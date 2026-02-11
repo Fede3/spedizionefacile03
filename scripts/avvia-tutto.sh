@@ -3,6 +3,37 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
+resolve_project_dir() {
+  local preferred="$1"
+  local marker="$2"
+  if [[ -f "${ROOT_DIR}/${preferred}/${marker}" ]]; then
+    echo "${ROOT_DIR}/${preferred}"
+    return 0
+  fi
+
+  local found
+  found="$(find "${ROOT_DIR}" -mindepth 1 -maxdepth 2 -type f -name "${marker}" | head -n 1 || true)"
+  if [[ -n "$found" ]]; then
+    dirname "$found"
+    return 0
+  fi
+
+  echo ""
+}
+
+LARAVEL_DIR="$(resolve_project_dir "laravel-spedizionefacile-main" "artisan")"
+NUXT_DIR="$(resolve_project_dir "nuxt-spedizionefacile-master" "nuxt.config.ts")"
+
+if [[ -z "$LARAVEL_DIR" ]]; then
+  echo "Cartella Laravel non trovata (marker artisan)."
+  exit 1
+fi
+
+if [[ -z "$NUXT_DIR" ]]; then
+  echo "Cartella Nuxt non trovata (marker nuxt.config.ts)."
+  exit 1
+fi
+
 NUXT_PORT="${NUXT_PORT:-3001}"
 LARAVEL_PORT="${LARAVEL_PORT:-8000}"
 
@@ -19,82 +50,85 @@ if ! command -v composer >/dev/null 2>&1; then
   exit 1
 fi
 
-if [[ -f "${ROOT_DIR}/laravel-spedizionefacile-main/composer.json" ]]; then
-  if [[ ! -f "${ROOT_DIR}/laravel-spedizionefacile-main/vendor/autoload.php" ]]; then
-    (cd "${ROOT_DIR}/laravel-spedizionefacile-main" && composer install --no-interaction --prefer-dist --no-dev --ignore-platform-req=ext-bcmath) || \
-    (cd "${ROOT_DIR}/laravel-spedizionefacile-main" && composer install --no-interaction --prefer-dist --no-dev --ignore-platform-reqs)
+if [[ -f "${LARAVEL_DIR}/composer.json" ]]; then
+  if [[ ! -f "${LARAVEL_DIR}/vendor/autoload.php" ]]; then
+    (cd "${LARAVEL_DIR}" && composer install --no-interaction --prefer-dist --no-dev --ignore-platform-req=ext-bcmath) || \
+    (cd "${LARAVEL_DIR}" && composer install --no-interaction --prefer-dist --no-dev --ignore-platform-reqs)
   fi
 fi
 
-if [[ -f "${ROOT_DIR}/laravel-spedizionefacile-main/.env.example" && ! -f "${ROOT_DIR}/laravel-spedizionefacile-main/.env" ]]; then
-  cp "${ROOT_DIR}/laravel-spedizionefacile-main/.env.example" "${ROOT_DIR}/laravel-spedizionefacile-main/.env"
+if [[ -f "${LARAVEL_DIR}/.env.example" && ! -f "${LARAVEL_DIR}/.env" ]]; then
+  cp "${LARAVEL_DIR}/.env.example" "${LARAVEL_DIR}/.env"
 fi
 
-if [[ -f "${ROOT_DIR}/laravel-spedizionefacile-main/.env" ]]; then
-  DB_PATH="${ROOT_DIR}/laravel-spedizionefacile-main/database/database.sqlite"
+if [[ -f "${LARAVEL_DIR}/.env" ]]; then
+  DB_PATH="${LARAVEL_DIR}/database/database.sqlite"
   touch "${DB_PATH}"
-  if grep -q "^DB_CONNECTION=" "${ROOT_DIR}/laravel-spedizionefacile-main/.env"; then
-    sed -i "s|^DB_CONNECTION=.*|DB_CONNECTION=sqlite|" "${ROOT_DIR}/laravel-spedizionefacile-main/.env"
-  else
-    echo "DB_CONNECTION=sqlite" >> "${ROOT_DIR}/laravel-spedizionefacile-main/.env"
-  fi
-  if grep -q "^DB_DATABASE=" "${ROOT_DIR}/laravel-spedizionefacile-main/.env"; then
-    sed -i "s|^DB_DATABASE=.*|DB_DATABASE=${DB_PATH}|" "${ROOT_DIR}/laravel-spedizionefacile-main/.env"
-  else
-    echo "DB_DATABASE=${DB_PATH}" >> "${ROOT_DIR}/laravel-spedizionefacile-main/.env"
-  fi
-  if ! grep -q "^APP_KEY=base64:" "${ROOT_DIR}/laravel-spedizionefacile-main/.env"; then
-    (cd "${ROOT_DIR}/laravel-spedizionefacile-main" && php artisan key:generate --force)
+  set_env_value() {
+    local key="$1"
+    local value="$2"
+    if grep -q "^${key}=" "${LARAVEL_DIR}/.env"; then
+      sed -i "s|^${key}=.*|${key}=${value}|" "${LARAVEL_DIR}/.env"
+    else
+      echo "${key}=${value}" >> "${LARAVEL_DIR}/.env"
+    fi
+  }
+  set_env_value "DB_CONNECTION" "sqlite"
+  set_env_value "DB_DATABASE" "${DB_PATH}"
+  set_env_value "SESSION_DRIVER" "file"
+  set_env_value "QUEUE_CONNECTION" "sync"
+  if ! grep -q "^APP_KEY=base64:" "${LARAVEL_DIR}/.env"; then
+    (cd "${LARAVEL_DIR}" && php artisan key:generate --force)
   fi
 
   # Ensure Sanctum/CORS include direct API port
   STATEFUL_DOMAINS="127.0.0.1:8787,localhost:8787,127.0.0.1:${NUXT_PORT},localhost:${NUXT_PORT},127.0.0.1:${LARAVEL_PORT},localhost:${LARAVEL_PORT}"
   CORS_ORIGINS="http://127.0.0.1:8787,http://localhost:8787,http://127.0.0.1:${NUXT_PORT},http://localhost:${NUXT_PORT},http://127.0.0.1:${LARAVEL_PORT},http://localhost:${LARAVEL_PORT}"
 
-  if grep -q "^SANCTUM_STATEFUL_DOMAINS=" "${ROOT_DIR}/laravel-spedizionefacile-main/.env"; then
-    sed -i "s|^SANCTUM_STATEFUL_DOMAINS=.*|SANCTUM_STATEFUL_DOMAINS=${STATEFUL_DOMAINS}|" "${ROOT_DIR}/laravel-spedizionefacile-main/.env"
+  if grep -q "^SANCTUM_STATEFUL_DOMAINS=" "${LARAVEL_DIR}/.env"; then
+    sed -i "s|^SANCTUM_STATEFUL_DOMAINS=.*|SANCTUM_STATEFUL_DOMAINS=${STATEFUL_DOMAINS}|" "${LARAVEL_DIR}/.env"
   else
-    echo "SANCTUM_STATEFUL_DOMAINS=${STATEFUL_DOMAINS}" >> "${ROOT_DIR}/laravel-spedizionefacile-main/.env"
+    echo "SANCTUM_STATEFUL_DOMAINS=${STATEFUL_DOMAINS}" >> "${LARAVEL_DIR}/.env"
   fi
 
-  if grep -q "^CORS_ALLOWED_ORIGINS=" "${ROOT_DIR}/laravel-spedizionefacile-main/.env"; then
-    sed -i "s|^CORS_ALLOWED_ORIGINS=.*|CORS_ALLOWED_ORIGINS=${CORS_ORIGINS}|" "${ROOT_DIR}/laravel-spedizionefacile-main/.env"
+  if grep -q "^CORS_ALLOWED_ORIGINS=" "${LARAVEL_DIR}/.env"; then
+    sed -i "s|^CORS_ALLOWED_ORIGINS=.*|CORS_ALLOWED_ORIGINS=${CORS_ORIGINS}|" "${LARAVEL_DIR}/.env"
   else
-    echo "CORS_ALLOWED_ORIGINS=${CORS_ORIGINS}" >> "${ROOT_DIR}/laravel-spedizionefacile-main/.env"
+    echo "CORS_ALLOWED_ORIGINS=${CORS_ORIGINS}" >> "${LARAVEL_DIR}/.env"
   fi
 
   # Set APP_URL based on environment
-  if grep -q "^APP_URL=" "${ROOT_DIR}/laravel-spedizionefacile-main/.env"; then
-    sed -i "s|^APP_URL=.*|APP_URL=${NUXT_PUBLIC_API_BASE:-http://127.0.0.1:${LARAVEL_PORT}}|" "${ROOT_DIR}/laravel-spedizionefacile-main/.env"
-  fi
-  if grep -q "^APP_FRONTEND_URL=" "${ROOT_DIR}/laravel-spedizionefacile-main/.env"; then
-    sed -i "s|^APP_FRONTEND_URL=.*|APP_FRONTEND_URL=${NUXT_PUBLIC_API_BASE:-http://127.0.0.1:${LARAVEL_PORT}}|" "${ROOT_DIR}/laravel-spedizionefacile-main/.env"
+  set_env_value "APP_URL" "${NUXT_PUBLIC_API_BASE:-http://127.0.0.1:${LARAVEL_PORT}}"
+  if [[ -n "${APP_FRONTEND_URL_OVERRIDE:-}" ]]; then
+    set_env_value "APP_FRONTEND_URL" "${APP_FRONTEND_URL_OVERRIDE}"
   fi
 
   # Run migrations (idempotent)
-  (cd "${ROOT_DIR}/laravel-spedizionefacile-main" && php artisan migrate --force 2>/dev/null || true)
+  (cd "${LARAVEL_DIR}" && php artisan migrate --force 2>/dev/null || true)
+  # Ensure default demo accounts exist and are verified
+  (cd "${LARAVEL_DIR}" && php artisan db:seed --class=Database\\Seeders\\DatabaseSeeder --force 2>/dev/null || true)
 fi
 
-if [[ -f "${ROOT_DIR}/nuxt-spedizionefacile-master/package.json" ]]; then
-  if [[ ! -d "${ROOT_DIR}/nuxt-spedizionefacile-master/node_modules" ]]; then
-    (cd "${ROOT_DIR}/nuxt-spedizionefacile-master" && npm install)
+if [[ -f "${NUXT_DIR}/package.json" ]]; then
+  if [[ ! -d "${NUXT_DIR}/node_modules" ]]; then
+    (cd "${NUXT_DIR}" && npm install)
   else
-    (cd "${ROOT_DIR}/nuxt-spedizionefacile-master" && npm install --prefer-offline --no-audit >/tmp/nuxt-npm-install.log 2>&1 || true)
+    (cd "${NUXT_DIR}" && npm install --prefer-offline --no-audit >/tmp/nuxt-npm-install.log 2>&1 || true)
   fi
 fi
 
 if [[ "${SKIP_LARAVEL_START:-0}" != "1" ]]; then
   if ! pgrep -f "artisan serve --host 0.0.0.0 --port ${LARAVEL_PORT}" >/dev/null 2>&1; then
-    (cd "${ROOT_DIR}/laravel-spedizionefacile-main" && php artisan serve --host 0.0.0.0 --port "${LARAVEL_PORT}" > /tmp/laravel.log 2>&1 &)
+    (cd "${LARAVEL_DIR}" && php artisan serve --host 0.0.0.0 --port "${LARAVEL_PORT}" > /tmp/laravel.log 2>&1 &)
   fi
 fi
 
 if [[ "${SKIP_NUXT_START:-0}" != "1" ]]; then
   if ! pgrep -f "nuxt.*--port ${NUXT_PORT}" >/dev/null 2>&1; then
-    (cd "${ROOT_DIR}/nuxt-spedizionefacile-master" && npm run dev -- --host 0.0.0.0 --port "${NUXT_PORT}" > /tmp/nuxt.log 2>&1 &)
+    (cd "${NUXT_DIR}" && npm run dev -- --host 0.0.0.0 --port "${NUXT_PORT}" > /tmp/nuxt.log 2>&1 &)
     sleep 4
     if ! pgrep -f "nuxt.*--port ${NUXT_PORT}" >/dev/null 2>&1; then
-      (cd "${ROOT_DIR}/nuxt-spedizionefacile-master" && npx nuxi dev --host 0.0.0.0 --port "${NUXT_PORT}" >> /tmp/nuxt.log 2>&1 &)
+      (cd "${NUXT_DIR}" && npx nuxi dev --host 0.0.0.0 --port "${NUXT_PORT}" >> /tmp/nuxt.log 2>&1 &)
     fi
   fi
 fi
@@ -102,3 +136,5 @@ fi
 echo "Backend API base: ${NUXT_PUBLIC_API_BASE}"
 echo "Nuxt port: ${NUXT_PORT}"
 echo "Laravel port: ${LARAVEL_PORT}"
+echo "Frontend dir: ${NUXT_DIR}"
+echo "Backend dir: ${LARAVEL_DIR}"

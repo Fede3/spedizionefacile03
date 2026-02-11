@@ -153,7 +153,8 @@ const showForm = ref(false);
 
 const loginGoogle = () => {
 	isGoogle.value = true;
-	window.location.href = `${apiBase}/api/auth/google/redirect`;
+	const frontendOrigin = window.location.origin;
+	window.location.href = `${apiBase}/api/auth/google/redirect?frontend=${encodeURIComponent(frontendOrigin)}`;
 };
 
 function onTabClick(newValue) {
