@@ -393,6 +393,7 @@ watch(
 								id="origin_postal_code"
 								placeholder="CAP"
 								class="input-preventivo-rapido"
+								required
 								@input="filterCap(userStore.shipmentDetails)" />
 							<p v-if="messageError?.['shipment_details.origin_postal_code']" class="text-red-500 text-[1rem] mt-[10px]">
 								{{ messageError["shipment_details.origin_postal_code"][0] }}
@@ -415,6 +416,7 @@ watch(
 								id="destination_postal_code"
 								placeholder="CAP"
 								class="input-preventivo-rapido"
+								required
 								@input="filterCap(userStore.shipmentDetails)" />
 							<p v-if="messageError?.['shipment_details.destination_postal_code']" class="text-red-500 text-[1rem] mt-[10px]">
 								{{ messageError["shipment_details.destination_postal_code"][0] }}
