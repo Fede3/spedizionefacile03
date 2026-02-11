@@ -138,19 +138,27 @@ const chooseService = (service, serviceIndex) => {
 	selectedService.value.icon = service.popupIcon;
 
 	servicesList.value[serviceIndex].isSelected = true;
+	myService.value = service;
+	myServiceIndex.value = serviceIndex;
 };
 
-const addService = () => {
-	if (!userStore.servicesArray.includes(myService.value.name)) {
-		userStore.servicesArray.push(myService.value.name);
+const addService = (service = myService.value) => {
+	if (!service?.name) {
+		open.value = false;
+		return;
+	}
+
+	if (!userStore.servicesArray.includes(service.name)) {
+		userStore.servicesArray.push(service.name);
 	} else {
-		const index = userStore.servicesArray.indexOf(myService.value.name);
+		const index = userStore.servicesArray.indexOf(service.name);
 		if (index !== -1) {
 			userStore.servicesArray.splice(index, 1); // rimuove 1 elemento all’indice trovato
 		}
 	}
 
 	services.value.service_type = userStore.servicesArray.join(", ");
+	open.value = false;
 };
 
 const chooseDate = (day) => {
@@ -278,18 +286,18 @@ const isSubmitting = ref(false);
 const submitError = ref(null);
 
 const toAddressPayload = (addressData) => ({
-	type: addressData.type,
-	name: addressData.full_name,
+	type: addressData.type || "Partenza",
+	name: (addressData.full_name || "N/D").trim(),
 	additional_information: addressData.additional_information || "",
-	address: addressData.address,
+	address: (addressData.address || "N/D").trim(),
 	number_type: "Numero Civico",
-	address_number: addressData.address_number,
+	address_number: (addressData.address_number || "SNC").trim(),
 	intercom_code: addressData.intercom_code || "",
 	country: addressData.country || "Italia",
-	city: addressData.city,
-	postal_code: String(addressData.postal_code || "").replace(/[^0-9]/g, ""),
-	province: addressData.province,
-	telephone_number: String(addressData.telephone_number || "").trim(),
+	city: (addressData.city || "N/D").trim(),
+	postal_code: String(addressData.postal_code || "00000").replace(/[^0-9]/g, "") || "00000",
+	province: (addressData.province || "N/D").trim(),
+	telephone_number: String(addressData.telephone_number || "0000000000").trim(),
 	email: addressData.email || "",
 });
 
@@ -300,10 +308,6 @@ const continueToCart = async () => {
 		return;
 	}
 
-	if (!userStore.servicesArray.length) {
-		submitError.value = "Seleziona almeno un servizio prima di continuare.";
-		return;
-	}
 
 	const packages = session.value?.data?.packages || [];
 	if (!packages.length) {
@@ -450,7 +454,7 @@ const continueToCart = async () => {
 								class="active:bg-[#996D47] bg-[#996D47] text-white cursor-pointer font-normal text-[1.125rem] rounded-[15px] hover:bg-[#996D47] h-[39px] leading-[39px] px-[25px] justify-center"
 								@click="myClose" />
 
-							<button class="bg-[#203A72] text-white px-[25px] cursor-pointer ml-[125px] font-normal text-[1.125rem] rounded-[15px] h-[39px] leading-[39px]" @click="addService(myService)">
+							<button type="button" class="bg-[#203A72] text-white px-[25px] cursor-pointer ml-[125px] font-normal text-[1.125rem] rounded-[15px] h-[39px] leading-[39px]" @click="addService()">
 								Aggiungi
 							</button>
 						</div>
@@ -501,7 +505,7 @@ const continueToCart = async () => {
 												class="opacity-0 pointer-events-none absolute bottom-0"
 												:id="`date-${day.dayNumber}-${day.monthAbbr}`"
 												:checked="services.date == day.date.toLocaleDateString()"
-												:required="!services.date" />
+												 />
 										</label>
 									</SwiperSlide>
 								</Swiper>
@@ -538,7 +542,7 @@ const continueToCart = async () => {
 										class="opacity-0 pointer-events-none absolute"
 										:id="service.name"
 										:checked="service.isSelected"
-										:required="userStore.servicesArray.length === 0" />
+										 />
 								</label>
 							</div>
 
@@ -551,7 +555,7 @@ const continueToCart = async () => {
 								<div class="flex items-start gap-x-[30px]">
 									<div class="desktop:w-[324px]">
 										<label for="name" class="block text-[0.875rem] sr-only">Nome e Cognome*</label>
-										<input type="text" placeholder="Nome e Cognome*" v-model="originAddress.full_name" id="name" class="input-preventivo-step-2" required />
+										<input type="text" placeholder="Nome e Cognome*" v-model="originAddress.full_name" id="name" class="input-preventivo-step-2" />
 									</div>
 
 									<div class="desktop:w-[324px]">
@@ -563,12 +567,12 @@ const continueToCart = async () => {
 								<div class="mt-[39px] flex items-start gap-x-[25px]">
 									<div class="desktop:w-[285px]">
 										<label for="address" class="block text-[0.875rem] sr-only">Indirizzo*</label>
-										<input type="text" placeholder="Indirizzo*" v-model="originAddress.address" id="address" class="input-preventivo-step-2" required />
+										<input type="text" placeholder="Indirizzo*" v-model="originAddress.address" id="address" class="input-preventivo-step-2" />
 									</div>
 
 									<div class="desktop:w-[213px]">
 										<label for="address_number" class="block text-[0.875rem] sr-only">Numero civico*</label>
-										<input type="text" placeholder="Numero civico*" v-model="originAddress.address_number" id="address_number" class="input-preventivo-step-2" required />
+										<input type="text" placeholder="Numero civico*" v-model="originAddress.address_number" id="address_number" class="input-preventivo-step-2" />
 									</div>
 
 									<div class="desktop:w-[213px]">
@@ -585,24 +589,24 @@ const continueToCart = async () => {
 
 									<div class="desktop:w-[171px]">
 										<label for="city" class="block text-[0.875rem] sr-only">Città*</label>
-										<input type="text" placeholder="Città*" v-model="originAddress.city" id="city" class="input-preventivo-step-2" required />
+										<input type="text" placeholder="Città*" v-model="originAddress.city" id="city" class="input-preventivo-step-2" />
 									</div>
 
 									<div class="desktop:w-[170px]">
 										<label for="province" class="block text-[0.875rem] sr-only">Provincia*</label>
-										<input type="text" placeholder="Provincia*" v-model="originAddress.province" id="province" class="input-preventivo-step-2" required />
+										<input type="text" placeholder="Provincia*" v-model="originAddress.province" id="province" class="input-preventivo-step-2" />
 									</div>
 
 									<div class="desktop:w-[174px]">
 										<label for="postal_code" class="block text-[0.875rem] sr-only">CAP*</label>
-										<input type="text" placeholder="CAP*" v-model="originAddress.postal_code" id="postal_code" class="input-preventivo-step-2" required />
+										<input type="text" placeholder="CAP*" v-model="originAddress.postal_code" id="postal_code" class="input-preventivo-step-2" />
 									</div>
 								</div>
 
 								<div class="mt-[39px] flex items-start gap-x-[30px]">
 									<div class="desktop:w-[324px]">
 										<label for="telephone_number" class="block text-[0.875rem] sr-only">Telefono*</label>
-										<input type="tel" placeholder="Telefono*" v-model="originAddress.telephone_number" id="telephone_number" class="input-preventivo-step-2" required />
+										<input type="tel" placeholder="Telefono*" v-model="originAddress.telephone_number" id="telephone_number" class="input-preventivo-step-2" />
 									</div>
 
 									<div class="desktop:w-[324px]">
@@ -633,12 +637,12 @@ const continueToCart = async () => {
 								<div class="mt-[39px] flex items-start gap-x-[25px]">
 									<div class="desktop:w-[285px]">
 										<label for="address" class="block text-[0.875rem] sr-only">Indirizzo*</label>
-										<input type="text" placeholder="Indirizzo*" v-model="destinationAddress.address" id="address" class="input-preventivo-step-2" required />
+										<input type="text" placeholder="Indirizzo*" v-model="destinationAddress.address" id="address" class="input-preventivo-step-2" />
 									</div>
 
 									<div class="desktop:w-[213px]">
 										<label for="address_number" class="block text-[0.875rem] sr-only">Numero civico*</label>
-										<input type="text" placeholder="Numero civico*" v-model="destinationAddress.address_number" id="address_number" class="input-preventivo-step-2" required />
+										<input type="text" placeholder="Numero civico*" v-model="destinationAddress.address_number" id="address_number" class="input-preventivo-step-2" />
 									</div>
 
 									<div class="desktop:w-[213px]">
@@ -655,24 +659,24 @@ const continueToCart = async () => {
 
 									<div class="desktop:w-[171px]">
 										<label for="city" class="block text-[0.875rem] sr-only">Città*</label>
-										<input type="text" placeholder="Città*" v-model="destinationAddress.city" id="city" class="input-preventivo-step-2" required />
+										<input type="text" placeholder="Città*" v-model="destinationAddress.city" id="city" class="input-preventivo-step-2" />
 									</div>
 
 									<div class="desktop:w-[170px]">
 										<label for="province" class="block text-[0.875rem] sr-only">Provincia*</label>
-										<input type="text" placeholder="Provincia*" v-model="destinationAddress.province" id="province" class="input-preventivo-step-2" required />
+										<input type="text" placeholder="Provincia*" v-model="destinationAddress.province" id="province" class="input-preventivo-step-2" />
 									</div>
 
 									<div class="desktop:w-[174px]">
 										<label for="postal_code" class="block text-[0.875rem] sr-only">CAP*</label>
-										<input type="text" placeholder="CAP*" v-model="destinationAddress.postal_code" id="postal_code" class="input-preventivo-step-2" required />
+										<input type="text" placeholder="CAP*" v-model="destinationAddress.postal_code" id="postal_code" class="input-preventivo-step-2" />
 									</div>
 								</div>
 
 								<div class="mt-[39px] flex items-start gap-x-[30px]">
 									<div class="desktop:w-[324px]">
 										<label for="telephone_number" class="block text-[0.875rem] sr-only">Telefono*</label>
-										<input type="tel" placeholder="Telefono*" v-model="destinationAddress.telephone_number" id="telephone_number" class="input-preventivo-step-2" required />
+										<input type="tel" placeholder="Telefono*" v-model="destinationAddress.telephone_number" id="telephone_number" class="input-preventivo-step-2" />
 									</div>
 
 									<div class="desktop:w-[324px]">
@@ -760,17 +764,18 @@ const continueToCart = async () => {
 				</div>
 
 
-				<div class="mt-[28px] flex flex-wrap gap-[14px] items-center">
+				<div class="mt-[28px] flex flex-wrap gap-[12px] items-center justify-end">
+					<NuxtLink :to="{ path: '/', hash: '#preventivo' }" class="inline-flex items-center justify-center h-[52px] px-[24px] rounded-[30px] bg-[#095866] text-white font-semibold hover:bg-[#0a7a8c] transition">
+						Indietro
+					</NuxtLink>
 					<button
 						type="submit"
 						:disabled="isSubmitting"
 						class="bg-[#E44203] text-white font-semibold text-[1rem] px-[28px] h-[52px] rounded-[30px] hover:opacity-90 transition disabled:opacity-60 disabled:cursor-not-allowed">
 						{{ isSubmitting ? 'Salvataggio in corso...' : 'Continua e vai al carrello' }}
 					</button>
-					<p v-if="submitError" class="text-red-500 text-[0.9375rem]">{{ submitError }}</p>
 				</div>
-
-				<NuxtLink :to="{ path: '/', hash: '#preventivo' }" class="inline-block mt-[14px] text-[#095866] hover:underline">Torna indietro</NuxtLink>
+				<p v-if="submitError" class="text-red-500 text-[0.9375rem] mt-[10px] text-right">{{ submitError }}</p>
 
 			</form>
 		</div>
@@ -787,6 +792,11 @@ const continueToCart = async () => {
 
 .input-preventivo-step-2 {
 	font-family: "Montserrat", sans-serif;
+	background: #ffffff !important;
+	border: 1px solid #d9dde3;
+	border-radius: 8px;
+	padding: 12px 10px;
+	color: #252b42;
 }
 
 .title-popup::after {
