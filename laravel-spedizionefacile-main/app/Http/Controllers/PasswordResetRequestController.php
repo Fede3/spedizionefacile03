@@ -16,6 +16,9 @@ class PasswordResetRequestController extends Controller
 {
     // this is most important function to send mail and inside of that there are another function
     public function sendEmail(Request $request) {
+        $request->validate([
+            'email' => ['required', 'email'],
+        ]);
 
         if (!$this->validateEmail($request->email)) { 
             return $this->failedResponse();
@@ -32,7 +35,7 @@ class PasswordResetRequestController extends Controller
     public function send($email) {
         $token = $this->createToken($email);
 
-        Mail::to($email)->queue(new ResetPasswordEmail($token, $email));  // token is important in send mail 
+        Mail::to($email)->send(new ResetPasswordEmail($token, $email));  // token is important in send mail 
     }
 
     public function createToken($email) {

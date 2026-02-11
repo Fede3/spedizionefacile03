@@ -23,6 +23,7 @@ class UpdatePasswordRequest extends FormRequest
     {
         return [
             'email' => 'required|email',
+            'resetToken' => 'required|string',
             'password' => 'required|confirmed'
         ];
     }
