@@ -1,14 +1,14 @@
-TUTTOINSIEME - INSTALLAZIONE MANUALE
+SPEDIZIONEFACILE - NOTE STORICHE INSTALLAZIONE
 =====================================
 
-Il pannello per Tuttoinsieme segue la stessa logica di BianchiPro.
+Il pannello per SpedizioneFacile segue la stessa logica di BianchiPro.
 
 MODIFICHE DA FARE:
 
 1. Copia PANNELLO.ps1 da BianchiproRestyling
 2. Modifica queste righe:
 
-   $Project = "TUTTOINSIEME"
+   $Project = "SPEDIZIONEFACILE"
    $FrontPort = 3001
    $BackPort = 8000
    $ProxyPort = 8787
@@ -21,4 +21,4 @@ MODIFICHE DA FARE:
 
 4. Usa lo stesso sistema di WaitPort per ciascuno
 
-OPPURE: Aspetta il file PANNELLO_TUTTOINSIEME.ps1 completo
+OPPURE: Aspetta il file PANNELLO_SPEDIZIONEFACILE.ps1 completo

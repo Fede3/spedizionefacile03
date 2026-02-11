@@ -4,6 +4,20 @@ $root = Split-Path -Parent $PSScriptRoot
 $backendLog = Join-Path $env:TEMP 'cloudflared-backend.log'
 $frontendLog = Join-Path $env:TEMP 'cloudflared-frontend.log'
 
+function Resolve-ProjectDir([string]$basePath, [string]$preferredName, [string]$markerFile) {
+  $preferred = Join-Path $basePath $preferredName
+  if (Test-Path (Join-Path $preferred $markerFile)) { return $preferred }
+
+  $candidate = Get-ChildItem -Path $basePath -Directory -ErrorAction SilentlyContinue |
+    Where-Object { Test-Path (Join-Path $_.FullName $markerFile) } |
+    Select-Object -First 1
+
+  if ($candidate) { return $candidate.FullName }
+  throw "Cartella progetto non trovata (marker: $markerFile) in $basePath"
+}
+
+$nuxtDir = Resolve-ProjectDir -basePath $root -preferredName 'nuxt-spedizionefacile-master' -markerFile 'nuxt.config.ts'
+
 function Get-TunnelUrl([string]$logFile) {
   for ($i = 0; $i -lt 60; $i++) {
     if (Test-Path $logFile) {
@@ -31,12 +45,14 @@ $backendUrl = Get-TunnelUrl $backendLog
 if (-not $backendUrl) { throw "Tunnel backend non disponibile. Log: $backendLog" }
 
 $env:NUXT_PUBLIC_API_BASE = $backendUrl
-Start-Process -FilePath powershell -ArgumentList '-NoProfile','-Command',"Set-Location '$root\\nuxt-spedizionefacile-master'; npm run dev -- --host 0.0.0.0 --port 3000 *> $env:TEMP\\nuxt.log" -WindowStyle Minimized
+Start-Process -FilePath powershell -ArgumentList '-NoProfile','-Command',"Set-Location '$nuxtDir'; npm run dev -- --host 0.0.0.0 --port 3001 *> $env:TEMP\\nuxt.log" -WindowStyle Minimized
 Start-Sleep -Seconds 2
 
-Start-Process -FilePath cloudflared -ArgumentList 'tunnel','--url','http://127.0.0.1:3000','--no-autoupdate' -RedirectStandardOutput $frontendLog -RedirectStandardError $frontendLog -WindowStyle Minimized
+Start-Process -FilePath cloudflared -ArgumentList 'tunnel','--url','http://127.0.0.1:3001','--no-autoupdate' -RedirectStandardOutput $frontendLog -RedirectStandardError $frontendLog -WindowStyle Minimized
 $frontendUrl = Get-TunnelUrl $frontendLog
 if (-not $frontendUrl) { throw "Tunnel frontend non disponibile. Log: $frontendLog" }
 
+Write-Output "✅ Root progetto: $root"
+Write-Output "✅ Frontend dir: $nuxtDir"
 Write-Output "✅ Frontend pubblico: $frontendUrl"
 Write-Output "✅ Backend pubblico:  $backendUrl"

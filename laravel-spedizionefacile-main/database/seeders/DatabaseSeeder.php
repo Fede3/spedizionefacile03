@@ -3,7 +3,6 @@
 namespace Database\Seeders;
 
 use App\Models\User;
-// use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
@@ -13,44 +12,53 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // Admin - vede tutto
-        User::factory()->create([
-            'name' => 'Admin',
-            'surname' => 'SpedizioneFacile',
-            'email' => 'admin@spedizionefacile.it',
-            'password' => 'Admin2026!',
-            'telephone_number' => '+39 000 0000000',
-            'role' => 'Admin',
-        ]);
+        $accounts = [
+            [
+                'email' => 'admin@spedizionefacile.it',
+                'name' => 'Admin',
+                'surname' => 'SpedizioneFacile',
+                'telephone_number' => '+39 000 0000000',
+                'password' => 'Admin2026!',
+                'role' => 'Admin',
+            ],
+            [
+                'email' => 'cliente@spedizionefacile.it',
+                'name' => 'Luca',
+                'surname' => 'Bianchi',
+                'telephone_number' => '+39 333 7654321',
+                'password' => 'Cliente2026!',
+                'role' => 'Cliente',
+            ],
+            [
+                'email' => 'prova@spedizionefacile.it',
+                'name' => 'Prova',
+                'surname' => 'Test',
+                'telephone_number' => '+39 333 1111111',
+                'password' => 'Prova2026!',
+                'role' => 'Cliente',
+            ],
+            [
+                'email' => 'pro@spedizionefacile.it',
+                'name' => 'Mario',
+                'surname' => 'Rossi',
+                'telephone_number' => '+39 333 1234567',
+                'password' => 'Partner2026!',
+                'role' => 'Partner Pro',
+            ],
+        ];
 
-        // Account Cliente
-        User::factory()->create([
-            'name' => 'Luca',
-            'surname' => 'Bianchi',
-            'email' => 'cliente@spedizionefacile.it',
-            'password' => 'Cliente2026!',
-            'telephone_number' => '+39 333 7654321',
-            'role' => 'Cliente',
-        ]);
-
-        // Account Prova (test)
-        User::factory()->create([
-            'name' => 'Prova',
-            'surname' => 'Test',
-            'email' => 'prova@spedizionefacile.it',
-            'password' => 'Prova2026!',
-            'telephone_number' => '+39 333 1111111',
-            'role' => 'Cliente',
-        ]);
-
-        // Account Partner Pro
-        User::factory()->create([
-            'name' => 'Mario',
-            'surname' => 'Rossi',
-            'email' => 'pro@spedizionefacile.it',
-            'password' => 'Partner2026!',
-            'telephone_number' => '+39 333 1234567',
-            'role' => 'Partner Pro',
-        ]);
+        foreach ($accounts as $account) {
+            User::updateOrCreate(
+                ['email' => $account['email']],
+                [
+                    'name' => $account['name'],
+                    'surname' => $account['surname'],
+                    'telephone_number' => $account['telephone_number'],
+                    'password' => $account['password'],
+                    'role' => $account['role'],
+                    'email_verified_at' => now(),
+                ]
+            );
+        }
     }
 }

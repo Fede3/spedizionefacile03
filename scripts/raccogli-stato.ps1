@@ -7,7 +7,7 @@ $reportFile = Join-Path $reportDir 'report.txt'
 New-Item -ItemType Directory -Force $reportDir | Out-Null
 
 $lines = @()
-$lines += '=== DIAGNOSTICA TUTTOINSIEME (Windows) ==='
+$lines += '=== DIAGNOSTICA SPEDIZIONEFACILE (Windows) ==='
 $lines += "Data: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')"
 $lines += "Root: $root"
 $lines += ''

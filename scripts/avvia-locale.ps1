@@ -1,8 +1,21 @@
 $ErrorActionPreference = 'Stop'
 
 $root = Split-Path -Parent $PSScriptRoot
-$laravelDir = Join-Path $root 'laravel-spedizionefacile-main'
-$nuxtDir = Join-Path $root 'nuxt-spedizionefacile-master'
+
+function Resolve-ProjectDir([string]$basePath, [string]$preferredName, [string]$markerFile) {
+  $preferred = Join-Path $basePath $preferredName
+  if (Test-Path (Join-Path $preferred $markerFile)) { return $preferred }
+
+  $candidate = Get-ChildItem -Path $basePath -Directory -ErrorAction SilentlyContinue |
+    Where-Object { Test-Path (Join-Path $_.FullName $markerFile) } |
+    Select-Object -First 1
+
+  if ($candidate) { return $candidate.FullName }
+  throw "Cartella progetto non trovata (marker: $markerFile) in $basePath"
+}
+
+$laravelDir = Resolve-ProjectDir -basePath $root -preferredName 'laravel-spedizionefacile-main' -markerFile 'artisan'
+$nuxtDir = Resolve-ProjectDir -basePath $root -preferredName 'nuxt-spedizionefacile-master' -markerFile 'nuxt.config.ts'
 
 $env:NUXT_PUBLIC_API_BASE = if ($env:NUXT_PUBLIC_API_BASE) { $env:NUXT_PUBLIC_API_BASE } else { 'http://127.0.0.1:8787' }
 
@@ -42,10 +55,36 @@ if (Test-Path $envFile) {
     $envContent += "`nDB_DATABASE=$dbPath"
   }
 
+  if ($envContent -match '(?m)^SESSION_DRIVER=') {
+    $envContent = [regex]::Replace($envContent, '(?m)^SESSION_DRIVER=.*$', 'SESSION_DRIVER=file')
+  } else {
+    $envContent += "`nSESSION_DRIVER=file"
+  }
+
+  if ($envContent -match '(?m)^QUEUE_CONNECTION=') {
+    $envContent = [regex]::Replace($envContent, '(?m)^QUEUE_CONNECTION=.*$', 'QUEUE_CONNECTION=sync')
+  } else {
+    $envContent += "`nQUEUE_CONNECTION=sync"
+  }
+
+  if ($envContent -match '(?m)^MAIL_MAILER=') {
+    $envContent = [regex]::Replace($envContent, '(?m)^MAIL_MAILER=.*$', 'MAIL_MAILER=log')
+  } else {
+    $envContent += "`nMAIL_MAILER=log"
+  }
+
+  if ($envContent -match '(?m)^APP_FRONTEND_URL=') {
+    $envContent = [regex]::Replace($envContent, '(?m)^APP_FRONTEND_URL=.*$', 'APP_FRONTEND_URL=http://127.0.0.1:8787')
+  } else {
+    $envContent += "`nAPP_FRONTEND_URL=http://127.0.0.1:8787"
+  }
+
   Set-Content -Path $envFile -Value $envContent -NoNewline
 
   Push-Location $laravelDir
   php artisan key:generate --force | Out-Null
+  try { php artisan migrate --force | Out-Null } catch {}
+  try { php artisan db:seed --class=Database\Seeders\DatabaseSeeder --force | Out-Null } catch {}
   Pop-Location
 }
 
@@ -60,7 +99,7 @@ Get-Process | Where-Object { $_.ProcessName -in @('php','node','caddy') } | ForE
 }
 
 Start-Process -FilePath powershell -ArgumentList '-NoProfile','-Command',"Set-Location '$laravelDir'; php artisan serve --host 0.0.0.0 --port 8000 *> $env:TEMP\\laravel.log" -WindowStyle Minimized
-Start-Process -FilePath powershell -ArgumentList '-NoProfile','-Command',"Set-Location '$nuxtDir'; npm run dev -- --host 0.0.0.0 --port 3000 *> $env:TEMP\\nuxt.log" -WindowStyle Minimized
+Start-Process -FilePath powershell -ArgumentList '-NoProfile','-Command',"Set-Location '$nuxtDir'; npm run dev -- --host 0.0.0.0 --port 3001 *> $env:TEMP\\nuxt.log" -WindowStyle Minimized
 
 if (Get-Command caddy -ErrorAction SilentlyContinue) {
   $caddyFile = Join-Path $root 'Caddyfile'
@@ -68,7 +107,10 @@ if (Get-Command caddy -ErrorAction SilentlyContinue) {
   Start-Process -FilePath powershell -ArgumentList '-NoProfile','-Command',"Set-Location '$root'; caddy run --config '$caddyFile' *> $env:TEMP\\caddy.log" -WindowStyle Minimized
   Write-Output '✅ Apri: http://127.0.0.1:8787'
 } else {
-  Write-Output '⚠️ Caddy non trovato. Apri: http://127.0.0.1:3000 (Nuxt)'
+  Write-Output '⚠️ Caddy non trovato. Apri: http://127.0.0.1:3001 (Nuxt)'
 }
 
+Write-Output "ℹ️ Root progetto: $root"
+Write-Output "ℹ️ Frontend dir: $nuxtDir"
+Write-Output "ℹ️ Backend dir: $laravelDir"
 Write-Output "ℹ️ Log: $env:TEMP\\nuxt.log, $env:TEMP\\laravel.log"
