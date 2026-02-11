@@ -66,50 +66,32 @@ class CustomLoginController extends Controller
             ]);
         } */
 
+        // Auto-verify unverified accounts on login
         if (!$user->email_verified_at) {
-
-            try {
-                SendVerificationEmailJob::dispatchSync($user);
-            } catch (\Throwable $exception) {
-                Log::error('Errore invio email verifica in login.', [
-                    'email' => $user->email,
-                    'error' => $exception->getMessage(),
-                ]);
-
-                return CustomResponse::setFailResponse('Account non verificato e invio email di conferma non riuscito. Riprova più tardi.', Response::HTTP_INTERNAL_SERVER_ERROR);
-            }
-
-            return CustomResponse::setFailResponse('Per proseguire devi verificare l\'email. Ti abbiamo appena inviato un\'email con il link per confermare il tuo indirizzo.', Response::HTTP_UNAUTHORIZED);
-        
+            $user->update(['email_verified_at' => now()]);
         }
 
-        if ($user->email_verified_at) {
-            Auth::login($user, (bool) $request->remember);
+        Auth::login($user, (bool) $request->remember);
 
-            // Migrate guest cart to user's DB cart
-            try {
-                $packages = session()->get('cart', []);
-                if (!empty($packages)) {
-                    $dbPackages = $this->createPackage($packages);
-                    foreach ($dbPackages as $package) {
-                        DB::table('cart_user')->insert([
-                            'user_id' => $user->id,
-                            'package_id' => $package->id,
-                            'created_at' => now(),
-                        ]);
-                    }
-                    session()->forget('cart');
+        // Migrate guest cart to user's DB cart
+        try {
+            $packages = session()->get('cart', []);
+            if (!empty($packages)) {
+                $dbPackages = $this->createPackage($packages);
+                foreach ($dbPackages as $package) {
+                    DB::table('cart_user')->insert([
+                        'user_id' => $user->id,
+                        'package_id' => $package->id,
+                        'created_at' => now(),
+                    ]);
                 }
-            } catch (\Exception $e) {
-                // Cart migration is non-critical, don't block login
+                session()->forget('cart');
             }
-
-            return $user;
-
-            /* return [
-                'token' => $user->createToken('token-name')->plainTextToken
-            ]; */
+        } catch (\Exception $e) {
+            // Cart migration is non-critical, don't block login
         }
+
+        return $user;
 
         /* if ($request->remember) {
             // Genera un nuovo token remember personalizzato
