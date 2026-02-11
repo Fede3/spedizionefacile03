@@ -82,15 +82,18 @@ const sanctum = useSanctumClient();
 const checkPrices = (pack) => {
 	let basePrice = null;
 
-	if (pack.weight_price != null && pack.volume_price != null) {
-		basePrice = Math.max(Number(pack.weight_price), Number(pack.volume_price));
-	} else if (pack.weight_price != null) {
-		basePrice = Number(pack.weight_price);
-	} else if (pack.volume_price != null) {
-		basePrice = Number(pack.volume_price);
+	const wp = pack.weight_price != null ? Number(pack.weight_price) : null;
+	const vp = pack.volume_price != null ? Number(pack.volume_price) : null;
+
+	if (wp != null && !isNaN(wp) && vp != null && !isNaN(vp)) {
+		basePrice = Math.max(wp, vp);
+	} else if (wp != null && !isNaN(wp)) {
+		basePrice = wp;
+	} else if (vp != null && !isNaN(vp)) {
+		basePrice = vp;
 	}
 
-	if (basePrice != null) {
+	if (basePrice != null && basePrice > 0) {
 		pack.single_price = basePrice;
 		pack.single_priceOrig = basePrice;
 		calcQuantity(pack);
@@ -99,21 +102,30 @@ const checkPrices = (pack) => {
 
 /* Calcolo prezzo se la quantità cambia */
 const calcQuantity = (pack) => {
-	pack.single_price = pack.single_priceOrig * Number(pack.quantity);
+	const orig = Number(pack.single_priceOrig) || 0;
+	const qty = Number(pack.quantity) || 1;
+	pack.single_price = orig * qty;
 
 	userStore.totalPrice = 0;
 
-	userStore.packages.forEach((pack) => {
-		userStore.totalPrice += Number(pack.single_price);
+	userStore.packages.forEach((p) => {
+		userStore.totalPrice += Number(p.single_price) || 0;
 	});
 };
 
 /* Calcolo del prezzo tenendo conto del peso */
 const calcPriceWithWeight = (pack) => {
-	pack.weight = pack.weight.replace(/[a-zA-Z]/g, "");
+	if (pack.weight != null) {
+		pack.weight = String(pack.weight).replace(/[a-zA-Z]/g, "");
+	}
 
 	myPack.value = pack;
 	const weight = Number(pack.weight);
+
+	if (!pack.weight || isNaN(weight) || weight <= 0) {
+		pack.weight_price = null;
+		return;
+	}
 
 	if (weight > 0 && weight < 2) {
 		pack.weight_price = 9;
@@ -133,15 +145,15 @@ const calcPriceWithWeight = (pack) => {
 /* Calcolo prezzo tenendo conto del volume */
 const calcPriceWithVolume = (pack) => {
 	if (pack.first_size) {
-		pack.first_size = pack.first_size.replace(/[^0-9]/g, "");
+		pack.first_size = String(pack.first_size).replace(/[^0-9]/g, "");
 	}
 
 	if (pack.second_size) {
-		pack.second_size = pack.second_size.replace(/[^0-9]/g, "");
+		pack.second_size = String(pack.second_size).replace(/[^0-9]/g, "");
 	}
 
 	if (pack.third_size) {
-		pack.third_size = pack.third_size.replace(/[^0-9]/g, "");
+		pack.third_size = String(pack.third_size).replace(/[^0-9]/g, "");
 	}
 
 	myPack.value = pack;
@@ -150,6 +162,11 @@ const calcPriceWithVolume = (pack) => {
 		const firstSize = Number(pack.first_size);
 		const secondSize = Number(pack.second_size);
 		const thirdSize = Number(pack.third_size);
+
+		if (firstSize <= 0 || secondSize <= 0 || thirdSize <= 0) {
+			pack.volume_price = null;
+			return;
+		}
 
 		const volume = (firstSize / 100) * (secondSize / 100) * (thirdSize / 100);
 
@@ -262,9 +279,8 @@ const calculateRate = async () => {
 		}
 	}
 
-	await useSanctumFetch("/sanctum/csrf-cookie");
-
 	try {
+		await sanctum("/sanctum/csrf-cookie");
 		await sanctum("/api/session/first-step", {
 			method: "POST",
 			body: {

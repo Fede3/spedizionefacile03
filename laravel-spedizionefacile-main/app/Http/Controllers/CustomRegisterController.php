@@ -37,18 +37,16 @@ class CustomRegisterController extends Controller
 
 
             $data = $request->validated();
-            
+
             $data['telephone_number'] = $data['prefix'] . ' ' . $data['telephone_number'];
 
             // password hashing is handled by User model 'hashed' cast - do NOT hash again
-            // Temporaneo
-            $data['email_verified_at'] = now();
 
             unset($data['prefix']);
 
             $user = User::create($data);
 
-            /* dispatch(new SendVerificationEmailJob($user)); */
+            dispatch(new SendVerificationEmailJob($user));
 
             return CustomResponse::setSuccessResponse('Ti abbiamo inviato un\'email con le istruzioni per completare la registrazione. Se non hai ricevuto la nostra email, controlla nella cartella SPAM.', Response::HTTP_CREATED);
 

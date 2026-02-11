@@ -8,6 +8,7 @@ export const useSession = () => {
 		{
 			method: "GET",
 		},
+		{},
 		"session",
 	);
 

@@ -36,6 +36,9 @@ nuxt-spedizionefacile-master/.output/
 # Database (local dev)
 laravel-spedizionefacile-main/database/database.sqlite
 
+# Captured emails (local SMTP)
+emails/
+
 # Backup files
 *.BAK_*
 *.bak_*

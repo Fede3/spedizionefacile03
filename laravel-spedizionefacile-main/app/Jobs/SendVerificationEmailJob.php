@@ -58,7 +58,7 @@ class SendVerificationEmailJob implements ShouldQueue
 
         /* $frontendUrl = str_replace(config('app.url'), 'http://localhost:8000', $url); */
 
-        Mail::to($this->user->email)->queue(
+        Mail::to($this->user->email)->send(
             new VerificationEmail($url)
         );
 
