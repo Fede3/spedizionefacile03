@@ -440,13 +440,14 @@ function Show-Status(){
   }
 
   Write-Host "--------------------------------------------" -ForegroundColor DarkCyan
+  Write-Host "Legenda colori menu: [Verde=Avvio] [Cyan=Online] [Rosso=Stop] [Magenta=Apri] [Giallo=Log]" -ForegroundColor DarkGray
   Write-Host ""
-  Write-Host "1 = Avvia locale" -ForegroundColor Yellow
-  Write-Host "2 = Condividi online (link pubblico)" -ForegroundColor Yellow
-  Write-Host "3 = Chiudi tutto" -ForegroundColor Yellow
-  Write-Host "4 = Apri locale nel browser" -ForegroundColor Yellow
+  Write-Host "1 = Avvia locale" -ForegroundColor Green
+  Write-Host "2 = Condividi online (link pubblico)" -ForegroundColor Cyan
+  Write-Host "3 = Chiudi tutto" -ForegroundColor Red
+  Write-Host "4 = Apri locale nel browser" -ForegroundColor Magenta
   Write-Host "5 = Vedi log" -ForegroundColor Yellow
-  Write-Host "Q = Esci" -ForegroundColor Yellow
+  Write-Host "Q = Esci" -ForegroundColor DarkGray
   Write-Host ""
 }
 

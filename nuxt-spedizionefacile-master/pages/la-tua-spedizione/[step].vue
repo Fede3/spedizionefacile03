@@ -357,8 +357,9 @@ const continueToCart = async () => {
 
 <template>
 	<section>
-		<div class="my-container mt-[72px] mb-[283px]">
-			<form ref="formRef" @submit.prevent="continueToCart">
+		<div class="my-container mt-[72px] mb-[120px]">
+			<div v-if="status === 'pending'" class="min-h-[720px] bg-[#E4E4E4] rounded-[20px] animate-pulse"></div>
+			<form v-else ref="formRef" @submit.prevent="continueToCart">
 				<Steps />
 
 				<UModal
@@ -764,7 +765,7 @@ const continueToCart = async () => {
 				</div>
 
 
-				<div class="mt-[28px] flex flex-wrap gap-[12px] items-center justify-end">
+				<div class="mt-[28px] w-[850px] ml-auto mr-auto flex flex-wrap gap-[12px] items-center justify-between">
 					<NuxtLink :to="{ path: '/', hash: '#preventivo' }" class="inline-flex items-center justify-center h-[52px] px-[24px] rounded-[30px] bg-[#095866] text-white font-semibold hover:bg-[#0a7a8c] transition">
 						Indietro
 					</NuxtLink>
@@ -793,6 +794,7 @@ const continueToCart = async () => {
 .input-preventivo-step-2 {
 	font-family: "Montserrat", sans-serif;
 	background: #ffffff !important;
+	box-shadow: 0 1px 0 rgba(0,0,0,0.03) inset;
 	border: 1px solid #d9dde3;
 	border-radius: 8px;
 	padding: 12px 10px;
