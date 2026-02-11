@@ -46,11 +46,10 @@ class CustomRegisterController extends Controller
 
             $user = User::create($data);
 
-            dispatch(new SendVerificationEmailJob($user));
+            SendVerificationEmailJob::dispatchSync($user);
 
             return CustomResponse::setSuccessResponse('Ti abbiamo inviato un\'email con le istruzioni per completare la registrazione. Se non hai ricevuto la nostra email, controlla nella cartella SPAM.', Response::HTTP_CREATED);
 
     }
 
 }
-
