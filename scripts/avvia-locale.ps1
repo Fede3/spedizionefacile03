@@ -67,11 +67,6 @@ if (Test-Path $envFile) {
     $envContent += "`nQUEUE_CONNECTION=sync"
   }
 
-  if ($envContent -match '(?m)^MAIL_MAILER=') {
-    $envContent = [regex]::Replace($envContent, '(?m)^MAIL_MAILER=.*$', 'MAIL_MAILER=log')
-  } else {
-    $envContent += "`nMAIL_MAILER=log"
-  }
 
   if ($envContent -match '(?m)^APP_FRONTEND_URL=') {
     $envContent = [regex]::Replace($envContent, '(?m)^APP_FRONTEND_URL=.*$', 'APP_FRONTEND_URL=http://127.0.0.1:8787')

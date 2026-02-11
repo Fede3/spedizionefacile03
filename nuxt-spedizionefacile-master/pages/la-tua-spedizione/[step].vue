@@ -268,12 +268,93 @@ const destinationAddress = ref({
 });
 
 const days = ["Lun", "Mar", "Mer", "Gio", "Ven"];
+
+
+const { endpoint, refresh: refreshCart } = useCart();
+const { isAuthenticated } = useSanctumAuth();
+const router = useRouter();
+
+const isSubmitting = ref(false);
+const submitError = ref(null);
+
+const toAddressPayload = (addressData) => ({
+	type: addressData.type,
+	name: addressData.full_name,
+	additional_information: addressData.additional_information || "",
+	address: addressData.address,
+	number_type: "Numero Civico",
+	address_number: addressData.address_number,
+	intercom_code: addressData.intercom_code || "",
+	country: addressData.country || "Italia",
+	city: addressData.city,
+	postal_code: String(addressData.postal_code || "").replace(/[^0-9]/g, ""),
+	province: addressData.province,
+	telephone_number: String(addressData.telephone_number || "").trim(),
+	email: addressData.email || "",
+});
+
+const continueToCart = async () => {
+	submitError.value = null;
+	if (!formRef.value || !formRef.value.checkValidity()) {
+		formRef.value?.reportValidity();
+		return;
+	}
+
+	if (!userStore.servicesArray.length) {
+		submitError.value = "Seleziona almeno un servizio prima di continuare.";
+		return;
+	}
+
+	const packages = session.value?.data?.packages || [];
+	if (!packages.length) {
+		submitError.value = "Nessun collo disponibile. Torna al preventivo rapido.";
+		return;
+	}
+
+	isSubmitting.value = true;
+
+	try {
+		const payload = {
+			origin_address: toAddressPayload(originAddress.value),
+			destination_address: toAddressPayload(destinationAddress.value),
+			services: {
+				service_type: userStore.servicesArray.join(", "),
+				date: services.value.date || "",
+				time: services.value.time || "",
+			},
+			packages,
+		};
+
+		await useSanctumFetch(isAuthenticated.value ? "/api/empty-cart" : "/api/empty-guest-cart", {
+			method: "DELETE",
+		});
+
+		await useSanctumFetch(endpoint.value, {
+			method: "POST",
+			body: payload,
+		});
+
+		await refreshCart();
+		await refresh();
+		await router.push("/carrello");
+	} catch (error) {
+		const statusCode = error?.response?.status || error?.statusCode;
+		if (statusCode === 422) {
+			submitError.value = "Dati spedizione non validi. Controlla indirizzi, CAP e telefono.";
+		} else {
+			submitError.value = "Errore durante il salvataggio della spedizione. Riprova.";
+		}
+	} finally {
+		isSubmitting.value = false;
+	}
+};
+
 </script>
 
 <template>
 	<section>
 		<div class="my-container mt-[72px] mb-[283px]">
-			<form ref="formRef" @submit.prevent="">
+			<form ref="formRef" @submit.prevent="continueToCart">
 				<Steps />
 
 				<UModal
@@ -678,7 +759,19 @@ const days = ["Lun", "Mar", "Mer", "Gio", "Ven"];
 					</div>
 				</div>
 
-				<NuxtLink :to="{ path: '/', hash: '#preventivo' }">Torna indietro</NuxtLink>
+
+				<div class="mt-[28px] flex flex-wrap gap-[14px] items-center">
+					<button
+						type="submit"
+						:disabled="isSubmitting"
+						class="bg-[#E44203] text-white font-semibold text-[1rem] px-[28px] h-[52px] rounded-[30px] hover:opacity-90 transition disabled:opacity-60 disabled:cursor-not-allowed">
+						{{ isSubmitting ? 'Salvataggio in corso...' : 'Continua e vai al carrello' }}
+					</button>
+					<p v-if="submitError" class="text-red-500 text-[0.9375rem]">{{ submitError }}</p>
+				</div>
+
+				<NuxtLink :to="{ path: '/', hash: '#preventivo' }" class="inline-block mt-[14px] text-[#095866] hover:underline">Torna indietro</NuxtLink>
+
 			</form>
 		</div>
 

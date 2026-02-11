@@ -77,7 +77,6 @@ if [[ -f "${LARAVEL_DIR}/.env" ]]; then
   set_env_value "DB_DATABASE" "${DB_PATH}"
   set_env_value "SESSION_DRIVER" "file"
   set_env_value "QUEUE_CONNECTION" "sync"
-  set_env_value "MAIL_MAILER" "log"
   if ! grep -q "^APP_KEY=base64:" "${LARAVEL_DIR}/.env"; then
     (cd "${LARAVEL_DIR}" && php artisan key:generate --force)
   fi
