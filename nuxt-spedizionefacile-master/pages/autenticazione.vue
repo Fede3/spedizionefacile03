@@ -213,7 +213,7 @@ function onTabClick(newValue) {
 						<span class="text-emerald-600 text-[1.5rem] font-bold">&#10003;</span>
 					</div>
 					<p class="text-[1rem] font-medium">{{ messageSuccess }}</p>
-					<p class="text-[0.875rem] text-[#737373] mt-[8px]">Ora puoi accedere con le tue credenziali.</p>
+					<p class="text-[0.875rem] text-[#737373] mt-[8px]">Il tuo account è attivo. Ora puoi accedere con le tue credenziali.</p>
 					<button @click="messageSuccess = null" class="mt-[16px] px-[24px] py-[10px] bg-[#095866] text-white rounded-[8px] text-[0.875rem] font-semibold cursor-pointer hover:bg-[#0a7a8c] transition-colors">
 						Torna al login
 					</button>
