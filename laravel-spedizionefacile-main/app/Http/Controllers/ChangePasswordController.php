@@ -45,7 +45,11 @@ class ChangePasswordController extends Controller
                 ->where('email', $request->email)
                 ->value('created_at');
 
-        $isExpired = Carbon::parse($tokenCreatedAt)->lt(Carbon::now()->subMinutes(1));
+        if (!$tokenCreatedAt) {
+            return $this->tokenNotFoundError();
+        }
+
+        $isExpired = Carbon::parse($tokenCreatedAt)->lt(Carbon::now()->subMinutes(60));
           
         if ($isExpired) {
             // reset password response
