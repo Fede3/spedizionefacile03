@@ -160,7 +160,6 @@ function Normalize-LaravelEnv([string]$backDir){
   Set-Or-AddEnvKey $envFile 'DB_DATABASE' $dbPath
   Set-Or-AddEnvKey $envFile 'SESSION_DRIVER' 'file'
   Set-Or-AddEnvKey $envFile 'QUEUE_CONNECTION' 'sync'
-  Set-Or-AddEnvKey $envFile 'MAIL_MAILER' 'log'
   Set-Or-AddEnvKey $envFile 'APP_FRONTEND_URL' 'http://127.0.0.1:8787'
 
   if(Test-Path (Join-Path $backDir 'artisan')){
