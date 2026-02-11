@@ -67,7 +67,7 @@ class CustomLoginController extends Controller
 
         if (!$user->email_verified_at) {
 
-            dispatch(new SendVerificationEmailJob($user));
+            SendVerificationEmailJob::dispatchSync($user);
 
             return CustomResponse::setFailResponse('Per proseguire devi verificare l\'email. Ti abbiamo appena inviato un\'email con il link per confermare il tuo indirizzo.', Response::HTTP_UNAUTHORIZED);
         
