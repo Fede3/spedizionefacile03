@@ -1,0 +1,73 @@
+previews:
+  generation: automatic
+
+services:
+  - type: web
+    name: spedizionefacile-api
+    env: docker
+    plan: free
+    rootDir: laravel-spedizionefacile-main
+    dockerfilePath: ./Dockerfile
+    autoDeploy: true
+    buildFilter:
+      paths:
+        - laravel-spedizionefacile-main/**
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: APP_KEY
+        generateValue: true
+      - key: APP_URL
+        fromService:
+          name: spedizionefacile-api
+          type: web
+          property: hostport
+      - key: LOG_CHANNEL
+        value: stderr
+      - key: DB_CONNECTION
+        value: pgsql
+      - key: DB_HOST
+        fromDatabase:
+          name: spedizionefacile-db
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: spedizionefacile-db
+          property: port
+      - key: DB_DATABASE
+        fromDatabase:
+          name: spedizionefacile-db
+          property: database
+      - key: DB_USERNAME
+        fromDatabase:
+          name: spedizionefacile-db
+          property: username
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: spedizionefacile-db
+          property: password
+
+  - type: web
+    name: spedizionefacile-web
+    env: node
+    plan: free
+    rootDir: nuxt-spedizionefacile-master
+    buildCommand: npm install && npm run build
+    startCommand: node .output/server/index.mjs
+    autoDeploy: true
+    buildFilter:
+      paths:
+        - nuxt-spedizionefacile-master/**
+    envVars:
+      - key: NUXT_PUBLIC_API_BASE
+        fromService:
+          name: spedizionefacile-api
+          type: web
+          property: hostport
+
+databases:
+  - name: spedizionefacile-db
+    databaseName: spedizionefacile
+    user: spedizionefacile
+    plan: free
+    region: ohio

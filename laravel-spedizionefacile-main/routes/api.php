@@ -1,0 +1,53 @@
+<?php
+
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\WalletController;
+use App\Http\Controllers\ReferralController;
+use App\Http\Controllers\WithdrawalController;
+use App\Http\Controllers\AdminController;
+use App\Http\Middleware\CheckAdmin;
+
+Route::get('/user', function (Request $request) {
+    return $request->user();
+})->middleware('auth:sanctum');
+
+Route::post('/logout', function (Request $request) {
+    Auth::guard('web')->logout();
+    $request->session()->invalidate();
+    $request->session()->regenerateToken();
+    return response()->json(['message' => 'Logged out']);
+})->middleware('auth:sanctum');
+
+// Wallet
+Route::middleware('auth:sanctum')->prefix('wallet')->group(function () {
+    Route::get('/balance', [WalletController::class, 'balance']);
+    Route::get('/movements', [WalletController::class, 'movements']);
+    Route::post('/top-up', [WalletController::class, 'topUp']);
+    Route::post('/pay', [WalletController::class, 'payWithWallet']);
+});
+
+// Referral
+Route::middleware('auth:sanctum')->prefix('referral')->group(function () {
+    Route::get('/my-code', [ReferralController::class, 'myCode']);
+    Route::post('/validate', [ReferralController::class, 'validate']);
+    Route::post('/apply', [ReferralController::class, 'apply']);
+    Route::get('/earnings', [ReferralController::class, 'earnings']);
+});
+
+// Withdrawals (Pro users)
+Route::middleware('auth:sanctum')->prefix('withdrawals')->group(function () {
+    Route::get('/', [WithdrawalController::class, 'index']);
+    Route::post('/', [WithdrawalController::class, 'store']);
+});
+
+// Admin routes
+Route::middleware(['auth:sanctum', CheckAdmin::class])->prefix('admin')->group(function () {
+    Route::get('/wallet/overview', [AdminController::class, 'walletOverview']);
+    Route::get('/wallet/users/{user}/movements', [AdminController::class, 'userMovements']);
+    Route::get('/withdrawals', [AdminController::class, 'withdrawals']);
+    Route::post('/withdrawals/{withdrawal}/approve', [AdminController::class, 'approveWithdrawal']);
+    Route::post('/withdrawals/{withdrawal}/reject', [AdminController::class, 'rejectWithdrawal']);
+    Route::get('/referrals', [AdminController::class, 'referralStats']);
+});
