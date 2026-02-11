@@ -55,6 +55,30 @@ if (Test-Path $envFile) {
     $envContent += "`nDB_DATABASE=$dbPath"
   }
 
+  if ($envContent -match '(?m)^SESSION_DRIVER=') {
+    $envContent = [regex]::Replace($envContent, '(?m)^SESSION_DRIVER=.*$', 'SESSION_DRIVER=file')
+  } else {
+    $envContent += "`nSESSION_DRIVER=file"
+  }
+
+  if ($envContent -match '(?m)^QUEUE_CONNECTION=') {
+    $envContent = [regex]::Replace($envContent, '(?m)^QUEUE_CONNECTION=.*$', 'QUEUE_CONNECTION=sync')
+  } else {
+    $envContent += "`nQUEUE_CONNECTION=sync"
+  }
+
+  if ($envContent -match '(?m)^MAIL_MAILER=') {
+    $envContent = [regex]::Replace($envContent, '(?m)^MAIL_MAILER=.*$', 'MAIL_MAILER=log')
+  } else {
+    $envContent += "`nMAIL_MAILER=log"
+  }
+
+  if ($envContent -match '(?m)^APP_FRONTEND_URL=') {
+    $envContent = [regex]::Replace($envContent, '(?m)^APP_FRONTEND_URL=.*$', 'APP_FRONTEND_URL=http://127.0.0.1:8787')
+  } else {
+    $envContent += "`nAPP_FRONTEND_URL=http://127.0.0.1:8787"
+  }
+
   Set-Content -Path $envFile -Value $envContent -NoNewline
 
   Push-Location $laravelDir

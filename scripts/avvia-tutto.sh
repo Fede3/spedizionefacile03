@@ -64,16 +64,20 @@ fi
 if [[ -f "${LARAVEL_DIR}/.env" ]]; then
   DB_PATH="${LARAVEL_DIR}/database/database.sqlite"
   touch "${DB_PATH}"
-  if grep -q "^DB_CONNECTION=" "${LARAVEL_DIR}/.env"; then
-    sed -i "s|^DB_CONNECTION=.*|DB_CONNECTION=sqlite|" "${LARAVEL_DIR}/.env"
-  else
-    echo "DB_CONNECTION=sqlite" >> "${LARAVEL_DIR}/.env"
-  fi
-  if grep -q "^DB_DATABASE=" "${LARAVEL_DIR}/.env"; then
-    sed -i "s|^DB_DATABASE=.*|DB_DATABASE=${DB_PATH}|" "${LARAVEL_DIR}/.env"
-  else
-    echo "DB_DATABASE=${DB_PATH}" >> "${LARAVEL_DIR}/.env"
-  fi
+  set_env_value() {
+    local key="$1"
+    local value="$2"
+    if grep -q "^${key}=" "${LARAVEL_DIR}/.env"; then
+      sed -i "s|^${key}=.*|${key}=${value}|" "${LARAVEL_DIR}/.env"
+    else
+      echo "${key}=${value}" >> "${LARAVEL_DIR}/.env"
+    fi
+  }
+  set_env_value "DB_CONNECTION" "sqlite"
+  set_env_value "DB_DATABASE" "${DB_PATH}"
+  set_env_value "SESSION_DRIVER" "file"
+  set_env_value "QUEUE_CONNECTION" "sync"
+  set_env_value "MAIL_MAILER" "log"
   if ! grep -q "^APP_KEY=base64:" "${LARAVEL_DIR}/.env"; then
     (cd "${LARAVEL_DIR}" && php artisan key:generate --force)
   fi
@@ -95,11 +99,9 @@ if [[ -f "${LARAVEL_DIR}/.env" ]]; then
   fi
 
   # Set APP_URL based on environment
-  if grep -q "^APP_URL=" "${LARAVEL_DIR}/.env"; then
-    sed -i "s|^APP_URL=.*|APP_URL=${NUXT_PUBLIC_API_BASE:-http://127.0.0.1:${LARAVEL_PORT}}|" "${LARAVEL_DIR}/.env"
-  fi
-  if grep -q "^APP_FRONTEND_URL=" "${LARAVEL_DIR}/.env"; then
-    sed -i "s|^APP_FRONTEND_URL=.*|APP_FRONTEND_URL=${NUXT_PUBLIC_API_BASE:-http://127.0.0.1:${LARAVEL_PORT}}|" "${LARAVEL_DIR}/.env"
+  set_env_value "APP_URL" "${NUXT_PUBLIC_API_BASE:-http://127.0.0.1:${LARAVEL_PORT}}"
+  if [[ -n "${APP_FRONTEND_URL_OVERRIDE:-}" ]]; then
+    set_env_value "APP_FRONTEND_URL" "${APP_FRONTEND_URL_OVERRIDE}"
   fi
 
   # Run migrations (idempotent)
