@@ -50,6 +50,7 @@ Route::group(['prefix' => 'api'], function() {
 
     /* LOGIN */
     Route::middleware(['throttle:10,1'])->post('/custom-login', [CustomLoginController::class, 'login']);
+    Route::middleware(['throttle:5,1'])->post('/resend-verification-email', [CustomLoginController::class, 'resendVerificationEmail']);
 
     /* CONFERMA EMAIL */
     Route::get('/verify-email/{id}', [VerificationController::class, 'verify'])

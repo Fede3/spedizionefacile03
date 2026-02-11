@@ -35,9 +35,14 @@ const messageLoading = ref(null);
 const isLoading = ref(false);
 
 const isGoogle = ref(false);
+const showResendVerification = ref(false);
+const resendMessage = ref(null);
+const resendLoading = ref(false);
 
 const handleLogin = async () => {
 	messageError.value = null;
+	showResendVerification.value = false;
+	resendMessage.value = null;
 
 	if (!credentials.value.email || !credentials.value.password) {
 		messageError.value = { email: ["Inserisci email e password."] };
@@ -73,7 +78,11 @@ const handleLogin = async () => {
 		if (status === 422) {
 			messageError.value = data?.errors || { email: ["Credenziali non valide."] };
 		} else if (status === 401) {
-			messageError.value = data?.errors || data || { email: [data?.message || "Credenziali non corrette."] };
+			const message = data?.message || "Credenziali non corrette.";
+			messageError.value = data?.errors || data || { email: [message] };
+			if (String(message).toLowerCase().includes("verificare l'email") || String(message).toLowerCase().includes("verificare l’email")) {
+				showResendVerification.value = true;
+			}
 		} else if (status === 429) {
 			messageError.value = { email: ["Troppi tentativi. Riprova tra qualche minuto."] };
 		} else if (status === 419) {
@@ -86,6 +95,31 @@ const handleLogin = async () => {
 	} finally {
 		messageLoading.value = null;
 		isLoading.value = false;
+	}
+};
+
+
+const resendVerificationEmail = async () => {
+	resendMessage.value = null;
+	showResendVerification.value = true;
+	if (!credentials.value.email) {
+		resendMessage.value = { type: "error", text: "Inserisci prima la tua email nel campo login." };
+		return;
+	}
+
+	resendLoading.value = true;
+	try {
+		const sanctum = useSanctumClient();
+		const response = await sanctum("/api/resend-verification-email", {
+			method: "POST",
+			body: { email: credentials.value.email },
+		});
+		resendMessage.value = { type: "success", text: response?.message || "Email inviata con successo." };
+	} catch (error) {
+		const data = error?.response?._data || error?.data;
+		resendMessage.value = { type: "error", text: data?.message || "Errore durante l'invio. Riprova." };
+	} finally {
+		resendLoading.value = false;
 	}
 };
 
@@ -110,6 +144,8 @@ const registerForm = ref({
 const registerUser = async () => {
 	messageError.value = null;
 	messageSuccess.value = null;
+	showResendVerification.value = false;
+	resendMessage.value = null;
 
 	messageLoading.value = "Registrazione in corso...";
 
@@ -162,6 +198,8 @@ function onTabClick(newValue) {
 		messageError.value = null;
 	}
 	messageSuccess.value = null;
+	showResendVerification.value = false;
+	resendMessage.value = null;
 }
 </script>
 
@@ -184,6 +222,17 @@ function onTabClick(newValue) {
 				<UTabs :items="items" v-if="!messageSuccess" @update:modelValue="onTabClick">
 					<!-- LOGIN TAB -->
 					<template #accedi>
+						<div v-if="showResendVerification" class="bg-amber-50 border border-amber-200 p-[16px] rounded-[10px] text-[#252B42] mt-[24px] mb-[12px]">
+							<p class="text-[0.9375rem] font-medium">Email non confermata. Ti reinviamo subito una nuova email di verifica.</p>
+							<button
+								type="button"
+								@click="resendVerificationEmail"
+								:disabled="resendLoading"
+								class="mt-[12px] px-[16px] py-[10px] rounded-[8px] bg-[#095866] text-white text-[0.875rem] font-semibold cursor-pointer hover:bg-[#0a7a8c] disabled:opacity-60 disabled:cursor-not-allowed">
+								{{ resendLoading ? 'Invio in corso...' : 'Invia nuova email di conferma' }}
+							</button>
+							<p v-if="resendMessage" class="text-[0.8125rem] mt-[10px]" :class="resendMessage.type === 'success' ? 'text-emerald-700' : 'text-red-600'">{{ resendMessage.text }}</p>
+						</div>
 						<UForm :state="credentials" @submit.prevent="handleLogin" class="bg-white p-[28px] rounded-[12px] shadow-[0_2px_8px_rgba(0,0,0,0.06)] border border-[#E9EBEC] text-[#252B42] mt-[24px]">
 							<div class="mb-[20px]">
 								<label for="login_email" class="block text-[0.875rem] font-medium text-[#252B42] mb-[6px]">Email</label>

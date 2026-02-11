@@ -120,6 +120,28 @@ class CustomLoginController extends Controller
         } */
     }
 
+
+    public function resendVerificationEmail(Request $request)
+    {
+        $request->validate([
+            'email' => 'required|email',
+        ]);
+
+        $user = User::where('email', $request->email)->first();
+
+        if (!$user) {
+            return CustomResponse::setSuccessResponse('Se l\'account esiste e non è verificato, abbiamo inviato una nuova email di conferma.', Response::HTTP_OK);
+        }
+
+        if ($user->email_verified_at) {
+            return CustomResponse::setFailResponse('Questa email risulta già verificata. Puoi accedere normalmente.', Response::HTTP_UNPROCESSABLE_ENTITY);
+        }
+
+        SendVerificationEmailJob::dispatchSync($user);
+
+        return CustomResponse::setSuccessResponse('Ti abbiamo inviato una nuova email di conferma. Controlla anche SPAM/Promozioni.', Response::HTTP_OK);
+    }
+
     public function createPackage($packages) {
 
         $createdPackages = [];
