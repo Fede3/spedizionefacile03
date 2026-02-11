@@ -14,7 +14,7 @@ function T([string]$m,[string]$c="Cyan"){
 }
 
 function Read-KeyChoice([string]$prompt = "Scelta"){
-  Write-Host -NoNewline ("$prompt: ") -ForegroundColor Cyan
+  Write-Host -NoNewline ("${prompt}: ") -ForegroundColor Cyan
   $keyInfo = [System.Console]::ReadKey($true)
   $char = $keyInfo.KeyChar
   Write-Host $char -ForegroundColor White
