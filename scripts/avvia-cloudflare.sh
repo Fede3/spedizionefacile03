@@ -53,7 +53,7 @@ fi
 pkill -f "nuxt.*--port ${NUXT_PORT}" >/dev/null 2>&1 || true
 pkill -f "nuxi dev --host 0.0.0.0 --port ${NUXT_PORT}" >/dev/null 2>&1 || true
 
-NUXT_PUBLIC_API_BASE="$BACKEND_PUBLIC_URL" SKIP_LARAVEL_START=1 bash "${ROOT_DIR}/scripts/avvia-tutto.sh"
+NUXT_PUBLIC_API_BASE="$BACKEND_PUBLIC_URL" APP_FRONTEND_URL_OVERRIDE="${APP_FRONTEND_URL_OVERRIDE:-}" SKIP_LARAVEL_START=1 bash "${ROOT_DIR}/scripts/avvia-tutto.sh"
 
 # 4) Espone frontend con Cloudflare Tunnel
 cloudflared tunnel --url "http://127.0.0.1:${NUXT_PORT}" --no-autoupdate > "$FRONTEND_LOG" 2>&1 &
