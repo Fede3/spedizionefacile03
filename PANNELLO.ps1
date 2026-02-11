@@ -1,4 +1,4 @@
-param([string]$Azione = "MENU")
+﻿param([string]$Azione = "MENU")
 
 $ErrorActionPreference = "Stop"
 $root    = Split-Path -Parent $MyInvocation.MyCommand.Path
@@ -11,6 +11,14 @@ if(-not (Test-Path $logDir)){ New-Item -ItemType Directory -Path $logDir | Out-N
 function T([string]$m,[string]$c="Cyan"){
   $ts=(Get-Date).ToString("HH:mm:ss")
   Write-Host "[$ts] $m" -ForegroundColor $c
+}
+
+function Read-KeyChoice([string]$prompt = "Scelta"){
+  Write-Host -NoNewline ("${prompt}: ") -ForegroundColor Cyan
+  $keyInfo = [System.Console]::ReadKey($true)
+  $char = $keyInfo.KeyChar
+  Write-Host $char -ForegroundColor White
+  return ([string]$char).Trim()
 }
 
 function Save-State($obj){
@@ -90,7 +98,7 @@ function Has-Caddyfile(){ return (Test-Path (Join-Path $root "Caddyfile")) }
 function Has-Caddy(){ return [bool](Get-Command caddy -ErrorAction SilentlyContinue) }
 
 function Stop-All(){
-  T "Chiusura totale (Tuttoinsieme)..." "Yellow"
+  T "Chiusura totale (spedizionefacile)..." "Yellow"
   $s = Load-State
   if($s){
     if($s.frontend){ Kill-PidTree ([int]$s.frontend) }
@@ -122,6 +130,53 @@ function Ensure-NpmInstall([string]$dir){
     $p.WaitForExit()
     if($p.ExitCode -ne 0){ T "ERRORE npm install Nuxt. Log: $e" "Red"; throw "npm install Nuxt fallito" }
     T "npm install Nuxt completato." "Green"
+  }
+}
+
+
+function Set-Or-AddEnvKey([string]$envPath,[string]$key,[string]$value){
+  $content = ''
+  if(Test-Path $envPath){ $content = Get-Content $envPath -Raw }
+  if($content -match "(?m)^$key="){
+    $content = [regex]::Replace($content, "(?m)^$key=.*$", "$key=$value")
+  } else {
+    if($content.Length -gt 0 -and -not $content.EndsWith("`n")){ $content += "`n" }
+    $content += "$key=$value`n"
+  }
+  Set-Content -Path $envPath -Value $content -NoNewline
+}
+
+function Normalize-LaravelEnv([string]$backDir){
+  $envFile = Join-Path $backDir '.env'
+  $envExample = Join-Path $backDir '.env.example'
+  if(-not (Test-Path $envFile) -and (Test-Path $envExample)){
+    Copy-Item $envExample $envFile -Force
+  }
+
+  $dbPath = Join-Path $backDir 'database\database.sqlite'
+  if(-not (Test-Path $dbPath)){ New-Item -ItemType File -Path $dbPath -Force | Out-Null }
+
+  Set-Or-AddEnvKey $envFile 'DB_CONNECTION' 'sqlite'
+  Set-Or-AddEnvKey $envFile 'DB_DATABASE' $dbPath
+  Set-Or-AddEnvKey $envFile 'SESSION_DRIVER' 'file'
+  Set-Or-AddEnvKey $envFile 'QUEUE_CONNECTION' 'sync'
+  Set-Or-AddEnvKey $envFile 'APP_FRONTEND_URL' 'http://127.0.0.1:8787'
+
+  if(Test-Path (Join-Path $backDir 'artisan')){
+    $keyOut = Join-Path $logDir 'keygen_out.log'
+    $keyErr = Join-Path $logDir 'keygen_err.log'
+    Start-Process -FilePath 'cmd.exe' -WorkingDirectory $backDir -WindowStyle Hidden -Wait `
+      -ArgumentList '/c','php artisan key:generate --force' -RedirectStandardOutput $keyOut -RedirectStandardError $keyErr | Out-Null
+
+    $migOut = Join-Path $logDir 'migrate_out.log'
+    $migErr = Join-Path $logDir 'migrate_err.log'
+    Start-Process -FilePath 'cmd.exe' -WorkingDirectory $backDir -WindowStyle Hidden -Wait `
+      -ArgumentList '/c','php artisan migrate --force' -RedirectStandardOutput $migOut -RedirectStandardError $migErr | Out-Null
+
+    $seedOut = Join-Path $logDir 'seed_out.log'
+    $seedErr = Join-Path $logDir 'seed_err.log'
+    Start-Process -FilePath 'cmd.exe' -WorkingDirectory $backDir -WindowStyle Hidden -Wait `
+      -ArgumentList '/c','php artisan db:seed --class=Database\Seeders\DatabaseSeeder --force' -RedirectStandardOutput $seedOut -RedirectStandardError $seedErr | Out-Null
   }
 }
 
@@ -160,6 +215,7 @@ function Start-Local([switch]$NonAprireBrowser){
 
   Ensure-NpmInstall $frontDir
   Ensure-ComposerInstall $backDir
+  Normalize-LaravelEnv $backDir
 
   # log
   $nuxtOut  = Join-Path $logDir "nuxt_out.log"
@@ -325,7 +381,7 @@ function Open-Online(){
 
 function Tail-Log(){
   T "Scegli log: 1=Nuxt OUT | 2=Nuxt ERR | 3=Laravel OUT | 4=Laravel ERR | 5=Caddy OUT | 6=Caddy ERR | 7=Cloudflared OUT | 8=Cloudflared ERR" "Yellow"
-  $c = Read-Host "Scelta"
+  $c = Read-KeyChoice "Log"
   if($c -eq $null){ $c = "" }
   $c = $c.Trim()
 
@@ -358,8 +414,9 @@ function Tail-Log(){
 function Show-Status(){
   $s = Load-State
   Write-Host ""
-  Write-Host "==============================" -ForegroundColor Yellow
-  Write-Host "TUTTOINSIEME - PANNELLO" -ForegroundColor Yellow
+  Write-Host "============================================" -ForegroundColor DarkCyan
+  Write-Host "      SPEDIZIONEFACILE CONTROL PANEL       " -ForegroundColor Cyan
+  Write-Host "============================================" -ForegroundColor DarkCyan
   Write-Host "Cartella: $root" -ForegroundColor DarkGray
 
   $base = "http://127.0.0.1:8787"
@@ -382,23 +439,22 @@ function Show-Status(){
     Write-Host "Stato: (nessuno)" -ForegroundColor DarkGray
   }
 
-  Write-Host "==============================" -ForegroundColor Yellow
+  Write-Host "--------------------------------------------" -ForegroundColor DarkCyan
+  Write-Host "Legenda colori menu: [Verde=Avvio] [Cyan=Online] [Rosso=Stop] [Magenta=Apri] [Giallo=Log]" -ForegroundColor DarkGray
   Write-Host ""
-  Write-Host "1 = Avvia locale" -ForegroundColor Yellow
-  Write-Host "2 = Condividi online (link pubblico)" -ForegroundColor Yellow
-  Write-Host "3 = Chiudi tutto" -ForegroundColor Yellow
-  Write-Host "4 = Apri locale nel browser" -ForegroundColor Yellow
+  Write-Host "1 = Avvia locale" -ForegroundColor Green
+  Write-Host "2 = Condividi online (link pubblico)" -ForegroundColor Cyan
+  Write-Host "3 = Chiudi tutto" -ForegroundColor Red
+  Write-Host "4 = Apri locale nel browser" -ForegroundColor Magenta
   Write-Host "5 = Vedi log" -ForegroundColor Yellow
-  Write-Host "Q = Esci" -ForegroundColor Yellow
+  Write-Host "Q = Esci" -ForegroundColor DarkGray
   Write-Host ""
 }
 
 function Menu(){
   while($true){
     Show-Status
-    $k = Read-Host "Scelta"
-    if($k -eq $null){ $k = "" }
-    $k = $k.Trim().ToUpper()
+    $k = (Read-KeyChoice "Menu").ToUpper()
 
     if($k -eq "1"){ Start-Local; continue }
     if($k -eq "2"){ Share-Online; continue }

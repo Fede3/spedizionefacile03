@@ -50,4 +50,7 @@ Route::middleware(['auth:sanctum', CheckAdmin::class])->prefix('admin')->group(f
     Route::post('/withdrawals/{withdrawal}/approve', [AdminController::class, 'approveWithdrawal']);
     Route::post('/withdrawals/{withdrawal}/reject', [AdminController::class, 'rejectWithdrawal']);
     Route::get('/referrals', [AdminController::class, 'referralStats']);
+    Route::get('/users', [AdminController::class, 'users']);
+    Route::patch('/users/{user}/approve', [AdminController::class, 'approveUser']);
+    Route::delete('/users/{user}', [AdminController::class, 'deleteUser']);
 });

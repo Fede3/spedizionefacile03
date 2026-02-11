@@ -1,4 +1,4 @@
-# TuttoInsieme Monorepo
+# SpedizioneFacile Monorepo
 
 Questo repository contiene:
 
@@ -103,3 +103,23 @@ powershell -ExecutionPolicy Bypass -File .\scripts\support-bundle.ps1
 Output atteso: `OK: creato ...support_bundle_*.zip`
 
 > Nota sicurezza: il bundle copia solo file di configurazione di esempio (`.env.example`), non i tuoi `.env` reali.
+
+## Account di prova e controllo amministrativo
+
+Dopo `php artisan migrate --seed` trovi questi account pronti:
+
+- **Admin**: `admin@spedizionefacile.it` / `Admin2026!`
+- **Cliente**: `cliente@spedizionefacile.it` / `Cliente2026!`
+- **Cliente test**: `prova@spedizionefacile.it` / `Prova2026!`
+- **Partner Pro**: `pro@spedizionefacile.it` / `Partner2026!`
+
+### Dove controllare tutti gli account registrati
+
+1. Accedi con l'utente admin.
+2. Apri **Il tuo account → Amministrazione**.
+3. Vai al tab **Account** (`/account/amministrazione`):
+   - vedi elenco completo utenti registrati,
+   - approvi account non verificati,
+   - elimini account in caso di bug/registrazioni errate.
+
+> Nota: l'eliminazione dell'utente amministratore attualmente loggato è bloccata per sicurezza.
