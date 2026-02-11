@@ -90,7 +90,7 @@ function Has-Caddyfile(){ return (Test-Path (Join-Path $root "Caddyfile")) }
 function Has-Caddy(){ return [bool](Get-Command caddy -ErrorAction SilentlyContinue) }
 
 function Stop-All(){
-  T "Chiusura totale (Tuttoinsieme)..." "Yellow"
+  T "Chiusura totale (spedizionefacile)..." "Yellow"
   $s = Load-State
   if($s){
     if($s.frontend){ Kill-PidTree ([int]$s.frontend) }
@@ -359,7 +359,7 @@ function Show-Status(){
   $s = Load-State
   Write-Host ""
   Write-Host "==============================" -ForegroundColor Yellow
-  Write-Host "TUTTOINSIEME - PANNELLO" -ForegroundColor Yellow
+  Write-Host "SPEDIZIONEFACILE - PANNELLO" -ForegroundColor Yellow
   Write-Host "Cartella: $root" -ForegroundColor DarkGray
 
   $base = "http://127.0.0.1:8787"
