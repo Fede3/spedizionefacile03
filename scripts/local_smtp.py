@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Local SMTP server that captures emails and saves them as .eml files.
-Emails are stored in /home/user/tuttoinsieme/emails/
+Emails are stored in <repo>/emails/ (calcolato automaticamente).
 Run: python3 scripts/local_smtp.py
 """
 import asyncio
