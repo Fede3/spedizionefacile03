@@ -13,6 +13,7 @@ use App\Utils\CustomResponse;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use App\Jobs\SendVerificationEmailJob;
 use Illuminate\Support\Facades\Cookie;
 use Illuminate\Validation\ValidationException;
@@ -67,7 +68,16 @@ class CustomLoginController extends Controller
 
         if (!$user->email_verified_at) {
 
-            SendVerificationEmailJob::dispatchSync($user);
+            try {
+                SendVerificationEmailJob::dispatchSync($user);
+            } catch (\Throwable $exception) {
+                Log::error('Errore invio email verifica in login.', [
+                    'email' => $user->email,
+                    'error' => $exception->getMessage(),
+                ]);
+
+                return CustomResponse::setFailResponse('Account non verificato e invio email di conferma non riuscito. Riprova più tardi.', Response::HTTP_INTERNAL_SERVER_ERROR);
+            }
 
             return CustomResponse::setFailResponse('Per proseguire devi verificare l\'email. Ti abbiamo appena inviato un\'email con il link per confermare il tuo indirizzo.', Response::HTTP_UNAUTHORIZED);
         
@@ -137,9 +147,18 @@ class CustomLoginController extends Controller
             return CustomResponse::setFailResponse('Questa email risulta già verificata. Puoi accedere normalmente.', Response::HTTP_UNPROCESSABLE_ENTITY);
         }
 
-        SendVerificationEmailJob::dispatchSync($user);
+        try {
+            SendVerificationEmailJob::dispatchSync($user);
 
-        return CustomResponse::setSuccessResponse('Ti abbiamo inviato una nuova email di conferma. Controlla anche SPAM/Promozioni.', Response::HTTP_OK);
+            return CustomResponse::setSuccessResponse('Ti abbiamo inviato una nuova email di conferma. Controlla anche SPAM/Promozioni.', Response::HTTP_OK);
+        } catch (\Throwable $exception) {
+            Log::error('Errore reinvio email verifica.', [
+                'email' => $user->email,
+                'error' => $exception->getMessage(),
+            ]);
+
+            return CustomResponse::setFailResponse('Impossibile inviare l\'email di conferma in questo momento.', Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
     }
 
     public function createPackage($packages) {

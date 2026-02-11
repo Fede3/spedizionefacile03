@@ -765,7 +765,7 @@ const continueToCart = async () => {
 				</div>
 
 
-				<div class="mt-[28px] w-[850px] ml-auto mr-auto flex flex-wrap gap-[12px] items-center justify-between">
+				<div class="mt-[28px] w-full max-w-[850px] mr-auto flex flex-wrap gap-[12px] items-center justify-between">
 					<NuxtLink :to="{ path: '/', hash: '#preventivo' }" class="inline-flex items-center justify-center h-[52px] px-[24px] rounded-[30px] bg-[#095866] text-white font-semibold hover:bg-[#0a7a8c] transition">
 						Indietro
 					</NuxtLink>
