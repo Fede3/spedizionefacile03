@@ -1,4 +1,4 @@
-param([string]$Azione = "MENU")
+﻿param([string]$Azione = "MENU")
 
 $ErrorActionPreference = "Stop"
 $root    = Split-Path -Parent $MyInvocation.MyCommand.Path
@@ -415,9 +415,9 @@ function Tail-Log(){
 function Show-Status(){
   $s = Load-State
   Write-Host ""
-  Write-Host "╔════════════════════════════════════════════╗" -ForegroundColor DarkCyan
-  Write-Host "║        SPEDIZIONEFACILE CONTROL PANEL      ║" -ForegroundColor Cyan
-  Write-Host "╚════════════════════════════════════════════╝" -ForegroundColor DarkCyan
+  Write-Host "============================================" -ForegroundColor DarkCyan
+  Write-Host "      SPEDIZIONEFACILE CONTROL PANEL       " -ForegroundColor Cyan
+  Write-Host "============================================" -ForegroundColor DarkCyan
   Write-Host "Cartella: $root" -ForegroundColor DarkGray
 
   $base = "http://127.0.0.1:8787"
@@ -440,7 +440,7 @@ function Show-Status(){
     Write-Host "Stato: (nessuno)" -ForegroundColor DarkGray
   }
 
-  Write-Host "──────────────────────────────────────────────" -ForegroundColor DarkCyan
+  Write-Host "--------------------------------------------" -ForegroundColor DarkCyan
   Write-Host ""
   Write-Host "1 = Avvia locale" -ForegroundColor Yellow
   Write-Host "2 = Condividi online (link pubblico)" -ForegroundColor Yellow
