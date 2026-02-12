@@ -83,6 +83,45 @@ class StripeController extends Controller
         ]);
     }
 
+    public function createPaymentIntent(Request $request) {
+        $request->validate([
+            'order_id' => 'required|integer',
+        ]);
+
+        $order = Order::findOrFail($request->order_id);
+        $user = $request->user();
+
+        $secret = $this->getStripeSecret();
+        if (!$secret) {
+            return response()->json(['error' => 'Stripe non configurato.'], 503);
+        }
+
+        $stripe = new StripeClient($secret);
+        $customerId = $this->createOrGetCustomer($user);
+
+        $amount = (int) $order->subtotal->amount();
+        if ($amount < 50) {
+            return response()->json(['error' => 'Importo troppo basso per il pagamento.'], 422);
+        }
+
+        try {
+            $paymentIntent = $stripe->paymentIntents->create([
+                'amount' => $amount,
+                'currency' => 'eur',
+                'customer' => $customerId,
+                'metadata' => ['order_id' => $order->id],
+                'automatic_payment_methods' => ['enabled' => true],
+            ]);
+
+            return response()->json([
+                'client_secret' => $paymentIntent->client_secret,
+                'payment_intent_id' => $paymentIntent->id,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
+
     public function orderPaid(Request $request) {
         $stripe = new StripeClient($this->getStripeSecret());
 

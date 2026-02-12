@@ -344,7 +344,7 @@ watch(
 	<section>
 		<div class="my-container">
 			<div
-				class="bg-white w-full rounded-[24px] desktop-xl:rounded-[32px] relative z-3 mt-[-132px] p-[20px_16px] desktop:p-[30px_36px] tablet:p-[20px_40px] tablet:mt-[-220px] desktop:mt-[-185px] desktop-xl:mt-[-70px] max-w-[1100px] mx-auto">
+				class="bg-white w-full rounded-[24px] desktop-xl:rounded-[32px] relative z-1 mt-[-132px] p-[20px_16px] desktop:p-[30px_36px] tablet:p-[20px_40px] tablet:mt-[-220px] desktop:mt-[-185px] desktop-xl:mt-[-70px] max-w-[1100px] mx-auto">
 				<h2 class="border-b-[1px] border-[#E6E6E6] text-[1.25rem] desktop:text-[2rem] text-black font-bold text-center pb-[8px]">Preventivo Rapido</h2>
 
 				<form ref="formRef" @submit.prevent="">
