@@ -277,6 +277,7 @@ const destinationAddress = ref({
 
 const days = ["Lun", "Mar", "Mer", "Gio", "Ven"];
 
+const formRef = ref(null);
 
 const { endpoint, refresh: refreshCart } = useCart();
 const { isAuthenticated } = useSanctumAuth();
@@ -284,6 +285,22 @@ const router = useRouter();
 
 const isSubmitting = ref(false);
 const submitError = ref(null);
+const showSavedPopup = ref(false);
+
+const goToCart = async () => {
+	showSavedPopup.value = false;
+	await router.push("/carrello");
+};
+
+const addAnotherShipment = () => {
+	showSavedPopup.value = false;
+	router.push("/");
+};
+
+const goToSavedShipments = () => {
+	showSavedPopup.value = false;
+	router.push("/account/spedizioni");
+};
 
 const toAddressPayload = (addressData) => ({
 	type: addressData.type || "Partenza",
@@ -329,10 +346,6 @@ const continueToCart = async () => {
 			packages,
 		};
 
-		await useSanctumFetch(isAuthenticated.value ? "/api/empty-cart" : "/api/empty-guest-cart", {
-			method: "DELETE",
-		});
-
 		await useSanctumFetch(endpoint.value, {
 			method: "POST",
 			body: payload,
@@ -340,7 +353,7 @@ const continueToCart = async () => {
 
 		await refreshCart();
 		await refresh();
-		await router.push("/carrello");
+		showSavedPopup.value = true;
 	} catch (error) {
 		const statusCode = error?.response?.status || error?.statusCode;
 		if (statusCode === 422) {
@@ -781,7 +794,62 @@ const continueToCart = async () => {
 			</form>
 		</div>
 
-		<!-- <div v-else class="text-center min-h-[400px] flex items-center justify-center">Caricamento...</div> -->
+		<!-- Shipment Saved Popup -->
+		<UModal v-model:open="showSavedPopup" :dismissible="false" :close="false">
+			<template #title>
+				<div class="flex items-center gap-[12px]">
+					<div class="w-[48px] h-[48px] rounded-full bg-emerald-100 flex items-center justify-center">
+						<Icon name="mdi:check-circle" class="text-[28px] text-emerald-600" />
+					</div>
+					<h3 class="text-[1.25rem] font-bold text-[#252B42]">Spedizione salvata!</h3>
+				</div>
+			</template>
+			<template #body>
+				<p class="text-[#737373] text-[0.9375rem] leading-[1.6] mb-[24px]">
+					La tua spedizione è stata configurata e salvata con successo. Cosa vuoi fare ora?
+				</p>
+				<div class="flex flex-col gap-[12px]">
+					<button
+						@click="goToCart"
+						class="w-full flex items-center gap-[14px] p-[16px] rounded-[12px] border border-[#E9EBEC] hover:border-[#095866] hover:bg-[#f0fafb] transition-all cursor-pointer group">
+						<div class="w-[44px] h-[44px] rounded-[10px] bg-[#095866]/10 flex items-center justify-center shrink-0">
+							<Icon name="mdi:cart-outline" class="text-[22px] text-[#095866]" />
+						</div>
+						<div class="text-left">
+							<p class="text-[0.9375rem] font-semibold text-[#252B42] group-hover:text-[#095866]">Vai al carrello</p>
+							<p class="text-[0.8125rem] text-[#737373]">Procedi al pagamento della spedizione</p>
+						</div>
+						<Icon name="mdi:chevron-right" class="text-[20px] text-[#C8CCD0] ml-auto" />
+					</button>
+
+					<button
+						@click="goToSavedShipments"
+						class="w-full flex items-center gap-[14px] p-[16px] rounded-[12px] border border-[#E9EBEC] hover:border-[#095866] hover:bg-[#f0fafb] transition-all cursor-pointer group">
+						<div class="w-[44px] h-[44px] rounded-[10px] bg-blue-50 flex items-center justify-center shrink-0">
+							<Icon name="mdi:package-variant-closed" class="text-[22px] text-blue-600" />
+						</div>
+						<div class="text-left">
+							<p class="text-[0.9375rem] font-semibold text-[#252B42] group-hover:text-[#095866]">Spedizioni configurate</p>
+							<p class="text-[0.8125rem] text-[#737373]">Visualizza tutte le spedizioni salvate</p>
+						</div>
+						<Icon name="mdi:chevron-right" class="text-[20px] text-[#C8CCD0] ml-auto" />
+					</button>
+
+					<button
+						@click="addAnotherShipment"
+						class="w-full flex items-center gap-[14px] p-[16px] rounded-[12px] border border-[#E9EBEC] hover:border-[#095866] hover:bg-[#f0fafb] transition-all cursor-pointer group">
+						<div class="w-[44px] h-[44px] rounded-[10px] bg-orange-50 flex items-center justify-center shrink-0">
+							<Icon name="mdi:plus-circle-outline" class="text-[22px] text-orange-600" />
+						</div>
+						<div class="text-left">
+							<p class="text-[0.9375rem] font-semibold text-[#252B42] group-hover:text-[#095866]">Aggiungi un'altra spedizione</p>
+							<p class="text-[0.8125rem] text-[#737373]">Configura una nuova spedizione</p>
+						</div>
+						<Icon name="mdi:chevron-right" class="text-[20px] text-[#C8CCD0] ml-auto" />
+					</button>
+				</div>
+			</template>
+		</UModal>
 	</section>
 </template>
 
