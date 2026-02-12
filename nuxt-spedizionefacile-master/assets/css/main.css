@@ -47,10 +47,6 @@
 }
 
 @layer components {
-	.my-container {
-		@apply max-w-[1280px] w-full mx-auto px-[20px] tablet:px-[40px] desktop:px-[40px] desktop:max-w-[1000px] desktop-xl:max-w-[1280px] desktop-xl:px-[20px];
-	}
-
 	.input-preventivo-rapido {
 		@apply bg-[#F1F1F1] text-[#767676] text-[0.875rem] font-medium w-full h-[54px] leading-[54px] rounded-[30px] px-[18px] placeholder:text-[#767676] block mt-[15px] tracking-[-0.336px];
 	}
@@ -64,7 +60,7 @@
 	}
 
 	.input-popup {
-		@apply bg-[#F1F1F1] text-[#767676] placeholder:text-[#767676] placeholder:text-[0.875rem] text-[0.875rem] tracking-[-0.336px] h-[40px] leading-[40px] w-full rounded-[30px] px-[18px] mt-[12px];
+		@apply bg-white text-[#767676] placeholder:text-[#767676] placeholder:text-[0.875rem] text-[0.875rem] tracking-[-0.336px] h-[40px] leading-[40px] w-full rounded-[30px] px-[18px] mt-[12px] border border-[#E9EBEC];
 	}
 
 	.input-preventivo-step-2 {
@@ -90,9 +86,34 @@
 }
 
 /*
- * Unlayered fallback: ensures my-container centering is never overridden
- * by any CSS layer (unlayered styles beat all layered styles).
+ * Unlayered: ensures my-container is never overridden by CSS layers.
+ * Unlayered styles always beat layered styles in Tailwind v4 / Nuxt UI.
  */
 .my-container {
-	margin-inline: auto;
+	max-width: 1280px !important;
+	width: 100% !important;
+	margin-left: auto !important;
+	margin-right: auto !important;
+	padding-left: 20px;
+	padding-right: 20px;
+}
+@media (min-width: 720px) {
+	.my-container {
+		padding-left: 40px;
+		padding-right: 40px;
+	}
+}
+@media (min-width: 1024px) {
+	.my-container {
+		padding-left: 40px;
+		padding-right: 40px;
+		max-width: 1000px !important;
+	}
+}
+@media (min-width: 1440px) {
+	.my-container {
+		padding-left: 20px;
+		padding-right: 20px;
+		max-width: 1280px !important;
+	}
 }

@@ -22,6 +22,7 @@ use App\Http\Controllers\StripeWebhookController;
 use App\Http\Controllers\SessionController;
 use App\Http\Controllers\ChangePasswordController;
 use App\Http\Controllers\CustomRegisterController;
+use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\PasswordResetRequestController;
 
 Route::get('/', function () {
@@ -109,6 +110,8 @@ Route::group(['prefix' => 'api'], function() {
 
             Route::post('stripe/create-order', [StripeController::class, 'createOrder']);
 
+            Route::post('stripe/create-payment-intent', [StripeController::class, 'createPaymentIntent']);
+
             Route::post('stripe/order-paid', [StripeController::class, 'orderPaid']);
 
             Route::post('stripe/webhook', [StripeWebhookController::class, 'handle']);
@@ -121,6 +124,10 @@ Route::group(['prefix' => 'api'], function() {
         Route::post('stripe/order-paid', [StripeController::class, 'orderPaid']);
 
         Route::post('stripe/webhook', [StripeWebhookController::class, 'handle']); */
+
+        /* IMPOSTAZIONI */
+        Route::get('settings/stripe', [SettingsController::class, 'getStripeConfig']);
+        Route::post('settings/stripe', [SettingsController::class, 'saveStripeConfig']);
 
         Route::post('stripe/create-setup-intent', [StripeController::class, 'createSetupIntent']);
 
