@@ -132,4 +132,50 @@ class AdminController extends Controller
             'summary' => $summary,
         ]);
     }
+
+    public function users(): JsonResponse
+    {
+        $users = User::orderByDesc('created_at')
+            ->get(['id', 'name', 'surname', 'email', 'role', 'telephone_number', 'email_verified_at', 'created_at']);
+
+        return response()->json(['data' => $users]);
+    }
+
+    public function approveUser(User $user): JsonResponse
+    {
+        if ($user->email_verified_at) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Account già verificato.',
+                'data' => $user,
+            ]);
+        }
+
+        $user->update([
+            'email_verified_at' => now(),
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Account verificato con successo.',
+            'data' => $user->fresh(),
+        ]);
+    }
+
+    public function deleteUser(User $user): JsonResponse
+    {
+        if ($user->id === auth()->id()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Non puoi eliminare il tuo account amministratore attivo.',
+            ], 422);
+        }
+
+        $user->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Utente eliminato con successo.',
+        ]);
+    }
 }

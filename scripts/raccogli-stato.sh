@@ -8,7 +8,7 @@ REPORT_FILE="${REPORT_DIR}/report.txt"
 mkdir -p "$REPORT_DIR"
 
 {
-  echo "=== DIAGNOSTICA TUTTOINSIEME ==="
+  echo "=== DIAGNOSTICA SPEDIZIONEFACILE ==="
   echo "Data: $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
   echo "Root: $ROOT_DIR"
   echo
