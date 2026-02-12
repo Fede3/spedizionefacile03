@@ -275,6 +275,102 @@ const destinationAddress = ref({
 	postal_code: session.value?.data?.shipment_details.destination_postal_code,
 });
 
+/* Validazione campi */
+const validationErrors = ref({});
+const showValidation = ref(false);
+
+const validateField = (section, field, value, label) => {
+	const key = `${section}_${field}`;
+	if (!value || !String(value).trim()) {
+		validationErrors.value[key] = `${label} è obbligatorio`;
+		return false;
+	}
+	// Validazione specifica per telefono
+	if (field === 'telephone_number') {
+		const cleaned = String(value).replace(/\s/g, '');
+		if (cleaned.length < 6 || !/^[+\d][\d\s-]{5,}$/.test(cleaned)) {
+			validationErrors.value[key] = 'Inserisci un numero di telefono valido';
+			return false;
+		}
+	}
+	// Validazione CAP
+	if (field === 'postal_code') {
+		const cleaned = String(value).replace(/[^0-9]/g, '');
+		if (cleaned.length < 4 || cleaned.length > 5) {
+			validationErrors.value[key] = 'Inserisci un CAP valido (5 cifre)';
+			return false;
+		}
+	}
+	// Validazione email (solo se compilata)
+	if (field === 'email' && value && String(value).trim()) {
+		const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+		if (!emailRegex.test(String(value).trim())) {
+			validationErrors.value[key] = 'Inserisci un indirizzo email valido';
+			return false;
+		}
+	}
+	delete validationErrors.value[key];
+	return true;
+};
+
+const validateForm = () => {
+	validationErrors.value = {};
+	showValidation.value = true;
+	let isValid = true;
+
+	// Campi obbligatori partenza
+	const originFields = [
+		['full_name', originAddress.value.full_name, 'Nome e Cognome'],
+		['address', originAddress.value.address, 'Indirizzo'],
+		['address_number', originAddress.value.address_number, 'Numero civico'],
+		['city', originAddress.value.city, 'Città'],
+		['province', originAddress.value.province, 'Provincia'],
+		['postal_code', originAddress.value.postal_code, 'CAP'],
+		['telephone_number', originAddress.value.telephone_number, 'Telefono'],
+	];
+
+	for (const [field, value, label] of originFields) {
+		if (!validateField('origin', field, value, label)) isValid = false;
+	}
+
+	// Email partenza (opzionale ma se presente deve essere valida)
+	if (originAddress.value.email) {
+		validateField('origin', 'email', originAddress.value.email, 'Email');
+	}
+
+	// Campi obbligatori destinazione
+	const destFields = [
+		['full_name', destinationAddress.value.full_name, 'Nome e Cognome'],
+		['address', destinationAddress.value.address, 'Indirizzo'],
+		['address_number', destinationAddress.value.address_number, 'Numero civico'],
+		['city', destinationAddress.value.city, 'Città'],
+		['province', destinationAddress.value.province, 'Provincia'],
+		['postal_code', destinationAddress.value.postal_code, 'CAP'],
+		['telephone_number', destinationAddress.value.telephone_number, 'Telefono'],
+	];
+
+	for (const [field, value, label] of destFields) {
+		if (!validateField('dest', field, value, label)) isValid = false;
+	}
+
+	// Email destinazione (opzionale ma se presente deve essere valida)
+	if (destinationAddress.value.email) {
+		validateField('dest', 'email', destinationAddress.value.email, 'Email');
+	}
+
+	return isValid;
+};
+
+const getFieldError = (section, field) => {
+	if (!showValidation.value) return null;
+	return validationErrors.value[`${section}_${field}`] || null;
+};
+
+const fieldClass = (section, field) => {
+	const hasError = getFieldError(section, field);
+	return hasError ? 'input-preventivo-step-2 !border-red-400 !bg-red-50/30' : 'input-preventivo-step-2';
+};
+
 const days = ["Lun", "Mar", "Mer", "Gio", "Ven"];
 
 const formRef = ref(null);
@@ -320,11 +416,21 @@ const toAddressPayload = (addressData) => ({
 
 const continueToCart = async () => {
 	submitError.value = null;
-	if (!formRef.value || !formRef.value.checkValidity()) {
-		formRef.value?.reportValidity();
+
+	// Validazione personalizzata dei campi
+	if (!validateForm()) {
+		const errorCount = Object.keys(validationErrors.value).length;
+		submitError.value = `Compila tutti i campi obbligatori. ${errorCount} ${errorCount === 1 ? 'campo mancante' : 'campi mancanti'}.`;
+
+		// Scroll al primo campo con errore
+		await nextTick();
+		const firstErrorEl = document.querySelector('.\\!border-red-400');
+		if (firstErrorEl) {
+			firstErrorEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+			firstErrorEl.focus();
+		}
 		return;
 	}
-
 
 	const packages = session.value?.data?.packages || [];
 	if (!packages.length) {
@@ -560,145 +666,162 @@ const continueToCart = async () => {
 								</label>
 							</div>
 
-							<div class="bg-[#E4E4E4] rounded-[20px] text-[#252B42] mt-[20px] pl-[40px] pt-[35px] pb-[43px]">
+							<!-- PARTENZA -->
+							<div class="bg-[#E4E4E4] rounded-[20px] text-[#252B42] mt-[20px] pl-[40px] pr-[40px] pt-[35px] pb-[43px]">
 								<h2 class="font-bold text-[1.125rem] tracking-[0.1px] mb-[39px]">
-									<!-- <Icon name="game-icons:position-marker" class="text-[#28a64c]" /> -->
 									Partenza
 								</h2>
 
 								<div class="flex items-start gap-x-[30px]">
 									<div class="desktop:w-[324px]">
-										<label for="name" class="block text-[0.875rem] sr-only">Nome e Cognome*</label>
-										<input type="text" placeholder="Nome e Cognome*" v-model="originAddress.full_name" id="name" class="input-preventivo-step-2" />
+										<label for="origin_name" class="block text-[0.875rem] sr-only">Nome e Cognome*</label>
+										<input type="text" placeholder="Nome e Cognome*" v-model="originAddress.full_name" id="origin_name" :class="fieldClass('origin', 'full_name')" required />
+										<p v-if="getFieldError('origin', 'full_name')" class="text-red-500 text-[0.75rem] mt-[4px]">{{ getFieldError('origin', 'full_name') }}</p>
 									</div>
 
 									<div class="desktop:w-[324px]">
-										<label for="additional_information" class="block text-[0.875rem] sr-only">Informazioni aggiuntive</label>
-										<input type="text" placeholder="Informazioni aggiuntive" v-model="originAddress.additional_information" id="additional_information" class="input-preventivo-step-2" />
+										<label for="origin_additional_info" class="block text-[0.875rem] sr-only">Informazioni aggiuntive</label>
+										<input type="text" placeholder="Informazioni aggiuntive" v-model="originAddress.additional_information" id="origin_additional_info" class="input-preventivo-step-2" />
 									</div>
 								</div>
 
 								<div class="mt-[39px] flex items-start gap-x-[25px]">
 									<div class="desktop:w-[285px]">
-										<label for="address" class="block text-[0.875rem] sr-only">Indirizzo*</label>
-										<input type="text" placeholder="Indirizzo*" v-model="originAddress.address" id="address" class="input-preventivo-step-2" />
+										<label for="origin_address" class="block text-[0.875rem] sr-only">Indirizzo*</label>
+										<input type="text" placeholder="Indirizzo*" v-model="originAddress.address" id="origin_address" :class="fieldClass('origin', 'address')" required />
+										<p v-if="getFieldError('origin', 'address')" class="text-red-500 text-[0.75rem] mt-[4px]">{{ getFieldError('origin', 'address') }}</p>
 									</div>
 
 									<div class="desktop:w-[213px]">
-										<label for="address_number" class="block text-[0.875rem] sr-only">Numero civico*</label>
-										<input type="text" placeholder="Numero civico*" v-model="originAddress.address_number" id="address_number" class="input-preventivo-step-2" />
+										<label for="origin_address_number" class="block text-[0.875rem] sr-only">Numero civico*</label>
+										<input type="text" placeholder="Numero civico*" v-model="originAddress.address_number" id="origin_address_number" :class="fieldClass('origin', 'address_number')" required />
+										<p v-if="getFieldError('origin', 'address_number')" class="text-red-500 text-[0.75rem] mt-[4px]">{{ getFieldError('origin', 'address_number') }}</p>
 									</div>
 
 									<div class="desktop:w-[213px]">
-										<label for="intercom_code" class="block text-[0.875rem] sr-only">Citofono</label>
-										<input type="text" placeholder="Citofono" v-model="originAddress.intercom_code" id="intercom_code" class="input-preventivo-step-2" />
+										<label for="origin_intercom" class="block text-[0.875rem] sr-only">Citofono</label>
+										<input type="text" placeholder="Citofono" v-model="originAddress.intercom_code" id="origin_intercom" class="input-preventivo-step-2" />
 									</div>
 								</div>
 
 								<div class="mt-[39px] flex items-start gap-x-[25px]">
 									<div class="desktop:w-[174px]">
-										<label for="country" class="block text-[0.875rem] sr-only">Paese*</label>
-										<input type="text" placeholder="Paese*" id="country" class="input-preventivo-step-2" disabled />
+										<label for="origin_country" class="block text-[0.875rem] sr-only">Paese*</label>
+										<input type="text" placeholder="Paese*" value="Italia" id="origin_country" class="input-preventivo-step-2" disabled />
 									</div>
 
 									<div class="desktop:w-[171px]">
-										<label for="city" class="block text-[0.875rem] sr-only">Città*</label>
-										<input type="text" placeholder="Città*" v-model="originAddress.city" id="city" class="input-preventivo-step-2" />
+										<label for="origin_city" class="block text-[0.875rem] sr-only">Città*</label>
+										<input type="text" placeholder="Città*" v-model="originAddress.city" id="origin_city" :class="fieldClass('origin', 'city')" required />
+										<p v-if="getFieldError('origin', 'city')" class="text-red-500 text-[0.75rem] mt-[4px]">{{ getFieldError('origin', 'city') }}</p>
 									</div>
 
 									<div class="desktop:w-[170px]">
-										<label for="province" class="block text-[0.875rem] sr-only">Provincia*</label>
-										<input type="text" placeholder="Provincia*" v-model="originAddress.province" id="province" class="input-preventivo-step-2" />
+										<label for="origin_province" class="block text-[0.875rem] sr-only">Provincia*</label>
+										<input type="text" placeholder="Provincia*" v-model="originAddress.province" id="origin_province" :class="fieldClass('origin', 'province')" required />
+										<p v-if="getFieldError('origin', 'province')" class="text-red-500 text-[0.75rem] mt-[4px]">{{ getFieldError('origin', 'province') }}</p>
 									</div>
 
 									<div class="desktop:w-[174px]">
-										<label for="postal_code" class="block text-[0.875rem] sr-only">CAP*</label>
-										<input type="text" placeholder="CAP*" v-model="originAddress.postal_code" id="postal_code" class="input-preventivo-step-2" />
+										<label for="origin_postal_code" class="block text-[0.875rem] sr-only">CAP*</label>
+										<input type="text" placeholder="CAP*" v-model="originAddress.postal_code" id="origin_postal_code" :class="fieldClass('origin', 'postal_code')" required />
+										<p v-if="getFieldError('origin', 'postal_code')" class="text-red-500 text-[0.75rem] mt-[4px]">{{ getFieldError('origin', 'postal_code') }}</p>
 									</div>
 								</div>
 
 								<div class="mt-[39px] flex items-start gap-x-[30px]">
 									<div class="desktop:w-[324px]">
-										<label for="telephone_number" class="block text-[0.875rem] sr-only">Telefono*</label>
-										<input type="tel" placeholder="Telefono*" v-model="originAddress.telephone_number" id="telephone_number" class="input-preventivo-step-2" />
+										<label for="origin_telephone" class="block text-[0.875rem] sr-only">Telefono*</label>
+										<input type="tel" placeholder="Telefono*" v-model="originAddress.telephone_number" id="origin_telephone" :class="fieldClass('origin', 'telephone_number')" required />
+										<p v-if="getFieldError('origin', 'telephone_number')" class="text-red-500 text-[0.75rem] mt-[4px]">{{ getFieldError('origin', 'telephone_number') }}</p>
 									</div>
 
 									<div class="desktop:w-[324px]">
-										<label for="email" class="block text-[0.875rem] sr-only">Email</label>
-										<input type="email" placeholder="Email" v-model="originAddress.email" id="email" class="input-preventivo-step-2" />
+										<label for="origin_email" class="block text-[0.875rem] sr-only">Email</label>
+										<input type="email" placeholder="Email" v-model="originAddress.email" id="origin_email" :class="fieldClass('origin', 'email')" />
+										<p v-if="getFieldError('origin', 'email')" class="text-red-500 text-[0.75rem] mt-[4px]">{{ getFieldError('origin', 'email') }}</p>
 									</div>
 								</div>
 							</div>
 
-							<div class="bg-[#E4E4E4] rounded-[20px] text-[#252B42] mt-[20px] pl-[40px] pt-[35px] pb-[43px]">
+							<!-- DESTINAZIONE -->
+							<div class="bg-[#E4E4E4] rounded-[20px] text-[#252B42] mt-[20px] pl-[40px] pr-[40px] pt-[35px] pb-[43px]">
 								<h2 class="font-bold text-[1.125rem] tracking-[0.1px] mb-[39px]">
-									<!-- <Icon name="game-icons:position-marker" class="text-[#28a64c]" /> -->
-									Partenza
+									Destinazione
 								</h2>
 
 								<div class="flex items-start gap-x-[30px]">
 									<div class="desktop:w-[324px]">
-										<label for="name" class="block text-[0.875rem] sr-only">Nome e Cognome*</label>
-										<input type="text" placeholder="Nome e Cognome*" v-model="destinationAddress.full_name" id="name" class="input-preventivo-step-2" required />
+										<label for="dest_name" class="block text-[0.875rem] sr-only">Nome e Cognome*</label>
+										<input type="text" placeholder="Nome e Cognome*" v-model="destinationAddress.full_name" id="dest_name" :class="fieldClass('dest', 'full_name')" required />
+										<p v-if="getFieldError('dest', 'full_name')" class="text-red-500 text-[0.75rem] mt-[4px]">{{ getFieldError('dest', 'full_name') }}</p>
 									</div>
 
 									<div class="desktop:w-[324px]">
-										<label for="additional_information" class="block text-[0.875rem] sr-only">Informazioni aggiuntive</label>
-										<input type="text" placeholder="Informazioni aggiuntive" v-model="destinationAddress.additional_information" id="additional_information" class="input-preventivo-step-2" />
+										<label for="dest_additional_info" class="block text-[0.875rem] sr-only">Informazioni aggiuntive</label>
+										<input type="text" placeholder="Informazioni aggiuntive" v-model="destinationAddress.additional_information" id="dest_additional_info" class="input-preventivo-step-2" />
 									</div>
 								</div>
 
 								<div class="mt-[39px] flex items-start gap-x-[25px]">
 									<div class="desktop:w-[285px]">
-										<label for="address" class="block text-[0.875rem] sr-only">Indirizzo*</label>
-										<input type="text" placeholder="Indirizzo*" v-model="destinationAddress.address" id="address" class="input-preventivo-step-2" />
+										<label for="dest_address" class="block text-[0.875rem] sr-only">Indirizzo*</label>
+										<input type="text" placeholder="Indirizzo*" v-model="destinationAddress.address" id="dest_address" :class="fieldClass('dest', 'address')" required />
+										<p v-if="getFieldError('dest', 'address')" class="text-red-500 text-[0.75rem] mt-[4px]">{{ getFieldError('dest', 'address') }}</p>
 									</div>
 
 									<div class="desktop:w-[213px]">
-										<label for="address_number" class="block text-[0.875rem] sr-only">Numero civico*</label>
-										<input type="text" placeholder="Numero civico*" v-model="destinationAddress.address_number" id="address_number" class="input-preventivo-step-2" />
+										<label for="dest_address_number" class="block text-[0.875rem] sr-only">Numero civico*</label>
+										<input type="text" placeholder="Numero civico*" v-model="destinationAddress.address_number" id="dest_address_number" :class="fieldClass('dest', 'address_number')" required />
+										<p v-if="getFieldError('dest', 'address_number')" class="text-red-500 text-[0.75rem] mt-[4px]">{{ getFieldError('dest', 'address_number') }}</p>
 									</div>
 
 									<div class="desktop:w-[213px]">
-										<label for="intercom_code" class="block text-[0.875rem] sr-only">Citofono</label>
-										<input type="text" placeholder="Citofono" v-model="destinationAddress.intercom_code" id="intercom_code" class="input-preventivo-step-2" />
+										<label for="dest_intercom" class="block text-[0.875rem] sr-only">Citofono</label>
+										<input type="text" placeholder="Citofono" v-model="destinationAddress.intercom_code" id="dest_intercom" class="input-preventivo-step-2" />
 									</div>
 								</div>
 
 								<div class="mt-[39px] flex items-start gap-x-[25px]">
 									<div class="desktop:w-[174px]">
-										<label for="country" class="block text-[0.875rem] sr-only">Paese*</label>
-										<input type="text" placeholder="Paese*" id="country" class="input-preventivo-step-2" disabled />
+										<label for="dest_country" class="block text-[0.875rem] sr-only">Paese*</label>
+										<input type="text" placeholder="Paese*" value="Italia" id="dest_country" class="input-preventivo-step-2" disabled />
 									</div>
 
 									<div class="desktop:w-[171px]">
-										<label for="city" class="block text-[0.875rem] sr-only">Città*</label>
-										<input type="text" placeholder="Città*" v-model="destinationAddress.city" id="city" class="input-preventivo-step-2" />
+										<label for="dest_city" class="block text-[0.875rem] sr-only">Città*</label>
+										<input type="text" placeholder="Città*" v-model="destinationAddress.city" id="dest_city" :class="fieldClass('dest', 'city')" required />
+										<p v-if="getFieldError('dest', 'city')" class="text-red-500 text-[0.75rem] mt-[4px]">{{ getFieldError('dest', 'city') }}</p>
 									</div>
 
 									<div class="desktop:w-[170px]">
-										<label for="province" class="block text-[0.875rem] sr-only">Provincia*</label>
-										<input type="text" placeholder="Provincia*" v-model="destinationAddress.province" id="province" class="input-preventivo-step-2" />
+										<label for="dest_province" class="block text-[0.875rem] sr-only">Provincia*</label>
+										<input type="text" placeholder="Provincia*" v-model="destinationAddress.province" id="dest_province" :class="fieldClass('dest', 'province')" required />
+										<p v-if="getFieldError('dest', 'province')" class="text-red-500 text-[0.75rem] mt-[4px]">{{ getFieldError('dest', 'province') }}</p>
 									</div>
 
 									<div class="desktop:w-[174px]">
-										<label for="postal_code" class="block text-[0.875rem] sr-only">CAP*</label>
-										<input type="text" placeholder="CAP*" v-model="destinationAddress.postal_code" id="postal_code" class="input-preventivo-step-2" />
+										<label for="dest_postal_code" class="block text-[0.875rem] sr-only">CAP*</label>
+										<input type="text" placeholder="CAP*" v-model="destinationAddress.postal_code" id="dest_postal_code" :class="fieldClass('dest', 'postal_code')" required />
+										<p v-if="getFieldError('dest', 'postal_code')" class="text-red-500 text-[0.75rem] mt-[4px]">{{ getFieldError('dest', 'postal_code') }}</p>
 									</div>
 								</div>
 
 								<div class="mt-[39px] flex items-start gap-x-[30px]">
 									<div class="desktop:w-[324px]">
-										<label for="telephone_number" class="block text-[0.875rem] sr-only">Telefono*</label>
-										<input type="tel" placeholder="Telefono*" v-model="destinationAddress.telephone_number" id="telephone_number" class="input-preventivo-step-2" />
+										<label for="dest_telephone" class="block text-[0.875rem] sr-only">Telefono*</label>
+										<input type="tel" placeholder="Telefono*" v-model="destinationAddress.telephone_number" id="dest_telephone" :class="fieldClass('dest', 'telephone_number')" required />
+										<p v-if="getFieldError('dest', 'telephone_number')" class="text-red-500 text-[0.75rem] mt-[4px]">{{ getFieldError('dest', 'telephone_number') }}</p>
 									</div>
 
 									<div class="desktop:w-[324px]">
-										<label for="email" class="block text-[0.875rem] sr-only">Email</label>
-										<input type="email" placeholder="Email" v-model="destinationAddress.email" id="email" class="input-preventivo-step-2" />
+										<label for="dest_email" class="block text-[0.875rem] sr-only">Email</label>
+										<input type="email" placeholder="Email" v-model="destinationAddress.email" id="dest_email" :class="fieldClass('dest', 'email')" />
+										<p v-if="getFieldError('dest', 'email')" class="text-red-500 text-[0.75rem] mt-[4px]">{{ getFieldError('dest', 'email') }}</p>
 									</div>
 								</div>
 							</div>
+
 						</div>
 					</div>
 
@@ -789,7 +912,10 @@ const continueToCart = async () => {
 						{{ isSubmitting ? 'Salvataggio in corso...' : 'Continua e vai al carrello' }}
 					</button>
 				</div>
-				<p v-if="submitError" class="text-red-500 text-[0.9375rem] mt-[10px] text-right">{{ submitError }}</p>
+				<div v-if="submitError" class="mt-[16px] w-full max-w-[850px] mr-auto p-[14px] bg-red-50 border border-red-200 rounded-[12px] flex items-center gap-[10px]">
+					<Icon name="mdi:alert-circle" class="text-[20px] text-red-500 shrink-0" />
+					<p class="text-red-600 text-[0.9375rem] font-medium">{{ submitError }}</p>
+				</div>
 
 			</form>
 		</div>
