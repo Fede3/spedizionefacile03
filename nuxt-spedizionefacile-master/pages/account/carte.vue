@@ -10,8 +10,15 @@ const { refreshIdentity } = useSanctumAuth();
 const runtimeConfig = useRuntimeConfig();
 const stripePromise = loadStripe(runtimeConfig.public.stripeKey);
 
-const stripe = await stripePromise;
 const client = useSanctumClient();
+
+// Stripe sarà null se il caricamento fallisce (ad-blocker, rete)
+let stripe = null;
+try {
+	stripe = await stripePromise;
+} catch (e) {
+	console.error("Stripe.js non caricato:", e);
+}
 
 const cardNumber = ref(null);
 const cardExpiry = ref(null);
@@ -39,7 +46,10 @@ const handleAddCard = async () => {
 	errorMessage.value = null;
 
 	try {
-		const stripe = await stripePromise;
+		if (!stripe) {
+			errorMessage.value = "Stripe non disponibile. Ricarica la pagina.";
+			return;
+		}
 
 		const { setupIntent, error } = await stripe.confirmCardSetup(clientSecret.value, {
 			payment_method: {
@@ -151,6 +161,13 @@ const togglePaymentForm = async () => {
 		clientSecret.value = null;
 		errorMessage.value = null;
 
+		if (!stripe) {
+			errorMessage.value = "Stripe non disponibile. Ricarica la pagina.";
+			textMessage.value = errorMessage.value;
+			textMessageType.value = "error";
+			return;
+		}
+
 		try {
 			const response = await client("/api/stripe/create-setup-intent", {
 				method: "POST",
@@ -168,7 +185,8 @@ const togglePaymentForm = async () => {
 
 			await nextTick();
 
-			elements.value = stripe.elements({ clientSecret: clientSecret.value });
+			// Individual card elements (cardNumber/cardExpiry/cardCvc) NON usano clientSecret in elements()
+			elements.value = stripe.elements();
 
 			const style = {
 				base: {

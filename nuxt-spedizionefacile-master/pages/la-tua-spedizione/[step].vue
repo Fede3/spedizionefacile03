@@ -484,6 +484,37 @@ const goBackFromSummary = () => {
 	showSummary.value = false;
 };
 
+/* Riepilogo: dropdown servizi e modifica sezioni */
+const showServiceDropdown = ref(false);
+
+const toggleServiceInSummary = (service) => {
+	const idx = userStore.servicesArray.indexOf(service.name);
+	if (idx !== -1) {
+		userStore.servicesArray.splice(idx, 1);
+	} else {
+		userStore.servicesArray.push(service.name);
+	}
+	services.value.service_type = userStore.servicesArray.join(", ");
+};
+
+const editFromSummary = async (section) => {
+	showSummary.value = false;
+	await nextTick();
+	let el = null;
+	if (section === 'date') {
+		el = document.querySelector('.my-swiper');
+	} else if (section === 'origin') {
+		el = document.getElementById('origin_name');
+	} else if (section === 'dest') {
+		el = document.getElementById('dest_name');
+	} else if (section === 'services') {
+		el = document.querySelector('.service-list');
+	}
+	if (el) {
+		el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+	}
+};
+
 /* Step 2: Conferma e salva spedizione */
 const confirmShipment = async () => {
 	submitError.value = null;
@@ -996,53 +1027,130 @@ const confirmShipment = async () => {
 
 				<!-- RIEPILOGO -->
 				<div v-if="showSummary" class="mt-[40px]">
-					<h2 class="text-[1.5rem] font-bold text-[#252B42] font-montserrat mb-[24px]">Riepilogo spedizione</h2>
+					<h2 class="text-[1.8125rem] font-bold text-[#252B42] font-montserrat tracking-[0.1px] mb-[30px]">Riepilogo spedizione</h2>
 
-					<div class="bg-white rounded-[16px] border border-[#E9EBEC] p-[32px] max-w-[850px]">
+					<div class="max-w-[850px] space-y-[16px]">
+
 						<!-- Giorno ritiro -->
-						<div class="mb-[24px] pb-[24px] border-b border-[#E9EBEC]">
-							<h3 class="text-[0.8125rem] font-semibold text-[#737373] uppercase tracking-wider mb-[8px]">Giorno di ritiro</h3>
-							<p class="text-[1rem] font-semibold text-[#252B42]">{{ services.date }}</p>
+						<div class="bg-[#E6E6E6] rounded-[20px] p-[24px_30px] flex items-center gap-[20px]">
+							<div class="w-[50px] h-[50px] rounded-[12px] bg-white flex items-center justify-center shrink-0">
+								<NuxtImg src="/img/quote/second-step/scheduled.png" alt="Calendario" width="30" height="30" />
+							</div>
+							<div class="flex-1 min-w-0">
+								<h3 class="text-[0.75rem] font-bold text-[#737373] uppercase tracking-wider mb-[4px]">Giorno di ritiro</h3>
+								<p class="text-[1rem] font-bold text-[#252B42]">{{ services.date }}</p>
+							</div>
+							<button type="button" @click="editFromSummary('date')" class="flex items-center gap-[6px] text-[#095866] hover:text-[#0a7a8c] cursor-pointer transition shrink-0">
+								<NuxtImg src="/img/quote/second-step/edit.png" alt="Modifica" width="14" height="14" />
+								<span class="text-[0.8125rem] font-semibold">Modifica</span>
+							</button>
 						</div>
 
 						<!-- Partenza -->
-						<div class="mb-[24px] pb-[24px] border-b border-[#E9EBEC]">
-							<h3 class="text-[0.8125rem] font-semibold text-[#737373] uppercase tracking-wider mb-[8px]">Partenza</h3>
-							<p class="text-[0.9375rem] text-[#252B42] font-semibold">{{ originAddress.full_name }}</p>
-							<p class="text-[0.875rem] text-[#404040]">{{ originAddress.address }} {{ originAddress.address_number }}, {{ originAddress.postal_code }} {{ originAddress.city }} ({{ originAddress.province }})</p>
-							<p class="text-[0.875rem] text-[#737373]">Tel: {{ originAddress.telephone_number }}<span v-if="originAddress.email"> - {{ originAddress.email }}</span></p>
+						<div class="bg-[#E6E6E6] rounded-[20px] p-[24px_30px] flex items-start gap-[20px]">
+							<div class="w-[50px] h-[50px] rounded-[12px] bg-white flex items-center justify-center shrink-0 mt-[4px]">
+								<NuxtImg src="/img/quote/second-step/origin.png" alt="Partenza" width="24" height="22" />
+							</div>
+							<div class="flex-1 min-w-0">
+								<h3 class="text-[0.75rem] font-bold text-[#737373] uppercase tracking-wider mb-[4px]">Partenza</h3>
+								<p class="text-[0.9375rem] font-bold text-[#252B42]">{{ originAddress.full_name }}</p>
+								<p class="text-[0.8125rem] text-[#404040] mt-[2px]">{{ originAddress.address }} {{ originAddress.address_number }}, {{ originAddress.postal_code }} {{ originAddress.city }} ({{ originAddress.province }})</p>
+								<p class="text-[0.8125rem] text-[#737373] mt-[2px]">Tel: {{ originAddress.telephone_number }}<span v-if="originAddress.email"> &middot; {{ originAddress.email }}</span></p>
+							</div>
+							<button type="button" @click="editFromSummary('origin')" class="flex items-center gap-[6px] text-[#095866] hover:text-[#0a7a8c] cursor-pointer transition shrink-0 mt-[4px]">
+								<NuxtImg src="/img/quote/second-step/edit.png" alt="Modifica" width="14" height="14" />
+								<span class="text-[0.8125rem] font-semibold">Modifica</span>
+							</button>
 						</div>
 
 						<!-- Destinazione -->
-						<div class="mb-[24px] pb-[24px] border-b border-[#E9EBEC]">
-							<h3 class="text-[0.8125rem] font-semibold text-[#737373] uppercase tracking-wider mb-[8px]">Destinazione</h3>
-							<p class="text-[0.9375rem] text-[#252B42] font-semibold">{{ destinationAddress.full_name }}</p>
-							<p class="text-[0.875rem] text-[#404040]">{{ destinationAddress.address }} {{ destinationAddress.address_number }}, {{ destinationAddress.postal_code }} {{ destinationAddress.city }} ({{ destinationAddress.province }})</p>
-							<p class="text-[0.875rem] text-[#737373]">Tel: {{ destinationAddress.telephone_number }}<span v-if="destinationAddress.email"> - {{ destinationAddress.email }}</span></p>
+						<div class="bg-[#E6E6E6] rounded-[20px] p-[24px_30px] flex items-start gap-[20px]">
+							<div class="w-[50px] h-[50px] rounded-[12px] bg-white flex items-center justify-center shrink-0 mt-[4px]">
+								<NuxtImg src="/img/quote/second-step/destination.png" alt="Destinazione" width="24" height="22" />
+							</div>
+							<div class="flex-1 min-w-0">
+								<h3 class="text-[0.75rem] font-bold text-[#737373] uppercase tracking-wider mb-[4px]">Destinazione</h3>
+								<p class="text-[0.9375rem] font-bold text-[#252B42]">{{ destinationAddress.full_name }}</p>
+								<p class="text-[0.8125rem] text-[#404040] mt-[2px]">{{ destinationAddress.address }} {{ destinationAddress.address_number }}, {{ destinationAddress.postal_code }} {{ destinationAddress.city }} ({{ destinationAddress.province }})</p>
+								<p class="text-[0.8125rem] text-[#737373] mt-[2px]">Tel: {{ destinationAddress.telephone_number }}<span v-if="destinationAddress.email"> &middot; {{ destinationAddress.email }}</span></p>
+							</div>
+							<button type="button" @click="editFromSummary('dest')" class="flex items-center gap-[6px] text-[#095866] hover:text-[#0a7a8c] cursor-pointer transition shrink-0 mt-[4px]">
+								<NuxtImg src="/img/quote/second-step/edit.png" alt="Modifica" width="14" height="14" />
+								<span class="text-[0.8125rem] font-semibold">Modifica</span>
+							</button>
 						</div>
 
 						<!-- Colli -->
-						<div class="mb-[24px] pb-[24px] border-b border-[#E9EBEC]">
-							<h3 class="text-[0.8125rem] font-semibold text-[#737373] uppercase tracking-wider mb-[8px]">Colli</h3>
-							<div v-for="(pack, i) in session?.data?.packages" :key="i" class="text-[0.875rem] text-[#252B42]">
-								<span class="font-semibold">{{ pack.quantity }}x</span> - {{ pack.weight }} kg ({{ pack.first_size }} x {{ pack.second_size }} x {{ pack.third_size }} cm)
+						<div class="bg-[#E6E6E6] rounded-[20px] p-[24px_30px] flex items-start gap-[20px]">
+							<div class="w-[50px] h-[50px] rounded-[12px] bg-white flex items-center justify-center shrink-0 mt-[4px]">
+								<NuxtImg src="/img/quote/second-step/pickup-and-delivery.png" alt="Colli" width="30" height="30" />
+							</div>
+							<div class="flex-1 min-w-0">
+								<h3 class="text-[0.75rem] font-bold text-[#737373] uppercase tracking-wider mb-[4px]">Colli</h3>
+								<div v-for="(pack, i) in session?.data?.packages" :key="i" class="text-[0.875rem] text-[#252B42] mt-[2px] first:mt-0">
+									<span class="font-bold">{{ pack.quantity }}x</span> &ndash; {{ pack.weight }} kg ({{ pack.first_size }} &times; {{ pack.second_size }} &times; {{ pack.third_size }} cm)
+								</div>
 							</div>
 						</div>
 
-						<!-- Servizi -->
-						<div class="mb-[24px] pb-[24px] border-b border-[#E9EBEC]">
-							<h3 class="text-[0.8125rem] font-semibold text-[#737373] uppercase tracking-wider mb-[8px]">Servizi</h3>
-							<ul v-if="userStore.servicesArray.length > 0" class="text-[0.875rem] text-[#252B42]">
-								<li v-for="s in userStore.servicesArray" :key="s">{{ s }}</li>
-							</ul>
-							<p v-else class="text-[0.875rem] text-[#737373]">Nessun servizio aggiuntivo selezionato</p>
+						<!-- Servizi con dropdown -->
+						<div class="bg-[#E6E6E6] rounded-[20px] p-[24px_30px]">
+							<div class="flex items-start gap-[20px]">
+								<div class="w-[50px] h-[50px] rounded-[12px] bg-white flex items-center justify-center shrink-0 mt-[4px]">
+									<NuxtImg src="/img/quote/second-step/insurance.png" alt="Servizi" width="30" height="30" />
+								</div>
+								<div class="flex-1 min-w-0">
+									<h3 class="text-[0.75rem] font-bold text-[#737373] uppercase tracking-wider mb-[4px]">Servizi</h3>
+									<ul v-if="userStore.servicesArray.length > 0" class="text-[0.875rem] text-[#252B42]">
+										<li v-for="s in userStore.servicesArray" :key="s" class="flex items-center gap-[6px] mt-[2px] first:mt-0">
+											<span class="w-[6px] h-[6px] rounded-full bg-[#095866] shrink-0"></span>
+											{{ s }}
+										</li>
+									</ul>
+									<p v-else class="text-[0.875rem] text-[#737373]">Nessun servizio aggiuntivo</p>
+								</div>
+								<button type="button" @click="showServiceDropdown = !showServiceDropdown" class="flex items-center gap-[6px] text-[#095866] hover:text-[#0a7a8c] cursor-pointer transition shrink-0 mt-[4px]">
+									<NuxtImg src="/img/quote/second-step/edit.png" alt="Modifica" width="14" height="14" />
+									<span class="text-[0.8125rem] font-semibold">{{ showServiceDropdown ? 'Chiudi' : 'Modifica' }}</span>
+								</button>
+							</div>
+
+							<!-- Dropdown servizi -->
+							<div v-if="showServiceDropdown" class="mt-[16px] pt-[16px] border-t border-[#D0D0D0]">
+								<div class="grid grid-cols-3 gap-[10px]">
+									<label
+										v-for="(service, sIdx) in servicesList"
+										:key="sIdx"
+										class="flex items-center gap-[10px] p-[12px] rounded-[12px] cursor-pointer transition-all select-none"
+										:class="userStore.servicesArray.includes(service.name) ? 'bg-[#095866] text-white' : 'bg-white text-[#252B42] hover:bg-[#f5f5f5]'"
+										@click="toggleServiceInSummary(service)">
+										<div
+											class="w-[32px] h-[32px] rounded-[8px] flex items-center justify-center shrink-0"
+											:class="userStore.servicesArray.includes(service.name) ? 'bg-white/20' : 'bg-[#F0F0F0]'">
+											<NuxtImg
+												:src="`/img/quote/second-step/${service.img}`"
+												:alt="service.name"
+												width="20"
+												height="20"
+												:class="{ 'brightness-0 invert': userStore.servicesArray.includes(service.name) }" />
+										</div>
+										<span class="text-[0.75rem] font-semibold leading-tight">{{ service.name }}</span>
+									</label>
+								</div>
+							</div>
 						</div>
 
 						<!-- Importo -->
-						<div>
-							<h3 class="text-[0.8125rem] font-semibold text-[#737373] uppercase tracking-wider mb-[8px]">Importo</h3>
-							<p class="text-[1.75rem] font-bold text-[#252B42]">{{ session?.data?.total_price }}€ <span class="text-[0.75rem] font-normal text-[#737373]">IVA inclusa</span></p>
+						<div class="bg-[#E6E6E6] rounded-[20px] p-[24px_30px] flex items-center gap-[20px]">
+							<div class="w-[50px] h-[50px] rounded-[12px] bg-white flex items-center justify-center shrink-0">
+								<span class="text-[1.5rem] font-bold text-[#095866]">&euro;</span>
+							</div>
+							<div class="flex-1">
+								<h3 class="text-[0.75rem] font-bold text-[#737373] uppercase tracking-wider mb-[4px]">Importo totale</h3>
+								<p class="text-[1.75rem] font-bold text-[#252B42] leading-tight">{{ session?.data?.total_price }}&euro; <span class="text-[0.75rem] font-normal text-[#737373]">IVA inclusa</span></p>
+							</div>
 						</div>
+
 					</div>
 
 					<!-- Bottoni riepilogo -->
@@ -1051,7 +1159,7 @@ const confirmShipment = async () => {
 							type="button"
 							@click="goBackFromSummary"
 							class="inline-flex items-center justify-center h-[52px] px-[24px] rounded-[30px] bg-[#095866] text-white font-semibold hover:bg-[#0a7a8c] transition cursor-pointer">
-							Modifica
+							Torna indietro
 						</button>
 						<button
 							type="button"
