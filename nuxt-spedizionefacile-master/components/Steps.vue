@@ -14,7 +14,8 @@ const activeStep = computed(() => {
 	if (props.currentStep >= 0) return props.currentStep;
 	if (route.name === 'index' || route.path === '/') return 0;
 	if (route.path.includes('la-tua-spedizione')) return 1;
-	if (route.path.includes('carrello') || route.path.includes('checkout')) return 4;
+	if (route.path.includes('carrello')) return 3;
+	if (route.path.includes('checkout')) return 4;
 	return 0;
 });
 

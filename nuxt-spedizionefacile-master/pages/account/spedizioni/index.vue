@@ -104,6 +104,18 @@ const getRecipientName = (order) => {
 	if (!order.packages?.length) return '—';
 	return order.packages[0].destination_address?.name || '—';
 };
+
+const isPendingPayment = (order) => {
+	const raw = statusRaw(order.status);
+	return raw === 'pending' || raw === 'payment_failed';
+};
+
+const getPendingReason = (order) => {
+	const raw = statusRaw(order.status);
+	if (raw === 'payment_failed') return 'Pagamento non riuscito. Riprova il pagamento per completare l\'ordine.';
+	if (raw === 'pending') return 'In attesa di pagamento. Completa il pagamento per procedere con la spedizione.';
+	return '';
+};
 </script>
 
 <template>
@@ -119,7 +131,22 @@ const getRecipientName = (order) => {
 			<!-- Title -->
 			<h1 class="text-[2rem] font-bold text-[#252B42] mb-[24px]">Spedizioni</h1>
 
-			<!-- Table Header Row (like the screenshot) -->
+			<!-- Filter Tabs -->
+			<div class="flex flex-wrap gap-[8px] mb-[20px]">
+				<button
+					v-for="(filter, filterIndex) in filters"
+					:key="filterIndex"
+					@click="changeFilter(filter, filterIndex)"
+					type="button"
+					:class="filterIndex === activeFilter
+						? 'bg-[#095866] text-white'
+						: 'bg-[#F0F0F0] text-[#737373] hover:bg-[#E0E0E0]'"
+					class="px-[18px] py-[10px] rounded-[30px] text-[0.875rem] font-medium cursor-pointer transition-colors">
+					{{ filter }}
+				</button>
+			</div>
+
+			<!-- Table Header Row -->
 			<div class="hidden desktop:block bg-[#E6E6E6] rounded-t-[12px] px-[20px] py-[12px] text-[0.75rem] font-bold text-[#252B42] border-b-[2px] border-[#E44203]">
 				<div class="flex items-center gap-[8px] flex-wrap">
 					<span class="w-[80px]"># Sped.</span>
@@ -134,21 +161,6 @@ const getRecipientName = (order) => {
 					<span class="w-[90px]">Ultimo Status</span>
 					<span class="flex-1">Azioni</span>
 				</div>
-			</div>
-
-			<!-- Filter Tabs -->
-			<div class="flex flex-wrap gap-[8px] mb-[24px] mt-[20px]">
-				<button
-					v-for="(filter, filterIndex) in filters"
-					:key="filterIndex"
-					@click="changeFilter(filter, filterIndex)"
-					type="button"
-					:class="filterIndex === activeFilter
-						? 'bg-[#095866] text-white'
-						: 'bg-[#F0F0F0] text-[#737373] hover:bg-[#E0E0E0]'"
-					class="px-[18px] py-[10px] rounded-[30px] text-[0.875rem] font-medium cursor-pointer transition-colors">
-					{{ filter }}
-				</button>
 			</div>
 
 			<!-- Loading -->
@@ -230,8 +242,23 @@ const getRecipientName = (order) => {
 						</div>
 					</div>
 
+					<!-- Pending payment alert -->
+					<div v-if="isPendingPayment(order)" class="mx-[20px] my-[12px] bg-amber-50 border border-amber-200 rounded-[10px] px-[16px] py-[12px] flex items-center gap-[12px]">
+						<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" class="text-amber-500 shrink-0"><path fill="currentColor" d="M13 14h-2V9h2m0 9h-2v-2h2M1 21h22L12 2z"/></svg>
+						<p class="text-[0.8125rem] text-amber-800 flex-1">{{ getPendingReason(order) }}</p>
+					</div>
+
 					<!-- Card footer - actions -->
-					<div class="px-[20px] py-[10px] border-t border-[#E9EBEC] flex items-center justify-end gap-[8px]">
+					<div class="px-[20px] py-[10px] border-t border-[#E9EBEC] flex items-center justify-between gap-[8px]">
+						<div>
+							<NuxtLink
+								v-if="isPendingPayment(order)"
+								:to="`/checkout?order_id=${order.id}`"
+								class="inline-flex items-center gap-[6px] px-[16px] py-[8px] bg-[#E44203] text-white rounded-[8px] text-[0.8125rem] font-semibold hover:opacity-90 transition">
+								<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+								Paga ora
+							</NuxtLink>
+						</div>
 						<NuxtLink :to="`/account/spedizioni/${order.id}`" title="Vedi dettagli" class="w-[32px] h-[32px] rounded-[8px] bg-[#095866]/10 flex items-center justify-center hover:bg-[#095866]/20 transition">
 							<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#095866" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
 						</NuxtLink>

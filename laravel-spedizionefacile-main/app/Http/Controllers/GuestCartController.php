@@ -72,11 +72,19 @@ class GuestCartController extends Controller
         }
 
         session()->put('cart', $cart);
+
+        return response()->json([
+            'data' => $cart,
+            'meta' => $this->meta($cart),
+            'message' => 'Carrello aggiornato',
+        ]);
     }
 
     public function emptyCart() {
-        
+
         session()->put('cart', []);
+
+        return response()->json(['message' => 'Carrello svuotato']);
     }
 
 }

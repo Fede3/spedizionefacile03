@@ -535,7 +535,7 @@ const continueToCart = async () => {
 		<div class="my-container mt-[72px] mb-[120px]">
 			<div v-if="status === 'pending'" class="min-h-[720px] bg-[#E4E4E4] rounded-[20px] animate-pulse"></div>
 			<form v-else ref="formRef" @submit.prevent="continueToCart">
-				<Steps />
+				<Steps :current-step="showAddressFields ? 2 : 1" />
 
 				<!-- Popup servizi (sempre disponibile, anche dal riepilogo) -->
 				<UModal
