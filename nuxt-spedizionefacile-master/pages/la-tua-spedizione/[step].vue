@@ -242,9 +242,18 @@ const editDestinationDetails = () => {
 };
 
 const myClose = () => {
+	if (selectedService.value.index !== "" && servicesList.value[selectedService.value.index]) {
+		servicesList.value[selectedService.value.index].isSelected = false;
+	}
 	open.value = false;
-	servicesList.value[selectedService.value.index].isSelected = false;
 };
+
+// Quando il modal viene chiuso dall'esterno (click fuori), deseleziona il servizio
+watch(open, (newVal) => {
+	if (!newVal && selectedService.value.index !== "" && servicesList.value[selectedService.value.index]) {
+		servicesList.value[selectedService.value.index].isSelected = false;
+	}
+});
 
 /* Dati indirizzo generico */
 const address = {
@@ -274,6 +283,112 @@ const destinationAddress = ref({
 	city: session.value?.data?.shipment_details.destination_city,
 	postal_code: session.value?.data?.shipment_details.destination_postal_code,
 });
+
+/* Pre-fill address data when session loads */
+watch(() => session.value?.data?.shipment_details, (details) => {
+	if (details) {
+		if (!originAddress.value.city) originAddress.value.city = details.origin_city;
+		if (!originAddress.value.postal_code) originAddress.value.postal_code = details.origin_postal_code;
+		if (!destinationAddress.value.city) destinationAddress.value.city = details.destination_city;
+		if (!destinationAddress.value.postal_code) destinationAddress.value.postal_code = details.destination_postal_code;
+	}
+}, { immediate: true });
+
+/* Validazione campi */
+const validationErrors = ref({});
+const showValidation = ref(false);
+
+const validateField = (section, field, value, label) => {
+	const key = `${section}_${field}`;
+	if (!value || !String(value).trim()) {
+		validationErrors.value[key] = `${label} è obbligatorio`;
+		return false;
+	}
+	// Validazione specifica per telefono
+	if (field === 'telephone_number') {
+		const cleaned = String(value).replace(/\s/g, '');
+		if (cleaned.length < 6 || !/^[+\d][\d\s-]{5,}$/.test(cleaned)) {
+			validationErrors.value[key] = 'Inserisci un numero di telefono valido';
+			return false;
+		}
+	}
+	// Validazione CAP
+	if (field === 'postal_code') {
+		const cleaned = String(value).replace(/[^0-9]/g, '');
+		if (cleaned.length < 4 || cleaned.length > 5) {
+			validationErrors.value[key] = 'Inserisci un CAP valido (5 cifre)';
+			return false;
+		}
+	}
+	// Validazione email (solo se compilata)
+	if (field === 'email' && value && String(value).trim()) {
+		const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+		if (!emailRegex.test(String(value).trim())) {
+			validationErrors.value[key] = 'Inserisci un indirizzo email valido';
+			return false;
+		}
+	}
+	delete validationErrors.value[key];
+	return true;
+};
+
+const validateForm = () => {
+	validationErrors.value = {};
+	showValidation.value = true;
+	let isValid = true;
+
+	// Campi obbligatori partenza
+	const originFields = [
+		['full_name', originAddress.value.full_name, 'Nome e Cognome'],
+		['address', originAddress.value.address, 'Indirizzo'],
+		['address_number', originAddress.value.address_number, 'Numero civico'],
+		['city', originAddress.value.city, 'Città'],
+		['province', originAddress.value.province, 'Provincia'],
+		['postal_code', originAddress.value.postal_code, 'CAP'],
+		['telephone_number', originAddress.value.telephone_number, 'Telefono'],
+	];
+
+	for (const [field, value, label] of originFields) {
+		if (!validateField('origin', field, value, label)) isValid = false;
+	}
+
+	// Email partenza (opzionale ma se presente deve essere valida)
+	if (originAddress.value.email) {
+		validateField('origin', 'email', originAddress.value.email, 'Email');
+	}
+
+	// Campi obbligatori destinazione
+	const destFields = [
+		['full_name', destinationAddress.value.full_name, 'Nome e Cognome'],
+		['address', destinationAddress.value.address, 'Indirizzo'],
+		['address_number', destinationAddress.value.address_number, 'Numero civico'],
+		['city', destinationAddress.value.city, 'Città'],
+		['province', destinationAddress.value.province, 'Provincia'],
+		['postal_code', destinationAddress.value.postal_code, 'CAP'],
+		['telephone_number', destinationAddress.value.telephone_number, 'Telefono'],
+	];
+
+	for (const [field, value, label] of destFields) {
+		if (!validateField('dest', field, value, label)) isValid = false;
+	}
+
+	// Email destinazione (opzionale ma se presente deve essere valida)
+	if (destinationAddress.value.email) {
+		validateField('dest', 'email', destinationAddress.value.email, 'Email');
+	}
+
+	return isValid;
+};
+
+const getFieldError = (section, field) => {
+	if (!showValidation.value) return null;
+	return validationErrors.value[`${section}_${field}`] || null;
+};
+
+const fieldClass = (section, field) => {
+	const hasError = getFieldError(section, field);
+	return hasError ? 'input-preventivo-step-2 !border-red-400 !bg-red-50/30' : 'input-preventivo-step-2';
+};
 
 const days = ["Lun", "Mar", "Mer", "Gio", "Ven"];
 
@@ -362,8 +477,9 @@ const continueToCart = async () => {
 			<form v-else ref="formRef" @submit.prevent="continueToCart">
 				<Steps />
 
+				<!-- Popup servizi (sempre disponibile, anche dal riepilogo) -->
 				<UModal
-					:dismissible="false"
+					:dismissible="true"
 					v-model:open="open"
 					:title="selectedService?.name"
 					:description="selectedService?.description"
@@ -462,6 +578,9 @@ const continueToCart = async () => {
 					</template>
 				</UModal>
 
+				<!-- STEP FORM: Servizi + Indirizzi -->
+				<div v-if="!showSummary">
+
 				<ClientOnly>
 					<div class="bg-[#E6E6E6] rounded-[20px] pt-[13px]">
 						<h2 class="ml-[78px] text-[1.8125rem] text-[#252B42] font-bold font-montserrat tracking-[0.1px]">Imposta giorno di ritiro</h2>
@@ -518,10 +637,10 @@ const continueToCart = async () => {
 					</div>
 				</ClientOnly>
 
-				<div class="flex items-start font-montserrat mt-[99px]">
-					<div class="desktop-xl:w-[893px]">
+				<div class="flex items-start font-montserrat mt-[60px] justify-center gap-x-[40px]">
+					<div class="flex-1 max-w-[850px]">
 						<!-- #f0ffff  group hover:bg-[#727272]-->
-						<div class="w-[850px]">
+						<div class="w-full">
 							<div class="flex items-start justify-between flex-wrap gap-[96px_50px]">
 								<label
 									v-for="(service, serviceIndex) in servicesList"
@@ -547,9 +666,21 @@ const continueToCart = async () => {
 								</label>
 							</div>
 
-							<div class="bg-[#E4E4E4] rounded-[20px] text-[#252B42] mt-[20px] pl-[40px] pt-[35px] pb-[43px]">
+							<!-- Bottone per aprire i campi indirizzo -->
+							<div v-if="!showAddressFields" class="mt-[40px] text-center">
+								<p v-if="dateError" class="text-red-500 text-[0.9375rem] mb-[16px] font-medium">{{ dateError }}</p>
+								<button
+									type="button"
+									@click="openAddressFields"
+									class="bg-[#095866] text-white font-semibold text-[1rem] px-[32px] h-[52px] rounded-[30px] hover:bg-[#0a7a8c] transition cursor-pointer">
+									Compila dati ritiro e destinazione
+								</button>
+							</div>
+
+							<!-- PARTENZA -->
+							<template v-if="showAddressFields">
+							<div class="bg-[#E4E4E4] rounded-[20px] text-[#252B42] mt-[20px] pl-[40px] pr-[40px] pt-[35px] pb-[43px]">
 								<h2 class="font-bold text-[1.125rem] tracking-[0.1px] mb-[39px]">
-									<!-- <Icon name="game-icons:position-marker" class="text-[#28a64c]" /> -->
 									Partenza
 								</h2>
 
@@ -560,8 +691,8 @@ const continueToCart = async () => {
 									</div>
 
 									<div class="desktop:w-[324px]">
-										<label for="additional_information" class="block text-[0.875rem] sr-only">Informazioni aggiuntive</label>
-										<input type="text" placeholder="Informazioni aggiuntive" v-model="originAddress.additional_information" id="additional_information" class="input-preventivo-step-2" />
+										<label for="origin_additional_info" class="block text-[0.875rem] sr-only">Informazioni aggiuntive</label>
+										<input type="text" placeholder="Informazioni aggiuntive" v-model="originAddress.additional_information" id="origin_additional_info" class="input-preventivo-step-2" />
 									</div>
 								</div>
 
@@ -577,15 +708,15 @@ const continueToCart = async () => {
 									</div>
 
 									<div class="desktop:w-[213px]">
-										<label for="intercom_code" class="block text-[0.875rem] sr-only">Citofono</label>
-										<input type="text" placeholder="Citofono" v-model="originAddress.intercom_code" id="intercom_code" class="input-preventivo-step-2" />
+										<label for="origin_intercom" class="block text-[0.875rem] sr-only">Citofono</label>
+										<input type="text" placeholder="Citofono" v-model="originAddress.intercom_code" id="origin_intercom" class="input-preventivo-step-2" />
 									</div>
 								</div>
 
 								<div class="mt-[39px] flex items-start gap-x-[25px]">
 									<div class="desktop:w-[174px]">
-										<label for="country" class="block text-[0.875rem] sr-only">Paese*</label>
-										<input type="text" placeholder="Paese*" id="country" class="input-preventivo-step-2" disabled />
+										<label for="origin_country" class="block text-[0.875rem] sr-only">Paese*</label>
+										<input type="text" placeholder="Paese*" value="Italia" id="origin_country" class="input-preventivo-step-2" disabled />
 									</div>
 
 									<div class="desktop:w-[171px]">
@@ -611,27 +742,29 @@ const continueToCart = async () => {
 									</div>
 
 									<div class="desktop:w-[324px]">
-										<label for="email" class="block text-[0.875rem] sr-only">Email</label>
-										<input type="email" placeholder="Email" v-model="originAddress.email" id="email" class="input-preventivo-step-2" />
+										<label for="origin_email" class="block text-[0.875rem] sr-only">Email</label>
+										<input type="email" placeholder="Email" v-model="originAddress.email" id="origin_email" :class="fieldClass('origin', 'email')" />
+										<p v-if="getFieldError('origin', 'email')" class="text-red-500 text-[0.75rem] mt-[4px]">{{ getFieldError('origin', 'email') }}</p>
 									</div>
 								</div>
 							</div>
 
-							<div class="bg-[#E4E4E4] rounded-[20px] text-[#252B42] mt-[20px] pl-[40px] pt-[35px] pb-[43px]">
+							<!-- DESTINAZIONE -->
+							<div class="bg-[#E4E4E4] rounded-[20px] text-[#252B42] mt-[20px] pl-[40px] pr-[40px] pt-[35px] pb-[43px]">
 								<h2 class="font-bold text-[1.125rem] tracking-[0.1px] mb-[39px]">
-									<!-- <Icon name="game-icons:position-marker" class="text-[#28a64c]" /> -->
-									Partenza
+									Destinazione
 								</h2>
 
 								<div class="flex items-start gap-x-[30px]">
 									<div class="desktop:w-[324px]">
-										<label for="name" class="block text-[0.875rem] sr-only">Nome e Cognome*</label>
-										<input type="text" placeholder="Nome e Cognome*" v-model="destinationAddress.full_name" id="name" class="input-preventivo-step-2" required />
+										<label for="dest_name" class="block text-[0.875rem] sr-only">Nome e Cognome*</label>
+										<input type="text" placeholder="Nome e Cognome*" v-model="destinationAddress.full_name" id="dest_name" :class="fieldClass('dest', 'full_name')" required />
+										<p v-if="getFieldError('dest', 'full_name')" class="text-red-500 text-[0.75rem] mt-[4px]">{{ getFieldError('dest', 'full_name') }}</p>
 									</div>
 
 									<div class="desktop:w-[324px]">
-										<label for="additional_information" class="block text-[0.875rem] sr-only">Informazioni aggiuntive</label>
-										<input type="text" placeholder="Informazioni aggiuntive" v-model="destinationAddress.additional_information" id="additional_information" class="input-preventivo-step-2" />
+										<label for="dest_additional_info" class="block text-[0.875rem] sr-only">Informazioni aggiuntive</label>
+										<input type="text" placeholder="Informazioni aggiuntive" v-model="destinationAddress.additional_information" id="dest_additional_info" class="input-preventivo-step-2" />
 									</div>
 								</div>
 
@@ -647,15 +780,15 @@ const continueToCart = async () => {
 									</div>
 
 									<div class="desktop:w-[213px]">
-										<label for="intercom_code" class="block text-[0.875rem] sr-only">Citofono</label>
-										<input type="text" placeholder="Citofono" v-model="destinationAddress.intercom_code" id="intercom_code" class="input-preventivo-step-2" />
+										<label for="dest_intercom" class="block text-[0.875rem] sr-only">Citofono</label>
+										<input type="text" placeholder="Citofono" v-model="destinationAddress.intercom_code" id="dest_intercom" class="input-preventivo-step-2" />
 									</div>
 								</div>
 
 								<div class="mt-[39px] flex items-start gap-x-[25px]">
 									<div class="desktop:w-[174px]">
-										<label for="country" class="block text-[0.875rem] sr-only">Paese*</label>
-										<input type="text" placeholder="Paese*" id="country" class="input-preventivo-step-2" disabled />
+										<label for="dest_country" class="block text-[0.875rem] sr-only">Paese*</label>
+										<input type="text" placeholder="Paese*" value="Italia" id="dest_country" class="input-preventivo-step-2" disabled />
 									</div>
 
 									<div class="desktop:w-[171px]">
@@ -681,17 +814,45 @@ const continueToCart = async () => {
 									</div>
 
 									<div class="desktop:w-[324px]">
-										<label for="email" class="block text-[0.875rem] sr-only">Email</label>
-										<input type="email" placeholder="Email" v-model="destinationAddress.email" id="email" class="input-preventivo-step-2" />
+										<label for="dest_email" class="block text-[0.875rem] sr-only">Email</label>
+										<input type="email" placeholder="Email" v-model="destinationAddress.email" id="dest_email" :class="fieldClass('dest', 'email')" />
+										<p v-if="getFieldError('dest', 'email')" class="text-red-500 text-[0.75rem] mt-[4px]">{{ getFieldError('dest', 'email') }}</p>
 									</div>
 								</div>
 							</div>
+
+						</template>
+						</div>
+
+						<div class="mt-[28px] flex flex-wrap gap-[12px] items-center justify-between">
+							<template v-if="showAddressFields">
+								<button
+									type="button"
+									@click="goBackToServices"
+									class="inline-flex items-center justify-center h-[52px] px-[24px] rounded-[30px] bg-[#095866] text-white font-semibold hover:bg-[#0a7a8c] transition cursor-pointer">
+									Indietro
+								</button>
+								<button
+									type="submit"
+									:disabled="isSubmitting"
+									class="bg-[#E44203] text-white font-semibold text-[1rem] px-[28px] h-[52px] rounded-[30px] hover:opacity-90 transition disabled:opacity-60 disabled:cursor-not-allowed">
+									{{ isSubmitting ? 'Salvataggio in corso...' : 'Continua e vai al carrello' }}
+								</button>
+							</template>
+							<template v-else>
+								<NuxtLink :to="{ path: '/', hash: '#preventivo' }" class="inline-flex items-center justify-center h-[52px] px-[24px] rounded-[30px] bg-[#095866] text-white font-semibold hover:bg-[#0a7a8c] transition">
+									Indietro
+								</NuxtLink>
+							</template>
+						</div>
+						<div v-if="submitError" class="mt-[16px] p-[14px] bg-red-50 border border-red-200 rounded-[12px] flex items-center gap-[10px]">
+							<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" class="text-red-500 shrink-0"><path fill="currentColor" d="M13 13h-2V7h2m0 10h-2v-2h2M12 2a10 10 0 0 1 10 10a10 10 0 0 1-10 10A10 10 0 0 1 2 12A10 10 0 0 1 12 2"/></svg>
+							<p class="text-red-600 text-[0.9375rem] font-medium">{{ submitError }}</p>
 						</div>
 					</div>
 
-					<!-- desktop-xl:w-[250px] before:content-[''] before:bg-green-500 before:w-[1px] before:block before:h-[871px] ml-[59px] -->
-					<div class="border-l-[0.5px] border-rgba(0,0,0,.8) min-h-[871px] mt-[30px] pl-[59px] pt-[50px]">
-						<div class="desktop-xl:w-[250px] flex flex-col gap-y-[50px]">
+					<div class="border-l-[0.5px] border-[rgba(0,0,0,0.1)] min-h-[600px] mt-[30px] pl-[30px] pt-[50px] shrink-0">
+						<div class="w-[250px] flex flex-col gap-y-[30px]">
 							<div class="bg-[#E4E4E4] rounded-[20px] p-[35px_21px] text-[#252B42] font-bold text-[0.6875rem] tracking-[0.1px]">
 								<div>
 									<div class="before:content-[''] before:inline-block before:bg-[url(/img/quote/second-step/origin.png)] before:w-[16px] before:h-[14px] before:mr-[10px] flex items-center">
@@ -730,14 +891,50 @@ const continueToCart = async () => {
 							</div>
 
 							<div class="bg-[#E4E4E4] rounded-[20px] p-[35px_21px] text-[#252B42] text-[0.6875rem] tracking-[0.1px]">
-								<h4 class="text-center font-bold mb-[12px]">Colli</h4>
+								<div class="flex items-center justify-between mb-[12px]">
+									<h4 class="text-center font-bold flex-1">Colli</h4>
+									<button type="button" @click="editingSidebarColli = !editingSidebarColli" class="ml-auto">
+										<NuxtImg src="/img/quote/second-step/edit.png" alt="Modifica" width="13" height="13" />
+									</button>
+								</div>
 
-								<ul class="font-semibold">
-									<li v-for="(pack, packIndex) in session?.data?.packages" :key="packIndex" class="mt-[10px] first:mt-0">
+								<!-- Vista lettura -->
+								<ul v-if="!editingSidebarColli" class="font-semibold">
+									<li v-for="(pack, packIndex) in editablePackages" :key="packIndex" class="mt-[10px] first:mt-0">
 										<p>{{ pack.quantity }} x - {{ pack.weight }} kg</p>
 										<p>({{ pack.first_size }} x {{ pack.second_size }} x {{ pack.third_size }}) cm</p>
 									</li>
 								</ul>
+
+								<!-- Vista modifica -->
+								<div v-else class="space-y-[10px]">
+									<div v-for="(pack, pi) in editablePackages" :key="pi" class="bg-white rounded-[10px] p-[10px]">
+										<p class="font-bold mb-[6px]">Collo #{{ pi + 1 }}</p>
+										<div class="grid grid-cols-2 gap-[6px]">
+											<div>
+												<label class="text-[0.6rem] text-[#737373]">Qtà</label>
+												<input type="number" v-model="pack.quantity" min="1" class="w-full bg-[#F1F1F1] rounded-[6px] h-[26px] text-center text-[0.75rem] px-[4px]" />
+											</div>
+											<div>
+												<label class="text-[0.6rem] text-[#737373]">Peso kg</label>
+												<input type="number" v-model="pack.weight" min="0.1" step="0.1" class="w-full bg-[#F1F1F1] rounded-[6px] h-[26px] text-center text-[0.75rem] px-[4px]" />
+											</div>
+											<div>
+												<label class="text-[0.6rem] text-[#737373]">L cm</label>
+												<input type="number" v-model="pack.first_size" min="1" class="w-full bg-[#F1F1F1] rounded-[6px] h-[26px] text-center text-[0.75rem] px-[4px]" />
+											</div>
+											<div>
+												<label class="text-[0.6rem] text-[#737373]">P cm</label>
+												<input type="number" v-model="pack.second_size" min="1" class="w-full bg-[#F1F1F1] rounded-[6px] h-[26px] text-center text-[0.75rem] px-[4px]" />
+											</div>
+											<div class="col-span-2">
+												<label class="text-[0.6rem] text-[#737373]">H cm</label>
+												<input type="number" v-model="pack.third_size" min="1" class="w-full bg-[#F1F1F1] rounded-[6px] h-[26px] text-center text-[0.75rem] px-[4px]" />
+											</div>
+										</div>
+									</div>
+									<button type="button" @click="editingSidebarColli = false" class="w-full bg-[#095866] text-white text-[0.6875rem] font-semibold h-[28px] rounded-[8px] hover:bg-[#0a7a8c] transition cursor-pointer">Salva</button>
+								</div>
 							</div>
 
 							<div class="bg-[#E4E4E4] rounded-[20px] p-[35px_21px] text-[#252B42] text-[0.6875rem] tracking-[0.1px]">
@@ -781,7 +978,62 @@ const continueToCart = async () => {
 			</form>
 		</div>
 
-		<!-- <div v-else class="text-center min-h-[400px] flex items-center justify-center">Caricamento...</div> -->
+		<!-- Shipment Saved Popup -->
+		<UModal v-model:open="showSavedPopup" :dismissible="true" :close="false">
+			<template #title>
+				<div class="flex items-center gap-[12px]">
+					<div class="w-[48px] h-[48px] rounded-full bg-emerald-100 flex items-center justify-center">
+						<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" class="text-emerald-600"><path fill="currentColor" d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10s10-4.5 10-10S17.5 2 12 2m-2 15l-5-5l1.41-1.41L10 14.17l7.59-7.59L19 8z"/></svg>
+					</div>
+					<h3 class="text-[1.25rem] font-bold text-[#252B42]">Spedizione salvata!</h3>
+				</div>
+			</template>
+			<template #body>
+				<p class="text-[#737373] text-[0.9375rem] leading-[1.6] mb-[24px]">
+					La tua spedizione è stata configurata e salvata con successo. Cosa vuoi fare ora?
+				</p>
+				<div class="flex flex-col gap-[12px]">
+					<button
+						@click="goToCart"
+						class="w-full flex items-center gap-[14px] p-[16px] rounded-[12px] border border-[#E9EBEC] hover:border-[#095866] hover:bg-[#f0fafb] transition-all cursor-pointer group">
+						<div class="w-[44px] h-[44px] rounded-[10px] bg-[#095866]/10 flex items-center justify-center shrink-0">
+							<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" class="text-[#095866]"><path fill="currentColor" d="M17 18a2 2 0 0 1 2 2a2 2 0 0 1-2 2a2 2 0 0 1-2-2c0-1.11.89-2 2-2M1 2h3.27l.94 2H20a1 1 0 0 1 1 1c0 .17-.05.34-.12.5l-3.58 6.47c-.34.61-1 1.03-1.75 1.03H8.1l-.9 1.63l-.03.12a.25.25 0 0 0 .25.25H19v2H7a2 2 0 0 1-2-2c0-.35.09-.68.24-.96l1.36-2.45L3 4H1zm6 16a2 2 0 0 1 2 2a2 2 0 0 1-2 2a2 2 0 0 1-2-2c0-1.11.89-2 2-2"/></svg>
+						</div>
+						<div class="text-left">
+							<p class="text-[0.9375rem] font-semibold text-[#252B42] group-hover:text-[#095866]">Vai al carrello</p>
+							<p class="text-[0.8125rem] text-[#737373]">Procedi al pagamento della spedizione</p>
+						</div>
+						<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" class="text-[#C8CCD0] ml-auto shrink-0"><path fill="currentColor" d="M8.59 16.59L13.17 12L8.59 7.41L10 6l6 6l-6 6z"/></svg>
+					</button>
+
+					<button
+						@click="goToSavedShipments"
+						class="w-full flex items-center gap-[14px] p-[16px] rounded-[12px] border border-[#E9EBEC] hover:border-[#095866] hover:bg-[#f0fafb] transition-all cursor-pointer group">
+						<div class="w-[44px] h-[44px] rounded-[10px] bg-blue-50 flex items-center justify-center shrink-0">
+							<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" class="text-blue-600"><path fill="currentColor" d="M21 16.5c0 .38-.21.71-.53.88l-7.9 4.44c-.16.12-.36.18-.57.18c-.21 0-.41-.06-.57-.18l-7.9-4.44A.99.99 0 0 1 3 16.5v-9c0-.38.21-.71.53-.88l7.9-4.44c.16-.12.36-.18.57-.18c.21 0 .41.06.57.18l7.9 4.44c.32.17.53.5.53.88zM12 4.15L6.04 7.5L12 10.85l5.96-3.35zM5 15.91l6 3.37v-6.73L5 9.18zm14 0V9.18l-6 3.37v6.73z"/></svg>
+						</div>
+						<div class="text-left">
+							<p class="text-[0.9375rem] font-semibold text-[#252B42] group-hover:text-[#095866]">Spedizioni configurate</p>
+							<p class="text-[0.8125rem] text-[#737373]">Salva nelle spedizioni configurate</p>
+						</div>
+						<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" class="text-[#C8CCD0] ml-auto shrink-0"><path fill="currentColor" d="M8.59 16.59L13.17 12L8.59 7.41L10 6l6 6l-6 6z"/></svg>
+					</button>
+
+					<button
+						@click="addAnotherShipment"
+						class="w-full flex items-center gap-[14px] p-[16px] rounded-[12px] border border-[#E9EBEC] hover:border-[#095866] hover:bg-[#f0fafb] transition-all cursor-pointer group">
+						<div class="w-[44px] h-[44px] rounded-[10px] bg-orange-50 flex items-center justify-center shrink-0">
+							<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" class="text-orange-600"><path fill="currentColor" d="M17 13h-4v4h-2v-4H7v-2h4V7h2v4h4m-5-9A10 10 0 0 0 2 12a10 10 0 0 0 10 10a10 10 0 0 0 10-10A10 10 0 0 0 12 2"/></svg>
+						</div>
+						<div class="text-left">
+							<p class="text-[0.9375rem] font-semibold text-[#252B42] group-hover:text-[#095866]">Aggiungi un'altra spedizione</p>
+							<p class="text-[0.8125rem] text-[#737373]">Configura una nuova spedizione</p>
+						</div>
+						<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" class="text-[#C8CCD0] ml-auto shrink-0"><path fill="currentColor" d="M8.59 16.59L13.17 12L8.59 7.41L10 6l6 6l-6 6z"/></svg>
+					</button>
+				</div>
+			</template>
+		</UModal>
 	</section>
 </template>
 
