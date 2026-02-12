@@ -150,36 +150,49 @@ const togglePaymentForm = async () => {
 		clientSecret.value = null;
 		errorMessage.value = null;
 
-		const { data } = await useSanctumFetch("/api/stripe/create-setup-intent", {
-			method: "POST",
-		});
+		try {
+			const { data, error: fetchError } = await useSanctumFetch("/api/stripe/create-setup-intent", {
+				method: "POST",
+			});
 
-		clientSecret.value = data.value.client_secret;
-		showFormPayments.value = true;
+			if (fetchError?.value || !data.value?.client_secret) {
+				errorMessage.value = "Impossibile inizializzare il modulo di pagamento. Riprova.";
+				textMessage.value = errorMessage.value;
+				textMessageType.value = "error";
+				return;
+			}
 
-		await nextTick();
+			clientSecret.value = data.value.client_secret;
+			showFormPayments.value = true;
 
-		elements.value = stripe.elements({ clientSecret: clientSecret.value });
+			await nextTick();
 
-		const style = {
-			base: {
-				color: "#252B42",
-				fontFamily: "Inter, system-ui, sans-serif",
-				fontSize: "15px",
-				fontWeight: "400",
-				"::placeholder": { color: "#a0a0a0" },
-			},
-			invalid: { color: "#dc2626" },
-		};
+			elements.value = stripe.elements({ clientSecret: clientSecret.value });
 
-		cardNumber.value = elements.value.create("cardNumber", { style, placeholder: "1234 5678 9012 3456" });
-		cardNumber.value.mount("#card-number");
+			const style = {
+				base: {
+					color: "#252B42",
+					fontFamily: "Inter, system-ui, sans-serif",
+					fontSize: "15px",
+					fontWeight: "400",
+					"::placeholder": { color: "#a0a0a0" },
+				},
+				invalid: { color: "#dc2626" },
+			};
 
-		cardExpiry.value = elements.value.create("cardExpiry", { style });
-		cardExpiry.value.mount("#card-expiry");
+			cardNumber.value = elements.value.create("cardNumber", { style, placeholder: "1234 5678 9012 3456" });
+			cardNumber.value.mount("#card-number");
 
-		cardCvc.value = elements.value.create("cardCvc", { style, placeholder: "123" });
-		cardCvc.value.mount("#card-cvc");
+			cardExpiry.value = elements.value.create("cardExpiry", { style });
+			cardExpiry.value.mount("#card-expiry");
+
+			cardCvc.value = elements.value.create("cardCvc", { style, placeholder: "123" });
+			cardCvc.value.mount("#card-cvc");
+		} catch (err) {
+			errorMessage.value = "Errore di connessione al sistema di pagamento. Riprova.";
+			textMessage.value = errorMessage.value;
+			textMessageType.value = "error";
+		}
 	}
 };
 
