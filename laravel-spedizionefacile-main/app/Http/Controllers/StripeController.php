@@ -8,6 +8,7 @@ use Stripe\Customer;
 use App\Models\Order;
 use App\Models\Coupon;
 use App\Models\Package;
+use App\Models\Setting;
 use Stripe\SetupIntent;
 use Stripe\StripeClient;
 use Stripe\PaymentIntent;
@@ -18,6 +19,14 @@ use Illuminate\Support\Facades\DB;
 
 class StripeController extends Controller
 {
+    /**
+     * Legge la secret key da settings (DB) con fallback su config (.env)
+     */
+    private function getStripeSecret(): ?string
+    {
+        return Setting::get('stripe_secret', config('services.stripe.secret'));
+    }
+
     public function createOrder(Request $request) {
         $request->validate([
             'subtotal' => 'required|numeric',
@@ -56,7 +65,7 @@ class StripeController extends Controller
 
         $order = Order::findOrFail($request->order_id);
 
-        $stripe = new StripeClient(config('services.stripe.secret'));
+        $stripe = new StripeClient($this->getStripeSecret());
 
         $paymentIntent = $stripe->paymentIntents->create([
             'amount' => $order->subtotal->amount(), // centesimi
@@ -75,7 +84,7 @@ class StripeController extends Controller
     }
 
     public function orderPaid(Request $request) {
-        $stripe = new StripeClient(config('services.stripe.secret'));
+        $stripe = new StripeClient($this->getStripeSecret());
 
         $intent = $stripe->paymentIntents->retrieve($request->ext_id);
 
@@ -112,7 +121,7 @@ class StripeController extends Controller
 
 
     public function createOrGetCustomer(User $user) {
-        $stripe = new StripeClient(config('services.stripe.secret'));
+        $stripe = new StripeClient($this->getStripeSecret());
 
         // Se l'utente non ha un customer Stripe, crealo
         if (!$user->customer_id) {
@@ -130,12 +139,14 @@ class StripeController extends Controller
 
 
     public function createSetupIntent(Request $request) {
-        if (!config('services.stripe.secret')) {
-            return response()->json(['error' => 'Stripe non configurato'], 503);
+        $secret = $this->getStripeSecret();
+
+        if (!$secret) {
+            return response()->json(['error' => 'Stripe non configurato. Vai nelle impostazioni per inserire le chiavi API.'], 503);
         }
 
         try {
-            $stripe = new StripeClient(config('services.stripe.secret'));
+            $stripe = new StripeClient($secret);
 
             $customerId = $this->createOrGetCustomer($request->user());
 
@@ -155,12 +166,13 @@ class StripeController extends Controller
 
     public function listPaymentMethods(Request $request) {
         $user = $request->user();
+        $secret = $this->getStripeSecret();
 
-        if (!$user->customer_id || !config('services.stripe.secret')) {
+        if (!$user->customer_id || !$secret) {
             return response()->json(['data' => [], 'default' => null]);
         }
 
-        $stripe = new StripeClient(config('services.stripe.secret'));
+        $stripe = new StripeClient($secret);
 
         // recupera tutti i metodi di pagamento (solo card)
         $pmList = $stripe->paymentMethods->all([
@@ -206,17 +218,17 @@ class StripeController extends Controller
             return response()->json(['error' => 'No Stripe customer'], 400);
         }
 
-        $stripe = new StripeClient(config('services.stripe.secret'));
+        $stripe = new StripeClient($this->getStripeSecret());
 
         $paymentMethodId = $request->payment_method;
 
         try {
-            // ✅ Collega la carta al customer (solo se non è già collegata)
+            // Collega la carta al customer (solo se non è già collegata)
             $stripe->paymentMethods->attach($paymentMethodId, [
                 'customer' => $user->customer_id
             ]);
 
-            // ✅ Imposta la carta come predefinita
+            // Imposta la carta come predefinita
             $stripe->customers->update($user->customer_id, [
                 'invoice_settings' => [
                     'default_payment_method' => $paymentMethodId
@@ -245,11 +257,9 @@ class StripeController extends Controller
             return response()->json(['error' => 'No Stripe customer'], 400);
         }
 
-        // ✅ Inizializza StripeClient
-        $stripe = new StripeClient(config('services.stripe.secret'));
+        $stripe = new StripeClient($this->getStripeSecret());
 
         try {
-            // ✅ Aggiorna il customer impostando il metodo di pagamento predefinito
             $customer = $stripe->customers->update($user->customer_id, [
                 'invoice_settings' => [
                     'default_payment_method' => $request->payment_method_id,
@@ -270,7 +280,7 @@ class StripeController extends Controller
 
         $request->validate(['payment_method_id' => 'required|string']);
 
-        $stripe = new StripeClient(config('services.stripe.secret'));
+        $stripe = new StripeClient($this->getStripeSecret());
 
         try {
             $stripe->paymentMethods->detach($request->payment_method_id);
@@ -283,12 +293,13 @@ class StripeController extends Controller
 
     public function getDefaultPaymentMethod(Request $request) {
         $user = $request->user();
+        $secret = $this->getStripeSecret();
 
-        if (!$user->customer_id || !config('services.stripe.secret')) {
+        if (!$user->customer_id || !$secret) {
             return response()->json(['card' => null]);
         }
 
-        $stripe = new StripeClient(config('services.stripe.secret'));
+        $stripe = new StripeClient($secret);
 
         // recupera customer (per il default)
         $customer = $stripe->customers->retrieve($user->customer_id);

@@ -475,6 +475,11 @@ const showRiepilogo = async () => {
 		return;
 	}
 
+	editablePackages.value = (packages || []).map(p => ({ ...p }));
+	editingDate.value = false;
+	editingOrigin.value = false;
+	editingDest.value = false;
+	editingColli.value = false;
 	showSummary.value = true;
 	await nextTick();
 	window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -497,22 +502,17 @@ const toggleServiceInSummary = (service) => {
 	services.value.service_type = userStore.servicesArray.join(", ");
 };
 
-const editFromSummary = async (section) => {
-	showSummary.value = false;
-	await nextTick();
-	let el = null;
-	if (section === 'date') {
-		el = document.querySelector('.my-swiper');
-	} else if (section === 'origin') {
-		el = document.getElementById('origin_name');
-	} else if (section === 'dest') {
-		el = document.getElementById('dest_name');
-	} else if (section === 'services') {
-		el = document.querySelector('.service-list');
-	}
-	if (el) {
-		el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-	}
+const editingDate = ref(false);
+const editingOrigin = ref(false);
+const editingDest = ref(false);
+const editingColli = ref(false);
+const editablePackages = ref([]);
+
+const editFromSummary = (section) => {
+	if (section === 'date') editingDate.value = !editingDate.value;
+	else if (section === 'origin') editingOrigin.value = !editingOrigin.value;
+	else if (section === 'dest') editingDest.value = !editingDest.value;
+	else if (section === 'colli') editingColli.value = !editingColli.value;
 };
 
 /* Step 2: Conferma e salva spedizione */
@@ -521,7 +521,7 @@ const confirmShipment = async () => {
 	isSubmitting.value = true;
 
 	try {
-		const packages = session.value?.data?.packages || [];
+		const packages = editablePackages.value.length > 0 ? editablePackages.value : (session.value?.data?.packages || []);
 		const payload = {
 			origin_address: toAddressPayload(originAddress.value),
 			destination_address: toAddressPayload(destinationAddress.value),
@@ -562,9 +562,7 @@ const confirmShipment = async () => {
 			<form v-else ref="formRef" @submit.prevent="showRiepilogo">
 				<Steps />
 
-				<!-- STEP FORM: Servizi + Indirizzi -->
-				<div v-if="!showSummary">
-
+				<!-- Popup servizi (sempre disponibile, anche dal riepilogo) -->
 				<UModal
 					:dismissible="true"
 					v-model:open="open"
@@ -664,6 +662,9 @@ const confirmShipment = async () => {
 						</div>
 					</template>
 				</UModal>
+
+				<!-- STEP FORM: Servizi + Indirizzi -->
+				<div v-if="!showSummary">
 
 				<ClientOnly>
 					<div class="bg-[#E6E6E6] rounded-[20px] pt-[13px]">
@@ -1032,63 +1033,197 @@ const confirmShipment = async () => {
 					<div class="max-w-[850px] space-y-[16px]">
 
 						<!-- Giorno ritiro -->
-						<div class="bg-[#E6E6E6] rounded-[20px] p-[24px_30px] flex items-center gap-[20px]">
-							<div class="w-[50px] h-[50px] rounded-[12px] bg-white flex items-center justify-center shrink-0">
-								<NuxtImg src="/img/quote/second-step/scheduled.png" alt="Calendario" width="30" height="30" />
+						<div class="bg-[#E6E6E6] rounded-[20px] p-[24px_30px]">
+							<div class="flex items-center gap-[20px]">
+								<div class="w-[50px] h-[50px] rounded-[12px] bg-white flex items-center justify-center shrink-0">
+									<NuxtImg src="/img/quote/second-step/scheduled.png" alt="Calendario" width="30" height="30" />
+								</div>
+								<div class="flex-1 min-w-0">
+									<h3 class="text-[0.75rem] font-bold text-[#737373] uppercase tracking-wider mb-[4px]">Giorno di ritiro</h3>
+									<p v-if="!editingDate" class="text-[1rem] font-bold text-[#252B42]">{{ services.date }}</p>
+								</div>
+								<button type="button" @click="editFromSummary('date')" class="flex items-center gap-[6px] text-[#095866] hover:text-[#0a7a8c] cursor-pointer transition shrink-0">
+									<NuxtImg src="/img/quote/second-step/edit.png" alt="Modifica" width="14" height="14" />
+									<span class="text-[0.8125rem] font-semibold">{{ editingDate ? 'Chiudi' : 'Modifica' }}</span>
+								</button>
 							</div>
-							<div class="flex-1 min-w-0">
-								<h3 class="text-[0.75rem] font-bold text-[#737373] uppercase tracking-wider mb-[4px]">Giorno di ritiro</h3>
-								<p class="text-[1rem] font-bold text-[#252B42]">{{ services.date }}</p>
-							</div>
-							<button type="button" @click="editFromSummary('date')" class="flex items-center gap-[6px] text-[#095866] hover:text-[#0a7a8c] cursor-pointer transition shrink-0">
-								<NuxtImg src="/img/quote/second-step/edit.png" alt="Modifica" width="14" height="14" />
-								<span class="text-[0.8125rem] font-semibold">Modifica</span>
-							</button>
+							<ClientOnly>
+								<div v-if="editingDate" class="mt-[16px] pt-[16px] border-t border-[#D0D0D0]">
+									<div class="relative px-[25px]">
+										<Swiper
+											class="summary-swiper h-[108px]"
+											:modules="[Navigation]"
+											:slides-per-view="5"
+											space-between="15"
+											:navigation="{ nextEl: '.summary-next', prevEl: '.summary-prev' }">
+											<SwiperSlide v-for="(day, index) in daysInMonth" :key="index">
+												<label
+													:key="day.date.toISOString()"
+													class="size-full block rounded-[10px] cursor-pointer select-none border-[1px] border-t-0"
+													:class="{
+														'border-[#2B2D52]': services.date == day.date.toLocaleDateString(),
+														'border-[#C0C0C0]': services.date != day.date.toLocaleDateString(),
+													}">
+													<span
+														class="w-full text-center block font-medium h-[30px] leading-[30px] rounded-[10px_10px_0_0] text-[0.8rem]"
+														:class="{
+															'bg-[#2B2D52] text-white': services.date == day.date.toLocaleDateString(),
+															'bg-[#C0C0C0] text-black': services.date != day.date.toLocaleDateString(),
+														}">
+														{{ day.weekday }}
+													</span>
+													<div class="flex flex-col justify-center items-center text-[#767676] leading-[24px] mt-[6px]">
+														<span class="font-bold text-[1.75rem]">{{ day.dayNumber }}</span>
+														<span class="text-[0.75rem]">{{ day.monthAbbr }}</span>
+													</div>
+													<input type="checkbox" @input="chooseDate(day)" class="opacity-0 pointer-events-none absolute bottom-0" :checked="services.date == day.date.toLocaleDateString()" />
+												</label>
+											</SwiperSlide>
+										</Swiper>
+										<button type="button" class="summary-prev absolute bottom-[35px] left-[4px] cursor-pointer z-10"><NuxtImg src="/img/quote/second-step/arrow-left.png" alt="" width="11" height="19" /></button>
+										<button type="button" class="summary-next absolute bottom-[35px] right-[4px] cursor-pointer z-10"><NuxtImg src="/img/quote/second-step/arrow-right.png" alt="" width="11" height="19" /></button>
+									</div>
+								</div>
+							</ClientOnly>
 						</div>
 
 						<!-- Partenza -->
-						<div class="bg-[#E6E6E6] rounded-[20px] p-[24px_30px] flex items-start gap-[20px]">
-							<div class="w-[50px] h-[50px] rounded-[12px] bg-white flex items-center justify-center shrink-0 mt-[4px]">
-								<NuxtImg src="/img/quote/second-step/origin.png" alt="Partenza" width="24" height="22" />
+						<div class="bg-[#E6E6E6] rounded-[20px] p-[24px_30px]">
+							<div class="flex items-start gap-[20px]">
+								<div class="w-[50px] h-[50px] rounded-[12px] bg-white flex items-center justify-center shrink-0 mt-[4px]">
+									<NuxtImg src="/img/quote/second-step/origin.png" alt="Partenza" width="24" height="22" />
+								</div>
+								<div class="flex-1 min-w-0">
+									<h3 class="text-[0.75rem] font-bold text-[#737373] uppercase tracking-wider mb-[4px]">Partenza</h3>
+									<template v-if="!editingOrigin">
+										<p class="text-[0.9375rem] font-bold text-[#252B42]">{{ originAddress.full_name }}</p>
+										<p class="text-[0.8125rem] text-[#404040] mt-[2px]">{{ originAddress.address }} {{ originAddress.address_number }}, {{ originAddress.postal_code }} {{ originAddress.city }} ({{ originAddress.province }})</p>
+										<p class="text-[0.8125rem] text-[#737373] mt-[2px]">Tel: {{ originAddress.telephone_number }}<span v-if="originAddress.email"> &middot; {{ originAddress.email }}</span></p>
+									</template>
+								</div>
+								<button type="button" @click="editFromSummary('origin')" class="flex items-center gap-[6px] text-[#095866] hover:text-[#0a7a8c] cursor-pointer transition shrink-0 mt-[4px]">
+									<NuxtImg src="/img/quote/second-step/edit.png" alt="Modifica" width="14" height="14" />
+									<span class="text-[0.8125rem] font-semibold">{{ editingOrigin ? 'Chiudi' : 'Modifica' }}</span>
+								</button>
 							</div>
-							<div class="flex-1 min-w-0">
-								<h3 class="text-[0.75rem] font-bold text-[#737373] uppercase tracking-wider mb-[4px]">Partenza</h3>
-								<p class="text-[0.9375rem] font-bold text-[#252B42]">{{ originAddress.full_name }}</p>
-								<p class="text-[0.8125rem] text-[#404040] mt-[2px]">{{ originAddress.address }} {{ originAddress.address_number }}, {{ originAddress.postal_code }} {{ originAddress.city }} ({{ originAddress.province }})</p>
-								<p class="text-[0.8125rem] text-[#737373] mt-[2px]">Tel: {{ originAddress.telephone_number }}<span v-if="originAddress.email"> &middot; {{ originAddress.email }}</span></p>
+							<div v-if="editingOrigin" class="mt-[16px] pt-[16px] border-t border-[#D0D0D0] space-y-[12px]">
+								<div class="grid grid-cols-2 gap-[12px]">
+									<input type="text" placeholder="Nome e Cognome*" v-model="originAddress.full_name" class="input-preventivo-step-2 w-full" />
+									<input type="text" placeholder="Informazioni aggiuntive" v-model="originAddress.additional_information" class="input-preventivo-step-2 w-full" />
+								</div>
+								<div class="grid grid-cols-3 gap-[12px]">
+									<input type="text" placeholder="Indirizzo*" v-model="originAddress.address" class="input-preventivo-step-2 w-full" />
+									<input type="text" placeholder="N. civico*" v-model="originAddress.address_number" class="input-preventivo-step-2 w-full" />
+									<input type="text" placeholder="Citofono" v-model="originAddress.intercom_code" class="input-preventivo-step-2 w-full" />
+								</div>
+								<div class="grid grid-cols-4 gap-[12px]">
+									<input type="text" placeholder="Paese*" value="Italia" class="input-preventivo-step-2 w-full" disabled />
+									<input type="text" placeholder="Città*" v-model="originAddress.city" class="input-preventivo-step-2 w-full" />
+									<input type="text" placeholder="Provincia*" v-model="originAddress.province" class="input-preventivo-step-2 w-full" />
+									<input type="text" placeholder="CAP*" v-model="originAddress.postal_code" class="input-preventivo-step-2 w-full" />
+								</div>
+								<div class="grid grid-cols-2 gap-[12px]">
+									<input type="tel" placeholder="Telefono*" v-model="originAddress.telephone_number" class="input-preventivo-step-2 w-full" />
+									<input type="email" placeholder="Email" v-model="originAddress.email" class="input-preventivo-step-2 w-full" />
+								</div>
+								<div class="flex justify-end">
+									<button type="button" @click="editingOrigin = false" class="bg-[#095866] text-white text-[0.8125rem] font-semibold px-[20px] h-[36px] rounded-[10px] hover:bg-[#0a7a8c] transition cursor-pointer">Salva</button>
+								</div>
 							</div>
-							<button type="button" @click="editFromSummary('origin')" class="flex items-center gap-[6px] text-[#095866] hover:text-[#0a7a8c] cursor-pointer transition shrink-0 mt-[4px]">
-								<NuxtImg src="/img/quote/second-step/edit.png" alt="Modifica" width="14" height="14" />
-								<span class="text-[0.8125rem] font-semibold">Modifica</span>
-							</button>
 						</div>
 
 						<!-- Destinazione -->
-						<div class="bg-[#E6E6E6] rounded-[20px] p-[24px_30px] flex items-start gap-[20px]">
-							<div class="w-[50px] h-[50px] rounded-[12px] bg-white flex items-center justify-center shrink-0 mt-[4px]">
-								<NuxtImg src="/img/quote/second-step/destination.png" alt="Destinazione" width="24" height="22" />
+						<div class="bg-[#E6E6E6] rounded-[20px] p-[24px_30px]">
+							<div class="flex items-start gap-[20px]">
+								<div class="w-[50px] h-[50px] rounded-[12px] bg-white flex items-center justify-center shrink-0 mt-[4px]">
+									<NuxtImg src="/img/quote/second-step/destination.png" alt="Destinazione" width="24" height="22" />
+								</div>
+								<div class="flex-1 min-w-0">
+									<h3 class="text-[0.75rem] font-bold text-[#737373] uppercase tracking-wider mb-[4px]">Destinazione</h3>
+									<template v-if="!editingDest">
+										<p class="text-[0.9375rem] font-bold text-[#252B42]">{{ destinationAddress.full_name }}</p>
+										<p class="text-[0.8125rem] text-[#404040] mt-[2px]">{{ destinationAddress.address }} {{ destinationAddress.address_number }}, {{ destinationAddress.postal_code }} {{ destinationAddress.city }} ({{ destinationAddress.province }})</p>
+										<p class="text-[0.8125rem] text-[#737373] mt-[2px]">Tel: {{ destinationAddress.telephone_number }}<span v-if="destinationAddress.email"> &middot; {{ destinationAddress.email }}</span></p>
+									</template>
+								</div>
+								<button type="button" @click="editFromSummary('dest')" class="flex items-center gap-[6px] text-[#095866] hover:text-[#0a7a8c] cursor-pointer transition shrink-0 mt-[4px]">
+									<NuxtImg src="/img/quote/second-step/edit.png" alt="Modifica" width="14" height="14" />
+									<span class="text-[0.8125rem] font-semibold">{{ editingDest ? 'Chiudi' : 'Modifica' }}</span>
+								</button>
 							</div>
-							<div class="flex-1 min-w-0">
-								<h3 class="text-[0.75rem] font-bold text-[#737373] uppercase tracking-wider mb-[4px]">Destinazione</h3>
-								<p class="text-[0.9375rem] font-bold text-[#252B42]">{{ destinationAddress.full_name }}</p>
-								<p class="text-[0.8125rem] text-[#404040] mt-[2px]">{{ destinationAddress.address }} {{ destinationAddress.address_number }}, {{ destinationAddress.postal_code }} {{ destinationAddress.city }} ({{ destinationAddress.province }})</p>
-								<p class="text-[0.8125rem] text-[#737373] mt-[2px]">Tel: {{ destinationAddress.telephone_number }}<span v-if="destinationAddress.email"> &middot; {{ destinationAddress.email }}</span></p>
+							<div v-if="editingDest" class="mt-[16px] pt-[16px] border-t border-[#D0D0D0] space-y-[12px]">
+								<div class="grid grid-cols-2 gap-[12px]">
+									<input type="text" placeholder="Nome e Cognome*" v-model="destinationAddress.full_name" class="input-preventivo-step-2 w-full" />
+									<input type="text" placeholder="Informazioni aggiuntive" v-model="destinationAddress.additional_information" class="input-preventivo-step-2 w-full" />
+								</div>
+								<div class="grid grid-cols-3 gap-[12px]">
+									<input type="text" placeholder="Indirizzo*" v-model="destinationAddress.address" class="input-preventivo-step-2 w-full" />
+									<input type="text" placeholder="N. civico*" v-model="destinationAddress.address_number" class="input-preventivo-step-2 w-full" />
+									<input type="text" placeholder="Citofono" v-model="destinationAddress.intercom_code" class="input-preventivo-step-2 w-full" />
+								</div>
+								<div class="grid grid-cols-4 gap-[12px]">
+									<input type="text" placeholder="Paese*" value="Italia" class="input-preventivo-step-2 w-full" disabled />
+									<input type="text" placeholder="Città*" v-model="destinationAddress.city" class="input-preventivo-step-2 w-full" />
+									<input type="text" placeholder="Provincia*" v-model="destinationAddress.province" class="input-preventivo-step-2 w-full" />
+									<input type="text" placeholder="CAP*" v-model="destinationAddress.postal_code" class="input-preventivo-step-2 w-full" />
+								</div>
+								<div class="grid grid-cols-2 gap-[12px]">
+									<input type="tel" placeholder="Telefono*" v-model="destinationAddress.telephone_number" class="input-preventivo-step-2 w-full" />
+									<input type="email" placeholder="Email" v-model="destinationAddress.email" class="input-preventivo-step-2 w-full" />
+								</div>
+								<div class="flex justify-end">
+									<button type="button" @click="editingDest = false" class="bg-[#095866] text-white text-[0.8125rem] font-semibold px-[20px] h-[36px] rounded-[10px] hover:bg-[#0a7a8c] transition cursor-pointer">Salva</button>
+								</div>
 							</div>
-							<button type="button" @click="editFromSummary('dest')" class="flex items-center gap-[6px] text-[#095866] hover:text-[#0a7a8c] cursor-pointer transition shrink-0 mt-[4px]">
-								<NuxtImg src="/img/quote/second-step/edit.png" alt="Modifica" width="14" height="14" />
-								<span class="text-[0.8125rem] font-semibold">Modifica</span>
-							</button>
 						</div>
 
 						<!-- Colli -->
-						<div class="bg-[#E6E6E6] rounded-[20px] p-[24px_30px] flex items-start gap-[20px]">
-							<div class="w-[50px] h-[50px] rounded-[12px] bg-white flex items-center justify-center shrink-0 mt-[4px]">
-								<NuxtImg src="/img/quote/second-step/pickup-and-delivery.png" alt="Colli" width="30" height="30" />
+						<div class="bg-[#E6E6E6] rounded-[20px] p-[24px_30px]">
+							<div class="flex items-start gap-[20px]">
+								<div class="w-[50px] h-[50px] rounded-[12px] bg-white flex items-center justify-center shrink-0 mt-[4px]">
+									<NuxtImg src="/img/quote/second-step/pickup-and-delivery.png" alt="Colli" width="30" height="30" />
+								</div>
+								<div class="flex-1 min-w-0">
+									<h3 class="text-[0.75rem] font-bold text-[#737373] uppercase tracking-wider mb-[4px]">Colli</h3>
+									<template v-if="!editingColli">
+										<div v-for="(pack, i) in editablePackages" :key="i" class="text-[0.875rem] text-[#252B42] mt-[2px] first:mt-0">
+											<span class="font-bold">{{ pack.quantity }}x</span> &ndash; {{ pack.weight }} kg ({{ pack.first_size }} &times; {{ pack.second_size }} &times; {{ pack.third_size }} cm)
+										</div>
+									</template>
+								</div>
+								<button type="button" @click="editFromSummary('colli')" class="flex items-center gap-[6px] text-[#095866] hover:text-[#0a7a8c] cursor-pointer transition shrink-0 mt-[4px]">
+									<NuxtImg src="/img/quote/second-step/edit.png" alt="Modifica" width="14" height="14" />
+									<span class="text-[0.8125rem] font-semibold">{{ editingColli ? 'Chiudi' : 'Modifica' }}</span>
+								</button>
 							</div>
-							<div class="flex-1 min-w-0">
-								<h3 class="text-[0.75rem] font-bold text-[#737373] uppercase tracking-wider mb-[4px]">Colli</h3>
-								<div v-for="(pack, i) in session?.data?.packages" :key="i" class="text-[0.875rem] text-[#252B42] mt-[2px] first:mt-0">
-									<span class="font-bold">{{ pack.quantity }}x</span> &ndash; {{ pack.weight }} kg ({{ pack.first_size }} &times; {{ pack.second_size }} &times; {{ pack.third_size }} cm)
+							<div v-if="editingColli" class="mt-[16px] pt-[16px] border-t border-[#D0D0D0] space-y-[12px]">
+								<div v-for="(pack, i) in editablePackages" :key="i" class="bg-white rounded-[12px] p-[16px]">
+									<p class="text-[0.8125rem] font-bold text-[#252B42] mb-[10px]">Collo #{{ i + 1 }}</p>
+									<div class="grid grid-cols-5 gap-[10px]">
+										<div>
+											<label class="block text-[0.6875rem] text-[#737373] mb-[4px]">Quantità</label>
+											<input type="number" v-model="pack.quantity" min="1" class="input-preventivo-step-2 w-full text-center" />
+										</div>
+										<div>
+											<label class="block text-[0.6875rem] text-[#737373] mb-[4px]">Peso (kg)</label>
+											<input type="number" v-model="pack.weight" min="0.1" step="0.1" class="input-preventivo-step-2 w-full text-center" />
+										</div>
+										<div>
+											<label class="block text-[0.6875rem] text-[#737373] mb-[4px]">L (cm)</label>
+											<input type="number" v-model="pack.first_size" min="1" class="input-preventivo-step-2 w-full text-center" />
+										</div>
+										<div>
+											<label class="block text-[0.6875rem] text-[#737373] mb-[4px]">P (cm)</label>
+											<input type="number" v-model="pack.second_size" min="1" class="input-preventivo-step-2 w-full text-center" />
+										</div>
+										<div>
+											<label class="block text-[0.6875rem] text-[#737373] mb-[4px]">H (cm)</label>
+											<input type="number" v-model="pack.third_size" min="1" class="input-preventivo-step-2 w-full text-center" />
+										</div>
+									</div>
+								</div>
+								<div class="flex justify-end">
+									<button type="button" @click="editingColli = false" class="bg-[#095866] text-white text-[0.8125rem] font-semibold px-[20px] h-[36px] rounded-[10px] hover:bg-[#0a7a8c] transition cursor-pointer">Salva</button>
 								</div>
 							</div>
 						</div>
@@ -1123,7 +1258,7 @@ const confirmShipment = async () => {
 										:key="sIdx"
 										class="flex items-center gap-[10px] p-[12px] rounded-[12px] cursor-pointer transition-all select-none"
 										:class="userStore.servicesArray.includes(service.name) ? 'bg-[#095866] text-white' : 'bg-white text-[#252B42] hover:bg-[#f5f5f5]'"
-										@click="toggleServiceInSummary(service)">
+										@click="chooseService(service, sIdx)">
 										<div
 											class="w-[32px] h-[32px] rounded-[8px] flex items-center justify-center shrink-0"
 											:class="userStore.servicesArray.includes(service.name) ? 'bg-white/20' : 'bg-[#F0F0F0]'">
@@ -1251,6 +1386,11 @@ const confirmShipment = async () => {
 	border-radius: 8px;
 	padding: 12px 10px;
 	color: #252b42;
+}
+
+.summary-swiper .swiper-slide {
+	background: #f1f1f1;
+	border-radius: 10px;
 }
 
 .title-popup::after {
