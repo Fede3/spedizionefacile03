@@ -72,26 +72,38 @@ function Wait-Http([string]$url,[int]$timeoutSec=240){
   return $false
 }
 
-function Find-Dir-With([string]$fileName){
-  $dirs = Get-ChildItem -Path $root -Directory -ErrorAction SilentlyContinue
-  foreach($d in $dirs){
-    if(Test-Path (Join-Path $d.FullName $fileName)){ return $d.FullName }
+function Resolve-ProjectDir([string]$preferredName, [string[]]$markerFiles, [string]$projectLabel){
+  $preferred = Join-Path $root $preferredName
+  foreach($marker in $markerFiles){
+    if(Test-Path (Join-Path $preferred $marker)){ return $preferred }
   }
-  return $null
+
+  $dirs = Get-ChildItem -Path $root -Directory -ErrorAction SilentlyContinue
+  $matches = @()
+  foreach($d in $dirs){
+    foreach($marker in $markerFiles){
+      if(Test-Path (Join-Path $d.FullName $marker)){
+        $matches += $d.FullName
+        break
+      }
+    }
+  }
+
+  if($matches.Count -eq 1){ return $matches[0] }
+  if($matches.Count -gt 1){
+    $list = ($matches | ForEach-Object { " - $_" }) -join "`n"
+    throw "Trovate piu cartelle candidate per ${projectLabel}. Rinomina o elimina i duplicati e lascia una sola cartella valida:`n$list"
+  }
+
+  throw "Non trovo la cartella ${projectLabel} (marker: $($markerFiles -join ', '))."
 }
 
 function Find-Frontend(){
-  foreach($n in @("nuxt.config.ts","nuxt.config.js","nuxt.config.mjs")){
-    $p = Find-Dir-With $n
-    if($p){ return $p }
-  }
-  throw "Non trovo la cartella Nuxt (manca nuxt.config.* in una sottocartella)."
+  return Resolve-ProjectDir "nuxt-spedizionefacile-master" @("nuxt.config.ts","nuxt.config.js","nuxt.config.mjs") "Nuxt"
 }
 
 function Find-Backend(){
-  $p = Find-Dir-With "artisan"
-  if($p){ return $p }
-  throw "Non trovo la cartella Laravel (manca artisan in una sottocartella)."
+  return Resolve-ProjectDir "laravel-spedizionefacile-main" @("artisan") "Laravel"
 }
 
 function Has-Caddyfile(){ return (Test-Path (Join-Path $root "Caddyfile")) }
@@ -207,6 +219,9 @@ function Start-Local([switch]$NonAprireBrowser){
 
   $frontDir = Find-Frontend
   $backDir  = Find-Backend
+
+  T "Frontend selezionato: $frontDir" "DarkCyan"
+  T "Backend selezionato:  $backDir" "DarkCyan"
 
   # porte dedicate (se vuoi cambiarle, si cambia qui, ma NON tocca BianchiPro)
   $frontPort = 3001

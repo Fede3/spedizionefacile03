@@ -238,18 +238,19 @@ const deletePack = async (index) => {
 const messageError = ref(null);
 
 const calculateRate = async () => {
+	messageError.value = null;
 	// Validate form on client-side FIRST
 	if (!formRef.value || !formRef.value.checkValidity()) {
 		formRef.value?.reportValidity();
 		isRateCalculated.value = false;
-		return;
+		return false;
 	}
 
 	// Check that at least one package is selected
 	if (!userStore.packages || userStore.packages.length === 0) {
 		messageError.value = { packages: ["Seleziona almeno un tipo di collo."] };
 		isRateCalculated.value = false;
-		return;
+		return false;
 	}
 
 	// Validate each package has weight and dimensions, and ensure prices are calculated
@@ -258,7 +259,7 @@ const calculateRate = async () => {
 		if (!pack.weight || !pack.first_size || !pack.second_size || !pack.third_size) {
 			messageError.value = { packages: ["Compila peso e dimensioni per tutti i colli."] };
 			isRateCalculated.value = false;
-			return;
+			return false;
 		}
 
 		// Recalculate prices to ensure they exist
@@ -276,7 +277,7 @@ const calculateRate = async () => {
 		if (pack.single_price == null || pack.single_price === undefined) {
 			messageError.value = { packages: ["Errore nel calcolo del prezzo. Reinserisci peso e dimensioni."] };
 			isRateCalculated.value = false;
-			return;
+			return false;
 		}
 	}
 
@@ -292,15 +293,24 @@ const calculateRate = async () => {
 	} catch (error) {
 		messageError.value = error?.data?.errors || { packages: ["Errore durante il calcolo. Riprova."] };
 		isRateCalculated.value = false;
-		return;
+		return false;
 	}
 
 	messageError.value = null;
 	isRateCalculated.value = true;
 	userStore.isQuoteStarted = true;
 	await refresh();
+
+	return true;
 };
 
+
+const continueToNextStep = async () => {
+	const ok = await calculateRate();
+	if (ok) {
+		await navigateTo('/la-tua-spedizione/2');
+	}
+};
 const nextStep = async () => {
 	window.scrollTo(0, 0);
 
@@ -347,7 +357,7 @@ watch(
 			<div
 				class="bg-white w-full rounded-[24px] desktop-xl:rounded-[32px] relative z-1 p-[20px_16px] desktop:p-[30px_36px] tablet:p-[20px_40px] mx-auto"
 			:class="route.path === '/'
-				? 'mt-[-132px] tablet:mt-[-220px] desktop:mt-[-185px] desktop-xl:mt-[-70px] max-w-[1100px]'
+				? 'mt-[-72px] tablet:mt-[-170px] desktop:mt-[-82px] desktop-xl:mt-[-54px] max-w-[1260px]'
 				: 'mt-[40px] max-w-[1200px]'">
 				<h2 class="border-b-[1px] border-[#E6E6E6] text-[1.25rem] desktop:text-[2rem] text-black font-bold text-center pb-[8px]">Preventivo Rapido</h2>
 
@@ -510,21 +520,14 @@ watch(
 						:class="{ 'text-[1.875rem] h-[80px]': !isRateCalculated, ' h-[113px]': isRateCalculated }">
 							<button
 								type="button"
-								@click="calculateRate"
-								v-if="!isRateCalculated"
+								@click="continueToNextStep"
 								class="w-full h-full rounded-[50px] cursor-pointer after:content-[''] after:bg-[url(/img/arrow-down.svg)] after:inline-block after:size-[16px] text-[1.875rem] after:ml-[10px] after:scale-200">
-								Continua
-							</button>
-
-							<NuxtLink
-								to="/la-tua-spedizione/2"
-								v-if="isRateCalculated"
-								class="rounded-[50px] after:content-[''] after:bg-[url(/img/arrow-down.svg)] after:inline-block after:size-[16px] h-[113px] after:scale-300 after:ml-[35px] flex items-center justify-center">
-								<span>
+								<span v-if="!isRateCalculated">Continua</span>
+								<span v-else>
 									<span class="text-[2.25rem] border-b-[1px] border-white pb-[4px]">Spedisci da {{ session?.data?.total_price }}€</span>
 									<span class="block text-right mr-[5px] mt-[5px]">IVA inclusa</span>
-							</span>
-						</NuxtLink>
+								</span>
+							</button>
 
 						<p v-if="status === 'pending'" class="h-full flex justify-center items-center">
 							<Icon name="eos-icons:bubble-loading" style="font-size: 60px" />

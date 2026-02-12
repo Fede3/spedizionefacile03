@@ -125,7 +125,7 @@ const displayTotal = computed(() => {
 				<h1 class="text-[1.5rem] desktop:text-[1.75rem] font-bold text-[#252B42] mb-[24px]">Carrello</h1>
 
 				<!-- Table header -->
-				<div class="hidden desktop:grid grid-cols-[1fr_1fr_1fr_100px_120px_80px] gap-[12px] px-[24px] pb-[10px] text-[0.75rem] font-bold text-[#737373] uppercase tracking-wider border-b border-[#E9EBEC]">
+				<div class="hidden desktop:grid grid-cols-[1fr_1fr_1fr_100px_120px_130px] gap-[12px] px-[24px] pb-[10px] text-[0.75rem] font-bold text-[#737373] uppercase tracking-wider border-b border-[#E9EBEC]">
 					<span>Partenza</span>
 					<span>Destinazione</span>
 					<span>Servizio</span>
@@ -142,7 +142,7 @@ const displayTotal = computed(() => {
 						class="bg-white rounded-[14px] border border-[#E9EBEC] hover:border-[#095866] transition-all">
 
 						<!-- Desktop row -->
-						<div class="hidden desktop:grid grid-cols-[1fr_1fr_1fr_100px_120px_80px] gap-[12px] items-center p-[16px_24px]">
+						<div class="hidden desktop:grid grid-cols-[1fr_1fr_1fr_100px_120px_130px] gap-[12px] items-center p-[16px_24px]">
 							<!-- Partenza -->
 							<div>
 								<p class="text-[0.875rem] font-semibold text-[#252B42]">{{ item.origin_address?.city }}</p>
@@ -168,7 +168,7 @@ const displayTotal = computed(() => {
 								<span class="text-[0.9375rem] font-bold text-[#252B42]">{{ formatPrice(item.single_price) }}</span>
 							</div>
 							<!-- Azioni -->
-							<div class="flex items-center justify-center gap-[8px]">
+							<div class="flex items-center justify-center gap-[10px] whitespace-nowrap">
 								<button type="button" @click="openDetail(item)" title="Dettagli" class="w-[32px] h-[32px] rounded-[8px] bg-[#095866]/10 flex items-center justify-center hover:bg-[#095866]/20 transition cursor-pointer">
 									<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#095866" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
 								</button>
@@ -257,7 +257,7 @@ const displayTotal = computed(() => {
 							Svuota carrello
 						</button>
 						<NuxtLink
-							to="/preventivo"
+							:to="{ path: '/', hash: '#preventivo' }"
 							class="inline-flex items-center gap-[6px] px-[20px] h-[48px] rounded-[12px] border border-[#E9EBEC] text-[#095866] hover:border-[#095866] transition text-[0.875rem] font-medium">
 							<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
 							Aggiungi spedizione
@@ -282,7 +282,7 @@ const displayTotal = computed(() => {
 					Non hai ancora aggiunto spedizioni al carrello. Configura la tua prima spedizione per iniziare.
 				</p>
 				<NuxtLink
-					to="/preventivo"
+					:to="{ path: '/', hash: '#preventivo' }"
 					class="inline-block px-[24px] py-[12px] bg-[#095866] hover:bg-[#0a7a8c] text-white rounded-[10px] font-semibold text-[0.9375rem] transition-colors">
 					Crea nuova spedizione
 				</NuxtLink>

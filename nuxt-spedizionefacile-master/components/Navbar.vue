@@ -1,8 +1,8 @@
 <script setup>
 const navLinks = [
 	{ page: "/servizi", text: "Servizi" },
-	{ page: "/", text: "Preventivo Rapido" },
-	{ page: "/", text: "Guide" },
+	{ page: { path: '/', hash: '#preventivo' }, text: 'Preventivo Rapido' },
+	{ page: { path: '/', hash: '#guide' }, text: 'Guide' },
 	{ page: "/checkout", text: "Checkout" },
 	{ page: "/contatti", text: "Contatti" },
 ];
@@ -48,7 +48,7 @@ const { cart, status } = useCart();
 				<span v-else>Accedi!</span>
 			</NuxtLink>
 
-			<NuxtLink to="/carrello" class="inline-block bg-[#E44203] px-[30px] h-[48px] leading-[48px] text-center text-white rounded-[24px] font-semibold">
+			<NuxtLink to="/carrello" class="inline-flex items-center justify-center gap-[8px] bg-[#E44203] min-w-[88px] px-[20px] h-[48px] leading-[48px] text-center text-white rounded-[24px] font-semibold whitespace-nowrap">
 				<Icon name="mdi:cart-outline" />
 				<span v-if="status === 'success'">{{ cart?.data?.length || 0 }}</span>
 				<span v-if="status === 'pending'">...</span>
