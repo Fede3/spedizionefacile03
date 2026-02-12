@@ -11,6 +11,7 @@ const runtimeConfig = useRuntimeConfig();
 const stripePromise = loadStripe(runtimeConfig.public.stripeKey);
 
 const stripe = await stripePromise;
+const client = useSanctumClient();
 
 const cardNumber = ref(null);
 const cardExpiry = ref(null);
@@ -60,13 +61,13 @@ const handleAddCard = async () => {
 			return;
 		}
 
-		const { data, error: serverError } = await useSanctumFetch("api/stripe/set-default-payment-method", {
+		const serverResponse = await client("/api/stripe/set-default-payment-method", {
 			method: "POST",
 			body: { payment_method: setupIntent.payment_method },
 		});
 
-		if (serverError?.value) {
-			errorMessage.value = "Errore server. Riprova.";
+		if (serverResponse?.error) {
+			errorMessage.value = serverResponse.error || "Errore server. Riprova.";
 			return;
 		}
 
@@ -90,11 +91,11 @@ const setDefault = async (pmId) => {
 	textMessageType.value = "info";
 
 	try {
-		const { data } = await useSanctumFetch("api/stripe/change-default-payment-method", {
+		const data = await client("/api/stripe/change-default-payment-method", {
 			method: "POST",
 			body: { payment_method_id: pmId },
 		});
-		if (data.value?.success) {
+		if (data?.success) {
 			textMessage.value = "Carta predefinita aggiornata.";
 			textMessageType.value = "success";
 			await refresh();
@@ -113,12 +114,12 @@ const deleteCard = async (pmId) => {
 	textMessageType.value = "info";
 
 	try {
-		const { data } = await useSanctumFetch("api/stripe/delete-card", {
+		const data = await client("/api/stripe/delete-card", {
 			method: "DELETE",
 			body: { payment_method_id: pmId },
 		});
 
-		if (data.value?.success) {
+		if (data?.success) {
 			await refresh();
 			deleteConfirmId.value = null;
 			textMessage.value = "Carta eliminata.";
@@ -151,18 +152,18 @@ const togglePaymentForm = async () => {
 		errorMessage.value = null;
 
 		try {
-			const { data, error: fetchError } = await useSanctumFetch("/api/stripe/create-setup-intent", {
+			const response = await client("/api/stripe/create-setup-intent", {
 				method: "POST",
 			});
 
-			if (fetchError?.value || !data.value?.client_secret) {
-				errorMessage.value = "Impossibile inizializzare il modulo di pagamento. Riprova.";
+			if (!response?.client_secret) {
+				errorMessage.value = response?.error || "Impossibile inizializzare il modulo di pagamento. Riprova.";
 				textMessage.value = errorMessage.value;
 				textMessageType.value = "error";
 				return;
 			}
 
-			clientSecret.value = data.value.client_secret;
+			clientSecret.value = response.client_secret;
 			showFormPayments.value = true;
 
 			await nextTick();
@@ -189,8 +190,9 @@ const togglePaymentForm = async () => {
 			cardCvc.value = elements.value.create("cardCvc", { style, placeholder: "123" });
 			cardCvc.value.mount("#card-cvc");
 		} catch (err) {
-			errorMessage.value = "Errore di connessione al sistema di pagamento. Riprova.";
-			textMessage.value = errorMessage.value;
+			const msg = err?.data?.error || err?.data?.message || err?.message || "Errore di connessione al sistema di pagamento.";
+			errorMessage.value = msg;
+			textMessage.value = msg;
 			textMessageType.value = "error";
 		}
 	}
