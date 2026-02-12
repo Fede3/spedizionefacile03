@@ -7,10 +7,16 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use App\Models\Setting;
 use Stripe\StripeClient;
 
 class WalletController extends Controller
 {
+    private function getStripeSecret(): ?string
+    {
+        return Setting::get('stripe_secret', config('services.stripe.secret'));
+    }
+
     public function balance(): JsonResponse
     {
         $user = auth()->user();
@@ -45,7 +51,15 @@ class WalletController extends Controller
         $amountCents = (int) round($data['amount'] * 100);
         $idempotencyKey = 'topup_' . $user->id . '_' . Str::uuid();
 
-        $stripe = new StripeClient(config('services.stripe.secret'));
+        $secret = $this->getStripeSecret();
+        if (!$secret) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Stripe non configurato. Vai nelle impostazioni per inserire le chiavi API.',
+            ], 503);
+        }
+
+        $stripe = new StripeClient($secret);
 
         // Ensure customer exists
         $stripeCtrl = new \App\Http\Controllers\StripeController();

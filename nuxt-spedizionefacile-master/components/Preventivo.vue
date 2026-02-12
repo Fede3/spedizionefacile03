@@ -308,51 +308,14 @@ const calculateRate = async () => {
 const continueToNextStep = async () => {
 	messageError.value = null;
 
-	// Validate form on client-side
-	if (!formRef.value || !formRef.value.checkValidity()) {
-		formRef.value?.reportValidity();
+	// If rate is already calculated, navigate to next step
+	if (isRateCalculated.value) {
+		await navigateTo('/la-tua-spedizione/2');
 		return;
 	}
 
-	// Check that at least one package is selected
-	if (!userStore.packages || userStore.packages.length === 0) {
-		messageError.value = { packages: ["Seleziona almeno un tipo di collo."] };
-		return;
-	}
-
-	// Validate each package has weight and dimensions
-	for (let i = 0; i < userStore.packages.length; i++) {
-		const pack = userStore.packages[i];
-		if (!pack.weight || !pack.first_size || !pack.second_size || !pack.third_size) {
-			messageError.value = { packages: ["Compila peso e dimensioni per tutti i colli."] };
-			return;
-		}
-
-		// Ensure prices are calculated
-		if (pack.weight_price == null) calcPriceWithWeight(pack);
-		if (pack.volume_price == null) calcPriceWithVolume(pack);
-		if (pack.single_price == null) checkPrices(pack);
-	}
-
-	// Try to sync with server, but navigate even if it fails
-	try {
-		await sanctum("/sanctum/csrf-cookie");
-		await sanctum("/api/session/first-step", {
-			method: "POST",
-			body: {
-				shipment_details: userStore.shipmentDetails,
-				packages: userStore.packages,
-			},
-		});
-		await refresh();
-	} catch (error) {
-		// Server sync failed, but we can still proceed with local data
-		console.warn("Server sync failed, proceeding with local data:", error);
-	}
-
-	isRateCalculated.value = true;
-	userStore.isQuoteStarted = true;
-	await navigateTo('/la-tua-spedizione/2');
+	// First click: calculate rate and show price
+	await calculateRate();
 };
 const nextStep = async () => {
 	window.scrollTo(0, 0);

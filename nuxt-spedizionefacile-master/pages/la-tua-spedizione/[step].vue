@@ -460,7 +460,9 @@ const continueToCart = async () => {
 	}
 
 
-	const packages = session.value?.data?.packages || [];
+	const packages = session.value?.data?.packages?.length
+		? session.value.data.packages
+		: userStore.packages || [];
 	if (!packages.length) {
 		submitError.value = "Nessun collo disponibile. Torna al preventivo rapido.";
 		return;
@@ -491,7 +493,7 @@ const continueToCart = async () => {
 
 		await refreshCart();
 		await refresh();
-		await router.push("/carrello");
+		showSavedPopup.value = true;
 	} catch (error) {
 		const statusCode = error?.response?.status || error?.statusCode;
 		if (statusCode === 422) {
@@ -616,12 +618,6 @@ const continueToCart = async () => {
 
 				<!-- STEP FORM: Servizi + Indirizzi -->
 				<div v-if="!showSummary">
-					<div class="flex justify-end mb-[16px]">
-						<button type="button" class="bg-[#095866] text-white font-semibold text-[0.9375rem] px-[24px] h-[42px] rounded-[30px] hover:bg-[#0a7a8c] transition cursor-pointer">
-							Create
-						</button>
-					</div>
-
 
 				<ClientOnly>
 					<div class="bg-[#E6E6E6] rounded-[20px] pt-[13px]">
@@ -1003,19 +999,6 @@ const continueToCart = async () => {
 					</div>
 				</div>
 
-
-				<div class="mt-[28px] w-full max-w-[850px] mr-auto flex flex-wrap gap-[12px] items-center justify-between">
-					<NuxtLink :to="{ path: '/', hash: '#preventivo' }" class="inline-flex items-center justify-center h-[52px] px-[24px] rounded-[30px] bg-[#095866] text-white font-semibold hover:bg-[#0a7a8c] transition">
-						Indietro
-					</NuxtLink>
-					<button
-						type="submit"
-						:disabled="isSubmitting"
-						class="bg-[#E44203] text-white font-semibold text-[1rem] px-[28px] h-[52px] rounded-[30px] hover:opacity-90 transition disabled:opacity-60 disabled:cursor-not-allowed">
-						{{ isSubmitting ? 'Salvataggio in corso...' : 'Continua e vai al carrello' }}
-					</button>
-				</div>
-				<p v-if="submitError" class="text-red-500 text-[0.9375rem] mt-[10px] text-right">{{ submitError }}</p>
 
 				</div>
 			</form>

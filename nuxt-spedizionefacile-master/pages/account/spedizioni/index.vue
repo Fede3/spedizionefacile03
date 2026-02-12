@@ -70,6 +70,119 @@ const openDetail = (item, type = 'cart') => {
 	detailType.value = type;
 	showDetail.value = true;
 };
+
+/* Spedizioni configurate - filters */
+const filterProvenienza = ref('');
+const filterRiferimento = ref('');
+const filterDateFrom = ref('');
+const filterDateTo = ref('');
+const filtersApplied = ref(false);
+
+const applyFilters = () => {
+	filtersApplied.value = true;
+};
+
+const resetFilters = () => {
+	filterProvenienza.value = '';
+	filterRiferimento.value = '';
+	filterDateFrom.value = '';
+	filterDateTo.value = '';
+	filtersApplied.value = false;
+};
+
+/* Spedizioni configurate - selection */
+const selectedItems = ref([]);
+const selectAll = ref(false);
+
+const toggleSelectAll = () => {
+	if (selectAll.value) {
+		selectedItems.value = filteredCartItems.value.map(item => item.id);
+	} else {
+		selectedItems.value = [];
+	}
+};
+
+const toggleItem = (id) => {
+	const idx = selectedItems.value.indexOf(id);
+	if (idx > -1) {
+		selectedItems.value.splice(idx, 1);
+	} else {
+		selectedItems.value.push(id);
+	}
+	selectAll.value = selectedItems.value.length === filteredCartItems.value.length;
+};
+
+/* Spedizioni configurate - pagination */
+const currentPage = ref(1);
+const itemsPerPage = 10;
+
+const filteredCartItems = computed(() => {
+	if (!cart.value?.data) return [];
+	let items = [...cart.value.data];
+
+	if (filtersApplied.value) {
+		if (filterProvenienza.value) {
+			items = items.filter(item =>
+				item.origin_address?.city?.toLowerCase().includes(filterProvenienza.value.toLowerCase())
+			);
+		}
+		if (filterRiferimento.value) {
+			items = items.filter(item =>
+				(item.services?.service_type || '').toLowerCase().includes(filterRiferimento.value.toLowerCase()) ||
+				String(item.id).includes(filterRiferimento.value)
+			);
+		}
+	}
+
+	return items;
+});
+
+const totalPages = computed(() => Math.max(1, Math.ceil(filteredCartItems.value.length / itemsPerPage)));
+
+const paginatedCartItems = computed(() => {
+	const start = (currentPage.value - 1) * itemsPerPage;
+	return filteredCartItems.value.slice(start, start + itemsPerPage);
+});
+
+const prevPage = () => {
+	if (currentPage.value > 1) currentPage.value--;
+};
+const nextPage = () => {
+	if (currentPage.value < totalPages.value) currentPage.value++;
+};
+
+/* Bulk delete */
+const bulkDelete = async () => {
+	if (!selectedItems.value.length) return;
+	for (const id of selectedItems.value) {
+		try {
+			await sanctumClient(`/api/cart/${id}`, { method: "DELETE" });
+		} catch (e) { /* silent */ }
+	}
+	selectedItems.value = [];
+	selectAll.value = false;
+	await refreshCart();
+};
+
+/* Bulk add to cart - navigates to carrello */
+const bulkAddToCart = () => {
+	router.push('/carrello');
+};
+
+const formatCreatedDate = (item) => {
+	if (item.created_at) {
+		return new Date(item.created_at).toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit', year: 'numeric' });
+	}
+	return new Date().toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit', year: 'numeric' });
+};
+
+const getPackageIcon = (item) => {
+	const type = item.package_type?.toLowerCase() || '';
+	if (type.includes('pallet')) return '/img/quote/first-step/pallet.png';
+	if (type.includes('busta')) return '/img/quote/first-step/envelope.png';
+	if (type.includes('valigia')) return '/img/quote/first-step/suitcase.png';
+	return '/img/quote/first-step/pack.png';
+};
 </script>
 
 <template>
@@ -109,76 +222,126 @@ const openDetail = (item, type = 'cart') => {
 
 			<!-- Spedizioni configurate (nel carrello) -->
 			<div v-if="cart?.data?.length > 0" class="mb-[40px]">
-				<h2 class="text-[1.125rem] font-bold text-[#252B42] mb-[16px] flex items-center gap-[10px]">
-					<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" class="text-[#E44203]"><path fill="currentColor" d="M21 16.5c0 .38-.21.71-.53.88l-7.9 4.44c-.16.12-.36.18-.57.18c-.21 0-.41-.06-.57-.18l-7.9-4.44A.99.99 0 0 1 3 16.5v-9c0-.38.21-.71.53-.88l7.9-4.44c.16-.12.36-.18.57-.18c.21 0 .41.06.57.18l7.9 4.44c.32.17.53.5.53.88zM12 4.15L6.04 7.5L12 10.85l5.96-3.35zM5 15.91l6 3.37v-6.73L5 9.18zm14 0V9.18l-6 3.37v6.73z"/></svg>
-					Spedizioni configurate
-					<span class="text-[0.8125rem] font-normal text-[#737373]">({{ cart.data.length }})</span>
-				</h2>
+				<h2 class="text-[1.5rem] desktop:text-[1.75rem] font-bold text-[#252B42] text-center mb-[24px]">Spedizioni configurate</h2>
 
-				<!-- Table header (desktop) -->
-				<div class="hidden desktop:grid grid-cols-[1fr_1fr_1fr_80px_100px_120px] gap-[12px] px-[24px] pb-[10px] text-[0.75rem] font-bold text-[#737373] uppercase tracking-wider border-b border-[#E9EBEC]">
-					<span>Partenza</span>
-					<span>Destinazione</span>
-					<span>Servizio</span>
-					<span class="text-center">Colli</span>
-					<span class="text-right">Importo</span>
-					<span class="text-center">Azioni</span>
+				<!-- Filter Bar -->
+				<div class="bg-[#F0F0F0] rounded-[16px] p-[20px_24px] mb-[16px]">
+					<div class="flex flex-wrap gap-[12px] items-end">
+						<!-- Provenienza -->
+						<div class="flex-1 min-w-[180px]">
+							<select v-model="filterProvenienza" class="w-full bg-white border border-[#D0D0D0] rounded-[30px] h-[42px] px-[16px] text-[0.875rem] text-[#404040] appearance-none cursor-pointer">
+								<option value="">Provenienza</option>
+								<option v-for="item in cart.data" :key="'prov-'+item.id" :value="item.origin_address?.city">{{ item.origin_address?.city }}</option>
+							</select>
+						</div>
+						<!-- Riferimento -->
+						<div class="flex-1 min-w-[180px]">
+							<input type="text" v-model="filterRiferimento" placeholder="Riferimento" class="w-full bg-white border border-[#D0D0D0] rounded-[30px] h-[42px] px-[16px] text-[0.875rem] text-[#404040] placeholder:text-[#999]" />
+						</div>
+					</div>
+					<div class="flex flex-wrap gap-[12px] items-center mt-[12px]">
+						<!-- Date range -->
+						<div class="flex-1 min-w-[150px]">
+							<input type="date" v-model="filterDateFrom" placeholder="Da: (data creazione)" class="w-full bg-white border border-[#D0D0D0] rounded-[30px] h-[42px] px-[16px] text-[0.875rem] text-[#404040]" />
+						</div>
+						<div class="flex-1 min-w-[150px]">
+							<input type="date" v-model="filterDateTo" placeholder="A: (data creazione)" class="w-full bg-white border border-[#D0D0D0] rounded-[30px] h-[42px] px-[16px] text-[0.875rem] text-[#404040]" />
+						</div>
+						<button @click="resetFilters" type="button" class="bg-[#E44203] text-white font-semibold text-[0.875rem] px-[24px] h-[42px] rounded-[30px] hover:opacity-90 transition cursor-pointer">
+							Annulla
+						</button>
+						<button @click="applyFilters" type="button" class="bg-[#252B42] text-white font-semibold text-[0.875rem] px-[24px] h-[42px] rounded-[30px] hover:opacity-90 transition cursor-pointer">
+							Applica filtro
+						</button>
+					</div>
 				</div>
 
-				<!-- Table rows -->
-				<div class="space-y-[8px] mt-[8px]">
-					<div
-						v-for="item in cart.data"
-						:key="item.id"
-						class="bg-white rounded-[14px] border border-[#E9EBEC] hover:border-[#095866] transition-all">
+				<!-- CSV Upload -->
+				<div class="mb-[16px]">
+					<button type="button" class="bg-[#252B42] text-white font-semibold text-[0.875rem] px-[24px] h-[42px] rounded-[30px] hover:opacity-90 transition cursor-pointer inline-flex items-center gap-[8px]">
+						<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+						Carica da file CSV
+					</button>
+				</div>
 
-						<!-- Desktop row -->
-						<div class="hidden desktop:grid grid-cols-[1fr_1fr_1fr_80px_100px_120px] gap-[12px] items-center p-[14px_24px]">
-							<!-- Partenza -->
-							<div>
-								<p class="text-[0.875rem] font-semibold text-[#252B42]">{{ item.origin_address?.city || '—' }}</p>
-								<p class="text-[0.75rem] text-[#737373]">{{ item.origin_address?.postal_code }} <span v-if="item.origin_address?.province">({{ item.origin_address?.province }})</span></p>
-							</div>
-							<!-- Destinazione -->
-							<div>
-								<p class="text-[0.875rem] font-semibold text-[#252B42]">{{ item.destination_address?.city || '—' }}</p>
-								<p class="text-[0.75rem] text-[#737373]">{{ item.destination_address?.postal_code }} <span v-if="item.destination_address?.province">({{ item.destination_address?.province }})</span></p>
-							</div>
+				<!-- Table -->
+				<div class="bg-white rounded-[16px] border border-[#E9EBEC] overflow-hidden">
+					<!-- Table header -->
+					<div class="hidden desktop:grid grid-cols-[40px_110px_100px_100px_80px_80px_140px_80px_90px_60px_100px] gap-[8px] px-[16px] py-[12px] text-[0.75rem] font-bold text-[#252B42] border-b-[2px] border-[#E44203]">
+						<span class="flex items-center">
+							<input type="checkbox" v-model="selectAll" @change="toggleSelectAll" class="w-[16px] h-[16px] accent-[#095866] cursor-pointer" />
+						</span>
+						<span>Data creazione</span>
+						<span>Provenienza</span>
+						<span>Riferimento</span>
+						<span>Servizio</span>
+						<span>Colli</span>
+						<span>Indirizzi</span>
+						<span>Accessori</span>
+						<span>Importo</span>
+						<span>Errore</span>
+						<span class="text-center"></span>
+					</div>
+
+					<!-- Table rows -->
+					<div>
+						<div
+							v-for="item in paginatedCartItems"
+							:key="item.id"
+							class="hidden desktop:grid grid-cols-[40px_110px_100px_100px_80px_80px_140px_80px_90px_60px_100px] gap-[8px] items-center px-[16px] py-[12px] border-b border-[#E9EBEC] hover:bg-[#F8F9FB] transition-colors text-[0.8125rem] text-[#252B42]">
+							<!-- Checkbox -->
+							<span class="flex items-center">
+								<input type="checkbox" :checked="selectedItems.includes(item.id)" @change="toggleItem(item.id)" class="w-[16px] h-[16px] accent-[#095866] cursor-pointer" />
+							</span>
+							<!-- Data creazione -->
+							<span class="text-[0.8125rem]">{{ formatCreatedDate(item) }}</span>
+							<!-- Provenienza -->
+							<span class="text-[0.8125rem]">{{ item.origin_address?.city ? 'Qui' : '—' }}</span>
+							<!-- Riferimento -->
+							<span class="text-[0.8125rem]">......</span>
 							<!-- Servizio -->
-							<div>
-								<p class="text-[0.8125rem] text-[#252B42]">{{ item.services?.service_type || 'Standard' }}</p>
-								<p v-if="item.services?.date" class="text-[0.75rem] text-[#737373]">{{ item.services.date }}</p>
-							</div>
+							<span class="text-[0.8125rem]">{{ item.services?.service_type?.split(',')[0]?.trim() || 'BRT' }}</span>
 							<!-- Colli -->
-							<div class="text-center">
-								<span class="text-[0.875rem] font-semibold text-[#252B42]">{{ item.quantity }}x</span>
-								<p class="text-[0.6875rem] text-[#737373]">{{ item.weight }} kg</p>
-							</div>
+							<span class="flex items-center gap-[4px] text-[0.8125rem]">
+								{{ item.quantity || 1 }} x
+								<NuxtImg :src="getPackageIcon(item)" alt="" width="18" height="18" />
+							</span>
+							<!-- Indirizzi -->
+							<span class="text-[0.75rem]">
+								<div class="flex items-center gap-[4px]">
+									<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#E44203" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+									<span class="truncate">{{ item.origin_address?.name || '—' }} - {{ item.origin_address?.city || '' }}</span>
+								</div>
+								<div class="flex items-center gap-[4px] mt-[2px]">
+									<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#095866" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+									<span class="truncate">{{ item.destination_address?.name || '—' }} - {{ item.destination_address?.city || '' }}</span>
+								</div>
+							</span>
+							<!-- Accessori -->
+							<span class="text-[0.8125rem]">......</span>
 							<!-- Importo -->
-							<div class="text-right">
-								<span class="text-[0.9375rem] font-bold text-[#252B42]">{{ formatPrice(item.single_price) }}</span>
-							</div>
+							<span class="text-[0.8125rem] font-semibold">{{ formatPrice(item.single_price) }}</span>
+							<!-- Errore -->
+							<span class="text-[0.8125rem]">......</span>
 							<!-- Azioni -->
-							<div class="flex items-center justify-center gap-[8px]">
-								<button type="button" @click="openDetail(item, 'cart')" title="Dettagli" class="w-[32px] h-[32px] rounded-[8px] bg-[#095866]/10 flex items-center justify-center hover:bg-[#095866]/20 transition cursor-pointer">
-									<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#095866" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+							<span class="flex items-center justify-end gap-[6px]">
+								<button type="button" @click="openDetail(item, 'cart')" title="Modifica" class="w-[28px] h-[28px] flex items-center justify-center cursor-pointer hover:opacity-70">
+									<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#252B42" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
 								</button>
-								<button type="button" @click="deleteFromCart(item.id)" :disabled="deletingId === item.id" title="Elimina" class="w-[32px] h-[32px] rounded-[8px] bg-red-50 flex items-center justify-center hover:bg-red-100 transition cursor-pointer disabled:opacity-50">
-									<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#EF4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+								<button type="button" @click="openDetail(item, 'cart')" title="Anteprima" class="w-[28px] h-[28px] flex items-center justify-center cursor-pointer hover:opacity-70">
+									<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#252B42" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
 								</button>
-								<NuxtLink to="/carrello" title="Vai al carrello" class="w-[32px] h-[32px] rounded-[8px] bg-[#E44203]/10 flex items-center justify-center hover:bg-[#E44203]/20 transition">
-									<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#E44203" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
-								</NuxtLink>
-							</div>
+								<button type="button" @click="deleteFromCart(item.id)" :disabled="deletingId === item.id" title="Elimina" class="w-[28px] h-[28px] flex items-center justify-center cursor-pointer hover:opacity-70 disabled:opacity-50">
+									<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#252B42" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+								</button>
+							</span>
 						</div>
 
-						<!-- Mobile card -->
-						<div class="desktop:hidden p-[16px]">
+						<!-- Mobile cards -->
+						<div v-for="item in paginatedCartItems" :key="'m-'+item.id" class="desktop:hidden p-[16px] border-b border-[#E9EBEC]">
 							<div class="flex items-center justify-between mb-[12px]">
 								<div class="flex items-center gap-[10px]">
-									<div class="w-[40px] h-[40px] rounded-[10px] bg-orange-50 flex items-center justify-center shrink-0">
-										<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" class="text-[#E44203]"><path fill="currentColor" d="M21 16.5c0 .38-.21.71-.53.88l-7.9 4.44c-.16.12-.36.18-.57.18c-.21 0-.41-.06-.57-.18l-7.9-4.44A.99.99 0 0 1 3 16.5v-9c0-.38.21-.71.53-.88l7.9-4.44c.16-.12.36-.18.57-.18c.21 0 .41.06.57.18l7.9 4.44c.32.17.53.5.53.88zM12 4.15L6.04 7.5L12 10.85l5.96-3.35zM5 15.91l6 3.37v-6.73L5 9.18zm14 0V9.18l-6 3.37v6.73z"/></svg>
-									</div>
+									<input type="checkbox" :checked="selectedItems.includes(item.id)" @change="toggleItem(item.id)" class="w-[16px] h-[16px] accent-[#095866] cursor-pointer" />
 									<div>
 										<p class="text-[0.875rem] font-semibold text-[#252B42]">{{ item.origin_address?.city || 'Partenza' }} &rarr; {{ item.destination_address?.city || 'Destinazione' }}</p>
 										<p class="text-[0.75rem] text-[#737373]">{{ item.quantity }}x &ndash; {{ item.weight }} kg</p>
@@ -191,10 +354,42 @@ const openDetail = (item, type = 'cart') => {
 								<button type="button" @click="deleteFromCart(item.id)" :disabled="deletingId === item.id" class="text-[0.75rem] text-red-500 font-semibold hover:underline cursor-pointer disabled:opacity-50">
 									{{ deletingId === item.id ? 'Eliminando...' : 'Elimina' }}
 								</button>
-								<NuxtLink to="/carrello" class="text-[0.75rem] text-[#E44203] font-semibold hover:underline">Carrello</NuxtLink>
 							</div>
 						</div>
 					</div>
+
+					<!-- Pagination -->
+					<div class="flex items-center justify-center gap-[8px] py-[16px] border-t border-[#E9EBEC]">
+						<button @click="prevPage" :disabled="currentPage <= 1" class="text-[0.875rem] font-medium text-[#252B42] hover:text-[#095866] disabled:text-[#C0C0C0] cursor-pointer disabled:cursor-not-allowed">Precedente</button>
+						<span
+							v-for="page in totalPages"
+							:key="page"
+							@click="currentPage = page"
+							:class="[
+								'w-[32px] h-[32px] flex items-center justify-center rounded-[6px] text-[0.875rem] font-semibold cursor-pointer',
+								currentPage === page ? 'bg-[#E44203] text-white' : 'text-[#252B42] hover:bg-[#F0F0F0]'
+							]">
+							{{ page }}
+						</span>
+						<button @click="nextPage" :disabled="currentPage >= totalPages" class="text-[0.875rem] font-medium text-[#252B42] hover:text-[#095866] disabled:text-[#C0C0C0] cursor-pointer disabled:cursor-not-allowed">Successivo</button>
+					</div>
+				</div>
+
+				<!-- Bottom buttons -->
+				<div class="flex items-center justify-center gap-[24px] mt-[24px]">
+					<button
+						@click="bulkDelete"
+						:disabled="selectedItems.length === 0"
+						type="button"
+						class="bg-[#996D47] text-white font-semibold text-[0.9375rem] px-[32px] h-[48px] rounded-[8px] hover:opacity-90 transition cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">
+						Elimina
+					</button>
+					<button
+						@click="bulkAddToCart"
+						type="button"
+						class="bg-[#252B42] text-white font-semibold text-[0.9375rem] px-[32px] h-[48px] rounded-[8px] hover:opacity-90 transition cursor-pointer">
+						Aggiungi al carrello
+					</button>
 				</div>
 			</div>
 

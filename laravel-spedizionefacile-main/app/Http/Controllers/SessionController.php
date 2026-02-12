@@ -26,7 +26,7 @@ class SessionController extends Controller
             'shipment_details.origin_postal_code' => ['required', 'string'],
             'shipment_details.destination_city' => ['required', 'string'],
             'shipment_details.destination_postal_code' => ['required', 'string'],
-            'shipment_details.date' => ['required', 'string'],
+            'shipment_details.date' => ['nullable', 'string'],
             'packages' => ['required', 'array', 'min:1'],
             'packages.*.package_type' => ['required', 'string'],
             'packages.*.quantity' => ['required', 'integer', 'min:1'],
