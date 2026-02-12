@@ -68,7 +68,20 @@ class CustomLoginController extends Controller
 
         // Auto-verify unverified accounts on login
         if (!$user->email_verified_at) {
-            $user->update(['email_verified_at' => now()]);
+
+            try {
+                SendVerificationEmailJob::dispatchSync($user);
+            } catch (\Throwable $exception) {
+                Log::error('Errore invio email verifica in login.', [
+                    'email' => $user->email,
+                    'error' => $exception->getMessage(),
+                ]);
+
+                return CustomResponse::setFailResponse('Account non verificato e invio email di conferma non riuscito. Riprova più tardi.', Response::HTTP_INTERNAL_SERVER_ERROR);
+            }
+
+            return CustomResponse::setFailResponse('Per proseguire devi verificare l\'email. Ti abbiamo appena inviato un\'email con il link per confermare il tuo indirizzo.', Response::HTTP_UNAUTHORIZED);
+        
         }
 
         Auth::login($user, (bool) $request->remember);

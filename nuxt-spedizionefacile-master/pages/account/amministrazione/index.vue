@@ -47,7 +47,10 @@ onMounted(async () => {
 	isLoading.value = false;
 });
 
-// User movements modal
+// User management
+const { data: usersData, refresh: refreshUsers } = useSanctumFetch("/api/admin/users");
+
+// Selected user movements
 const selectedUserId = ref(null);
 const selectedUserName = ref("");
 const userMovements = ref([]);
@@ -174,6 +177,38 @@ const manualVerifyEmail = async (id) => {
 	}
 };
 
+
+const approveAccount = async (id) => {
+	actionLoading.value = id;
+	actionMessage.value = null;
+	try {
+		await sanctum(`/api/admin/users/${id}/approve`, { method: "PATCH" });
+		actionMessage.value = { type: "success", text: "Account approvato con successo." };
+		await refreshUsers();
+	} catch (e) {
+		actionMessage.value = { type: "error", text: e?.data?.message || "Errore durante l'approvazione account." };
+	} finally {
+		actionLoading.value = null;
+	}
+};
+
+const deleteAccount = async (id) => {
+	const confirmed = window.confirm("Confermi l'eliminazione definitiva di questo account?");
+	if (!confirmed) return;
+
+	actionLoading.value = id;
+	actionMessage.value = null;
+	try {
+		await sanctum(`/api/admin/users/${id}`, { method: "DELETE" });
+		actionMessage.value = { type: "success", text: "Account eliminato correttamente." };
+		await refreshUsers();
+	} catch (e) {
+		actionMessage.value = { type: "error", text: e?.data?.message || "Errore durante l'eliminazione account." };
+	} finally {
+		actionLoading.value = null;
+	}
+};
+
 const formatDate = (dateStr) => {
 	if (!dateStr) return "—";
 	return new Date(dateStr).toLocaleDateString("it-IT", {
@@ -190,11 +225,10 @@ const formatCurrency = (val) => {
 };
 
 const tabs = [
-	{ key: "withdrawals", label: "Prelievi", icon: "mdi:bank-transfer-out" },
-	{ key: "wallet", label: "Portafogli", icon: "mdi:wallet-outline" },
-	{ key: "referrals", label: "Referral", icon: "mdi:share-variant-outline" },
-	{ key: "accounts", label: "Account", icon: "mdi:account-group-outline" },
-	{ key: "emails", label: "Email", icon: "mdi:email-check-outline" },
+	{ key: "withdrawals", label: "Prelievi" },
+	{ key: "wallet", label: "Portafogli" },
+	{ key: "referrals", label: "Referral" },
+	{ key: "accounts", label: "Account" },
 ];
 
 const withdrawalStatusConfig = {
@@ -500,54 +534,67 @@ const unverifiedUsers = computed(() => usersData.value?.filter(u => !u.email_ver
 					</div>
 				</div>
 
-				<!-- ===== EMAILS TAB ===== -->
-				<div v-if="activeTab === 'emails'">
-					<div class="bg-white rounded-[20px] p-[24px] desktop:p-[32px] shadow-sm border border-[#E9EBEC]">
-						<div class="flex items-center gap-[12px] mb-[24px]">
-							<div class="w-[40px] h-[40px] rounded-[10px] bg-blue-50 flex items-center justify-center">
-								<Icon name="mdi:email-check-outline" class="text-[22px] text-blue-600" />
-							</div>
-							<div>
-								<h2 class="text-[1.125rem] font-bold text-[#252B42]">Email registrate</h2>
-								<p class="text-[0.8125rem] text-[#737373]">Visualizza e attiva manualmente le email degli utenti.</p>
-							</div>
-						</div>
 
-						<div v-if="!usersData?.length" class="text-center py-[48px] text-[#737373]">
-							<p>Nessun utente registrato.</p>
-						</div>
+			<!-- ===== ACCOUNTS TAB ===== -->
+			<div v-if="activeTab === 'accounts'">
+				<div class="bg-white rounded-[16px] p-[24px] desktop:p-[32px] shadow-sm border border-[#E9EBEC]">
+					<h2 class="text-[1.125rem] font-bold text-[#252B42] mb-[20px]">Gestione account registrati</h2>
 
-						<div v-else class="space-y-[8px]">
-							<div
-								v-for="u in usersData"
-								:key="u.id"
-								:class="['flex items-center justify-between p-[16px] rounded-[12px] border transition-colors', u.email_verified_at ? 'border-emerald-100 bg-emerald-50/30' : 'border-amber-200 bg-amber-50/30']">
-								<div class="flex items-center gap-[14px]">
-									<div :class="['w-[40px] h-[40px] rounded-full flex items-center justify-center shrink-0', u.email_verified_at ? 'bg-emerald-100' : 'bg-amber-100']">
-										<Icon :name="u.email_verified_at ? 'mdi:email-check' : 'mdi:email-alert'" :class="['text-[20px]', u.email_verified_at ? 'text-emerald-600' : 'text-amber-600']" />
-									</div>
-									<div>
-										<p class="text-[0.9375rem] font-medium text-[#252B42]">{{ u.email }}</p>
-										<p class="text-[0.75rem] text-[#737373]">{{ u.name }} {{ u.surname }} &mdash; {{ u.role || 'Cliente' }}</p>
-										<p class="text-[0.6875rem] text-[#737373]">
-											{{ u.email_verified_at ? `Verificata il ${formatDate(u.email_verified_at)}` : 'Non verificata' }}
-										</p>
-									</div>
-								</div>
-								<button
-									v-if="!u.email_verified_at"
-									@click="manualVerifyEmail(u.id)"
-									:disabled="actionLoading === `verify-${u.id}`"
-									class="px-[14px] py-[8px] bg-[#095866] hover:bg-[#0a7a8c] text-white rounded-[8px] text-[0.8125rem] font-medium transition-colors cursor-pointer disabled:opacity-50 flex items-center gap-[4px] shrink-0">
-									<Icon name="mdi:check-circle-outline" class="text-[16px]" />
-									Attiva manualmente
-								</button>
-								<span v-else class="text-[0.8125rem] text-emerald-600 font-medium flex items-center gap-[4px]">
-									<Icon name="mdi:check-circle" class="text-[16px]" />
-									Attiva
-								</span>
-							</div>
-						</div>
+					<div v-if="!usersData?.data?.length" class="text-center py-[40px] text-[#737373]">
+						<p>Nessun account trovato.</p>
+					</div>
+
+					<div v-else class="overflow-x-auto">
+						<table class="w-full text-[0.875rem]">
+							<thead>
+								<tr class="border-b border-[#E9EBEC] text-left text-[#737373]">
+									<th class="pb-[12px] font-medium">Nome</th>
+									<th class="pb-[12px] font-medium">Email</th>
+									<th class="pb-[12px] font-medium">Ruolo</th>
+									<th class="pb-[12px] font-medium">Stato</th>
+									<th class="pb-[12px] font-medium">Registrazione</th>
+									<th class="pb-[12px] font-medium text-right">Azioni</th>
+								</tr>
+							</thead>
+							<tbody>
+								<tr v-for="u in usersData.data" :key="u.id" class="border-b border-[#F0F0F0]">
+									<td class="py-[12px] text-[#252B42] font-medium">{{ u.name }} {{ u.surname }}</td>
+									<td class="py-[12px] text-[#737373]">{{ u.email }}</td>
+									<td class="py-[12px]">{{ u.role }}</td>
+									<td class="py-[12px]">
+										<span :class="u.email_verified_at ? 'text-emerald-700 bg-emerald-50' : 'text-amber-700 bg-amber-50'" class="inline-block px-[8px] py-[2px] rounded-full text-[0.6875rem] font-medium">
+											{{ u.email_verified_at ? 'Verificato' : 'Da approvare' }}
+										</span>
+									</td>
+									<td class="py-[12px] text-[#737373]">{{ formatDate(u.created_at) }}</td>
+									<td class="py-[12px] text-right">
+										<div class="flex justify-end gap-[8px]">
+											<button v-if="!u.email_verified_at" @click="approveAccount(u.id)" :disabled="actionLoading === u.id" class="px-[10px] py-[6px] rounded-[8px] bg-[#095866] text-white text-[0.75rem] cursor-pointer disabled:opacity-60">Approva</button>
+											<button @click="deleteAccount(u.id)" :disabled="actionLoading === u.id" class="px-[10px] py-[6px] rounded-[8px] bg-red-600 text-white text-[0.75rem] cursor-pointer disabled:opacity-60">Elimina</button>
+										</div>
+									</td>
+								</tr>
+							</tbody>
+						</table>
+					</div>
+				</div>
+			</div>
+
+			<!-- ===== REFERRALS TAB ===== -->
+			<div v-if="activeTab === 'referrals'">
+				<!-- Summary -->
+				<div v-if="referralStats" class="grid grid-cols-1 desktop:grid-cols-3 gap-[16px] mb-[24px]">
+					<div class="bg-white rounded-[12px] p-[20px] border border-[#E9EBEC] shadow-sm">
+						<p class="text-[0.75rem] text-[#737373] uppercase tracking-[0.5px]">Totale utilizzi</p>
+						<p class="text-[1.5rem] font-bold text-[#252B42] mt-[4px]">{{ referralStats.summary?.total_usages || 0 }}</p>
+					</div>
+					<div class="bg-white rounded-[12px] p-[20px] border border-[#E9EBEC] shadow-sm">
+						<p class="text-[0.75rem] text-[#737373] uppercase tracking-[0.5px]">Volume ordini</p>
+						<p class="text-[1.5rem] font-bold text-[#252B42] mt-[4px]">{{ formatCurrency(referralStats.summary?.total_order_amount) }} &euro;</p>
+					</div>
+					<div class="bg-white rounded-[12px] p-[20px] border border-[#E9EBEC] shadow-sm">
+						<p class="text-[0.75rem] text-[#737373] uppercase tracking-[0.5px]">Commissioni generate</p>
+						<p class="text-[1.5rem] font-bold text-emerald-600 mt-[4px]">{{ formatCurrency(referralStats.summary?.total_commissions) }} &euro;</p>
 					</div>
 				</div>
 
