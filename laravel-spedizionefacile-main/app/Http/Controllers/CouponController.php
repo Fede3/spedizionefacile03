@@ -20,16 +20,17 @@ class CouponController extends Controller
             ], 404);
         }
 
-        $discountAmount = $total * $coupon->percentage;
+        $percentageValue = $coupon->percentage; // e.g. 10 means 10%
+        $discountAmount = $total * ($percentageValue / 100);
         $finalAmount = $total - $discountAmount;
 
         // Passa i centesimi interi a Money
-        $finalAmountCents = intval(round($finalAmount * 100)); 
-        $newAmount = new MyMoney($finalAmountCents);          
+        $finalAmountCents = intval(round($finalAmount * 100));
+        $newAmount = new MyMoney($finalAmountCents);
 
         return response()->json([
             'success' => true,
-            'percentage' => $coupon->percentage * 100,
+            'percentage' => $percentageValue,
             'new_total' => $newAmount->formatted(),
         ]);
 

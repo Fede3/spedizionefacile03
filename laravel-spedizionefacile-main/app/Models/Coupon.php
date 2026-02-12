@@ -9,9 +9,7 @@ class Coupon extends Model
     protected $fillable = [
         'code',
         'stripe_connected_account_id',
-        /* 'discount_percentage',
-        'pro_commission_percentage', */
         'percentage',
-        'active'
+        'active',
     ];
 }

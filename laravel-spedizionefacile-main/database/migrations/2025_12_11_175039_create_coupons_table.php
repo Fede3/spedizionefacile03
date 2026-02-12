@@ -14,11 +14,9 @@ return new class extends Migration
         Schema::create('coupons', function (Blueprint $table) {
             $table->id();
             $table->string('code')->unique();
-            $table->string('stripe_connected_account_id');
-            /* $table->decimal('discount_percentage', 5, 2);
-            $table->decimal('pro_commission_percentage', 5, 2); */
+            $table->string('stripe_connected_account_id')->nullable();
             $table->decimal('percentage', 5, 2);
-           /*  $table->boolean('active')->default(true); */
+            $table->boolean('active')->default(true);
             $table->timestamps();
         });
     }

@@ -3,13 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Cart\MyMoney;
-use App\Models\Address;
+use App\Models\PackageAddress;
 use App\Models\Package;
 use App\Models\Service;
 use Illuminate\Support\Facades\DB;
-use App\Http\Resources\AddressResource;
 use App\Http\Resources\PackageResource;
-use App\Http\Resources\ServiceResource;
 use App\Http\Requests\PackageStoreRequest;
 use Symfony\Component\HttpFoundation\Request;
 
@@ -63,8 +61,8 @@ class CartController extends Controller
         $data = $request->validated();
 
         $outPackages = DB::transaction(function() use ($data) {
-            $origin = Address::create($data['origin_address']);
-            $destination = Address::create($data['destination_address']);
+            $origin = PackageAddress::create($data['origin_address']);
+            $destination = PackageAddress::create($data['destination_address']);
 
             $services = Service::create($data['services']);
 

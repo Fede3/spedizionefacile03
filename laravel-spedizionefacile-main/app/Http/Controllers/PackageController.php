@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Cart\MyMoney;
-use App\Models\Address;
+use App\Models\PackageAddress;
 use App\Models\Package;
 use App\Models\Service;
 use Illuminate\Http\Request;
@@ -61,8 +61,8 @@ class PackageController extends Controller
         $data = $request->validated();
 
         $outPackages = DB::transaction(function() use ($data) {
-            $origin = Address::create($data['origin_address']);
-            $destination = Address::create($data['destination_address']);
+            $origin = PackageAddress::create($data['origin_address']);
+            $destination = PackageAddress::create($data['destination_address']);
 
             $services = Service::create($data['services']);
 
