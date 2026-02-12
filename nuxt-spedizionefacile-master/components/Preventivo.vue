@@ -306,10 +306,53 @@ const calculateRate = async () => {
 
 
 const continueToNextStep = async () => {
-	const ok = await calculateRate();
-	if (ok) {
-		await navigateTo('/la-tua-spedizione/2');
+	messageError.value = null;
+
+	// Validate form on client-side
+	if (!formRef.value || !formRef.value.checkValidity()) {
+		formRef.value?.reportValidity();
+		return;
 	}
+
+	// Check that at least one package is selected
+	if (!userStore.packages || userStore.packages.length === 0) {
+		messageError.value = { packages: ["Seleziona almeno un tipo di collo."] };
+		return;
+	}
+
+	// Validate each package has weight and dimensions
+	for (let i = 0; i < userStore.packages.length; i++) {
+		const pack = userStore.packages[i];
+		if (!pack.weight || !pack.first_size || !pack.second_size || !pack.third_size) {
+			messageError.value = { packages: ["Compila peso e dimensioni per tutti i colli."] };
+			return;
+		}
+
+		// Ensure prices are calculated
+		if (pack.weight_price == null) calcPriceWithWeight(pack);
+		if (pack.volume_price == null) calcPriceWithVolume(pack);
+		if (pack.single_price == null) checkPrices(pack);
+	}
+
+	// Try to sync with server, but navigate even if it fails
+	try {
+		await sanctum("/sanctum/csrf-cookie");
+		await sanctum("/api/session/first-step", {
+			method: "POST",
+			body: {
+				shipment_details: userStore.shipmentDetails,
+				packages: userStore.packages,
+			},
+		});
+		await refresh();
+	} catch (error) {
+		// Server sync failed, but we can still proceed with local data
+		console.warn("Server sync failed, proceeding with local data:", error);
+	}
+
+	isRateCalculated.value = true;
+	userStore.isQuoteStarted = true;
+	await navigateTo('/la-tua-spedizione/2');
 };
 const nextStep = async () => {
 	window.scrollTo(0, 0);
@@ -355,9 +398,9 @@ watch(
 	<section>
 		<div class="my-container">
 			<div
-				class="bg-white w-full rounded-[24px] desktop-xl:rounded-[32px] relative z-1 p-[20px_16px] desktop:p-[30px_36px] tablet:p-[20px_40px] mx-auto"
+				class="bg-white w-full rounded-[24px] desktop-xl:rounded-[32px] relative z-30 p-[20px_16px] desktop:p-[30px_36px] tablet:p-[20px_40px] mx-auto"
 			:class="route.path === '/'
-				? 'mt-[-72px] tablet:mt-[-170px] desktop:mt-[-82px] desktop-xl:mt-[-54px] max-w-[1260px]'
+				? 'mt-[-40px] tablet:mt-[-60px] desktop:mt-[-50px] desktop-xl:mt-[-30px] max-w-[1260px]'
 				: 'mt-[40px] max-w-[1200px]'">
 				<h2 class="border-b-[1px] border-[#E6E6E6] text-[1.25rem] desktop:text-[2rem] text-black font-bold text-center pb-[8px]">Preventivo Rapido</h2>
 
