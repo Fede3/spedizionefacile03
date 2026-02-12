@@ -242,9 +242,18 @@ const editDestinationDetails = () => {
 };
 
 const myClose = () => {
+	if (selectedService.value.index !== "" && servicesList.value[selectedService.value.index]) {
+		servicesList.value[selectedService.value.index].isSelected = false;
+	}
 	open.value = false;
-	servicesList.value[selectedService.value.index].isSelected = false;
 };
+
+// Quando il modal viene chiuso dall'esterno (click fuori), deseleziona il servizio
+watch(open, (newVal) => {
+	if (!newVal && selectedService.value.index !== "" && servicesList.value[selectedService.value.index]) {
+		servicesList.value[selectedService.value.index].isSelected = false;
+	}
+});
 
 /* Dati indirizzo generico */
 const address = {
@@ -402,6 +411,7 @@ const router = useRouter();
 const isSubmitting = ref(false);
 const submitError = ref(null);
 const showSavedPopup = ref(false);
+const showSummary = ref(false);
 
 const goToCart = async () => {
 	showSavedPopup.value = false;
@@ -434,7 +444,8 @@ const toAddressPayload = (addressData) => ({
 	email: addressData.email || "",
 });
 
-const continueToCart = async () => {
+/* Step 1: Valida e mostra riepilogo */
+const showRiepilogo = async () => {
 	submitError.value = null;
 
 	// Giorno di ritiro obbligatorio
@@ -464,9 +475,22 @@ const continueToCart = async () => {
 		return;
 	}
 
+	showSummary.value = true;
+	await nextTick();
+	window.scrollTo({ top: 0, behavior: 'smooth' });
+};
+
+const goBackFromSummary = () => {
+	showSummary.value = false;
+};
+
+/* Step 2: Conferma e salva spedizione */
+const confirmShipment = async () => {
+	submitError.value = null;
 	isSubmitting.value = true;
 
 	try {
+		const packages = session.value?.data?.packages || [];
 		const payload = {
 			origin_address: toAddressPayload(originAddress.value),
 			destination_address: toAddressPayload(destinationAddress.value),
@@ -504,11 +528,14 @@ const continueToCart = async () => {
 	<section>
 		<div class="my-container mt-[72px] mb-[120px]">
 			<div v-if="status === 'pending'" class="min-h-[720px] bg-[#E4E4E4] rounded-[20px] animate-pulse"></div>
-			<form v-else ref="formRef" @submit.prevent="continueToCart">
+			<form v-else ref="formRef" @submit.prevent="showRiepilogo">
 				<Steps />
 
+				<!-- STEP FORM: Servizi + Indirizzi -->
+				<div v-if="!showSummary">
+
 				<UModal
-					:dismissible="false"
+					:dismissible="true"
 					v-model:open="open"
 					:title="selectedService?.name"
 					:description="selectedService?.description"
@@ -965,12 +992,86 @@ const continueToCart = async () => {
 					<Icon name="mdi:alert-circle" class="text-[20px] text-red-500 shrink-0" />
 					<p class="text-red-600 text-[0.9375rem] font-medium">{{ submitError }}</p>
 				</div>
+				</div>
+
+				<!-- RIEPILOGO -->
+				<div v-if="showSummary" class="mt-[40px]">
+					<h2 class="text-[1.5rem] font-bold text-[#252B42] font-montserrat mb-[24px]">Riepilogo spedizione</h2>
+
+					<div class="bg-white rounded-[16px] border border-[#E9EBEC] p-[32px] max-w-[850px]">
+						<!-- Giorno ritiro -->
+						<div class="mb-[24px] pb-[24px] border-b border-[#E9EBEC]">
+							<h3 class="text-[0.8125rem] font-semibold text-[#737373] uppercase tracking-wider mb-[8px]">Giorno di ritiro</h3>
+							<p class="text-[1rem] font-semibold text-[#252B42]">{{ services.date }}</p>
+						</div>
+
+						<!-- Partenza -->
+						<div class="mb-[24px] pb-[24px] border-b border-[#E9EBEC]">
+							<h3 class="text-[0.8125rem] font-semibold text-[#737373] uppercase tracking-wider mb-[8px]">Partenza</h3>
+							<p class="text-[0.9375rem] text-[#252B42] font-semibold">{{ originAddress.full_name }}</p>
+							<p class="text-[0.875rem] text-[#404040]">{{ originAddress.address }} {{ originAddress.address_number }}, {{ originAddress.postal_code }} {{ originAddress.city }} ({{ originAddress.province }})</p>
+							<p class="text-[0.875rem] text-[#737373]">Tel: {{ originAddress.telephone_number }}<span v-if="originAddress.email"> - {{ originAddress.email }}</span></p>
+						</div>
+
+						<!-- Destinazione -->
+						<div class="mb-[24px] pb-[24px] border-b border-[#E9EBEC]">
+							<h3 class="text-[0.8125rem] font-semibold text-[#737373] uppercase tracking-wider mb-[8px]">Destinazione</h3>
+							<p class="text-[0.9375rem] text-[#252B42] font-semibold">{{ destinationAddress.full_name }}</p>
+							<p class="text-[0.875rem] text-[#404040]">{{ destinationAddress.address }} {{ destinationAddress.address_number }}, {{ destinationAddress.postal_code }} {{ destinationAddress.city }} ({{ destinationAddress.province }})</p>
+							<p class="text-[0.875rem] text-[#737373]">Tel: {{ destinationAddress.telephone_number }}<span v-if="destinationAddress.email"> - {{ destinationAddress.email }}</span></p>
+						</div>
+
+						<!-- Colli -->
+						<div class="mb-[24px] pb-[24px] border-b border-[#E9EBEC]">
+							<h3 class="text-[0.8125rem] font-semibold text-[#737373] uppercase tracking-wider mb-[8px]">Colli</h3>
+							<div v-for="(pack, i) in session?.data?.packages" :key="i" class="text-[0.875rem] text-[#252B42]">
+								<span class="font-semibold">{{ pack.quantity }}x</span> - {{ pack.weight }} kg ({{ pack.first_size }} x {{ pack.second_size }} x {{ pack.third_size }} cm)
+							</div>
+						</div>
+
+						<!-- Servizi -->
+						<div class="mb-[24px] pb-[24px] border-b border-[#E9EBEC]">
+							<h3 class="text-[0.8125rem] font-semibold text-[#737373] uppercase tracking-wider mb-[8px]">Servizi</h3>
+							<ul v-if="userStore.servicesArray.length > 0" class="text-[0.875rem] text-[#252B42]">
+								<li v-for="s in userStore.servicesArray" :key="s">{{ s }}</li>
+							</ul>
+							<p v-else class="text-[0.875rem] text-[#737373]">Nessun servizio aggiuntivo selezionato</p>
+						</div>
+
+						<!-- Importo -->
+						<div>
+							<h3 class="text-[0.8125rem] font-semibold text-[#737373] uppercase tracking-wider mb-[8px]">Importo</h3>
+							<p class="text-[1.75rem] font-bold text-[#252B42]">{{ session?.data?.total_price }}€ <span class="text-[0.75rem] font-normal text-[#737373]">IVA inclusa</span></p>
+						</div>
+					</div>
+
+					<!-- Bottoni riepilogo -->
+					<div class="mt-[28px] flex flex-wrap gap-[12px] items-center justify-between max-w-[850px]">
+						<button
+							type="button"
+							@click="goBackFromSummary"
+							class="inline-flex items-center justify-center h-[52px] px-[24px] rounded-[30px] bg-[#095866] text-white font-semibold hover:bg-[#0a7a8c] transition cursor-pointer">
+							Modifica
+						</button>
+						<button
+							type="button"
+							@click="confirmShipment"
+							:disabled="isSubmitting"
+							class="bg-[#E44203] text-white font-semibold text-[1rem] px-[28px] h-[52px] rounded-[30px] hover:opacity-90 transition disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer">
+							{{ isSubmitting ? 'Conferma in corso...' : 'Conferma spedizione' }}
+						</button>
+					</div>
+					<div v-if="submitError" class="mt-[16px] max-w-[850px] p-[14px] bg-red-50 border border-red-200 rounded-[12px] flex items-center gap-[10px]">
+						<Icon name="mdi:alert-circle" class="text-[20px] text-red-500 shrink-0" />
+						<p class="text-red-600 text-[0.9375rem] font-medium">{{ submitError }}</p>
+					</div>
+				</div>
 
 			</form>
 		</div>
 
 		<!-- Shipment Saved Popup -->
-		<UModal v-model:open="showSavedPopup" :dismissible="false" :close="false">
+		<UModal v-model:open="showSavedPopup" :dismissible="true" :close="false">
 			<template #title>
 				<div class="flex items-center gap-[12px]">
 					<div class="w-[48px] h-[48px] rounded-full bg-emerald-100 flex items-center justify-center">
