@@ -7,16 +7,16 @@ const route = useRoute();
 
 	<!--  -->
 	<header
-		class="relative bg-[#E3E3E3]"
+		class="relative bg-[#E3E3E3] z-40"
 		:class="{
-			'desktop:h-[722px] tablet:h-[600px] h-[524px] overflow-x-hidden after:absolute after:content-[\'\'] after:h-[100px] after:w-full after:bg-[#eeeeee] after:z-1 after:bottom-0 desktop:after:hidden':
+			'desktop:h-[722px] tablet:h-[600px] h-[524px] overflow-x-hidden overflow-y-hidden after:absolute after:content-[\'\'] after:h-[100px] after:w-full after:bg-[#eeeeee] after:z-1 after:bottom-0 desktop:after:hidden':
 				route.path === '/',
-			'desktop:h-[359px] desktop-xl:h-[457px] h-[308px]': route.path === '/servizi',
-			'desktop:h-[722px] desktop-xl:h-[783px] h-[432px]': route.path === '/contatti',
-			'desktop:h-[762px] desktop-xl:h-[913px] h-[464px] tablet:h-[500px]': route.path === '/chi-siamo',
-			'desktop:h-[318px] desktop-xl:h-[424px] h-[230px]': route.path === '/faq',
-			'desktop:h-[359px] desktop-xl:h-[392px] h-[214px]': route.path === '/account',
-			'desktop:h-[529px] desktop-xl:h-[772px] h-[397px] tablet:h-[460px]': route.path.includes('pagamento-alla-consegna'),
+			'desktop:h-[359px] desktop-xl:h-[457px] h-[308px] overflow-hidden': route.path === '/servizi',
+			'desktop:h-[722px] desktop-xl:h-[783px] h-[432px] overflow-hidden': route.path === '/contatti',
+			'desktop:h-[762px] desktop-xl:h-[913px] h-[464px] tablet:h-[500px] overflow-hidden': route.path === '/chi-siamo',
+			'desktop:h-[318px] desktop-xl:h-[424px] h-[230px] overflow-hidden': route.path === '/faq',
+			'desktop:h-[359px] desktop-xl:h-[392px] h-[214px] overflow-hidden': route.path === '/account',
+			'desktop:h-[529px] desktop-xl:h-[772px] h-[397px] tablet:h-[460px] overflow-hidden': route.path.includes('pagamento-alla-consegna'),
 		}">
 		<!--  before:content-[''] before:absolute before:left-[-80px] before:top-0 before:w-[60%] before:h-full before:bg-[url('/img/header-bg.svg')] before:bg-no-repeat before:z-[1] da inserire sul div qui sotto -->
 		<div class="desktop-xl:pt-[40px] desktop:pt-[25px] mobile:pt-[20px] my-container relative h-full">

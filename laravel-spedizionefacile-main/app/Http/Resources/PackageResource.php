@@ -26,6 +26,7 @@ class PackageResource extends JsonResource
             'third_size' => $this->third_size,
             'weight_price' => $this->weight_price,
             'volume_price' => $this->volume_price,
+            'single_price' => $this->single_price,
             'origin_address' => new PackageAddressResource($this->originAddress),
             'destination_address' => new PackageAddressResource($this->destinationAddress),
             'services' => new ServiceResource($this->service)
