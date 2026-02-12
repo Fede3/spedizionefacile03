@@ -15,7 +15,7 @@ const { cart, status } = useCart();
 <template>
 	<div class="relative w-full">
 		<div class="h-[4px] w-full bg-[#E44203] rounded-full mb-2"></div>
-		<div class="grid grid-cols-[auto_1fr_auto_auto] items-center gap-4 desktop:h-[65px] tablet:h-[50px] h-[38px] relative z-2">
+		<div class="grid grid-cols-[auto_1fr_auto_auto] items-center gap-4 desktop:h-[65px] tablet:h-[50px] h-[38px] relative z-50">
 			<NuxtLink to="/" class="flex items-center h-full outline-none">
 				<Logo :is-navbar="true" />
 			</NuxtLink>
