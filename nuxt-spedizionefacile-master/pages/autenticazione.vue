@@ -187,6 +187,10 @@ const registerUser = async () => {
 
 const showForm = ref(false);
 
+const showLoginPassword = ref(false);
+const showRegPassword = ref(false);
+const showRegPasswordConfirm = ref(false);
+
 const loginGoogle = () => {
 	isGoogle.value = true;
 	const frontendOrigin = window.location.origin;
@@ -213,7 +217,7 @@ function onTabClick(newValue) {
 						<span class="text-emerald-600 text-[1.5rem] font-bold">&#10003;</span>
 					</div>
 					<p class="text-[1rem] font-medium">{{ messageSuccess }}</p>
-					<p class="text-[0.875rem] text-[#737373] mt-[8px]">Ora puoi accedere con le tue credenziali.</p>
+					<p class="text-[0.875rem] text-[#737373] mt-[8px]">Il tuo account è attivo. Ora puoi accedere con le tue credenziali.</p>
 					<button @click="messageSuccess = null" class="mt-[16px] px-[24px] py-[10px] bg-[#095866] text-white rounded-[8px] text-[0.875rem] font-semibold cursor-pointer hover:bg-[#0a7a8c] transition-colors">
 						Torna al login
 					</button>
@@ -247,13 +251,20 @@ function onTabClick(newValue) {
 
 							<div class="mb-[20px]">
 								<label for="login_password" class="block text-[0.875rem] font-medium text-[#252B42] mb-[6px]">Password</label>
-								<input
-									type="password"
-									id="login_password"
-									v-model="credentials.password"
-									placeholder="La tua password"
-									class="bg-[#F8F9FB] p-[12px] border border-[#E9EBEC] rounded-[8px] placeholder:text-[#A0A5AB] w-full text-[0.9375rem] focus:border-[#095866] focus:outline-none transition-colors"
-									required />
+								<div class="relative">
+									<input
+										:type="showLoginPassword ? 'text' : 'password'"
+										id="login_password"
+										v-model="credentials.password"
+										placeholder="La tua password"
+										autocomplete="current-password"
+										class="bg-[#F8F9FB] p-[12px] pr-[44px] border border-[#E9EBEC] rounded-[8px] placeholder:text-[#A0A5AB] w-full text-[0.9375rem] focus:border-[#095866] focus:outline-none transition-colors"
+										required />
+									<button type="button" @click="showLoginPassword = !showLoginPassword" class="absolute right-[12px] top-1/2 -translate-y-1/2 text-[#A0A5AB] hover:text-[#252B42] cursor-pointer transition-colors" tabindex="-1">
+										<svg v-if="!showLoginPassword" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+										<svg v-else width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+									</button>
+								</div>
 							</div>
 
 							<p v-if="messageError?.email" class="text-red-500 text-[0.8125rem] mb-[12px] bg-red-50 p-[10px] rounded-[6px]">
@@ -402,26 +413,40 @@ function onTabClick(newValue) {
 
 								<div class="mb-[16px]">
 									<label for="reg_password" class="block text-[0.875rem] font-medium text-[#252B42] mb-[6px]">Password *</label>
-									<input
-										type="password"
-										id="reg_password"
-										placeholder="Minimo 8 caratteri"
-										v-model="registerForm.password"
-										class="bg-[#F8F9FB] p-[12px] border border-[#E9EBEC] rounded-[8px] placeholder:text-[#A0A5AB] w-full text-[0.9375rem] focus:border-[#095866] focus:outline-none transition-colors"
-										minlength="8"
-										required />
+									<div class="relative">
+										<input
+											:type="showRegPassword ? 'text' : 'password'"
+											id="reg_password"
+											placeholder="Minimo 8 caratteri"
+											v-model="registerForm.password"
+											autocomplete="new-password"
+											class="bg-[#F8F9FB] p-[12px] pr-[44px] border border-[#E9EBEC] rounded-[8px] placeholder:text-[#A0A5AB] w-full text-[0.9375rem] focus:border-[#095866] focus:outline-none transition-colors"
+											minlength="8"
+											required />
+										<button type="button" @click="showRegPassword = !showRegPassword" class="absolute right-[12px] top-1/2 -translate-y-1/2 text-[#A0A5AB] hover:text-[#252B42] cursor-pointer transition-colors" tabindex="-1">
+											<svg v-if="!showRegPassword" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+											<svg v-else width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+										</button>
+									</div>
 								</div>
 
 								<div class="mb-[8px]">
 									<label for="reg_password_confirmation" class="block text-[0.875rem] font-medium text-[#252B42] mb-[6px]">Conferma Password *</label>
-									<input
-										type="password"
-										id="reg_password_confirmation"
-										placeholder="Ripeti la password"
-										v-model="registerForm.password_confirmation"
-										class="bg-[#F8F9FB] p-[12px] border border-[#E9EBEC] rounded-[8px] placeholder:text-[#A0A5AB] w-full text-[0.9375rem] focus:border-[#095866] focus:outline-none transition-colors"
-										minlength="8"
-										required />
+									<div class="relative">
+										<input
+											:type="showRegPasswordConfirm ? 'text' : 'password'"
+											id="reg_password_confirmation"
+											placeholder="Ripeti la password"
+											v-model="registerForm.password_confirmation"
+											autocomplete="new-password"
+											class="bg-[#F8F9FB] p-[12px] pr-[44px] border border-[#E9EBEC] rounded-[8px] placeholder:text-[#A0A5AB] w-full text-[0.9375rem] focus:border-[#095866] focus:outline-none transition-colors"
+											minlength="8"
+											required />
+										<button type="button" @click="showRegPasswordConfirm = !showRegPasswordConfirm" class="absolute right-[12px] top-1/2 -translate-y-1/2 text-[#A0A5AB] hover:text-[#252B42] cursor-pointer transition-colors" tabindex="-1">
+											<svg v-if="!showRegPasswordConfirm" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+											<svg v-else width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+										</button>
+									</div>
 								</div>
 
 								<p v-if="messageError?.password" class="text-red-500 text-[0.8125rem] mb-[8px] bg-red-50 p-[8px] rounded-[6px]">

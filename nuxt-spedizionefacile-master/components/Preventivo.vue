@@ -1,5 +1,6 @@
 <script setup>
 const userStore = useUserStore();
+const route = useRoute();
 
 const formRef = ref(null);
 
@@ -344,13 +345,16 @@ watch(
 	<section>
 		<div class="my-container">
 			<div
-				class="bg-white w-full rounded-[24px] desktop-xl:rounded-[32px] relative z-3 mt-[-132px] p-[24px_20px] desktop:p-[40px] tablet:p-[24px_50px] tablet:mt-[-220px] desktop:mt-[-185px] desktop-xl:mt-[-70px]">
-				<h2 class="border-b-[1px] border-[#E6E6E6] text-[1.5rem] desktop:text-[2.5rem] text-black font-bold text-center">Preventivo Rapido</h2>
+				class="bg-white w-full rounded-[24px] desktop-xl:rounded-[32px] relative z-1 p-[20px_16px] desktop:p-[30px_36px] tablet:p-[20px_40px] mx-auto"
+			:class="route.path === '/'
+				? 'mt-[-132px] tablet:mt-[-220px] desktop:mt-[-185px] desktop-xl:mt-[-70px] max-w-[1100px]'
+				: 'mt-[40px] max-w-[1200px]'">
+				<h2 class="border-b-[1px] border-[#E6E6E6] text-[1.25rem] desktop:text-[2rem] text-black font-bold text-center pb-[8px]">Preventivo Rapido</h2>
 
 				<form ref="formRef" @submit.prevent="">
-					<Steps />
+					<Steps :current-step="0" />
 
-					<h3 class="font-semibold text-[1.5rem] text-black border-b-[1px] border-[#E6E6E6] desktop:w-[469px] h-[61px] pl-[18px]">Aggiungi altri colli alla spedizione</h3>
+					<h3 class="font-semibold text-[1.25rem] text-black border-b-[1px] border-[#E6E6E6] desktop:w-[469px] h-[50px] pl-[18px]">Aggiungi altri colli alla spedizione</h3>
 
 					<ul class="flex items-center flex-wrap gap-[16px] desktop:gap-x-[30px] desktop-xl:gap-x-[40px] mt-[10px]">
 						<li
@@ -373,7 +377,7 @@ watch(
 						{{ messageError.packages[0] }}
 					</p>
 
-					<h3 class="font-semibold text-[1.5rem] text-black border-b-[1px] border-[#E6E6E6] desktop:w-[600px] h-[61px] pl-[18px] mt-[88px]">Inserisci la posizione di partenza e destinazione</h3>
+					<h3 class="font-semibold text-[1.25rem] text-black border-b-[1px] border-[#E6E6E6] desktop:w-[600px] h-[50px] pl-[18px] mt-[40px]">Inserisci la posizione di partenza e destinazione</h3>
 
 					<div
 						class="flex items-start flex-wrap tablet:justify-center desktop-xl:justify-between tablet:gap-x-[20px] gap-y-[24px] tablet:gap-y-[20px] desktop:gap-y-[36px] desktop-xl:gap-y-0 border-[1px] border-[rgba(0,0,0,.2)] rounded-[30px] p-[15px] mt-[10px]">
@@ -423,17 +427,10 @@ watch(
 							</p>
 						</div>
 
-						<div class="w-full tablet:w-[30%] desktop:w-full desktop-xl:w-[200px]">
-							<label for="date" class="label-preventivo-rapido">Data spedizione</label>
-							<input type="date" v-model="userStore.shipmentDetails.date" id="date" :min="getTodayDate" class="input-preventivo-rapido uppercase" required />
-							<p v-if="messageError?.['shipment_details.date']" class="text-red-500 text-[1rem] mt-[10px]">
-								{{ messageError["shipment_details.date"][0] }}
-							</p>
-						</div>
 					</div>
 
 					<div v-if="userStore.packages.length > 0">
-						<h3 class="font-semibold text-[1.5rem] text-black border-b-[1px] border-[#E6E6E6] desktop:w-[492px] h-[61px] pl-[18px] mt-[88px]">Inserisci le dimensioni e il peso dei colli</h3>
+						<h3 class="font-semibold text-[1.25rem] text-black border-b-[1px] border-[#E6E6E6] desktop:w-[492px] h-[50px] pl-[18px] mt-[40px]">Inserisci le dimensioni e il peso dei colli</h3>
 
 						<ul class="mt-[10px]">
 							<li
@@ -509,7 +506,7 @@ watch(
 						</button> -->
 
 					<div
-						class="bg-[#E44203] w-full text-white font-semibold text-center mt-[32px] desktop-xl:mt-[88px] rounded-[50px] desktop:mt-0 tracking-[-0.48px]"
+						class="bg-[#E44203] w-full text-white font-semibold text-center mt-[24px] desktop-xl:mt-[40px] rounded-[50px] desktop:mt-[20px] tracking-[-0.48px]"
 						:class="{ 'text-[1.875rem] h-[80px]': !isRateCalculated, ' h-[113px]': isRateCalculated }">
 							<button
 								type="button"
