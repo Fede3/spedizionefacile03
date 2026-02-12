@@ -392,6 +392,42 @@ const fieldClass = (section, field) => {
 
 const days = ["Lun", "Mar", "Mer", "Gio", "Ven"];
 
+const formRef = ref(null);
+const showSummary = ref(false);
+const showAddressFields = ref(false);
+const showSavedPopup = ref(false);
+const editingSidebarColli = ref(false);
+const dateError = ref(null);
+
+const editablePackages = computed(() => session.value?.data?.packages || []);
+
+const openAddressFields = () => {
+	if (!services.value.date) {
+		dateError.value = 'Seleziona un giorno di ritiro prima di procedere.';
+		return;
+	}
+	dateError.value = null;
+	showAddressFields.value = true;
+};
+
+const goBackToServices = () => {
+	showAddressFields.value = false;
+};
+
+const goToCart = () => {
+	showSavedPopup.value = false;
+	navigateTo('/carrello');
+};
+
+const goToSavedShipments = () => {
+	showSavedPopup.value = false;
+	navigateTo('/account/spedizioni');
+};
+
+const addAnotherShipment = () => {
+	showSavedPopup.value = false;
+	navigateTo('/preventivo');
+};
 
 const { endpoint, refresh: refreshCart } = useCart();
 const { isAuthenticated } = useSanctumAuth();
