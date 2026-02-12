@@ -148,3 +148,5 @@ npm run build
 ```
 
 Questo evita che una modifica locale non chiusa correttamente blocchi tutta l'app.
+
+Se l'errore resta, esegui anche `git fetch --all && git reset --hard origin/work` nella root del progetto prima della build, per riallineare i file locali corrotti.
