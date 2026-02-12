@@ -11,16 +11,32 @@ use Laravel\Socialite\Facades\Socialite;
 class GoogleController extends Controller
 {
     // Reindirizza a Google
-    public function redirectToGoogle() {
-        return Socialite::driver('google')->stateless()->with(['prompt' => 'select_account consent'])->redirect();
+    public function redirectToGoogle(Request $request)
+    {
+        $frontend = trim((string) $request->query('frontend', ''));
+        $fallbackFrontend = rtrim((string) config('app.frontend_url', config('app.url')), '/');
+
+        if (!filter_var($frontend, FILTER_VALIDATE_URL)) {
+            $frontend = $fallbackFrontend;
+        }
+
+        $response = Socialite::driver('google')
+            ->stateless()
+            ->with(['prompt' => 'select_account consent'])
+            ->redirect();
+
+        return $response->withCookie(cookie('frontend_redirect', $frontend, 15, '/', null, false, false));
     }
 
     // Callback da Google
-    public function handleGoogleCallback() {
+    public function handleGoogleCallback(Request $request)
+    {
+        $frontendUrl = rtrim((string) ($request->cookie('frontend_redirect') ?: config('app.frontend_url', config('app.url'))), '/');
+
         try {
             $googleUser = Socialite::driver('google')->stateless()->user();
         } catch (\Exception $e) {
-            return redirect(config('app.frontend_url', config('app.url')) . '/autenticazione?error=google_failed');
+            return redirect($frontendUrl . '/autenticazione?error=google_failed')->withoutCookie('frontend_redirect');
         }
 
         // Trova o crea l'utente
@@ -44,6 +60,6 @@ class GoogleController extends Controller
 
         Auth::login($user);
 
-        return redirect(config('app.frontend_url', config('app.url')) . '/account');
+        return redirect($frontendUrl . '/account')->withoutCookie('frontend_redirect');
     }
 }
