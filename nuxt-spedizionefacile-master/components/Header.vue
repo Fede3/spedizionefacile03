@@ -7,7 +7,7 @@ const route = useRoute();
 
 	<!--  -->
 	<header
-		class="relative bg-[#E3E3E3]"
+		class="relative bg-[#E3E3E3] z-40"
 		:class="{
 			'desktop:h-[722px] tablet:h-[600px] h-[524px] overflow-x-hidden overflow-y-hidden after:absolute after:content-[\'\'] after:h-[100px] after:w-full after:bg-[#eeeeee] after:z-1 after:bottom-0 desktop:after:hidden':
 				route.path === '/',

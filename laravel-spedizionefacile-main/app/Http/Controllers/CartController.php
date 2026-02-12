@@ -38,7 +38,7 @@ class CartController extends Controller
     public function subtotal($packages) {
 
         $subtotal = $packages->sum(function($package) {
-            return (int) $package->single_price * $package->quantity;
+            return (int) $package->single_price;
         });
 
         return new MyMoney($subtotal);
@@ -103,6 +103,19 @@ class CartController extends Controller
         }
 
         return PackageResource::collection($outPackages);
+    }
+
+    public function destroy($id) {
+        $userId = auth()->id();
+
+        DB::table('cart_user')
+            ->where('user_id', $userId)
+            ->where('package_id', $id)
+            ->delete();
+
+        Package::where('id', $id)->where('user_id', $userId)->delete();
+
+        return response()->json(['message' => 'Spedizione rimossa dal carrello']);
     }
 
     public function emptyCart() {

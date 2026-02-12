@@ -110,6 +110,8 @@ Route::group(['prefix' => 'api'], function() {
 
             Route::post('stripe/create-order', [StripeController::class, 'createOrder']);
 
+            Route::post('stripe/create-payment-intent', [StripeController::class, 'createPaymentIntent']);
+
             Route::post('stripe/order-paid', [StripeController::class, 'orderPaid']);
 
             Route::post('stripe/webhook', [StripeWebhookController::class, 'handle']);
