@@ -580,6 +580,12 @@ const continueToCart = async () => {
 
 				<!-- STEP FORM: Servizi + Indirizzi -->
 				<div v-if="!showSummary">
+					<div class="flex justify-end mb-[16px]">
+						<button type="button" class="bg-[#095866] text-white font-semibold text-[0.9375rem] px-[24px] h-[42px] rounded-[30px] hover:bg-[#0a7a8c] transition cursor-pointer">
+							Create
+						</button>
+					</div>
+
 
 				<ClientOnly>
 					<div class="bg-[#E6E6E6] rounded-[20px] pt-[13px]">
@@ -975,6 +981,7 @@ const continueToCart = async () => {
 				</div>
 				<p v-if="submitError" class="text-red-500 text-[0.9375rem] mt-[10px] text-right">{{ submitError }}</p>
 
+				</div>
 			</form>
 		</div>
 
