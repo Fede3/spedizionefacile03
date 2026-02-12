@@ -373,6 +373,26 @@ const fieldClass = (section, field) => {
 
 const days = ["Lun", "Mar", "Mer", "Gio", "Ven"];
 
+/* Controllo visibilità campi indirizzo */
+const showAddressFields = ref(false);
+const dateError = ref(null);
+
+const openAddressFields = () => {
+	dateError.value = null;
+
+	// Giorno di ritiro obbligatorio
+	if (!services.value.date) {
+		dateError.value = "Seleziona un giorno di ritiro prima di continuare.";
+		return;
+	}
+
+	showAddressFields.value = true;
+};
+
+const goBackToServices = () => {
+	showAddressFields.value = false;
+};
+
 const formRef = ref(null);
 
 const { endpoint, refresh: refreshCart } = useCart();
@@ -416,6 +436,12 @@ const toAddressPayload = (addressData) => ({
 
 const continueToCart = async () => {
 	submitError.value = null;
+
+	// Giorno di ritiro obbligatorio
+	if (!services.value.date) {
+		submitError.value = "Seleziona un giorno di ritiro.";
+		return;
+	}
 
 	// Validazione personalizzata dei campi
 	if (!validateForm()) {
@@ -666,7 +692,19 @@ const continueToCart = async () => {
 								</label>
 							</div>
 
+							<!-- Bottone per aprire i campi indirizzo -->
+							<div v-if="!showAddressFields" class="mt-[40px] text-center">
+								<p v-if="dateError" class="text-red-500 text-[0.9375rem] mb-[16px] font-medium">{{ dateError }}</p>
+								<button
+									type="button"
+									@click="openAddressFields"
+									class="bg-[#095866] text-white font-semibold text-[1rem] px-[32px] h-[52px] rounded-[30px] hover:bg-[#0a7a8c] transition cursor-pointer">
+									Compila dati ritiro e destinazione
+								</button>
+							</div>
+
 							<!-- PARTENZA -->
+							<template v-if="showAddressFields">
 							<div class="bg-[#E4E4E4] rounded-[20px] text-[#252B42] mt-[20px] pl-[40px] pr-[40px] pt-[35px] pb-[43px]">
 								<h2 class="font-bold text-[1.125rem] tracking-[0.1px] mb-[39px]">
 									Partenza
@@ -822,6 +860,7 @@ const continueToCart = async () => {
 								</div>
 							</div>
 
+						</template>
 						</div>
 					</div>
 
@@ -902,15 +941,25 @@ const continueToCart = async () => {
 
 
 				<div class="mt-[28px] w-full max-w-[850px] mr-auto flex flex-wrap gap-[12px] items-center justify-between">
-					<NuxtLink :to="{ path: '/', hash: '#preventivo' }" class="inline-flex items-center justify-center h-[52px] px-[24px] rounded-[30px] bg-[#095866] text-white font-semibold hover:bg-[#0a7a8c] transition">
-						Indietro
-					</NuxtLink>
-					<button
-						type="submit"
-						:disabled="isSubmitting"
-						class="bg-[#E44203] text-white font-semibold text-[1rem] px-[28px] h-[52px] rounded-[30px] hover:opacity-90 transition disabled:opacity-60 disabled:cursor-not-allowed">
-						{{ isSubmitting ? 'Salvataggio in corso...' : 'Continua e vai al carrello' }}
-					</button>
+					<template v-if="showAddressFields">
+						<button
+							type="button"
+							@click="goBackToServices"
+							class="inline-flex items-center justify-center h-[52px] px-[24px] rounded-[30px] bg-[#095866] text-white font-semibold hover:bg-[#0a7a8c] transition cursor-pointer">
+							Indietro
+						</button>
+						<button
+							type="submit"
+							:disabled="isSubmitting"
+							class="bg-[#E44203] text-white font-semibold text-[1rem] px-[28px] h-[52px] rounded-[30px] hover:opacity-90 transition disabled:opacity-60 disabled:cursor-not-allowed">
+							{{ isSubmitting ? 'Salvataggio in corso...' : 'Continua e vai al carrello' }}
+						</button>
+					</template>
+					<template v-else>
+						<NuxtLink :to="{ path: '/', hash: '#preventivo' }" class="inline-flex items-center justify-center h-[52px] px-[24px] rounded-[30px] bg-[#095866] text-white font-semibold hover:bg-[#0a7a8c] transition">
+							Indietro
+						</NuxtLink>
+					</template>
 				</div>
 				<div v-if="submitError" class="mt-[16px] w-full max-w-[850px] mr-auto p-[14px] bg-red-50 border border-red-200 rounded-[12px] flex items-center gap-[10px]">
 					<Icon name="mdi:alert-circle" class="text-[20px] text-red-500 shrink-0" />

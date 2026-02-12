@@ -134,21 +134,22 @@ class StripeController extends Controller
             return response()->json(['error' => 'Stripe non configurato'], 503);
         }
 
-        $stripe = new StripeClient(config('services.stripe.secret'));
+        try {
+            $stripe = new StripeClient(config('services.stripe.secret'));
 
-        $customerId = $this->createOrGetCustomer($request->user());
+            $customerId = $this->createOrGetCustomer($request->user());
 
-        $intent = $stripe->setupIntents->create([
-            'customer' => $customerId,
-            'payment_method_types' => [
-                'card', 
-                'sepa_debit',
-                'paypal'],
-        ]);
+            $intent = $stripe->setupIntents->create([
+                'customer' => $customerId,
+                'payment_method_types' => ['card'],
+            ]);
 
-        return response()->json([
-            'client_secret' => $intent->client_secret
-        ]);
+            return response()->json([
+                'client_secret' => $intent->client_secret
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
     }
 
 
