@@ -135,3 +135,16 @@ Dopo `php artisan migrate --seed` trovi questi account pronti:
 - wrapping dell’icona cestino nello step 1.
 
 Se nel repository vedi più PR aperte, usa quella con titolo che inizia con **"PR refresh"**.
+
+
+## Ripristino rapido errore Vue "Element is missing end tag"
+
+Se in locale compare un errore 500 con `Element is missing end tag` su `pages/la-tua-spedizione/[step].vue`, allinea il file al branch corrente prima di riavviare:
+
+```bash
+git checkout -- nuxt-spedizionefacile-master/pages/la-tua-spedizione/[step].vue
+cd nuxt-spedizionefacile-master
+npm run build
+```
+
+Questo evita che una modifica locale non chiusa correttamente blocchi tutta l'app.
