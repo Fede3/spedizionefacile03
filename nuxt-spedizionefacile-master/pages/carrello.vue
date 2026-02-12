@@ -6,6 +6,34 @@ const router = useRouter();
 
 const endpoint = computed(() => (isAuthenticated.value ? "/api/empty-cart" : "/api/empty-guest-cart"));
 
+// Filters
+const filterProvenienza = ref('');
+const filterRiferimento = ref('');
+
+const filteredCartItems = computed(() => {
+	if (!cart.value?.data) return [];
+	let items = [...cart.value.data];
+	if (filterProvenienza.value) {
+		items = items.filter(item =>
+			item.origin_address?.city?.toLowerCase().includes(filterProvenienza.value.toLowerCase())
+		);
+	}
+	if (filterRiferimento.value) {
+		items = items.filter(item =>
+			String(item.id).includes(filterRiferimento.value) ||
+			(item.origin_address?.name || '').toLowerCase().includes(filterRiferimento.value.toLowerCase()) ||
+			(item.destination_address?.name || '').toLowerCase().includes(filterRiferimento.value.toLowerCase())
+		);
+	}
+	return items;
+});
+
+const uniqueCities = computed(() => {
+	if (!cart.value?.data) return [];
+	const cities = cart.value.data.map(item => item.origin_address?.city).filter(Boolean);
+	return [...new Set(cities)];
+});
+
 // Delete confirmation
 const showDeleteConfirm = ref(false);
 const deleteTargetId = ref(null);
@@ -40,20 +68,26 @@ const emptyCart = async () => {
 	}
 };
 
-// Detail popup
-const showDetail = ref(false);
-const detailItem = ref(null);
-
-const openDetail = (item) => {
-	detailItem.value = item;
-	showDetail.value = true;
+// Price helper
+const formatPrice = (cents) => {
+	if (!cents && cents !== 0) return '0,00€';
+	const euros = Number(cents) / 100;
+	return euros.toFixed(2).replace('.', ',') + '€';
 };
 
-// Price helper: single_price is stored in cents
-const formatPrice = (cents) => {
-	if (!cents) return '0,00 €';
-	const euros = Number(cents) / 100;
-	return euros.toFixed(2).replace('.', ',') + ' €';
+const formatDate = (item) => {
+	if (item.created_at) {
+		return new Date(item.created_at).toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit', year: 'numeric' });
+	}
+	return new Date().toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit', year: 'numeric' });
+};
+
+const getPackageIcon = (item) => {
+	const type = item.package_type?.toLowerCase() || '';
+	if (type.includes('pallet')) return '/img/quote/first-step/pallet.png';
+	if (type.includes('busta')) return '/img/quote/first-step/envelope.png';
+	if (type.includes('valigia')) return '/img/quote/first-step/suitcase.png';
+	return '/img/quote/first-step/pack.png';
 };
 
 // Coupon
@@ -103,8 +137,8 @@ const displayTotal = computed(() => {
 </script>
 
 <template>
-	<section class="min-h-[600px] py-[30px] desktop:py-[50px]">
-		<div class="my-container">
+	<section class="min-h-[600px] py-[30px] desktop:py-[50px] bg-[#F0F0F0]">
+		<div class="my-container max-w-[1200px]">
 			<!-- Loading -->
 			<div v-if="status === 'pending'" class="max-w-[1100px] mx-auto">
 				<div v-for="n in 3" :key="n" class="bg-white rounded-[16px] border border-[#E9EBEC] p-[24px] mb-[12px] animate-pulse">
@@ -119,170 +153,159 @@ const displayTotal = computed(() => {
 			</div>
 
 			<!-- Cart content -->
-			<div v-else-if="cart?.data?.length > 0" class="max-w-[1100px] mx-auto">
-				<div class="flex items-center justify-between mb-[24px]">
-					<h1 class="text-[1.5rem] desktop:text-[1.75rem] font-bold text-[#252B42] flex items-center gap-[10px]">
-						<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#252B42" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
-						Carrello
-					</h1>
-					<NuxtLink
-						to="/preventivo"
-						class="inline-flex items-center gap-[6px] px-[20px] h-[42px] rounded-[12px] bg-[#E44203] text-white text-[0.875rem] font-semibold hover:opacity-90 transition">
-						<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-						Nuova spedizione
-					</NuxtLink>
-				</div>
+			<div v-else-if="cart?.data?.length > 0" class="max-w-[1200px] mx-auto">
+				<!-- Title -->
+				<h1 class="text-[2rem] font-bold text-[#252B42] text-center mb-[4px] font-montserrat">Carrello</h1>
+				<div class="w-[40px] h-[3px] bg-[#E44203] mx-auto mb-[32px]"></div>
 
-				<!-- Table header -->
-				<div class="hidden desktop:grid grid-cols-[1fr_1fr_1fr_100px_120px_130px] gap-[12px] px-[24px] pb-[10px] text-[0.75rem] font-bold text-[#737373] uppercase tracking-wider border-b border-[#E9EBEC]">
-					<span>Partenza</span>
-					<span>Destinazione</span>
-					<span>Servizio</span>
-					<span class="text-center">Colli</span>
-					<span class="text-right">Importo</span>
-					<span class="text-center">Azioni</span>
-				</div>
+				<!-- Main card -->
+				<div class="bg-[#E6E6E6] rounded-[20px] p-[30px_36px] border border-dashed border-[#B0B0B0]">
+					<!-- Filters row -->
+					<div class="flex flex-wrap gap-[16px] items-center mb-[20px]">
+						<div class="flex-1 min-w-[200px] max-w-[400px]">
+							<select v-model="filterProvenienza" class="w-full bg-white border border-[#D0D0D0] rounded-[30px] h-[44px] px-[18px] text-[0.875rem] text-[#404040] appearance-none cursor-pointer">
+								<option value="">Provenienza</option>
+								<option v-for="city in uniqueCities" :key="city" :value="city">{{ city }}</option>
+							</select>
+						</div>
+						<div class="flex-1 min-w-[200px] max-w-[400px] ml-auto">
+							<input type="text" v-model="filterRiferimento" placeholder="Riferimento" class="w-full bg-white border border-[#D0D0D0] rounded-[30px] h-[44px] px-[18px] text-[0.875rem] text-[#404040] placeholder:text-[#999]" />
+						</div>
+					</div>
 
-				<!-- Cart items -->
-				<div class="space-y-[10px] mt-[10px]">
-					<div
-						v-for="item in cart.data"
-						:key="item.id"
-						class="bg-white rounded-[14px] border border-[#E9EBEC] hover:border-[#095866] transition-all">
+					<!-- Dotted divider -->
+					<div class="border-t border-dashed border-[#B0B0B0] my-[16px]"></div>
 
-						<!-- Desktop row -->
-						<div class="hidden desktop:grid grid-cols-[1fr_1fr_1fr_100px_120px_130px] gap-[12px] items-center p-[16px_24px]">
-							<!-- Partenza -->
-							<div>
-								<p class="text-[0.875rem] font-semibold text-[#252B42]">{{ item.origin_address?.city }}</p>
-								<p class="text-[0.75rem] text-[#737373]">{{ item.origin_address?.postal_code }} ({{ item.origin_address?.province }})</p>
-							</div>
-							<!-- Destinazione -->
-							<div>
-								<p class="text-[0.875rem] font-semibold text-[#252B42]">{{ item.destination_address?.city }}</p>
-								<p class="text-[0.75rem] text-[#737373]">{{ item.destination_address?.postal_code }} ({{ item.destination_address?.province }})</p>
-							</div>
-							<!-- Servizio -->
-							<div>
-								<p class="text-[0.8125rem] text-[#252B42]">{{ item.services?.service_type || 'Standard' }}</p>
-								<p v-if="item.services?.date" class="text-[0.75rem] text-[#737373]">{{ item.services.date }}</p>
-							</div>
-							<!-- Colli -->
-							<div class="text-center">
-								<span class="text-[0.875rem] font-semibold text-[#252B42]">{{ item.quantity }}x</span>
-								<p class="text-[0.6875rem] text-[#737373]">{{ item.weight }} kg</p>
-							</div>
-							<!-- Importo -->
-							<div class="text-right">
-								<span class="text-[0.9375rem] font-bold text-[#252B42]">{{ formatPrice(item.single_price) }}</span>
-							</div>
-							<!-- Azioni -->
-							<div class="flex items-center justify-center gap-[10px] whitespace-nowrap">
-								<button type="button" @click="openDetail(item)" title="Dettagli" class="w-[32px] h-[32px] rounded-[8px] bg-[#095866]/10 flex items-center justify-center hover:bg-[#095866]/20 transition cursor-pointer">
-									<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#095866" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-								</button>
-								<button type="button" @click="askDelete(item.id)" title="Elimina" class="w-[32px] h-[32px] rounded-[8px] bg-red-50 flex items-center justify-center hover:bg-red-100 transition cursor-pointer">
-									<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#EF4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
-								</button>
+					<!-- Coupon row -->
+					<div class="flex flex-wrap items-center gap-[16px] mb-[20px]">
+						<span class="text-[1rem] font-bold text-[#252B42]">Inserisci Cupon</span>
+						<div class="flex-1 max-w-[300px]">
+							<input
+								v-if="!couponApplied"
+								type="text"
+								v-model="couponCode"
+								placeholder="PROVA123"
+								class="w-full bg-white border border-[#D0D0D0] rounded-[30px] h-[44px] px-[18px] text-[0.875rem] text-[#404040] placeholder:text-[#999]" />
+							<div v-else class="flex items-center gap-[8px] bg-emerald-50 border border-emerald-200 rounded-[30px] h-[44px] px-[18px]">
+								<span class="text-emerald-700 font-semibold text-[0.875rem]">{{ couponCode.toUpperCase() }} (-{{ couponDiscount }}%)</span>
+								<button @click="removeCoupon" class="text-red-500 text-[0.75rem] hover:underline cursor-pointer ml-auto">X</button>
 							</div>
 						</div>
+						<button
+							v-if="!couponApplied"
+							type="button"
+							@click="applyCoupon"
+							class="bg-[#252B42] text-white font-semibold text-[0.9375rem] px-[28px] h-[44px] rounded-[30px] hover:opacity-90 transition cursor-pointer">
+							Applica Cupon
+						</button>
+					</div>
+					<p v-if="couponMessage" class="text-[0.8125rem] mb-[12px]" :class="couponMessage.type === 'success' ? 'text-emerald-600' : 'text-red-500'">
+						{{ couponMessage.text }}
+					</p>
 
-						<!-- Mobile card -->
-						<div class="desktop:hidden p-[16px]">
-							<div class="flex items-center justify-between mb-[12px]">
-								<div class="flex items-center gap-[10px]">
-									<div class="w-[40px] h-[40px] rounded-[10px] bg-[#095866]/10 flex items-center justify-center shrink-0">
-										<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#095866" stroke-width="2"><rect x="1" y="3" width="22" height="18" rx="2"/><path d="M1 9h22"/></svg>
-									</div>
-									<div>
-										<p class="text-[0.875rem] font-semibold text-[#252B42]">{{ item.origin_address?.city }} &rarr; {{ item.destination_address?.city }}</p>
-										<p class="text-[0.75rem] text-[#737373]">{{ item.quantity }}x &ndash; {{ item.weight }} kg</p>
-									</div>
+					<!-- Dotted divider -->
+					<div class="border-t border-dashed border-[#B0B0B0] my-[16px]"></div>
+
+					<!-- Spedizioni table -->
+					<h2 class="text-[1.25rem] font-bold text-[#252B42] text-center mb-[16px]">Spedizioni</h2>
+
+					<!-- Table header -->
+					<div class="hidden desktop:grid grid-cols-[40px_140px_100px_80px_80px_170px_80px_90px_90px] gap-[8px] px-[12px] py-[10px] text-[0.8125rem] font-bold text-[#252B42] border-b-[2px] border-[#252B42]">
+						<span></span>
+						<span>Partenza</span>
+						<span>Destinazione</span>
+						<span>Servizio</span>
+						<span>Colli</span>
+						<span>Indirizzi</span>
+						<span>Accessori</span>
+						<span>Importo</span>
+						<span>Riferimenti</span>
+					</div>
+
+					<!-- Table rows -->
+					<div>
+						<div
+							v-for="(item, idx) in filteredCartItems"
+							:key="item.id"
+							class="hidden desktop:grid grid-cols-[40px_140px_100px_80px_80px_170px_80px_90px_90px] gap-[8px] items-center px-[12px] py-[12px] border-b border-[#C0C0C0] text-[0.8125rem] text-[#252B42]">
+							<!-- # -->
+							<span class="font-semibold">{{ idx + 1 }}</span>
+							<!-- Partenza -->
+							<span class="text-[0.8125rem]">{{ formatDate(item) }} - {{ item.origin_address?.name || '—' }}</span>
+							<!-- Destinazione -->
+							<span class="text-[0.8125rem]">{{ item.destination_address?.name?.split(' ')[0] || '—' }}</span>
+							<!-- Servizio -->
+							<span class="text-[0.8125rem]">{{ item.services?.service_type?.split(',')[0]?.trim() || 'BRT' }}</span>
+							<!-- Colli -->
+							<span class="flex items-center gap-[4px] text-[0.8125rem]">
+								{{ item.quantity || 1 }} x
+								<NuxtImg :src="getPackageIcon(item)" alt="" width="20" height="20" />
+							</span>
+							<!-- Indirizzi -->
+							<span class="text-[0.75rem]">
+								<div class="flex items-center gap-[4px]">
+									<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#E44203" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+									<span class="truncate">{{ item.origin_address?.name?.split(' ')[0] || '' }} - {{ item.origin_address?.city || '' }}</span>
+								</div>
+								<div class="flex items-center gap-[4px] mt-[4px]">
+									<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#E44203" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+									<span class="truncate">{{ item.destination_address?.name?.split(' ')[0] || '' }} - {{ item.destination_address?.city || '' }}</span>
+								</div>
+							</span>
+							<!-- Accessori -->
+							<span class="text-[0.8125rem] text-[#737373]">......</span>
+							<!-- Importo -->
+							<span class="text-[0.8125rem] font-semibold">{{ formatPrice(item.single_price) }}</span>
+							<!-- Riferimenti -->
+							<span class="text-[0.8125rem] text-[#737373]">......</span>
+						</div>
+
+						<!-- Mobile cards -->
+						<div v-for="(item, idx) in filteredCartItems" :key="'m-'+item.id" class="desktop:hidden p-[16px] border-b border-[#C0C0C0]">
+							<div class="flex items-center justify-between mb-[8px]">
+								<div>
+									<p class="text-[0.875rem] font-semibold text-[#252B42]">#{{ idx + 1 }} {{ item.origin_address?.city || 'Partenza' }} &rarr; {{ item.destination_address?.city || 'Destinazione' }}</p>
+									<p class="text-[0.75rem] text-[#737373]">{{ item.quantity }}x &ndash; {{ item.weight }} kg</p>
 								</div>
 								<span class="text-[0.9375rem] font-bold text-[#252B42]">{{ formatPrice(item.single_price) }}</span>
 							</div>
-							<div class="flex gap-[8px] justify-end">
-								<button type="button" @click="openDetail(item)" class="text-[0.75rem] text-[#095866] font-semibold hover:underline cursor-pointer">Dettagli</button>
+							<div class="flex gap-[12px] justify-end">
 								<button type="button" @click="askDelete(item.id)" class="text-[0.75rem] text-red-500 font-semibold hover:underline cursor-pointer">Elimina</button>
 							</div>
 						</div>
 					</div>
-				</div>
-
-				<!-- Coupon + totals -->
-				<div class="mt-[28px] flex flex-col desktop:flex-row gap-[20px] items-start desktop:items-end justify-between">
-					<!-- Coupon -->
-					<div class="bg-white rounded-[14px] border border-[#E9EBEC] p-[20px] w-full desktop:w-[380px]">
-						<h3 class="text-[0.875rem] font-bold text-[#252B42] mb-[10px]">Codice sconto</h3>
-						<div v-if="!couponApplied" class="flex gap-[8px]">
-							<input
-								type="text"
-								v-model="couponCode"
-								placeholder="Inserisci codice"
-								class="flex-1 bg-[#F8F9FB] p-[10px_14px] border border-[#E9EBEC] rounded-[8px] text-[0.875rem] placeholder:text-[#A0A5AB] focus:border-[#095866] focus:outline-none" />
-							<button
-								type="button"
-								@click="applyCoupon"
-								class="bg-[#095866] text-white px-[16px] py-[10px] rounded-[8px] text-[0.8125rem] font-semibold hover:bg-[#0a7a8c] transition cursor-pointer">
-								Applica
-							</button>
-						</div>
-						<div v-else class="flex items-center justify-between p-[10px] bg-emerald-50 border border-emerald-200 rounded-[8px]">
-							<div>
-								<p class="text-emerald-700 font-semibold text-[0.8125rem]">{{ couponCode.toUpperCase() }} &ndash; Sconto {{ couponDiscount }}%</p>
-							</div>
-							<button @click="removeCoupon" class="text-[0.75rem] text-red-500 hover:underline cursor-pointer">Rimuovi</button>
-						</div>
-						<p v-if="couponMessage" class="mt-[8px] text-[0.8125rem]" :class="couponMessage.type === 'success' ? 'text-emerald-600' : 'text-red-500'">
-							{{ couponMessage.text }}
-						</p>
-					</div>
 
 					<!-- Totals -->
-					<div class="bg-white rounded-[14px] border border-[#E9EBEC] p-[20px] w-full desktop:w-[360px]">
-						<div class="flex items-center justify-between mb-[8px]">
-							<span class="text-[0.875rem] text-[#737373]">Subtotale ({{ cart.data?.length }} spedizioni)</span>
-							<span class="text-[0.9375rem] font-semibold text-[#252B42]" :class="{ 'line-through text-[#A0A5AB]': couponApplied }">{{ cart.meta?.total }}</span>
+					<div class="mt-[16px] border-t border-[#C0C0C0] pt-[12px]">
+						<div class="flex items-center justify-between py-[8px] border-b border-dashed border-[#C0C0C0]">
+							<span class="text-[0.9375rem] font-bold text-[#252B42]">Importo spedizioni</span>
+							<span class="text-[0.9375rem] font-bold text-[#252B42]" :class="{ 'line-through text-[#A0A5AB]': couponApplied }">{{ cart.meta?.total }}</span>
 						</div>
-						<div v-if="couponApplied" class="flex items-center justify-between mb-[8px]">
-							<span class="text-[0.875rem] text-emerald-600">Sconto {{ couponDiscount }}%</span>
-							<span class="text-[0.9375rem] font-semibold text-emerald-600">{{ appliedTotal }}</span>
+						<div v-if="couponApplied" class="flex items-center justify-between py-[8px] border-b border-dashed border-[#C0C0C0]">
+							<span class="text-[0.9375rem] font-bold text-emerald-600">Sconto coupon ({{ couponDiscount }}%)</span>
+							<span class="text-[0.9375rem] font-bold text-emerald-600">{{ appliedTotal }}</span>
 						</div>
-						<div class="flex items-center justify-between pt-[12px] border-t border-[#E9EBEC]">
-							<span class="text-[1rem] font-bold text-[#252B42]">Totale</span>
-							<span class="text-[1.25rem] font-bold text-[#252B42]">{{ displayTotal }}</span>
+						<div class="flex items-center justify-between py-[8px]">
+							<span class="text-[1rem] font-bold text-[#252B42]">Importo totale</span>
+							<span class="text-[1rem] font-bold text-[#252B42]">{{ displayTotal }}</span>
 						</div>
 					</div>
-				</div>
 
-				<!-- Action buttons -->
-				<div class="mt-[24px] flex flex-col desktop:flex-row gap-[12px] items-center justify-between">
-					<div class="flex gap-[12px]">
-						<button
-							type="button"
-							@click="emptyCart"
-							class="inline-flex items-center gap-[6px] px-[20px] h-[48px] rounded-[12px] border border-[#E9EBEC] text-[#737373] hover:border-red-300 hover:text-red-500 transition text-[0.875rem] font-medium cursor-pointer">
-							<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
-							Svuota carrello
-						</button>
+					<!-- Action button -->
+					<div class="flex justify-center mt-[24px]">
 						<NuxtLink
-							to="/preventivo"
-							class="inline-flex items-center gap-[6px] px-[20px] h-[48px] rounded-[12px] border border-[#E9EBEC] text-[#095866] hover:border-[#095866] transition text-[0.875rem] font-medium">
-							<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-							Aggiungi spedizione
+							to="/checkout"
+							class="inline-flex items-center justify-center gap-[8px] px-[40px] h-[52px] rounded-[30px] bg-[#252B42] text-white font-semibold text-[1rem] hover:opacity-90 transition">
+							Procedi con l'ordine
 						</NuxtLink>
 					</div>
-					<NuxtLink
-						to="/checkout"
-						class="inline-flex items-center justify-center gap-[8px] px-[32px] h-[52px] rounded-[14px] bg-[#E44203] text-white font-semibold text-[1rem] hover:opacity-90 transition">
-						Procedi al pagamento
-						<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
-					</NuxtLink>
 				</div>
 			</div>
 
 			<!-- Empty cart -->
 			<div v-else-if="status === 'success'" class="max-w-[600px] mx-auto py-[80px] text-center">
+				<h1 class="text-[2rem] font-bold text-[#252B42] text-center mb-[4px] font-montserrat">Carrello</h1>
+				<div class="w-[40px] h-[3px] bg-[#E44203] mx-auto mb-[32px]"></div>
 				<div class="w-[80px] h-[80px] mx-auto mb-[20px] bg-[#F8F9FB] rounded-full flex items-center justify-center">
 					<svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#C8CCD0" stroke-width="2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
 				</div>
@@ -297,59 +320,6 @@ const displayTotal = computed(() => {
 				</NuxtLink>
 			</div>
 		</div>
-
-		<!-- Detail popup -->
-		<UModal v-model:open="showDetail" :dismissible="true" :close="false">
-			<template #title>
-				<div class="flex items-center justify-between">
-					<h3 class="text-[1.125rem] font-bold text-[#252B42]">Dettagli spedizione</h3>
-					<button type="button" @click="showDetail = false" class="text-[#737373] hover:text-[#252B42] cursor-pointer">
-						<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-					</button>
-				</div>
-			</template>
-			<template #body>
-				<div v-if="detailItem" class="space-y-[16px]">
-					<!-- Partenza -->
-					<div class="bg-[#F8F9FB] rounded-[12px] p-[16px]">
-						<h4 class="text-[0.75rem] font-bold text-[#737373] uppercase tracking-wider mb-[8px]">Partenza</h4>
-						<p class="text-[0.9375rem] font-semibold text-[#252B42]">{{ detailItem.origin_address?.name }}</p>
-						<p class="text-[0.8125rem] text-[#404040]">{{ detailItem.origin_address?.address }} {{ detailItem.origin_address?.address_number }}</p>
-						<p class="text-[0.8125rem] text-[#404040]">{{ detailItem.origin_address?.postal_code }} {{ detailItem.origin_address?.city }} ({{ detailItem.origin_address?.province }})</p>
-						<p class="text-[0.75rem] text-[#737373] mt-[4px]">Tel: {{ detailItem.origin_address?.telephone_number }}</p>
-					</div>
-					<!-- Destinazione -->
-					<div class="bg-[#F8F9FB] rounded-[12px] p-[16px]">
-						<h4 class="text-[0.75rem] font-bold text-[#737373] uppercase tracking-wider mb-[8px]">Destinazione</h4>
-						<p class="text-[0.9375rem] font-semibold text-[#252B42]">{{ detailItem.destination_address?.name }}</p>
-						<p class="text-[0.8125rem] text-[#404040]">{{ detailItem.destination_address?.address }} {{ detailItem.destination_address?.address_number }}</p>
-						<p class="text-[0.8125rem] text-[#404040]">{{ detailItem.destination_address?.postal_code }} {{ detailItem.destination_address?.city }} ({{ detailItem.destination_address?.province }})</p>
-						<p class="text-[0.75rem] text-[#737373] mt-[4px]">Tel: {{ detailItem.destination_address?.telephone_number }}</p>
-					</div>
-					<!-- Colli -->
-					<div class="bg-[#F8F9FB] rounded-[12px] p-[16px]">
-						<h4 class="text-[0.75rem] font-bold text-[#737373] uppercase tracking-wider mb-[8px]">Collo</h4>
-						<div class="grid grid-cols-2 gap-[8px] text-[0.8125rem] text-[#252B42]">
-							<p><span class="text-[#737373]">Tipo:</span> {{ detailItem.package_type }}</p>
-							<p><span class="text-[#737373]">Quantità:</span> {{ detailItem.quantity }}</p>
-							<p><span class="text-[#737373]">Peso:</span> {{ detailItem.weight }} kg</p>
-							<p><span class="text-[#737373]">Dimensioni:</span> {{ detailItem.first_size }}&times;{{ detailItem.second_size }}&times;{{ detailItem.third_size }} cm</p>
-						</div>
-					</div>
-					<!-- Servizi -->
-					<div class="bg-[#F8F9FB] rounded-[12px] p-[16px]">
-						<h4 class="text-[0.75rem] font-bold text-[#737373] uppercase tracking-wider mb-[8px]">Servizi</h4>
-						<p class="text-[0.8125rem] text-[#252B42]">{{ detailItem.services?.service_type || 'Standard' }}</p>
-						<p v-if="detailItem.services?.date" class="text-[0.75rem] text-[#737373] mt-[4px]">Ritiro: {{ detailItem.services.date }}</p>
-					</div>
-					<!-- Importo -->
-					<div class="bg-[#095866]/5 rounded-[12px] p-[16px] flex items-center justify-between">
-						<span class="text-[0.875rem] font-bold text-[#252B42]">Importo</span>
-						<span class="text-[1.25rem] font-bold text-[#095866]">{{ formatPrice(detailItem.single_price) }}</span>
-					</div>
-				</div>
-			</template>
-		</UModal>
 
 		<!-- Delete confirm popup -->
 		<UModal v-model:open="showDeleteConfirm" :dismissible="true" :close="false">

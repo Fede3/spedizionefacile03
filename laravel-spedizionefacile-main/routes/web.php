@@ -24,6 +24,9 @@ use App\Http\Controllers\ChangePasswordController;
 use App\Http\Controllers\CustomRegisterController;
 use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\PasswordResetRequestController;
+use App\Http\Controllers\SavedShipmentController;
+use App\Http\Controllers\ReferralController;
+use App\Http\Controllers\WalletController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -154,6 +157,12 @@ Route::group(['prefix' => 'api'], function() {
             /* ->middleware(CheckAdmin::class); */
 
         Route::post('calculate-coupon', [CouponController::class, 'calculateCoupon']);
+
+        /* SPEDIZIONI CONFIGURATE (SAVED SHIPMENTS) */
+        Route::get('saved-shipments', [SavedShipmentController::class, 'index']);
+        Route::post('saved-shipments', [SavedShipmentController::class, 'store']);
+        Route::delete('saved-shipments/{id}', [SavedShipmentController::class, 'destroy']);
+        Route::post('saved-shipments/add-to-cart', [SavedShipmentController::class, 'addToCart']);
 
         /* BRAINTREETOKEN */
         /* Route::get('braintreeToken', 'App\Http\Controllers\PaymentMethodController@generateCustomerBraintreeToken'); */

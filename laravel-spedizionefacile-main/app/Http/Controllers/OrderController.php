@@ -61,7 +61,12 @@ class OrderController extends Controller
             
         }
         else {
-            $orders = Order::where('user_id', $user->id)->get();
+            $orders = Order::with([
+                'packages.originAddress',
+                'packages.destinationAddress',
+                'packages.service',
+                'transactions',
+            ])->where('user_id', $user->id)->orderByDesc('created_at')->get();
         }
 
         return OrderResource::collection($orders);

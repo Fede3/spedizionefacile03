@@ -28,9 +28,14 @@ class Order extends Model
     public function getStatus($status) {
         $data = [
             'pending' => 'In attesa',
-            'processing' => 'Processato',
+            'processing' => 'In lavorazione',
+            'completed' => 'Completato',
             'payment_failed' => 'Fallito',
-            'payed' => 'Pagato'
+            'payed' => 'Pagato',
+            'cancelled' => 'Annullato',
+            'in_transit' => 'In transito',
+            'delivered' => 'Consegnato',
+            'in_giacenza' => 'In giacenza',
         ];
 
         return $data[$status] ?? $status;

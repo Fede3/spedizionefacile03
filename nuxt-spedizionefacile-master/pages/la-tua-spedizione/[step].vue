@@ -414,17 +414,58 @@ const goBackToServices = () => {
 	showAddressFields.value = false;
 };
 
-const goToCart = () => {
-	showSavedPopup.value = false;
-	navigateTo('/carrello');
+const pendingPayload = ref(null);
+
+const goToCart = async () => {
+	if (!pendingPayload.value) return;
+	isSubmitting.value = true;
+	try {
+		await useSanctumFetch(isAuthenticated.value ? "/api/empty-cart" : "/api/empty-guest-cart", {
+			method: "DELETE",
+		});
+		await useSanctumFetch(endpoint.value, {
+			method: "POST",
+			body: pendingPayload.value,
+		});
+		await refreshCart();
+		showSavedPopup.value = false;
+		navigateTo('/carrello');
+	} catch (error) {
+		submitError.value = "Errore durante il salvataggio nel carrello. Riprova.";
+		showSavedPopup.value = false;
+	} finally {
+		isSubmitting.value = false;
+	}
 };
 
-const goToSavedShipments = () => {
-	showSavedPopup.value = false;
-	navigateTo('/account/spedizioni');
+const goToSavedShipments = async () => {
+	if (!pendingPayload.value) return;
+	isSubmitting.value = true;
+	try {
+		await useSanctumFetch("/api/saved-shipments", {
+			method: "POST",
+			body: pendingPayload.value,
+		});
+		showSavedPopup.value = false;
+		navigateTo('/account/spedizioni-configurate');
+	} catch (error) {
+		submitError.value = "Errore durante il salvataggio. Riprova.";
+		showSavedPopup.value = false;
+	} finally {
+		isSubmitting.value = false;
+	}
 };
 
-const addAnotherShipment = () => {
+const addAnotherShipment = async () => {
+	if (!pendingPayload.value) return;
+	isSubmitting.value = true;
+	try {
+		await useSanctumFetch("/api/saved-shipments", {
+			method: "POST",
+			body: pendingPayload.value,
+		});
+	} catch (e) { /* silent */ }
+	isSubmitting.value = false;
 	showSavedPopup.value = false;
 	navigateTo('/preventivo');
 };
@@ -459,7 +500,6 @@ const continueToCart = async () => {
 		return;
 	}
 
-
 	const packages = session.value?.data?.packages?.length
 		? session.value.data.packages
 		: userStore.packages || [];
@@ -468,42 +508,18 @@ const continueToCart = async () => {
 		return;
 	}
 
-	isSubmitting.value = true;
+	pendingPayload.value = {
+		origin_address: toAddressPayload(originAddress.value),
+		destination_address: toAddressPayload(destinationAddress.value),
+		services: {
+			service_type: userStore.servicesArray.join(", "),
+			date: services.value.date || "",
+			time: services.value.time || "",
+		},
+		packages,
+	};
 
-	try {
-		const payload = {
-			origin_address: toAddressPayload(originAddress.value),
-			destination_address: toAddressPayload(destinationAddress.value),
-			services: {
-				service_type: userStore.servicesArray.join(", "),
-				date: services.value.date || "",
-				time: services.value.time || "",
-			},
-			packages,
-		};
-
-		await useSanctumFetch(isAuthenticated.value ? "/api/empty-cart" : "/api/empty-guest-cart", {
-			method: "DELETE",
-		});
-
-		await useSanctumFetch(endpoint.value, {
-			method: "POST",
-			body: payload,
-		});
-
-		await refreshCart();
-		await refresh();
-		showSavedPopup.value = true;
-	} catch (error) {
-		const statusCode = error?.response?.status || error?.statusCode;
-		if (statusCode === 422) {
-			submitError.value = "Dati spedizione non validi. Controlla indirizzi, CAP e telefono.";
-		} else {
-			submitError.value = "Errore durante il salvataggio della spedizione. Riprova.";
-		}
-	} finally {
-		isSubmitting.value = false;
-	}
+	showSavedPopup.value = true;
 };
 
 </script>
@@ -705,14 +721,16 @@ const continueToCart = async () => {
 							</div>
 
 							<!-- Bottone per aprire i campi indirizzo -->
-							<div v-if="!showAddressFields" class="mt-[40px] text-center">
-								<p v-if="dateError" class="text-red-500 text-[0.9375rem] mb-[16px] font-medium">{{ dateError }}</p>
-								<button
-									type="button"
-									@click="openAddressFields"
-									class="bg-[#095866] text-white font-semibold text-[1rem] px-[32px] h-[52px] rounded-[30px] hover:bg-[#0a7a8c] transition cursor-pointer">
-									Compila dati ritiro e destinazione
-								</button>
+							<div v-if="!showAddressFields" class="mt-[40px] flex justify-end">
+								<div>
+									<p v-if="dateError" class="text-red-500 text-[0.9375rem] mb-[16px] font-medium">{{ dateError }}</p>
+									<button
+										type="button"
+										@click="openAddressFields"
+										class="bg-[#E44203] text-white font-semibold text-[1rem] px-[32px] h-[52px] rounded-[30px] hover:opacity-90 transition cursor-pointer">
+										Compila dati ritiro e destinazione
+									</button>
+								</div>
 							</div>
 
 							<!-- PARTENZA -->
@@ -1026,8 +1044,8 @@ const continueToCart = async () => {
 							<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" class="text-[#095866]"><path fill="currentColor" d="M17 18a2 2 0 0 1 2 2a2 2 0 0 1-2 2a2 2 0 0 1-2-2c0-1.11.89-2 2-2M1 2h3.27l.94 2H20a1 1 0 0 1 1 1c0 .17-.05.34-.12.5l-3.58 6.47c-.34.61-1 1.03-1.75 1.03H8.1l-.9 1.63l-.03.12a.25.25 0 0 0 .25.25H19v2H7a2 2 0 0 1-2-2c0-.35.09-.68.24-.96l1.36-2.45L3 4H1zm6 16a2 2 0 0 1 2 2a2 2 0 0 1-2 2a2 2 0 0 1-2-2c0-1.11.89-2 2-2"/></svg>
 						</div>
 						<div class="text-left">
-							<p class="text-[0.9375rem] font-semibold text-[#252B42] group-hover:text-[#095866]">Vai al carrello</p>
-							<p class="text-[0.8125rem] text-[#737373]">Procedi al pagamento della spedizione</p>
+							<p class="text-[0.9375rem] font-semibold text-[#252B42] group-hover:text-[#095866]">Aggiungi al carrello</p>
+							<p class="text-[0.8125rem] text-[#737373]">Aggiungi la spedizione al carrello per procedere al pagamento</p>
 						</div>
 						<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" class="text-[#C8CCD0] ml-auto shrink-0"><path fill="currentColor" d="M8.59 16.59L13.17 12L8.59 7.41L10 6l6 6l-6 6z"/></svg>
 					</button>
@@ -1039,8 +1057,8 @@ const continueToCart = async () => {
 							<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" class="text-blue-600"><path fill="currentColor" d="M21 16.5c0 .38-.21.71-.53.88l-7.9 4.44c-.16.12-.36.18-.57.18c-.21 0-.41-.06-.57-.18l-7.9-4.44A.99.99 0 0 1 3 16.5v-9c0-.38.21-.71.53-.88l7.9-4.44c.16-.12.36-.18.57-.18c.21 0 .41.06.57.18l7.9 4.44c.32.17.53.5.53.88zM12 4.15L6.04 7.5L12 10.85l5.96-3.35zM5 15.91l6 3.37v-6.73L5 9.18zm14 0V9.18l-6 3.37v6.73z"/></svg>
 						</div>
 						<div class="text-left">
-							<p class="text-[0.9375rem] font-semibold text-[#252B42] group-hover:text-[#095866]">Spedizioni configurate</p>
-							<p class="text-[0.8125rem] text-[#737373]">Salva nelle spedizioni configurate</p>
+							<p class="text-[0.9375rem] font-semibold text-[#252B42] group-hover:text-[#095866]">Aggiungi a spedizioni configurate</p>
+							<p class="text-[0.8125rem] text-[#737373]">Salva la spedizione nelle spedizioni configurate</p>
 						</div>
 						<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" class="text-[#C8CCD0] ml-auto shrink-0"><path fill="currentColor" d="M8.59 16.59L13.17 12L8.59 7.41L10 6l6 6l-6 6z"/></svg>
 					</button>
