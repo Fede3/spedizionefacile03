@@ -21,33 +21,21 @@ class CustomRegisterController extends Controller
         try {
             DB::beginTransaction();
 
-            // Auto-verify the email so the user can log in immediately
-            $data['email_verified_at'] = now();
-
             $user = User::create($data);
-
-            // Try to send verification email, but don't block registration if it fails
-            try {
-                SendVerificationEmailJob::dispatchSync($user);
-            } catch (\Throwable $emailException) {
-                Log::warning('Email di verifica non inviata, ma account creato e auto-verificato.', [
-                    'email' => $request->email,
-                    'error' => $emailException->getMessage(),
-                ]);
-            }
+            SendVerificationEmailJob::dispatchSync($user);
 
             DB::commit();
 
-            return CustomResponse::setSuccessResponse('Registrazione completata con successo! Ora puoi accedere con le tue credenziali.', Response::HTTP_CREATED);
+            return CustomResponse::setSuccessResponse('Ti abbiamo inviato un\'email con le istruzioni per completare la registrazione. Se non hai ricevuto la nostra email, controlla nella cartella SPAM.', Response::HTTP_CREATED);
         } catch (\Throwable $exception) {
             DB::rollBack();
 
-            Log::error('Errore registrazione.', [
+            Log::error('Errore registrazione o invio email di verifica.', [
                 'email' => $request->email,
                 'error' => $exception->getMessage(),
             ]);
 
-            return CustomResponse::setFailResponse('Registrazione non completata. Riprova tra qualche minuto.', Response::HTTP_INTERNAL_SERVER_ERROR);
+            return CustomResponse::setFailResponse('Registrazione non completata: impossibile inviare l\'email di verifica. Riprova tra qualche minuto.', Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 }

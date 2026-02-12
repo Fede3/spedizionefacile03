@@ -123,3 +123,15 @@ Dopo `php artisan migrate --seed` trovi questi account pronti:
    - elimini account in caso di bug/registrazioni errate.
 
 > Nota: l'eliminazione dell'utente amministratore attualmente loggato è bloccata per sicurezza.
+
+
+## Nota PR refresh regressioni UI/Preventivo
+
+È disponibile una PR di refresh dedicata alle regressioni segnalate su:
+- layout preventivo/carrello compresso,
+- immagine hero home non visibile,
+- stato sessione/navbar al ritorno in home,
+- blocco del bottone **Continua** nello step spedizione,
+- wrapping dell’icona cestino nello step 1.
+
+Se nel repository vedi più PR aperte, usa quella con titolo che inizia con **"PR refresh"**.

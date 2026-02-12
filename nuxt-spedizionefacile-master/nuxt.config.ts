@@ -8,14 +8,14 @@ export default defineNuxtConfig({
 
   runtimeConfig: {
     public: {
-      apiBase: process.env.NUXT_PUBLIC_API_BASE || 'http://127.0.0.1:8000',
+      apiBase: process.env.NUXT_PUBLIC_API_BASE || 'http://127.0.0.1:8787',
       stripeKey: process.env.NUXT_PUBLIC_STRIPE_KEY || 'pk_test_placeholder',
     },
   },
 
   sanctum: {
-    baseUrl: process.env.NUXT_PUBLIC_API_BASE || 'http://127.0.0.1:8000',
-    origin: process.env.NUXT_PUBLIC_API_BASE || 'http://127.0.0.1:8000',
+    baseUrl: process.env.NUXT_PUBLIC_API_BASE || 'http://127.0.0.1:8787',
+    origin: process.env.NUXT_PUBLIC_API_BASE || 'http://127.0.0.1:8787',
     endpoints: {
       csrf: '/sanctum/csrf-cookie',
       login: '/api/custom-login',

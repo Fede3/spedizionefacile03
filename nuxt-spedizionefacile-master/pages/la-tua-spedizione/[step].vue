@@ -392,52 +392,13 @@ const fieldClass = (section, field) => {
 
 const days = ["Lun", "Mar", "Mer", "Gio", "Ven"];
 
-/* Controllo visibilità campi indirizzo */
-const showAddressFields = ref(false);
-const dateError = ref(null);
-
-const openAddressFields = () => {
-	dateError.value = null;
-
-	// Giorno di ritiro obbligatorio
-	if (!services.value.date) {
-		dateError.value = "Seleziona un giorno di ritiro prima di continuare.";
-		return;
-	}
-
-	showAddressFields.value = true;
-};
-
-const goBackToServices = () => {
-	showAddressFields.value = false;
-};
-
-const formRef = ref(null);
 
 const { endpoint, refresh: refreshCart } = useCart();
 const { isAuthenticated } = useSanctumAuth();
-const sanctumClient = useSanctumClient();
 const router = useRouter();
 
 const isSubmitting = ref(false);
 const submitError = ref(null);
-const showSavedPopup = ref(false);
-const showSummary = ref(false);
-
-const goToCart = async () => {
-	showSavedPopup.value = false;
-	await router.push("/carrello");
-};
-
-const addAnotherShipment = () => {
-	showSavedPopup.value = false;
-	router.push("/preventivo");
-};
-
-const goToSavedShipments = () => {
-	showSavedPopup.value = false;
-	router.push("/account/spedizioni");
-};
 
 const toAddressPayload = (addressData) => ({
 	type: addressData.type || "Partenza",
@@ -455,30 +416,13 @@ const toAddressPayload = (addressData) => ({
 	email: addressData.email || "",
 });
 
-/* Step 1: Valida e mostra riepilogo */
-const showRiepilogo = async () => {
+const continueToCart = async () => {
 	submitError.value = null;
-
-	// Giorno di ritiro obbligatorio
-	if (!services.value.date) {
-		submitError.value = "Seleziona un giorno di ritiro.";
+	if (!formRef.value || !formRef.value.checkValidity()) {
+		formRef.value?.reportValidity();
 		return;
 	}
 
-	// Validazione personalizzata dei campi
-	if (!validateForm()) {
-		const errorCount = Object.keys(validationErrors.value).length;
-		submitError.value = `Compila tutti i campi obbligatori. ${errorCount} ${errorCount === 1 ? 'campo mancante' : 'campi mancanti'}.`;
-
-		// Scroll al primo campo con errore
-		await nextTick();
-		const firstErrorEl = document.querySelector('.\\!border-red-400');
-		if (firstErrorEl) {
-			firstErrorEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
-			firstErrorEl.focus();
-		}
-		return;
-	}
 
 	const packages = session.value?.data?.packages || [];
 	if (!packages.length) {
@@ -486,83 +430,9 @@ const showRiepilogo = async () => {
 		return;
 	}
 
-	editablePackages.value = (packages || []).map(p => ({ ...p }));
-	editingDate.value = false;
-	editingOrigin.value = false;
-	editingDest.value = false;
-	editingColli.value = false;
-	showSummary.value = true;
-	await nextTick();
-	window.scrollTo({ top: 0, behavior: 'smooth' });
-};
-
-const goBackFromSummary = () => {
-	showSummary.value = false;
-};
-
-/* Riepilogo: dropdown servizi e modifica sezioni */
-const showServiceDropdown = ref(false);
-
-const toggleServiceInSummary = (service) => {
-	const idx = userStore.servicesArray.indexOf(service.name);
-	if (idx !== -1) {
-		userStore.servicesArray.splice(idx, 1);
-	} else {
-		userStore.servicesArray.push(service.name);
-	}
-	services.value.service_type = userStore.servicesArray.join(", ");
-};
-
-const editingDate = ref(false);
-const editingOrigin = ref(false);
-const editingDest = ref(false);
-const editingColli = ref(false);
-const editablePackages = ref([]);
-
-const editFromSummary = (section) => {
-	if (section === 'date') editingDate.value = !editingDate.value;
-	else if (section === 'origin') editingOrigin.value = !editingOrigin.value;
-	else if (section === 'dest') editingDest.value = !editingDest.value;
-	else if (section === 'colli') editingColli.value = !editingColli.value;
-};
-
-/* Step bar: calcola step corrente e gestisci navigazione */
-const computedCurrentStep = computed(() => {
-	if (showSummary.value) return 3;
-	if (showAddressFields.value) return 2;
-	return 1;
-});
-
-const handleStepNavigate = (stepIndex) => {
-	if (stepIndex === 0) {
-		navigateTo('/preventivo');
-	} else if (stepIndex === 1) {
-		showSummary.value = false;
-		showAddressFields.value = false;
-	} else if (stepIndex === 2) {
-		showSummary.value = false;
-		showAddressFields.value = true;
-	} else if (stepIndex === 3 && showSummary.value) {
-		// Already on summary
-	}
-};
-
-/* Init editablePackages da session */
-const editingSidebarColli = ref(false);
-
-watch(() => session.value?.data?.packages, (newPkgs) => {
-	if (newPkgs?.length > 0 && editablePackages.value.length === 0) {
-		editablePackages.value = newPkgs.map(p => ({ ...p }));
-	}
-}, { immediate: true });
-
-/* Step 2: Conferma e salva spedizione */
-const confirmShipment = async () => {
-	submitError.value = null;
 	isSubmitting.value = true;
 
 	try {
-		const packages = editablePackages.value.length > 0 ? editablePackages.value : (session.value?.data?.packages || []);
 		const payload = {
 			origin_address: toAddressPayload(originAddress.value),
 			destination_address: toAddressPayload(destinationAddress.value),
@@ -574,14 +444,18 @@ const confirmShipment = async () => {
 			packages,
 		};
 
-		await sanctumClient(endpoint.value, {
+		await useSanctumFetch(isAuthenticated.value ? "/api/empty-cart" : "/api/empty-guest-cart", {
+			method: "DELETE",
+		});
+
+		await useSanctumFetch(endpoint.value, {
 			method: "POST",
 			body: payload,
 		});
 
 		await refreshCart();
 		await refresh();
-		showSavedPopup.value = true;
+		await router.push("/carrello");
 	} catch (error) {
 		const statusCode = error?.response?.status || error?.statusCode;
 		if (statusCode === 422) {
@@ -598,10 +472,10 @@ const confirmShipment = async () => {
 
 <template>
 	<section>
-		<div class="my-container mt-[72px] mb-[120px] max-w-[1200px] mx-auto">
+		<div class="my-container mt-[72px] mb-[120px]">
 			<div v-if="status === 'pending'" class="min-h-[720px] bg-[#E4E4E4] rounded-[20px] animate-pulse"></div>
-			<form v-else ref="formRef" @submit.prevent="showRiepilogo">
-				<Steps :current-step="computedCurrentStep" @navigate="handleStepNavigate" />
+			<form v-else ref="formRef" @submit.prevent="continueToCart">
+				<Steps />
 
 				<!-- Popup servizi (sempre disponibile, anche dal riepilogo) -->
 				<UModal
@@ -812,9 +686,8 @@ const confirmShipment = async () => {
 
 								<div class="flex items-start gap-x-[30px]">
 									<div class="desktop:w-[324px]">
-										<label for="origin_name" class="block text-[0.875rem] sr-only">Nome e Cognome*</label>
-										<input type="text" placeholder="Nome e Cognome*" v-model="originAddress.full_name" id="origin_name" :class="fieldClass('origin', 'full_name')" required />
-										<p v-if="getFieldError('origin', 'full_name')" class="text-red-500 text-[0.75rem] mt-[4px]">{{ getFieldError('origin', 'full_name') }}</p>
+										<label for="name" class="block text-[0.875rem] sr-only">Nome e Cognome*</label>
+										<input type="text" placeholder="Nome e Cognome*" v-model="originAddress.full_name" id="name" class="input-preventivo-step-2" />
 									</div>
 
 									<div class="desktop:w-[324px]">
@@ -825,15 +698,13 @@ const confirmShipment = async () => {
 
 								<div class="mt-[39px] flex items-start gap-x-[25px]">
 									<div class="desktop:w-[285px]">
-										<label for="origin_address" class="block text-[0.875rem] sr-only">Indirizzo*</label>
-										<input type="text" placeholder="Indirizzo*" v-model="originAddress.address" id="origin_address" :class="fieldClass('origin', 'address')" required />
-										<p v-if="getFieldError('origin', 'address')" class="text-red-500 text-[0.75rem] mt-[4px]">{{ getFieldError('origin', 'address') }}</p>
+										<label for="address" class="block text-[0.875rem] sr-only">Indirizzo*</label>
+										<input type="text" placeholder="Indirizzo*" v-model="originAddress.address" id="address" class="input-preventivo-step-2" />
 									</div>
 
 									<div class="desktop:w-[213px]">
-										<label for="origin_address_number" class="block text-[0.875rem] sr-only">Numero civico*</label>
-										<input type="text" placeholder="Numero civico*" v-model="originAddress.address_number" id="origin_address_number" :class="fieldClass('origin', 'address_number')" required />
-										<p v-if="getFieldError('origin', 'address_number')" class="text-red-500 text-[0.75rem] mt-[4px]">{{ getFieldError('origin', 'address_number') }}</p>
+										<label for="address_number" class="block text-[0.875rem] sr-only">Numero civico*</label>
+										<input type="text" placeholder="Numero civico*" v-model="originAddress.address_number" id="address_number" class="input-preventivo-step-2" />
 									</div>
 
 									<div class="desktop:w-[213px]">
@@ -849,29 +720,25 @@ const confirmShipment = async () => {
 									</div>
 
 									<div class="desktop:w-[171px]">
-										<label for="origin_city" class="block text-[0.875rem] sr-only">Città*</label>
-										<input type="text" placeholder="Città*" v-model="originAddress.city" id="origin_city" :class="fieldClass('origin', 'city')" required />
-										<p v-if="getFieldError('origin', 'city')" class="text-red-500 text-[0.75rem] mt-[4px]">{{ getFieldError('origin', 'city') }}</p>
+										<label for="city" class="block text-[0.875rem] sr-only">Città*</label>
+										<input type="text" placeholder="Città*" v-model="originAddress.city" id="city" class="input-preventivo-step-2" />
 									</div>
 
 									<div class="desktop:w-[170px]">
-										<label for="origin_province" class="block text-[0.875rem] sr-only">Provincia*</label>
-										<input type="text" placeholder="Provincia*" v-model="originAddress.province" id="origin_province" :class="fieldClass('origin', 'province')" required />
-										<p v-if="getFieldError('origin', 'province')" class="text-red-500 text-[0.75rem] mt-[4px]">{{ getFieldError('origin', 'province') }}</p>
+										<label for="province" class="block text-[0.875rem] sr-only">Provincia*</label>
+										<input type="text" placeholder="Provincia*" v-model="originAddress.province" id="province" class="input-preventivo-step-2" />
 									</div>
 
 									<div class="desktop:w-[174px]">
-										<label for="origin_postal_code" class="block text-[0.875rem] sr-only">CAP*</label>
-										<input type="text" placeholder="CAP*" v-model="originAddress.postal_code" id="origin_postal_code" :class="fieldClass('origin', 'postal_code')" required />
-										<p v-if="getFieldError('origin', 'postal_code')" class="text-red-500 text-[0.75rem] mt-[4px]">{{ getFieldError('origin', 'postal_code') }}</p>
+										<label for="postal_code" class="block text-[0.875rem] sr-only">CAP*</label>
+										<input type="text" placeholder="CAP*" v-model="originAddress.postal_code" id="postal_code" class="input-preventivo-step-2" />
 									</div>
 								</div>
 
 								<div class="mt-[39px] flex items-start gap-x-[30px]">
 									<div class="desktop:w-[324px]">
-										<label for="origin_telephone" class="block text-[0.875rem] sr-only">Telefono*</label>
-										<input type="tel" placeholder="Telefono*" v-model="originAddress.telephone_number" id="origin_telephone" :class="fieldClass('origin', 'telephone_number')" required />
-										<p v-if="getFieldError('origin', 'telephone_number')" class="text-red-500 text-[0.75rem] mt-[4px]">{{ getFieldError('origin', 'telephone_number') }}</p>
+										<label for="telephone_number" class="block text-[0.875rem] sr-only">Telefono*</label>
+										<input type="tel" placeholder="Telefono*" v-model="originAddress.telephone_number" id="telephone_number" class="input-preventivo-step-2" />
 									</div>
 
 									<div class="desktop:w-[324px]">
@@ -903,15 +770,13 @@ const confirmShipment = async () => {
 
 								<div class="mt-[39px] flex items-start gap-x-[25px]">
 									<div class="desktop:w-[285px]">
-										<label for="dest_address" class="block text-[0.875rem] sr-only">Indirizzo*</label>
-										<input type="text" placeholder="Indirizzo*" v-model="destinationAddress.address" id="dest_address" :class="fieldClass('dest', 'address')" required />
-										<p v-if="getFieldError('dest', 'address')" class="text-red-500 text-[0.75rem] mt-[4px]">{{ getFieldError('dest', 'address') }}</p>
+										<label for="address" class="block text-[0.875rem] sr-only">Indirizzo*</label>
+										<input type="text" placeholder="Indirizzo*" v-model="destinationAddress.address" id="address" class="input-preventivo-step-2" />
 									</div>
 
 									<div class="desktop:w-[213px]">
-										<label for="dest_address_number" class="block text-[0.875rem] sr-only">Numero civico*</label>
-										<input type="text" placeholder="Numero civico*" v-model="destinationAddress.address_number" id="dest_address_number" :class="fieldClass('dest', 'address_number')" required />
-										<p v-if="getFieldError('dest', 'address_number')" class="text-red-500 text-[0.75rem] mt-[4px]">{{ getFieldError('dest', 'address_number') }}</p>
+										<label for="address_number" class="block text-[0.875rem] sr-only">Numero civico*</label>
+										<input type="text" placeholder="Numero civico*" v-model="destinationAddress.address_number" id="address_number" class="input-preventivo-step-2" />
 									</div>
 
 									<div class="desktop:w-[213px]">
@@ -927,29 +792,25 @@ const confirmShipment = async () => {
 									</div>
 
 									<div class="desktop:w-[171px]">
-										<label for="dest_city" class="block text-[0.875rem] sr-only">Città*</label>
-										<input type="text" placeholder="Città*" v-model="destinationAddress.city" id="dest_city" :class="fieldClass('dest', 'city')" required />
-										<p v-if="getFieldError('dest', 'city')" class="text-red-500 text-[0.75rem] mt-[4px]">{{ getFieldError('dest', 'city') }}</p>
+										<label for="city" class="block text-[0.875rem] sr-only">Città*</label>
+										<input type="text" placeholder="Città*" v-model="destinationAddress.city" id="city" class="input-preventivo-step-2" />
 									</div>
 
 									<div class="desktop:w-[170px]">
-										<label for="dest_province" class="block text-[0.875rem] sr-only">Provincia*</label>
-										<input type="text" placeholder="Provincia*" v-model="destinationAddress.province" id="dest_province" :class="fieldClass('dest', 'province')" required />
-										<p v-if="getFieldError('dest', 'province')" class="text-red-500 text-[0.75rem] mt-[4px]">{{ getFieldError('dest', 'province') }}</p>
+										<label for="province" class="block text-[0.875rem] sr-only">Provincia*</label>
+										<input type="text" placeholder="Provincia*" v-model="destinationAddress.province" id="province" class="input-preventivo-step-2" />
 									</div>
 
 									<div class="desktop:w-[174px]">
-										<label for="dest_postal_code" class="block text-[0.875rem] sr-only">CAP*</label>
-										<input type="text" placeholder="CAP*" v-model="destinationAddress.postal_code" id="dest_postal_code" :class="fieldClass('dest', 'postal_code')" required />
-										<p v-if="getFieldError('dest', 'postal_code')" class="text-red-500 text-[0.75rem] mt-[4px]">{{ getFieldError('dest', 'postal_code') }}</p>
+										<label for="postal_code" class="block text-[0.875rem] sr-only">CAP*</label>
+										<input type="text" placeholder="CAP*" v-model="destinationAddress.postal_code" id="postal_code" class="input-preventivo-step-2" />
 									</div>
 								</div>
 
 								<div class="mt-[39px] flex items-start gap-x-[30px]">
 									<div class="desktop:w-[324px]">
-										<label for="dest_telephone" class="block text-[0.875rem] sr-only">Telefono*</label>
-										<input type="tel" placeholder="Telefono*" v-model="destinationAddress.telephone_number" id="dest_telephone" :class="fieldClass('dest', 'telephone_number')" required />
-										<p v-if="getFieldError('dest', 'telephone_number')" class="text-red-500 text-[0.75rem] mt-[4px]">{{ getFieldError('dest', 'telephone_number') }}</p>
+										<label for="telephone_number" class="block text-[0.875rem] sr-only">Telefono*</label>
+										<input type="tel" placeholder="Telefono*" v-model="destinationAddress.telephone_number" id="telephone_number" class="input-preventivo-step-2" />
 									</div>
 
 									<div class="desktop:w-[324px]">
@@ -1101,291 +962,18 @@ const confirmShipment = async () => {
 				</div>
 
 
+				<div class="mt-[28px] w-full max-w-[850px] mr-auto flex flex-wrap gap-[12px] items-center justify-between">
+					<NuxtLink :to="{ path: '/', hash: '#preventivo' }" class="inline-flex items-center justify-center h-[52px] px-[24px] rounded-[30px] bg-[#095866] text-white font-semibold hover:bg-[#0a7a8c] transition">
+						Indietro
+					</NuxtLink>
+					<button
+						type="submit"
+						:disabled="isSubmitting"
+						class="bg-[#E44203] text-white font-semibold text-[1rem] px-[28px] h-[52px] rounded-[30px] hover:opacity-90 transition disabled:opacity-60 disabled:cursor-not-allowed">
+						{{ isSubmitting ? 'Salvataggio in corso...' : 'Continua e vai al carrello' }}
+					</button>
 				</div>
-
-				<!-- RIEPILOGO -->
-				<div v-if="showSummary" class="mt-[40px] max-w-[900px] mx-auto">
-					<h2 class="text-[1.8125rem] font-bold text-[#252B42] font-montserrat tracking-[0.1px] mb-[30px]">Riepilogo spedizione</h2>
-
-					<div class="space-y-[16px]">
-
-						<!-- Giorno ritiro -->
-						<div class="bg-[#E6E6E6] rounded-[20px] p-[24px_30px]">
-							<div class="flex items-center gap-[20px]">
-								<div class="w-[50px] h-[50px] rounded-[12px] bg-white flex items-center justify-center shrink-0">
-									<NuxtImg src="/img/quote/second-step/scheduled.png" alt="Calendario" width="30" height="30" />
-								</div>
-								<div class="flex-1 min-w-0">
-									<h3 class="text-[0.75rem] font-bold text-[#737373] uppercase tracking-wider mb-[4px]">Giorno di ritiro</h3>
-									<p v-if="!editingDate" class="text-[1rem] font-bold text-[#252B42]">{{ services.date }}</p>
-								</div>
-								<button type="button" @click="editFromSummary('date')" class="flex items-center gap-[6px] text-[#095866] hover:text-[#0a7a8c] cursor-pointer transition shrink-0">
-									<NuxtImg src="/img/quote/second-step/edit.png" alt="Modifica" width="14" height="14" />
-									<span class="text-[0.8125rem] font-semibold">{{ editingDate ? 'Chiudi' : 'Modifica' }}</span>
-								</button>
-							</div>
-							<ClientOnly>
-								<div v-if="editingDate" class="mt-[16px] pt-[16px] border-t border-[#D0D0D0]">
-									<div class="relative px-[25px]">
-										<Swiper
-											class="summary-swiper h-[108px]"
-											:modules="[Navigation]"
-											:slides-per-view="5"
-											space-between="15"
-											:navigation="{ nextEl: '.summary-next', prevEl: '.summary-prev' }">
-											<SwiperSlide v-for="(day, index) in daysInMonth" :key="index">
-												<label
-													:key="day.date.toISOString()"
-													class="size-full block rounded-[10px] cursor-pointer select-none border-[1px] border-t-0"
-													:class="{
-														'border-[#2B2D52]': services.date == day.date.toLocaleDateString(),
-														'border-[#C0C0C0]': services.date != day.date.toLocaleDateString(),
-													}">
-													<span
-														class="w-full text-center block font-medium h-[30px] leading-[30px] rounded-[10px_10px_0_0] text-[0.8rem]"
-														:class="{
-															'bg-[#2B2D52] text-white': services.date == day.date.toLocaleDateString(),
-															'bg-[#C0C0C0] text-black': services.date != day.date.toLocaleDateString(),
-														}">
-														{{ day.weekday }}
-													</span>
-													<div class="flex flex-col justify-center items-center text-[#767676] leading-[24px] mt-[6px]">
-														<span class="font-bold text-[1.75rem]">{{ day.dayNumber }}</span>
-														<span class="text-[0.75rem]">{{ day.monthAbbr }}</span>
-													</div>
-													<input type="checkbox" @input="chooseDate(day)" class="opacity-0 pointer-events-none absolute bottom-0" :checked="services.date == day.date.toLocaleDateString()" />
-												</label>
-											</SwiperSlide>
-										</Swiper>
-										<button type="button" class="summary-prev absolute bottom-[35px] left-[4px] cursor-pointer z-10"><NuxtImg src="/img/quote/second-step/arrow-left.png" alt="" width="11" height="19" /></button>
-										<button type="button" class="summary-next absolute bottom-[35px] right-[4px] cursor-pointer z-10"><NuxtImg src="/img/quote/second-step/arrow-right.png" alt="" width="11" height="19" /></button>
-									</div>
-								</div>
-							</ClientOnly>
-						</div>
-
-						<!-- Partenza -->
-						<div class="bg-[#E6E6E6] rounded-[20px] p-[24px_30px]">
-							<div class="flex items-start gap-[20px]">
-								<div class="w-[50px] h-[50px] rounded-[12px] bg-white flex items-center justify-center shrink-0 mt-[4px]">
-									<NuxtImg src="/img/quote/second-step/origin.png" alt="Partenza" width="24" height="22" />
-								</div>
-								<div class="flex-1 min-w-0">
-									<h3 class="text-[0.75rem] font-bold text-[#737373] uppercase tracking-wider mb-[4px]">Partenza</h3>
-									<template v-if="!editingOrigin">
-										<p class="text-[0.9375rem] font-bold text-[#252B42]">{{ originAddress.full_name }}</p>
-										<p class="text-[0.8125rem] text-[#404040] mt-[2px]">{{ originAddress.address }} {{ originAddress.address_number }}, {{ originAddress.postal_code }} {{ originAddress.city }} ({{ originAddress.province }})</p>
-										<p class="text-[0.8125rem] text-[#737373] mt-[2px]">Tel: {{ originAddress.telephone_number }}<span v-if="originAddress.email"> &middot; {{ originAddress.email }}</span></p>
-									</template>
-								</div>
-								<button type="button" @click="editFromSummary('origin')" class="flex items-center gap-[6px] text-[#095866] hover:text-[#0a7a8c] cursor-pointer transition shrink-0 mt-[4px]">
-									<NuxtImg src="/img/quote/second-step/edit.png" alt="Modifica" width="14" height="14" />
-									<span class="text-[0.8125rem] font-semibold">{{ editingOrigin ? 'Chiudi' : 'Modifica' }}</span>
-								</button>
-							</div>
-							<div v-if="editingOrigin" class="mt-[16px] pt-[16px] border-t border-[#D0D0D0] space-y-[12px]">
-								<div class="grid grid-cols-2 gap-[12px]">
-									<input type="text" placeholder="Nome e Cognome*" v-model="originAddress.full_name" class="input-preventivo-step-2 w-full" />
-									<input type="text" placeholder="Informazioni aggiuntive" v-model="originAddress.additional_information" class="input-preventivo-step-2 w-full" />
-								</div>
-								<div class="grid grid-cols-3 gap-[12px]">
-									<input type="text" placeholder="Indirizzo*" v-model="originAddress.address" class="input-preventivo-step-2 w-full" />
-									<input type="text" placeholder="N. civico*" v-model="originAddress.address_number" class="input-preventivo-step-2 w-full" />
-									<input type="text" placeholder="Citofono" v-model="originAddress.intercom_code" class="input-preventivo-step-2 w-full" />
-								</div>
-								<div class="grid grid-cols-4 gap-[12px]">
-									<input type="text" placeholder="Paese*" value="Italia" class="input-preventivo-step-2 w-full" disabled />
-									<input type="text" placeholder="Città*" v-model="originAddress.city" class="input-preventivo-step-2 w-full" />
-									<input type="text" placeholder="Provincia*" v-model="originAddress.province" class="input-preventivo-step-2 w-full" />
-									<input type="text" placeholder="CAP*" v-model="originAddress.postal_code" class="input-preventivo-step-2 w-full" />
-								</div>
-								<div class="grid grid-cols-2 gap-[12px]">
-									<input type="tel" placeholder="Telefono*" v-model="originAddress.telephone_number" class="input-preventivo-step-2 w-full" />
-									<input type="email" placeholder="Email" v-model="originAddress.email" class="input-preventivo-step-2 w-full" />
-								</div>
-								<div class="flex justify-end">
-									<button type="button" @click="editingOrigin = false" class="bg-[#095866] text-white text-[0.8125rem] font-semibold px-[20px] h-[36px] rounded-[10px] hover:bg-[#0a7a8c] transition cursor-pointer">Salva</button>
-								</div>
-							</div>
-						</div>
-
-						<!-- Destinazione -->
-						<div class="bg-[#E6E6E6] rounded-[20px] p-[24px_30px]">
-							<div class="flex items-start gap-[20px]">
-								<div class="w-[50px] h-[50px] rounded-[12px] bg-white flex items-center justify-center shrink-0 mt-[4px]">
-									<NuxtImg src="/img/quote/second-step/destination.png" alt="Destinazione" width="24" height="22" />
-								</div>
-								<div class="flex-1 min-w-0">
-									<h3 class="text-[0.75rem] font-bold text-[#737373] uppercase tracking-wider mb-[4px]">Destinazione</h3>
-									<template v-if="!editingDest">
-										<p class="text-[0.9375rem] font-bold text-[#252B42]">{{ destinationAddress.full_name }}</p>
-										<p class="text-[0.8125rem] text-[#404040] mt-[2px]">{{ destinationAddress.address }} {{ destinationAddress.address_number }}, {{ destinationAddress.postal_code }} {{ destinationAddress.city }} ({{ destinationAddress.province }})</p>
-										<p class="text-[0.8125rem] text-[#737373] mt-[2px]">Tel: {{ destinationAddress.telephone_number }}<span v-if="destinationAddress.email"> &middot; {{ destinationAddress.email }}</span></p>
-									</template>
-								</div>
-								<button type="button" @click="editFromSummary('dest')" class="flex items-center gap-[6px] text-[#095866] hover:text-[#0a7a8c] cursor-pointer transition shrink-0 mt-[4px]">
-									<NuxtImg src="/img/quote/second-step/edit.png" alt="Modifica" width="14" height="14" />
-									<span class="text-[0.8125rem] font-semibold">{{ editingDest ? 'Chiudi' : 'Modifica' }}</span>
-								</button>
-							</div>
-							<div v-if="editingDest" class="mt-[16px] pt-[16px] border-t border-[#D0D0D0] space-y-[12px]">
-								<div class="grid grid-cols-2 gap-[12px]">
-									<input type="text" placeholder="Nome e Cognome*" v-model="destinationAddress.full_name" class="input-preventivo-step-2 w-full" />
-									<input type="text" placeholder="Informazioni aggiuntive" v-model="destinationAddress.additional_information" class="input-preventivo-step-2 w-full" />
-								</div>
-								<div class="grid grid-cols-3 gap-[12px]">
-									<input type="text" placeholder="Indirizzo*" v-model="destinationAddress.address" class="input-preventivo-step-2 w-full" />
-									<input type="text" placeholder="N. civico*" v-model="destinationAddress.address_number" class="input-preventivo-step-2 w-full" />
-									<input type="text" placeholder="Citofono" v-model="destinationAddress.intercom_code" class="input-preventivo-step-2 w-full" />
-								</div>
-								<div class="grid grid-cols-4 gap-[12px]">
-									<input type="text" placeholder="Paese*" value="Italia" class="input-preventivo-step-2 w-full" disabled />
-									<input type="text" placeholder="Città*" v-model="destinationAddress.city" class="input-preventivo-step-2 w-full" />
-									<input type="text" placeholder="Provincia*" v-model="destinationAddress.province" class="input-preventivo-step-2 w-full" />
-									<input type="text" placeholder="CAP*" v-model="destinationAddress.postal_code" class="input-preventivo-step-2 w-full" />
-								</div>
-								<div class="grid grid-cols-2 gap-[12px]">
-									<input type="tel" placeholder="Telefono*" v-model="destinationAddress.telephone_number" class="input-preventivo-step-2 w-full" />
-									<input type="email" placeholder="Email" v-model="destinationAddress.email" class="input-preventivo-step-2 w-full" />
-								</div>
-								<div class="flex justify-end">
-									<button type="button" @click="editingDest = false" class="bg-[#095866] text-white text-[0.8125rem] font-semibold px-[20px] h-[36px] rounded-[10px] hover:bg-[#0a7a8c] transition cursor-pointer">Salva</button>
-								</div>
-							</div>
-						</div>
-
-						<!-- Colli -->
-						<div class="bg-[#E6E6E6] rounded-[20px] p-[24px_30px]">
-							<div class="flex items-start gap-[20px]">
-								<div class="w-[50px] h-[50px] rounded-[12px] bg-white flex items-center justify-center shrink-0 mt-[4px]">
-									<NuxtImg src="/img/quote/second-step/pickup-and-delivery.png" alt="Colli" width="30" height="30" />
-								</div>
-								<div class="flex-1 min-w-0">
-									<h3 class="text-[0.75rem] font-bold text-[#737373] uppercase tracking-wider mb-[4px]">Colli</h3>
-									<template v-if="!editingColli">
-										<div v-for="(pack, i) in editablePackages" :key="i" class="text-[0.875rem] text-[#252B42] mt-[2px] first:mt-0">
-											<span class="font-bold">{{ pack.quantity }}x</span> &ndash; {{ pack.weight }} kg ({{ pack.first_size }} &times; {{ pack.second_size }} &times; {{ pack.third_size }} cm)
-										</div>
-									</template>
-								</div>
-								<button type="button" @click="editFromSummary('colli')" class="flex items-center gap-[6px] text-[#095866] hover:text-[#0a7a8c] cursor-pointer transition shrink-0 mt-[4px]">
-									<NuxtImg src="/img/quote/second-step/edit.png" alt="Modifica" width="14" height="14" />
-									<span class="text-[0.8125rem] font-semibold">{{ editingColli ? 'Chiudi' : 'Modifica' }}</span>
-								</button>
-							</div>
-							<div v-if="editingColli" class="mt-[16px] pt-[16px] border-t border-[#D0D0D0] space-y-[12px]">
-								<div v-for="(pack, i) in editablePackages" :key="i" class="bg-white rounded-[12px] p-[16px]">
-									<p class="text-[0.8125rem] font-bold text-[#252B42] mb-[10px]">Collo #{{ i + 1 }}</p>
-									<div class="grid grid-cols-5 gap-[10px]">
-										<div>
-											<label class="block text-[0.6875rem] text-[#737373] mb-[4px]">Quantità</label>
-											<input type="number" v-model="pack.quantity" min="1" class="input-preventivo-step-2 w-full text-center" />
-										</div>
-										<div>
-											<label class="block text-[0.6875rem] text-[#737373] mb-[4px]">Peso (kg)</label>
-											<input type="number" v-model="pack.weight" min="0.1" step="0.1" class="input-preventivo-step-2 w-full text-center" />
-										</div>
-										<div>
-											<label class="block text-[0.6875rem] text-[#737373] mb-[4px]">L (cm)</label>
-											<input type="number" v-model="pack.first_size" min="1" class="input-preventivo-step-2 w-full text-center" />
-										</div>
-										<div>
-											<label class="block text-[0.6875rem] text-[#737373] mb-[4px]">P (cm)</label>
-											<input type="number" v-model="pack.second_size" min="1" class="input-preventivo-step-2 w-full text-center" />
-										</div>
-										<div>
-											<label class="block text-[0.6875rem] text-[#737373] mb-[4px]">H (cm)</label>
-											<input type="number" v-model="pack.third_size" min="1" class="input-preventivo-step-2 w-full text-center" />
-										</div>
-									</div>
-								</div>
-								<div class="flex justify-end">
-									<button type="button" @click="editingColli = false" class="bg-[#095866] text-white text-[0.8125rem] font-semibold px-[20px] h-[36px] rounded-[10px] hover:bg-[#0a7a8c] transition cursor-pointer">Salva</button>
-								</div>
-							</div>
-						</div>
-
-						<!-- Servizi con dropdown -->
-						<div class="bg-[#E6E6E6] rounded-[20px] p-[24px_30px]">
-							<div class="flex items-start gap-[20px]">
-								<div class="w-[50px] h-[50px] rounded-[12px] bg-white flex items-center justify-center shrink-0 mt-[4px]">
-									<NuxtImg src="/img/quote/second-step/insurance.png" alt="Servizi" width="30" height="30" />
-								</div>
-								<div class="flex-1 min-w-0">
-									<h3 class="text-[0.75rem] font-bold text-[#737373] uppercase tracking-wider mb-[4px]">Servizi</h3>
-									<ul v-if="userStore.servicesArray.length > 0" class="text-[0.875rem] text-[#252B42]">
-										<li v-for="s in userStore.servicesArray" :key="s" class="flex items-center gap-[6px] mt-[2px] first:mt-0">
-											<span class="w-[6px] h-[6px] rounded-full bg-[#095866] shrink-0"></span>
-											{{ s }}
-										</li>
-									</ul>
-									<p v-else class="text-[0.875rem] text-[#737373]">Nessun servizio aggiuntivo</p>
-								</div>
-								<button type="button" @click="showServiceDropdown = !showServiceDropdown" class="flex items-center gap-[6px] text-[#095866] hover:text-[#0a7a8c] cursor-pointer transition shrink-0 mt-[4px]">
-									<NuxtImg src="/img/quote/second-step/edit.png" alt="Modifica" width="14" height="14" />
-									<span class="text-[0.8125rem] font-semibold">{{ showServiceDropdown ? 'Chiudi' : 'Modifica' }}</span>
-								</button>
-							</div>
-
-							<!-- Dropdown servizi -->
-							<div v-if="showServiceDropdown" class="mt-[16px] pt-[16px] border-t border-[#D0D0D0]">
-								<div class="grid grid-cols-3 gap-[10px]">
-									<label
-										v-for="(service, sIdx) in servicesList"
-										:key="sIdx"
-										class="flex items-center gap-[10px] p-[12px] rounded-[12px] cursor-pointer transition-all select-none"
-										:class="userStore.servicesArray.includes(service.name) ? 'bg-[#095866] text-white' : 'bg-white text-[#252B42] hover:bg-[#f5f5f5]'"
-										@click="chooseService(service, sIdx)">
-										<div
-											class="w-[32px] h-[32px] rounded-[8px] flex items-center justify-center shrink-0"
-											:class="userStore.servicesArray.includes(service.name) ? 'bg-white/20' : 'bg-[#F0F0F0]'">
-											<NuxtImg
-												:src="`/img/quote/second-step/${service.img}`"
-												:alt="service.name"
-												width="20"
-												height="20"
-												:class="{ 'brightness-0 invert': userStore.servicesArray.includes(service.name) }" />
-										</div>
-										<span class="text-[0.75rem] font-semibold leading-tight">{{ service.name }}</span>
-									</label>
-								</div>
-							</div>
-						</div>
-
-						<!-- Importo -->
-						<div class="bg-[#E6E6E6] rounded-[20px] p-[24px_30px] flex items-center gap-[20px]">
-							<div class="w-[50px] h-[50px] rounded-[12px] bg-white flex items-center justify-center shrink-0">
-								<span class="text-[1.5rem] font-bold text-[#095866]">&euro;</span>
-							</div>
-							<div class="flex-1">
-								<h3 class="text-[0.75rem] font-bold text-[#737373] uppercase tracking-wider mb-[4px]">Importo totale</h3>
-								<p class="text-[1.75rem] font-bold text-[#252B42] leading-tight">{{ session?.data?.total_price }}&euro; <span class="text-[0.75rem] font-normal text-[#737373]">IVA inclusa</span></p>
-							</div>
-						</div>
-
-					</div>
-
-					<!-- Bottoni riepilogo -->
-					<div class="mt-[28px] flex flex-wrap gap-[12px] items-center justify-between">
-						<button
-							type="button"
-							@click="goBackFromSummary"
-							class="inline-flex items-center justify-center h-[52px] px-[24px] rounded-[30px] bg-[#095866] text-white font-semibold hover:bg-[#0a7a8c] transition cursor-pointer">
-							Torna indietro
-						</button>
-						<button
-							type="button"
-							@click="confirmShipment"
-							:disabled="isSubmitting"
-							class="bg-[#E44203] text-white font-semibold text-[1rem] px-[28px] h-[52px] rounded-[30px] hover:opacity-90 transition disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer">
-							{{ isSubmitting ? 'Conferma in corso...' : 'Conferma spedizione' }}
-						</button>
-					</div>
-					<div v-if="submitError" class="mt-[16px] p-[14px] bg-red-50 border border-red-200 rounded-[12px] flex items-center gap-[10px]">
-						<Icon name="mdi:alert-circle" class="text-[20px] text-red-500 shrink-0" />
-						<p class="text-red-600 text-[0.9375rem] font-medium">{{ submitError }}</p>
-					</div>
-				</div>
+				<p v-if="submitError" class="text-red-500 text-[0.9375rem] mt-[10px] text-right">{{ submitError }}</p>
 
 			</form>
 		</div>
@@ -1463,11 +1051,6 @@ const confirmShipment = async () => {
 	border-radius: 8px;
 	padding: 12px 10px;
 	color: #252b42;
-}
-
-.summary-swiper .swiper-slide {
-	background: #f1f1f1;
-	border-radius: 10px;
 }
 
 .title-popup::after {
