@@ -29,7 +29,8 @@ class PackageResource extends JsonResource
             'single_price' => $this->single_price,
             'origin_address' => new PackageAddressResource($this->originAddress),
             'destination_address' => new PackageAddressResource($this->destinationAddress),
-            'services' => new ServiceResource($this->service)
+            'services' => new ServiceResource($this->service),
+            'created_at' => $this->created_at?->toISOString(),
         ];
     }
 }

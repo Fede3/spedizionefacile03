@@ -161,6 +161,7 @@ Route::group(['prefix' => 'api'], function() {
         /* SPEDIZIONI CONFIGURATE (SAVED SHIPMENTS) */
         Route::get('saved-shipments', [SavedShipmentController::class, 'index']);
         Route::post('saved-shipments', [SavedShipmentController::class, 'store']);
+        Route::put('saved-shipments/{id}', [SavedShipmentController::class, 'update']);
         Route::delete('saved-shipments/{id}', [SavedShipmentController::class, 'destroy']);
         Route::post('saved-shipments/add-to-cart', [SavedShipmentController::class, 'addToCart']);
 

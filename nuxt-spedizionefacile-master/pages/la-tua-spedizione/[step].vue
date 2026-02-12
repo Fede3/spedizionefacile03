@@ -720,18 +720,8 @@ const continueToCart = async () => {
 								</label>
 							</div>
 
-							<!-- Bottone per aprire i campi indirizzo -->
-							<div v-if="!showAddressFields" class="mt-[40px] flex justify-end">
-								<div>
-									<p v-if="dateError" class="text-red-500 text-[0.9375rem] mb-[16px] font-medium">{{ dateError }}</p>
-									<button
-										type="button"
-										@click="openAddressFields"
-										class="bg-[#E44203] text-white font-semibold text-[1rem] px-[32px] h-[52px] rounded-[30px] hover:opacity-90 transition cursor-pointer">
-										Compila dati ritiro e destinazione
-									</button>
-								</div>
-							</div>
+							<!-- Date error (shown when no date selected) -->
+							<p v-if="!showAddressFields && dateError" class="text-red-500 text-[0.9375rem] mt-[16px] font-medium text-right">{{ dateError }}</p>
 
 							<!-- PARTENZA -->
 							<template v-if="showAddressFields">
@@ -899,6 +889,12 @@ const continueToCart = async () => {
 								<NuxtLink :to="{ path: '/', hash: '#preventivo' }" class="inline-flex items-center justify-center h-[52px] px-[24px] rounded-[30px] bg-[#095866] text-white font-semibold hover:bg-[#0a7a8c] transition">
 									Indietro
 								</NuxtLink>
+								<button
+									type="button"
+									@click="openAddressFields"
+									class="bg-[#E44203] text-white font-semibold text-[1rem] px-[32px] h-[52px] rounded-[30px] hover:opacity-90 transition cursor-pointer">
+									Compila dati ritiro e destinazione
+								</button>
 							</template>
 						</div>
 						<div v-if="submitError" class="mt-[16px] p-[14px] bg-red-50 border border-red-200 rounded-[12px] flex items-center gap-[10px]">

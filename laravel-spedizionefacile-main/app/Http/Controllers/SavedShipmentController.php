@@ -80,6 +80,59 @@ class SavedShipmentController extends Controller
         return PackageResource::collection($outPackages);
     }
 
+    public function update(Request $request, $id)
+    {
+        $userId = auth()->id();
+
+        $package = Package::where('id', $id)->where('user_id', $userId)->firstOrFail();
+
+        $data = $request->validate([
+            'origin_address' => 'sometimes|array',
+            'origin_address.name' => 'nullable|string',
+            'origin_address.address' => 'nullable|string',
+            'origin_address.address_number' => 'nullable|string',
+            'origin_address.city' => 'nullable|string',
+            'origin_address.postal_code' => 'nullable|string',
+            'origin_address.province' => 'nullable|string',
+            'origin_address.telephone_number' => 'nullable|string',
+            'origin_address.email' => 'nullable|string',
+            'destination_address' => 'sometimes|array',
+            'destination_address.name' => 'nullable|string',
+            'destination_address.address' => 'nullable|string',
+            'destination_address.address_number' => 'nullable|string',
+            'destination_address.city' => 'nullable|string',
+            'destination_address.postal_code' => 'nullable|string',
+            'destination_address.province' => 'nullable|string',
+            'destination_address.telephone_number' => 'nullable|string',
+            'destination_address.email' => 'nullable|string',
+            'package_type' => 'nullable|string',
+            'quantity' => 'nullable|integer',
+            'weight' => 'nullable|string',
+            'first_size' => 'nullable|string',
+            'second_size' => 'nullable|string',
+            'third_size' => 'nullable|string',
+        ]);
+
+        DB::transaction(function () use ($package, $data) {
+            if (isset($data['origin_address']) && $package->originAddress) {
+                $package->originAddress->update($data['origin_address']);
+            }
+            if (isset($data['destination_address']) && $package->destinationAddress) {
+                $package->destinationAddress->update($data['destination_address']);
+            }
+
+            $packageFields = array_intersect_key($data, array_flip([
+                'package_type', 'quantity', 'weight', 'first_size', 'second_size', 'third_size',
+            ]));
+            if (!empty($packageFields)) {
+                $package->update($packageFields);
+            }
+        });
+
+        $package->load(['originAddress', 'destinationAddress', 'service']);
+        return new PackageResource($package);
+    }
+
     public function destroy($id)
     {
         $userId = auth()->id();

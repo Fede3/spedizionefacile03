@@ -517,7 +517,7 @@ watch(
 							<span v-if="!isRateCalculated">Continua</span>
 							<span v-else>
 								<span class="text-[2.25rem] border-b-[1px] border-white pb-[4px]">Spedisci da {{ totalPrice }}€</span>
-								<span class="block text-right mr-[5px] mt-[5px]">IVA inclusa</span>
+								<span class="block text-center mt-[5px]">IVA inclusa</span>
 							</span>
 						</button> -->
 
@@ -531,7 +531,7 @@ watch(
 								<span v-if="!isRateCalculated">Continua</span>
 								<span v-else>
 									<span class="text-[2.25rem] border-b-[1px] border-white pb-[4px]">Spedisci da {{ session?.data?.total_price }}€</span>
-									<span class="block text-right mr-[5px] mt-[5px]">IVA inclusa</span>
+									<span class="block text-center mt-[5px]">IVA inclusa</span>
 								</span>
 							</button>
 
@@ -554,7 +554,7 @@ watch(
 							class="bg-[#E44203] w-full text-white font-semibold text-center mt-[32px] desktop-xl:mt-[88px] rounded-[50px] desktop:mt-0 cursor-pointer tracking-[-0.48px] after:content-[''] after:bg-[url(/img/arrow-down.svg)] after:inline-block after:size-[16px] h-[113px] after:scale-300 after:ml-[35px] flex items-center justify-center">
 							<span>
 								<span class="text-[2.25rem] border-b-[1px] border-white pb-[4px]">Spedisci da {{ userStore.totalPrice }}€</span>
-								<span class="block text-right mr-[5px] mt-[5px]">IVA inclusa</span>
+								<span class="block text-center mt-[5px]">IVA inclusa</span>
 							</span>
 						</NuxtLink> -->
 				</form>

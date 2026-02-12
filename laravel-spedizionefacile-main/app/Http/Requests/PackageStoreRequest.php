@@ -50,10 +50,10 @@ class PackageStoreRequest extends FormRequest
             'destination_address.postal_code' => 'required|string',
             'destination_address.province' => 'required|string',
             'destination_address.telephone_number' => 'required|string',
-            /* 'destination_address.email' => 'nullable|string', */
+            'destination_address.email' => 'nullable|string',
 
             /* Servizi */
-            'services.service_type' => 'required|string',
+            'services.service_type' => 'nullable|string',
             'services.date' => 'nullable|string',
             'services.time' => 'nullable|string',
 
