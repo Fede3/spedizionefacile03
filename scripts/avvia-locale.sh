@@ -5,6 +5,7 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 # Per uso locale con Caddy come origine unica (8787)
 export NUXT_PUBLIC_API_BASE="${NUXT_PUBLIC_API_BASE:-http://127.0.0.1:8787}"
+export APP_FRONTEND_URL_OVERRIDE="${APP_FRONTEND_URL_OVERRIDE:-http://127.0.0.1:8787}"
 export NUXT_PORT="${NUXT_PORT:-3001}"
 export LARAVEL_PORT="${LARAVEL_PORT:-8000}"
 

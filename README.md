@@ -1,4 +1,4 @@
-# TuttoInsieme Monorepo
+# SpedizioneFacile Monorepo
 
 Questo repository contiene:
 
@@ -103,3 +103,48 @@ powershell -ExecutionPolicy Bypass -File .\scripts\support-bundle.ps1
 Output atteso: `OK: creato ...support_bundle_*.zip`
 
 > Nota sicurezza: il bundle copia solo file di configurazione di esempio (`.env.example`), non i tuoi `.env` reali.
+
+## Account di prova e controllo amministrativo
+
+Dopo `php artisan migrate --seed` trovi questi account pronti:
+
+- **Admin**: `admin@spedizionefacile.it` / `Admin2026!`
+- **Cliente**: `cliente@spedizionefacile.it` / `Cliente2026!`
+- **Cliente test**: `prova@spedizionefacile.it` / `Prova2026!`
+- **Partner Pro**: `pro@spedizionefacile.it` / `Partner2026!`
+
+### Dove controllare tutti gli account registrati
+
+1. Accedi con l'utente admin.
+2. Apri **Il tuo account → Amministrazione**.
+3. Vai al tab **Account** (`/account/amministrazione`):
+   - vedi elenco completo utenti registrati,
+   - approvi account non verificati,
+   - elimini account in caso di bug/registrazioni errate.
+
+> Nota: l'eliminazione dell'utente amministratore attualmente loggato è bloccata per sicurezza.
+
+
+## Nota PR refresh regressioni UI/Preventivo
+
+È disponibile una PR di refresh dedicata alle regressioni segnalate su:
+- layout preventivo/carrello compresso,
+- immagine hero home non visibile,
+- stato sessione/navbar al ritorno in home,
+- blocco del bottone **Continua** nello step spedizione,
+- wrapping dell’icona cestino nello step 1.
+
+Se nel repository vedi più PR aperte, usa quella con titolo che inizia con **"PR refresh"**.
+
+
+## Ripristino rapido errore Vue "Element is missing end tag"
+
+Se in locale compare un errore 500 con `Element is missing end tag` su `pages/la-tua-spedizione/[step].vue`, allinea il file al branch corrente prima di riavviare:
+
+```bash
+git checkout -- nuxt-spedizionefacile-master/pages/la-tua-spedizione/[step].vue
+cd nuxt-spedizionefacile-master
+npm run build
+```
+
+Questo evita che una modifica locale non chiusa correttamente blocchi tutta l'app.
