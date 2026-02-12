@@ -27,10 +27,17 @@ class RegisterRequest extends FormRequest
             'prefix' => 'string|required',
             'telephone_number' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users|confirmed',
-            'password' => 'required|string|min:8|confirmed',
+            'password' => [
+                'required',
+                'string',
+                'min:8',
+                'confirmed',
+                'regex:/[a-z]/',      // almeno una lettera minuscola
+                'regex:/[A-Z]/',      // almeno una lettera maiuscola
+                'regex:/[0-9]/',      // almeno un numero
+                'regex:/[@$!%*?&#^]/', // almeno un simbolo speciale
+            ],
             'role' => 'required|string'
-
-            /* |regex:/[a-z]/|regex:/[A-Z]/|regex:/[0-9]/regex:/[@$!%*?&]/ */
 
         ];
     }
@@ -50,6 +57,7 @@ class RegisterRequest extends FormRequest
             'password.required' => 'La password è obbligatoria.',
             'password.string' => 'La password deve essere una stringa valida.',
             'password.min' => 'La password deve contenere almeno 8 caratteri.',
+            'password.regex' => 'La password deve contenere almeno una lettera maiuscola, una minuscola, un numero e un simbolo speciale (@$!%*?&#^).',
             'password.confirmed' => 'La conferma della password non corrisponde.',
 
             'role.required' => 'Il tipo di account è obbligatorio.',

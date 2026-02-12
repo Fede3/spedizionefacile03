@@ -16,11 +16,11 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->statefulApi();
 
         $middleware->validateCsrfTokens(except: [
-            'stripe/webhook',     
+            'stripe/webhook',
         ]);
 
-        // Aggiungi il tuo middleware al gruppo web senza sovrascrivere
-        /* $middleware->appendToGroup('web', \App\Http\Middleware\CustomRememberCookie::class); */
+        // Security headers for all responses
+        $middleware->append(\App\Http\Middleware\SecurityHeaders::class);
     })
     ->withExceptions(function ($exceptions) {
         $exceptions->render(function (InvalidSignatureException $e, $request) {

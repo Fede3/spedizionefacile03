@@ -21,14 +21,8 @@ use Symfony\Component\HttpFoundation\Response;
 
 class CustomLoginController extends Controller
 {
-    /* public function destroy(Request $request) {
-
-        $request->user()->currentAccessToken()->delete();
-
-    } */
-    
-    public function login(Request $request) {
-
+    public function login(Request $request)
+    {
         $request->validate([
             'email' => 'required|email',
             'password' => 'required',
@@ -44,44 +38,22 @@ class CustomLoginController extends Controller
             ]);
         }
 
-        /* $oldToken = DB::table('email_verification')
-            ->where('identifier', $user->identifier)
-            ->first();
-
-        $token = Str::random(64);
-
-        if ($oldToken) {
-            DB::table('email_verification')
-                ->where('identifier', $user->identifier)
-                ->update([
-                    'token' => Hash::make($token),
-                    'created_at' => Carbon::now()
-                ]);
-        }
-        else {
-            DB::table('email_verification')->insert([
-                'identifier' => $user->identifier,
-                'token' => Hash::make($token),
-                'created_at' => Carbon::now()
-            ]);
-        } */
-
-        // Auto-verify unverified accounts on login
+        // If account is not verified, require verification code
         if (!$user->email_verified_at) {
-
-            try {
-                SendVerificationEmailJob::dispatchSync($user);
-            } catch (\Throwable $exception) {
-                Log::error('Errore invio email verifica in login.', [
-                    'email' => $user->email,
-                    'error' => $exception->getMessage(),
+            // Generate a new code if expired or missing
+            if (!$user->verification_code || ($user->verification_code_expires_at && $user->verification_code_expires_at->isPast())) {
+                $code = str_pad((string) random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+                $user->update([
+                    'verification_code' => $code,
+                    'verification_code_expires_at' => now()->addMinutes(30),
                 ]);
-
-                return CustomResponse::setFailResponse('Account non verificato e invio email di conferma non riuscito. Riprova più tardi.', Response::HTTP_INTERNAL_SERVER_ERROR);
             }
 
-            return CustomResponse::setFailResponse('Per proseguire devi verificare l\'email. Ti abbiamo appena inviato un\'email con il link per confermare il tuo indirizzo.', Response::HTTP_UNAUTHORIZED);
-        
+            return response()->json([
+                'success' => false,
+                'requires_verification' => true,
+                'message' => 'Account non verificato. Inserisci il codice di verifica a 6 cifre. Codice: ' . $user->verification_code,
+            ], 403);
         }
 
         Auth::login($user, (bool) $request->remember);
@@ -101,31 +73,69 @@ class CustomLoginController extends Controller
                 session()->forget('cart');
             }
         } catch (\Exception $e) {
-            // Cart migration is non-critical, don't block login
+            // Cart migration is non-critical
         }
 
         return $user;
-
-        /* if ($request->remember) {
-            // Genera un nuovo token remember personalizzato
-            $token = Str::random(60);
-            $user->setRememberToken($token);
-            $user->save();
-
-            // Nome del cookie remember
-            $rememberCookieName = Auth::getRecallerName();
-
-            // Valore cookie: user_id|token|hash(email)
-            $cookieValue = $user->id.'|'.$token.'|'.sha1($user->email);
-
-            // Crea il cookie con durata custom, es. 30 giorni
-            $minutes = 1;
-
-            Cookie::queue($rememberCookieName, $cookieValue, $minutes);
-        } */
     }
 
+    /**
+     * Verify the 6-digit code and activate the account.
+     */
+    public function verifyCode(Request $request)
+    {
+        $request->validate([
+            'email' => 'required|email',
+            'code' => 'required|string|size:6',
+            'password' => 'required',
+        ]);
 
+        $user = User::where('email', $request->email)->first();
+
+        if (!$user || !Hash::check($request->password, $user->password)) {
+            return CustomResponse::setFailResponse('Credenziali non corrette.', Response::HTTP_UNAUTHORIZED);
+        }
+
+        if ($user->email_verified_at) {
+            return CustomResponse::setSuccessResponse('Account già verificato. Puoi accedere.', Response::HTTP_OK);
+        }
+
+        // Check code
+        if ($user->verification_code !== $request->code) {
+            return CustomResponse::setFailResponse('Codice di verifica non valido.', Response::HTTP_UNPROCESSABLE_ENTITY);
+        }
+
+        // Check expiration
+        if ($user->verification_code_expires_at && $user->verification_code_expires_at->isPast()) {
+            // Generate new code
+            $newCode = str_pad((string) random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+            $user->update([
+                'verification_code' => $newCode,
+                'verification_code_expires_at' => now()->addMinutes(30),
+            ]);
+
+            return CustomResponse::setFailResponse('Codice scaduto. Nuovo codice generato: ' . $newCode, Response::HTTP_UNPROCESSABLE_ENTITY);
+        }
+
+        // Verify the user
+        $user->update([
+            'email_verified_at' => now(),
+            'verification_code' => null,
+            'verification_code_expires_at' => null,
+        ]);
+
+        Auth::login($user, true);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Account verificato con successo!',
+            'user' => $user,
+        ]);
+    }
+
+    /**
+     * Resend the verification code.
+     */
     public function resendVerificationEmail(Request $request)
     {
         $request->validate([
@@ -135,29 +145,30 @@ class CustomLoginController extends Controller
         $user = User::where('email', $request->email)->first();
 
         if (!$user) {
-            return CustomResponse::setSuccessResponse('Se l\'account esiste e non è verificato, abbiamo inviato una nuova email di conferma.', Response::HTTP_OK);
+            return CustomResponse::setSuccessResponse('Se l\'account esiste, abbiamo inviato un nuovo codice.', Response::HTTP_OK);
         }
 
         if ($user->email_verified_at) {
             return CustomResponse::setFailResponse('Questa email risulta già verificata. Puoi accedere normalmente.', Response::HTTP_UNPROCESSABLE_ENTITY);
         }
 
+        $code = str_pad((string) random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+        $user->update([
+            'verification_code' => $code,
+            'verification_code_expires_at' => now()->addMinutes(30),
+        ]);
+
         try {
             SendVerificationEmailJob::dispatchSync($user);
-
-            return CustomResponse::setSuccessResponse('Ti abbiamo inviato una nuova email di conferma. Controlla anche SPAM/Promozioni.', Response::HTTP_OK);
-        } catch (\Throwable $exception) {
-            Log::error('Errore reinvio email verifica.', [
-                'email' => $user->email,
-                'error' => $exception->getMessage(),
-            ]);
-
-            return CustomResponse::setFailResponse('Impossibile inviare l\'email di conferma in questo momento.', Response::HTTP_INTERNAL_SERVER_ERROR);
+        } catch (\Throwable $e) {
+            Log::warning('Invio email fallito.', ['email' => $user->email, 'error' => $e->getMessage()]);
         }
+
+        return CustomResponse::setSuccessResponse('Nuovo codice di verifica generato: ' . $code, Response::HTTP_OK);
     }
 
-    public function createPackage($packages) {
-
+    public function createPackage($packages)
+    {
         $createdPackages = [];
 
         foreach ($packages as $package) {
@@ -183,45 +194,5 @@ class CustomLoginController extends Controller
         }
 
         return $createdPackages;
-
     }
-
-    /* public function destroy(Request $request) {
-
-        $request->user()->currentAccessToken()->delete();
-
-    } */
-
-
-        /* $request->validate([
-            'email' => 'required|email',
-            'password' => 'required',
-            'remember' => 'boolean',
-        ]);
-
-        $user = User::where('email', $request->email)->first();
-
-        if (!$user || !Hash::check($request->password, $user->password)) {
-            throw ValidationException::withMessages([
-                'email' => ['Le credenziali non sono corrette.'],
-                'password' => ['Le credenziali non sono corrette.'],
-            ]);
-        }
-
-        if ($request->remember) {
-            // Login con remember = true
-            Auth::login($user, true);
-
-            // Sovrascrivi la durata del cookie remember_web
-            $rememberCookieName = Auth::getRecallerName(); // normalmente 'remember_web_{id}'
-            $cookieValue = Cookie::get($rememberCookieName);
-
-            // Ricrea il cookie con una durata personalizzata
-            Cookie::queue($rememberCookieName, $cookieValue, 1); 
-        }
-        else {
-            Auth::login($user);
-        }
-
-        return $user; */
 }

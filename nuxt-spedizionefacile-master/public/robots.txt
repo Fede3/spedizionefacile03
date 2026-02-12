@@ -1,2 +1,10 @@
 User-Agent: *
-Disallow:
+Allow: /
+Disallow: /account/
+Disallow: /carrello
+Disallow: /checkout
+Disallow: /aggiorna-password
+Disallow: /verifica-email
+Disallow: /la-tua-spedizione/
+
+Sitemap: https://spedizionefacile.it/sitemap.xml

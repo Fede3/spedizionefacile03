@@ -36,6 +36,8 @@ class User extends Authenticatable
         'email_verified_at',
         'stripe_account_id',
         'customer_id',
+        'verification_code',
+        'verification_code_expires_at',
     ];
 
     /**
@@ -47,6 +49,8 @@ class User extends Authenticatable
         'password',
         'updated_at',
         'remember_token',
+        'verification_code',
+        'verification_code_expires_at',
     ];
 
     /**
@@ -58,6 +62,7 @@ class User extends Authenticatable
     {
         return [
             'email_verified_at' => 'datetime',
+            'verification_code_expires_at' => 'datetime',
             'password' => 'hashed',
         ];
     }

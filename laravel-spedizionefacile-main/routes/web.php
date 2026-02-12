@@ -42,8 +42,8 @@ Route::get('/auth/google/callback', [GoogleController::class, 'handleGoogleCallb
 
 Route::group(['prefix' => 'api'], function() {
 
-    /* LOGIN */
-    Route::post('/custom-register', [CustomRegisterController::class, 'register']);
+    /* REGISTRAZIONE */
+    Route::middleware(['throttle:5,1'])->post('/custom-register', [CustomRegisterController::class, 'register']);
 
     Route::get('/auth/google/redirect', [GoogleController::class, 'redirectToGoogle']);
 
@@ -55,6 +55,7 @@ Route::group(['prefix' => 'api'], function() {
     /* LOGIN */
     Route::middleware(['throttle:10,1'])->post('/custom-login', [CustomLoginController::class, 'login']);
     Route::middleware(['throttle:5,1'])->post('/resend-verification-email', [CustomLoginController::class, 'resendVerificationEmail']);
+    Route::middleware(['throttle:10,1'])->post('/verify-code', [CustomLoginController::class, 'verifyCode']);
 
     /* CONFERMA EMAIL */
     Route::get('/verify-email/{id}', [VerificationController::class, 'verify'])

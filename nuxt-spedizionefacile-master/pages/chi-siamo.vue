@@ -1,9 +1,10 @@
 <script setup>
-/* useHead({
-	htmlAttrs: {
-		class: "scroll-smooth",
-	},
-}); */
+useSeoMeta({
+	title: 'Chi Siamo | SpedizioneFacile - La Tua Piattaforma di Spedizioni',
+	ogTitle: 'Chi Siamo | SpedizioneFacile',
+	description: 'Scopri SpedizioneFacile: la piattaforma italiana che ti aiuta a spedire senza stress con prezzi trasparenti, procedure snelle e assistenza dedicata.',
+	ogDescription: 'Scopri SpedizioneFacile: spedizioni senza stress con prezzi trasparenti e assistenza dedicata.',
+});
 
 const sections = [
 	{

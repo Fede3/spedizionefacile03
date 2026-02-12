@@ -21,35 +21,35 @@ class CustomRegisterController extends Controller
         try {
             DB::beginTransaction();
 
-            $user = User::create($data);
+            // Generate 6-digit verification code
+            $code = str_pad((string) random_int(0, 999999), 6, '0', STR_PAD_LEFT);
 
-            // Try to send verification email
+            $user = User::create($data);
+            $user->update([
+                'verification_code' => $code,
+                'verification_code_expires_at' => now()->addMinutes(30),
+            ]);
+
+            // Try to send verification email with code
             try {
                 SendVerificationEmailJob::dispatchSync($user);
             } catch (\Throwable $mailException) {
-                Log::warning('Email di verifica non inviata (mailer potrebbe essere in modalità log).', [
+                Log::warning('Email di verifica non inviata.', [
                     'email' => $user->email,
                     'error' => $mailException->getMessage(),
                 ]);
             }
 
-            // In local/dev: auto-verify so user can login immediately
-            // In production with real SMTP: user will receive the email
-            if (app()->environment('local', 'testing') && config('mail.default') === 'log') {
-                $user->update(['email_verified_at' => now()]);
-            }
-
             DB::commit();
 
-            $message = $user->email_verified_at
-                ? 'Registrazione completata! Puoi accedere al tuo account.'
-                : 'Ti abbiamo inviato un\'email con le istruzioni per completare la registrazione. Se non hai ricevuto la nostra email, controlla nella cartella SPAM.';
-
-            return CustomResponse::setSuccessResponse($message, Response::HTTP_CREATED);
+            return CustomResponse::setSuccessResponse(
+                'Registrazione completata! Inserisci il codice di verifica a 6 cifre per attivare il tuo account. Codice: ' . $code,
+                Response::HTTP_CREATED
+            );
         } catch (\Throwable $exception) {
             DB::rollBack();
 
-            Log::error('Errore registrazione o invio email di verifica.', [
+            Log::error('Errore registrazione.', [
                 'email' => $request->email,
                 'error' => $exception->getMessage(),
             ]);

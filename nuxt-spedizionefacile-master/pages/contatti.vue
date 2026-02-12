@@ -1,4 +1,11 @@
 <script setup>
+useSeoMeta({
+	title: 'Contatti | SpedizioneFacile - Assistenza e Supporto',
+	ogTitle: 'Contatti | SpedizioneFacile',
+	description: 'Hai bisogno di aiuto? Contatta il team di SpedizioneFacile per assistenza sulle tue spedizioni, preventivi personalizzati o informazioni sui nostri servizi.',
+	ogDescription: 'Contatta SpedizioneFacile per assistenza e supporto sulle tue spedizioni.',
+});
+
 const contactForm = ref({
 	name: "",
 	surname: "",

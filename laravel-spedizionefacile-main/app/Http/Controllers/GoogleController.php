@@ -20,8 +20,10 @@ class GoogleController extends Controller
             $frontend = $fallbackFrontend;
         }
 
+        $redirectUri = config('services.google.redirect');
         $response = Socialite::driver('google')
             ->stateless()
+            ->redirectUrl($redirectUri)
             ->with(['prompt' => 'select_account consent'])
             ->redirect();
 
@@ -34,7 +36,11 @@ class GoogleController extends Controller
         $frontendUrl = rtrim((string) ($request->cookie('frontend_redirect') ?: config('app.frontend_url', config('app.url'))), '/');
 
         try {
-            $googleUser = Socialite::driver('google')->stateless()->user();
+            $redirectUri = config('services.google.redirect');
+            $googleUser = Socialite::driver('google')
+                ->stateless()
+                ->redirectUrl($redirectUri)
+                ->user();
         } catch (\Exception $e) {
             return redirect($frontendUrl . '/autenticazione?error=google_failed')->withoutCookie('frontend_redirect');
         }

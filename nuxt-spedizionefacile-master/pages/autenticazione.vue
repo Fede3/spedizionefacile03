@@ -1,6 +1,13 @@
 <script setup>
 import { FetchError } from "ofetch";
 
+useSeoMeta({
+	title: 'Accedi o Registrati | SpedizioneFacile',
+	ogTitle: 'Accedi o Registrati | SpedizioneFacile',
+	description: 'Accedi al tuo account SpedizioneFacile o registrati gratuitamente per gestire le tue spedizioni, tracciare i pacchi e risparmiare sui corrieri.',
+	ogDescription: 'Accedi o registrati su SpedizioneFacile per gestire le tue spedizioni.',
+});
+
 const { login } = useSanctumAuth();
 
 const items = ref([
@@ -39,6 +46,13 @@ const showResendVerification = ref(false);
 const resendMessage = ref(null);
 const resendLoading = ref(false);
 
+// Verification code flow
+const verificationMode = ref(false);
+const verificationCode = ref(["", "", "", "", "", ""]);
+const verificationLoading = ref(false);
+const verificationError = ref(null);
+const verificationSuccess = ref(null);
+
 const handleLogin = async () => {
 	messageError.value = null;
 	showResendVerification.value = false;
@@ -75,12 +89,19 @@ const handleLogin = async () => {
 		const status = error?.response?.status || error?.statusCode;
 		const data = error?.response?._data || error?.data;
 
-		if (status === 422) {
+		if (status === 403 && data?.requires_verification) {
+			// Account not verified - show verification code input
+			verificationMode.value = true;
+			verificationCode.value = ["", "", "", "", "", ""];
+			verificationError.value = null;
+			verificationSuccess.value = null;
+			messageError.value = null;
+		} else if (status === 422) {
 			messageError.value = data?.errors || { email: ["Credenziali non valide."] };
 		} else if (status === 401) {
 			const message = data?.message || "Credenziali non corrette.";
 			messageError.value = data?.errors || data || { email: [message] };
-			if (String(message).toLowerCase().includes("verificare l'email") || String(message).toLowerCase().includes("verificare l’email")) {
+			if (String(message).toLowerCase().includes("verificare l'email") || String(message).toLowerCase().includes("verificare l'email")) {
 				showResendVerification.value = true;
 			}
 		} else if (status === 429) {
@@ -122,6 +143,100 @@ const resendVerificationEmail = async () => {
 		resendLoading.value = false;
 	}
 };
+
+const verifyCode = async () => {
+	const code = verificationCode.value.join("");
+	if (code.length !== 6) {
+		verificationError.value = "Inserisci il codice completo a 6 cifre.";
+		return;
+	}
+
+	verificationLoading.value = true;
+	verificationError.value = null;
+
+	try {
+		const sanctum = useSanctumClient();
+		const response = await sanctum("/api/verify-code", {
+			method: "POST",
+			body: {
+				email: credentials.value.email,
+				password: credentials.value.password,
+				code: code,
+			},
+		});
+
+		verificationSuccess.value = response?.message || "Account verificato con successo!";
+		verificationMode.value = false;
+
+		// Auto-login after verification
+		await login(credentials.value);
+	} catch (error) {
+		const data = error?.response?._data || error?.data;
+		verificationError.value = data?.message || "Codice non valido. Riprova.";
+	} finally {
+		verificationLoading.value = false;
+	}
+};
+
+const handleVerificationInput = (index, event) => {
+	const value = event.target.value;
+	if (value && index < 5) {
+		const nextInput = event.target.parentElement.querySelector(`input:nth-child(${index + 2})`);
+		if (nextInput) nextInput.focus();
+	}
+};
+
+const handleVerificationKeydown = (index, event) => {
+	if (event.key === "Backspace" && !verificationCode.value[index] && index > 0) {
+		const prevInput = event.target.parentElement.querySelector(`input:nth-child(${index})`);
+		if (prevInput) prevInput.focus();
+	}
+};
+
+const handleVerificationPaste = (event) => {
+	event.preventDefault();
+	const paste = (event.clipboardData || window.clipboardData).getData("text").replace(/\D/g, "").slice(0, 6);
+	for (let i = 0; i < 6; i++) {
+		verificationCode.value[i] = paste[i] || "";
+	}
+};
+
+const resendCodeForVerification = async () => {
+	verificationError.value = null;
+	verificationLoading.value = true;
+	try {
+		const sanctum = useSanctumClient();
+		const response = await sanctum("/api/resend-verification-email", {
+			method: "POST",
+			body: { email: credentials.value.email },
+		});
+		verificationError.value = null;
+		verificationSuccess.value = response?.message || "Nuovo codice inviato!";
+	} catch (error) {
+		const data = error?.response?._data || error?.data;
+		verificationError.value = data?.message || "Errore nell'invio del codice. Riprova.";
+	} finally {
+		verificationLoading.value = false;
+	}
+};
+
+// Password strength for registration
+const passwordChecks = computed(() => {
+	const pwd = registerForm.value.password || "";
+	return {
+		minLength: pwd.length >= 8,
+		hasLower: /[a-z]/.test(pwd),
+		hasUpper: /[A-Z]/.test(pwd),
+		hasNumber: /[0-9]/.test(pwd),
+		hasSymbol: /[@$!%*?&#^]/.test(pwd),
+	};
+});
+
+const passwordStrength = computed(() => {
+	const checks = passwordChecks.value;
+	const passed = Object.values(checks).filter(Boolean).length;
+	return passed;
+});
 
 definePageMeta({
 	middleware: ["sanctum:guest"],
@@ -204,6 +319,9 @@ function onTabClick(newValue) {
 	messageSuccess.value = null;
 	showResendVerification.value = false;
 	resendMessage.value = null;
+	verificationMode.value = false;
+	verificationError.value = null;
+	verificationSuccess.value = null;
 }
 </script>
 
@@ -217,7 +335,7 @@ function onTabClick(newValue) {
 						<span class="text-emerald-600 text-[1.5rem] font-bold">&#10003;</span>
 					</div>
 					<p class="text-[1rem] font-medium">{{ messageSuccess }}</p>
-					<p class="text-[0.875rem] text-[#737373] mt-[8px]">Il tuo account è attivo. Ora puoi accedere con le tue credenziali.</p>
+					<p class="text-[0.875rem] text-[#737373] mt-[8px]">Accedi con le tue credenziali e inserisci il codice di verifica per attivare l'account.</p>
 					<button @click="messageSuccess = null" class="mt-[16px] px-[24px] py-[10px] bg-[#095866] text-white rounded-[8px] text-[0.875rem] font-semibold cursor-pointer hover:bg-[#0a7a8c] transition-colors">
 						Torna al login
 					</button>
@@ -226,7 +344,31 @@ function onTabClick(newValue) {
 				<UTabs :items="items" v-if="!messageSuccess" @update:modelValue="onTabClick">
 					<!-- LOGIN TAB -->
 					<template #accedi>
-						<div v-if="showResendVerification" class="bg-amber-50 border border-amber-200 p-[16px] rounded-[10px] text-[#252B42] mt-[24px] mb-[12px]">
+						<!-- Verification Code Input -->
+						<div v-if="verificationMode" class="bg-white p-[28px] rounded-[12px] shadow-[0_2px_8px_rgba(0,0,0,0.06)] border border-[#E9EBEC] text-[#252B42] mt-[24px]">
+							<div class="text-center mb-[20px]">
+								<div class="w-[56px] h-[56px] mx-auto mb-[16px] bg-[#095866]/10 rounded-full flex items-center justify-center">
+									<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#095866" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+								</div>
+								<h3 class="text-[1.125rem] font-semibold text-[#252B42]">Verifica il tuo account</h3>
+								<p class="text-[0.875rem] text-[#737373] mt-[8px]">Inserisci il codice di verifica a 6 cifre che hai ricevuto via email all'indirizzo <strong>{{ credentials.email }}</strong></p>
+							</div>
+							<div class="flex justify-center gap-[8px] mb-[20px]" @paste="handleVerificationPaste">
+								<input v-for="(digit, index) in verificationCode" :key="index" type="text" maxlength="1" inputmode="numeric" :value="verificationCode[index]" @input="(e) => { verificationCode[index] = e.target.value.replace(/\D/g, ''); handleVerificationInput(index, e); }" @keydown="(e) => handleVerificationKeydown(index, e)" class="w-[48px] h-[56px] text-center text-[1.25rem] font-bold bg-[#F8F9FB] border border-[#E9EBEC] rounded-[8px] focus:border-[#095866] focus:outline-none transition-colors" />
+							</div>
+							<p v-if="verificationError" class="text-red-500 text-[0.8125rem] mb-[12px] bg-red-50 p-[10px] rounded-[6px] text-center">{{ verificationError }}</p>
+							<p v-if="verificationSuccess" class="text-emerald-600 text-[0.8125rem] mb-[12px] bg-emerald-50 p-[10px] rounded-[6px] text-center">{{ verificationSuccess }}</p>
+							<button type="button" @click="verifyCode" :disabled="verificationLoading" :class="['w-full py-[14px] rounded-[10px] text-white font-semibold text-[1rem] transition-all', verificationLoading ? 'bg-gray-300 cursor-not-allowed' : 'bg-[#095866] hover:bg-[#0a7a8c] cursor-pointer']">
+								<span v-if="verificationLoading">Verifica in corso...</span>
+								<span v-else>Verifica Account</span>
+							</button>
+							<div class="flex items-center justify-between mt-[16px]">
+								<button type="button" @click="resendCodeForVerification" :disabled="verificationLoading" class="text-[0.8125rem] text-[#095866] font-semibold hover:underline cursor-pointer disabled:opacity-60">Invia nuovo codice</button>
+								<button type="button" @click="verificationMode = false; verificationError = null; verificationSuccess = null;" class="text-[0.8125rem] text-[#737373] hover:underline cursor-pointer">Torna al login</button>
+							</div>
+						</div>
+
+						<div v-if="showResendVerification && !verificationMode" class="bg-amber-50 border border-amber-200 p-[16px] rounded-[10px] text-[#252B42] mt-[24px] mb-[12px]">
 							<p class="text-[0.9375rem] font-medium">Email non confermata. Ti reinviamo subito una nuova email di verifica.</p>
 							<button
 								type="button"
@@ -237,7 +379,7 @@ function onTabClick(newValue) {
 							</button>
 							<p v-if="resendMessage" class="text-[0.8125rem] mt-[10px]" :class="resendMessage.type === 'success' ? 'text-emerald-700' : 'text-red-600'">{{ resendMessage.text }}</p>
 						</div>
-						<UForm :state="credentials" @submit.prevent="handleLogin" class="bg-white p-[28px] rounded-[12px] shadow-[0_2px_8px_rgba(0,0,0,0.06)] border border-[#E9EBEC] text-[#252B42] mt-[24px]">
+						<UForm v-if="!verificationMode" :state="credentials" @submit.prevent="handleLogin" class="bg-white p-[28px] rounded-[12px] shadow-[0_2px_8px_rgba(0,0,0,0.06)] border border-[#E9EBEC] text-[#252B42] mt-[24px]">
 							<div class="mb-[20px]">
 								<label for="login_email" class="block text-[0.875rem] font-medium text-[#252B42] mb-[6px]">Email</label>
 								<input
@@ -427,6 +569,29 @@ function onTabClick(newValue) {
 											<svg v-if="!showRegPassword" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
 											<svg v-else width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
 										</button>
+									</div>
+									<!-- Password strength indicator -->
+									<div v-if="registerForm.password" class="mt-[8px]">
+										<div class="flex gap-[4px] mb-[6px]">
+											<div v-for="i in 5" :key="i" class="h-[3px] flex-1 rounded-full transition-all" :class="passwordStrength >= i ? (passwordStrength <= 2 ? 'bg-red-400' : passwordStrength <= 3 ? 'bg-amber-400' : 'bg-emerald-500') : 'bg-[#E9EBEC]'"></div>
+										</div>
+										<ul class="space-y-[2px]">
+											<li class="text-[0.75rem] flex items-center gap-[4px]" :class="passwordChecks.minLength ? 'text-emerald-600' : 'text-[#A0A5AB]'">
+												<span>{{ passwordChecks.minLength ? '\u2713' : '\u2022' }}</span> Minimo 8 caratteri
+											</li>
+											<li class="text-[0.75rem] flex items-center gap-[4px]" :class="passwordChecks.hasLower ? 'text-emerald-600' : 'text-[#A0A5AB]'">
+												<span>{{ passwordChecks.hasLower ? '\u2713' : '\u2022' }}</span> Una lettera minuscola
+											</li>
+											<li class="text-[0.75rem] flex items-center gap-[4px]" :class="passwordChecks.hasUpper ? 'text-emerald-600' : 'text-[#A0A5AB]'">
+												<span>{{ passwordChecks.hasUpper ? '\u2713' : '\u2022' }}</span> Una lettera maiuscola
+											</li>
+											<li class="text-[0.75rem] flex items-center gap-[4px]" :class="passwordChecks.hasNumber ? 'text-emerald-600' : 'text-[#A0A5AB]'">
+												<span>{{ passwordChecks.hasNumber ? '\u2713' : '\u2022' }}</span> Un numero
+											</li>
+											<li class="text-[0.75rem] flex items-center gap-[4px]" :class="passwordChecks.hasSymbol ? 'text-emerald-600' : 'text-[#A0A5AB]'">
+												<span>{{ passwordChecks.hasSymbol ? '\u2713' : '\u2022' }}</span> Un simbolo (@$!%*?&#^)
+											</li>
+										</ul>
 									</div>
 								</div>
 

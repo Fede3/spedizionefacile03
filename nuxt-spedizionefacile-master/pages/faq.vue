@@ -1,4 +1,11 @@
 <script setup>
+useSeoMeta({
+	title: 'FAQ - Domande Frequenti | SpedizioneFacile',
+	ogTitle: 'FAQ | SpedizioneFacile',
+	description: 'Trova risposte alle domande più frequenti su SpedizioneFacile: prezzi, servizi, tracking, assicurazione, contrassegno e molto altro.',
+	ogDescription: 'Domande frequenti su SpedizioneFacile: tutto quello che devi sapere sulle spedizioni.',
+});
+
 const items = ref([
 	{
 		label: "1. Come viene calcolato il prezzo di una spedizione su SpedizioneFacile?",

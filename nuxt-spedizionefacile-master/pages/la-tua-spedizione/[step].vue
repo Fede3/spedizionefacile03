@@ -419,18 +419,19 @@ const pendingPayload = ref(null);
 const goToCart = async () => {
 	if (!pendingPayload.value) return;
 	isSubmitting.value = true;
+	submitError.value = null;
 	try {
-		await useSanctumFetch(isAuthenticated.value ? "/api/empty-cart" : "/api/empty-guest-cart", {
+		await sanctumClient(isAuthenticated.value ? "/api/empty-cart" : "/api/empty-guest-cart", {
 			method: "DELETE",
 		});
-		await useSanctumFetch(endpoint.value, {
+		await sanctumClient(endpoint.value, {
 			method: "POST",
 			body: pendingPayload.value,
 		});
-		await refreshCart();
 		showSavedPopup.value = false;
 		navigateTo('/carrello');
 	} catch (error) {
+		console.error('Cart save error:', error);
 		submitError.value = "Errore durante il salvataggio nel carrello. Riprova.";
 		showSavedPopup.value = false;
 	} finally {
@@ -441,14 +442,16 @@ const goToCart = async () => {
 const goToSavedShipments = async () => {
 	if (!pendingPayload.value) return;
 	isSubmitting.value = true;
+	submitError.value = null;
 	try {
-		await useSanctumFetch("/api/saved-shipments", {
+		await sanctumClient("/api/saved-shipments", {
 			method: "POST",
 			body: pendingPayload.value,
 		});
 		showSavedPopup.value = false;
 		navigateTo('/account/spedizioni-configurate');
 	} catch (error) {
+		console.error('Saved shipments error:', error);
 		submitError.value = "Errore durante il salvataggio. Riprova.";
 		showSavedPopup.value = false;
 	} finally {
@@ -460,11 +463,13 @@ const addAnotherShipment = async () => {
 	if (!pendingPayload.value) return;
 	isSubmitting.value = true;
 	try {
-		await useSanctumFetch("/api/saved-shipments", {
+		await sanctumClient("/api/saved-shipments", {
 			method: "POST",
 			body: pendingPayload.value,
 		});
-	} catch (e) { /* silent */ }
+	} catch (e) {
+		console.error('Add another error:', e);
+	}
 	isSubmitting.value = false;
 	showSavedPopup.value = false;
 	navigateTo('/preventivo');
@@ -472,6 +477,7 @@ const addAnotherShipment = async () => {
 
 const { endpoint, refresh: refreshCart } = useCart();
 const { isAuthenticated } = useSanctumAuth();
+const sanctumClient = useSanctumClient();
 const router = useRouter();
 
 const isSubmitting = ref(false);
