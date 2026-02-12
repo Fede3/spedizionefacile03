@@ -56,6 +56,9 @@ const { data: usersData, refresh: refreshUsers } = useSanctumFetch("/api/admin/u
 // User management
 const { data: usersData, refresh: refreshUsers } = useSanctumFetch("/api/admin/users");
 
+// User management
+const { data: usersData, refresh: refreshUsers } = useSanctumFetch("/api/admin/users");
+
 // Selected user movements
 const selectedUserId = ref(null);
 const selectedUserName = ref("");
@@ -178,6 +181,38 @@ const manualVerifyEmail = async (id) => {
 		clearMessage();
 	} catch (e) {
 		actionMessage.value = { type: "error", text: e?.response?._data?.message || "Errore durante la verifica manuale." };
+	} finally {
+		actionLoading.value = null;
+	}
+};
+
+
+const approveAccount = async (id) => {
+	actionLoading.value = id;
+	actionMessage.value = null;
+	try {
+		await sanctum(`/api/admin/users/${id}/approve`, { method: "PATCH" });
+		actionMessage.value = { type: "success", text: "Account approvato con successo." };
+		await refreshUsers();
+	} catch (e) {
+		actionMessage.value = { type: "error", text: e?.data?.message || "Errore durante l'approvazione account." };
+	} finally {
+		actionLoading.value = null;
+	}
+};
+
+const deleteAccount = async (id) => {
+	const confirmed = window.confirm("Confermi l'eliminazione definitiva di questo account?");
+	if (!confirmed) return;
+
+	actionLoading.value = id;
+	actionMessage.value = null;
+	try {
+		await sanctum(`/api/admin/users/${id}`, { method: "DELETE" });
+		actionMessage.value = { type: "success", text: "Account eliminato correttamente." };
+		await refreshUsers();
+	} catch (e) {
+		actionMessage.value = { type: "error", text: e?.data?.message || "Errore durante l'eliminazione account." };
 	} finally {
 		actionLoading.value = null;
 	}
@@ -603,6 +638,52 @@ const unverifiedUsers = computed(() => usersData.value?.filter(u => !u.email_ver
 						</div>
 					</div>
 				</div>
+
+
+			<!-- ===== ACCOUNTS TAB ===== -->
+			<div v-if="activeTab === 'accounts'">
+				<div class="bg-white rounded-[16px] p-[24px] desktop:p-[32px] shadow-sm border border-[#E9EBEC]">
+					<h2 class="text-[1.125rem] font-bold text-[#252B42] mb-[20px]">Gestione account registrati</h2>
+
+					<div v-if="!usersData?.data?.length" class="text-center py-[40px] text-[#737373]">
+						<p>Nessun account trovato.</p>
+					</div>
+
+					<div v-else class="overflow-x-auto">
+						<table class="w-full text-[0.875rem]">
+							<thead>
+								<tr class="border-b border-[#E9EBEC] text-left text-[#737373]">
+									<th class="pb-[12px] font-medium">Nome</th>
+									<th class="pb-[12px] font-medium">Email</th>
+									<th class="pb-[12px] font-medium">Ruolo</th>
+									<th class="pb-[12px] font-medium">Stato</th>
+									<th class="pb-[12px] font-medium">Registrazione</th>
+									<th class="pb-[12px] font-medium text-right">Azioni</th>
+								</tr>
+							</thead>
+							<tbody>
+								<tr v-for="u in usersData.data" :key="u.id" class="border-b border-[#F0F0F0]">
+									<td class="py-[12px] text-[#252B42] font-medium">{{ u.name }} {{ u.surname }}</td>
+									<td class="py-[12px] text-[#737373]">{{ u.email }}</td>
+									<td class="py-[12px]">{{ u.role }}</td>
+									<td class="py-[12px]">
+										<span :class="u.email_verified_at ? 'text-emerald-700 bg-emerald-50' : 'text-amber-700 bg-amber-50'" class="inline-block px-[8px] py-[2px] rounded-full text-[0.6875rem] font-medium">
+											{{ u.email_verified_at ? 'Verificato' : 'Da approvare' }}
+										</span>
+									</td>
+									<td class="py-[12px] text-[#737373]">{{ formatDate(u.created_at) }}</td>
+									<td class="py-[12px] text-right">
+										<div class="flex justify-end gap-[8px]">
+											<button v-if="!u.email_verified_at" @click="approveAccount(u.id)" :disabled="actionLoading === u.id" class="px-[10px] py-[6px] rounded-[8px] bg-[#095866] text-white text-[0.75rem] cursor-pointer disabled:opacity-60">Approva</button>
+											<button @click="deleteAccount(u.id)" :disabled="actionLoading === u.id" class="px-[10px] py-[6px] rounded-[8px] bg-red-600 text-white text-[0.75rem] cursor-pointer disabled:opacity-60">Elimina</button>
+										</div>
+									</td>
+								</tr>
+							</tbody>
+						</table>
+					</div>
+				</div>
+			</div>
 
 
 			<!-- ===== ACCOUNTS TAB ===== -->
