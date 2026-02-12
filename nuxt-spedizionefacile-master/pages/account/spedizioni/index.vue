@@ -294,7 +294,7 @@ const formatPrice = (cents) => {
 						Non hai ancora effettuato nessun ordine. Configura la tua prima spedizione per iniziare.
 					</p>
 					<NuxtLink
-						to="/preventivo"
+						:to="{ path: '/', hash: '#preventivo' }"
 						class="inline-block px-[24px] py-[12px] bg-[#095866] hover:bg-[#0a7a8c] text-white rounded-[10px] font-semibold text-[0.9375rem] transition-colors">
 						Crea nuova spedizione
 					</NuxtLink>

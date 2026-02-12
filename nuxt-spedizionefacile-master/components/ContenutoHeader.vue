@@ -24,7 +24,7 @@ const props = defineProps({
 					:style="
 						data
 							? { '--admin-image': `url(${data?.image_url})` }
-							: { '--admin-image': `url(https://www.spedirepaccoonline.it/sparrow-v1.4.2/pages/assets/img_3/spedire-pacco-online-con-ritiro-e-consegna-a-domicilio.jpg)` }
+							: { '--admin-image': `url(/img/homepage/trasporti-img.png)` }
 					"
 					class="admin-pill">
 					6,88 €
