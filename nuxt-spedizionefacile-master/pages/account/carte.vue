@@ -6,12 +6,79 @@ definePageMeta({
 });
 
 const { refreshIdentity } = useSanctumAuth();
-
 const runtimeConfig = useRuntimeConfig();
-const stripePromise = loadStripe(runtimeConfig.public.stripeKey);
+const client = useSanctumClient();
 
-const stripe = await stripePromise;
+/* ===== STRIPE CONFIG: fetch from backend ===== */
+const stripeConfigured = ref(false);
+const stripePublishableKey = ref("");
+const configLoading = ref(true);
+const showConfigForm = ref(false);
+const configPublishableKey = ref("");
+const configSecretKey = ref("");
+const configError = ref(null);
+const configSaving = ref(false);
 
+// Fetch Stripe config dal backend
+try {
+	const config = await client("/api/settings/stripe");
+	stripeConfigured.value = config?.configured || false;
+	stripePublishableKey.value = config?.publishable_key || "";
+} catch (e) {
+	// Fallback a runtime config
+	stripePublishableKey.value = runtimeConfig.public.stripeKey || "";
+	stripeConfigured.value = !!stripePublishableKey.value;
+}
+configLoading.value = false;
+
+// Load Stripe.js con la chiave corretta
+let stripe = null;
+if (stripePublishableKey.value) {
+	try {
+		stripe = await loadStripe(stripePublishableKey.value);
+	} catch (e) {
+		console.error("Stripe.js non caricato:", e);
+	}
+}
+
+const saveStripeConfig = async () => {
+	configError.value = null;
+	configSaving.value = true;
+
+	try {
+		const res = await client("/api/settings/stripe", {
+			method: "POST",
+			body: {
+				publishable_key: configPublishableKey.value,
+				secret_key: configSecretKey.value,
+			},
+		});
+
+		if (res?.success) {
+			stripeConfigured.value = true;
+			stripePublishableKey.value = configPublishableKey.value;
+			showConfigForm.value = false;
+
+			// Ricarica Stripe con la nuova chiave
+			try {
+				stripe = await loadStripe(configPublishableKey.value);
+			} catch (e) {
+				console.error("Stripe.js non caricato:", e);
+			}
+
+			textMessage.value = "Stripe configurato con successo!";
+			textMessageType.value = "success";
+			setTimeout(() => { textMessage.value = ""; }, 3000);
+		}
+	} catch (err) {
+		const msg = err?.data?.message || err?.data?.errors?.publishable_key?.[0] || err?.data?.errors?.secret_key?.[0] || "Errore durante il salvataggio.";
+		configError.value = msg;
+	} finally {
+		configSaving.value = false;
+	}
+};
+
+/* ===== CARD MANAGEMENT ===== */
 const cardNumber = ref(null);
 const cardExpiry = ref(null);
 const cardCvc = ref(null);
@@ -38,7 +105,10 @@ const handleAddCard = async () => {
 	errorMessage.value = null;
 
 	try {
-		const stripe = await stripePromise;
+		if (!stripe) {
+			errorMessage.value = "Stripe non disponibile. Ricarica la pagina.";
+			return;
+		}
 
 		const { setupIntent, error } = await stripe.confirmCardSetup(clientSecret.value, {
 			payment_method: {
@@ -60,13 +130,13 @@ const handleAddCard = async () => {
 			return;
 		}
 
-		const { data, error: serverError } = await useSanctumFetch("api/stripe/set-default-payment-method", {
+		const serverResponse = await client("/api/stripe/set-default-payment-method", {
 			method: "POST",
 			body: { payment_method: setupIntent.payment_method },
 		});
 
-		if (serverError?.value) {
-			errorMessage.value = "Errore server. Riprova.";
+		if (serverResponse?.error) {
+			errorMessage.value = serverResponse.error || "Errore server. Riprova.";
 			return;
 		}
 
@@ -90,11 +160,11 @@ const setDefault = async (pmId) => {
 	textMessageType.value = "info";
 
 	try {
-		const { data } = await useSanctumFetch("api/stripe/change-default-payment-method", {
+		const data = await client("/api/stripe/change-default-payment-method", {
 			method: "POST",
 			body: { payment_method_id: pmId },
 		});
-		if (data.value?.success) {
+		if (data?.success) {
 			textMessage.value = "Carta predefinita aggiornata.";
 			textMessageType.value = "success";
 			await refresh();
@@ -113,12 +183,12 @@ const deleteCard = async (pmId) => {
 	textMessageType.value = "info";
 
 	try {
-		const { data } = await useSanctumFetch("api/stripe/delete-card", {
+		const data = await client("/api/stripe/delete-card", {
 			method: "DELETE",
 			body: { payment_method_id: pmId },
 		});
 
-		if (data.value?.success) {
+		if (data?.success) {
 			await refresh();
 			deleteConfirmId.value = null;
 			textMessage.value = "Carta eliminata.";
@@ -150,36 +220,57 @@ const togglePaymentForm = async () => {
 		clientSecret.value = null;
 		errorMessage.value = null;
 
-		const { data } = await useSanctumFetch("/api/stripe/create-setup-intent", {
-			method: "POST",
-		});
+		if (!stripe) {
+			errorMessage.value = "Stripe non disponibile. Ricarica la pagina o configura le chiavi API.";
+			textMessage.value = errorMessage.value;
+			textMessageType.value = "error";
+			return;
+		}
 
-		clientSecret.value = data.value.client_secret;
-		showFormPayments.value = true;
+		try {
+			const response = await client("/api/stripe/create-setup-intent", {
+				method: "POST",
+			});
 
-		await nextTick();
+			if (!response?.client_secret) {
+				errorMessage.value = response?.error || "Impossibile inizializzare il modulo di pagamento. Riprova.";
+				textMessage.value = errorMessage.value;
+				textMessageType.value = "error";
+				return;
+			}
 
-		elements.value = stripe.elements({ clientSecret: clientSecret.value });
+			clientSecret.value = response.client_secret;
+			showFormPayments.value = true;
 
-		const style = {
-			base: {
-				color: "#252B42",
-				fontFamily: "Inter, system-ui, sans-serif",
-				fontSize: "15px",
-				fontWeight: "400",
-				"::placeholder": { color: "#a0a0a0" },
-			},
-			invalid: { color: "#dc2626" },
-		};
+			await nextTick();
 
-		cardNumber.value = elements.value.create("cardNumber", { style, placeholder: "1234 5678 9012 3456" });
-		cardNumber.value.mount("#card-number");
+			elements.value = stripe.elements();
 
-		cardExpiry.value = elements.value.create("cardExpiry", { style });
-		cardExpiry.value.mount("#card-expiry");
+			const style = {
+				base: {
+					color: "#252B42",
+					fontFamily: "Inter, system-ui, sans-serif",
+					fontSize: "15px",
+					fontWeight: "400",
+					"::placeholder": { color: "#a0a0a0" },
+				},
+				invalid: { color: "#dc2626" },
+			};
 
-		cardCvc.value = elements.value.create("cardCvc", { style, placeholder: "123" });
-		cardCvc.value.mount("#card-cvc");
+			cardNumber.value = elements.value.create("cardNumber", { style, placeholder: "1234 5678 9012 3456" });
+			cardNumber.value.mount("#card-number");
+
+			cardExpiry.value = elements.value.create("cardExpiry", { style });
+			cardExpiry.value.mount("#card-expiry");
+
+			cardCvc.value = elements.value.create("cardCvc", { style, placeholder: "123" });
+			cardCvc.value.mount("#card-cvc");
+		} catch (err) {
+			const msg = err?.data?.error || err?.data?.message || err?.message || "Errore di connessione al sistema di pagamento.";
+			errorMessage.value = msg;
+			textMessage.value = msg;
+			textMessageType.value = "error";
+		}
 	}
 };
 
@@ -201,7 +292,12 @@ const getBrandIcon = (brand) => {
 			<div class="mb-[24px] text-[0.875rem] text-[#737373]">
 				<NuxtLink to="/account" class="hover:underline text-[#095866]">Il tuo account</NuxtLink>
 				<span class="mx-[6px]">/</span>
-				<span v-if="!showFormPayments" class="font-semibold text-[#252B42]">Carte e pagamenti</span>
+				<span v-if="!showFormPayments && !showConfigForm" class="font-semibold text-[#252B42]">Carte e pagamenti</span>
+				<template v-else-if="showConfigForm">
+					<NuxtLink class="hover:underline text-[#095866] cursor-pointer" @click.prevent="showConfigForm = false">Carte e pagamenti</NuxtLink>
+					<span class="mx-[6px]">/</span>
+					<span class="font-semibold text-[#252B42]">Configurazione Stripe</span>
+				</template>
 				<template v-else>
 					<NuxtLink class="hover:underline text-[#095866] cursor-pointer" @click.prevent="togglePaymentForm">Carte e pagamenti</NuxtLink>
 					<span class="mx-[6px]">/</span>
@@ -219,16 +315,101 @@ const getBrandIcon = (brand) => {
 				{{ textMessage }}
 			</div>
 
+			<!-- ===== STRIPE NOT CONFIGURED BANNER ===== -->
+			<div v-if="!stripeConfigured && !showConfigForm && !configLoading" class="mb-[24px] p-[20px] bg-amber-50 border border-amber-200 rounded-[12px]">
+				<div class="flex items-start gap-[14px]">
+					<div class="w-[44px] h-[44px] rounded-[10px] bg-amber-100 flex items-center justify-center shrink-0">
+						<Icon name="mdi:alert-outline" class="text-[24px] text-amber-600" />
+					</div>
+					<div class="flex-1">
+						<h3 class="text-[0.9375rem] font-bold text-[#252B42] mb-[4px]">Stripe non configurato</h3>
+						<p class="text-[0.8125rem] text-[#737373] leading-[1.5] mb-[12px]">
+							Per aggiungere carte di pagamento devi prima configurare le chiavi API di Stripe.
+							Le trovi nella tua <a href="https://dashboard.stripe.com/apikeys" target="_blank" class="text-[#095866] underline">dashboard Stripe</a>.
+						</p>
+						<button
+							@click="showConfigForm = true"
+							class="px-[18px] py-[10px] bg-[#095866] hover:bg-[#0a7a8c] text-white rounded-[8px] text-[0.8125rem] font-semibold transition-colors cursor-pointer">
+							Configura Stripe
+						</button>
+					</div>
+				</div>
+			</div>
+
+			<!-- ===== STRIPE CONFIG FORM ===== -->
+			<template v-if="showConfigForm">
+				<h1 class="text-[1.5rem] desktop:text-[1.75rem] font-bold text-[#252B42] mb-[24px]">Configurazione Stripe</h1>
+
+				<div class="bg-white rounded-[16px] p-[24px] desktop:p-[32px] shadow-sm border border-[#E9EBEC] max-w-[540px] mx-auto">
+					<p class="text-[0.875rem] text-[#737373] leading-[1.6] mb-[24px]">
+						Inserisci le chiavi API dal tuo account Stripe. Le trovi in
+						<a href="https://dashboard.stripe.com/apikeys" target="_blank" class="text-[#095866] underline font-medium">Dashboard &rarr; Developers &rarr; API keys</a>.
+					</p>
+
+					<div class="mb-[20px]">
+						<label class="block text-[0.8125rem] font-semibold text-[#404040] mb-[6px]">Publishable Key</label>
+						<input
+							type="text"
+							v-model="configPublishableKey"
+							class="w-full px-[14px] py-[12px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[8px] text-[0.875rem] text-[#252B42] placeholder:text-[#a0a0a0] focus:border-[#095866] focus:outline-none transition-colors font-mono"
+							placeholder="pk_test_..." />
+					</div>
+
+					<div class="mb-[24px]">
+						<label class="block text-[0.8125rem] font-semibold text-[#404040] mb-[6px]">Secret Key</label>
+						<input
+							type="password"
+							v-model="configSecretKey"
+							class="w-full px-[14px] py-[12px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[8px] text-[0.875rem] text-[#252B42] placeholder:text-[#a0a0a0] focus:border-[#095866] focus:outline-none transition-colors font-mono"
+							placeholder="sk_test_..." />
+					</div>
+
+					<p v-if="configError" class="text-red-500 text-[0.8125rem] mb-[16px] p-[10px] bg-red-50 rounded-[8px] border border-red-200">
+						{{ configError }}
+					</p>
+
+					<div class="flex gap-[12px]">
+						<button
+							@click="showConfigForm = false"
+							class="flex-1 py-[14px] rounded-[10px] bg-[#F0F0F0] hover:bg-[#E0E0E0] text-[#404040] font-semibold text-[0.9375rem] transition-colors cursor-pointer">
+							Annulla
+						</button>
+						<button
+							@click="saveStripeConfig"
+							:disabled="configSaving || !configPublishableKey || !configSecretKey"
+							class="flex-1 py-[14px] rounded-[10px] bg-[#095866] hover:bg-[#0a7a8c] text-white font-semibold text-[0.9375rem] transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">
+							{{ configSaving ? 'Salvataggio...' : 'Salva configurazione' }}
+						</button>
+					</div>
+
+					<div class="mt-[16px] flex items-center justify-center gap-[6px] text-[0.75rem] text-[#a0a0a0]">
+						<span>&#128274;</span>
+						<span>Le chiavi vengono salvate in modo sicuro nel server</span>
+					</div>
+				</div>
+			</template>
+
 			<!-- ===== CARD LIST VIEW ===== -->
-			<template v-if="!showFormPayments">
+			<template v-if="!showFormPayments && !showConfigForm">
 				<div class="flex items-center justify-between mb-[24px]">
 					<h1 class="text-[1.5rem] desktop:text-[1.75rem] font-bold text-[#252B42]">Carte e pagamenti</h1>
-					<button
-						type="button"
-						@click="togglePaymentForm"
-						class="px-[20px] py-[10px] bg-[#095866] hover:bg-[#0a7a8c] text-white rounded-[10px] text-[0.875rem] font-semibold transition-colors cursor-pointer">
-						+ Aggiungi carta
-					</button>
+					<div class="flex items-center gap-[10px]">
+						<button
+							type="button"
+							@click="showConfigForm = true"
+							class="px-[16px] py-[10px] bg-[#F0F0F0] hover:bg-[#E0E0E0] text-[#404040] rounded-[10px] text-[0.8125rem] font-medium transition-colors cursor-pointer"
+							title="Configura chiavi API Stripe">
+							<Icon name="mdi:cog-outline" class="text-[16px] align-middle mr-[4px]" />
+							Stripe
+						</button>
+						<button
+							type="button"
+							@click="togglePaymentForm"
+							:disabled="!stripeConfigured"
+							class="px-[20px] py-[10px] bg-[#095866] hover:bg-[#0a7a8c] text-white rounded-[10px] text-[0.875rem] font-semibold transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">
+							+ Aggiungi carta
+						</button>
+					</div>
 				</div>
 
 				<!-- Loading skeleton -->
@@ -253,8 +434,8 @@ const getBrandIcon = (brand) => {
 						</div>
 						<h2 class="text-[1.25rem] font-bold text-[#252B42] mb-[10px]">Nessuna carta salvata</h2>
 						<p class="text-[#737373] text-[0.9375rem] max-w-[400px] mx-auto mb-[24px] leading-[1.6]">Aggiungi una carta di pagamento per velocizzare le tue spedizioni e ricaricare il portafoglio.</p>
-						<button @click="togglePaymentForm" class="px-[24px] py-[12px] bg-[#095866] hover:bg-[#0a7a8c] text-white rounded-[10px] font-semibold text-[0.9375rem] transition-colors cursor-pointer">
-							Aggiungi la tua prima carta
+						<button @click="stripeConfigured ? togglePaymentForm() : (showConfigForm = true)" class="px-[24px] py-[12px] bg-[#095866] hover:bg-[#0a7a8c] text-white rounded-[10px] font-semibold text-[0.9375rem] transition-colors cursor-pointer">
+							{{ stripeConfigured ? 'Aggiungi la tua prima carta' : 'Configura Stripe' }}
 						</button>
 					</div>
 
