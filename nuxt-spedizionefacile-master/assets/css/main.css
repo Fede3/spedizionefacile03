@@ -90,10 +90,10 @@
  * Unlayered styles always beat layered styles in Tailwind v4 / Nuxt UI.
  */
 .my-container {
-	max-width: 1280px;
-	width: 100%;
-	margin-left: auto;
-	margin-right: auto;
+	max-width: 1280px !important;
+	width: 100% !important;
+	margin-left: auto !important;
+	margin-right: auto !important;
 	padding-left: 20px;
 	padding-right: 20px;
 }
@@ -107,13 +107,13 @@
 	.my-container {
 		padding-left: 40px;
 		padding-right: 40px;
-		max-width: 1000px;
+		max-width: 1000px !important;
 	}
 }
 @media (min-width: 1440px) {
 	.my-container {
 		padding-left: 20px;
 		padding-right: 20px;
-		max-width: 1280px;
+		max-width: 1280px !important;
 	}
 }

@@ -71,16 +71,16 @@ const applyCoupon = async () => {
 		const total = cart.value?.meta?.total;
 		const numericTotal = Number(String(total).replace('€', '').replace(',', '.').trim());
 
-		const { data } = await useSanctumFetch('/api/calculate-coupon', {
+		const data = await sanctum('/api/calculate-coupon', {
 			method: 'POST',
 			body: { coupon: couponCode.value, total: numericTotal },
 		});
 
-		if (data.value?.success) {
+		if (data?.success) {
 			couponApplied.value = true;
-			couponDiscount.value = data.value.percentage;
-			appliedTotal.value = data.value.new_total;
-			couponMessage.value = { type: 'success', text: `Sconto del ${data.value.percentage}% applicato!` };
+			couponDiscount.value = data.percentage;
+			appliedTotal.value = data.new_total;
+			couponMessage.value = { type: 'success', text: `Sconto del ${data.percentage}% applicato!` };
 		} else {
 			couponMessage.value = { type: 'error', text: 'Coupon non valido.' };
 		}
