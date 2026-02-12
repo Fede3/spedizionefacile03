@@ -424,15 +424,23 @@ const goToCart = async () => {
 		await sanctumClient(isAuthenticated.value ? "/api/empty-cart" : "/api/empty-guest-cart", {
 			method: "DELETE",
 		});
-		await sanctumClient(endpoint.value, {
+		const result = await sanctumClient(endpoint.value, {
 			method: "POST",
 			body: pendingPayload.value,
 		});
+		console.log('Cart saved successfully:', result);
 		showSavedPopup.value = false;
+		// Clear stale cart cache so carrello.vue fetches fresh data
+		clearNuxtData("cart");
+		await refreshCart();
 		navigateTo('/carrello');
 	} catch (error) {
 		console.error('Cart save error:', error);
-		submitError.value = "Errore durante il salvataggio nel carrello. Riprova.";
+		const errorData = error?.response?._data || error?.data;
+		const errorMsg = errorData?.message || errorData?.errors
+			? JSON.stringify(errorData.errors || errorData.message)
+			: "Errore durante il salvataggio nel carrello. Riprova.";
+		submitError.value = errorMsg;
 		showSavedPopup.value = false;
 	} finally {
 		isSubmitting.value = false;
@@ -444,15 +452,17 @@ const goToSavedShipments = async () => {
 	isSubmitting.value = true;
 	submitError.value = null;
 	try {
-		await sanctumClient("/api/saved-shipments", {
+		const result = await sanctumClient("/api/saved-shipments", {
 			method: "POST",
 			body: pendingPayload.value,
 		});
+		console.log('Saved shipment successfully:', result);
 		showSavedPopup.value = false;
 		navigateTo('/account/spedizioni-configurate');
 	} catch (error) {
 		console.error('Saved shipments error:', error);
-		submitError.value = "Errore durante il salvataggio. Riprova.";
+		const errorData = error?.response?._data || error?.data;
+		submitError.value = errorData?.message || "Errore durante il salvataggio. Riprova.";
 		showSavedPopup.value = false;
 	} finally {
 		isSubmitting.value = false;

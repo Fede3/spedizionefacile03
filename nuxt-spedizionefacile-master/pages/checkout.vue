@@ -11,6 +11,9 @@ definePageMeta({
 	middleware: ["sanctum:auth"],
 });
 
+// Force fresh cart data
+await refreshCart();
+
 // Check cart not empty
 const checkCart = () => {
 	if (!cart.value || cart.value.data?.length === 0) {

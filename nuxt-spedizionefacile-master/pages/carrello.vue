@@ -6,6 +6,11 @@ const router = useRouter();
 
 const endpoint = computed(() => (isAuthenticated.value ? "/api/empty-cart" : "/api/empty-guest-cart"));
 
+// Force fresh cart data every time the page is visited (useSanctumFetch caches)
+onMounted(async () => {
+	await refresh();
+});
+
 // Filters
 const filterProvenienza = ref('');
 const filterRiferimento = ref('');
