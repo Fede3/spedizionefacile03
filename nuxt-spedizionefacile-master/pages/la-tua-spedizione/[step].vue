@@ -420,7 +420,7 @@ const goToCart = async () => {
 
 const addAnotherShipment = () => {
 	showSavedPopup.value = false;
-	router.push("/");
+	router.push("/preventivo");
 };
 
 const goToSavedShipments = () => {
@@ -515,6 +515,36 @@ const editFromSummary = (section) => {
 	else if (section === 'colli') editingColli.value = !editingColli.value;
 };
 
+/* Step bar: calcola step corrente e gestisci navigazione */
+const computedCurrentStep = computed(() => {
+	if (showSummary.value) return 3;
+	if (showAddressFields.value) return 2;
+	return 1;
+});
+
+const handleStepNavigate = (stepIndex) => {
+	if (stepIndex === 0) {
+		navigateTo('/preventivo');
+	} else if (stepIndex === 1) {
+		showSummary.value = false;
+		showAddressFields.value = false;
+	} else if (stepIndex === 2) {
+		showSummary.value = false;
+		showAddressFields.value = true;
+	} else if (stepIndex === 3 && showSummary.value) {
+		// Already on summary
+	}
+};
+
+/* Init editablePackages da session */
+const editingSidebarColli = ref(false);
+
+watch(() => session.value?.data?.packages, (newPkgs) => {
+	if (newPkgs?.length > 0 && editablePackages.value.length === 0) {
+		editablePackages.value = newPkgs.map(p => ({ ...p }));
+	}
+}, { immediate: true });
+
 /* Step 2: Conferma e salva spedizione */
 const confirmShipment = async () => {
 	submitError.value = null;
@@ -557,10 +587,10 @@ const confirmShipment = async () => {
 
 <template>
 	<section>
-		<div class="my-container mt-[72px] mb-[120px]">
+		<div class="my-container mt-[72px] mb-[120px] max-w-[1200px] mx-auto">
 			<div v-if="status === 'pending'" class="min-h-[720px] bg-[#E4E4E4] rounded-[20px] animate-pulse"></div>
 			<form v-else ref="formRef" @submit.prevent="showRiepilogo">
-				<Steps />
+				<Steps :current-step="computedCurrentStep" @navigate="handleStepNavigate" />
 
 				<!-- Popup servizi (sempre disponibile, anche dal riepilogo) -->
 				<UModal
@@ -722,10 +752,10 @@ const confirmShipment = async () => {
 					</div>
 				</ClientOnly>
 
-				<div class="flex items-start font-montserrat mt-[99px]">
-					<div class="desktop-xl:w-[893px]">
+				<div class="flex items-start font-montserrat mt-[60px] justify-center gap-x-[40px]">
+					<div class="flex-1 max-w-[850px]">
 						<!-- #f0ffff  group hover:bg-[#727272]-->
-						<div class="w-[850px]">
+						<div class="w-full">
 							<div class="flex items-start justify-between flex-wrap gap-[96px_50px]">
 								<label
 									v-for="(service, serviceIndex) in servicesList"
@@ -923,9 +953,8 @@ const confirmShipment = async () => {
 						</div>
 					</div>
 
-					<!-- desktop-xl:w-[250px] before:content-[''] before:bg-green-500 before:w-[1px] before:block before:h-[871px] ml-[59px] -->
-					<div class="border-l-[0.5px] border-rgba(0,0,0,.8) min-h-[871px] mt-[30px] pl-[59px] pt-[50px]">
-						<div class="desktop-xl:w-[250px] flex flex-col gap-y-[50px]">
+					<div class="border-l-[0.5px] border-[rgba(0,0,0,0.1)] min-h-[600px] mt-[30px] pl-[30px] pt-[50px] shrink-0">
+						<div class="w-[250px] flex flex-col gap-y-[30px]">
 							<div class="bg-[#E4E4E4] rounded-[20px] p-[35px_21px] text-[#252B42] font-bold text-[0.6875rem] tracking-[0.1px]">
 								<div>
 									<div class="before:content-[''] before:inline-block before:bg-[url(/img/quote/second-step/origin.png)] before:w-[16px] before:h-[14px] before:mr-[10px] flex items-center">
@@ -964,14 +993,50 @@ const confirmShipment = async () => {
 							</div>
 
 							<div class="bg-[#E4E4E4] rounded-[20px] p-[35px_21px] text-[#252B42] text-[0.6875rem] tracking-[0.1px]">
-								<h4 class="text-center font-bold mb-[12px]">Colli</h4>
+								<div class="flex items-center justify-between mb-[12px]">
+									<h4 class="text-center font-bold flex-1">Colli</h4>
+									<button type="button" @click="editingSidebarColli = !editingSidebarColli" class="ml-auto">
+										<NuxtImg src="/img/quote/second-step/edit.png" alt="Modifica" width="13" height="13" />
+									</button>
+								</div>
 
-								<ul class="font-semibold">
-									<li v-for="(pack, packIndex) in session?.data?.packages" :key="packIndex" class="mt-[10px] first:mt-0">
+								<!-- Vista lettura -->
+								<ul v-if="!editingSidebarColli" class="font-semibold">
+									<li v-for="(pack, packIndex) in editablePackages" :key="packIndex" class="mt-[10px] first:mt-0">
 										<p>{{ pack.quantity }} x - {{ pack.weight }} kg</p>
 										<p>({{ pack.first_size }} x {{ pack.second_size }} x {{ pack.third_size }}) cm</p>
 									</li>
 								</ul>
+
+								<!-- Vista modifica -->
+								<div v-else class="space-y-[10px]">
+									<div v-for="(pack, pi) in editablePackages" :key="pi" class="bg-white rounded-[10px] p-[10px]">
+										<p class="font-bold mb-[6px]">Collo #{{ pi + 1 }}</p>
+										<div class="grid grid-cols-2 gap-[6px]">
+											<div>
+												<label class="text-[0.6rem] text-[#737373]">Qtà</label>
+												<input type="number" v-model="pack.quantity" min="1" class="w-full bg-[#F1F1F1] rounded-[6px] h-[26px] text-center text-[0.75rem] px-[4px]" />
+											</div>
+											<div>
+												<label class="text-[0.6rem] text-[#737373]">Peso kg</label>
+												<input type="number" v-model="pack.weight" min="0.1" step="0.1" class="w-full bg-[#F1F1F1] rounded-[6px] h-[26px] text-center text-[0.75rem] px-[4px]" />
+											</div>
+											<div>
+												<label class="text-[0.6rem] text-[#737373]">L cm</label>
+												<input type="number" v-model="pack.first_size" min="1" class="w-full bg-[#F1F1F1] rounded-[6px] h-[26px] text-center text-[0.75rem] px-[4px]" />
+											</div>
+											<div>
+												<label class="text-[0.6rem] text-[#737373]">P cm</label>
+												<input type="number" v-model="pack.second_size" min="1" class="w-full bg-[#F1F1F1] rounded-[6px] h-[26px] text-center text-[0.75rem] px-[4px]" />
+											</div>
+											<div class="col-span-2">
+												<label class="text-[0.6rem] text-[#737373]">H cm</label>
+												<input type="number" v-model="pack.third_size" min="1" class="w-full bg-[#F1F1F1] rounded-[6px] h-[26px] text-center text-[0.75rem] px-[4px]" />
+											</div>
+										</div>
+									</div>
+									<button type="button" @click="editingSidebarColli = false" class="w-full bg-[#095866] text-white text-[0.6875rem] font-semibold h-[28px] rounded-[8px] hover:bg-[#0a7a8c] transition cursor-pointer">Salva</button>
+								</div>
 							</div>
 
 							<div class="bg-[#E4E4E4] rounded-[20px] p-[35px_21px] text-[#252B42] text-[0.6875rem] tracking-[0.1px]">
@@ -999,7 +1064,7 @@ const confirmShipment = async () => {
 				</div>
 
 
-				<div class="mt-[28px] w-full max-w-[850px] mr-auto flex flex-wrap gap-[12px] items-center justify-between">
+				<div class="mt-[28px] w-full max-w-[850px] mx-auto flex flex-wrap gap-[12px] items-center justify-between">
 					<template v-if="showAddressFields">
 						<button
 							type="button"
@@ -1020,17 +1085,17 @@ const confirmShipment = async () => {
 						</NuxtLink>
 					</template>
 				</div>
-				<div v-if="submitError" class="mt-[16px] w-full max-w-[850px] mr-auto p-[14px] bg-red-50 border border-red-200 rounded-[12px] flex items-center gap-[10px]">
+				<div v-if="submitError" class="mt-[16px] w-full max-w-[850px] mx-auto p-[14px] bg-red-50 border border-red-200 rounded-[12px] flex items-center gap-[10px]">
 					<Icon name="mdi:alert-circle" class="text-[20px] text-red-500 shrink-0" />
 					<p class="text-red-600 text-[0.9375rem] font-medium">{{ submitError }}</p>
 				</div>
 				</div>
 
 				<!-- RIEPILOGO -->
-				<div v-if="showSummary" class="mt-[40px]">
+				<div v-if="showSummary" class="mt-[40px] max-w-[900px] mx-auto">
 					<h2 class="text-[1.8125rem] font-bold text-[#252B42] font-montserrat tracking-[0.1px] mb-[30px]">Riepilogo spedizione</h2>
 
-					<div class="max-w-[850px] space-y-[16px]">
+					<div class="space-y-[16px]">
 
 						<!-- Giorno ritiro -->
 						<div class="bg-[#E6E6E6] rounded-[20px] p-[24px_30px]">
@@ -1289,7 +1354,7 @@ const confirmShipment = async () => {
 					</div>
 
 					<!-- Bottoni riepilogo -->
-					<div class="mt-[28px] flex flex-wrap gap-[12px] items-center justify-between max-w-[850px]">
+					<div class="mt-[28px] flex flex-wrap gap-[12px] items-center justify-between">
 						<button
 							type="button"
 							@click="goBackFromSummary"
@@ -1304,7 +1369,7 @@ const confirmShipment = async () => {
 							{{ isSubmitting ? 'Conferma in corso...' : 'Conferma spedizione' }}
 						</button>
 					</div>
-					<div v-if="submitError" class="mt-[16px] max-w-[850px] p-[14px] bg-red-50 border border-red-200 rounded-[12px] flex items-center gap-[10px]">
+					<div v-if="submitError" class="mt-[16px] p-[14px] bg-red-50 border border-red-200 rounded-[12px] flex items-center gap-[10px]">
 						<Icon name="mdi:alert-circle" class="text-[20px] text-red-500 shrink-0" />
 						<p class="text-red-600 text-[0.9375rem] font-medium">{{ submitError }}</p>
 					</div>
@@ -1335,7 +1400,7 @@ const confirmShipment = async () => {
 							<Icon name="mdi:cart-outline" class="text-[22px] text-[#095866]" />
 						</div>
 						<div class="text-left">
-							<p class="text-[0.9375rem] font-semibold text-[#252B42] group-hover:text-[#095866]">Vai al carrello</p>
+							<p class="text-[0.9375rem] font-semibold text-[#252B42] group-hover:text-[#095866]">Aggiungi al carrello</p>
 							<p class="text-[0.8125rem] text-[#737373]">Procedi al pagamento della spedizione</p>
 						</div>
 						<Icon name="mdi:chevron-right" class="text-[20px] text-[#C8CCD0] ml-auto" />
@@ -1348,8 +1413,8 @@ const confirmShipment = async () => {
 							<Icon name="mdi:package-variant-closed" class="text-[22px] text-blue-600" />
 						</div>
 						<div class="text-left">
-							<p class="text-[0.9375rem] font-semibold text-[#252B42] group-hover:text-[#095866]">Spedizioni configurate</p>
-							<p class="text-[0.8125rem] text-[#737373]">Visualizza tutte le spedizioni salvate</p>
+							<p class="text-[0.9375rem] font-semibold text-[#252B42] group-hover:text-[#095866]">Aggiungi a spedizioni configurate</p>
+							<p class="text-[0.8125rem] text-[#737373]">Salva nelle spedizioni configurate</p>
 						</div>
 						<Icon name="mdi:chevron-right" class="text-[20px] text-[#C8CCD0] ml-auto" />
 					</button>
