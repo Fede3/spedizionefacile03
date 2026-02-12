@@ -23,7 +23,7 @@ return [
 
     'allowed_origins_patterns' => ['/https?:\/\/.*\.trycloudflare\.com/'],
 
-    'allowed_headers' => ['Content-Type', 'X-Requested-With', 'Authorization', 'Accept', 'Origin', 'X-XSRF-TOKEN'],
+    'allowed_headers' => ['*'],
 
     'exposed_headers' => [],
 

@@ -41,7 +41,14 @@ class SavedShipmentController extends Controller
         $outPackages = DB::transaction(function () use ($data) {
             $origin = PackageAddress::create($data['origin_address']);
             $destination = PackageAddress::create($data['destination_address']);
-            $services = Service::create($data['services']);
+
+            // Ensure service_type is never null/empty (DB column is NOT NULL)
+            $servicesData = $data['services'];
+            $servicesData['service_type'] = !empty($servicesData['service_type']) ? $servicesData['service_type'] : 'Nessuno';
+            $servicesData['date'] = $servicesData['date'] ?? '';
+            $servicesData['time'] = $servicesData['time'] ?? '';
+
+            $services = Service::create($servicesData);
 
             $authId = auth()->id();
             $packages = [];
