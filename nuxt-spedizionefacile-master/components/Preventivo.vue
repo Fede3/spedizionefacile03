@@ -1,5 +1,6 @@
 <script setup>
 const userStore = useUserStore();
+const route = useRoute();
 
 const formRef = ref(null);
 
@@ -344,7 +345,10 @@ watch(
 	<section>
 		<div class="my-container">
 			<div
-				class="bg-white w-full rounded-[24px] desktop-xl:rounded-[32px] relative z-1 mt-[-132px] p-[20px_16px] desktop:p-[30px_36px] tablet:p-[20px_40px] tablet:mt-[-220px] desktop:mt-[-185px] desktop-xl:mt-[-70px] max-w-[1100px] mx-auto">
+				class="bg-white w-full rounded-[24px] desktop-xl:rounded-[32px] relative z-1 p-[20px_16px] desktop:p-[30px_36px] tablet:p-[20px_40px] mx-auto"
+			:class="route.path === '/'
+				? 'mt-[-132px] tablet:mt-[-220px] desktop:mt-[-185px] desktop-xl:mt-[-70px] max-w-[1100px]'
+				: 'mt-[40px] max-w-[1200px]'">
 				<h2 class="border-b-[1px] border-[#E6E6E6] text-[1.25rem] desktop:text-[2rem] text-black font-bold text-center pb-[8px]">Preventivo Rapido</h2>
 
 				<form ref="formRef" @submit.prevent="">
@@ -423,13 +427,6 @@ watch(
 							</p>
 						</div>
 
-						<div class="w-full tablet:w-[30%] desktop:w-full desktop-xl:w-[200px]">
-							<label for="date" class="label-preventivo-rapido">Data spedizione</label>
-							<input type="date" v-model="userStore.shipmentDetails.date" id="date" :min="getTodayDate" class="input-preventivo-rapido uppercase" required />
-							<p v-if="messageError?.['shipment_details.date']" class="text-red-500 text-[1rem] mt-[10px]">
-								{{ messageError["shipment_details.date"][0] }}
-							</p>
-						</div>
 					</div>
 
 					<div v-if="userStore.packages.length > 0">

@@ -284,6 +284,16 @@ const destinationAddress = ref({
 	postal_code: session.value?.data?.shipment_details.destination_postal_code,
 });
 
+/* Pre-fill address data when session loads */
+watch(() => session.value?.data?.shipment_details, (details) => {
+	if (details) {
+		if (!originAddress.value.city) originAddress.value.city = details.origin_city;
+		if (!originAddress.value.postal_code) originAddress.value.postal_code = details.origin_postal_code;
+		if (!destinationAddress.value.city) destinationAddress.value.city = details.destination_city;
+		if (!destinationAddress.value.postal_code) destinationAddress.value.postal_code = details.destination_postal_code;
+	}
+}, { immediate: true });
+
 /* Validazione campi */
 const validationErrors = ref({});
 const showValidation = ref(false);
@@ -406,6 +416,7 @@ const formRef = ref(null);
 
 const { endpoint, refresh: refreshCart } = useCart();
 const { isAuthenticated } = useSanctumAuth();
+const sanctumClient = useSanctumClient();
 const router = useRouter();
 
 const isSubmitting = ref(false);
@@ -563,7 +574,7 @@ const confirmShipment = async () => {
 			packages,
 		};
 
-		await useSanctumFetch(endpoint.value, {
+		await sanctumClient(endpoint.value, {
 			method: "POST",
 			body: payload,
 		});
@@ -951,6 +962,32 @@ const confirmShipment = async () => {
 
 						</template>
 						</div>
+
+						<div class="mt-[28px] flex flex-wrap gap-[12px] items-center justify-between">
+							<template v-if="showAddressFields">
+								<button
+									type="button"
+									@click="goBackToServices"
+									class="inline-flex items-center justify-center h-[52px] px-[24px] rounded-[30px] bg-[#095866] text-white font-semibold hover:bg-[#0a7a8c] transition cursor-pointer">
+									Indietro
+								</button>
+								<button
+									type="submit"
+									:disabled="isSubmitting"
+									class="bg-[#E44203] text-white font-semibold text-[1rem] px-[28px] h-[52px] rounded-[30px] hover:opacity-90 transition disabled:opacity-60 disabled:cursor-not-allowed">
+									{{ isSubmitting ? 'Salvataggio in corso...' : 'Continua e vai al carrello' }}
+								</button>
+							</template>
+							<template v-else>
+								<NuxtLink :to="{ path: '/', hash: '#preventivo' }" class="inline-flex items-center justify-center h-[52px] px-[24px] rounded-[30px] bg-[#095866] text-white font-semibold hover:bg-[#0a7a8c] transition">
+									Indietro
+								</NuxtLink>
+							</template>
+						</div>
+						<div v-if="submitError" class="mt-[16px] p-[14px] bg-red-50 border border-red-200 rounded-[12px] flex items-center gap-[10px]">
+							<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" class="text-red-500 shrink-0"><path fill="currentColor" d="M13 13h-2V7h2m0 10h-2v-2h2M12 2a10 10 0 0 1 10 10a10 10 0 0 1-10 10A10 10 0 0 1 2 12A10 10 0 0 1 12 2"/></svg>
+							<p class="text-red-600 text-[0.9375rem] font-medium">{{ submitError }}</p>
+						</div>
 					</div>
 
 					<div class="border-l-[0.5px] border-[rgba(0,0,0,0.1)] min-h-[600px] mt-[30px] pl-[30px] pt-[50px] shrink-0">
@@ -1064,31 +1101,6 @@ const confirmShipment = async () => {
 				</div>
 
 
-				<div class="mt-[28px] w-full max-w-[850px] mx-auto flex flex-wrap gap-[12px] items-center justify-between">
-					<template v-if="showAddressFields">
-						<button
-							type="button"
-							@click="goBackToServices"
-							class="inline-flex items-center justify-center h-[52px] px-[24px] rounded-[30px] bg-[#095866] text-white font-semibold hover:bg-[#0a7a8c] transition cursor-pointer">
-							Indietro
-						</button>
-						<button
-							type="submit"
-							:disabled="isSubmitting"
-							class="bg-[#E44203] text-white font-semibold text-[1rem] px-[28px] h-[52px] rounded-[30px] hover:opacity-90 transition disabled:opacity-60 disabled:cursor-not-allowed">
-							{{ isSubmitting ? 'Salvataggio in corso...' : 'Continua e vai al carrello' }}
-						</button>
-					</template>
-					<template v-else>
-						<NuxtLink :to="{ path: '/', hash: '#preventivo' }" class="inline-flex items-center justify-center h-[52px] px-[24px] rounded-[30px] bg-[#095866] text-white font-semibold hover:bg-[#0a7a8c] transition">
-							Indietro
-						</NuxtLink>
-					</template>
-				</div>
-				<div v-if="submitError" class="mt-[16px] w-full max-w-[850px] mx-auto p-[14px] bg-red-50 border border-red-200 rounded-[12px] flex items-center gap-[10px]">
-					<Icon name="mdi:alert-circle" class="text-[20px] text-red-500 shrink-0" />
-					<p class="text-red-600 text-[0.9375rem] font-medium">{{ submitError }}</p>
-				</div>
 				</div>
 
 				<!-- RIEPILOGO -->
@@ -1383,7 +1395,7 @@ const confirmShipment = async () => {
 			<template #title>
 				<div class="flex items-center gap-[12px]">
 					<div class="w-[48px] h-[48px] rounded-full bg-emerald-100 flex items-center justify-center">
-						<Icon name="mdi:check-circle" class="text-[28px] text-emerald-600" />
+						<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" class="text-emerald-600"><path fill="currentColor" d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10s10-4.5 10-10S17.5 2 12 2m-2 15l-5-5l1.41-1.41L10 14.17l7.59-7.59L19 8z"/></svg>
 					</div>
 					<h3 class="text-[1.25rem] font-bold text-[#252B42]">Spedizione salvata!</h3>
 				</div>
@@ -1397,39 +1409,39 @@ const confirmShipment = async () => {
 						@click="goToCart"
 						class="w-full flex items-center gap-[14px] p-[16px] rounded-[12px] border border-[#E9EBEC] hover:border-[#095866] hover:bg-[#f0fafb] transition-all cursor-pointer group">
 						<div class="w-[44px] h-[44px] rounded-[10px] bg-[#095866]/10 flex items-center justify-center shrink-0">
-							<Icon name="mdi:cart-outline" class="text-[22px] text-[#095866]" />
+							<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" class="text-[#095866]"><path fill="currentColor" d="M17 18a2 2 0 0 1 2 2a2 2 0 0 1-2 2a2 2 0 0 1-2-2c0-1.11.89-2 2-2M1 2h3.27l.94 2H20a1 1 0 0 1 1 1c0 .17-.05.34-.12.5l-3.58 6.47c-.34.61-1 1.03-1.75 1.03H8.1l-.9 1.63l-.03.12a.25.25 0 0 0 .25.25H19v2H7a2 2 0 0 1-2-2c0-.35.09-.68.24-.96l1.36-2.45L3 4H1zm6 16a2 2 0 0 1 2 2a2 2 0 0 1-2 2a2 2 0 0 1-2-2c0-1.11.89-2 2-2"/></svg>
 						</div>
 						<div class="text-left">
-							<p class="text-[0.9375rem] font-semibold text-[#252B42] group-hover:text-[#095866]">Aggiungi al carrello</p>
+							<p class="text-[0.9375rem] font-semibold text-[#252B42] group-hover:text-[#095866]">Vai al carrello</p>
 							<p class="text-[0.8125rem] text-[#737373]">Procedi al pagamento della spedizione</p>
 						</div>
-						<Icon name="mdi:chevron-right" class="text-[20px] text-[#C8CCD0] ml-auto" />
+						<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" class="text-[#C8CCD0] ml-auto shrink-0"><path fill="currentColor" d="M8.59 16.59L13.17 12L8.59 7.41L10 6l6 6l-6 6z"/></svg>
 					</button>
 
 					<button
 						@click="goToSavedShipments"
 						class="w-full flex items-center gap-[14px] p-[16px] rounded-[12px] border border-[#E9EBEC] hover:border-[#095866] hover:bg-[#f0fafb] transition-all cursor-pointer group">
 						<div class="w-[44px] h-[44px] rounded-[10px] bg-blue-50 flex items-center justify-center shrink-0">
-							<Icon name="mdi:package-variant-closed" class="text-[22px] text-blue-600" />
+							<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" class="text-blue-600"><path fill="currentColor" d="M21 16.5c0 .38-.21.71-.53.88l-7.9 4.44c-.16.12-.36.18-.57.18c-.21 0-.41-.06-.57-.18l-7.9-4.44A.99.99 0 0 1 3 16.5v-9c0-.38.21-.71.53-.88l7.9-4.44c.16-.12.36-.18.57-.18c.21 0 .41.06.57.18l7.9 4.44c.32.17.53.5.53.88zM12 4.15L6.04 7.5L12 10.85l5.96-3.35zM5 15.91l6 3.37v-6.73L5 9.18zm14 0V9.18l-6 3.37v6.73z"/></svg>
 						</div>
 						<div class="text-left">
-							<p class="text-[0.9375rem] font-semibold text-[#252B42] group-hover:text-[#095866]">Aggiungi a spedizioni configurate</p>
+							<p class="text-[0.9375rem] font-semibold text-[#252B42] group-hover:text-[#095866]">Spedizioni configurate</p>
 							<p class="text-[0.8125rem] text-[#737373]">Salva nelle spedizioni configurate</p>
 						</div>
-						<Icon name="mdi:chevron-right" class="text-[20px] text-[#C8CCD0] ml-auto" />
+						<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" class="text-[#C8CCD0] ml-auto shrink-0"><path fill="currentColor" d="M8.59 16.59L13.17 12L8.59 7.41L10 6l6 6l-6 6z"/></svg>
 					</button>
 
 					<button
 						@click="addAnotherShipment"
 						class="w-full flex items-center gap-[14px] p-[16px] rounded-[12px] border border-[#E9EBEC] hover:border-[#095866] hover:bg-[#f0fafb] transition-all cursor-pointer group">
 						<div class="w-[44px] h-[44px] rounded-[10px] bg-orange-50 flex items-center justify-center shrink-0">
-							<Icon name="mdi:plus-circle-outline" class="text-[22px] text-orange-600" />
+							<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" class="text-orange-600"><path fill="currentColor" d="M17 13h-4v4h-2v-4H7v-2h4V7h2v4h4m-5-9A10 10 0 0 0 2 12a10 10 0 0 0 10 10a10 10 0 0 0 10-10A10 10 0 0 0 12 2"/></svg>
 						</div>
 						<div class="text-left">
 							<p class="text-[0.9375rem] font-semibold text-[#252B42] group-hover:text-[#095866]">Aggiungi un'altra spedizione</p>
 							<p class="text-[0.8125rem] text-[#737373]">Configura una nuova spedizione</p>
 						</div>
-						<Icon name="mdi:chevron-right" class="text-[20px] text-[#C8CCD0] ml-auto" />
+						<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" class="text-[#C8CCD0] ml-auto shrink-0"><path fill="currentColor" d="M8.59 16.59L13.17 12L8.59 7.41L10 6l6 6l-6 6z"/></svg>
 					</button>
 				</div>
 			</template>
