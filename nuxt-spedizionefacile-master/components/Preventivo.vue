@@ -361,7 +361,7 @@ watch(
 	<section>
 		<div class="my-container">
 			<div
-				class="bg-white w-full rounded-[24px] desktop-xl:rounded-[32px] relative z-30 p-[20px_16px] desktop:p-[30px_36px] tablet:p-[20px_40px] mx-auto"
+				class="bg-white w-full rounded-[24px] desktop-xl:rounded-[32px] relative z-50 p-[20px_16px] desktop:p-[30px_36px] tablet:p-[20px_40px] mx-auto"
 			:class="route.path === '/'
 				? 'mt-[-40px] tablet:mt-[-60px] desktop:mt-[-50px] desktop-xl:mt-[-30px] max-w-[1260px]'
 				: 'mt-[40px] max-w-[1200px]'">
