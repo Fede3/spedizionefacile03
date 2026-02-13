@@ -12,11 +12,27 @@ const showEditForm = ref(false);
 
 const userInfo = ref({
 	name: user.value?.name || "",
+	surname: user.value?.surname || "",
 	email: user.value?.email || "",
 	password: "",
 	password_confirmation: "",
 	telephone_number: user.value?.telephone_number || "",
+	// Business data
+	company_name: user.value?.company_name || "",
+	vat_number: user.value?.vat_number || "",
+	fiscal_code: user.value?.fiscal_code || "",
+	pec: user.value?.pec || "",
+	sdi_code: user.value?.sdi_code || "",
+	// Billing data
+	billing_name: user.value?.billing_name || "",
+	billing_address: user.value?.billing_address || "",
+	billing_city: user.value?.billing_city || "",
+	billing_postal_code: user.value?.billing_postal_code || "",
+	billing_province: user.value?.billing_province || "",
 });
+
+// "same as shipping" checkbox
+const billingSameAsShipping = ref(false);
 
 const sanctum = useSanctumClient();
 
@@ -148,6 +164,17 @@ const handleLogout = async () => {
 							</div>
 						</div>
 
+						<div v-if="user?.company_name" class="flex items-start gap-[12px]">
+							<div class="w-[36px] h-[36px] rounded-[8px] bg-[#F8F9FB] flex items-center justify-center shrink-0">
+								<Icon name="mdi:domain" class="text-[18px] text-[#737373]" />
+							</div>
+							<div>
+								<p class="text-[0.8125rem] text-[#737373]">Azienda</p>
+								<p class="text-[0.9375rem] font-medium text-[#252B42]">{{ user?.company_name }}</p>
+								<p v-if="user?.vat_number" class="text-[0.8125rem] text-[#737373]">P.IVA: {{ user?.vat_number }}</p>
+							</div>
+						</div>
+
 						<div class="flex items-start gap-[12px]">
 							<div class="w-[36px] h-[36px] rounded-[8px] bg-[#F8F9FB] flex items-center justify-center shrink-0">
 								<Icon name="mdi:lock-outline" class="text-[18px] text-[#737373]" />
@@ -172,58 +199,101 @@ const handleLogout = async () => {
 			<template v-if="showEditForm">
 				<h1 class="text-[1.5rem] desktop:text-[1.75rem] font-bold text-[#252B42] mb-[24px]">Modifica dati</h1>
 
-				<div class="bg-white rounded-[16px] p-[24px] desktop:p-[32px] shadow-sm border border-[#E9EBEC] max-w-[480px] mx-auto">
+				<div class="bg-white rounded-[16px] p-[24px] desktop:p-[32px] shadow-sm border border-[#E9EBEC] max-w-[600px] mx-auto">
 					<form @submit.prevent="updateInfo">
-						<div class="mb-[20px]">
-							<label for="name" class="block text-[0.8125rem] font-semibold text-[#404040] mb-[6px]">Nome</label>
-							<input
-								type="text"
-								v-model="userInfo.name"
-								id="name"
-								class="w-full px-[14px] py-[12px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[8px] text-[0.9375rem] text-[#252B42] placeholder:text-[#a0a0a0] focus:border-[#095866] focus:outline-none transition-colors"
-								placeholder="Il tuo nome"
-								required />
+						<!-- Personal data -->
+						<h3 class="text-[1rem] font-bold text-[#252B42] mb-[16px]">Dati personali</h3>
+						<div class="grid grid-cols-2 gap-[12px] mb-[16px]">
+							<div>
+								<label class="block text-[0.8125rem] font-semibold text-[#404040] mb-[4px]">Nome *</label>
+								<input type="text" v-model="userInfo.name" class="w-full px-[12px] py-[10px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[8px] text-[0.875rem] focus:border-[#095866] focus:outline-none" required />
+							</div>
+							<div>
+								<label class="block text-[0.8125rem] font-semibold text-[#404040] mb-[4px]">Cognome</label>
+								<input type="text" v-model="userInfo.surname" class="w-full px-[12px] py-[10px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[8px] text-[0.875rem] focus:border-[#095866] focus:outline-none" />
+							</div>
+						</div>
+						<div class="mb-[16px]">
+							<label class="block text-[0.8125rem] font-semibold text-[#404040] mb-[4px]">Email *</label>
+							<input type="email" v-model="userInfo.email" class="w-full px-[12px] py-[10px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[8px] text-[0.875rem] focus:border-[#095866] focus:outline-none" required />
+						</div>
+						<div class="mb-[16px]">
+							<label class="block text-[0.8125rem] font-semibold text-[#404040] mb-[4px]">Telefono</label>
+							<input type="text" v-model="userInfo.telephone_number" class="w-full px-[12px] py-[10px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[8px] text-[0.875rem] focus:border-[#095866] focus:outline-none" />
 						</div>
 
-						<div class="mb-[20px]">
-							<label for="email" class="block text-[0.8125rem] font-semibold text-[#404040] mb-[6px]">Email</label>
-							<input
-								type="email"
-								v-model="userInfo.email"
-								id="email"
-								class="w-full px-[14px] py-[12px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[8px] text-[0.9375rem] text-[#252B42] placeholder:text-[#a0a0a0] focus:border-[#095866] focus:outline-none transition-colors"
-								placeholder="La tua email"
-								required />
+						<!-- Business data -->
+						<h3 class="text-[1rem] font-bold text-[#252B42] mb-[12px] mt-[24px] pt-[20px] border-t border-[#F0F0F0]">Dati aziendali (opzionale)</h3>
+						<p class="text-[0.8125rem] text-[#737373] mb-[14px]">Compila solo se sei un commerciante o un'azienda.</p>
+						<div class="grid grid-cols-2 gap-[12px] mb-[12px]">
+							<div>
+								<label class="block text-[0.8125rem] font-semibold text-[#404040] mb-[4px]">Ragione Sociale</label>
+								<input type="text" v-model="userInfo.company_name" placeholder="Nome azienda" class="w-full px-[12px] py-[10px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[8px] text-[0.875rem] focus:border-[#095866] focus:outline-none" />
+							</div>
+							<div>
+								<label class="block text-[0.8125rem] font-semibold text-[#404040] mb-[4px]">Partita IVA</label>
+								<input type="text" v-model="userInfo.vat_number" placeholder="IT12345678901" class="w-full px-[12px] py-[10px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[8px] text-[0.875rem] focus:border-[#095866] focus:outline-none" />
+							</div>
+						</div>
+						<div class="grid grid-cols-2 gap-[12px] mb-[12px]">
+							<div>
+								<label class="block text-[0.8125rem] font-semibold text-[#404040] mb-[4px]">Codice Fiscale</label>
+								<input type="text" v-model="userInfo.fiscal_code" placeholder="RSSMRA80A01H501U" class="w-full px-[12px] py-[10px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[8px] text-[0.875rem] focus:border-[#095866] focus:outline-none" />
+							</div>
+							<div>
+								<label class="block text-[0.8125rem] font-semibold text-[#404040] mb-[4px]">PEC</label>
+								<input type="email" v-model="userInfo.pec" placeholder="azienda@pec.it" class="w-full px-[12px] py-[10px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[8px] text-[0.875rem] focus:border-[#095866] focus:outline-none" />
+							</div>
+						</div>
+						<div class="mb-[12px]">
+							<label class="block text-[0.8125rem] font-semibold text-[#404040] mb-[4px]">Codice SDI</label>
+							<input type="text" v-model="userInfo.sdi_code" placeholder="0000000" maxlength="7" class="w-full px-[12px] py-[10px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[8px] text-[0.875rem] focus:border-[#095866] focus:outline-none" />
 						</div>
 
-						<div class="mb-[20px]">
-							<label for="telephone_number" class="block text-[0.8125rem] font-semibold text-[#404040] mb-[6px]">Numero di telefono</label>
-							<input
-								type="text"
-								v-model="userInfo.telephone_number"
-								id="telephone_number"
-								class="w-full px-[14px] py-[12px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[8px] text-[0.9375rem] text-[#252B42] placeholder:text-[#a0a0a0] focus:border-[#095866] focus:outline-none transition-colors"
-								placeholder="Inserisci il numero di telefono" />
-						</div>
+						<!-- Billing data -->
+						<h3 class="text-[1rem] font-bold text-[#252B42] mb-[12px] mt-[24px] pt-[20px] border-t border-[#F0F0F0]">Dati di fatturazione</h3>
 
-						<div class="mb-[20px]">
-							<label for="password" class="block text-[0.8125rem] font-semibold text-[#404040] mb-[6px]">Nuova password</label>
-							<input
-								type="password"
-								v-model="userInfo.password"
-								id="password"
-								class="w-full px-[14px] py-[12px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[8px] text-[0.9375rem] text-[#252B42] placeholder:text-[#a0a0a0] focus:border-[#095866] focus:outline-none transition-colors"
-								placeholder="Lascia vuoto per mantenere la stessa" />
-						</div>
+						<label class="flex items-center gap-[8px] cursor-pointer mb-[14px]">
+							<input type="checkbox" v-model="billingSameAsShipping" class="w-[18px] h-[18px] accent-[#095866] cursor-pointer" />
+							<span class="text-[0.8125rem] text-[#737373]">Uguale ai dati di spedizione</span>
+						</label>
 
-						<div class="mb-[24px]">
-							<label for="password_confirmation" class="block text-[0.8125rem] font-semibold text-[#404040] mb-[6px]">Conferma password</label>
-							<input
-								type="password"
-								v-model="userInfo.password_confirmation"
-								id="password_confirmation"
-								class="w-full px-[14px] py-[12px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[8px] text-[0.9375rem] text-[#252B42] placeholder:text-[#a0a0a0] focus:border-[#095866] focus:outline-none transition-colors"
-								placeholder="Conferma la nuova password" />
+						<template v-if="!billingSameAsShipping">
+							<div class="mb-[12px]">
+								<label class="block text-[0.8125rem] font-semibold text-[#404040] mb-[4px]">Intestatario fatturazione</label>
+								<input type="text" v-model="userInfo.billing_name" placeholder="Nome o Ragione Sociale" class="w-full px-[12px] py-[10px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[8px] text-[0.875rem] focus:border-[#095866] focus:outline-none" />
+							</div>
+							<div class="mb-[12px]">
+								<label class="block text-[0.8125rem] font-semibold text-[#404040] mb-[4px]">Indirizzo fatturazione</label>
+								<input type="text" v-model="userInfo.billing_address" placeholder="Via Roma 10" class="w-full px-[12px] py-[10px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[8px] text-[0.875rem] focus:border-[#095866] focus:outline-none" />
+							</div>
+							<div class="grid grid-cols-3 gap-[12px] mb-[12px]">
+								<div>
+									<label class="block text-[0.8125rem] font-semibold text-[#404040] mb-[4px]">Città</label>
+									<input type="text" v-model="userInfo.billing_city" placeholder="Roma" class="w-full px-[12px] py-[10px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[8px] text-[0.875rem] focus:border-[#095866] focus:outline-none" />
+								</div>
+								<div>
+									<label class="block text-[0.8125rem] font-semibold text-[#404040] mb-[4px]">CAP</label>
+									<input type="text" v-model="userInfo.billing_postal_code" placeholder="00100" class="w-full px-[12px] py-[10px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[8px] text-[0.875rem] focus:border-[#095866] focus:outline-none" />
+								</div>
+								<div>
+									<label class="block text-[0.8125rem] font-semibold text-[#404040] mb-[4px]">Provincia</label>
+									<input type="text" v-model="userInfo.billing_province" placeholder="RM" class="w-full px-[12px] py-[10px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[8px] text-[0.875rem] focus:border-[#095866] focus:outline-none" />
+								</div>
+							</div>
+						</template>
+
+						<!-- Password -->
+						<h3 class="text-[1rem] font-bold text-[#252B42] mb-[12px] mt-[24px] pt-[20px] border-t border-[#F0F0F0]">Cambia password</h3>
+						<div class="grid grid-cols-2 gap-[12px] mb-[24px]">
+							<div>
+								<label class="block text-[0.8125rem] font-semibold text-[#404040] mb-[4px]">Nuova password</label>
+								<input type="password" v-model="userInfo.password" placeholder="Lascia vuoto per mantenere" class="w-full px-[12px] py-[10px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[8px] text-[0.875rem] focus:border-[#095866] focus:outline-none" />
+							</div>
+							<div>
+								<label class="block text-[0.8125rem] font-semibold text-[#404040] mb-[4px]">Conferma password</label>
+								<input type="password" v-model="userInfo.password_confirmation" placeholder="Conferma" class="w-full px-[12px] py-[10px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[8px] text-[0.875rem] focus:border-[#095866] focus:outline-none" />
+							</div>
 						</div>
 
 						<p v-if="messageLoading" class="text-center text-[0.875rem] text-[#095866] font-medium mb-[16px]">
@@ -231,15 +301,10 @@ const handleLogout = async () => {
 						</p>
 
 						<div class="flex gap-[12px]">
-							<button
-								type="button"
-								@click.prevent="showEditForm = false"
-								class="flex-1 py-[14px] rounded-[10px] bg-[#F0F0F0] hover:bg-[#E0E0E0] text-[#404040] font-semibold text-[0.9375rem] transition-colors cursor-pointer">
+							<button type="button" @click.prevent="showEditForm = false" class="flex-1 py-[14px] rounded-[10px] bg-[#F0F0F0] hover:bg-[#E0E0E0] text-[#404040] font-semibold text-[0.9375rem] transition-colors cursor-pointer">
 								Annulla
 							</button>
-							<button
-								type="submit"
-								class="flex-1 py-[14px] rounded-[10px] bg-[#095866] hover:bg-[#0a7a8c] text-white font-semibold text-[0.9375rem] transition-colors cursor-pointer">
+							<button type="submit" class="flex-1 py-[14px] rounded-[10px] bg-[#095866] hover:bg-[#0a7a8c] text-white font-semibold text-[0.9375rem] transition-colors cursor-pointer">
 								Salva modifiche
 							</button>
 						</div>

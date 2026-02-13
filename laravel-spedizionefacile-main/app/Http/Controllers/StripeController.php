@@ -27,6 +27,42 @@ class StripeController extends Controller
         return Setting::get('stripe_secret', config('services.stripe.secret'));
     }
 
+    /**
+     * Mark an order as completed (for wallet/bonifico payments that bypass Stripe).
+     */
+    public function markOrderCompleted(Request $request) {
+        $request->validate([
+            'order_id' => 'required|integer',
+            'payment_type' => 'required|string|in:wallet,bonifico',
+            'ext_id' => 'nullable|string',
+        ]);
+
+        $order = Order::findOrFail($request->order_id);
+
+        if ($order->user_id !== auth()->id()) {
+            return response()->json(['error' => 'Non autorizzato.'], 403);
+        }
+
+        $order->status = $request->payment_type === 'bonifico' ? Order::PENDING : Order::COMPLETED;
+        $order->save();
+
+        Transaction::create([
+            'order_id' => $order->id,
+            'ext_id' => $request->ext_id ?? ($request->payment_type . '_' . now()->timestamp),
+            'type' => $request->payment_type,
+            'status' => $request->payment_type === 'bonifico' ? 'pending' : 'succeeded',
+            'total' => $order->subtotal->amount(),
+        ]);
+
+        if ($request->payment_type !== 'bonifico') {
+            DB::table('cart_user')
+                ->where('user_id', auth()->id())
+                ->delete();
+        }
+
+        return response()->json(['success' => true]);
+    }
+
     public function createOrder(Request $request) {
         $request->validate([
             'subtotal' => 'required|numeric',

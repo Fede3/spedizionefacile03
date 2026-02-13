@@ -34,17 +34,11 @@ class ProRequestController extends Controller
             ], 422);
         }
 
-        $validated = $request->validate([
-            'company_name' => 'required|string|max:255',
-            'vat_number' => 'required|string|max:50',
-            'message' => 'nullable|string|max:1000',
-        ]);
-
         $proRequest = ProRequest::create([
             'user_id' => $user->id,
-            'company_name' => $validated['company_name'],
-            'vat_number' => $validated['vat_number'],
-            'message' => $validated['message'] ?? null,
+            'company_name' => $request->input('company_name', ''),
+            'vat_number' => $request->input('vat_number', ''),
+            'message' => $request->input('message'),
             'status' => 'pending',
         ]);
 

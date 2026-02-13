@@ -16,20 +16,31 @@ const existingOrderId = computed(() => route.query.order_id || null);
 
 // Force fresh cart data (unless paying for existing order)
 if (!existingOrderId.value) {
+	clearNuxtData("cart");
 	await refreshCart();
 
 	// Check cart not empty
-	const checkCart = () => {
-		if (!cart.value || cart.value.data?.length === 0) {
-			return navigateTo("/carrello");
-		}
-	};
-	await checkCart();
+	if (!cart.value || cart.value.data?.length === 0) {
+		navigateTo("/carrello");
+	}
 }
 
-// Stripe setup
-const stripePromise = loadStripe(config.public.stripeKey);
-const stripe = await stripePromise;
+// Stripe setup (client-only to avoid SSR issues)
+let stripe = null;
+const stripeReady = ref(false);
+
+onMounted(async () => {
+	try {
+		const stripePromise = loadStripe(config.public.stripeKey);
+		stripe = await stripePromise;
+		stripeReady.value = true;
+		if (paymentMethod.value === 'carta' && !defaultPayment.value?.card) {
+			await mountCardElement();
+		}
+	} catch (e) {
+		console.error('Stripe load error:', e);
+	}
+});
 
 // Saved card
 const { data: defaultPayment } = useSanctumFetch("/api/stripe/default-payment-method");
@@ -70,16 +81,87 @@ const fatturaData = ref({
 	codice_sdi: '',
 });
 
-// Wallet balance
-const { data: walletData } = useSanctumFetch("/api/wallet/balance");
-const walletBalance = computed(() => {
-	return Number(walletData.value?.balance ?? 0);
-});
+// Wallet balance (lazy to avoid SSR issues)
+const walletBalance = ref(0);
+const walletLoaded = ref(false);
+
+const loadWalletBalance = async () => {
+	if (walletLoaded.value) return;
+	try {
+		const result = await sanctum("/api/wallet/balance");
+		walletBalance.value = Number(result?.balance ?? 0);
+		walletLoaded.value = true;
+	} catch (e) {
+		walletBalance.value = 0;
+		walletLoaded.value = true;
+	}
+};
+
 const walletFormatted = computed(() => walletBalance.value.toFixed(2).replace('.', ',') + '€');
-const walletSufficient = computed(() => walletBalance.value >= getNumberTotal.value);
+const walletSufficient = computed(() => walletBalance.value >= finalTotal.value);
+
+// Coupon / promo code
+const couponCode = ref('');
+const couponLoading = ref(false);
+const couponError = ref(null);
+const couponApplied = ref(null);
+
+const validateCoupon = async () => {
+	if (!couponCode.value || couponCode.value.trim().length < 2) return;
+	couponLoading.value = true;
+	couponError.value = null;
+	couponApplied.value = null;
+	try {
+		const result = await sanctum("/api/referral/validate", {
+			method: "POST",
+			body: { code: couponCode.value.trim().toUpperCase() },
+		});
+		if (result?.valid) {
+			const discountAmount = Math.round(getNumberTotal.value * (result.discount_percent / 100) * 100) / 100;
+			couponApplied.value = {
+				discount_percent: result.discount_percent,
+				discount_amount: discountAmount,
+				pro_name: result.pro_name,
+				code: couponCode.value.trim().toUpperCase(),
+			};
+		}
+	} catch (e) {
+		const data = e?.response?._data || e?.data;
+		couponError.value = data?.message || "Codice non valido.";
+	} finally {
+		couponLoading.value = false;
+	}
+};
+
+const removeCoupon = () => {
+	couponApplied.value = null;
+	couponCode.value = '';
+	couponError.value = null;
+};
+
+const finalTotal = computed(() => {
+	if (couponApplied.value) {
+		return Math.max(0, getNumberTotal.value - couponApplied.value.discount_amount);
+	}
+	return getNumberTotal.value;
+});
+
+const finalTotalFormatted = computed(() => {
+	return finalTotal.value.toFixed(2).replace('.', ',') + '€';
+});
 
 // Payment method selection
 const paymentMethod = ref('carta');
+
+// Load wallet balance when wallet tab is selected
+watch(paymentMethod, async (val) => {
+	if (val === 'wallet') {
+		await loadWalletBalance();
+	}
+	if (val === 'carta' && !defaultPayment.value?.card && stripeReady.value) {
+		await mountCardElement();
+	}
+});
 
 // Stripe card element
 const cardElement = ref(null);
@@ -115,16 +197,10 @@ const mountCardElement = async () => {
 	}
 };
 
-watch(paymentMethod, async (val) => {
-	if (val === 'carta' && !defaultPayment.value?.card) {
-		await mountCardElement();
-	}
-});
-
 const useNewCard = ref(false);
 
 watch(useNewCard, async (val) => {
-	if (val) {
+	if (val && stripeReady.value) {
 		await nextTick();
 		await mountCardElement();
 	}
@@ -169,9 +245,33 @@ const processPayment = async () => {
 			orderId = orderResponse.order_id;
 		}
 
+		// Apply coupon/referral code if present
+		if (couponApplied.value) {
+			try {
+				await sanctum("/api/referral/apply", {
+					method: "POST",
+					body: {
+						code: couponApplied.value.code,
+						order_id: orderId,
+						order_amount: getNumberTotal.value,
+					},
+				});
+			} catch (e) {
+				console.warn('Coupon apply warning:', e);
+			}
+		}
+
 		if (paymentMethod.value === 'bonifico') {
+			await sanctum("/api/stripe/mark-order-completed", {
+				method: "POST",
+				body: {
+					order_id: orderId,
+					payment_type: 'bonifico',
+				},
+			});
 			paymentSuccess.value = true;
 			successOrderId.value = orderId;
+			clearNuxtData("cart");
 			await refreshCart();
 			return;
 		}
@@ -180,19 +280,24 @@ const processPayment = async () => {
 			const walletResult = await sanctum("/api/wallet/pay", {
 				method: "POST",
 				body: {
-					amount: getNumberTotal.value,
+					amount: finalTotal.value,
 					reference: `order-${orderId}`,
 					description: `Pagamento ordine #${orderId}`,
 				},
 			});
 
-			if (walletResult?.success || walletResult?.movement) {
-				await sanctum("/api/stripe/order-paid", {
+			if (walletResult?.success) {
+				await sanctum("/api/stripe/mark-order-completed", {
 					method: "POST",
-					body: { order_id: orderId, ext_id: `wallet-${walletResult?.movement?.id || Date.now()}` },
+					body: {
+						order_id: orderId,
+						payment_type: 'wallet',
+						ext_id: `wallet-${walletResult?.data?.id || Date.now()}`,
+					},
 				});
 				paymentSuccess.value = true;
 				successOrderId.value = orderId;
+				clearNuxtData("cart");
 				await refreshCart();
 			} else {
 				paymentError.value = walletResult?.message || "Pagamento con wallet non riuscito.";
@@ -218,6 +323,7 @@ const processPayment = async () => {
 				});
 				paymentSuccess.value = true;
 				successOrderId.value = orderId;
+				clearNuxtData("cart");
 				await refreshCart();
 			} else {
 				paymentError.value = "Pagamento non riuscito. Stato: " + payResult.status;
@@ -253,6 +359,7 @@ const processPayment = async () => {
 				});
 				paymentSuccess.value = true;
 				successOrderId.value = orderId;
+				clearNuxtData("cart");
 				await refreshCart();
 			} else {
 				paymentError.value = "Stato pagamento: " + paymentIntent.status;
@@ -262,17 +369,11 @@ const processPayment = async () => {
 
 	} catch (err) {
 		console.error('Payment error:', err);
-		paymentError.value = err?.response?._data?.error || err?.data?.error || err?.message || "Errore durante il pagamento. Riprova.";
+		paymentError.value = err?.response?._data?.error || err?.response?._data?.message || err?.data?.error || err?.message || "Errore durante il pagamento. Riprova.";
 	} finally {
 		isProcessing.value = false;
 	}
 };
-
-onMounted(async () => {
-	if (paymentMethod.value === 'carta' && !defaultPayment.value?.card) {
-		await mountCardElement();
-	}
-});
 </script>
 
 <template>
@@ -318,13 +419,11 @@ onMounted(async () => {
 						</NuxtLink>
 					</div>
 
-					<!-- Table header -->
 					<div class="flex items-center justify-between py-[8px] border-b border-[#C0C0C0] text-[0.875rem] font-bold text-[#252B42]">
 						<span>Prodotto</span>
 						<span>Importo totale</span>
 					</div>
 
-					<!-- Spedizioni -->
 					<div class="flex items-center justify-between py-[10px] border-b border-[#E0E0E0]">
 						<span class="text-[0.9375rem] text-[#252B42] flex items-center gap-[6px]">
 							<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#095866" stroke-width="2"><rect x="1" y="3" width="22" height="18" rx="2"/><path d="M1 9h22"/></svg>
@@ -333,21 +432,53 @@ onMounted(async () => {
 						<span class="text-[0.9375rem] font-semibold text-[#252B42]">{{ getTotal }}</span>
 					</div>
 
-					<!-- Servizi -->
-					<div class="flex items-center justify-between py-[10px] border-b border-[#E0E0E0]">
-						<span class="text-[0.9375rem] text-[#252B42]">Servizi</span>
-						<span class="text-[0.9375rem] font-semibold text-[#252B42]">{{ getTotal }}</span>
+					<div v-if="couponApplied" class="flex items-center justify-between py-[10px] border-b border-[#E0E0E0]">
+						<span class="text-[0.9375rem] text-emerald-700 flex items-center gap-[6px]">
+							<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
+							Sconto {{ couponApplied.discount_percent }}% ({{ couponApplied.code }})
+						</span>
+						<span class="text-[0.9375rem] font-semibold text-emerald-700">-{{ couponApplied.discount_amount.toFixed(2).replace('.', ',') }}€</span>
 					</div>
 
-					<!-- Totale -->
 					<div class="flex items-center justify-between py-[10px]">
 						<span class="text-[1rem] font-bold text-[#252B42]">Totale</span>
-						<span class="text-[1rem] font-bold text-[#252B42]">{{ getTotal }}</span>
+						<span class="text-[1rem] font-bold text-[#252B42]">{{ finalTotalFormatted }}</span>
 					</div>
 
 					<div v-if="contentDescription" class="mt-[12px] text-[0.875rem] text-[#252B42]">
 						Contenuto: <span class="font-bold">{{ contentDescription }}</span>
 					</div>
+				</div>
+
+				<!-- Codice promozionale -->
+				<div class="bg-[#E6E6E6] rounded-[20px] p-[30px_36px]">
+					<h2 class="text-[1.25rem] font-bold text-[#252B42] mb-[16px]">Codice promozionale</h2>
+
+					<div v-if="couponApplied" class="flex items-center gap-[12px] bg-emerald-50 border border-emerald-200 rounded-[10px] p-[14px]">
+						<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+						<div class="flex-1">
+							<p class="text-[0.9375rem] font-semibold text-emerald-800">Codice {{ couponApplied.code }} applicato!</p>
+							<p class="text-[0.8125rem] text-emerald-700">Sconto del {{ couponApplied.discount_percent }}% da {{ couponApplied.pro_name }}</p>
+						</div>
+						<button type="button" @click="removeCoupon" class="text-[0.8125rem] text-red-500 hover:underline font-medium cursor-pointer">Rimuovi</button>
+					</div>
+					<div v-else class="flex gap-[12px]">
+						<input
+							v-model="couponCode"
+							type="text"
+							placeholder="Inserisci codice promozionale..."
+							maxlength="20"
+							class="flex-1 bg-white p-[12px_16px] border border-[#D0D0D0] rounded-[10px] text-[0.9375rem] placeholder:text-[#A0A5AB] uppercase tracking-wider focus:border-[#095866] focus:outline-none"
+							@keyup.enter="validateCoupon" />
+						<button
+							type="button"
+							@click="validateCoupon"
+							:disabled="couponLoading || !couponCode.trim()"
+							class="px-[24px] py-[12px] bg-[#095866] text-white rounded-[10px] font-semibold text-[0.875rem] hover:bg-[#0a7a8c] transition disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer">
+							{{ couponLoading ? 'Verifica...' : 'Applica' }}
+						</button>
+					</div>
+					<p v-if="couponError" class="text-red-500 text-[0.8125rem] mt-[8px]">{{ couponError }}</p>
 				</div>
 
 				<!-- Dettagli fatturazione -->
@@ -357,9 +488,8 @@ onMounted(async () => {
 					<div class="flex items-center justify-between mb-[8px]">
 						<div>
 							<p class="text-[0.9375rem] text-[#252B42]">Importo servizi fatturati:</p>
-							<p class="text-[0.9375rem] font-semibold text-[#252B42]">{{ getTotal }}</p>
+							<p class="text-[0.9375rem] font-semibold text-[#252B42]">{{ finalTotalFormatted }}</p>
 						</div>
-						<span class="text-[0.9375rem] font-semibold text-[#252B42]">{{ getTotal }}</span>
 					</div>
 
 					<div class="flex gap-[12px] mt-[20px]">
@@ -435,7 +565,7 @@ onMounted(async () => {
 							class="flex items-center gap-[8px] px-[20px] py-[12px] rounded-[8px] text-[0.875rem] font-medium cursor-pointer transition-colors border">
 							<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#095866" stroke-width="2"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg>
 							<span class="text-[#252B42]">Wallet</span>
-							<span class="text-[0.75rem] text-[#095866] font-semibold">({{ walletFormatted }})</span>
+							<span v-if="walletLoaded" class="text-[0.75rem] text-[#095866] font-semibold">({{ walletFormatted }})</span>
 						</button>
 					</div>
 
@@ -473,8 +603,8 @@ onMounted(async () => {
 					<div v-if="paymentMethod === 'wallet'" class="bg-white rounded-[10px] p-[16px] text-[0.8125rem] text-[#737373] leading-[1.6]">
 						<p class="font-semibold text-[#252B42] mb-[6px]">Pagamento tramite Wallet</p>
 						<p>Saldo disponibile: <span class="font-bold text-[#095866]">{{ walletFormatted }}</span></p>
-						<p v-if="!walletSufficient" class="text-red-500 mt-[8px] font-medium">Saldo insufficiente. Ricarica il tuo wallet per procedere.</p>
-						<p v-else class="text-emerald-600 mt-[8px]">Saldo sufficiente per completare il pagamento.</p>
+						<p v-if="walletLoaded && !walletSufficient" class="text-red-500 mt-[8px] font-medium">Saldo insufficiente. Ricarica il tuo wallet per procedere.</p>
+						<p v-else-if="walletLoaded" class="text-emerald-600 mt-[8px]">Saldo sufficiente per completare il pagamento.</p>
 					</div>
 
 					<div class="mt-[20px]">

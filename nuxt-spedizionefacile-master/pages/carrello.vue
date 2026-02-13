@@ -144,6 +144,7 @@ const displayTotal = computed(() => {
 <template>
 	<section class="min-h-[600px] py-[30px] desktop:py-[50px] bg-[#F0F0F0]">
 		<div class="my-container max-w-[1200px]">
+			<Steps :current-step="3" />
 			<!-- Loading -->
 			<div v-if="status === 'pending'" class="max-w-[1100px] mx-auto">
 				<div v-for="n in 3" :key="n" class="bg-white rounded-[16px] border border-[#E9EBEC] p-[24px] mb-[12px] animate-pulse">

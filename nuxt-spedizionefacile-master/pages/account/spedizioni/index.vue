@@ -120,24 +120,27 @@ const getPendingReason = (order) => {
 const sanctum = useSanctumClient();
 const savingToConfigured = ref({});
 const savedToConfigured = ref({});
+const saveError = ref({});
 
 const saveToConfigured = async (order) => {
 	if (!order.packages?.length) return;
 	savingToConfigured.value[order.id] = true;
+	saveError.value[order.id] = null;
 	try {
 		const pkg = order.packages[0];
+		const svc = pkg.service || pkg.services || {};
 		await sanctum("/api/saved-shipments", {
 			method: "POST",
 			body: {
 				origin_address: {
 					type: "Partenza",
 					name: pkg.origin_address?.name || "N/D",
-					additional_information: "",
+					additional_information: pkg.origin_address?.additional_information || "",
 					address: pkg.origin_address?.address || "N/D",
 					number_type: "Numero Civico",
 					address_number: pkg.origin_address?.address_number || "SNC",
-					intercom_code: "",
-					country: "Italia",
+					intercom_code: pkg.origin_address?.intercom_code || "",
+					country: pkg.origin_address?.country || "Italia",
 					city: pkg.origin_address?.city || "N/D",
 					postal_code: pkg.origin_address?.postal_code || "00000",
 					province: pkg.origin_address?.province || "N/D",
@@ -147,12 +150,12 @@ const saveToConfigured = async (order) => {
 				destination_address: {
 					type: "Destinazione",
 					name: pkg.destination_address?.name || "N/D",
-					additional_information: "",
+					additional_information: pkg.destination_address?.additional_information || "",
 					address: pkg.destination_address?.address || "N/D",
 					number_type: "Numero Civico",
 					address_number: pkg.destination_address?.address_number || "SNC",
-					intercom_code: "",
-					country: "Italia",
+					intercom_code: pkg.destination_address?.intercom_code || "",
+					country: pkg.destination_address?.country || "Italia",
 					city: pkg.destination_address?.city || "N/D",
 					postal_code: pkg.destination_address?.postal_code || "00000",
 					province: pkg.destination_address?.province || "N/D",
@@ -160,9 +163,9 @@ const saveToConfigured = async (order) => {
 					email: pkg.destination_address?.email || "",
 				},
 				services: {
-					service_type: pkg.services?.service_type || "Nessuno",
-					date: pkg.services?.date || "",
-					time: pkg.services?.time || "",
+					service_type: svc.service_type || "Nessuno",
+					date: svc.date || "",
+					time: svc.time || "",
 				},
 				packages: order.packages.map(p => ({
 					package_type: p.package_type || "Pacco",
@@ -180,6 +183,8 @@ const saveToConfigured = async (order) => {
 		savedToConfigured.value[order.id] = true;
 	} catch (e) {
 		console.error("Errore salvataggio:", e);
+		const errorData = e?.response?._data || e?.data;
+		saveError.value[order.id] = errorData?.message || "Errore durante il salvataggio. Riprova.";
 	} finally {
 		savingToConfigured.value[order.id] = false;
 	}
@@ -343,6 +348,9 @@ const saveToConfigured = async (order) => {
 						<NuxtLink :to="`/account/spedizioni/${order.id}`" title="Vedi dettagli" class="w-[32px] h-[32px] rounded-[8px] bg-[#095866]/10 flex items-center justify-center hover:bg-[#095866]/20 transition">
 							<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#095866" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
 						</NuxtLink>
+					</div>
+					<div v-if="saveError[order.id]" class="mt-[8px] px-[20px]">
+						<p class="text-red-500 text-[0.8125rem] bg-red-50 p-[8px] rounded-[6px]">{{ saveError[order.id] }}</p>
 					</div>
 				</div>
 			</div>

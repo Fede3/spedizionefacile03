@@ -14,6 +14,7 @@ const activeStep = computed(() => {
 	if (props.currentStep >= 0) return props.currentStep;
 	if (route.name === 'index' || route.path === '/') return 0;
 	if (route.path.includes('la-tua-spedizione')) return 1;
+	if (route.path.includes('riepilogo')) return 3;
 	if (route.path.includes('carrello')) return 3;
 	if (route.path.includes('checkout')) return 4;
 	return 0;
@@ -26,8 +27,8 @@ const canNavigate = (index) => {
 const stepRoutes = {
 	0: '/#preventivo',
 	1: '/la-tua-spedizione/2',
-	2: '/la-tua-spedizione/2',
-	3: '/carrello',
+	2: '/la-tua-spedizione/2?step=ritiro',
+	3: '/riepilogo',
 	4: '/checkout',
 };
 

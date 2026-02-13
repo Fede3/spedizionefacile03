@@ -16,6 +16,11 @@ class CheckCart
      */
     public function handle(Request $request, Closure $next): Response
     {
+        // Allow requests that reference an existing order (e.g. "Paga ora" for pending orders)
+        if ($request->has('order_id') && $request->order_id) {
+            return $next($request);
+        }
+
         $cart = DB::table('cart_user')
             ->where('user_id', auth()->id())
             ->get();

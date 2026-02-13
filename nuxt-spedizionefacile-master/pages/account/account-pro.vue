@@ -158,32 +158,20 @@ const formatDate = (dateStr) => {
 					<p class="text-[0.9375rem] font-semibold text-red-800">La tua richiesta precedente è stata rifiutata. Puoi inviarne una nuova.</p>
 				</div>
 
-				<!-- Pro request form -->
+				<!-- Pro request button -->
 				<div v-if="!proRequestStatus?.has_request || proRequestStatus?.data?.status === 'rejected'">
 					<div v-if="proRequestSuccess" class="bg-emerald-50 border border-emerald-200 rounded-[12px] p-[20px] text-center">
 						<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2.5" class="mx-auto mb-[8px]"><polyline points="20 6 9 17 4 12"/></svg>
 						<p class="text-[1rem] font-semibold text-emerald-800">Richiesta inviata con successo!</p>
 						<p class="text-[0.8125rem] text-emerald-700 mt-[4px]">Riceverai una risposta dall'amministratore al più presto.</p>
 					</div>
-					<form v-else @submit.prevent="submitProRequest" class="max-w-[500px] mx-auto space-y-[16px]">
-						<h3 class="text-[1.125rem] font-bold text-[#252B42] text-center">Richiedi accesso Pro</h3>
-						<div>
-							<label for="pro_company" class="block text-[0.875rem] font-medium text-[#252B42] mb-[6px]">Ragione Sociale *</label>
-							<input type="text" id="pro_company" v-model="proRequestForm.company_name" placeholder="Nome azienda" class="w-full bg-[#F8F9FB] p-[12px] border border-[#E9EBEC] rounded-[8px] placeholder:text-[#A0A5AB] text-[0.9375rem] focus:border-[#095866] focus:outline-none" required />
-						</div>
-						<div>
-							<label for="pro_vat" class="block text-[0.875rem] font-medium text-[#252B42] mb-[6px]">Partita IVA *</label>
-							<input type="text" id="pro_vat" v-model="proRequestForm.vat_number" placeholder="IT12345678901" class="w-full bg-[#F8F9FB] p-[12px] border border-[#E9EBEC] rounded-[8px] placeholder:text-[#A0A5AB] text-[0.9375rem] focus:border-[#095866] focus:outline-none" required />
-						</div>
-						<div>
-							<label for="pro_message" class="block text-[0.875rem] font-medium text-[#252B42] mb-[6px]">Messaggio (opzionale)</label>
-							<textarea id="pro_message" v-model="proRequestForm.message" placeholder="Perché vuoi diventare Partner Pro?" rows="3" class="w-full bg-[#F8F9FB] p-[12px] border border-[#E9EBEC] rounded-[8px] placeholder:text-[#A0A5AB] text-[0.9375rem] focus:border-[#095866] focus:outline-none resize-none"></textarea>
-						</div>
-						<p v-if="proRequestError" class="text-red-500 text-[0.8125rem] bg-red-50 p-[10px] rounded-[6px]">{{ proRequestError }}</p>
-						<button type="submit" :disabled="proRequestLoading" :class="proRequestLoading ? 'bg-gray-300 cursor-not-allowed' : 'bg-[#095866] hover:bg-[#0a7a8c] cursor-pointer'" class="w-full py-[14px] rounded-[10px] text-white font-semibold text-[1rem] transition-all">
-							{{ proRequestLoading ? 'Invio in corso...' : 'Invia richiesta Pro' }}
+					<div v-else class="text-center">
+						<p v-if="proRequestError" class="text-red-500 text-[0.8125rem] bg-red-50 p-[10px] rounded-[6px] mb-[16px]">{{ proRequestError }}</p>
+						<button @click="submitProRequest" :disabled="proRequestLoading" :class="proRequestLoading ? 'bg-gray-300 cursor-not-allowed' : 'bg-[#095866] hover:bg-[#0a7a8c] cursor-pointer'" class="px-[40px] py-[16px] rounded-[12px] text-white font-semibold text-[1.125rem] transition-all">
+							{{ proRequestLoading ? 'Invio in corso...' : 'Richiedi accesso Pro' }}
 						</button>
-					</form>
+						<p class="text-[0.8125rem] text-[#737373] mt-[12px]">L'amministratore potrà visualizzare i tuoi dati dal tuo profilo.</p>
+					</div>
 				</div>
 			</div>
 

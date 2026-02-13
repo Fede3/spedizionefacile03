@@ -268,8 +268,12 @@ const address = {
 	email: "",
 };
 
+/* Pre-fill from userStore if navigating back from riepilogo */
+const storedOrigin = userStore.originAddressData;
+const storedDest = userStore.destinationAddressData;
+
 /* Dati indirizzo di partenza */
-const originAddress = ref({
+const originAddress = ref(storedOrigin ? { ...storedOrigin } : {
 	...address,
 	type: "Partenza",
 	city: session.value?.data?.shipment_details.origin_city,
@@ -277,12 +281,86 @@ const originAddress = ref({
 });
 
 /* Dati indirizzo di destinazione */
-const destinationAddress = ref({
+const destinationAddress = ref(storedDest ? { ...storedDest } : {
 	...address,
 	type: "Destinazione",
 	city: session.value?.data?.shipment_details.destination_city,
 	postal_code: session.value?.data?.shipment_details.destination_postal_code,
 });
+
+/* Auto-show address fields if coming back from riepilogo */
+if (route.query.step === 'ritiro' || storedOrigin) {
+	// Will be used after showAddressFields ref is created
+	nextTick(() => {
+		showAddressFields.value = true;
+	});
+}
+
+/* Restore pickup date from store */
+if (userStore.pickupDate) {
+	services.value.date = userStore.pickupDate;
+}
+
+/* Restore services selection from store */
+if (userStore.servicesArray.length > 0) {
+	services.value.service_type = userStore.servicesArray.join(", ");
+	// Mark selected services visually
+	servicesList.value.forEach(svc => {
+		if (userStore.servicesArray.includes(svc.name)) {
+			svc.isSelected = true;
+		}
+	});
+}
+
+/* Saved addresses selector */
+const savedAddresses = ref([]);
+const loadingSavedAddresses = ref(false);
+const showOriginAddressSelector = ref(false);
+const showDestAddressSelector = ref(false);
+
+const loadSavedAddresses = async () => {
+	if (!isAuthenticated.value) return;
+	if (savedAddresses.value.length > 0) return;
+	loadingSavedAddresses.value = true;
+	try {
+		const result = await sanctumClient("/api/user-addresses");
+		savedAddresses.value = result?.data || [];
+	} catch (e) {
+		console.error("Errore caricamento indirizzi:", e);
+	} finally {
+		loadingSavedAddresses.value = false;
+	}
+};
+
+const applySavedAddress = (addr, target) => {
+	const ref = target === 'origin' ? originAddress : destinationAddress;
+	ref.value.full_name = addr.name || "";
+	ref.value.address = addr.address || "";
+	ref.value.address_number = addr.address_number || "";
+	ref.value.city = addr.city || "";
+	ref.value.postal_code = addr.postal_code || "";
+	ref.value.province = addr.province || "";
+	ref.value.telephone_number = addr.telephone_number || "";
+	ref.value.email = addr.email || "";
+	ref.value.additional_information = addr.additional_information || "";
+	ref.value.intercom_code = addr.intercom_code || "";
+	if (target === 'origin') {
+		showOriginAddressSelector.value = false;
+	} else {
+		showDestAddressSelector.value = false;
+	}
+};
+
+const toggleAddressSelector = (target) => {
+	loadSavedAddresses();
+	if (target === 'origin') {
+		showOriginAddressSelector.value = !showOriginAddressSelector.value;
+		showDestAddressSelector.value = false;
+	} else {
+		showDestAddressSelector.value = !showDestAddressSelector.value;
+		showOriginAddressSelector.value = false;
+	}
+};
 
 /* Pre-fill address data when session loads */
 watch(() => session.value?.data?.shipment_details, (details) => {
@@ -575,7 +653,7 @@ const continueToCart = async () => {
 		return;
 	}
 
-	pendingPayload.value = {
+	const payload = {
 		origin_address: toAddressPayload(originAddress.value),
 		destination_address: toAddressPayload(destinationAddress.value),
 		services: {
@@ -586,7 +664,13 @@ const continueToCart = async () => {
 		packages,
 	};
 
-	showSavedPopup.value = true;
+	// Store in userStore for riepilogo page and backward navigation
+	userStore.pendingShipment = payload;
+	userStore.originAddressData = { ...originAddress.value };
+	userStore.destinationAddressData = { ...destinationAddress.value };
+	userStore.pickupDate = services.value.date || "";
+
+	navigateTo('/riepilogo');
 };
 
 </script>
@@ -817,9 +901,30 @@ const continueToCart = async () => {
 							</div>
 
 							<div class="bg-[#E4E4E4] rounded-[20px] text-[#252B42] mt-[20px] pl-[40px] pr-[40px] pt-[35px] pb-[43px]">
-								<h2 class="font-bold text-[1.125rem] tracking-[0.1px] mb-[39px]">
-									Partenza
-								</h2>
+								<div class="flex items-center justify-between mb-[39px]">
+									<h2 class="font-bold text-[1.125rem] tracking-[0.1px]">
+										Partenza
+									</h2>
+									<div v-if="isAuthenticated" class="relative">
+										<button type="button" @click="toggleAddressSelector('origin')" class="inline-flex items-center gap-[6px] px-[14px] py-[8px] bg-[#095866] text-white rounded-[8px] text-[0.8125rem] font-semibold hover:bg-[#0a7a8c] transition cursor-pointer">
+											<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+											Indirizzi salvati
+										</button>
+										<div v-if="showOriginAddressSelector" class="absolute z-50 top-full right-0 mt-[4px] bg-white border border-[#D0D0D0] rounded-[12px] shadow-xl max-h-[250px] overflow-y-auto w-[320px]">
+											<div v-if="loadingSavedAddresses" class="p-[16px] text-center text-[0.8125rem] text-[#737373]">Caricamento...</div>
+											<template v-else-if="savedAddresses.length > 0">
+												<div v-for="addr in savedAddresses" :key="addr.id" @click="applySavedAddress(addr, 'origin')" class="px-[14px] py-[10px] cursor-pointer hover:bg-[#f0fafb] border-b border-[#F0F0F0] last:border-0 transition-colors">
+													<p class="text-[0.875rem] font-semibold text-[#252B42]">{{ addr.name }}</p>
+													<p class="text-[0.75rem] text-[#737373]">{{ addr.address }} {{ addr.address_number }}, {{ addr.postal_code }} {{ addr.city }}</p>
+												</div>
+											</template>
+											<div v-else class="p-[16px]">
+												<p class="text-[0.8125rem] text-[#737373]">Nessun indirizzo salvato.</p>
+												<NuxtLink to="/account/indirizzi" class="text-[0.8125rem] text-[#095866] hover:underline font-semibold mt-[4px] inline-block">Aggiungi indirizzo</NuxtLink>
+											</div>
+										</div>
+									</div>
+								</div>
 
 								<div class="flex items-start gap-x-[30px]">
 									<div class="desktop:w-[324px]">
@@ -888,9 +993,30 @@ const continueToCart = async () => {
 
 							<!-- DESTINAZIONE -->
 							<div class="bg-[#E4E4E4] rounded-[20px] text-[#252B42] mt-[20px] pl-[40px] pr-[40px] pt-[35px] pb-[43px]">
-								<h2 class="font-bold text-[1.125rem] tracking-[0.1px] mb-[39px]">
-									Destinazione
-								</h2>
+								<div class="flex items-center justify-between mb-[39px]">
+									<h2 class="font-bold text-[1.125rem] tracking-[0.1px]">
+										Destinazione
+									</h2>
+									<div v-if="isAuthenticated" class="relative">
+										<button type="button" @click="toggleAddressSelector('dest')" class="inline-flex items-center gap-[6px] px-[14px] py-[8px] bg-[#095866] text-white rounded-[8px] text-[0.8125rem] font-semibold hover:bg-[#0a7a8c] transition cursor-pointer">
+											<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+											Indirizzi salvati
+										</button>
+										<div v-if="showDestAddressSelector" class="absolute z-50 top-full right-0 mt-[4px] bg-white border border-[#D0D0D0] rounded-[12px] shadow-xl max-h-[250px] overflow-y-auto w-[320px]">
+											<div v-if="loadingSavedAddresses" class="p-[16px] text-center text-[0.8125rem] text-[#737373]">Caricamento...</div>
+											<template v-else-if="savedAddresses.length > 0">
+												<div v-for="addr in savedAddresses" :key="addr.id" @click="applySavedAddress(addr, 'dest')" class="px-[14px] py-[10px] cursor-pointer hover:bg-[#f0fafb] border-b border-[#F0F0F0] last:border-0 transition-colors">
+													<p class="text-[0.875rem] font-semibold text-[#252B42]">{{ addr.name }}</p>
+													<p class="text-[0.75rem] text-[#737373]">{{ addr.address }} {{ addr.address_number }}, {{ addr.postal_code }} {{ addr.city }}</p>
+												</div>
+											</template>
+											<div v-else class="p-[16px]">
+												<p class="text-[0.8125rem] text-[#737373]">Nessun indirizzo salvato.</p>
+												<NuxtLink to="/account/indirizzi" class="text-[0.8125rem] text-[#095866] hover:underline font-semibold mt-[4px] inline-block">Aggiungi indirizzo</NuxtLink>
+											</div>
+										</div>
+									</div>
+								</div>
 
 								<div class="flex items-start gap-x-[30px]">
 									<div class="desktop:w-[324px]">
@@ -973,7 +1099,7 @@ const continueToCart = async () => {
 									type="submit"
 									:disabled="isSubmitting"
 									class="bg-[#E44203] text-white font-semibold text-[1rem] px-[28px] h-[52px] rounded-[30px] hover:opacity-90 transition disabled:opacity-60 disabled:cursor-not-allowed">
-									{{ isSubmitting ? 'Salvataggio in corso...' : 'Continua e vai al carrello' }}
+									{{ isSubmitting ? 'Salvataggio in corso...' : 'Continua al riepilogo' }}
 								</button>
 							</template>
 							<template v-else>
@@ -1109,62 +1235,7 @@ const continueToCart = async () => {
 			</form>
 		</div>
 
-		<!-- Shipment Saved Popup -->
-		<UModal v-model:open="showSavedPopup" :dismissible="true" :close="false">
-			<template #title>
-				<div class="flex items-center gap-[12px]">
-					<div class="w-[48px] h-[48px] rounded-full bg-emerald-100 flex items-center justify-center">
-						<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" class="text-emerald-600"><path fill="currentColor" d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10s10-4.5 10-10S17.5 2 12 2m-2 15l-5-5l1.41-1.41L10 14.17l7.59-7.59L19 8z"/></svg>
-					</div>
-					<h3 class="text-[1.25rem] font-bold text-[#252B42]">Spedizione salvata!</h3>
-				</div>
-			</template>
-			<template #body>
-				<p class="text-[#737373] text-[0.9375rem] leading-[1.6] mb-[24px]">
-					La tua spedizione è stata configurata e salvata con successo. Cosa vuoi fare ora?
-				</p>
-				<div class="flex flex-col gap-[12px]">
-					<button
-						@click="goToCart"
-						class="w-full flex items-center gap-[14px] p-[16px] rounded-[12px] border border-[#E9EBEC] hover:border-[#095866] hover:bg-[#f0fafb] transition-all cursor-pointer group">
-						<div class="w-[44px] h-[44px] rounded-[10px] bg-[#095866]/10 flex items-center justify-center shrink-0">
-							<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" class="text-[#095866]"><path fill="currentColor" d="M17 18a2 2 0 0 1 2 2a2 2 0 0 1-2 2a2 2 0 0 1-2-2c0-1.11.89-2 2-2M1 2h3.27l.94 2H20a1 1 0 0 1 1 1c0 .17-.05.34-.12.5l-3.58 6.47c-.34.61-1 1.03-1.75 1.03H8.1l-.9 1.63l-.03.12a.25.25 0 0 0 .25.25H19v2H7a2 2 0 0 1-2-2c0-.35.09-.68.24-.96l1.36-2.45L3 4H1zm6 16a2 2 0 0 1 2 2a2 2 0 0 1-2 2a2 2 0 0 1-2-2c0-1.11.89-2 2-2"/></svg>
-						</div>
-						<div class="text-left">
-							<p class="text-[0.9375rem] font-semibold text-[#252B42] group-hover:text-[#095866]">Aggiungi al carrello</p>
-							<p class="text-[0.8125rem] text-[#737373]">Aggiungi la spedizione al carrello per procedere al pagamento</p>
-						</div>
-						<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" class="text-[#C8CCD0] ml-auto shrink-0"><path fill="currentColor" d="M8.59 16.59L13.17 12L8.59 7.41L10 6l6 6l-6 6z"/></svg>
-					</button>
-
-					<button
-						@click="goToSavedShipments"
-						class="w-full flex items-center gap-[14px] p-[16px] rounded-[12px] border border-[#E9EBEC] hover:border-[#095866] hover:bg-[#f0fafb] transition-all cursor-pointer group">
-						<div class="w-[44px] h-[44px] rounded-[10px] bg-blue-50 flex items-center justify-center shrink-0">
-							<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" class="text-blue-600"><path fill="currentColor" d="M21 16.5c0 .38-.21.71-.53.88l-7.9 4.44c-.16.12-.36.18-.57.18c-.21 0-.41-.06-.57-.18l-7.9-4.44A.99.99 0 0 1 3 16.5v-9c0-.38.21-.71.53-.88l7.9-4.44c.16-.12.36-.18.57-.18c.21 0 .41.06.57.18l7.9 4.44c.32.17.53.5.53.88zM12 4.15L6.04 7.5L12 10.85l5.96-3.35zM5 15.91l6 3.37v-6.73L5 9.18zm14 0V9.18l-6 3.37v6.73z"/></svg>
-						</div>
-						<div class="text-left">
-							<p class="text-[0.9375rem] font-semibold text-[#252B42] group-hover:text-[#095866]">Aggiungi a spedizioni configurate</p>
-							<p class="text-[0.8125rem] text-[#737373]">Salva la spedizione nelle spedizioni configurate</p>
-						</div>
-						<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" class="text-[#C8CCD0] ml-auto shrink-0"><path fill="currentColor" d="M8.59 16.59L13.17 12L8.59 7.41L10 6l6 6l-6 6z"/></svg>
-					</button>
-
-					<button
-						@click="addAnotherShipment"
-						class="w-full flex items-center gap-[14px] p-[16px] rounded-[12px] border border-[#E9EBEC] hover:border-[#095866] hover:bg-[#f0fafb] transition-all cursor-pointer group">
-						<div class="w-[44px] h-[44px] rounded-[10px] bg-orange-50 flex items-center justify-center shrink-0">
-							<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" class="text-orange-600"><path fill="currentColor" d="M17 13h-4v4h-2v-4H7v-2h4V7h2v4h4m-5-9A10 10 0 0 0 2 12a10 10 0 0 0 10 10a10 10 0 0 0 10-10A10 10 0 0 0 12 2"/></svg>
-						</div>
-						<div class="text-left">
-							<p class="text-[0.9375rem] font-semibold text-[#252B42] group-hover:text-[#095866]">Aggiungi un'altra spedizione</p>
-							<p class="text-[0.8125rem] text-[#737373]">Configura una nuova spedizione</p>
-						</div>
-						<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" class="text-[#C8CCD0] ml-auto shrink-0"><path fill="currentColor" d="M8.59 16.59L13.17 12L8.59 7.41L10 6l6 6l-6 6z"/></svg>
-					</button>
-				</div>
-			</template>
-		</UModal>
+		<!-- Popup rimosso - la logica è ora nella pagina /riepilogo -->
 	</section>
 </template>
 

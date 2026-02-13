@@ -115,6 +115,9 @@ Route::group(['prefix' => 'api'], function() {
         
         Route::apiResource('packages', PackageController::class);
 
+        // Non-Stripe payment completion (wallet/bonifico) - outside CheckCart
+        Route::post('stripe/mark-order-completed', [StripeController::class, 'markOrderCompleted']);
+
         Route::group(['middleware' => [CheckCart::class]], function() {
             Route::post('stripe/create-payment', [StripeController::class, 'createPayment']);
 

@@ -20,6 +20,14 @@ export const useUserStore = defineStore("user", () => {
 
 	const servicesArray = ref([]);
 
+	// Pending shipment payload (used for riepilogo and backward navigation)
+	const pendingShipment = ref(null);
+
+	// Address data for pre-filling when navigating back
+	const originAddressData = ref(null);
+	const destinationAddressData = ref(null);
+	const pickupDate = ref("");
+
 	return {
 		stepNumber,
 		isQuoteStarted,
@@ -27,5 +35,9 @@ export const useUserStore = defineStore("user", () => {
 		packages,
 		totalPrice,
 		servicesArray,
+		pendingShipment,
+		originAddressData,
+		destinationAddressData,
+		pickupDate,
 	};
 });
