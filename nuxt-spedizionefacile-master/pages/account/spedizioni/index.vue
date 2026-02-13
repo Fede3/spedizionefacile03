@@ -122,8 +122,35 @@ const savingToConfigured = ref({});
 const savedToConfigured = ref({});
 const saveError = ref({});
 
+// Load saved shipments to detect duplicates
+const savedShipmentIds = ref(new Set());
+const loadSavedShipments = async () => {
+	try {
+		const result = await sanctum("/api/saved-shipments");
+		const items = result?.data || [];
+		// Track which order package ids are already saved
+		items.forEach(item => {
+			if (item.id) savedShipmentIds.value.add(item.id);
+		});
+	} catch (e) { /* ignore */ }
+};
+onMounted(loadSavedShipments);
+
+const isAlreadySaved = (order) => {
+	if (savedToConfigured.value[order.id]) return true;
+	// Check if any package from this order is already in saved shipments
+	if (order.packages?.length) {
+		return order.packages.some(pkg => savedShipmentIds.value.has(pkg.id));
+	}
+	return false;
+};
+
 const saveToConfigured = async (order) => {
 	if (!order.packages?.length) return;
+	if (isAlreadySaved(order)) {
+		saveError.value[order.id] = "Questa spedizione è già stata salvata nelle spedizioni configurate.";
+		return;
+	}
 	savingToConfigured.value[order.id] = true;
 	saveError.value[order.id] = null;
 	try {
@@ -181,6 +208,8 @@ const saveToConfigured = async (order) => {
 			},
 		});
 		savedToConfigured.value[order.id] = true;
+		// Refresh saved list
+		await loadSavedShipments();
 	} catch (e) {
 		console.error("Errore salvataggio:", e);
 		const errorData = e?.response?._data || e?.data;
@@ -259,8 +288,11 @@ const saveToConfigured = async (order) => {
 					<!-- Card header -->
 					<div class="bg-[#F8F9FB] px-[20px] py-[12px] border-b border-[#E9EBEC] flex items-center justify-between">
 						<div class="flex items-center gap-[10px]">
+							<span class="text-[0.75rem] font-mono font-bold text-white bg-[#095866] px-[10px] py-[3px] rounded-[6px]">
+								SF-{{ String(order.id).padStart(6, '0') }}
+							</span>
 							<span class="text-[0.9375rem] font-bold text-[#252B42]">
-								Pacco {{ order.packages?.length || 0 }}#
+								{{ order.packages?.length || 0 }} Collo/i
 							</span>
 							<span class="text-[0.9375rem] text-[#252B42]">
 								BRT {{ getServiceLabel(order) }}
@@ -332,7 +364,7 @@ const saveToConfigured = async (order) => {
 								Paga ora
 							</NuxtLink>
 							<button
-								v-if="!savedToConfigured[order.id]"
+								v-if="!isAlreadySaved(order)"
 								type="button"
 								@click="saveToConfigured(order)"
 								:disabled="savingToConfigured[order.id]"

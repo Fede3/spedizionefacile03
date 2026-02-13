@@ -14,8 +14,8 @@ return new class extends Migration
         Schema::create('pro_requests', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
-            $table->string('company_name');
-            $table->string('vat_number');
+            $table->string('company_name')->nullable()->default('');
+            $table->string('vat_number')->nullable()->default('');
             $table->text('message')->nullable();
             $table->enum('status', ['pending', 'approved', 'rejected'])->default('pending');
             $table->timestamp('reviewed_at')->nullable();

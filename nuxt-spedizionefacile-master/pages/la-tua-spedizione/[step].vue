@@ -276,16 +276,16 @@ const storedDest = userStore.destinationAddressData;
 const originAddress = ref(storedOrigin ? { ...storedOrigin } : {
 	...address,
 	type: "Partenza",
-	city: session.value?.data?.shipment_details.origin_city,
-	postal_code: session.value?.data?.shipment_details.origin_postal_code,
+	city: session.value?.data?.shipment_details?.origin_city || "",
+	postal_code: session.value?.data?.shipment_details?.origin_postal_code || "",
 });
 
 /* Dati indirizzo di destinazione */
 const destinationAddress = ref(storedDest ? { ...storedDest } : {
 	...address,
 	type: "Destinazione",
-	city: session.value?.data?.shipment_details.destination_city,
-	postal_code: session.value?.data?.shipment_details.destination_postal_code,
+	city: session.value?.data?.shipment_details?.destination_city || "",
+	postal_code: session.value?.data?.shipment_details?.destination_postal_code || "",
 });
 
 /* Auto-show address fields if coming back from riepilogo */
@@ -333,17 +333,17 @@ const loadSavedAddresses = async () => {
 };
 
 const applySavedAddress = (addr, target) => {
-	const ref = target === 'origin' ? originAddress : destinationAddress;
-	ref.value.full_name = addr.name || "";
-	ref.value.address = addr.address || "";
-	ref.value.address_number = addr.address_number || "";
-	ref.value.city = addr.city || "";
-	ref.value.postal_code = addr.postal_code || "";
-	ref.value.province = addr.province || "";
-	ref.value.telephone_number = addr.telephone_number || "";
-	ref.value.email = addr.email || "";
-	ref.value.additional_information = addr.additional_information || "";
-	ref.value.intercom_code = addr.intercom_code || "";
+	const addrRef = target === 'origin' ? originAddress : destinationAddress;
+	addrRef.value.full_name = addr.name || "";
+	addrRef.value.address = addr.address || "";
+	addrRef.value.address_number = addr.address_number || "";
+	addrRef.value.city = addr.city || "";
+	addrRef.value.postal_code = addr.postal_code || "";
+	addrRef.value.province = addr.province || "";
+	addrRef.value.telephone_number = addr.telephone_number || "";
+	addrRef.value.email = addr.email || "";
+	addrRef.value.additional_information = addr.additional_information || "";
+	addrRef.value.intercom_code = addr.intercom_code || "";
 	if (target === 'origin') {
 		showOriginAddressSelector.value = false;
 	} else {
@@ -1125,7 +1125,7 @@ const continueToCart = async () => {
 							<div class="bg-[#E4E4E4] rounded-[20px] p-[35px_21px] text-[#252B42] font-bold text-[0.6875rem] tracking-[0.1px]">
 								<div>
 									<div class="before:content-[''] before:inline-block before:bg-[url(/img/quote/second-step/origin.png)] before:w-[16px] before:h-[14px] before:mr-[10px] flex items-center">
-										<div v-if="!isOriginDetailsEdited">{{ session?.data?.shipment_details.origin_city }} - {{ session?.data?.shipment_details.origin_postal_code }} - Italia</div>
+										<div v-if="!isOriginDetailsEdited">{{ session?.data?.shipment_details?.origin_city }} - {{ session?.data?.shipment_details?.origin_postal_code }} - Italia</div>
 
 										<div v-else>
 											<input type="text" v-model="temporaryShipmentDetails.origin_city" id="" class="bg-white font-montserrat w-[45px]" />
@@ -1142,7 +1142,7 @@ const continueToCart = async () => {
 
 									<div
 										class="mt-[12px] before:content-[''] before:inline-block before:bg-[url(/img/quote/second-step/destination.png)] before:w-[16px] before:h-[14px] before:mr-[10px] flex items-center">
-										<div v-if="!isDestinationDetailsEdited">{{ session?.data?.shipment_details.destination_city }} - {{ session?.data?.shipment_details.destination_postal_code }} - Italia</div>
+										<div v-if="!isDestinationDetailsEdited">{{ session?.data?.shipment_details?.destination_city }} - {{ session?.data?.shipment_details?.destination_postal_code }} - Italia</div>
 
 										<div v-else>
 											<input type="text" v-model="temporaryShipmentDetails.destination_city" id="" class="bg-white font-montserrat w-[45px]" />

@@ -445,9 +445,9 @@ watch(
 	<section>
 		<div class="my-container">
 			<div
-				class="bg-white w-full rounded-[24px] desktop-xl:rounded-[32px] relative z-50 p-[20px_16px] desktop:p-[30px_36px] tablet:p-[20px_40px] mx-auto"
+				class="bg-white w-full rounded-[24px] desktop-xl:rounded-[32px] relative z-10 p-[20px_16px] desktop:p-[30px_36px] tablet:p-[20px_40px] mx-auto"
 			:class="route.path === '/'
-				? 'mt-[-40px] tablet:mt-[-60px] desktop:mt-[-50px] desktop-xl:mt-[-30px] max-w-[1260px]'
+				? 'mt-[10px] tablet:mt-[10px] desktop:mt-[10px] desktop-xl:mt-[10px] max-w-[1260px]'
 				: 'mt-[40px] max-w-[1200px]'">
 				<h2 class="border-b-[1px] border-[#E6E6E6] text-[1.25rem] desktop:text-[2rem] text-black font-bold text-center pb-[8px]">Preventivo Rapido</h2>
 

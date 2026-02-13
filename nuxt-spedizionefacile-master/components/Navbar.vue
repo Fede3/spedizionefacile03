@@ -3,7 +3,6 @@ const navLinks = [
 	{ page: "/servizi", text: "Servizi" },
 	{ page: { path: '/', hash: '#preventivo' }, text: 'Preventivo Rapido' },
 	{ page: { path: '/', hash: '#guide' }, text: 'Guide' },
-	{ page: "/checkout", text: "Checkout" },
 	{ page: "/contatti", text: "Contatti" },
 ];
 
