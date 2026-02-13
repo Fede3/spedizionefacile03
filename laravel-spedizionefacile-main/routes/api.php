@@ -7,6 +7,7 @@ use App\Http\Controllers\WalletController;
 use App\Http\Controllers\ReferralController;
 use App\Http\Controllers\WithdrawalController;
 use App\Http\Controllers\AdminController;
+use App\Http\Controllers\ProRequestController;
 use App\Http\Middleware\CheckAdmin;
 
 Route::get('/user', function (Request $request) {
@@ -42,6 +43,12 @@ Route::middleware('auth:sanctum')->prefix('withdrawals')->group(function () {
     Route::post('/', [WithdrawalController::class, 'store']);
 });
 
+// Pro Request
+Route::middleware('auth:sanctum')->prefix('pro-request')->group(function () {
+    Route::post('/', [ProRequestController::class, 'store']);
+    Route::get('/status', [ProRequestController::class, 'status']);
+});
+
 // Admin routes
 Route::middleware(['auth:sanctum', CheckAdmin::class])->prefix('admin')->group(function () {
     Route::get('/wallet/overview', [AdminController::class, 'walletOverview']);
@@ -50,6 +57,9 @@ Route::middleware(['auth:sanctum', CheckAdmin::class])->prefix('admin')->group(f
     Route::post('/withdrawals/{withdrawal}/approve', [AdminController::class, 'approveWithdrawal']);
     Route::post('/withdrawals/{withdrawal}/reject', [AdminController::class, 'rejectWithdrawal']);
     Route::get('/referrals', [AdminController::class, 'referralStats']);
+    Route::get('/pro-requests', [ProRequestController::class, 'index']);
+    Route::patch('/pro-requests/{proRequest}/approve', [ProRequestController::class, 'approve']);
+    Route::patch('/pro-requests/{proRequest}/reject', [ProRequestController::class, 'reject']);
     Route::get('/users', [AdminController::class, 'users']);
     Route::patch('/users/{user}/approve', [AdminController::class, 'approveUser']);
     Route::delete('/users/{user}', [AdminController::class, 'deleteUser']);

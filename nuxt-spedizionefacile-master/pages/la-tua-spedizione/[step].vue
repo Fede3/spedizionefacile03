@@ -488,6 +488,57 @@ const addAnotherShipment = async () => {
 const { endpoint, refresh: refreshCart } = useCart();
 const { isAuthenticated } = useSanctumAuth();
 const sanctumClient = useSanctumClient();
+
+// Default data from saved configured shipments
+const showDefaultDropdown = ref(false);
+const savedConfigs = ref([]);
+const loadingConfigs = ref(false);
+
+const loadSavedConfigs = async () => {
+	if (!isAuthenticated.value) return;
+	if (savedConfigs.value.length > 0) {
+		showDefaultDropdown.value = !showDefaultDropdown.value;
+		return;
+	}
+	loadingConfigs.value = true;
+	try {
+		const result = await sanctumClient("/api/saved-shipments");
+		savedConfigs.value = result?.data || [];
+		showDefaultDropdown.value = true;
+	} catch (e) {
+		console.error("Errore caricamento configurazioni:", e);
+	} finally {
+		loadingConfigs.value = false;
+	}
+};
+
+const applyConfig = (item) => {
+	if (item.origin_address) {
+		originAddress.value.full_name = item.origin_address.name || "";
+		originAddress.value.address = item.origin_address.address || "";
+		originAddress.value.address_number = item.origin_address.address_number || "";
+		originAddress.value.city = item.origin_address.city || "";
+		originAddress.value.postal_code = item.origin_address.postal_code || "";
+		originAddress.value.province = item.origin_address.province || "";
+		originAddress.value.telephone_number = item.origin_address.telephone_number || "";
+		originAddress.value.email = item.origin_address.email || "";
+		originAddress.value.additional_information = item.origin_address.additional_information || "";
+		originAddress.value.intercom_code = item.origin_address.intercom_code || "";
+	}
+	if (item.destination_address) {
+		destinationAddress.value.full_name = item.destination_address.name || "";
+		destinationAddress.value.address = item.destination_address.address || "";
+		destinationAddress.value.address_number = item.destination_address.address_number || "";
+		destinationAddress.value.city = item.destination_address.city || "";
+		destinationAddress.value.postal_code = item.destination_address.postal_code || "";
+		destinationAddress.value.province = item.destination_address.province || "";
+		destinationAddress.value.telephone_number = item.destination_address.telephone_number || "";
+		destinationAddress.value.email = item.destination_address.email || "";
+		destinationAddress.value.additional_information = item.destination_address.additional_information || "";
+		destinationAddress.value.intercom_code = item.destination_address.intercom_code || "";
+	}
+	showDefaultDropdown.value = false;
+};
 const router = useRouter();
 
 const isSubmitting = ref(false);
@@ -741,6 +792,30 @@ const continueToCart = async () => {
 
 							<!-- PARTENZA -->
 							<template v-if="showAddressFields">
+							<!-- Default data button -->
+							<div v-if="isAuthenticated" class="mt-[20px] mb-[10px] relative">
+								<button type="button" @click="loadSavedConfigs" :disabled="loadingConfigs" class="inline-flex items-center gap-[8px] px-[18px] py-[10px] bg-[#095866] text-white rounded-[10px] text-[0.875rem] font-semibold hover:bg-[#0a7a8c] transition cursor-pointer disabled:opacity-60">
+									<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+									{{ loadingConfigs ? 'Caricamento...' : 'Immetti dati default' }}
+								</button>
+								<div v-if="showDefaultDropdown && savedConfigs.length > 0" class="absolute z-50 top-full left-0 mt-[4px] bg-white border border-[#D0D0D0] rounded-[12px] shadow-xl max-h-[300px] overflow-y-auto w-[400px]">
+									<div class="p-[12px] border-b border-[#F0F0F0] text-[0.8125rem] font-bold text-[#252B42]">Seleziona una spedizione configurata</div>
+									<div v-for="item in savedConfigs" :key="item.id" @click="applyConfig(item)" class="px-[14px] py-[12px] cursor-pointer hover:bg-[#f0fafb] border-b border-[#F0F0F0] last:border-0 transition-colors">
+										<div class="flex items-center gap-[8px]">
+											<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#996D47" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+											<span class="text-[0.875rem] font-semibold text-[#252B42]">{{ item.origin_address?.city || 'Partenza' }}</span>
+											<span class="text-[#737373]">&rarr;</span>
+											<span class="text-[0.875rem] font-semibold text-[#252B42]">{{ item.destination_address?.city || 'Destinazione' }}</span>
+										</div>
+										<p class="text-[0.75rem] text-[#737373] mt-[2px]">{{ item.origin_address?.name || '' }} - {{ item.destination_address?.name || '' }}</p>
+									</div>
+								</div>
+								<div v-if="showDefaultDropdown && savedConfigs.length === 0 && !loadingConfigs" class="absolute z-50 top-full left-0 mt-[4px] bg-white border border-[#D0D0D0] rounded-[12px] shadow-xl p-[20px] w-[300px]">
+									<p class="text-[0.875rem] text-[#737373]">Nessuna spedizione configurata salvata.</p>
+									<NuxtLink to="/account/spedizioni-configurate" class="text-[0.8125rem] text-[#095866] hover:underline font-semibold mt-[8px] inline-block">Vai a spedizioni configurate</NuxtLink>
+								</div>
+							</div>
+
 							<div class="bg-[#E4E4E4] rounded-[20px] text-[#252B42] mt-[20px] pl-[40px] pr-[40px] pt-[35px] pb-[43px]">
 								<h2 class="font-bold text-[1.125rem] tracking-[0.1px] mb-[39px]">
 									Partenza

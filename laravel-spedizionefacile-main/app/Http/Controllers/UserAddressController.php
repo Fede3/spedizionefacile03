@@ -34,9 +34,9 @@ class UserAddressController extends Controller
             return CustomResponse::setFailResponse($errorMsg, Response::HTTP_NOT_ACCEPTABLE);
         }
 
-
-        $user_address = UserAddress::make($request->only(
+        $data = $request->only(
             [
+                'type',
                 'name',
                 'additional_information',
                 'address',
@@ -51,7 +51,20 @@ class UserAddressController extends Controller
                 'email',
                 'default'
             ]
-        ));
+        );
+
+        // Map province_name to province if province is not provided
+        if (empty($data['province']) && $request->has('province_name')) {
+            $data['province'] = $request->input('province_name');
+        }
+
+        // Set defaults for fields the frontend may not send
+        $data['type'] = $data['type'] ?? 'shipping';
+        $data['country'] = $data['country'] ?? 'IT';
+        $data['number_type'] = $data['number_type'] ?? 'civico';
+        $data['address_number'] = $data['address_number'] ?? '';
+
+        $user_address = UserAddress::make($data);
 
         auth()->user()->addresses()->save($user_address);
 

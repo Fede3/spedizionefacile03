@@ -7,6 +7,7 @@ use App\Models\Package;
 use App\Models\UserAddress;
 use App\Models\WalletMovement;
 use App\Models\ReferralUsage;
+use App\Models\ProRequest;
 use App\Models\WithdrawalRequest;
 use Illuminate\Support\Str;
 use Illuminate\Notifications\Notifiable;
@@ -114,6 +115,10 @@ class User extends Authenticatable
 
     public function withdrawalRequests() {
         return $this->hasMany(WithdrawalRequest::class);
+    }
+
+    public function proRequests() {
+        return $this->hasMany(ProRequest::class);
     }
 
     public function walletBalance(): float {

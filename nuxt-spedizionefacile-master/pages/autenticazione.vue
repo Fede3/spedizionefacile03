@@ -52,6 +52,7 @@ const verificationCode = ref(["", "", "", "", "", ""]);
 const verificationLoading = ref(false);
 const verificationError = ref(null);
 const verificationSuccess = ref(null);
+const verificationCodeHint = ref(null);
 
 const handleLogin = async () => {
 	messageError.value = null;
@@ -96,6 +97,12 @@ const handleLogin = async () => {
 			verificationError.value = null;
 			verificationSuccess.value = null;
 			messageError.value = null;
+			// Extract code from response message if available
+			const msg = data?.message || "";
+			const codeMatch = msg.match(/Codice:\s*(\d{6})/);
+			if (codeMatch) {
+				verificationCodeHint.value = codeMatch[1];
+			}
 		} else if (status === 422) {
 			messageError.value = data?.errors || { email: ["Credenziali non valide."] };
 		} else if (status === 401) {
@@ -211,7 +218,13 @@ const resendCodeForVerification = async () => {
 			body: { email: credentials.value.email },
 		});
 		verificationError.value = null;
-		verificationSuccess.value = response?.message || "Nuovo codice inviato!";
+		const resendMsg = response?.message || "Nuovo codice inviato!";
+		verificationSuccess.value = resendMsg;
+		// Extract code from resend response
+		const resendCodeMatch = resendMsg.match(/(\d{6})/);
+		if (resendCodeMatch) {
+			verificationCodeHint.value = resendCodeMatch[1];
+		}
 	} catch (error) {
 		const data = error?.response?._data || error?.data;
 		verificationError.value = data?.message || "Errore nell'invio del codice. Riprova.";
@@ -351,7 +364,11 @@ function onTabClick(newValue) {
 									<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#095866" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
 								</div>
 								<h3 class="text-[1.125rem] font-semibold text-[#252B42]">Verifica il tuo account</h3>
-								<p class="text-[0.875rem] text-[#737373] mt-[8px]">Inserisci il codice di verifica a 6 cifre che hai ricevuto via email all'indirizzo <strong>{{ credentials.email }}</strong></p>
+								<p class="text-[0.875rem] text-[#737373] mt-[8px]">Inserisci il codice di verifica a 6 cifre per verificare l'account <strong>{{ credentials.email }}</strong></p>
+								<div v-if="verificationCodeHint" class="mt-[12px] bg-blue-50 border border-blue-200 rounded-[8px] p-[12px] text-center">
+									<p class="text-[0.8125rem] text-blue-700 mb-[4px]">Il tuo codice di verifica:</p>
+									<p class="text-[1.5rem] font-bold text-blue-800 tracking-[8px]">{{ verificationCodeHint }}</p>
+								</div>
 							</div>
 							<div class="flex justify-center gap-[8px] mb-[20px]" @paste="handleVerificationPaste">
 								<input v-for="(digit, index) in verificationCode" :key="index" type="text" maxlength="1" inputmode="numeric" :value="verificationCode[index]" @input="(e) => { verificationCode[index] = e.target.value.replace(/\D/g, ''); handleVerificationInput(index, e); }" @keydown="(e) => handleVerificationKeydown(index, e)" class="w-[48px] h-[56px] text-center text-[1.25rem] font-bold bg-[#F8F9FB] border border-[#E9EBEC] rounded-[8px] focus:border-[#095866] focus:outline-none transition-colors" />

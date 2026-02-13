@@ -11,12 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        /* Schema::create('locations', function (Blueprint $table) {
+        Schema::create('locations', function (Blueprint $table) {
             $table->id();
-            $table->string('postal_code');
-            $table->string('place_name');
+            $table->string('postal_code')->index();
+            $table->string('place_name')->index();
             $table->string('province');
-        }); */
+        });
     }
 
     /**

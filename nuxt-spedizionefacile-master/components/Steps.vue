@@ -23,9 +23,18 @@ const canNavigate = (index) => {
 	return index < activeStep.value;
 };
 
+const stepRoutes = {
+	0: '/#preventivo',
+	1: '/la-tua-spedizione/2',
+	2: '/la-tua-spedizione/2',
+	3: '/carrello',
+	4: '/checkout',
+};
+
 const handleClick = (index) => {
 	if (canNavigate(index)) {
 		emit('navigate', index);
+		navigateTo(stepRoutes[index] || '/');
 	}
 };
 </script>

@@ -116,6 +116,74 @@ const getPendingReason = (order) => {
 	if (raw === 'pending') return 'In attesa di pagamento. Completa il pagamento per procedere con la spedizione.';
 	return '';
 };
+
+const sanctum = useSanctumClient();
+const savingToConfigured = ref({});
+const savedToConfigured = ref({});
+
+const saveToConfigured = async (order) => {
+	if (!order.packages?.length) return;
+	savingToConfigured.value[order.id] = true;
+	try {
+		const pkg = order.packages[0];
+		await sanctum("/api/saved-shipments", {
+			method: "POST",
+			body: {
+				origin_address: {
+					type: "Partenza",
+					name: pkg.origin_address?.name || "N/D",
+					additional_information: "",
+					address: pkg.origin_address?.address || "N/D",
+					number_type: "Numero Civico",
+					address_number: pkg.origin_address?.address_number || "SNC",
+					intercom_code: "",
+					country: "Italia",
+					city: pkg.origin_address?.city || "N/D",
+					postal_code: pkg.origin_address?.postal_code || "00000",
+					province: pkg.origin_address?.province || "N/D",
+					telephone_number: pkg.origin_address?.telephone_number || "0000000000",
+					email: pkg.origin_address?.email || "",
+				},
+				destination_address: {
+					type: "Destinazione",
+					name: pkg.destination_address?.name || "N/D",
+					additional_information: "",
+					address: pkg.destination_address?.address || "N/D",
+					number_type: "Numero Civico",
+					address_number: pkg.destination_address?.address_number || "SNC",
+					intercom_code: "",
+					country: "Italia",
+					city: pkg.destination_address?.city || "N/D",
+					postal_code: pkg.destination_address?.postal_code || "00000",
+					province: pkg.destination_address?.province || "N/D",
+					telephone_number: pkg.destination_address?.telephone_number || "0000000000",
+					email: pkg.destination_address?.email || "",
+				},
+				services: {
+					service_type: pkg.services?.service_type || "Nessuno",
+					date: pkg.services?.date || "",
+					time: pkg.services?.time || "",
+				},
+				packages: order.packages.map(p => ({
+					package_type: p.package_type || "Pacco",
+					quantity: p.quantity || 1,
+					weight: p.weight || 1,
+					first_size: p.first_size || 10,
+					second_size: p.second_size || 10,
+					third_size: p.third_size || 10,
+					single_price: Number(p.single_price || 0) / 100,
+					weight_price: p.weight_price || 0,
+					volume_price: p.volume_price || 0,
+				})),
+			},
+		});
+		savedToConfigured.value[order.id] = true;
+	} catch (e) {
+		console.error("Errore salvataggio:", e);
+	} finally {
+		savingToConfigured.value[order.id] = false;
+	}
+};
 </script>
 
 <template>
@@ -250,7 +318,7 @@ const getPendingReason = (order) => {
 
 					<!-- Card footer - actions -->
 					<div class="px-[20px] py-[10px] border-t border-[#E9EBEC] flex items-center justify-between gap-[8px]">
-						<div>
+						<div class="flex items-center gap-[8px]">
 							<NuxtLink
 								v-if="isPendingPayment(order)"
 								:to="`/checkout?order_id=${order.id}`"
@@ -258,6 +326,19 @@ const getPendingReason = (order) => {
 								<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
 								Paga ora
 							</NuxtLink>
+							<button
+								v-if="!savedToConfigured[order.id]"
+								type="button"
+								@click="saveToConfigured(order)"
+								:disabled="savingToConfigured[order.id]"
+								class="inline-flex items-center gap-[6px] px-[14px] py-[8px] bg-[#095866] text-white rounded-[8px] text-[0.8125rem] font-semibold hover:opacity-90 transition disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer">
+								<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+								{{ savingToConfigured[order.id] ? 'Salvataggio...' : 'Salva configurata' }}
+							</button>
+							<span v-else class="inline-flex items-center gap-[6px] px-[14px] py-[8px] bg-emerald-100 text-emerald-700 rounded-[8px] text-[0.8125rem] font-semibold">
+								<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+								Salvata
+							</span>
 						</div>
 						<NuxtLink :to="`/account/spedizioni/${order.id}`" title="Vedi dettagli" class="w-[32px] h-[32px] rounded-[8px] bg-[#095866]/10 flex items-center justify-center hover:bg-[#095866]/20 transition">
 							<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#095866" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>

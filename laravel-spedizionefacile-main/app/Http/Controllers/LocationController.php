@@ -37,4 +37,44 @@ class LocationController extends Controller
 
         return response()->json($result);
     }
+
+    /**
+     * Search locations by city name or postal code.
+     * GET /api/locations/search?q=xxx
+     */
+    public function search(Request $request)
+    {
+        $query = $request->input('q', '');
+
+        if (strlen($query) < 2) {
+            return response()->json([]);
+        }
+
+        $results = Location::where('place_name', 'LIKE', '%' . $query . '%')
+            ->orWhere('postal_code', 'LIKE', '%' . $query . '%')
+            ->select('postal_code', 'place_name', 'province')
+            ->limit(20)
+            ->get();
+
+        return response()->json($results);
+    }
+
+    /**
+     * Get locations by exact postal code (CAP).
+     * GET /api/locations/by-cap?cap=xxxxx
+     */
+    public function byCap(Request $request)
+    {
+        $cap = $request->input('cap', '');
+
+        if (empty($cap)) {
+            return response()->json([]);
+        }
+
+        $results = Location::where('postal_code', $cap)
+            ->select('postal_code', 'place_name', 'province')
+            ->get();
+
+        return response()->json($results);
+    }
 }

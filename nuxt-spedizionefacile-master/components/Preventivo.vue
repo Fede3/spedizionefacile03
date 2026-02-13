@@ -6,6 +6,90 @@ const formRef = ref(null);
 
 const isRateCalculated = ref(false);
 
+// CAP/City autocomplete
+const originSuggestions = ref([]);
+const destSuggestions = ref([]);
+const showOriginSuggestions = ref(false);
+const showDestSuggestions = ref(false);
+let originSearchTimeout = null;
+let destSearchTimeout = null;
+
+const searchLocations = async (query) => {
+	if (!query || query.length < 2) return [];
+	try {
+		const results = await sanctum(`/api/locations/search?q=${encodeURIComponent(query)}`);
+		return results || [];
+	} catch (e) {
+		return [];
+	}
+};
+
+const onOriginCityInput = () => {
+	clearTimeout(originSearchTimeout);
+	originSearchTimeout = setTimeout(async () => {
+		const q = userStore.shipmentDetails.origin_city;
+		if (q && q.length >= 2) {
+			originSuggestions.value = await searchLocations(q);
+			showOriginSuggestions.value = originSuggestions.value.length > 0;
+		} else {
+			showOriginSuggestions.value = false;
+		}
+	}, 300);
+};
+
+const onOriginCapInput = () => {
+	clearTimeout(originSearchTimeout);
+	filterCap(userStore.shipmentDetails);
+	originSearchTimeout = setTimeout(async () => {
+		const q = userStore.shipmentDetails.origin_postal_code;
+		if (q && q.length >= 3) {
+			originSuggestions.value = await searchLocations(q);
+			showOriginSuggestions.value = originSuggestions.value.length > 0;
+		} else {
+			showOriginSuggestions.value = false;
+		}
+	}, 300);
+};
+
+const selectOriginLocation = (loc) => {
+	userStore.shipmentDetails.origin_city = loc.place_name;
+	userStore.shipmentDetails.origin_postal_code = loc.postal_code;
+	showOriginSuggestions.value = false;
+};
+
+const onDestCityInput = () => {
+	clearTimeout(destSearchTimeout);
+	destSearchTimeout = setTimeout(async () => {
+		const q = userStore.shipmentDetails.destination_city;
+		if (q && q.length >= 2) {
+			destSuggestions.value = await searchLocations(q);
+			showDestSuggestions.value = destSuggestions.value.length > 0;
+		} else {
+			showDestSuggestions.value = false;
+		}
+	}, 300);
+};
+
+const onDestCapInput = () => {
+	clearTimeout(destSearchTimeout);
+	filterCap(userStore.shipmentDetails);
+	destSearchTimeout = setTimeout(async () => {
+		const q = userStore.shipmentDetails.destination_postal_code;
+		if (q && q.length >= 3) {
+			destSuggestions.value = await searchLocations(q);
+			showDestSuggestions.value = destSuggestions.value.length > 0;
+		} else {
+			showDestSuggestions.value = false;
+		}
+	}, 300);
+};
+
+const selectDestLocation = (loc) => {
+	userStore.shipmentDetails.destination_city = loc.place_name;
+	userStore.shipmentDetails.destination_postal_code = loc.postal_code;
+	showDestSuggestions.value = false;
+};
+
 const getTodayDate = computed(() => {
 	const today = new Date();
 	const dd = String(today.getDate()).padStart(2, "0");
@@ -397,47 +481,53 @@ watch(
 
 					<div
 						class="flex items-start flex-wrap tablet:justify-center desktop-xl:justify-between tablet:gap-x-[20px] gap-y-[24px] tablet:gap-y-[20px] desktop:gap-y-[36px] desktop-xl:gap-y-0 border-[1px] border-[rgba(0,0,0,.2)] rounded-[30px] p-[15px] mt-[10px]">
-						<div class="w-full tablet:w-[30%] desktop:w-full desktop-xl:w-[200px]">
+						<div class="w-full tablet:w-[30%] desktop:w-full desktop-xl:w-[200px] relative">
 							<label for="origin_city" class="label-preventivo-rapido">Città di Ritiro</label>
-							<input type="text" v-model="userStore.shipmentDetails.origin_city" id="origin_city" placeholder="Città" class="input-preventivo-rapido" required />
+							<input type="text" v-model="userStore.shipmentDetails.origin_city" id="origin_city" placeholder="Città" class="input-preventivo-rapido" required autocomplete="off" @input="onOriginCityInput" @blur="setTimeout(() => showOriginSuggestions = false, 200)" />
+							<ul v-if="showOriginSuggestions && originSuggestions.length" class="absolute z-50 top-full left-0 right-0 bg-white border border-[#D0D0D0] rounded-[10px] mt-[2px] max-h-[200px] overflow-y-auto shadow-lg">
+								<li v-for="loc in originSuggestions" :key="loc.id" @mousedown.prevent="selectOriginLocation(loc)" class="px-[14px] py-[10px] cursor-pointer hover:bg-[#f0fafb] text-[0.875rem] text-[#252B42] border-b border-[#F0F0F0] last:border-0">
+									<span class="font-semibold">{{ loc.place_name }}</span> <span class="text-[#737373]">({{ loc.province_name }}) - {{ loc.postal_code }}</span>
+								</li>
+							</ul>
 							<p v-if="messageError?.['shipment_details.origin_city']" class="text-red-500 text-[1rem] mt-[10px]">
 								{{ messageError["shipment_details.origin_city"][0] }}
 							</p>
 						</div>
 
-						<div class="w-full tablet:w-[30%] desktop:w-full desktop-xl:w-[200px]">
+						<div class="w-full tablet:w-[30%] desktop:w-full desktop-xl:w-[200px] relative">
 							<label for="origin_postal_code" class="label-preventivo-rapido">CAP di Ritiro</label>
-							<input
-								type="text"
-								v-model="userStore.shipmentDetails.origin_postal_code"
-								id="origin_postal_code"
-								placeholder="CAP"
-								class="input-preventivo-rapido"
-								required
-								@input="filterCap(userStore.shipmentDetails)" />
+							<input type="text" v-model="userStore.shipmentDetails.origin_postal_code" id="origin_postal_code" placeholder="CAP" class="input-preventivo-rapido" required autocomplete="off" @input="onOriginCapInput" @blur="setTimeout(() => showOriginSuggestions = false, 200)" />
+							<ul v-if="showOriginSuggestions && originSuggestions.length" class="absolute z-50 top-full left-0 right-0 bg-white border border-[#D0D0D0] rounded-[10px] mt-[2px] max-h-[200px] overflow-y-auto shadow-lg">
+								<li v-for="loc in originSuggestions" :key="loc.id" @mousedown.prevent="selectOriginLocation(loc)" class="px-[14px] py-[10px] cursor-pointer hover:bg-[#f0fafb] text-[0.875rem] text-[#252B42] border-b border-[#F0F0F0] last:border-0">
+									<span class="font-semibold">{{ loc.postal_code }}</span> - {{ loc.place_name }} <span class="text-[#737373]">({{ loc.province_name }})</span>
+								</li>
+							</ul>
 							<p v-if="messageError?.['shipment_details.origin_postal_code']" class="text-red-500 text-[1rem] mt-[10px]">
 								{{ messageError["shipment_details.origin_postal_code"][0] }}
 							</p>
 						</div>
 
-						<div class="w-full tablet:w-[30%] desktop:w-full desktop-xl:w-[200px]">
+						<div class="w-full tablet:w-[30%] desktop:w-full desktop-xl:w-[200px] relative">
 							<label for="destination_city" class="label-preventivo-rapido">Città Consegna</label>
-							<input type="text" v-model="userStore.shipmentDetails.destination_city" id="destination_city" placeholder="Città" class="input-preventivo-rapido" required />
+							<input type="text" v-model="userStore.shipmentDetails.destination_city" id="destination_city" placeholder="Città" class="input-preventivo-rapido" required autocomplete="off" @input="onDestCityInput" @blur="setTimeout(() => showDestSuggestions = false, 200)" />
+							<ul v-if="showDestSuggestions && destSuggestions.length" class="absolute z-50 top-full left-0 right-0 bg-white border border-[#D0D0D0] rounded-[10px] mt-[2px] max-h-[200px] overflow-y-auto shadow-lg">
+								<li v-for="loc in destSuggestions" :key="loc.id" @mousedown.prevent="selectDestLocation(loc)" class="px-[14px] py-[10px] cursor-pointer hover:bg-[#f0fafb] text-[0.875rem] text-[#252B42] border-b border-[#F0F0F0] last:border-0">
+									<span class="font-semibold">{{ loc.place_name }}</span> <span class="text-[#737373]">({{ loc.province_name }}) - {{ loc.postal_code }}</span>
+								</li>
+							</ul>
 							<p v-if="messageError?.['shipment_details.destination_city']" class="text-red-500 text-[1rem] mt-[10px]">
 								{{ messageError["shipment_details.destination_city"][0] }}
 							</p>
 						</div>
 
-						<div class="w-full tablet:w-[30%] desktop:w-full desktop-xl:w-[200px]">
+						<div class="w-full tablet:w-[30%] desktop:w-full desktop-xl:w-[200px] relative">
 							<label for="destination_postal_code" class="label-preventivo-rapido">CAP Consegna</label>
-							<input
-								type="text"
-								v-model="userStore.shipmentDetails.destination_postal_code"
-								id="destination_postal_code"
-								placeholder="CAP"
-								class="input-preventivo-rapido"
-								required
-								@input="filterCap(userStore.shipmentDetails)" />
+							<input type="text" v-model="userStore.shipmentDetails.destination_postal_code" id="destination_postal_code" placeholder="CAP" class="input-preventivo-rapido" required autocomplete="off" @input="onDestCapInput" @blur="setTimeout(() => showDestSuggestions = false, 200)" />
+							<ul v-if="showDestSuggestions && destSuggestions.length" class="absolute z-50 top-full left-0 right-0 bg-white border border-[#D0D0D0] rounded-[10px] mt-[2px] max-h-[200px] overflow-y-auto shadow-lg">
+								<li v-for="loc in destSuggestions" :key="loc.id" @mousedown.prevent="selectDestLocation(loc)" class="px-[14px] py-[10px] cursor-pointer hover:bg-[#f0fafb] text-[0.875rem] text-[#252B42] border-b border-[#F0F0F0] last:border-0">
+									<span class="font-semibold">{{ loc.postal_code }}</span> - {{ loc.place_name }} <span class="text-[#737373]">({{ loc.province_name }})</span>
+								</li>
+							</ul>
 							<p v-if="messageError?.['shipment_details.destination_postal_code']" class="text-red-500 text-[1rem] mt-[10px]">
 								{{ messageError["shipment_details.destination_postal_code"][0] }}
 							</p>

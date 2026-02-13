@@ -11,16 +11,21 @@ definePageMeta({
 	middleware: ["sanctum:auth"],
 });
 
-// Force fresh cart data
-await refreshCart();
+const route = useRoute();
+const existingOrderId = computed(() => route.query.order_id || null);
 
-// Check cart not empty
-const checkCart = () => {
-	if (!cart.value || cart.value.data?.length === 0) {
-		return navigateTo("/carrello");
-	}
-};
-await checkCart();
+// Force fresh cart data (unless paying for existing order)
+if (!existingOrderId.value) {
+	await refreshCart();
+
+	// Check cart not empty
+	const checkCart = () => {
+		if (!cart.value || cart.value.data?.length === 0) {
+			return navigateTo("/carrello");
+		}
+	};
+	await checkCart();
+}
 
 // Stripe setup
 const stripePromise = loadStripe(config.public.stripeKey);
@@ -64,6 +69,14 @@ const fatturaData = ref({
 	pec: '',
 	codice_sdi: '',
 });
+
+// Wallet balance
+const { data: walletData } = useSanctumFetch("/api/wallet/balance");
+const walletBalance = computed(() => {
+	return Number(walletData.value?.balance ?? 0);
+});
+const walletFormatted = computed(() => walletBalance.value.toFixed(2).replace('.', ',') + '€');
+const walletSufficient = computed(() => walletBalance.value >= getNumberTotal.value);
 
 // Payment method selection
 const paymentMethod = ref('carta');
@@ -135,6 +148,7 @@ const canPay = computed(() => {
 	}
 	if (paymentMethod.value === 'bonifico') return true;
 	if (paymentMethod.value === 'paypal') return true;
+	if (paymentMethod.value === 'wallet') return walletSufficient.value;
 	return false;
 });
 
@@ -144,17 +158,45 @@ const processPayment = async () => {
 	paymentError.value = null;
 
 	try {
-		const orderResponse = await sanctum("/api/stripe/create-order", {
-			method: "POST",
-			body: { subtotal: Math.round(getNumberTotal.value * 100) },
-		});
-
-		const orderId = orderResponse.order_id;
+		let orderId;
+		if (existingOrderId.value) {
+			orderId = existingOrderId.value;
+		} else {
+			const orderResponse = await sanctum("/api/stripe/create-order", {
+				method: "POST",
+				body: { subtotal: Math.round(getNumberTotal.value * 100) },
+			});
+			orderId = orderResponse.order_id;
+		}
 
 		if (paymentMethod.value === 'bonifico') {
 			paymentSuccess.value = true;
 			successOrderId.value = orderId;
 			await refreshCart();
+			return;
+		}
+
+		if (paymentMethod.value === 'wallet') {
+			const walletResult = await sanctum("/api/wallet/pay", {
+				method: "POST",
+				body: {
+					amount: getNumberTotal.value,
+					reference: `order-${orderId}`,
+					description: `Pagamento ordine #${orderId}`,
+				},
+			});
+
+			if (walletResult?.success || walletResult?.movement) {
+				await sanctum("/api/stripe/order-paid", {
+					method: "POST",
+					body: { order_id: orderId, ext_id: `wallet-${walletResult?.movement?.id || Date.now()}` },
+				});
+				paymentSuccess.value = true;
+				successOrderId.value = orderId;
+				await refreshCart();
+			} else {
+				paymentError.value = walletResult?.message || "Pagamento con wallet non riuscito.";
+			}
 			return;
 		}
 
@@ -388,6 +430,13 @@ onMounted(async () => {
 							<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#095866" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
 							<span class="text-[#252B42]">Carta di credito/debito</span>
 						</button>
+						<button type="button" @click="paymentMethod = 'wallet'"
+							:class="paymentMethod === 'wallet' ? 'border-[#252B42] bg-white' : 'border-[#D0D0D0] bg-white'"
+							class="flex items-center gap-[8px] px-[20px] py-[12px] rounded-[8px] text-[0.875rem] font-medium cursor-pointer transition-colors border">
+							<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#095866" stroke-width="2"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg>
+							<span class="text-[#252B42]">Wallet</span>
+							<span class="text-[0.75rem] text-[#095866] font-semibold">({{ walletFormatted }})</span>
+						</button>
 					</div>
 
 					<div v-if="paymentMethod === 'carta'">
@@ -419,6 +468,13 @@ onMounted(async () => {
 					<div v-if="paymentMethod === 'paypal'" class="bg-white rounded-[10px] p-[16px] text-[0.8125rem] text-[#737373] leading-[1.6]">
 						<p class="font-semibold text-[#252B42] mb-[6px]">Pagamento tramite PayPal</p>
 						<p>Verrai reindirizzato a PayPal per completare il pagamento in sicurezza.</p>
+					</div>
+
+					<div v-if="paymentMethod === 'wallet'" class="bg-white rounded-[10px] p-[16px] text-[0.8125rem] text-[#737373] leading-[1.6]">
+						<p class="font-semibold text-[#252B42] mb-[6px]">Pagamento tramite Wallet</p>
+						<p>Saldo disponibile: <span class="font-bold text-[#095866]">{{ walletFormatted }}</span></p>
+						<p v-if="!walletSufficient" class="text-red-500 mt-[8px] font-medium">Saldo insufficiente. Ricarica il tuo wallet per procedere.</p>
+						<p v-else class="text-emerald-600 mt-[8px]">Saldo sufficiente per completare il pagamento.</p>
 					</div>
 
 					<div class="mt-[20px]">

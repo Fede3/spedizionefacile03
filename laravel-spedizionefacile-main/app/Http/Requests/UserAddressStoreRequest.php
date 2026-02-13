@@ -22,16 +22,19 @@ class UserAddressStoreRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'type' => 'nullable|string',
             'name' => 'required|string',
+            'additional_information' => 'nullable|string',
             'address' => 'required|string',
-            'number_type' => 'required|string',
-            'address_number' => 'required|string',
+            'number_type' => 'nullable|string',
+            'address_number' => 'nullable|string',
             'intercom_code' => 'nullable|string',
-            'country' => 'required|string',
+            'country' => 'nullable|string',
             'city' => 'required|string',
             'postal_code' => 'required|string',
-            'province' => 'required|string',
-            'telephone_number' => 'required|string',
+            'province' => 'nullable|string',
+            'province_name' => 'nullable|string',
+            'telephone_number' => 'nullable|string',
             'email' => 'nullable|string',
             'default' => 'nullable'
         ];

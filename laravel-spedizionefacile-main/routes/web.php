@@ -27,6 +27,7 @@ use App\Http\Controllers\PasswordResetRequestController;
 use App\Http\Controllers\SavedShipmentController;
 use App\Http\Controllers\ReferralController;
 use App\Http\Controllers\WalletController;
+use App\Http\Controllers\ContactController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -66,6 +67,8 @@ Route::group(['prefix' => 'api'], function() {
     /* COMUNI, CAP, PROVINCE */
     /* Route::post('/postLocation', [LocationController::class, 'postLocation']);
     Route::get('/getLocations', [LocationController::class, 'getLocations']); */
+    Route::get('/locations/search', [LocationController::class, 'search']);
+    Route::get('/locations/by-cap', [LocationController::class, 'byCap']);
     
     /* RECUPERO E MODIFICA PASSWORD */
     Route::post('/forgot-password', [PasswordResetRequestController::class, 'sendEmail']);
@@ -81,6 +84,9 @@ Route::group(['prefix' => 'api'], function() {
     Route::apiResource('guest-cart', GuestCartController::class);
 
     Route::delete('empty-guest-cart', [GuestCartController::class, 'emptyCart']);
+
+    /* CONTATTACI */
+    Route::middleware(['throttle:5,1'])->post('/contact', [ContactController::class, 'store']);
 
     /* MIDDLEWARE PER LE ROTTE QUANDO DEVI ESSERE LOGGATO */
     Route::group(['middleware' => ['auth:sanctum']], function() {
@@ -177,5 +183,11 @@ Route::group(['prefix' => 'api'], function() {
         Route::get('paymentMethods/{customerId}', 'App\Http\Controllers\PaymentMethodController@getPaymentMethods');
 
         Route::get('defaultPaymentMethod/{customerId}', 'App\Http\Controllers\PaymentMethodController@getDefaultPaymentMethod'); */
+
+        /* MESSAGGI CONTATTO (ADMIN) */
+        Route::middleware([CheckAdmin::class])->group(function () {
+            Route::get('admin/contact-messages', [ContactController::class, 'index']);
+            Route::patch('admin/contact-messages/{id}/read', [ContactController::class, 'markAsRead']);
+        });
     });
 });
