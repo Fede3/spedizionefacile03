@@ -162,6 +162,29 @@ class AdminController extends Controller
         ]);
     }
 
+    public function updateUserRole(Request $request, User $user): JsonResponse
+    {
+        $data = $request->validate([
+            'role' => ['required', 'string', 'in:User,Partner Pro,Admin'],
+        ]);
+
+        $oldRole = $user->role;
+        $user->role = $data['role'];
+
+        // Generate referral code when upgrading to Partner Pro
+        if ($data['role'] === 'Partner Pro' && !$user->referral_code) {
+            $user->referral_code = strtoupper(Str::random(8));
+        }
+
+        $user->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => "Ruolo aggiornato da '{$oldRole}' a '{$data['role']}'.",
+            'data' => $user->fresh(),
+        ]);
+    }
+
     public function deleteUser(User $user): JsonResponse
     {
         if ($user->id === auth()->id()) {

@@ -59,7 +59,7 @@ class GuestCartController extends Controller
             $singlePriceCents = (int) round(($pack['single_price'] ?? 0) * 100);
             $newQty = (int) ($pack['quantity'] ?? 1);
 
-            // Check for identical package already in cart
+            // Check for identical package already in cart (compare all key fields)
             $duplicateIndex = null;
             foreach ($cart as $idx => $existing) {
                 if (
@@ -70,10 +70,12 @@ class GuestCartController extends Controller
                     && (string) ($existing['third_size'] ?? '') === (string) ($pack['third_size'] ?? '')
                     && ($existing['origin_address']['city'] ?? '') === ($request->origin_address['city'] ?? '')
                     && ($existing['origin_address']['postal_code'] ?? '') === ($request->origin_address['postal_code'] ?? '')
+                    && ($existing['origin_address']['name'] ?? '') === ($request->origin_address['name'] ?? '')
+                    && ($existing['origin_address']['address'] ?? '') === ($request->origin_address['address'] ?? '')
                     && ($existing['destination_address']['city'] ?? '') === ($request->destination_address['city'] ?? '')
                     && ($existing['destination_address']['postal_code'] ?? '') === ($request->destination_address['postal_code'] ?? '')
-                    && ($existing['origin_address']['name'] ?? '') === ($request->origin_address['name'] ?? '')
                     && ($existing['destination_address']['name'] ?? '') === ($request->destination_address['name'] ?? '')
+                    && ($existing['destination_address']['address'] ?? '') === ($request->destination_address['address'] ?? '')
                 ) {
                     $duplicateIndex = $idx;
                     break;

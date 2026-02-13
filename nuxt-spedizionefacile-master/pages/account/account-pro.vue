@@ -74,6 +74,7 @@ onMounted(() => {
 
 const copied = ref(false);
 const copiedAccountCode = ref(false);
+const copiedLink = ref(false);
 
 const copyCode = async () => {
 	if (!referralData.value?.referral_code) return;
@@ -85,6 +86,25 @@ const copyCode = async () => {
 		fallbackCopy(referralData.value.referral_code);
 		copied.value = true;
 		setTimeout(() => (copied.value = false), 2000);
+	}
+};
+
+const copyReferralLink = async () => {
+	if (!referralData.value?.referral_link) return;
+	try {
+		await navigator.clipboard.writeText(referralData.value.referral_link);
+		copiedLink.value = true;
+		setTimeout(() => (copiedLink.value = false), 2000);
+	} catch {
+		fallbackCopy(referralData.value.referral_link);
+		copiedLink.value = true;
+		setTimeout(() => (copiedLink.value = false), 2000);
+	}
+};
+
+const shareWhatsApp = () => {
+	if (referralData.value?.whatsapp_link) {
+		window.open(referralData.value.whatsapp_link, '_blank');
 	}
 };
 
@@ -215,10 +235,24 @@ const formatDate = (dateStr) => {
 								<button
 									@click="copyCode"
 									class="px-[14px] py-[6px] bg-white/20 hover:bg-white/30 rounded-[8px] text-[0.8125rem] font-medium transition-all cursor-pointer">
-									{{ copied ? "Copiato!" : "Copia" }}
+									{{ copied ? "Copiato!" : "Copia codice" }}
 								</button>
 							</div>
 							<p class="text-[0.8125rem] opacity-60 mt-[8px]">Condividi per dare il 5% di sconto ai tuoi contatti.</p>
+							<div class="flex flex-wrap items-center gap-[10px] mt-[14px]">
+								<button
+									@click="copyReferralLink"
+									class="inline-flex items-center gap-[6px] px-[14px] py-[8px] bg-white/20 hover:bg-white/30 rounded-[8px] text-[0.8125rem] font-medium transition-all cursor-pointer">
+									<Icon :name="copiedLink ? 'mdi:check' : 'mdi:link-variant'" class="text-[16px]" />
+									{{ copiedLink ? "Link copiato!" : "Copia link" }}
+								</button>
+								<button
+									@click="shareWhatsApp"
+									class="inline-flex items-center gap-[6px] px-[14px] py-[8px] bg-[#25D366]/80 hover:bg-[#25D366] rounded-[8px] text-[0.8125rem] font-medium transition-all cursor-pointer">
+									<Icon name="mdi:whatsapp" class="text-[18px]" />
+									Condividi su WhatsApp
+								</button>
+							</div>
 						</div>
 					</div>
 				</div>

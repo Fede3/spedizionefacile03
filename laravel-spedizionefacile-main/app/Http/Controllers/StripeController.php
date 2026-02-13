@@ -35,6 +35,7 @@ class StripeController extends Controller
             'order_id' => 'required|integer',
             'payment_type' => 'required|string|in:wallet,bonifico',
             'ext_id' => 'nullable|string',
+            'is_existing_order' => 'nullable|boolean',
         ]);
 
         $order = Order::findOrFail($request->order_id);
@@ -54,7 +55,8 @@ class StripeController extends Controller
             'total' => $order->subtotal->amount(),
         ]);
 
-        if ($request->payment_type !== 'bonifico') {
+        // Only clear cart when paying from cart flow, not when paying an existing order
+        if ($request->payment_type !== 'bonifico' && !$request->boolean('is_existing_order')) {
             DB::table('cart_user')
                 ->where('user_id', auth()->id())
                 ->delete();
@@ -65,16 +67,37 @@ class StripeController extends Controller
 
     public function createOrder(Request $request) {
         $request->validate([
-            'subtotal' => 'required|numeric',
+            'subtotal' => 'nullable|numeric',
+            'package_ids' => 'nullable|array',
+            'package_ids.*' => 'integer',
         ]);
+
+        $userId = auth()->id();
+
+        // If specific package_ids provided, create order for those only (single shipment "Paga ora")
+        if ($request->has('package_ids') && !empty($request->package_ids)) {
+            $packages = Package::where('user_id', $userId)
+                ->whereIn('id', $request->package_ids)
+                ->get();
+        } else {
+            // Default: get packages from cart
+            $cartPackageIds = DB::table('cart_user')
+                ->where('user_id', $userId)
+                ->pluck('package_id');
+
+            $packages = Package::whereIn('id', $cartPackageIds)->get();
+        }
+
+        // Calculate subtotal server-side from package prices (never trust client)
+        $subtotal = $packages->sum(function ($pkg) {
+            return (int) $pkg->single_price;
+        });
 
         $order = Order::create([
-            'user_id' => auth()->id(),
-            'subtotal' => $request->subtotal,
+            'user_id' => $userId,
+            'subtotal' => $subtotal,
             'status' => Order::PENDING,
         ]);
-
-        $packages = Package::where('user_id', auth()->id())->get();
 
         foreach ($packages as $package) {
             DB::table('package_order')->insert([
@@ -101,6 +124,10 @@ class StripeController extends Controller
 
         $order = Order::findOrFail($request->order_id);
 
+        if ($order->user_id !== auth()->id()) {
+            return response()->json(['error' => 'Non autorizzato.'], 403);
+        }
+
         $stripe = new StripeClient($this->getStripeSecret());
 
         $paymentIntent = $stripe->paymentIntents->create([
@@ -126,6 +153,10 @@ class StripeController extends Controller
 
         $order = Order::findOrFail($request->order_id);
         $user = $request->user();
+
+        if ($order->user_id !== $user->id) {
+            return response()->json(['error' => 'Non autorizzato.'], 403);
+        }
 
         $secret = $this->getStripeSecret();
         if (!$secret) {
@@ -165,6 +196,20 @@ class StripeController extends Controller
 
         $order = Order::findOrFail($request->order_id);
 
+        if ($order->user_id !== auth()->id()) {
+            return response()->json(['error' => 'Non autorizzato.'], 403);
+        }
+
+        // Verify the payment intent matches this order
+        if (isset($intent->metadata['order_id']) && (int) $intent->metadata['order_id'] !== $order->id) {
+            return response()->json(['error' => 'Payment intent non corrisponde all\'ordine.'], 422);
+        }
+
+        // Verify amount matches
+        if ((int) $intent->amount !== (int) $order->subtotal->amount()) {
+            return response()->json(['error' => 'Importo non corrisponde.'], 422);
+        }
+
         $type = $intent->payment_method
             ? $stripe->paymentMethods->retrieve($intent->payment_method)->type
             : $intent->payment_method_types[0] ?? 'unknown';
@@ -187,9 +232,12 @@ class StripeController extends Controller
             return response()->json(['success' => false], 402);
         }
 
-        DB::table('cart_user')
-            ->where('user_id', auth()->id())
-            ->delete();
+        // Only clear cart when paying from cart flow, not when paying an existing order
+        if (!$request->boolean('is_existing_order')) {
+            DB::table('cart_user')
+                ->where('user_id', auth()->id())
+                ->delete();
+        }
 
         return response()->json(['success' => true]);
     }

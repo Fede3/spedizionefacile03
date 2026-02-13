@@ -16,7 +16,7 @@ class CheckAdmin
      */
     public function handle(Request $request, Closure $next): Response
     {
-        if (auth()->user()->role != 'Admin') {
+        if (!auth()->user()?->isAdmin()) {
              return response()->json([
                 'message' => 'Accesso vietato. Non sei amministratore.',
             ], 403);

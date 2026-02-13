@@ -119,6 +119,11 @@ Route::group(['prefix' => 'api'], function() {
         // Non-Stripe payment completion (wallet/bonifico) - outside CheckCart
         Route::post('stripe/mark-order-completed', [StripeController::class, 'markOrderCompleted']);
 
+        // Existing order payment routes (outside CheckCart since cart may be empty or unrelated)
+        Route::post('stripe/existing-order-payment', [StripeController::class, 'createPayment']);
+        Route::post('stripe/existing-order-payment-intent', [StripeController::class, 'createPaymentIntent']);
+        Route::post('stripe/existing-order-paid', [StripeController::class, 'orderPaid']);
+
         Route::group(['middleware' => [CheckCart::class]], function() {
             Route::post('stripe/create-payment', [StripeController::class, 'createPayment']);
 
@@ -165,7 +170,8 @@ Route::group(['prefix' => 'api'], function() {
 
         /* ORDINI */
         Route::apiResource('orders', OrderController::class);
-            /* ->middleware(CheckAdmin::class); */
+        Route::post('orders/{order}/cancel', [OrderController::class, 'cancel']);
+        Route::post('create-direct-order', [OrderController::class, 'createDirectOrder']);
 
         Route::post('calculate-coupon', [CouponController::class, 'calculateCoupon']);
 

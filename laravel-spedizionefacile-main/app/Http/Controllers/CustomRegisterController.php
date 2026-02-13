@@ -18,6 +18,15 @@ class CustomRegisterController extends Controller
         $data['telephone_number'] = $data['prefix'] . ' ' . $data['telephone_number'];
         unset($data['prefix']);
 
+        // Validate and store referral code if provided
+        if (!empty($data['referred_by'])) {
+            $referralCode = strtoupper($data['referred_by']);
+            $proUser = User::where('referral_code', $referralCode)
+                ->where('role', 'Partner Pro')
+                ->first();
+            $data['referred_by'] = $proUser ? $referralCode : null;
+        }
+
         try {
             DB::beginTransaction();
 
@@ -43,7 +52,7 @@ class CustomRegisterController extends Controller
             DB::commit();
 
             return CustomResponse::setSuccessResponse(
-                'Registrazione completata! Inserisci il codice di verifica a 6 cifre per attivare il tuo account. Codice: ' . $code,
+                'Registrazione completata! Inserisci il codice di verifica a 6 cifre inviato alla tua email.',
                 Response::HTTP_CREATED
             );
         } catch (\Throwable $exception) {

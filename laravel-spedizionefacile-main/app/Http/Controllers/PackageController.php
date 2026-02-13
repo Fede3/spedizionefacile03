@@ -83,8 +83,7 @@ class PackageController extends Controller
                     'origin_address_id' => $origin->id,
                     'destination_address_id' => $destination->id,
                     'service_id' => $services->id,
-                    'user_id' => $authId ?: null,
-                    'session_id' => $authId ? null : session()->getId(), 
+                    'user_id' => $authId,
                 ]);
             }
 

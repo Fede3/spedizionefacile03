@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Coupon;
+use App\Models\User;
 use Illuminate\Http\Request;
 use App\Cart\MyMoney;
 
@@ -11,29 +12,63 @@ class CouponController extends Controller
     public function calculateCoupon(Request $request) {
         $couponCode = $request->input('coupon');
         $total = $request->input('total');
-        
-        $coupon = Coupon::where('code', $couponCode)->first();
 
-        if (!$coupon) {
+        // First check if it's a regular coupon
+        $coupon = Coupon::where('code', $couponCode)->where('active', true)->first();
+
+        if ($coupon) {
+            $percentageValue = $coupon->percentage;
+            $discountAmount = $total * ($percentageValue / 100);
+            $finalAmount = $total - $discountAmount;
+
+            $finalAmountCents = intval(round($finalAmount * 100));
+            $newAmount = new MyMoney($finalAmountCents);
+
             return response()->json([
-                'error' => 'Coupon non valido'
-            ], 404);
+                'success' => true,
+                'type' => 'coupon',
+                'percentage' => $percentageValue,
+                'discount_amount' => round($discountAmount, 2),
+                'new_total' => $newAmount->formatted(),
+                'new_total_raw' => round($finalAmount, 2),
+            ]);
         }
 
-        $percentageValue = $coupon->percentage; // e.g. 10 means 10%
-        $discountAmount = $total * ($percentageValue / 100);
-        $finalAmount = $total - $discountAmount;
+        // Then check if it's a referral code (8-char code belonging to a Partner Pro)
+        $proUser = User::where('referral_code', strtoupper($couponCode))
+            ->where('role', 'Partner Pro')
+            ->first();
 
-        // Passa i centesimi interi a Money
-        $finalAmountCents = intval(round($finalAmount * 100));
-        $newAmount = new MyMoney($finalAmountCents);
+        if ($proUser) {
+            $buyer = auth()->user();
+
+            if ($proUser->id === $buyer->id) {
+                return response()->json([
+                    'error' => 'Non puoi usare il tuo stesso codice referral.'
+                ], 422);
+            }
+
+            $percentageValue = 5; // Referral codes always give 5% discount
+            $discountAmount = $total * ($percentageValue / 100);
+            $finalAmount = $total - $discountAmount;
+
+            $finalAmountCents = intval(round($finalAmount * 100));
+            $newAmount = new MyMoney($finalAmountCents);
+
+            return response()->json([
+                'success' => true,
+                'type' => 'referral',
+                'percentage' => $percentageValue,
+                'discount_amount' => round($discountAmount, 2),
+                'new_total' => $newAmount->formatted(),
+                'new_total_raw' => round($finalAmount, 2),
+                'referral_code' => strtoupper($couponCode),
+                'pro_user_name' => $proUser->name,
+            ]);
+        }
 
         return response()->json([
-            'success' => true,
-            'percentage' => $percentageValue,
-            'new_total' => $newAmount->formatted(),
-        ]);
-
-
+            'error' => 'Codice non valido'
+        ], 404);
     }
 }

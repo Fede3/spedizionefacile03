@@ -37,7 +37,8 @@ class RegisterRequest extends FormRequest
                 'regex:/[0-9]/',      // almeno un numero
                 'regex:/[@$!%*?&#^]/', // almeno un simbolo speciale
             ],
-            'role' => 'required|string'
+            'role' => 'required|string',
+            'referred_by' => 'nullable|string|max:8',
 
         ];
     }

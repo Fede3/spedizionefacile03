@@ -21,7 +21,7 @@ class OrderResource extends JsonResource
             'status' => $this->getStatus($this->status),
             'subtotal' => $this->subtotal->formatted(),
             'user' => $this->user,
-            'created_at' => $this->created_at->setTimezone('Europe/Rome')->format('m/d/Y H:i'),
+            'created_at' => $this->created_at->setTimezone('Europe/Rome')->format('d/m/Y H:i'),
             'packages' => PackageResource::collection($this->packages),
             'transactions' => TransactionResource::collection($this->transactions),
         ];

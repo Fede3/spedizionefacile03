@@ -15,12 +15,14 @@ const items = ref([
 		label: "Accedi",
 		icon: "",
 		slot: "accedi",
+		value: "accedi",
 		disabled: false,
 	},
 	{
 		label: "Registrati",
 		icon: "",
 		slot: "registrati",
+		value: "registrati",
 		disabled: false,
 	},
 ]);
@@ -108,7 +110,7 @@ const handleLogin = async () => {
 		} else if (status === 401) {
 			const message = data?.message || "Credenziali non corrette.";
 			messageError.value = data?.errors || data || { email: [message] };
-			if (String(message).toLowerCase().includes("verificare l'email") || String(message).toLowerCase().includes("verificare l'email")) {
+			if (String(message).toLowerCase().includes("verificare l'email") || String(message).toLowerCase().includes("verifica")) {
 				showResendVerification.value = true;
 			}
 		} else if (status === 429) {
@@ -267,7 +269,17 @@ const registerForm = ref({
 	password: "",
 	password_confirmation: "",
 	role: "Cliente",
+	referred_by: "",
 });
+
+// Capture referral code from URL (?ref=CODE) and auto-switch to registration tab
+const route = useRoute();
+const refCode = route.query.ref;
+const defaultTabValue = refCode ? 'registrati' : 'accedi';
+
+if (refCode) {
+	registerForm.value.referred_by = String(refCode).toUpperCase();
+}
 
 const registerUser = async () => {
 	messageError.value = null;
@@ -354,7 +366,7 @@ function onTabClick(newValue) {
 					</button>
 				</div>
 
-				<UTabs :items="items" v-if="!messageSuccess" @update:modelValue="onTabClick">
+				<UTabs :items="items" v-if="!messageSuccess" :default-value="defaultTabValue" @update:modelValue="onTabClick">
 					<!-- LOGIN TAB -->
 					<template #accedi>
 						<!-- Verification Code Input -->
@@ -636,6 +648,13 @@ function onTabClick(newValue) {
 										{{ error }}
 									</span>
 								</p>
+
+								<!-- Referral code (shown when arriving from referral link) -->
+								<div v-if="registerForm.referred_by" class="bg-emerald-50 border border-emerald-200 p-[12px] rounded-[8px] mt-[8px]">
+									<p class="text-[0.8125rem] text-emerald-700 font-medium">Codice referral applicato: <strong>{{ registerForm.referred_by }}</strong></p>
+									<p class="text-[0.75rem] text-emerald-600 mt-[4px]">Riceverai uno sconto del 5% su tutte le spedizioni!</p>
+								</div>
+								<p v-if="messageError?.referred_by" class="text-red-500 text-[0.8125rem] mb-[8px]">{{ messageError.referred_by[0] }}</p>
 							</div>
 
 							<button

@@ -74,10 +74,18 @@ const emptyCart = async () => {
 };
 
 // Price helper — single_price is stored in cents (backend multiplies by 100)
+// single_price = total for all quantities (unit_price * qty)
 const formatPrice = (cents) => {
 	if (!cents && cents !== 0) return '0,00€';
 	const num = Number(cents) / 100;
 	return num.toFixed(2).replace('.', ',') + '€';
+};
+
+// Get per-unit price from total and quantity
+const unitPrice = (item) => {
+	const total = Number(item.single_price) || 0;
+	const qty = Math.max(1, Number(item.quantity) || 1);
+	return Math.round(total / qty);
 };
 
 // Quantity update
@@ -277,7 +285,10 @@ const displayTotal = computed(() => {
 							<!-- Accessori -->
 							<span class="text-[0.8125rem] text-[#737373]">......</span>
 							<!-- Importo -->
-							<span class="text-[0.8125rem] font-semibold">{{ formatPrice(item.single_price) }}</span>
+							<span class="text-[0.8125rem] font-semibold">
+								<span v-if="(item.quantity || 1) > 1" class="block text-[0.6875rem] text-[#737373] font-normal">{{ formatPrice(unitPrice(item)) }}/cad</span>
+								{{ formatPrice(item.single_price) }}
+							</span>
 							<!-- Azioni -->
 							<span class="text-center">
 								<button type="button" @click="askDelete(item.id)" class="text-red-500 hover:text-red-700 cursor-pointer" title="Elimina">
@@ -293,7 +304,10 @@ const displayTotal = computed(() => {
 									<p class="text-[0.875rem] font-semibold text-[#252B42]">#{{ idx + 1 }} {{ item.origin_address?.city || 'Partenza' }} &rarr; {{ item.destination_address?.city || 'Destinazione' }}</p>
 									<p class="text-[0.75rem] text-[#737373]">{{ item.weight }} kg</p>
 								</div>
-								<span class="text-[0.9375rem] font-bold text-[#252B42]">{{ formatPrice(item.single_price) }}</span>
+								<div class="text-right">
+									<span v-if="(item.quantity || 1) > 1" class="block text-[0.6875rem] text-[#737373]">{{ formatPrice(unitPrice(item)) }}/cad</span>
+									<span class="text-[0.9375rem] font-bold text-[#252B42]">{{ formatPrice(item.single_price) }}</span>
+								</div>
 							</div>
 							<div class="flex items-center justify-between">
 								<div class="flex items-center gap-[8px]">

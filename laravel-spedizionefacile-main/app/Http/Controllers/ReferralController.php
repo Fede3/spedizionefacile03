@@ -27,10 +27,18 @@ class ReferralController extends Controller
         $totalEarnings = $user->referralUsagesAsPro()->where('status', 'confirmed')->sum('commission_amount');
         $totalUsages = $user->referralUsagesAsPro()->count();
 
+        // Build share links
+        $baseUrl = config('app.frontend_url', config('app.url'));
+        $referralLink = $baseUrl . '?ref=' . $user->referral_code;
+        $whatsappMessage = urlencode("Spedisci con SpedizioneFacile e ottieni il 5% di sconto! Usa il mio codice: {$user->referral_code} oppure registrati da qui: {$referralLink}");
+        $whatsappLink = "https://wa.me/?text={$whatsappMessage}";
+
         return response()->json([
             'referral_code' => $user->referral_code,
             'total_earnings' => round($totalEarnings, 2),
             'total_usages' => $totalUsages,
+            'referral_link' => $referralLink,
+            'whatsapp_link' => $whatsappLink,
         ]);
     }
 
@@ -112,6 +120,75 @@ class ReferralController extends Controller
             'success' => true,
             'discount_amount' => $discountAmount,
             'usage' => $usage,
+        ]);
+    }
+
+    /**
+     * Store referral code on user account (called when user registers or visits via referral link).
+     * This makes the discount persistent for all future orders.
+     */
+    public function storeReferral(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'code' => ['required', 'string', 'size:8'],
+        ]);
+
+        $code = strtoupper($data['code']);
+
+        $proUser = User::where('referral_code', $code)
+            ->where('role', 'Partner Pro')
+            ->first();
+
+        if (!$proUser) {
+            return response()->json(['message' => 'Codice referral non valido.'], 404);
+        }
+
+        $user = auth()->user();
+
+        if ($proUser->id === $user->id) {
+            return response()->json(['message' => 'Non puoi usare il tuo stesso codice.'], 422);
+        }
+
+        // Store the referral code on the user so it persists
+        $user->referred_by = $code;
+        $user->save();
+
+        return response()->json([
+            'success' => true,
+            'referred_by' => $code,
+            'discount_percent' => 5,
+            'pro_name' => $proUser->name,
+        ]);
+    }
+
+    /**
+     * Get the user's active referral discount (persistent code from referral link).
+     */
+    public function myDiscount(): JsonResponse
+    {
+        $user = auth()->user();
+
+        if (!$user->referred_by) {
+            return response()->json([
+                'has_discount' => false,
+            ]);
+        }
+
+        $proUser = User::where('referral_code', $user->referred_by)
+            ->where('role', 'Partner Pro')
+            ->first();
+
+        if (!$proUser) {
+            return response()->json([
+                'has_discount' => false,
+            ]);
+        }
+
+        return response()->json([
+            'has_discount' => true,
+            'referral_code' => $user->referred_by,
+            'discount_percent' => 5,
+            'pro_name' => $proUser->name,
         ]);
     }
 

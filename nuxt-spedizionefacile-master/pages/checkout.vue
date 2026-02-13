@@ -14,8 +14,19 @@ definePageMeta({
 const route = useRoute();
 const existingOrderId = computed(() => route.query.order_id || null);
 
-// Force fresh cart data (unless paying for existing order)
-if (!existingOrderId.value) {
+// When paying for an existing order, load that order's data
+const existingOrder = ref(null);
+
+if (existingOrderId.value) {
+	try {
+		const orderData = await sanctum(`/api/orders/${existingOrderId.value}`);
+		existingOrder.value = orderData?.data || orderData;
+	} catch (e) {
+		console.error('Failed to load order:', e);
+		navigateTo("/account/spedizioni");
+	}
+} else {
+	// Force fresh cart data
 	clearNuxtData("cart");
 	await refreshCart();
 
@@ -52,21 +63,29 @@ const formatPrice = (cents) => {
 	return euros.toFixed(2).replace('.', ',') + '€';
 };
 
-const getTotal = computed(() => cart.value?.meta?.total || '0,00€');
+// Use order data when paying existing order, cart data otherwise
+const displayPackages = computed(() => {
+	if (existingOrder.value) return existingOrder.value.packages || [];
+	return cart.value?.data || [];
+});
+
+const getTotal = computed(() => {
+	if (existingOrder.value) return existingOrder.value.subtotal || '0,00€';
+	return cart.value?.meta?.total || '0,00€';
+});
 
 const getNumberTotal = computed(() => {
 	return Number(String(getTotal.value).replace(/[€\s\u00A0]/g, "").replace(",", "."));
 });
 
 const totalPackages = computed(() => {
-	if (!cart.value?.data) return 0;
-	return cart.value.data.reduce((sum, item) => sum + (Number(item.quantity) || 1), 0);
+	return displayPackages.value.reduce((sum, item) => sum + (Number(item.quantity) || 1), 0);
 });
 
 // Content description from packages
 const contentDescription = computed(() => {
-	if (!cart.value?.data?.length) return '';
-	const types = cart.value.data.map(item => item.package_type || 'Pacco').filter(Boolean);
+	if (!displayPackages.value.length) return '';
+	const types = displayPackages.value.map(item => item.package_type || 'Pacco').filter(Boolean);
 	return [...new Set(types)].join(', ');
 });
 
@@ -112,26 +131,52 @@ const validateCoupon = async () => {
 	couponError.value = null;
 	couponApplied.value = null;
 	try {
-		const result = await sanctum("/api/referral/validate", {
+		// Use the unified coupon endpoint that handles both regular coupons and referral codes
+		const result = await sanctum("/api/calculate-coupon", {
 			method: "POST",
-			body: { code: couponCode.value.trim().toUpperCase() },
+			body: { coupon: couponCode.value.trim().toUpperCase(), total: getNumberTotal.value },
 		});
-		if (result?.valid) {
-			const discountAmount = Math.round(getNumberTotal.value * (result.discount_percent / 100) * 100) / 100;
+		if (result?.success) {
 			couponApplied.value = {
-				discount_percent: result.discount_percent,
-				discount_amount: discountAmount,
-				pro_name: result.pro_name,
-				code: couponCode.value.trim().toUpperCase(),
+				type: result.type || 'coupon',
+				discount_percent: result.percentage,
+				discount_amount: result.discount_amount,
+				pro_name: result.pro_user_name || '',
+				code: result.referral_code || couponCode.value.trim().toUpperCase(),
 			};
 		}
 	} catch (e) {
 		const data = e?.response?._data || e?.data;
-		couponError.value = data?.message || "Codice non valido.";
+		couponError.value = data?.error || data?.message || "Codice non valido.";
 	} finally {
 		couponLoading.value = false;
 	}
 };
+
+// Auto-apply referral code if user has referred_by
+const autoApplyReferral = async () => {
+	if (couponApplied.value) return;
+	try {
+		const result = await sanctum("/api/referral/my-discount");
+		if (result?.has_discount && result?.referral_code) {
+			couponCode.value = result.referral_code;
+			const discountAmount = Math.round(getNumberTotal.value * (result.discount_percent / 100) * 100) / 100;
+			couponApplied.value = {
+				type: 'referral',
+				discount_percent: result.discount_percent,
+				discount_amount: discountAmount,
+				pro_name: result.pro_name || '',
+				code: result.referral_code,
+			};
+		}
+	} catch (e) {
+		// Silently ignore - user may not have referral
+	}
+};
+
+onMounted(() => {
+	autoApplyReferral();
+});
 
 const removeCoupon = () => {
 	couponApplied.value = null;
@@ -234,7 +279,9 @@ const processPayment = async () => {
 
 	try {
 		let orderId;
-		if (existingOrderId.value) {
+		const isExisting = !!existingOrderId.value;
+
+		if (isExisting) {
 			orderId = existingOrderId.value;
 		} else {
 			const orderResponse = await sanctum("/api/stripe/create-order", {
@@ -244,8 +291,8 @@ const processPayment = async () => {
 			orderId = orderResponse.order_id;
 		}
 
-		// Apply coupon/referral code if present
-		if (couponApplied.value) {
+		// Apply referral commission if a referral code was used
+		if (couponApplied.value && couponApplied.value.type === 'referral') {
 			try {
 				await sanctum("/api/referral/apply", {
 					method: "POST",
@@ -256,9 +303,19 @@ const processPayment = async () => {
 					},
 				});
 			} catch (e) {
-				console.warn('Coupon apply warning:', e);
+				console.warn('Referral apply warning:', e);
 			}
 		}
+
+		// Helper: only clear cart when paying from cart (not existing order)
+		const onPaymentSuccess = async () => {
+			paymentSuccess.value = true;
+			successOrderId.value = orderId;
+			if (!existingOrderId.value) {
+				clearNuxtData("cart");
+				await refreshCart();
+			}
+		};
 
 		if (paymentMethod.value === 'bonifico') {
 			await sanctum("/api/stripe/mark-order-completed", {
@@ -266,12 +323,10 @@ const processPayment = async () => {
 				body: {
 					order_id: orderId,
 					payment_type: 'bonifico',
+					is_existing_order: !!existingOrderId.value,
 				},
 			});
-			paymentSuccess.value = true;
-			successOrderId.value = orderId;
-			clearNuxtData("cart");
-			await refreshCart();
+			await onPaymentSuccess();
 			return;
 		}
 
@@ -292,12 +347,10 @@ const processPayment = async () => {
 						order_id: orderId,
 						payment_type: 'wallet',
 						ext_id: `wallet-${walletResult?.data?.id || Date.now()}`,
+						is_existing_order: !!existingOrderId.value,
 					},
 				});
-				paymentSuccess.value = true;
-				successOrderId.value = orderId;
-				clearNuxtData("cart");
-				await refreshCart();
+				await onPaymentSuccess();
 			} else {
 				paymentError.value = walletResult?.message || "Pagamento con wallet non riuscito.";
 			}
@@ -305,7 +358,8 @@ const processPayment = async () => {
 		}
 
 		if (paymentMethod.value === 'carta' && defaultPayment.value?.card && !useNewCard.value) {
-			const payResult = await sanctum("/api/stripe/create-payment", {
+			const payEndpoint = isExisting ? '/api/stripe/existing-order-payment' : '/api/stripe/create-payment';
+			const payResult = await sanctum(payEndpoint, {
 				method: "POST",
 				body: {
 					order_id: orderId,
@@ -316,14 +370,16 @@ const processPayment = async () => {
 			});
 
 			if (payResult.status === "succeeded") {
-				await sanctum("/api/stripe/order-paid", {
+				const paidEndpoint = isExisting ? '/api/stripe/existing-order-paid' : '/api/stripe/order-paid';
+				await sanctum(paidEndpoint, {
 					method: "POST",
-					body: { order_id: orderId, ext_id: payResult.payment_intent_id },
+					body: {
+						order_id: orderId,
+						ext_id: payResult.payment_intent_id,
+						is_existing_order: isExisting,
+					},
 				});
-				paymentSuccess.value = true;
-				successOrderId.value = orderId;
-				clearNuxtData("cart");
-				await refreshCart();
+				await onPaymentSuccess();
 			} else {
 				paymentError.value = "Pagamento non riuscito. Stato: " + payResult.status;
 			}
@@ -331,7 +387,8 @@ const processPayment = async () => {
 		}
 
 		if (paymentMethod.value === 'carta' && (useNewCard.value || !defaultPayment.value?.card)) {
-			const piResponse = await sanctum("/api/stripe/create-payment-intent", {
+			const piEndpoint = isExisting ? '/api/stripe/existing-order-payment-intent' : '/api/stripe/create-payment-intent';
+			const piResponse = await sanctum(piEndpoint, {
 				method: "POST",
 				body: { order_id: orderId },
 			});
@@ -352,14 +409,16 @@ const processPayment = async () => {
 			}
 
 			if (paymentIntent.status === "succeeded") {
-				await sanctum("/api/stripe/order-paid", {
+				const paidEndpoint = isExisting ? '/api/stripe/existing-order-paid' : '/api/stripe/order-paid';
+				await sanctum(paidEndpoint, {
 					method: "POST",
-					body: { order_id: orderId, ext_id: paymentIntent.id },
+					body: {
+						order_id: orderId,
+						ext_id: paymentIntent.id,
+						is_existing_order: isExisting,
+					},
 				});
-				paymentSuccess.value = true;
-				successOrderId.value = orderId;
-				clearNuxtData("cart");
-				await refreshCart();
+				await onPaymentSuccess();
 			} else {
 				paymentError.value = "Stato pagamento: " + paymentIntent.status;
 			}
@@ -379,7 +438,7 @@ const processPayment = async () => {
 	<section class="min-h-[600px] py-[30px] desktop:py-[50px] bg-[#F0F0F0]">
 		<div class="my-container max-w-[1100px]">
 			<!-- Steps -->
-			<Steps :current-step="5" />
+			<Steps :current-step="4" />
 
 			<!-- Success -->
 			<div v-if="paymentSuccess" class="max-w-[600px] mx-auto text-center py-[60px]">
@@ -413,9 +472,12 @@ const processPayment = async () => {
 				<div class="bg-[#E6E6E6] rounded-[20px] p-[30px_36px]">
 					<div class="flex items-center justify-between mb-[16px]">
 						<h2 class="text-[1.25rem] font-bold text-[#252B42]">Riepilogo</h2>
-						<NuxtLink to="/carrello" class="bg-[#E44203] text-white font-semibold text-[0.875rem] px-[20px] py-[8px] rounded-[8px] hover:opacity-90 transition">
+						<NuxtLink v-if="!existingOrderId" to="/carrello" class="bg-[#E44203] text-white font-semibold text-[0.875rem] px-[20px] py-[8px] rounded-[8px] hover:opacity-90 transition">
 							Modifica
 						</NuxtLink>
+						<span v-else class="text-[0.875rem] font-semibold text-[#737373]">
+							Ordine #{{ existingOrderId }}
+						</span>
 					</div>
 
 					<div class="flex items-center justify-between py-[8px] border-b border-[#C0C0C0] text-[0.875rem] font-bold text-[#252B42]">

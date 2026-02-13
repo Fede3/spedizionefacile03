@@ -52,7 +52,7 @@ class CustomLoginController extends Controller
             return response()->json([
                 'success' => false,
                 'requires_verification' => true,
-                'message' => 'Account non verificato. Inserisci il codice di verifica a 6 cifre. Codice: ' . $user->verification_code,
+                'message' => 'Account non verificato. Inserisci il codice di verifica a 6 cifre inviato alla tua email.',
             ], 403);
         }
 
@@ -164,7 +164,7 @@ class CustomLoginController extends Controller
             Log::warning('Invio email fallito.', ['email' => $user->email, 'error' => $e->getMessage()]);
         }
 
-        return CustomResponse::setSuccessResponse('Nuovo codice di verifica generato: ' . $code, Response::HTTP_OK);
+        return CustomResponse::setSuccessResponse('Nuovo codice di verifica inviato alla tua email.', Response::HTTP_OK);
     }
 
     public function createPackage($packages)

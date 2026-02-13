@@ -23,10 +23,14 @@ class SettingsController extends Controller
     }
 
     /**
-     * Salva le chiavi Stripe nel database
+     * Salva le chiavi Stripe nel database (solo admin)
      */
     public function saveStripeConfig(Request $request)
     {
+        if (!$request->user()?->isAdmin()) {
+            return response()->json(['error' => 'Non autorizzato.'], 403);
+        }
+
         $request->validate([
             'publishable_key' => 'required|string|starts_with:pk_',
             'secret_key' => 'required|string|starts_with:sk_',

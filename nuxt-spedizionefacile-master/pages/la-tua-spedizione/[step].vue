@@ -472,9 +472,7 @@ const fieldClass = (section, field) => {
 const days = ["Lun", "Mar", "Mer", "Gio", "Ven"];
 
 const formRef = ref(null);
-const showSummary = ref(false);
 const showAddressFields = ref(false);
-const showSavedPopup = ref(false);
 const editingSidebarColli = ref(false);
 const dateError = ref(null);
 
@@ -502,77 +500,7 @@ const goBackToServices = () => {
 	showAddressFields.value = false;
 };
 
-const pendingPayload = ref(null);
-
-const goToCart = async () => {
-	if (!pendingPayload.value) return;
-	isSubmitting.value = true;
-	submitError.value = null;
-	try {
-		const result = await sanctumClient(endpoint.value, {
-			method: "POST",
-			body: pendingPayload.value,
-		});
-		console.log('Cart saved successfully:', result);
-		showSavedPopup.value = false;
-		// Clear stale cart cache so carrello.vue fetches fresh data
-		clearNuxtData("cart");
-		await refreshCart();
-		navigateTo('/carrello');
-	} catch (error) {
-		console.error('Cart save error:', error);
-		const errorData = error?.response?._data || error?.data;
-		const errorMsg = errorData?.message || errorData?.errors
-			? JSON.stringify(errorData.errors || errorData.message)
-			: "Errore durante il salvataggio nel carrello. Riprova.";
-		submitError.value = errorMsg;
-		showSavedPopup.value = false;
-	} finally {
-		isSubmitting.value = false;
-	}
-};
-
-const goToSavedShipments = async () => {
-	if (!pendingPayload.value) return;
-	if (!isAuthenticated.value) {
-		submitError.value = "Devi effettuare il login per salvare le spedizioni configurate.";
-		return;
-	}
-	isSubmitting.value = true;
-	submitError.value = null;
-	try {
-		const result = await sanctumClient("/api/saved-shipments", {
-			method: "POST",
-			body: pendingPayload.value,
-		});
-		console.log('Saved shipment successfully:', result);
-		showSavedPopup.value = false;
-		navigateTo('/account/spedizioni-configurate');
-	} catch (error) {
-		console.error('Saved shipments error:', error);
-		const errorData = error?.response?._data || error?.data;
-		submitError.value = errorData?.message || "Errore durante il salvataggio. Riprova.";
-		showSavedPopup.value = false;
-	} finally {
-		isSubmitting.value = false;
-	}
-};
-
-const addAnotherShipment = async () => {
-	if (!pendingPayload.value) return;
-	isSubmitting.value = true;
-	try {
-		await sanctumClient("/api/saved-shipments", {
-			method: "POST",
-			body: pendingPayload.value,
-		});
-	} catch (e) {
-		console.error('Add another error:', e);
-	}
-	isSubmitting.value = false;
-	showSavedPopup.value = false;
-	navigateTo('/preventivo');
-};
+// Action handlers moved to /riepilogo page
 
 const { endpoint, refresh: refreshCart } = useCart();
 const { isAuthenticated } = useSanctumAuth();
@@ -821,7 +749,7 @@ const continueToCart = async () => {
 				</UModal>
 
 				<!-- STEP FORM: Servizi + Indirizzi -->
-				<div v-if="!showSummary">
+				<div>
 
 				<ClientOnly>
 					<div class="bg-[#E6E6E6] rounded-[20px] pt-[13px]">

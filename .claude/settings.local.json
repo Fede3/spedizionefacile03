@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(php artisan:*)",
+      "Bash(git -C /mnt/c/Users/Feder/Desktop/spedizionefacile status --short)",
+      "Bash(git config:*)"
+    ]
+  }
+}

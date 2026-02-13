@@ -17,6 +17,9 @@ class SavedShipmentController extends Controller
     {
         $user = auth()->user();
 
+        // Auto-cleanup: remove saved shipments that have no valid package
+        $this->cleanupOrphanedShipments($user->id);
+
         $savedIds = DB::table('saved_shipments')
             ->where('user_id', $user->id)
             ->pluck('package_id');
@@ -24,6 +27,30 @@ class SavedShipmentController extends Controller
         $packages = Package::with(['originAddress', 'destinationAddress', 'service'])
             ->whereIn('id', $savedIds)
             ->get();
+
+        // Auto-cleanup: remove packages without valid dimensions (no colli)
+        $invalidPackages = $packages->filter(function ($pkg) {
+            return empty($pkg->package_type)
+                || (empty($pkg->weight) && empty($pkg->first_size));
+        });
+
+        if ($invalidPackages->isNotEmpty()) {
+            foreach ($invalidPackages as $pkg) {
+                DB::table('saved_shipments')
+                    ->where('user_id', $user->id)
+                    ->where('package_id', $pkg->id)
+                    ->delete();
+                $pkg->delete();
+            }
+            // Re-fetch valid packages
+            $savedIds = DB::table('saved_shipments')
+                ->where('user_id', $user->id)
+                ->pluck('package_id');
+
+            $packages = Package::with(['originAddress', 'destinationAddress', 'service'])
+                ->whereIn('id', $savedIds)
+                ->get();
+        }
 
         return PackageResource::collection($packages)
             ->additional([
@@ -104,8 +131,7 @@ class SavedShipmentController extends Controller
                     'origin_address_id' => $origin->id,
                     'destination_address_id' => $destination->id,
                     'service_id' => $services->id,
-                    'user_id' => $userId ?: null,
-                    'session_id' => $userId ? null : session()->getId(),
+                    'user_id' => $userId,
                 ]);
             }
 
@@ -140,6 +166,9 @@ class SavedShipmentController extends Controller
             'origin_address.province' => 'nullable|string',
             'origin_address.telephone_number' => 'nullable|string',
             'origin_address.email' => 'nullable|string',
+            'origin_address.country' => 'nullable|string',
+            'origin_address.additional_information' => 'nullable|string',
+            'origin_address.intercom_code' => 'nullable|string',
             'destination_address' => 'sometimes|array',
             'destination_address.name' => 'nullable|string',
             'destination_address.address' => 'nullable|string',
@@ -149,12 +178,22 @@ class SavedShipmentController extends Controller
             'destination_address.province' => 'nullable|string',
             'destination_address.telephone_number' => 'nullable|string',
             'destination_address.email' => 'nullable|string',
+            'destination_address.country' => 'nullable|string',
+            'destination_address.additional_information' => 'nullable|string',
+            'destination_address.intercom_code' => 'nullable|string',
             'package_type' => 'nullable|string',
             'quantity' => 'nullable|integer',
             'weight' => 'nullable|string',
             'first_size' => 'nullable|string',
             'second_size' => 'nullable|string',
             'third_size' => 'nullable|string',
+            'single_price' => 'nullable|numeric',
+            'weight_price' => 'nullable|numeric',
+            'volume_price' => 'nullable|numeric',
+            'services' => 'sometimes|array',
+            'services.service_type' => 'nullable|string',
+            'services.date' => 'nullable|string',
+            'services.time' => 'nullable|string',
         ]);
 
         DB::transaction(function () use ($package, $data) {
@@ -165,9 +204,28 @@ class SavedShipmentController extends Controller
                 $package->destinationAddress->update($data['destination_address']);
             }
 
+            // Update service if provided
+            if (isset($data['services']) && $package->service) {
+                $serviceData = $data['services'];
+                $serviceData['service_type'] = !empty($serviceData['service_type']) ? $serviceData['service_type'] : 'Nessuno';
+                $package->service->update($serviceData);
+            }
+
             $packageFields = array_intersect_key($data, array_flip([
                 'package_type', 'quantity', 'weight', 'first_size', 'second_size', 'third_size',
             ]));
+
+            // Recalculate price if dimensions changed
+            if (isset($data['single_price'])) {
+                $packageFields['single_price'] = (int) round($data['single_price'] * 100);
+            }
+            if (isset($data['weight_price'])) {
+                $packageFields['weight_price'] = $data['weight_price'];
+            }
+            if (isset($data['volume_price'])) {
+                $packageFields['volume_price'] = $data['volume_price'];
+            }
+
             if (!empty($packageFields)) {
                 $package->update($packageFields);
             }
@@ -182,6 +240,12 @@ class SavedShipmentController extends Controller
         $userId = auth()->id();
 
         DB::table('saved_shipments')
+            ->where('user_id', $userId)
+            ->where('package_id', $id)
+            ->delete();
+
+        // Also remove from cart if present
+        DB::table('cart_user')
             ->where('user_id', $userId)
             ->where('package_id', $id)
             ->delete();
@@ -236,5 +300,29 @@ class SavedShipmentController extends Controller
             'message' => 'Spedizioni aggiunte al carrello',
             'moved' => count($validIds),
         ]);
+    }
+
+    /**
+     * Remove orphaned saved shipment entries (where the package no longer exists).
+     */
+    private function cleanupOrphanedShipments(int $userId): void
+    {
+        $savedIds = DB::table('saved_shipments')
+            ->where('user_id', $userId)
+            ->pluck('package_id');
+
+        if ($savedIds->isEmpty()) {
+            return;
+        }
+
+        $existingIds = Package::whereIn('id', $savedIds)->pluck('id');
+        $orphanedIds = $savedIds->diff($existingIds);
+
+        if ($orphanedIds->isNotEmpty()) {
+            DB::table('saved_shipments')
+                ->where('user_id', $userId)
+                ->whereIn('package_id', $orphanedIds)
+                ->delete();
+        }
     }
 }

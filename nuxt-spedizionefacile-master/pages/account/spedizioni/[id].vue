@@ -80,7 +80,7 @@ const orderData = computed(() => order.value?.data || order.value || null);
 						</div>
 						<div>
 							<p class="text-[0.75rem] text-[#737373] uppercase font-medium mb-[4px]">Totale</p>
-							<p class="text-[0.9375rem] font-semibold text-[#252B42]">{{ formatPrice(orderData.subtotal) }}</p>
+							<p class="text-[0.9375rem] font-semibold text-[#252B42]">{{ orderData.subtotal }}</p>
 						</div>
 					</div>
 				</div>

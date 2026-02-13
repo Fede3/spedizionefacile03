@@ -56,7 +56,7 @@ const filteredOrders = computed(() => {
 		'Chiusi': ['Completato', 'Consegnato'],
 		'Annullati': ['Annullato', 'Fallito'],
 		'In giacenza': ['In giacenza'],
-		'Bozze': ['pending'],
+		'Bozze': ['In attesa', 'Fallito'],
 	};
 
 	const allowed = filterMap[textFilter.value] || [];
@@ -121,32 +121,57 @@ const sanctum = useSanctumClient();
 const savingToConfigured = ref({});
 const savedToConfigured = ref({});
 const saveError = ref({});
+const cancellingOrder = ref({});
 
-// Load saved shipments to detect duplicates
-const savedShipmentIds = ref(new Set());
+const cancelOrder = async (order) => {
+	if (!confirm('Sei sicuro di voler annullare questo ordine?')) return;
+	cancellingOrder.value[order.id] = true;
+	try {
+		await sanctum(`/api/orders/${order.id}/cancel`, { method: 'POST' });
+		await refresh();
+	} catch (e) {
+		const data = e?.response?._data || e?.data;
+		saveError.value[order.id] = data?.error || data?.message || 'Errore durante l\'annullamento.';
+	} finally {
+		cancellingOrder.value[order.id] = false;
+	}
+};
+
+// Load saved shipments to detect duplicates by comparing actual data
+const savedShipmentsList = ref([]);
 const loadSavedShipments = async () => {
 	try {
 		const result = await sanctum("/api/saved-shipments");
-		const items = result?.data || [];
-		// Track which order package ids are already saved
-		items.forEach(item => {
-			if (item.id) savedShipmentIds.value.add(item.id);
-		});
+		savedShipmentsList.value = result?.data || [];
 	} catch (e) { /* ignore */ }
 };
 onMounted(loadSavedShipments);
 
 const isAlreadySaved = (order) => {
 	if (savedToConfigured.value[order.id]) return true;
-	// Check if any package from this order is already in saved shipments
-	if (order.packages?.length) {
-		return order.packages.some(pkg => savedShipmentIds.value.has(pkg.id));
-	}
-	return false;
+	if (!order.packages?.length || !savedShipmentsList.value.length) return false;
+	// Compare actual data fields (not IDs) to detect if an order was already saved
+	const pkg = order.packages[0];
+	return savedShipmentsList.value.some(saved => {
+		return saved.package_type === pkg.package_type
+			&& String(saved.weight) === String(pkg.weight)
+			&& String(saved.first_size) === String(pkg.first_size)
+			&& String(saved.second_size) === String(pkg.second_size)
+			&& String(saved.third_size) === String(pkg.third_size)
+			&& saved.origin_address?.city === pkg.origin_address?.city
+			&& saved.origin_address?.postal_code === pkg.origin_address?.postal_code
+			&& saved.origin_address?.name === pkg.origin_address?.name
+			&& saved.destination_address?.city === pkg.destination_address?.city
+			&& saved.destination_address?.postal_code === pkg.destination_address?.postal_code
+			&& saved.destination_address?.name === pkg.destination_address?.name;
+	});
 };
 
 const saveToConfigured = async (order) => {
-	if (!order.packages?.length) return;
+	if (!order.packages?.length) {
+		saveError.value[order.id] = "Nessun collo presente in questo ordine.";
+		return;
+	}
 	if (isAlreadySaved(order)) {
 		saveError.value[order.id] = "Questa spedizione è già stata salvata nelle spedizioni configurate.";
 		return;
@@ -155,7 +180,7 @@ const saveToConfigured = async (order) => {
 	saveError.value[order.id] = null;
 	try {
 		const pkg = order.packages[0];
-		const svc = pkg.service || pkg.services || {};
+		const svc = pkg.services || pkg.service || {};
 		await sanctum("/api/saved-shipments", {
 			method: "POST",
 			body: {
@@ -164,7 +189,7 @@ const saveToConfigured = async (order) => {
 					name: pkg.origin_address?.name || "N/D",
 					additional_information: pkg.origin_address?.additional_information || "",
 					address: pkg.origin_address?.address || "N/D",
-					number_type: "Numero Civico",
+					number_type: pkg.origin_address?.number_type || "Numero Civico",
 					address_number: pkg.origin_address?.address_number || "SNC",
 					intercom_code: pkg.origin_address?.intercom_code || "",
 					country: pkg.origin_address?.country || "Italia",
@@ -179,7 +204,7 @@ const saveToConfigured = async (order) => {
 					name: pkg.destination_address?.name || "N/D",
 					additional_information: pkg.destination_address?.additional_information || "",
 					address: pkg.destination_address?.address || "N/D",
-					number_type: "Numero Civico",
+					number_type: pkg.destination_address?.number_type || "Numero Civico",
 					address_number: pkg.destination_address?.address_number || "SNC",
 					intercom_code: pkg.destination_address?.intercom_code || "",
 					country: pkg.destination_address?.country || "Italia",
@@ -201,6 +226,7 @@ const saveToConfigured = async (order) => {
 					first_size: p.first_size || 10,
 					second_size: p.second_size || 10,
 					third_size: p.third_size || 10,
+					// single_price from API is in cents — convert to EUR for the store endpoint
 					single_price: Number(p.single_price || 0) / 100,
 					weight_price: p.weight_price || 0,
 					volume_price: p.volume_price || 0,
@@ -208,7 +234,8 @@ const saveToConfigured = async (order) => {
 			},
 		});
 		savedToConfigured.value[order.id] = true;
-		// Refresh saved list
+		saveError.value[order.id] = null;
+		// Refresh saved list for accurate duplicate detection
 		await loadSavedShipments();
 	} catch (e) {
 		console.error("Errore salvataggio:", e);
@@ -246,23 +273,6 @@ const saveToConfigured = async (order) => {
 					class="px-[18px] py-[10px] rounded-[30px] text-[0.875rem] font-medium cursor-pointer transition-colors">
 					{{ filter }}
 				</button>
-			</div>
-
-			<!-- Table Header Row -->
-			<div class="hidden desktop:block bg-[#E6E6E6] rounded-t-[12px] px-[20px] py-[12px] text-[0.75rem] font-bold text-[#252B42] border-b-[2px] border-[#E44203]">
-				<div class="flex items-center gap-[8px] flex-wrap">
-					<span class="w-[80px]"># Sped.</span>
-					<span class="w-[80px]">[# Ordine]</span>
-					<span class="w-[100px]">[Provenienza]</span>
-					<span class="w-[100px]">[Data acquisto]</span>
-					<span class="w-[70px]">Etichetta</span>
-					<span class="w-[120px]">Servizio</span>
-					<span class="w-[80px]">[Dett. Colli Dich.]</span>
-					<span class="w-[80px]">[Dett. Colli Rilev.]</span>
-					<span class="w-[70px]">Accessori</span>
-					<span class="w-[90px]">Ultimo Status</span>
-					<span class="flex-1">Azioni</span>
-				</div>
 			</div>
 
 			<!-- Loading -->
@@ -353,6 +363,12 @@ const saveToConfigured = async (order) => {
 						<p class="text-[0.8125rem] text-amber-800 flex-1">{{ getPendingReason(order) }}</p>
 					</div>
 
+					<!-- Save error/success message -->
+					<div v-if="saveError[order.id]" class="mx-[20px] my-[8px] bg-red-50 border border-red-200 rounded-[10px] px-[16px] py-[10px] flex items-center gap-[10px]">
+						<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" class="text-red-500 shrink-0"><path fill="currentColor" d="M13 13h-2V7h2m0 10h-2v-2h2M12 2a10 10 0 0 1 10 10a10 10 0 0 1-10 10A10 10 0 0 1 2 12A10 10 0 0 1 12 2"/></svg>
+						<p class="text-red-600 text-[0.8125rem] font-medium">{{ saveError[order.id] }}</p>
+					</div>
+
 					<!-- Card footer - actions -->
 					<div class="px-[20px] py-[10px] border-t border-[#E9EBEC] flex items-center justify-between gap-[8px]">
 						<div class="flex items-center gap-[8px]">
@@ -363,6 +379,15 @@ const saveToConfigured = async (order) => {
 								<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
 								Paga ora
 							</NuxtLink>
+							<button
+								v-if="isPendingPayment(order)"
+								type="button"
+								@click="cancelOrder(order)"
+								:disabled="cancellingOrder[order.id]"
+								class="inline-flex items-center gap-[6px] px-[14px] py-[8px] bg-white border border-red-300 text-red-600 rounded-[8px] text-[0.8125rem] font-semibold hover:bg-red-50 transition disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer">
+								<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+								{{ cancellingOrder[order.id] ? 'Annullamento...' : 'Annulla ordine' }}
+							</button>
 							<button
 								v-if="!isAlreadySaved(order)"
 								type="button"
@@ -380,9 +405,6 @@ const saveToConfigured = async (order) => {
 						<NuxtLink :to="`/account/spedizioni/${order.id}`" title="Vedi dettagli" class="w-[32px] h-[32px] rounded-[8px] bg-[#095866]/10 flex items-center justify-center hover:bg-[#095866]/20 transition">
 							<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#095866" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
 						</NuxtLink>
-					</div>
-					<div v-if="saveError[order.id]" class="mt-[8px] px-[20px]">
-						<p class="text-red-500 text-[0.8125rem] bg-red-50 p-[8px] rounded-[6px]">{{ saveError[order.id] }}</p>
 					</div>
 				</div>
 			</div>

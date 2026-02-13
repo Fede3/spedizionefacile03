@@ -33,6 +33,7 @@ class User extends Authenticatable
         'password',
         'role',
         'referral_code',
+        'referred_by',
         'identifier',
         'email_verified_at',
         'stripe_account_id',

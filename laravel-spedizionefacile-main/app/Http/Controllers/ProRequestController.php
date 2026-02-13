@@ -36,9 +36,9 @@ class ProRequestController extends Controller
 
         $proRequest = ProRequest::create([
             'user_id' => $user->id,
-            'company_name' => $request->input('company_name', ''),
-            'vat_number' => $request->input('vat_number', ''),
-            'message' => $request->input('message'),
+            'company_name' => $request->input('company_name') ?? '',
+            'vat_number' => $request->input('vat_number') ?? '',
+            'message' => $request->input('message') ?? '',
             'status' => 'pending',
         ]);
 

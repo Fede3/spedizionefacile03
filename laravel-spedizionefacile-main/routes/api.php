@@ -34,6 +34,8 @@ Route::middleware('auth:sanctum')->prefix('referral')->group(function () {
     Route::get('/my-code', [ReferralController::class, 'myCode']);
     Route::post('/validate', [ReferralController::class, 'validate']);
     Route::post('/apply', [ReferralController::class, 'apply']);
+    Route::post('/store', [ReferralController::class, 'storeReferral']);
+    Route::get('/my-discount', [ReferralController::class, 'myDiscount']);
     Route::get('/earnings', [ReferralController::class, 'earnings']);
 });
 
@@ -62,5 +64,6 @@ Route::middleware(['auth:sanctum', CheckAdmin::class])->prefix('admin')->group(f
     Route::patch('/pro-requests/{proRequest}/reject', [ProRequestController::class, 'reject']);
     Route::get('/users', [AdminController::class, 'users']);
     Route::patch('/users/{user}/approve', [AdminController::class, 'approveUser']);
+    Route::patch('/users/{user}/role', [AdminController::class, 'updateUserRole']);
     Route::delete('/users/{user}', [AdminController::class, 'deleteUser']);
 });
