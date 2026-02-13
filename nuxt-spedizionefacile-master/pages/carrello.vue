@@ -74,10 +74,10 @@ const emptyCart = async () => {
 };
 
 // Price helper
-const formatPrice = (cents) => {
-	if (!cents && cents !== 0) return '0,00€';
-	const euros = Number(cents) / 100;
-	return euros.toFixed(2).replace('.', ',') + '€';
+const formatPrice = (price) => {
+	if (!price && price !== 0) return '0,00€';
+	const num = Number(price);
+	return num.toFixed(2).replace('.', ',') + '€';
 };
 
 const formatDate = (item) => {
@@ -144,7 +144,7 @@ const displayTotal = computed(() => {
 <template>
 	<section class="min-h-[600px] py-[30px] desktop:py-[50px] bg-[#F0F0F0]">
 		<div class="my-container max-w-[1200px]">
-			<Steps :current-step="3" />
+			<Steps :current-step="4" />
 			<!-- Loading -->
 			<div v-if="status === 'pending'" class="max-w-[1100px] mx-auto">
 				<div v-for="n in 3" :key="n" class="bg-white rounded-[16px] border border-[#E9EBEC] p-[24px] mb-[12px] animate-pulse">
@@ -225,7 +225,7 @@ const displayTotal = computed(() => {
 						<span>Indirizzi</span>
 						<span>Accessori</span>
 						<span>Importo</span>
-						<span>Riferimenti</span>
+						<span class="text-center">Azioni</span>
 					</div>
 
 					<!-- Table rows -->
@@ -262,8 +262,12 @@ const displayTotal = computed(() => {
 							<span class="text-[0.8125rem] text-[#737373]">......</span>
 							<!-- Importo -->
 							<span class="text-[0.8125rem] font-semibold">{{ formatPrice(item.single_price) }}</span>
-							<!-- Riferimenti -->
-							<span class="text-[0.8125rem] text-[#737373]">......</span>
+							<!-- Azioni -->
+							<span class="text-center">
+								<button type="button" @click="askDelete(item.id)" class="text-red-500 hover:text-red-700 cursor-pointer" title="Elimina">
+									<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+								</button>
+							</span>
 						</div>
 
 						<!-- Mobile cards -->

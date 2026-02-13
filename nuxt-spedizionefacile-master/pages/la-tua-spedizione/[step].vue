@@ -153,12 +153,21 @@ const addService = (service = myService.value) => {
 	} else {
 		const index = userStore.servicesArray.indexOf(service.name);
 		if (index !== -1) {
-			userStore.servicesArray.splice(index, 1); // rimuove 1 elemento all’indice trovato
+			userStore.servicesArray.splice(index, 1); // rimuove 1 elemento all'indice trovato
 		}
 	}
 
 	services.value.service_type = userStore.servicesArray.join(", ");
 	open.value = false;
+};
+
+const removeServiceFromSidebar = (idx) => {
+	const removed = userStore.servicesArray[idx];
+	userStore.servicesArray.splice(idx, 1);
+	services.value.service_type = userStore.servicesArray.join(", ");
+	// Deselect visually
+	const svc = servicesList.value.find(s => s.name === removed);
+	if (svc) svc.isSelected = false;
 };
 
 const chooseDate = (day) => {
@@ -479,6 +488,15 @@ const dateError = ref(null);
 
 const editablePackages = computed(() => session.value?.data?.packages || []);
 
+/* Watch route query for backward navigation (Ritiro -> Servizi) */
+watch(() => route.query.step, (newStep, oldStep) => {
+	if (oldStep === 'ritiro' && !newStep) {
+		showAddressFields.value = false;
+	} else if (newStep === 'ritiro') {
+		showAddressFields.value = true;
+	}
+});
+
 const openAddressFields = () => {
 	if (!services.value.date) {
 		dateError.value = 'Seleziona un giorno di ritiro prima di procedere.';
@@ -731,32 +749,58 @@ const continueToCart = async () => {
 						</p>
 					</template> -->
 					<template #body>
-						<!-- <UButton
-							label=""
-							class="active:bg-transparent bg-transparent cursor-pointer hover:bg-transparent w-[47px] h-[37px] bg-[url(/img/quote/second-step/close.png)] absolute right-[30px] top-[40px]"
-							@click="myClose" /> -->
+						<p v-if="selectedService?.description" class="text-[#252B42] text-[0.9375rem] leading-[24px] tracking-[0.1px] text-center mb-[20px]">{{ selectedService.description }}</p>
+
+						<!-- Contrassegno -->
+						<div v-if="selectedService?.index === 1" class="space-y-[20px]">
+							<div>
+								<label for="contrassegno_importo" class="label-popup">Importo</label>
+								<input type="text" id="contrassegno_importo" class="input-popup bg-white" placeholder="0.00€" />
+							</div>
+							<div>
+								<label for="contrassegno_incasso" class="label-popup">Modalità di incasso</label>
+								<select id="contrassegno_incasso" class="input-popup bg-white">
+									<option value="">Seleziona modalità</option>
+									<option value="contanti">Contanti</option>
+									<option value="assegno">Assegno bancario</option>
+									<option value="assegno_circolare">Assegno circolare</option>
+								</select>
+							</div>
+							<div>
+								<label for="contrassegno_rimborso" class="label-popup">Modalità di rimborso</label>
+								<select id="contrassegno_rimborso" class="input-popup bg-white">
+									<option value="">Seleziona modalità</option>
+									<option value="bonifico">Bonifico bancario</option>
+									<option value="assegno">Assegno</option>
+								</select>
+							</div>
+							<div>
+								<label for="contrassegno_dettaglio" class="label-popup">Dettaglio modalità rimborso</label>
+								<input type="text" id="contrassegno_dettaglio" class="input-popup bg-white" placeholder="IBAN o dettagli rimborso" />
+							</div>
+						</div>
 
 						<!-- Assicurazione -->
 						<div v-if="selectedService?.index === 2">
 							<ul>
 								<li v-for="(pack, indexPopup) in session?.data?.packages" :key="indexPopup" class="mt-[20px] first:mt-0">
-									<label for="pack_value" class="label-popup">
+									<label :for="'pack_value_'+indexPopup" class="label-popup">
 										Valore collo #{{ indexPopup + 1 }} - {{ pack.weight }} Kg - ({{ pack.first_size }} x {{ pack.second_size }} x {{ pack.third_size }} ) cm
 									</label>
-									<input type="text" name="" id="pack_value" class="input-popup" placeholder="0.00" />
+									<input type="text" :id="'pack_value_'+indexPopup" class="input-popup bg-white" placeholder="0.00" />
 								</li>
 							</ul>
 						</div>
 
 						<div v-if="selectedService?.index === 4" class="">
 							<label for="pallet" class="label-popup">Pallet</label>
-							<input type="text" name="" id="pallet" class="input-popup" />
+							<input type="text" name="" id="pallet" class="input-popup bg-white" />
 						</div>
 
 						<div v-if="selectedService?.index === 5" class="flex items-start justify-between pb-[20px]">
 							<div v-for="(day, dayIndex) in days" :key="dayIndex" class="w-[94px]">
-								<label for="day" class="block text-black text-[1.25rem] tracking-[-0.48px] font-medium text-center">{{ day }}</label>
-								<select name="" id="day" class="border-[0.2px] border-[#ABABAB] rounded-[30px] h-[36px] leading-[36px] pl-[18px] w-full mt-[10px] text-[0.875rem] font-medium text-[#767676]">
+								<label :for="'day_'+dayIndex" class="block text-black text-[1.25rem] tracking-[-0.48px] font-medium text-center">{{ day }}</label>
+								<select :id="'day_'+dayIndex" class="border-[0.2px] border-[#ABABAB] rounded-[30px] h-[36px] leading-[36px] pl-[18px] w-full mt-[10px] text-[0.875rem] font-medium text-[#767676] bg-white">
 									<option value="">No</option>
 									<option value="">Si</option>
 								</select>
@@ -764,8 +808,8 @@ const continueToCart = async () => {
 						</div>
 
 						<div v-if="selectedService?.index === 6" class="">
-							<label for="telephone_number" class="label-popup">Telefono</label>
-							<input type="tel" name="" id="telephone_number" class="input-popup" />
+							<label for="telephone_number_popup" class="label-popup">Telefono</label>
+							<input type="tel" id="telephone_number_popup" class="input-popup bg-white" />
 						</div>
 					</template>
 
@@ -876,51 +920,53 @@ const continueToCart = async () => {
 
 							<!-- PARTENZA -->
 							<template v-if="showAddressFields">
-							<!-- Default data button -->
-							<div v-if="isAuthenticated" class="mt-[20px] mb-[10px] relative">
-								<button type="button" @click="loadSavedConfigs" :disabled="loadingConfigs" class="inline-flex items-center gap-[8px] px-[18px] py-[10px] bg-[#095866] text-white rounded-[10px] text-[0.875rem] font-semibold hover:bg-[#0a7a8c] transition cursor-pointer disabled:opacity-60">
-									<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-									{{ loadingConfigs ? 'Caricamento...' : 'Immetti dati default' }}
-								</button>
-								<div v-if="showDefaultDropdown && savedConfigs.length > 0" class="absolute z-50 top-full left-0 mt-[4px] bg-white border border-[#D0D0D0] rounded-[12px] shadow-xl max-h-[300px] overflow-y-auto w-[400px]">
-									<div class="p-[12px] border-b border-[#F0F0F0] text-[0.8125rem] font-bold text-[#252B42]">Seleziona una spedizione configurata</div>
-									<div v-for="item in savedConfigs" :key="item.id" @click="applyConfig(item)" class="px-[14px] py-[12px] cursor-pointer hover:bg-[#f0fafb] border-b border-[#F0F0F0] last:border-0 transition-colors">
-										<div class="flex items-center gap-[8px]">
-											<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#996D47" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-											<span class="text-[0.875rem] font-semibold text-[#252B42]">{{ item.origin_address?.city || 'Partenza' }}</span>
-											<span class="text-[#737373]">&rarr;</span>
-											<span class="text-[0.875rem] font-semibold text-[#252B42]">{{ item.destination_address?.city || 'Destinazione' }}</span>
-										</div>
-										<p class="text-[0.75rem] text-[#737373] mt-[2px]">{{ item.origin_address?.name || '' }} - {{ item.destination_address?.name || '' }}</p>
-									</div>
-								</div>
-								<div v-if="showDefaultDropdown && savedConfigs.length === 0 && !loadingConfigs" class="absolute z-50 top-full left-0 mt-[4px] bg-white border border-[#D0D0D0] rounded-[12px] shadow-xl p-[20px] w-[300px]">
-									<p class="text-[0.875rem] text-[#737373]">Nessuna spedizione configurata salvata.</p>
-									<NuxtLink to="/account/spedizioni-configurate" class="text-[0.8125rem] text-[#095866] hover:underline font-semibold mt-[8px] inline-block">Vai a spedizioni configurate</NuxtLink>
-								</div>
-							</div>
-
 							<div class="bg-[#E4E4E4] rounded-[20px] text-[#252B42] mt-[20px] pl-[40px] pr-[40px] pt-[35px] pb-[43px]">
-								<div class="flex items-center justify-between mb-[39px]">
+								<div class="flex items-center justify-between mb-[39px] flex-wrap gap-[10px]">
 									<h2 class="font-bold text-[1.125rem] tracking-[0.1px]">
 										Partenza
 									</h2>
-									<div v-if="isAuthenticated" class="relative">
-										<button type="button" @click="toggleAddressSelector('origin')" class="inline-flex items-center gap-[6px] px-[14px] py-[8px] bg-[#095866] text-white rounded-[8px] text-[0.8125rem] font-semibold hover:bg-[#0a7a8c] transition cursor-pointer">
-											<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-											Indirizzi salvati
-										</button>
-										<div v-if="showOriginAddressSelector" class="absolute z-50 top-full right-0 mt-[4px] bg-white border border-[#D0D0D0] rounded-[12px] shadow-xl max-h-[250px] overflow-y-auto w-[320px]">
-											<div v-if="loadingSavedAddresses" class="p-[16px] text-center text-[0.8125rem] text-[#737373]">Caricamento...</div>
-											<template v-else-if="savedAddresses.length > 0">
-												<div v-for="addr in savedAddresses" :key="addr.id" @click="applySavedAddress(addr, 'origin')" class="px-[14px] py-[10px] cursor-pointer hover:bg-[#f0fafb] border-b border-[#F0F0F0] last:border-0 transition-colors">
-													<p class="text-[0.875rem] font-semibold text-[#252B42]">{{ addr.name }}</p>
-													<p class="text-[0.75rem] text-[#737373]">{{ addr.address }} {{ addr.address_number }}, {{ addr.postal_code }} {{ addr.city }}</p>
+									<div v-if="isAuthenticated" class="flex items-center gap-[10px]">
+										<!-- Immetti dati default -->
+										<div class="relative">
+											<button type="button" @click="loadSavedConfigs" :disabled="loadingConfigs" class="inline-flex items-center gap-[6px] px-[14px] py-[8px] bg-[#996D47] text-white rounded-[8px] text-[0.8125rem] font-semibold hover:bg-[#7d5939] transition cursor-pointer disabled:opacity-60">
+												<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+												{{ loadingConfigs ? '...' : 'Dati default' }}
+											</button>
+											<div v-if="showDefaultDropdown && savedConfigs.length > 0" class="absolute z-50 top-full right-0 mt-[4px] bg-white border border-[#D0D0D0] rounded-[12px] shadow-xl max-h-[300px] overflow-y-auto w-[400px]">
+												<div class="p-[12px] border-b border-[#F0F0F0] text-[0.8125rem] font-bold text-[#252B42]">Seleziona una spedizione configurata</div>
+												<div v-for="item in savedConfigs" :key="item.id" @click="applyConfig(item)" class="px-[14px] py-[12px] cursor-pointer hover:bg-[#f0fafb] border-b border-[#F0F0F0] last:border-0 transition-colors">
+													<div class="flex items-center gap-[8px]">
+														<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#996D47" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+														<span class="text-[0.875rem] font-semibold text-[#252B42]">{{ item.origin_address?.city || 'Partenza' }}</span>
+														<span class="text-[#737373]">&rarr;</span>
+														<span class="text-[0.875rem] font-semibold text-[#252B42]">{{ item.destination_address?.city || 'Destinazione' }}</span>
+													</div>
+													<p class="text-[0.75rem] text-[#737373] mt-[2px]">{{ item.origin_address?.name || '' }} - {{ item.destination_address?.name || '' }}</p>
 												</div>
-											</template>
-											<div v-else class="p-[16px]">
-												<p class="text-[0.8125rem] text-[#737373]">Nessun indirizzo salvato.</p>
-												<NuxtLink to="/account/indirizzi" class="text-[0.8125rem] text-[#095866] hover:underline font-semibold mt-[4px] inline-block">Aggiungi indirizzo</NuxtLink>
+											</div>
+											<div v-if="showDefaultDropdown && savedConfigs.length === 0 && !loadingConfigs" class="absolute z-50 top-full right-0 mt-[4px] bg-white border border-[#D0D0D0] rounded-[12px] shadow-xl p-[20px] w-[300px]">
+												<p class="text-[0.875rem] text-[#737373]">Nessuna spedizione configurata salvata.</p>
+												<NuxtLink to="/account/spedizioni-configurate" class="text-[0.8125rem] text-[#095866] hover:underline font-semibold mt-[8px] inline-block">Vai a spedizioni configurate</NuxtLink>
+											</div>
+										</div>
+										<!-- Indirizzi salvati -->
+										<div class="relative">
+											<button type="button" @click="toggleAddressSelector('origin')" class="inline-flex items-center gap-[6px] px-[14px] py-[8px] bg-[#095866] text-white rounded-[8px] text-[0.8125rem] font-semibold hover:bg-[#0a7a8c] transition cursor-pointer">
+												<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+												Indirizzi salvati
+											</button>
+											<div v-if="showOriginAddressSelector" class="absolute z-50 top-full right-0 mt-[4px] bg-white border border-[#D0D0D0] rounded-[12px] shadow-xl max-h-[250px] overflow-y-auto w-[320px]">
+												<div v-if="loadingSavedAddresses" class="p-[16px] text-center text-[0.8125rem] text-[#737373]">Caricamento...</div>
+												<template v-else-if="savedAddresses.length > 0">
+													<div v-for="addr in savedAddresses" :key="addr.id" @click="applySavedAddress(addr, 'origin')" class="px-[14px] py-[10px] cursor-pointer hover:bg-[#f0fafb] border-b border-[#F0F0F0] last:border-0 transition-colors">
+														<p class="text-[0.875rem] font-semibold text-[#252B42]">{{ addr.name }}</p>
+														<p class="text-[0.75rem] text-[#737373]">{{ addr.address }} {{ addr.address_number }}, {{ addr.postal_code }} {{ addr.city }}</p>
+													</div>
+												</template>
+												<div v-else class="p-[16px]">
+													<p class="text-[0.8125rem] text-[#737373]">Nessun indirizzo salvato.</p>
+													<NuxtLink to="/account/indirizzi" class="text-[0.8125rem] text-[#095866] hover:underline font-semibold mt-[4px] inline-block">Aggiungi indirizzo</NuxtLink>
+												</div>
 											</div>
 										</div>
 									</div>
@@ -1123,6 +1169,7 @@ const continueToCart = async () => {
 					<div class="border-l-[0.5px] border-[rgba(0,0,0,0.1)] min-h-[600px] mt-[30px] pl-[30px] pt-[50px] shrink-0">
 						<div class="w-[250px] flex flex-col gap-y-[30px]">
 							<div class="bg-[#E4E4E4] rounded-[20px] p-[35px_21px] text-[#252B42] font-bold text-[0.6875rem] tracking-[0.1px]">
+								<h4 class="text-center font-bold mb-[12px]">Indirizzi</h4>
 								<div>
 									<div class="before:content-[''] before:inline-block before:bg-[url(/img/quote/second-step/origin.png)] before:w-[16px] before:h-[14px] before:mr-[10px] flex items-center">
 										<div v-if="!isOriginDetailsEdited">{{ session?.data?.shipment_details?.origin_city }} - {{ session?.data?.shipment_details?.origin_postal_code }} - Italia</div>
@@ -1211,8 +1258,9 @@ const continueToCart = async () => {
 
 								<div>
 									<ul class="font-semibold" v-if="userStore.servicesArray.length > 0">
-										<li v-for="service in userStore.servicesArray" :key="service" class="mt-[5px] first:mt-0">
-											{{ service }}
+										<li v-for="(service, sIdx) in userStore.servicesArray" :key="service" class="mt-[5px] first:mt-0 flex items-center justify-between">
+											<span>{{ service }}</span>
+											<button type="button" @click="removeServiceFromSidebar(sIdx)" class="text-red-400 hover:text-red-600 ml-[8px] cursor-pointer text-[0.75rem] font-bold" title="Rimuovi">X</button>
 										</li>
 									</ul>
 									<p class="text-center" v-else>Non hai ancora scelto un servizio</p>

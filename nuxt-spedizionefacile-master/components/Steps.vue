@@ -5,7 +5,7 @@ const props = defineProps({
 
 const emit = defineEmits(['navigate']);
 
-const steps = ["Misure", "Servizi", "Ritiro", "Conferma", "Pagamento"];
+const steps = ["Misure", "Servizi", "Ritiro", "Conferma", "Carrello", "Pagamento"];
 
 const route = useRoute();
 
@@ -15,8 +15,8 @@ const activeStep = computed(() => {
 	if (route.name === 'index' || route.path === '/') return 0;
 	if (route.path.includes('la-tua-spedizione')) return 1;
 	if (route.path.includes('riepilogo')) return 3;
-	if (route.path.includes('carrello')) return 3;
-	if (route.path.includes('checkout')) return 4;
+	if (route.path.includes('carrello')) return 4;
+	if (route.path.includes('checkout')) return 5;
 	return 0;
 });
 
@@ -29,7 +29,8 @@ const stepRoutes = {
 	1: '/la-tua-spedizione/2',
 	2: '/la-tua-spedizione/2?step=ritiro',
 	3: '/riepilogo',
-	4: '/checkout',
+	4: '/carrello',
+	5: '/checkout',
 };
 
 const handleClick = (index) => {

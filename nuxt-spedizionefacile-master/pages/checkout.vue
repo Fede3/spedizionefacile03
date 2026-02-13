@@ -380,7 +380,7 @@ const processPayment = async () => {
 	<section class="min-h-[600px] py-[30px] desktop:py-[50px] bg-[#F0F0F0]">
 		<div class="my-container max-w-[1100px]">
 			<!-- Steps -->
-			<Steps :current-step="4" />
+			<Steps :current-step="5" />
 
 			<!-- Success -->
 			<div v-if="paymentSuccess" class="max-w-[600px] mx-auto text-center py-[60px]">

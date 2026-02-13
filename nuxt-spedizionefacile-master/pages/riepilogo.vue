@@ -15,10 +15,10 @@ if (!shipment.value) {
 	navigateTo('/la-tua-spedizione/2');
 }
 
-const formatPrice = (cents) => {
-	if (!cents && cents !== 0) return '0,00€';
-	const euros = Number(cents) / 100;
-	return euros.toFixed(2).replace('.', ',') + '€';
+const formatPrice = (price) => {
+	if (!price && price !== 0) return '0,00€';
+	const num = Number(price);
+	return num.toFixed(2).replace('.', ',') + '€';
 };
 
 const totalPrice = computed(() => {
@@ -105,7 +105,12 @@ const goBack = () => {
 
 				<!-- Colli -->
 				<div class="bg-[#E4E4E4] rounded-[20px] p-[28px_32px] mb-[16px]">
-					<h2 class="text-[1.125rem] font-bold text-[#252B42] mb-[16px]">Colli</h2>
+					<div class="flex items-center justify-between mb-[16px]">
+						<h2 class="text-[1.125rem] font-bold text-[#252B42]">Colli</h2>
+						<NuxtLink to="/#preventivo" class="text-[#095866] hover:text-[#0a7a8c] transition" title="Modifica colli">
+							<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+						</NuxtLink>
+					</div>
 					<div class="space-y-[10px]">
 						<div v-for="(pkg, idx) in shipment.packages" :key="idx" class="bg-white rounded-[12px] p-[16px] flex items-center justify-between">
 							<div class="flex items-center gap-[16px]">
@@ -126,10 +131,15 @@ const goBack = () => {
 				<div class="grid grid-cols-1 desktop:grid-cols-2 gap-[16px] mb-[16px]">
 					<!-- Partenza -->
 					<div class="bg-[#E4E4E4] rounded-[20px] p-[28px_32px]">
-						<h2 class="text-[1.125rem] font-bold text-[#252B42] mb-[16px] flex items-center gap-[8px]">
-							<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#E44203" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-							Partenza
-						</h2>
+						<div class="flex items-center justify-between mb-[16px]">
+							<h2 class="text-[1.125rem] font-bold text-[#252B42] flex items-center gap-[8px]">
+								<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#E44203" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+								Partenza
+							</h2>
+							<NuxtLink to="/la-tua-spedizione/2?step=ritiro" class="text-[#095866] hover:text-[#0a7a8c] transition" title="Modifica partenza">
+								<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+							</NuxtLink>
+						</div>
 						<div class="text-[0.875rem] text-[#252B42] space-y-[4px]">
 							<p class="font-semibold">{{ shipment.origin_address?.name }}</p>
 							<p>{{ shipment.origin_address?.address }} {{ shipment.origin_address?.address_number }}</p>
@@ -141,10 +151,15 @@ const goBack = () => {
 
 					<!-- Destinazione -->
 					<div class="bg-[#E4E4E4] rounded-[20px] p-[28px_32px]">
-						<h2 class="text-[1.125rem] font-bold text-[#252B42] mb-[16px] flex items-center gap-[8px]">
-							<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#095866" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-							Destinazione
-						</h2>
+						<div class="flex items-center justify-between mb-[16px]">
+							<h2 class="text-[1.125rem] font-bold text-[#252B42] flex items-center gap-[8px]">
+								<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#095866" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+								Destinazione
+							</h2>
+							<NuxtLink to="/la-tua-spedizione/2?step=ritiro" class="text-[#095866] hover:text-[#0a7a8c] transition" title="Modifica destinazione">
+								<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+							</NuxtLink>
+						</div>
 						<div class="text-[0.875rem] text-[#252B42] space-y-[4px]">
 							<p class="font-semibold">{{ shipment.destination_address?.name }}</p>
 							<p>{{ shipment.destination_address?.address }} {{ shipment.destination_address?.address_number }}</p>
@@ -157,7 +172,12 @@ const goBack = () => {
 
 				<!-- Servizi + Data -->
 				<div class="bg-[#E4E4E4] rounded-[20px] p-[28px_32px] mb-[16px]">
-					<h2 class="text-[1.125rem] font-bold text-[#252B42] mb-[12px]">Servizi e data ritiro</h2>
+					<div class="flex items-center justify-between mb-[12px]">
+						<h2 class="text-[1.125rem] font-bold text-[#252B42]">Servizi e data ritiro</h2>
+						<NuxtLink to="/la-tua-spedizione/2" class="text-[#095866] hover:text-[#0a7a8c] transition" title="Modifica servizi">
+							<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+						</NuxtLink>
+					</div>
 					<div class="flex flex-wrap gap-[24px]">
 						<div>
 							<p class="text-[0.75rem] font-bold text-[#737373] uppercase tracking-wider mb-[4px]">Servizi</p>
