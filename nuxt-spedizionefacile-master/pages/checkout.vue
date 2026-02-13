@@ -55,7 +55,7 @@ const formatPrice = (cents) => {
 const getTotal = computed(() => cart.value?.meta?.total || '0,00€');
 
 const getNumberTotal = computed(() => {
-	return Number(String(getTotal.value).replace("€", "").replace(",", ".").trim());
+	return Number(String(getTotal.value).replace(/[€\s\u00A0]/g, "").replace(",", "."));
 });
 
 const totalPackages = computed(() => {
@@ -223,7 +223,6 @@ const canPay = computed(() => {
 		return cardComplete.value;
 	}
 	if (paymentMethod.value === 'bonifico') return true;
-	if (paymentMethod.value === 'paypal') return true;
 	if (paymentMethod.value === 'wallet') return walletSufficient.value;
 	return false;
 });
@@ -597,7 +596,7 @@ const processPayment = async () => {
 
 					<div v-if="paymentMethod === 'paypal'" class="bg-white rounded-[10px] p-[16px] text-[0.8125rem] text-[#737373] leading-[1.6]">
 						<p class="font-semibold text-[#252B42] mb-[6px]">Pagamento tramite PayPal</p>
-						<p>Verrai reindirizzato a PayPal per completare il pagamento in sicurezza.</p>
+						<p>Il pagamento tramite PayPal sarà disponibile a breve. Seleziona un altro metodo di pagamento per procedere.</p>
 					</div>
 
 					<div v-if="paymentMethod === 'wallet'" class="bg-white rounded-[10px] p-[16px] text-[0.8125rem] text-[#737373] leading-[1.6]">

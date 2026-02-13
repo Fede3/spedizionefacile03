@@ -112,6 +112,7 @@ Route::group(['prefix' => 'api'], function() {
         Route::delete('empty-cart', [CartController::class, 'emptyCart']);
 
         Route::apiResource('cart', CartController::class);
+        Route::patch('cart/{id}/quantity', [CartController::class, 'updateQuantity']);
         
         Route::apiResource('packages', PackageController::class);
 

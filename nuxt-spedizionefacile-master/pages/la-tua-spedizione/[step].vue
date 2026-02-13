@@ -93,14 +93,6 @@ const servicesList = ref([
 		description: "Recapito in ufficio postale, dentro una casella dedicata al destinatario.",
 		isSelected: false,
 	},
-	{
-		img: "prova.png",
-		width: 74,
-		height: 55,
-		name: "Prova",
-		description: "Prova",
-		isSelected: false,
-	},
 ]);
 
 const open = ref(false);
@@ -517,9 +509,6 @@ const goToCart = async () => {
 	isSubmitting.value = true;
 	submitError.value = null;
 	try {
-		await sanctumClient(isAuthenticated.value ? "/api/empty-cart" : "/api/empty-guest-cart", {
-			method: "DELETE",
-		});
 		const result = await sanctumClient(endpoint.value, {
 			method: "POST",
 			body: pendingPayload.value,
@@ -545,6 +534,10 @@ const goToCart = async () => {
 
 const goToSavedShipments = async () => {
 	if (!pendingPayload.value) return;
+	if (!isAuthenticated.value) {
+		submitError.value = "Devi effettuare il login per salvare le spedizioni configurate.";
+		return;
+	}
 	isSubmitting.value = true;
 	submitError.value = null;
 	try {

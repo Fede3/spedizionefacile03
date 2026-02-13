@@ -30,9 +30,6 @@ const goToCart = async () => {
 	isSubmitting.value = true;
 	submitError.value = null;
 	try {
-		await sanctumClient(isAuthenticated.value ? "/api/empty-cart" : "/api/empty-guest-cart", {
-			method: "DELETE",
-		});
 		await sanctumClient(endpoint.value, {
 			method: "POST",
 			body: shipment.value,
@@ -51,6 +48,10 @@ const goToCart = async () => {
 
 const goToSavedShipments = async () => {
 	if (!shipment.value) return;
+	if (!isAuthenticated.value) {
+		submitError.value = "Devi effettuare il login per salvare le spedizioni configurate.";
+		return;
+	}
 	isSubmitting.value = true;
 	submitError.value = null;
 	try {

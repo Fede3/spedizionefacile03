@@ -26,11 +26,9 @@ const updatePassword = async () => {
 	isLoading.value = true;
 
 	try {
-		const response = await $fetch(`${useRuntimeConfig().public.apiBase}/update-password`, {
+		const sanctum = useSanctumClient();
+		const response = await sanctum("/api/update-password", {
 			method: "POST",
-			headers: {
-				"ngrok-skip-browser-warning": "skip-browser-warning",
-			},
 			body: data.value,
 		});
 

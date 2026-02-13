@@ -13,11 +13,9 @@ const sendEmailResetPassword = async () => {
 	isLoading.value = true;
 
 	try {
-		const response = await $fetch(`${useRuntimeConfig().public.apiBase}/forgot-password`, {
+		const sanctum = useSanctumClient();
+		const response = await sanctum("/api/forgot-password", {
 			method: "POST",
-			headers: {
-				"ngrok-skip-browser-warning": "skip-browser-warning",
-			},
 			body: resetPassword.value,
 		});
 

@@ -73,11 +73,25 @@ const emptyCart = async () => {
 	}
 };
 
-// Price helper
-const formatPrice = (price) => {
-	if (!price && price !== 0) return '0,00€';
-	const num = Number(price);
+// Price helper — single_price is stored in cents (backend multiplies by 100)
+const formatPrice = (cents) => {
+	if (!cents && cents !== 0) return '0,00€';
+	const num = Number(cents) / 100;
 	return num.toFixed(2).replace('.', ',') + '€';
+};
+
+// Quantity update
+const updateQuantity = async (itemId, newQty) => {
+	if (newQty < 1) return;
+	try {
+		await sanctum(`/api/cart/${itemId}/quantity`, {
+			method: 'PATCH',
+			body: { quantity: newQty },
+		});
+		await refresh();
+	} catch (e) {
+		console.error('Errore aggiornamento quantità:', e);
+	}
 };
 
 const formatDate = (item) => {
@@ -108,7 +122,7 @@ const applyCoupon = async () => {
 
 	try {
 		const total = cart.value?.meta?.total;
-		const numericTotal = Number(String(total).replace('€', '').replace(',', '.').trim());
+		const numericTotal = Number(String(total).replace(/[€\s\u00A0]/g, '').replace(',', '.'));
 
 		const data = await sanctum('/api/calculate-coupon', {
 			method: 'POST',
@@ -244,7 +258,9 @@ const displayTotal = computed(() => {
 							<span class="text-[0.8125rem]">{{ item.services?.service_type?.split(',')[0]?.trim() || 'BRT' }}</span>
 							<!-- Colli -->
 							<span class="flex items-center gap-[4px] text-[0.8125rem]">
-								{{ item.quantity || 1 }} x
+								<button type="button" @click="updateQuantity(item.id, (item.quantity || 1) - 1)" :disabled="(item.quantity || 1) <= 1" class="w-[20px] h-[20px] flex items-center justify-center rounded-full bg-[#E9EBEC] text-[#252B42] text-[0.75rem] font-bold hover:bg-[#D0D0D0] disabled:opacity-30 cursor-pointer disabled:cursor-not-allowed">-</button>
+								<span class="min-w-[16px] text-center font-semibold">{{ item.quantity || 1 }}</span>
+								<button type="button" @click="updateQuantity(item.id, (item.quantity || 1) + 1)" class="w-[20px] h-[20px] flex items-center justify-center rounded-full bg-[#E9EBEC] text-[#252B42] text-[0.75rem] font-bold hover:bg-[#D0D0D0] cursor-pointer">+</button>
 								<NuxtImg :src="getPackageIcon(item)" alt="" width="20" height="20" />
 							</span>
 							<!-- Indirizzi -->
@@ -275,11 +291,16 @@ const displayTotal = computed(() => {
 							<div class="flex items-center justify-between mb-[8px]">
 								<div>
 									<p class="text-[0.875rem] font-semibold text-[#252B42]">#{{ idx + 1 }} {{ item.origin_address?.city || 'Partenza' }} &rarr; {{ item.destination_address?.city || 'Destinazione' }}</p>
-									<p class="text-[0.75rem] text-[#737373]">{{ item.quantity }}x &ndash; {{ item.weight }} kg</p>
+									<p class="text-[0.75rem] text-[#737373]">{{ item.weight }} kg</p>
 								</div>
 								<span class="text-[0.9375rem] font-bold text-[#252B42]">{{ formatPrice(item.single_price) }}</span>
 							</div>
-							<div class="flex gap-[12px] justify-end">
+							<div class="flex items-center justify-between">
+								<div class="flex items-center gap-[8px]">
+									<button type="button" @click="updateQuantity(item.id, (item.quantity || 1) - 1)" :disabled="(item.quantity || 1) <= 1" class="w-[28px] h-[28px] flex items-center justify-center rounded-full bg-[#E9EBEC] text-[#252B42] text-[0.875rem] font-bold hover:bg-[#D0D0D0] disabled:opacity-30 cursor-pointer disabled:cursor-not-allowed">-</button>
+									<span class="min-w-[24px] text-center font-semibold text-[0.875rem] text-[#252B42]">{{ item.quantity || 1 }}x</span>
+									<button type="button" @click="updateQuantity(item.id, (item.quantity || 1) + 1)" class="w-[28px] h-[28px] flex items-center justify-center rounded-full bg-[#E9EBEC] text-[#252B42] text-[0.875rem] font-bold hover:bg-[#D0D0D0] cursor-pointer">+</button>
+								</div>
 								<button type="button" @click="askDelete(item.id)" class="text-[0.75rem] text-red-500 font-semibold hover:underline cursor-pointer">Elimina</button>
 							</div>
 						</div>

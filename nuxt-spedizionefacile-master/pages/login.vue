@@ -4,8 +4,8 @@ import { FetchError } from "ofetch";
 const { login, refreshIdentity } = useSanctumAuth();
 
 const credentials = ref({
-	email: "vale@example.com",
-	password: "C1a!0.Gg",
+	email: "",
+	password: "",
 	remember: false,
 });
 

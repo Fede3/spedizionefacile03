@@ -37,8 +37,46 @@ class SavedShipmentController extends Controller
     public function store(PackageStoreRequest $request)
     {
         $data = $request->validated();
+        $userId = auth()->id();
 
-        $outPackages = DB::transaction(function () use ($data) {
+        // Check for duplicate saved shipments
+        $savedIds = DB::table('saved_shipments')
+            ->where('user_id', $userId)
+            ->pluck('package_id');
+
+        $existingSaved = Package::with(['originAddress', 'destinationAddress', 'service'])
+            ->whereIn('id', $savedIds)
+            ->get();
+
+        // Check each incoming package against existing saved shipments
+        foreach ($data['packages'] as $packageData) {
+            $isDuplicate = $existingSaved->contains(function ($existing) use ($packageData, $data) {
+                return $existing->package_type === $packageData['package_type']
+                    && (string) $existing->weight === (string) $packageData['weight']
+                    && (string) $existing->first_size === (string) $packageData['first_size']
+                    && (string) $existing->second_size === (string) $packageData['second_size']
+                    && (string) $existing->third_size === (string) $packageData['third_size']
+                    && (int) $existing->quantity === (int) $packageData['quantity']
+                    && $existing->originAddress
+                    && $existing->originAddress->city === ($data['origin_address']['city'] ?? '')
+                    && $existing->originAddress->postal_code === ($data['origin_address']['postal_code'] ?? '')
+                    && $existing->originAddress->name === ($data['origin_address']['name'] ?? '')
+                    && $existing->originAddress->address === ($data['origin_address']['address'] ?? '')
+                    && $existing->destinationAddress
+                    && $existing->destinationAddress->city === ($data['destination_address']['city'] ?? '')
+                    && $existing->destinationAddress->postal_code === ($data['destination_address']['postal_code'] ?? '')
+                    && $existing->destinationAddress->name === ($data['destination_address']['name'] ?? '')
+                    && $existing->destinationAddress->address === ($data['destination_address']['address'] ?? '');
+            });
+
+            if ($isDuplicate) {
+                return response()->json([
+                    'message' => 'Spedizione già configurata. Modifica almeno un dato per salvarla come nuova configurazione.',
+                ], 422);
+            }
+        }
+
+        $outPackages = DB::transaction(function () use ($data, $userId) {
             $origin = PackageAddress::create($data['origin_address']);
             $destination = PackageAddress::create($data['destination_address']);
 
@@ -50,7 +88,6 @@ class SavedShipmentController extends Controller
 
             $services = Service::create($servicesData);
 
-            $authId = auth()->id();
             $packages = [];
 
             foreach ($data['packages'] as $packageData) {
@@ -63,12 +100,12 @@ class SavedShipmentController extends Controller
                     'third_size' => $packageData['third_size'],
                     'weight_price' => $packageData['weight_price'] ?? null,
                     'volume_price' => $packageData['volume_price'] ?? null,
-                    'single_price' => $packageData['single_price'] * 100 ?? null,
+                    'single_price' => (int) round(($packageData['single_price'] ?? 0) * 100),
                     'origin_address_id' => $origin->id,
                     'destination_address_id' => $destination->id,
                     'service_id' => $services->id,
-                    'user_id' => $authId ?: null,
-                    'session_id' => $authId ? null : session()->getId(),
+                    'user_id' => $userId ?: null,
+                    'session_id' => $userId ? null : session()->getId(),
                 ]);
             }
 
@@ -77,7 +114,7 @@ class SavedShipmentController extends Controller
 
         foreach ($outPackages as $package) {
             DB::table('saved_shipments')->insert([
-                'user_id' => auth()->id(),
+                'user_id' => $userId,
                 'package_id' => $package->id,
                 'created_at' => now(),
                 'updated_at' => now(),
