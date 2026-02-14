@@ -15,10 +15,12 @@ const props = defineProps({
 	<!-- Homepage -->
 	<div class="mt-[54px] desktop-xl:mt-[56px] relative z-2" v-if="route.path === '/'">
 		<div class="text-[#222222] tablet:max-w-[770px] tablet:mx-auto desktop:mx-0">
-			<h1>
-				<span
-					class="desktop:text-[4.8125rem] desktop-xl:text-[6.25rem] text-[2.5rem] font-bold desktop:font-medium tracking-[-1px] desktop:leading-[87px] desktop-xl:leading-[105px] leading-[58px] block desktop:w-[600px] desktop-xl:w-[785px] w-[300px] desktop-xl:font-bold">
-					Spedisci in Italia a partire da
+			<h1 class="leading-tight">
+				<span class="block text-[2rem] tablet:text-[3rem] desktop:text-[4.8125rem] desktop-xl:text-[6.25rem] font-bold tracking-[-1px]">
+					Spedisci in Italia
+				</span>
+				<span class="block text-[1.375rem] tablet:text-[2rem] desktop:text-[3rem] desktop-xl:text-[3.75rem] font-semibold tracking-[-0.5px] text-[#444] mt-[4px] desktop:mt-[8px]">
+					a partire da
 				</span>
 				<span
 					:style="
@@ -26,11 +28,11 @@ const props = defineProps({
 							? { '--admin-image': `url(${data?.image_url})` }
 							: { '--admin-image': `url(/img/homepage/trasporti-img.png)` }
 					"
-					class="admin-pill">
+					class="admin-pill mt-[12px] desktop:mt-[16px]">
 					6,88 €
 				</span>
 			</h1>
-			<p class="desktop:text-[2.8675rem] desktop-xl:text-[2.5rem] tracking-[-0.4px] font-extrabold tablet:ml-[50px] desktop:ml-0">IVA e ritiro incluso</p>
+			<p class="text-[1.25rem] tablet:text-[1.5rem] desktop:text-[2rem] desktop-xl:text-[2.5rem] tracking-[-0.4px] font-extrabold mt-[16px] desktop:mt-[24px]">IVA e ritiro incluso</p>
 		</div>
 	</div>
 
@@ -132,22 +134,20 @@ const props = defineProps({
 </template>
 
 <style scoped>
+/* Mobile base */
 .admin-pill {
 	position: relative;
-	display: block;
-	text-align: center;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
 	font-weight: 800;
-	color: #eee;
+	color: #fff;
 	background: #e44203;
-
-	width: 144px;
-	height: 57px;
-	line-height: 57px;
-	font-size: 2rem;
+	width: 160px;
+	height: 64px;
+	font-size: 2.25rem;
 	letter-spacing: -1.1px;
-
-	border-radius: 76px;
-	margin: 14px 0 6px;
+	border-radius: 80px;
 }
 
 .admin-pill::after {
@@ -157,27 +157,28 @@ const props = defineProps({
 	background-repeat: no-repeat;
 	background-position: right;
 	background-size: cover;
-
-	width: 490px;
-	height: 275px;
+	width: 320px;
+	height: 190px;
 	border-radius: 20px 20px 0 0;
-
-	transform: scaleX(-1);
-	margin: 7px 0 0 40px;
+	left: 150px;
+	top: -10px;
 	z-index: 20;
 }
 
 /* Tablet */
 @media (min-width: 45rem) {
 	.admin-pill {
-		margin-left: 50px;
+		width: 220px;
+		height: 84px;
+		font-size: 3rem;
+		margin-left: 0;
 	}
 
 	.admin-pill::after {
-		width: 550px;
-		height: 306px;
-		margin-left: 70px;
-		margin-top: -60px;
+		width: 440px;
+		height: 260px;
+		left: 200px;
+		top: -50px;
 	}
 }
 
@@ -186,16 +187,14 @@ const props = defineProps({
 	.admin-pill {
 		width: 354px;
 		height: 121px;
-		line-height: 121px;
 		font-size: 5rem;
-		margin-left: 0;
 	}
 
 	.admin-pill::after {
-		width: 790px;
-		height: 490px;
-		margin-left: 120px;
-		top: -80px;
+		width: 720px;
+		height: 430px;
+		left: 320px;
+		top: -90px;
 		border-radius: 48px 48px 0 0;
 	}
 }
@@ -205,19 +204,16 @@ const props = defineProps({
 	.admin-pill {
 		width: 458px;
 		height: 155px;
-		line-height: 155px;
 		font-size: 6.875rem;
 		border-radius: 110px;
-		margin: 24px 0 15px;
 	}
 
 	.admin-pill::after {
 		width: 796px;
 		height: 426px;
-		margin-left: 170px;
-		top: -40px;
+		left: 420px;
+		top: -50px;
 		border-radius: 50px 50px 0 0;
-		transform: none;
 	}
 }
 </style>
