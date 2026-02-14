@@ -54,19 +54,25 @@ const props = defineProps({
 	<!-- Homepage -->
 	<div class="mt-[54px] desktop-xl:mt-[56px] relative z-2" v-if="route.path === '/'">
 		<div class="text-[#222222] tablet:max-w-[770px] tablet:mx-auto desktop:mx-0">
-			<h1>
-				<span
-					class="desktop:text-[4.8125rem] desktop-xl:text-[6.25rem] text-[2.25rem] tablet:text-[2.5rem] font-bold desktop:font-medium tracking-[-1px] desktop:leading-[87px] desktop-xl:leading-[105px] leading-[52px] tablet:leading-[58px] block desktop:w-[600px] desktop-xl:w-[785px] max-w-full tablet:w-[300px] desktop-xl:font-bold">
-					Spedisci in Italia a partire da
+			<h1 class="leading-none">
+				<!-- Riga 1: titolo principale -->
+				<span class="block text-[2.25rem] tablet:text-[3.25rem] desktop:text-[4.8125rem] desktop-xl:text-[6.25rem] font-bold tracking-[-1.5px] leading-[1.1]">
+					Spedisci in Italia
 				</span>
-				<!-- Prezzo base barrato se c'e' sconto attivo -->
-				<span v-if="showMinPriceDiscount" class="block text-[1.25rem] desktop:text-[2rem] text-[#999] line-through font-medium mt-[4px]">
-					{{ minBasePriceFormatted }} €
-				</span>
-				<span
-					:style="{ '--admin-image': data?.image_url ? `url(${data.image_url})` : `url(/img/homepage/trasporti-img.png)` }"
-					class="admin-pill">
-					{{ minPriceFormatted }} €
+				<!-- Riga 2: "a partire da" + badge prezzo inline -->
+				<span class="flex items-center flex-wrap gap-x-[14px] gap-y-[8px] mt-[8px] desktop:mt-[12px]">
+					<span class="text-[1.5rem] tablet:text-[2rem] desktop:text-[3rem] desktop-xl:text-[3.5rem] font-semibold tracking-[-0.5px] text-[#444]">
+						a partire da
+					</span>
+					<!-- Prezzo base barrato se c'e' sconto attivo -->
+					<span v-if="showMinPriceDiscount" class="text-[1.25rem] desktop:text-[2rem] text-[#999] line-through font-medium">
+						{{ minBasePriceFormatted }} €
+					</span>
+					<span
+						:style="{ '--admin-image': data?.image_url ? `url(${data.image_url})` : `url(/img/homepage/trasporti-img.png)` }"
+						class="admin-pill">
+						{{ minPriceFormatted }} €
+					</span>
 				</span>
 			</h1>
 			<!-- Badge sconto % -->
@@ -84,7 +90,7 @@ const props = defineProps({
 					{{ promoSettings.label_text }}
 				</span>
 			</div>
-			<p class="text-[0.8125rem] tablet:text-[1.25rem] desktop:text-[2.8675rem] desktop-xl:text-[2.5rem] tracking-[-0.4px] font-extrabold ml-[40px] tablet:ml-[145px] desktop:ml-[205px] desktop-xl:ml-[225px] mt-[-8px] tablet:mt-[-14px]">IVA e ritiro incluso</p>
+			<p class="text-[1rem] tablet:text-[1.375rem] desktop:text-[2rem] desktop-xl:text-[2.5rem] tracking-[-0.4px] font-extrabold mt-[16px] desktop:mt-[20px]">IVA e ritiro incluso</p>
 		</div>
 	</div>
 
@@ -206,22 +212,22 @@ const props = defineProps({
 </template>
 
 <style scoped>
+/* Mobile base — pill inline nella riga flex */
 .admin-pill {
 	position: relative;
-	display: block;
-	text-align: center;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
 	font-weight: 800;
-	color: #eee;
+	color: #fff;
 	background: #e44203;
+	flex-shrink: 0;
 
-	width: 120px;
-	height: 48px;
-	line-height: 48px;
-	font-size: 1.625rem;
-	letter-spacing: -0.8px;
-
+	width: 130px;
+	height: 52px;
+	font-size: 1.75rem;
+	letter-spacing: -1px;
 	border-radius: 60px;
-	margin: -10px 0 0 20px;
 }
 
 .admin-pill::after {
@@ -229,36 +235,32 @@ const props = defineProps({
 	position: absolute;
 	background-image: var(--admin-image);
 	background-repeat: no-repeat;
-	background-position: right;
+	background-position: right center;
 	background-size: cover;
 
-	width: min(320px, calc(100vw - 60px));
-	height: 200px;
+	width: min(300px, calc(100vw - 80px));
+	height: 190px;
 	border-radius: 16px 16px 0 0;
-
-	transform: scaleX(-1);
-	margin: 7px 0 0 20px;
+	left: 110px;
+	top: -10px;
 	z-index: 20;
 }
 
 /* Tablet */
 @media (min-width: 45rem) {
 	.admin-pill {
-		width: 144px;
-		height: 57px;
-		line-height: 57px;
-		font-size: 2rem;
-		border-radius: 76px;
-		margin-left: 130px;
-		margin-top: -77px;
+		width: 160px;
+		height: 64px;
+		font-size: 2.25rem;
+		border-radius: 80px;
 	}
 
 	.admin-pill::after {
-		width: 550px;
-		height: 306px;
+		width: 480px;
+		height: 280px;
 		border-radius: 20px 20px 0 0;
-		margin-left: 70px;
-		margin-top: -60px;
+		left: 140px;
+		top: -30px;
 	}
 }
 
@@ -267,17 +269,14 @@ const props = defineProps({
 	.admin-pill {
 		width: 354px;
 		height: 121px;
-		line-height: 121px;
 		font-size: 5rem;
-		margin-left: 180px;
-		margin-top: -92px;
 	}
 
 	.admin-pill::after {
 		width: 790px;
 		height: 490px;
-		margin-left: 120px;
-		top: -80px;
+		left: 300px;
+		top: -90px;
 		border-radius: 48px 48px 0 0;
 	}
 }
@@ -287,19 +286,16 @@ const props = defineProps({
 	.admin-pill {
 		width: 458px;
 		height: 155px;
-		line-height: 155px;
 		font-size: 6.875rem;
 		border-radius: 110px;
-		margin: -82px 0 15px 190px;
 	}
 
 	.admin-pill::after {
 		width: 796px;
 		height: 426px;
-		margin-left: 170px;
-		top: -40px;
+		left: 400px;
+		top: -50px;
 		border-radius: 50px 50px 0 0;
-		transform: none;
 	}
 }
 </style>
