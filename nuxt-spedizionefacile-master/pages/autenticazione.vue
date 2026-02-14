@@ -1,3 +1,11 @@
+<!--
+  FILE: pages/autenticazione.vue
+  SCOPO: Login/registrazione unificata — email/password, Google OAuth, verifica 6 cifre, referral.
+  API: POST /api/login, POST /api/register, POST /api/verify-code, POST /api/resend-code,
+       GET /auth/google (redirect OAuth).
+  ROUTE: /autenticazione (middleware sanctum:guest, solo utenti non autenticati).
+  NOTE: Supporta ?ref=CODICE per registrazione con codice referral, ?redirect=PATH per redirect post-login.
+-->
 <script setup>
 import { FetchError } from "ofetch";
 
@@ -8,8 +16,10 @@ useSeoMeta({
 	ogDescription: 'Accedi o registrati su SpedizioneFacile per gestire le tue spedizioni.',
 });
 
+// Funzione di login da nuxt-auth-sanctum
 const { login } = useSanctumAuth();
 
+// Tab per alternare tra Login e Registrazione
 const items = ref([
 	{
 		label: "Accedi",
@@ -27,35 +37,34 @@ const items = ref([
 	},
 ]);
 
+// --- STATO LOGIN ---
 const credentials = ref({
 	email: "",
 	password: "",
-	remember: false,
+	remember: false, // Checkbox "ricordami"
 });
 
-const messageError = ref(null);
+const messageError = ref(null);         // Errori di validazione (oggetto con chiavi campo)
+const limitMessageError = ref(null);    // Errore limite tentativi
+const messageSuccess = ref(null);       // Messaggio di successo (es. registrazione completata)
+const messageLoading = ref(null);       // Messaggio di caricamento (es. "Login in corso...")
+const isLoading = ref(false);           // Stato di caricamento globale
+const isGoogle = ref(false);            // Se l'utente sta facendo login con Google
+const showResendVerification = ref(false); // Mostra il bottone per re-inviare email di verifica
+const resendMessage = ref(null);        // Messaggio di feedback re-invio
+const resendLoading = ref(false);       // Stato caricamento re-invio
 
-const limitMessageError = ref(null);
-
-const messageSuccess = ref(null);
-
-const messageLoading = ref(null);
-
-const isLoading = ref(false);
-
-const isGoogle = ref(false);
-const showResendVerification = ref(false);
-const resendMessage = ref(null);
-const resendLoading = ref(false);
-
-// Verification code flow
-const verificationMode = ref(false);
-const verificationCode = ref(["", "", "", "", "", ""]);
+// --- VERIFICA CODICE A 6 CIFRE ---
+// Quando l'account non e' verificato, il backend risponde con 403 e richiede il codice
+const verificationMode = ref(false);                     // Se siamo nella modalita' verifica codice
+const verificationCode = ref(["", "", "", "", "", ""]);  // Array con le 6 cifre del codice
 const verificationLoading = ref(false);
 const verificationError = ref(null);
 const verificationSuccess = ref(null);
-const verificationCodeHint = ref(null);
+const verificationCodeHint = ref(null);  // Suggerimento codice (mostrato in ambiente dev)
 
+// Gestisce il login con email e password
+// Se il backend risponde 403 con requires_verification, attiva la modalita' verifica codice
 const handleLogin = async () => {
 	messageError.value = null;
 	showResendVerification.value = false;
@@ -129,6 +138,7 @@ const handleLogin = async () => {
 };
 
 
+// Re-invia l'email di verifica all'indirizzo inserito nel campo login
 const resendVerificationEmail = async () => {
 	resendMessage.value = null;
 	showResendVerification.value = true;
@@ -153,6 +163,7 @@ const resendVerificationEmail = async () => {
 	}
 };
 
+// Verifica il codice a 6 cifre inserito dall'utente e, se valido, esegue il login automatico
 const verifyCode = async () => {
 	const code = verificationCode.value.join("");
 	if (code.length !== 6) {
@@ -174,11 +185,20 @@ const verifyCode = async () => {
 			},
 		});
 
-		verificationSuccess.value = response?.message || "Account verificato con successo!";
+		// Account verificato: eseguiamo il login automatico
 		verificationMode.value = false;
+		messageLoading.value = "Account verificato! Accesso in corso...";
+		isLoading.value = true;
 
-		// Auto-login after verification
-		await login(credentials.value);
+		try {
+			await login(credentials.value);
+		} catch (loginError) {
+			// Se il login automatico fallisce, mostriamo un messaggio di successo
+			// e chiediamo all'utente di riprovare manualmente
+			messageSuccess.value = response?.message || "Account verificato con successo! Ora puoi accedere.";
+			isLoading.value = false;
+			messageLoading.value = null;
+		}
 	} catch (error) {
 		const data = error?.response?._data || error?.data;
 		verificationError.value = data?.message || "Codice non valido. Riprova.";
@@ -187,6 +207,7 @@ const verifyCode = async () => {
 	}
 };
 
+// Gestisce l'input nei campi del codice di verifica: avanza automaticamente al campo successivo
 const handleVerificationInput = (index, event) => {
 	const value = event.target.value;
 	if (value && index < 5) {
@@ -195,6 +216,7 @@ const handleVerificationInput = (index, event) => {
 	}
 };
 
+// Gestisce il tasto Backspace nei campi verifica: torna al campo precedente se vuoto
 const handleVerificationKeydown = (index, event) => {
 	if (event.key === "Backspace" && !verificationCode.value[index] && index > 0) {
 		const prevInput = event.target.parentElement.querySelector(`input:nth-child(${index})`);
@@ -202,6 +224,7 @@ const handleVerificationKeydown = (index, event) => {
 	}
 };
 
+// Gestisce il "copia e incolla" del codice di verifica: distribuisce le cifre nei 6 campi
 const handleVerificationPaste = (event) => {
 	event.preventDefault();
 	const paste = (event.clipboardData || window.clipboardData).getData("text").replace(/\D/g, "").slice(0, 6);
@@ -235,7 +258,8 @@ const resendCodeForVerification = async () => {
 	}
 };
 
-// Password strength for registration
+// --- INDICATORE FORZA PASSWORD (registrazione) ---
+// Controlla i requisiti della password: lunghezza, maiuscola, minuscola, numero, simbolo
 const passwordChecks = computed(() => {
 	const pwd = registerForm.value.password || "";
 	return {
@@ -243,22 +267,25 @@ const passwordChecks = computed(() => {
 		hasLower: /[a-z]/.test(pwd),
 		hasUpper: /[A-Z]/.test(pwd),
 		hasNumber: /[0-9]/.test(pwd),
-		hasSymbol: /[@$!%*?&#^]/.test(pwd),
+		hasSymbol: /[^a-zA-Z0-9\s]/.test(pwd),
 	};
 });
 
+// Numero di requisiti soddisfatti (da 0 a 5) per la barra di forza
 const passwordStrength = computed(() => {
 	const checks = passwordChecks.value;
 	const passed = Object.values(checks).filter(Boolean).length;
 	return passed;
 });
 
+// Solo utenti NON autenticati possono accedere a questa pagina
 definePageMeta({
 	middleware: ["sanctum:guest"],
 });
 
 const apiBase = useRuntimeConfig().public.apiBase;
 
+// --- STATO REGISTRAZIONE ---
 const registerForm = ref({
 	name: "",
 	surname: "",
@@ -270,9 +297,10 @@ const registerForm = ref({
 	password_confirmation: "",
 	role: "Cliente",
 	referred_by: "",
+	user_type: "privato",
 });
 
-// Capture referral code from URL (?ref=CODE) and auto-switch to registration tab
+// Cattura il codice referral dall'URL (?ref=CODICE) e apre automaticamente il tab di registrazione
 const route = useRoute();
 const refCode = route.query.ref;
 const defaultTabValue = refCode ? 'registrati' : 'accedi';
@@ -281,6 +309,7 @@ if (refCode) {
 	registerForm.value.referred_by = String(refCode).toUpperCase();
 }
 
+// Invia il form di registrazione al backend (/api/custom-register)
 const registerUser = async () => {
 	messageError.value = null;
 	messageSuccess.value = null;
@@ -327,16 +356,21 @@ const registerUser = async () => {
 
 const showForm = ref(false);
 
+// Toggle visibilita' password nei campi di input
 const showLoginPassword = ref(false);
 const showRegPassword = ref(false);
 const showRegPasswordConfirm = ref(false);
 
+// Reindirizza l'utente alla pagina di login Google (OAuth) sul backend Laravel
+// Passa anche il parametro redirect per tornare alla pagina precedente dopo il login
 const loginGoogle = () => {
 	isGoogle.value = true;
 	const frontendOrigin = window.location.origin;
-	window.location.href = `${apiBase}/api/auth/google/redirect?frontend=${encodeURIComponent(frontendOrigin)}`;
+	const redirectTo = route.query.redirect ? String(route.query.redirect) : '/';
+	window.location.href = `${apiBase}/api/auth/google/redirect?frontend=${encodeURIComponent(frontendOrigin)}&redirect=${encodeURIComponent(redirectTo)}`;
 };
 
+// Quando l'utente cambia tab (Login <-> Registrazione), resetta tutti i messaggi di errore/successo
 function onTabClick(newValue) {
 	if (messageError.value) {
 		messageError.value = null;
@@ -361,7 +395,7 @@ function onTabClick(newValue) {
 					</div>
 					<p class="text-[1rem] font-medium">{{ messageSuccess }}</p>
 					<p class="text-[0.875rem] text-[#737373] mt-[8px]">Accedi con le tue credenziali e inserisci il codice di verifica per attivare l'account.</p>
-					<button @click="messageSuccess = null" class="mt-[16px] px-[24px] py-[10px] bg-[#095866] text-white rounded-[8px] text-[0.875rem] font-semibold cursor-pointer hover:bg-[#0a7a8c] transition-colors">
+					<button @click="messageSuccess = null" class="mt-[16px] px-[24px] py-[10px] bg-[#095866] text-white rounded-[8px] text-[0.875rem] font-semibold cursor-pointer hover:bg-[#074a56] transition-colors">
 						Torna al login
 					</button>
 				</div>
@@ -387,7 +421,7 @@ function onTabClick(newValue) {
 							</div>
 							<p v-if="verificationError" class="text-red-500 text-[0.8125rem] mb-[12px] bg-red-50 p-[10px] rounded-[6px] text-center">{{ verificationError }}</p>
 							<p v-if="verificationSuccess" class="text-emerald-600 text-[0.8125rem] mb-[12px] bg-emerald-50 p-[10px] rounded-[6px] text-center">{{ verificationSuccess }}</p>
-							<button type="button" @click="verifyCode" :disabled="verificationLoading" :class="['w-full py-[14px] rounded-[10px] text-white font-semibold text-[1rem] transition-all', verificationLoading ? 'bg-gray-300 cursor-not-allowed' : 'bg-[#095866] hover:bg-[#0a7a8c] cursor-pointer']">
+							<button type="button" @click="verifyCode" :disabled="verificationLoading" :class="['w-full py-[14px] rounded-[10px] text-white font-semibold text-[1rem] transition-all', verificationLoading ? 'bg-gray-300 cursor-not-allowed' : 'bg-[#095866] hover:bg-[#074a56] cursor-pointer']">
 								<span v-if="verificationLoading">Verifica in corso...</span>
 								<span v-else>Verifica Account</span>
 							</button>
@@ -403,7 +437,7 @@ function onTabClick(newValue) {
 								type="button"
 								@click="resendVerificationEmail"
 								:disabled="resendLoading"
-								class="mt-[12px] px-[16px] py-[10px] rounded-[8px] bg-[#095866] text-white text-[0.875rem] font-semibold cursor-pointer hover:bg-[#0a7a8c] disabled:opacity-60 disabled:cursor-not-allowed">
+								class="mt-[12px] px-[16px] py-[10px] rounded-[8px] bg-[#095866] text-white text-[0.875rem] font-semibold cursor-pointer hover:bg-[#074a56] disabled:opacity-60 disabled:cursor-not-allowed">
 								{{ resendLoading ? 'Invio in corso...' : 'Invia nuova email di conferma' }}
 							</button>
 							<p v-if="resendMessage" class="text-[0.8125rem] mt-[10px]" :class="resendMessage.type === 'success' ? 'text-emerald-700' : 'text-red-600'">{{ resendMessage.text }}</p>
@@ -446,9 +480,9 @@ function onTabClick(newValue) {
 								{{ messageError.message }}
 							</p>
 
-							<div class="flex items-center gap-[8px] mb-[20px]">
-								<input type="checkbox" id="remember" v-model="credentials.remember" class="w-[16px] h-[16px] accent-[#095866]" />
-								<label for="remember" class="text-[0.8125rem] text-[#737373] cursor-pointer">Ricordami</label>
+							<div class="flex items-center gap-[10px] mb-[20px]">
+								<input type="checkbox" id="remember" v-model="credentials.remember" class="w-[18px] h-[18px] accent-[#095866] cursor-pointer shrink-0" />
+								<label for="remember" class="text-[0.875rem] text-[#737373] cursor-pointer select-none">Ricordami</label>
 							</div>
 
 							<button
@@ -456,7 +490,7 @@ function onTabClick(newValue) {
 								:disabled="isLoading"
 								:class="[
 									'w-full py-[14px] rounded-[10px] text-white font-semibold text-[1rem] transition-all',
-									isLoading ? 'bg-gray-300 cursor-not-allowed' : 'bg-[#095866] hover:bg-[#0a7a8c] cursor-pointer',
+									isLoading ? 'bg-gray-300 cursor-not-allowed' : 'bg-[#095866] hover:bg-[#074a56] cursor-pointer',
 								]">
 								<span v-if="isLoading">Accesso in corso...</span>
 								<span v-else>Accedi</span>
@@ -511,6 +545,32 @@ function onTabClick(newValue) {
 							</div>
 
 							<div class="bg-white p-[28px] rounded-[12px] shadow-[0_2px_8px_rgba(0,0,0,0.06)] border border-[#E9EBEC]">
+								<!-- Tipo account: Privato o Azienda -->
+								<div class="flex items-center gap-[12px] mb-[20px]">
+									<label
+										:class="[
+											'flex-1 flex items-center justify-center gap-[6px] px-[16px] py-[12px] rounded-[10px] cursor-pointer border transition-all text-[0.9375rem] font-medium text-center',
+											registerForm.user_type === 'privato'
+												? 'bg-[#095866] text-white border-[#095866] shadow-sm'
+												: 'bg-white text-[#252B42] border-[#E9EBEC] hover:border-[#095866]',
+										]">
+										<input type="radio" value="privato" v-model="registerForm.user_type" class="sr-only" />
+										<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[18px] h-[18px]" fill="currentColor"><path d="M12,4A4,4 0 0,1 16,8A4,4 0 0,1 12,12A4,4 0 0,1 8,8A4,4 0 0,1 12,4M12,14C16.42,14 20,15.79 20,18V20H4V18C4,15.79 7.58,14 12,14Z"/></svg>
+										Privato
+									</label>
+									<label
+										:class="[
+											'flex-1 flex items-center justify-center gap-[6px] px-[16px] py-[12px] rounded-[10px] cursor-pointer border transition-all text-[0.9375rem] font-medium text-center',
+											registerForm.user_type === 'commerciante'
+												? 'bg-[#095866] text-white border-[#095866] shadow-sm'
+												: 'bg-white text-[#252B42] border-[#E9EBEC] hover:border-[#095866]',
+										]">
+										<input type="radio" value="commerciante" v-model="registerForm.user_type" class="sr-only" />
+										<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[18px] h-[18px]" fill="currentColor"><path d="M18,15H16V17H18M18,11H16V13H18M20,19H12V17H14V15H12V13H14V11H12V9H20M10,7H8V5H10M10,11H8V9H10M10,15H8V13H10M10,19H8V17H10M6,7H4V5H6M6,11H4V9H6M6,15H4V13H6M6,19H4V17H6M12,7V3H2V21H22V7H12Z"/></svg>
+										Azienda
+									</label>
+								</div>
+
 								<div class="grid grid-cols-2 gap-[12px] mb-[16px]">
 									<div>
 										<label for="reg_name" class="block text-[0.875rem] font-medium text-[#252B42] mb-[6px]">Nome *</label>
@@ -590,6 +650,7 @@ function onTabClick(newValue) {
 											id="reg_password"
 											placeholder="Minimo 8 caratteri"
 											v-model="registerForm.password"
+											@change="registerForm.password = $event.target.value"
 											autocomplete="new-password"
 											class="bg-[#F8F9FB] p-[12px] pr-[44px] border border-[#E9EBEC] rounded-[8px] placeholder:text-[#A0A5AB] w-full text-[0.9375rem] focus:border-[#095866] focus:outline-none transition-colors"
 											minlength="8"
@@ -618,7 +679,7 @@ function onTabClick(newValue) {
 												<span>{{ passwordChecks.hasNumber ? '\u2713' : '\u2022' }}</span> Un numero
 											</li>
 											<li class="text-[0.75rem] flex items-center gap-[4px]" :class="passwordChecks.hasSymbol ? 'text-emerald-600' : 'text-[#A0A5AB]'">
-												<span>{{ passwordChecks.hasSymbol ? '\u2713' : '\u2022' }}</span> Un simbolo (@$!%*?&#^)
+												<span>{{ passwordChecks.hasSymbol ? '\u2713' : '\u2022' }}</span> Un simbolo speciale (es. @!#.-_)
 											</li>
 										</ul>
 									</div>
@@ -632,6 +693,7 @@ function onTabClick(newValue) {
 											id="reg_password_confirmation"
 											placeholder="Ripeti la password"
 											v-model="registerForm.password_confirmation"
+											@change="registerForm.password_confirmation = $event.target.value"
 											autocomplete="new-password"
 											class="bg-[#F8F9FB] p-[12px] pr-[44px] border border-[#E9EBEC] rounded-[8px] placeholder:text-[#A0A5AB] w-full text-[0.9375rem] focus:border-[#095866] focus:outline-none transition-colors"
 											minlength="8"
@@ -662,7 +724,7 @@ function onTabClick(newValue) {
 								:disabled="isLoading"
 								:class="[
 									'w-full py-[14px] rounded-[10px] text-white font-semibold text-[1rem] mt-[20px] transition-all',
-									isLoading ? 'bg-gray-300 cursor-not-allowed' : 'bg-[#095866] hover:bg-[#0a7a8c] cursor-pointer',
+									isLoading ? 'bg-gray-300 cursor-not-allowed' : 'bg-[#095866] hover:bg-[#074a56] cursor-pointer',
 								]">
 								<span v-if="isLoading">Registrazione in corso...</span>
 								<span v-else>Crea Account</span>

@@ -1,4 +1,36 @@
 <?php
+/**
+ * FILE: ProRequestController.php
+ * SCOPO: Gestisce le richieste per diventare Partner Pro (invio, stato, approvazione/rifiuto admin).
+ *
+ * COSA ENTRA:
+ *   - Request con company_name, vat_number, message per store
+ *   - ProRequest (route model binding) per approve/reject
+ *
+ * COSA ESCE:
+ *   - JSON con success, data (richiesta creata) per store
+ *   - JSON con has_request, data (richiesta piu' recente) per status
+ *   - JSON con data (lista tutte le richieste con utente) per index (admin)
+ *   - JSON con success, data (richiesta aggiornata + utente con ruolo) per approve/reject
+ *
+ * CHIAMATO DA:
+ *   - routes/api.php — POST /api/pro-request, GET /api/pro-request/status
+ *   - routes/api.php — GET /api/admin/pro-requests (admin)
+ *   - routes/api.php — POST /api/admin/pro-requests/{id}/approve|reject (admin)
+ *   - nuxt: pages/account/account-pro.vue, pannello admin
+ *
+ * EFFETTI COLLATERALI:
+ *   - Database: crea record in pro_requests con status "pending"
+ *   - Database (approve): aggiorna ruolo utente a "Partner Pro", genera referral_code 8 caratteri
+ *   - Database (reject): aggiorna status a "rejected", salva reviewed_at
+ *
+ * ERRORI TIPICI:
+ *   - 422: utente gia' Partner Pro, oppure richiesta gia' in attesa, oppure richiesta non pending
+ *
+ * DOCUMENTI CORRELATI:
+ *   - app/Models/ProRequest.php — modello richiesta con company_name, vat_number, status
+ *   - ReferralController.php — funzionalita' referral disponibili dopo approvazione
+ */
 
 namespace App\Http\Controllers;
 
@@ -7,23 +39,24 @@ use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
-
 class ProRequestController extends Controller
 {
     /**
-     * Submit a new Pro request.
-     * Only allowed if the user is not already Pro and has no pending request.
+     * Invia una nuova richiesta per diventare Partner Pro.
+     * L'utente non deve gia' essere Pro e non deve avere una richiesta in attesa.
      */
     public function store(Request $request): JsonResponse
     {
         $user = auth()->user();
 
+        // Se l'utente e' gia' Partner Pro, non puo' fare un'altra richiesta
         if ($user->isPro()) {
             return response()->json([
                 'message' => 'Sei già un Partner Pro.',
             ], 422);
         }
 
+        // Controlliamo che non ci sia gia' una richiesta in attesa di revisione
         $pendingRequest = ProRequest::where('user_id', $user->id)
             ->where('status', 'pending')
             ->first();
@@ -34,12 +67,13 @@ class ProRequestController extends Controller
             ], 422);
         }
 
+        // Creiamo la richiesta con i dati dell'azienda
         $proRequest = ProRequest::create([
             'user_id' => $user->id,
             'company_name' => $request->input('company_name') ?? '',
             'vat_number' => $request->input('vat_number') ?? '',
             'message' => $request->input('message') ?? '',
-            'status' => 'pending',
+            'status' => 'pending', // In attesa di revisione da parte dell'admin
         ]);
 
         return response()->json([
@@ -50,12 +84,14 @@ class ProRequestController extends Controller
     }
 
     /**
-     * Get the current user's pro request status.
+     * Mostra lo stato della richiesta Pro dell'utente corrente.
+     * L'utente puo' vedere se ha una richiesta in attesa, approvata o rifiutata.
      */
     public function status(): JsonResponse
     {
         $user = auth()->user();
 
+        // Cerchiamo la richiesta piu' recente dell'utente
         $proRequest = ProRequest::where('user_id', $user->id)
             ->orderByDesc('created_at')
             ->first();
@@ -74,7 +110,8 @@ class ProRequestController extends Controller
     }
 
     /**
-     * Admin: List all pro requests.
+     * Funzione per l'AMMINISTRATORE: mostra la lista di tutte le richieste Pro
+     * di tutti gli utenti, con i dati dell'utente che ha fatto la richiesta.
      */
     public function index(): JsonResponse
     {
@@ -86,21 +123,27 @@ class ProRequestController extends Controller
     }
 
     /**
-     * Admin: Approve a pro request and set the user role to 'Partner Pro'.
+     * Funzione per l'AMMINISTRATORE: approva una richiesta Pro.
+     * Cambia lo stato della richiesta in "approvato" e aggiorna il ruolo dell'utente
+     * a "Partner Pro", generando anche un codice referral unico.
      */
     public function approve(ProRequest $proRequest): JsonResponse
     {
+        // La richiesta deve essere ancora in attesa per poter essere approvata
         if ($proRequest->status !== 'pending') {
             return response()->json([
                 'message' => 'Questa richiesta non è in attesa.',
             ], 422);
         }
 
+        // Aggiorniamo lo stato della richiesta a "approvata"
         $proRequest->update([
             'status' => 'approved',
             'reviewed_at' => now(),
         ]);
 
+        // Aggiorniamo il ruolo dell'utente a "Partner Pro"
+        // e generiamo un codice referral se non ne ha gia' uno
         $user = $proRequest->user;
         $user->update([
             'role' => 'Partner Pro',
@@ -115,7 +158,7 @@ class ProRequestController extends Controller
     }
 
     /**
-     * Admin: Reject a pro request.
+     * Funzione per l'AMMINISTRATORE: rifiuta una richiesta Pro.
      */
     public function reject(ProRequest $proRequest): JsonResponse
     {

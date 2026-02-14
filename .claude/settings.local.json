@@ -3,7 +3,30 @@
     "allow": [
       "Bash(php artisan:*)",
       "Bash(git -C /mnt/c/Users/Feder/Desktop/spedizionefacile status --short)",
-      "Bash(git config:*)"
+      "Bash(git config:*)",
+      "WebSearch",
+      "WebFetch(domain:github.com)",
+      "Bash(cat:*)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "WebFetch(domain:api.github.com)",
+      "Bash(npx nuxi typecheck:*)",
+      "Bash(test:*)",
+      "WebFetch(domain:)",
+      "Bash(composer require:*)",
+      "Bash(php.exe artisan migrate:*)",
+      "Bash(bash -n /mnt/c/Users/Feder/Desktop/spedizionefacile/scripts/avvia-tutto.sh)",
+      "Bash(git checkout:*)",
+      "Bash(sqlite3:*)",
+      "Bash(/mnt/c/Users/Feder/AppData/Local/Microsoft/WinGet/Packages/PHP.PHP.8.4_Microsoft.Winget.Source_8wekyb3d8bbwe/php.exe artisan tinker --execute=\"\n$user = \\\\App\\\\Models\\\\User::where\\(''email'', ''federico.mascia237@gmail.com''\\)->first\\(\\);\n$cartIds = \\\\DB::table\\(''cart_user''\\)->where\\(''user_id'', $user->id\\)->pluck\\(''package_id''\\);\n$packages = \\\\App\\\\Models\\\\Package::whereIn\\(''id'', $cartIds\\)->get\\([''id'',''package_type'',''quantity'',''weight'',''single_price'',''first_size'',''second_size'',''third_size'']\\);\necho json_encode\\($packages, JSON_PRETTY_PRINT\\);\n\")",
+      "Bash(/mnt/c/Users/Feder/AppData/Local/Microsoft/WinGet/Packages/PHP.PHP.8.4_Microsoft.Winget.Source_8wekyb3d8bbwe/php.exe artisan tinker --execute=\"\n$p = \\\\App\\\\Models\\\\Package::find\\(41\\);\necho ''Before: '' . $p->single_price . PHP_EOL;\n$p->single_price = 2000;\n$p->save\\(\\);\necho ''After: '' . $p->single_price . PHP_EOL;\n\")",
+      "WebFetch(domain:www.paccofacile.it)",
+      "WebFetch(domain:www.spedirecomodo.it)",
+      "WebFetch(domain:services.brt.it)",
+      "Bash(/mnt/c/Users/Feder/AppData/Local/Microsoft/WinGet/Packages/PHP.PHP.8.4_Microsoft.Winget.Source_8wekyb3d8bbwe/php.exe artisan tinker:*)",
+      "WebFetch(domain:www.centro-spedizioni.it)",
+      "Bash(curl:*)",
+      "Bash(ls:*)",
+      "Bash(python3:*)"
     ]
   }
 }

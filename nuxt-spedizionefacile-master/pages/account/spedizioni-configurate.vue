@@ -1,4 +1,12 @@
+/**
+ * FILE: pages/account/spedizioni-configurate.vue
+ * SCOPO: Spedizioni salvate — lista, filtro, selezione multipla, aggiungi a carrello, modifica, elimina.
+ * API: GET /api/saved-shipments, PUT /api/saved-shipments/{id}, DELETE /api/saved-shipments/{id},
+ *      POST /api/saved-shipments/add-to-cart.
+ * ROUTE: /account/spedizioni-configurate (middleware sanctum:auth).
+ */
 <script setup>
+/* Richiede che l'utente sia autenticato */
 definePageMeta({
 	middleware: ["sanctum:auth"],
 });
@@ -6,16 +14,20 @@ definePageMeta({
 const sanctum = useSanctumClient();
 const router = useRouter();
 
-// Fetch saved shipments
+/* Carica le spedizioni salvate dal server */
 const { data: savedShipments, refresh, status: savedStatus } = useSanctumFetch("/api/saved-shipments", {
 	method: "GET",
 });
 
-// Filters
+/* === FILTRI === */
+/* Filtro per citta' di provenienza */
 const filterProvenienza = ref('');
+/* Filtro per numero di riferimento */
 const filterRiferimento = ref('');
+/* Filtro per data: da/a */
 const filterDateFrom = ref('');
 const filterDateTo = ref('');
+/* Indica se i filtri sono stati applicati */
 const filtersApplied = ref(false);
 
 const applyFilters = () => { filtersApplied.value = true; };
@@ -27,10 +39,13 @@ const resetFilters = () => {
 	filtersApplied.value = false;
 };
 
-// Selection
+/* === SELEZIONE MULTIPLA === */
+/* Lista degli ID delle spedizioni selezionate con la checkbox */
 const selectedItems = ref([]);
+/* Se true, tutte le spedizioni visibili sono selezionate */
 const selectAll = ref(false);
 
+/* Seleziona o deseleziona tutte le spedizioni */
 const toggleSelectAll = () => {
 	if (selectAll.value) {
 		selectedItems.value = filteredItems.value.map(item => item.id);
@@ -39,6 +54,7 @@ const toggleSelectAll = () => {
 	}
 };
 
+/* Aggiunge o rimuove una singola spedizione dalla selezione */
 const toggleItem = (id) => {
 	const idx = selectedItems.value.indexOf(id);
 	if (idx > -1) {
@@ -49,10 +65,13 @@ const toggleItem = (id) => {
 	selectAll.value = selectedItems.value.length === filteredItems.value.length && filteredItems.value.length > 0;
 };
 
-// Pagination
+/* === PAGINAZIONE === */
+/* Pagina corrente della tabella */
 const currentPage = ref(1);
+/* Numero di spedizioni per pagina */
 const itemsPerPage = 10;
 
+/* Lista delle spedizioni filtrate in base ai filtri attivi (citta', data, riferimento) */
 const filteredItems = computed(() => {
 	if (!savedShipments.value?.data) return [];
 	let items = [...savedShipments.value.data];
@@ -104,9 +123,12 @@ const uniqueCities = computed(() => {
 	return [...new Set(cities)];
 });
 
-// Delete
+/* === ELIMINAZIONE SINGOLA === */
+/* Mostra/nasconde il popup di conferma eliminazione */
 const showDeleteConfirm = ref(false);
+/* ID della spedizione da eliminare */
 const deleteTargetId = ref(null);
+/* Indica se l'eliminazione e' in corso */
 const deleteLoading = ref(false);
 
 const askDelete = (id) => {
@@ -119,8 +141,10 @@ const confirmDelete = async () => {
 	try {
 		await sanctum(`/api/saved-shipments/${deleteTargetId.value}`, { method: "DELETE" });
 		await refresh();
+		showFeedback('Spedizione eliminata con successo.');
 	} catch (e) {
 		console.error(e);
+		showFeedback('Errore durante l\'eliminazione.', 'error');
 	} finally {
 		deleteLoading.value = false;
 		showDeleteConfirm.value = false;
@@ -128,21 +152,32 @@ const confirmDelete = async () => {
 	}
 };
 
-// Bulk delete
+/* Elimina tutte le spedizioni selezionate (una per una) */
+const bulkDeleteLoading = ref(false);
 const bulkDelete = async () => {
 	if (!selectedItems.value.length) return;
-	for (const id of selectedItems.value) {
-		try {
+	bulkDeleteLoading.value = true;
+	const count = selectedItems.value.length;
+	try {
+		for (const id of selectedItems.value) {
 			await sanctum(`/api/saved-shipments/${id}`, { method: "DELETE" });
-		} catch (e) { /* silent */ }
+		}
+		selectedItems.value = [];
+		selectAll.value = false;
+		await refresh();
+		showFeedback(`${count} spedizion${count === 1 ? 'e eliminata' : 'i eliminate'} con successo.`);
+	} catch (e) {
+		console.error(e);
+		showFeedback('Errore durante l\'eliminazione.', 'error');
+		await refresh();
+	} finally {
+		bulkDeleteLoading.value = false;
 	}
-	selectedItems.value = [];
-	selectAll.value = false;
-	await refresh();
 };
 
-// Add to cart
+/* === AGGIUNTA AL CARRELLO === */
 const addToCartLoading = ref(false);
+/* Aggiunge le spedizioni selezionate al carrello e reindirizza alla pagina carrello */
 const bulkAddToCart = async () => {
 	if (!selectedItems.value.length) return;
 	addToCartLoading.value = true;
@@ -162,12 +197,17 @@ const bulkAddToCart = async () => {
 	}
 };
 
-// Edit popup
+/* === MODIFICA SPEDIZIONE (popup) === */
+/* Mostra/nasconde il popup di modifica */
 const showEdit = ref(false);
+/* La spedizione che si sta modificando */
 const editItem = ref(null);
+/* Dati del form di modifica (indirizzi, collo, dimensioni) */
 const editForm = ref({});
+/* Indica se il salvataggio modifiche e' in corso */
 const editSaving = ref(false);
 
+/* Apre il popup di modifica con i dati della spedizione selezionata */
 const openEdit = (item) => {
 	editItem.value = item;
 	editForm.value = {
@@ -195,6 +235,7 @@ const openEdit = (item) => {
 	showEdit.value = true;
 };
 
+/* Salva le modifiche della spedizione nel server */
 const saveEdit = async () => {
 	if (!editItem.value) return;
 	editSaving.value = true;
@@ -230,17 +271,59 @@ const saveEdit = async () => {
 		});
 		await refresh();
 		showEdit.value = false;
+		showFeedback('Spedizione aggiornata con successo.');
 	} catch (e) {
 		console.error(e);
+		showFeedback('Errore durante il salvataggio.', 'error');
 	} finally {
 		editSaving.value = false;
 	}
 };
 
+/* === MESSAGGI DI FEEDBACK === */
+/* Messaggio di successo/errore mostrato in alto nella pagina */
+const feedbackMessage = ref('');
+const feedbackType = ref('success');
+const showFeedback = (msg, type = 'success') => {
+	feedbackMessage.value = msg;
+	feedbackType.value = type;
+	setTimeout(() => { feedbackMessage.value = ''; }, 4000);
+};
+
+/* Converte il prezzo da centesimi a euro con virgola (es. 1500 -> "15,00 EUR") */
 const formatPrice = (cents) => {
 	if (!cents && cents !== 0) return '—';
 	return (Number(cents) / 100).toFixed(2).replace('.', ',') + '€';
 };
+
+/* === RILEVAMENTO DESTINAZIONI DUPLICATE === */
+/* Genera una chiave univoca per l'indirizzo di destinazione */
+const destKey = (item) => {
+	const d = item.destination_address;
+	if (!d) return '';
+	return [d.name, d.address, d.address_number, d.city, d.postal_code].filter(Boolean).join('|').toLowerCase();
+};
+
+/* Mappa delle destinazioni duplicate: chiave -> array di ID */
+const duplicateDestinations = computed(() => {
+	if (!savedShipments.value?.data) return new Set();
+	const map = {};
+	for (const item of savedShipments.value.data) {
+		const key = destKey(item);
+		if (!key) continue;
+		if (!map[key]) map[key] = [];
+		map[key].push(item.id);
+	}
+	const dupeIds = new Set();
+	for (const ids of Object.values(map)) {
+		if (ids.length > 1) {
+			ids.forEach(id => dupeIds.add(id));
+		}
+	}
+	return dupeIds;
+});
+
+const isDuplicateDest = (item) => duplicateDestinations.value.has(item.id);
 
 const formatCreatedDate = (item) => {
 	if (item.created_at) {
@@ -249,6 +332,7 @@ const formatCreatedDate = (item) => {
 	return new Date().toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit', year: 'numeric' });
 };
 
+/* Sceglie l'icona del pacco: pallet, busta o pacco standard */
 const getPackageIcon = (item) => {
 	const type = item.package_type?.toLowerCase() || '';
 	if (type.includes('pallet')) return '/img/quote/first-step/pallet.png';
@@ -260,8 +344,23 @@ const getPackageIcon = (item) => {
 <template>
 	<section class="min-h-[600px] py-[40px] desktop:py-[60px]">
 		<div class="my-container max-w-[1200px]">
-			<!-- Title -->
-			<h1 class="text-[2rem] font-bold text-black text-center mb-[32px] font-montserrat">Spedizioni configurate</h1>
+			<!-- Breadcrumb - aggiunto per navigazione coerente con le altre pagine account -->
+			<div class="mb-[24px] text-[0.875rem] text-[#737373]">
+				<NuxtLink to="/account" class="hover:underline text-[#095866] font-medium">Il tuo account</NuxtLink>
+				<span class="mx-[8px] text-[#C8CCD0]">/</span>
+				<span class="font-semibold text-[#252B42]">Spedizioni configurate</span>
+			</div>
+
+			<!-- Titolo - allineato a sinistra coerente con le altre pagine -->
+			<h1 class="text-[1.75rem] font-bold text-[#252B42] mb-[8px]">Spedizioni configurate</h1>
+			<p class="text-[#737373] text-[0.9375rem] mb-[32px]">Gestisci le spedizioni salvate, modificale o aggiungile al carrello.</p>
+
+			<!-- Feedback message - successo/errore -->
+			<Transition name="fade">
+				<div v-if="feedbackMessage" :class="['mb-[20px] px-[16px] py-[12px] rounded-[10px] text-[0.875rem] font-medium', feedbackType === 'success' ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-700 border border-red-200']">
+					{{ feedbackMessage }}
+				</div>
+			</Transition>
 
 			<!-- Loading -->
 			<div v-if="savedStatus === 'pending'" class="space-y-[12px]">
@@ -298,15 +397,16 @@ const getPackageIcon = (item) => {
 							<input type="date" v-model="filterDateTo" placeholder="A: (data creazione)" class="w-full bg-white border border-[#D0D0D0] rounded-[30px] h-[44px] px-[18px] text-[0.875rem] text-[#404040]" />
 						</div>
 						<div class="flex gap-[12px] ml-auto">
-							<button @click="resetFilters" type="button" class="bg-[#996D47] text-white font-semibold text-[0.9375rem] px-[28px] h-[44px] rounded-[30px] hover:opacity-90 transition cursor-pointer">Annulla</button>
-							<button @click="applyFilters" type="button" class="bg-[#252B42] text-white font-semibold text-[0.9375rem] px-[28px] h-[44px] rounded-[30px] hover:opacity-90 transition cursor-pointer">Applica filtro</button>
+							<button @click="resetFilters" type="button" class="inline-flex items-center gap-[6px] bg-[#E9EBEC] text-[#252B42] font-semibold text-[0.9375rem] px-[28px] h-[44px] rounded-[30px] hover:opacity-90 transition cursor-pointer"><Icon name="mdi:close" class="text-[18px]" />Annulla</button>
+							<button @click="applyFilters" type="button" class="inline-flex items-center gap-[6px] bg-[#252B42] text-white font-semibold text-[0.9375rem] px-[28px] h-[44px] rounded-[30px] hover:opacity-90 transition cursor-pointer"><Icon name="mdi:filter-outline" class="text-[18px]" />Applica filtro</button>
 						</div>
 					</div>
 				</div>
 
 				<!-- CSV upload section -->
 				<div class="border border-dashed border-[#A8C4D0] rounded-[8px] p-[20px_24px] mb-[12px]">
-					<button type="button" class="bg-[#252B42] text-white font-semibold text-[0.9375rem] px-[28px] h-[44px] rounded-[30px] hover:opacity-90 transition cursor-pointer">
+					<button type="button" class="inline-flex items-center gap-[6px] bg-[#252B42] text-white font-semibold text-[0.9375rem] px-[28px] h-[44px] rounded-[30px] hover:opacity-90 transition cursor-pointer">
+						<Icon name="mdi:file-upload-outline" class="text-[18px]" />
 						Carica da file CSV
 					</button>
 				</div>
@@ -314,7 +414,7 @@ const getPackageIcon = (item) => {
 				<!-- Table section -->
 				<div class="border border-dashed border-[#A8C4D0] rounded-[8px] overflow-hidden mb-[12px]">
 					<!-- Table header -->
-					<div class="hidden desktop:grid grid-cols-[40px_110px_100px_90px_80px_80px_160px_80px_90px_60px] gap-[8px] px-[16px] py-[12px] text-[0.8125rem] font-bold text-[#252B42] border-b border-[#D0D0D0]">
+					<div class="hidden desktop:grid grid-cols-[3%_10%_10%_9%_8%_10%_22%_7%_9%_12%] gap-[4px] px-[16px] py-[12px] text-[0.8125rem] font-bold text-[#252B42] border-b border-[#D0D0D0]">
 						<span class="flex items-center">
 							<input type="checkbox" v-model="selectAll" @change="toggleSelectAll" class="w-[16px] h-[16px] accent-[#095866] cursor-pointer" />
 						</span>
@@ -326,16 +426,17 @@ const getPackageIcon = (item) => {
 						<span>Indirizzi</span>
 						<span>Accessori</span>
 						<span>Importo</span>
-						<span>Errore</span>
+						<span class="text-center">Azioni</span>
 					</div>
 
 					<!-- Table rows -->
+					<!-- Zebra striping: righe alterne con sfondo piu' chiaro -->
 					<div v-if="paginatedItems.length > 0">
 						<div
-							v-for="item in paginatedItems"
+							v-for="(item, idx) in paginatedItems"
 							:key="item.id"
 							@dblclick="openEdit(item)"
-							class="hidden desktop:grid grid-cols-[40px_110px_100px_90px_80px_80px_160px_80px_90px_60px] gap-[8px] items-center px-[16px] py-[12px] border-b border-[#E9EBEC] hover:bg-[#F8F9FB] transition-colors text-[0.8125rem] text-[#252B42] cursor-pointer">
+							:class="['hidden desktop:grid grid-cols-[3%_10%_10%_9%_8%_10%_22%_7%_9%_12%] gap-[4px] items-center px-[16px] py-[12px] border-b border-[#E9EBEC] hover:bg-[#EDF5F7] transition-colors text-[0.8125rem] text-[#252B42] cursor-pointer', idx % 2 === 1 ? 'bg-[#F8F9FB]' : '', isDuplicateDest(item) ? 'ring-1 ring-amber-400 ring-inset' : '']">
 							<span class="flex items-center">
 								<input type="checkbox" :checked="selectedItems.includes(item.id)" @change="toggleItem(item.id)" class="w-[16px] h-[16px] accent-[#095866] cursor-pointer" />
 							</span>
@@ -349,61 +450,95 @@ const getPackageIcon = (item) => {
 							</span>
 							<span class="text-[0.75rem]">
 								<div class="flex items-center gap-[4px]">
-									<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#996D47" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+									<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#095866" stroke-width="2" class="shrink-0"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
 									<span class="truncate">{{ item.origin_address?.name?.split(' ')[0] || '—' }} - {{ item.origin_address?.city || '' }}</span>
 								</div>
 								<div class="flex items-center gap-[4px] mt-[2px]">
-									<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#996D47" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+									<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#095866" stroke-width="2" class="shrink-0"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
 									<span class="truncate">{{ item.destination_address?.name?.split(' ')[0] || '—' }} - {{ item.destination_address?.city || '' }}</span>
+								</div>
+								<div v-if="isDuplicateDest(item)" class="flex items-center gap-[4px] mt-[4px] text-amber-600 text-[0.6875rem] font-medium">
+									<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="shrink-0"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+									Destinazione duplicata
 								</div>
 							</span>
 							<span class="text-[#737373]">......</span>
 							<span class="font-semibold">{{ formatPrice(item.single_price) }}</span>
-							<span class="text-[#737373]">......</span>
+							<span class="flex items-center justify-center gap-[8px]">
+								<button type="button" @click="openEdit(item)" class="text-[#095866] hover:text-[#074a56] cursor-pointer" title="Modifica">
+									<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+								</button>
+								<button type="button" @click="askDelete(item.id)" class="text-red-500 hover:text-red-700 cursor-pointer" title="Elimina">
+									<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+								</button>
+							</span>
 						</div>
 
 						<!-- Mobile rows -->
-						<div v-for="item in paginatedItems" :key="'m-'+item.id" class="desktop:hidden p-[16px] border-b border-[#E9EBEC]">
+						<div v-for="item in paginatedItems" :key="'m-'+item.id" :class="['desktop:hidden p-[16px] border-b border-[#E9EBEC]', isDuplicateDest(item) ? 'bg-amber-50 border-l-[3px] border-l-amber-400' : '']">
 							<div class="flex items-center justify-between mb-[10px]">
 								<div class="flex items-center gap-[10px]">
 									<input type="checkbox" :checked="selectedItems.includes(item.id)" @change="toggleItem(item.id)" class="w-[16px] h-[16px] accent-[#095866] cursor-pointer" />
 									<div>
 										<p class="text-[0.875rem] font-semibold text-[#252B42]">{{ item.origin_address?.city || 'Partenza' }} &rarr; {{ item.destination_address?.city || 'Dest.' }}</p>
 										<p class="text-[0.75rem] text-[#737373]">{{ item.quantity }}x - {{ item.weight }} kg - {{ formatCreatedDate(item) }}</p>
+										<p v-if="isDuplicateDest(item)" class="text-[0.6875rem] text-amber-600 font-medium mt-[2px] flex items-center gap-[4px]">
+											<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+											Destinazione duplicata
+										</p>
 									</div>
 								</div>
 								<span class="text-[0.9375rem] font-bold text-[#252B42]">{{ formatPrice(item.single_price) }}</span>
 							</div>
 							<div class="flex gap-[12px] justify-end">
-								<button @click="openEdit(item)" class="text-[0.75rem] text-[#095866] font-semibold hover:underline cursor-pointer">Modifica</button>
-								<button @click="askDelete(item.id)" class="text-[0.75rem] text-red-500 font-semibold hover:underline cursor-pointer">Elimina</button>
+								<button @click="openEdit(item)" class="inline-flex items-center gap-[4px] text-[0.75rem] text-[#095866] font-semibold hover:underline cursor-pointer">
+									<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+									Modifica
+								</button>
+								<button @click="askDelete(item.id)" class="text-red-500 hover:text-red-700 cursor-pointer" title="Elimina">
+									<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+								</button>
 							</div>
 						</div>
 					</div>
 
-					<!-- Empty table -->
-					<div v-else class="p-[40px] text-center text-[#737373] text-[0.9375rem]">
-						Nessuna spedizione configurata trovata.
+					<!-- Empty state migliorato con icona, messaggio e CTA -->
+					<div v-else class="p-[48px] text-center">
+						<div class="w-[72px] h-[72px] mx-auto mb-[20px] bg-[#F8F9FB] rounded-full flex items-center justify-center">
+							<Icon name="mdi:package-variant-closed" class="text-[32px] text-[#C8CCD0]" />
+						</div>
+						<h2 class="text-[1.25rem] font-bold text-[#252B42] mb-[10px]">Nessuna spedizione configurata</h2>
+						<p class="text-[#737373] text-[0.9375rem] max-w-[400px] mx-auto mb-[24px] leading-[1.6]">
+							Le spedizioni salvate appariranno qui. Puoi salvarle dalla pagina delle spedizioni o crearne una nuova.
+						</p>
+						<NuxtLink to="/preventivo" class="inline-flex items-center gap-[6px] px-[24px] py-[12px] bg-[#095866] hover:bg-[#074a56] text-white rounded-[10px] font-semibold text-[0.9375rem] transition-colors">
+							<Icon name="mdi:plus" class="text-[18px]" />
+							Crea nuova spedizione
+						</NuxtLink>
 					</div>
 
 					<!-- Pagination -->
 					<div class="flex items-center justify-center gap-[8px] py-[16px] border-t border-[#E9EBEC]">
-						<button @click="prevPage" :disabled="currentPage <= 1" class="text-[0.875rem] font-medium text-[#252B42] hover:text-[#095866] disabled:text-[#C0C0C0] cursor-pointer disabled:cursor-not-allowed">Precedente</button>
+						<button @click="prevPage" :disabled="currentPage <= 1" class="inline-flex items-center gap-[4px] text-[0.875rem] font-medium text-[#252B42] hover:text-[#095866] disabled:text-[#C0C0C0] cursor-pointer disabled:cursor-not-allowed"><Icon name="mdi:chevron-left" class="text-[18px]" />Precedente</button>
 						<span
 							v-for="page in totalPages"
 							:key="page"
 							@click="currentPage = page"
-							:class="['w-[32px] h-[32px] flex items-center justify-center rounded-[6px] text-[0.875rem] font-semibold cursor-pointer', currentPage === page ? 'bg-[#E44203] text-white' : 'text-[#252B42] hover:bg-[#F0F0F0]']">
+							:class="['w-[32px] h-[32px] flex items-center justify-center rounded-[6px] text-[0.875rem] font-semibold cursor-pointer', currentPage === page ? 'bg-[#095866] text-white' : 'text-[#252B42] hover:bg-[#F0F0F0]']">
 							{{ page }}
 						</span>
-						<button @click="nextPage" :disabled="currentPage >= totalPages" class="text-[0.875rem] font-medium text-[#252B42] hover:text-[#095866] disabled:text-[#C0C0C0] cursor-pointer disabled:cursor-not-allowed">Successivo</button>
+						<button @click="nextPage" :disabled="currentPage >= totalPages" class="inline-flex items-center gap-[4px] text-[0.875rem] font-medium text-[#252B42] hover:text-[#095866] disabled:text-[#C0C0C0] cursor-pointer disabled:cursor-not-allowed">Successivo<Icon name="mdi:chevron-right" class="text-[18px]" /></button>
 					</div>
 				</div>
 
 				<!-- Bottom action buttons -->
 				<div class="flex items-center justify-center gap-[24px] mt-[20px]">
-					<button @click="bulkDelete" :disabled="selectedItems.length === 0" type="button" class="bg-[#996D47] text-white font-semibold text-[0.9375rem] px-[36px] h-[48px] rounded-[30px] hover:opacity-90 transition cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">Elimina</button>
-					<button @click="bulkAddToCart" :disabled="selectedItems.length === 0 || addToCartLoading" type="button" class="bg-[#252B42] text-white font-semibold text-[0.9375rem] px-[36px] h-[48px] rounded-[30px] hover:opacity-90 transition cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">
+					<button @click="bulkDelete" :disabled="selectedItems.length === 0 || bulkDeleteLoading" type="button" class="inline-flex items-center gap-[6px] bg-red-500 text-white font-semibold text-[0.9375rem] px-[36px] h-[48px] rounded-[30px] hover:bg-red-600 transition cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">
+						<Icon name="mdi:delete-outline" class="text-[18px]" />
+						{{ bulkDeleteLoading ? 'Eliminazione...' : `Elimina${selectedItems.length ? ` (${selectedItems.length})` : ''}` }}
+					</button>
+					<button @click="bulkAddToCart" :disabled="selectedItems.length === 0 || addToCartLoading" type="button" class="inline-flex items-center gap-[6px] bg-[#252B42] text-white font-semibold text-[0.9375rem] px-[36px] h-[48px] rounded-[30px] hover:opacity-90 transition cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">
+						<Icon name="mdi:cart-plus" class="text-[18px]" />
 						{{ addToCartLoading ? 'Aggiungendo...' : 'Aggiungi al carrello' }}
 					</button>
 				</div>
@@ -416,7 +551,7 @@ const getPackageIcon = (item) => {
 				<div class="flex items-center justify-between">
 					<h3 class="text-[1.125rem] font-bold text-[#252B42]">Modifica spedizione</h3>
 					<button type="button" @click="showEdit = false" class="text-[#737373] hover:text-[#252B42] cursor-pointer">
-						<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+						<Icon name="mdi:close" class="text-[20px]" />
 					</button>
 				</div>
 			</template>
@@ -480,8 +615,9 @@ const getPackageIcon = (item) => {
 					</div>
 
 					<div class="flex justify-end gap-[10px] pt-[8px]">
-						<button type="button" @click="showEdit = false" class="px-[20px] py-[10px] rounded-[30px] bg-[#996D47] text-white text-[0.875rem] font-semibold hover:opacity-90 transition cursor-pointer">Annulla</button>
-						<button type="button" @click="saveEdit" :disabled="editSaving" class="px-[20px] py-[10px] rounded-[30px] bg-[#252B42] text-white text-[0.875rem] font-semibold hover:opacity-90 transition cursor-pointer disabled:opacity-60">
+						<button type="button" @click="showEdit = false" class="inline-flex items-center gap-[6px] px-[20px] py-[10px] rounded-[30px] bg-[#E9EBEC] text-[#252B42] text-[0.875rem] font-semibold hover:opacity-90 transition cursor-pointer"><Icon name="mdi:close" class="text-[18px]" />Annulla</button>
+						<button type="button" @click="saveEdit" :disabled="editSaving" class="inline-flex items-center gap-[6px] px-[20px] py-[10px] rounded-[30px] bg-[#252B42] text-white text-[0.875rem] font-semibold hover:opacity-90 transition cursor-pointer disabled:opacity-60">
+							<Icon name="mdi:content-save" class="text-[18px]" />
 							{{ editSaving ? 'Salvataggio...' : 'Salva modifiche' }}
 						</button>
 					</div>
@@ -501,8 +637,9 @@ const getPackageIcon = (item) => {
 			</template>
 			<template #footer>
 				<div class="flex justify-end gap-[10px]">
-					<button type="button" @click="showDeleteConfirm = false" class="px-[20px] py-[10px] rounded-[30px] bg-[#996D47] text-white text-[0.875rem] font-semibold hover:opacity-90 transition cursor-pointer">Annulla</button>
-					<button type="button" @click="confirmDelete" :disabled="deleteLoading" class="px-[20px] py-[10px] rounded-[30px] bg-red-500 text-white hover:bg-red-600 transition text-[0.875rem] font-semibold disabled:opacity-60 cursor-pointer">
+					<button type="button" @click="showDeleteConfirm = false" class="inline-flex items-center gap-[6px] px-[20px] py-[10px] rounded-[30px] bg-[#E9EBEC] text-[#252B42] text-[0.875rem] font-semibold hover:opacity-90 transition cursor-pointer"><Icon name="mdi:close" class="text-[18px]" />Annulla</button>
+					<button type="button" @click="confirmDelete" :disabled="deleteLoading" class="inline-flex items-center gap-[6px] px-[20px] py-[10px] rounded-[30px] bg-red-500 text-white hover:bg-red-600 transition text-[0.875rem] font-semibold disabled:opacity-60 cursor-pointer">
+						<Icon name="mdi:delete-outline" class="text-[18px]" />
 						{{ deleteLoading ? 'Eliminazione...' : 'Elimina' }}
 					</button>
 				</div>
@@ -510,3 +647,9 @@ const getPackageIcon = (item) => {
 		</UModal>
 	</section>
 </template>
+
+<style scoped>
+/* Transizione per i messaggi di feedback */
+.fade-enter-active, .fade-leave-active { transition: opacity 0.3s ease; }
+.fade-enter-from, .fade-leave-to { opacity: 0; }
+</style>

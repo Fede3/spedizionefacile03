@@ -1,21 +1,34 @@
+/**
+ * FILE: pages/account/spedizioni/index.vue
+ * SCOPO: Lista ordini utente — filtro per stato, pagamento, annullamento, salva come configurata.
+ * API: GET /api/orders, DELETE /api/orders/{id}, POST /api/saved-shipments.
+ * ROUTE: /account/spedizioni (middleware sanctum:auth).
+ */
 <script setup>
+/* Richiede che l'utente sia autenticato */
 definePageMeta({
 	middleware: ["sanctum:auth"],
 });
 
+/* Filtri disponibili per lo stato delle spedizioni */
 const filters = ref(["Tutti", "Aperti", "Chiusi", "Annullati", "In giacenza", "Bozze"]);
+/* Indice del filtro attivo (0 = Tutti) */
 const activeFilter = ref(0);
+/* Testo del filtro attivo, usato per filtrare la lista */
 const textFilter = ref("Tutti");
 
+/* Carica tutti gli ordini dell'utente dal server. "refresh" permette di ricaricarli */
 const { data: orders, refresh, status: ordersStatus } = useSanctumFetch("/api/orders", {
 	method: "GET",
 });
 
+/* Cambia il filtro attivo quando l'utente clicca su un tab (es. "Aperti", "Chiusi") */
 const changeFilter = (filter, filterIndex) => {
 	activeFilter.value = filterIndex;
 	textFilter.value = filter;
 };
 
+/* Converte lo stato in italiano (es. "In attesa") nel codice interno (es. "pending") */
 const statusRaw = (status) => {
 	const map = {
 		'In attesa': 'pending',
@@ -24,6 +37,7 @@ const statusRaw = (status) => {
 		'Fallito': 'payment_failed',
 		'Pagato': 'payed',
 		'Annullato': 'cancelled',
+		'Rimborsato': 'refunded',
 		'In transito': 'in_transit',
 		'Consegnato': 'delivered',
 		'In giacenza': 'in_giacenza',
@@ -31,6 +45,7 @@ const statusRaw = (status) => {
 	return map[status] || status;
 };
 
+/* Restituisce le classi CSS colorate in base allo stato (verde = completato, rosso = fallito, ecc.) */
 const statusColor = (status) => {
 	const raw = statusRaw(status);
 	const map = {
@@ -39,7 +54,8 @@ const statusColor = (status) => {
 		completed: 'bg-emerald-100 text-emerald-700',
 		payment_failed: 'bg-red-100 text-red-700',
 		payed: 'bg-emerald-100 text-emerald-700',
-		cancelled: 'bg-gray-100 text-gray-700',
+		cancelled: 'bg-gray-200 text-gray-600',
+		refunded: 'bg-orange-100 text-orange-700',
 		in_transit: 'bg-blue-100 text-blue-700',
 		delivered: 'bg-emerald-100 text-emerald-700',
 		in_giacenza: 'bg-orange-100 text-orange-700',
@@ -47,6 +63,7 @@ const statusColor = (status) => {
 	return map[raw] || 'bg-gray-100 text-gray-700';
 };
 
+/* Lista ordini filtrata in base al tab selezionato. Si aggiorna automaticamente */
 const filteredOrders = computed(() => {
 	if (!orders.value?.data) return [];
 	if (textFilter.value === 'Tutti') return orders.value.data;
@@ -54,7 +71,7 @@ const filteredOrders = computed(() => {
 	const filterMap = {
 		'Aperti': ['In attesa', 'In lavorazione', 'In transito', 'Pagato'],
 		'Chiusi': ['Completato', 'Consegnato'],
-		'Annullati': ['Annullato', 'Fallito'],
+		'Annullati': ['Annullato', 'Rimborsato', 'Fallito'],
 		'In giacenza': ['In giacenza'],
 		'Bozze': ['In attesa', 'Fallito'],
 	};
@@ -63,6 +80,7 @@ const filteredOrders = computed(() => {
 	return orders.value.data.filter(order => allowed.includes(order.status));
 });
 
+/* Formatta una data nel formato italiano (es. "13/02/2026") */
 const formatDate = (dateStr) => {
 	if (!dateStr) return '—';
 	try {
@@ -73,6 +91,7 @@ const formatDate = (dateStr) => {
 	}
 };
 
+/* Restituisce l'icona del pacco in base al tipo: pallet, busta o pacco standard */
 const getPackageIcon = (item) => {
 	const type = item?.package_type?.toLowerCase() || '';
 	if (type.includes('pallet')) return '/img/quote/first-step/pallet.png';
@@ -80,6 +99,7 @@ const getPackageIcon = (item) => {
 	return '/img/quote/first-step/pack.png';
 };
 
+/* Crea il testo del percorso tipo "Roma(RM) -> Milano(MI)" */
 const getRouteLabel = (order) => {
 	if (!order.packages?.length) return '—';
 	const pkg = order.packages[0];
@@ -90,6 +110,7 @@ const getRouteLabel = (order) => {
 	return `${originCity}${originProv ? '(' + originProv + ')' : ''} → ${destCity}${destProv ? '(' + destProv + ')' : ''}`;
 };
 
+/* Restituisce il nome del servizio di spedizione (es. "Espresso Nazionale") */
 const getServiceLabel = (order) => {
 	if (!order.packages?.length) return '—';
 	return order.packages[0].services?.service_type?.split(',')[0]?.trim() || 'Espresso Nazionale';
@@ -105,6 +126,7 @@ const getRecipientName = (order) => {
 	return order.packages[0].destination_address?.name || '—';
 };
 
+/* Controlla se l'ordine e' in attesa di pagamento o il pagamento e' fallito */
 const isPendingPayment = (order) => {
 	const raw = statusRaw(order.status);
 	return raw === 'pending' || raw === 'payment_failed';
@@ -118,16 +140,38 @@ const getPendingReason = (order) => {
 };
 
 const sanctum = useSanctumClient();
+/* Stato di caricamento per il salvataggio come "spedizione configurata" (per ogni ordine) */
 const savingToConfigured = ref({});
+/* Tiene traccia degli ordini gia' salvati come configurati */
 const savedToConfigured = ref({});
+/* Eventuali errori durante il salvataggio (per ogni ordine) */
 const saveError = ref({});
+/* Stato di caricamento per l'annullamento ordine (per ogni ordine) */
 const cancellingOrder = ref({});
 
+/* Controlla se l'ordine e' annullabile (flag dall'API) */
+const isCancellable = (order) => {
+	return order.cancellable === true;
+};
+
+/* Annulla un ordine dopo conferma dell'utente. Chiama l'API e poi ricarica la lista */
 const cancelOrder = async (order) => {
-	if (!confirm('Sei sicuro di voler annullare questo ordine?')) return;
+	const raw = statusRaw(order.status);
+	const isPaid = ['completed', 'processing', 'in_transit'].includes(raw);
+
+	const message = isPaid
+		? 'Sei sicuro di voler annullare questa spedizione? Verra\' applicata una commissione di annullamento di 2,00 EUR. Il rimborso verra\' accreditato sul metodo di pagamento originale.'
+		: 'Sei sicuro di voler annullare questo ordine?';
+
+	if (!confirm(message)) return;
+
 	cancellingOrder.value[order.id] = true;
 	try {
-		await sanctum(`/api/orders/${order.id}/cancel`, { method: 'POST' });
+		const result = await sanctum(`/api/orders/${order.id}/cancel`, { method: 'POST' });
+		// Mostra messaggio di successo se c'e' un rimborso
+		if (result?.refund_amount && result.refund_amount !== '0,00') {
+			saveError.value[order.id] = null;
+		}
 		await refresh();
 	} catch (e) {
 		const data = e?.response?._data || e?.data;
@@ -137,7 +181,7 @@ const cancelOrder = async (order) => {
 	}
 };
 
-// Load saved shipments to detect duplicates by comparing actual data
+/* Carica le spedizioni gia' salvate per evitare duplicati quando si salva una configurata */
 const savedShipmentsList = ref([]);
 const loadSavedShipments = async () => {
 	try {
@@ -147,6 +191,7 @@ const loadSavedShipments = async () => {
 };
 onMounted(loadSavedShipments);
 
+/* Controlla se una spedizione e' gia' stata salvata confrontando i dati (citta', peso, misure, ecc.) */
 const isAlreadySaved = (order) => {
 	if (savedToConfigured.value[order.id]) return true;
 	if (!order.packages?.length || !savedShipmentsList.value.length) return false;
@@ -167,6 +212,10 @@ const isAlreadySaved = (order) => {
 	});
 };
 
+/**
+ * Salva un ordine come "spedizione configurata" per poterlo riutilizzare.
+ * Copia tutti i dati (indirizzi, colli, servizi) nella tabella delle spedizioni salvate.
+ */
 const saveToConfigured = async (order) => {
 	if (!order.packages?.length) {
 		saveError.value[order.id] = "Nessun collo presente in questo ordine.";
@@ -307,9 +356,9 @@ const saveToConfigured = async (order) => {
 							<span class="text-[0.9375rem] text-[#252B42]">
 								BRT {{ getServiceLabel(order) }}
 							</span>
-							<a href="#" class="text-[#095866]" title="Apri tracking">
-								<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
-							</a>
+							<NuxtLink :to="`/account/spedizioni/${order.id}`" class="text-[#095866]" title="Vedi dettagli">
+								<Icon name="mdi:open-in-new" class="text-[16px]" />
+							</NuxtLink>
 						</div>
 						<div class="flex items-center gap-[8px]">
 							<span :class="statusColor(order.status)" class="px-[12px] py-[4px] rounded-full text-[0.75rem] font-semibold inline-block">
@@ -359,14 +408,24 @@ const saveToConfigured = async (order) => {
 
 					<!-- Pending payment alert -->
 					<div v-if="isPendingPayment(order)" class="mx-[20px] my-[12px] bg-amber-50 border border-amber-200 rounded-[10px] px-[16px] py-[12px] flex items-center gap-[12px]">
-						<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" class="text-amber-500 shrink-0"><path fill="currentColor" d="M13 14h-2V9h2m0 9h-2v-2h2M1 21h22L12 2z"/></svg>
+						<Icon name="mdi:alert-outline" class="text-[22px] text-amber-500 shrink-0" />
 						<p class="text-[0.8125rem] text-amber-800 flex-1">{{ getPendingReason(order) }}</p>
 					</div>
 
 					<!-- Save error/success message -->
 					<div v-if="saveError[order.id]" class="mx-[20px] my-[8px] bg-red-50 border border-red-200 rounded-[10px] px-[16px] py-[10px] flex items-center gap-[10px]">
-						<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" class="text-red-500 shrink-0"><path fill="currentColor" d="M13 13h-2V7h2m0 10h-2v-2h2M12 2a10 10 0 0 1 10 10a10 10 0 0 1-10 10A10 10 0 0 1 2 12A10 10 0 0 1 12 2"/></svg>
+						<Icon name="mdi:alert-circle" class="text-[18px] text-red-500 shrink-0" />
 						<p class="text-red-600 text-[0.8125rem] font-medium">{{ saveError[order.id] }}</p>
+					</div>
+
+					<!-- Refund info (for refunded orders) -->
+					<div v-if="statusRaw(order.status) === 'refunded' && order.refund_amount" class="mx-[20px] my-[8px] bg-orange-50 border border-orange-200 rounded-[10px] px-[16px] py-[10px] flex items-center gap-[10px]">
+						<!-- Refund icon SVG -->
+						<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#EA580C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="shrink-0"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+						<p class="text-orange-700 text-[0.8125rem]">
+							Rimborso di <span class="font-semibold">{{ order.refund_amount }}</span> effettuato
+							<span v-if="order.refunded_at"> il {{ order.refunded_at }}</span>
+						</p>
 					</div>
 
 					<!-- Card footer - actions -->
@@ -375,18 +434,18 @@ const saveToConfigured = async (order) => {
 							<NuxtLink
 								v-if="isPendingPayment(order)"
 								:to="`/checkout?order_id=${order.id}`"
-								class="inline-flex items-center gap-[6px] px-[16px] py-[8px] bg-[#E44203] text-white rounded-[8px] text-[0.8125rem] font-semibold hover:opacity-90 transition">
-								<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+								class="inline-flex items-center gap-[6px] px-[16px] py-[8px] bg-[#E44203] text-white rounded-[10px] text-[0.8125rem] font-semibold hover:bg-[#c93800] transition-all">
+								<Icon name="mdi:credit-card-outline" class="text-[16px]" />
 								Paga ora
 							</NuxtLink>
 							<button
-								v-if="isPendingPayment(order)"
+								v-if="isCancellable(order)"
 								type="button"
 								@click="cancelOrder(order)"
 								:disabled="cancellingOrder[order.id]"
-								class="inline-flex items-center gap-[6px] px-[14px] py-[8px] bg-white border border-red-300 text-red-600 rounded-[8px] text-[0.8125rem] font-semibold hover:bg-red-50 transition disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer">
-								<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-								{{ cancellingOrder[order.id] ? 'Annullamento...' : 'Annulla ordine' }}
+								class="inline-flex items-center gap-[4px] px-[10px] py-[6px] text-[#737373] text-[0.75rem] hover:text-red-600 hover:bg-red-50 rounded-[8px] transition disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer">
+								<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[14px] h-[14px]" fill="currentColor"><path d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,4A8,8 0 0,1 20,12A8,8 0 0,1 12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4M7,10L12,15L17,10H7Z"/></svg>
+								{{ cancellingOrder[order.id] ? 'Blocco...' : 'Blocca' }}
 							</button>
 							<button
 								v-if="!isAlreadySaved(order)"
@@ -394,16 +453,16 @@ const saveToConfigured = async (order) => {
 								@click="saveToConfigured(order)"
 								:disabled="savingToConfigured[order.id]"
 								class="inline-flex items-center gap-[6px] px-[14px] py-[8px] bg-[#095866] text-white rounded-[8px] text-[0.8125rem] font-semibold hover:opacity-90 transition disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer">
-								<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+								<Icon name="mdi:content-save-outline" class="text-[16px]" />
 								{{ savingToConfigured[order.id] ? 'Salvataggio...' : 'Salva configurata' }}
 							</button>
 							<span v-else class="inline-flex items-center gap-[6px] px-[14px] py-[8px] bg-emerald-100 text-emerald-700 rounded-[8px] text-[0.8125rem] font-semibold">
-								<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+								<Icon name="mdi:check" class="text-[16px]" />
 								Salvata
 							</span>
 						</div>
 						<NuxtLink :to="`/account/spedizioni/${order.id}`" title="Vedi dettagli" class="w-[32px] h-[32px] rounded-[8px] bg-[#095866]/10 flex items-center justify-center hover:bg-[#095866]/20 transition">
-							<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#095866" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+							<Icon name="mdi:eye-outline" class="text-[16px] text-[#095866]" />
 						</NuxtLink>
 					</div>
 				</div>
@@ -412,13 +471,13 @@ const saveToConfigured = async (order) => {
 			<!-- Empty state -->
 			<div v-else class="bg-white rounded-[16px] p-[48px] border border-[#E9EBEC] text-center">
 				<div class="w-[72px] h-[72px] mx-auto mb-[20px] bg-[#F8F9FB] rounded-full flex items-center justify-center">
-					<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" class="text-[#C8CCD0]"><path fill="currentColor" d="M18 18.5a1.5 1.5 0 0 1-1.5-1.5a1.5 1.5 0 0 1 1.5-1.5a1.5 1.5 0 0 1 1.5 1.5a1.5 1.5 0 0 1-1.5 1.5m1.5-9l1.96 2.5H17V9.5m-11 9a1.5 1.5 0 0 1-1.5-1.5A1.5 1.5 0 0 1 6 15.5A1.5 1.5 0 0 1 7.5 17A1.5 1.5 0 0 1 6 18.5M20 8h-3V4H3c-1.11 0-2 .89-2 2v11h2a3 3 0 0 0 3 3a3 3 0 0 0 3-3h6a3 3 0 0 0 3 3a3 3 0 0 0 3-3h2v-5z"/></svg>
+					<Icon name="mdi:truck-fast-outline" class="text-[32px] text-[#C8CCD0]" />
 				</div>
 				<h2 class="text-[1.25rem] font-bold text-[#252B42] mb-[10px]">Nessuna spedizione</h2>
 				<p class="text-[#737373] text-[0.9375rem] max-w-[400px] mx-auto mb-[24px] leading-[1.6]">
 					Non hai ancora effettuato nessun ordine. Configura la tua prima spedizione per iniziare.
 				</p>
-				<NuxtLink to="/preventivo" class="inline-block px-[24px] py-[12px] bg-[#095866] hover:bg-[#0a7a8c] text-white rounded-[10px] font-semibold text-[0.9375rem] transition-colors">
+				<NuxtLink to="/preventivo" class="inline-block px-[24px] py-[12px] bg-[#095866] hover:bg-[#074a56] text-white rounded-[10px] font-semibold text-[0.9375rem] transition-colors">
 					Crea nuova spedizione
 				</NuxtLink>
 			</div>

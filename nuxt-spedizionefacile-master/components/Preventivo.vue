@@ -1,3 +1,28 @@
+<!--
+	COMPONENTE PREVENTIVO (Preventivo.vue)
+
+	Questo componente e' il CUORE del sito: e' il modulo dove l'utente crea un preventivo per la spedizione.
+	Viene mostrato nella homepage e nella pagina dedicata al preventivo.
+
+	Come funziona:
+	1. L'utente sceglie il tipo di collo (pacco, busta, pallet o valigia)
+	2. Inserisce la citta' e il CAP di partenza e di destinazione (con suggerimenti automatici)
+	3. Inserisce peso e dimensioni (3 lati in cm) per ogni collo
+	4. Il sistema calcola automaticamente il prezzo in base a peso e volume
+	   (viene usato il prezzo piu' alto tra peso e volume)
+	5. Cliccando "Continua", i dati vengono inviati al server per validazione
+	6. Se tutto va bene, appare il prezzo totale e l'utente puo' procedere allo step successivo
+
+	Il prezzo viene calcolato cosi':
+	- Si calcola un prezzo basato sul peso (7 fasce: 0-2kg=8.90, 2-5kg=11.90, 5-10kg=14.90, 10-25kg=19.90, 25-50kg=29.90, 50-75kg=39.90, 75-100kg=49.90)
+	- Si calcola un prezzo basato sul volume (7 fasce analoghe in m³)
+	- Si prende il prezzo PIU' ALTO tra i due
+	- Si aggiunge il supplemento CAP 90 (+2.50€ per ogni CAP che inizia con 90)
+	- Si moltiplica per la quantita' di colli uguali
+
+	I dati del preventivo vengono salvati nello "store" (la memoria condivisa del sito)
+	e nella sessione del server, cosi' si mantengono navigando tra le pagine.
+-->
 <script setup>
 const userStore = useUserStore();
 const route = useRoute();
@@ -5,6 +30,10 @@ const route = useRoute();
 const formRef = ref(null);
 
 const isRateCalculated = ref(false);
+
+// Carica fasce prezzo dinamiche dall'API (con fallback hardcoded)
+const { loadPriceBands, getWeightPrice, getVolumePrice, promoSettings, getMinPrice } = usePriceBands();
+onMounted(() => { loadPriceBands(); });
 
 // CAP/City autocomplete
 const originSuggestions = ref([]);
@@ -111,12 +140,6 @@ const packageTypeList = [
 		height: 47,
 	},
 	{
-		text: "Busta",
-		img: "envelope.png",
-		width: 47,
-		height: 32,
-	},
-	{
 		text: "Pallet",
 		img: "pallet.png",
 		width: 43,
@@ -163,7 +186,9 @@ const myPack = ref(null);
 
 const sanctum = useSanctumClient();
 
-/* Controllo se il prezzo con il volume e con il peso esistono a calcolo la quantità */
+/* Controllo se il prezzo con il volume e con il peso esistono e calcolo la quantità
+ * Il prezzo finale e' il MAX tra peso e volume + supplemento CAP 90 (+2.50€ per ogni CAP che inizia con 90)
+ */
 const checkPrices = (pack) => {
 	let basePrice = null;
 
@@ -179,8 +204,15 @@ const checkPrices = (pack) => {
 	}
 
 	if (basePrice != null && basePrice > 0) {
-		pack.single_price = basePrice;
-		pack.single_priceOrig = basePrice;
+		// Supplemento per CAP che iniziano con "90" (+2.50€ per ritiro e/o destinazione)
+		let supplement = 0;
+		const originCap = userStore.shipmentDetails.origin_postal_code || '';
+		const destCap = userStore.shipmentDetails.destination_postal_code || '';
+		if (originCap.startsWith('90')) supplement += 2.50;
+		if (destCap.startsWith('90')) supplement += 2.50;
+
+		pack.single_price = Number((basePrice + supplement).toFixed(2));
+		pack.single_priceOrig = pack.single_price;
 		calcQuantity(pack);
 	}
 };
@@ -198,7 +230,10 @@ const calcQuantity = (pack) => {
 	});
 };
 
-/* Calcolo del prezzo tenendo conto del peso */
+/* Calcolo del prezzo tenendo conto del peso
+ * Usa fasce dinamiche caricate da API (con fallback hardcoded).
+ * Il prezzo viene cercato tramite getWeightPrice() del composable usePriceBands.
+ */
 const calcPriceWithWeight = (pack) => {
 	if (pack.weight != null) {
 		pack.weight = String(pack.weight).replace(/[a-zA-Z]/g, "");
@@ -212,22 +247,14 @@ const calcPriceWithWeight = (pack) => {
 		return;
 	}
 
-	if (weight > 0 && weight < 2) {
-		pack.weight_price = 9;
-	} else if (weight >= 2 && weight < 5) {
-		pack.weight_price = 12;
-	} else if (weight >= 5 && weight < 10) {
-		pack.weight_price = 18;
-	} else if (weight >= 10 && weight <= 25) {
-		pack.weight_price = 20;
-	} else {
-		pack.weight_price = 20;
-	}
-
+	pack.weight_price = getWeightPrice(weight);
 	checkPrices(pack);
 };
 
-/* Calcolo prezzo tenendo conto del volume */
+/* Calcolo prezzo tenendo conto del volume (in m³)
+ * Usa fasce dinamiche caricate da API (con fallback hardcoded).
+ * Il prezzo viene cercato tramite getVolumePrice() del composable usePriceBands.
+ */
 const calcPriceWithVolume = (pack) => {
 	if (pack.first_size) {
 		pack.first_size = String(pack.first_size).replace(/[^0-9]/g, "");
@@ -254,32 +281,62 @@ const calcPriceWithVolume = (pack) => {
 		}
 
 		const volume = (firstSize / 100) * (secondSize / 100) * (thirdSize / 100);
+		const volumeNumber = Number(volume.toFixed(6));
 
-		const volumeNumber = Number(volume.toFixed(3));
-
-		if (volumeNumber > 0 && volumeNumber < 0.008) {
-			pack.volume_price = 9;
-		} else if (volumeNumber >= 0.008 && volumeNumber < 0.02) {
-			pack.volume_price = 12;
-		} else if (volumeNumber >= 0.02 && volumeNumber < 0.04) {
-			pack.volume_price = 18;
-		} else if (volumeNumber >= 0.04 && volumeNumber <= 0.1) {
-			pack.volume_price = 20;
-		} else {
-			pack.volume_price = 20;
-		}
-
+		pack.volume_price = getVolumePrice(volumeNumber);
 		checkPrices(pack);
 	}
 };
 
+// Smart validation for Preventivo fields
+const sv = useSmartValidation();
+
 const filterCap = (shipment_details) => {
 	if (shipment_details.origin_postal_code) {
-		shipment_details.origin_postal_code = shipment_details.origin_postal_code.replace(/[a-zA-Z]/g, "");
+		shipment_details.origin_postal_code = sv.filterCAP(shipment_details.origin_postal_code);
 	}
 
 	if (shipment_details.destination_postal_code) {
-		shipment_details.destination_postal_code = shipment_details.destination_postal_code.replace(/[a-zA-Z]/g, "");
+		shipment_details.destination_postal_code = sv.filterCAP(shipment_details.destination_postal_code);
+	}
+};
+
+// Validate weight with max limit
+const onWeightInput = (pack, packIndex) => {
+	calcPriceWithWeight(pack);
+	const key = `peso_${packIndex}`;
+	if (sv.isTouched(key)) {
+		sv.validatePeso(key, pack.weight);
+	}
+};
+
+const onWeightBlur = (pack, packIndex) => {
+	const key = `peso_${packIndex}`;
+	sv.onBlur(key, () => sv.validatePeso(key, pack.weight));
+};
+
+// Validate dimensions with max limit
+const onDimInput = (pack, packIndex, dimName, label) => {
+	calcPriceWithVolume(pack);
+	const key = `${dimName}_${packIndex}`;
+	if (sv.isTouched(key)) {
+		sv.validateDimensione(key, pack[dimName], label);
+	}
+};
+
+const onDimBlur = (pack, packIndex, dimName, label) => {
+	const key = `${dimName}_${packIndex}`;
+	sv.onBlur(key, () => sv.validateDimensione(key, pack[dimName], label));
+};
+
+// CAP validation
+const onCapBlur = (fieldKey, value) => {
+	sv.onBlur(fieldKey, () => sv.validateCAP(fieldKey, value));
+};
+
+const onCapInputSmart = (fieldKey, value) => {
+	if (sv.isTouched(fieldKey)) {
+		sv.validateCAP(fieldKey, value);
 	}
 };
 
@@ -320,6 +377,16 @@ const deletePack = async (index) => {
 };
 
 const messageError = ref(null);
+const isCalculating = ref(false);
+
+const scrollToFirstError = () => {
+	nextTick(() => {
+		const errorEl = document.querySelector('.text-red-500');
+		if (errorEl) {
+			errorEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+		}
+	});
+};
 
 const calculateRate = async () => {
 	messageError.value = null;
@@ -334,6 +401,7 @@ const calculateRate = async () => {
 	if (!userStore.packages || userStore.packages.length === 0) {
 		messageError.value = { packages: ["Seleziona almeno un tipo di collo."] };
 		isRateCalculated.value = false;
+		scrollToFirstError();
 		return false;
 	}
 
@@ -343,6 +411,7 @@ const calculateRate = async () => {
 		if (!pack.weight || !pack.first_size || !pack.second_size || !pack.third_size) {
 			messageError.value = { packages: ["Compila peso e dimensioni per tutti i colli."] };
 			isRateCalculated.value = false;
+			scrollToFirstError();
 			return false;
 		}
 
@@ -365,6 +434,7 @@ const calculateRate = async () => {
 		}
 	}
 
+	isCalculating.value = true;
 	try {
 		await sanctum("/sanctum/csrf-cookie");
 		await sanctum("/api/session/first-step", {
@@ -377,7 +447,10 @@ const calculateRate = async () => {
 	} catch (error) {
 		messageError.value = error?.data?.errors || { packages: ["Errore durante il calcolo. Riprova."] };
 		isRateCalculated.value = false;
+		scrollToFirstError();
 		return false;
+	} finally {
+		isCalculating.value = false;
 	}
 
 	messageError.value = null;
@@ -439,33 +512,76 @@ watch(
 	},
 	{ deep: true },
 );
+
+// Ricalcola supplementi CAP90 quando i CAP cambiano
+watch(
+	() => [userStore.shipmentDetails.origin_postal_code, userStore.shipmentDetails.destination_postal_code],
+	() => {
+		// Ricalcola i prezzi di tutti i pacchi per aggiornare il supplemento CAP90
+		for (const pack of userStore.packages) {
+			if (pack.weight_price != null || pack.volume_price != null) {
+				checkPrices(pack);
+			}
+		}
+	},
+);
+
+const hasFormData = computed(() => {
+	const sd = userStore.shipmentDetails;
+	return userStore.packages.length > 0 || sd.origin_city || sd.origin_postal_code || sd.destination_city || sd.destination_postal_code;
+});
+
+const resetForm = () => {
+	userStore.packages.splice(0);
+	userStore.shipmentDetails.origin_city = "";
+	userStore.shipmentDetails.origin_postal_code = "";
+	userStore.shipmentDetails.destination_city = "";
+	userStore.shipmentDetails.destination_postal_code = "";
+	userStore.shipmentDetails.date = "";
+	userStore.totalPrice = 0;
+	isPackageSelected.value = false;
+	isRateCalculated.value = false;
+	messageError.value = null;
+};
 </script>
 
 <template>
-	<section>
+	<section :class="route.path === '/' ? 'mt-[-20px] desktop:mt-[-40px] relative z-50' : 'pt-[24px]'">
 		<div class="my-container">
 			<div
-				class="bg-white w-full rounded-[24px] desktop-xl:rounded-[32px] relative z-10 p-[20px_16px] desktop:p-[30px_36px] tablet:p-[20px_40px] mx-auto"
+				class="bg-white w-full rounded-[20px] tablet:rounded-[24px] desktop-xl:rounded-[32px] relative z-10 p-[16px_12px] tablet:p-[20px_40px] desktop:p-[30px_36px] mx-auto"
 			:class="route.path === '/'
-				? 'mt-[10px] tablet:mt-[10px] desktop:mt-[10px] desktop-xl:mt-[10px] max-w-[1260px]'
-				: 'mt-[40px] max-w-[1200px]'">
-				<h2 class="border-b-[1px] border-[#E6E6E6] text-[1.25rem] desktop:text-[2rem] text-black font-bold text-center pb-[8px]">Preventivo Rapido</h2>
+				? 'max-w-[1260px] shadow-[0_8px_32px_rgba(0,0,0,0.12)]'
+				: 'mt-[20px] max-w-[1200px] shadow-[0_4px_20px_rgba(0,0,0,0.08)]'">
+				<div class="border-b-[1px] border-[#E6E6E6] pb-[8px] flex items-center justify-center relative">
+					<h2 class="text-[1.25rem] desktop:text-[2rem] text-black font-bold text-center">Preventivo Rapido</h2>
+					<button
+						v-if="hasFormData"
+						type="button"
+						@click="resetForm"
+						class="absolute right-0 top-1/2 -translate-y-1/2 flex items-center gap-[4px] text-[0.75rem] text-[#999] hover:text-[#E44203] transition cursor-pointer group"
+						title="Azzera tutti i campi del preventivo">
+						<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="group-hover:rotate-[-180deg] transition-transform duration-300"><path d="M2.5 2v6h6"/><path d="M2.66 15.57a10 10 0 1 0 .57-8.38L2.5 8"/></svg>
+						<span class="hidden tablet:inline">Azzera</span>
+					</button>
+				</div>
 
 				<form ref="formRef" @submit.prevent="">
 					<Steps :current-step="0" />
 
-					<h3 class="font-semibold text-[1.25rem] text-black border-b-[1px] border-[#E6E6E6] desktop:w-[469px] h-[50px] pl-[18px]">Aggiungi altri colli alla spedizione</h3>
+					<h3 class="font-semibold text-[1rem] tablet:text-[1.25rem] text-black border-b-[1px] border-[#E6E6E6] desktop:w-[469px] h-[50px] pl-[18px] leading-[50px]" title="Seleziona il tipo di pacco che vuoi spedire. Puoi aggiungere più colli alla stessa spedizione.">Aggiungi altri colli alla spedizione</h3>
 
-					<ul class="flex items-center flex-wrap gap-[16px] desktop:gap-x-[30px] desktop-xl:gap-x-[40px] mt-[10px]">
+					<ul class="flex items-center flex-wrap gap-[12px] tablet:gap-[16px] desktop:gap-x-[30px] desktop-xl:gap-x-[40px] mt-[10px]">
 						<li
 							v-for="(packageType, packageTypeIndex) in packageTypeList"
 							:key="packageTypeIndex"
-							class="rounded-[21px] relative shadow-[6px_6px_5.3px_rgba(0,0,0,.32)] h-[77px] desktop-xl:text-[1.625rem] text-black font-medium tracking-[-0.624px] w-[calc(50%-8px)] tablet:w-[calc(25%-12px)] desktop-xl:w-[193px]">
+							class="rounded-[21px] relative shadow-[6px_6px_5.3px_rgba(0,0,0,.32)] h-[77px] desktop-xl:text-[1.625rem] text-black font-medium tracking-[-0.624px] w-[calc(33.333%-8px)] tablet:w-[calc(25%-12px)] desktop-xl:w-[193px] transition-all duration-200 hover:shadow-[6px_6px_12px_rgba(0,0,0,.2)] hover:-translate-y-[1px]">
 							<button
 								type="button"
 								@click="selectPackageType(packageType)"
 								class="w-full h-full flex justify-center items-center gap-x-[31px] cursor-pointer package-card after:content-[''] after:bg-no-repeat after:bg-right"
-								:style="{ '--after-bg': `url(/img/quote/first-step/${packageType.img})`, '--after-width': `${packageType.width}px`, '--after-height': `${packageType.height}px` }">
+								:style="{ '--after-bg': `url(/img/quote/first-step/${packageType.img})`, '--after-width': `${packageType.width}px`, '--after-height': `${packageType.height}px` }"
+								:title="`Clicca per aggiungere un collo di tipo ${packageType.text}`">
 								{{ packageType.text }}
 							</button>
 							<input type="radio" name="package_type" class="absolute left-[50%] bottom-0 opacity-0 pointer-events-none" />
@@ -477,15 +593,15 @@ watch(
 						{{ messageError.packages[0] }}
 					</p>
 
-					<h3 class="font-semibold text-[1.25rem] text-black border-b-[1px] border-[#E6E6E6] desktop:w-[600px] h-[50px] pl-[18px] mt-[40px]">Inserisci la posizione di partenza e destinazione</h3>
+					<h3 class="font-semibold text-[1rem] tablet:text-[1.25rem] text-black border-b-[1px] border-[#E6E6E6] desktop:w-[600px] h-auto min-h-[50px] pl-[18px] mt-[30px] tablet:mt-[40px] py-[10px] tablet:py-0 tablet:leading-[50px]">Inserisci la posizione di partenza e destinazione</h3>
 
 					<div
-						class="flex items-start flex-wrap tablet:justify-center desktop-xl:justify-between tablet:gap-x-[20px] gap-y-[24px] tablet:gap-y-[20px] desktop:gap-y-[36px] desktop-xl:gap-y-0 border-[1px] border-[rgba(0,0,0,.2)] rounded-[30px] p-[15px] mt-[10px]">
+						class="flex items-start flex-wrap tablet:justify-center desktop-xl:justify-between tablet:gap-x-[20px] gap-y-[16px] tablet:gap-y-[20px] desktop:gap-y-[36px] desktop-xl:gap-y-0 border-[1px] border-[rgba(0,0,0,.2)] rounded-[20px] tablet:rounded-[30px] p-[12px] tablet:p-[15px] mt-[10px]">
 						<div class="w-full tablet:w-[30%] desktop:w-full desktop-xl:w-[200px] relative">
 							<label for="origin_city" class="label-preventivo-rapido">Città di Ritiro</label>
 							<input type="text" v-model="userStore.shipmentDetails.origin_city" id="origin_city" placeholder="Città" class="input-preventivo-rapido" required autocomplete="off" @input="onOriginCityInput" @blur="setTimeout(() => showOriginSuggestions = false, 200)" />
 							<ul v-if="showOriginSuggestions && originSuggestions.length" class="absolute z-50 top-full left-0 right-0 bg-white border border-[#D0D0D0] rounded-[10px] mt-[2px] max-h-[200px] overflow-y-auto shadow-lg">
-								<li v-for="loc in originSuggestions" :key="loc.id" @mousedown.prevent="selectOriginLocation(loc)" class="px-[14px] py-[10px] cursor-pointer hover:bg-[#f0fafb] text-[0.875rem] text-[#252B42] border-b border-[#F0F0F0] last:border-0">
+								<li v-for="loc in originSuggestions" :key="loc.id" @mousedown.prevent="selectOriginLocation(loc)" class="px-[14px] py-[12px] tablet:py-[10px] cursor-pointer hover:bg-[#f0fafb] text-[0.875rem] text-[#252B42] border-b border-[#F0F0F0] last:border-0">
 									<span class="font-semibold">{{ loc.place_name }}</span> <span class="text-[#737373]">({{ loc.province_name }}) - {{ loc.postal_code }}</span>
 								</li>
 							</ul>
@@ -496,13 +612,14 @@ watch(
 
 						<div class="w-full tablet:w-[30%] desktop:w-full desktop-xl:w-[200px] relative">
 							<label for="origin_postal_code" class="label-preventivo-rapido">CAP di Ritiro</label>
-							<input type="text" v-model="userStore.shipmentDetails.origin_postal_code" id="origin_postal_code" placeholder="CAP" class="input-preventivo-rapido" required autocomplete="off" @input="onOriginCapInput" @blur="setTimeout(() => showOriginSuggestions = false, 200)" />
+							<input type="text" v-model="userStore.shipmentDetails.origin_postal_code" id="origin_postal_code" placeholder="CAP" :class="sv.errorClass('origin_cap', 'input-preventivo-rapido')" required autocomplete="off" maxlength="5" @input="onOriginCapInput(); onCapInputSmart('origin_cap', userStore.shipmentDetails.origin_postal_code)" @blur="setTimeout(() => showOriginSuggestions = false, 200); onCapBlur('origin_cap', userStore.shipmentDetails.origin_postal_code)" />
 							<ul v-if="showOriginSuggestions && originSuggestions.length" class="absolute z-50 top-full left-0 right-0 bg-white border border-[#D0D0D0] rounded-[10px] mt-[2px] max-h-[200px] overflow-y-auto shadow-lg">
-								<li v-for="loc in originSuggestions" :key="loc.id" @mousedown.prevent="selectOriginLocation(loc)" class="px-[14px] py-[10px] cursor-pointer hover:bg-[#f0fafb] text-[0.875rem] text-[#252B42] border-b border-[#F0F0F0] last:border-0">
+								<li v-for="loc in originSuggestions" :key="loc.id" @mousedown.prevent="selectOriginLocation(loc)" class="px-[14px] py-[12px] tablet:py-[10px] cursor-pointer hover:bg-[#f0fafb] text-[0.875rem] text-[#252B42] border-b border-[#F0F0F0] last:border-0">
 									<span class="font-semibold">{{ loc.postal_code }}</span> - {{ loc.place_name }} <span class="text-[#737373]">({{ loc.province_name }})</span>
 								</li>
 							</ul>
-							<p v-if="messageError?.['shipment_details.origin_postal_code']" class="text-red-500 text-[1rem] mt-[10px]">
+							<p v-if="sv.getError('origin_cap')" class="text-red-500 text-[0.8125rem] mt-[4px]">{{ sv.getError('origin_cap') }}</p>
+							<p v-else-if="messageError?.['shipment_details.origin_postal_code']" class="text-red-500 text-[1rem] mt-[10px]">
 								{{ messageError["shipment_details.origin_postal_code"][0] }}
 							</p>
 						</div>
@@ -511,7 +628,7 @@ watch(
 							<label for="destination_city" class="label-preventivo-rapido">Città Consegna</label>
 							<input type="text" v-model="userStore.shipmentDetails.destination_city" id="destination_city" placeholder="Città" class="input-preventivo-rapido" required autocomplete="off" @input="onDestCityInput" @blur="setTimeout(() => showDestSuggestions = false, 200)" />
 							<ul v-if="showDestSuggestions && destSuggestions.length" class="absolute z-50 top-full left-0 right-0 bg-white border border-[#D0D0D0] rounded-[10px] mt-[2px] max-h-[200px] overflow-y-auto shadow-lg">
-								<li v-for="loc in destSuggestions" :key="loc.id" @mousedown.prevent="selectDestLocation(loc)" class="px-[14px] py-[10px] cursor-pointer hover:bg-[#f0fafb] text-[0.875rem] text-[#252B42] border-b border-[#F0F0F0] last:border-0">
+								<li v-for="loc in destSuggestions" :key="loc.id" @mousedown.prevent="selectDestLocation(loc)" class="px-[14px] py-[12px] tablet:py-[10px] cursor-pointer hover:bg-[#f0fafb] text-[0.875rem] text-[#252B42] border-b border-[#F0F0F0] last:border-0">
 									<span class="font-semibold">{{ loc.place_name }}</span> <span class="text-[#737373]">({{ loc.province_name }}) - {{ loc.postal_code }}</span>
 								</li>
 							</ul>
@@ -522,13 +639,14 @@ watch(
 
 						<div class="w-full tablet:w-[30%] desktop:w-full desktop-xl:w-[200px] relative">
 							<label for="destination_postal_code" class="label-preventivo-rapido">CAP Consegna</label>
-							<input type="text" v-model="userStore.shipmentDetails.destination_postal_code" id="destination_postal_code" placeholder="CAP" class="input-preventivo-rapido" required autocomplete="off" @input="onDestCapInput" @blur="setTimeout(() => showDestSuggestions = false, 200)" />
+							<input type="text" v-model="userStore.shipmentDetails.destination_postal_code" id="destination_postal_code" placeholder="CAP" :class="sv.errorClass('dest_cap', 'input-preventivo-rapido')" required autocomplete="off" maxlength="5" @input="onDestCapInput(); onCapInputSmart('dest_cap', userStore.shipmentDetails.destination_postal_code)" @blur="setTimeout(() => showDestSuggestions = false, 200); onCapBlur('dest_cap', userStore.shipmentDetails.destination_postal_code)" />
 							<ul v-if="showDestSuggestions && destSuggestions.length" class="absolute z-50 top-full left-0 right-0 bg-white border border-[#D0D0D0] rounded-[10px] mt-[2px] max-h-[200px] overflow-y-auto shadow-lg">
-								<li v-for="loc in destSuggestions" :key="loc.id" @mousedown.prevent="selectDestLocation(loc)" class="px-[14px] py-[10px] cursor-pointer hover:bg-[#f0fafb] text-[0.875rem] text-[#252B42] border-b border-[#F0F0F0] last:border-0">
+								<li v-for="loc in destSuggestions" :key="loc.id" @mousedown.prevent="selectDestLocation(loc)" class="px-[14px] py-[12px] tablet:py-[10px] cursor-pointer hover:bg-[#f0fafb] text-[0.875rem] text-[#252B42] border-b border-[#F0F0F0] last:border-0">
 									<span class="font-semibold">{{ loc.postal_code }}</span> - {{ loc.place_name }} <span class="text-[#737373]">({{ loc.province_name }})</span>
 								</li>
 							</ul>
-							<p v-if="messageError?.['shipment_details.destination_postal_code']" class="text-red-500 text-[1rem] mt-[10px]">
+							<p v-if="sv.getError('dest_cap')" class="text-red-500 text-[0.8125rem] mt-[4px]">{{ sv.getError('dest_cap') }}</p>
+							<p v-else-if="messageError?.['shipment_details.destination_postal_code']" class="text-red-500 text-[1rem] mt-[10px]">
 								{{ messageError["shipment_details.destination_postal_code"][0] }}
 							</p>
 						</div>
@@ -536,18 +654,28 @@ watch(
 					</div>
 
 					<div v-if="userStore.packages.length > 0">
-						<h3 class="font-semibold text-[1.25rem] text-black border-b-[1px] border-[#E6E6E6] desktop:w-[492px] h-[50px] pl-[18px] mt-[40px]">Inserisci le dimensioni e il peso dei colli</h3>
+						<h3 class="font-semibold text-[1rem] tablet:text-[1.25rem] text-black border-b-[1px] border-[#E6E6E6] desktop:w-[492px] min-h-[50px] pl-[18px] mt-[30px] tablet:mt-[40px] py-[10px] tablet:py-0 flex items-center gap-[8px]">
+							Inserisci le dimensioni e il peso dei colli
+							<!-- Info icon con tooltip avviso misure -->
+							<span class="relative group inline-flex">
+								<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[20px] h-[20px] text-[#737373] cursor-help shrink-0" fill="currentColor"><path d="M13,9H11V7H13M13,17H11V11H13M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z"/></svg>
+								<span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-[8px] w-[280px] bg-[#252B42] text-white text-[0.75rem] font-normal leading-[1.4] p-[12px] rounded-[10px] shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 pointer-events-none">
+									Inserisci peso e dimensioni reali del collo. Il corriere verifica le misure: se risultano significativamente diverse, il pacco potrebbe essere bloccato e potrebbero essere addebitati costi aggiuntivi per lo svincolo.
+									<span class="absolute top-full left-1/2 -translate-x-1/2 border-[6px] border-transparent border-t-[#252B42]"></span>
+								</span>
+							</span>
+						</h3>
 
 						<ul class="mt-[10px]">
 							<li
 								v-for="(pack, packIndex) in userStore.packages"
 								:key="packIndex"
-								class="flex items-start flex-wrap tablet:justify-center desktop-xl:justify-between tablet:gap-x-[20px] gap-y-[24px] tablet:gap-y-[20px] desktop:gap-y-[36px] desktop-xl:gap-y-0 border-[1px] border-[rgba(0,0,0,.2)] rounded-[30px] p-[15px_20px] mt-[10px] w-full li-card before:content-[''] before:self-center"
+								class="flex items-start flex-wrap tablet:justify-center desktop-xl:justify-between tablet:gap-x-[20px] gap-y-[16px] tablet:gap-y-[20px] desktop:gap-y-[36px] desktop-xl:gap-y-0 border-[1px] border-[rgba(0,0,0,.2)] rounded-[20px] tablet:rounded-[30px] p-[12px_14px] tablet:p-[15px_20px] mt-[10px] w-full li-card before:content-[''] before:self-center"
 								:style="{ '--before-bg': `url(/img/quote/first-step/${pack.img})`, '--before-width': `${pack.width}px`, '--before-height': `${pack.height}px` }">
 								<!-- class=""
 									 -->
 								<div class="self-center">
-									<select v-model="pack.quantity" id="quantity" class="text-black text-[1.25rem] font-medium" @change="calcQuantity(pack)">
+									<select v-model="pack.quantity" id="quantity" class="text-black text-[1.25rem] font-medium min-h-[44px] min-w-[44px]" @change="calcQuantity(pack)" title="Numero di colli identici da spedire. Il prezzo verrà moltiplicato per la quantità.">
 										<option v-for="quantity in 10" :key="quantity" :value="quantity" :disabled="quantity === pack.quantity">
 											{{ quantity }}
 										</option>
@@ -558,38 +686,42 @@ watch(
 								</div>
 
 								<div class="w-full tablet:w-[30%] desktop:w-full desktop-xl:w-[200px]">
-									<label for="weight" class="label-preventivo-rapido">Peso (Kg)</label>
-									<input type="text" placeholder="...Kg" v-model="pack.weight" id="weight" class="input-preventivo-rapido" @input="calcPriceWithWeight(pack)" required />
-									<p v-if="messageError?.[`packages.${packIndex}.weight`]" class="text-red-500 text-[1rem] mt-[10px]">
+									<label for="weight" class="label-preventivo-rapido" title="Inserisci il peso effettivo del collo in kilogrammi">Peso (Kg)</label>
+									<input type="text" placeholder="...Kg" v-model="pack.weight" id="weight" :class="sv.errorClass(`peso_${packIndex}`, 'input-preventivo-rapido')" @input="onWeightInput(pack, packIndex)" @blur="onWeightBlur(pack, packIndex)" required title="Peso effettivo del collo. Il prezzo viene calcolato in base al peso o al volume, a seconda di quale è maggiore." />
+									<p v-if="sv.getError(`peso_${packIndex}`)" class="text-red-500 text-[0.8125rem] mt-[4px]">{{ sv.getError(`peso_${packIndex}`) }}</p>
+									<p v-else-if="messageError?.[`packages.${packIndex}.weight`]" class="text-red-500 text-[1rem] mt-[10px]">
 										{{ messageError[`packages.${packIndex}.weight`][0] }}
 									</p>
 								</div>
 
 								<div class="w-full tablet:w-[30%] desktop:w-full desktop-xl:w-[200px]">
-									<label for="first_size" class="label-preventivo-rapido">Lato 1 (Cm)</label>
-									<input type="text" placeholder="...Cm" v-model="pack.first_size" id="first_size" class="input-preventivo-rapido" @input="calcPriceWithVolume(pack)" required />
-									<p v-if="messageError?.[`packages.${packIndex}.first_size`]" class="text-red-500 text-[1rem] mt-[10px]">
+									<label for="first_size" class="label-preventivo-rapido" title="Misura in centimetri del primo lato del collo (lunghezza)">Lato 1 (Cm)</label>
+									<input type="text" placeholder="...Cm" v-model="pack.first_size" id="first_size" :class="sv.errorClass(`first_size_${packIndex}`, 'input-preventivo-rapido')" @input="onDimInput(pack, packIndex, 'first_size', 'Lato 1')" @blur="onDimBlur(pack, packIndex, 'first_size', 'Lato 1')" required />
+									<p v-if="sv.getError(`first_size_${packIndex}`)" class="text-red-500 text-[0.8125rem] mt-[4px]">{{ sv.getError(`first_size_${packIndex}`) }}</p>
+									<p v-else-if="messageError?.[`packages.${packIndex}.first_size`]" class="text-red-500 text-[1rem] mt-[10px]">
 										{{ messageError[`packages.${packIndex}.first_size`][0] }}
 									</p>
 								</div>
 
 								<div class="w-full tablet:w-[30%] desktop:w-full desktop-xl:w-[200px]">
-									<label for="second_size" class="label-preventivo-rapido">Lato 2 (Cm)</label>
-									<input type="text" placeholder="...Cm" v-model="pack.second_size" id="second_size" class="input-preventivo-rapido" @input="calcPriceWithVolume(pack)" required />
-									<p v-if="messageError?.[`packages.${packIndex}.second_size`]" class="text-red-500 text-[1rem] mt-[10px]">
+									<label for="second_size" class="label-preventivo-rapido" title="Misura in centimetri del secondo lato del collo (larghezza)">Lato 2 (Cm)</label>
+									<input type="text" placeholder="...Cm" v-model="pack.second_size" id="second_size" :class="sv.errorClass(`second_size_${packIndex}`, 'input-preventivo-rapido')" @input="onDimInput(pack, packIndex, 'second_size', 'Lato 2')" @blur="onDimBlur(pack, packIndex, 'second_size', 'Lato 2')" required />
+									<p v-if="sv.getError(`second_size_${packIndex}`)" class="text-red-500 text-[0.8125rem] mt-[4px]">{{ sv.getError(`second_size_${packIndex}`) }}</p>
+									<p v-else-if="messageError?.[`packages.${packIndex}.second_size`]" class="text-red-500 text-[1rem] mt-[10px]">
 										{{ messageError[`packages.${packIndex}.second_size`][0] }}
 									</p>
 								</div>
 
 								<div class="w-full tablet:w-[30%] desktop:w-full desktop-xl:w-[200px]">
-									<label for="third_size" class="label-preventivo-rapido">Lato 3 (Cm)</label>
-									<input type="text" placeholder="...Cm" v-model="pack.third_size" id="third_size" class="input-preventivo-rapido" @input="calcPriceWithVolume(pack)" required />
-									<p v-if="messageError?.[`packages.${packIndex}.third_size`]" class="text-red-500 text-[1rem] mt-[10px]">
+									<label for="third_size" class="label-preventivo-rapido" title="Misura in centimetri del terzo lato del collo (altezza)">Lato 3 (Cm)</label>
+									<input type="text" placeholder="...Cm" v-model="pack.third_size" id="third_size" :class="sv.errorClass(`third_size_${packIndex}`, 'input-preventivo-rapido')" @input="onDimInput(pack, packIndex, 'third_size', 'Lato 3')" @blur="onDimBlur(pack, packIndex, 'third_size', 'Lato 3')" required />
+									<p v-if="sv.getError(`third_size_${packIndex}`)" class="text-red-500 text-[0.8125rem] mt-[4px]">{{ sv.getError(`third_size_${packIndex}`) }}</p>
+									<p v-else-if="messageError?.[`packages.${packIndex}.third_size`]" class="text-red-500 text-[1rem] mt-[10px]">
 										{{ messageError[`packages.${packIndex}.third_size`][0] }}
 									</p>
 								</div>
 
-								<button type="button" class="cursor-pointer text-[#DB9FA1] self-center" @click="deletePack(packIndex)" aria-label="Elimina elemento" title="Elimina">
+								<button type="button" class="cursor-pointer text-[#DB9FA1] self-center p-[6px] min-w-[44px] min-h-[44px] flex items-center justify-center" @click="deletePack(packIndex)" aria-label="Elimina elemento" title="Rimuovi questo collo dalla spedizione">
 									<NuxtImg src="/img/quote/first-step/trash.png" alt="" width="30" height="35" />
 								</button>
 							</li>
@@ -611,24 +743,40 @@ watch(
 							</span>
 						</button> -->
 
+					<!-- Promo banner sopra il CTA -->
+					<div v-if="promoSettings?.active && promoSettings?.label_text" class="flex justify-center mt-[20px] desktop:mt-[16px]">
+						<span
+							:style="{ backgroundColor: promoSettings.label_color || '#E44203' }"
+							class="inline-flex items-center gap-[6px] px-[14px] py-[6px] rounded-[10px] text-white text-[0.875rem] font-bold tracking-wide shadow-sm">
+							<img v-if="promoSettings.label_image" :src="promoSettings.label_image" alt="" class="h-[18px] w-auto" />
+							{{ promoSettings.label_text }}
+						</span>
+					</div>
+
 					<div
-						class="bg-[#E44203] w-full text-white font-semibold text-center mt-[24px] desktop-xl:mt-[40px] rounded-[50px] desktop:mt-[20px] tracking-[-0.48px]"
-						:class="{ 'text-[1.875rem] h-[80px]': !isRateCalculated, ' h-[113px]': isRateCalculated }">
+						class="bg-[#E44203] w-full text-white font-semibold text-center rounded-[50px] tracking-[-0.48px] transition-all duration-200 hover:bg-[#c93800] hover:shadow-[0_6px_20px_rgba(228,66,3,0.35)]"
+						:class="[
+							{ 'text-[1.5rem] tablet:text-[1.875rem] h-[64px] tablet:h-[80px]': !isRateCalculated, 'h-[90px] tablet:h-[113px]': isRateCalculated },
+							promoSettings?.active && promoSettings?.label_text ? 'mt-[12px]' : 'mt-[24px] desktop-xl:mt-[40px] desktop:mt-[20px]'
+						]">
 							<button
+								v-if="status !== 'pending' && !isCalculating"
 								type="button"
 								@click="continueToNextStep"
-								class="w-full h-full rounded-[50px] cursor-pointer after:content-[''] after:bg-[url(/img/arrow-down.svg)] after:inline-block after:size-[16px] text-[1.875rem] after:ml-[10px] after:scale-200">
+								:disabled="isCalculating"
+								class="w-full h-full rounded-[50px] cursor-pointer after:content-[''] after:bg-[url(/img/arrow-down.svg)] after:inline-block after:size-[16px] text-[1.5rem] tablet:text-[1.875rem] after:ml-[10px] after:scale-200 disabled:opacity-70 disabled:cursor-not-allowed">
 								<span v-if="!isRateCalculated">Continua</span>
 								<span v-else>
-									<span class="text-[2.25rem] border-b-[1px] border-white pb-[4px]">Spedisci da {{ session?.data?.total_price }}€</span>
-									<span class="block text-center mt-[5px]">IVA inclusa</span>
+									<span class="text-[1.75rem] tablet:text-[2.25rem] border-b-[1px] border-white pb-[4px]">Spedisci da {{ session?.data?.total_price }}€</span>
+									<span class="block text-center mt-[5px] text-[0.875rem] tablet:text-[1rem]">IVA inclusa</span>
 								</span>
 							</button>
 
-						<p v-if="status === 'pending'" class="h-full flex justify-center items-center">
+						<p v-if="status === 'pending' || isCalculating" class="h-full flex justify-center items-center">
 							<Icon name="eos-icons:bubble-loading" style="font-size: 60px" />
 						</p>
 					</div>
+
 
 					<!-- <button
 							type="button"

@@ -1,5 +1,17 @@
 <?php
 
+/**
+ * MIDDLEWARE: CONTROLLA SE IL CARRELLO HA DEI PRODOTTI
+ *
+ * Questo middleware verifica che il carrello dell'utente non sia vuoto
+ * prima di procedere con operazioni come il pagamento o la creazione dell'ordine.
+ *
+ * Se il carrello e' vuoto, la richiesta viene bloccata con un errore 400
+ * e il messaggio "Carrello vuoto".
+ *
+ * Ha senso: non puoi pagare se non hai niente nel carrello!
+ */
+
 namespace App\Http\Middleware;
 
 use Closure;
@@ -10,9 +22,9 @@ use Symfony\Component\HttpFoundation\Response;
 class CheckCart
 {
     /**
-     * Handle an incoming request.
-     *
-     * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
+     * Controlla se il carrello dell'utente ha almeno un prodotto.
+     * Cerca nella tabella "cart_user" del database i pacchi dell'utente.
+     * Se non ne trova, blocca la richiesta.
      */
     public function handle(Request $request, Closure $next): Response
     {

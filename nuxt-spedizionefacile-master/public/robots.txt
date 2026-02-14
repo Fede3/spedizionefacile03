@@ -6,5 +6,7 @@ Disallow: /checkout
 Disallow: /aggiorna-password
 Disallow: /verifica-email
 Disallow: /la-tua-spedizione/
+Disallow: /riepilogo
+Disallow: /recupera-password
 
 Sitemap: https://spedizionefacile.it/sitemap.xml

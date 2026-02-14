@@ -67,6 +67,12 @@ if (Test-Path $envFile) {
     $envContent += "`nQUEUE_CONNECTION=sync"
   }
 
+  if ($envContent -match '(?m)^CACHE_STORE=') {
+    $envContent = [regex]::Replace($envContent, '(?m)^CACHE_STORE=.*$', 'CACHE_STORE=file')
+  } else {
+    $envContent += "`nCACHE_STORE=file"
+  }
+
 
   if ($envContent -match '(?m)^APP_FRONTEND_URL=') {
     $envContent = [regex]::Replace($envContent, '(?m)^APP_FRONTEND_URL=.*$', 'APP_FRONTEND_URL=http://127.0.0.1:8787')
@@ -80,6 +86,7 @@ if (Test-Path $envFile) {
   php artisan key:generate --force | Out-Null
   try { php artisan migrate --force | Out-Null } catch {}
   try { php artisan db:seed --class=Database\Seeders\DatabaseSeeder --force | Out-Null } catch {}
+  try { php artisan storage:link | Out-Null } catch {}
   Pop-Location
 }
 

@@ -1,12 +1,27 @@
+/**
+ * PAGINA BONUS E PROMOZIONI
+ * Mostra le promozioni e i bonus disponibili per l'utente:
+ * - "Invita un amico" (solo per Partner Pro): guadagna commissioni
+ * - "Ricarica e risparmia": nessuna commissione sulle ricariche
+ * - "Diventa Partner Pro": per chi non e' ancora Pro
+ * I bonus visibili cambiano in base al ruolo dell'utente.
+ */
 <script setup>
+/* Richiede che l'utente sia autenticato */
 definePageMeta({
 	middleware: ["sanctum:auth"],
 });
 
 const { user } = useSanctumAuth();
 
+/* Controlla se l'utente e' Partner Pro */
 const isPro = computed(() => user.value?.role === "Partner Pro");
 
+/**
+ * Lista di tutti i bonus disponibili.
+ * Ogni bonus ha: icona, titolo, descrizione, badge, link
+ * e flag "proOnly" (visibile solo ai Pro) e "available" (se mostrarlo).
+ */
 const bonuses = [
 	{
 		icon: "mdi:share-variant-outline",
@@ -43,6 +58,7 @@ const bonuses = [
 	},
 ];
 
+/* Filtra i bonus: nasconde quelli "solo Pro" se l'utente non e' Pro, e quelli non disponibili */
 const filteredBonuses = computed(() => {
 	return bonuses.filter((b) => {
 		if (b.proOnly && !isPro.value) return false;

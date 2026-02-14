@@ -1,5 +1,18 @@
 <?php
 
+/**
+ * EMAIL: RECUPERO PASSWORD
+ *
+ * Questa classe rappresenta l'email che viene inviata a un utente
+ * quando richiede di recuperare la sua password dimenticata.
+ *
+ * L'email contiene un token (codice segreto temporaneo) e l'email dell'utente.
+ * Con questi dati, il frontend costruisce il link per la pagina dove
+ * l'utente puo' scegliere una nuova password.
+ *
+ * Il contenuto dell'email e' definito nel template: resources/views/emails/passwordReset.blade.php
+ */
+
 namespace App\Mail;
 
 use Illuminate\Bus\Queueable;
@@ -12,11 +25,13 @@ class ResetPasswordEmail extends Mailable
 {
     use Queueable, SerializesModels;
 
+    // Token segreto per il recupero password (scade dopo un certo tempo)
     public $token;
+    // Email dell'utente che vuole recuperare la password
     public $email;
 
     /**
-     * Create a new message instance.
+     * Crea l'email con il token di recupero e l'email dell'utente.
      */
     public function __construct($token, $email)
     {
@@ -25,7 +40,7 @@ class ResetPasswordEmail extends Mailable
     }
 
     /**
-     * Get the message envelope.
+     * Configura l'oggetto (subject) dell'email.
      */
     public function envelope(): Envelope
     {
@@ -35,7 +50,8 @@ class ResetPasswordEmail extends Mailable
     }
 
     /**
-     * Get the message content definition.
+     * Definisce il contenuto dell'email.
+     * Usa il template Markdown "passwordReset" e gli passa token ed email.
      */
     public function content(): Content
     {
@@ -49,9 +65,7 @@ class ResetPasswordEmail extends Mailable
     }
 
     /**
-     * Get the attachments for the message.
-     *
-     * @return array<int, \Illuminate\Mail\Mailables\Attachment>
+     * Allegati dell'email (nessuno in questo caso).
      */
     public function attachments(): array
     {

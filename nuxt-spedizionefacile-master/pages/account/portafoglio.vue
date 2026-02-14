@@ -1,6 +1,14 @@
+/**
+ * FILE: pages/account/portafoglio.vue
+ * SCOPO: Portafoglio — saldo, ricarica via Stripe, storico movimenti, saldo commissioni Pro.
+ * API: GET /api/wallet/balance, GET /api/wallet/movements, POST /api/wallet/top-up,
+ *      GET /api/stripe/payment-methods, GET /api/stripe-config.
+ * ROUTE: /account/portafoglio (middleware sanctum:auth).
+ */
 <script setup>
 import { loadStripe } from "@stripe/stripe-js";
 
+/* Richiede che l'utente sia autenticato */
 definePageMeta({
 	middleware: ["sanctum:auth"],
 });
@@ -8,20 +16,30 @@ definePageMeta({
 const { user } = useSanctumAuth();
 const sanctum = useSanctumClient();
 
+/* Saldo del portafoglio (principale e commissioni) */
 const balance = ref(null);
+/* Lista dei movimenti (ricariche, pagamenti, commissioni, ecc.) */
 const movements = ref([]);
+/* Carta di pagamento predefinita dell'utente (per la ricarica) */
 const defaultPaymentMethod = ref(null);
+/* Indicatori di caricamento per saldo e movimenti */
 const isLoadingBalance = ref(true);
 const isLoadingMovements = ref(true);
 
+/* Importo scelto dall'utente per la ricarica */
 const topUpAmount = ref("");
+/* Indica se la ricarica e' in corso */
 const isLoading = ref(false);
+/* Messaggio di feedback (successo o errore) dopo un'operazione */
 const message = ref(null);
 const messageType = ref("success");
+/* Tab attivo (ricarica o storico) */
 const activeTab = ref("topup");
 
+/* Importi preimpostati per la ricarica rapida */
 const presetAmounts = [10, 25, 50, 100, 200];
 
+/* Carica il saldo del portafoglio dal server */
 const fetchBalance = async () => {
 	try {
 		const res = await sanctum("/api/wallet/balance");
@@ -33,6 +51,7 @@ const fetchBalance = async () => {
 	}
 };
 
+/* Carica lo storico dei movimenti dal server */
 const fetchMovements = async () => {
 	try {
 		const res = await sanctum("/api/wallet/movements");
@@ -44,6 +63,7 @@ const fetchMovements = async () => {
 	}
 };
 
+/* Carica la carta di pagamento predefinita dell'utente */
 const fetchPaymentMethod = async () => {
 	try {
 		const res = await sanctum("/api/stripe/default-payment-method");
@@ -53,14 +73,21 @@ const fetchPaymentMethod = async () => {
 	}
 };
 
+/* All'apertura della pagina, carica in parallelo: saldo, movimenti e carta predefinita */
 onMounted(async () => {
 	await Promise.all([fetchBalance(), fetchMovements(), fetchPaymentMethod()]);
 });
 
+/* Quando l'utente clicca un importo preimpostato (es. 25 EUR), lo seleziona */
 const selectPreset = (amount) => {
 	topUpAmount.value = amount;
 };
 
+/**
+ * Esegue la ricarica del portafoglio.
+ * Verifica che ci sia un importo valido e una carta, poi invia la richiesta.
+ * Dopo il successo, aggiorna saldo e movimenti.
+ */
 const handleTopUp = async () => {
 	if (!topUpAmount.value || topUpAmount.value < 1) {
 		message.value = "Inserisci un importo minimo di 1,00 EUR";
@@ -115,6 +142,7 @@ const formatDate = (dateStr) => {
 	});
 };
 
+/* Restituisce il colore del testo: verde per entrate (credit), rosso per uscite (debit) */
 const getMovementColor = (mov) => {
 	if (mov.type === "credit") return "text-emerald-600";
 	return "text-red-500";
@@ -124,6 +152,7 @@ const getMovementSign = (mov) => {
 	return mov.type === "credit" ? "+" : "-";
 };
 
+/* Sceglie l'icona giusta in base alla fonte del movimento (carta, commissione, prelievo, ecc.) */
 const getMovementIcon = (mov) => {
 	if (mov.source === "stripe") return mov.type === "credit" ? "mdi:credit-card-plus-outline" : "mdi:credit-card-minus-outline";
 	if (mov.source === "commission") return "mdi:account-cash-outline";
@@ -133,6 +162,7 @@ const getMovementIcon = (mov) => {
 	return "mdi:swap-horizontal";
 };
 
+/* Traduce il nome della fonte del movimento in italiano (es. "stripe" -> "Carta") */
 const getSourceLabel = (source) => {
 	const labels = {
 		stripe: "Carta",
@@ -155,6 +185,7 @@ const getSourceColor = (source) => {
 	return colors[source] || "bg-gray-50 text-gray-600";
 };
 
+/* Controlla se l'utente e' un Partner Pro (per mostrare il saldo commissioni) */
 const isPro = computed(() => user.value?.role === "Partner Pro");
 </script>
 
@@ -171,7 +202,7 @@ const isPro = computed(() => user.value?.role === "Partner Pro");
 			<!-- Balance Cards Row -->
 			<div class="grid grid-cols-1 desktop:grid-cols-2 gap-[20px] mb-[32px]">
 				<!-- Main Balance -->
-				<div class="relative bg-gradient-to-br from-[#095866] to-[#0a7a8c] rounded-[20px] p-[28px] desktop:p-[32px] text-white shadow-[0_8px_32px_rgba(9,88,102,0.25)] overflow-hidden">
+				<div class="relative bg-gradient-to-br from-[#095866] to-[#0b6d7d] rounded-[20px] p-[28px] desktop:p-[32px] text-white shadow-[0_8px_32px_rgba(9,88,102,0.25)] overflow-hidden">
 					<div class="absolute top-0 right-0 w-[200px] h-[200px] rounded-full bg-white/5 -translate-y-1/2 translate-x-1/2"></div>
 					<div class="absolute bottom-0 left-0 w-[120px] h-[120px] rounded-full bg-white/5 translate-y-1/2 -translate-x-1/2"></div>
 					<div class="relative z-1">
@@ -215,11 +246,11 @@ const isPro = computed(() => user.value?.role === "Partner Pro");
 						<p class="text-[0.8125rem] text-[#737373] leading-[1.5]">Gestisci il tuo portafoglio e i metodi di pagamento.</p>
 					</div>
 					<div class="flex flex-col gap-[10px] mt-[20px]">
-						<NuxtLink to="/account/carte" class="flex items-center gap-[10px] text-[0.875rem] font-medium text-[#095866] hover:text-[#0a7a8c] transition-colors">
+						<NuxtLink to="/account/carte" class="flex items-center gap-[10px] text-[0.875rem] font-medium text-[#095866] hover:text-[#0b6d7d] transition-colors">
 							<Icon name="mdi:credit-card-outline" class="text-[18px]" />
 							Gestisci carte
 						</NuxtLink>
-						<NuxtLink to="/account/spedizioni" class="flex items-center gap-[10px] text-[0.875rem] font-medium text-[#095866] hover:text-[#0a7a8c] transition-colors">
+						<NuxtLink to="/account/spedizioni" class="flex items-center gap-[10px] text-[0.875rem] font-medium text-[#095866] hover:text-[#0b6d7d] transition-colors">
 							<Icon name="mdi:truck-fast-outline" class="text-[18px]" />
 							Le tue spedizioni
 						</NuxtLink>
@@ -299,7 +330,7 @@ const isPro = computed(() => user.value?.role === "Partner Pro");
 						'w-full py-[16px] rounded-[12px] text-white font-semibold text-[1rem] transition-all flex items-center justify-center gap-[8px]',
 						isLoading || !defaultPaymentMethod?.card
 							? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-							: 'bg-[#095866] hover:bg-[#0a7a8c] cursor-pointer shadow-[0_2px_8px_rgba(9,88,102,0.25)] hover:shadow-[0_4px_16px_rgba(9,88,102,0.3)]',
+							: 'bg-[#095866] hover:bg-[#074a56] cursor-pointer shadow-[0_2px_8px_rgba(9,88,102,0.25)] hover:shadow-[0_4px_16px_rgba(9,88,102,0.3)]',
 					]">
 					<Icon v-if="!isLoading" name="mdi:wallet-plus-outline" class="text-[20px]" />
 					<span v-if="isLoading">Elaborazione in corso...</span>

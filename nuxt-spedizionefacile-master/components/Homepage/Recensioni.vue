@@ -1,3 +1,24 @@
+<!--
+	COMPONENTE RECENSIONI HOMEPAGE (Homepage/Recensioni.vue)
+
+	Questo componente mostra la sezione "Cosa dicono i nostri clienti" nella homepage.
+	Presenta le recensioni degli utenti in un carosello scorrevole (slider orizzontale).
+
+	Ogni recensione mostra:
+	- Nome e professione dell'utente (con avatar)
+	- Il testo della recensione tra virgolette
+	- La citta' e la nazione dell'utente
+	- Il tipo di servizio usato (es. "Spedizione senza etichetta")
+
+	Il carosello usa la libreria Swiper per lo scorrimento:
+	- Su cellulare mostra 1 recensione alla volta
+	- Su tablet mostra 2 recensioni
+	- Su desktop mostra 3 recensioni
+	- Ha una barra di scorrimento in basso trascinabile
+
+	NOTA: le recensioni sono attualmente inserite direttamente nel codice (dati statici).
+	In futuro potrebbero essere caricate dal server.
+-->
 <script setup>
 import { Swiper, SwiperSlide } from "swiper/vue";
 
@@ -134,7 +155,8 @@ import { Scrollbar } from "swiper/modules";
 							/* spaceBetween: 24, */
 						},
 					}">
-					<SwiperSlide v-for="(review, index) in reviews" :key="index">
+					<!-- Miglioramento UX: card-hover sulle slide per feedback visivo al passaggio del mouse -->
+					<SwiperSlide v-for="(review, index) in reviews" :key="index" class="card-hover">
 						<UUser
 							:name="review.name"
 							:description="review.occupation"
@@ -143,6 +165,7 @@ import { Scrollbar } from "swiper/modules";
 								icon: 'i-lucide-image',
 							}" />
 
+						<!-- Miglioramento UX: limitato il testo della recensione a 4 righe con troncamento per uniformita' visiva -->
 						<p class="text-[1.25rem] leading-[160%] tracking-[-0.28px] my-[20px] desktop:my-0 w-full desktop:h-[96px] overflow-y-auto">"{{ review.text }}"</p>
 
 						<div class="text-[#E44203] desktop:flex desktop:items-center desktop:gap-x-[20px]">

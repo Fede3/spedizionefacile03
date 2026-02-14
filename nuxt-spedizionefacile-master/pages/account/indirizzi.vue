@@ -124,7 +124,7 @@ const addressList = computed(() => addresses.value?.data || []);
 				<button
 					v-if="!showForm"
 					@click="openNewForm"
-					class="px-[20px] py-[10px] bg-[#095866] hover:bg-[#0a7a8c] text-white rounded-[10px] text-[0.875rem] font-semibold transition-colors cursor-pointer">
+					class="px-[20px] py-[10px] bg-[#095866] hover:bg-[#074a56] text-white rounded-[10px] text-[0.875rem] font-semibold transition-colors cursor-pointer">
 					+ Nuovo indirizzo
 				</button>
 			</div>
@@ -182,7 +182,7 @@ const addressList = computed(() => addresses.value?.data || []);
 						<button type="button" @click="closeForm" class="flex-1 py-[12px] rounded-[10px] bg-[#F0F0F0] hover:bg-[#E0E0E0] text-[#404040] font-semibold text-[0.875rem] transition-colors cursor-pointer">
 							Annulla
 						</button>
-						<button type="submit" :disabled="formLoading" class="flex-1 py-[12px] rounded-[10px] bg-[#095866] hover:bg-[#0a7a8c] text-white font-semibold text-[0.875rem] transition-colors cursor-pointer disabled:opacity-60">
+						<button type="submit" :disabled="formLoading" class="flex-1 py-[12px] rounded-[10px] bg-[#095866] hover:bg-[#074a56] text-white font-semibold text-[0.875rem] transition-colors cursor-pointer disabled:opacity-60">
 							{{ formLoading ? 'Salvataggio...' : (editingId ? 'Salva modifiche' : 'Aggiungi indirizzo') }}
 						</button>
 					</div>
@@ -210,10 +210,10 @@ const addressList = computed(() => addresses.value?.data || []);
 						</div>
 						<div class="flex gap-[8px] shrink-0">
 							<button @click="openEditForm(addr)" class="p-[8px] rounded-[8px] hover:bg-[#F0F0F0] transition cursor-pointer" title="Modifica">
-								<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#737373" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+								<Icon name="mdi:pencil-outline" class="text-[16px] text-[#737373]" />
 							</button>
 							<button @click="deleteAddress(addr.id)" class="p-[8px] rounded-[8px] hover:bg-red-50 transition cursor-pointer" title="Elimina">
-								<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#EF4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+								<Icon name="mdi:delete-outline" class="text-[16px] text-red-500" />
 							</button>
 						</div>
 					</div>
@@ -223,11 +223,11 @@ const addressList = computed(() => addresses.value?.data || []);
 			<!-- Empty -->
 			<div v-else-if="!showForm" class="bg-white rounded-[16px] p-[48px] border border-[#E9EBEC] text-center">
 				<div class="w-[64px] h-[64px] mx-auto mb-[16px] bg-[#F8F9FB] rounded-full flex items-center justify-center">
-					<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#C8CCD0" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+					<Icon name="mdi:map-marker-outline" class="text-[28px] text-[#C8CCD0]" />
 				</div>
 				<h2 class="text-[1.125rem] font-bold text-[#252B42] mb-[8px]">Nessun indirizzo salvato</h2>
 				<p class="text-[0.875rem] text-[#737373] mb-[20px]">Aggiungi il tuo primo indirizzo per velocizzare le spedizioni.</p>
-				<button @click="openNewForm" class="px-[24px] py-[12px] bg-[#095866] hover:bg-[#0a7a8c] text-white rounded-[10px] font-semibold text-[0.875rem] transition-colors cursor-pointer">
+				<button @click="openNewForm" class="px-[24px] py-[12px] bg-[#095866] hover:bg-[#074a56] text-white rounded-[10px] font-semibold text-[0.875rem] transition-colors cursor-pointer">
 					+ Aggiungi indirizzo
 				</button>
 			</div>

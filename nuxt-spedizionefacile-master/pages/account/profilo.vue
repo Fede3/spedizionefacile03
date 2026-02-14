@@ -1,15 +1,31 @@
+/**
+ * FILE: pages/account/profilo.vue
+ * SCOPO: Profilo utente — visualizza/modifica dati personali, aziendali, fatturazione, password.
+ * API: PUT /api/user (aggiorna profilo), POST /api/user/change-password.
+ * ROUTE: /account/profilo (middleware sanctum:auth).
+ */
 <script setup>
+/* Richiede che l'utente sia autenticato */
 definePageMeta({
 	middleware: ["sanctum:auth"],
 });
 
+/* refreshIdentity ricarica i dati utente dopo un salvataggio,
+   user contiene i dati dell'utente, logout serve per uscire */
 const { refreshIdentity, user, logout } = useSanctumAuth();
 
+/* Messaggi mostrati all'utente: errore, successo e caricamento */
 const messageError = ref(null);
 const messageSuccess = ref(null);
 const messageLoading = ref(null);
+
+/* Controlla se mostrare il form di modifica o la vista di sola lettura */
 const showEditForm = ref(false);
 
+/**
+ * Oggetto con tutti i campi modificabili del profilo utente.
+ * Viene pre-compilato con i dati attuali dell'utente.
+ */
 const userInfo = ref({
 	name: user.value?.name || "",
 	surname: user.value?.surname || "",
@@ -17,6 +33,7 @@ const userInfo = ref({
 	password: "",
 	password_confirmation: "",
 	telephone_number: user.value?.telephone_number || "",
+	user_type: user.value?.user_type || "privato",
 	// Business data
 	company_name: user.value?.company_name || "",
 	vat_number: user.value?.vat_number || "",
@@ -31,11 +48,17 @@ const userInfo = ref({
 	billing_province: user.value?.billing_province || "",
 });
 
-// "same as shipping" checkbox
+/* Se spuntato, i dati di fatturazione sono uguali a quelli di spedizione */
 const billingSameAsShipping = ref(false);
 
+/* Client per chiamare le API del backend (autenticato con cookie) */
 const sanctum = useSanctumClient();
 
+/**
+ * Salva le modifiche al profilo.
+ * Invia i dati al server, poi aggiorna i dati utente in locale.
+ * Viene chiamata quando l'utente clicca "Salva modifiche" nel form.
+ */
 const updateInfo = async () => {
 	messageError.value = null;
 	messageSuccess.value = null;
@@ -71,6 +94,7 @@ const updateInfo = async () => {
 	}
 };
 
+/* Mostra il numero di telefono o un testo se non ancora inserito */
 const getTelephoneNumber = (telephone_number) => {
 	if (!telephone_number || telephone_number === "0") {
 		return "Non ancora aggiunto";
@@ -78,12 +102,14 @@ const getTelephoneNumber = (telephone_number) => {
 	return telephone_number;
 };
 
+/* Restituisce etichetta e colore del badge in base al ruolo utente (Cliente, Partner Pro, Admin) */
 const getRoleBadge = (role) => {
 	if (role === "Partner Pro") return { label: "Partner Pro", class: "bg-[#095866]/10 text-[#095866]" };
 	if (role === "Admin") return { label: "Admin", class: "bg-purple-50 text-purple-700" };
 	return { label: "Cliente", class: "bg-blue-50 text-blue-700" };
 };
 
+/* Esegue il logout e in caso di errore riporta alla homepage */
 const handleLogout = async () => {
 	try {
 		await logout();
@@ -122,7 +148,8 @@ const handleLogout = async () => {
 					<h1 class="text-[1.5rem] desktop:text-[1.75rem] font-bold text-[#252B42]">Profilo e dati</h1>
 					<button
 						@click="showEditForm = true"
-						class="px-[20px] py-[10px] bg-[#095866] hover:bg-[#0a7a8c] text-white rounded-[10px] text-[0.875rem] font-semibold transition-colors cursor-pointer">
+						class="inline-flex items-center gap-[6px] px-[20px] py-[10px] bg-[#095866] hover:bg-[#074a56] text-white rounded-[10px] text-[0.875rem] font-semibold transition-colors cursor-pointer">
+						<Icon name="mdi:pencil-outline" class="text-[16px]" />
 						Modifica dati
 					</button>
 				</div>
@@ -164,6 +191,16 @@ const handleLogout = async () => {
 							</div>
 						</div>
 
+						<div class="flex items-start gap-[12px]">
+							<div class="w-[36px] h-[36px] rounded-[8px] bg-[#F8F9FB] flex items-center justify-center shrink-0">
+								<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[18px] h-[18px] text-[#737373]" fill="currentColor"><path d="M12,5.5A3.5,3.5 0 0,1 15.5,9A3.5,3.5 0 0,1 12,12.5A3.5,3.5 0 0,1 8.5,9A3.5,3.5 0 0,1 12,5.5M5,8C5.56,8 6.08,8.15 6.53,8.42C6.38,9.85 6.8,11.27 7.66,12.38C7.16,13.34 6.16,14 5,14A3,3 0 0,1 2,11A3,3 0 0,1 5,8M19,8A3,3 0 0,1 22,11A3,3 0 0,1 19,14C17.84,14 16.84,13.34 16.34,12.38C17.2,11.27 17.62,9.85 17.47,8.42C17.92,8.15 18.44,8 19,8M5.5,18.25C5.5,16.18 8.41,14.5 12,14.5C15.59,14.5 18.5,16.18 18.5,18.25V20H5.5V18.25Z"/></svg>
+							</div>
+							<div>
+								<p class="text-[0.8125rem] text-[#737373]">Tipo account</p>
+								<p class="text-[0.9375rem] font-medium text-[#252B42]">{{ (user?.user_type || 'privato') === 'commerciante' ? 'Azienda' : 'Privato' }}</p>
+							</div>
+						</div>
+
 						<div v-if="user?.company_name" class="flex items-start gap-[12px]">
 							<div class="w-[36px] h-[36px] rounded-[8px] bg-[#F8F9FB] flex items-center justify-center shrink-0">
 								<Icon name="mdi:domain" class="text-[18px] text-[#737373]" />
@@ -190,7 +227,8 @@ const handleLogout = async () => {
 				<!-- Logout button -->
 				<button
 					@click.prevent="handleLogout"
-					class="w-full py-[14px] border border-[#E9EBEC] rounded-[10px] text-[0.9375rem] text-[#737373] hover:text-red-600 hover:border-red-200 hover:bg-red-50 transition-all cursor-pointer font-medium">
+					class="w-full py-[14px] border border-[#E9EBEC] rounded-[10px] text-[0.9375rem] text-[#737373] hover:text-red-600 hover:border-red-200 hover:bg-red-50 transition-all cursor-pointer font-medium inline-flex items-center justify-center gap-[8px]">
+					<Icon name="mdi:logout" class="text-[18px]" />
 					Esci dall'account
 				</button>
 			</template>
@@ -201,6 +239,31 @@ const handleLogout = async () => {
 
 				<div class="bg-white rounded-[16px] p-[24px] desktop:p-[32px] shadow-sm border border-[#E9EBEC] max-w-[600px] mx-auto">
 					<form @submit.prevent="updateInfo">
+						<!-- Tipo account -->
+						<h3 class="text-[1rem] font-bold text-[#252B42] mb-[12px]">Tipo account</h3>
+						<div class="flex items-center gap-[12px] mb-[20px]">
+							<label
+								:class="[
+									'flex-1 flex items-center justify-center gap-[6px] px-[16px] py-[12px] rounded-[10px] cursor-pointer border transition-all text-[0.9375rem] font-medium text-center',
+									userInfo.user_type === 'privato'
+										? 'bg-[#095866] text-white border-[#095866] shadow-sm'
+										: 'bg-white text-[#252B42] border-[#E9EBEC] hover:border-[#095866]',
+								]">
+								<input type="radio" value="privato" v-model="userInfo.user_type" class="sr-only" />
+								Privato
+							</label>
+							<label
+								:class="[
+									'flex-1 flex items-center justify-center gap-[6px] px-[16px] py-[12px] rounded-[10px] cursor-pointer border transition-all text-[0.9375rem] font-medium text-center',
+									userInfo.user_type === 'commerciante'
+										? 'bg-[#095866] text-white border-[#095866] shadow-sm'
+										: 'bg-white text-[#252B42] border-[#E9EBEC] hover:border-[#095866]',
+								]">
+								<input type="radio" value="commerciante" v-model="userInfo.user_type" class="sr-only" />
+								Azienda
+							</label>
+						</div>
+
 						<!-- Personal data -->
 						<h3 class="text-[1rem] font-bold text-[#252B42] mb-[16px]">Dati personali</h3>
 						<div class="grid grid-cols-2 gap-[12px] mb-[16px]">
@@ -296,16 +359,15 @@ const handleLogout = async () => {
 							</div>
 						</div>
 
-						<p v-if="messageLoading" class="text-center text-[0.875rem] text-[#095866] font-medium mb-[16px]">
-							{{ messageLoading }}
-						</p>
-
+						<!-- Bottoni salva/annulla con loading state sul pulsante -->
 						<div class="flex gap-[12px]">
-							<button type="button" @click.prevent="showEditForm = false" class="flex-1 py-[14px] rounded-[10px] bg-[#F0F0F0] hover:bg-[#E0E0E0] text-[#404040] font-semibold text-[0.9375rem] transition-colors cursor-pointer">
+							<button type="button" @click.prevent="showEditForm = false" :disabled="!!messageLoading" class="flex-1 inline-flex items-center justify-center gap-[6px] py-[14px] rounded-[10px] bg-[#F0F0F0] hover:bg-[#E0E0E0] text-[#404040] font-semibold text-[0.9375rem] transition-colors cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed">
+								<Icon name="mdi:close" class="text-[18px]" />
 								Annulla
 							</button>
-							<button type="submit" class="flex-1 py-[14px] rounded-[10px] bg-[#095866] hover:bg-[#0a7a8c] text-white font-semibold text-[0.9375rem] transition-colors cursor-pointer">
-								Salva modifiche
+							<button type="submit" :disabled="!!messageLoading" class="flex-1 inline-flex items-center justify-center gap-[6px] py-[14px] rounded-[10px] bg-[#095866] hover:bg-[#074a56] text-white font-semibold text-[0.9375rem] transition-colors cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed">
+								<Icon name="mdi:content-save" class="text-[18px]" />
+								{{ messageLoading ? 'Salvataggio...' : 'Salva modifiche' }}
 							</button>
 						</div>
 					</form>

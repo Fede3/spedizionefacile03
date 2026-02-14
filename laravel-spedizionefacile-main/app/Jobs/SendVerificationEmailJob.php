@@ -1,17 +1,25 @@
 <?php
 
+/**
+ * JOB: INVIO EMAIL DI VERIFICA
+ *
+ * Invia all'utente un'email contenente il codice di verifica a 6 cifre.
+ * Il codice e' gia' stato generato e salvato nel campo verification_code dell'utente
+ * prima di chiamare questo job.
+ */
+
 namespace App\Jobs;
 
 use App\Mail\VerificationEmail;
 use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Facades\URL;
+use Illuminate\Support\Facades\Log;
 
 class SendVerificationEmailJob
 {
     protected $user;
 
     /**
-     * Create a new job instance.
+     * Crea il job con l'utente a cui inviare l'email.
      */
     public function __construct($user)
     {
@@ -19,18 +27,22 @@ class SendVerificationEmailJob
     }
 
     /**
-     * Execute the job.
+     * Esegue il job: invia l'email con il codice di verifica a 6 cifre.
      */
     public function handle(): void
     {
-        $url = URL::temporarySignedRoute(
-            'verification.verify',
-            now()->addMinutes(60),
-            ['id' => $this->user->id]
-        );
+        $code = $this->user->verification_code;
+
+        if (!$code) {
+            Log::warning('Tentativo di invio email di verifica senza codice.', [
+                'user_id' => $this->user->id,
+                'email' => $this->user->email,
+            ]);
+            return;
+        }
 
         Mail::to($this->user->email)->send(
-            new VerificationEmail($url)
+            new VerificationEmail($code)
         );
     }
 

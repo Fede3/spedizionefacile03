@@ -1,4 +1,11 @@
+/**
+ * PAGINA ASSISTENZA
+ * Qui l'utente puo' inviare una richiesta di supporto compilando
+ * un modulo con oggetto e messaggio. Mostra anche i contatti
+ * (email assistenza e orari di disponibilita').
+ */
 <script setup>
+/* Richiede che l'utente sia autenticato */
 definePageMeta({
 	middleware: ["sanctum:auth"],
 });
@@ -6,12 +13,21 @@ definePageMeta({
 const { user } = useSanctumAuth();
 const sanctum = useSanctumClient();
 
+/* Oggetto della richiesta di assistenza */
 const subject = ref("");
+/* Testo del messaggio di assistenza */
 const message = ref("");
+/* Indica se l'invio e' in corso */
 const isSending = ref(false);
+/* Messaggio di conferma o errore dopo l'invio */
 const feedback = ref(null);
 const feedbackType = ref("success");
 
+/**
+ * Invia la richiesta di assistenza.
+ * Controlla che i campi siano compilati, poi simula l'invio
+ * (in futuro si colleghera' a un vero endpoint API per i ticket).
+ */
 const handleSubmit = async () => {
 	if (!subject.value.trim() || !message.value.trim()) {
 		feedback.value = "Compila tutti i campi obbligatori.";
@@ -108,7 +124,7 @@ const handleSubmit = async () => {
 						'w-full py-[14px] rounded-[10px] font-semibold text-[0.9375rem] transition-all flex items-center justify-center gap-[8px]',
 						isSending
 							? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-							: 'bg-[#095866] hover:bg-[#0a7a8c] text-white cursor-pointer',
+							: 'bg-[#095866] hover:bg-[#074a56] text-white cursor-pointer',
 					]">
 					<Icon v-if="!isSending" name="mdi:send" class="text-[18px]" />
 					{{ isSending ? "Invio in corso..." : "Invia richiesta" }}

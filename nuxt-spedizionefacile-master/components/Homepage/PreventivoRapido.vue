@@ -1,3 +1,22 @@
+<!--
+	COMPONENTE PREVENTIVO RAPIDO HOMEPAGE (Homepage/PreventivoRapido.vue)
+
+	Questo e' un modulo preventivo SEMPLIFICATO che appare nella homepage del sito.
+	A differenza del componente Preventivo.vue (quello principale), questo mostra solo
+	i campi base per iniziare:
+	- Nazionalita' e CAP di ritiro
+	- Nazionalita' e CAP di consegna
+	- Data della spedizione
+
+	In alto mostra anche un indicatore a 3 passi:
+	1. Seleziona Posizione
+	2. Seleziona Dimensioni
+	3. Conferma
+
+	NOTA: questo componente sembra essere una versione precedente/alternativa
+	e potrebbe non essere attualmente in uso nella homepage (dove invece
+	viene usato il componente Preventivo.vue).
+-->
 <script setup>
 const currentStep = ref(1);
 

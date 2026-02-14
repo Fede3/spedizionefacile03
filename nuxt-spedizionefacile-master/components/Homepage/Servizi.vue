@@ -1,3 +1,21 @@
+<!--
+	COMPONENTE SERVIZI HOMEPAGE (Homepage/Servizi.vue)
+
+	Questo componente mostra la sezione "Spedisci senza pensieri" nella homepage.
+	Presenta i 5 servizi principali offerti dal sito:
+
+	1. Assistenza rapida - ticket, chat o telefono con risposta in 30 minuti
+	2. Spedizione senza etichetta - il corriere porta l'etichetta gia' pronta
+	3. Ritiro a domicilio - prenota oggi, ritiro domani
+	4. Pagamento in contrassegno - il destinatario paga al corriere
+	5. Wallet e Punti Fedelta' - ricarica il portafoglio e accumula punti
+
+	Ogni servizio ha un'icona, un titolo, una descrizione e un pulsante
+	che porta alla pagina dettagliata del servizio.
+
+	Sotto i servizi c'e' anche una sezione di testo che spiega come funziona
+	il sistema di calcolo prezzi e il tracciamento delle spedizioni.
+-->
 <script setup>
 const items = ref([
 	{
@@ -23,16 +41,16 @@ const services = ref([
 		height: 94,
 		description: "Ticket, chat o telefono dal lunedì al venerdì: primo feedback medio in 30 minuti. Ti seguiamo dal preventivo alla consegna, incluse pratiche di rimborso o giacenza.",
 		button: "Chiedi",
-		url: "/",
+		url: "/contatti",
 	},
 	{
 		title: "Spedizione senza etichetta",
 		icon: "/img/homepage/services/label-free-shipping.png",
 		width: 104,
 		height: 100,
-		description: "Il driver BRT arriva con l'etichetta digitale già pronta: tu non stampi nulla, risparmi ta e riduci l'impronta di CO₂. Basta indie peso, misure e indirizzi: al resto pensiamo noi.",
+		description: "Il driver BRT arriva con l'etichetta digitale già pronta: tu non stampi nulla, risparmi carta e riduci l'impronta di CO₂. Basta indicare peso, misure e indirizzi: al resto pensiamo noi.",
 		button: "Leggi di più",
-		url: "/",
+		url: "/servizi",
 	},
 	{
 		title: "Ritiro a domicilio",
@@ -41,7 +59,7 @@ const services = ref([
 		height: 83,
 		description: "Prenota oggi, ritiro domani dove vuoi tu: abitazione, ufficio o negozio. Notifiche live e secondo tentativo gratuito se il destinatario è assente.",
 		button: "Leggi di più",
-		url: "/",
+		url: "/servizi",
 	},
 	{
 		title: "Pagamento in contrassegno",
@@ -50,16 +68,16 @@ const services = ref([
 		height: 94,
 		description: "Il destinatario salda al corriere in contanti o POS; tu ricevi l'importo sul Wallet o su IBAN entro 5 giorni. Massimo gestibile 999 €. Azzera il rischio di insoluti.",
 		button: "Leggi di più",
-		url: "/",
+		url: "/servizi/pagamento-alla-consegna",
 	},
 	{
 		title: "Wallet e Punti Fedeltà",
 		icon: "/img/homepage/services/loyalty-points.png",
 		width: 82,
 		height: 106,
-		description: "Riica con tagli da 25/50/100 € e ottieni subito un bonus del 10 %. I punti si sommano ad ogni spedizione e li spendi al checkout per abbassare il prezzo.",
+		description: "Ricarica con tagli da 25/50/100 € e ottieni subito un bonus del 10 %. I punti si sommano ad ogni spedizione e li spendi al checkout per abbassare il prezzo.",
 		button: "Leggi di più",
-		url: "/",
+		url: "/account/portafoglio",
 	},
 ]);
 
@@ -76,17 +94,17 @@ const otherServices = computed(() => services.value.slice(1));
 	<section class="mt-[164px] desktop-xl:pb-[231px] pb-[94px] desktop:pb-[172px]">
 		<div class="my-container">
 			<div class="font-montserrat">
-				<h2 class="font-bold text-[0.875rem] tracking-[0.2px] text-[#23A6F0] text-center">Servizi</h2>
+				<h2 class="font-bold text-[0.875rem] tracking-[0.2px] text-[#095866] text-center">Servizi</h2>
 
 				<p class="font-bold text-[1.5rem] tracking-[0.1px] text-[#252B42] text-center my-[10px]">Spedisci senza pensieri</p>
 
 				<p class="text-[0.875rem] tracking-[0.2px] text-[#737373] text-center max-w-[756px] mx-auto leading-[20px]">
-					Scegli il servizio che ti serve, ottieni il prezzo in tempo reale e affida il pacco a BRT in meno di due minuti. Niente file, niente ta, solo soluzioni fatte per te.
+					Scegli il servizio che ti serve, ottieni il prezzo in tempo reale e affida il pacco a BRT in meno di due minuti. Niente file, niente carta, solo soluzioni fatte per te.
 				</p>
 
 				<div class="desktop-xl:flex desktop-xl:items-start desktop-xl:justify-between mt-[50px]">
 					<div class="tablet:w-[448px] tablet:mx-auto desktop-xl:mx-0">
-						<div class="bg-white rounded-[30px] p-[24px] desktop-xl:w-[364px] shadow-[0_13px_19px_rgba(0,0,0,0.07)] mx-auto">
+						<div class="bg-white rounded-[30px] p-[24px] desktop-xl:w-[364px] shadow-[0_13px_19px_rgba(0,0,0,0.07)] mx-auto card-hover">
 							<NuxtImg :src="services[0].icon" :alt="services[0].title" :width="services[0].width" :height="services[0].height" class="mx-auto" />
 							<h3 class="services-title">{{ services[0].title }}</h3>
 
@@ -94,7 +112,8 @@ const otherServices = computed(() => services.value.slice(1));
 								{{ services[0].description }}
 							</p>
 
-							<NuxtLink :to="services[0].url" class="services-button w-[107px] flex items-center justify-center gap-x-[10px]">
+							<!-- Miglioramento UX: aggiunto btn-hover per feedback visivo al passaggio del mouse -->
+						<NuxtLink :to="services[0].url" class="services-button w-[107px] flex items-center justify-center gap-x-[10px] btn-hover">
 								{{ services[0].button }}
 
 								<NuxtImg src="/img/homepage/services/arrow-right.svg" aria-hidden="true" width="9" height="16" alt="" class="w-[9px] h-[16px]" />
@@ -103,7 +122,7 @@ const otherServices = computed(() => services.value.slice(1));
 					</div>
 
 					<div class="tablet:flex tablet:items-start tablet:justify-between desktop-xl:justify-center tablet:flex-wrap mt-[60px] desktop-xl:mt-0 tablet:w-full">
-						<div v-for="(service, index) in otherServices" :key="index" class="tablet:w-[370px] min-h-[363px] p-[35px_27px_0_27px] desktop-xl:mb-[24px] mb-[60px] tablet:mx-auto desktop-xl:mx-0">
+						<div v-for="(service, index) in otherServices" :key="index" class="tablet:w-[370px] min-h-[363px] p-[35px_27px_0_27px] desktop-xl:mb-[24px] mb-[60px] tablet:mx-auto desktop-xl:mx-0 rounded-[20px] card-hover">
 							<NuxtImg :src="service.icon" :alt="service.title" :width="service.width" :height="service.height" class="mx-auto" />
 
 							<h3 class="services-title">{{ service.title }}</h3>
@@ -112,7 +131,8 @@ const otherServices = computed(() => services.value.slice(1));
 								{{ service.description }}
 							</p>
 
-							<NuxtLink :to="service.url" class="services-button w-[153px] flex items-center justify-center gap-x-[10px]">
+							<!-- Miglioramento UX: aggiunto btn-hover per feedback visivo -->
+							<NuxtLink :to="service.url" class="services-button w-[153px] flex items-center justify-center gap-x-[10px] btn-hover">
 								{{ service.button }}
 								<!-- <Icon name="fe:arrow-right" class="text-[22px] align-middle" /> -->
 								<NuxtImg src="/img/homepage/services/arrow-right.svg" aria-hidden="true" width="9" height="16" alt="" class="w-[9px] h-[16px]" />
@@ -137,8 +157,8 @@ const otherServices = computed(() => services.value.slice(1));
 					</p>
 
 					<NuxtLink
-						to="/"
-						class="bg-[#E44203] text-white desktop-xl:w-[170px] desktop-xl:h-[60px] desktop-xl:block tablet:text-[1.25rem] tracking-[-0.48px] font-semibold text-center rounded-[35px] leading-[59px] p-[10px_20px] desktop-xl:p-0">
+						to="/servizi"
+						class="bg-[#E44203] text-white desktop-xl:w-[170px] desktop-xl:h-[60px] desktop-xl:block tablet:text-[1.25rem] tracking-[-0.48px] font-semibold text-center rounded-[35px] leading-[59px] p-[10px_20px] desktop-xl:p-0 btn-hover inline-block">
 						Scopri di più
 					</NuxtLink>
 				</div>

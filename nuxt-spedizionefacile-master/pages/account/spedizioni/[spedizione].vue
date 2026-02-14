@@ -1,14 +1,23 @@
+/**
+ * PAGINA DETTAGLIO SPEDIZIONE (VECCHIA VERSIONE)
+ * Versione precedente della pagina dettaglio ordine.
+ * Mostra i dati in tabelle semplici: cliente, colli, indirizzi e transazione.
+ * Questa pagina usa il parametro "spedizione" nell'URL.
+ */
 <script setup>
+/* Richiede che l'utente sia autenticato */
 definePageMeta({
 	middleware: ["sanctum:auth"],
 });
 
 const route = useRoute();
 
+/* Carica i dati dell'ordine usando il parametro "spedizione" dall'URL */
 const { data: order, error } = await useSanctumFetch(`/api/orders/${route.params.spedizione}`, {
 	method: "GET",
 });
 
+/* Se l'utente non ha i permessi (errore 403), viene reindirizzato alla dashboard */
 const checkError = () => {
 	if (error.value && error.value.statusCode === 403) {
 		return navigateTo("/account");

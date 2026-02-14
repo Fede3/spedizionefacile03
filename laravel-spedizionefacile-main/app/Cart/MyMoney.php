@@ -9,7 +9,7 @@ use App\Cart\MyMoney;
 use Money\Currencies\ISOCurrencies;
 use Money\Formatter\IntlMoneyFormatter;
 
-class MyMoney {
+class MyMoney implements \JsonSerializable {
     protected $money;
 
     public function __construct($value) {
@@ -36,5 +36,12 @@ class MyMoney {
         $this->money = $this->money->add($money->instance());
 
         return $this;
+    }
+
+    public function jsonSerialize(): mixed {
+        return [
+            'amount' => (int) $this->money->getAmount(),
+            'formatted' => $this->formatted(),
+        ];
     }
 }

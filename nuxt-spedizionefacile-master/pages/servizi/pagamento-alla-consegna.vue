@@ -1,10 +1,52 @@
+<!--
+  PAGINA: Pagamento alla Consegna (servizi/pagamento-alla-consegna.vue)
+  Pagina informativa dedicata al servizio di contrassegno (pagamento alla consegna).
+  Spiega: cos'e', quando usarlo, come funziona con SpedizioneFacile,
+  requisiti, limiti, costi, dati richiesti e domande frequenti.
+  Include dati strutturati JSON-LD per il SEO (FAQPage).
+-->
 <script setup>
-/*useHead({
-	htmlAttrs: {
-		class: "scroll-smooth",
-	},
-});*/
+// Meta tag SEO per la pagina contrassegno
+useSeoMeta({
+	title: 'Pagamento alla Consegna (Contrassegno) | SpedizioneFacile',
+	ogTitle: 'Pagamento alla Consegna | SpedizioneFacile',
+	description: 'Spedisci con pagamento alla consegna: il corriere incassa per tuo conto al momento della consegna. Scopri come funziona il contrassegno con SpedizioneFacile.',
+	ogDescription: 'Spedisci con contrassegno: il corriere incassa per tuo conto alla consegna. Scopri come funziona.',
+});
 
+useHead({
+	script: [
+		{
+			type: 'application/ld+json',
+			innerHTML: JSON.stringify({
+				'@context': 'https://schema.org',
+				'@type': 'FAQPage',
+				mainEntity: [
+					{
+						'@type': 'Question',
+						name: 'Il pagamento alla consegna è solo in contanti?',
+						acceptedAnswer: {
+							'@type': 'Answer',
+							text: 'Per i servizi nazionali è normalmente in contanti; alcune reti offrono varianti o servizi correlati. Verifica sempre le condizioni del vettore scelto.',
+						},
+					},
+					{
+						'@type': 'Question',
+						name: 'Come scelgo come ricevere i soldi incassati?',
+						acceptedAnswer: {
+							'@type': 'Answer',
+							text: 'Al momento dell\'ordine selezioni la modalità di riversamento resa disponibile dal vettore; per esempio accredito su conto corrente.',
+						},
+					},
+				],
+			}),
+		},
+	],
+});
+
+// Dati strutturati JSON-LD per i rich snippets Google (domande frequenti sul contrassegno)
+
+// Lista delle domande frequenti sul pagamento alla consegna
 const faqs = [
 	{
 		title: "Il pagamento alla consegna è solo in contanti?",
@@ -26,6 +68,7 @@ const faqs = [
 </script>
 
 <template>
+	<!-- Pagina informativa sul servizio di pagamento alla consegna (contrassegno) -->
 	<section id="pagamento-alla-consegna">
 		<div class="my-container">
 			<p
@@ -86,8 +129,7 @@ const faqs = [
 
 					<p>
 						Il corriere ritira il collo e lo porta in consegna. Alla porta incassa l'importo indicato. Se il destinatario non paga o rifiuta, la spedizione non viene consegnata e rientra al mittente
-						secondo la prassi del vettore. La natura “incasso alla consegna” è un servizio accessorio previsto nelle condizioni generali dei principali corrieri nazionali. irp-cdn.multiscreensite.com
-					</p>
+						secondo la prassi del vettore. La natura “incasso alla consegna” è un servizio accessorio previsto nelle condizioni generali dei principali corrieri nazionali.					</p>
 
 					<h4 class="mt-[30px]">3. Riversamento dell'incasso</h4>
 
@@ -99,8 +141,7 @@ const faqs = [
 					<h4 class="mt-[30px]">4. Tracciamento e quietanze</h4>
 
 					<p>
-						Nel tuo profilo vedi lo stato “incasso in corso”, “incasso eseguito”, “riversato”. Puoi scaricare la quietanza di incasso e la distinta di riversamento. Validazione Sono stati descritti
-						tutti i passaggi: impostazione, consegna con incasso, riversamento, tracciamento. Sì.
+						Nel tuo profilo vedi lo stato "incasso in corso", "incasso eseguito", "riversato". Puoi scaricare la quietanza di incasso e la distinta di riversamento.
 					</p>
 				</div>
 
@@ -116,17 +157,12 @@ const faqs = [
 					<li>Pagamento tipicamente in contanti alla consegna. Alcuni vettori offrono varianti o servizi correlati; GLS indica esplicitamente il servizio “Contanti GLS”.</li>
 					<li>
 						Importi elevati: verifica sempre eventuali limiti o soglie del vettore e la normativa corrente sui pagamenti in contanti; i limiti possono variare nel tempo. Le pagine ufficiali dei
-						vettori e le condizioni aggiornate prevalgono. irp-cdn.multiscreensite.com
-					</li>
+						vettori e le condizioni aggiornate prevalgono.					</li>
 					<li>Dati del destinatario completi e reperibilità telefonica: riduce i tentativi di consegna a vuoto.</li>
 					<li>Imballo robusto e prova di valore: se vendi merce costosa, valuta assicurazione e foto di pre-imballo.</li>
 					<li>In caso di mancato pagamento il collo non viene consegnato e può tornare al mittente; pianifica la gestione resi e i costi collegati.</li>
 
-					<li>
-						Validazione
-						<span class="block ml-[10px]">Coperti requisiti operativi, metodo di pagamento, note su limiti, gestione rifiuti. Sì.</span>
-					</li>
-				</ul>
+					</ul>
 
 				<h3 class="desktop:text-[2.5rem] font-medium leading-[110%] tracking-[-0.96px] desktop:mb-[30px] text-[#222222] desktop:mt-[70px] text-[1.875rem] mb-[20px] mt-[40px]">Costi</h3>
 				<ul class="list-disc list-inside [&>li]:mb-[5px] [&>li]:ml-[5px]">
@@ -135,11 +171,7 @@ const faqs = [
 						dipende dal vettore e dalle condizioni applicate. La pagina informativa Paccofacile chiarisce che il contrassegno è un servizio accessorio con costi dedicati; la tariffa esatta viene
 						mostrata nel preventivo prima dell'acquisto.
 					</li>
-					<li>
-						Validazione
-						<span class="block ml-[10px]">Spiegato che esiste un sovrapprezzo e dove viene mostrato. Sì.</span>
-					</li>
-				</ul>
+					</ul>
 
 				<h3 class="desktop:text-[2.5rem] font-medium leading-[110%] tracking-[-0.96px] desktop:mb-[30px] text-[#222222] desktop:mt-[70px] text-[1.875rem] mb-[20px] mt-[40px]">
 					Dati richiesti e controlli nel checkout
@@ -149,9 +181,7 @@ const faqs = [
 					<li>campo descrizione per ricevuta</li>
 					<li>scelta riversamento: accredito su conto o portafoglio</li>
 					<li>consenso esplicito del mittente ai termini del servizio accessorio contrassegno</li>
-					<li>avviso chiaro al destinatario nell'email/SMS di pre-consegna: “consegna con incasso X € in contanti”</li>
-					Aggiornamento sintetico
-					<span class="block ml-[10px]">Le specifiche del modulo ordine sono definite e pronte per lo sviluppo UI.</span>
+					<li>avviso chiaro al destinatario nell'email/SMS di pre-consegna: "consegna con incasso X € in contanti"</li>
 				</ul>
 
 				<h3 class="desktop:text-[2.5rem] font-medium leading-[110%] tracking-[-0.96px] desktop:mb-[30px] text-[#222222] desktop:mt-[70px] text-[1.875rem] mb-[20px] mt-[40px]">Cosa succede se…</h3>
@@ -175,11 +205,7 @@ const faqs = [
 							La fattura resta di competenza del mittente; il corriere incassa per tuo conto. Indica l'importo esatto e conserva la quietanza di incasso per la riconciliazione.
 						</span>
 					</li>
-					<li>
-						Validazione
-						<span class="block ml-[10px]">Coperti i principali casi critici: rifiuto, tempi di rimessa, fattura. Sì.</span>
-					</li>
-				</ul>
+					</ul>
 			</div>
 
 			<h2

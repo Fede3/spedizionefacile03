@@ -1,32 +1,35 @@
 <?php
 
+/**
+ * REQUEST: VALIDAZIONE INDIRIZZO DI FATTURAZIONE
+ *
+ * Valida i dati inviati quando l'utente crea o modifica un indirizzo
+ * di fatturazione. Tutti i campi sono obbligatori: nome/ragione sociale,
+ * via, citta', provincia e CAP.
+ */
+
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
 class BillingAddressStoreRequest extends FormRequest
 {
-    /**
-     * Determine if the user is authorized to make this request.
-     */
     public function authorize(): bool
     {
         return true;
     }
 
     /**
-     * Get the validation rules that apply to the request.
-     *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
+     * Regole di validazione per l'indirizzo di fatturazione.
      */
     public function rules(): array
     {
         return [
-            'name' => 'required|string',
-            'address' => 'required|string',
-            'city' => 'required|string',
-            'province_name' => 'required|string',
-            'postal_code' => 'required|string',
+            'name' => 'required|string',            // Nome o ragione sociale (obbligatorio)
+            'address' => 'required|string',          // Via/piazza (obbligatorio)
+            'city' => 'required|string',             // Citta' (obbligatorio)
+            'province_name' => 'required|string',    // Nome provincia (obbligatorio)
+            'postal_code' => 'required|string',      // CAP (obbligatorio)
             /* 'default' => 'nullable' */
         ];
     }

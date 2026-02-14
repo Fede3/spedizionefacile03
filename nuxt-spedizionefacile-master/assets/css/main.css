@@ -1,6 +1,12 @@
 @import "tailwindcss";
 @import "@nuxt/ui";
 
+/* ============================================================
+   DESIGN SYSTEM - SpedizioneFacile
+   Variabili CSS centralizzate per garantire coerenza visiva
+   su tutte le pagine del sito.
+   ============================================================ */
+
 @theme {
 	--breakpoint-mobile: 23.4375rem; /* 375px */
 	--breakpoint-account-pages: 37.5rem; /*600px */
@@ -14,6 +20,21 @@
 
 @theme {
 	--font-montserrat: "Montserrat", sans-serif;
+
+	/* Palette colori del brand */
+	--color-brand-primary: #095866;
+	--color-brand-primary-hover: #074a56;
+	--color-brand-primary-light: #0b6d7d;
+	--color-brand-accent: #E44203;
+	--color-brand-accent-hover: #c93800;
+	--color-brand-success: #0a8a7a;
+	--color-brand-warning: #f59e0b;
+	--color-brand-error: #ef4444;
+	--color-brand-text: #252B42;
+	--color-brand-text-secondary: #737373;
+	--color-brand-bg: #eeeeee;
+	--color-brand-card: #ffffff;
+	--color-brand-border: #E9EBEC;
 }
 
 @layer base {
@@ -32,7 +53,7 @@
 	body {
 		font-family: "Inter", sans-serif;
 		font-size: 16px;
-		background-color: #eeeeee;
+		background-color: var(--color-brand-bg);
 		color: #222222;
 	}
 
@@ -48,15 +69,197 @@
 	select {
 		@apply outline-none;
 	}
+
+	/* Transizioni globali per elementi interattivi */
+	a {
+		transition: color 0.2s ease;
+	}
+}
+
+@layer components {
+	/* --- Global hover/interaction polish --- */
+
+	/* Cards: subtle lift on hover */
+	.card-hover {
+		transition: transform 0.2s ease, box-shadow 0.2s ease;
+	}
+	.card-hover:hover {
+		transform: translateY(-2px);
+		box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+	}
+
+	/* Buttons: smooth scale + shadow */
+	.btn-hover {
+		transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+	}
+	.btn-hover:hover {
+		transform: scale(1.02);
+		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+	}
+	.btn-hover:active {
+		transform: scale(0.98);
+	}
+
+	/* Input focus glow */
+	.input-focus-ring {
+		transition: border-color 0.2s ease, box-shadow 0.2s ease;
+	}
+	.input-focus-ring:focus {
+		border-color: var(--color-brand-primary);
+		box-shadow: 0 0 0 3px rgba(9, 88, 102, 0.1);
+	}
+
+	/* ============================================================
+	   PULSANTI - Gerarchia coerente su tutto il sito
+	   ============================================================ */
+	/* Pulsante primario (azioni principali) */
+	.btn-primary {
+		@apply text-white font-semibold rounded-[12px] px-[24px] py-[12px] transition-all cursor-pointer;
+		background-color: var(--color-brand-primary);
+	}
+	.btn-primary:hover {
+		background-color: var(--color-brand-primary-hover);
+		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+		transform: scale(1.02);
+	}
+	.btn-primary:active {
+		transform: scale(0.98);
+	}
+	.btn-primary:disabled {
+		@apply opacity-50 cursor-not-allowed;
+		transform: none;
+		box-shadow: none;
+	}
+
+	/* Pulsante secondario (azioni secondarie) */
+	.btn-secondary {
+		@apply font-semibold rounded-[12px] px-[24px] py-[12px] transition-all cursor-pointer;
+		border: 1px solid var(--color-brand-primary);
+		color: var(--color-brand-primary);
+		background: transparent;
+	}
+	.btn-secondary:hover {
+		background-color: var(--color-brand-primary);
+		color: #fff;
+		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+	}
+
+	/* Pulsante CTA arancione (call to action) */
+	.btn-cta {
+		@apply text-white font-semibold rounded-[12px] px-[24px] py-[12px] transition-all cursor-pointer;
+		background-color: var(--color-brand-accent);
+	}
+	.btn-cta:hover {
+		background-color: var(--color-brand-accent-hover);
+		box-shadow: 0 4px 12px rgba(228, 66, 3, 0.3);
+		transform: scale(1.02);
+	}
+	.btn-cta:active {
+		transform: scale(0.98);
+	}
+
+	/* Pulsante pericolo (eliminazione, annullamento) */
+	.btn-danger {
+		@apply bg-red-500 text-white font-semibold rounded-[12px] px-[24px] py-[12px] transition-all cursor-pointer;
+	}
+	.btn-danger:hover {
+		@apply bg-red-600;
+		box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+	}
+
+	/* ============================================================
+	   CARD - Stile coerente per tutte le schede
+	   ============================================================ */
+	.card-base {
+		background: var(--color-brand-card);
+		border: 1px solid var(--color-brand-border);
+		border-radius: 16px;
+		padding: 24px;
+		box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+	}
+
+	/* ============================================================
+	   FORM - Input, label, errore coerenti
+	   ============================================================ */
+	.form-input {
+		@apply w-full text-[0.875rem] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[12px] px-[14px] py-[12px] placeholder:text-[#a0a0a0] focus:outline-none;
+		color: var(--color-brand-text);
+		transition: border-color 0.2s ease, box-shadow 0.2s ease;
+	}
+	.form-input:focus {
+		border-color: var(--color-brand-primary);
+		box-shadow: 0 0 0 3px rgba(9, 88, 102, 0.1);
+		background: #fff;
+	}
+	.form-input.is-error {
+		border-color: var(--color-brand-error);
+		box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.08);
+	}
+
+	.form-label {
+		@apply block text-[0.8125rem] font-semibold mb-[4px];
+		color: var(--color-brand-text);
+	}
+
+	.form-error {
+		@apply text-red-500 text-[0.8125rem] mt-[4px];
+	}
+
+	/* ============================================================
+	   BADGE DI STATO - Coerenti per spedizioni, ordini, transazioni
+	   ============================================================ */
+	.badge {
+		@apply inline-flex items-center gap-[4px] px-[10px] py-[3px] rounded-full text-[0.75rem] font-semibold;
+	}
+	.badge-success {
+		@apply bg-green-100 text-green-700;
+	}
+	.badge-pending {
+		@apply bg-yellow-100 text-yellow-700;
+	}
+	.badge-error {
+		@apply bg-red-100 text-red-700;
+	}
+	.badge-transit {
+		@apply bg-blue-100 text-blue-700;
+	}
+	.badge-draft {
+		@apply bg-gray-100 text-gray-700;
+	}
+
+	/* ============================================================
+	   TIPOGRAFIA - Titoli e testi coerenti
+	   ============================================================ */
+	.page-title {
+		@apply text-[1.5rem] desktop:text-[2rem] font-bold;
+		color: var(--color-brand-text);
+	}
+	.section-title {
+		@apply text-[1.25rem] font-semibold;
+		color: var(--color-brand-text);
+	}
+	.card-title {
+		@apply text-[1.125rem] font-semibold;
+		color: var(--color-brand-text);
+	}
+	.body-text {
+		@apply text-[0.875rem];
+		color: var(--color-brand-text-secondary);
+	}
 }
 
 @layer components {
 	.input-preventivo-rapido {
-		@apply bg-[#F1F1F1] text-[#767676] text-[0.875rem] font-medium w-full h-[54px] leading-[54px] rounded-[30px] px-[18px] placeholder:text-[#767676] block mt-[15px] tracking-[-0.336px];
+		@apply bg-[#F1F1F1] text-[#767676] text-[1rem] tablet:text-[0.875rem] font-medium w-full h-[54px] leading-[54px] rounded-[30px] px-[18px] placeholder:text-[#767676] block mt-[15px] tracking-[-0.336px];
+		transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+	}
+	.input-preventivo-rapido:focus {
+		background-color: #fff;
+		box-shadow: 0 0 0 3px rgba(9, 88, 102, 0.1);
 	}
 
 	.label-preventivo-rapido {
-		@apply text-[1.126rem] desktop:text-[1.25rem] text-black font-semibold desktop-xl:font-medium tracking-[-0.48px];
+		@apply text-[1rem] tablet:text-[1.126rem] desktop:text-[1.25rem] text-black font-semibold desktop-xl:font-medium tracking-[-0.48px];
 	}
 
 	.label-popup {
@@ -65,28 +268,106 @@
 
 	.input-popup {
 		@apply bg-white text-[#767676] placeholder:text-[#767676] placeholder:text-[0.875rem] text-[0.875rem] tracking-[-0.336px] h-[40px] leading-[40px] w-full rounded-[30px] px-[18px] mt-[12px] border border-[#E9EBEC];
+		transition: border-color 0.2s ease, box-shadow 0.2s ease;
+	}
+	.input-popup:focus {
+		border-color: #095866;
+		box-shadow: 0 0 0 3px rgba(9, 88, 102, 0.1);
 	}
 
 	.input-preventivo-step-2 {
-		@apply bg-white rounded-[20px] h-[32px] text-[#222222] text-[0.875rem] tracking-[0.2px] font-montserrat placeholder:text-[#222222] placeholder:text-[0.875rem] px-[20px] w-full;
+		@apply bg-white rounded-[20px] h-[44px] text-[#222222] text-[1rem] tracking-[0.2px] font-montserrat placeholder:text-[#222222] placeholder:text-[0.875rem] px-[20px] w-full;
 	}
 
 	/* Servizi */
 	.services-title {
-		@apply text-center tracking-[0.1px] text-[#252B42] font-bold mt-[20px] after:content-[''] after:bg-[#E74040] after:w-[50px] after:h-[2px] after:block after:mx-auto after:mt-[15px];
+		@apply text-center tracking-[0.1px] text-[#252B42] font-bold mt-[20px] after:content-[''] after:bg-[#E44203] after:w-[50px] after:h-[2px] after:block after:mx-auto after:mt-[15px];
 	}
 	.services-description {
 		@apply text-[#737373] tracking-[0.2px] leading-[20px] text-[0.875rem] my-[20px];
 	}
 
 	.services-button {
-		@apply block text-[0.875rem] border border-[#23A6F0] rounded-[37px] tracking-[0.2px] text-center text-[#23A6F0] font-bold h-[42px] leading-[40px] mx-auto;
+		@apply block text-[0.875rem] border border-[#095866] rounded-[37px] tracking-[0.2px] text-center text-[#095866] font-bold h-[42px] leading-[40px] mx-auto;
+		transition: background-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
+	}
+	.services-button:hover {
+		background-color: #095866;
+		color: #fff;
+		transform: scale(1.02);
 	}
 
 	/* Contatti */
 	.input-contatti {
 		@apply bg-white h-[80px] block w-full leading-[80px] text-[#737373] placeholder:text-[#737373] text-[1.25rem] rounded-[21px] tracking-[-0.28px] pl-[24px] pr-[13px] mt-[32px] bg-[url('/img/contacts/asterisk.svg')] bg-no-repeat bg-[100%_13px] bg-origin-content;
+		transition: box-shadow 0.2s ease;
 	}
+	.input-contatti:focus {
+		box-shadow: 0 0 0 3px rgba(9, 88, 102, 0.1);
+	}
+}
+
+/* Page transition animations */
+.page-enter-active,
+.page-leave-active {
+	transition: opacity 0.25s ease, transform 0.25s ease;
+}
+.page-enter-from {
+	opacity: 0;
+	transform: translateY(8px);
+}
+.page-leave-to {
+	opacity: 0;
+	transform: translateY(-8px);
+}
+
+/* Layout transition */
+.layout-enter-active,
+.layout-leave-active {
+	transition: opacity 0.2s ease;
+}
+.layout-enter-from,
+.layout-leave-to {
+	opacity: 0;
+}
+
+/* Fade-in utility for lazy-loaded sections */
+.fade-in-section {
+	animation: fadeInUp 0.4s ease forwards;
+}
+@keyframes fadeInUp {
+	from {
+		opacity: 0;
+		transform: translateY(12px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+/* Spinner for button loading states */
+@keyframes spin-smooth {
+	to { transform: rotate(360deg); }
+}
+.btn-spinner {
+	display: inline-block;
+	width: 18px;
+	height: 18px;
+	border: 2px solid rgba(255, 255, 255, 0.3);
+	border-top-color: #fff;
+	border-radius: 50%;
+	animation: spin-smooth 0.6s linear infinite;
+	vertical-align: middle;
+}
+
+/* Hide scrollbar but keep scroll functionality */
+.scrollbar-hide {
+	-ms-overflow-style: none;
+	scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+	display: none;
 }
 
 /*

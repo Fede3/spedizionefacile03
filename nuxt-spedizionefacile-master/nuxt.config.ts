@@ -1,3 +1,41 @@
+/**
+ * CONFIGURAZIONE NUXT (nuxt.config.ts)
+ *
+ * Questo file e' il "centro di controllo" dell'applicazione frontend.
+ * Qui si configurano tutte le impostazioni principali del sito.
+ *
+ * Sezioni di configurazione:
+ *
+ * - compatibilityDate: la data di riferimento per la compatibilita' con Nuxt
+ * - devtools: attiva gli strumenti per gli sviluppatori nel browser
+ * - modules: i "moduli aggiuntivi" installati:
+ *   * @nuxt/ui: libreria di componenti grafici pronti (pulsanti, modali, ecc.)
+ *   * @nuxt/image: ottimizzazione automatica delle immagini
+ *   * @pinia/nuxt: gestione dello stato globale (lo "store" / memoria condivisa)
+ *   * nuxt-auth-sanctum: autenticazione utenti con Laravel Sanctum
+ *
+ * - css: il file CSS principale con gli stili globali del sito
+ * - app.head: le impostazioni SEO della pagina (titolo, descrizione, parole chiave, ecc.)
+ *   che aiutano Google a capire e indicizzare il sito
+ *
+ * - router: configurazione della navigazione (scorrimento fluido tra le pagine)
+ *
+ * - runtimeConfig: variabili di configurazione accessibili a runtime:
+ *   * apiBase: indirizzo del server backend (Laravel)
+ *   * stripeKey: chiave pubblica di Stripe per i pagamenti online
+ *
+ * - sanctum: configurazione dell'autenticazione con il backend Laravel:
+ *   * baseUrl: indirizzo del server backend
+ *   * endpoints: gli indirizzi per login, logout, csrf e dati utente
+ *   * csrf: nome del cookie e header per la protezione CSRF (anti-attacco)
+ *   * redirect: dove mandare l'utente dopo login, logout, ecc.
+ *
+ * - devServer: il server di sviluppo locale (porta 3001, accessibile da qualsiasi IP)
+ *
+ * - vite: configurazione del "motore" che compila il codice:
+ *   * allowedHosts: domini autorizzati (per tunnel Cloudflare e localhost)
+ *   * manualChunks: divide Stripe e Swiper in file separati per caricare piu' veloce
+ */
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
   compatibilityDate: '2024-04-03',
@@ -7,6 +45,8 @@ export default defineNuxtConfig({
   css: ['~/assets/css/main.css'],
 
   app: {
+    /* Transizioni disabilitate: causavano schermo bianco durante la navigazione
+       perche' il mode 'out-in' fa svanire la pagina vecchia PRIMA che la nuova sia pronta */
     head: {
       htmlAttrs: { lang: 'it' },
       charset: 'utf-8',
@@ -31,6 +71,12 @@ export default defineNuxtConfig({
       link: [
         { rel: 'canonical', href: 'https://spedizionefacile.it' },
       ],
+    },
+  },
+
+  router: {
+    options: {
+      scrollBehaviorType: 'smooth',
     },
   },
 
@@ -59,14 +105,18 @@ export default defineNuxtConfig({
     },
     redirect: {
       keepRequestedRoute: true,
-      onLogin: '/account',
+      onLogin: '/',
       onLogout: '/',
       onAuthOnly: '/autenticazione',
-      onGuestOnly: '/account',
+      onGuestOnly: '/',
     },
     globalMiddleware: {
       enabled: false,
     },
+  },
+
+  experimental: {
+    payloadExtraction: true,
   },
 
   devServer: {
@@ -77,6 +127,16 @@ export default defineNuxtConfig({
   vite: {
     server: {
       allowedHosts: ['.trycloudflare.com', 'localhost', '127.0.0.1'],
+    },
+    build: {
+      rollupOptions: {
+        output: {
+          manualChunks: {
+            stripe: ['@stripe/stripe-js'],
+            swiper: ['swiper'],
+          },
+        },
+      },
     },
   },
 })

@@ -1,3 +1,22 @@
+<!--
+	COMPONENTE HEADER (Header.vue)
+
+	Questo e' l'intestazione del sito, la parte in alto di ogni pagina.
+	Contiene la barra di navigazione (Navbar) e il contenuto dell'header (ContenutoHeader).
+
+	L'altezza e lo stile dell'header cambiano automaticamente in base alla pagina
+	in cui si trova l'utente:
+	- Homepage: header grande con immagine di sfondo
+	- Servizi: header medio
+	- Contatti: header grande
+	- Chi siamo: header grande
+	- FAQ: header medio
+	- Account: header piccolo
+	- Pagamento alla consegna: header medio-grande
+
+	Il componente usa le "classi condizionali" per adattare le dimensioni
+	a seconda del percorso della pagina corrente (route.path).
+-->
 <script setup>
 const route = useRoute();
 </script>
@@ -17,6 +36,8 @@ const route = useRoute();
 			'desktop:h-[318px] desktop-xl:h-[424px] h-[230px] overflow-hidden': route.path === '/faq',
 			'desktop:h-[359px] desktop-xl:h-[392px] h-[214px] overflow-hidden': route.path === '/account',
 			'desktop:h-[529px] desktop-xl:h-[772px] h-[397px] tablet:h-[460px] overflow-hidden': route.path.includes('pagamento-alla-consegna'),
+			'desktop:h-[359px] desktop-xl:h-[457px] h-[308px] overflow-hidden': route.path.startsWith('/guide'),
+			'h-auto pb-[12px]': route.path === '/preventivo',
 		}">
 		<!--  before:content-[''] before:absolute before:left-[-80px] before:top-0 before:w-[60%] before:h-full before:bg-[url('/img/header-bg.svg')] before:bg-no-repeat before:z-[1] da inserire sul div qui sotto -->
 		<div class="desktop-xl:pt-[40px] desktop:pt-[25px] mobile:pt-[20px] my-container relative h-full">

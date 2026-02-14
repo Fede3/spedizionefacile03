@@ -3,17 +3,17 @@
 
 Grazie per esserti registrato su **SpedizioneFacile**.
 
-Per completare l'attivazione del tuo account, clicca sul pulsante qui sotto:
+Per completare l'attivazione del tuo account, inserisci il seguente codice di verifica nella pagina di login:
 
-<x-mail::button :url="$url">
-Conferma email
-</x-mail::button>
+<x-mail::panel>
+<div style="text-align: center; font-size: 32px; font-weight: bold; letter-spacing: 8px; color: #095866;">
+{{ $code }}
+</div>
+</x-mail::panel>
 
-Se il pulsante non funziona, copia e incolla questo link nel browser:
+Il codice scade tra **30 minuti**.
 
-{{ $url }}
-
-Il link scade tra 60 minuti.
+Se non hai richiesto la registrazione, ignora questa email.
 
 Grazie,<br>
 {{ config('app.name') }}

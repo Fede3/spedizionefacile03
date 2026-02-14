@@ -1,4 +1,27 @@
 <?php
+/**
+ * FILE: PackageController.php
+ * SCOPO: Mostra la lista di tutti i pacchi dell'utente (logica CRUD ora in CartController).
+ *
+ * COSA ENTRA:
+ *   - Request autenticata (auth()->id() per filtrare i pacchi dell'utente)
+ *
+ * COSA ESCE:
+ *   - PackageResource collection con tutti i pacchi dell'utente
+ *
+ * CHIAMATO DA:
+ *   - routes/api.php — GET /api/packages
+ *
+ * EFFETTI COLLATERALI:
+ *   - Nessuno (sola lettura)
+ *
+ * ERRORI TIPICI:
+ *   - Nessuno specifico
+ *
+ * DOCUMENTI CORRELATI:
+ *   - CartController.php — gestione completa del carrello (creazione, modifica, eliminazione pacchi)
+ *   - SavedShipmentController.php — spedizioni salvate come template
+ */
 
 namespace App\Http\Controllers;
 
@@ -10,24 +33,20 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Http\Resources\PackageResource;
 use App\Http\Requests\PackageStoreRequest;
-
 class PackageController extends Controller
 {
+    // Mostra la lista di tutti i pacchi dell'utente attualmente loggato
     public function index(Request $request) {
-        
+
         $packages = Package::where('user_id', auth()->id())->get();
 
-        /* return response()->json([
-            'data' => PackageResource::collection($packages),
-            'meta' => $this->meta($packages)
-        ]); */
-
         return PackageResource::collection($packages);
-            /* ->additional([
-                'meta' => $this->meta($packages)
-            ]); */
 
     }
+
+    /* Le funzioni seguenti sono state commentate perche' la logica del carrello
+       e' stata spostata in altri controller (CartController, GuestCartController).
+       Sono state lasciate come riferimento per capire come funzionava prima. */
 
     /* public function subtotal($packages) {
 
@@ -52,7 +71,7 @@ class PackageController extends Controller
     } */
 
     /* public function show(Package $package) {
-        
+
         return new PackageResource($package);
     } */
 
@@ -87,7 +106,7 @@ class PackageController extends Controller
                 ]);
             }
 
-            return $packages; 
+            return $packages;
         });
 
         return PackageResource::collection($outPackages);

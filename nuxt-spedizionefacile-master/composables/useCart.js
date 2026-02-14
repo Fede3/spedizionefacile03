@@ -1,3 +1,11 @@
+/**
+ * FILE: composables/useCart.js
+ * SCOPO: Composable carrello — switch automatico autenticato (DB) / ospite (sessione).
+ * API: GET /api/cart (CartController) se autenticato, GET /api/guest-cart (GuestCartController) se ospite.
+ * RESTITUISCE: endpoint (computed URL), cart (dati carrello), refresh, status, error.
+ * USATO DA: pages/carrello.vue, pages/checkout.vue, pages/riepilogo.vue,
+ *           components/Navbar.vue (contatore pacchi).
+ */
 export const useCart = () => {
 	const { isAuthenticated } = useSanctumAuth();
 	const endpoint = computed(() => (isAuthenticated.value ? "/api/cart" : "/api/guest-cart"));
@@ -11,11 +19,9 @@ export const useCart = () => {
 		endpoint,
 		{
 			method: "GET",
-		},
-		{
+			key: "cart",
 			watch: [endpoint],
 		},
-		"cart"
 	);
 
 	return { endpoint, cart, refresh, status, error };

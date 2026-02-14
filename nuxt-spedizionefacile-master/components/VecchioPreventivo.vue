@@ -1,3 +1,22 @@
+<!--
+	COMPONENTE VECCHIO PREVENTIVO (VecchioPreventivo.vue)
+
+	Questa e' una versione PRECEDENTE del modulo preventivo, usata come riferimento.
+	Contiene un flusso a 4 step completo tutto in una pagina:
+
+	Step 1 - Dati base: l'utente inserisce citta'/CAP di partenza e destinazione,
+	         sceglie il tipo di collo, inserisce peso e dimensioni, e calcola la tariffa.
+	Step 2 - Servizi: l'utente sceglie servizi aggiuntivi come spedizione senza etichetta,
+	         contrassegno, assicurazione, sponda idraulica, data programmata, ecc.
+	Step 3 - Indirizzi: l'utente compila nome, indirizzo completo, telefono ed email
+	         sia per il mittente che per il destinatario. Se ha scelto "Stabilito/Programmato",
+	         puo' anche scegliere una data e fascia oraria specifiche.
+	Step 4 - Riepilogo: mostra un riassunto di tutti i dati inseriti e permette
+	         di aggiungere la spedizione al carrello.
+
+	NOTA: questo componente NON e' piu' quello principale usato nel sito,
+	ma viene mantenuto come versione di backup/riferimento.
+-->
 <script setup>
 const router = useRouter();
 

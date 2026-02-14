@@ -1,4 +1,13 @@
+/**
+ * PAGINA ACCOUNT PRO (Partner)
+ * Per utenti NON Pro: mostra info su come diventare Partner Pro
+ * e permette di inviare la richiesta all'admin.
+ * Per utenti GIA' Pro: mostra il codice referral, il link da condividere,
+ * le statistiche (commissioni totali, utilizzi, saldo prelevabile)
+ * e lo storico delle commissioni guadagnate.
+ */
 <script setup>
+/* Richiede che l'utente sia autenticato */
 definePageMeta({
 	middleware: ["sanctum:auth"],
 });
@@ -6,19 +15,26 @@ definePageMeta({
 const { user } = useSanctumAuth();
 const sanctum = useSanctumClient();
 
+/* Controlla se l'utente e' gia' Partner Pro */
 const isPro = computed(() => user.value?.role === "Partner Pro");
 
-// Pro request
+/* === RICHIESTA ACCOUNT PRO (per chi non e' ancora Pro) === */
+/* Stato della richiesta Pro (pending, approved, rejected) */
 const proRequestStatus = ref(null);
+/* Indica se l'invio della richiesta e' in corso */
 const proRequestLoading = ref(false);
+/* Dati del form di richiesta Pro */
 const proRequestForm = ref({
 	company_name: "",
 	vat_number: "",
 	message: "",
 });
+/* Errore durante l'invio della richiesta */
 const proRequestError = ref(null);
+/* Indica se la richiesta e' stata inviata con successo */
 const proRequestSuccess = ref(false);
 
+/* Controlla se l'utente ha gia' inviato una richiesta Pro e il suo stato */
 const fetchProRequestStatus = async () => {
 	try {
 		const result = await sanctum("/api/pro-request/status");
@@ -26,6 +42,7 @@ const fetchProRequestStatus = async () => {
 	} catch (e) { /* ignore */ }
 };
 
+/* Invia la richiesta per diventare Partner Pro all'amministratore */
 const submitProRequest = async () => {
 	proRequestError.value = null;
 	proRequestLoading.value = true;
@@ -44,10 +61,15 @@ const submitProRequest = async () => {
 	}
 };
 
+/* === DATI PARTNER PRO (visibili solo se gia' Pro) === */
+/* Contiene il codice referral, link, guadagni totali e utilizzi */
 const referralData = ref(null);
+/* Dati sulle commissioni (saldo prelevabile, storico) */
 const earnings = ref(null);
+/* Indica se i dati sono in fase di caricamento */
 const isLoading = ref(true);
 
+/* Carica il codice referral e le statistiche guadagni dal server */
 const fetchData = async () => {
 	if (!isPro.value) {
 		isLoading.value = false;
@@ -72,10 +94,12 @@ onMounted(() => {
 	if (!isPro.value) fetchProRequestStatus();
 });
 
+/* Indicatori per mostrare "Copiato!" temporaneamente dopo un click */
 const copied = ref(false);
 const copiedAccountCode = ref(false);
 const copiedLink = ref(false);
 
+/* Copia il codice referral negli appunti dell'utente */
 const copyCode = async () => {
 	if (!referralData.value?.referral_code) return;
 	try {
@@ -89,6 +113,7 @@ const copyCode = async () => {
 	}
 };
 
+/* Copia il link referral completo negli appunti */
 const copyReferralLink = async () => {
 	if (!referralData.value?.referral_link) return;
 	try {
@@ -102,12 +127,14 @@ const copyReferralLink = async () => {
 	}
 };
 
+/* Apre WhatsApp con un messaggio precompilato con il link referral */
 const shareWhatsApp = () => {
 	if (referralData.value?.whatsapp_link) {
 		window.open(referralData.value.whatsapp_link, '_blank');
 	}
 };
 
+/* Copia il codice account (es. "SF-PRO-000123") negli appunti */
 const copyAccountCode = async () => {
 	const code = `SF-PRO-${user.value?.id?.toString().padStart(6, '0')}`;
 	try {
@@ -121,6 +148,7 @@ const copyAccountCode = async () => {
 	}
 };
 
+/* Metodo alternativo per copiare testo nei browser piu' vecchi */
 const fallbackCopy = (text) => {
 	const el = document.createElement("textarea");
 	el.value = text;
@@ -163,7 +191,7 @@ const formatDate = (dateStr) => {
 
 				<!-- Pending request status -->
 				<div v-if="proRequestStatus?.has_request && proRequestStatus?.data?.status === 'pending'" class="bg-amber-50 border border-amber-200 rounded-[12px] p-[20px] text-center mb-[24px]">
-					<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="2" class="mx-auto mb-[8px]"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+					<Icon name="mdi:clock-outline" class="text-[24px] text-amber-600 mx-auto mb-[8px]" />
 					<p class="text-[0.9375rem] font-semibold text-amber-800">Richiesta in attesa di approvazione</p>
 					<p class="text-[0.8125rem] text-amber-700 mt-[4px]">La tua richiesta Pro è in fase di revisione. Ti comunicheremo l'esito al più presto.</p>
 				</div>
@@ -181,13 +209,14 @@ const formatDate = (dateStr) => {
 				<!-- Pro request button -->
 				<div v-if="!proRequestStatus?.has_request || proRequestStatus?.data?.status === 'rejected'">
 					<div v-if="proRequestSuccess" class="bg-emerald-50 border border-emerald-200 rounded-[12px] p-[20px] text-center">
-						<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2.5" class="mx-auto mb-[8px]"><polyline points="20 6 9 17 4 12"/></svg>
+						<Icon name="mdi:check-circle-outline" class="text-[32px] text-emerald-500 mx-auto mb-[8px]" />
 						<p class="text-[1rem] font-semibold text-emerald-800">Richiesta inviata con successo!</p>
 						<p class="text-[0.8125rem] text-emerald-700 mt-[4px]">Riceverai una risposta dall'amministratore al più presto.</p>
 					</div>
 					<div v-else class="text-center">
 						<p v-if="proRequestError" class="text-red-500 text-[0.8125rem] bg-red-50 p-[10px] rounded-[6px] mb-[16px]">{{ proRequestError }}</p>
-						<button @click="submitProRequest" :disabled="proRequestLoading" :class="proRequestLoading ? 'bg-gray-300 cursor-not-allowed' : 'bg-[#095866] hover:bg-[#0a7a8c] cursor-pointer'" class="px-[40px] py-[16px] rounded-[12px] text-white font-semibold text-[1.125rem] transition-all">
+						<button @click="submitProRequest" :disabled="proRequestLoading" :class="proRequestLoading ? 'bg-gray-300 cursor-not-allowed' : 'bg-[#095866] hover:bg-[#074a56] cursor-pointer'" class="inline-flex items-center gap-[8px] px-[40px] py-[16px] rounded-[12px] text-white font-semibold text-[1.125rem] transition-all">
+							<Icon name="mdi:star-outline" class="text-[22px]" />
 							{{ proRequestLoading ? 'Invio in corso...' : 'Richiedi accesso Pro' }}
 						</button>
 						<p class="text-[0.8125rem] text-[#737373] mt-[12px]">L'amministratore potrà visualizzare i tuoi dati dal tuo profilo.</p>
@@ -219,7 +248,7 @@ const formatDate = (dateStr) => {
 					</div>
 
 					<!-- Referral Code -->
-					<div class="relative bg-gradient-to-br from-[#095866] to-[#0a7a8c] rounded-[20px] p-[28px] text-white shadow-[0_8px_24px_rgba(9,88,102,0.2)] overflow-hidden">
+					<div class="relative bg-gradient-to-br from-[#095866] to-[#0b6d7d] rounded-[20px] p-[28px] text-white shadow-[0_8px_24px_rgba(9,88,102,0.2)] overflow-hidden">
 						<div class="absolute top-0 right-0 w-[160px] h-[160px] rounded-full bg-white/5 -translate-y-1/2 translate-x-1/2"></div>
 						<div class="relative z-1">
 							<div class="flex items-center gap-[10px] mb-[16px]">

@@ -1,4 +1,41 @@
 <?php
+/**
+ * FILE: SavedShipmentController.php
+ * SCOPO: Gestisce le spedizioni configurate (template riutilizzabili) salvate dall'utente.
+ *
+ * COSA ENTRA:
+ *   - PackageStoreRequest con packages, origin_address, destination_address, services per store
+ *   - Request con campi parziali per update (indirizzi, dimensioni, servizi)
+ *   - Request con package_ids (array di ID) per addToCart
+ *   - ID pacco nella URL per update/destroy
+ *
+ * COSA ESCE:
+ *   - PackageResource collection con meta (empty, count) per index
+ *   - PackageResource collection per store
+ *   - PackageResource singolo per update
+ *   - JSON con message per destroy
+ *   - JSON con message, moved (conteggio copie) per addToCart
+ *
+ * CHIAMATO DA:
+ *   - routes/api.php — GET/POST /api/saved-shipments, PUT/DELETE /api/saved-shipments/{id}
+ *   - routes/api.php — POST /api/saved-shipments/add-to-cart
+ *   - nuxt: pages/account/spedizioni-configurate.vue
+ *
+ * EFFETTI COLLATERALI:
+ *   - Database: CRUD su tabella pivot saved_shipments (user_id, package_id)
+ *   - Database: crea/aggiorna/elimina package, package_addresses, services
+ *   - Database (addToCart): crea COPIE di pacchi/indirizzi/servizi e li inserisce in cart_user
+ *   - Database (index): pulizia automatica pacchi orfani e pacchi senza dati validi
+ *
+ * ERRORI TIPICI:
+ *   - 422: spedizione duplicata (stessi indirizzi, stesse dimensioni)
+ *   - 404: pacco non trovato o non appartenente all'utente
+ *
+ * DOCUMENTI CORRELATI:
+ *   - app/Models/Package.php — modello pacco con relazioni indirizzi e servizi
+ *   - CartController.php — carrello autenticato dove le copie vengono inserite
+ *   - app/Http/Requests/PackageStoreRequest.php — regole di validazione pacchi
+ */
 
 namespace App\Http\Controllers;
 
@@ -10,25 +47,29 @@ use Illuminate\Support\Facades\DB;
 use App\Http\Resources\PackageResource;
 use App\Http\Requests\PackageStoreRequest;
 use Illuminate\Http\Request;
-
 class SavedShipmentController extends Controller
 {
+    // Mostra la lista di tutte le spedizioni salvate dall'utente
+    // Prima di mostrare la lista, pulisce eventuali dati orfani o non validi
     public function index(Request $request)
     {
         $user = auth()->user();
 
-        // Auto-cleanup: remove saved shipments that have no valid package
+        // Pulizia automatica: rimuove le spedizioni salvate il cui pacco non esiste piu' nel database
         $this->cleanupOrphanedShipments($user->id);
 
+        // Recuperiamo gli ID dei pacchi salvati dall'utente
         $savedIds = DB::table('saved_shipments')
             ->where('user_id', $user->id)
             ->pluck('package_id');
 
+        // Carichiamo i pacchi con tutti i dati collegati (indirizzi e servizi)
         $packages = Package::with(['originAddress', 'destinationAddress', 'service'])
             ->whereIn('id', $savedIds)
             ->get();
 
-        // Auto-cleanup: remove packages without valid dimensions (no colli)
+        // Pulizia automatica: rimuove pacchi che non hanno dati validi
+        // (es. pacchi senza tipo o senza dimensioni, che possono essere rimasti per errore)
         $invalidPackages = $packages->filter(function ($pkg) {
             return empty($pkg->package_type)
                 || (empty($pkg->weight) && empty($pkg->first_size));
@@ -42,7 +83,7 @@ class SavedShipmentController extends Controller
                     ->delete();
                 $pkg->delete();
             }
-            // Re-fetch valid packages
+            // Ricarichiamo i pacchi validi dopo la pulizia
             $savedIds = DB::table('saved_shipments')
                 ->where('user_id', $user->id)
                 ->pluck('package_id');
@@ -61,12 +102,15 @@ class SavedShipmentController extends Controller
             ]);
     }
 
+    // Salva una nuova spedizione configurata
+    // Crea gli indirizzi, i servizi e i pacchi nel database, poi li collega all'utente
     public function store(PackageStoreRequest $request)
     {
         $data = $request->validated();
         $userId = auth()->id();
 
-        // Check for duplicate saved shipments
+        // Controlliamo che non esista gia' una spedizione identica salvata
+        // (stessi indirizzi, stesse dimensioni, stessa quantita')
         $savedIds = DB::table('saved_shipments')
             ->where('user_id', $userId)
             ->pluck('package_id');
@@ -75,7 +119,7 @@ class SavedShipmentController extends Controller
             ->whereIn('id', $savedIds)
             ->get();
 
-        // Check each incoming package against existing saved shipments
+        // Confrontiamo ogni nuovo pacco con quelli gia' salvati
         foreach ($data['packages'] as $packageData) {
             $isDuplicate = $existingSaved->contains(function ($existing) use ($packageData, $data) {
                 return $existing->package_type === $packageData['package_type']
@@ -96,6 +140,7 @@ class SavedShipmentController extends Controller
                     && $existing->destinationAddress->address === ($data['destination_address']['address'] ?? '');
             });
 
+            // Se e' un duplicato, avvisiamo l'utente
             if ($isDuplicate) {
                 return response()->json([
                     'message' => 'Spedizione già configurata. Modifica almeno un dato per salvarla come nuova configurazione.',
@@ -103,11 +148,14 @@ class SavedShipmentController extends Controller
             }
         }
 
+        // Creiamo tutti i record nel database dentro una "transazione"
+        // (se qualcosa va storto, viene annullato tutto per evitare dati incompleti)
         $outPackages = DB::transaction(function () use ($data, $userId) {
+            // Creiamo l'indirizzo di partenza e quello di destinazione
             $origin = PackageAddress::create($data['origin_address']);
             $destination = PackageAddress::create($data['destination_address']);
 
-            // Ensure service_type is never null/empty (DB column is NOT NULL)
+            // Creiamo i servizi aggiuntivi, assicurandoci che i campi obbligatori non siano vuoti
             $servicesData = $data['services'];
             $servicesData['service_type'] = !empty($servicesData['service_type']) ? $servicesData['service_type'] : 'Nessuno';
             $servicesData['date'] = $servicesData['date'] ?? '';
@@ -117,6 +165,7 @@ class SavedShipmentController extends Controller
 
             $packages = [];
 
+            // Creiamo ogni pacco e lo colleghiamo agli indirizzi e ai servizi
             foreach ($data['packages'] as $packageData) {
                 $packages[] = Package::create([
                     'package_type' => $packageData['package_type'],
@@ -127,7 +176,7 @@ class SavedShipmentController extends Controller
                     'third_size' => $packageData['third_size'],
                     'weight_price' => $packageData['weight_price'] ?? null,
                     'volume_price' => $packageData['volume_price'] ?? null,
-                    'single_price' => (int) round(($packageData['single_price'] ?? 0) * 100),
+                    'single_price' => (int) round(($packageData['single_price'] ?? 0) * 100), // Da euro a centesimi
                     'origin_address_id' => $origin->id,
                     'destination_address_id' => $destination->id,
                     'service_id' => $services->id,
@@ -138,6 +187,7 @@ class SavedShipmentController extends Controller
             return $packages;
         });
 
+        // Colleghiamo ogni pacco alla tabella delle spedizioni salvate
         foreach ($outPackages as $package) {
             DB::table('saved_shipments')->insert([
                 'user_id' => $userId,
@@ -150,12 +200,15 @@ class SavedShipmentController extends Controller
         return PackageResource::collection($outPackages);
     }
 
+    // Modifica una spedizione salvata (aggiorna indirizzi, dimensioni, servizi)
     public function update(Request $request, $id)
     {
         $userId = auth()->id();
 
+        // Cerchiamo il pacco assicurandoci che appartenga all'utente
         $package = Package::where('id', $id)->where('user_id', $userId)->firstOrFail();
 
+        // Controlliamo i dati inviati
         $data = $request->validate([
             'origin_address' => 'sometimes|array',
             'origin_address.name' => 'nullable|string',
@@ -196,26 +249,30 @@ class SavedShipmentController extends Controller
             'services.time' => 'nullable|string',
         ]);
 
+        // Aggiorniamo tutto dentro una transazione per sicurezza
         DB::transaction(function () use ($package, $data) {
+            // Aggiorniamo l'indirizzo di partenza se e' stato modificato
             if (isset($data['origin_address']) && $package->originAddress) {
                 $package->originAddress->update($data['origin_address']);
             }
+            // Aggiorniamo l'indirizzo di destinazione se e' stato modificato
             if (isset($data['destination_address']) && $package->destinationAddress) {
                 $package->destinationAddress->update($data['destination_address']);
             }
 
-            // Update service if provided
+            // Aggiorniamo i servizi se sono stati modificati
             if (isset($data['services']) && $package->service) {
                 $serviceData = $data['services'];
                 $serviceData['service_type'] = !empty($serviceData['service_type']) ? $serviceData['service_type'] : 'Nessuno';
                 $package->service->update($serviceData);
             }
 
+            // Aggiorniamo i campi del pacco (tipo, quantita', dimensioni)
             $packageFields = array_intersect_key($data, array_flip([
                 'package_type', 'quantity', 'weight', 'first_size', 'second_size', 'third_size',
             ]));
 
-            // Recalculate price if dimensions changed
+            // Se il prezzo e' stato modificato, lo convertiamo da euro a centesimi
             if (isset($data['single_price'])) {
                 $packageFields['single_price'] = (int) round($data['single_price'] * 100);
             }
@@ -231,32 +288,39 @@ class SavedShipmentController extends Controller
             }
         });
 
+        // Ricarichiamo i dati aggiornati e li restituiamo al frontend
         $package->load(['originAddress', 'destinationAddress', 'service']);
         return new PackageResource($package);
     }
 
+    // Elimina una spedizione salvata
+    // Rimuove anche il pacco dal carrello se era presente
     public function destroy($id)
     {
         $userId = auth()->id();
 
+        // Rimuoviamo il collegamento dalla tabella spedizioni salvate
         DB::table('saved_shipments')
             ->where('user_id', $userId)
             ->where('package_id', $id)
             ->delete();
 
-        // Also remove from cart if present
+        // Rimuoviamo anche dal carrello se era presente
         DB::table('cart_user')
             ->where('user_id', $userId)
             ->where('package_id', $id)
             ->delete();
 
+        // Eliminiamo il pacco dal database
         Package::where('id', $id)->where('user_id', $userId)->delete();
 
         return response()->json(['message' => 'Spedizione rimossa']);
     }
 
     /**
-     * Move selected saved shipments to the cart.
+     * Copia le spedizioni salvate selezionate nel carrello per il pagamento.
+     * L'originale resta nelle spedizioni configurate come template riutilizzabile.
+     * L'utente seleziona una o piu' spedizioni salvate e ne aggiunge copie al carrello.
      */
     public function addToCart(Request $request)
     {
@@ -268,42 +332,66 @@ class SavedShipmentController extends Controller
         $userId = auth()->id();
         $packageIds = $request->package_ids;
 
-        // Verify these packages belong to the user's saved shipments
+        // Verifichiamo che i pacchi selezionati appartengano alle spedizioni salvate dell'utente
         $validIds = DB::table('saved_shipments')
             ->where('user_id', $userId)
             ->whereIn('package_id', $packageIds)
             ->pluck('package_id')
             ->toArray();
 
+        // Per ogni spedizione salvata selezionata, creiamo una COPIA nel carrello.
+        // L'originale resta nelle spedizioni configurate (funziona come un template riutilizzabile).
+        $copiedCount = 0;
         foreach ($validIds as $packageId) {
-            // Check not already in cart
-            $exists = DB::table('cart_user')
-                ->where('user_id', $userId)
-                ->where('package_id', $packageId)
-                ->exists();
+            $original = Package::with(['originAddress', 'destinationAddress', 'service'])->find($packageId);
+            if (!$original) continue;
 
-            if (!$exists) {
-                DB::table('cart_user')->insert([
-                    'user_id' => $userId,
-                    'package_id' => $packageId,
-                ]);
-            }
+            // Creiamo copie degli indirizzi e dei servizi
+            $newOrigin = $original->originAddress
+                ? PackageAddress::create($original->originAddress->replicate()->toArray())
+                : null;
+            $newDestination = $original->destinationAddress
+                ? PackageAddress::create($original->destinationAddress->replicate()->toArray())
+                : null;
+            $newService = $original->service
+                ? Service::create($original->service->replicate()->toArray())
+                : null;
 
-            // Remove from saved shipments
-            DB::table('saved_shipments')
-                ->where('user_id', $userId)
-                ->where('package_id', $packageId)
-                ->delete();
+            // Creiamo una copia del pacco con i nuovi ID collegati
+            $newPackage = Package::create([
+                'package_type' => $original->package_type,
+                'quantity' => $original->quantity,
+                'weight' => $original->weight,
+                'first_size' => $original->first_size,
+                'second_size' => $original->second_size,
+                'third_size' => $original->third_size,
+                'weight_price' => $original->weight_price,
+                'volume_price' => $original->volume_price,
+                'single_price' => $original->single_price,
+                'origin_address_id' => $newOrigin ? $newOrigin->id : null,
+                'destination_address_id' => $newDestination ? $newDestination->id : null,
+                'service_id' => $newService ? $newService->id : null,
+                'user_id' => $userId,
+            ]);
+
+            // Aggiungiamo la copia al carrello
+            DB::table('cart_user')->insert([
+                'user_id' => $userId,
+                'package_id' => $newPackage->id,
+            ]);
+
+            $copiedCount++;
         }
 
         return response()->json([
             'message' => 'Spedizioni aggiunte al carrello',
-            'moved' => count($validIds),
+            'moved' => $copiedCount,
         ]);
     }
 
     /**
-     * Remove orphaned saved shipment entries (where the package no longer exists).
+     * Pulizia interna: rimuove le spedizioni salvate il cui pacco non esiste piu' nel database.
+     * Questo puo' succedere se un pacco viene eliminato direttamente senza passare da destroy().
      */
     private function cleanupOrphanedShipments(int $userId): void
     {
@@ -315,7 +403,9 @@ class SavedShipmentController extends Controller
             return;
         }
 
+        // Controlliamo quali pacchi esistono ancora nel database
         $existingIds = Package::whereIn('id', $savedIds)->pluck('id');
+        // I pacchi "orfani" sono quelli che sono nella tabella saved_shipments ma non nel database pacchi
         $orphanedIds = $savedIds->diff($existingIds);
 
         if ($orphanedIds->isNotEmpty()) {

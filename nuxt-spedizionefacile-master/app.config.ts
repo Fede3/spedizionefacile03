@@ -1,3 +1,28 @@
+/**
+ * CONFIGURAZIONE ASPETTO GRAFICO (app.config.ts)
+ *
+ * Questo file personalizza l'aspetto dei componenti della libreria Nuxt UI.
+ * Nuxt UI fornisce componenti pronti all'uso (accordion, modal, tabs, breadcrumb, ecc.)
+ * e qui si modificano colori, dimensioni e stili per adattarli al design di SpedizioneFacile.
+ *
+ * Componenti personalizzati:
+ *
+ * - accordion: la sezione a "fisarmonica" usata nella pagina FAQ e servizi,
+ *   dove si clicca un titolo per espandere/comprimere il contenuto
+ *
+ * - modal: la finestra che si apre sopra la pagina (usata per dettagli servizi
+ *   nel secondo step del preventivo). Ha sfondo grigio, bordi arrotondati
+ *   e un pulsante X per chiuderla
+ *
+ * - tabs: le linguette per cambiare tra diverse viste (es. nelle pagine account)
+ *   con colore primario verde scuro (#005961)
+ *
+ * - breadcrumb: il percorso di navigazione (es. Home > Servizi > Pagamento)
+ *   con link neri e pagina attiva in verde scuro
+ *
+ * - user: il componente che mostra nome e avatar dell'utente
+ *   (usato nelle recensioni)
+ */
 export default defineAppConfig({
 	ui: {
 		accordion: {

@@ -1,5 +1,22 @@
 <?php
 
+/**
+ * REQUEST: VALIDAZIONE CREAZIONE PACCHI
+ *
+ * Una "Form Request" in Laravel serve per validare i dati inviati dall'utente
+ * PRIMA che arrivino al controller. Se i dati non sono validi, la richiesta
+ * viene automaticamente rifiutata con un messaggio di errore.
+ *
+ * Questa Request valida tutti i dati necessari per creare dei pacchi:
+ * - Indirizzo di partenza (tutti i campi obbligatori)
+ * - Indirizzo di destinazione (tutti i campi obbligatori)
+ * - Servizi opzionali (tipo, data, orario)
+ * - I pacchi stessi (tipo, quantita', peso, dimensioni, prezzo)
+ *
+ * Ogni regola specifica: se il campo e' obbligatorio, il tipo di dato,
+ * la lunghezza massima e i valori minimi/massimi accettati.
+ */
+
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
@@ -7,7 +24,7 @@ use Illuminate\Foundation\Http\FormRequest;
 class PackageStoreRequest extends FormRequest
 {
     /**
-     * Determine if the user is authorized to make this request.
+     * Autorizzazione: tutti possono fare questa richiesta (true).
      */
     public function authorize(): bool
     {
@@ -15,14 +32,13 @@ class PackageStoreRequest extends FormRequest
     }
 
     /**
-     * Get the validation rules that apply to the request.
-     *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
+     * Regole di validazione per ogni campo.
+     * Se un campo non rispetta le regole, la richiesta viene rifiutata.
      */
     public function rules(): array
     {
         return [
-            /* Indirizzo di partenza */
+            /* Indirizzo di partenza - da dove parte il pacco */
             'origin_address.type' => 'required|string|max:50',
             'origin_address.name' => 'required|string|max:200',
             'origin_address.additional_information' => 'nullable|string|max:500',
@@ -37,7 +53,7 @@ class PackageStoreRequest extends FormRequest
             'origin_address.telephone_number' => 'required|string|max:20',
             'origin_address.email' => 'nullable|string|max:200',
 
-            /* Indirizzo di destinazione */
+            /* Indirizzo di destinazione - dove deve arrivare il pacco */
             'destination_address.type' => 'required|string|max:50',
             'destination_address.name' => 'required|string|max:200',
             'destination_address.additional_information' => 'nullable|string|max:500',
@@ -52,22 +68,25 @@ class PackageStoreRequest extends FormRequest
             'destination_address.telephone_number' => 'required|string|max:20',
             'destination_address.email' => 'nullable|string|max:200',
 
-            /* Servizi */
+            /* Servizi opzionali (tipo di spedizione, data e orario di ritiro) */
             'services.service_type' => 'nullable|string|max:500',
             'services.date' => 'nullable|string|max:20',
             'services.time' => 'nullable|string|max:20',
 
-            /* Pacchi */
+            /* Pacchi - almeno 1 pacco, massimo 50 */
             'packages' => 'required|array|min:1|max:50',
-            'packages.*.package_type' => 'required|string|max:50',
-            'packages.*.quantity' => 'required|integer|min:1|max:999',
-            'packages.*.weight' => 'required|numeric|min:0.1|max:9999',
-            'packages.*.first_size' => 'required|numeric|min:1|max:9999',
-            'packages.*.second_size' => 'required|numeric|min:1|max:9999',
-            'packages.*.third_size' => 'required|numeric|min:1|max:9999',
-            'packages.*.weight_price' => 'nullable|numeric|min:0',
-            'packages.*.volume_price' => 'nullable|numeric|min:0',
-            'packages.*.single_price' => 'required|numeric|min:0',
+            'packages.*.package_type' => 'required|string|max:50',           // Tipo (busta, scatola...)
+            'packages.*.quantity' => 'required|integer|min:1|max:999',       // Quantita' (da 1 a 999)
+            'packages.*.weight' => 'required|numeric|min:0.1|max:9999',     // Peso minimo 0.1 kg
+            'packages.*.first_size' => 'required|numeric|min:1|max:9999',   // Lunghezza minimo 1 cm
+            'packages.*.second_size' => 'required|numeric|min:1|max:9999',  // Larghezza minimo 1 cm
+            'packages.*.third_size' => 'required|numeric|min:1|max:9999',   // Altezza minimo 1 cm
+            'packages.*.weight_price' => 'nullable|numeric|min:0',          // Prezzo per peso (opzionale)
+            'packages.*.volume_price' => 'nullable|numeric|min:0',          // Prezzo per volume (opzionale)
+            'packages.*.single_price' => 'required|numeric|min:0',          // Prezzo finale (obbligatorio)
+
+            /* Descrizione del contenuto del pacco (opzionale) */
+            'content_description' => 'nullable|string|max:255',
         ];
     }
 }
