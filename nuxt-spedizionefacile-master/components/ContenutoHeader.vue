@@ -3,28 +3,32 @@
 
 	Questo componente mostra il contenuto principale dell'intestazione (header),
 	che cambia in base alla pagina in cui si trova l'utente.
-
-	Per ogni pagina mostra testi e layout diversi:
-	- Homepage: il titolo grande "Spedisci in Italia a partire da 8,90 euro"
-	  con l'immagine del trasporto (caricata dall'admin o quella predefinita)
-	- Servizi: titolo "Le nostre guide" con pulsante "Scendi"
-	- Pagamento alla consegna: titolo e pulsante "Scendi"
-	- Contatti: titolo "Siamo qui per aiutarti con le tue spedizioni"
-	- Chi siamo: titolo "Spedire un pacco online non e' mai stato cosi' facile"
-	- FAQ: titolo "Trova le tue risposte"
-	- Account: titolo "Il tuo account"
-
-	L'immagine nell'header della homepage viene caricata dal server tramite
-	il composable useAdminImage() - se l'admin ha impostato un'immagine personalizzata,
-	viene usata quella, altrimenti si usa l'immagine predefinita.
 -->
 <script setup>
-const { data, status } = useAdminImage();
+const { data } = useAdminImage();
 const route = useRoute();
 
-// Carica fasce prezzo e promo per il prezzo minimo dinamico
+// Ottimizzazione: precarica l'immagine hero di default per evitare ritardo nel rendering above-the-fold.
+// Se l'admin ha impostato un'immagine personalizzata, quella verra' caricata dinamicamente.
+useHead({
+	link: [
+		{
+			rel: 'preload',
+			as: 'image',
+			href: '/img/homepage/trasporti-img.png',
+			fetchpriority: 'high',
+		},
+	],
+});
+
+// Carica fasce prezzo solo sulla homepage (dove il prezzo minimo viene mostrato nel hero).
+// Su altre pagine che usano i prezzi (Preventivo.vue), loadPriceBands viene chiamato li'.
 const { loadPriceBands, getMinPrice, promoSettings } = usePriceBands();
-onMounted(() => { loadPriceBands(); });
+onMounted(() => {
+	if (route.path === '/' || route.path === '/preventivo') {
+		loadPriceBands();
+	}
+});
 
 const minPriceInfo = computed(() => getMinPrice());
 const minPriceFormatted = computed(() => {
@@ -51,46 +55,63 @@ const props = defineProps({
 </script>
 
 <template>
-	<!-- Homepage -->
-	<div class="mt-[54px] desktop-xl:mt-[56px] relative z-2" v-if="route.path === '/'">
-		<div class="text-[#222222] tablet:max-w-[770px] tablet:mx-auto desktop:mx-0">
-			<h1 class="leading-none">
-				<!-- Riga 1: titolo principale -->
-				<span class="block text-[2.25rem] tablet:text-[3.25rem] desktop:text-[4.8125rem] desktop-xl:text-[6.25rem] font-bold tracking-[-1.5px] leading-[1.1]">
-					Spedisci in Italia
-				</span>
-				<!-- Riga 2: "a partire da" + badge prezzo inline -->
-				<span class="flex items-center flex-wrap gap-x-[14px] gap-y-[8px] mt-[8px] desktop:mt-[12px]">
-					<span class="text-[1.5rem] tablet:text-[2rem] desktop:text-[3rem] desktop-xl:text-[3.5rem] font-semibold tracking-[-0.5px] text-[#444]">
-						a partire da
+	<!-- ============================================================
+	     HOMEPAGE HERO
+	     ============================================================ -->
+	<div class="hero" v-if="route.path === '/'">
+		<!-- Decorazione teal dietro la card -->
+		<div class="hero__teal-accent anim-accent"></div>
+
+		<div class="hero__layout">
+			<!-- Colonna sinistra: testo + card prezzo -->
+			<div class="hero__content">
+				<h1 class="hero__heading anim-title">
+					Spedisci<br class="desktop:hidden" /> in Italia
+				</h1>
+
+				<!-- Card prezzo bianca in risalto -->
+				<div class="hero__card anim-pill">
+					<div class="hero__card-accent"></div>
+					<div class="hero__card-body">
+						<span class="hero__card-label">a partire da</span>
+						<div class="hero__card-price-row">
+							<span v-if="showMinPriceDiscount" class="hero__price-old">{{ minBasePriceFormatted }}€</span>
+							<span class="hero__card-price">{{ minPriceFormatted }}<span class="hero__card-eur">€</span></span>
+						</div>
+						<span class="hero__card-includes">
+							<svg width="14" height="14" viewBox="0 0 24 24" fill="none" class="shrink-0"><circle cx="12" cy="12" r="12" fill="rgba(255,255,255,0.3)"/><path d="M7 12.5l3 3 7-7" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+							IVA e ritiro incluso
+						</span>
+					</div>
+				</div>
+
+				<!-- Promo badges -->
+				<div v-if="showMinPriceDiscount" class="mt-[10px] anim-tagline">
+					<span class="inline-flex items-center gap-[4px] px-[10px] py-[4px] rounded-[8px] bg-emerald-500 text-white text-[0.8125rem] font-bold">
+						-{{ minPriceInfo.discountPercent }}%
 					</span>
-					<!-- Prezzo base barrato se c'e' sconto attivo -->
-					<span v-if="showMinPriceDiscount" class="text-[1.25rem] desktop:text-[2rem] text-[#999] line-through font-medium">
-						{{ minBasePriceFormatted }} €
-					</span>
+				</div>
+				<div v-if="promoSettings?.active && promoSettings?.label_text" class="mt-[8px] anim-tagline">
 					<span
-						:style="{ '--admin-image': data?.image_url ? `url(${data.image_url})` : `url(/img/homepage/trasporti-img.png)` }"
-						class="admin-pill">
-						{{ minPriceFormatted }} €
+						:style="{ backgroundColor: promoSettings.label_color || '#E44203' }"
+						class="inline-flex items-center gap-[6px] px-[10px] py-[4px] rounded-[8px] text-white text-[0.75rem] font-bold tracking-wide shadow-sm">
+						<!-- Ottimizzazione: immagine promo above-the-fold, decoding async -->
+						<img v-if="promoSettings.label_image" :src="promoSettings.label_image" alt="" decoding="async" width="40" height="16" class="h-[16px] w-auto shrink-0" />
+						{{ promoSettings.label_text }}
 					</span>
-				</span>
-			</h1>
-			<!-- Badge sconto % -->
-			<div v-if="showMinPriceDiscount" class="flex items-center gap-[8px] mt-[4px] mb-[2px]">
-				<span class="inline-flex items-center gap-[4px] px-[10px] py-[5px] rounded-[8px] bg-emerald-500 text-white text-[0.8125rem] tablet:text-[0.875rem] desktop:text-[1rem] font-bold">
-					-{{ minPriceInfo.discountPercent }}%
-				</span>
+				</div>
+				<p v-if="promoSettings?.active && promoSettings?.description" class="text-[0.8125rem] text-[#555] font-medium mt-[6px] anim-tagline">
+					{{ promoSettings.description }}
+				</p>
 			</div>
-			<!-- Banner promo -->
-			<div v-if="promoSettings?.active && promoSettings?.label_text" class="flex items-center gap-[8px] mt-[6px] mb-[4px]">
-				<span
-					:style="{ backgroundColor: promoSettings.label_color || '#E44203' }"
-					class="inline-flex items-center gap-[6px] px-[10px] tablet:px-[12px] py-[5px] rounded-[8px] text-white text-[0.75rem] tablet:text-[0.8125rem] desktop:text-[0.9375rem] font-bold tracking-wide shadow-sm max-w-full">
-					<img v-if="promoSettings.label_image" :src="promoSettings.label_image" alt="" class="h-[16px] tablet:h-[18px] w-auto shrink-0" />
-					{{ promoSettings.label_text }}
-				</span>
+
+			<!-- Colonna destra: immagine -->
+			<div class="hero__image anim-image">
+				<div
+					class="hero__image-bg"
+					:style="{ backgroundImage: data?.image_url ? `url(${data.image_url})` : `url(/img/homepage/trasporti-img.png)` }">
+				</div>
 			</div>
-			<p class="text-[1rem] tablet:text-[1.375rem] desktop:text-[2rem] desktop-xl:text-[2.5rem] tracking-[-0.4px] font-extrabold mt-[16px] desktop:mt-[20px]">IVA e ritiro incluso</p>
 		</div>
 	</div>
 
@@ -106,7 +127,6 @@ const props = defineProps({
 			href="#servizi"
 			class="desktop:w-[146px] w-[123px] desktop:h-[60px] h-[48px] rounded-[35px] bg-[#E44203] leading-[48px] desktop:leading-[60px] font-semibold text-center text-white tracking-[-0.384px] mx-auto text-[0.875rem] desktop:text-[1rem] block">
 			<span class="after:bg-[url('/img/arrow-down.svg')] after:bg-no-repeat after:inline-block after:size-[16px] after:ml-[11px] after:rotate-90 after:align-[-1px]">Scendi</span>
-			<!-- <NuxtImg src="/img/arrow-down.svg" aria-hidden="true" width="16" height="16" alt="" class="size-[16px] rotate-90" /> -->
 		</a>
 	</div>
 
@@ -142,8 +162,6 @@ const props = defineProps({
 				Siamo qui per aiutarti con le tue spedizioni.
 			</p>
 		</div>
-
-		<!-- <div class="desktop-xl:w-[1280px] w-full h-[175px] mid-desktop:h-[220px] desktop:w-full desktop:h-[300px] desktop-xl:h-[290px] bg-green-500 rounded-t-[33px]"></div> -->
 	</div>
 
 	<!-- Chi siamo -->
@@ -164,8 +182,6 @@ const props = defineProps({
 				<span class="after:bg-[url('/img/arrow-down.svg')] after:bg-no-repeat after:inline-block after:size-[16px] after:ml-[11px] after:rotate-90 after:align-[-1px]">Scendi</span>
 			</a>
 		</div>
-
-		<!-- <div class="desktop-xl:w-[1280px] w-full h-[175px] mid-desktop:h-[220px] desktop:w-full desktop:h-[300px] desktop-xl:h-[360px] bg-green-500 rounded-t-[33px]"></div> -->
 	</div>
 
 	<!-- Guide -->
@@ -198,8 +214,6 @@ const props = defineProps({
 				Trova le tue risposte
 			</p>
 		</div>
-
-		<!-- <div class="desktop-xl:w-[1280px] w-full h-[175px] mid-desktop:h-[220px] desktop:w-full desktop:h-[300px] desktop-xl:h-[360px] bg-green-500 rounded-t-[33px]"></div> -->
 	</div>
 
 	<!-- Account -->
@@ -212,90 +226,411 @@ const props = defineProps({
 </template>
 
 <style scoped>
-/* Mobile base — pill inline nella riga flex */
-.admin-pill {
+/* ============================================================
+   HERO — "Floating Card" design
+   Mobile-first, card prezzo prominente, accento teal
+   ============================================================ */
+.hero {
 	position: relative;
-	display: inline-flex;
-	align-items: center;
-	justify-content: center;
+	z-index: 2;
+	padding-top: 20px;
+	overflow: hidden;
+	padding-bottom: 80px;
+	margin-bottom: -80px;
+}
+
+.hero__layout {
+	position: relative;
+}
+
+.hero__content {
+	position: relative;
+	z-index: 5;
+}
+
+/* --- Accento teal decorativo --- */
+.hero__teal-accent {
+	position: absolute;
+	right: -20px;
+	top: 35px;
+	width: 200px;
+	height: 220px;
+	background: linear-gradient(135deg, #095866 0%, #0b6d7d 100%);
+	border-radius: 24px 0 0 24px;
+	z-index: 1;
+	transform: rotate(6deg);
+	opacity: 0.15;
+}
+
+/* --- Titolo --- */
+.hero__heading {
+	font-size: 2.25rem;
+	font-weight: 800;
+	color: #1a1a1a;
+	line-height: 1.05;
+	letter-spacing: -1.2px;
+	margin: 0;
+}
+
+/* --- Card prezzo --- */
+.hero__card {
+	display: flex;
+	margin-top: 12px;
+	background: linear-gradient(135deg, #E44203 0%, #095866 100%);
+	border-radius: 16px;
+	overflow: hidden;
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+	max-width: 200px;
+}
+
+.hero__card-accent {
+	display: none;
+}
+
+.hero__card-body {
+	padding: 14px 18px;
+	display: flex;
+	flex-direction: column;
+}
+
+.hero__card-label {
+	font-size: 0.8125rem;
+	font-weight: 500;
+	color: rgba(255, 255, 255, 0.75);
+	text-transform: uppercase;
+	letter-spacing: 0.8px;
+}
+
+.hero__card-price-row {
+	display: flex;
+	align-items: baseline;
+	gap: 8px;
+	margin-top: 2px;
+}
+
+.hero__price-old {
+	font-size: 0.9375rem;
+	color: rgba(255, 255, 255, 0.5);
+	text-decoration: line-through;
+	font-weight: 500;
+}
+
+.hero__card-price {
+	font-size: 3rem;
 	font-weight: 800;
 	color: #fff;
-	background: #e44203;
-	flex-shrink: 0;
-
-	width: 130px;
-	height: 52px;
-	font-size: 1.75rem;
-	letter-spacing: -1px;
-	border-radius: 60px;
+	line-height: 1;
+	letter-spacing: -2px;
 }
 
-.admin-pill::after {
-	content: "";
+.hero__card-eur {
+	font-size: 1.5rem;
+	font-weight: 700;
+	vertical-align: super;
+	margin-left: 1px;
+	letter-spacing: 0;
+	color: #fff;
+}
+
+.hero__card-includes {
+	display: inline-flex;
+	align-items: center;
+	gap: 5px;
+	font-size: 0.75rem;
+	font-weight: 600;
+	color: rgba(255, 255, 255, 0.9);
+	margin-top: 6px;
+}
+
+/* --- Immagine --- */
+.hero__image {
 	position: absolute;
-	background-image: var(--admin-image);
+	right: -85px;
+	top: 45px;
+	z-index: 2;
+	width: 80vw;
+	max-width: calc(100vw - 10px);
+	height: 600px;
+	opacity: 0.18;
+}
+
+.hero__image-bg {
+	width: 100%;
+	height: 100%;
+	background-size: contain;
+	background-position: center top;
 	background-repeat: no-repeat;
-	background-position: right center;
-	background-size: cover;
-
-	width: min(300px, calc(100vw - 80px));
-	height: 190px;
-	border-radius: 16px 16px 0 0;
-	left: 110px;
-	top: -10px;
-	z-index: 20;
+	border-radius: 20px 0 0 0;
 }
 
-/* Tablet */
+/* ============================================================
+   ANIMAZIONI
+   ============================================================ */
+@media (prefers-reduced-motion: no-preference) {
+	@keyframes fadeSlideUp {
+		from { opacity: 0; transform: translateY(18px); }
+		to { opacity: 1; transform: translateY(0); }
+	}
+
+	@keyframes fadeIn {
+		from { opacity: 0; transform: translateY(8px); }
+		to { opacity: 1; transform: translateY(0); }
+	}
+
+	@keyframes slideIn {
+		from { opacity: 0; transform: translateX(20px) scale(0.96); }
+		to { opacity: 1; transform: translateX(0) scale(1); }
+	}
+
+	@keyframes accentIn {
+		from { opacity: 0; transform: rotate(6deg) scale(0.7); }
+		to { opacity: 0.15; transform: rotate(6deg) scale(1); }
+	}
+
+	.anim-title {
+		animation: fadeSlideUp 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+	}
+
+	.anim-pill {
+		animation: fadeSlideUp 0.5s cubic-bezier(0.22, 1, 0.36, 1) 0.15s both;
+	}
+
+	.anim-image {
+		animation: slideIn 0.55s cubic-bezier(0.22, 1, 0.36, 1) 0.2s both;
+	}
+
+	.anim-accent {
+		animation: accentIn 0.6s cubic-bezier(0.22, 1, 0.36, 1) 0.1s both;
+	}
+
+	.anim-tagline {
+		animation: fadeIn 0.4s cubic-bezier(0.22, 1, 0.36, 1) 0.35s both;
+	}
+}
+
+/* ============================================================
+   TABLET (720px+)
+   ============================================================ */
 @media (min-width: 45rem) {
-	.admin-pill {
-		width: 160px;
-		height: 64px;
-		font-size: 2.25rem;
-		border-radius: 80px;
+	.hero {
+		padding-top: 30px;
 	}
 
-	.admin-pill::after {
+	.hero__teal-accent {
+		width: 200px;
+		height: 200px;
+		right: 20px;
+		top: 20px;
+		border-radius: 32px;
+		opacity: 0.12;
+	}
+
+	.hero__heading {
+		font-size: 3.25rem;
+		letter-spacing: -1.5px;
+	}
+
+	.hero__card {
+		max-width: 320px;
+		margin-top: 22px;
+		border-radius: 20px;
+	}
+
+	.hero__card-accent {
+		width: 6px;
+	}
+
+	.hero__card-body {
+		padding: 18px 24px;
+	}
+
+	.hero__card-label {
+		font-size: 0.875rem;
+	}
+
+	.hero__card-price {
+		font-size: 4rem;
+		letter-spacing: -2.5px;
+	}
+
+	.hero__card-eur {
+		font-size: 1.75rem;
+	}
+
+	.hero__card-includes {
+		font-size: 0.8125rem;
+		gap: 6px;
+	}
+
+	.hero__image {
 		width: 480px;
-		height: 280px;
-		border-radius: 20px 20px 0 0;
-		left: 140px;
-		top: -30px;
+		height: 440px;
+		right: -40px;
+		bottom: -60px;
+		top: auto;
+		opacity: 0.2;
+	}
+
+	.hero__image-bg {
+		border-radius: 28px;
 	}
 }
 
-/* Desktop */
+/* ============================================================
+   DESKTOP (1024px+)
+   ============================================================ */
 @media (min-width: 64rem) {
-	.admin-pill {
-		width: 354px;
-		height: 121px;
-		font-size: 5rem;
+	.hero {
+		padding-top: 0px;
+		margin-top: -60px;
 	}
 
-	.admin-pill::after {
-		width: 790px;
-		height: 490px;
-		left: 300px;
-		top: -90px;
-		border-radius: 48px 48px 0 0;
+	.hero__layout {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 0px;
+	}
+
+	.hero__content {
+		flex: 0 0 50%;
+		margin-top: -15px;
+	}
+
+	.hero__teal-accent {
+		width: 340px;
+		height: 320px;
+		right: 5%;
+		top: 115px;
+		border-radius: 40px;
+		transform: rotate(8deg);
+		opacity: 0.08;
+		width: 480px;
+		height: 450px;
+	}
+
+	.hero__heading {
+		font-size: 4.5rem;
+		letter-spacing: -2.5px;
+	}
+
+	.hero__card {
+		max-width: 380px;
+		margin-top: 28px;
+		border-radius: 22px;
+		box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1), 0 2px 6px rgba(0, 0, 0, 0.04);
+	}
+
+	.hero__card-accent {
+		width: 7px;
+	}
+
+	.hero__card-body {
+		padding: 22px 28px;
+	}
+
+	.hero__card-label {
+		font-size: 1rem;
+		letter-spacing: 1px;
+	}
+
+	.hero__card-price {
+		font-size: 5rem;
+		letter-spacing: -3px;
+	}
+
+	.hero__card-eur {
+		font-size: 2.25rem;
+	}
+
+	.hero__card-includes {
+		font-size: 0.9375rem;
+		gap: 8px;
+		margin-top: 8px;
+	}
+
+	/* Immagine — colonna propria, si avvicina al testo da sinistra */
+	.hero__image {
+		position: relative;
+		right: auto;
+		top: 140px;
+		bottom: auto;
+		flex: 0 0 58%;
+		width: auto;
+		height: 600px;
+		opacity: 1;
+		margin-left: -480px;
+	}
+
+	.hero__image-bg {
+		border-radius: 28px;
+		box-shadow: 0 12px 40px rgba(9, 88, 102, 0.15);
+	}
+
+	@keyframes accentIn {
+		from { opacity: 0; transform: rotate(8deg) scale(0.7); }
+		to { opacity: 0.08; transform: rotate(8deg) scale(1); }
 	}
 }
 
-/* Desktop XL */
+/* ============================================================
+   DESKTOP XL (1440px+)
+   ============================================================ */
 @media (min-width: 90rem) {
-	.admin-pill {
-		width: 458px;
-		height: 155px;
-		font-size: 6.875rem;
-		border-radius: 110px;
+	.hero {
+		padding-top: 0px;
+		margin-top: -70px;
 	}
 
-	.admin-pill::after {
-		width: 796px;
-		height: 426px;
-		left: 400px;
-		top: -50px;
-		border-radius: 50px 50px 0 0;
+	.hero__teal-accent {
+		width: 580px;
+		height: 540px;
+		right: 8%;
+		top: 125px;
+		border-radius: 48px;
+	}
+
+	.hero__heading {
+		font-size: 5.5rem;
+		letter-spacing: -3px;
+	}
+
+	.hero__card {
+		max-width: 420px;
+		margin-top: 32px;
+		border-radius: 24px;
+	}
+
+	.hero__card-body {
+		padding: 26px 32px;
+	}
+
+	.hero__card-label {
+		font-size: 1.0625rem;
+	}
+
+	.hero__card-price {
+		font-size: 6rem;
+		letter-spacing: -3.5px;
+	}
+
+	.hero__card-eur {
+		font-size: 2.75rem;
+	}
+
+	.hero__card-includes {
+		font-size: 1rem;
+		margin-top: 10px;
+	}
+
+	.hero__image {
+		height: 700px;
+		margin-left: -540px;
+		top: 150px;
+	}
+
+	.hero__image-bg {
+		border-radius: 36px;
 	}
 }
 </style>

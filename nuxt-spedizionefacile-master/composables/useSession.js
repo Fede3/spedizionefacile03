@@ -16,6 +16,8 @@ export const useSession = () => {
 		{
 			method: "GET",
 			key: "session",
+			lazy: true,
+			dedupe: "defer",
 		},
 	);
 

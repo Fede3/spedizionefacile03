@@ -109,7 +109,8 @@ onBeforeUnmount(() => {
 							<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[20px] h-[20px] text-[#095866]" fill="currentColor"><path d="M8.5,13.5L11,16.5L14.5,12L19,18H5M21,19V5C21,3.89 20.1,3 19,3H5A2,2 0 0,0 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19Z"/></svg> Immagine attuale
 						</h2>
 						<div v-if="currentImageUrl" class="rounded-[12px] border border-[#E9EBEC] overflow-hidden">
-							<img :src="currentImageUrl" alt="Immagine homepage attuale" class="w-full max-h-[400px] object-cover" />
+							<!-- Ottimizzazione: lazy loading + decoding async -->
+							<img :src="currentImageUrl" alt="Immagine homepage attuale" loading="lazy" decoding="async" class="w-full max-h-[400px] object-cover" />
 						</div>
 						<div v-else class="flex flex-col items-center justify-center py-[60px] text-[#737373] rounded-[12px] border border-dashed border-[#C8CCD0] bg-[#FAFBFC]">
 							<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[48px] h-[48px] text-[#C8CCD0] mb-[12px]" fill="currentColor"><path d="M21,17.2L6.8,3H19A2,2 0 0,1 21,5V17.2M20.7,22L19.7,21H5A2,2 0 0,1 3,19V5C3,4.7 3.1,4.4 3.2,4.2L2,3L3.3,1.7L22,20.4L20.7,22M16.8,18L12.9,14.1L11,16.5L8.5,13.5L5,18H16.8Z"/></svg>
@@ -127,7 +128,8 @@ onBeforeUnmount(() => {
 						<div v-if="previewUrl" class="mb-[20px]">
 							<p class="text-[0.75rem] text-[#737373] uppercase tracking-[0.5px] font-medium mb-[8px]">Anteprima</p>
 							<div class="relative rounded-[12px] border border-[#E9EBEC] overflow-hidden">
-								<img :src="previewUrl" alt="Anteprima nuova immagine" class="w-full max-h-[300px] object-cover" />
+								<!-- Ottimizzazione: lazy loading + decoding async -->
+								<img :src="previewUrl" alt="Anteprima nuova immagine" loading="lazy" decoding="async" class="w-full max-h-[300px] object-cover" />
 								<button @click="removePreview" class="absolute top-[8px] right-[8px] w-[32px] h-[32px] bg-white/90 hover:bg-white rounded-full flex items-center justify-center shadow cursor-pointer">
 									<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[18px] h-[18px] text-[#404040]" fill="currentColor"><path d="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z"/></svg>
 								</button>

@@ -18,8 +18,10 @@ const activeFilter = ref(0);
 const textFilter = ref("Tutti");
 
 /* Carica tutti gli ordini dell'utente dal server. "refresh" permette di ricaricarli */
+// lazy: true — la lista ordini si carica dopo il render iniziale (mostra skeleton nel frattempo)
 const { data: orders, refresh, status: ordersStatus } = useSanctumFetch("/api/orders", {
 	method: "GET",
+	lazy: true,
 });
 
 /* Cambia il filtro attivo quando l'utente clicca su un tab (es. "Aperti", "Chiusi") */
@@ -357,7 +359,7 @@ const saveToConfigured = async (order) => {
 								BRT {{ getServiceLabel(order) }}
 							</span>
 							<NuxtLink :to="`/account/spedizioni/${order.id}`" class="text-[#095866]" title="Vedi dettagli">
-								<Icon name="mdi:open-in-new" class="text-[16px]" />
+								<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M14,3V5H17.59L7.76,14.83L9.17,16.24L19,6.41V10H21V3M19,19H5V5H12V3H5C3.89,3 3,3.9 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V12H19V19Z"/></svg>
 							</NuxtLink>
 						</div>
 						<div class="flex items-center gap-[8px]">
@@ -408,13 +410,13 @@ const saveToConfigured = async (order) => {
 
 					<!-- Pending payment alert -->
 					<div v-if="isPendingPayment(order)" class="mx-[20px] my-[12px] bg-amber-50 border border-amber-200 rounded-[10px] px-[16px] py-[12px] flex items-center gap-[12px]">
-						<Icon name="mdi:alert-outline" class="text-[22px] text-amber-500 shrink-0" />
+						<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="#F59E0B" class="shrink-0"><path d="M12,2L1,21H23M12,6L19.53,19H4.47M11,10V14H13V10M11,16V18H13V16"/></svg>
 						<p class="text-[0.8125rem] text-amber-800 flex-1">{{ getPendingReason(order) }}</p>
 					</div>
 
 					<!-- Save error/success message -->
 					<div v-if="saveError[order.id]" class="mx-[20px] my-[8px] bg-red-50 border border-red-200 rounded-[10px] px-[16px] py-[10px] flex items-center gap-[10px]">
-						<Icon name="mdi:alert-circle" class="text-[18px] text-red-500 shrink-0" />
+						<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="#EF4444" class="shrink-0"><path d="M13,13H11V7H13M13,17H11V15H13M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z"/></svg>
 						<p class="text-red-600 text-[0.8125rem] font-medium">{{ saveError[order.id] }}</p>
 					</div>
 
@@ -435,7 +437,7 @@ const saveToConfigured = async (order) => {
 								v-if="isPendingPayment(order)"
 								:to="`/checkout?order_id=${order.id}`"
 								class="inline-flex items-center gap-[6px] px-[16px] py-[8px] bg-[#E44203] text-white rounded-[10px] text-[0.8125rem] font-semibold hover:bg-[#c93800] transition-all">
-								<Icon name="mdi:credit-card-outline" class="text-[16px]" />
+								<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M20,8H4V6H20M20,18H4V12H20M20,4H4C2.89,4 2,4.89 2,6V18A2,2 0 0,0 4,20H20A2,2 0 0,0 22,18V6C22,4.89 21.1,4 20,4Z"/></svg>
 								Paga ora
 							</NuxtLink>
 							<button
@@ -453,16 +455,16 @@ const saveToConfigured = async (order) => {
 								@click="saveToConfigured(order)"
 								:disabled="savingToConfigured[order.id]"
 								class="inline-flex items-center gap-[6px] px-[14px] py-[8px] bg-[#095866] text-white rounded-[8px] text-[0.8125rem] font-semibold hover:opacity-90 transition disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer">
-								<Icon name="mdi:content-save-outline" class="text-[16px]" />
+								<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M17,3H5C3.89,3 3,3.9 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V7L17,3M19,19H5V5H16.17L19,7.83V19M12,12A3,3 0 0,0 9,15A3,3 0 0,0 12,18A3,3 0 0,0 15,15A3,3 0 0,0 12,12M6,6H15V10H6V6Z"/></svg>
 								{{ savingToConfigured[order.id] ? 'Salvataggio...' : 'Salva configurata' }}
 							</button>
 							<span v-else class="inline-flex items-center gap-[6px] px-[14px] py-[8px] bg-emerald-100 text-emerald-700 rounded-[8px] text-[0.8125rem] font-semibold">
-								<Icon name="mdi:check" class="text-[16px]" />
+								<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z"/></svg>
 								Salvata
 							</span>
 						</div>
 						<NuxtLink :to="`/account/spedizioni/${order.id}`" title="Vedi dettagli" class="w-[32px] h-[32px] rounded-[8px] bg-[#095866]/10 flex items-center justify-center hover:bg-[#095866]/20 transition">
-							<Icon name="mdi:eye-outline" class="text-[16px] text-[#095866]" />
+							<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="#095866"><path d="M12,9A3,3 0 0,0 9,12A3,3 0 0,0 12,15A3,3 0 0,0 15,12A3,3 0 0,0 12,9M12,17A5,5 0 0,1 7,12A5,5 0 0,1 12,7A5,5 0 0,1 17,12A5,5 0 0,1 12,17M12,4.5C7,4.5 2.73,7.61 1,12C2.73,16.39 7,19.5 12,19.5C17,19.5 21.27,16.39 23,12C21.27,7.61 17,4.5 12,4.5Z"/></svg>
 						</NuxtLink>
 					</div>
 				</div>
@@ -471,7 +473,7 @@ const saveToConfigured = async (order) => {
 			<!-- Empty state -->
 			<div v-else class="bg-white rounded-[16px] p-[48px] border border-[#E9EBEC] text-center">
 				<div class="w-[72px] h-[72px] mx-auto mb-[20px] bg-[#F8F9FB] rounded-full flex items-center justify-center">
-					<Icon name="mdi:truck-fast-outline" class="text-[32px] text-[#C8CCD0]" />
+					<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="#C8CCD0"><path d="M3,4A2,2 0 0,0 1,6V17H3A3,3 0 0,0 6,20A3,3 0 0,0 9,17H15A3,3 0 0,0 18,20A3,3 0 0,0 21,17H23V12L20,8H17V4M10,6L14,10L10,14V11H4V9H10M17,9.5H19.5L21.47,12H17M6,15.5A1.5,1.5 0 0,1 7.5,17A1.5,1.5 0 0,1 6,18.5A1.5,1.5 0 0,1 4.5,17A1.5,1.5 0 0,1 6,15.5M18,15.5A1.5,1.5 0 0,1 19.5,17A1.5,1.5 0 0,1 18,18.5A1.5,1.5 0 0,1 16.5,17A1.5,1.5 0 0,1 18,15.5Z"/></svg>
 				</div>
 				<h2 class="text-[1.25rem] font-bold text-[#252B42] mb-[10px]">Nessuna spedizione</h2>
 				<p class="text-[#737373] text-[0.9375rem] max-w-[400px] mx-auto mb-[24px] leading-[1.6]">

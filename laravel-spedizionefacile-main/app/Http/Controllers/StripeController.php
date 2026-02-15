@@ -184,6 +184,17 @@ class StripeController extends Controller
                     }
                 }
 
+                // PUDO: controlliamo se uno dei pacchi del gruppo ha un punto PUDO nel service_data
+                // Se presente, salviamo l'ID del punto nell'ordine per la spedizione BRT
+                $pudoId = null;
+                foreach ($groupPackages as $pkg) {
+                    $sd = $pkg->service->service_data ?? [];
+                    if (!empty($sd['pudo']['pudo_id']) && ($sd['delivery_mode'] ?? '') === 'pudo') {
+                        $pudoId = $sd['pudo']['pudo_id'];
+                        break;
+                    }
+                }
+
                 // Creiamo l'ordine per questo gruppo di indirizzi
                 $order = Order::create([
                     'user_id' => $userId,
@@ -191,6 +202,7 @@ class StripeController extends Controller
                     'status' => Order::PENDING,
                     'is_cod' => $isCod,
                     'cod_amount' => $codAmount,
+                    'brt_pudo_id' => $pudoId,
                 ]);
 
                 // Colleghiamo i pacchi all'ordine

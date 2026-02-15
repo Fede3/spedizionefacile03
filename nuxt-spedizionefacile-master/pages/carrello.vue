@@ -316,7 +316,8 @@ const displayTotal = computed(() => {
 					<span
 						:style="{ backgroundColor: promoSettings.label_color || '#E44203' }"
 						class="inline-flex items-center gap-[6px] px-[16px] py-[8px] rounded-[10px] text-white text-[0.9375rem] font-bold tracking-wide shadow-sm">
-						<img v-if="promoSettings.label_image" :src="promoSettings.label_image" alt="" class="h-[20px] w-auto" />
+						<!-- Ottimizzazione: lazy loading + decoding async + dimensioni per CLS -->
+						<img v-if="promoSettings.label_image" :src="promoSettings.label_image" alt="" loading="lazy" decoding="async" width="40" height="20" class="h-[20px] w-auto" />
 						{{ promoSettings.label_text }}
 					</span>
 				</div>
@@ -330,13 +331,13 @@ const displayTotal = computed(() => {
 					<!-- Filters row -->
 					<div class="flex flex-col tablet:flex-row gap-[12px] tablet:gap-[16px] items-stretch tablet:items-center mb-[20px]">
 						<div class="w-full tablet:flex-1 tablet:min-w-[200px] tablet:max-w-[400px]">
-							<select v-model="filterProvenienza" class="w-full bg-white border border-[#D0D0D0] rounded-[30px] h-[48px] tablet:h-[44px] px-[18px] text-[1rem] tablet:text-[0.875rem] text-[#404040] appearance-none cursor-pointer">
+							<select v-model="filterProvenienza" class="w-full bg-white border border-[#D0D0D0] rounded-[30px] h-[48px] tablet:h-[44px] px-[18px] text-[1rem] tablet:text-[0.875rem] text-[#404040] appearance-none cursor-pointer transition-[border-color,box-shadow] duration-200 focus:border-[#095866] focus:shadow-[0_0_0_3px_rgba(9,88,102,0.1)]">
 								<option value="">Provenienza</option>
 								<option v-for="city in uniqueCities" :key="city" :value="city">{{ city }}</option>
 							</select>
 						</div>
 						<div class="w-full tablet:flex-1 tablet:min-w-[200px] tablet:max-w-[400px] tablet:ml-auto">
-							<input type="text" v-model="filterRiferimento" placeholder="Riferimento" class="w-full bg-white border border-[#D0D0D0] rounded-[30px] h-[48px] tablet:h-[44px] px-[18px] text-[1rem] tablet:text-[0.875rem] text-[#404040] placeholder:text-[#999]" />
+							<input type="text" v-model="filterRiferimento" placeholder="Riferimento" class="w-full bg-white border border-[#D0D0D0] rounded-[30px] h-[48px] tablet:h-[44px] px-[18px] text-[1rem] tablet:text-[0.875rem] text-[#404040] placeholder:text-[#999] transition-[border-color,box-shadow] duration-200 focus:border-[#095866] focus:shadow-[0_0_0_3px_rgba(9,88,102,0.1)]" />
 						</div>
 					</div>
 
@@ -352,7 +353,7 @@ const displayTotal = computed(() => {
 								type="text"
 								v-model="couponCode"
 								placeholder="PROVA123"
-								class="w-full bg-white border border-[#D0D0D0] rounded-[30px] h-[48px] tablet:h-[44px] px-[18px] text-[1rem] tablet:text-[0.875rem] text-[#404040] placeholder:text-[#999]" />
+								class="w-full bg-white border border-[#D0D0D0] rounded-[30px] h-[48px] tablet:h-[44px] px-[18px] text-[1rem] tablet:text-[0.875rem] text-[#404040] placeholder:text-[#999] transition-[border-color,box-shadow] duration-200 focus:border-[#095866] focus:shadow-[0_0_0_3px_rgba(9,88,102,0.1)]" />
 							<div v-else class="flex items-center gap-[8px] bg-emerald-50 border border-emerald-200 rounded-[30px] h-[44px] px-[18px]">
 								<span class="text-emerald-700 font-semibold text-[0.875rem]">{{ couponCode.toUpperCase() }} (-{{ couponDiscount }}%)</span>
 								<button @click="removeCoupon" class="text-red-500 text-[0.75rem] hover:underline cursor-pointer ml-auto">X</button>
@@ -362,7 +363,7 @@ const displayTotal = computed(() => {
 							v-if="!couponApplied"
 							type="button"
 							@click="applyCoupon"
-							class="inline-flex items-center gap-[6px] bg-[#095866] text-white font-semibold text-[0.9375rem] px-[28px] h-[44px] rounded-[30px] hover:bg-[#074a56] transition-all cursor-pointer">
+							class="inline-flex items-center justify-center gap-[6px] bg-[#095866] text-white font-semibold text-[0.9375rem] px-[28px] min-h-[48px] w-full tablet:w-auto rounded-[30px] hover:bg-[#074a56] transition-[background-color,transform] duration-200 cursor-pointer active:scale-[0.97]">
 							<Icon name="mdi:tag-outline" class="text-[18px]" />
 							Applica Coupon
 						</button>
@@ -392,19 +393,19 @@ const displayTotal = computed(() => {
 									@click="toggleGroup(entry.groupIndex)"
 									class="w-full flex items-center gap-[10px] tablet:gap-[16px] p-[14px] tablet:p-[20px] hover:bg-[#f8fafb] transition cursor-pointer text-left">
 									<!-- Merge icon -->
-									<div class="w-[44px] h-[44px] rounded-[12px] flex items-center justify-center shrink-0"
+									<div class="w-[36px] h-[36px] tablet:w-[44px] tablet:h-[44px] rounded-[10px] tablet:rounded-[12px] flex items-center justify-center shrink-0"
 										:style="{ backgroundColor: entry.color + '15' }">
-										<svg width="22" height="22" viewBox="0 0 24 24" fill="none" :stroke="entry.color" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 3h5v5"/><path d="M4 20L21 3"/><path d="M21 16v5h-5"/><path d="M15 15l6 6"/><path d="M4 4l5 5"/></svg>
+										<svg width="18" height="18" viewBox="0 0 24 24" fill="none" :stroke="entry.color" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="tablet:w-[22px] tablet:h-[22px]"><path d="M16 3h5v5"/><path d="M4 20L21 3"/><path d="M21 16v5h-5"/><path d="M15 15l6 6"/><path d="M4 4l5 5"/></svg>
 									</div>
 
 									<!-- Route info -->
 									<div class="flex-1 min-w-0">
-										<div class="flex items-center gap-[8px] flex-wrap">
-											<span class="text-[0.9375rem] font-bold text-[#252B42]">
+										<div class="flex items-center gap-[6px] tablet:gap-[8px] flex-wrap">
+											<span class="text-[0.8125rem] tablet:text-[0.9375rem] font-bold text-[#252B42]">
 												{{ entry.items[0]?.origin_address?.city || 'Partenza' }}
 											</span>
-											<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#E44203" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="shrink-0"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
-											<span class="text-[0.9375rem] font-bold text-[#252B42]">
+											<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#E44203" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="shrink-0 tablet:w-[18px] tablet:h-[18px]"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+											<span class="text-[0.8125rem] tablet:text-[0.9375rem] font-bold text-[#252B42]">
 												{{ entry.items[0]?.destination_address?.city || 'Destinazione' }}
 											</span>
 										</div>
@@ -425,8 +426,8 @@ const displayTotal = computed(() => {
 
 									<!-- Total price -->
 									<div class="text-right shrink-0">
-										<p class="text-[1.125rem] font-bold text-[#252B42]">{{ formatPrice(entry.totalCents) }}</p>
-										<p class="text-[0.75rem] text-[#737373]">totale gruppo</p>
+										<p class="text-[0.9375rem] tablet:text-[1.125rem] font-bold text-[#252B42]">{{ formatPrice(entry.totalCents) }}</p>
+										<p class="text-[0.6875rem] tablet:text-[0.75rem] text-[#737373]">totale gruppo</p>
 									</div>
 
 									<!-- Expand/collapse chevron -->
@@ -436,72 +437,76 @@ const displayTotal = computed(() => {
 								</button>
 
 								<!-- Group addresses (always visible) -->
-								<div class="px-[20px] pb-[4px] flex flex-wrap gap-x-[24px] gap-y-[4px] text-[0.8125rem] text-[#404040]">
-									<div class="flex items-center gap-[6px]">
-										<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#E44203" stroke-width="2" class="shrink-0"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-										<span>{{ entry.items[0]?.origin_address?.name || '' }} - {{ entry.items[0]?.origin_address?.address || '' }}, {{ entry.items[0]?.origin_address?.city || '' }}</span>
+								<div class="px-[14px] tablet:px-[20px] pb-[4px] flex flex-wrap gap-x-[24px] gap-y-[4px] text-[0.75rem] tablet:text-[0.8125rem] text-[#404040]">
+									<div class="flex items-start gap-[6px] min-w-0">
+										<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#E44203" stroke-width="2" class="shrink-0 mt-[2px]"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+										<span class="break-words">{{ entry.items[0]?.origin_address?.name || '' }} - {{ entry.items[0]?.origin_address?.address || '' }}, {{ entry.items[0]?.origin_address?.city || '' }}</span>
 									</div>
-									<div class="flex items-center gap-[6px]">
-										<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#095866" stroke-width="2" class="shrink-0"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-										<span>{{ entry.items[0]?.destination_address?.name || '' }} - {{ entry.items[0]?.destination_address?.address || '' }}, {{ entry.items[0]?.destination_address?.city || '' }}</span>
+									<div class="flex items-start gap-[6px] min-w-0">
+										<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#095866" stroke-width="2" class="shrink-0 mt-[2px]"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+										<span class="break-words">{{ entry.items[0]?.destination_address?.name || '' }} - {{ entry.items[0]?.destination_address?.address || '' }}, {{ entry.items[0]?.destination_address?.city || '' }}</span>
 									</div>
 								</div>
 
 								<!-- Expanded: individual parcels -->
-								<div v-if="isGroupExpanded(entry.groupIndex)" class="px-[20px] pb-[16px] pt-[8px]">
+								<div v-if="isGroupExpanded(entry.groupIndex)" class="px-[12px] tablet:px-[20px] pb-[16px] pt-[8px]">
 									<div class="border-t border-dashed border-[#D0D0D0] pt-[12px]">
 										<div
 											v-for="(item, pIdx) in entry.items"
 											:key="item.id"
-											class="flex items-center gap-[8px] tablet:gap-[12px] py-[10px] px-[8px] tablet:px-[12px] rounded-[10px] mb-[6px]"
+											class="flex flex-wrap tablet:flex-nowrap items-center gap-[8px] tablet:gap-[12px] py-[10px] px-[8px] tablet:px-[12px] rounded-[10px] mb-[6px]"
 											:class="pIdx % 2 === 0 ? 'bg-[#F8F9FB]' : 'bg-white'">
 											<!-- Package icon -->
-											<div class="w-[36px] h-[36px] rounded-[8px] bg-[#F0F0F0] flex items-center justify-center shrink-0">
-												<NuxtImg :src="getPackageIcon(item)" alt="" width="22" height="22" />
+											<div class="w-[32px] h-[32px] tablet:w-[36px] tablet:h-[36px] rounded-[8px] bg-[#F0F0F0] flex items-center justify-center shrink-0">
+												<!-- Ottimizzazione: decoding async -->
+												<NuxtImg :src="getPackageIcon(item)" alt="" width="22" height="22" loading="lazy" decoding="async" class="w-[18px] h-[18px] tablet:w-[22px] tablet:h-[22px]" />
 											</div>
 
 											<!-- Package info -->
 											<div class="flex-1 min-w-0">
-												<p class="text-[0.875rem] font-semibold text-[#252B42]">
+												<p class="text-[0.8125rem] tablet:text-[0.875rem] font-semibold text-[#252B42]">
 													Collo {{ pIdx + 1 }}
 													<span class="font-normal text-[#737373] ml-[4px]">{{ item.package_type || 'Pacco' }}</span>
 												</p>
-												<p class="text-[0.8125rem] text-[#737373]">
+												<p class="text-[0.75rem] tablet:text-[0.8125rem] text-[#737373]">
 													{{ item.weight }} kg
 													<span class="mx-[4px]">&middot;</span>
 													{{ item.first_size }}x{{ item.second_size }}x{{ item.third_size }} cm
 												</p>
 											</div>
 
-											<!-- Quantity -->
-											<div class="flex items-center gap-[4px] shrink-0">
-												<button type="button" @click="updateQuantity(item.id, (item.quantity || 1) - 1)" :disabled="(item.quantity || 1) <= 1" class="w-[32px] h-[32px] tablet:w-[24px] tablet:h-[24px] flex items-center justify-center rounded-full bg-[#E9EBEC] text-[#252B42] text-[0.875rem] tablet:text-[0.75rem] font-bold hover:bg-[#D0D0D0] disabled:opacity-30 cursor-pointer disabled:cursor-not-allowed">-</button>
-												<span class="min-w-[20px] text-center font-semibold text-[0.8125rem] text-[#252B42]">{{ item.quantity || 1 }}</span>
-												<button type="button" @click="updateQuantity(item.id, (item.quantity || 1) + 1)" class="w-[32px] h-[32px] tablet:w-[24px] tablet:h-[24px] flex items-center justify-center rounded-full bg-[#E9EBEC] text-[#252B42] text-[0.875rem] tablet:text-[0.75rem] font-bold hover:bg-[#D0D0D0] cursor-pointer">+</button>
-											</div>
-
-											<!-- Price -->
-											<div class="text-right shrink-0 min-w-[70px]">
+											<!-- Price (on mobile, placed next to package info) -->
+											<div class="text-right shrink-0 min-w-[60px] tablet:min-w-[70px]">
 												<span v-if="(item.quantity || 1) > 1" class="block text-[0.6875rem] text-[#737373]">{{ formatPrice(unitPrice(item)) }}/cad</span>
-												<span class="text-[0.875rem] font-semibold text-[#252B42]">{{ formatPrice(item.single_price) }}</span>
+												<span class="text-[0.8125rem] tablet:text-[0.875rem] font-semibold text-[#252B42]">{{ formatPrice(item.single_price) }}</span>
 											</div>
 
-											<!-- Actions -->
-											<div class="flex items-center gap-[6px] shrink-0">
-												<NuxtLink :to="`/riepilogo?edit=${item.id}`" class="min-w-[36px] min-h-[36px] tablet:min-w-0 tablet:min-h-0 flex items-center justify-center text-[#095866] hover:text-[#074a56] cursor-pointer" title="Modifica collo">
-													<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-												</NuxtLink>
-												<button type="button" @click="askDelete(item.id)" class="min-w-[36px] min-h-[36px] tablet:min-w-0 tablet:min-h-0 flex items-center justify-center text-red-500 hover:text-red-700 cursor-pointer" title="Elimina collo">
-													<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
-												</button>
+											<!-- Quantity + Actions row (wraps to second line on mobile) -->
+											<div class="w-full tablet:w-auto flex items-center justify-between tablet:justify-start gap-[8px] tablet:gap-[4px] pl-[40px] tablet:pl-0">
+												<!-- Quantity -->
+												<div class="flex items-center gap-[4px] shrink-0">
+													<button type="button" @click="updateQuantity(item.id, (item.quantity || 1) - 1)" :disabled="(item.quantity || 1) <= 1" class="w-[32px] h-[32px] tablet:w-[24px] tablet:h-[24px] flex items-center justify-center rounded-full bg-[#E9EBEC] text-[#252B42] text-[0.875rem] tablet:text-[0.75rem] font-bold hover:bg-[#D0D0D0] disabled:opacity-30 cursor-pointer disabled:cursor-not-allowed transition-[background-color,transform] duration-200 active:scale-90">-</button>
+													<span class="min-w-[20px] text-center font-semibold text-[0.8125rem] text-[#252B42]">{{ item.quantity || 1 }}</span>
+													<button type="button" @click="updateQuantity(item.id, (item.quantity || 1) + 1)" class="w-[32px] h-[32px] tablet:w-[24px] tablet:h-[24px] flex items-center justify-center rounded-full bg-[#E9EBEC] text-[#252B42] text-[0.875rem] tablet:text-[0.75rem] font-bold hover:bg-[#D0D0D0] cursor-pointer transition-[background-color,transform] duration-200 active:scale-90">+</button>
+												</div>
+
+												<!-- Actions -->
+												<div class="flex items-center gap-[6px] shrink-0">
+													<NuxtLink :to="`/riepilogo?edit=${item.id}`" class="min-w-[36px] min-h-[36px] tablet:min-w-0 tablet:min-h-0 flex items-center justify-center text-[#095866] hover:text-[#074a56] cursor-pointer" title="Modifica collo">
+														<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+													</NuxtLink>
+													<button type="button" @click="askDelete(item.id)" class="min-w-[36px] min-h-[36px] tablet:min-w-0 tablet:min-h-0 flex items-center justify-center text-red-500 hover:text-red-700 cursor-pointer" title="Elimina collo">
+														<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+													</button>
+												</div>
 											</div>
 										</div>
 									</div>
 								</div>
 
 								<!-- Collapsed summary -->
-								<div v-else class="px-[20px] pb-[16px] pt-[4px]">
-									<p class="text-[0.8125rem] text-[#737373]">
+								<div v-else class="px-[14px] tablet:px-[20px] pb-[16px] pt-[4px]">
+									<p class="text-[0.75rem] tablet:text-[0.8125rem] text-[#737373]">
 										{{ entry.items.map((i, idx) => `Collo ${idx + 1}: ${i.weight}kg`).join(' | ') }}
 									</p>
 								</div>
@@ -515,7 +520,8 @@ const displayTotal = computed(() => {
 								<div class="hidden desktop:flex items-center gap-[16px] p-[16px_20px]">
 									<!-- Package icon -->
 									<div class="w-[44px] h-[44px] rounded-[10px] bg-[#F8F9FB] flex items-center justify-center shrink-0">
-										<NuxtImg :src="getPackageIcon(entry.item)" alt="" width="28" height="28" />
+										<!-- Ottimizzazione: decoding async -->
+										<NuxtImg :src="getPackageIcon(entry.item)" alt="" width="28" height="28" loading="lazy" decoding="async" />
 									</div>
 
 									<!-- Route -->
@@ -557,9 +563,9 @@ const displayTotal = computed(() => {
 
 									<!-- Quantity -->
 									<div class="flex items-center gap-[4px] shrink-0">
-										<button type="button" @click="updateQuantity(entry.item.id, (entry.item.quantity || 1) - 1)" :disabled="(entry.item.quantity || 1) <= 1" class="w-[22px] h-[22px] flex items-center justify-center rounded-full bg-[#E9EBEC] text-[#252B42] text-[0.75rem] font-bold hover:bg-[#D0D0D0] disabled:opacity-30 cursor-pointer disabled:cursor-not-allowed">-</button>
+										<button type="button" @click="updateQuantity(entry.item.id, (entry.item.quantity || 1) - 1)" :disabled="(entry.item.quantity || 1) <= 1" class="w-[22px] h-[22px] flex items-center justify-center rounded-full bg-[#E9EBEC] text-[#252B42] text-[0.75rem] font-bold hover:bg-[#D0D0D0] disabled:opacity-30 cursor-pointer disabled:cursor-not-allowed transition-[background-color,transform] duration-200 active:scale-90">-</button>
 										<span class="min-w-[20px] text-center font-semibold text-[0.8125rem]">{{ entry.item.quantity || 1 }}</span>
-										<button type="button" @click="updateQuantity(entry.item.id, (entry.item.quantity || 1) + 1)" class="w-[22px] h-[22px] flex items-center justify-center rounded-full bg-[#E9EBEC] text-[#252B42] text-[0.75rem] font-bold hover:bg-[#D0D0D0] cursor-pointer">+</button>
+										<button type="button" @click="updateQuantity(entry.item.id, (entry.item.quantity || 1) + 1)" class="w-[22px] h-[22px] flex items-center justify-center rounded-full bg-[#E9EBEC] text-[#252B42] text-[0.75rem] font-bold hover:bg-[#D0D0D0] cursor-pointer transition-[background-color,transform] duration-200 active:scale-90">+</button>
 									</div>
 
 									<!-- Price -->
@@ -580,29 +586,29 @@ const displayTotal = computed(() => {
 								</div>
 
 								<!-- Mobile layout -->
-								<div class="desktop:hidden p-[16px]">
+								<div class="desktop:hidden p-[14px]">
 									<div class="flex items-center justify-between mb-[8px]">
-										<div>
-											<p class="text-[0.875rem] font-semibold text-[#252B42]">{{ entry.item.origin_address?.city || 'Partenza' }} &rarr; {{ entry.item.destination_address?.city || 'Destinazione' }}</p>
+										<div class="min-w-0 flex-1 mr-[10px]">
+											<p class="text-[0.875rem] font-semibold text-[#252B42] truncate">{{ entry.item.origin_address?.city || 'Partenza' }} &rarr; {{ entry.item.destination_address?.city || 'Destinazione' }}</p>
 											<p class="text-[0.75rem] text-[#737373]">{{ entry.item.weight }} kg &middot; {{ entry.item.first_size }}x{{ entry.item.second_size }}x{{ entry.item.third_size }} cm</p>
 										</div>
-										<div class="text-right">
+										<div class="text-right shrink-0">
 											<span v-if="(entry.item.quantity || 1) > 1" class="block text-[0.6875rem] text-[#737373]">{{ formatPrice(unitPrice(entry.item)) }}/cad</span>
 											<span class="text-[0.9375rem] font-bold text-[#252B42]">{{ formatPrice(entry.item.single_price) }}</span>
 										</div>
 									</div>
-									<div class="flex items-center justify-between">
+									<div class="flex items-center justify-between mt-[6px]">
 										<div class="flex items-center gap-[8px]">
-											<button type="button" @click="updateQuantity(entry.item.id, (entry.item.quantity || 1) - 1)" :disabled="(entry.item.quantity || 1) <= 1" class="w-[28px] h-[28px] flex items-center justify-center rounded-full bg-[#E9EBEC] text-[#252B42] text-[0.875rem] font-bold hover:bg-[#D0D0D0] disabled:opacity-30 cursor-pointer disabled:cursor-not-allowed">-</button>
+											<button type="button" @click="updateQuantity(entry.item.id, (entry.item.quantity || 1) - 1)" :disabled="(entry.item.quantity || 1) <= 1" class="w-[36px] h-[36px] flex items-center justify-center rounded-full bg-[#E9EBEC] text-[#252B42] text-[0.875rem] font-bold hover:bg-[#D0D0D0] disabled:opacity-30 cursor-pointer disabled:cursor-not-allowed transition-[background-color,transform] duration-200 active:scale-90">-</button>
 											<span class="min-w-[24px] text-center font-semibold text-[0.875rem] text-[#252B42]">{{ entry.item.quantity || 1 }}x</span>
-											<button type="button" @click="updateQuantity(entry.item.id, (entry.item.quantity || 1) + 1)" class="w-[28px] h-[28px] flex items-center justify-center rounded-full bg-[#E9EBEC] text-[#252B42] text-[0.875rem] font-bold hover:bg-[#D0D0D0] cursor-pointer">+</button>
+											<button type="button" @click="updateQuantity(entry.item.id, (entry.item.quantity || 1) + 1)" class="w-[36px] h-[36px] flex items-center justify-center rounded-full bg-[#E9EBEC] text-[#252B42] text-[0.875rem] font-bold hover:bg-[#D0D0D0] cursor-pointer transition-[background-color,transform] duration-200 active:scale-90">+</button>
 										</div>
 										<div class="flex items-center gap-[12px]">
-											<NuxtLink :to="`/riepilogo?edit=${entry.item.id}`" class="inline-flex items-center gap-[4px] text-[0.75rem] text-[#095866] font-semibold hover:underline cursor-pointer">
+											<NuxtLink :to="`/riepilogo?edit=${entry.item.id}`" class="inline-flex items-center gap-[4px] text-[0.8125rem] text-[#095866] font-semibold hover:underline cursor-pointer min-h-[44px] px-[4px]">
 												<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
 												Modifica
 											</NuxtLink>
-											<button type="button" @click="askDelete(entry.item.id)" class="text-[0.75rem] text-red-500 font-semibold hover:underline cursor-pointer">Elimina</button>
+											<button type="button" @click="askDelete(entry.item.id)" class="text-[0.8125rem] text-red-500 font-semibold hover:underline cursor-pointer min-h-[44px] px-[4px]">Elimina</button>
 										</div>
 									</div>
 								</div>
@@ -632,13 +638,13 @@ const displayTotal = computed(() => {
 						<button
 							type="button"
 							@click="showEmptyConfirm = true"
-							class="inline-flex items-center justify-center gap-[6px] px-[20px] h-[44px] rounded-[30px] border border-[#E9EBEC] text-[#737373] text-[0.875rem] font-medium hover:border-red-300 hover:text-red-500 hover:bg-red-50 transition cursor-pointer">
+							class="inline-flex items-center justify-center gap-[6px] px-[20px] min-h-[48px] rounded-[30px] border border-[#E9EBEC] text-[#737373] text-[0.875rem] font-medium hover:border-red-300 hover:text-red-500 hover:bg-red-50 transition-[border-color,color,background-color,transform] duration-200 cursor-pointer active:scale-[0.97]">
 							<Icon name="mdi:delete-sweep-outline" class="text-[18px]" />
 							Svuota carrello
 						</button>
 						<NuxtLink
 							to="/checkout"
-							class="inline-flex items-center justify-center gap-[8px] px-[40px] h-[52px] rounded-[30px] bg-[#E44203] text-white font-semibold text-[1rem] hover:bg-[#c93800] transition-all shadow-sm hover:shadow-[0_4px_12px_rgba(228,66,3,0.3)]">
+							class="inline-flex items-center justify-center gap-[8px] px-[40px] min-h-[52px] rounded-[30px] bg-[#E44203] text-white font-semibold text-[1rem] hover:bg-[#c93800] transition-[background-color,box-shadow,transform] duration-200 shadow-sm hover:shadow-[0_4px_12px_rgba(228,66,3,0.3)] active:scale-[0.97]">
 							Procedi con l'ordine
 							<Icon name="mdi:arrow-right" class="text-[20px]" />
 						</NuxtLink>
@@ -650,8 +656,8 @@ const displayTotal = computed(() => {
 			<div v-else-if="status !== 'pending'" class="max-w-[600px] mx-auto py-[80px] text-center">
 				<h1 class="text-[1.5rem] tablet:text-[2rem] font-bold text-[#252B42] text-center mb-[4px] font-montserrat">Carrello</h1>
 				<div class="w-[40px] h-[3px] bg-[#E44203] mx-auto mb-[32px]"></div>
-				<div class="w-[80px] h-[80px] mx-auto mb-[20px] bg-[#F8F9FB] rounded-full flex items-center justify-center">
-					<Icon name="mdi:cart-outline" class="text-[36px] text-[#C8CCD0]" />
+				<div class="w-[80px] h-[80px] mx-auto mb-[20px] bg-[#E44203] rounded-full flex items-center justify-center">
+					<svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
 				</div>
 				<h2 class="text-[1.25rem] font-bold text-[#252B42] mb-[10px]">Il carrello è vuoto</h2>
 				<p class="text-[#737373] text-[0.9375rem] max-w-[400px] mx-auto mb-[24px] leading-[1.6]">
@@ -659,8 +665,8 @@ const displayTotal = computed(() => {
 				</p>
 				<NuxtLink
 					to="/preventivo"
-					class="inline-flex items-center gap-[6px] px-[24px] py-[12px] bg-[#095866] hover:bg-[#074a56] text-white rounded-[10px] font-semibold text-[0.9375rem] transition-colors">
-					<Icon name="mdi:plus" class="text-[18px]" />
+					class="inline-flex items-center gap-[6px] px-[24px] py-[14px] bg-[#095866] hover:bg-[#074a56] text-white rounded-[10px] font-semibold text-[0.9375rem] transition-[background-color,transform] duration-200 active:scale-[0.97] min-h-[48px]">
+					<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
 					Crea nuova spedizione
 				</NuxtLink>
 			</div>

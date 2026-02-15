@@ -31,6 +31,7 @@ const promo = ref({
 	label_color: '#E44203',
 	label_image: null,
 	show_badges: true,
+	description: '', // Descrizione testuale dello sconto mostrata nell'header homepage
 });
 
 // Confronta se ci sono modifiche rispetto ai valori originali
@@ -113,6 +114,7 @@ const fetchPromoSettings = async () => {
 			label_color: data.promo_label_color || '#E44203',
 			label_image: data.promo_label_image || null,
 			show_badges: data.promo_show_badges === 'true' || data.promo_show_badges === true,
+			description: data.promo_description || '',
 		};
 	} catch (e) {
 		// Default values already set
@@ -221,6 +223,7 @@ const savePromo = async () => {
 				promo_label_text: promo.value.label_text,
 				promo_label_color: promo.value.label_color,
 				promo_show_badges: promo.value.show_badges ? 'true' : 'false',
+				promo_description: promo.value.description,
 			},
 		});
 		showSuccess("Impostazioni promozione salvate con successo.");
@@ -590,6 +593,18 @@ onMounted(() => {
 									class="w-full max-w-[400px] bg-[#FAFBFC] border border-[#D0D0D0] rounded-[10px] h-[48px] tablet:h-[44px] px-[16px] text-[1rem] tablet:text-[0.875rem] text-[#252B42] placeholder:text-[#A0A5AB] focus:border-[#095866] focus:outline-none" />
 							</div>
 
+							<!-- Descrizione sconto — testo libero mostrato nell'header homepage sotto il prezzo -->
+							<div>
+								<label class="block text-[0.8125rem] font-medium text-[#252B42] mb-[6px]">Descrizione sconto (mostrata nell'header)</label>
+								<textarea
+									v-model="promo.description"
+									placeholder="es. Sconto del 20% su tutte le spedizioni nazionali! Valido fino al 31 marzo."
+									maxlength="300"
+									rows="3"
+									class="w-full max-w-[500px] bg-[#FAFBFC] border border-[#D0D0D0] rounded-[10px] px-[16px] py-[12px] text-[0.875rem] text-[#252B42] placeholder:text-[#A0A5AB] focus:border-[#095866] focus:outline-none resize-y"></textarea>
+								<p class="text-[0.6875rem] text-[#999] mt-[4px]">Massimo 300 caratteri. Questo testo appare sotto il prezzo nella homepage.</p>
+							</div>
+
 							<!-- Colore etichetta -->
 							<div>
 								<label class="block text-[0.8125rem] font-medium text-[#252B42] mb-[6px]">Colore etichetta</label>
@@ -624,7 +639,8 @@ onMounted(() => {
 										<input type="file" accept="image/*" class="hidden" @change="uploadPromoImage" :disabled="promoImageUploading" />
 									</label>
 									<div v-if="promo.label_image" class="flex items-center gap-[8px]">
-										<img :src="promo.label_image" alt="Promo" class="h-[40px] w-auto rounded-[6px] border border-[#D0D0D0]" />
+										<!-- Ottimizzazione: lazy loading + decoding async -->
+										<img :src="promo.label_image" alt="Promo" loading="lazy" decoding="async" width="80" height="40" class="h-[40px] w-auto rounded-[6px] border border-[#D0D0D0]" />
 										<button type="button" @click="promo.label_image = null" class="text-red-500 text-[0.75rem] hover:underline cursor-pointer">Rimuovi</button>
 									</div>
 								</div>
@@ -645,6 +661,35 @@ onMounted(() => {
 										:class="promo.show_badges ? 'translate-x-[28px] tablet:translate-x-[26px]' : 'translate-x-[2px]'"
 										class="inline-block h-[30px] w-[30px] tablet:h-[24px] tablet:w-[24px] transform rounded-full bg-white transition-transform shadow-sm" />
 								</button>
+							</div>
+
+							<!-- Anteprima live — mostra come appare la promo nell'header homepage -->
+							<div v-if="promo.active && (promo.label_text || promo.description)" class="p-[20px] bg-[#F0F4F5] rounded-[16px] border border-[#D0D8DA]">
+								<p class="text-[0.75rem] font-semibold text-[#737373] mb-[12px] uppercase tracking-wider">Anteprima header homepage</p>
+								<div class="bg-white rounded-[12px] p-[16px] shadow-sm">
+									<p class="text-[1.25rem] font-bold text-[#222]">Spedisci in Italia</p>
+									<div class="flex items-center gap-[10px] mt-[6px]">
+										<span class="text-[1rem] text-[#444] font-semibold">a partire da</span>
+										<span class="inline-flex items-center justify-center px-[14px] py-[6px] bg-[#E44203] text-white font-extrabold text-[1.25rem] rounded-[40px]">8,90 &euro;</span>
+									</div>
+									<!-- Badge sconto % -->
+									<div v-if="promo.show_badges" class="flex items-center gap-[8px] mt-[6px]">
+										<span class="inline-flex items-center gap-[4px] px-[8px] py-[3px] rounded-[8px] bg-emerald-500 text-white text-[0.75rem] font-bold">-20%</span>
+									</div>
+									<!-- Etichetta promo -->
+									<div v-if="promo.label_text" class="mt-[6px]">
+										<span
+											:style="{ backgroundColor: promo.label_color || '#E44203' }"
+											class="inline-flex items-center gap-[6px] px-[10px] py-[4px] rounded-[8px] text-white text-[0.75rem] font-bold tracking-wide">
+											<!-- Ottimizzazione: lazy loading + decoding async + dimensioni per CLS -->
+											<img v-if="promo.label_image" :src="promo.label_image" alt="" loading="lazy" decoding="async" width="30" height="14" class="h-[14px] w-auto shrink-0" />
+											{{ promo.label_text }}
+										</span>
+									</div>
+									<!-- Descrizione sconto -->
+									<p v-if="promo.description" class="text-[0.8125rem] text-[#444] font-medium mt-[6px]">{{ promo.description }}</p>
+									<p class="text-[0.9375rem] font-extrabold mt-[10px] text-[#222]">IVA e ritiro incluso</p>
+								</div>
 							</div>
 
 							<!-- Salva promozione -->

@@ -66,19 +66,22 @@ const handleClick = (index) => {
 </script>
 
 <template>
-	<ul class="flex justify-center flex-wrap gap-x-[10px] tablet:gap-x-[30px] desktop-xl:gap-x-[50px] desktop-xl:my-[50px] my-[20px] tablet:my-[30px] text-[0.75rem] tablet:text-[0.875rem] desktop-xl:text-[1rem] text-[#737373] tracking-[-0.252px] min-h-[44px]" id="preventivo">
-		<li
-			v-for="(step, index) in steps"
-			:key="index"
-			class="min-h-[44px] leading-[44px] tablet:leading-[48px] transition-all select-none whitespace-nowrap px-[8px] tablet:px-[0px]"
-			:class="{
-				'bg-[#E44203] text-white !px-[16px] tablet:!px-[24px] rounded-[38px] font-semibold': index === activeStep,
-				'cursor-pointer hover:text-[#095866]': canNavigate(index),
-				'opacity-40 cursor-default': index > activeStep,
-			}"
-			@click="handleClick(index)">
-			<span class="tablet:hidden">{{ index + 1 }}</span>
-			<span class="hidden tablet:inline">{{ index + 1 }}. {{ step }}</span>
-		</li>
-	</ul>
+	<nav class="overflow-x-auto scrollbar-hide scroll-smooth" id="preventivo">
+		<ul class="flex justify-center gap-x-[6px] tablet:gap-x-[30px] desktop-xl:gap-x-[50px] desktop-xl:my-[50px] my-[16px] tablet:my-[30px] text-[0.6875rem] tablet:text-[0.875rem] desktop-xl:text-[1rem] text-[#737373] tracking-[-0.252px] min-h-[36px] tablet:min-h-[44px] px-[4px]">
+			<li
+				v-for="(step, index) in steps"
+				:key="index"
+				class="min-h-[36px] leading-[36px] tablet:min-h-[44px] tablet:leading-[44px] tablet:leading-[48px] transition-[color,background-color,opacity] duration-200 select-none whitespace-nowrap px-[6px] tablet:px-[0px]"
+				:class="{
+					'bg-[#E44203] text-white tablet:w-auto !px-[12px] tablet:!px-[24px] text-center rounded-[38px] font-semibold step-active-pulse': index === activeStep,
+					'cursor-pointer hover:text-[#095866]': canNavigate(index),
+					'opacity-40 cursor-default': index > activeStep,
+				}"
+				@click="handleClick(index)">
+				<span class="tablet:hidden" v-if="index !== activeStep">{{ index + 1 }}</span>
+				<span class="tablet:hidden" v-if="index === activeStep">{{ index + 1 }}. {{ step }}</span>
+				<span class="hidden tablet:inline">{{ index + 1 }}. {{ step }}</span>
+			</li>
+		</ul>
+	</nav>
 </template>

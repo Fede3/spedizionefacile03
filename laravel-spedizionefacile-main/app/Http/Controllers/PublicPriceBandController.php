@@ -38,6 +38,7 @@ class PublicPriceBandController extends Controller
                         'label_color' => Setting::get('promo_label_color', '#E44203'),
                         'label_image' => Setting::get('promo_label_image'),
                         'show_badges' => Setting::get('promo_show_badges', 'true') === 'true',
+                        'description' => Setting::get('promo_description', ''),
                     ],
                 ];
             });
@@ -56,6 +57,7 @@ class PublicPriceBandController extends Controller
                         'label_color' => Setting::get('promo_label_color', '#E44203'),
                         'label_image' => Setting::get('promo_label_image'),
                         'show_badges' => Setting::get('promo_show_badges', 'true') === 'true',
+                        'description' => Setting::get('promo_description', ''),
                     ],
                 ];
             } catch (\Exception $e2) {

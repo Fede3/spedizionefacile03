@@ -87,6 +87,17 @@ class PackageStoreRequest extends FormRequest
 
             /* Descrizione del contenuto del pacco (opzionale) */
             'content_description' => 'nullable|string|max:255',
+
+            /* PUDO - Punto di ritiro BRT (opzionale) */
+            /* delivery_mode: 'home' = domicilio, 'pudo' = ritiro in punto BRT convenzionato */
+            'delivery_mode' => 'nullable|string|in:home,pudo',
+            /* pudo: oggetto con i dati del punto BRT selezionato (pudo_id, name, address, ecc.) */
+            'pudo' => 'nullable|array',
+            'pudo.pudo_id' => 'nullable|string|max:100',
+            'pudo.name' => 'nullable|string|max:300',
+            'pudo.address' => 'nullable|string|max:300',
+            'pudo.city' => 'nullable|string|max:200',
+            'pudo.zip_code' => 'nullable|string|max:10',
         ];
     }
 }

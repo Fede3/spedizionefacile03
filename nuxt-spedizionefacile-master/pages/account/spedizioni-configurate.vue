@@ -15,8 +15,10 @@ const sanctum = useSanctumClient();
 const router = useRouter();
 
 /* Carica le spedizioni salvate dal server */
+// lazy: true — la lista si carica dopo il render iniziale (mostra skeleton nel frattempo)
 const { data: savedShipments, refresh, status: savedStatus } = useSanctumFetch("/api/saved-shipments", {
 	method: "GET",
+	lazy: true,
 });
 
 /* === FILTRI === */
@@ -446,7 +448,8 @@ const getPackageIcon = (item) => {
 							<span>{{ item.services?.service_type?.split(',')[0]?.trim() || 'BRT' }}</span>
 							<span class="flex items-center gap-[4px]">
 								{{ item.quantity || 1 }} x
-								<NuxtImg :src="getPackageIcon(item)" alt="" width="20" height="22" />
+								<!-- Ottimizzazione: lazy loading + decoding async -->
+								<NuxtImg :src="getPackageIcon(item)" alt="" width="20" height="22" loading="lazy" decoding="async" />
 							</span>
 							<span class="text-[0.75rem]">
 								<div class="flex items-center gap-[4px]">

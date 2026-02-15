@@ -197,6 +197,13 @@ class OrderController extends Controller
                 }
             }
 
+            // PUDO: se l'utente ha scelto ritiro in un punto BRT, salviamo l'ID del punto
+            // nell'ordine (campo brt_pudo_id) per passarlo a BRT quando creeremo la spedizione
+            $pudoId = null;
+            if (!empty($data['pudo']['pudo_id']) && ($data['delivery_mode'] ?? 'home') === 'pudo') {
+                $pudoId = $data['pudo']['pudo_id'];
+            }
+
             // Creiamo l'ordine con il subtotale calcolato
             $order = Order::create([
                 'user_id' => $userId,
@@ -204,6 +211,7 @@ class OrderController extends Controller
                 'status' => Order::PENDING, // In attesa di pagamento
                 'is_cod' => $isCod,
                 'cod_amount' => $codAmount,
+                'brt_pudo_id' => $pudoId,
             ]);
 
             // Colleghiamo i pacchi all'ordine tramite la tabella di relazione

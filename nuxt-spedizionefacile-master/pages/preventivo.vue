@@ -40,5 +40,8 @@ useHead({
 </script>
 
 <template>
-	<Preventivo />
+	<!-- pb: spazio generoso sotto il box preventivo per staccarlo dal footer -->
+	<div class="pb-[48px] tablet:pb-[64px] desktop:pb-[80px]">
+		<Preventivo />
+	</div>
 </template>

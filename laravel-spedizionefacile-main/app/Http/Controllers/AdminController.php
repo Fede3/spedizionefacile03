@@ -426,6 +426,29 @@ class AdminController extends Controller
         ]);
     }
 
+    // Aggiorna o rimuove il punto PUDO associato a un ordine
+    // L'admin puo' scegliere un punto di ritiro BRT per conto del cliente
+    public function updateOrderPudo(Request $request, Order $order): JsonResponse
+    {
+        $data = $request->validate([
+            'pudo_id' => 'nullable|string|max:100',
+            'pudo_name' => 'nullable|string|max:300',
+            'pudo_address' => 'nullable|string|max:300',
+            'pudo_city' => 'nullable|string|max:200',
+            'pudo_zip' => 'nullable|string|max:10',
+        ]);
+
+        $order->update(['brt_pudo_id' => $data['pudo_id']]);
+
+        return response()->json([
+            'success' => true,
+            'message' => $data['pudo_id']
+                ? "Punto PUDO '{$data['pudo_id']}' impostato per ordine #{$order->id}."
+                : "Punto PUDO rimosso dall'ordine #{$order->id}.",
+            'data' => $order->fresh(),
+        ]);
+    }
+
     // Mostra la lista delle spedizioni BRT (ordini che hanno un'etichetta BRT)
     // Supporta filtro per stato e ricerca
     public function shipments(Request $request): JsonResponse

@@ -385,7 +385,7 @@ const goBack = () => {
 
 <template>
 	<section class="min-h-[600px]">
-		<div class="my-container mt-[40px] tablet:mt-[72px] mb-[60px] tablet:mb-[120px] px-[12px] tablet:px-0">
+		<div class="my-container mt-[40px] tablet:mt-[72px] mb-[60px] tablet:mb-[120px] px-[12px] tablet:px-0 overflow-x-hidden">
 			<Steps v-if="!isEditFromCart" :current-step="3" />
 
 			<!-- Loading state per modifica dal carrello -->
@@ -421,17 +421,18 @@ const goBack = () => {
 
 					<!-- View mode -->
 					<div v-if="editingSection !== 'colli'" class="space-y-[10px]">
-						<div v-for="(pkg, idx) in shipment.packages" :key="idx" class="bg-white rounded-[12px] p-[16px] flex items-center justify-between">
-							<div class="flex items-center gap-[16px]">
-								<div class="w-[44px] h-[44px] rounded-[10px] bg-[#F8F9FB] flex items-center justify-center">
-									<NuxtImg src="/img/quote/first-step/pack.png" alt="" width="28" height="28" />
+						<div v-for="(pkg, idx) in shipment.packages" :key="idx" class="bg-white rounded-[12px] p-[12px] tablet:p-[16px] flex items-center justify-between gap-[8px] tablet:gap-[16px]">
+							<div class="flex items-center gap-[10px] tablet:gap-[16px] min-w-0">
+								<div class="w-[36px] h-[36px] tablet:w-[44px] tablet:h-[44px] rounded-[10px] bg-[#F8F9FB] flex items-center justify-center shrink-0">
+									<!-- Ottimizzazione: lazy loading + decoding async -->
+									<NuxtImg src="/img/quote/first-step/pack.png" alt="" width="28" height="28" loading="lazy" decoding="async" class="w-[22px] h-[22px] tablet:w-[28px] tablet:h-[28px]" />
 								</div>
-								<div>
-									<p class="text-[0.9375rem] font-semibold text-[#252B42]">{{ pkg.package_type || 'Pacco' }} #{{ idx + 1 }}</p>
-									<p class="text-[0.8125rem] text-[#737373]">{{ pkg.quantity || 1 }}x &ndash; {{ pkg.weight }} kg &ndash; {{ pkg.first_size }}x{{ pkg.second_size }}x{{ pkg.third_size }} cm</p>
+								<div class="min-w-0">
+									<p class="text-[0.875rem] tablet:text-[0.9375rem] font-semibold text-[#252B42] truncate">{{ pkg.package_type || 'Pacco' }} #{{ idx + 1 }}</p>
+									<p class="text-[0.75rem] tablet:text-[0.8125rem] text-[#737373]">{{ pkg.quantity || 1 }}x &ndash; {{ pkg.weight }} kg &ndash; {{ pkg.first_size }}x{{ pkg.second_size }}x{{ pkg.third_size }} cm</p>
 								</div>
 							</div>
-							<span class="text-[0.9375rem] font-bold text-[#252B42]">{{ formatPrice(pkg.single_price) }}</span>
+							<span class="text-[0.875rem] tablet:text-[0.9375rem] font-bold text-[#252B42] shrink-0">{{ formatPrice(pkg.single_price) }}</span>
 						</div>
 					</div>
 
@@ -442,23 +443,23 @@ const goBack = () => {
 							<div class="grid grid-cols-2 tablet:grid-cols-4 gap-[10px]">
 								<div>
 									<label class="text-[0.75rem] text-[#737373]">Quantità</label>
-									<input type="number" v-model="pkg.quantity" min="1" class="w-full bg-[#F1F1F1] rounded-[8px] h-[44px] text-center text-[1rem] px-[8px]" />
+									<input type="number" v-model="pkg.quantity" min="1" class="w-full bg-[#F1F1F1] rounded-[8px] h-[44px] text-center text-[1rem] px-[8px] transition-[border-color,box-shadow,background-color] duration-200 focus:border-[#095866] focus:bg-white focus:shadow-[0_0_0_3px_rgba(9,88,102,0.1)] border border-transparent" />
 								</div>
 								<div>
 									<label class="text-[0.75rem] text-[#737373]">Peso (kg)</label>
-									<input type="number" v-model="pkg.weight" min="0.1" step="0.1" class="w-full bg-[#F1F1F1] rounded-[8px] h-[44px] text-center text-[1rem] px-[8px]" />
+									<input type="number" v-model="pkg.weight" min="0.1" step="0.1" class="w-full bg-[#F1F1F1] rounded-[8px] h-[44px] text-center text-[1rem] px-[8px] transition-[border-color,box-shadow,background-color] duration-200 focus:border-[#095866] focus:bg-white focus:shadow-[0_0_0_3px_rgba(9,88,102,0.1)] border border-transparent" />
 								</div>
 								<div>
 									<label class="text-[0.75rem] text-[#737373]">L (cm)</label>
-									<input type="number" v-model="pkg.first_size" min="1" class="w-full bg-[#F1F1F1] rounded-[8px] h-[44px] text-center text-[1rem] px-[8px]" />
+									<input type="number" v-model="pkg.first_size" min="1" class="w-full bg-[#F1F1F1] rounded-[8px] h-[44px] text-center text-[1rem] px-[8px] transition-[border-color,box-shadow,background-color] duration-200 focus:border-[#095866] focus:bg-white focus:shadow-[0_0_0_3px_rgba(9,88,102,0.1)] border border-transparent" />
 								</div>
 								<div>
 									<label class="text-[0.75rem] text-[#737373]">P (cm)</label>
-									<input type="number" v-model="pkg.second_size" min="1" class="w-full bg-[#F1F1F1] rounded-[8px] h-[44px] text-center text-[1rem] px-[8px]" />
+									<input type="number" v-model="pkg.second_size" min="1" class="w-full bg-[#F1F1F1] rounded-[8px] h-[44px] text-center text-[1rem] px-[8px] transition-[border-color,box-shadow,background-color] duration-200 focus:border-[#095866] focus:bg-white focus:shadow-[0_0_0_3px_rgba(9,88,102,0.1)] border border-transparent" />
 								</div>
 								<div>
 									<label class="text-[0.75rem] text-[#737373]">H (cm)</label>
-									<input type="number" v-model="pkg.third_size" min="1" class="w-full bg-[#F1F1F1] rounded-[8px] h-[44px] text-center text-[1rem] px-[8px]" />
+									<input type="number" v-model="pkg.third_size" min="1" class="w-full bg-[#F1F1F1] rounded-[8px] h-[44px] text-center text-[1rem] px-[8px] transition-[border-color,box-shadow,background-color] duration-200 focus:border-[#095866] focus:bg-white focus:shadow-[0_0_0_3px_rgba(9,88,102,0.1)] border border-transparent" />
 								</div>
 							</div>
 						</div>
@@ -496,40 +497,40 @@ const goBack = () => {
 						<div v-else class="space-y-[10px]">
 							<div>
 								<label class="text-[0.75rem] text-[#737373]">Nome e Cognome</label>
-								<input type="text" v-model="editOrigin.name" class="w-full bg-white rounded-[8px] h-[44px] px-[10px] text-[1rem] border border-[#D0D0D0]" />
+								<input type="text" v-model="editOrigin.name" class="w-full bg-white rounded-[8px] h-[44px] px-[10px] text-[1rem] border border-[#D0D0D0] transition-[border-color,box-shadow,background-color] duration-200 focus:border-[#095866] focus:shadow-[0_0_0_3px_rgba(9,88,102,0.1)]" />
 							</div>
 							<div class="grid grid-cols-1 tablet:grid-cols-2 gap-[10px]">
 								<div>
 									<label class="text-[0.75rem] text-[#737373]">Indirizzo</label>
-									<input type="text" v-model="editOrigin.address" class="w-full bg-white rounded-[8px] h-[44px] px-[10px] text-[1rem] border border-[#D0D0D0]" />
+									<input type="text" v-model="editOrigin.address" class="w-full bg-white rounded-[8px] h-[44px] px-[10px] text-[1rem] border border-[#D0D0D0] transition-[border-color,box-shadow,background-color] duration-200 focus:border-[#095866] focus:shadow-[0_0_0_3px_rgba(9,88,102,0.1)]" />
 								</div>
 								<div>
 									<label class="text-[0.75rem] text-[#737373]">N. Civico</label>
-									<input type="text" v-model="editOrigin.address_number" class="w-full bg-white rounded-[8px] h-[44px] px-[10px] text-[1rem] border border-[#D0D0D0]" />
+									<input type="text" v-model="editOrigin.address_number" class="w-full bg-white rounded-[8px] h-[44px] px-[10px] text-[1rem] border border-[#D0D0D0] transition-[border-color,box-shadow,background-color] duration-200 focus:border-[#095866] focus:shadow-[0_0_0_3px_rgba(9,88,102,0.1)]" />
 								</div>
 							</div>
 							<div class="grid grid-cols-2 tablet:grid-cols-3 gap-[10px]">
 								<div>
 									<label class="text-[0.75rem] text-[#737373]">Città</label>
-									<input type="text" v-model="editOrigin.city" class="w-full bg-white rounded-[8px] h-[44px] px-[10px] text-[1rem] border border-[#D0D0D0]" />
+									<input type="text" v-model="editOrigin.city" class="w-full bg-white rounded-[8px] h-[44px] px-[10px] text-[1rem] border border-[#D0D0D0] transition-[border-color,box-shadow,background-color] duration-200 focus:border-[#095866] focus:shadow-[0_0_0_3px_rgba(9,88,102,0.1)]" />
 								</div>
 								<div>
 									<label class="text-[0.75rem] text-[#737373]">CAP</label>
-									<input type="text" v-model="editOrigin.postal_code" class="w-full bg-white rounded-[8px] h-[44px] px-[10px] text-[1rem] border border-[#D0D0D0]" />
+									<input type="text" v-model="editOrigin.postal_code" class="w-full bg-white rounded-[8px] h-[44px] px-[10px] text-[1rem] border border-[#D0D0D0] transition-[border-color,box-shadow,background-color] duration-200 focus:border-[#095866] focus:shadow-[0_0_0_3px_rgba(9,88,102,0.1)]" />
 								</div>
 								<div class="col-span-2 tablet:col-span-1">
 									<label class="text-[0.75rem] text-[#737373]">Provincia</label>
-									<input type="text" v-model="editOrigin.province" class="w-full bg-white rounded-[8px] h-[44px] px-[10px] text-[1rem] border border-[#D0D0D0]" />
+									<input type="text" v-model="editOrigin.province" class="w-full bg-white rounded-[8px] h-[44px] px-[10px] text-[1rem] border border-[#D0D0D0] transition-[border-color,box-shadow,background-color] duration-200 focus:border-[#095866] focus:shadow-[0_0_0_3px_rgba(9,88,102,0.1)]" />
 								</div>
 							</div>
 							<div class="grid grid-cols-1 tablet:grid-cols-2 gap-[10px]">
 								<div>
 									<label class="text-[0.75rem] text-[#737373]">Telefono</label>
-									<input type="tel" v-model="editOrigin.telephone_number" class="w-full bg-white rounded-[8px] h-[44px] px-[10px] text-[1rem] border border-[#D0D0D0]" />
+									<input type="tel" v-model="editOrigin.telephone_number" class="w-full bg-white rounded-[8px] h-[44px] px-[10px] text-[1rem] border border-[#D0D0D0] transition-[border-color,box-shadow,background-color] duration-200 focus:border-[#095866] focus:shadow-[0_0_0_3px_rgba(9,88,102,0.1)]" />
 								</div>
 								<div>
 									<label class="text-[0.75rem] text-[#737373]">Email</label>
-									<input type="email" v-model="editOrigin.email" class="w-full bg-white rounded-[8px] h-[44px] px-[10px] text-[1rem] border border-[#D0D0D0]" />
+									<input type="email" v-model="editOrigin.email" class="w-full bg-white rounded-[8px] h-[44px] px-[10px] text-[1rem] border border-[#D0D0D0] transition-[border-color,box-shadow,background-color] duration-200 focus:border-[#095866] focus:shadow-[0_0_0_3px_rgba(9,88,102,0.1)]" />
 								</div>
 							</div>
 							<div class="flex gap-[10px] justify-end">
@@ -546,9 +547,21 @@ const goBack = () => {
 								<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#095866" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
 								Destinazione
 							</h2>
-							<button type="button" @click="startEdit('destination')" class="text-[#095866] hover:text-[#074a56] transition cursor-pointer" title="Modifica destinazione">
+							<!-- In modalità PUDO il modifica riporta a step 2 per cambiare il punto -->
+							<button type="button" @click="shipment.pudo ? goBack() : startEdit('destination')" class="text-[#095866] hover:text-[#074a56] transition cursor-pointer" title="Modifica destinazione">
 								<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
 							</button>
+						</div>
+
+						<!-- Badge PUDO: visibile quando la spedizione è diretta a un Punto BRT -->
+						<!-- Mostra il nome e l'indirizzo del punto di ritiro scelto dall'utente -->
+						<div v-if="shipment.pudo" class="mb-[12px] p-[10px] bg-[#095866]/10 rounded-[10px] flex items-start gap-[8px]">
+							<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#095866" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="shrink-0 mt-[2px]"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+							<div class="text-[0.8125rem]">
+								<span class="font-bold text-[#095866]">Ritiro in Punto BRT</span>
+								<p class="text-[#252B42] font-semibold mt-[2px]">{{ shipment.pudo.name }}</p>
+								<p class="text-[#737373]">{{ shipment.pudo.address }}, {{ shipment.pudo.zip_code }} {{ shipment.pudo.city }}</p>
+							</div>
 						</div>
 
 						<!-- View mode -->
@@ -564,40 +577,40 @@ const goBack = () => {
 						<div v-else class="space-y-[10px]">
 							<div>
 								<label class="text-[0.75rem] text-[#737373]">Nome e Cognome</label>
-								<input type="text" v-model="editDestination.name" class="w-full bg-white rounded-[8px] h-[44px] px-[10px] text-[1rem] border border-[#D0D0D0]" />
+								<input type="text" v-model="editDestination.name" class="w-full bg-white rounded-[8px] h-[44px] px-[10px] text-[1rem] border border-[#D0D0D0] transition-[border-color,box-shadow,background-color] duration-200 focus:border-[#095866] focus:shadow-[0_0_0_3px_rgba(9,88,102,0.1)]" />
 							</div>
 							<div class="grid grid-cols-1 tablet:grid-cols-2 gap-[10px]">
 								<div>
 									<label class="text-[0.75rem] text-[#737373]">Indirizzo</label>
-									<input type="text" v-model="editDestination.address" class="w-full bg-white rounded-[8px] h-[44px] px-[10px] text-[1rem] border border-[#D0D0D0]" />
+									<input type="text" v-model="editDestination.address" class="w-full bg-white rounded-[8px] h-[44px] px-[10px] text-[1rem] border border-[#D0D0D0] transition-[border-color,box-shadow,background-color] duration-200 focus:border-[#095866] focus:shadow-[0_0_0_3px_rgba(9,88,102,0.1)]" />
 								</div>
 								<div>
 									<label class="text-[0.75rem] text-[#737373]">N. Civico</label>
-									<input type="text" v-model="editDestination.address_number" class="w-full bg-white rounded-[8px] h-[44px] px-[10px] text-[1rem] border border-[#D0D0D0]" />
+									<input type="text" v-model="editDestination.address_number" class="w-full bg-white rounded-[8px] h-[44px] px-[10px] text-[1rem] border border-[#D0D0D0] transition-[border-color,box-shadow,background-color] duration-200 focus:border-[#095866] focus:shadow-[0_0_0_3px_rgba(9,88,102,0.1)]" />
 								</div>
 							</div>
 							<div class="grid grid-cols-2 tablet:grid-cols-3 gap-[10px]">
 								<div>
 									<label class="text-[0.75rem] text-[#737373]">Città</label>
-									<input type="text" v-model="editDestination.city" class="w-full bg-white rounded-[8px] h-[44px] px-[10px] text-[1rem] border border-[#D0D0D0]" />
+									<input type="text" v-model="editDestination.city" class="w-full bg-white rounded-[8px] h-[44px] px-[10px] text-[1rem] border border-[#D0D0D0] transition-[border-color,box-shadow,background-color] duration-200 focus:border-[#095866] focus:shadow-[0_0_0_3px_rgba(9,88,102,0.1)]" />
 								</div>
 								<div>
 									<label class="text-[0.75rem] text-[#737373]">CAP</label>
-									<input type="text" v-model="editDestination.postal_code" class="w-full bg-white rounded-[8px] h-[44px] px-[10px] text-[1rem] border border-[#D0D0D0]" />
+									<input type="text" v-model="editDestination.postal_code" class="w-full bg-white rounded-[8px] h-[44px] px-[10px] text-[1rem] border border-[#D0D0D0] transition-[border-color,box-shadow,background-color] duration-200 focus:border-[#095866] focus:shadow-[0_0_0_3px_rgba(9,88,102,0.1)]" />
 								</div>
 								<div class="col-span-2 tablet:col-span-1">
 									<label class="text-[0.75rem] text-[#737373]">Provincia</label>
-									<input type="text" v-model="editDestination.province" class="w-full bg-white rounded-[8px] h-[44px] px-[10px] text-[1rem] border border-[#D0D0D0]" />
+									<input type="text" v-model="editDestination.province" class="w-full bg-white rounded-[8px] h-[44px] px-[10px] text-[1rem] border border-[#D0D0D0] transition-[border-color,box-shadow,background-color] duration-200 focus:border-[#095866] focus:shadow-[0_0_0_3px_rgba(9,88,102,0.1)]" />
 								</div>
 							</div>
 							<div class="grid grid-cols-1 tablet:grid-cols-2 gap-[10px]">
 								<div>
 									<label class="text-[0.75rem] text-[#737373]">Telefono</label>
-									<input type="tel" v-model="editDestination.telephone_number" class="w-full bg-white rounded-[8px] h-[44px] px-[10px] text-[1rem] border border-[#D0D0D0]" />
+									<input type="tel" v-model="editDestination.telephone_number" class="w-full bg-white rounded-[8px] h-[44px] px-[10px] text-[1rem] border border-[#D0D0D0] transition-[border-color,box-shadow,background-color] duration-200 focus:border-[#095866] focus:shadow-[0_0_0_3px_rgba(9,88,102,0.1)]" />
 								</div>
 								<div>
 									<label class="text-[0.75rem] text-[#737373]">Email</label>
-									<input type="email" v-model="editDestination.email" class="w-full bg-white rounded-[8px] h-[44px] px-[10px] text-[1rem] border border-[#D0D0D0]" />
+									<input type="email" v-model="editDestination.email" class="w-full bg-white rounded-[8px] h-[44px] px-[10px] text-[1rem] border border-[#D0D0D0] transition-[border-color,box-shadow,background-color] duration-200 focus:border-[#095866] focus:shadow-[0_0_0_3px_rgba(9,88,102,0.1)]" />
 								</div>
 							</div>
 							<div class="flex gap-[10px] justify-end">
@@ -649,7 +662,7 @@ const goBack = () => {
 								:class="isServiceSelected(svc.name)
 									? 'bg-[#095866] text-white border-[#095866]'
 									: 'bg-white text-[#252B42] border-[#D0D0D0] hover:border-[#095866]'"
-								class="px-[12px] py-[12px] min-h-[44px] rounded-[10px] text-[0.875rem] font-medium border transition-all cursor-pointer text-center">
+								class="px-[12px] py-[12px] min-h-[44px] rounded-[10px] text-[0.875rem] font-medium border transition-[background-color,color,border-color,transform] duration-200 cursor-pointer text-center active:scale-95">
 								{{ svc.name }}
 							</button>
 						</div>
@@ -667,11 +680,11 @@ const goBack = () => {
 							<div v-if="selectedServiceForEdit.name === 'Contrassegno'" class="space-y-[10px]">
 								<div>
 									<label class="text-[0.75rem] text-[#737373]">Importo</label>
-									<input type="text" v-model="servicePopupData.importo" class="w-full bg-[#F8F9FB] rounded-[8px] h-[44px] px-[10px] text-[1rem] border border-[#D0D0D0]" placeholder="0.00€" />
+									<input type="text" v-model="servicePopupData.importo" class="w-full bg-[#F8F9FB] rounded-[8px] h-[44px] px-[10px] text-[1rem] border border-[#D0D0D0] transition-[border-color,box-shadow,background-color] duration-200 focus:border-[#095866] focus:shadow-[0_0_0_3px_rgba(9,88,102,0.1)]" placeholder="0.00€" />
 								</div>
 								<div>
 									<label class="text-[0.75rem] text-[#737373]">Modalità di incasso</label>
-									<select v-model="servicePopupData.incasso" class="w-full bg-[#F8F9FB] rounded-[8px] h-[44px] px-[10px] text-[1rem] border border-[#D0D0D0]">
+									<select v-model="servicePopupData.incasso" class="w-full bg-[#F8F9FB] rounded-[8px] h-[44px] px-[10px] text-[1rem] border border-[#D0D0D0] transition-[border-color,box-shadow,background-color] duration-200 focus:border-[#095866] focus:shadow-[0_0_0_3px_rgba(9,88,102,0.1)]">
 										<option value="">Seleziona</option>
 										<option value="contanti">Contanti</option>
 										<option value="assegno">Assegno bancario</option>
@@ -680,7 +693,7 @@ const goBack = () => {
 								</div>
 								<div>
 									<label class="text-[0.75rem] text-[#737373]">Modalità di rimborso</label>
-									<select v-model="servicePopupData.rimborso" class="w-full bg-[#F8F9FB] rounded-[8px] h-[44px] px-[10px] text-[1rem] border border-[#D0D0D0]">
+									<select v-model="servicePopupData.rimborso" class="w-full bg-[#F8F9FB] rounded-[8px] h-[44px] px-[10px] text-[1rem] border border-[#D0D0D0] transition-[border-color,box-shadow,background-color] duration-200 focus:border-[#095866] focus:shadow-[0_0_0_3px_rgba(9,88,102,0.1)]">
 										<option value="">Seleziona</option>
 										<option value="bonifico">Bonifico bancario</option>
 										<option value="assegno">Assegno</option>
@@ -688,7 +701,7 @@ const goBack = () => {
 								</div>
 								<div>
 									<label class="text-[0.75rem] text-[#737373]">Dettaglio rimborso</label>
-									<input type="text" v-model="servicePopupData.dettaglio" class="w-full bg-[#F8F9FB] rounded-[8px] h-[44px] px-[10px] text-[1rem] border border-[#D0D0D0]" placeholder="IBAN o dettagli" />
+									<input type="text" v-model="servicePopupData.dettaglio" class="w-full bg-[#F8F9FB] rounded-[8px] h-[44px] px-[10px] text-[1rem] border border-[#D0D0D0] transition-[border-color,box-shadow,background-color] duration-200 focus:border-[#095866] focus:shadow-[0_0_0_3px_rgba(9,88,102,0.1)]" placeholder="IBAN o dettagli" />
 								</div>
 							</div>
 
@@ -696,7 +709,7 @@ const goBack = () => {
 							<div v-if="selectedServiceForEdit.name === 'Assicurazione'" class="space-y-[10px]">
 								<div v-for="(pkg, pkgIdx) in shipment.packages" :key="pkgIdx">
 									<label class="text-[0.75rem] text-[#737373]">Valore collo #{{ pkgIdx + 1 }} - {{ pkg.weight }}kg</label>
-									<input type="text" v-model="servicePopupData['valore_' + pkgIdx]" class="w-full bg-[#F8F9FB] rounded-[8px] h-[44px] px-[10px] text-[1rem] border border-[#D0D0D0]" placeholder="0.00€" />
+									<input type="text" v-model="servicePopupData['valore_' + pkgIdx]" class="w-full bg-[#F8F9FB] rounded-[8px] h-[44px] px-[10px] text-[1rem] border border-[#D0D0D0] transition-[border-color,box-shadow,background-color] duration-200 focus:border-[#095866] focus:shadow-[0_0_0_3px_rgba(9,88,102,0.1)]" placeholder="0.00€" />
 								</div>
 							</div>
 
@@ -704,7 +717,7 @@ const goBack = () => {
 							<div v-if="selectedServiceForEdit.name === 'Sponda idraulica'" class="space-y-[10px]">
 								<div>
 									<label class="text-[0.75rem] text-[#737373]">Pallet</label>
-									<input type="text" v-model="servicePopupData.pallet" class="w-full bg-[#F8F9FB] rounded-[8px] h-[44px] px-[10px] text-[1rem] border border-[#D0D0D0]" />
+									<input type="text" v-model="servicePopupData.pallet" class="w-full bg-[#F8F9FB] rounded-[8px] h-[44px] px-[10px] text-[1rem] border border-[#D0D0D0] transition-[border-color,box-shadow,background-color] duration-200 focus:border-[#095866] focus:shadow-[0_0_0_3px_rgba(9,88,102,0.1)]" />
 								</div>
 							</div>
 
@@ -712,7 +725,7 @@ const goBack = () => {
 							<div v-if="selectedServiceForEdit.name === 'Chiamata'" class="space-y-[10px]">
 								<div>
 									<label class="text-[0.75rem] text-[#737373]">Numero di telefono</label>
-									<input type="tel" v-model="servicePopupData.telefono" class="w-full bg-[#F8F9FB] rounded-[8px] h-[44px] px-[10px] text-[1rem] border border-[#D0D0D0]" placeholder="Numero di telefono" />
+									<input type="tel" v-model="servicePopupData.telefono" class="w-full bg-[#F8F9FB] rounded-[8px] h-[44px] px-[10px] text-[1rem] border border-[#D0D0D0] transition-[border-color,box-shadow,background-color] duration-200 focus:border-[#095866] focus:shadow-[0_0_0_3px_rgba(9,88,102,0.1)]" placeholder="Numero di telefono" />
 								</div>
 							</div>
 
@@ -727,14 +740,14 @@ const goBack = () => {
 								</div>
 							</div>
 
-							<button type="button" @click="confirmServicePopup" class="mt-[12px] w-full py-[10px] bg-[#095866] text-white rounded-[8px] text-[0.875rem] font-semibold hover:bg-[#074a56] transition cursor-pointer">
+							<button type="button" @click="confirmServicePopup" class="mt-[12px] w-full min-h-[44px] py-[10px] bg-[#095866] text-white rounded-[8px] text-[0.875rem] font-semibold hover:bg-[#074a56] transition-[background-color,transform] duration-200 cursor-pointer active:scale-[0.97]">
 								Conferma
 							</button>
 						</div>
 
 						<div>
 							<label class="text-[0.75rem] text-[#737373]">Data ritiro</label>
-							<input type="date" v-model="editServices.date" class="w-full bg-white rounded-[8px] h-[44px] px-[10px] text-[1rem] border border-[#D0D0D0]" />
+							<input type="date" v-model="editServices.date" class="w-full bg-white rounded-[8px] h-[44px] px-[10px] text-[1rem] border border-[#D0D0D0] transition-[border-color,box-shadow,background-color] duration-200 focus:border-[#095866] focus:shadow-[0_0_0_3px_rgba(9,88,102,0.1)]" />
 						</div>
 						<div class="flex gap-[10px] justify-end">
 							<button type="button" @click="cancelEdit" class="px-[14px] py-[6px] text-[0.8125rem] text-[#737373] hover:text-[#252B42] transition cursor-pointer">Annulla</button>
@@ -754,7 +767,8 @@ const goBack = () => {
 						<span
 							:style="{ backgroundColor: promoSettings.label_color || '#E44203' }"
 							class="inline-flex items-center gap-[5px] px-[10px] py-[4px] rounded-[6px] text-white text-[0.75rem] font-bold tracking-wide">
-							<img v-if="promoSettings.label_image" :src="promoSettings.label_image" alt="" class="h-[14px] w-auto" />
+							<!-- Ottimizzazione: lazy loading + decoding async + dimensioni per CLS -->
+							<img v-if="promoSettings.label_image" :src="promoSettings.label_image" alt="" loading="lazy" decoding="async" width="30" height="14" class="h-[14px] w-auto" />
 							{{ promoSettings.label_text }}
 						</span>
 					</div>
@@ -768,7 +782,7 @@ const goBack = () => {
 
 				<!-- Indietro + Procedi al pagamento -->
 				<div class="flex flex-col tablet:flex-row items-stretch tablet:items-center justify-between gap-[12px] mb-[24px]">
-					<button @click="goBack" class="inline-flex items-center justify-center gap-[8px] px-[24px] h-[48px] rounded-[30px] bg-[#095866] text-white font-semibold hover:bg-[#074a56] transition cursor-pointer">
+					<button @click="goBack" class="inline-flex items-center justify-center gap-[8px] px-[24px] min-h-[48px] rounded-[30px] bg-[#095866] text-white font-semibold hover:bg-[#074a56] transition-[background-color,transform] duration-200 cursor-pointer active:scale-[0.97]">
 						<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
 						{{ isEditFromCart ? 'Torna al carrello' : 'Indietro' }}
 					</button>
@@ -776,7 +790,7 @@ const goBack = () => {
 						v-if="!isEditFromCart"
 						@click="proceedToCheckout"
 						:disabled="isSubmitting"
-						class="inline-flex items-center justify-center gap-[8px] px-[28px] h-[48px] rounded-[30px] bg-[#E44203] text-white font-semibold hover:opacity-90 transition cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed">
+						class="inline-flex items-center justify-center gap-[8px] px-[28px] min-h-[48px] rounded-[30px] bg-[#E44203] text-white font-semibold hover:opacity-90 transition-[opacity,transform] duration-200 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed active:scale-[0.97]">
 						<span v-if="isSubmitting">Caricamento...</span>
 						<span v-else>Procedi al pagamento</span>
 						<svg v-if="!isSubmitting" width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8z"/></svg>
@@ -790,7 +804,7 @@ const goBack = () => {
 						v-if="isEditFromCart"
 						@click="goToCart"
 						:disabled="isSubmitting"
-						class="w-full flex items-center gap-[14px] p-[16px] rounded-[12px] border border-[#095866] bg-[#f0fafb] hover:bg-[#e0f4f7] transition-all cursor-pointer group disabled:opacity-60">
+						class="w-full flex items-center gap-[14px] p-[16px] rounded-[12px] border border-[#095866] bg-[#f0fafb] hover:bg-[#e0f4f7] transition-[background-color,opacity,transform] duration-200 cursor-pointer group disabled:opacity-60 active:scale-[0.98]">
 						<div class="w-[44px] h-[44px] rounded-[10px] bg-[#095866]/10 flex items-center justify-center shrink-0">
 							<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" class="text-[#095866]"><path fill="currentColor" d="M15 9H5V5h10m-3 14a3 3 0 0 1-3-3a3 3 0 0 1 3-3a3 3 0 0 1 3 3a3 3 0 0 1-3 3m5-16H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V7z"/></svg>
 						</div>
@@ -806,7 +820,7 @@ const goBack = () => {
 						v-if="!isEditFromCart"
 						@click="goToCart"
 						:disabled="isSubmitting"
-						class="w-full flex items-center gap-[14px] p-[16px] rounded-[12px] border border-[#E9EBEC] bg-white hover:border-[#095866] hover:bg-[#f0fafb] transition-all cursor-pointer group disabled:opacity-60">
+						class="w-full flex items-center gap-[10px] tablet:gap-[14px] p-[12px] tablet:p-[16px] rounded-[12px] border border-[#E9EBEC] bg-white hover:border-[#095866] hover:bg-[#f0fafb] transition-[border-color,background-color,opacity,transform] duration-200 cursor-pointer group disabled:opacity-60 active:scale-[0.98]">
 						<div class="w-[44px] h-[44px] rounded-[10px] bg-[#095866]/10 flex items-center justify-center shrink-0">
 							<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" class="text-[#095866]"><path fill="currentColor" d="M17 18a2 2 0 0 1 2 2a2 2 0 0 1-2 2a2 2 0 0 1-2-2c0-1.11.89-2 2-2M1 2h3.27l.94 2H20a1 1 0 0 1 1 1c0 .17-.05.34-.12.5l-3.58 6.47c-.34.61-1 1.03-1.75 1.03H8.1l-.9 1.63l-.03.12a.25.25 0 0 0 .25.25H19v2H7a2 2 0 0 1-2-2c0-.35.09-.68.24-.96l1.36-2.45L3 4H1zm6 16a2 2 0 0 1 2 2a2 2 0 0 1-2 2a2 2 0 0 1-2-2c0-1.11.89-2 2-2"/></svg>
 						</div>
@@ -822,7 +836,7 @@ const goBack = () => {
 						<button
 							@click="goToSavedShipments"
 							:disabled="isSubmitting"
-							class="flex-1 flex items-center gap-[14px] p-[16px] rounded-[12px] border border-[#E9EBEC] bg-white hover:border-[#095866] hover:bg-[#f0fafb] transition-all cursor-pointer group disabled:opacity-60">
+							class="flex-1 flex items-center gap-[10px] tablet:gap-[14px] p-[12px] tablet:p-[16px] rounded-[12px] border border-[#E9EBEC] bg-white hover:border-[#095866] hover:bg-[#f0fafb] transition-[border-color,background-color,opacity,transform] duration-200 cursor-pointer group disabled:opacity-60 active:scale-[0.98]">
 							<div class="w-[44px] h-[44px] rounded-[10px] bg-blue-50 flex items-center justify-center shrink-0">
 								<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" class="text-blue-600"><path fill="currentColor" d="M21 16.5c0 .38-.21.71-.53.88l-7.9 4.44c-.16.12-.36.18-.57.18c-.21 0-.41-.06-.57-.18l-7.9-4.44A.99.99 0 0 1 3 16.5v-9c0-.38.21-.71.53-.88l7.9-4.44c.16-.12.36-.18.57-.18c.21 0 .41.06.57.18l7.9 4.44c.32.17.53.5.53.88zM12 4.15L6.04 7.5L12 10.85l5.96-3.35zM5 15.91l6 3.37v-6.73L5 9.18zm14 0V9.18l-6 3.37v6.73z"/></svg>
 							</div>
@@ -836,7 +850,7 @@ const goBack = () => {
 						<button
 							type="button"
 							@click="window.scrollTo({ top: 0, behavior: 'smooth' })"
-							class="w-[56px] shrink-0 flex items-center justify-center rounded-[12px] border border-[#E9EBEC] bg-white hover:border-[#095866] hover:bg-[#f0fafb] transition-all cursor-pointer"
+							class="w-[56px] shrink-0 flex items-center justify-center rounded-[12px] border border-[#E9EBEC] bg-white hover:border-[#095866] hover:bg-[#f0fafb] transition-[border-color,background-color] cursor-pointer"
 							title="Vedi dettagli spedizione">
 							<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#095866" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
 						</button>
@@ -845,7 +859,7 @@ const goBack = () => {
 					<button
 						@click="addAnotherShipment"
 						:disabled="isSubmitting"
-						class="w-full flex items-center gap-[14px] p-[16px] rounded-[12px] border border-[#E9EBEC] bg-white hover:border-[#095866] hover:bg-[#f0fafb] transition-all cursor-pointer group disabled:opacity-60">
+						class="w-full flex items-center gap-[10px] tablet:gap-[14px] p-[12px] tablet:p-[16px] rounded-[12px] border border-[#E9EBEC] bg-white hover:border-[#095866] hover:bg-[#f0fafb] transition-[border-color,background-color,opacity,transform] duration-200 cursor-pointer group disabled:opacity-60 active:scale-[0.98]">
 						<div class="w-[44px] h-[44px] rounded-[10px] bg-orange-50 flex items-center justify-center shrink-0">
 							<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" class="text-orange-600"><path fill="currentColor" d="M17 13h-4v4h-2v-4H7v-2h4V7h2v4h4m-5-9A10 10 0 0 0 2 12a10 10 0 0 0 10 10a10 10 0 0 0 10-10A10 10 0 0 0 12 2"/></svg>
 						</div>

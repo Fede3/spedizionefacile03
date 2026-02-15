@@ -306,6 +306,18 @@ class CartController extends Controller
                     $servicesData['service_data'] = $servicesData['serviceData'];
                     unset($servicesData['serviceData']);
                 }
+                // PUDO: aggiorniamo i dati del punto di ritiro nel service_data
+                if (!empty($data['pudo']) && ($data['delivery_mode'] ?? 'home') === 'pudo') {
+                    $serviceData = $servicesData['service_data'] ?? $package->service->service_data ?? [];
+                    $serviceData['pudo'] = $data['pudo'];
+                    $serviceData['delivery_mode'] = 'pudo';
+                    $servicesData['service_data'] = $serviceData;
+                } elseif (($data['delivery_mode'] ?? null) === 'home') {
+                    // Se l'utente è tornato a domicilio, rimuoviamo i dati PUDO
+                    $serviceData = $servicesData['service_data'] ?? $package->service->service_data ?? [];
+                    unset($serviceData['pudo'], $serviceData['delivery_mode']);
+                    $servicesData['service_data'] = $serviceData;
+                }
                 $package->service->update($servicesData);
             }
 
@@ -361,6 +373,15 @@ class CartController extends Controller
             if (isset($servicesData['serviceData'])) {
                 $servicesData['service_data'] = $servicesData['serviceData'];
                 unset($servicesData['serviceData']);
+            }
+
+            // PUDO: se l'utente ha scelto ritiro in un punto BRT, salviamo i dati nel service_data
+            // Quando l'ordine verra' creato, leggeremo pudo_id da qui per salvarlo su brt_pudo_id
+            if (!empty($data['pudo']) && ($data['delivery_mode'] ?? 'home') === 'pudo') {
+                $serviceData = $servicesData['service_data'] ?? [];
+                $serviceData['pudo'] = $data['pudo'];
+                $serviceData['delivery_mode'] = 'pudo';
+                $servicesData['service_data'] = $serviceData;
             }
 
             $packages = [];

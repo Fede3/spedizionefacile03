@@ -67,7 +67,7 @@ definePageMeta({
 
 				<p v-if="messageError" class="text-red-500 text-[0.8125rem] mt-[10px] bg-red-50 p-[10px] rounded-[6px]">{{ messageError }}</p>
 
-				<button type="submit" :disabled="isLoading" :class="['w-full py-[14px] rounded-[10px] text-white font-semibold text-[1rem] mt-[20px] transition-all', isLoading ? 'bg-gray-300 cursor-not-allowed' : 'bg-[#095866] hover:bg-[#074a56] cursor-pointer']">
+				<button type="submit" :disabled="isLoading" :class="['w-full py-[14px] rounded-[10px] text-white font-semibold text-[1rem] mt-[20px] transition-[background-color]', isLoading ? 'bg-gray-300 cursor-not-allowed' : 'bg-[#095866] hover:bg-[#074a56] cursor-pointer']">
 					{{ isLoading ? 'Invio in corso...' : 'Invia link recupero password' }}
 				</button>
 

@@ -100,7 +100,22 @@ class GoogleController extends Controller
         // Cerchiamo se esiste gia' un utente con questa email nel nostro database
         $user = User::where('email', $googleUser->email)->first();
 
-        if (!$user) {
+        if ($user) {
+            // Utente esistente - aggiorniamo google_id e avatar se non presenti
+            $updates = [];
+            if (!$user->google_id) {
+                $updates['google_id'] = $googleUser->getId();
+            }
+            if (!$user->avatar && $googleUser->getAvatar()) {
+                $updates['avatar'] = $googleUser->getAvatar();
+            }
+            if (!$user->email_verified_at) {
+                $updates['email_verified_at'] = now();
+            }
+            if (!empty($updates)) {
+                $user->update($updates);
+            }
+        } else {
             // Se l'utente non esiste, lo creiamo con i dati di Google
             $user = new User([
                 'email' => $googleUser->email,
@@ -109,16 +124,12 @@ class GoogleController extends Controller
                 'telephone_number' => '0',
                 'email_verified_at' => now(), // L'email e' automaticamente verificata (Google l'ha gia' controllata)
                 'password' => Str::random(16), // Password casuale (l'utente usa Google per accedere)
+                'google_id' => $googleUser->getId(),
+                'avatar' => $googleUser->getAvatar(),
             ]);
             // Il ruolo va impostato esplicitamente perche' non e' tra i campi $fillable
             // (per sicurezza: nessuno puo' auto-assegnarsi un ruolo tramite richiesta HTTP)
             $user->role = 'User';
-            $user->save();
-        }
-
-        // Assicuriamoci che l'email sia segnata come verificata anche per utenti gia' esistenti
-        if (!$user->email_verified_at) {
-            $user->email_verified_at = now();
             $user->save();
         }
 

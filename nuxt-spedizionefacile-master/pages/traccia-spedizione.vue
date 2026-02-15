@@ -168,7 +168,7 @@ onMounted(() => {
 						<div class="absolute top-[18px] left-[24px] right-[24px] h-[3px] bg-[#E9EBEC] rounded-full"></div>
 						<!-- Linea di progresso attiva -->
 						<div
-							class="absolute top-[18px] left-[24px] h-[3px] bg-[#095866] rounded-full transition-all duration-500"
+							class="absolute top-[18px] left-[24px] h-[3px] bg-[#095866] rounded-full transition-[width] duration-500"
 							:style="{ width: currentStepIndex >= statusTimeline.length - 1 ? 'calc(100% - 48px)' : `calc(${(currentStepIndex / (statusTimeline.length - 1)) * 100}% - ${24 * (1 - currentStepIndex / (statusTimeline.length - 1))}px)` }">
 						</div>
 

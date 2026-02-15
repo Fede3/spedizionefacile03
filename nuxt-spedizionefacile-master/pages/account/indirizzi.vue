@@ -4,7 +4,8 @@ definePageMeta({
 });
 
 const sanctum = useSanctumClient();
-const { data: addresses, refresh: refreshAddresses, status: addressesStatus } = useSanctumFetch("/api/user-addresses");
+// lazy: true — la rubrica indirizzi si carica dopo il render iniziale della pagina
+const { data: addresses, refresh: refreshAddresses, status: addressesStatus } = useSanctumFetch("/api/user-addresses", { lazy: true });
 
 const showForm = ref(false);
 const editingId = ref(null);

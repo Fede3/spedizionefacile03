@@ -28,7 +28,7 @@ const route = useRoute();
 	<header
 		class="relative bg-[#E3E3E3] z-40"
 		:class="{
-			'desktop:h-[722px] tablet:h-[600px] h-[524px] overflow-x-hidden overflow-y-hidden after:absolute after:content-[\'\'] after:h-[100px] after:w-full after:bg-[#eeeeee] after:z-1 after:bottom-0 desktop:after:hidden':
+			'desktop:h-[680px] desktop-xl:h-[722px] tablet:h-[540px] h-[480px] overflow-hidden after:absolute after:content-[\'\'] after:h-[80px] after:w-full after:bg-[#eeeeee] after:z-1 after:bottom-0 desktop:after:hidden':
 				route.path === '/',
 			'desktop:h-[359px] desktop-xl:h-[457px] h-[308px] overflow-hidden': route.path === '/servizi',
 			'desktop:h-[722px] desktop-xl:h-[783px] h-[432px] overflow-hidden': route.path === '/contatti',

@@ -636,6 +636,53 @@ const days = ["Lun", "Mar", "Mer", "Gio", "Ven"];
 const formRef = ref(null);
 const showAddressFields = ref(false);
 const editingSidebarColli = ref(false);
+
+// --- PUDO (Punto di ritiro BRT) ---
+// deliveryMode: 'home' = consegna a domicilio classica, 'pudo' = ritiro in un punto BRT convenzionato
+// Quando l'utente sceglie 'pudo', i campi indirizzo destinazione vengono auto-compilati (read-only)
+// con l'indirizzo del punto PUDO selezionato.
+const deliveryMode = computed({
+	get: () => userStore.deliveryMode,
+	set: (v) => { userStore.deliveryMode = v; },
+});
+
+// Quando l'utente seleziona un punto PUDO dalla lista, salviamo l'oggetto completo nello store
+// e auto-compiliamo i campi indirizzo destinazione con i dati del punto.
+const onPudoSelected = (pudo) => {
+	userStore.selectedPudo = pudo;
+	// Auto-compiliamo i campi destinazione con l'indirizzo del punto PUDO
+	// cosi' il backend riceve un indirizzo valido anche per la spedizione PUDO.
+	// Il campo "province" non arriva dal PUDO, quindi usiamo 'ND' (Non Disponibile)
+	// perché BRT conosce gia' l'indirizzo esatto del punto tramite il pudo_id.
+	destinationAddress.value.full_name = pudo.name || '';
+	destinationAddress.value.address = pudo.address || '';
+	destinationAddress.value.address_number = 'SNC';
+	destinationAddress.value.city = pudo.city || '';
+	destinationAddress.value.postal_code = pudo.zip_code || '';
+	destinationAddress.value.province = pudo.province || 'ND';
+	destinationAddress.value.telephone_number = '0000000000';
+};
+
+// Quando l'utente deseleziona il punto PUDO, puliamo lo store
+// e svuotiamo i campi destinazione per permettere l'inserimento manuale
+const onPudoDeselected = () => {
+	userStore.selectedPudo = null;
+	// Ripristiniamo i campi destinazione ai valori originali (dalla sessione del preventivo)
+	destinationAddress.value.full_name = '';
+	destinationAddress.value.address = '';
+	destinationAddress.value.address_number = '';
+	destinationAddress.value.city = session.value?.data?.shipment_details?.destination_city || '';
+	destinationAddress.value.postal_code = session.value?.data?.shipment_details?.destination_postal_code || '';
+	destinationAddress.value.province = '';
+	destinationAddress.value.telephone_number = '';
+};
+
+// Quando si cambia modalità consegna, resettiamo il PUDO se si torna a domicilio
+watch(deliveryMode, (newMode) => {
+	if (newMode === 'home') {
+		userStore.selectedPudo = null;
+	}
+});
 const dateError = ref(null);
 
 const editablePackages = computed(() => {
@@ -902,6 +949,12 @@ const continueToCart = async () => {
 		return;
 	}
 
+	// Se l'utente ha scelto ritiro in un Punto BRT, deve averne selezionato uno
+	if (userStore.deliveryMode === 'pudo' && !userStore.selectedPudo) {
+		submitError.value = "Seleziona un Punto BRT per la consegna prima di procedere.";
+		return;
+	}
+
 	const payload = {
 		origin_address: toAddressPayload(originAddress.value),
 		destination_address: toAddressPayload(destinationAddress.value),
@@ -912,6 +965,10 @@ const continueToCart = async () => {
 		},
 		packages,
 		content_description: userStore.contentDescription || "",
+		// PUDO: se l'utente ha scelto ritiro in punto BRT, includiamo i dati del punto
+		// Il backend usera' pudo.pudo_id per salvare brt_pudo_id nell'ordine
+		delivery_mode: userStore.deliveryMode,
+		pudo: userStore.deliveryMode === 'pudo' ? userStore.selectedPudo : null,
 	};
 
 	// Store in userStore for riepilogo page and backward navigation
@@ -1117,8 +1174,9 @@ const continueToCart = async () => {
 									</SwiperSlide>
 								</Swiper>
 
-								<button class="custom-prev absolute bottom-[35px] left-[10px] cursor-pointer"><NuxtImg src="/img/quote/second-step/arrow-left.png" alt="" width="11" height="19" /></button>
-								<button class="custom-next absolute bottom-[35px] right-[10px] cursor-pointer"><NuxtImg src="/img/quote/second-step/arrow-right.png" alt="" width="11" height="19" /></button>
+								<!-- Ottimizzazione: decoding async per frecce navigazione -->
+								<button class="custom-prev absolute bottom-[35px] left-[10px] cursor-pointer"><NuxtImg src="/img/quote/second-step/arrow-left.png" alt="" width="11" height="19" loading="lazy" decoding="async" /></button>
+								<button class="custom-next absolute bottom-[35px] right-[10px] cursor-pointer"><NuxtImg src="/img/quote/second-step/arrow-right.png" alt="" width="11" height="19" loading="lazy" decoding="async" /></button>
 							</div>
 						</div>
 					</div>
@@ -1314,16 +1372,71 @@ const continueToCart = async () => {
 								</div>
 							</div>
 
+							<!-- TOGGLE MODALITA' CONSEGNA -->
+							<!-- L'utente sceglie tra consegna classica a domicilio oppure ritiro
+							     in un punto BRT convenzionato (tabaccaio, edicola, negozio) -->
+							<div class="mt-[20px] mb-[4px]">
+								<p class="text-[0.875rem] font-bold text-[#252B42] mb-[10px]">Modalità di consegna</p>
+								<div class="flex flex-col tablet:flex-row gap-[10px]">
+									<!-- Bottone "Consegna a domicilio" — modalità classica -->
+									<button
+										type="button"
+										@click="deliveryMode = 'home'"
+										class="inline-flex items-center gap-[8px] px-[18px] py-[12px] rounded-[30px] text-[0.875rem] font-semibold border-2 transition-[background-color,color,border-color] duration-200 cursor-pointer"
+										:class="deliveryMode === 'home' ? 'bg-[#095866] text-white border-[#095866]' : 'bg-white text-[#252B42] border-[#D0D0D0] hover:border-[#095866]'">
+										<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+										Consegna a domicilio
+									</button>
+									<!-- Bottone "Ritira in un Punto BRT" — consegna presso punto PUDO -->
+									<button
+										type="button"
+										@click="deliveryMode = 'pudo'"
+										class="inline-flex items-center gap-[8px] px-[18px] py-[12px] rounded-[30px] text-[0.875rem] font-semibold border-2 transition-[background-color,color,border-color] duration-200 cursor-pointer"
+										:class="deliveryMode === 'pudo' ? 'bg-[#095866] text-white border-[#095866]' : 'bg-white text-[#252B42] border-[#D0D0D0] hover:border-[#095866]'">
+										<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+										Ritira in un Punto BRT
+									</button>
+								</div>
+							</div>
+
+							<!-- SELETTORE PUDO — visibile solo se l'utente ha scelto "Ritira in un Punto BRT" -->
+							<!-- Permette di cercare punti PUDO per città/CAP e selezionarne uno -->
+							<div v-if="deliveryMode === 'pudo'" class="bg-[#E4E4E4] rounded-[20px] text-[#252B42] mt-[16px] px-[16px] tablet:px-[40px] pt-[24px] tablet:pt-[35px] pb-[24px] tablet:pb-[43px]">
+								<h2 class="font-bold text-[1.125rem] tracking-[0.1px] flex items-center gap-[8px] mb-[4px]">
+									<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#095866" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+									Cerca un Punto BRT
+								</h2>
+								<p class="text-[0.8125rem] text-[#737373] mb-[8px]">Cerca un tabaccaio, edicola o negozio convenzionato BRT vicino alla destinazione.</p>
+								<!-- PudoSelector: componente riutilizzabile che gestisce ricerca e selezione -->
+								<!-- Riceve città e CAP di destinazione come valori iniziali per la ricerca -->
+								<PudoSelector
+									:initial-city="destinationAddress.city"
+									:initial-zip="destinationAddress.postal_code"
+									@select="onPudoSelected"
+									@deselect="onPudoDeselected" />
+								<!-- Riepilogo PUDO selezionato -->
+								<div v-if="userStore.selectedPudo" class="mt-[16px] p-[12px] bg-white rounded-[10px] border-2 border-[#095866] text-[0.875rem]">
+									<div class="flex items-center gap-[6px] text-[#095866] font-bold mb-[4px]">
+										<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+										Punto selezionato
+									</div>
+									<p class="font-semibold text-[#252B42]">{{ userStore.selectedPudo.name }}</p>
+									<p class="text-[#737373]">{{ userStore.selectedPudo.address }}, {{ userStore.selectedPudo.zip_code }} {{ userStore.selectedPudo.city }}</p>
+								</div>
+							</div>
+
 							<!-- DESTINAZIONE -->
+							<!-- Se modalità PUDO: i campi destinazione sono auto-compilati e read-only -->
+							<!-- Se modalità domicilio: i campi sono editabili normalmente -->
 							<div class="bg-[#E4E4E4] rounded-[20px] text-[#252B42] mt-[20px] px-[16px] tablet:px-[40px] pt-[24px] tablet:pt-[35px] pb-[24px] tablet:pb-[43px]">
 								<div class="flex items-center justify-between mb-[20px] tablet:mb-[39px]">
 									<div class="flex items-center gap-[10px]">
 									<h2 class="font-bold text-[1.125rem] tracking-[0.1px]">
-										Destinazione
+										{{ deliveryMode === 'pudo' ? 'Destinazione (Punto BRT)' : 'Destinazione' }}
 									</h2>
-									<!-- Icona salva indirizzo destinazione -->
+									<!-- Icona salva indirizzo destinazione (nascosta in modalità PUDO perché l'indirizzo è del punto BRT) -->
 									<button
-										v-if="canSaveDestAddress"
+										v-if="canSaveDestAddress && deliveryMode !== 'pudo'"
 										type="button"
 										@click="saveAddressToBook('dest')"
 										:disabled="savingDestAddress"
@@ -1337,7 +1450,8 @@ const continueToCart = async () => {
 										Salvato
 									</span>
 								</div>
-									<div v-if="isAuthenticated" class="relative">
+									<!-- In modalità PUDO non mostriamo "Indirizzi salvati" perché l'indirizzo è quello del punto BRT -->
+									<div v-if="isAuthenticated && deliveryMode !== 'pudo'" class="relative">
 										<button type="button" @click="toggleAddressSelector('dest')" class="inline-flex items-center gap-[6px] px-[14px] py-[8px] bg-[#095866] text-white rounded-[8px] text-[0.8125rem] font-semibold hover:bg-[#074a56] transition cursor-pointer">
 											<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
 											Indirizzi salvati
@@ -1358,6 +1472,18 @@ const continueToCart = async () => {
 									</div>
 								</div>
 
+								<!-- In modalità PUDO: banner informativo + campi auto-compilati e non editabili -->
+								<div v-if="deliveryMode === 'pudo' && userStore.selectedPudo" class="mb-[16px] p-[12px] bg-[#095866]/10 rounded-[10px] flex items-center gap-[8px] text-[0.8125rem] text-[#095866]">
+									<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+									Indirizzo compilato automaticamente dal Punto BRT selezionato.
+								</div>
+								<div v-if="deliveryMode === 'pudo' && !userStore.selectedPudo" class="mb-[16px] p-[12px] bg-orange-50 rounded-[10px] flex items-center gap-[8px] text-[0.8125rem] text-orange-700">
+									<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+									Seleziona un Punto BRT qui sopra per procedere.
+								</div>
+
+								<!-- Wrapper: in modalità PUDO i campi sono disabilitati visivamente (compilati automaticamente) -->
+								<div :class="{ 'opacity-60 pointer-events-none': deliveryMode === 'pudo' }">
 								<div class="grid grid-cols-1 tablet:grid-cols-2 gap-[16px] tablet:gap-x-[30px]">
 									<div>
 										<label for="dest_name" class="block text-[0.875rem] sr-only">Nome e Cognome*</label>
@@ -1431,6 +1557,7 @@ const continueToCart = async () => {
 										<p v-if="getFieldError('dest', 'email')" class="text-red-500 text-[0.75rem] mt-[4px]">{{ getFieldError('dest', 'email') }}</p>
 									</div>
 								</div>
+								</div><!-- Fine wrapper PUDO readonly -->
 							</div>
 
 						</template>
@@ -1490,7 +1617,7 @@ const continueToCart = async () => {
 										</div>
 
 										<button type="button" @click="editOriginDetails" title="Modifica" class="ml-auto">
-											<NuxtImg src="/img/quote/second-step/edit.png" alt="Modifica" width="13" height="13" />
+											<NuxtImg src="/img/quote/second-step/edit.png" alt="Modifica" width="13" height="13" loading="lazy" decoding="async" />
 										</button>
 									</div>
 
@@ -1507,7 +1634,7 @@ const continueToCart = async () => {
 										</div>
 
 										<button type="button" @click="editDestinationDetails" title="Modifica" class="ml-auto">
-											<NuxtImg src="/img/quote/second-step/edit.png" alt="Modifica" width="13" height="13" />
+											<NuxtImg src="/img/quote/second-step/edit.png" alt="Modifica" width="13" height="13" loading="lazy" decoding="async" />
 										</button>
 									</div>
 								</div>
@@ -1517,7 +1644,7 @@ const continueToCart = async () => {
 								<div class="flex items-center justify-between mb-[12px]">
 									<h4 class="text-center font-bold flex-1">Colli</h4>
 									<button type="button" @click="editingSidebarColli = !editingSidebarColli" class="ml-auto">
-										<NuxtImg src="/img/quote/second-step/edit.png" alt="Modifica" width="13" height="13" />
+										<NuxtImg src="/img/quote/second-step/edit.png" alt="Modifica" width="13" height="13" loading="lazy" decoding="async" />
 									</button>
 								</div>
 

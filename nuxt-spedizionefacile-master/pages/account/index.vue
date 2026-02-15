@@ -385,7 +385,7 @@ const handleLogout = async () => {
 				<button
 					@click="handleLogout"
 					:disabled="isLoggingOut"
-					class="px-[20px] py-[10px] bg-white/70 backdrop-blur-sm border border-[#d0d0d0] rounded-[12px] text-[0.875rem] text-[#555] hover:text-red-600 hover:border-red-200 hover:bg-red-50 transition-all cursor-pointer">
+					class="px-[20px] py-[10px] bg-white/70 backdrop-blur-sm border border-[#d0d0d0] rounded-[12px] text-[0.875rem] text-[#555] hover:text-red-600 hover:border-red-200 hover:bg-red-50 transition-[color,border-color,background-color] cursor-pointer">
 					{{ isLoggingOut ? "Uscita..." : "Esci" }}
 				</button>
 			</div>
@@ -397,19 +397,19 @@ const handleLogout = async () => {
 		<div class="flex flex-wrap gap-[10px]">
 			<NuxtLink
 				to="/preventivo"
-				class="inline-flex items-center gap-[8px] px-[20px] py-[12px] bg-[#095866] text-white rounded-[12px] text-[0.875rem] font-semibold hover:bg-[#074a56] transition-all shadow-sm btn-hover">
+				class="inline-flex items-center gap-[8px] px-[20px] py-[12px] bg-[#095866] text-white rounded-[12px] text-[0.875rem] font-semibold hover:bg-[#074a56] transition-[background-color] shadow-sm btn-hover">
 				<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[18px] h-[18px]" fill="currentColor"><path d="M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z"/></svg>
 				Nuova spedizione
 			</NuxtLink>
 			<NuxtLink
 				to="/carrello"
-				class="inline-flex items-center gap-[8px] px-[20px] py-[12px] bg-white text-[#252B42] rounded-[12px] text-[0.875rem] font-medium border border-[#E9EBEC] hover:border-[#095866] hover:text-[#095866] transition-all shadow-sm">
+				class="inline-flex items-center gap-[8px] px-[20px] py-[12px] bg-white text-[#252B42] rounded-[12px] text-[0.875rem] font-medium border border-[#E9EBEC] hover:border-[#095866] hover:text-[#095866] transition-[border-color,color] shadow-sm">
 				<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[18px] h-[18px]" fill="currentColor"><path d="M17,18A2,2 0 0,1 19,20A2,2 0 0,1 17,22C15.89,22 15,21.1 15,20C15,18.89 15.89,18 17,18M1,2H4.27L5.21,4H20A1,1 0 0,1 21,5C21,5.17 20.95,5.34 20.88,5.5L17.3,11.97C16.96,12.58 16.3,13 15.55,13H8.1L7.2,14.63L7.17,14.75A0.25,0.25 0 0,0 7.42,15H19V17H7C5.89,17 5,16.1 5,15C5,14.65 5.09,14.32 5.24,14.04L6.6,11.59L3,4H1V2M7,18A2,2 0 0,1 9,20A2,2 0 0,1 7,22C5.89,22 5,21.1 5,20C5,18.89 5.89,18 7,18M16,11L18.78,6H6.14L8.5,11H16Z"/></svg>
 				Vai al carrello
 			</NuxtLink>
 			<NuxtLink
 				to="/traccia-spedizione"
-				class="inline-flex items-center gap-[8px] px-[20px] py-[12px] bg-white text-[#252B42] rounded-[12px] text-[0.875rem] font-medium border border-[#E9EBEC] hover:border-[#095866] hover:text-[#095866] transition-all shadow-sm">
+				class="inline-flex items-center gap-[8px] px-[20px] py-[12px] bg-white text-[#252B42] rounded-[12px] text-[0.875rem] font-medium border border-[#E9EBEC] hover:border-[#095866] hover:text-[#095866] transition-[border-color,color] shadow-sm">
 				<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[18px] h-[18px]" fill="currentColor"><path d="M18,15A3,3 0 0,1 21,18A3,3 0 0,1 18,21C16.69,21 15.58,20.17 15.17,19H14V17H15.17C15.58,15.83 16.69,15 18,15M18,17A1,1 0 0,0 17,18A1,1 0 0,0 18,19A1,1 0 0,0 19,18A1,1 0 0,0 18,17M6,15A3,3 0 0,1 9,18A3,3 0 0,1 6,21A3,3 0 0,1 3,18C3,16.69 3.83,15.58 5,15.17V7.83C3.83,7.42 3,6.31 3,5A3,3 0 0,1 6,2A3,3 0 0,1 9,5C9,6.31 8.17,7.42 7,7.83V15.17C8.17,15.58 9,16.69 9,18M6,17A1,1 0 0,0 5,18A1,1 0 0,0 6,19A1,1 0 0,0 7,18A1,1 0 0,0 6,17M6,4A1,1 0 0,0 5,5A1,1 0 0,0 6,6A1,1 0 0,0 7,5A1,1 0 0,0 6,4M12,11V13H9.09C9.27,12.37 9.55,11.78 9.91,11.22L12,11M18,9A3,3 0 0,1 21,12H19C19,11.45 18.55,11 18,11A1,1 0 0,0 17,12V13H15V12A3,3 0 0,1 18,9Z"/></svg>
 				Traccia spedizione
 			</NuxtLink>
@@ -448,7 +448,7 @@ const handleLogout = async () => {
 						<NuxtLink
 							:to="`/account${page.url}`"
 							:class="[
-								'account-card flex flex-col items-center text-center h-full min-h-[200px] desktop:min-h-[220px] rounded-[16px] p-[24px] desktop:p-[28px] transition-all duration-200 group hover:-translate-y-[2px] border',
+								'account-card flex flex-col items-center text-center h-full min-h-[200px] desktop:min-h-[220px] rounded-[16px] p-[24px] desktop:p-[28px] transition-[transform,box-shadow,background-color] duration-200 group hover:-translate-y-[2px] border contain-content',
 								section.adminOnly
 									? 'bg-purple-50/60 border-purple-100 hover:bg-purple-50 hover:shadow-[0_6px_20px_rgba(124,58,237,0.1)]'
 									: 'bg-white border-[#E9EBEC] shadow-[0_1px_3px_rgba(0,0,0,0.08)] hover:shadow-[0_8px_24px_rgba(0,0,0,0.12)]',

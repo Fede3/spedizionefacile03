@@ -6,7 +6,15 @@
  * ROUTE: /account/portafoglio (middleware sanctum:auth).
  */
 <script setup>
-import { loadStripe } from "@stripe/stripe-js";
+// Nota: loadStripe non serve in questa pagina (il pagamento e' gestito dal backend via sanctum).
+// L'import e' stato rimosso per ridurre il bundle JS.
+
+// Preconnect to Stripe only on this page (not globally, to save connections on other pages)
+// Aggiunto anche api.stripe.com per velocizzare le chiamate API di pagamento
+useHead({ link: [
+	{ rel: 'preconnect', href: 'https://js.stripe.com', crossorigin: '' },
+	{ rel: 'preconnect', href: 'https://api.stripe.com', crossorigin: '' },
+] });
 
 /* Richiede che l'utente sia autenticato */
 definePageMeta({

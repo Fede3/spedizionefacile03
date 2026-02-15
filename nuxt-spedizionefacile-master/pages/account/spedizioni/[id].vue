@@ -15,7 +15,8 @@ const route = useRoute();
 const orderId = route.params.id;
 
 /* Carica i dati dell'ordine dal server. "refresh" permette di ricaricarli */
-const { data: order, status: orderStatus, refresh } = useSanctumFetch(`/api/orders/${orderId}`);
+// lazy: true — i dati ordine si caricano dopo il render iniziale (mostra skeleton nel frattempo)
+const { data: order, status: orderStatus, refresh } = useSanctumFetch(`/api/orders/${orderId}`, { lazy: true });
 
 /* Formatta una data nel formato italiano con ora (es. "13/02/2026, 14:30") */
 const formatDate = (dateStr) => {
@@ -370,6 +371,13 @@ const paymentMethodLabel = (method) => {
 							<p class="text-[0.8125rem] text-[#737373]">{{ pkg.origin_address.address }} {{ pkg.origin_address.address_number }}</p>
 							<p class="text-[0.8125rem] text-[#737373]">{{ pkg.origin_address.postal_code }} {{ pkg.origin_address.city }} ({{ pkg.origin_address.province }})</p>
 							<p v-if="pkg.origin_address.telephone_number" class="text-[0.8125rem] text-[#737373]">Tel: {{ pkg.origin_address.telephone_number }}</p>
+						</div>
+
+						<!-- Badge PUDO: visibile se l'ordine prevede ritiro in un punto BRT convenzionato -->
+						<!-- Il campo brt_pudo_id viene impostato quando l'utente sceglie "Ritira in Punto BRT" -->
+						<div v-if="order?.data?.brt_pudo_id" class="bg-[#095866]/10 rounded-[10px] p-[12px] flex items-center gap-[8px]">
+							<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#095866" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="shrink-0"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+							<span class="text-[0.8125rem] font-bold text-[#095866]">Consegna presso Punto BRT</span>
 						</div>
 
 						<!-- Destination Address -->

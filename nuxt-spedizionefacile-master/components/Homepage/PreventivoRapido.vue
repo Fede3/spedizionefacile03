@@ -45,7 +45,7 @@ const newAddress2 = ref({
 			<div
 				class="bg-white w-full rounded-[24px] desktop-xl:rounded-[32px] relative z-3 mt-[-132px] p-[24px_20px] desktop:p-[40px] tablet:p-[24px_50px] tablet:mt-[-220px] desktop:mt-[-185px] desktop-xl:mt-[-70px]">
 				<div class="border-b-[1px] border-[#E6E6E6] h-[58px] desktop:h-[65px] desktop-xl:h-[76px] flex items-start justify-between">
-					<span class="text-[1.5rem] desktop:text-[1.875rem] desktop-xl:text-[2rem] text-black font-medium">Preventivo Rapido</span>
+					<span class="text-[1.25rem] tablet:text-[1.5rem] desktop:text-[1.875rem] desktop-xl:text-[2rem] text-black font-medium">Preventivo Rapido</span>
 
 					<div class="desktop-xl:items-center hidden desktop-xl:flex">
 						<div
@@ -70,25 +70,25 @@ const newAddress2 = ref({
 
 				<form
 					action=""
-					class="flex items-start flex-wrap tablet:justify-center desktop-xl:justify-between tablet:gap-x-[20px] gap-y-[24px] tablet:gap-y-[20px] desktop:gap-y-[36px] desktop-xl:gap-y-0 desktop:pt-[71px] desktop-xl:pt-[60px] pt-[46px]">
+					class="flex items-start flex-wrap tablet:justify-center desktop-xl:justify-between tablet:gap-x-[20px] gap-y-[18px] tablet:gap-y-[20px] desktop:gap-y-[36px] desktop-xl:gap-y-0 desktop:pt-[71px] desktop-xl:pt-[60px] pt-[30px] tablet:pt-[46px]">
 					<div class="w-full tablet:w-[30%] desktop:w-full desktop-xl:w-[200px]">
 						<label for="" class="label-preventivo-rapido">Ritiro in</label>
-						<input type="text" name="" id="" placeholder="Nazionalità" class="input-preventivo-rapido" required />
+						<input type="text" name="" id="" placeholder="Nazionalità" class="input-preventivo-rapido input-animated" required />
 					</div>
 
 					<div class="w-full tablet:w-[30%] desktop:w-full desktop-xl:w-[200px]">
 						<label for="" class="label-preventivo-rapido">CAP di Ritiro</label>
-						<input type="text" name="" id="" placeholder="CAP" class="input-preventivo-rapido" required />
+						<input type="text" name="" id="" placeholder="CAP" class="input-preventivo-rapido input-animated" required />
 					</div>
 
 					<div class="w-full tablet:w-[30%] desktop:w-full desktop-xl:w-[200px]">
 						<label for="" class="label-preventivo-rapido">Consegna in</label>
-						<input type="text" name="" id="" placeholder="Nazionalità" class="input-preventivo-rapido" required />
+						<input type="text" name="" id="" placeholder="Nazionalità" class="input-preventivo-rapido input-animated" required />
 					</div>
 
 					<div class="w-full tablet:w-[30%] desktop:w-full desktop-xl:w-[200px]">
 						<label for="" class="label-preventivo-rapido">CAP Consegna</label>
-						<input type="text" name="" id="" placeholder="CAP" class="input-preventivo-rapido" required />
+						<input type="text" name="" id="" placeholder="CAP" class="input-preventivo-rapido input-animated" required />
 					</div>
 
 					<div class="w-full tablet:w-[30%] desktop:w-full desktop-xl:w-[200px]">
@@ -96,7 +96,7 @@ const newAddress2 = ref({
 						<input type="date" name="" id="" class="input-preventivo-rapido uppercase" required />
 					</div>
 
-					<button class="bg-[#E44203] w-full h-[60px] text-white text-[1.25rem] font-semibold text-center mt-[32px] desktop-xl:mt-[36px] rounded-[50px] desktop:mt-0 cursor-pointer tracking-[-0.48px]">
+					<button class="cta-button bg-[#E44203] w-full h-[52px] tablet:h-[60px] text-white text-[1.125rem] tablet:text-[1.25rem] font-semibold text-center mt-[24px] tablet:mt-[32px] desktop-xl:mt-[36px] rounded-[50px] desktop:mt-0 cursor-pointer tracking-[-0.48px]">
 						<span class="after:bg-[url('/img/arrow-down.svg')] after:bg-no-repeat after:bg-right after:inline-block after:size-[16px] after:ml-[11px] after:align-[-1px]">Continua</span>
 						<!-- <Icon name="tabler:circle-arrow-right-filled" class="ml-[11px]" /> -->
 						<!-- <NuxtImg src="" aria-hidden="true" width="16" height="16" alt="" class="size-[16px]" /> -->
@@ -106,3 +106,43 @@ const newAddress2 = ref({
 		</div>
 	</section>
 </template>
+
+<style scoped>
+@media (prefers-reduced-motion: no-preference) {
+	/* Gentle floating pulse on CTA button
+	   Ottimizzato: usa opacity+transform su pseudo-element invece di animare box-shadow (GPU-friendly) */
+	@keyframes gentlePulse {
+		0%, 100% { opacity: 0.4; transform: scale(1); }
+		50% { opacity: 0; transform: scale(1.15); }
+	}
+
+	.cta-button {
+		position: relative;
+		transition: transform 0.2s ease;
+	}
+	.cta-button::after {
+		content: '';
+		position: absolute;
+		inset: 0;
+		border-radius: inherit;
+		border: 3px solid rgba(228, 66, 3, 0.6);
+		animation: gentlePulse 2.5s ease-in-out infinite;
+		pointer-events: none;
+	}
+	.cta-button:hover {
+		transform: scale(1.02);
+	}
+	.cta-button:active {
+		transform: scale(0.98);
+	}
+
+	/* Smooth focus transitions on inputs */
+	.input-animated {
+		transition: border-color 0.25s ease, box-shadow 0.25s ease;
+	}
+	.input-animated:focus {
+		border-color: #E44203;
+		box-shadow: 0 0 0 3px rgba(228, 66, 3, 0.12);
+	}
+}
+</style>

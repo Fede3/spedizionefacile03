@@ -7,7 +7,15 @@
  * ROUTE: /account/carte (middleware sanctum:auth).
  */
 <script setup>
-import { loadStripe } from "@stripe/stripe-js";
+// Ottimizzazione bundle: import dinamico di Stripe (non incluso nel chunk principale)
+// loadStripe viene importato solo quando serve, non al caricamento della pagina
+
+// Preconnect to Stripe only on this page (not globally, to save connections on other pages)
+// Aggiunto anche api.stripe.com per velocizzare le chiamate API post-caricamento
+useHead({ link: [
+	{ rel: 'preconnect', href: 'https://js.stripe.com', crossorigin: '' },
+	{ rel: 'preconnect', href: 'https://api.stripe.com', crossorigin: '' },
+] });
 
 /* Richiede che l'utente sia autenticato */
 definePageMeta({
@@ -48,10 +56,11 @@ try {
 }
 configLoading.value = false;
 
-// Load Stripe.js con la chiave corretta
+// Load Stripe.js con la chiave corretta (import dinamico per ridurre il bundle iniziale)
 let stripe = null;
 if (stripePublishableKey.value) {
 	try {
+		const { loadStripe } = await import('@stripe/stripe-js');
 		stripe = await loadStripe(stripePublishableKey.value);
 	} catch (e) {
 		console.error("Stripe.js non caricato:", e);
@@ -77,8 +86,9 @@ const saveStripeConfig = async () => {
 			stripePublishableKey.value = configPublishableKey.value;
 			showConfigForm.value = false;
 
-			// Ricarica Stripe con la nuova chiave
+			// Ricarica Stripe con la nuova chiave (import dinamico)
 			try {
+				const { loadStripe } = await import('@stripe/stripe-js');
 				stripe = await loadStripe(configPublishableKey.value);
 			} catch (e) {
 				console.error("Stripe.js non caricato:", e);
@@ -119,7 +129,8 @@ const textMessageType = ref("info");
 const deleteConfirmId = ref(null);
 
 /* Carica la lista delle carte salvate dell'utente */
-const { data: payments, status, refresh } = useSanctumFetch("/api/stripe/payment-methods");
+// lazy: true — la lista carte puo' caricarsi dopo il render iniziale della pagina
+const { data: payments, status, refresh } = useSanctumFetch("/api/stripe/payment-methods", { lazy: true });
 
 /**
  * Aggiunge una nuova carta di credito.

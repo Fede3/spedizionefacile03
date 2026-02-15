@@ -96,6 +96,8 @@ class PriceBandController extends Controller
                 'promo_label_color' => Setting::get('promo_label_color', '#E44203'),
                 'promo_label_image' => Setting::get('promo_label_image'),
                 'promo_show_badges' => Setting::get('promo_show_badges', 'true'),
+                // Descrizione personalizzata dello sconto (es. "Sconto del 20% su tutte le spedizioni!")
+                'promo_description' => Setting::get('promo_description', ''),
             ],
         ]);
     }
@@ -108,12 +110,16 @@ class PriceBandController extends Controller
             'promo_label_text' => 'nullable|string|max:100',
             'promo_label_color' => 'nullable|string|max:20',
             'promo_show_badges' => 'required|in:true,false',
+            // Descrizione testuale dello sconto mostrata nell'header della homepage
+            'promo_description' => 'nullable|string|max:300',
         ]);
 
         Setting::set('promo_active', $data['promo_active']);
         Setting::set('promo_label_text', $data['promo_label_text'] ?? '');
         Setting::set('promo_label_color', $data['promo_label_color'] ?? '#E44203');
         Setting::set('promo_show_badges', $data['promo_show_badges']);
+        // Salva la descrizione dello sconto (es. "Sconto del 20% su tutte le spedizioni!")
+        Setting::set('promo_description', $data['promo_description'] ?? '');
 
         // Invalida cache pubblica per mostrare subito le modifiche promo
         try { Cache::forget('public_price_bands'); } catch (\Exception $e) {}

@@ -6,9 +6,10 @@
   ROUTE: / (pubblica, accessibile a tutti).
 -->
 <script setup>
-// Promo settings per banner nella CTA
-const { loadPriceBands, promoSettings } = usePriceBands();
-onMounted(() => { loadPriceBands(); });
+// Promo settings per banner nella CTA.
+// loadPriceBands() non serve qui: viene gia' chiamato da ContenutoHeader e Preventivo.
+// Il composable ha un TTL di 5 minuti, quindi la prima chiamata carica e le altre sono no-op.
+const { promoSettings } = usePriceBands();
 
 // Imposta i meta tag SEO per la homepage (titolo, descrizione, Open Graph)
 useSeoMeta({
@@ -81,7 +82,8 @@ useHead({
 				<span
 					:style="{ backgroundColor: promoSettings.label_color || '#E44203' }"
 					class="inline-flex items-center gap-[6px] px-[14px] tablet:px-[16px] py-[7px] tablet:py-[8px] rounded-[10px] text-white text-[0.875rem] tablet:text-[1rem] font-bold tracking-wide shadow-sm max-w-full">
-					<img v-if="promoSettings.label_image" :src="promoSettings.label_image" alt="" class="h-[18px] tablet:h-[20px] w-auto shrink-0" />
+					<!-- Ottimizzazione: lazy loading + decoding async + dimensioni per CLS -->
+					<img v-if="promoSettings.label_image" :src="promoSettings.label_image" alt="" loading="lazy" decoding="async" width="40" height="18" class="h-[18px] tablet:h-[20px] w-auto shrink-0" />
 					{{ promoSettings.label_text }}
 				</span>
 			</div>

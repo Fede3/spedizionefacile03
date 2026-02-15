@@ -48,6 +48,12 @@
 
 	html {
 		scrollbar-gutter: stable;
+		scroll-behavior: smooth;
+	}
+
+	/* Better tap highlighting on mobile */
+	* {
+		-webkit-tap-highlight-color: transparent;
 	}
 
 	body {
@@ -64,16 +70,32 @@
 		font-family: "Inter", sans-serif;
 	}
 
+	/* Smooth transitions on buttons and links */
+	button,
+	a {
+		transition: color 0.2s ease, background-color 0.2s ease, border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+	}
+
+	/* Input transitions - only border and shadow, NOT all (causes mobile bugs) */
+	input,
+	select,
+	textarea {
+		transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+	}
+
 	input,
 	textarea,
 	select {
 		@apply outline-none;
 	}
 
-	/* Transizioni globali per elementi interattivi */
-	a {
-		transition: color 0.2s ease;
+	/* Focus visible for accessibility */
+	:focus-visible {
+		outline: 2px solid #095866;
+		outline-offset: 2px;
 	}
+
+	/* (transition for a/button already defined above) */
 }
 
 @layer components {
@@ -114,8 +136,9 @@
 	   ============================================================ */
 	/* Pulsante primario (azioni principali) */
 	.btn-primary {
-		@apply text-white font-semibold rounded-[12px] px-[24px] py-[12px] transition-all cursor-pointer;
+		@apply text-white font-semibold rounded-[12px] px-[24px] py-[12px] cursor-pointer;
 		background-color: var(--color-brand-primary);
+		transition: background-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease, opacity 0.2s ease;
 	}
 	.btn-primary:hover {
 		background-color: var(--color-brand-primary-hover);
@@ -133,10 +156,11 @@
 
 	/* Pulsante secondario (azioni secondarie) */
 	.btn-secondary {
-		@apply font-semibold rounded-[12px] px-[24px] py-[12px] transition-all cursor-pointer;
+		@apply font-semibold rounded-[12px] px-[24px] py-[12px] cursor-pointer;
 		border: 1px solid var(--color-brand-primary);
 		color: var(--color-brand-primary);
 		background: transparent;
+		transition: background-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
 	}
 	.btn-secondary:hover {
 		background-color: var(--color-brand-primary);
@@ -146,8 +170,9 @@
 
 	/* Pulsante CTA arancione (call to action) */
 	.btn-cta {
-		@apply text-white font-semibold rounded-[12px] px-[24px] py-[12px] transition-all cursor-pointer;
+		@apply text-white font-semibold rounded-[12px] px-[24px] py-[12px] cursor-pointer;
 		background-color: var(--color-brand-accent);
+		transition: background-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
 	}
 	.btn-cta:hover {
 		background-color: var(--color-brand-accent-hover);
@@ -160,7 +185,8 @@
 
 	/* Pulsante pericolo (eliminazione, annullamento) */
 	.btn-danger {
-		@apply bg-red-500 text-white font-semibold rounded-[12px] px-[24px] py-[12px] transition-all cursor-pointer;
+		@apply bg-red-500 text-white font-semibold rounded-[12px] px-[24px] py-[12px] cursor-pointer;
+		transition: background-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
 	}
 	.btn-danger:hover {
 		@apply bg-red-600;
@@ -252,9 +278,11 @@
 	.input-preventivo-rapido {
 		@apply bg-[#F1F1F1] text-[#767676] text-[1rem] tablet:text-[0.875rem] font-medium w-full h-[54px] leading-[54px] rounded-[30px] px-[18px] placeholder:text-[#767676] block mt-[15px] tracking-[-0.336px];
 		transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+		border: 2px solid transparent;
 	}
 	.input-preventivo-rapido:focus {
 		background-color: #fff;
+		border-color: #095866;
 		box-shadow: 0 0 0 3px rgba(9, 88, 102, 0.1);
 	}
 
@@ -307,28 +335,49 @@
 	}
 }
 
-/* Page transition animations */
-.page-enter-active,
+/* Page transition animations
+   Leave is faster (0.12s) so the new page appears quickly and avoids white-flash. */
+.page-enter-active {
+	transition: opacity 0.2s ease, transform 0.2s ease;
+}
 .page-leave-active {
-	transition: opacity 0.25s ease, transform 0.25s ease;
+	transition: opacity 0.12s ease;
 }
 .page-enter-from {
 	opacity: 0;
-	transform: translateY(8px);
+	transform: translateY(6px);
 }
 .page-leave-to {
 	opacity: 0;
-	transform: translateY(-8px);
 }
 
 /* Layout transition */
 .layout-enter-active,
 .layout-leave-active {
-	transition: opacity 0.2s ease;
+	transition: opacity 0.15s ease;
 }
 .layout-enter-from,
 .layout-leave-to {
 	opacity: 0;
+}
+
+/* Active step pulse animation for Steps.vue
+   Ottimizzato: usa opacity su pseudo-element invece di animare box-shadow (GPU-friendly) */
+@keyframes step-pulse {
+	0%, 100% { opacity: 0.4; transform: scale(1); }
+	50% { opacity: 0; transform: scale(1.35); }
+}
+.step-active-pulse {
+	position: relative;
+}
+.step-active-pulse::after {
+	content: '';
+	position: absolute;
+	inset: 0;
+	border-radius: inherit;
+	border: 3px solid rgba(228, 66, 3, 0.6);
+	animation: step-pulse 2s ease-in-out infinite;
+	pointer-events: none;
 }
 
 /* Fade-in utility for lazy-loaded sections */
@@ -359,6 +408,18 @@
 	border-radius: 50%;
 	animation: spin-smooth 0.6s linear infinite;
 	vertical-align: middle;
+}
+
+/* content-visibility: auto per sezioni below-the-fold — il browser salta il rendering
+   finché non sono vicine al viewport, riducendo il lavoro iniziale di layout/paint */
+.cv-auto {
+	content-visibility: auto;
+	contain-intrinsic-size: auto 500px;
+}
+
+/* contain: content per card/elementi indipendenti — isola layout e paint dal resto della pagina */
+.contain-content {
+	contain: content;
 }
 
 /* Hide scrollbar but keep scroll functionality */

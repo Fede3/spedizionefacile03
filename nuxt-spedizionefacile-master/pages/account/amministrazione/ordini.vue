@@ -123,6 +123,61 @@ const changeUserType = async (userId, newType) => {
 	} catch (e) { showError(e, "Errore durante l'aggiornamento tipo account."); }
 };
 
+// Estrae i dati del punto PUDO dal service_data dei pacchetti dell'ordine
+// I dati PUDO vengono salvati dentro service_data quando l'utente sceglie un punto di ritiro
+const getPudoFromOrder = (order) => {
+	if (!order?.packages?.length) return null;
+	for (const pkg of order.packages) {
+		const sd = pkg.service?.service_data;
+		if (sd?.pudo?.name) return sd.pudo;
+	}
+	return null;
+};
+
+// Admin PUDO: permette all'admin di scegliere/cambiare il punto PUDO per un ordine
+const showPudoSelector = ref(false);   // Mostra/nasconde il PudoSelector nel modal
+const pudoSaving = ref(false);         // true durante il salvataggio del PUDO
+
+// Quando l'admin seleziona un punto PUDO dal PudoSelector
+const onAdminPudoSelected = async (pudo) => {
+	if (!selectedOrder.value) return;
+	pudoSaving.value = true;
+	try {
+		await sanctum(`/api/admin/orders/${selectedOrder.value.id}/pudo`, {
+			method: 'PATCH',
+			body: { pudo_id: pudo.pudo_id, pudo_name: pudo.name, pudo_address: pudo.address, pudo_city: pudo.city, pudo_zip: pudo.zip_code },
+		});
+		selectedOrder.value.brt_pudo_id = pudo.pudo_id;
+		showPudoSelector.value = false;
+		showSuccess(`Punto PUDO impostato per ordine #${selectedOrder.value.id}`);
+		await fetchOrders();
+	} catch (e) {
+		showError(e, 'Errore nel salvataggio del punto PUDO.');
+	} finally {
+		pudoSaving.value = false;
+	}
+};
+
+// Rimuove il PUDO da un ordine (torna a consegna a domicilio)
+const removeAdminPudo = async () => {
+	if (!selectedOrder.value) return;
+	pudoSaving.value = true;
+	try {
+		await sanctum(`/api/admin/orders/${selectedOrder.value.id}/pudo`, {
+			method: 'PATCH',
+			body: { pudo_id: null },
+		});
+		selectedOrder.value.brt_pudo_id = null;
+		showPudoSelector.value = false;
+		showSuccess(`Punto PUDO rimosso dall'ordine #${selectedOrder.value.id}`);
+		await fetchOrders();
+	} catch (e) {
+		showError(e, 'Errore nella rimozione del punto PUDO.');
+	} finally {
+		pudoSaving.value = false;
+	}
+};
+
 onMounted(() => { fetchOrders(); });
 </script>
 
@@ -252,6 +307,7 @@ onMounted(() => { fetchOrders(); });
 									<div class="flex items-center gap-[14px]">
 										<span class="text-[0.8125rem] font-bold text-[#252B42]">#{{ order.id }}</span>
 										<span class="text-[0.8125rem] text-[#737373]">{{ order.packages?.length || 0 }} colli</span>
+										<span v-if="order.brt_pudo_id" class="text-[0.625rem] font-semibold bg-[#095866]/10 text-[#095866] px-[6px] py-[2px] rounded">PUDO</span>
 									</div>
 									<div class="flex items-center gap-[10px]">
 										<span class="text-[0.875rem] font-semibold text-[#252B42]">&euro;{{ formatCents(order.subtotal?.amount ?? order.subtotal) }}</span>
@@ -303,6 +359,7 @@ onMounted(() => { fetchOrders(); });
 								<td class="py-[14px]">
 									<span v-if="order.brt_parcel_id" class="text-[0.75rem] font-mono bg-indigo-50 text-indigo-700 px-[6px] py-[2px] rounded">{{ order.brt_parcel_id }}</span>
 									<span v-else class="text-[#C8CCD0]">&mdash;</span>
+									<span v-if="order.brt_pudo_id" class="ml-[4px] text-[0.625rem] font-semibold bg-[#095866]/10 text-[#095866] px-[6px] py-[2px] rounded" title="Ritiro in Punto BRT">PUDO</span>
 								</td>
 								<td class="py-[14px] text-[#737373] text-[0.8125rem]">{{ formatDate(order.created_at) }}</td>
 								<td class="py-[14px] text-right">
@@ -378,6 +435,45 @@ onMounted(() => { fetchOrders(); });
 							<button v-if="selectedOrder.brt_parcel_id" @click="downloadLabel(selectedOrder)" class="inline-flex items-center gap-[4px] px-[12px] py-[6px] bg-white border border-indigo-300 text-indigo-700 rounded-[8px] text-[0.75rem] font-medium hover:bg-indigo-50 cursor-pointer transition-colors">
 								<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[14px] h-[14px]" fill="currentColor"><path d="M5,20H19V18H5M19,9H15V3H9V9H5L12,16L19,9Z"/></svg> Scarica etichetta
 							</button>
+						</div>
+					</div>
+
+					<!-- Sezione PUDO: mostra il punto PUDO attuale + bottoni admin per gestirlo -->
+					<div class="bg-[#095866]/10 rounded-[12px] p-[16px] mb-[16px]">
+						<div class="flex items-center justify-between mb-[6px]">
+							<div class="flex items-center gap-[8px]">
+								<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#095866" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+								<span class="text-[0.875rem] font-bold text-[#095866]">Punto di ritiro BRT</span>
+							</div>
+							<div class="flex gap-[6px]">
+								<button
+									@click="showPudoSelector = !showPudoSelector"
+									class="px-[10px] py-[4px] rounded-[8px] bg-[#095866] text-white text-[0.75rem] font-medium cursor-pointer hover:bg-[#074a56] transition-colors inline-flex items-center gap-[4px]">
+									<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+									{{ selectedOrder.brt_pudo_id ? 'Cambia' : 'Scegli' }}
+								</button>
+								<button
+									v-if="selectedOrder.brt_pudo_id"
+									@click="removeAdminPudo"
+									:disabled="pudoSaving"
+									class="px-[10px] py-[4px] rounded-[8px] bg-red-500 text-white text-[0.75rem] font-medium cursor-pointer hover:bg-red-600 transition-colors disabled:opacity-50">
+									Rimuovi
+								</button>
+							</div>
+						</div>
+						<!-- Info PUDO attuale -->
+						<template v-if="selectedOrder.brt_pudo_id">
+							<p class="text-[0.8125rem] text-[#404040]">PUDO ID: <span class="font-mono font-medium">{{ selectedOrder.brt_pudo_id }}</span></p>
+							<template v-if="getPudoFromOrder(selectedOrder)">
+								<p class="text-[0.8125rem] text-[#252B42] font-semibold mt-[4px]">{{ getPudoFromOrder(selectedOrder).name }}</p>
+								<p class="text-[0.8125rem] text-[#737373]">{{ getPudoFromOrder(selectedOrder).address }}, {{ getPudoFromOrder(selectedOrder).zip_code }} {{ getPudoFromOrder(selectedOrder).city }}</p>
+							</template>
+						</template>
+						<p v-else class="text-[0.8125rem] text-[#737373]">Consegna a domicilio (nessun punto PUDO selezionato)</p>
+
+						<!-- PudoSelector per l'admin -->
+						<div v-if="showPudoSelector" class="mt-[12px] pt-[12px] border-t border-[#095866]/20">
+							<PudoSelector @select="onAdminPudoSelected" @deselect="() => {}" />
 						</div>
 					</div>
 

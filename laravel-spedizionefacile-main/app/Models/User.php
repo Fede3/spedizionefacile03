@@ -72,6 +72,8 @@ class User extends Authenticatable
         'verification_code',             // Codice di verifica temporaneo per il login
         'verification_code_expires_at',  // Scadenza del codice di verifica
         'user_type',                     // Tipo account: "privato" o "commerciante"
+        'google_id',                     // ID Google OAuth (per login con Google)
+        'avatar',                        // URL dell'avatar (da Google)
     ];
 
     /**

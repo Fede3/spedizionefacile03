@@ -20,6 +20,8 @@ export const useCart = () => {
 		{
 			method: "GET",
 			key: "cart",
+			lazy: true,
+			dedupe: "defer",
 			watch: [endpoint],
 		},
 	);

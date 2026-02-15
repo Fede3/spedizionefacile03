@@ -100,7 +100,7 @@ const getServiceSvg = (service) => {
 						</p>
 
 						<!-- Bottone con freccia inline SVG -->
-						<NuxtLink :to="getServiceLink(service)" class="inline-flex items-center gap-[8px] px-[20px] h-[44px] rounded-[35px] bg-[#E44203] text-center text-white font-semibold tracking-[-0.336px] text-[0.875rem] transition-all duration-200 hover:bg-[#c93800] hover:shadow-[0_4px_12px_rgba(228,66,3,0.3)]">
+						<NuxtLink :to="getServiceLink(service)" class="inline-flex items-center gap-[8px] px-[20px] h-[44px] rounded-[35px] bg-[#E44203] text-center text-white font-semibold tracking-[-0.336px] text-[0.875rem] transition-[background-color,box-shadow] duration-200 hover:bg-[#c93800] hover:shadow-[0_4px_12px_rgba(228,66,3,0.3)]">
 							Leggi di piu'
 							<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M8.59,16.58L13.17,12L8.59,7.41L10,6L16,12L10,18L8.59,16.58Z"/></svg>
 						</NuxtLink>

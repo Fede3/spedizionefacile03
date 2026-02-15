@@ -15,5 +15,7 @@ const props = defineProps({
 </script>
 
 <template>
-	<UBreadcrumb :items="items" />
+	<div class="overflow-x-auto whitespace-nowrap scrollbar-hide scroll-smooth text-[0.75rem] tablet:text-[0.875rem]">
+		<UBreadcrumb :items="items" />
+	</div>
 </template>

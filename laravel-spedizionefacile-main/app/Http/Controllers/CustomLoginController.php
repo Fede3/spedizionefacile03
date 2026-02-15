@@ -108,23 +108,34 @@ class CustomLoginController extends Controller
         // Il parametro "remember" permette di rimanere collegati anche dopo aver chiuso il browser
         Auth::login($user, (bool) $request->remember);
 
+        // Rigeneriamo l'ID della sessione per prevenire attacchi di session fixation
+        // e garantire che il cookie di sessione sia aggiornato per le richieste successive.
+        // hasSession() controlla se la sessione e' disponibile (potrebbe non esserlo
+        // quando la richiesta arriva da un dominio non riconosciuto come "stateful" da Sanctum,
+        // ad esempio tramite tunnel Cloudflare con dominio dinamico).
+        if ($request->hasSession()) {
+            $request->session()->regenerate();
+        }
+
         // Trasferiamo i pacchi dal carrello ospite (sessione) al carrello utente (database)
         // Questo permette all'utente di non perdere i pacchi aggiunti prima di fare il login
         try {
-            $packages = session()->get('cart', []);
-            if (!empty($packages)) {
-                // Creiamo i pacchi nel database
-                $dbPackages = $this->createPackage($packages);
-                // Li colleghiamo al carrello dell'utente
-                foreach ($dbPackages as $package) {
-                    DB::table('cart_user')->insert([
-                        'user_id' => $user->id,
-                        'package_id' => $package->id,
-                        'created_at' => now(),
-                    ]);
+            if ($request->hasSession()) {
+                $packages = session()->get('cart', []);
+                if (!empty($packages)) {
+                    // Creiamo i pacchi nel database
+                    $dbPackages = $this->createPackage($packages);
+                    // Li colleghiamo al carrello dell'utente
+                    foreach ($dbPackages as $package) {
+                        DB::table('cart_user')->insert([
+                            'user_id' => $user->id,
+                            'package_id' => $package->id,
+                            'created_at' => now(),
+                        ]);
+                    }
+                    // Svuotiamo il carrello della sessione perche' ora i dati sono nel database
+                    session()->forget('cart');
                 }
-                // Svuotiamo il carrello della sessione perche' ora i dati sono nel database
-                session()->forget('cart');
             }
         } catch (\Exception $e) {
             // Se il trasferimento del carrello fallisce, non blocchiamo il login
@@ -190,6 +201,12 @@ class CustomLoginController extends Controller
 
         // Facciamo il login automatico
         Auth::login($user, true);
+
+        // Rigeneriamo l'ID della sessione per prevenire attacchi di session fixation.
+        // Controlliamo che la sessione sia disponibile (vedi commento nel metodo login()).
+        if ($request->hasSession()) {
+            $request->session()->regenerate();
+        }
 
         return response()->json([
             'success' => true,

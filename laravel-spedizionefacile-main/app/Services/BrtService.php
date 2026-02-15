@@ -514,11 +514,17 @@ class BrtService
     public function getPudoByAddress(string $address, string $zipCode, string $city, string $countryCode = 'ITA', int $maxResults = 10): array
     {
         try {
+            // Costruiamo gli header — il token è opzionale per gli endpoint "open"
+            $headers = ['Accept' => 'application/json'];
+            if (!empty($this->pudoToken)) {
+                $headers['X-API-Auth'] = $this->pudoToken;
+            }
+
+            // withoutVerifying(): BRT usa un certificato self-signed nella chain SSL,
+            // senza questo flag cURL restituisce errore 60 e la richiesta fallisce.
             $response = Http::timeout(15)
-                ->withHeaders([
-                    'X-API-Auth' => $this->pudoToken,  // Token di autenticazione per le API PUDO
-                    'Accept' => 'application/json',
-                ])
+                ->withoutVerifying()
+                ->withHeaders($headers)
                 ->get($this->pudoApiUrl . '/pudo/v1/open/pickup/get-pudo-by-address', [
                     'address' => $address,
                     'zipCode' => $zipCode,
@@ -531,7 +537,13 @@ class BrtService
             $body = $response->json();
 
             if (!$response->successful()) {
-                return ['success' => false, 'error' => 'Errore PUDO API (HTTP ' . $response->status() . ')', 'pudo' => []];
+                Log::warning('BRT PUDO API error', [
+                    'status' => $response->status(),
+                    'body' => $response->body(),
+                    'city' => $city,
+                    'zip' => $zipCode,
+                ]);
+                return ['success' => false, 'error' => 'Errore PUDO API (HTTP ' . $response->status() . '): ' . ($body['message'] ?? $response->body()), 'pudo' => []];
             }
 
             $pudoList = $body['pudo'] ?? [];
@@ -569,7 +581,9 @@ class BrtService
     public function getPudoByCoordinates(float $latitude, float $longitude, int $maxResults = 10): array
     {
         try {
+            // withoutVerifying(): certificato self-signed BRT (vedi searchPudo)
             $response = Http::timeout(15)
+                ->withoutVerifying()
                 ->withHeaders([
                     'X-API-Auth' => $this->pudoToken,
                     'Accept' => 'application/json',
@@ -620,7 +634,9 @@ class BrtService
     public function getPudoDetails(string $pudoId): array
     {
         try {
+            // withoutVerifying(): certificato self-signed BRT (vedi searchPudo)
             $response = Http::timeout(15)
+                ->withoutVerifying()
                 ->withHeaders([
                     'X-API-Auth' => $this->pudoToken,
                     'Accept' => 'application/json',

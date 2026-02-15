@@ -43,11 +43,14 @@ const FALLBACK_VOLUME_BANDS = [
 
 // Stato condiviso tra componenti
 const priceBands = ref({ weight: [], volume: [] });
-const promoSettings = ref({ active: false, label_text: '', label_color: '#E44203', label_image: null, show_badges: false });
+const promoSettings = ref({ active: false, label_text: '', label_color: '#E44203', label_image: null, show_badges: false, description: '' });
 const loading = ref(false);
 const loaded = ref(false);
 let lastFetchTime = 0;
 const TTL_MS = 5 * 60 * 1000; // 5 minuti
+// Deduplica richieste concorrenti: se piu' componenti chiamano loadPriceBands()
+// contemporaneamente, condividono la stessa Promise (una sola richiesta HTTP).
+let pendingFetchPromise = null;
 
 export const usePriceBands = () => {
 	const sanctum = useSanctumClient();
@@ -86,12 +89,15 @@ export const usePriceBands = () => {
 		}
 	};
 
-	// Carica dal server, ma solo se il TTL e' scaduto
+	// Carica dal server, ma solo se il TTL e' scaduto.
+	// Se una richiesta e' gia' in corso, riusa la stessa Promise (deduplica).
 	const loadPriceBands = async () => {
-		if (loading.value) return;
 		const expired = Date.now() - lastFetchTime > TTL_MS;
 		if (loaded.value && !expired) return;
-		await fetchFromApi();
+		// Se c'e' gia' una richiesta in volo, aspetta quella invece di farne un'altra
+		if (pendingFetchPromise) return pendingFetchPromise;
+		pendingFetchPromise = fetchFromApi().finally(() => { pendingFetchPromise = null; });
+		return pendingFetchPromise;
 	};
 
 	// Forza il ricaricamento ignorando il TTL (usato dall'admin dopo il salvataggio)

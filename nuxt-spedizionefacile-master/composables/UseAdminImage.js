@@ -18,6 +18,9 @@
 export const useAdminImage = () => {
 	const { data, refresh, status } = useSanctumFetch("/api/public/homepage-image", {
 		method: "GET",
+		key: "admin-homepage-image",
+		lazy: true,
+		dedupe: "defer",
 	});
 
 	return { data, refresh, status };

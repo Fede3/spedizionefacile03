@@ -14,6 +14,11 @@ import { defineStore } from "pinia";
 // Chiave per sessionStorage
 const STORAGE_KEY = "spedizionefacile_user_store";
 
+// Debounce: evita troppe scritture consecutive su sessionStorage.
+// Il deep watcher su 14 ref scatta spesso; con debounce scriviamo max 1 volta ogni 300ms.
+let debounceTimer = null;
+const DEBOUNCE_MS = 300;
+
 // Carica lo stato salvato da sessionStorage (se presente)
 function loadFromSession() {
 	if (import.meta.server) return null;
@@ -70,28 +75,40 @@ export const useUserStore = defineStore("user", () => {
 	// ID del pacco nel carrello che si sta modificando (null = nuova spedizione)
 	const editingCartItemId = ref(saved?.editingCartItemId ?? null);
 
-	// Salva in sessionStorage ogni volta che cambia qualcosa
+	// PUDO: modalità di consegna ('home' = domicilio, 'pudo' = punto BRT)
+	const deliveryMode = ref(saved?.deliveryMode ?? 'home');
+	// PUDO: punto di ritiro selezionato (oggetto con pudo_id, name, address, ecc.)
+	const selectedPudo = ref(saved?.selectedPudo ?? null);
+
+	// Salva in sessionStorage ogni volta che cambia qualcosa.
+	// Debounced: accumula le modifiche e scrive una sola volta ogni 300ms
+	// per evitare scritture eccessive su sessionStorage durante input rapidi.
 	function persist() {
-		saveToSession({
-			stepNumber: stepNumber.value,
-			shipmentDetails: shipmentDetails.value,
-			isQuoteStarted: isQuoteStarted.value,
-			totalPrice: totalPrice.value,
-			packages: packages.value,
-			servicesArray: servicesArray.value,
-			contentDescription: contentDescription.value,
-			pendingShipment: pendingShipment.value,
-			originAddressData: originAddressData.value,
-			destinationAddressData: destinationAddressData.value,
-			pickupDate: pickupDate.value,
-			editingCartItemId: editingCartItemId.value,
-		});
+		if (debounceTimer) clearTimeout(debounceTimer);
+		debounceTimer = setTimeout(() => {
+			saveToSession({
+				stepNumber: stepNumber.value,
+				shipmentDetails: shipmentDetails.value,
+				isQuoteStarted: isQuoteStarted.value,
+				totalPrice: totalPrice.value,
+				packages: packages.value,
+				servicesArray: servicesArray.value,
+				contentDescription: contentDescription.value,
+				pendingShipment: pendingShipment.value,
+				originAddressData: originAddressData.value,
+				destinationAddressData: destinationAddressData.value,
+				pickupDate: pickupDate.value,
+				editingCartItemId: editingCartItemId.value,
+				deliveryMode: deliveryMode.value,
+				selectedPudo: selectedPudo.value,
+			});
+		}, DEBOUNCE_MS);
 	}
 
 	// Osserva tutti i campi e persisti automaticamente
 	watch([stepNumber, shipmentDetails, isQuoteStarted, totalPrice, packages,
 		servicesArray, contentDescription, pendingShipment, originAddressData,
-		destinationAddressData, pickupDate, editingCartItemId], persist, { deep: true });
+		destinationAddressData, pickupDate, editingCartItemId, deliveryMode, selectedPudo], persist, { deep: true });
 
 	return {
 		stepNumber,
@@ -106,5 +123,7 @@ export const useUserStore = defineStore("user", () => {
 		destinationAddressData,
 		pickupDate,
 		editingCartItemId,
+		deliveryMode,
+		selectedPudo,
 	};
 });

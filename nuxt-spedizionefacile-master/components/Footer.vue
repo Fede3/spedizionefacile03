@@ -56,7 +56,8 @@ const linkColumns = [
 </script>
 
 <template>
-	<footer role="contentinfo">
+	<!-- content-visibility: auto — il footer è sempre below-the-fold, il browser può saltare il rendering iniziale -->
+	<footer role="contentinfo" class="cv-auto">
 		<!-- Sezione principale del footer: sfondo scuro (brand primary) -->
 		<div class="bg-[#095866] text-white">
 			<div class="my-container pt-[48px] tablet:pt-[64px] pb-[40px] tablet:pb-[56px]">
@@ -85,14 +86,14 @@ const linkColumns = [
 								:aria-label="social.label"
 								target="_blank"
 								rel="noopener noreferrer"
-								class="w-[44px] h-[44px] rounded-full bg-white/10 flex items-center justify-center text-white/80 transition-all duration-200 hover:bg-[#E44203] hover:text-white hover:scale-110">
+								class="w-[44px] h-[44px] rounded-full bg-white/10 flex items-center justify-center text-white/80 transition-[background-color,color,transform] duration-200 hover:bg-[#E44203] hover:text-white hover:scale-110 active:scale-95">
 								<Icon :name="social.icon" class="text-[18px]" />
 							</a>
 						</div>
 
 						<!-- Contatto rapido -->
 						<div class="mt-[24px] flex flex-col gap-[8px]">
-							<a href="mailto:info@spedizionefacile.it" class="flex items-center gap-[8px] text-white/70 text-[0.875rem] hover:text-white transition-colors duration-200">
+							<a href="mailto:info@spedizionefacile.it" class="flex items-center gap-[8px] text-white/70 text-[0.875rem] hover:text-white transition-colors duration-200 min-h-[44px]">
 								<Icon name="mdi:email-outline" class="text-[16px]" />
 								info@spedizionefacile.it
 							</a>
@@ -106,11 +107,11 @@ const linkColumns = [
 							<h3 class="text-white font-semibold text-[1rem] mb-[16px] pb-[8px] border-b border-white/20">
 								{{ col.title }}
 							</h3>
-							<ul class="flex flex-col gap-[10px]">
+							<ul class="flex flex-col gap-[2px] tablet:gap-[10px]">
 								<li v-for="(page, pageIndex) in col.pages" :key="pageIndex">
 									<NuxtLink
 										:to="page.url"
-										class="text-white/70 text-[0.875rem] hover:text-[#E44203] transition-colors duration-200 inline-block py-[6px] tablet:py-[2px]">
+										class="text-white/70 text-[0.875rem] hover:text-[#E44203] transition-colors duration-200 inline-flex items-center py-[8px] tablet:py-[4px] min-h-[44px] tablet:min-h-0">
 										{{ page.text }}
 									</NuxtLink>
 								</li>
@@ -129,7 +130,7 @@ const linkColumns = [
 				</p>
 				<NuxtLink
 					to="/preventivo"
-					class="bg-[#E44203] text-white px-[24px] py-[12px] tablet:py-[10px] rounded-full text-[0.875rem] font-semibold hover:bg-[#c93800] transition-all duration-200 hover:shadow-[0_4px_12px_rgba(228,66,3,0.4)] whitespace-nowrap min-h-[44px] flex items-center justify-center">
+					class="bg-[#E44203] text-white px-[24px] py-[12px] tablet:py-[10px] rounded-full text-[0.875rem] font-semibold hover:bg-[#c93800] transition-[background-color,box-shadow,transform] duration-200 hover:shadow-[0_4px_12px_rgba(228,66,3,0.4)] whitespace-nowrap min-h-[48px] w-full tablet:w-auto flex items-center justify-center active:scale-[0.97]">
 					Preventivo Gratuito
 				</NuxtLink>
 			</div>

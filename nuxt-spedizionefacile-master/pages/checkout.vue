@@ -9,7 +9,15 @@
   NOTE: Supporta ?order_id=XXX per pagamento ordine esistente.
 -->
 <script setup>
-import { loadStripe } from "@stripe/stripe-js";
+// Ottimizzazione bundle: import dinamico di Stripe (non incluso nel chunk principale)
+// loadStripe viene importato solo quando serve, dentro onMounted()
+
+// Preconnect to Stripe only on this page (not globally, to save connections on other pages)
+// Aggiunto anche api.stripe.com per velocizzare le chiamate API post-caricamento
+useHead({ link: [
+	{ rel: 'preconnect', href: 'https://js.stripe.com', crossorigin: '' },
+	{ rel: 'preconnect', href: 'https://api.stripe.com', crossorigin: '' },
+] });
 
 // Meta tag SEO
 useSeoMeta({
@@ -65,8 +73,10 @@ let stripe = null;
 const stripeReady = ref(false);
 
 // Carica Stripe quando il componente e' montato nel browser
+// Import dinamico: @stripe/stripe-js viene scaricato solo quando serve (non nel bundle iniziale)
 onMounted(async () => {
 	try {
+		const { loadStripe } = await import('@stripe/stripe-js');
 		const stripePromise = loadStripe(config.public.stripeKey);
 		stripe = await stripePromise;
 		stripeReady.value = true;
@@ -80,7 +90,9 @@ onMounted(async () => {
 });
 
 // Recupera la carta di pagamento salvata dell'utente (se ne ha una)
-const { data: defaultPayment } = useSanctumFetch("/api/stripe/default-payment-method");
+// lazy: true — i dati della carta salvata non servono al primo render,
+// vengono usati solo quando l'utente sceglie il metodo "carta"
+const { data: defaultPayment } = useSanctumFetch("/api/stripe/default-payment-method", { lazy: true });
 
 // Formatta il prezzo da centesimi a euro (es. 1200 -> "12,00€")
 const formatPrice = (cents) => {
@@ -719,7 +731,8 @@ const processPayment = async () => {
 								<span v-if="promoSettings?.active && promoSettings?.label_text"
 									:style="{ backgroundColor: promoSettings.label_color || '#E44203' }"
 									class="inline-flex items-center gap-[4px] px-[8px] py-[3px] rounded-[6px] text-white text-[0.6875rem] font-bold tracking-wide">
-									<img v-if="promoSettings.label_image" :src="promoSettings.label_image" alt="" class="h-[12px] w-auto" />
+									<!-- Ottimizzazione: lazy loading + decoding async + dimensioni per CLS -->
+									<img v-if="promoSettings.label_image" :src="promoSettings.label_image" alt="" loading="lazy" decoding="async" width="24" height="12" class="h-[12px] w-auto" />
 									{{ promoSettings.label_text }}
 								</span>
 							</div>
@@ -903,7 +916,7 @@ const processPayment = async () => {
 				<div class="flex flex-col items-center gap-[8px]">
 					<button type="button" @click="processPayment" :disabled="!canPay"
 						:class="[
-							'w-full tablet:w-auto px-[24px] tablet:px-[40px] py-[16px] min-h-[52px] rounded-[30px] text-white font-semibold text-[1rem] transition-all flex items-center justify-center gap-[8px]',
+							'w-full tablet:w-auto px-[24px] tablet:px-[40px] py-[16px] min-h-[52px] rounded-[30px] text-white font-semibold text-[1rem] transition-[background-color,opacity,transform] flex items-center justify-center gap-[8px]',
 							canPay ? 'bg-[#E44203] hover:opacity-90 cursor-pointer' : 'bg-gray-300 cursor-not-allowed',
 						]">
 						<Icon v-if="isProcessing" name="mdi:loading" class="text-[20px] animate-spin" />

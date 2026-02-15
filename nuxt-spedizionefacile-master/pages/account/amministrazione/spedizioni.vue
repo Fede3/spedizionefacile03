@@ -120,7 +120,10 @@ onMounted(() => { fetchShipments(); });
 							<tr v-for="(s, idx) in shipmentsData.data" :key="s.id" :class="['border-b border-[#F0F0F0] last:border-0', idx % 2 === 1 ? 'bg-[#FAFBFC]' : '']">
 								<td class="py-[14px] font-bold text-[#252B42]">#{{ s.id }}</td>
 								<td class="py-[14px] text-[#404040]">{{ s.user?.name }} {{ s.user?.surname }}</td>
-								<td class="py-[14px] font-mono text-[0.8125rem] text-indigo-700">{{ s.brt_parcel_id }}</td>
+								<td class="py-[14px]">
+									<span class="font-mono text-[0.8125rem] text-indigo-700">{{ s.brt_parcel_id }}</span>
+									<span v-if="s.brt_pudo_id" class="ml-[4px] text-[0.625rem] font-semibold bg-[#095866]/10 text-[#095866] px-[6px] py-[2px] rounded" title="Ritiro in Punto BRT">PUDO</span>
+								</td>
 								<td class="py-[14px]">
 									<span :class="['inline-flex items-center gap-[4px] px-[10px] py-[3px] rounded-full text-[0.6875rem] font-medium', orderStatusConfig[s.status]?.bg || 'bg-gray-50', orderStatusConfig[s.status]?.text || 'text-gray-700']">
 										<svg v-if="s.status === 'pending'" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[12px] h-[12px]" fill="currentColor"><path d="M12,20A8,8 0 0,0 20,12A8,8 0 0,0 12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22C6.47,22 2,17.5 2,12A10,10 0 0,1 12,2M12.5,7V12.25L17,14.92L16.25,16.15L11,13V7H12.5Z"/></svg>

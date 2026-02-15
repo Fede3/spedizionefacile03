@@ -172,7 +172,8 @@ onMounted(() => { fetchArticle(); });
 						</h2>
 						<div class="max-w-[700px]">
 							<div v-if="form.image_url" class="mb-[16px]">
-								<img :src="form.image_url" alt="Immagine servizio" class="max-w-full max-h-[200px] rounded-[12px] border border-[#E9EBEC] object-cover" />
+								<!-- Ottimizzazione: lazy loading + decoding async -->
+								<img :src="form.image_url" alt="Immagine servizio" loading="lazy" decoding="async" class="max-w-full max-h-[200px] rounded-[12px] border border-[#E9EBEC] object-cover" />
 							</div>
 							<label class="inline-flex items-center gap-[8px] px-[16px] py-[10px] bg-[#F0F0F0] hover:bg-[#E0E0E0] text-[#404040] rounded-[10px] text-[0.875rem] font-medium cursor-pointer transition-colors">
 								<svg v-if="uploading" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[18px] h-[18px] animate-spin" fill="currentColor"><path d="M12,4V2A10,10 0 0,0 2,12H4A8,8 0 0,1 12,4Z"/></svg>

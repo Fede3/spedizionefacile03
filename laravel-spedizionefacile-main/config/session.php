@@ -1,4 +1,30 @@
 <?php
+/**
+ * FILE: config/session.php
+ * SCOPO: Configura la sessione PHP usata per l'autenticazione Sanctum SPA e il preventivo rapido.
+ *
+ * La sessione e' fondamentale per SpedizioneFacile:
+ * 1. AUTENTICAZIONE: Sanctum usa il cookie di sessione per riconoscere l'utente loggato
+ * 2. PREVENTIVO RAPIDO: i dati del preventivo (pacchi, indirizzi, prezzi) sono salvati in sessione
+ *    (SessionController.php) per utenti non registrati
+ *
+ * PARAMETRI CRITICI PER SANCTUM SPA:
+ * - driver: 'database' per sessioni persistenti (sopravvivono al riavvio del server)
+ * - domain: DEVE corrispondere al dominio del frontend (o null per auto-detect)
+ * - secure: null per auto-detect (HTTPS in produzione, HTTP in sviluppo)
+ * - same_site: 'lax' per permettere i cookie cross-site con sicurezza
+ * - http_only: true per impedire accesso JavaScript al cookie (protezione XSS)
+ *
+ * ATTENZIONE:
+ * - Se domain e' impostato male, i cookie non vengono inviati e l'auth fallisce con 401
+ * - expire_on_close=true: la sessione scade quando si chiude il browser
+ * - In sviluppo locale (HTTP), secure DEVE essere false o null
+ *
+ * DOCUMENTI CORRELATI:
+ *   - config/sanctum.php — domini stateful per autenticazione SPA
+ *   - config/cors.php — supports_credentials=true per inviare i cookie cross-origin
+ *   - .env — SESSION_DOMAIN, SESSION_SECURE_COOKIE, SESSION_SAME_SITE
+ */
 
 use Illuminate\Support\Str;
 
@@ -6,15 +32,17 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Default Session Driver
+    | Driver di Sessione
     |--------------------------------------------------------------------------
     |
-    | This option determines the default session driver that is utilized for
-    | incoming requests. Laravel supports a variety of storage options to
-    | persist session data. Database storage is a great default choice.
+    | Determina dove vengono salvati i dati della sessione.
+    | 'database': i dati sono salvati nella tabella 'sessions' del database.
+    | Questa e' la scelta migliore per SpedizioneFacile perche':
+    | - Le sessioni sopravvivono al riavvio del server
+    | - Funzionano con piu' server (se necessario in futuro)
+    | - Permettono di vedere le sessioni attive nel database
     |
-    | Supported: "file", "cookie", "database", "apc",
-    |            "memcached", "redis", "dynamodb", "array"
+    | Alternative: "file", "cookie", "redis", "memcached", "array"
     |
     */
 
@@ -22,13 +50,14 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Session Lifetime
+    | Durata della Sessione
     |--------------------------------------------------------------------------
     |
-    | Here you may specify the number of minutes that you wish the session
-    | to be allowed to remain idle before it expires. If you want them
-    | to expire immediately when the browser is closed then you may
-    | indicate that via the expire_on_close configuration option.
+    | Quanti minuti la sessione puo' restare inattiva prima di scadere.
+    | 120 minuti (2 ore) = l'utente resta loggato per 2 ore senza attivita'.
+    |
+    | expire_on_close: se true, la sessione scade quando l'utente chiude il browser.
+    | Con true, anche se il lifetime e' 120 min, la sessione muore alla chiusura del browser.
     |
     */
 
@@ -38,12 +67,12 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Session Encryption
+    | Crittografia Sessione
     |--------------------------------------------------------------------------
     |
-    | This option allows you to easily specify that all of your session data
-    | should be encrypted before it's stored. All encryption is performed
-    | automatically by Laravel and you may use the session like normal.
+    | Se abilitato, tutti i dati della sessione vengono criptati prima di
+    | essere salvati. Di default e' disabilitato perche' il database e' gia'
+    | protetto e la crittografia aggiunge overhead.
     |
     */
 
@@ -51,12 +80,11 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Session File Location
+    | Posizione File Sessione
     |--------------------------------------------------------------------------
     |
-    | When utilizing the "file" session driver, the session files are placed
-    | on disk. The default storage location is defined here; however, you
-    | are free to provide another location where they should be stored.
+    | Se si usa il driver "file", i file di sessione vengono salvati qui.
+    | Ogni sessione e' un file separato con l'ID sessione come nome.
     |
     */
 
@@ -64,12 +92,11 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Session Database Connection
+    | Connessione Database per Sessioni
     |--------------------------------------------------------------------------
     |
-    | When using the "database" or "redis" session drivers, you may specify a
-    | connection that should be used to manage these sessions. This should
-    | correspond to a connection in your database configuration options.
+    | Se si usa il driver "database" o "redis", specifica quale connessione usare.
+    | Se null, usa la connessione di default dal file config/database.php.
     |
     */
 
@@ -77,12 +104,11 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Session Database Table
+    | Tabella Database per Sessioni
     |--------------------------------------------------------------------------
     |
-    | When using the "database" session driver, you may specify the table to
-    | be used to store sessions. Of course, a sensible default is defined
-    | for you; however, you're welcome to change this to another table.
+    | Se si usa il driver "database", questa e' la tabella dove vengono salvate.
+    | Colonne necessarie: id, user_id, ip_address, user_agent, payload, last_activity.
     |
     */
 
@@ -90,14 +116,11 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Session Cache Store
+    | Cache Store per Sessioni
     |--------------------------------------------------------------------------
     |
-    | When using one of the framework's cache driven session backends, you may
-    | define the cache store which should be used to store the session data
-    | between requests. This must match one of your defined cache stores.
-    |
-    | Affects: "apc", "dynamodb", "memcached", "redis"
+    | Se si usa un driver basato su cache (apc, memcached, redis, dynamodb),
+    | specifica quale "store" di cache usare (definiti in config/cache.php).
     |
     */
 
@@ -105,12 +128,12 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Session Sweeping Lottery
+    | Pulizia Sessioni Scadute (Lottery)
     |--------------------------------------------------------------------------
     |
-    | Some session drivers must manually sweep their storage location to get
-    | rid of old sessions from storage. Here are the chances that it will
-    | happen on a given request. By default, the odds are 2 out of 100.
+    | Alcuni driver (come "file") devono pulire periodicamente le sessioni scadute.
+    | [2, 100] = ad ogni richiesta c'e' il 2% di probabilita' che venga fatta
+    | la pulizia. Non si fa ad ogni richiesta per non rallentare il server.
     |
     */
 
@@ -118,13 +141,12 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Session Cookie Name
+    | Nome del Cookie di Sessione
     |--------------------------------------------------------------------------
     |
-    | Here you may change the name of the session cookie that is created by
-    | the framework. Typically, you should not need to change this value
-    | since doing so does not grant a meaningful security improvement.
-    |
+    | Nome del cookie di sessione creato da Laravel. Di default e' basato
+    | sul nome dell'applicazione (es. "spedizionefacile_session").
+    | Non c'e' motivo di cambiarlo.
     |
     */
 
@@ -135,12 +157,11 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Session Cookie Path
+    | Percorso del Cookie (Path)
     |--------------------------------------------------------------------------
     |
-    | The session cookie path determines the path for which the cookie will
-    | be regarded as available. Typically, this will be the root path of
-    | your application, but you're free to change this when necessary.
+    | Il percorso per cui il cookie e' valido. "/" significa "tutto il sito".
+    | Il browser invia il cookie solo per le richieste a questo percorso e sotto-percorsi.
     |
     */
 
@@ -148,12 +169,12 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Session Cookie Domain
+    | Dominio del Cookie
     |--------------------------------------------------------------------------
     |
-    | This value determines the domain and subdomains the session cookie is
-    | available to. By default, the cookie will be available to the root
-    | domain and all subdomains. Typically, this shouldn't be changed.
+    | Il dominio per cui il cookie e' valido. Se vuoto/null, il browser lo imposta
+    | automaticamente al dominio corrente. Per supportare i sottodomini,
+    | si puo' impostare ".spedizionefacile.it" (con il punto davanti).
     |
     */
 
@@ -161,25 +182,30 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | HTTPS Only Cookies
+    | Cookie Solo HTTPS (Secure)
     |--------------------------------------------------------------------------
     |
-    | By setting this option to true, session cookies will only be sent back
-    | to the server if the browser has a HTTPS connection. This will keep
-    | the cookie from being sent to you when it can't be done securely.
+    | Se true, il cookie di sessione viene inviato SOLO su connessioni HTTPS.
+    | null = auto-detect: secure in HTTPS, non-secure in HTTP.
+    |
+    | ATTENZIONE: in sviluppo locale (HTTP), questo DEVE essere false o null,
+    | altrimenti il browser non invia il cookie e l'autenticazione fallisce.
+    | In produzione (HTTPS), dovrebbe essere true per sicurezza.
     |
     */
 
-    'secure' => env('SESSION_SECURE_COOKIE'),
+    // null = auto-detect (secure quando la richiesta e' HTTPS, non-secure quando HTTP)
+    'secure' => env('SESSION_SECURE_COOKIE') === 'null' ? null : env('SESSION_SECURE_COOKIE'),
 
     /*
     |--------------------------------------------------------------------------
-    | HTTP Access Only
+    | Cookie Solo HTTP (HttpOnly)
     |--------------------------------------------------------------------------
     |
-    | Setting this value to true will prevent JavaScript from accessing the
-    | value of the cookie and the cookie will only be accessible through
-    | the HTTP protocol. It's unlikely you should disable this option.
+    | Se true, il cookie di sessione NON e' accessibile da JavaScript.
+    | Questo e' FONDAMENTALE per la sicurezza: impedisce che un attacco XSS
+    | possa rubare il cookie di sessione e impersonare l'utente.
+    | NON disabilitare mai questa opzione.
     |
     */
 
@@ -187,16 +213,17 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Same-Site Cookies
+    | Same-Site Cookie
     |--------------------------------------------------------------------------
     |
-    | This option determines how your cookies behave when cross-site requests
-    | take place, and can be used to mitigate CSRF attacks. By default, we
-    | will set this value to "lax" to permit secure cross-site requests.
+    | Controlla se il cookie viene inviato nelle richieste cross-site.
+    | - 'lax': il cookie viene inviato per navigazione top-level (link cliccati)
+    |   ma NON per richieste AJAX cross-site (protegge da CSRF)
+    | - 'none': il cookie viene sempre inviato (richiede secure=true)
+    | - 'strict': il cookie NON viene mai inviato in richieste cross-site
     |
-    | See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie#samesitesamesite-value
-    |
-    | Supported: "lax", "strict", "none", null
+    | Per Sanctum SPA con frontend su porta diversa: 'lax' e' la scelta corretta.
+    | Se frontend e backend sono su domini diversi, potrebbe servire 'none' + secure=true.
     |
     */
 
@@ -204,12 +231,11 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Partitioned Cookies
+    | Cookie Partizionati (CHIPS)
     |--------------------------------------------------------------------------
     |
-    | Setting this value to true will tie the cookie to the top-level site for
-    | a cross-site context. Partitioned cookies are accepted by the browser
-    | when flagged "secure" and the Same-Site attribute is set to "none".
+    | Se true, il cookie viene partizionato per sito di primo livello.
+    | Richiede secure=true e same_site='none'. Non necessario per la nostra configurazione.
     |
     */
 

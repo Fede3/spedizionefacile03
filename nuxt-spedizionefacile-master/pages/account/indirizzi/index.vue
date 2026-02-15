@@ -78,8 +78,10 @@ const {
 	error,
 	status,
 	refresh: refreshAddress,
+// lazy: true — la rubrica indirizzi si carica dopo il render iniziale della pagina
 } = useSanctumFetch(`/api/user-addresses`, {
 	method: "GET",
+	lazy: true,
 });
 
 const sanctum = useSanctumClient();

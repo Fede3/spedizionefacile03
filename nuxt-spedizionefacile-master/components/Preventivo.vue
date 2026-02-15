@@ -546,7 +546,7 @@ const resetForm = () => {
 </script>
 
 <template>
-	<section :class="route.path === '/' ? 'mt-[-20px] desktop:mt-[-40px] relative z-50' : 'pt-[24px]'">
+	<section :class="route.path === '/' ? 'mt-[-140px] tablet:mt-[-70px] desktop:mt-[-60px] relative z-50' : 'pt-[24px]'">
 		<div class="my-container">
 			<div
 				class="bg-white w-full rounded-[20px] tablet:rounded-[24px] desktop-xl:rounded-[32px] relative z-10 p-[16px_12px] tablet:p-[20px_40px] desktop:p-[30px_36px] mx-auto"
@@ -569,17 +569,17 @@ const resetForm = () => {
 				<form ref="formRef" @submit.prevent="">
 					<Steps :current-step="0" />
 
-					<h3 class="font-semibold text-[1rem] tablet:text-[1.25rem] text-black border-b-[1px] border-[#E6E6E6] desktop:w-[469px] h-[50px] pl-[18px] leading-[50px]" title="Seleziona il tipo di pacco che vuoi spedire. Puoi aggiungere più colli alla stessa spedizione.">Aggiungi altri colli alla spedizione</h3>
+					<h3 class="font-semibold text-[0.875rem] tablet:text-[1rem] desktop:text-[1.25rem] text-black border-b-[1px] border-[#E6E6E6] desktop:w-[469px] h-[44px] tablet:h-[50px] pl-[10px] tablet:pl-[18px] leading-[44px] tablet:leading-[50px] scroll-mt-[80px]" title="Seleziona il tipo di pacco che vuoi spedire. Puoi aggiungere più colli alla stessa spedizione.">Aggiungi altri colli alla spedizione</h3>
 
 					<ul class="flex items-center flex-wrap gap-[12px] tablet:gap-[16px] desktop:gap-x-[30px] desktop-xl:gap-x-[40px] mt-[10px]">
 						<li
 							v-for="(packageType, packageTypeIndex) in packageTypeList"
 							:key="packageTypeIndex"
-							class="rounded-[21px] relative shadow-[6px_6px_5.3px_rgba(0,0,0,.32)] h-[77px] desktop-xl:text-[1.625rem] text-black font-medium tracking-[-0.624px] w-[calc(33.333%-8px)] tablet:w-[calc(25%-12px)] desktop-xl:w-[193px] transition-all duration-200 hover:shadow-[6px_6px_12px_rgba(0,0,0,.2)] hover:-translate-y-[1px]">
+							class="rounded-[21px] relative shadow-[6px_6px_5.3px_rgba(0,0,0,.32)] h-[50px] tablet:h-[77px] text-[0.875rem] tablet:text-[1rem] desktop-xl:text-[1.625rem] text-black font-medium tracking-[-0.624px] w-[calc(33.333%-8px)] tablet:w-[calc(25%-12px)] desktop-xl:w-[193px] transition-[transform,box-shadow] duration-200 hover:shadow-[6px_6px_12px_rgba(0,0,0,.2)] hover:-translate-y-[1px] active:scale-95">
 							<button
 								type="button"
 								@click="selectPackageType(packageType)"
-								class="w-full h-full flex justify-center items-center gap-x-[31px] cursor-pointer package-card after:content-[''] after:bg-no-repeat after:bg-right"
+								class="w-full h-full flex justify-center items-center gap-x-[12px] tablet:gap-x-[31px] cursor-pointer package-card after:content-[''] after:bg-no-repeat after:bg-right"
 								:style="{ '--after-bg': `url(/img/quote/first-step/${packageType.img})`, '--after-width': `${packageType.width}px`, '--after-height': `${packageType.height}px` }"
 								:title="`Clicca per aggiungere un collo di tipo ${packageType.text}`">
 								{{ packageType.text }}
@@ -593,7 +593,7 @@ const resetForm = () => {
 						{{ messageError.packages[0] }}
 					</p>
 
-					<h3 class="font-semibold text-[1rem] tablet:text-[1.25rem] text-black border-b-[1px] border-[#E6E6E6] desktop:w-[600px] h-auto min-h-[50px] pl-[18px] mt-[30px] tablet:mt-[40px] py-[10px] tablet:py-0 tablet:leading-[50px]">Inserisci la posizione di partenza e destinazione</h3>
+					<h3 class="font-semibold text-[0.875rem] tablet:text-[1rem] desktop:text-[1.25rem] text-black border-b-[1px] border-[#E6E6E6] desktop:w-[600px] h-auto min-h-[44px] tablet:min-h-[50px] pl-[10px] tablet:pl-[18px] mt-[20px] tablet:mt-[40px] py-[10px] tablet:py-0 tablet:leading-[50px] scroll-mt-[80px]">Inserisci la posizione di partenza e destinazione</h3>
 
 					<div
 						class="flex items-start flex-wrap tablet:justify-center desktop-xl:justify-between tablet:gap-x-[20px] gap-y-[16px] tablet:gap-y-[20px] desktop:gap-y-[36px] desktop-xl:gap-y-0 border-[1px] border-[rgba(0,0,0,.2)] rounded-[20px] tablet:rounded-[30px] p-[12px] tablet:p-[15px] mt-[10px]">
@@ -654,12 +654,12 @@ const resetForm = () => {
 					</div>
 
 					<div v-if="userStore.packages.length > 0">
-						<h3 class="font-semibold text-[1rem] tablet:text-[1.25rem] text-black border-b-[1px] border-[#E6E6E6] desktop:w-[492px] min-h-[50px] pl-[18px] mt-[30px] tablet:mt-[40px] py-[10px] tablet:py-0 flex items-center gap-[8px]">
+						<h3 class="font-semibold text-[0.875rem] tablet:text-[1rem] desktop:text-[1.25rem] text-black border-b-[1px] border-[#E6E6E6] desktop:w-[492px] min-h-[44px] tablet:min-h-[50px] pl-[10px] tablet:pl-[18px] mt-[20px] tablet:mt-[40px] py-[10px] tablet:py-0 flex items-center gap-[8px] scroll-mt-[80px]">
 							Inserisci le dimensioni e il peso dei colli
 							<!-- Info icon con tooltip avviso misure -->
 							<span class="relative group inline-flex">
 								<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[20px] h-[20px] text-[#737373] cursor-help shrink-0" fill="currentColor"><path d="M13,9H11V7H13M13,17H11V11H13M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z"/></svg>
-								<span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-[8px] w-[280px] bg-[#252B42] text-white text-[0.75rem] font-normal leading-[1.4] p-[12px] rounded-[10px] shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 pointer-events-none">
+								<span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-[8px] w-[280px] bg-[#252B42] text-white text-[0.75rem] font-normal leading-[1.4] p-[12px] rounded-[10px] shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-[opacity,visibility] duration-200 z-50 pointer-events-none">
 									Inserisci peso e dimensioni reali del collo. Il corriere verifica le misure: se risultano significativamente diverse, il pacco potrebbe essere bloccato e potrebbero essere addebitati costi aggiuntivi per lo svincolo.
 									<span class="absolute top-full left-1/2 -translate-x-1/2 border-[6px] border-transparent border-t-[#252B42]"></span>
 								</span>
@@ -670,10 +670,24 @@ const resetForm = () => {
 							<li
 								v-for="(pack, packIndex) in userStore.packages"
 								:key="packIndex"
-								class="flex items-start flex-wrap tablet:justify-center desktop-xl:justify-between tablet:gap-x-[20px] gap-y-[16px] tablet:gap-y-[20px] desktop:gap-y-[36px] desktop-xl:gap-y-0 border-[1px] border-[rgba(0,0,0,.2)] rounded-[20px] tablet:rounded-[30px] p-[12px_14px] tablet:p-[15px_20px] mt-[10px] w-full li-card before:content-[''] before:self-center"
-								:style="{ '--before-bg': `url(/img/quote/first-step/${pack.img})`, '--before-width': `${pack.width}px`, '--before-height': `${pack.height}px` }">
-								<!-- class=""
-									 -->
+								class="relative border-[1px] border-[rgba(0,0,0,.2)] rounded-[20px] tablet:rounded-[30px] p-[12px_14px] tablet:p-[15px_20px] mt-[10px] w-full scroll-mt-[80px]">
+								<!-- Header riga: icona pacco + cestino (mobile) -->
+								<div class="flex items-center justify-between desktop-xl:hidden mb-[12px]">
+									<div class="flex items-center gap-[10px]">
+										<!-- Ottimizzazione: lazy loading + decoding async -->
+										<NuxtImg :src="`/img/quote/first-step/${pack.img}`" :alt="pack.package_type" width="32" height="32" loading="lazy" decoding="async" class="h-[32px] w-auto object-contain" />
+										<span class="text-[0.875rem] font-semibold text-[#333]">{{ pack.package_type }}</span>
+									</div>
+									<button type="button" class="cursor-pointer text-[#DB9FA1] p-[4px] min-w-[36px] min-h-[36px] flex items-center justify-center hover:text-red-500 transition-colors" @click="deletePack(packIndex)" aria-label="Elimina elemento" title="Rimuovi questo collo dalla spedizione">
+										<!-- Ottimizzazione: lazy loading + decoding async -->
+										<NuxtImg src="/img/quote/first-step/trash.png" alt="" width="24" height="28" loading="lazy" decoding="async" />
+									</button>
+								</div>
+
+								<!-- Contenuto: campi input -->
+								<div class="flex items-start flex-wrap tablet:justify-center desktop-xl:justify-between tablet:gap-x-[20px] gap-y-[16px] tablet:gap-y-[20px] desktop:gap-y-[36px] desktop-xl:gap-y-0 li-card before:content-[''] before:self-center before:hidden desktop-xl:before:block"
+									:style="{ '--before-bg': `url(/img/quote/first-step/${pack.img})`, '--before-width': `${pack.width}px`, '--before-height': `${pack.height}px` }">
+
 								<div class="self-center">
 									<select v-model="pack.quantity" id="quantity" class="text-black text-[1.25rem] font-medium min-h-[44px] min-w-[44px]" @change="calcQuantity(pack)" title="Numero di colli identici da spedire. Il prezzo verrà moltiplicato per la quantità.">
 										<option v-for="quantity in 10" :key="quantity" :value="quantity" :disabled="quantity === pack.quantity">
@@ -721,9 +735,11 @@ const resetForm = () => {
 									</p>
 								</div>
 
-								<button type="button" class="cursor-pointer text-[#DB9FA1] self-center p-[6px] min-w-[44px] min-h-[44px] flex items-center justify-center" @click="deletePack(packIndex)" aria-label="Elimina elemento" title="Rimuovi questo collo dalla spedizione">
-									<NuxtImg src="/img/quote/first-step/trash.png" alt="" width="30" height="35" />
+								<button type="button" class="hidden desktop-xl:flex cursor-pointer text-[#DB9FA1] self-center p-[6px] min-w-[44px] min-h-[44px] items-center justify-center hover:text-red-500 transition-colors" @click="deletePack(packIndex)" aria-label="Elimina elemento" title="Rimuovi questo collo dalla spedizione">
+									<!-- Ottimizzazione: lazy loading + decoding async -->
+									<NuxtImg src="/img/quote/first-step/trash.png" alt="" width="30" height="35" loading="lazy" decoding="async" />
 								</button>
+								</div>
 							</li>
 						</ul>
 					</div>
@@ -748,13 +764,14 @@ const resetForm = () => {
 						<span
 							:style="{ backgroundColor: promoSettings.label_color || '#E44203' }"
 							class="inline-flex items-center gap-[6px] px-[14px] py-[6px] rounded-[10px] text-white text-[0.875rem] font-bold tracking-wide shadow-sm">
-							<img v-if="promoSettings.label_image" :src="promoSettings.label_image" alt="" class="h-[18px] w-auto" />
+							<!-- Ottimizzazione: lazy loading + decoding async + dimensioni per prevenire CLS -->
+							<img v-if="promoSettings.label_image" :src="promoSettings.label_image" alt="" loading="lazy" decoding="async" width="40" height="18" class="h-[18px] w-auto" />
 							{{ promoSettings.label_text }}
 						</span>
 					</div>
 
 					<div
-						class="bg-[#E44203] w-full text-white font-semibold text-center rounded-[50px] tracking-[-0.48px] transition-all duration-200 hover:bg-[#c93800] hover:shadow-[0_6px_20px_rgba(228,66,3,0.35)]"
+						class="bg-[#E44203] w-full text-white font-semibold text-center rounded-[50px] tracking-[-0.48px] transition-[background-color,box-shadow,transform] duration-200 hover:bg-[#c93800] hover:shadow-[0_6px_20px_rgba(228,66,3,0.35)] active:scale-[0.98] overflow-hidden"
 						:class="[
 							{ 'text-[1.5rem] tablet:text-[1.875rem] h-[64px] tablet:h-[80px]': !isRateCalculated, 'h-[90px] tablet:h-[113px]': isRateCalculated },
 							promoSettings?.active && promoSettings?.label_text ? 'mt-[12px]' : 'mt-[24px] desktop-xl:mt-[40px] desktop:mt-[20px]'
@@ -764,12 +781,13 @@ const resetForm = () => {
 								type="button"
 								@click="continueToNextStep"
 								:disabled="isCalculating"
-								class="w-full h-full rounded-[50px] cursor-pointer after:content-[''] after:bg-[url(/img/arrow-down.svg)] after:inline-block after:size-[16px] text-[1.5rem] tablet:text-[1.875rem] after:ml-[10px] after:scale-200 disabled:opacity-70 disabled:cursor-not-allowed">
+								class="w-full h-full rounded-[50px] cursor-pointer flex items-center justify-center gap-[10px] text-[1.5rem] tablet:text-[1.875rem] disabled:opacity-70 disabled:cursor-not-allowed">
 								<span v-if="!isRateCalculated">Continua</span>
 								<span v-else>
 									<span class="text-[1.75rem] tablet:text-[2.25rem] border-b-[1px] border-white pb-[4px]">Spedisci da {{ session?.data?.total_price }}€</span>
 									<span class="block text-center mt-[5px] text-[0.875rem] tablet:text-[1rem]">IVA inclusa</span>
 								</span>
+								<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="shrink-0"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg>
 							</button>
 
 						<p v-if="status === 'pending' || isCalculating" class="h-full flex justify-center items-center">
@@ -802,16 +820,32 @@ const resetForm = () => {
 </template>
 
 <style>
+/* Mobile-first: smaller images on small screens */
 .package-card::after {
 	background-image: var(--after-bg);
-	width: var(--after-width);
-	height: var(--after-height);
+	width: calc(var(--after-width) * 0.65);
+	height: calc(var(--after-height) * 0.65);
+	background-size: contain;
 }
 
 .li-card::before {
 	background-image: var(--before-bg);
-	width: var(--before-width);
-	height: var(--before-height);
+	width: calc(var(--before-width) * 0.7);
+	height: calc(var(--before-height) * 0.7);
+	background-size: contain;
+}
+
+/* Tablet and up: full-size images */
+@media (min-width: 45rem) {
+	.package-card::after {
+		width: var(--after-width);
+		height: var(--after-height);
+	}
+
+	.li-card::before {
+		width: var(--before-width);
+		height: var(--before-height);
+	}
 }
 
 .service-list::before {
