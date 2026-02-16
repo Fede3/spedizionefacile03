@@ -26,5 +26,9 @@ class EventServiceProvider extends ServiceProvider
         \App\Events\UserRegistered::class => [
             \App\Listeners\SendVerificationEmail::class,
         ],
+        \App\Events\OrderPaid::class => [
+            \App\Listeners\MarkOrderProcessing::class,
+            \App\Listeners\GenerateBrtLabel::class,
+        ],
     ];
 }

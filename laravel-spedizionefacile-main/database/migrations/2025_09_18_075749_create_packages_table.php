@@ -27,10 +27,8 @@ return new class extends Migration
             $table->foreignId('origin_address_id')->constrained('package_addresses');
             $table->foreignId('destination_address_id')->constrained('package_addresses');
             $table->foreignId('service_id')->constrained('services');
-            $table->foreignId('user_id')->required()->constrained()->onDelete('cascade'); 
+            $table->foreignId('user_id')->nullable()->constrained()->onDelete('cascade');
 
-            /* $table->foreignId('origin_address_id')->constrained('addresses');
-            $table->foreignId('destination_address_id')->constrained('addresses'); */
             $table->timestamps();
         });
     }

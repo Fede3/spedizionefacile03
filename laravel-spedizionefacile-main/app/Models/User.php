@@ -1,4 +1,46 @@
 <?php
+/**
+ * FILE: User.php
+ * SCOPO: Modello utente registrato su SpedizioneFacile con ruoli (User, Partner Pro, Admin).
+ *
+ * DOVE SI USA:
+ *   - Tutti i controller (auth()->user() restituisce questo modello)
+ *   - WalletController.php — walletBalance(), commissionBalance()
+ *   - ReferralController.php — referralUsagesAsPro(), isPro()
+ *   - AdminController.php — gestione utenti, ruoli, portafogli
+ *
+ * DATI IN INGRESSO:
+ *   - Dati utente: name, surname, email, telephone_number, password, referral_code, referred_by
+ *   Esempio: User::create(['name' => 'Mario', 'email' => 'mario@test.it', 'password' => 'secret'])
+ *
+ * DATI IN USCITA:
+ *   - Relazioni: addresses, packages, orders, walletMovements, referralUsagesAsPro, withdrawalRequests
+ *   - Metodi: walletBalance() (saldo portafoglio in euro), commissionBalance() (commissioni Pro in euro)
+ *   - Helper: isAdmin() (true se role='Admin'), isPro() (true se role='Partner Pro')
+ *   Esempio: $user->walletBalance() => 15.50, $user->isAdmin() => false
+ *
+ * VINCOLI:
+ *   - role NON e' in $fillable (protezione mass assignment): va impostato con $user->role = 'Admin'
+ *   - password viene hashata automaticamente tramite cast 'hashed'
+ *   - Il referral_code viene generato automaticamente per i Partner Pro (boot creating)
+ *   - Ruoli validi: "User", "Partner Pro", "Admin"
+ *
+ * ERRORI TIPICI:
+ *   - Usare User::create(['role' => 'Admin']): il campo role non e' in $fillable
+ *   - Hashare la password manualmente: il cast 'hashed' lo fa gia'
+ *   - Confondere walletBalance (portafoglio virtuale) con commissionBalance (commissioni referral)
+ *
+ * PUNTI DI MODIFICA SICURI:
+ *   - Per aggiungere un nuovo ruolo: aggiungere il check in isAdmin()/isPro() o creare nuovo metodo
+ *   - Per aggiungere campi utente: aggiungere in $fillable e nella migrazione
+ *   - Per nascondere campi in JSON: aggiungere in $hidden
+ *
+ * COLLEGAMENTI:
+ *   - app/Models/WalletMovement.php — movimenti portafoglio per calcolo saldo
+ *   - app/Models/ReferralUsage.php — utilizzi referral per calcolo commissioni
+ *   - app/Models/WithdrawalRequest.php — prelievi per calcolo commissionBalance
+ *   - app/Http/Controllers/CustomRegisterController.php — creazione utente con ruolo "User"
+ */
 
 namespace App\Models;
 
@@ -7,6 +49,7 @@ use App\Models\Package;
 use App\Models\UserAddress;
 use App\Models\WalletMovement;
 use App\Models\ReferralUsage;
+use App\Models\ProRequest;
 use App\Models\WithdrawalRequest;
 use Illuminate\Support\Str;
 use Illuminate\Notifications\Notifiable;
@@ -20,44 +63,55 @@ class User extends Authenticatable
     /* HasApiTokens, */
 
     /**
-     * The attributes that are mass assignable.
-     *
-     * @var array<int, string>
+     * Campi compilabili dall'esterno (mass assignment).
+     * Sono i dati che possono essere inseriti o modificati quando si crea/aggiorna un utente.
+     * E' una protezione di Laravel: solo questi campi possono essere scritti in massa,
+     * cosi' nessuno puo' modificare campi sensibili (come il ruolo) senza autorizzazione.
      */
     protected $fillable = [
-        'name',
-        'surname',
-        'email',
-        'telephone_number',
-        'password',
-        'role',
-        'referral_code',
-        'identifier',
-        'email_verified_at',
-        'stripe_account_id',
-        'customer_id',
+        'name',                          // Nome dell'utente
+        'surname',                       // Cognome dell'utente
+        'email',                         // Indirizzo email (usato anche per il login)
+        'telephone_number',              // Numero di telefono
+        'password',                      // Password (viene salvata criptata)
+        'referral_code',                 // Codice referral personale (solo per utenti Pro)
+        'referred_by',                   // Codice referral di chi lo ha invitato
+        'identifier',                    // Identificativo univoco dell'utente
+        'email_verified_at',             // Data e ora in cui l'email e' stata verificata
+        'stripe_account_id',             // ID dell'account Stripe (per pagamenti)
+        'customer_id',                   // ID cliente su Stripe
+        'verification_code',             // Codice di verifica temporaneo per il login
+        'verification_code_expires_at',  // Scadenza del codice di verifica
+        'user_type',                     // Tipo account: "privato" o "commerciante"
+        'google_id',                     // ID Google OAuth (per login con Google)
+        'avatar',                        // URL dell'avatar (da Google)
     ];
 
     /**
-     * The attributes that should be hidden for serialization.
-     *
-     * @var array<int, string>
+     * Campi nascosti nelle risposte JSON.
+     * Quando i dati dell'utente vengono inviati al frontend (al browser),
+     * questi campi NON vengono inclusi per motivi di sicurezza.
+     * Ad esempio, la password non deve mai essere visibile.
      */
     protected $hidden = [
         'password',
         'updated_at',
         'remember_token',
+        'verification_code',
+        'verification_code_expires_at',
     ];
 
     /**
-     * Get the attributes that should be cast.
-     *
-     * @return array<string, string>
+     * Conversioni automatiche dei tipi di dato.
+     * Laravel converte automaticamente questi campi nel tipo giusto:
+     * - Le date vengono trasformate in oggetti Carbon (per gestire facilmente le date)
+     * - La password viene automaticamente criptata quando viene salvata
      */
     protected function casts(): array
     {
         return [
             'email_verified_at' => 'datetime',
+            'verification_code_expires_at' => 'datetime',
             'password' => 'hashed',
         ];
     }
@@ -69,10 +123,14 @@ class User extends Authenticatable
         });
     } */
 
+    // Controlla se l'utente e' un amministratore del sito
+    // Restituisce true (vero) se il ruolo dell'utente e' "Admin"
     public function isAdmin(): bool {
         return $this->role === 'Admin';
     }
 
+    // Relazione: un utente ha MOLTI indirizzi salvati nella sua rubrica
+    // Esempio: casa, ufficio, magazzino...
     public function addresses() {
         return $this->hasMany(UserAddress::class);
     }
@@ -87,30 +145,51 @@ class User extends Authenticatable
         return $this->hasMany(CartUser::class); // carrello dell'utente
     } */
 
+    // Relazione: un utente ha MOLTI pacchi configurati
+    // Sono i pacchi che l'utente ha preparato per la spedizione
     public function packages() {
         return $this->hasMany(Package::class);
     }
 
+    // Relazione: un utente ha MOLTI ordini
+    // Ogni volta che l'utente paga una spedizione, viene creato un ordine
     public function orders() {
         return $this->hasMany(Order::class);
     }
 
+    // Controlla se l'utente e' un Partner Pro
+    // I Partner Pro hanno un codice referral e guadagnano commissioni
     public function isPro(): bool {
         return $this->role === 'Partner Pro';
     }
 
+    // Relazione: un utente ha MOLTI movimenti nel portafoglio
+    // I movimenti possono essere ricariche (credit) o pagamenti (debit)
     public function walletMovements() {
         return $this->hasMany(WalletMovement::class);
     }
 
+    // Relazione: un utente Pro ha MOLTI utilizzi del suo codice referral
+    // Ogni volta che qualcuno usa il suo codice, viene registrato qui
     public function referralUsagesAsPro() {
         return $this->hasMany(ReferralUsage::class, 'pro_user_id');
     }
 
+    // Relazione: un utente ha MOLTE richieste di prelievo delle commissioni guadagnate
     public function withdrawalRequests() {
         return $this->hasMany(WithdrawalRequest::class);
     }
 
+    // Relazione: un utente ha MOLTE richieste per diventare Partner Pro
+    public function proRequests() {
+        return $this->hasMany(ProRequest::class);
+    }
+
+    /**
+     * Calcola il saldo del portafoglio dell'utente.
+     * Prende tutti i movimenti confermati, somma le ricariche (credit)
+     * e sottrae i pagamenti (debit). Il risultato e' il saldo disponibile.
+     */
     public function walletBalance(): float {
         $credits = $this->walletMovements()
             ->where('status', 'confirmed')
@@ -123,6 +202,11 @@ class User extends Authenticatable
         return round($credits - $debits, 2);
     }
 
+    /**
+     * Calcola il saldo delle commissioni guadagnate dall'utente Pro.
+     * Prende le commissioni confermate e sottrae i prelievi gia' approvati o completati.
+     * Il risultato e' quanto puo' ancora prelevare.
+     */
     public function commissionBalance(): float {
         $earned = $this->referralUsagesAsPro()
             ->where('status', 'confirmed')
@@ -133,6 +217,11 @@ class User extends Authenticatable
         return round($earned - $withdrawn, 2);
     }
 
+    /**
+     * Azioni automatiche quando viene creato un nuovo utente.
+     * Se l'utente e' un Partner Pro e non ha ancora un codice referral,
+     * gliene viene generato uno casuale di 8 caratteri (es. "AB3K9XZ2").
+     */
     protected static function booted()
     {
         static::creating(function ($user) {

@@ -60,5 +60,11 @@ class DatabaseSeeder extends Seeder
                 ]
             );
         }
+
+        // Seed fasce prezzo e articoli (guide + servizi)
+        $this->call([
+            PriceBandSeeder::class,
+            ArticleSeeder::class,
+        ]);
     }
 }

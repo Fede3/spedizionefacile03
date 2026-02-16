@@ -1,5 +1,17 @@
 <?php
 
+/**
+ * EMAIL: VERIFICA INDIRIZZO EMAIL
+ *
+ * Questa classe rappresenta l'email che viene inviata a un utente
+ * dopo la registrazione per verificare che il suo indirizzo email sia valido.
+ *
+ * L'email contiene un codice a 6 cifre che l'utente deve inserire
+ * nella pagina di login per attivare il suo account.
+ *
+ * Il contenuto dell'email e' definito nel template: resources/views/emails/verificationEmail.blade.php
+ */
+
 namespace App\Mail;
 
 use Illuminate\Bus\Queueable;
@@ -13,43 +25,44 @@ class VerificationEmail extends Mailable
 {
     use Queueable, SerializesModels;
 
-    public $url;
+    // Il codice di verifica a 6 cifre
+    public $code;
 
     /**
-     * Create a new message instance.
+     * Crea l'email con il codice di verifica.
      */
-    public function __construct($url)
+    public function __construct(string $code)
     {
-        $this->url = $url;
+        $this->code = $code;
     }
 
     /**
-     * Get the message envelope.
+     * Configura l'oggetto (subject) dell'email.
+     * E' quello che l'utente vede nella sua casella di posta come titolo.
      */
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Verification Email',
+            subject: 'Il tuo codice di verifica SpedizioneFacile',
         );
     }
 
     /**
-     * Get the message content definition.
+     * Definisce il contenuto dell'email.
+     * Usa il template Markdown "verificationEmail" e gli passa il codice di verifica.
      */
     public function content(): Content
     {
         return new Content(
             markdown: 'emails.verificationEmail',
             with: [
-                'url' => $this->url,
+                'code' => $this->code,
             ],
         );
     }
 
     /**
-     * Get the attachments for the message.
-     *
-     * @return array<int, \Illuminate\Mail\Mailables\Attachment>
+     * Allegati dell'email (nessuno in questo caso).
      */
     public function attachments(): array
     {

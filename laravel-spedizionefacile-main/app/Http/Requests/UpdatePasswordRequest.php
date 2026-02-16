@@ -1,30 +1,37 @@
 <?php
 
+/**
+ * REQUEST: VALIDAZIONE AGGIORNAMENTO PASSWORD
+ *
+ * Valida i dati inviati quando un utente reimposta la sua password
+ * dopo aver richiesto il recupero password.
+ *
+ * Servono tre campi:
+ * - L'email dell'utente
+ * - Il token di reset (codice segreto ricevuto via email)
+ * - La nuova password (con conferma)
+ */
+
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
 class UpdatePasswordRequest extends FormRequest
 {
-    /**
-     * Determine if the user is authorized to make this request.
-     */
     public function authorize(): bool
     {
         return true;
     }
 
     /**
-     * Get the validation rules that apply to the request.
-     *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
+     * Regole di validazione per il reset della password.
      */
     public function rules(): array
     {
         return [
-            'email' => 'required|email',
-            'resetToken' => 'required|string',
-            'password' => 'required|confirmed'
+            'email' => 'required|email',          // Email dell'utente (obbligatoria)
+            'resetToken' => 'required|string',     // Token di reset ricevuto via email
+            'password' => 'required|confirmed'     // Nuova password (deve essere confermata)
         ];
     }
 }

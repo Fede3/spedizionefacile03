@@ -1,5 +1,19 @@
 <?php
 
+/**
+ * MIDDLEWARE: CONTROLLA SE L'UTENTE E' AMMINISTRATORE
+ *
+ * Un middleware e' come un "guardiano" che controlla ogni richiesta
+ * prima che arrivi al controller. Questo middleware verifica che
+ * l'utente sia un amministratore del sito.
+ *
+ * Se l'utente NON e' admin, la richiesta viene bloccata e viene
+ * restituito un errore 403 (accesso vietato).
+ *
+ * Viene usato per proteggere le pagine di amministrazione:
+ * solo gli admin possono vedere ordini, gestire utenti, ecc.
+ */
+
 namespace App\Http\Middleware;
 
 use Closure;
@@ -10,13 +24,13 @@ use Symfony\Component\HttpFoundation\Response;
 class CheckAdmin
 {
     /**
-     * Handle an incoming request.
-     *
-     * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
+     * Controlla se l'utente collegato e' un amministratore.
+     * Se non lo e', blocca la richiesta con errore 403.
+     * Se lo e', lascia passare la richiesta al controller.
      */
     public function handle(Request $request, Closure $next): Response
     {
-        if (auth()->user()->role != 'Admin') {
+        if (!auth()->user()?->isAdmin()) {
              return response()->json([
                 'message' => 'Accesso vietato. Non sei amministratore.',
             ], 403);

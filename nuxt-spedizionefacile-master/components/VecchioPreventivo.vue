@@ -1,3 +1,26 @@
+<!--
+	COMPONENTE: VecchioPreventivo (VecchioPreventivo.vue)
+	SCOPO: Versione PRECEDENTE del modulo preventivo — mantenuta come riferimento storico.
+
+	DOVE SI USA: NON attualmente in uso (sostituito dal flusso multi-pagina attuale)
+	PROPS: nessuna
+	EMITS: nessuno
+
+	DATI IN INGRESSO: useCart() (per l'endpoint di aggiunta al carrello)
+	DATI IN USCITA: POST su endpoint carrello (quando attivo)
+
+	VINCOLI: NON modificare — questo componente e' un backup, non influisce sul sito attivo
+	PUNTI DI MODIFICA SICURI: nessuno (componente non in uso)
+	COLLEGAMENTI: components/Preventivo.vue (la versione attiva)
+
+	CONTIENE un flusso a 4 step completo in una sola pagina:
+	Step 1 - Dati base: citta'/CAP, tipo di collo, peso, dimensioni, calcolo tariffa
+	Step 2 - Servizi: senza etichetta, contrassegno, assicurazione, sponda idraulica, ecc.
+	Step 3 - Indirizzi: mittente e destinatario completi + data programmata
+	Step 4 - Riepilogo: riassunto dati + "Aggiungi al carrello"
+
+	NOTA: le fasce prezzo sono hardcoded (non usa usePriceBands).
+-->
 <script setup>
 const router = useRouter();
 

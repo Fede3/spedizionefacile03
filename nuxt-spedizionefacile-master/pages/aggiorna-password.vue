@@ -1,7 +1,15 @@
+<!--
+  PAGINA: Aggiorna Password (aggiorna-password.vue)
+  Form per impostare una nuova password dopo aver cliccato il link di recupero.
+  Richiede il token di reset dalla URL (?token=XXX), email e nuova password.
+  Dopo il successo, reindirizza automaticamente alla pagina di autenticazione.
+  Solo per utenti non autenticati (middleware sanctum:guest + update-password).
+-->
 <script setup>
 const route = useRoute();
 const router = useRouter();
 
+// Dati del form: token, email, nuova password e conferma
 const data = ref({
 	resetToken: "",
 	email: "",
@@ -13,6 +21,7 @@ const messageError = ref(null);
 const messageSuccess = ref(null);
 const isLoading = ref(false);
 
+// Invia la nuova password al backend (/api/update-password) con il token di reset
 const updatePassword = async () => {
 	messageError.value = null;
 	messageSuccess.value = null;
@@ -26,11 +35,9 @@ const updatePassword = async () => {
 	isLoading.value = true;
 
 	try {
-		const response = await $fetch(`${useRuntimeConfig().public.apiBase}/update-password`, {
+		const sanctum = useSanctumClient();
+		const response = await sanctum("/api/update-password", {
 			method: "POST",
-			headers: {
-				"ngrok-skip-browser-warning": "skip-browser-warning",
-			},
 			body: data.value,
 		});
 

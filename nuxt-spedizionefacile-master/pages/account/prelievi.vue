@@ -1,4 +1,39 @@
+<!--
+  FILE: pages/account/prelievi.vue
+  SCOPO: Pagina prelievi commissioni — solo per Partner Pro.
+         Mostra saldo prelevabile, storico richieste di prelievo, guida "come funziona".
+         Se l'utente non e' Pro, mostra un invito a diventarlo.
+  API: GET /api/withdrawals — storico richieste prelievo,
+       POST /api/withdrawals — richiesta nuovo prelievo.
+  COMPONENTI: nessun componente custom.
+  ROUTE: /account/prelievi (middleware sanctum:auth).
+
+  DATI IN INGRESSO:
+    - user (da useSanctumAuth) — ruolo e saldo commissioni.
+    - withdrawals (da API) — storico richieste.
+
+  DATI IN USCITA:
+    - POST /api/withdrawals — nuova richiesta di prelievo.
+
+  VINCOLI:
+    - L'utente deve essere autenticato.
+    - Solo i Partner Pro vedono il form di prelievo.
+    - Il saldo prelevabile deve essere sufficiente.
+
+  ERRORI TIPICI:
+    - Saldo insufficiente → messaggio errore.
+    - Utente non Pro → mostra invito a diventarlo.
+
+  PUNTI DI MODIFICA SICURI:
+    - Cambiare il minimo prelevabile: modificare la validazione nel form.
+    - Aggiungere metodi di prelievo: modificare il form.
+
+  COLLEGAMENTI:
+    - pages/account/account-pro.vue → gestione Partner Pro.
+    - pages/account/bonus.vue → pagina bonus.
+-->
 <script setup>
+/* Richiede che l'utente sia autenticato */
 definePageMeta({
 	middleware: ["sanctum:auth"],
 });
@@ -6,15 +41,22 @@ definePageMeta({
 const { user } = useSanctumAuth();
 const sanctum = useSanctumClient();
 
+/* Controlla se l'utente e' Partner Pro (solo loro possono prelevare) */
 const isPro = computed(() => user.value?.role === "Partner Pro");
 
+/* Lista delle richieste di prelievo fatte dall'utente */
 const withdrawals = ref([]);
+/* Dati sui guadagni da commissioni (saldo prelevabile) */
 const earnings = ref(null);
+/* Indica se i dati sono in fase di caricamento iniziale */
 const isLoadingData = ref(true);
+/* Indica se una richiesta di prelievo e' in corso */
 const isLoading = ref(false);
+/* Messaggio di feedback (successo o errore) */
 const message = ref(null);
 const messageType = ref("success");
 
+/* Carica dal server le richieste di prelievo e i dati sui guadagni */
 const fetchData = async () => {
 	if (!isPro.value) {
 		isLoadingData.value = false;
@@ -36,16 +78,22 @@ const fetchData = async () => {
 
 onMounted(fetchData);
 
+/* Calcola il saldo disponibile per il prelievo */
 const availableBalance = computed(() => {
 	if (!earnings.value) return 0;
 	return Number(earnings.value.commission_balance || 0);
 });
 
+/* Controlla se c'e' gia' una richiesta di prelievo in attesa (si puo' averne solo una) */
 const hasPending = computed(() => {
 	if (!Array.isArray(withdrawals.value)) return false;
 	return withdrawals.value.some((w) => w.status === "pending");
 });
 
+/**
+ * Invia una richiesta di prelievo per l'intero saldo commissioni.
+ * Controlla che il saldo sia almeno 1 EUR e che non ci siano richieste in sospeso.
+ */
 const requestWithdrawal = async () => {
 	if (availableBalance.value < 1) {
 		message.value = "Saldo commissioni insufficiente. Minimo 1,00 EUR.";
@@ -94,6 +142,7 @@ const formatDate = (dateStr) => {
 	});
 };
 
+/* Configurazione colori e icone per ogni stato della richiesta di prelievo */
 const statusConfig = {
 	pending: { label: "In attesa", icon: "mdi:clock-outline", bg: "bg-amber-50", text: "text-amber-700", border: "border-amber-200" },
 	approved: { label: "Approvata", icon: "mdi:check-circle-outline", bg: "bg-emerald-50", text: "text-emerald-700", border: "border-emerald-200" },
@@ -121,7 +170,7 @@ const statusConfig = {
 				<p class="text-[#737373] text-[0.9375rem] max-w-[480px] mx-auto mb-[24px] leading-[1.6]">
 					I prelievi delle commissioni sono disponibili solo per gli account Partner Pro.
 				</p>
-				<NuxtLink to="/account/account-pro" class="inline-flex items-center gap-[8px] px-[24px] py-[12px] bg-[#095866] text-white rounded-[10px] font-semibold text-[0.9375rem] hover:bg-[#0a7a8c] transition-colors">
+				<NuxtLink to="/account/account-pro" class="inline-flex items-center gap-[8px] px-[24px] py-[12px] bg-[#095866] text-white rounded-[10px] font-semibold text-[0.9375rem] hover:bg-[#074a56] transition-colors">
 					<Icon name="mdi:star-outline" class="text-[18px]" />
 					Scopri Account Pro
 				</NuxtLink>
@@ -130,7 +179,7 @@ const statusConfig = {
 			<!-- Pro User Content -->
 			<template v-else>
 				<!-- Balance + Request Card -->
-				<div class="relative bg-gradient-to-br from-[#095866] to-[#0a7a8c] rounded-[20px] p-[32px] text-white mb-[24px] shadow-[0_8px_32px_rgba(9,88,102,0.25)] overflow-hidden">
+				<div class="relative bg-gradient-to-br from-[#095866] to-[#0b6d7d] rounded-[20px] p-[32px] text-white mb-[24px] shadow-[0_8px_32px_rgba(9,88,102,0.25)] overflow-hidden">
 					<div class="absolute top-0 right-0 w-[200px] h-[200px] rounded-full bg-white/5 -translate-y-1/2 translate-x-1/2"></div>
 					<div class="relative z-1 flex flex-col desktop:flex-row desktop:items-center desktop:justify-between gap-[20px]">
 						<div>

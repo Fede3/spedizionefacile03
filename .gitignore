@@ -43,3 +43,4 @@ emails/
 *.BAK_*
 *.bak_*
 backup/
+nul

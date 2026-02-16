@@ -1,170 +1,64 @@
 <?php
 
-use App\Http\Middleware\CheckCart;
-use App\Http\Middleware\CheckAdmin;
-use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\CartController;
-use App\Http\Controllers\UserController;
-use App\Http\Controllers\OrderController;
-use App\Http\Controllers\CouponController;
-use App\Http\Controllers\GoogleController;
-use App\Http\Controllers\StripeController;
-use App\Http\Controllers\AddressController;
-use App\Http\Controllers\PackageController;
-use App\Http\Controllers\LocationController;
-use App\Http\Controllers\ShipmentController;
-use App\Http\Controllers\GuestCartController;
-use App\Http\Controllers\CustomLoginController;
-use App\Http\Controllers\UserAddressController;
-use App\Http\Controllers\VerificationController;
-use App\Http\Controllers\StripeConnectController;
-use App\Http\Controllers\StripeWebhookController;
-use App\Http\Controllers\SessionController;
-use App\Http\Controllers\ChangePasswordController;
-use App\Http\Controllers\CustomRegisterController;
-use App\Http\Controllers\SettingsController;
-use App\Http\Controllers\PasswordResetRequestController;
+/**
+ * FILE: web.php (Rotte Web)
+ *
+ * SCOPO:
+ *   Contiene SOLO le rotte che devono usare il middleware "web" standard di Laravel
+ *   (sessione classica, CSRF web, cookie). Queste rotte NON sono API.
+ *
+ * PERCHE' COSI' POCHE ROTTE?
+ *   Prima tutte le rotte API erano qui dentro un Route::group(['prefix' => 'api']).
+ *   Il problema era che il login (qui, middleware "web") creava la sessione in un modo,
+ *   ma GET /api/user (in api.php, middleware "statefulApi") la leggeva in un altro modo.
+ *   Risultato: dopo il login, l'utente risultava "Unauthenticated" perche' i due
+ *   middleware stack gestivano la sessione in maniera diversa.
+ *
+ *   SOLUZIONE: tutte le rotte /api/* sono state spostate in api.php, cosi' login,
+ *   /api/user, carrello, ordini ecc. usano TUTTI lo stesso middleware "statefulApi"
+ *   e la sessione funziona correttamente.
+ *
+ * COSA CONTIENE:
+ *   - GET /             → Pagina di benvenuto Laravel (non usata dal frontend Nuxt)
+ *   - GET /login        → Redirect a /autenticazione (necessaria per Sanctum)
+ *   - POST /stripe/webhook → Webhook Stripe (riceve notifiche pagamento, no sessione)
+ *   - GET /auth/google/callback → Callback OAuth Google (redirect dal browser di Google)
+ *
+ * CHIAMATO DA:
+ *   - Laravel (routing automatico)
+ *   - Stripe (webhook POST)
+ *   - Google OAuth (redirect callback)
+ *   - Sanctum internamente (rotta "login" come fallback per utenti non autenticati)
+ */
 
+use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\GoogleController;
+use App\Http\Controllers\StripeWebhookController;
+
+// Pagina principale del backend Laravel (non usata dal frontend Nuxt)
+// Mostra la pagina di benvenuto di default di Laravel
 Route::get('/', function () {
     return view('welcome');
 });
 
+// Rotta di login "fittizia" — Sanctum la usa come fallback
+// Quando un utente non autenticato tenta di accedere a una rotta protetta con auth:sanctum,
+// Laravel lo redirige alla rotta con nome 'login'. Noi lo mandiamo alla pagina di login
+// del frontend Nuxt (/autenticazione) cosi' puo' inserire le sue credenziali.
+// NOTA: questa rotta DEVE avere ->name('login') altrimenti Sanctum da' errore
 Route::get('/login', function () {
     return redirect('/autenticazione');
 })->name('login');
 
+// Webhook di Stripe — riceve le notifiche di pagamento da Stripe
+// Stripe invia qui un POST ogni volta che un pagamento viene completato, rimborsato, ecc.
+// E' pubblico (senza login) perche' Stripe lo chiama direttamente dai suoi server.
+// La verifica dell'autenticita' viene fatta dal StripeWebhookController tramite la firma.
 Route::post('/stripe/webhook', [StripeWebhookController::class, 'handle']);
 
+// Callback di Google OAuth — riceve il redirect dopo che l'utente si autentica con Google
+// Quando l'utente clicca "Accedi con Google", viene mandato su Google, e dopo
+// il login Google lo rimanda qui. Questa rotta e' in web.php (e NON in api.php)
+// perche' il redirect di Google arriva direttamente nel browser dell'utente,
+// quindi deve usare il middleware web per gestire la sessione e i cookie.
 Route::get('/auth/google/callback', [GoogleController::class, 'handleGoogleCallback']);
-
-Route::group(['prefix' => 'api'], function() {
-
-    /* LOGIN */
-    Route::post('/custom-register', [CustomRegisterController::class, 'register']);
-
-    Route::get('/auth/google/redirect', [GoogleController::class, 'redirectToGoogle']);
-
-    Route::post('/upload-file', [UserController::class, 'uploadFile'])
-            ->middleware(CheckAdmin::class);
-
-    Route::get('/get-admin-image', [UserController::class, 'getAdminImage']);
-
-    /* LOGIN */
-    Route::middleware(['throttle:10,1'])->post('/custom-login', [CustomLoginController::class, 'login']);
-    Route::middleware(['throttle:5,1'])->post('/resend-verification-email', [CustomLoginController::class, 'resendVerificationEmail']);
-
-    /* CONFERMA EMAIL */
-    Route::get('/verify-email/{id}', [VerificationController::class, 'verify'])
-            ->middleware('signed')
-            ->name('verification.verify');
-
-
-    /* COMUNI, CAP, PROVINCE */
-    /* Route::post('/postLocation', [LocationController::class, 'postLocation']);
-    Route::get('/getLocations', [LocationController::class, 'getLocations']); */
-    
-    /* RECUPERO E MODIFICA PASSWORD */
-    Route::post('/forgot-password', [PasswordResetRequestController::class, 'sendEmail']);
-    Route::post('/update-password', [ChangePasswordController::class, 'passwordResetProcess']);
-
-
-    Route::get('/session', [SessionController::class, 'show']);
-    Route::post('/session/first-step', [SessionController::class, 'firstStep']);
-
-    /* COLLI E INDIRIZZI PARTENZA E DESTINAZIONE INSIEME */
-    /* Route::apiResource('shipments', ShipmentController::class); */
-
-    Route::apiResource('guest-cart', GuestCartController::class);
-
-    Route::delete('empty-guest-cart', [GuestCartController::class, 'emptyCart']);
-
-    /* MIDDLEWARE PER LE ROTTE QUANDO DEVI ESSERE LOGGATO */
-    Route::group(['middleware' => ['auth:sanctum']], function() {
-        /* INFORMAZIONI UTENTE */
-        Route::apiResource('users', UserController::class);
-
-        /* INDIRIZZI UTENTE */
-        Route::apiResource('user-addresses', UserAddressController::class);
-
-        /* Route::apiResource('user_addresses', UserAddressController::class); */
-            /* ->parameters([
-                'user_addresses' => 'user_addresses:identifier'
-            ]); */
-
-
-        Route::get('/stripe/connect', [StripeConnectController::class, 'connect']);
-        Route::get('/stripe/callback', [StripeConnectController::class, 'callback']);
-
-        Route::get('/stripe/create-account', [StripeConnectController::class, 'createAccount']);
-
-        
-        /* CARRELLO */
-        Route::delete('empty-cart', [CartController::class, 'emptyCart']);
-
-        Route::apiResource('cart', CartController::class);
-        
-        Route::apiResource('packages', PackageController::class);
-
-        Route::group(['middleware' => [CheckCart::class]], function() {
-            Route::post('stripe/create-payment', [StripeController::class, 'createPayment']);
-
-            Route::post('stripe/create-order', [StripeController::class, 'createOrder']);
-
-            Route::post('stripe/create-payment-intent', [StripeController::class, 'createPaymentIntent']);
-
-            Route::post('stripe/order-paid', [StripeController::class, 'orderPaid']);
-
-            Route::post('stripe/webhook', [StripeWebhookController::class, 'handle']);
-        });
-
-        /* Route::post('stripe/create-payment', [StripeController::class, 'createPayment']);
-
-        Route::post('stripe/create-order', [StripeController::class, 'createOrder']);
-
-        Route::post('stripe/order-paid', [StripeController::class, 'orderPaid']);
-
-        Route::post('stripe/webhook', [StripeWebhookController::class, 'handle']); */
-
-        /* IMPOSTAZIONI */
-        Route::get('settings/stripe', [SettingsController::class, 'getStripeConfig']);
-        Route::post('settings/stripe', [SettingsController::class, 'saveStripeConfig']);
-
-        Route::post('stripe/create-setup-intent', [StripeController::class, 'createSetupIntent']);
-
-        Route::get('stripe/payment-methods', [StripeController::class, 'listPaymentMethods']);
-
-        Route::post('stripe/set-default-payment-method', [StripeController::class, 'setDefaultPaymentMethod']);
-
-        Route::post('stripe/change-default-payment-method', [StripeController::class, 'changeDefaultPaymentMethod']);
-
-        Route::get('stripe/default-payment-method', [StripeController::class, 'getDefaultPaymentMethod']);
-
-        Route::delete('stripe/delete-card', [StripeController::class, 'deleteCard']);
-
-       
-
-        /* COLLI */
-        Route::apiResource('packages', PackageController::class);
-
-        /* INDIRIZZI PARTENZA E DESTINAZIONE */
-        Route::apiResource('addresses', AddressController::class);
-
-        /* ORDINI */
-        Route::apiResource('orders', OrderController::class);
-            /* ->middleware(CheckAdmin::class); */
-
-        Route::post('calculate-coupon', [CouponController::class, 'calculateCoupon']);
-
-        /* BRAINTREETOKEN */
-        /* Route::get('braintreeToken', 'App\Http\Controllers\PaymentMethodController@generateCustomerBraintreeToken'); */
-
-        /* METODI DI PAGAMENTO */
-        /* Route::post('addCard', 'App\Http\Controllers\PaymentMethodController@addCard');
-        Route::post('editInfoCard', 'App\Http\Controllers\PaymentMethodController@editInfoCard');
-        Route::post('deleteCard', 'App\Http\Controllers\PaymentMethodController@deleteCard');
-
-        Route::get('paymentMethods/{customerId}', 'App\Http\Controllers\PaymentMethodController@getPaymentMethods');
-
-        Route::get('defaultPaymentMethod/{customerId}', 'App\Http\Controllers\PaymentMethodController@getDefaultPaymentMethod'); */
-    });
-});

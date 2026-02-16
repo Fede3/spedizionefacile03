@@ -1,25 +1,89 @@
+<!--
+  FILE: pages/account/profilo.vue
+  SCOPO: Profilo utente — visualizza e modifica dati personali, aziendali, fatturazione, password.
+         Due viste: sola lettura (card profilo) e form di modifica inline.
+  API: PATCH /api/users/{id} (aggiorna profilo utente).
+  COMPONENTI: nessun componente custom (solo Icon di Nuxt).
+  ROUTE: /account/profilo (middleware sanctum:auth).
+
+  DATI IN INGRESSO:
+    - user (da useSanctumAuth) — dati dell'utente autenticato.
+
+  DATI IN USCITA:
+    - PATCH /api/users/{id} — salva i dati modificati nel backend.
+
+  VINCOLI:
+    - L'utente deve essere autenticato (middleware sanctum:auth).
+    - Se la sessione scade (401), redirect a /autenticazione.
+    - La password puo' essere lasciata vuota per non cambiarla.
+
+  ERRORI TIPICI:
+    - 401 → sessione scaduta, redirect automatico.
+    - Errori di validazione → mostra il primo errore dal backend.
+
+  PUNTI DI MODIFICA SICURI:
+    - Aggiungere campi al form: aggiungere in userInfo e nel template.
+    - Cambiare i colori del badge ruolo: modificare getRoleBadge().
+
+  COLLEGAMENTI:
+    - pages/autenticazione.vue → redirect se sessione scaduta.
+    - pages/account/index.vue → dashboard account (breadcrumb).
+-->
 <script setup>
+/* Richiede che l'utente sia autenticato */
 definePageMeta({
 	middleware: ["sanctum:auth"],
 });
 
+/* refreshIdentity ricarica i dati utente dopo un salvataggio,
+   user contiene i dati dell'utente, logout serve per uscire */
 const { refreshIdentity, user, logout } = useSanctumAuth();
 
+/* Messaggi mostrati all'utente: errore, successo e caricamento */
 const messageError = ref(null);
 const messageSuccess = ref(null);
 const messageLoading = ref(null);
+
+/* Controlla se mostrare il form di modifica o la vista di sola lettura */
 const showEditForm = ref(false);
 
+/**
+ * Oggetto con tutti i campi modificabili del profilo utente.
+ * Viene pre-compilato con i dati attuali dell'utente.
+ */
 const userInfo = ref({
 	name: user.value?.name || "",
+	surname: user.value?.surname || "",
 	email: user.value?.email || "",
 	password: "",
 	password_confirmation: "",
 	telephone_number: user.value?.telephone_number || "",
+	user_type: user.value?.user_type || "privato",
+	// Business data
+	company_name: user.value?.company_name || "",
+	vat_number: user.value?.vat_number || "",
+	fiscal_code: user.value?.fiscal_code || "",
+	pec: user.value?.pec || "",
+	sdi_code: user.value?.sdi_code || "",
+	// Billing data
+	billing_name: user.value?.billing_name || "",
+	billing_address: user.value?.billing_address || "",
+	billing_city: user.value?.billing_city || "",
+	billing_postal_code: user.value?.billing_postal_code || "",
+	billing_province: user.value?.billing_province || "",
 });
 
+/* Se spuntato, i dati di fatturazione sono uguali a quelli di spedizione */
+const billingSameAsShipping = ref(false);
+
+/* Client per chiamare le API del backend (autenticato con cookie) */
 const sanctum = useSanctumClient();
 
+/**
+ * Salva le modifiche al profilo.
+ * Invia i dati al server, poi aggiorna i dati utente in locale.
+ * Viene chiamata quando l'utente clicca "Salva modifiche" nel form.
+ */
 const updateInfo = async () => {
 	messageError.value = null;
 	messageSuccess.value = null;
@@ -55,6 +119,7 @@ const updateInfo = async () => {
 	}
 };
 
+/* Mostra il numero di telefono o un testo se non ancora inserito */
 const getTelephoneNumber = (telephone_number) => {
 	if (!telephone_number || telephone_number === "0") {
 		return "Non ancora aggiunto";
@@ -62,12 +127,14 @@ const getTelephoneNumber = (telephone_number) => {
 	return telephone_number;
 };
 
+/* Restituisce etichetta e colore del badge in base al ruolo utente (Cliente, Partner Pro, Admin) */
 const getRoleBadge = (role) => {
 	if (role === "Partner Pro") return { label: "Partner Pro", class: "bg-[#095866]/10 text-[#095866]" };
 	if (role === "Admin") return { label: "Admin", class: "bg-purple-50 text-purple-700" };
 	return { label: "Cliente", class: "bg-blue-50 text-blue-700" };
 };
 
+/* Esegue il logout e in caso di errore riporta alla homepage */
 const handleLogout = async () => {
 	try {
 		await logout();
@@ -106,7 +173,8 @@ const handleLogout = async () => {
 					<h1 class="text-[1.5rem] desktop:text-[1.75rem] font-bold text-[#252B42]">Profilo e dati</h1>
 					<button
 						@click="showEditForm = true"
-						class="px-[20px] py-[10px] bg-[#095866] hover:bg-[#0a7a8c] text-white rounded-[10px] text-[0.875rem] font-semibold transition-colors cursor-pointer">
+						class="inline-flex items-center gap-[6px] px-[20px] py-[10px] bg-[#095866] hover:bg-[#074a56] text-white rounded-[10px] text-[0.875rem] font-semibold transition-colors cursor-pointer">
+						<Icon name="mdi:pencil-outline" class="text-[16px]" />
 						Modifica dati
 					</button>
 				</div>
@@ -150,6 +218,27 @@ const handleLogout = async () => {
 
 						<div class="flex items-start gap-[12px]">
 							<div class="w-[36px] h-[36px] rounded-[8px] bg-[#F8F9FB] flex items-center justify-center shrink-0">
+								<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[18px] h-[18px] text-[#737373]" fill="currentColor"><path d="M12,5.5A3.5,3.5 0 0,1 15.5,9A3.5,3.5 0 0,1 12,12.5A3.5,3.5 0 0,1 8.5,9A3.5,3.5 0 0,1 12,5.5M5,8C5.56,8 6.08,8.15 6.53,8.42C6.38,9.85 6.8,11.27 7.66,12.38C7.16,13.34 6.16,14 5,14A3,3 0 0,1 2,11A3,3 0 0,1 5,8M19,8A3,3 0 0,1 22,11A3,3 0 0,1 19,14C17.84,14 16.84,13.34 16.34,12.38C17.2,11.27 17.62,9.85 17.47,8.42C17.92,8.15 18.44,8 19,8M5.5,18.25C5.5,16.18 8.41,14.5 12,14.5C15.59,14.5 18.5,16.18 18.5,18.25V20H5.5V18.25Z"/></svg>
+							</div>
+							<div>
+								<p class="text-[0.8125rem] text-[#737373]">Tipo account</p>
+								<p class="text-[0.9375rem] font-medium text-[#252B42]">{{ (user?.user_type || 'privato') === 'commerciante' ? 'Azienda' : 'Privato' }}</p>
+							</div>
+						</div>
+
+						<div v-if="user?.company_name" class="flex items-start gap-[12px]">
+							<div class="w-[36px] h-[36px] rounded-[8px] bg-[#F8F9FB] flex items-center justify-center shrink-0">
+								<Icon name="mdi:domain" class="text-[18px] text-[#737373]" />
+							</div>
+							<div>
+								<p class="text-[0.8125rem] text-[#737373]">Azienda</p>
+								<p class="text-[0.9375rem] font-medium text-[#252B42]">{{ user?.company_name }}</p>
+								<p v-if="user?.vat_number" class="text-[0.8125rem] text-[#737373]">P.IVA: {{ user?.vat_number }}</p>
+							</div>
+						</div>
+
+						<div class="flex items-start gap-[12px]">
+							<div class="w-[36px] h-[36px] rounded-[8px] bg-[#F8F9FB] flex items-center justify-center shrink-0">
 								<Icon name="mdi:lock-outline" class="text-[18px] text-[#737373]" />
 							</div>
 							<div>
@@ -163,7 +252,8 @@ const handleLogout = async () => {
 				<!-- Logout button -->
 				<button
 					@click.prevent="handleLogout"
-					class="w-full py-[14px] border border-[#E9EBEC] rounded-[10px] text-[0.9375rem] text-[#737373] hover:text-red-600 hover:border-red-200 hover:bg-red-50 transition-all cursor-pointer font-medium">
+					class="w-full py-[14px] border border-[#E9EBEC] rounded-[10px] text-[0.9375rem] text-[#737373] hover:text-red-600 hover:border-red-200 hover:bg-red-50 transition-all cursor-pointer font-medium inline-flex items-center justify-center gap-[8px]">
+					<Icon name="mdi:logout" class="text-[18px]" />
 					Esci dall'account
 				</button>
 			</template>
@@ -172,75 +262,137 @@ const handleLogout = async () => {
 			<template v-if="showEditForm">
 				<h1 class="text-[1.5rem] desktop:text-[1.75rem] font-bold text-[#252B42] mb-[24px]">Modifica dati</h1>
 
-				<div class="bg-white rounded-[16px] p-[24px] desktop:p-[32px] shadow-sm border border-[#E9EBEC] max-w-[480px] mx-auto">
+				<div class="bg-white rounded-[16px] p-[24px] desktop:p-[32px] shadow-sm border border-[#E9EBEC] max-w-[600px] mx-auto">
 					<form @submit.prevent="updateInfo">
-						<div class="mb-[20px]">
-							<label for="name" class="block text-[0.8125rem] font-semibold text-[#404040] mb-[6px]">Nome</label>
-							<input
-								type="text"
-								v-model="userInfo.name"
-								id="name"
-								class="w-full px-[14px] py-[12px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[8px] text-[0.9375rem] text-[#252B42] placeholder:text-[#a0a0a0] focus:border-[#095866] focus:outline-none transition-colors"
-								placeholder="Il tuo nome"
-								required />
+						<!-- Tipo account -->
+						<h3 class="text-[1rem] font-bold text-[#252B42] mb-[12px]">Tipo account</h3>
+						<div class="flex items-center gap-[12px] mb-[20px]">
+							<label
+								:class="[
+									'flex-1 flex items-center justify-center gap-[6px] px-[16px] py-[12px] rounded-[10px] cursor-pointer border transition-all text-[0.9375rem] font-medium text-center',
+									userInfo.user_type === 'privato'
+										? 'bg-[#095866] text-white border-[#095866] shadow-sm'
+										: 'bg-white text-[#252B42] border-[#E9EBEC] hover:border-[#095866]',
+								]">
+								<input type="radio" value="privato" v-model="userInfo.user_type" class="sr-only" />
+								Privato
+							</label>
+							<label
+								:class="[
+									'flex-1 flex items-center justify-center gap-[6px] px-[16px] py-[12px] rounded-[10px] cursor-pointer border transition-all text-[0.9375rem] font-medium text-center',
+									userInfo.user_type === 'commerciante'
+										? 'bg-[#095866] text-white border-[#095866] shadow-sm'
+										: 'bg-white text-[#252B42] border-[#E9EBEC] hover:border-[#095866]',
+								]">
+								<input type="radio" value="commerciante" v-model="userInfo.user_type" class="sr-only" />
+								Azienda
+							</label>
 						</div>
 
-						<div class="mb-[20px]">
-							<label for="email" class="block text-[0.8125rem] font-semibold text-[#404040] mb-[6px]">Email</label>
-							<input
-								type="email"
-								v-model="userInfo.email"
-								id="email"
-								class="w-full px-[14px] py-[12px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[8px] text-[0.9375rem] text-[#252B42] placeholder:text-[#a0a0a0] focus:border-[#095866] focus:outline-none transition-colors"
-								placeholder="La tua email"
-								required />
+						<!-- Personal data -->
+						<h3 class="text-[1rem] font-bold text-[#252B42] mb-[16px]">Dati personali</h3>
+						<div class="grid grid-cols-2 gap-[12px] mb-[16px]">
+							<div>
+								<label class="block text-[0.8125rem] font-semibold text-[#404040] mb-[4px]">Nome *</label>
+								<input type="text" v-model="userInfo.name" class="w-full px-[12px] py-[10px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[8px] text-[0.875rem] focus:border-[#095866] focus:outline-none" required />
+							</div>
+							<div>
+								<label class="block text-[0.8125rem] font-semibold text-[#404040] mb-[4px]">Cognome</label>
+								<input type="text" v-model="userInfo.surname" class="w-full px-[12px] py-[10px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[8px] text-[0.875rem] focus:border-[#095866] focus:outline-none" />
+							</div>
+						</div>
+						<div class="mb-[16px]">
+							<label class="block text-[0.8125rem] font-semibold text-[#404040] mb-[4px]">Email *</label>
+							<input type="email" v-model="userInfo.email" class="w-full px-[12px] py-[10px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[8px] text-[0.875rem] focus:border-[#095866] focus:outline-none" required />
+						</div>
+						<div class="mb-[16px]">
+							<label class="block text-[0.8125rem] font-semibold text-[#404040] mb-[4px]">Telefono</label>
+							<input type="text" v-model="userInfo.telephone_number" class="w-full px-[12px] py-[10px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[8px] text-[0.875rem] focus:border-[#095866] focus:outline-none" />
 						</div>
 
-						<div class="mb-[20px]">
-							<label for="telephone_number" class="block text-[0.8125rem] font-semibold text-[#404040] mb-[6px]">Numero di telefono</label>
-							<input
-								type="text"
-								v-model="userInfo.telephone_number"
-								id="telephone_number"
-								class="w-full px-[14px] py-[12px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[8px] text-[0.9375rem] text-[#252B42] placeholder:text-[#a0a0a0] focus:border-[#095866] focus:outline-none transition-colors"
-								placeholder="Inserisci il numero di telefono" />
+						<!-- Business data -->
+						<h3 class="text-[1rem] font-bold text-[#252B42] mb-[12px] mt-[24px] pt-[20px] border-t border-[#F0F0F0]">Dati aziendali (opzionale)</h3>
+						<p class="text-[0.8125rem] text-[#737373] mb-[14px]">Compila solo se sei un commerciante o un'azienda.</p>
+						<div class="grid grid-cols-2 gap-[12px] mb-[12px]">
+							<div>
+								<label class="block text-[0.8125rem] font-semibold text-[#404040] mb-[4px]">Ragione Sociale</label>
+								<input type="text" v-model="userInfo.company_name" placeholder="Nome azienda" class="w-full px-[12px] py-[10px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[8px] text-[0.875rem] focus:border-[#095866] focus:outline-none" />
+							</div>
+							<div>
+								<label class="block text-[0.8125rem] font-semibold text-[#404040] mb-[4px]">Partita IVA</label>
+								<input type="text" v-model="userInfo.vat_number" placeholder="IT12345678901" class="w-full px-[12px] py-[10px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[8px] text-[0.875rem] focus:border-[#095866] focus:outline-none" />
+							</div>
+						</div>
+						<div class="grid grid-cols-2 gap-[12px] mb-[12px]">
+							<div>
+								<label class="block text-[0.8125rem] font-semibold text-[#404040] mb-[4px]">Codice Fiscale</label>
+								<input type="text" v-model="userInfo.fiscal_code" placeholder="RSSMRA80A01H501U" class="w-full px-[12px] py-[10px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[8px] text-[0.875rem] focus:border-[#095866] focus:outline-none" />
+							</div>
+							<div>
+								<label class="block text-[0.8125rem] font-semibold text-[#404040] mb-[4px]">PEC</label>
+								<input type="email" v-model="userInfo.pec" placeholder="azienda@pec.it" class="w-full px-[12px] py-[10px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[8px] text-[0.875rem] focus:border-[#095866] focus:outline-none" />
+							</div>
+						</div>
+						<div class="mb-[12px]">
+							<label class="block text-[0.8125rem] font-semibold text-[#404040] mb-[4px]">Codice SDI</label>
+							<input type="text" v-model="userInfo.sdi_code" placeholder="0000000" maxlength="7" class="w-full px-[12px] py-[10px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[8px] text-[0.875rem] focus:border-[#095866] focus:outline-none" />
 						</div>
 
-						<div class="mb-[20px]">
-							<label for="password" class="block text-[0.8125rem] font-semibold text-[#404040] mb-[6px]">Nuova password</label>
-							<input
-								type="password"
-								v-model="userInfo.password"
-								id="password"
-								class="w-full px-[14px] py-[12px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[8px] text-[0.9375rem] text-[#252B42] placeholder:text-[#a0a0a0] focus:border-[#095866] focus:outline-none transition-colors"
-								placeholder="Lascia vuoto per mantenere la stessa" />
+						<!-- Billing data -->
+						<h3 class="text-[1rem] font-bold text-[#252B42] mb-[12px] mt-[24px] pt-[20px] border-t border-[#F0F0F0]">Dati di fatturazione</h3>
+
+						<label class="flex items-center gap-[8px] cursor-pointer mb-[14px]">
+							<input type="checkbox" v-model="billingSameAsShipping" class="w-[18px] h-[18px] accent-[#095866] cursor-pointer" />
+							<span class="text-[0.8125rem] text-[#737373]">Uguale ai dati di spedizione</span>
+						</label>
+
+						<template v-if="!billingSameAsShipping">
+							<div class="mb-[12px]">
+								<label class="block text-[0.8125rem] font-semibold text-[#404040] mb-[4px]">Intestatario fatturazione</label>
+								<input type="text" v-model="userInfo.billing_name" placeholder="Nome o Ragione Sociale" class="w-full px-[12px] py-[10px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[8px] text-[0.875rem] focus:border-[#095866] focus:outline-none" />
+							</div>
+							<div class="mb-[12px]">
+								<label class="block text-[0.8125rem] font-semibold text-[#404040] mb-[4px]">Indirizzo fatturazione</label>
+								<input type="text" v-model="userInfo.billing_address" placeholder="Via Roma 10" class="w-full px-[12px] py-[10px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[8px] text-[0.875rem] focus:border-[#095866] focus:outline-none" />
+							</div>
+							<div class="grid grid-cols-3 gap-[12px] mb-[12px]">
+								<div>
+									<label class="block text-[0.8125rem] font-semibold text-[#404040] mb-[4px]">Città</label>
+									<input type="text" v-model="userInfo.billing_city" placeholder="Roma" class="w-full px-[12px] py-[10px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[8px] text-[0.875rem] focus:border-[#095866] focus:outline-none" />
+								</div>
+								<div>
+									<label class="block text-[0.8125rem] font-semibold text-[#404040] mb-[4px]">CAP</label>
+									<input type="text" v-model="userInfo.billing_postal_code" placeholder="00100" class="w-full px-[12px] py-[10px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[8px] text-[0.875rem] focus:border-[#095866] focus:outline-none" />
+								</div>
+								<div>
+									<label class="block text-[0.8125rem] font-semibold text-[#404040] mb-[4px]">Provincia</label>
+									<input type="text" v-model="userInfo.billing_province" placeholder="RM" class="w-full px-[12px] py-[10px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[8px] text-[0.875rem] focus:border-[#095866] focus:outline-none" />
+								</div>
+							</div>
+						</template>
+
+						<!-- Password -->
+						<h3 class="text-[1rem] font-bold text-[#252B42] mb-[12px] mt-[24px] pt-[20px] border-t border-[#F0F0F0]">Cambia password</h3>
+						<div class="grid grid-cols-2 gap-[12px] mb-[24px]">
+							<div>
+								<label class="block text-[0.8125rem] font-semibold text-[#404040] mb-[4px]">Nuova password</label>
+								<input type="password" v-model="userInfo.password" placeholder="Lascia vuoto per mantenere" class="w-full px-[12px] py-[10px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[8px] text-[0.875rem] focus:border-[#095866] focus:outline-none" />
+							</div>
+							<div>
+								<label class="block text-[0.8125rem] font-semibold text-[#404040] mb-[4px]">Conferma password</label>
+								<input type="password" v-model="userInfo.password_confirmation" placeholder="Conferma" class="w-full px-[12px] py-[10px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[8px] text-[0.875rem] focus:border-[#095866] focus:outline-none" />
+							</div>
 						</div>
 
-						<div class="mb-[24px]">
-							<label for="password_confirmation" class="block text-[0.8125rem] font-semibold text-[#404040] mb-[6px]">Conferma password</label>
-							<input
-								type="password"
-								v-model="userInfo.password_confirmation"
-								id="password_confirmation"
-								class="w-full px-[14px] py-[12px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[8px] text-[0.9375rem] text-[#252B42] placeholder:text-[#a0a0a0] focus:border-[#095866] focus:outline-none transition-colors"
-								placeholder="Conferma la nuova password" />
-						</div>
-
-						<p v-if="messageLoading" class="text-center text-[0.875rem] text-[#095866] font-medium mb-[16px]">
-							{{ messageLoading }}
-						</p>
-
+						<!-- Bottoni salva/annulla con loading state sul pulsante -->
 						<div class="flex gap-[12px]">
-							<button
-								type="button"
-								@click.prevent="showEditForm = false"
-								class="flex-1 py-[14px] rounded-[10px] bg-[#F0F0F0] hover:bg-[#E0E0E0] text-[#404040] font-semibold text-[0.9375rem] transition-colors cursor-pointer">
+							<button type="button" @click.prevent="showEditForm = false" :disabled="!!messageLoading" class="flex-1 inline-flex items-center justify-center gap-[6px] py-[14px] rounded-[10px] bg-[#F0F0F0] hover:bg-[#E0E0E0] text-[#404040] font-semibold text-[0.9375rem] transition-colors cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed">
+								<Icon name="mdi:close" class="text-[18px]" />
 								Annulla
 							</button>
-							<button
-								type="submit"
-								class="flex-1 py-[14px] rounded-[10px] bg-[#095866] hover:bg-[#0a7a8c] text-white font-semibold text-[0.9375rem] transition-colors cursor-pointer">
-								Salva modifiche
+							<button type="submit" :disabled="!!messageLoading" class="flex-1 inline-flex items-center justify-center gap-[6px] py-[14px] rounded-[10px] bg-[#095866] hover:bg-[#074a56] text-white font-semibold text-[0.9375rem] transition-colors cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed">
+								<Icon name="mdi:content-save" class="text-[18px]" />
+								{{ messageLoading ? 'Salvataggio...' : 'Salva modifiche' }}
 							</button>
 						</div>
 					</form>

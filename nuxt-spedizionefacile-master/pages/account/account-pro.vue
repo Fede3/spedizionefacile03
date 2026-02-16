@@ -1,4 +1,41 @@
+<!--
+  FILE: pages/account/account-pro.vue
+  SCOPO: Pagina Partner Pro — due viste in base al ruolo utente.
+         Non Pro: informazioni e form per richiedere il ruolo Partner Pro all'admin.
+         Gia' Pro: codice referral, link da condividere, statistiche commissioni,
+         saldo prelevabile e storico commissioni.
+  API: POST /api/pro-requests — invia richiesta Partner Pro,
+       GET /api/referral-stats — statistiche referral (solo Pro),
+       GET /api/commissions — storico commissioni (solo Pro).
+  COMPONENTI: nessun componente custom.
+  ROUTE: /account/account-pro (middleware sanctum:auth).
+
+  DATI IN INGRESSO:
+    - user (da useSanctumAuth) — ruolo, codice referral.
+    - referralStats, commissions (da API, solo Pro).
+
+  DATI IN USCITA:
+    - POST /api/pro-requests — richiesta Partner Pro.
+
+  VINCOLI:
+    - L'utente deve essere autenticato.
+    - La richiesta Pro richiede nome azienda e P.IVA.
+    - Il codice referral e' generato dal backend al momento dell'approvazione.
+
+  ERRORI TIPICI:
+    - Richiesta gia' inviata → messaggio "in attesa di approvazione".
+    - Campi aziendali mancanti → errore validazione.
+
+  PUNTI DI MODIFICA SICURI:
+    - Aggiungere campi alla richiesta Pro: modificare il form e il body API.
+    - Cambiare le statistiche mostrate: modificare il template card.
+
+  COLLEGAMENTI:
+    - pages/account/prelievi.vue → prelievo commissioni.
+    - pages/account/amministrazione/utenti.vue → admin approva/rifiuta richieste.
+-->
 <script setup>
+/* Richiede che l'utente sia autenticato */
 definePageMeta({
 	middleware: ["sanctum:auth"],
 });
@@ -6,12 +43,61 @@ definePageMeta({
 const { user } = useSanctumAuth();
 const sanctum = useSanctumClient();
 
+/* Controlla se l'utente e' gia' Partner Pro */
 const isPro = computed(() => user.value?.role === "Partner Pro");
 
+/* === RICHIESTA ACCOUNT PRO (per chi non e' ancora Pro) === */
+/* Stato della richiesta Pro (pending, approved, rejected) */
+const proRequestStatus = ref(null);
+/* Indica se l'invio della richiesta e' in corso */
+const proRequestLoading = ref(false);
+/* Dati del form di richiesta Pro */
+const proRequestForm = ref({
+	company_name: "",
+	vat_number: "",
+	message: "",
+});
+/* Errore durante l'invio della richiesta */
+const proRequestError = ref(null);
+/* Indica se la richiesta e' stata inviata con successo */
+const proRequestSuccess = ref(false);
+
+/* Controlla se l'utente ha gia' inviato una richiesta Pro e il suo stato */
+const fetchProRequestStatus = async () => {
+	try {
+		const result = await sanctum("/api/pro-request/status");
+		proRequestStatus.value = result;
+	} catch (e) { /* ignore */ }
+};
+
+/* Invia la richiesta per diventare Partner Pro all'amministratore */
+const submitProRequest = async () => {
+	proRequestError.value = null;
+	proRequestLoading.value = true;
+	try {
+		await sanctum("/api/pro-request", {
+			method: "POST",
+			body: proRequestForm.value,
+		});
+		proRequestSuccess.value = true;
+		await fetchProRequestStatus();
+	} catch (e) {
+		const data = e?.response?._data || e?.data;
+		proRequestError.value = data?.message || "Errore nell'invio della richiesta. Riprova.";
+	} finally {
+		proRequestLoading.value = false;
+	}
+};
+
+/* === DATI PARTNER PRO (visibili solo se gia' Pro) === */
+/* Contiene il codice referral, link, guadagni totali e utilizzi */
 const referralData = ref(null);
+/* Dati sulle commissioni (saldo prelevabile, storico) */
 const earnings = ref(null);
+/* Indica se i dati sono in fase di caricamento */
 const isLoading = ref(true);
 
+/* Carica il codice referral e le statistiche guadagni dal server */
 const fetchData = async () => {
 	if (!isPro.value) {
 		isLoading.value = false;
@@ -31,11 +117,17 @@ const fetchData = async () => {
 	}
 };
 
-onMounted(fetchData);
+onMounted(() => {
+	fetchData();
+	if (!isPro.value) fetchProRequestStatus();
+});
 
+/* Indicatori per mostrare "Copiato!" temporaneamente dopo un click */
 const copied = ref(false);
 const copiedAccountCode = ref(false);
+const copiedLink = ref(false);
 
+/* Copia il codice referral negli appunti dell'utente */
 const copyCode = async () => {
 	if (!referralData.value?.referral_code) return;
 	try {
@@ -49,6 +141,28 @@ const copyCode = async () => {
 	}
 };
 
+/* Copia il link referral completo negli appunti */
+const copyReferralLink = async () => {
+	if (!referralData.value?.referral_link) return;
+	try {
+		await navigator.clipboard.writeText(referralData.value.referral_link);
+		copiedLink.value = true;
+		setTimeout(() => (copiedLink.value = false), 2000);
+	} catch {
+		fallbackCopy(referralData.value.referral_link);
+		copiedLink.value = true;
+		setTimeout(() => (copiedLink.value = false), 2000);
+	}
+};
+
+/* Apre WhatsApp con un messaggio precompilato con il link referral */
+const shareWhatsApp = () => {
+	if (referralData.value?.whatsapp_link) {
+		window.open(referralData.value.whatsapp_link, '_blank');
+	}
+};
+
+/* Copia il codice account (es. "SF-PRO-000123") negli appunti */
 const copyAccountCode = async () => {
 	const code = `SF-PRO-${user.value?.id?.toString().padStart(6, '0')}`;
 	try {
@@ -62,6 +176,7 @@ const copyAccountCode = async () => {
 	}
 };
 
+/* Metodo alternativo per copiare testo nei browser piu' vecchi */
 const fallbackCopy = (text) => {
 	const el = document.createElement("textarea");
 	el.value = text;
@@ -91,20 +206,50 @@ const formatDate = (dateStr) => {
 			</div>
 
 			<!-- Not Pro -->
-			<div v-if="!isPro" class="bg-white rounded-[20px] p-[32px] desktop:p-[48px] shadow-sm border border-[#E9EBEC] text-center">
-				<div class="w-[80px] h-[80px] mx-auto mb-[24px] bg-gradient-to-br from-amber-50 to-amber-100 rounded-full flex items-center justify-center">
-					<Icon name="mdi:star-outline" class="text-[36px] text-amber-500" />
+			<div v-if="!isPro" class="bg-white rounded-[20px] p-[32px] desktop:p-[48px] shadow-sm border border-[#E9EBEC]">
+				<div class="text-center mb-[32px]">
+					<div class="w-[80px] h-[80px] mx-auto mb-[24px] bg-gradient-to-br from-amber-50 to-amber-100 rounded-full flex items-center justify-center">
+						<Icon name="mdi:star-outline" class="text-[36px] text-amber-500" />
+					</div>
+					<h2 class="text-[1.5rem] font-bold text-[#252B42] mb-[12px]">Diventa Partner Pro</h2>
+					<p class="text-[#737373] text-[0.9375rem] max-w-[480px] mx-auto leading-[1.6]">
+						Ottieni un codice referral personale e guadagna una commissione del 5% su ogni spedizione acquistata tramite il tuo codice. I clienti che usano il tuo codice ricevono uno sconto del 5%.
+					</p>
 				</div>
-				<h2 class="text-[1.5rem] font-bold text-[#252B42] mb-[12px]">Diventa Partner Pro</h2>
-				<p class="text-[#737373] text-[0.9375rem] max-w-[480px] mx-auto mb-[24px] leading-[1.6]">
-					Ottieni un codice referral personale e guadagna una commissione del 5% su ogni spedizione acquistata tramite il tuo codice. I clienti che usano il tuo codice ricevono uno sconto del 5%.
-				</p>
-				<div class="inline-flex items-center gap-[8px] px-[20px] py-[10px] bg-[#F8F9FB] rounded-[10px] border border-[#E9EBEC]">
-					<Icon name="mdi:account-outline" class="text-[18px] text-[#737373]" />
-					<span class="text-[0.875rem] text-[#737373]">Il tuo account:</span>
-					<span class="text-[0.875rem] font-bold text-[#252B42]">{{ user?.role }}</span>
+
+				<!-- Pending request status -->
+				<div v-if="proRequestStatus?.has_request && proRequestStatus?.data?.status === 'pending'" class="bg-amber-50 border border-amber-200 rounded-[12px] p-[20px] text-center mb-[24px]">
+					<Icon name="mdi:clock-outline" class="text-[24px] text-amber-600 mx-auto mb-[8px]" />
+					<p class="text-[0.9375rem] font-semibold text-amber-800">Richiesta in attesa di approvazione</p>
+					<p class="text-[0.8125rem] text-amber-700 mt-[4px]">La tua richiesta Pro è in fase di revisione. Ti comunicheremo l'esito al più presto.</p>
 				</div>
-				<p class="text-[0.8125rem] text-[#737373] mt-[20px]">Per diventare Partner Pro, contattaci o registrati come Partner Pro.</p>
+
+				<!-- Approved -->
+				<div v-else-if="proRequestStatus?.has_request && proRequestStatus?.data?.status === 'approved'" class="bg-emerald-50 border border-emerald-200 rounded-[12px] p-[20px] text-center mb-[24px]">
+					<p class="text-[0.9375rem] font-semibold text-emerald-800">Richiesta approvata! Ricarica la pagina per vedere il tuo account Pro.</p>
+				</div>
+
+				<!-- Rejected -->
+				<div v-else-if="proRequestStatus?.has_request && proRequestStatus?.data?.status === 'rejected'" class="bg-red-50 border border-red-200 rounded-[12px] p-[20px] text-center mb-[24px]">
+					<p class="text-[0.9375rem] font-semibold text-red-800">La tua richiesta precedente è stata rifiutata. Puoi inviarne una nuova.</p>
+				</div>
+
+				<!-- Pro request button -->
+				<div v-if="!proRequestStatus?.has_request || proRequestStatus?.data?.status === 'rejected'">
+					<div v-if="proRequestSuccess" class="bg-emerald-50 border border-emerald-200 rounded-[12px] p-[20px] text-center">
+						<Icon name="mdi:check-circle-outline" class="text-[32px] text-emerald-500 mx-auto mb-[8px]" />
+						<p class="text-[1rem] font-semibold text-emerald-800">Richiesta inviata con successo!</p>
+						<p class="text-[0.8125rem] text-emerald-700 mt-[4px]">Riceverai una risposta dall'amministratore al più presto.</p>
+					</div>
+					<div v-else class="text-center">
+						<p v-if="proRequestError" class="text-red-500 text-[0.8125rem] bg-red-50 p-[10px] rounded-[6px] mb-[16px]">{{ proRequestError }}</p>
+						<button @click="submitProRequest" :disabled="proRequestLoading" :class="proRequestLoading ? 'bg-gray-300 cursor-not-allowed' : 'bg-[#095866] hover:bg-[#074a56] cursor-pointer'" class="inline-flex items-center gap-[8px] px-[40px] py-[16px] rounded-[12px] text-white font-semibold text-[1.125rem] transition-all">
+							<Icon name="mdi:star-outline" class="text-[22px]" />
+							{{ proRequestLoading ? 'Invio in corso...' : 'Richiedi accesso Pro' }}
+						</button>
+						<p class="text-[0.8125rem] text-[#737373] mt-[12px]">L'amministratore potrà visualizzare i tuoi dati dal tuo profilo.</p>
+					</div>
+				</div>
 			</div>
 
 			<!-- Pro User Content -->
@@ -131,7 +276,7 @@ const formatDate = (dateStr) => {
 					</div>
 
 					<!-- Referral Code -->
-					<div class="relative bg-gradient-to-br from-[#095866] to-[#0a7a8c] rounded-[20px] p-[28px] text-white shadow-[0_8px_24px_rgba(9,88,102,0.2)] overflow-hidden">
+					<div class="relative bg-gradient-to-br from-[#095866] to-[#0b6d7d] rounded-[20px] p-[28px] text-white shadow-[0_8px_24px_rgba(9,88,102,0.2)] overflow-hidden">
 						<div class="absolute top-0 right-0 w-[160px] h-[160px] rounded-full bg-white/5 -translate-y-1/2 translate-x-1/2"></div>
 						<div class="relative z-1">
 							<div class="flex items-center gap-[10px] mb-[16px]">
@@ -147,10 +292,24 @@ const formatDate = (dateStr) => {
 								<button
 									@click="copyCode"
 									class="px-[14px] py-[6px] bg-white/20 hover:bg-white/30 rounded-[8px] text-[0.8125rem] font-medium transition-all cursor-pointer">
-									{{ copied ? "Copiato!" : "Copia" }}
+									{{ copied ? "Copiato!" : "Copia codice" }}
 								</button>
 							</div>
 							<p class="text-[0.8125rem] opacity-60 mt-[8px]">Condividi per dare il 5% di sconto ai tuoi contatti.</p>
+							<div class="flex flex-wrap items-center gap-[10px] mt-[14px]">
+								<button
+									@click="copyReferralLink"
+									class="inline-flex items-center gap-[6px] px-[14px] py-[8px] bg-white/20 hover:bg-white/30 rounded-[8px] text-[0.8125rem] font-medium transition-all cursor-pointer">
+									<Icon :name="copiedLink ? 'mdi:check' : 'mdi:link-variant'" class="text-[16px]" />
+									{{ copiedLink ? "Link copiato!" : "Copia link" }}
+								</button>
+								<button
+									@click="shareWhatsApp"
+									class="inline-flex items-center gap-[6px] px-[14px] py-[8px] bg-[#25D366]/80 hover:bg-[#25D366] rounded-[8px] text-[0.8125rem] font-medium transition-all cursor-pointer">
+									<Icon name="mdi:whatsapp" class="text-[18px]" />
+									Condividi su WhatsApp
+								</button>
+							</div>
 						</div>
 					</div>
 				</div>

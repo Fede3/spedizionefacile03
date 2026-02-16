@@ -1,13 +1,53 @@
+# =============================================================================
+# CADDYFILE per CLOUDFLARE TUNNEL (condivisione online)
+# =============================================================================
+#
+# SCOPO: Versione del Caddyfile usata quando il sito e' condiviso tramite
+#        Cloudflare Tunnel (comando: cloudflared tunnel --url http://localhost:8787).
+#
+# COME FUNZIONA IL TUNNEL:
+#   Internet (HTTPS) → Cloudflare → Tunnel → Caddy (:8787 HTTP) → Laravel/Nuxt
+#
+#   Il browser dell'utente remoto usa HTTPS (gestito da Cloudflare).
+#   Ma Caddy riceve la richiesta in HTTP (localhost:8787).
+#   Quindi dobbiamo dire a Laravel: "il client originale usava HTTPS!"
+#
+# DIFFERENZA DAL CADDYFILE NORMALE:
+#   Nel Caddyfile normale, X-Forwarded-Proto usa "{http.request.scheme}" (auto-detect).
+#   Qui lo forziamo a "https" perche' sappiamo che Cloudflare SEMPRE termina TLS,
+#   quindi il client originale usa SEMPRE HTTPS.
+#
+# PERCHE' E' IMPORTANTE:
+#   Se Laravel non sa che il client usa HTTPS:
+#   - I cookie di sessione NON hanno il flag "Secure" → browser avvisa "sessione insicura"
+#   - Gli URL generati da Laravel iniziano con http:// → problemi di mixed content
+#   - $request->secure() restituisce false → HSTS non viene inviato
+#
+# FILE CORRELATI:
+#   - Caddyfile — versione locale (auto-detect del protocollo)
+#   - bootstrap/app.php — trustProxies che permette a Laravel di leggere questi header
+#   - scripts/avvia-cloudflare.sh — script che avvia il tunnel e usa questo Caddyfile
+# =============================================================================
+
 :8787 {
+  # Comprime le risposte con gzip per velocizzare il caricamento
   encode gzip
 
+  # Definisce quali percorsi vanno al backend Laravel
   @api path /api/* /sanctum/* /storage/* /auth/*
 
-  reverse_proxy @api 127.0.0.1:8000
+  # Richieste API → Laravel (porta 8000)
+  # X-Forwarded-Proto forzato a "https" perche' Cloudflare usa sempre HTTPS
+  reverse_proxy @api 127.0.0.1:8000 {
+    header_up X-Forwarded-Host "{http.request.host}"
+    header_up X-Forwarded-Proto "https"
+  }
 
+  # Tutto il resto → Nuxt frontend (porta 3001)
+  # X-Forwarded-Proto forzato a "https" per lo stesso motivo
   reverse_proxy 127.0.0.1:3001 {
     header_up Host "localhost:3001"
     header_up X-Forwarded-Host "{http.request.host}"
-    header_up X-Forwarded-Proto "{http.request.scheme}"
+    header_up X-Forwarded-Proto "https"
   }
 }

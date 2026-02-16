@@ -1,4 +1,47 @@
 <?php
+/**
+ * FILE: GuestCartController.php
+ * SCOPO: Gestisce il carrello per utenti non registrati (ospiti), salvato in sessione.
+ *
+ * COSA ENTRA:
+ *   - Nessun parametro per index (legge dalla sessione)
+ *   - Request con packages[] (tipo, dimensioni, peso), origin_address, destination_address per store
+ *
+ * COSA ESCE:
+ *   - JSON con data (array pacchi), meta (empty, subtotal, total formattati) per index/store
+ *   - JSON con message per emptyCart
+ *
+ * CHIAMATO DA:
+ *   - routes/api.php — GET /api/guest-cart, POST /api/guest-cart, DELETE /api/guest-cart
+ *   - nuxt: composables/useCart.js (quando utente non autenticato)
+ *   - nuxt: pages/carrello.vue, pages/checkout.vue
+ *
+ * EFFETTI COLLATERALI:
+ *   - Sessione: salva/aggiorna/svuota chiave 'cart' con array di pacchi
+ *   - I prezzi sono in centesimi (single_price = euro * 100) per evitare errori di arrotondamento
+ *   - Duplicati: se un pacco identico (stesse dimensioni, stesso percorso) esiste gia',
+ *     aumenta la quantita' invece di creare un nuovo elemento
+ *
+ * VINCOLI:
+ *   - I prezzi nella sessione sono in CENTESIMI (single_price = euro * 100)
+ *   - La conversione euro->centesimi avviene in store(): round(euro * 100)
+ *   - La sessione si svuota quando il browser viene chiuso (o dopo il timeout)
+ *   - I dati del carrello ospite vengono trasferiti nel DB al momento del login
+ *   - Duplicati: stesse dimensioni + stessi indirizzi = aumento quantita' (non nuovo elemento)
+ *
+ * ERRORI TIPICI:
+ *   - 422: dati di validazione mancanti (almeno un pacco con dimensioni e indirizzi)
+ *
+ * PUNTI DI MODIFICA SICURI:
+ *   - Per aggiungere campi al pacco ospite: aggiungerli in store() nel blocco $cart[]
+ *   - Per cambiare i criteri di deduplicazione: modificare il confronto nel blocco $duplicateIndex
+ *
+ * COLLEGAMENTI:
+ *   - CartController.php — carrello per utenti autenticati (salva in database)
+ *   - CustomLoginController.php — trasferisce il carrello sessione nel database al login
+ *   - app/Cart/MyMoney.php — formattazione prezzi in centesimi (es. 900 -> "9,00 EUR")
+ *   - composables/useCart.js — composable Nuxt che sceglie guest-cart o cart in base all'auth
+ */
 
 namespace App\Http\Controllers;
 
@@ -9,74 +52,135 @@ use Illuminate\Http\Request;
 use App\Http\Resources\PackageResource;
 use App\Http\Requests\CartCreateRequest;
 use App\Http\Requests\GuestCartCreateRequest;
-
 class GuestCartController extends Controller
 {
+    // Mostra il contenuto del carrello dell'ospite
+    // I pacchi sono salvati nella sessione con la chiave 'cart'
     public function index() {
         $packages = session()->get('cart', []);
 
         return response()->json([
             'data' => $packages,
-            'meta' => $this->meta($packages),
+            'meta' => $this->meta($packages), // Informazioni aggiuntive (totale, se e' vuoto, ecc.)
         ]);
-
-        /* return PackageResource::collection($packages)
-            ->additional([
-                'meta' => $this->meta($packages)
-            ]); */
     }
 
+    // Calcola il subtotale del carrello sommando i prezzi di tutti i pacchi
+    // Il prezzo di ogni pacco (single_price) e' gia' in centesimi e include la quantita'
     public function subtotal($packages) {
         $subtotal = 0;
 
         foreach ($packages as $package) {
-            $subtotal += ((int) $package['single_price'] * $package['quantity']) * 100; 
+            $subtotal += (int) ($package['single_price'] ?? 0);
         }
 
+        // MyMoney e' una classe che gestisce i prezzi in centesimi e li formatta correttamente
         return new MyMoney($subtotal);
     }
 
-
-    /* public function total($packages) {
-        $sixEuro = new MyMoney(600); // 600 centesimi = 6€
-        return $this->subtotal($packages)->add($sixEuro);
-    } */
-
+    // Prepara le informazioni aggiuntive (meta) per la risposta
+    // Include: se il carrello e' vuoto, il subtotale e il totale formattati (es. "9,00 EUR")
     protected function meta($packages) {
         return [
             'empty' => count($packages) === 0,
             'subtotal' => $this->subtotal($packages)->formatted(),
             'total' => $this->subtotal($packages)->formatted()
         ];
-    } 
-
-    public function store(Request $request) {
-
-        $cart = session()->get('cart', []);
-
-        foreach ($request->packages as $pack) {
-            $cart[] = [
-                'package_type' => $pack['package_type'],
-                'quantity' => $pack['quantity'],
-                'weight' => $pack['weight'],
-                'first_size' => $pack['first_size'],
-                'second_size' => $pack['second_size'],
-                'third_size' => $pack['third_size'],
-                'weight_price' => $pack['weight_price'],
-                'volume_price' => $pack['volume_price'],
-                'single_price' => $pack['single_price'],
-                'origin_address' => $request->origin_address,
-                'destination_address' => $request->destination_address,
-                'services' => $request->services,
-            ];
-        }
-
-        session()->put('cart', $cart);
     }
 
+    // Aggiunge uno o piu' pacchi al carrello dell'ospite
+    // Se un pacco identico e' gia' nel carrello (stesse dimensioni, stesso percorso),
+    // invece di crearne uno nuovo aumenta la quantita' di quello esistente
+    public function store(Request $request) {
+
+        // Validiamo che i dati minimi siano presenti
+        $request->validate([
+            'packages' => 'required|array|min:1',
+            'packages.*.package_type' => 'required|string',
+            'packages.*.weight' => 'required',
+            'packages.*.first_size' => 'required',
+            'packages.*.second_size' => 'required',
+            'packages.*.third_size' => 'required',
+            'origin_address' => 'required|array',
+            'destination_address' => 'required|array',
+        ]);
+
+        // Recuperiamo il carrello attuale dalla sessione (o un array vuoto se non esiste)
+        $cart = session()->get('cart', []);
+
+        // Per ogni pacco inviato dal frontend
+        foreach ($request->packages as $pack) {
+            // Convertiamo il prezzo da euro a centesimi (es. 9.00 -> 900)
+            $singlePriceCents = (int) round(($pack['single_price'] ?? 0) * 100);
+            $newQty = (int) ($pack['quantity'] ?? 1);
+
+            // Controlliamo se un pacco identico esiste gia' nel carrello
+            // (stesse dimensioni, stesso peso, stessi indirizzi di partenza e destinazione)
+            $duplicateIndex = null;
+            foreach ($cart as $idx => $existing) {
+                if (
+                    ($existing['package_type'] ?? '') === ($pack['package_type'] ?? '')
+                    && (string) ($existing['weight'] ?? '') === (string) ($pack['weight'] ?? '')
+                    && (string) ($existing['first_size'] ?? '') === (string) ($pack['first_size'] ?? '')
+                    && (string) ($existing['second_size'] ?? '') === (string) ($pack['second_size'] ?? '')
+                    && (string) ($existing['third_size'] ?? '') === (string) ($pack['third_size'] ?? '')
+                    && ($existing['origin_address']['city'] ?? '') === ($request->origin_address['city'] ?? '')
+                    && ($existing['origin_address']['postal_code'] ?? '') === ($request->origin_address['postal_code'] ?? '')
+                    && ($existing['origin_address']['name'] ?? '') === ($request->origin_address['name'] ?? '')
+                    && ($existing['origin_address']['address'] ?? '') === ($request->origin_address['address'] ?? '')
+                    && ($existing['destination_address']['city'] ?? '') === ($request->destination_address['city'] ?? '')
+                    && ($existing['destination_address']['postal_code'] ?? '') === ($request->destination_address['postal_code'] ?? '')
+                    && ($existing['destination_address']['name'] ?? '') === ($request->destination_address['name'] ?? '')
+                    && ($existing['destination_address']['address'] ?? '') === ($request->destination_address['address'] ?? '')
+                ) {
+                    $duplicateIndex = $idx;
+                    break;
+                }
+            }
+
+            if ($duplicateIndex !== null) {
+                // Se il pacco esiste gia', aumentiamo la quantita' e ricalcoliamo il prezzo
+                $oldQty = (int) ($cart[$duplicateIndex]['quantity'] ?? 1);
+                $oldPrice = (int) ($cart[$duplicateIndex]['single_price'] ?? 0);
+                $basePrice = $oldQty > 0 ? (int) round($oldPrice / $oldQty) : $singlePriceCents;
+                $updatedQty = $oldQty + $newQty;
+                $cart[$duplicateIndex]['quantity'] = $updatedQty;
+                $cart[$duplicateIndex]['single_price'] = $basePrice * $updatedQty;
+            } else {
+                // Se il pacco e' nuovo, lo aggiungiamo al carrello
+                $cart[] = [
+                    'package_type' => $pack['package_type'],
+                    'quantity' => $newQty,
+                    'weight' => $pack['weight'],
+                    'first_size' => $pack['first_size'],
+                    'second_size' => $pack['second_size'],
+                    'third_size' => $pack['third_size'],
+                    'weight_price' => $pack['weight_price'],
+                    'volume_price' => $pack['volume_price'],
+                    'single_price' => $singlePriceCents,
+                    'origin_address' => $request->origin_address,
+                    'destination_address' => $request->destination_address,
+                    'services' => $request->services,
+                ];
+            }
+        }
+
+        // Salviamo il carrello aggiornato nella sessione
+        session()->put('cart', $cart);
+
+        return response()->json([
+            'data' => $cart,
+            'meta' => $this->meta($cart),
+            'message' => 'Carrello aggiornato',
+        ]);
+    }
+
+    // Svuota completamente il carrello dell'ospite
     public function emptyCart() {
-        
+
         session()->put('cart', []);
+
+        return response()->json(['message' => 'Carrello svuotato']);
     }
 
 }

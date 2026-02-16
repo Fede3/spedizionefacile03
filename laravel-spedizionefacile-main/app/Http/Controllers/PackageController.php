@@ -1,33 +1,59 @@
 <?php
+/**
+ * FILE: PackageController.php
+ * SCOPO: Mostra la lista di tutti i pacchi dell'utente (logica CRUD ora in CartController).
+ *
+ * COSA ENTRA:
+ *   - Request autenticata (auth()->id() per filtrare i pacchi dell'utente)
+ *
+ * COSA ESCE:
+ *   - PackageResource collection con tutti i pacchi dell'utente
+ *
+ * CHIAMATO DA:
+ *   - routes/api.php — GET /api/packages
+ *
+ * EFFETTI COLLATERALI:
+ *   - Nessuno (sola lettura)
+ *
+ * VINCOLI:
+ *   - La maggior parte della logica CRUD e' stata spostata in CartController
+ *   - Le funzioni commentate sono lasciate come riferimento storico
+ *
+ * ERRORI TIPICI:
+ *   - Nessuno specifico
+ *
+ * PUNTI DI MODIFICA SICURI:
+ *   - Per aggiungere funzionalita' ai pacchi, e' preferibile farlo in CartController
+ *
+ * COLLEGAMENTI:
+ *   - CartController.php — gestione completa del carrello (creazione, modifica, eliminazione pacchi)
+ *   - SavedShipmentController.php — spedizioni salvate come template
+ */
 
 namespace App\Http\Controllers;
 
 use App\Cart\MyMoney;
-use App\Models\Address;
+use App\Models\PackageAddress;
 use App\Models\Package;
 use App\Models\Service;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Http\Resources\PackageResource;
 use App\Http\Requests\PackageStoreRequest;
-
 class PackageController extends Controller
 {
+    // Mostra la lista di tutti i pacchi dell'utente attualmente loggato
     public function index(Request $request) {
-        
+
         $packages = Package::where('user_id', auth()->id())->get();
 
-        /* return response()->json([
-            'data' => PackageResource::collection($packages),
-            'meta' => $this->meta($packages)
-        ]); */
-
         return PackageResource::collection($packages);
-            /* ->additional([
-                'meta' => $this->meta($packages)
-            ]); */
 
     }
+
+    /* Le funzioni seguenti sono state commentate perche' la logica del carrello
+       e' stata spostata in altri controller (CartController, GuestCartController).
+       Sono state lasciate come riferimento per capire come funzionava prima. */
 
     /* public function subtotal($packages) {
 
@@ -52,7 +78,7 @@ class PackageController extends Controller
     } */
 
     /* public function show(Package $package) {
-        
+
         return new PackageResource($package);
     } */
 
@@ -61,8 +87,8 @@ class PackageController extends Controller
         $data = $request->validated();
 
         $outPackages = DB::transaction(function() use ($data) {
-            $origin = Address::create($data['origin_address']);
-            $destination = Address::create($data['destination_address']);
+            $origin = PackageAddress::create($data['origin_address']);
+            $destination = PackageAddress::create($data['destination_address']);
 
             $services = Service::create($data['services']);
 
@@ -83,12 +109,11 @@ class PackageController extends Controller
                     'origin_address_id' => $origin->id,
                     'destination_address_id' => $destination->id,
                     'service_id' => $services->id,
-                    'user_id' => $authId ?: null,
-                    'session_id' => $authId ? null : session()->getId(), 
+                    'user_id' => $authId,
                 ]);
             }
 
-            return $packages; 
+            return $packages;
         });
 
         return PackageResource::collection($outPackages);

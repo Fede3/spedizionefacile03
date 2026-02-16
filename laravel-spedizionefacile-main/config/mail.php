@@ -82,6 +82,17 @@ return [
             ],
         ],
 
+        // Resend via SMTP (alternativa diretta, stessa configurazione di smtp)
+        'resend' => [
+            'transport' => 'smtp',
+            'host' => 'smtp.resend.com',
+            'port' => 465,
+            'encryption' => 'ssl',
+            'username' => 'resend',
+            'password' => env('MAIL_PASSWORD'),
+            'timeout' => 10,
+        ],
+
     ],
 
     /*

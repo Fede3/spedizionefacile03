@@ -1,215 +1,66 @@
+<!--
+  FILE: pages/account/amministrazione/index.vue
+  SCOPO: Dashboard amministrazione — panoramica con KPI, notifiche, grafico ordini,
+         ultimi ordini espandibili. Le card di navigazione sono in /account (sezioni admin viola).
+  API: GET /api/admin/dashboard — dati KPI e ordini recenti.
+  COMPONENTI: nessun componente custom.
+  ROUTE: /account/amministrazione (middleware sanctum:auth + admin).
+
+  DATI IN INGRESSO:
+    - dashboardData (da API) — KPI, notifiche, grafico, ultimi ordini.
+
+  DATI IN USCITA: nessuna (pagina di sola lettura).
+
+  VINCOLI: solo utenti Admin.
+
+  COLLEGAMENTI:
+    - pages/account/amministrazione/ordini.vue → gestione ordini.
+    - pages/account/amministrazione/utenti.vue → gestione utenti.
+    - composables/useAdmin.js → utility condivise admin.
+-->
 <script setup>
 definePageMeta({
 	middleware: ["sanctum:auth", "admin"],
 });
 
 const sanctum = useSanctumClient();
+const { formatCurrency, formatCents, formatDate, orderStatusConfig } = useAdmin();
 
-const activeTab = ref("withdrawals");
-
-// Data
-const withdrawalsData = ref([]);
-const walletOverview = ref([]);
-const referralStats = ref(null);
-const usersData = ref([]);
 const isLoading = ref(true);
+const dashboardData = ref(null);
 
-const fetchWithdrawals = async () => {
-	try {
-		const res = await sanctum("/api/admin/withdrawals");
-		withdrawalsData.value = res?.data || res || [];
-	} catch (e) { withdrawalsData.value = []; }
-};
+// Quanti ordini mostrare (inizia con 5, poi +5 ad ogni click)
+const ordersToShow = ref(5);
 
-const fetchWallet = async () => {
+const fetchDashboard = async () => {
 	try {
-		const res = await sanctum("/api/admin/wallet/overview");
-		walletOverview.value = res?.data || res || [];
-	} catch (e) { walletOverview.value = []; }
-};
-
-const fetchReferrals = async () => {
-	try {
-		const res = await sanctum("/api/admin/referrals");
-		referralStats.value = res;
-	} catch (e) { referralStats.value = null; }
-};
-
-const fetchUsers = async () => {
-	try {
-		const res = await sanctum("/api/admin/users");
-		usersData.value = res?.data || res || [];
-	} catch (e) { usersData.value = []; }
+		const res = await sanctum("/api/admin/dashboard");
+		dashboardData.value = res;
+	} catch (e) { dashboardData.value = null; }
 };
 
 onMounted(async () => {
-	await Promise.all([fetchWithdrawals(), fetchWallet(), fetchReferrals(), fetchUsers()]);
+	await fetchDashboard();
 	isLoading.value = false;
 });
 
-// User management
-const { refresh: refreshUsers } = useSanctumFetch("/api/admin/users");
+const chartMax = computed(() => {
+	if (!dashboardData.value?.daily_orders?.length) return 1;
+	return Math.max(1, ...dashboardData.value.daily_orders.map(d => d.count));
+});
 
-// Selected user movements
-const selectedUserId = ref(null);
-const selectedUserName = ref("");
-const userMovements = ref([]);
+const visibleOrders = computed(() => {
+	if (!dashboardData.value?.recent_orders?.length) return [];
+	return dashboardData.value.recent_orders.slice(0, ordersToShow.value);
+});
 
-const viewUserMovements = async (userId, userName) => {
-	selectedUserId.value = userId;
-	selectedUserName.value = userName;
-	try {
-		const res = await sanctum(`/api/admin/wallet/users/${userId}/movements`);
-		userMovements.value = res?.data || res || [];
-	} catch (e) {
-		userMovements.value = [];
-	}
-};
+const hasMoreOrders = computed(() => {
+	if (!dashboardData.value?.recent_orders?.length) return false;
+	return ordersToShow.value < dashboardData.value.recent_orders.length;
+});
 
-const closeUserMovements = () => {
-	selectedUserId.value = null;
-	selectedUserName.value = "";
-	userMovements.value = [];
-};
-
-// Withdrawal actions
-const actionLoading = ref(null);
-const actionMessage = ref(null);
-
-const clearMessage = () => {
-	setTimeout(() => { actionMessage.value = null; }, 5000);
-};
-
-const approveWithdrawal = async (id) => {
-	actionLoading.value = id;
-	actionMessage.value = null;
-	try {
-		await sanctum(`/api/admin/withdrawals/${id}/approve`, { method: "POST" });
-		actionMessage.value = { type: "success", text: "Prelievo approvato con successo." };
-		await fetchWithdrawals();
-		clearMessage();
-	} catch (e) {
-		actionMessage.value = { type: "error", text: e?.response?._data?.message || e?.data?.message || "Errore durante l'approvazione." };
-	} finally {
-		actionLoading.value = null;
-	}
-};
-
-const rejectNotes = ref("");
-const rejectingId = ref(null);
-
-const startReject = (id) => {
-	rejectingId.value = id;
-	rejectNotes.value = "";
-};
-
-const cancelReject = () => {
-	rejectingId.value = null;
-	rejectNotes.value = "";
-};
-
-const confirmReject = async (id) => {
-	actionLoading.value = id;
-	actionMessage.value = null;
-	try {
-		await sanctum(`/api/admin/withdrawals/${id}/reject`, {
-			method: "POST",
-			body: { admin_notes: rejectNotes.value },
-		});
-		actionMessage.value = { type: "success", text: "Prelievo rifiutato." };
-		rejectingId.value = null;
-		rejectNotes.value = "";
-		await fetchWithdrawals();
-		clearMessage();
-	} catch (e) {
-		actionMessage.value = { type: "error", text: e?.response?._data?.message || e?.data?.message || "Errore durante il rifiuto." };
-	} finally {
-		actionLoading.value = null;
-	}
-};
-
-const approveAccount = async (id) => {
-	actionLoading.value = id;
-	actionMessage.value = null;
-	try {
-		await sanctum(`/api/admin/users/${id}/approve`, { method: "PATCH" });
-		actionMessage.value = { type: "success", text: "Account approvato e email verificata." };
-		await fetchUsers();
-		clearMessage();
-	} catch (e) {
-		actionMessage.value = { type: "error", text: e?.response?._data?.message || e?.data?.message || "Errore durante l'approvazione account." };
-	} finally {
-		actionLoading.value = null;
-	}
-};
-
-const deleteAccount = async (id) => {
-	const confirmed = window.confirm("Confermi l'eliminazione definitiva di questo account?");
-	if (!confirmed) return;
-
-	actionLoading.value = id;
-	actionMessage.value = null;
-	try {
-		await sanctum(`/api/admin/users/${id}`, { method: "DELETE" });
-		actionMessage.value = { type: "success", text: "Account eliminato correttamente." };
-		await fetchUsers();
-		clearMessage();
-	} catch (e) {
-		actionMessage.value = { type: "error", text: e?.response?._data?.message || e?.data?.message || "Errore durante l'eliminazione account." };
-	} finally {
-		actionLoading.value = null;
-	}
-};
-
-// Manual email verification
-const manualVerifyEmail = async (id) => {
-	actionLoading.value = `verify-${id}`;
-	actionMessage.value = null;
-	try {
-		await sanctum(`/api/admin/users/${id}/approve`, { method: "PATCH" });
-		actionMessage.value = { type: "success", text: "Email verificata manualmente." };
-		await fetchUsers();
-		clearMessage();
-	} catch (e) {
-		actionMessage.value = { type: "error", text: e?.response?._data?.message || "Errore durante la verifica manuale." };
-	} finally {
-		actionLoading.value = null;
-	}
-};
-
-
-const formatDate = (dateStr) => {
-	if (!dateStr) return "—";
-	return new Date(dateStr).toLocaleDateString("it-IT", {
-		day: "2-digit",
-		month: "short",
-		year: "numeric",
-		hour: "2-digit",
-		minute: "2-digit",
-	});
-};
-
-const formatCurrency = (val) => {
-	return Number(val || 0).toFixed(2);
-};
-
-const tabs = [
-	{ key: "withdrawals", label: "Prelievi" },
-	{ key: "wallet", label: "Portafogli" },
-	{ key: "referrals", label: "Referral" },
-	{ key: "accounts", label: "Account" },
-];
-
-const withdrawalStatusConfig = {
-	pending: { label: "In attesa", icon: "mdi:clock-outline", bg: "bg-amber-50", text: "text-amber-700" },
-	approved: { label: "Approvata", icon: "mdi:check-circle-outline", bg: "bg-emerald-50", text: "text-emerald-700" },
-	rejected: { label: "Rifiutata", icon: "mdi:close-circle-outline", bg: "bg-red-50", text: "text-red-700" },
-};
-
-const referralStatusConfig = {
-	confirmed: { label: "Confermata", bg: "bg-emerald-50", text: "text-emerald-700" },
-	paid: { label: "Pagata", bg: "bg-blue-50", text: "text-blue-700" },
-	pending: { label: "In attesa", bg: "bg-amber-50", text: "text-amber-700" },
+const showMoreOrders = () => {
+	ordersToShow.value += 5;
 };
 
 // Computed stats
@@ -221,7 +72,7 @@ const unverifiedUsers = computed(() => usersData.value?.filter(u => !u.email_ver
 
 <template>
 	<section class="min-h-[600px] py-[40px] desktop:py-[60px] desktop-xl:py-[80px]">
-		<div class="my-container max-w-[1200px]">
+		<div class="my-container max-w-[1400px]">
 			<!-- Breadcrumb -->
 			<div class="mb-[24px] text-[0.875rem] text-[#737373]">
 				<NuxtLink to="/account" class="hover:underline text-[#095866] font-medium">Il tuo account</NuxtLink>
@@ -230,39 +81,7 @@ const unverifiedUsers = computed(() => usersData.value?.filter(u => !u.email_ver
 			</div>
 
 			<h1 class="text-[1.75rem] font-bold text-[#252B42] mb-[8px]">Pannello Amministrazione</h1>
-			<p class="text-[0.875rem] text-[#737373] mb-[32px]">Gestisci utenti, prelievi, portafogli e referral.</p>
-
-			<!-- Tabs -->
-			<div class="flex flex-wrap gap-[4px] mb-[28px] bg-[#F0F0F0] rounded-[12px] p-[4px]">
-				<button
-					v-for="tab in tabs"
-					:key="tab.key"
-					@click="activeTab = tab.key"
-					:class="[
-						'flex items-center gap-[6px] px-[16px] py-[10px] rounded-[8px] text-[0.8125rem] font-medium transition-all cursor-pointer',
-						activeTab === tab.key ? 'bg-white text-[#095866] shadow-sm' : 'text-[#737373] hover:text-[#404040]',
-					]">
-					<Icon :name="tab.icon" class="text-[16px]" />
-					{{ tab.label }}
-					<span v-if="tab.key === 'withdrawals' && pendingWithdrawals.length" class="ml-[2px] w-[20px] h-[20px] rounded-full bg-amber-500 text-white text-[0.625rem] flex items-center justify-center font-bold">
-						{{ pendingWithdrawals.length }}
-					</span>
-					<span v-if="tab.key === 'emails' && unverifiedUsers.length" class="ml-[2px] w-[20px] h-[20px] rounded-full bg-red-500 text-white text-[0.625rem] flex items-center justify-center font-bold">
-						{{ unverifiedUsers.length }}
-					</span>
-				</button>
-			</div>
-
-			<!-- Action message -->
-			<div
-				v-if="actionMessage"
-				:class="[
-					'mb-[20px] px-[16px] py-[12px] rounded-[12px] text-[0.875rem] font-medium flex items-center gap-[8px]',
-					actionMessage.type === 'success' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-red-50 text-red-700 border border-red-200',
-				]">
-				<Icon :name="actionMessage.type === 'success' ? 'mdi:check-circle' : 'mdi:alert-circle'" class="text-[18px] shrink-0" />
-				{{ actionMessage.text }}
-			</div>
+			<p class="text-[0.875rem] text-[#737373] mb-[32px]">Panoramica generale, notifiche e attivita' recenti.</p>
 
 			<!-- Loading -->
 			<div v-if="isLoading" class="py-[60px] flex justify-center">
@@ -270,309 +89,195 @@ const unverifiedUsers = computed(() => usersData.value?.filter(u => !u.email_ver
 			</div>
 
 			<template v-else>
-				<!-- ===== WITHDRAWALS TAB ===== -->
-				<div v-if="activeTab === 'withdrawals'">
-					<div class="grid grid-cols-1 account-pages:grid-cols-3 gap-[16px] mb-[24px]">
+				<div v-if="dashboardData">
+					<!-- Stats cards row 1: main KPIs -->
+					<div class="grid grid-cols-2 desktop:grid-cols-4 gap-[16px] mb-[16px]">
 						<div class="bg-white rounded-[16px] p-[20px] border border-[#E9EBEC] shadow-sm">
 							<div class="flex items-center gap-[8px] mb-[8px]">
-								<Icon name="mdi:clock-outline" class="text-[18px] text-amber-600" />
-								<p class="text-[0.75rem] text-[#737373] uppercase tracking-[0.5px] font-medium">In attesa</p>
+								<div class="w-[36px] h-[36px] rounded-[10px] bg-blue-50 flex items-center justify-center">
+									<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[18px] h-[18px] text-blue-600" fill="currentColor"><path d="M13,12H20V13.5H13M13,9.5H20V11H13M13,14.5H20V16H13M21,4H3A2,2 0 0,0 1,6V19A2,2 0 0,0 3,21H21A2,2 0 0,0 23,19V6A2,2 0 0,0 21,4M21,19H12V6H21"/></svg>
+								</div>
+								<p class="text-[0.75rem] text-[#737373] uppercase tracking-[0.5px] font-medium">Ordini totali</p>
 							</div>
-							<p class="text-[1.75rem] font-bold text-amber-600">{{ pendingWithdrawals.length }}</p>
+							<p class="text-[1.75rem] font-bold text-[#252B42]">{{ dashboardData.orders.total }}</p>
+							<div class="flex gap-[12px] mt-[6px] text-[0.6875rem] text-[#737373]">
+								<span class="text-amber-600">{{ dashboardData.orders.pending }} in attesa</span>
+								<span class="text-emerald-600">{{ dashboardData.orders.completed }} completati</span>
+							</div>
 						</div>
+
 						<div class="bg-white rounded-[16px] p-[20px] border border-[#E9EBEC] shadow-sm">
 							<div class="flex items-center gap-[8px] mb-[8px]">
-								<Icon name="mdi:check-circle-outline" class="text-[18px] text-emerald-600" />
-								<p class="text-[0.75rem] text-[#737373] uppercase tracking-[0.5px] font-medium">Approvate</p>
+								<div class="w-[36px] h-[36px] rounded-[10px] bg-emerald-50 flex items-center justify-center">
+									<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[18px] h-[18px] text-emerald-600" fill="currentColor"><path d="M15,18.5C12.49,18.5 10.32,17.08 9.24,15H15L16,13H8.58C8.53,12.67 8.5,12.34 8.5,12C8.5,11.66 8.53,11.33 8.58,11H15L16,9H9.24C10.32,6.92 12.5,5.5 15,5.5C16.61,5.5 18.09,6.09 19.23,7.07L21,5.29C19.41,3.86 17.31,3 15,3C11.08,3 7.76,5.51 6.52,9H3L2,11H6.06C6.02,11.33 6,11.66 6,12C6,12.34 6.02,12.67 6.06,13H3L2,15H6.52C7.76,18.49 11.08,21 15,21C17.31,21 19.41,20.14 21,18.71L19.22,16.93C18.09,17.91 16.62,18.5 15,18.5Z"/></svg>
+								</div>
+								<p class="text-[0.75rem] text-[#737373] uppercase tracking-[0.5px] font-medium">Fatturato totale</p>
 							</div>
-							<p class="text-[1.75rem] font-bold text-emerald-600">{{ approvedWithdrawals.length }}</p>
+							<p class="text-[1.75rem] font-bold text-emerald-600">&euro;{{ formatCents(dashboardData.revenue) }}</p>
+							<div class="mt-[6px] text-[0.6875rem] text-[#737373]">
+								<span class="text-emerald-600">&euro;{{ formatCents(dashboardData.revenue_month) }} questo mese</span>
+							</div>
 						</div>
+
 						<div class="bg-white rounded-[16px] p-[20px] border border-[#E9EBEC] shadow-sm">
 							<div class="flex items-center gap-[8px] mb-[8px]">
-								<Icon name="mdi:currency-eur" class="text-[18px] text-[#252B42]" />
-								<p class="text-[0.75rem] text-[#737373] uppercase tracking-[0.5px] font-medium">Totale approvato</p>
+								<div class="w-[36px] h-[36px] rounded-[10px] bg-purple-50 flex items-center justify-center">
+									<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[18px] h-[18px] text-purple-600" fill="currentColor"><path d="M16,13C15.71,13 15.38,13 15.03,13.05C16.19,13.89 17,15 17,16.5V18H22V16.5C22,14.17 18.33,13 16,13M8,13C5.67,13 2,14.17 2,16.5V18H14V16.5C14,14.17 10.33,13 8,13M8,11A3,3 0 0,0 11,8A3,3 0 0,0 8,5A3,3 0 0,0 5,8A3,3 0 0,0 8,11M16,11A3,3 0 0,0 19,8A3,3 0 0,0 16,5A3,3 0 0,0 13,8A3,3 0 0,0 16,11Z"/></svg>
+								</div>
+								<p class="text-[0.75rem] text-[#737373] uppercase tracking-[0.5px] font-medium">Utenti</p>
 							</div>
-							<p class="text-[1.75rem] font-bold text-[#252B42]">&euro;{{ formatCurrency(totalApproved) }}</p>
+							<p class="text-[1.75rem] font-bold text-[#252B42]">{{ dashboardData.users.total }}</p>
+							<div class="flex gap-[12px] mt-[6px] text-[0.6875rem] text-[#737373]">
+								<span class="text-emerald-600">{{ dashboardData.users.verified }} verificati</span>
+								<span class="text-[#095866]">{{ dashboardData.users.pro }} Pro</span>
+							</div>
+						</div>
+
+						<div class="bg-white rounded-[16px] p-[20px] border border-[#E9EBEC] shadow-sm">
+							<div class="flex items-center gap-[8px] mb-[8px]">
+								<div class="w-[36px] h-[36px] rounded-[10px] bg-indigo-50 flex items-center justify-center">
+									<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[18px] h-[18px] text-indigo-600" fill="currentColor"><path d="M18,18.5A1.5,1.5 0 0,1 16.5,17A1.5,1.5 0 0,1 18,15.5A1.5,1.5 0 0,1 19.5,17A1.5,1.5 0 0,1 18,18.5M19.5,9.5L21.46,12H17V9.5M6,18.5A1.5,1.5 0 0,1 4.5,17A1.5,1.5 0 0,1 6,15.5A1.5,1.5 0 0,1 7.5,17A1.5,1.5 0 0,1 6,18.5M20,8H17V4H3C1.89,4 1,4.89 1,6V17H3A3,3 0 0,0 6,20A3,3 0 0,0 9,17H15A3,3 0 0,0 18,20A3,3 0 0,0 21,17H23V12L20,8Z"/></svg>
+								</div>
+								<p class="text-[0.75rem] text-[#737373] uppercase tracking-[0.5px] font-medium">Spedizioni BRT</p>
+							</div>
+							<p class="text-[1.75rem] font-bold text-[#252B42]">{{ dashboardData.shipments.with_label }}</p>
+							<div class="flex gap-[12px] mt-[6px] text-[0.6875rem] text-[#737373]">
+								<span class="text-indigo-600">{{ dashboardData.shipments.in_transit }} in transito</span>
+								<span class="text-teal-600">{{ dashboardData.shipments.delivered }} consegnate</span>
+							</div>
 						</div>
 					</div>
 
-					<div class="bg-white rounded-[20px] p-[24px] desktop:p-[32px] shadow-sm border border-[#E9EBEC]">
-						<h2 class="text-[1.125rem] font-bold text-[#252B42] mb-[20px]">Richieste di prelievo</h2>
-
-						<div v-if="!withdrawalsData?.length" class="text-center py-[48px] text-[#737373]">
-							<Icon name="mdi:bank-transfer" class="text-[40px] text-[#C8CCD0] mx-auto mb-[12px]" />
-							<p>Nessuna richiesta di prelievo.</p>
+					<!-- Stats cards row 2: period KPIs -->
+					<div class="grid grid-cols-3 desktop:grid-cols-3 gap-[16px] mb-[24px]">
+						<div class="bg-white rounded-[16px] p-[16px] border border-[#E9EBEC] shadow-sm">
+							<p class="text-[0.6875rem] text-[#737373] uppercase tracking-[0.5px] font-medium mb-[4px]">Ordini oggi</p>
+							<p class="text-[1.5rem] font-bold text-[#252B42]">{{ dashboardData.orders.today }}</p>
 						</div>
+						<div class="bg-white rounded-[16px] p-[16px] border border-[#E9EBEC] shadow-sm">
+							<p class="text-[0.6875rem] text-[#737373] uppercase tracking-[0.5px] font-medium mb-[4px]">Questa settimana</p>
+							<p class="text-[1.5rem] font-bold text-[#252B42]">{{ dashboardData.orders.week }}</p>
+						</div>
+						<div class="bg-white rounded-[16px] p-[16px] border border-[#E9EBEC] shadow-sm">
+							<p class="text-[0.6875rem] text-[#737373] uppercase tracking-[0.5px] font-medium mb-[4px]">Questo mese</p>
+							<p class="text-[1.5rem] font-bold text-[#252B42]">{{ dashboardData.orders.month }}</p>
+						</div>
+					</div>
 
-						<div v-else class="space-y-[12px]">
+					<!-- Quick alerts / notifiche -->
+					<div class="grid grid-cols-1 desktop:grid-cols-4 gap-[12px] mb-[24px]">
+						<NuxtLink v-if="dashboardData.pending_withdrawals > 0" to="/account/amministrazione/prelievi" class="bg-amber-50 rounded-[14px] p-[14px] border border-amber-200 cursor-pointer hover:border-amber-300 transition-colors">
+							<div class="flex items-center gap-[10px]">
+								<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[20px] h-[20px] text-amber-600 shrink-0" fill="currentColor"><path d="M2,5H22V7H2V5M15,10H22V12H15V10M15,16H22V18H15V16M2,10H13L8,15H2V10M2,16H8L13,21H2V16Z"/></svg>
+								<div>
+									<p class="text-[0.8125rem] font-semibold text-amber-800">{{ dashboardData.pending_withdrawals }} prelievi in attesa</p>
+									<p class="text-[0.6875rem] text-amber-600">Clicca per gestire</p>
+								</div>
+							</div>
+						</NuxtLink>
+						<NuxtLink v-if="dashboardData.unread_messages > 0" to="/account/amministrazione/messaggi" class="bg-blue-50 rounded-[14px] p-[14px] border border-blue-200 cursor-pointer hover:border-blue-300 transition-colors">
+							<div class="flex items-center gap-[10px]">
+								<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[20px] h-[20px] text-blue-600 shrink-0" fill="currentColor"><path d="M20,8L12,13L4,8V6L12,11L20,6M20,4H4C2.89,4 2,4.89 2,6V18A2,2 0 0,0 4,20H20A2,2 0 0,0 22,18V6C22,4.89 21.1,4 20,4Z"/></svg>
+								<div>
+									<p class="text-[0.8125rem] font-semibold text-blue-800">{{ dashboardData.unread_messages }} messaggi non letti</p>
+									<p class="text-[0.6875rem] text-blue-600">Clicca per leggere</p>
+								</div>
+							</div>
+						</NuxtLink>
+						<NuxtLink v-if="dashboardData.orders.payment_failed > 0" to="/account/amministrazione/ordini" class="bg-red-50 rounded-[14px] p-[14px] border border-red-200 cursor-pointer hover:border-red-300 transition-colors">
+							<div class="flex items-center gap-[10px]">
+								<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[20px] h-[20px] text-red-600 shrink-0" fill="currentColor"><path d="M20,8H4V6H20M20,18H4V12H20M20,4H4C2.89,4 2,4.89 2,6V18A2,2 0 0,0 4,20H20A2,2 0 0,0 22,18V6C22,4.89 21.1,4 20,4Z"/></svg>
+								<div>
+									<p class="text-[0.8125rem] font-semibold text-red-800">{{ dashboardData.orders.payment_failed }} pagamenti falliti</p>
+									<p class="text-[0.6875rem] text-red-600">Clicca per vedere</p>
+								</div>
+							</div>
+						</NuxtLink>
+						<NuxtLink v-if="dashboardData.shipments.without_label > 0" to="/account/amministrazione/ordini" class="bg-orange-50 rounded-[14px] p-[14px] border border-orange-200 cursor-pointer hover:border-orange-300 transition-colors">
+							<div class="flex items-center gap-[10px]">
+								<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[20px] h-[20px] text-orange-600 shrink-0" fill="currentColor"><path d="M18.73,18L20.47,6.62C20.79,6.79 21,7.12 21,7.5V16.5C21,16.88 20.79,17.21 20.47,17.38L18.73,18M3.53,6.62L11.43,2.18C11.59,2.06 11.79,2 12,2C12.21,2 12.41,2.06 12.57,2.18L20.47,6.62C20.79,6.79 21,7.12 21,7.5V16.5C21,16.88 20.79,17.21 20.47,17.38L12.57,21.82C12.41,21.94 12.21,22 12,22C11.79,22 11.59,21.94 11.43,21.82L3.53,17.38C3.21,17.21 3,16.88 3,16.5V7.5C3,7.12 3.21,6.79 3.53,6.62Z"/></svg>
+								<div>
+									<p class="text-[0.8125rem] font-semibold text-orange-800">{{ dashboardData.shipments.without_label }} senza etichetta</p>
+									<p class="text-[0.6875rem] text-orange-600">Ordini completati senza label BRT</p>
+								</div>
+							</div>
+						</NuxtLink>
+						<NuxtLink v-if="dashboardData.pending_pro_requests > 0" to="/account/amministrazione/utenti" class="bg-purple-50 rounded-[14px] p-[14px] border border-purple-200 cursor-pointer hover:border-purple-300 transition-colors">
+							<div class="flex items-center gap-[10px]">
+								<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[20px] h-[20px] text-purple-600 shrink-0" fill="currentColor"><path d="M12,15.39L8.24,17.66L9.23,13.38L5.91,10.5L10.29,10.13L12,6.09L13.71,10.13L18.09,10.5L14.77,13.38L15.76,17.66M22,9.24L14.81,8.63L12,2L9.19,8.63L2,9.24L7.46,13.97L5.82,21L12,17.27L18.18,21L16.54,13.97L22,9.24Z"/></svg>
+								<div>
+									<p class="text-[0.8125rem] font-semibold text-purple-800">{{ dashboardData.pending_pro_requests }} richieste Pro</p>
+									<p class="text-[0.6875rem] text-purple-600">Clicca per gestire</p>
+								</div>
+							</div>
+						</NuxtLink>
+					</div>
+
+					<!-- Orders chart (CSS bars, last 30 days) -->
+					<div v-if="dashboardData.daily_orders?.length" class="bg-white rounded-[20px] p-[24px] desktop:p-[32px] shadow-sm border border-[#E9EBEC] mb-[24px]">
+						<h2 class="text-[1.125rem] font-bold text-[#252B42] mb-[16px]">Ordini ultimi 30 giorni</h2>
+						<div class="flex items-end gap-[4px] h-[120px]">
 							<div
-								v-for="w in withdrawalsData"
-								:key="w.id"
-								class="p-[18px] rounded-[14px] border border-[#E9EBEC] hover:border-[#D0D0D0] transition-colors">
-								<div class="flex flex-col desktop:flex-row desktop:items-center justify-between gap-[12px]">
-									<div class="flex-1">
-										<div class="flex items-center gap-[10px] mb-[6px]">
-											<span class="text-[1.125rem] font-bold text-[#252B42]">&euro;{{ formatCurrency(w.amount) }}</span>
-											<span
-												:class="[
-													'inline-flex items-center gap-[4px] px-[10px] py-[3px] rounded-full text-[0.6875rem] font-medium',
-													withdrawalStatusConfig[w.status]?.bg || 'bg-gray-50',
-													withdrawalStatusConfig[w.status]?.text || 'text-gray-700',
-												]">
-												<Icon :name="withdrawalStatusConfig[w.status]?.icon || 'mdi:help'" class="text-[12px]" />
-												{{ withdrawalStatusConfig[w.status]?.label || w.status }}
-											</span>
-										</div>
-										<p class="text-[0.875rem] text-[#404040]">
-											<span class="font-medium">{{ w.user?.name }} {{ w.user?.surname }}</span>
-											<span class="text-[#737373] ml-[8px]">{{ w.user?.email }}</span>
-										</p>
-										<p class="text-[0.75rem] text-[#737373] mt-[2px]">Richiesta: {{ formatDate(w.created_at) }}</p>
-										<p v-if="w.admin_notes" class="text-[0.75rem] text-[#737373] mt-[2px] italic">Note: {{ w.admin_notes }}</p>
-									</div>
-
-									<div v-if="w.status === 'pending'" class="flex items-center gap-[8px]">
-										<template v-if="rejectingId !== w.id">
-											<button
-												@click="approveWithdrawal(w.id)"
-												:disabled="actionLoading === w.id"
-												class="px-[16px] py-[8px] bg-emerald-600 hover:bg-emerald-700 text-white rounded-[8px] text-[0.8125rem] font-medium transition-colors cursor-pointer disabled:opacity-50 flex items-center gap-[4px]">
-												<Icon name="mdi:check" class="text-[16px]" />
-												{{ actionLoading === w.id ? "..." : "Approva" }}
-											</button>
-											<button
-												@click="startReject(w.id)"
-												:disabled="actionLoading === w.id"
-												class="px-[16px] py-[8px] bg-red-50 hover:bg-red-100 text-red-700 rounded-[8px] text-[0.8125rem] font-medium transition-colors cursor-pointer border border-red-200">
-												Rifiuta
-											</button>
-										</template>
-										<template v-else>
-											<div class="flex items-center gap-[8px]">
-												<input
-													v-model="rejectNotes"
-													type="text"
-													placeholder="Motivo (opzionale)"
-													class="px-[12px] py-[8px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[8px] text-[0.8125rem] w-[200px] focus:border-[#095866] focus:outline-none" />
-												<button @click="confirmReject(w.id)" :disabled="actionLoading === w.id" class="px-[14px] py-[8px] bg-red-600 hover:bg-red-700 text-white rounded-[8px] text-[0.8125rem] font-medium cursor-pointer disabled:opacity-50">
-													{{ actionLoading === w.id ? "..." : "Conferma" }}
-												</button>
-												<button @click="cancelReject" class="px-[14px] py-[8px] bg-[#F0F0F0] hover:bg-[#E0E0E0] text-[#404040] rounded-[8px] text-[0.8125rem] font-medium cursor-pointer">Annulla</button>
-											</div>
-										</template>
-									</div>
+								v-for="(day, i) in dashboardData.daily_orders"
+								:key="i"
+								class="flex-1 flex flex-col items-center justify-end h-full group relative">
+								<div
+									class="w-full rounded-t-[3px] bg-[#095866] hover:bg-[#0b6d7e] transition-colors min-h-[2px]"
+									:style="{ height: (day.count / chartMax * 100) + '%' }">
+								</div>
+								<span v-if="i % 5 === 0" class="text-[0.5rem] text-[#737373] mt-[4px] leading-none">{{ day.date }}</span>
+								<div class="absolute bottom-full mb-[4px] px-[6px] py-[3px] bg-[#252B42] text-white text-[0.625rem] rounded-[4px] opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-10">
+									{{ day.date }}: {{ day.count }} ordini
 								</div>
 							</div>
 						</div>
 					</div>
-				</div>
 
-				<!-- ===== WALLET TAB ===== -->
-				<div v-if="activeTab === 'wallet'">
-					<!-- User movements modal -->
-					<div v-if="selectedUserId" class="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-[20px]" @click.self="closeUserMovements">
-						<div class="bg-white rounded-[20px] p-[28px] shadow-2xl max-w-[700px] w-full max-h-[80vh] overflow-y-auto">
-							<div class="flex items-center justify-between mb-[24px]">
-								<h3 class="text-[1.125rem] font-bold text-[#252B42]">Movimenti di {{ selectedUserName }}</h3>
-								<button @click="closeUserMovements" class="w-[36px] h-[36px] flex items-center justify-center rounded-full bg-[#F0F0F0] hover:bg-[#E0E0E0] cursor-pointer">
-									<Icon name="mdi:close" class="text-[18px] text-[#404040]" />
-								</button>
-							</div>
+					<!-- Recent orders (espandibile) -->
+					<div class="bg-white rounded-[20px] p-[24px] desktop:p-[32px] shadow-sm border border-[#E9EBEC]">
+						<div class="flex items-center justify-between mb-[20px]">
+							<h2 class="text-[1.125rem] font-bold text-[#252B42]">Ultimi ordini</h2>
+							<NuxtLink to="/account/amministrazione/ordini" class="inline-flex items-center gap-[4px] text-[0.75rem] text-[#737373] hover:text-[#095866] hover:underline font-medium">
+								Gestione completa
+								<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[14px] h-[14px]" fill="currentColor"><path d="M4,11V13H16L10.5,18.5L11.92,19.92L19.84,12L11.92,4.08L10.5,5.5L16,11H4Z"/></svg>
+							</NuxtLink>
+						</div>
 
-							<div v-if="!userMovements?.length" class="text-center py-[40px] text-[#737373]">
-								<p>Nessun movimento per questo utente.</p>
-							</div>
+						<div v-if="!dashboardData.recent_orders?.length" class="text-center py-[32px] text-[#737373]">
+							<p>Nessun ordine recente.</p>
+						</div>
 
-							<ul v-else class="space-y-[4px]">
-								<li v-for="mov in userMovements" :key="mov.id" class="flex items-center justify-between p-[12px] rounded-[10px] hover:bg-[#F8F9FB]">
-									<div class="flex-1 min-w-0">
-										<p class="text-[0.875rem] font-medium text-[#252B42] truncate">{{ mov.description }}</p>
-										<div class="flex items-center gap-[8px] mt-[2px]">
-											<span class="text-[0.75rem] text-[#737373]">{{ formatDate(mov.created_at) }}</span>
-											<span v-if="mov.source" class="text-[0.6875rem] px-[8px] py-[2px] rounded-full bg-[#F0F0F0] text-[#737373]">{{ mov.source }}</span>
-										</div>
-									</div>
-									<span :class="['text-[0.9375rem] font-bold tabular-nums whitespace-nowrap ml-[16px]', mov.type === 'credit' ? 'text-emerald-600' : 'text-red-500']">
-										{{ mov.type === "credit" ? "+" : "-" }}&euro;{{ formatCurrency(mov.amount) }}
+						<div v-else class="space-y-[8px]">
+							<div v-for="order in visibleOrders" :key="order.id" class="flex items-center justify-between p-[14px] rounded-[12px] border border-[#F0F0F0] hover:border-[#E0E0E0] transition-colors">
+								<div class="flex items-center gap-[14px]">
+									<span class="text-[0.8125rem] font-bold text-[#252B42]">#{{ order.id }}</span>
+									<span class="text-[0.8125rem] text-[#404040]">{{ order.user?.name }} {{ order.user?.surname }}</span>
+								</div>
+								<div class="flex items-center gap-[12px]">
+									<span class="text-[0.875rem] font-semibold text-[#252B42]">&euro;{{ formatCents(order.subtotal?.amount ?? order.subtotal) }}</span>
+									<span :class="['inline-flex items-center gap-[4px] px-[10px] py-[3px] rounded-full text-[0.6875rem] font-medium', orderStatusConfig[order.status]?.bg || 'bg-gray-50', orderStatusConfig[order.status]?.text || 'text-gray-700']">
+										<span class="w-[8px] h-[8px] rounded-full" :class="orderStatusConfig[order.status]?.text || 'text-gray-700'" style="background-color: currentColor"></span>
+										{{ orderStatusConfig[order.status]?.label || order.status }}
 									</span>
-								</li>
-							</ul>
+									<span class="text-[0.75rem] text-[#737373] hidden desktop:inline">{{ formatDate(order.created_at) }}</span>
+								</div>
+							</div>
 						</div>
 					</div>
 
-					<div class="bg-white rounded-[20px] p-[24px] desktop:p-[32px] shadow-sm border border-[#E9EBEC]">
-						<h2 class="text-[1.125rem] font-bold text-[#252B42] mb-[20px]">Utenti con movimenti</h2>
-
-						<div v-if="!walletOverview?.length" class="text-center py-[48px] text-[#737373]">
-							<Icon name="mdi:wallet-outline" class="text-[40px] text-[#C8CCD0] mx-auto mb-[12px]" />
-							<p>Nessun utente con movimenti.</p>
-						</div>
-
-						<div v-else class="overflow-x-auto">
-							<table class="w-full text-[0.875rem]">
-								<thead>
-									<tr class="border-b border-[#E9EBEC] text-left text-[#737373]">
-										<th class="pb-[12px] font-medium">Utente</th>
-										<th class="pb-[12px] font-medium">Email</th>
-										<th class="pb-[12px] font-medium">Ruolo</th>
-										<th class="pb-[12px] font-medium text-right">Saldo</th>
-										<th class="pb-[12px] font-medium text-right">Commissioni</th>
-										<th class="pb-[12px] font-medium text-center">Azioni</th>
-									</tr>
-								</thead>
-								<tbody>
-									<tr v-for="u in walletOverview" :key="u.id" class="border-b border-[#F0F0F0] last:border-0">
-										<td class="py-[14px] text-[#252B42] font-medium">{{ u.name }}</td>
-										<td class="py-[14px] text-[#737373]">{{ u.email }}</td>
-										<td class="py-[14px]">
-											<span :class="['inline-block px-[8px] py-[2px] rounded-full text-[0.6875rem] font-medium', u.role === 'Partner Pro' ? 'bg-[#095866]/10 text-[#095866]' : u.role === 'Admin' ? 'bg-purple-50 text-purple-700' : 'bg-gray-100 text-gray-600']">
-												{{ u.role || "Cliente" }}
-											</span>
-										</td>
-										<td class="py-[14px] text-right font-semibold text-[#252B42]">&euro;{{ formatCurrency(u.wallet_balance) }}</td>
-										<td class="py-[14px] text-right font-semibold text-emerald-600">&euro;{{ formatCurrency(u.commission_balance) }}</td>
-										<td class="py-[14px] text-center">
-											<button @click="viewUserMovements(u.id, u.name)" class="text-[0.8125rem] text-[#095866] hover:underline cursor-pointer font-medium">Movimenti</button>
-										</td>
-									</tr>
-								</tbody>
-							</table>
-						</div>
+					<!-- Espandi - mostra altri 5 ordini -->
+					<div v-if="hasMoreOrders" class="text-center mt-[16px]">
+						<button @click="showMoreOrders" class="inline-flex items-center gap-[6px] px-[24px] py-[12px] text-[#095866] hover:bg-[#f0f7f8] rounded-[12px] text-[0.875rem] font-medium transition-colors cursor-pointer border border-[#E9EBEC] hover:border-[#095866]">
+							<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[16px] h-[16px]" fill="currentColor"><path d="M7.41,8.58L12,13.17L16.59,8.58L18,10L12,16L6,10L7.41,8.58Z"/></svg>
+							Espandi (+5 ordini)
+						</button>
 					</div>
 				</div>
 
-				<!-- ===== ACCOUNTS TAB ===== -->
-				<div v-if="activeTab === 'accounts'">
-					<div class="bg-white rounded-[20px] p-[24px] desktop:p-[32px] shadow-sm border border-[#E9EBEC]">
-						<h2 class="text-[1.125rem] font-bold text-[#252B42] mb-[20px]">Gestione account registrati</h2>
-
-						<div v-if="!usersData?.length" class="text-center py-[48px] text-[#737373]">
-							<Icon name="mdi:account-group" class="text-[40px] text-[#C8CCD0] mx-auto mb-[12px]" />
-							<p>Nessun account trovato.</p>
-						</div>
-
-						<div v-else class="overflow-x-auto">
-							<table class="w-full text-[0.875rem]">
-								<thead>
-									<tr class="border-b border-[#E9EBEC] text-left text-[#737373]">
-										<th class="pb-[12px] font-medium">Nome</th>
-										<th class="pb-[12px] font-medium">Email</th>
-										<th class="pb-[12px] font-medium">Ruolo</th>
-										<th class="pb-[12px] font-medium">Codice Ref.</th>
-										<th class="pb-[12px] font-medium">Stato</th>
-										<th class="pb-[12px] font-medium">Registrazione</th>
-										<th class="pb-[12px] font-medium text-right">Azioni</th>
-									</tr>
-								</thead>
-								<tbody>
-									<tr v-for="u in usersData" :key="u.id" class="border-b border-[#F0F0F0] last:border-0">
-										<td class="py-[14px] text-[#252B42] font-medium">{{ u.name }} {{ u.surname }}</td>
-										<td class="py-[14px] text-[#737373]">{{ u.email }}</td>
-										<td class="py-[14px]">
-											<span :class="['inline-block px-[8px] py-[2px] rounded-full text-[0.6875rem] font-medium', u.role === 'Partner Pro' ? 'bg-[#095866]/10 text-[#095866]' : u.role === 'Admin' ? 'bg-purple-50 text-purple-700' : 'bg-gray-100 text-gray-600']">
-												{{ u.role || "Cliente" }}
-											</span>
-										</td>
-										<td class="py-[14px]">
-											<span v-if="u.referral_code" class="font-mono text-[0.75rem] bg-[#F0F0F0] px-[6px] py-[2px] rounded">{{ u.referral_code }}</span>
-											<span v-else class="text-[#C8CCD0]">—</span>
-										</td>
-										<td class="py-[14px]">
-											<span :class="u.email_verified_at ? 'text-emerald-700 bg-emerald-50' : 'text-amber-700 bg-amber-50'" class="inline-flex items-center gap-[4px] px-[8px] py-[2px] rounded-full text-[0.6875rem] font-medium">
-												<Icon :name="u.email_verified_at ? 'mdi:check-circle' : 'mdi:clock-outline'" class="text-[12px]" />
-												{{ u.email_verified_at ? 'Verificato' : 'Non verificato' }}
-											</span>
-										</td>
-										<td class="py-[14px] text-[#737373] text-[0.8125rem]">{{ formatDate(u.created_at) }}</td>
-										<td class="py-[14px] text-right">
-											<div class="flex justify-end gap-[6px]">
-												<button v-if="!u.email_verified_at" @click="approveAccount(u.id)" :disabled="actionLoading === u.id" class="px-[10px] py-[6px] rounded-[8px] bg-[#095866] text-white text-[0.75rem] cursor-pointer disabled:opacity-60 flex items-center gap-[4px]">
-													<Icon name="mdi:check" class="text-[14px]" />
-													Approva
-												</button>
-												<button @click="deleteAccount(u.id)" :disabled="actionLoading === u.id" class="px-[10px] py-[6px] rounded-[8px] bg-red-600 text-white text-[0.75rem] cursor-pointer disabled:opacity-60 flex items-center gap-[4px]">
-													<Icon name="mdi:delete-outline" class="text-[14px]" />
-													Elimina
-												</button>
-											</div>
-										</td>
-									</tr>
-								</tbody>
-							</table>
-						</div>
-					</div>
-				</div>
-
-
-				<div v-if="activeTab === 'referrals'">
-					<div v-if="referralStats" class="grid grid-cols-1 account-pages:grid-cols-3 gap-[16px] mb-[24px]">
-						<div class="bg-white rounded-[16px] p-[20px] border border-[#E9EBEC] shadow-sm">
-							<div class="flex items-center gap-[8px] mb-[8px]">
-								<Icon name="mdi:share-variant" class="text-[18px] text-blue-600" />
-								<p class="text-[0.75rem] text-[#737373] uppercase tracking-[0.5px] font-medium">Totale utilizzi</p>
-							</div>
-							<p class="text-[1.75rem] font-bold text-[#252B42]">{{ referralStats.summary?.total_usages || 0 }}</p>
-						</div>
-						<div class="bg-white rounded-[16px] p-[20px] border border-[#E9EBEC] shadow-sm">
-							<div class="flex items-center gap-[8px] mb-[8px]">
-								<Icon name="mdi:cart-outline" class="text-[18px] text-[#252B42]" />
-								<p class="text-[0.75rem] text-[#737373] uppercase tracking-[0.5px] font-medium">Volume ordini</p>
-							</div>
-							<p class="text-[1.75rem] font-bold text-[#252B42]">&euro;{{ formatCurrency(referralStats.summary?.total_order_amount) }}</p>
-						</div>
-						<div class="bg-white rounded-[16px] p-[20px] border border-[#E9EBEC] shadow-sm">
-							<div class="flex items-center gap-[8px] mb-[8px]">
-								<Icon name="mdi:cash-check" class="text-[18px] text-emerald-600" />
-								<p class="text-[0.75rem] text-[#737373] uppercase tracking-[0.5px] font-medium">Commissioni generate</p>
-							</div>
-							<p class="text-[1.75rem] font-bold text-emerald-600">&euro;{{ formatCurrency(referralStats.summary?.total_commissions) }}</p>
-						</div>
-					</div>
-
-					<div class="bg-white rounded-[20px] p-[24px] desktop:p-[32px] shadow-sm border border-[#E9EBEC]">
-						<h2 class="text-[1.125rem] font-bold text-[#252B42] mb-[20px]">Utilizzi codici referral</h2>
-
-						<div v-if="!referralStats?.data?.length" class="text-center py-[48px] text-[#737373]">
-							<Icon name="mdi:share-variant" class="text-[40px] text-[#C8CCD0] mx-auto mb-[12px]" />
-							<p>Nessun utilizzo registrato.</p>
-						</div>
-
-						<div v-else class="overflow-x-auto">
-							<table class="w-full text-[0.875rem]">
-								<thead>
-									<tr class="border-b border-[#E9EBEC] text-left text-[#737373]">
-										<th class="pb-[12px] font-medium">Data</th>
-										<th class="pb-[12px] font-medium">Codice</th>
-										<th class="pb-[12px] font-medium">Partner Pro</th>
-										<th class="pb-[12px] font-medium">Acquirente</th>
-										<th class="pb-[12px] font-medium text-right">Ordine</th>
-										<th class="pb-[12px] font-medium text-right">Sconto</th>
-										<th class="pb-[12px] font-medium text-right">Commissione</th>
-										<th class="pb-[12px] font-medium text-center">Stato</th>
-									</tr>
-								</thead>
-								<tbody>
-									<tr v-for="usage in referralStats.data" :key="usage.id" class="border-b border-[#F0F0F0] last:border-0">
-										<td class="py-[14px] text-[#404040]">{{ formatDate(usage.created_at) }}</td>
-										<td class="py-[14px]">
-											<span class="font-mono text-[0.8125rem] bg-[#F0F0F0] px-[8px] py-[2px] rounded">{{ usage.referral_code }}</span>
-										</td>
-										<td class="py-[14px] text-[#252B42] font-medium">{{ usage.pro_user?.name }}</td>
-										<td class="py-[14px] text-[#404040]">{{ usage.buyer?.name }}</td>
-										<td class="py-[14px] text-right text-[#404040]">&euro;{{ formatCurrency(usage.order_amount) }}</td>
-										<td class="py-[14px] text-right text-blue-600">-&euro;{{ formatCurrency(usage.discount_amount) }}</td>
-										<td class="py-[14px] text-right font-semibold text-emerald-600">+&euro;{{ formatCurrency(usage.commission_amount) }}</td>
-										<td class="py-[14px] text-center">
-											<span
-												:class="['inline-block px-[8px] py-[2px] rounded-full text-[0.6875rem] font-medium', referralStatusConfig[usage.status]?.bg || 'bg-gray-50', referralStatusConfig[usage.status]?.text || 'text-gray-700']">
-												{{ referralStatusConfig[usage.status]?.label || usage.status }}
-											</span>
-										</td>
-									</tr>
-								</tbody>
-							</table>
-						</div>
-					</div>
+				<!-- Fallback se dashboard non caricata -->
+				<div v-else class="text-center py-[60px] text-[#737373]">
+					<p class="text-[0.9375rem]">Impossibile caricare i dati della dashboard. Riprova.</p>
+					<button @click="fetchDashboard(); isLoading = true; fetchDashboard().then(() => isLoading = false)" class="mt-[12px] px-[20px] py-[10px] bg-[#095866] text-white rounded-[10px] text-[0.875rem] font-medium cursor-pointer">Riprova</button>
 				</div>
 			</template>
 		</div>

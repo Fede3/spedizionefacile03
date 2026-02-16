@@ -4,6 +4,7 @@ set -e
 
 # Wait for database to be ready
 if [ ! -z "$DB_HOST" ]; then
+    ATTEMPT_COUNTER=0
     echo "Waiting for database at $DB_HOST:$DB_PORT..."
     until nc -z "$DB_HOST" "$DB_PORT" 2>/dev/null || [ $ATTEMPT_COUNTER -eq 60 ]; do
         ATTEMPT_COUNTER=$((ATTEMPT_COUNTER+1))
@@ -21,6 +22,9 @@ if [ ! -z "$DB_HOST" ]; then
     # Run migrations
     echo "Running migrations..."
     php artisan migrate --force
+
+    # Create storage symlink for uploaded images
+    php artisan storage:link 2>/dev/null || true
     
     # Seed database if needed
     if [ "$APP_ENV" = "production" ]; then

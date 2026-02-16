@@ -1,4 +1,51 @@
 <?php
+/**
+ * FILE: CustomLoginController.php
+ * SCOPO: Gestisce login con email/password, verifica codice 6 cifre e trasferimento carrello ospite.
+ *
+ * COSA ENTRA:
+ *   - Request con email, password, remember per login
+ *   - Request con email, code, password per verifyCode
+ *   - Request con email per resendVerificationEmail
+ *
+ * COSA ESCE:
+ *   - JSON con dati utente dopo login riuscito
+ *   - JSON con requires_verification=true se serve il codice a 6 cifre (HTTP 403)
+ *   - CustomResponse success/fail per verifyCode e resendVerificationEmail
+ *
+ * CHIAMATO DA:
+ *   - routes/api.php — POST /api/login, POST /api/verify-code, POST /api/resend-verification
+ *   - nuxt: pages/autenticazione.vue (form login e verifica codice)
+ *
+ * EFFETTI COLLATERALI:
+ *   - Sessione: crea sessione autenticata (Auth::login)
+ *   - Database: aggiorna email_verified_at, verification_code su users
+ *   - Database: trasferisce pacchi dalla sessione (cart) a packages + cart_user
+ *   - Email: invia codice di verifica a 6 cifre (SendVerificationEmailJob)
+ *
+ * VINCOLI:
+ *   - Il codice di verifica dura 30 minuti (verification_code_expires_at)
+ *   - La sessione viene rigenerata dopo il login (prevenzione session fixation)
+ *   - hasSession() e' necessario perche' con tunnel Cloudflare la sessione potrebbe non esserci
+ *   - Il trasferimento carrello ospite NON blocca il login se fallisce
+ *   - Il campo "role" NON e' tra i $fillable del modello User (sicurezza)
+ *
+ * ERRORI TIPICI:
+ *   - 422: credenziali non corrette (ValidationException)
+ *   - 403: account non verificato (richiede inserimento codice)
+ *   - 422: codice di verifica errato o scaduto (durata 30 minuti)
+ *
+ * PUNTI DI MODIFICA SICURI:
+ *   - Per cambiare la durata del codice: modificare "addMinutes(30)" nelle varie funzioni
+ *   - Per cambiare la lunghezza del codice: modificare il blocco random_int e 'size:6'
+ *   - Per disabilitare il trasferimento carrello: rimuovere il blocco try/catch dopo Auth::login()
+ *
+ * COLLEGAMENTI:
+ *   - CustomRegisterController.php — registrazione nuovi utenti
+ *   - GoogleController.php — login con Google OAuth
+ *   - GuestCartController.php — carrello ospite (sessione) trasferito dopo login
+ *   - pages/autenticazione.vue — pagina frontend login/registrazione
+ */
 
 namespace App\Http\Controllers;
 
@@ -18,25 +65,31 @@ use App\Jobs\SendVerificationEmailJob;
 use Illuminate\Support\Facades\Cookie;
 use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpFoundation\Response;
-
 class CustomLoginController extends Controller
 {
-    /* public function destroy(Request $request) {
-
-        $request->user()->currentAccessToken()->delete();
-
-    } */
-    
-    public function login(Request $request) {
-
+    /**
+     * login — Verifica credenziali, gestisce verifica email e trasferisce carrello ospite.
+     *
+     * PERCHE': Oltre al login standard, gestisce la verifica email a 6 cifre e il trasferimento
+     *   dei pacchi dal carrello sessione (ospite) al carrello database (utente autenticato).
+     * COME LEGGERLO: 1) Valida credenziali  2) Se email non verificata: genera/invia codice, return 403
+     *   3) Auth::login  4) Rigenera sessione  5) Trasferisce pacchi da sessione a DB
+     * COME MODIFICARLO: Per aggiungere controlli post-login, inserirli dopo Auth::login().
+     * COSA EVITARE: Non rimuovere session()->regenerate() — previene session fixation.
+     */
+    public function login(Request $request)
+    {
+        // Controlliamo che email e password siano stati inseriti
         $request->validate([
             'email' => 'required|email',
             'password' => 'required',
             'remember' => 'boolean',
         ]);
 
+        // Cerchiamo l'utente nel database per email
         $user = User::where('email', $request->email)->first();
 
+        // Verifichiamo che l'utente esista e che la password sia corretta
         if (!$user || !Hash::check($request->password, $user->password)) {
             throw ValidationException::withMessages([
                 'email' => ['Le credenziali non sono corrette.'],
@@ -44,88 +97,150 @@ class CustomLoginController extends Controller
             ]);
         }
 
-        /* $oldToken = DB::table('email_verification')
-            ->where('identifier', $user->identifier)
-            ->first();
-
-        $token = Str::random(64);
-
-        if ($oldToken) {
-            DB::table('email_verification')
-                ->where('identifier', $user->identifier)
-                ->update([
-                    'token' => Hash::make($token),
-                    'created_at' => Carbon::now()
-                ]);
-        }
-        else {
-            DB::table('email_verification')->insert([
-                'identifier' => $user->identifier,
-                'token' => Hash::make($token),
-                'created_at' => Carbon::now()
-            ]);
-        } */
-
-        // Auto-verify unverified accounts on login
+        // Se l'account non ha ancora l'email verificata, richiediamo il codice di verifica
         if (!$user->email_verified_at) {
-
-            try {
-                SendVerificationEmailJob::dispatchSync($user);
-            } catch (\Throwable $exception) {
-                Log::error('Errore invio email verifica in login.', [
-                    'email' => $user->email,
-                    'error' => $exception->getMessage(),
+            // Se il codice e' scaduto o non esiste, ne generiamo uno nuovo e lo inviamo via email
+            if (!$user->verification_code || ($user->verification_code_expires_at && $user->verification_code_expires_at->isPast())) {
+                $code = str_pad((string) random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+                $user->update([
+                    'verification_code' => $code,
+                    'verification_code_expires_at' => now()->addMinutes(30),
                 ]);
 
-                return CustomResponse::setFailResponse('Account non verificato e invio email di conferma non riuscito. Riprova più tardi.', Response::HTTP_INTERNAL_SERVER_ERROR);
-            }
-
-            return CustomResponse::setFailResponse('Per proseguire devi verificare l\'email. Ti abbiamo appena inviato un\'email con il link per confermare il tuo indirizzo.', Response::HTTP_UNAUTHORIZED);
-        
-        }
-
-        Auth::login($user, (bool) $request->remember);
-
-        // Migrate guest cart to user's DB cart
-        try {
-            $packages = session()->get('cart', []);
-            if (!empty($packages)) {
-                $dbPackages = $this->createPackage($packages);
-                foreach ($dbPackages as $package) {
-                    DB::table('cart_user')->insert([
-                        'user_id' => $user->id,
-                        'package_id' => $package->id,
-                        'created_at' => now(),
+                // Inviamo l'email con il nuovo codice
+                try {
+                    SendVerificationEmailJob::dispatchSync($user);
+                } catch (\Throwable $e) {
+                    Log::warning('Invio email codice verifica fallito durante login.', [
+                        'email' => $user->email,
+                        'error' => $e->getMessage(),
                     ]);
                 }
-                session()->forget('cart');
+            }
+
+            // Rispondiamo dicendo che serve la verifica (il frontend mostrera' il modulo per il codice)
+            return response()->json([
+                'success' => false,
+                'requires_verification' => true,
+                'message' => 'Account non verificato. Inserisci il codice di verifica a 6 cifre inviato alla tua email.',
+            ], 403);
+        }
+
+        // Se le credenziali sono corrette e l'email e' verificata, facciamo il login
+        // Il parametro "remember" permette di rimanere collegati anche dopo aver chiuso il browser
+        Auth::login($user, (bool) $request->remember);
+
+        // Rigeneriamo l'ID della sessione per prevenire attacchi di session fixation
+        // e garantire che il cookie di sessione sia aggiornato per le richieste successive.
+        // hasSession() controlla se la sessione e' disponibile (potrebbe non esserlo
+        // quando la richiesta arriva da un dominio non riconosciuto come "stateful" da Sanctum,
+        // ad esempio tramite tunnel Cloudflare con dominio dinamico).
+        if ($request->hasSession()) {
+            $request->session()->regenerate();
+        }
+
+        // Trasferiamo i pacchi dal carrello ospite (sessione) al carrello utente (database)
+        // Questo permette all'utente di non perdere i pacchi aggiunti prima di fare il login
+        try {
+            if ($request->hasSession()) {
+                $packages = session()->get('cart', []);
+                if (!empty($packages)) {
+                    // Creiamo i pacchi nel database
+                    $dbPackages = $this->createPackage($packages);
+                    // Li colleghiamo al carrello dell'utente
+                    foreach ($dbPackages as $package) {
+                        DB::table('cart_user')->insert([
+                            'user_id' => $user->id,
+                            'package_id' => $package->id,
+                            'created_at' => now(),
+                        ]);
+                    }
+                    // Svuotiamo il carrello della sessione perche' ora i dati sono nel database
+                    session()->forget('cart');
+                }
             }
         } catch (\Exception $e) {
-            // Cart migration is non-critical, don't block login
+            // Se il trasferimento del carrello fallisce, non blocchiamo il login
+            // (il carrello non e' critico, l'importante e' che l'utente entri)
         }
 
         return $user;
-
-        /* if ($request->remember) {
-            // Genera un nuovo token remember personalizzato
-            $token = Str::random(60);
-            $user->setRememberToken($token);
-            $user->save();
-
-            // Nome del cookie remember
-            $rememberCookieName = Auth::getRecallerName();
-
-            // Valore cookie: user_id|token|hash(email)
-            $cookieValue = $user->id.'|'.$token.'|'.sha1($user->email);
-
-            // Crea il cookie con durata custom, es. 30 giorni
-            $minutes = 1;
-
-            Cookie::queue($rememberCookieName, $cookieValue, $minutes);
-        } */
     }
 
+    /**
+     * Verifica il codice a 6 cifre e attiva l'account.
+     * Questa funzione viene chiamata quando l'utente inserisce il codice ricevuto via email.
+     */
+    public function verifyCode(Request $request)
+    {
+        $request->validate([
+            'email' => 'required|email',
+            'code' => 'required|string|size:6',
+            'password' => 'required',
+        ]);
 
+        // Verifichiamo nuovamente le credenziali (per sicurezza)
+        $user = User::where('email', $request->email)->first();
+
+        if (!$user || !Hash::check($request->password, $user->password)) {
+            return CustomResponse::setFailResponse('Credenziali non corrette.', Response::HTTP_UNAUTHORIZED);
+        }
+
+        // Se l'account e' gia' verificato, non serve fare nulla
+        if ($user->email_verified_at) {
+            return CustomResponse::setSuccessResponse('Account già verificato. Puoi accedere.', Response::HTTP_OK);
+        }
+
+        // Controlliamo che il codice inserito sia quello giusto
+        if ($user->verification_code !== $request->code) {
+            return CustomResponse::setFailResponse('Codice di verifica non valido.', Response::HTTP_UNPROCESSABLE_ENTITY);
+        }
+
+        // Controlliamo che il codice non sia scaduto (dura 30 minuti)
+        if ($user->verification_code_expires_at && $user->verification_code_expires_at->isPast()) {
+            // Se il codice e' scaduto, ne generiamo uno nuovo e lo inviamo via email
+            $newCode = str_pad((string) random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+            $user->update([
+                'verification_code' => $newCode,
+                'verification_code_expires_at' => now()->addMinutes(30),
+            ]);
+
+            try {
+                SendVerificationEmailJob::dispatchSync($user);
+            } catch (\Throwable $e) {
+                Log::warning('Invio email nuovo codice fallito.', ['email' => $user->email, 'error' => $e->getMessage()]);
+            }
+
+            return CustomResponse::setFailResponse('Codice scaduto. Un nuovo codice di verifica è stato inviato alla tua email.', Response::HTTP_UNPROCESSABLE_ENTITY);
+        }
+
+        // Tutto ok: verifichiamo l'account e cancelliamo il codice
+        $user->update([
+            'email_verified_at' => now(),
+            'verification_code' => null,
+            'verification_code_expires_at' => null,
+        ]);
+
+        // Facciamo il login automatico
+        Auth::login($user, true);
+
+        // Rigeneriamo l'ID della sessione per prevenire attacchi di session fixation.
+        // Controlliamo che la sessione sia disponibile (vedi commento nel metodo login()).
+        if ($request->hasSession()) {
+            $request->session()->regenerate();
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Account verificato con successo!',
+            'user' => $user,
+        ]);
+    }
+
+    /**
+     * Reinvia il codice di verifica via email.
+     * Usato quando l'utente non ha ricevuto il codice o quando e' scaduto.
+     */
     public function resendVerificationEmail(Request $request)
     {
         $request->validate([
@@ -134,37 +249,48 @@ class CustomLoginController extends Controller
 
         $user = User::where('email', $request->email)->first();
 
+        // Per sicurezza, non riveliamo se l'email esiste o meno nel database
         if (!$user) {
-            return CustomResponse::setSuccessResponse('Se l\'account esiste e non è verificato, abbiamo inviato una nuova email di conferma.', Response::HTTP_OK);
+            return CustomResponse::setSuccessResponse('Se l\'account esiste, abbiamo inviato un nuovo codice.', Response::HTTP_OK);
         }
 
         if ($user->email_verified_at) {
             return CustomResponse::setFailResponse('Questa email risulta già verificata. Puoi accedere normalmente.', Response::HTTP_UNPROCESSABLE_ENTITY);
         }
 
+        // Generiamo un nuovo codice a 6 cifre con scadenza di 30 minuti
+        $code = str_pad((string) random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+        $user->update([
+            'verification_code' => $code,
+            'verification_code_expires_at' => now()->addMinutes(30),
+        ]);
+
+        // Inviamo l'email con il nuovo codice
         try {
             SendVerificationEmailJob::dispatchSync($user);
-
-            return CustomResponse::setSuccessResponse('Ti abbiamo inviato una nuova email di conferma. Controlla anche SPAM/Promozioni.', Response::HTTP_OK);
-        } catch (\Throwable $exception) {
-            Log::error('Errore reinvio email verifica.', [
-                'email' => $user->email,
-                'error' => $exception->getMessage(),
-            ]);
-
-            return CustomResponse::setFailResponse('Impossibile inviare l\'email di conferma in questo momento.', Response::HTTP_INTERNAL_SERVER_ERROR);
+        } catch (\Throwable $e) {
+            Log::warning('Invio email fallito.', ['email' => $user->email, 'error' => $e->getMessage()]);
         }
+
+        return CustomResponse::setSuccessResponse('Nuovo codice di verifica inviato alla tua email.', Response::HTTP_OK);
     }
 
-    public function createPackage($packages) {
-
+    // Funzione di supporto: crea i pacchi nel database a partire dai dati del carrello sessione
+    // Usata durante il login per trasferire i pacchi dal carrello ospite al database
+    public function createPackage($packages)
+    {
         $createdPackages = [];
 
+        // Per ogni pacco nel carrello sessione, creiamo i record necessari nel database
         foreach ($packages as $package) {
+            // Creiamo l'indirizzo di partenza
             $origin = PackageAddress::create($package['origin_address']);
+            // Creiamo l'indirizzo di destinazione
             $destination = PackageAddress::create($package['destination_address']);
+            // Creiamo i servizi aggiuntivi
             $services = Service::create($package['services']);
 
+            // Creiamo il pacco vero e proprio collegandolo a indirizzi, servizi e utente
             $createdPackages[] = Package::create([
                 'package_type' => $package['package_type'],
                 'quantity' => $package['quantity'],
@@ -183,45 +309,5 @@ class CustomLoginController extends Controller
         }
 
         return $createdPackages;
-
     }
-
-    /* public function destroy(Request $request) {
-
-        $request->user()->currentAccessToken()->delete();
-
-    } */
-
-
-        /* $request->validate([
-            'email' => 'required|email',
-            'password' => 'required',
-            'remember' => 'boolean',
-        ]);
-
-        $user = User::where('email', $request->email)->first();
-
-        if (!$user || !Hash::check($request->password, $user->password)) {
-            throw ValidationException::withMessages([
-                'email' => ['Le credenziali non sono corrette.'],
-                'password' => ['Le credenziali non sono corrette.'],
-            ]);
-        }
-
-        if ($request->remember) {
-            // Login con remember = true
-            Auth::login($user, true);
-
-            // Sovrascrivi la durata del cookie remember_web
-            $rememberCookieName = Auth::getRecallerName(); // normalmente 'remember_web_{id}'
-            $cookieValue = Cookie::get($rememberCookieName);
-
-            // Ricrea il cookie con una durata personalizzata
-            Cookie::queue($rememberCookieName, $cookieValue, 1); 
-        }
-        else {
-            Auth::login($user);
-        }
-
-        return $user; */
 }

@@ -172,6 +172,7 @@ function Normalize-LaravelEnv([string]$backDir){
   Set-Or-AddEnvKey $envFile 'DB_DATABASE' $dbPath
   Set-Or-AddEnvKey $envFile 'SESSION_DRIVER' 'file'
   Set-Or-AddEnvKey $envFile 'QUEUE_CONNECTION' 'sync'
+  Set-Or-AddEnvKey $envFile 'CACHE_STORE' 'file'
   Set-Or-AddEnvKey $envFile 'APP_FRONTEND_URL' 'http://127.0.0.1:8787'
 
   if(Test-Path (Join-Path $backDir 'artisan')){
@@ -189,6 +190,15 @@ function Normalize-LaravelEnv([string]$backDir){
     $seedErr = Join-Path $logDir 'seed_err.log'
     Start-Process -FilePath 'cmd.exe' -WorkingDirectory $backDir -WindowStyle Hidden -Wait `
       -ArgumentList '/c','php artisan db:seed --class=Database\Seeders\DatabaseSeeder --force' -RedirectStandardOutput $seedOut -RedirectStandardError $seedErr | Out-Null
+
+    # Crea il symlink storage per rendere accessibili le immagini caricate (es. homepage)
+    $storageLink = Join-Path $backDir 'public\storage'
+    if(-not (Test-Path $storageLink)){
+      $linkOut = Join-Path $logDir 'storagelink_out.log'
+      $linkErr = Join-Path $logDir 'storagelink_err.log'
+      Start-Process -FilePath 'cmd.exe' -WorkingDirectory $backDir -WindowStyle Hidden -Wait `
+        -ArgumentList '/c','php artisan storage:link' -RedirectStandardOutput $linkOut -RedirectStandardError $linkErr | Out-Null
+    }
   }
 }
 
@@ -326,7 +336,7 @@ function Share-Online(){
   $err = Join-Path $logDir "cloudflared_err.log"
   Remove-Item $out,$err -Force -ErrorAction SilentlyContinue | Out-Null
 
-  # Quick Tunnel Cloudflare (trycloudflare) :contentReference[oaicite:2]{index=2}
+  # Quick Tunnel Cloudflare (trycloudflare)
   $cfDir = Join-Path $env:USERPROFILE ".cloudflared"
   $bak = @()
   try{
