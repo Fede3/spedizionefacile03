@@ -73,7 +73,9 @@
       "Bash(\"$PHP\" -l \"$BASE\\\\app\\\\Http\\\\Controllers\\\\Traits\\\\NormalizesServiceData.php\")",
       "Bash(\"$PHP\" -l \"$BASE\\\\app\\\\Models\\\\Order.php\")",
       "Bash(\"$PHP\" -l \"$BASE\\\\app\\\\Models\\\\Package.php\")",
-      "Bash(git log:*)"
+      "Bash(git log:*)",
+      "Bash(git check-ignore:*)",
+      "Bash(git push:*)"
     ]
   }
 }

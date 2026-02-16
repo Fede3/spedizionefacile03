@@ -336,7 +336,7 @@ function Share-Online(){
   $err = Join-Path $logDir "cloudflared_err.log"
   Remove-Item $out,$err -Force -ErrorAction SilentlyContinue | Out-Null
 
-  # Quick Tunnel Cloudflare (trycloudflare) :contentReference[oaicite:2]{index=2}
+  # Quick Tunnel Cloudflare (trycloudflare)
   $cfDir = Join-Path $env:USERPROFILE ".cloudflared"
   $bak = @()
   try{
