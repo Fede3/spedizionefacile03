@@ -1,7 +1,14 @@
-/**
- * ADMIN - Portafogli
- * Panoramica saldi utenti e modale movimenti.
- */
+<!--
+  FILE: pages/account/amministrazione/portafogli.vue
+  SCOPO: Pannello admin — panoramica portafogli di tutti gli utenti.
+         Mostra saldi, modale con storico movimenti per utente.
+  API: GET /api/admin/wallets — panoramica saldi,
+       GET /api/admin/wallets/{userId}/movements — movimenti di un utente.
+  ROUTE: /account/amministrazione/portafogli (middleware sanctum:auth + admin).
+
+  COLLEGAMENTI:
+    - pages/account/portafoglio.vue → portafoglio lato utente.
+-->
 <script setup>
 definePageMeta({
 	middleware: ["sanctum:auth", "admin"],

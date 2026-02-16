@@ -23,15 +23,28 @@
  *   - Database: trasferisce pacchi dalla sessione (cart) a packages + cart_user
  *   - Email: invia codice di verifica a 6 cifre (SendVerificationEmailJob)
  *
+ * VINCOLI:
+ *   - Il codice di verifica dura 30 minuti (verification_code_expires_at)
+ *   - La sessione viene rigenerata dopo il login (prevenzione session fixation)
+ *   - hasSession() e' necessario perche' con tunnel Cloudflare la sessione potrebbe non esserci
+ *   - Il trasferimento carrello ospite NON blocca il login se fallisce
+ *   - Il campo "role" NON e' tra i $fillable del modello User (sicurezza)
+ *
  * ERRORI TIPICI:
  *   - 422: credenziali non corrette (ValidationException)
  *   - 403: account non verificato (richiede inserimento codice)
  *   - 422: codice di verifica errato o scaduto (durata 30 minuti)
  *
- * DOCUMENTI CORRELATI:
+ * PUNTI DI MODIFICA SICURI:
+ *   - Per cambiare la durata del codice: modificare "addMinutes(30)" nelle varie funzioni
+ *   - Per cambiare la lunghezza del codice: modificare il blocco random_int e 'size:6'
+ *   - Per disabilitare il trasferimento carrello: rimuovere il blocco try/catch dopo Auth::login()
+ *
+ * COLLEGAMENTI:
  *   - CustomRegisterController.php — registrazione nuovi utenti
  *   - GoogleController.php — login con Google OAuth
  *   - GuestCartController.php — carrello ospite (sessione) trasferito dopo login
+ *   - pages/autenticazione.vue — pagina frontend login/registrazione
  */
 
 namespace App\Http\Controllers;
@@ -54,7 +67,16 @@ use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpFoundation\Response;
 class CustomLoginController extends Controller
 {
-    // Funzione principale di login: verifica le credenziali e fa accedere l'utente
+    /**
+     * login — Verifica credenziali, gestisce verifica email e trasferisce carrello ospite.
+     *
+     * PERCHE': Oltre al login standard, gestisce la verifica email a 6 cifre e il trasferimento
+     *   dei pacchi dal carrello sessione (ospite) al carrello database (utente autenticato).
+     * COME LEGGERLO: 1) Valida credenziali  2) Se email non verificata: genera/invia codice, return 403
+     *   3) Auth::login  4) Rigenera sessione  5) Trasferisce pacchi da sessione a DB
+     * COME MODIFICARLO: Per aggiungere controlli post-login, inserirli dopo Auth::login().
+     * COSA EVITARE: Non rimuovere session()->regenerate() — previene session fixation.
+     */
     public function login(Request $request)
     {
         // Controlliamo che email e password siano stati inseriti

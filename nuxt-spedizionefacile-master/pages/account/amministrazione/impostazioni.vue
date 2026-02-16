@@ -1,7 +1,16 @@
-/**
- * ADMIN - Impostazioni
- * Configurazione Stripe, BRT e impostazioni generali del sito.
- */
+<!--
+  FILE: pages/account/amministrazione/impostazioni.vue
+  SCOPO: Pannello admin — impostazioni generali del sito.
+         Configurazione Stripe (chiavi API), BRT (credenziali), parametri generali.
+  API: GET /api/admin/settings — leggi impostazioni,
+       POST /api/admin/settings — salva impostazioni.
+  ROUTE: /account/amministrazione/impostazioni (middleware sanctum:auth + admin).
+
+  VINCOLI: le chiavi API sono sensibili, gestite lato server.
+
+  COLLEGAMENTI:
+    - composables/useAdmin.js → utility condivise admin.
+-->
 <script setup>
 definePageMeta({
 	middleware: ["sanctum:auth", "admin"],

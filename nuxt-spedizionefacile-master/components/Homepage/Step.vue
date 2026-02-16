@@ -1,18 +1,25 @@
 <!--
-	COMPONENTE PASSI HOMEPAGE (Homepage/Step.vue)
+	COMPONENTE: Step (Homepage/Step.vue)
+	SCOPO: Sezione homepage "Spedisci in 4 semplici passi" — spiega il processo visivamente.
 
-	Questo componente mostra la sezione "Spedisci in 4 semplici passi" nella homepage.
-	Spiega all'utente come funziona il servizio in modo visivo e semplice.
+	DOVE SI USA: pages/index.vue (homepage)
+	PROPS: nessuna
+	EMITS: nessuno
 
-	I 4 passi mostrati sono:
-	1. Pacco e dimensioni - "Ti basta indicare quello che sai"
-	2. Ritiro e consegna - "Scegli l'indirizzo e l'orario che preferisci"
-	3. Personalizza i servizi - "Assicurazione, contrassegno, consegna express"
-	4. Paga e stampa l'etichetta - "Un clic con carta o portafoglio interno"
+	DATI IN INGRESSO: nessuno (dati statici nell'array steps)
+	DATI IN USCITA: nessuno (solo visualizzazione e navigazione)
 
-	Ogni passo ha un'icona, un titolo e una breve descrizione.
-	A sinistra c'e' un riquadro verde con il messaggio "Spedisci in 2 minuti"
-	e un pulsante per andare alla pagina del preventivo.
+	VINCOLI: le icone PNG sono in public/img/homepage/timeline/ — non rinominarle
+	PUNTI DI MODIFICA SICURI: array steps (testi, icone), testo nel riquadro verde
+	COLLEGAMENTI: pages/preventivo.vue (link "Calcola il prezzo")
+
+	I 4 PASSI:
+	1. Pacco & dimensioni — "Ti basta indicare quello che sai"
+	2. Ritiro & consegna — "Scegli l'indirizzo e l'orario che preferisci"
+	3. Personalizza i servizi — "Assicurazione, contrassegno, consegna express"
+	4. Paga e stampa l'etichetta — "Un clic con carta o portafoglio interno"
+
+	ANIMAZIONE: IntersectionObserver con reveal-step (slide da sinistra, rispetta prefers-reduced-motion)
 -->
 <script setup>
 onMounted(() => {

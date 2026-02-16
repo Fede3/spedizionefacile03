@@ -3,20 +3,36 @@
  * FILE: ArticleController.php
  * SCOPO: Gestisce il CRUD degli articoli (guide e servizi) dal pannello admin.
  *
- * COSA ENTRA:
- *   - Request con type (filtro guide/service) per index
- *   - Request con dati articolo per store/update
- *   - Request con file immagine per uploadImage
- *   - Article via route model binding
+ * DOVE SI USA: Pannello admin (gestione guide e servizi), pagine pubbliche guide/servizi
  *
- * COSA ESCE:
- *   - JSON con lista articoli (index)
- *   - JSON con singolo articolo (show, store, update)
- *   - JSON con URL immagine (uploadImage)
- *   - JSON con success per eliminazione (destroy)
+ * DATI IN INGRESSO:
+ *   - index(): {type?: "guide"|"service"} per filtrare
+ *   - store(): {title, slug?, type: "guide"|"service", meta_description?, intro?, sections?, faqs?,
+ *     featured_image?, icon?, is_published?, sort_order?}
+ *   - update(): stessi campi di store() ma tutti opzionali
+ *   - uploadImage(): file immagine (max 5MB)
  *
- * CHIAMATO DA:
- *   - routes/api.php — rotte /api/admin/articles/* (protette da middleware admin)
+ * DATI IN USCITA:
+ *   - index(): {data: [articoli]}
+ *   - store/update: {success, data: articolo}
+ *   - uploadImage: {success, url: "/storage/articles/..."}
+ *
+ * VINCOLI:
+ *   - Lo slug viene generato automaticamente dal titolo se non specificato (Str::slug)
+ *   - Le sezioni (sections) e FAQ (faqs) sono array JSON salvati nel campo JSON del DB
+ *   - Le immagini vengono salvate nel disco "public" nella cartella "articles"
+ *
+ * ERRORI TIPICI:
+ *   - 422: titolo mancante, slug duplicato, tipo non valido, immagine troppo grande
+ *
+ * PUNTI DI MODIFICA SICURI:
+ *   - Per aggiungere un campo all'articolo: aggiungerlo in validate() di store() e update()
+ *   - Per aggiungere un tipo: modificare la regola 'in:guide,service' in validate()
+ *
+ * COLLEGAMENTI:
+ *   - PublicArticleController.php — endpoint pubblici per guide e servizi
+ *   - app/Models/Article.php — modello con scopes guides(), services(), published()
+ *   - pages/account/amministrazione/guide/ — pannello admin guide
  */
 
 namespace App\Http\Controllers;

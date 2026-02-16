@@ -3,25 +3,32 @@
  * FILE: CartEmpty.php
  * SCOPO: Listener che svuota il carrello dell'utente dopo la creazione di un ordine.
  *
- * COSA ENTRA:
- *   - OrderCreated event (contiene l'ordine appena creato)
+ * DOVE SI USA:
+ *   - EventServiceProvider — registrato come listener di OrderCreated
+ *   - Scatenato quando OrderController o StripeController creano un nuovo ordine
  *
- * COSA ESCE:
+ * DATI IN INGRESSO:
+ *   - OrderCreated event (contiene l'ordine appena creato)
+ *   Esempio: event(new OrderCreated($order)) → CartEmpty.handle() viene chiamato
+ *
+ * DATI IN USCITA:
  *   - Nessun ritorno (void)
  *
- * CHIAMATO DA:
- *   - EventServiceProvider — registrato come listener di OrderCreated
- *
- * EFFETTI COLLATERALI:
- *   - Database: rimuove tutti i record dalla tabella cart_user per l'utente corrente
+ * VINCOLI:
+ *   - Dipende dalla classe Cart (iniettata nel costruttore)
+ *   - Deve essere registrato in EventServiceProvider per funzionare
  *
  * ERRORI TIPICI:
- *   - Nessuno (operazione semplice di svuotamento)
+ *   - Se Cart non svuota correttamente: l'utente vedra' ancora i pacchi nel carrello
  *
- * DOCUMENTI CORRELATI:
+ * PUNTI DI MODIFICA SICURI:
+ *   - Per aggiungere logica post-svuotamento: dopo $this->cart->empty()
+ *   - Per svuotare solo certi pacchi: sostituire empty() con logica selettiva
+ *
+ * COLLEGAMENTI:
  *   - app/Events/OrderCreated.php — evento che scatena questo listener
  *   - app/Cart/Cart.php — classe carrello con metodo empty()
- *   - OrderController.php / StripeController.php — scatenano OrderCreated alla creazione ordine
+ *   - app/Http/Controllers/OrderController.php — scatena OrderCreated
  */
 
 namespace App\Listeners;

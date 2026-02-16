@@ -17,13 +17,24 @@
  * EFFETTI COLLATERALI:
  *   - Nessuno (sola lettura: verifica coupon e calcola sconto senza salvare)
  *
+ * VINCOLI:
+ *   - L'ordine di ricerca e': prima coupon admin, poi codice referral Partner Pro
+ *   - I codici referral danno SEMPRE il 5% di sconto (hardcoded)
+ *   - L'utente NON puo' usare il proprio codice referral su se stesso
+ *   - Questa funzione e' di sola lettura: non salva nulla, solo calcola lo sconto
+ *
  * ERRORI TIPICI:
  *   - 404: codice non corrisponde a nessun coupon attivo ne' codice referral
  *   - 422: utente sta tentando di usare il proprio codice referral
  *
- * DOCUMENTI CORRELATI:
+ * PUNTI DI MODIFICA SICURI:
+ *   - Per cambiare la percentuale referral: modificare "$percentageValue = 5" nel blocco $proUser
+ *   - Per aggiungere un tipo di sconto: aggiungere un blocco dopo il check referral
+ *
+ * COLLEGAMENTI:
  *   - app/Models/Coupon.php — modello coupon con code, percentage, active
  *   - ReferralController.php — gestione completa dei codici referral e commissioni
+ *   - pages/checkout.vue — campo codice promozionale
  */
 
 namespace App\Http\Controllers;

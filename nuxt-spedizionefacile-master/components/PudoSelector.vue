@@ -1,27 +1,31 @@
 <!--
-  FILE: components/PudoSelector.vue
-  SCOPO: Componente per cercare e selezionare un punto PUDO BRT.
+	COMPONENTE: PudoSelector (PudoSelector.vue)
+	SCOPO: Cerca e seleziona un punto PUDO BRT (Pick Up / Drop Off).
 
-  COS'E' UN PUDO?
-  PUDO = Pick Up / Drop Off. Sono negozi convenzionati con BRT (tabaccai, edicole, cartolerie, ecc.)
-  dove il destinatario puo' andare a ritirare il pacco invece di farselo consegnare a casa.
-  Utile per chi non e' mai a casa o vuole piu' flessibilita'.
+	DOVE SI USA: pages/la-tua-spedizione/[step].vue (step 2, sezione Destinazione)
+	PROPS: initialCity (String), initialZip (String) — pre-compilati dalla destinazione del preventivo
+	EMITS: @select(pudo), @deselect — quando l'utente seleziona/deseleziona un punto
 
-  COME FUNZIONA:
-  1. L'utente inserisce citta' e/o CAP della zona dove vuole ritirare
-  2. Clicca "Cerca punti di ritiro" → chiama l'API BRT che restituisce i punti vicini
-  3. Appaiono delle card con nome, indirizzo, distanza di ogni punto
-  4. L'utente clicca su una card per selezionare quel punto
-  5. Il componente emette l'evento "select" con i dati del punto → il padre auto-compila la destinazione
+	DATI IN INGRESSO: props (citta'/CAP iniziali), API BRT
+	DATI IN USCITA: emit('select', pudo) con oggetto {pudo_id, name, address, zip_code, city, ...}
 
-  API USATE:
-  - GET /api/brt/pudo/search?city=X&zip_code=Y  → restituisce lista di punti PUDO
-  - GET /api/brt/pudo/{pudoId}                   → restituisce dettagli (orari completi, indicazioni)
+	VINCOLI: la ricerca PUDO dipende dall'API BRT — se BRT e' offline, mostra errore
+	PUNTI DI MODIFICA SICURI: stili CSS delle card, messaggi di errore
+	COLLEGAMENTI: laravel-spedizionefacile-main/app/Http/Controllers/BrtController.php
 
-  USATO DA: pages/la-tua-spedizione/[step].vue (step 2, sezione Destinazione)
-  EMETTE:
-  - @select(pudo)   → quando l'utente seleziona un punto (pudo = oggetto con pudo_id, name, address, ecc.)
-  - @deselect        → quando l'utente clicca di nuovo sullo stesso punto per deselezionarlo
+	COS'E' UN PUDO?
+	PUDO = Pick Up / Drop Off. Sono negozi convenzionati con BRT (tabaccai, edicole, ecc.)
+	dove il destinatario puo' ritirare il pacco invece di farselo consegnare a casa.
+
+	FLUSSO:
+	1. L'utente inserisce citta' e/o CAP della zona dove vuole ritirare
+	2. Clicca "Cerca punti di ritiro" → chiama GET /api/brt/pudo/search
+	3. Appaiono card con nome, indirizzo, distanza di ogni punto
+	4. L'utente clicca una card per selezionare → il padre auto-compila la destinazione
+
+	API USATE:
+	- GET /api/brt/pudo/search?city=X&zip_code=Y  → lista punti PUDO (max 10)
+	- GET /api/brt/pudo/{pudoId}                   → dettagli (orari, indicazioni)
 -->
 <script setup>
 // Props: citta' e CAP iniziali (pre-compilati dalla destinazione scelta nel preventivo)

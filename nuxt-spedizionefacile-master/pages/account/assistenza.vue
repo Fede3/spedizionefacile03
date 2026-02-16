@@ -1,9 +1,31 @@
-/**
- * PAGINA ASSISTENZA
- * Qui l'utente puo' inviare una richiesta di supporto compilando
- * un modulo con oggetto e messaggio. Mostra anche i contatti
- * (email assistenza e orari di disponibilita').
- */
+<!--
+  FILE: pages/account/assistenza.vue
+  SCOPO: Pagina assistenza — form per inviare richieste di supporto all'admin.
+         Mostra anche i contatti diretti (email assistenza e orari).
+  API: POST /api/support-tickets — invia richiesta di assistenza.
+  COMPONENTI: nessun componente custom.
+  ROUTE: /account/assistenza (middleware sanctum:auth).
+
+  DATI IN INGRESSO:
+    - user (da useSanctumAuth) — dati utente per pre-compilare il form.
+
+  DATI IN USCITA:
+    - POST /api/support-tickets — crea ticket di assistenza.
+
+  VINCOLI:
+    - L'utente deve essere autenticato.
+    - Oggetto e messaggio sono obbligatori.
+
+  ERRORI TIPICI:
+    - Errore di rete durante l'invio → messaggio errore.
+
+  PUNTI DI MODIFICA SICURI:
+    - Aggiungere campi al form: aggiungere ref e input nel template.
+    - Cambiare email/orari assistenza: modificare il template.
+
+  COLLEGAMENTI:
+    - pages/account/index.vue → dashboard account.
+-->
 <script setup>
 /* Richiede che l'utente sia autenticato */
 definePageMeta({

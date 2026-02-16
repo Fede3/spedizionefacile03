@@ -3,23 +3,29 @@
  * FILE: MarkOrderProcessing.php
  * SCOPO: Listener che segna l'ordine come "in lavorazione" dopo il pagamento riuscito.
  *
- * COSA ENTRA:
- *   - OrderPaid event con order
- *
- * COSA ESCE:
- *   - Nessun ritorno (void), aggiorna status ordine nel database
- *
- * CHIAMATO DA:
+ * DOVE SI USA:
  *   - EventServiceProvider — registrato come listener di OrderPaid
+ *   - Scatenato da StripeController quando il pagamento va a buon fine
  *
- * EFFETTI COLLATERALI:
- *   - Database: aggiorna order.status da "pending" a "processing"
- *   - Nota: GenerateBrtLabel (altro listener OrderPaid) poi lo cambia in "in_transit"
+ * DATI IN INGRESSO:
+ *   - OrderPaid event con order (l'ordine appena pagato)
+ *   Esempio: event(new OrderPaid($order)) → MarkOrderProcessing.handle()
+ *
+ * DATI IN USCITA:
+ *   - Nessun ritorno (void), aggiorna order.status da "pending" a "processing"
+ *
+ * VINCOLI:
+ *   - Viene eseguito PRIMA di GenerateBrtLabel (che poi cambia lo stato in "in_transit")
+ *   - Lo stato "processing" e' temporaneo: dura solo fino alla generazione dell'etichetta BRT
  *
  * ERRORI TIPICI:
  *   - Nessuno (operazione semplice di aggiornamento)
  *
- * DOCUMENTI CORRELATI:
+ * PUNTI DI MODIFICA SICURI:
+ *   - Per aggiungere logica post-pagamento: aggiungere dopo l'update()
+ *   - Per cambiare lo stato target: modificare Order::PROCESSING nel metodo handle()
+ *
+ * COLLEGAMENTI:
  *   - app/Events/OrderPaid.php — evento che scatena questo listener
  *   - app/Listeners/GenerateBrtLabel.php — successivo listener che genera etichetta BRT
  *   - app/Models/Order.php — costanti di stato (PROCESSING, IN_TRANSIT, ecc.)

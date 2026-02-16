@@ -1,19 +1,20 @@
 /**
- * COMPOSABLE IMMAGINE ADMIN (useAdminImage)
+ * COMPOSABLE: useAdminImage (UseAdminImage.js)
+ * SCOPO: Carica l'immagine hero personalizzata impostata dall'admin del sito.
  *
- * Questa e' una "funzione riutilizzabile" che carica l'immagine personalizzata
- * impostata dall'amministratore del sito.
- * I composable sono funzioni che si possono usare in piu' pagine del sito
- * senza dover riscrivere lo stesso codice ogni volta.
+ * DOVE SI USA: components/ContenutoHeader.vue (immagine hero della homepage)
  *
- * L'immagine viene usata nell'header della homepage: se l'admin ha caricato
- * un'immagine dal pannello di amministrazione, viene mostrata quella.
- * Se non c'e' nessuna immagine personalizzata, il sito mostra l'immagine predefinita.
+ * COSA RESTITUISCE:
+ *   - data: ref con i dati dell'immagine ({image_url: "https://..."} o null)
+ *   - refresh: funzione per ricaricare l'immagine dal server
+ *   - status: stato della richiesta ("idle", "pending", "success", "error")
+ * ESEMPIO D'USO: const { data } = useAdminImage()
+ *                → data.value?.image_url (URL immagine, o null = usa immagine predefinita)
  *
- * Restituisce:
- * - data: i dati dell'immagine (contiene image_url con l'indirizzo dell'immagine)
- * - refresh: funzione per ricaricare l'immagine dal server
- * - status: lo stato della richiesta (caricamento, completato, errore)
+ * VINCOLI: l'API e' pubblica (non richiede autenticazione)
+ * ERRORI TIPICI: non gestire il caso data.value = null (nessuna immagine caricata)
+ * COLLEGAMENTI: laravel-spedizionefacile-main/app/Http/Controllers/HomepageImageController.php,
+ *               pages/account/amministrazione/immagine-homepage.vue (pannello admin per caricare)
  */
 export const useAdminImage = () => {
 	const { data, refresh, status } = useSanctumFetch("/api/public/homepage-image", {

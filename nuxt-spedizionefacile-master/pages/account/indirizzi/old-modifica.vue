@@ -1,3 +1,13 @@
+<!--
+  FILE: pages/account/indirizzi/old-modifica.vue
+  SCOPO: Vecchia pagina di modifica indirizzo (versione precedente).
+         Carica un indirizzo dal server tramite query string ?id= e permette la modifica.
+  API: GET /api/addresses/{id} — carica indirizzo,
+       PATCH /api/addresses/{id} — salva modifiche.
+  ROUTE: /account/indirizzi/old-modifica?id={id} (middleware implicito).
+
+  NOTA: Versione precedente. La versione attuale e' gestita inline in indirizzi/index.vue.
+-->
 <script setup>
 const route = useRoute();
 

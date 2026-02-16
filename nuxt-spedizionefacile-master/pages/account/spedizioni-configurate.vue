@@ -1,10 +1,35 @@
-/**
- * FILE: pages/account/spedizioni-configurate.vue
- * SCOPO: Spedizioni salvate — lista, filtro, selezione multipla, aggiungi a carrello, modifica, elimina.
- * API: GET /api/saved-shipments, PUT /api/saved-shipments/{id}, DELETE /api/saved-shipments/{id},
- *      POST /api/saved-shipments/add-to-cart.
- * ROUTE: /account/spedizioni-configurate (middleware sanctum:auth).
- */
+<!--
+  FILE: pages/account/spedizioni-configurate.vue
+  SCOPO: Spedizioni salvate — lista, filtro, selezione multipla, aggiungi a carrello, modifica, elimina.
+         Permette di risparmiare tempo ri-inviando configurazioni di spedizione gia' usate.
+  API: GET /api/saved-shipments — lista spedizioni salvate,
+       PUT /api/saved-shipments/{id} — modifica nome/note,
+       DELETE /api/saved-shipments/{id} — elimina,
+       POST /api/saved-shipments/add-to-cart — aggiungi selezionate al carrello.
+  COMPONENTI: nessun componente custom.
+  ROUTE: /account/spedizioni-configurate (middleware sanctum:auth).
+
+  DATI IN INGRESSO:
+    - savedShipments (da useSanctumFetch) — lista spedizioni salvate.
+
+  DATI IN USCITA:
+    - PUT/DELETE su saved-shipments, POST add-to-cart.
+
+  VINCOLI:
+    - L'utente deve essere autenticato.
+    - La selezione multipla permette di aggiungere piu' spedizioni al carrello in una volta.
+
+  ERRORI TIPICI:
+    - Spedizione salvata con dati obsoleti → errore al momento dell'aggiunta al carrello.
+
+  PUNTI DI MODIFICA SICURI:
+    - Aggiungere campi modificabili: modificare il form inline e il body PUT.
+    - Cambiare il layout card: modificare il template.
+
+  COLLEGAMENTI:
+    - pages/carrello.vue → dopo l'aggiunta al carrello.
+    - pages/account/spedizioni/index.vue → lista ordini (da cui si puo' salvare).
+-->
 <script setup>
 /* Richiede che l'utente sia autenticato */
 definePageMeta({

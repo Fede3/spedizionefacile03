@@ -1,10 +1,23 @@
 <!--
   FILE: pages/autenticazione.vue
   SCOPO: Login/registrazione unificata — email/password, Google OAuth, verifica 6 cifre, referral.
-  API: POST /api/login, POST /api/register, POST /api/verify-code, POST /api/resend-code,
-       GET /auth/google (redirect OAuth).
+
+  API: POST /api/login (via useSanctumAuth), POST /api/custom-register,
+       POST /api/verify-code, POST /api/resend-verification-email,
+       GET /api/auth/google/redirect (redirect OAuth).
+  COMPONENTI: UTabs, UForm (Nuxt UI).
   ROUTE: /autenticazione (middleware sanctum:guest, solo utenti non autenticati).
-  NOTE: Supporta ?ref=CODICE per registrazione con codice referral, ?redirect=PATH per redirect post-login.
+
+  DATI IN INGRESSO: ?ref=CODICE (codice referral pre-compilato), ?redirect=PATH (redirect post-login),
+                    ?error=google_auth_failed (errore OAuth Google).
+  DATI IN USCITA: login riuscito -> redirect automatico (gestito da nuxt-auth-sanctum).
+
+  VINCOLI: il CSRF token e' gestito automaticamente da nuxt-auth-sanctum, NON manualmente.
+           La verifica a 6 cifre e' obbligatoria per account non verificati (risposta 403).
+  ERRORI TIPICI: chiamare manualmente /sanctum/csrf-cookie (causa doppio token e errori 419).
+                 Non gestire il retry automatico su errore 419 (CSRF scaduto).
+  PUNTI DI MODIFICA SICURI: testi form, stili bottoni, prefissi telefonici, requisiti password.
+  COLLEGAMENTI: composables/useSession.js, stores/userStore.js, pages/recupera-password.vue.
 -->
 <script setup>
 // Nota: rimosso import inutilizzato di FetchError da "ofetch" (dead code, riduce parse time)

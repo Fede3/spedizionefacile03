@@ -1,7 +1,12 @@
-/**
- * ADMIN - Nuovo Servizio
- * Creazione di un nuovo servizio con sezioni dinamiche e FAQ.
- */
+<!--
+  FILE: pages/account/amministrazione/servizi/nuovo.vue
+  SCOPO: Pannello admin — creazione nuovo servizio con sezioni dinamiche e FAQ.
+  API: POST /api/admin/services — crea servizio.
+  ROUTE: /account/amministrazione/servizi/nuovo (middleware sanctum:auth + admin).
+
+  COLLEGAMENTI:
+    - pages/account/amministrazione/servizi/index.vue → torna alla lista servizi.
+-->
 <script setup>
 definePageMeta({
 	middleware: ["sanctum:auth", "admin"],

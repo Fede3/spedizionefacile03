@@ -3,29 +3,35 @@
  * FILE: UserAddress.php
  * SCOPO: Modello indirizzo della rubrica utente con gestione automatica dell'indirizzo predefinito.
  *
- * COSA ENTRA:
+ * DOVE SI USA:
+ *   - UserAddressController.php — CRUD indirizzi rubrica (max 5 per utente)
+ *   - nuxt: pages/account/indirizzi/index.vue — lista indirizzi salvati
+ *
+ * DATI IN INGRESSO:
  *   - name, address, address_number, city, postal_code, province, country
  *   - telephone_number, email, additional_information, intercom_code, default, user_id
+ *   Esempio: UserAddress::create(['name' => 'Casa', 'city' => 'Milano', 'user_id' => 1, 'default' => true])
  *
- * COSA ESCE:
+ * DATI IN USCITA:
  *   - Relazione: user (l'utente proprietario)
+ *   Esempio: $address->user->name — nome dell'utente proprietario dell'indirizzo
  *
- * CHIAMATO DA:
- *   - UserAddressController.php — CRUD indirizzi rubrica (max 5 per utente)
- *   - nuxt: pages/account/indirizzi/index.vue, pages/la-tua-spedizione/[step].vue
- *
- * EFFETTI COLLATERALI:
- *   - Boot creating: il primo indirizzo diventa automaticamente predefinito
- *   - Boot creating: se nuovo indirizzo e' default, rimuove default dagli altri
- *   - Boot updating: se indirizzo impostato come default, rimuove default dagli altri
- *   - Boot deleting: se eliminato l'indirizzo default, il piu' vecchio diventa il nuovo default
+ * VINCOLI:
+ *   - Max 5 indirizzi per utente (controllato dal controller, non dal modello)
+ *   - Sempre almeno un indirizzo predefinito (gestito automaticamente nel boot)
+ *   - Differenza con PackageAddress: UserAddress e' la rubrica, PackageAddress e' legato al pacco
  *
  * ERRORI TIPICI:
- *   - Differenza con PackageAddress: UserAddress e' la rubrica utente, PackageAddress e' legato al pacco
- *   - Max 5 indirizzi per utente (controllato dal controller, non dal modello)
+ *   - Creare un indirizzo default=true senza sapere che rimuove il default dagli altri
+ *   - Eliminare l'indirizzo predefinito: il boot lo gestisce, ma potrebbe sorprendere
  *
- * DOCUMENTI CORRELATI:
- *   - UserAddressController.php — controller CRUD con limite 5 indirizzi
+ * PUNTI DI MODIFICA SICURI:
+ *   - Per cambiare il limite indirizzi: modificare la validazione in UserAddressController
+ *   - Per cambiare la logica del default: modificare i callback in boot()
+ *   - Per aggiungere campi: aggiungere in $fillable e nella migrazione
+ *
+ * COLLEGAMENTI:
+ *   - app/Http/Controllers/UserAddressController.php — controller CRUD con limite 5 indirizzi
  *   - app/Models/PackageAddress.php — indirizzi specifici dei pacchi (diversi dalla rubrica)
  */
 

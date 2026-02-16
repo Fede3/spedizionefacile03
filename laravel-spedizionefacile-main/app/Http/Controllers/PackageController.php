@@ -15,10 +15,17 @@
  * EFFETTI COLLATERALI:
  *   - Nessuno (sola lettura)
  *
+ * VINCOLI:
+ *   - La maggior parte della logica CRUD e' stata spostata in CartController
+ *   - Le funzioni commentate sono lasciate come riferimento storico
+ *
  * ERRORI TIPICI:
  *   - Nessuno specifico
  *
- * DOCUMENTI CORRELATI:
+ * PUNTI DI MODIFICA SICURI:
+ *   - Per aggiungere funzionalita' ai pacchi, e' preferibile farlo in CartController
+ *
+ * COLLEGAMENTI:
  *   - CartController.php — gestione completa del carrello (creazione, modifica, eliminazione pacchi)
  *   - SavedShipmentController.php — spedizioni salvate come template
  */

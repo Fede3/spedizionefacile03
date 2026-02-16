@@ -1,7 +1,14 @@
-/**
- * ADMIN - Messaggi
- * Messaggi ricevuti dal form contatti del sito.
- */
+<!--
+  FILE: pages/account/amministrazione/messaggi.vue
+  SCOPO: Pannello admin — messaggi ricevuti dal form contatti del sito.
+         Visualizzazione lista con dettaglio espandibile.
+  API: GET /api/admin/contact-messages — lista messaggi,
+       DELETE /api/admin/contact-messages/{id} — elimina messaggio.
+  ROUTE: /account/amministrazione/messaggi (middleware sanctum:auth + admin).
+
+  COLLEGAMENTI:
+    - pages/contatti.vue → form pubblico che genera i messaggi.
+-->
 <script setup>
 definePageMeta({
 	middleware: ["sanctum:auth", "admin"],

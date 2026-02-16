@@ -1,23 +1,27 @@
 <!--
-	COMPONENTE RECENSIONI HOMEPAGE (Homepage/Recensioni.vue)
+	COMPONENTE: Recensioni (Homepage/Recensioni.vue)
+	SCOPO: Sezione homepage "Cosa dicono i nostri clienti" — carosello di recensioni.
 
-	Questo componente mostra la sezione "Cosa dicono i nostri clienti" nella homepage.
-	Presenta le recensioni degli utenti in un carosello scorrevole (slider orizzontale).
+	DOVE SI USA: pages/index.vue (homepage)
+	PROPS: nessuna
+	EMITS: nessuno
 
-	Ogni recensione mostra:
-	- Nome e professione dell'utente (con avatar)
-	- Il testo della recensione tra virgolette
-	- La citta' e la nazione dell'utente
-	- Il tipo di servizio usato (es. "Spedizione senza etichetta")
+	DATI IN INGRESSO: nessuno (dati statici nell'array reviews)
+	DATI IN USCITA: nessuno (solo visualizzazione)
 
-	Il carosello usa la libreria Swiper per lo scorrimento:
-	- Su cellulare mostra 1 recensione alla volta
-	- Su tablet mostra 2 recensioni
-	- Su desktop mostra 3 recensioni
-	- Ha una barra di scorrimento in basso trascinabile
+	VINCOLI: usa la libreria Swiper (importata come vendor-swiper chunk separato)
+	         NON applicare content-visibility: auto — Swiper necessita di dimensioni calcolate al mount
+	PUNTI DI MODIFICA SICURI: array reviews (testi, nomi, citta'), breakpoints di Swiper
+	COLLEGAMENTI: nessuno
 
-	NOTA: le recensioni sono attualmente inserite direttamente nel codice (dati statici).
-	In futuro potrebbero essere caricate dal server.
+	CAROSELLO:
+	- Mobile: 1 recensione alla volta
+	- Tablet: 2 recensioni
+	- Desktop: 3 recensioni
+	- Barra di scorrimento in basso trascinabile (Scrollbar module)
+
+	NOTA: le recensioni sono dati statici. In futuro potrebbero essere caricate dal server.
+	ANIMAZIONE: IntersectionObserver con reveal-review (rispetta prefers-reduced-motion)
 -->
 <script setup>
 import { Swiper, SwiperSlide } from "swiper/vue";
@@ -127,8 +131,8 @@ import { Scrollbar } from "swiper/modules";
 </script>
 
 <template>
-	<!-- content-visibility: auto — sezione below-the-fold, rendering differito -->
-	<section class="mt-[80px] tablet:mt-[100px] desktop:mt-[136px] cv-auto">
+	<!-- content-visibility NON applicabile qui: Swiper necessita di dimensioni calcolate al mount -->
+	<section class="mt-[80px] tablet:mt-[100px] desktop:mt-[136px]">
 		<div class="my-container">
 			<h2 class="text-center text-[rgba(0,0,0,.6)] font-medium desktop:text-[1.25rem] tracking-[1.8px] reveal-review">Recensioni</h2>
 

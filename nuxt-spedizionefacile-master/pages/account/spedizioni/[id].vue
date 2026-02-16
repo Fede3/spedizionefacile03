@@ -1,9 +1,25 @@
-/**
- * FILE: pages/account/spedizioni/[id].vue
- * SCOPO: Dettaglio ordine — stato, colli, indirizzi, etichetta BRT, link tracking, annullamento e rimborso.
- * API: GET /api/orders/{id}, GET /api/brt/label/{orderId}, POST /api/orders/{id}/cancel, GET /api/orders/{id}/refund-eligibility.
- * ROUTE: /account/spedizioni/:id (middleware sanctum:auth).
- */
+<!--
+  FILE: pages/account/spedizioni/[id].vue
+  SCOPO: Dettaglio ordine — stato, colli, indirizzi, etichetta BRT, link tracking, annullamento e rimborso.
+
+  API: GET /api/orders/{id} (dettaglio ordine), GET /api/brt/label/{orderId} (download PDF etichetta),
+       POST /api/brt/create-shipment (rigenera etichetta), POST /api/orders/{id}/cancel (annulla),
+       GET /api/orders/{id}/refund-eligibility (verifica idoneita' rimborso),
+       POST /api/orders/{id}/add-package (aggiungi collo a ordine in attesa).
+  COMPONENTI: Teleport (modale annullamento nativo Vue).
+  ROUTE: /account/spedizioni/:id (middleware sanctum:auth).
+
+  DATI IN INGRESSO: route.params.id (ID ordine dalla URL).
+  DATI IN USCITA: download PDF etichetta, navigazione a /traccia-spedizione?code=XXX.
+
+  VINCOLI: l'etichetta BRT si scarica come blob PDF. La rigenerazione chiama l'API BRT.
+           Il rimborso ha una commissione di 2 EUR per ordini gia' in lavorazione.
+           Ordini in_transit NON sono rimborsabili.
+  ERRORI TIPICI: non gestire lo stato "in_giacenza" nei colori stato.
+  PUNTI DI MODIFICA SICURI: colori stato (statusColor), layout colli, testi modale.
+  COLLEGAMENTI: pages/account/spedizioni/index.vue, pages/traccia-spedizione.vue,
+                controllers/OrderController.php, controllers/BrtController.php.
+-->
 <script setup>
 /* Richiede che l'utente sia autenticato */
 definePageMeta({

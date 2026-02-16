@@ -1,23 +1,31 @@
 <!--
-	COMPONENTE INDICATORE PASSI (Steps.vue)
+	COMPONENTE: Steps (Steps.vue)
+	SCOPO: Barra di navigazione a 5 step del processo di spedizione.
 
-	Questo componente mostra la "barra dei passi" (step) del processo di spedizione.
-	Serve a far capire all'utente a che punto si trova nel percorso di prenotazione.
+	DOVE SI USA: components/Preventivo.vue (step 0),
+	             pages/la-tua-spedizione/[step].vue (step 1-2),
+	             pages/riepilogo.vue (step 3), pages/checkout.vue (step 4)
+	PROPS: currentStep (Number, default -1 = auto-detect dalla route)
+	EMITS: navigate(index) — emesso quando l'utente clicca su uno step precedente
 
-	I 5 passi sono:
-	1. Misure - inserimento dimensioni e peso del pacco
-	2. Servizi - scelta dei servizi aggiuntivi
-	3. Ritiro - inserimento indirizzo di ritiro e consegna
-	4. Conferma - riepilogo di tutti i dati
-	5. Pagamento - pagamento della spedizione
+	DATI IN INGRESSO: route.path (per auto-detect dello step corrente), props.currentStep
+	DATI IN USCITA: emit('navigate', index), navigazione diretta via navigateTo()
 
-	Il passo attivo viene evidenziato con un colore arancione.
-	I passi gia' completati sono cliccabili per tornare indietro.
-	I passi futuri sono grigi e non cliccabili.
+	VINCOLI: l'ordine degli step e le route associate in stepRoutes devono restare sincronizzati
+	PUNTI DI MODIFICA SICURI: array steps (nomi), stepRoutes (URL associati)
+	COLLEGAMENTI: components/Preventivo.vue, pages/la-tua-spedizione/[step].vue
 
-	Il componente riconosce automaticamente in quale passo si trova
-	guardando l'indirizzo della pagina (route.path), oppure puo' ricevere
-	il passo corrente come parametro dal componente che lo usa.
+	I 5 PASSI:
+	1. Misure — inserimento dimensioni e peso del pacco
+	2. Servizi — scelta dei servizi aggiuntivi
+	3. Ritiro — inserimento indirizzo di ritiro e consegna
+	4. Conferma — riepilogo di tutti i dati
+	5. Pagamento — pagamento della spedizione
+
+	COMPORTAMENTO:
+	- Step attivo: evidenziato in arancione
+	- Step completati: cliccabili per tornare indietro
+	- Step futuri: grigi e non cliccabili
 -->
 <script setup>
 const props = defineProps({

@@ -3,23 +3,18 @@
  * FILE: AddressController.php
  * SCOPO: Controller segnaposto per indirizzi generici (tutte le funzioni restituiscono risposte vuote).
  *
- * COSA ENTRA:
- *   - Request standard per store/update
- *   - ID nella URL per show/update/destroy
+ * DOVE SI USA: Attualmente non utilizzato attivamente nelle route.
  *
- * COSA ESCE:
- *   - JSON vuoto con codici HTTP appropriati (200, 201, 204, 404)
+ * DATI IN INGRESSO: Request standard per store/update, ID nella URL per show/update/destroy.
+ * DATI IN USCITA: JSON vuoto con codici HTTP appropriati (200, 201, 204, 404).
  *
- * CHIAMATO DA:
- *   - Attualmente non utilizzato attivamente nelle route
+ * VINCOLI: Questo controller e' un segnaposto. La logica reale e' in UserAddressController.
  *
- * EFFETTI COLLATERALI:
- *   - Nessuno (tutte le funzioni sono segnaposto)
+ * ERRORI TIPICI: Nessuno.
  *
- * ERRORI TIPICI:
- *   - Nessuno
+ * PUNTI DI MODIFICA SICURI: Se serve implementare la logica, copiare il pattern da UserAddressController.
  *
- * DOCUMENTI CORRELATI:
+ * COLLEGAMENTI:
  *   - UserAddressController.php — gestione reale degli indirizzi utente
  *   - BillingAddressController.php — gestione indirizzi di fatturazione
  */

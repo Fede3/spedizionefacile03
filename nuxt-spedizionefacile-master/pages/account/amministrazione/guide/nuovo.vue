@@ -1,7 +1,12 @@
-/**
- * ADMIN - Nuova Guida
- * Creazione di una nuova guida con sezioni dinamiche.
- */
+<!--
+  FILE: pages/account/amministrazione/guide/nuovo.vue
+  SCOPO: Pannello admin — creazione nuova guida con sezioni dinamiche (titolo, contenuto, immagine).
+  API: POST /api/admin/guides — crea guida.
+  ROUTE: /account/amministrazione/guide/nuovo (middleware sanctum:auth + admin).
+
+  COLLEGAMENTI:
+    - pages/account/amministrazione/guide/index.vue → torna alla lista guide.
+-->
 <script setup>
 definePageMeta({
 	middleware: ["sanctum:auth", "admin"],

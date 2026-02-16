@@ -1,8 +1,22 @@
 <!--
-	COMPONENTE CONTENUTO HEADER (ContenutoHeader.vue)
+	COMPONENTE: ContenutoHeader (ContenutoHeader.vue)
+	SCOPO: Mostra il contenuto dell'intestazione (hero) che cambia in base alla pagina corrente.
 
-	Questo componente mostra il contenuto principale dell'intestazione (header),
-	che cambia in base alla pagina in cui si trova l'utente.
+	DOVE SI USA: components/Header.vue (unico padre)
+	PROPS: title, description, button, image, path (tutti opzionali, usati per pagine generiche)
+	EMITS: nessuno
+
+	DATI IN INGRESSO: useAdminImage() (immagine hero personalizzata dall'admin),
+	                  usePriceBands() (prezzo minimo per il badge hero),
+	                  route.path (per decidere quale sezione mostrare)
+	DATI IN USCITA: nessuno (solo visualizzazione)
+
+	VINCOLI: il prezzo minimo nel hero DEVE corrispondere alla prima fascia peso
+	PUNTI DI MODIFICA SICURI: testi, stili CSS, struttura HTML delle singole sezioni
+	COLLEGAMENTI: composables/usePriceBands.js, composables/UseAdminImage.js
+
+	SEZIONI: Homepage (hero con prezzo), Servizi, Contatti, Chi siamo,
+	         Pagamento alla consegna, Guide, FAQ, Account
 -->
 <script setup>
 const { data } = useAdminImage();

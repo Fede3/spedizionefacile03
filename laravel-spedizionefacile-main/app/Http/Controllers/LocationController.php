@@ -21,12 +21,23 @@
  * EFFETTI COLLATERALI:
  *   - Sessione: salva city in sessione (postLocation)
  *
+ * VINCOLI:
+ *   - La ricerca richiede almeno 2 caratteri per evitare risposte troppo grandi
+ *   - Massimo 20 risultati per ricerca (LIMIT 20)
+ *   - La tabella locations contiene tutti i CAP e le citta' italiane
+ *   - Un CAP puo' corrispondere a piu' citta' (es. 00100 -> Roma, Citta' del Vaticano)
+ *
  * ERRORI TIPICI:
  *   - Nessun errore HTTP specifico (restituisce array vuoto se nessun risultato)
  *
- * DOCUMENTI CORRELATI:
+ * PUNTI DI MODIFICA SICURI:
+ *   - Per cambiare il minimo caratteri: modificare "strlen($query) < 2" in search()
+ *   - Per cambiare il limite risultati: modificare "limit(20)" in search()
+ *
+ * COLLEGAMENTI:
  *   - app/Models/Location.php — modello localita' con postal_code, place_name, province
  *   - SessionController.php — usa la sessione per i dati del preventivo rapido
+ *   - components/Homepage/PreventivoRapido.vue — autocompletamento citta'
  */
 
 namespace App\Http\Controllers;

@@ -1,21 +1,19 @@
 <!--
-	COMPONENTE PREVENTIVO RAPIDO HOMEPAGE (Homepage/PreventivoRapido.vue)
+	COMPONENTE: PreventivoRapido (Homepage/PreventivoRapido.vue)
+	SCOPO: Modulo preventivo SEMPLIFICATO — versione precedente/alternativa.
 
-	Questo e' un modulo preventivo SEMPLIFICATO che appare nella homepage del sito.
-	A differenza del componente Preventivo.vue (quello principale), questo mostra solo
-	i campi base per iniziare:
-	- Nazionalita' e CAP di ritiro
-	- Nazionalita' e CAP di consegna
-	- Data della spedizione
+	DOVE SI USA: NON attualmente in uso (sostituito da components/Preventivo.vue nella homepage)
+	PROPS: nessuna
+	EMITS: nessuno
 
-	In alto mostra anche un indicatore a 3 passi:
-	1. Seleziona Posizione
-	2. Seleziona Dimensioni
-	3. Conferma
+	DATI IN INGRESSO: nessuno (dati locali)
+	DATI IN USCITA: nessuno (form non collegato al backend)
 
-	NOTA: questo componente sembra essere una versione precedente/alternativa
-	e potrebbe non essere attualmente in uso nella homepage (dove invece
-	viene usato il componente Preventivo.vue).
+	VINCOLI: questo componente e' una versione di backup, non modificare per funzionalita' attive
+	PUNTI DI MODIFICA SICURI: nessuno (componente non in uso)
+	COLLEGAMENTI: components/Preventivo.vue (la versione attiva)
+
+	NOTA: mantenuto come riferimento storico. Il componente attivo e' Preventivo.vue.
 -->
 <script setup>
 const currentStep = ref(1);

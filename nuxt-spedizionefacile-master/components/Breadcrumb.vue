@@ -1,12 +1,17 @@
 <!--
-	COMPONENTE BREADCRUMB (Breadcrumb.vue)
+	COMPONENTE: Breadcrumb (Breadcrumb.vue)
+	SCOPO: Mostra il percorso di navigazione (es. Home > Servizi > Pagamento alla consegna).
 
-	Questo componente mostra il "percorso di navigazione" (breadcrumb),
-	cioe' quella riga di link tipo: Home > Servizi > Pagamento alla consegna
-	che aiuta l'utente a capire dove si trova nel sito e a tornare indietro facilmente.
+	DOVE SI USA: pages/servizi/*.vue, pages/guide/*.vue, pages/chi-siamo.vue e altre pagine interne
+	PROPS: items (Array) — lista di voci [{label, to}] da mostrare nel percorso
+	EMITS: nessuno
 
-	Riceve come parametro la lista di voci da mostrare (items) e usa il componente
-	UBreadcrumb della libreria Nuxt UI per visualizzarle.
+	DATI IN INGRESSO: props.items (passato dal componente padre)
+	DATI IN USCITA: nessuno (solo visualizzazione e navigazione)
+
+	VINCOLI: usa UBreadcrumb di Nuxt UI — lo stile e' personalizzato in app.config.ts
+	PUNTI DI MODIFICA SICURI: classi CSS wrapper
+	COLLEGAMENTI: app.config.ts (personalizzazione stile breadcrumb)
 -->
 <script setup>
 const props = defineProps({

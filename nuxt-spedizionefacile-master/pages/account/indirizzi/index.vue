@@ -1,10 +1,38 @@
-/**
- * FILE: pages/account/indirizzi/index.vue
- * SCOPO: Rubrica indirizzi — CRUD indirizzi salvati, predefinito, card layout, max 5.
- * API: GET /api/user-addresses, POST /api/user-addresses, PUT /api/user-addresses/{id},
- *      DELETE /api/user-addresses/{id}.
- * ROUTE: /account/indirizzi (middleware sanctum:auth).
- */
+<!--
+  FILE: pages/account/indirizzi/index.vue
+  SCOPO: Rubrica indirizzi — CRUD completo degli indirizzi salvati dall'utente.
+         Card layout con predefinito, creazione, modifica, eliminazione con conferma inline.
+  API: GET /api/user-addresses — lista indirizzi,
+       POST /api/user-addresses — crea nuovo,
+       PATCH /api/user-addresses/{id} — modifica / imposta predefinito,
+       DELETE /api/user-addresses/{id} — elimina.
+  COMPONENTI: nessun componente custom (solo Icon di Nuxt).
+  ROUTE: /account/indirizzi (middleware sanctum:auth).
+
+  DATI IN INGRESSO:
+    - addresses (da useSanctumFetch) — lista indirizzi dal server.
+    - provinceList — elenco completo province italiane (hardcoded).
+
+  DATI IN USCITA:
+    - POST/PATCH/DELETE su /api/user-addresses — operazioni CRUD.
+
+  VINCOLI:
+    - L'utente deve essere autenticato (middleware sanctum:auth).
+    - Ogni indirizzo ha: name, address, city, postal_code, province_name, default.
+    - Un solo indirizzo puo' essere predefinito alla volta.
+
+  ERRORI TIPICI:
+    - Errore di validazione dal backend (CAP malformato, campi mancanti).
+    - Errore di rete durante eliminazione.
+
+  PUNTI DI MODIFICA SICURI:
+    - Aggiungere campi all'indirizzo: aggiungere in newAddress, editedAddress, form e API body.
+    - Cambiare il limite massimo di indirizzi: gestito lato backend.
+
+  COLLEGAMENTI:
+    - pages/account/index.vue → dashboard account (breadcrumb).
+    - pages/riepilogo.vue → gli indirizzi salvati possono essere usati nel riepilogo spedizione.
+-->
 <script setup>
 /* Richiede che l'utente sia autenticato */
 definePageMeta({

@@ -1,9 +1,19 @@
 <!--
   FILE: pages/traccia-spedizione.vue
   SCOPO: Tracking spedizione — ricerca per codice BRT/ordine/riferimento, timeline stato.
-  API: GET /api/brt/track/{code} (tracking BRT via backend).
+
+  API: GET /api/tracking/search?code=XXX (ricerca unificata: ordine interno o codice BRT).
+  COMPONENTI: nessuno (pagina standalone).
   ROUTE: /traccia-spedizione (pubblica).
-  NOTE: Supporta ?code=XXX nell'URL per precompilare il campo di ricerca.
+
+  DATI IN INGRESSO: ?code=XXX (query param per precompilare e cercare automaticamente).
+  DATI IN USCITA: risultato tracking con timeline e link a BRT esterno.
+
+  VINCOLI: la ricerca usa $fetch diretto (non sanctumClient) perche' e' pubblica.
+           Se la spedizione non e' nel DB, offre link diretto al tracking BRT.
+  ERRORI TIPICI: confondere raw_status (chiave interna) con status (etichetta tradotta).
+  PUNTI DI MODIFICA SICURI: timeline stati (statusTimeline), colori stato, testi UI.
+  COLLEGAMENTI: pages/account/spedizioni/, controllers/TrackingController.php.
 -->
 <script setup>
 // Meta tag SEO per la pagina di tracking

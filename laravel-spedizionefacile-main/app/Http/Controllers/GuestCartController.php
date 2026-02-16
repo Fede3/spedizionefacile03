@@ -22,13 +22,25 @@
  *   - Duplicati: se un pacco identico (stesse dimensioni, stesso percorso) esiste gia',
  *     aumenta la quantita' invece di creare un nuovo elemento
  *
+ * VINCOLI:
+ *   - I prezzi nella sessione sono in CENTESIMI (single_price = euro * 100)
+ *   - La conversione euro->centesimi avviene in store(): round(euro * 100)
+ *   - La sessione si svuota quando il browser viene chiuso (o dopo il timeout)
+ *   - I dati del carrello ospite vengono trasferiti nel DB al momento del login
+ *   - Duplicati: stesse dimensioni + stessi indirizzi = aumento quantita' (non nuovo elemento)
+ *
  * ERRORI TIPICI:
  *   - 422: dati di validazione mancanti (almeno un pacco con dimensioni e indirizzi)
  *
- * DOCUMENTI CORRELATI:
+ * PUNTI DI MODIFICA SICURI:
+ *   - Per aggiungere campi al pacco ospite: aggiungerli in store() nel blocco $cart[]
+ *   - Per cambiare i criteri di deduplicazione: modificare il confronto nel blocco $duplicateIndex
+ *
+ * COLLEGAMENTI:
  *   - CartController.php — carrello per utenti autenticati (salva in database)
  *   - CustomLoginController.php — trasferisce il carrello sessione nel database al login
  *   - app/Cart/MyMoney.php — formattazione prezzi in centesimi (es. 900 -> "9,00 EUR")
+ *   - composables/useCart.js — composable Nuxt che sceglie guest-cart o cart in base all'auth
  */
 
 namespace App\Http\Controllers;

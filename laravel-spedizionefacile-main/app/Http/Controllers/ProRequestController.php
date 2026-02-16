@@ -24,12 +24,23 @@
  *   - Database (approve): aggiorna ruolo utente a "Partner Pro", genera referral_code 8 caratteri
  *   - Database (reject): aggiorna status a "rejected", salva reviewed_at
  *
+ * VINCOLI:
+ *   - Un utente puo' avere al massimo UNA richiesta pending alla volta
+ *   - L'approvazione genera automaticamente un referral_code di 8 caratteri
+ *   - Il codice referral viene generato SOLO se l'utente non ne ha gia' uno
+ *   - Solo le richieste con status "pending" possono essere approvate o rifiutate
+ *
  * ERRORI TIPICI:
  *   - 422: utente gia' Partner Pro, oppure richiesta gia' in attesa, oppure richiesta non pending
  *
- * DOCUMENTI CORRELATI:
+ * PUNTI DI MODIFICA SICURI:
+ *   - Per aggiungere campi alla richiesta: aggiungerli in store() e nel modello ProRequest
+ *   - Per cambiare la lunghezza del codice referral: modificare Str::random(8) in approve()
+ *
+ * COLLEGAMENTI:
  *   - app/Models/ProRequest.php — modello richiesta con company_name, vat_number, status
  *   - ReferralController.php — funzionalita' referral disponibili dopo approvazione
+ *   - pages/account/account-pro.vue — pagina frontend richiesta Pro
  */
 
 namespace App\Http\Controllers;

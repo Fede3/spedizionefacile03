@@ -1,6 +1,27 @@
 /**
- * Composable condiviso per le pagine admin.
- * Contiene funzioni di utilita', configurazioni stato e gestione messaggi.
+ * COMPOSABLE: useAdmin (useAdmin.js)
+ * SCOPO: Funzioni di utilita' condivise per tutte le pagine del pannello amministrazione.
+ *
+ * DOVE SI USA: pages/account/amministrazione/*.vue (ordini, utenti, spedizioni, prezzi, ecc.)
+ *
+ * COSA RESTITUISCE:
+ *   - actionLoading: ref con l'ID dell'azione in corso (per spinner)
+ *   - actionMessage: ref con il messaggio di feedback ({type, text})
+ *   - showSuccess(text): mostra un messaggio verde per 5 secondi
+ *   - showError(e, fallback): mostra un messaggio rosso per 5 secondi
+ *   - formatCurrency(val): formatta un valore come valuta italiana (es. "12,50")
+ *   - formatCents(val): converte centesimi in euro formattati (es. 1250 → "12,50")
+ *   - formatDate(dateStr): formatta una data nel formato italiano con ora
+ *   - orderStatusConfig: colori/icone/etichette per ogni stato ordine
+ *   - withdrawalStatusConfig: colori/etichette per stati prelievo
+ *   - referralStatusConfig: colori/etichette per stati referral
+ *   - proRequestStatusConfig: colori/etichette per richieste account Pro
+ *   - downloadLabel(order): scarica l'etichetta BRT come PDF
+ * ESEMPIO D'USO: const { showSuccess, formatCurrency, orderStatusConfig } = useAdmin()
+ *
+ * VINCOLI: formatCurrency gestisce 3 formati diversi (oggetto MyMoney, stringa, numero)
+ * ERRORI TIPICI: confondere centesimi e euro — usare formatCents per valori dal DB
+ * COLLEGAMENTI: laravel-spedizionefacile-main/app/Http/Controllers/BrtController.php (etichette)
  */
 export const useAdmin = () => {
 	/* Stato delle azioni admin (approvazione, eliminazione, ecc.) */

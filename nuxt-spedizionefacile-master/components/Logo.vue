@@ -1,12 +1,17 @@
 <!--
-	COMPONENTE LOGO (Logo.vue)
+	COMPONENTE: Logo (Logo.vue)
+	SCOPO: Mostra il logo di SpedizioneFacile (cerchio arancione + scritta).
 
-	Questo componente mostra il logo di SpedizioneFacile.
-	E' composto da un cerchio arancione con l'icona del pacco
-	e la scritta "SpedizioneFacile" a fianco.
+	DOVE SI USA: components/Navbar.vue (barra di navigazione), components/Footer.vue (pie' di pagina)
+	PROPS: isNavbar (Boolean) — true nella navbar, false nel footer (cambia colore testo)
+	EMITS: nessuno
 
-	Viene usato sia nella barra di navigazione (Navbar) che nel piede di pagina (Footer).
-	Il parametro "isNavbar" indica se il logo e' usato nella navbar (true) o nel footer (false).
+	DATI IN INGRESSO: props.isNavbar, route.path
+	DATI IN USCITA: nessuno (solo visualizzazione)
+
+	VINCOLI: l'immagine del logo e' above-the-fold, usare loading="eager" e fetchpriority="high"
+	PUNTI DI MODIFICA SICURI: dimensioni responsive, testo "SpedizioneFacile"
+	COLLEGAMENTI: public/img/logo-spedizionefacile.png
 -->
 <script setup>
 const props = defineProps({

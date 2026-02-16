@@ -1,7 +1,14 @@
-/**
- * ADMIN - Modifica Servizio
- * Modifica servizio esistente con sezioni dinamiche, FAQ e upload immagine.
- */
+<!--
+  FILE: pages/account/amministrazione/servizi/[id].vue
+  SCOPO: Pannello admin — modifica servizio esistente con sezioni dinamiche, FAQ e upload immagine.
+  API: GET /api/admin/services/{id} — carica servizio,
+       PUT /api/admin/services/{id} — salva modifiche,
+       POST /api/admin/services/{id}/upload-image — upload immagine.
+  ROUTE: /account/amministrazione/servizi/{id} (middleware sanctum:auth + admin).
+
+  COLLEGAMENTI:
+    - pages/account/amministrazione/servizi/index.vue → torna alla lista servizi.
+-->
 <script setup>
 definePageMeta({
 	middleware: ["sanctum:auth", "admin"],

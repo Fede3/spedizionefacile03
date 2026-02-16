@@ -1,10 +1,20 @@
-/**
- * FILE: pages/account/index.vue
- * SCOPO: Dashboard account — griglia card (spedizioni, pagamenti, profilo, admin).
- * API: nessuna chiamata diretta (usa useSanctumAuth per dati utente).
- * ROUTE: /account (middleware sanctum:auth).
- * NOTE: Sezione Admin visibile solo se user.role === "Admin".
- */
+<!--
+  FILE: pages/account/index.vue
+  SCOPO: Dashboard account — griglia card con link a tutte le sezioni (spedizioni, pagamenti, profilo, admin).
+
+  API: nessuna chiamata diretta (usa useSanctumAuth per dati utente e ruolo).
+  COMPONENTI: nessuno di esterno (solo NuxtLink per navigazione).
+  ROUTE: /account (middleware sanctum:auth).
+
+  DATI IN INGRESSO: nessuno (legge il ruolo utente da useSanctumAuth).
+  DATI IN USCITA: navigazione alle sotto-pagine account.
+
+  VINCOLI: le icone SVG sono inline (NON usare componente Icon) per rendering garantito.
+           Le sezioni admin sono filtrate in base al ruolo (isAdmin computed).
+  ERRORI TIPICI: aggiungere una pagina senza impostare visible correttamente.
+  PUNTI DI MODIFICA SICURI: aggiungere/rimuovere card in sections[], testi, icone SVG.
+  COLLEGAMENTI: tutte le sotto-pagine /account/*, composables/useSanctumAuth.
+-->
 <script setup>
 /* Richiede che l'utente sia autenticato per accedere a questa pagina */
 definePageMeta({

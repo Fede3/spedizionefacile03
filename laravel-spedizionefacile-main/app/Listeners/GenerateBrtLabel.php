@@ -3,29 +3,36 @@
  * FILE: GenerateBrtLabel.php
  * SCOPO: Listener che genera automaticamente l'etichetta BRT dopo il pagamento di un ordine.
  *
- * COSA ENTRA:
- *   - OrderPaid event con order (l'ordine appena pagato)
- *
- * COSA ESCE:
- *   - Nessun ritorno (void), ma aggiorna l'ordine nel database
- *
- * CHIAMATO DA:
+ * DOVE SI USA:
  *   - EventServiceProvider — registrato come listener di OrderPaid
  *   - Scatenato da StripeController.php quando il pagamento va a buon fine
  *
- * EFFETTI COLLATERALI:
- *   - Rete: chiama BrtService::createShipment (API BRT) con retry fino a 3 tentativi
- *   - Database: aggiorna ordine con brt_parcel_id, brt_tracking_url, brt_label_base64, status=in_transit
- *   - Database: salva brt_error se la generazione fallisce (per mostrare errore nel frontend)
- *   - Email: invia ShipmentLabelMail con etichetta PDF all'utente
- *   - Log: registra successo/fallimento della generazione
+ * DATI IN INGRESSO:
+ *   - OrderPaid event con order (l'ordine appena pagato)
+ *   Esempio: event(new OrderPaid($order)) → GenerateBrtLabel.handle() viene chiamato
+ *
+ * DATI IN USCITA:
+ *   - Nessun ritorno (void), ma aggiorna l'ordine nel database con dati BRT
+ *   Esempio: order.brt_parcel_id, order.brt_tracking_url, order.brt_label_base64, order.status=in_transit
+ *
+ * VINCOLI:
+ *   - Richiede BRT configurato (config services.brt.client_id non vuoto)
+ *   - L'ordine deve avere pacchi con indirizzi completi
+ *   - Massimo 3 tentativi con retry incrementale (1s, 2s)
+ *   - Non deve bloccare il flusso: se BRT fallisce, salva l'errore e continua
  *
  * ERRORI TIPICI:
- *   - BRT non configurato: salta silenziosamente (log info)
+ *   - BRT non configurato: salta silenziosamente (log info, nessun errore)
  *   - Ordine ha gia' etichetta: salta (evita duplicati)
- *   - Fallimento dopo 3 tentativi: salva errore in brt_error, non blocca il flusso
+ *   - Fallimento dopo 3 tentativi: salva errore in brt_error per mostrarlo nel frontend
+ *   - Email fallita: non blocca, l'errore viene solo loggato
  *
- * DOCUMENTI CORRELATI:
+ * PUNTI DI MODIFICA SICURI:
+ *   - Per cambiare numero tentativi: modificare MAX_RETRIES
+ *   - Per aggiungere opzioni BRT: modificare il blocco $options prima del ciclo for
+ *   - Per cambiare il comportamento post-successo: modificare il blocco if result.success
+ *
+ * COLLEGAMENTI:
  *   - app/Services/BrtService.php — servizio che comunica con API BRT
  *   - app/Events/OrderPaid.php — evento che scatena questo listener
  *   - app/Mail/ShipmentLabelMail.php — email con etichetta PDF allegata
@@ -51,6 +58,27 @@ class GenerateBrtLabel
         //
     }
 
+    /**
+     * handle — Genera etichetta BRT con retry e aggiorna l'ordine.
+     *
+     * PERCHE': Dopo il pagamento, l'etichetta BRT deve essere generata automaticamente
+     *   per permettere la spedizione. Il retry gestisce errori temporanei della rete.
+     *
+     * COME LEGGERLO:
+     *   1. Controlli iniziali: BRT configurato? Etichetta gia' presente?
+     *   2. Preparazione opzioni (contrassegno, PUDO)
+     *   3. Ciclo retry: chiama BrtService.createShipment fino a MAX_RETRIES
+     *   4. Successo: salva dati BRT nell'ordine, invia email con etichetta
+     *   5. Fallimento: salva errore in brt_error per il frontend
+     *
+     * COME MODIFICARLO:
+     *   - Per aggiungere opzioni: modificare il blocco $options
+     *   - Per cambiare cosa succede dopo il successo: modificare il blocco if result.success
+     *
+     * COSA EVITARE:
+     *   - Non lanciare eccezioni: il listener non deve bloccare il flusso di pagamento
+     *   - Non rimuovere il refresh() prima dell'update: evita conflitti con MarkOrderProcessing
+     */
     public function handle(OrderPaid $event): void
     {
         $order = $event->order;

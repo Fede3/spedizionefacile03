@@ -1,11 +1,32 @@
-/**
- * PAGINA BONUS E PROMOZIONI
- * Mostra le promozioni e i bonus disponibili per l'utente:
- * - "Invita un amico" (solo per Partner Pro): guadagna commissioni
- * - "Ricarica e risparmia": nessuna commissione sulle ricariche
- * - "Diventa Partner Pro": per chi non e' ancora Pro
- * I bonus visibili cambiano in base al ruolo dell'utente.
- */
+<!--
+  FILE: pages/account/bonus.vue
+  SCOPO: Pagina bonus e promozioni — mostra le offerte disponibili per l'utente.
+         "Invita un amico" (solo Partner Pro), "Ricarica e risparmia", "Diventa Partner Pro".
+         I bonus visibili cambiano in base al ruolo dell'utente.
+  API: nessuna (solo dati utente da useSanctumAuth).
+  COMPONENTI: nessun componente custom.
+  ROUTE: /account/bonus (middleware sanctum:auth).
+
+  DATI IN INGRESSO:
+    - user (da useSanctumAuth) — ruolo utente per filtrare i bonus visibili.
+
+  DATI IN USCITA: nessuna (pagina informativa con link di navigazione).
+
+  VINCOLI:
+    - L'utente deve essere autenticato.
+    - I bonus "Invita un amico" e "Prelievi" sono visibili solo ai Partner Pro.
+
+  ERRORI TIPICI: nessuno (pagina statica condizionale).
+
+  PUNTI DI MODIFICA SICURI:
+    - Aggiungere nuovi bonus: aggiungere una nuova card nel template.
+    - Cambiare le condizioni di visibilita': modificare i v-if sui blocchi.
+
+  COLLEGAMENTI:
+    - pages/account/account-pro.vue → richiesta/gestione Partner Pro.
+    - pages/account/portafoglio.vue → ricarica portafoglio.
+    - pages/account/prelievi.vue → prelievi commissioni.
+-->
 <script setup>
 /* Richiede che l'utente sia autenticato */
 definePageMeta({

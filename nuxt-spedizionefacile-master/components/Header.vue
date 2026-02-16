@@ -1,21 +1,27 @@
 <!--
-	COMPONENTE HEADER (Header.vue)
+	COMPONENTE: Header (Header.vue)
+	SCOPO: Intestazione del sito — contiene Navbar e ContenutoHeader.
 
-	Questo e' l'intestazione del sito, la parte in alto di ogni pagina.
-	Contiene la barra di navigazione (Navbar) e il contenuto dell'header (ContenutoHeader).
+	DOVE SI USA: layouts/default.vue (layout principale, presente in tutte le pagine)
+	PROPS: nessuna
+	EMITS: nessuno
 
-	L'altezza e lo stile dell'header cambiano automaticamente in base alla pagina
-	in cui si trova l'utente:
-	- Homepage: header grande con immagine di sfondo
-	- Servizi: header medio
-	- Contatti: header grande
-	- Chi siamo: header grande
-	- FAQ: header medio
-	- Account: header piccolo
-	- Pagamento alla consegna: header medio-grande
+	DATI IN INGRESSO: route.path (per adattare altezza e stile)
+	DATI IN USCITA: nessuno (solo visualizzazione)
 
-	Il componente usa le "classi condizionali" per adattare le dimensioni
-	a seconda del percorso della pagina corrente (route.path).
+	VINCOLI: l'altezza dell'header e' diversa per ogni pagina — se aggiungi una nuova
+	         pagina con header personalizzato, aggiungi la regola qui e in ContenutoHeader.vue
+	PUNTI DI MODIFICA SICURI: classi CSS condizionali per altezza/overflow
+	COLLEGAMENTI: components/Navbar.vue, components/ContenutoHeader.vue
+
+	ALTEZZE PER PAGINA:
+	- Homepage: grande (480px mobile → 722px desktop-xl) con overflow hidden
+	- Servizi: medio (308px → 457px)
+	- Contatti: grande (432px → 783px)
+	- Chi siamo: grande (464px → 913px)
+	- FAQ: medio (230px → 424px)
+	- Account: piccolo (214px → 392px)
+	- Preventivo: auto (si adatta al contenuto)
 -->
 <script setup>
 const route = useRoute();

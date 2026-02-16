@@ -1,20 +1,26 @@
 <!--
-	COMPONENTE SERVIZI HOMEPAGE (Homepage/Servizi.vue)
+	COMPONENTE: Servizi (Homepage/Servizi.vue)
+	SCOPO: Sezione homepage "Spedisci senza pensieri" — presenta i 5 servizi principali.
 
-	Questo componente mostra la sezione "Spedisci senza pensieri" nella homepage.
-	Presenta i 5 servizi principali offerti dal sito:
+	DOVE SI USA: pages/index.vue (homepage)
+	PROPS: nessuna
+	EMITS: nessuno
 
-	1. Assistenza rapida - ticket, chat o telefono con risposta in 30 minuti
-	2. Spedizione senza etichetta - il corriere porta l'etichetta gia' pronta
-	3. Ritiro a domicilio - prenota oggi, ritiro domani
-	4. Pagamento in contrassegno - il destinatario paga al corriere
-	5. Wallet e Punti Fedelta' - ricarica il portafoglio e accumula punti
+	DATI IN INGRESSO: nessuno (dati statici nell'array services)
+	DATI IN USCITA: nessuno (solo visualizzazione e navigazione)
 
-	Ogni servizio ha un'icona, un titolo, una descrizione e un pulsante
-	che porta alla pagina dettagliata del servizio.
+	VINCOLI: le icone SVG sono in public/img/homepage/services/ — non rinominarle
+	PUNTI DI MODIFICA SICURI: array services (testi, icone, URL), testo descrittivo in fondo
+	COLLEGAMENTI: pages/contatti.vue, pages/servizi/*.vue, pages/account/portafoglio.vue
 
-	Sotto i servizi c'e' anche una sezione di testo che spiega come funziona
-	il sistema di calcolo prezzi e il tracciamento delle spedizioni.
+	I 5 SERVIZI:
+	1. Assistenza rapida — ticket, chat o telefono con risposta in 30 minuti
+	2. Spedizione senza etichetta — il corriere porta l'etichetta gia' pronta
+	3. Ritiro a domicilio — prenota oggi, ritiro domani
+	4. Pagamento in contrassegno — il destinatario paga al corriere
+	5. Wallet e Punti Fedelta' — ricarica il portafoglio e accumula punti
+
+	ANIMAZIONE: IntersectionObserver per reveal-on-scroll (rispetta prefers-reduced-motion)
 -->
 <script setup>
 onMounted(() => {

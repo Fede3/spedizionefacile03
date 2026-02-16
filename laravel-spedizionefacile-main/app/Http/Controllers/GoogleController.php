@@ -23,13 +23,26 @@
  *   - Sessione: crea sessione autenticata (Auth::login)
  *   - Cookie: salva frontend_redirect e frontend_redirect_path (durata 15 min)
  *
+ * VINCOLI:
+ *   - Usa Socialite in modalita' stateless (non usa sessione per OAuth)
+ *   - Il redirect_uri DEVE corrispondere a quello configurato nella Google Cloud Console
+ *   - I cookie frontend_redirect durano 15 minuti (il tempo per completare il flusso Google)
+ *   - Il campo "role" NON e' tra i $fillable (impostato manualmente a "User" per sicurezza)
+ *   - Solo percorsi relativi (iniziano con /) sono accettati come redirect path
+ *
  * ERRORI TIPICI:
  *   - Redirect con error=google_failed se Google restituisce errore
  *   - L'utente gia' registrato con email viene collegato automaticamente
  *
- * DOCUMENTI CORRELATI:
+ * PUNTI DI MODIFICA SICURI:
+ *   - Per aggiungere un provider OAuth: creare un controller simile con lo stesso pattern
+ *   - Per cambiare la durata del cookie: modificare il valore 15 in withCookie()
+ *   - Per richiedere scope aggiuntivi: aggiungerli nella chiamata Socialite::driver()
+ *
+ * COLLEGAMENTI:
  *   - config/services.php — google.client_id, google.client_secret, google.redirect
  *   - CustomLoginController.php — login alternativo con email/password
+ *   - pages/autenticazione.vue — bottone "Accedi con Google"
  */
 
 namespace App\Http\Controllers;

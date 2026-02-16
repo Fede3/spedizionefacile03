@@ -3,30 +3,28 @@
  * FILE: BrtController.php
  * SCOPO: Gestisce tutte le operazioni con il corriere BRT (creazione spedizioni, etichette, tracking, PUDO).
  *
- * COSA ENTRA:
- *   - Request con order_id per createShipment/confirmShipment/deleteShipment
- *   - Opzioni: is_cod, cod_amount, pudo_id, notes per contrassegno e punto di ritiro
- *   - Request con code per publicTracking (ricerca pubblica per codice BRT/ordine)
- *   - Request con address/zip_code/city per pudoSearch, lat/lng per pudoNearby
+ * DOVE SI USA: Dettaglio ordine, pagina tracking, checkout (ricerca PUDO), pannello admin, test BRT
  *
- * COSA ESCE:
- *   - JSON con parcel_id, tracking_number, tracking_url per createShipment
- *   - PDF binario per downloadLabel (Content-Type: application/pdf)
- *   - JSON con lista punti PUDO (nome, indirizzo, coordinate, distanza) per pudoSearch/pudoNearby
- *   - JSON con stato spedizione e timeline per publicTracking
+ * DATI IN INGRESSO:
+ *   - createShipment(): {order_id, is_cod?, cod_amount?, pudo_id?, notes?}
+ *   - confirmShipment/deleteShipment(): {order_id}
+ *   - publicTracking(): {code: "BRT123" | "SF-000042" | "12345"}
+ *   - pudoSearch(): {address?, zip_code, city, country?: "ITA", max_results?: 10}
+ *   - pudoNearby(): {latitude, longitude, max_results?: 10}
+ *   - testCreate(): {consignee_name, consignee_address, consignee_city, ...}
  *
- * CHIAMATO DA:
- *   - routes/api.php — POST /api/brt/shipment, PUT /api/brt/confirm, DELETE /api/brt/shipment
- *   - routes/api.php — GET /api/brt/label/{order}, GET /api/brt/tracking/{order}
- *   - routes/api.php — POST /api/brt/tracking/public (senza auth)
- *   - routes/api.php — POST /api/brt/pudo/search, POST /api/brt/pudo/nearby
- *   - nuxt: pages/account/spedizioni/[id].vue, pages/traccia-spedizione.vue, pages/checkout.vue
+ * DATI IN USCITA:
+ *   - createShipment(): {success, parcel_id, tracking_number, tracking_url, order_status}
+ *   - downloadLabel(): file PDF binario (Content-Type: application/pdf)
+ *   - publicTracking(): {found, order_id?, status, status_description, brt_tracking_url}
+ *   - pudoSearch/pudoNearby(): array di punti PUDO con nome, indirizzo, coordinate
  *
- * EFFETTI COLLATERALI:
- *   - Rete: chiamate API BRT per spedizioni, etichette, PUDO
- *   - Database: aggiorna campi brt_* nell'ordine (parcel_id, tracking_url, label_base64, ecc.)
- *   - Email: invia etichetta BRT all'utente dopo creazione spedizione
- *   - Stato ordine: passa a 'in_transit' dopo creazione spedizione, torna a 'completed' dopo eliminazione
+ * VINCOLI:
+ *   - createShipment() salva 13+ campi brt_* nell'ordine — NON rimuoverne senza aggiornare il frontend
+ *   - L'etichetta e' salvata come base64 nel campo brt_label_base64 (campo TEXT grande)
+ *   - deleteShipment() resetta TUTTI i campi brt_* e riporta lo stato a 'completed'
+ *   - publicTracking() e' SENZA autenticazione — non esporre dati sensibili dell'utente
+ *   - L'email dell'etichetta non blocca il flusso se fallisce (errore solo nei log)
  *
  * ERRORI TIPICI:
  *   - 403: utente non proprietario e non admin
@@ -34,9 +32,16 @@
  *   - 422: ordine non ancora pagato, dati mancanti
  *   - 502: errore API BRT (indirizzo non riconosciuto, credenziali errate)
  *
- * DOCUMENTI CORRELATI:
+ * PUNTI DI MODIFICA SICURI:
+ *   - Per aggiungere campi BRT: aggiungerli in createShipment() (salvataggio) e deleteShipment() (reset)
+ *   - Per modificare la ricerca tracking: aggiungere casi nel blocco sequenziale di publicTracking()
+ *   - Per cambiare il formato dell'etichetta: modificare BrtService.createShipment()
+ *
+ * COLLEGAMENTI:
  *   - app/Services/BrtService.php — logica di comunicazione con le API BRT
  *   - app/Listeners/GenerateBrtLabel.php — generazione automatica etichetta dopo pagamento
+ *   - pages/traccia-spedizione.vue — pagina pubblica di tracking
+ *   - pages/account/spedizioni/[id].vue — dettaglio ordine con download etichetta
  */
 
 namespace App\Http\Controllers;
@@ -271,9 +276,15 @@ class BrtController extends Controller
     }
 
     /**
-     * Ricerca pubblica di tracking: cerca un ordine per codice BRT (parcel ID)
-     * o per numero ordine. Non richiede autenticazione.
-     * Restituisce lo stato, il parcel ID, l'URL di tracking BRT e dati minimi.
+     * publicTracking — Ricerca pubblica di tracking, senza autenticazione.
+     *
+     * PERCHE': Permette a chiunque di cercare lo stato di una spedizione inserendo un codice.
+     *   Cerca in ordine: brt_parcel_id, brt_tracking_number, brt_numeric_sender_reference, ID ordine.
+     * COME LEGGERLO: 1) Cerca per parcel_id  2) Se non trovato, cerca per tracking_number
+     *   3) Se non trovato, cerca per numeric_sender_reference  4) Se non trovato, cerca per ID ordine
+     *   5) Mappa lo stato in italiano  6) Restituisce dati minimi (no dati utente)
+     * COME MODIFICARLO: Per aggiungere un criterio di ricerca, inserire un nuovo blocco "if (!$order)".
+     * COSA EVITARE: Non esporre dati dell'utente (email, nome) — e' un endpoint pubblico.
      */
     public function publicTracking(Request $request)
     {

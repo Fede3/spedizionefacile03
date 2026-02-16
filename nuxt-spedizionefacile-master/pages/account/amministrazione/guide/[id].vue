@@ -1,7 +1,14 @@
-/**
- * ADMIN - Modifica Guida
- * Modifica guida esistente con sezioni dinamiche e upload immagine.
- */
+<!--
+  FILE: pages/account/amministrazione/guide/[id].vue
+  SCOPO: Pannello admin — modifica guida esistente con sezioni dinamiche e upload immagine.
+  API: GET /api/admin/guides/{id} — carica guida,
+       PUT /api/admin/guides/{id} — salva modifiche,
+       POST /api/admin/guides/{id}/upload-image — upload immagine sezione.
+  ROUTE: /account/amministrazione/guide/{id} (middleware sanctum:auth + admin).
+
+  COLLEGAMENTI:
+    - pages/account/amministrazione/guide/index.vue → torna alla lista guide.
+-->
 <script setup>
 definePageMeta({
 	middleware: ["sanctum:auth", "admin"],

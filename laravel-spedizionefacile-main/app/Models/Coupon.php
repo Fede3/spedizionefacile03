@@ -3,24 +3,34 @@
  * FILE: Coupon.php
  * SCOPO: Modello buono sconto con codice, percentuale e stato attivo/disattivo.
  *
- * COSA ENTRA:
+ * DOVE SI USA:
+ *   - CouponController.php — calculateCoupon cerca coupon attivo per codice
+ *   - AdminController.php — CRUD coupon dal pannello admin
+ *
+ * DATI IN INGRESSO:
  *   - code (es. "SCONTO10"), percentage (es. 10), active (bool)
  *   - stripe_connected_account_id (opzionale, per multi-vendor)
+ *   Esempio: Coupon::create(['code' => 'SCONTO10', 'percentage' => 10, 'active' => true])
  *
- * COSA ESCE:
+ * DATI IN USCITA:
  *   - Record nella tabella coupons
+ *   Esempio: Coupon::where('code', 'SCONTO10')->where('active', true)->first()
  *
- * CHIAMATO DA:
- *   - CouponController.php — calculateCoupon cerca coupon attivo per codice
- *
- * EFFETTI COLLATERALI:
- *   - Nessuno (modello semplice senza boot/observer)
+ * VINCOLI:
+ *   - active deve essere true per essere utilizzabile (query filtra sempre per active=true)
+ *   - code deve essere unico (validato dal controller)
  *
  * ERRORI TIPICI:
- *   - active deve essere true per essere utilizzabile (where active=true in query)
+ *   - Creare coupon senza active=true: non sara' utilizzabile dal frontend
+ *   - percentage e' un intero (10 = 10%), non un decimale (0.10)
  *
- * DOCUMENTI CORRELATI:
- *   - CouponController.php — calcolo sconto con priorita': prima coupon, poi referral
+ * PUNTI DI MODIFICA SICURI:
+ *   - Per aggiungere scadenza: aggiungere campo expires_at in $fillable e nella migrazione
+ *   - Per aggiungere limite utilizzi: aggiungere campo max_uses e contatore uses_count
+ *
+ * COLLEGAMENTI:
+ *   - app/Http/Controllers/CouponController.php — calcolo sconto
+ *   - app/Http/Controllers/AdminController.php — CRUD coupon admin
  */
 
 namespace App\Models;

@@ -3,24 +3,29 @@
  * FILE: BillingAddress.php
  * SCOPO: Modello indirizzo di fatturazione (diverso da indirizzo spedizione).
  *
- * COSA ENTRA:
- *   - name (nome/ragione sociale), address, city, province_name, postal_code
- *
- * COSA ESCE:
- *   - Record salvato in tabella billing_addresses
- *
- * CHIAMATO DA:
+ * DOVE SI USA:
  *   - BillingAddressController.php — CRUD indirizzi di fatturazione
  *   - nuxt: pages/checkout.vue (selezione indirizzo fattura)
  *
- * EFFETTI COLLATERALI:
- *   - Nessuno (modello semplice senza boot/observer)
+ * DATI IN INGRESSO:
+ *   - name (nome/ragione sociale), address, city, province_name, postal_code
+ *   Esempio: BillingAddress::create(['name' => 'Mario Rossi Srl', 'city' => 'Milano'])
+ *
+ * DATI IN USCITA:
+ *   - Record salvato in tabella billing_addresses
+ *
+ * VINCOLI:
+ *   - province_name e' il nome completo della provincia (es. "Milano"), non la sigla ("MI")
+ *   - Non ha relazione diretta con User (non c'e' user_id)
  *
  * ERRORI TIPICI:
- *   - province_name e' il nome completo della provincia (es. "Milano"), non la sigla ("MI")
+ *   - Confusione con UserAddress o PackageAddress: BillingAddress e' solo per la fatturazione
  *
- * DOCUMENTI CORRELATI:
- *   - BillingAddressController.php — controller CRUD
+ * PUNTI DI MODIFICA SICURI:
+ *   - Per aggiungere user_id: aggiungere in $fillable e nella migrazione, poi creare relazione
+ *
+ * COLLEGAMENTI:
+ *   - app/Http/Controllers/BillingAddressController.php — controller CRUD
  *   - app/Http/Resources/BillingAddressResource.php — formattazione per risposta API
  */
 

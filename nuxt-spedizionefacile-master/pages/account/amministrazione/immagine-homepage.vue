@@ -1,7 +1,14 @@
-/**
- * ADMIN - Immagine Homepage
- * Upload e gestione dell'immagine decorativa della homepage.
- */
+<!--
+  FILE: pages/account/amministrazione/immagine-homepage.vue
+  SCOPO: Pannello admin — upload e gestione dell'immagine decorativa della homepage.
+  API: GET /api/admin/homepage-image — immagine attuale,
+       POST /api/admin/homepage-image — upload nuova immagine,
+       DELETE /api/admin/homepage-image — rimuovi immagine.
+  ROUTE: /account/amministrazione/immagine-homepage (middleware sanctum:auth + admin).
+
+  COLLEGAMENTI:
+    - pages/index.vue → homepage che mostra l'immagine.
+-->
 <script setup>
 definePageMeta({
 	middleware: ["sanctum:auth", "admin"],

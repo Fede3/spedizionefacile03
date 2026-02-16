@@ -1,41 +1,57 @@
 <!--
-	COMPONENTE PREVENTIVO (Preventivo.vue)
+	COMPONENTE: Preventivo (Preventivo.vue)
+	SCOPO: Modulo principale per creare un preventivo di spedizione — il cuore del sito.
 
-	Questo componente e' il CUORE del sito: e' il modulo dove l'utente crea un preventivo per la spedizione.
-	Viene mostrato nella homepage e nella pagina dedicata al preventivo.
+	DOVE SI USA: pages/index.vue (homepage), pages/preventivo.vue (pagina dedicata)
+	PROPS: nessuna
+	EMITS: nessuno
 
-	Come funziona:
-	1. L'utente sceglie il tipo di collo (pacco, busta, pallet o valigia)
-	2. Inserisce la citta' e il CAP di partenza e di destinazione (con suggerimenti automatici)
+	DATI IN INGRESSO: userStore (stato globale Pinia), useSession (sessione server),
+	                  usePriceBands (fasce prezzo da API), useSmartValidation (validazione campi)
+	DATI IN USCITA: POST /api/session/first-step (salva preventivo nel server),
+	                navigazione a /la-tua-spedizione/2 (step successivo)
+
+	VINCOLI: non modificare la formula di calcolo prezzo senza aggiornare anche
+	         il backend (SessionController::firstStep). I due DEVONO dare lo stesso risultato.
+	PUNTI DI MODIFICA SICURI: packageTypeList (tipi di collo), template HTML/CSS
+	COLLEGAMENTI: composables/usePriceBands.js, composables/useSmartValidation.js,
+	              stores/userStore.js, docs/guide/MODIFICARE-REGOLA-PREZZO.md
+
+	FLUSSO UTENTE:
+	1. L'utente sceglie il tipo di collo (Pacco, Pallet, Valigia)
+	2. Inserisce citta' e CAP di partenza e destinazione (con suggerimenti automatici)
 	3. Inserisce peso e dimensioni (3 lati in cm) per ogni collo
 	4. Il sistema calcola automaticamente il prezzo in base a peso e volume
-	   (viene usato il prezzo piu' alto tra peso e volume)
+	   (viene usato il prezzo PIU' ALTO tra peso e volume)
 	5. Cliccando "Continua", i dati vengono inviati al server per validazione
 	6. Se tutto va bene, appare il prezzo totale e l'utente puo' procedere allo step successivo
 
-	Il prezzo viene calcolato cosi':
-	- Si calcola un prezzo basato sul peso (7 fasce: 0-2kg=8.90, 2-5kg=11.90, 5-10kg=14.90, 10-25kg=19.90, 25-50kg=29.90, 50-75kg=39.90, 75-100kg=49.90)
-	- Si calcola un prezzo basato sul volume (7 fasce analoghe in m³)
-	- Si prende il prezzo PIU' ALTO tra i due
+	FORMULA PREZZO:
+	- Si calcola un prezzo basato sul peso (7 fasce dinamiche da API, fallback hardcoded)
+	- Si calcola un prezzo basato sul volume (7 fasce analoghe in m3)
+	- Si prende il prezzo PIU' ALTO tra i due → MAX(peso, volume)
 	- Si aggiunge il supplemento CAP 90 (+2.50€ per ogni CAP che inizia con 90)
 	- Si moltiplica per la quantita' di colli uguali
 
-	I dati del preventivo vengono salvati nello "store" (la memoria condivisa del sito)
+	I dati del preventivo vengono salvati nello "store" Pinia (memoria condivisa del sito)
 	e nella sessione del server, cosi' si mantengono navigando tra le pagine.
 -->
 <script setup>
-const userStore = useUserStore();
-const route = useRoute();
+// --- DIPENDENZE E STATO INIZIALE ---
 
-const formRef = ref(null);
+const userStore = useUserStore();   // Store Pinia: stato globale condiviso (pacchi, indirizzi, prezzo)
+const route = useRoute();           // Route corrente: serve per adattare lo stile (homepage vs pagina dedicata)
 
-const isRateCalculated = ref(false);
+const formRef = ref(null);          // Riferimento al <form> HTML per la validazione nativa del browser
+
+const isRateCalculated = ref(false); // true quando il prezzo e' stato calcolato e confermato dal server
 
 // Carica fasce prezzo dinamiche dall'API (con fallback hardcoded)
 const { loadPriceBands, getWeightPrice, getVolumePrice, promoSettings, getMinPrice } = usePriceBands();
 onMounted(() => { loadPriceBands(); });
 
-// CAP/City autocomplete
+// --- AUTOCOMPLETE CITTA'/CAP ---
+// L'utente digita nel campo citta' o CAP, dopo 300ms parte la ricerca API
 const originSuggestions = ref([]);
 const destSuggestions = ref([]);
 const showOriginSuggestions = ref(false);
@@ -130,8 +146,12 @@ const getTodayDate = computed(() => {
 
 /* const getTodayDate = new Date().toISOString().split("T")[0]; */
 
+// --- SESSIONE SERVER ---
+// La sessione contiene i dati del preventivo salvati lato server (per persistenza tra pagine)
 const { session, status, refresh } = useSession();
 
+// --- TIPI DI COLLO DISPONIBILI ---
+// Ogni tipo ha un testo, un'immagine e le dimensioni dell'icona
 const packageTypeList = [
 	{
 		text: "Pacco",
@@ -153,9 +173,11 @@ const packageTypeList = [
 	},
 ];
 
-const isPackageSelected = ref(false);
+// --- GESTIONE PACCHI ---
 
-const newPackage = ref({});
+const isPackageSelected = ref(false);  // true quando l'utente ha aggiunto almeno un collo
+
+const newPackage = ref({});            // Oggetto temporaneo per il pacco in fase di aggiunta
 
 /* Seleziono la tipologia di pacco */
 const selectPackageType = (packageType) => {
@@ -182,8 +204,9 @@ const selectPackageType = (packageType) => {
 	isPackageSelected.value = true;
 };
 
-const myPack = ref(null);
+const myPack = ref(null);             // Riferimento al pacco attualmente in modifica
 
+// Client HTTP autenticato (gestisce CSRF e cookie di Sanctum automaticamente)
 const sanctum = useSanctumClient();
 
 /* Controllo se il prezzo con il volume e con il peso esistono e calcolo la quantità
@@ -288,7 +311,8 @@ const calcPriceWithVolume = (pack) => {
 	}
 };
 
-// Smart validation for Preventivo fields
+// --- VALIDAZIONE CAMPI ---
+// Validazione intelligente: mostra errori solo dopo che l'utente ha interagito col campo
 const sv = useSmartValidation();
 
 const filterCap = (shipment_details) => {
@@ -376,8 +400,10 @@ const deletePack = async (index) => {
 	});
 };
 
-const messageError = ref(null);
-const isCalculating = ref(false);
+// --- STATO ERRORI E CALCOLO ---
+
+const messageError = ref(null);      // Errori dal server o dalla validazione locale (oggetto {campo: [messaggi]})
+const isCalculating = ref(false);    // true durante la chiamata API di calcolo tariffa
 
 const scrollToFirstError = () => {
 	nextTick(() => {
@@ -388,16 +414,18 @@ const scrollToFirstError = () => {
 	});
 };
 
+// --- CALCOLO TARIFFA ---
+// Flusso: validazione client → validazione pacchi → POST al server → mostra prezzo
 const calculateRate = async () => {
 	messageError.value = null;
-	// Validate form on client-side FIRST
+	// 1. Validazione HTML5 nativa (campi required, tipo, ecc.)
 	if (!formRef.value || !formRef.value.checkValidity()) {
 		formRef.value?.reportValidity();
 		isRateCalculated.value = false;
 		return false;
 	}
 
-	// Check that at least one package is selected
+	// 2. Controlla che ci sia almeno un collo
 	if (!userStore.packages || userStore.packages.length === 0) {
 		messageError.value = { packages: ["Seleziona almeno un tipo di collo."] };
 		isRateCalculated.value = false;
@@ -405,7 +433,7 @@ const calculateRate = async () => {
 		return false;
 	}
 
-	// Validate each package has weight and dimensions, and ensure prices are calculated
+	// 3. Ogni pacco deve avere peso e dimensioni, e i prezzi devono essere calcolati
 	for (let i = 0; i < userStore.packages.length; i++) {
 		const pack = userStore.packages[i];
 		if (!pack.weight || !pack.first_size || !pack.second_size || !pack.third_size) {
@@ -434,9 +462,10 @@ const calculateRate = async () => {
 		}
 	}
 
+	// 4. Invio dati al server per validazione e salvataggio in sessione
 	isCalculating.value = true;
 	try {
-		await sanctum("/sanctum/csrf-cookie");
+		await sanctum("/sanctum/csrf-cookie");    // Rinnova il token CSRF prima del POST
 		await sanctum("/api/session/first-step", {
 			method: "POST",
 			body: {
@@ -462,10 +491,12 @@ const calculateRate = async () => {
 };
 
 
+// --- NAVIGAZIONE STEP ---
+// Primo click: calcola il prezzo. Secondo click: vai allo step 2.
 const continueToNextStep = async () => {
 	messageError.value = null;
 
-	// If rate is already calculated, navigate to next step
+	// Se il prezzo e' gia' calcolato, naviga allo step successivo (servizi)
 	if (isRateCalculated.value) {
 		await navigateTo('/la-tua-spedizione/2');
 		return;
@@ -494,6 +525,10 @@ const getPackages = computed(() => (userStore.packages.length === 0 && session.v
 	} */
 /* isLoading.value = false; */
 /* }); */
+
+// --- WATCHERS ---
+// Quando cambiano pacchi o dettagli spedizione, resetta il calcolo del prezzo
+// (l'utente deve cliccare "Continua" di nuovo per ricalcolare)
 
 watch(
 	() => userStore.packages,
@@ -526,6 +561,8 @@ watch(
 	},
 );
 
+// --- RESET FORM ---
+// Controllo se ci sono dati inseriti (per mostrare il pulsante "Azzera")
 const hasFormData = computed(() => {
 	const sd = userStore.shipmentDetails;
 	return userStore.packages.length > 0 || sd.origin_city || sd.origin_postal_code || sd.destination_city || sd.destination_postal_code;

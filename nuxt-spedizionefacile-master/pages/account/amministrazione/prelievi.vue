@@ -1,7 +1,15 @@
-/**
- * ADMIN - Prelievi
- * Richieste di prelievo: approvazione, rifiuto e storico.
- */
+<!--
+  FILE: pages/account/amministrazione/prelievi.vue
+  SCOPO: Pannello admin — gestione richieste di prelievo commissioni Partner Pro.
+         Approvazione, rifiuto e storico delle richieste.
+  API: GET /api/admin/withdrawals — lista richieste prelievo,
+       PATCH /api/admin/withdrawals/{id}/approve — approva prelievo,
+       PATCH /api/admin/withdrawals/{id}/reject — rifiuta prelievo.
+  ROUTE: /account/amministrazione/prelievi (middleware sanctum:auth + admin).
+
+  COLLEGAMENTI:
+    - pages/account/prelievi.vue → lato utente Partner Pro.
+-->
 <script setup>
 definePageMeta({
 	middleware: ["sanctum:auth", "admin"],

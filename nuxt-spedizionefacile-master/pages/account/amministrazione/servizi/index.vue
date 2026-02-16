@@ -1,7 +1,16 @@
-/**
- * ADMIN - Servizi
- * Lista servizi con pubblicazione, ordinamento e azioni CRUD.
- */
+<!--
+  FILE: pages/account/amministrazione/servizi/index.vue
+  SCOPO: Pannello admin — lista servizi con pubblicazione, ordinamento e azioni CRUD.
+  API: GET /api/admin/services — lista servizi,
+       PATCH /api/admin/services/{id}/publish — pubblica/bozza,
+       DELETE /api/admin/services/{id} — elimina servizio.
+  ROUTE: /account/amministrazione/servizi (middleware sanctum:auth + admin).
+
+  COLLEGAMENTI:
+    - pages/account/amministrazione/servizi/nuovo.vue → crea nuovo servizio.
+    - pages/account/amministrazione/servizi/[id].vue → modifica servizio.
+    - pages/servizi/index.vue → lista servizi pubblica.
+-->
 <script setup>
 definePageMeta({
 	middleware: ["sanctum:auth", "admin"],

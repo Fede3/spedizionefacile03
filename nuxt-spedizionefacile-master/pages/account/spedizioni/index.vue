@@ -1,9 +1,21 @@
-/**
- * FILE: pages/account/spedizioni/index.vue
- * SCOPO: Lista ordini utente — filtro per stato, pagamento, annullamento, salva come configurata.
- * API: GET /api/orders, DELETE /api/orders/{id}, POST /api/saved-shipments.
- * ROUTE: /account/spedizioni (middleware sanctum:auth).
- */
+<!--
+  FILE: pages/account/spedizioni/index.vue
+  SCOPO: Lista ordini utente — filtro per stato, pagamento in sospeso, annullamento, salva come configurata.
+
+  API: GET /api/orders (lista ordini), POST /api/orders/{id}/cancel (annulla ordine),
+       POST /api/saved-shipments (salva configurazione), GET /api/saved-shipments (lista salvate).
+  COMPONENTI: nessuno di esterno (solo NuxtLink).
+  ROUTE: /account/spedizioni (middleware sanctum:auth).
+
+  DATI IN INGRESSO: nessuno (carica tutti gli ordini dell'utente autenticato).
+  DATI IN USCITA: navigazione a /account/spedizioni/{id}, /checkout?order_id={id}.
+
+  VINCOLI: single_price nel DB e' in centesimi; va diviso per 100 quando si salva come configurata.
+           L'annullamento di ordini pagati applica una commissione di 2 EUR.
+  ERRORI TIPICI: non convertire single_price da centesimi a euro al salvataggio come configurata.
+  PUNTI DI MODIFICA SICURI: filtri (array filters), colori stato, layout card.
+  COLLEGAMENTI: pages/account/spedizioni/[id].vue, pages/checkout.vue, controllers/OrderController.php.
+-->
 <script setup>
 /* Richiede che l'utente sia autenticato */
 definePageMeta({

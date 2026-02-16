@@ -3,15 +3,26 @@
  * FILE: PublicArticleController.php
  * SCOPO: Fornisce gli articoli (guide e servizi) pubblicati al frontend pubblico.
  *
- * COSA ENTRA:
- *   - Slug per guide/service singoli
+ * DOVE SI USA: Pagine pubbliche guide e servizi (senza autenticazione)
  *
- * COSA ESCE:
- *   - JSON con lista guide/servizi pubblicati
- *   - JSON con singola guida/servizio per slug
+ * DATI IN INGRESSO: Slug (stringa) per guide/service singoli; nessuno per le liste.
+ * DATI IN USCITA: {data: articolo} o {data: [articoli]} con campi ridotti per le liste.
  *
- * CHIAMATO DA:
- *   - routes/api.php — rotte /api/public/guides e /api/public/services (pubbliche)
+ * VINCOLI:
+ *   - Restituisce SOLO articoli con is_published = true (scope published())
+ *   - Le liste restituiscono campi ridotti (no sections, no faqs) per performance
+ *   - Gli articoli sono ordinati per sort_order
+ *
+ * ERRORI TIPICI:
+ *   - 404: slug non trovato tra gli articoli pubblicati
+ *
+ * PUNTI DI MODIFICA SICURI:
+ *   - Per cambiare i campi restituiti nelle liste: modificare il get([...]) nelle funzioni
+ *
+ * COLLEGAMENTI:
+ *   - ArticleController.php — CRUD admin per creare/modificare gli articoli
+ *   - app/Models/Article.php — modello con scopes guides(), services(), published()
+ *   - pages/guide/ e pages/servizi/ — pagine frontend
  */
 
 namespace App\Http\Controllers;

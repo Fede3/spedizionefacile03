@@ -1,7 +1,13 @@
-/**
- * ADMIN - Referral
- * Statistiche codici referral, utilizzi e commissioni.
- */
+<!--
+  FILE: pages/account/amministrazione/referral.vue
+  SCOPO: Pannello admin — statistiche sistema referral.
+         Codici referral attivi, utilizzi, commissioni generate.
+  API: GET /api/admin/referral-stats — statistiche referral globali.
+  ROUTE: /account/amministrazione/referral (middleware sanctum:auth + admin).
+
+  COLLEGAMENTI:
+    - pages/account/account-pro.vue → lato utente Partner Pro (codice referral).
+-->
 <script setup>
 definePageMeta({
 	middleware: ["sanctum:auth", "admin"],

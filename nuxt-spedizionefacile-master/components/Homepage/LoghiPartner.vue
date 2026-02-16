@@ -1,13 +1,20 @@
 <!--
-	COMPONENTE LOGHI PARTNER (Homepage/LoghiPartner.vue)
+	COMPONENTE: LoghiPartner (Homepage/LoghiPartner.vue)
+	SCOPO: Striscia scorrevole (marquee) con i loghi dei partner nella homepage.
 
-	Questo componente mostra una striscia scorrevole (marquee) con i loghi dei partner.
-	La striscia scorre automaticamente da destra a sinistra e si ferma quando
-	l'utente ci passa sopra con il mouse.
+	DOVE SI USA: pages/index.vue (homepage)
+	PROPS: nessuna
+	EMITS: nessuno
 
-	Attualmente usa icone segnaposto (GitHub, Discord, X, Instagram, LinkedIn, Facebook).
-	In futuro le icone andranno sostituite con i loghi reali dei corrieri
-	e dei partner commerciali di SpedizioneFacile.
+	DATI IN INGRESSO: nessuno (icone statiche)
+	DATI IN USCITA: nessuno (solo visualizzazione)
+
+	VINCOLI: usa UMarquee di Nuxt UI — si ferma automaticamente al passaggio del mouse
+	PUNTI DI MODIFICA SICURI: sostituire le icone segnaposto con i loghi reali dei partner
+	COLLEGAMENTI: nessuno
+
+	NOTA: attualmente usa icone segnaposto (GitHub, Discord, X, ecc.).
+	Da sostituire con i loghi reali dei corrieri e partner commerciali.
 -->
 <template>
 	<section class="mt-[94px]">

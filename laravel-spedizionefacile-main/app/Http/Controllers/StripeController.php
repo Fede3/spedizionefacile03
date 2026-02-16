@@ -3,38 +3,45 @@
  * FILE: StripeController.php
  * SCOPO: Gestisce tutti i pagamenti Stripe, la creazione ordini dal carrello e le carte salvate.
  *
- * COSA ENTRA:
- *   - Request con order_id, payment_method_id, customer_id per pagamenti
- *   - Request con payment_type (wallet/bonifico) per markOrderCompleted
- *   - Request con package_ids per createOrder da pacchi specifici
+ * DOVE SI USA: Checkout, gestione carte, conferma pagamento, pannello ordini
  *
- * COSA ESCE:
- *   - JSON con order_id per createOrder
- *   - JSON con client_secret per createPaymentIntent/createSetupIntent (usato dal frontend Stripe)
- *   - JSON con lista carte (brand, last4, exp, default) per listPaymentMethods
- *   - JSON success/error per operazioni di pagamento
+ * DATI IN INGRESSO:
+ *   - createOrder(): {subtotal?, package_ids?: [1,2,3]}
+ *   - createPaymentIntent(): {order_id: 42}
+ *   - orderPaid(): {order_id: 42, ext_id: "pi_xxx", is_existing_order?: false}
+ *   - markOrderCompleted(): {order_id, payment_type: "wallet"|"bonifico", ext_id?, is_existing_order?}
+ *   - createPayment(): {order_id, currency, payment_method_id, customer_id}
+ *   - Carte: {payment_method: "pm_xxx"} o {payment_method_id: "pm_xxx"}
  *
- * CHIAMATO DA:
- *   - routes/api.php — POST /api/create-order, POST /api/create-payment-intent
- *   - routes/api.php — POST /api/order-paid, POST /api/mark-order-completed
- *   - routes/api.php — POST /api/setup-intent, GET /api/payment-methods
- *   - routes/api.php — POST /api/set-default-payment, DELETE /api/delete-card
- *   - nuxt: pages/checkout.vue, pages/account/carte.vue
+ * DATI IN USCITA:
+ *   - createOrder(): {order_id} o {order_id, order_ids, merged_count} se piu' ordini
+ *   - createPaymentIntent(): {client_secret: "pi_xxx_secret_yyy", payment_intent_id}
+ *   - orderPaid(): {success: true}
+ *   - listPaymentMethods(): {data: [{id, brand, last4, exp_month, exp_year, default}], default}
  *
- * EFFETTI COLLATERALI:
- *   - Rete: chiamate API Stripe (PaymentIntent, SetupIntent, Customer, PaymentMethod)
- *   - Database: crea ordini, transazioni; svuota carrello dopo pagamento
- *   - Eventi: lancia OrderPaid che attiva MarkOrderProcessing e GenerateBrtLabel
+ * VINCOLI:
+ *   - Stripe richiede importi in centesimi e minimo 50 centesimi (0,50 EUR)
+ *   - Le chiavi Stripe vengono prima dal DB (Setting), poi dal .env come fallback
+ *   - Il carrello viene svuotato SOLO dopo pagamento riuscito (non per ordini esistenti)
+ *   - L'evento OrderPaid attiva la catena: MarkOrderProcessing -> GenerateBrtLabel
+ *   - I pacchi con stessi indirizzi E stesso servizio vengono raggruppati in un solo ordine
  *
  * ERRORI TIPICI:
  *   - 403: utente non proprietario dell'ordine
  *   - 422: importo troppo basso (<50 centesimi), importo non corrispondente
  *   - 503: Stripe non configurato (chiavi mancanti)
  *
- * DOCUMENTI CORRELATI:
+ * PUNTI DI MODIFICA SICURI:
+ *   - Per aggiungere un metodo di pagamento: aggiungere un case in markOrderCompleted()
+ *   - Per cambiare la logica di raggruppamento ordini: modificare groupPackagesByAddress()
+ *   - Per cambiare l'importo minimo: modificare il check "$amount < 50" in createPaymentIntent()
+ *
+ * COLLEGAMENTI:
  *   - StripeWebhookController.php — gestione notifiche asincrone da Stripe
  *   - WalletController.php — pagamenti alternativi con portafoglio
  *   - SettingsController.php — configurazione chiavi Stripe
+ *   - app/Events/OrderPaid.php — evento lanciato dopo pagamento riuscito
+ *   - app/Listeners/GenerateBrtLabel.php — genera etichetta BRT dopo OrderPaid
  */
 
 namespace App\Http\Controllers;
@@ -117,10 +124,18 @@ class StripeController extends Controller
         return response()->json(['success' => true]);
     }
 
-    // Crea ordini a partire dai pacchi nel carrello (o da pacchi specifici).
-    // I pacchi con indirizzi di partenza e destinazione identici vengono raggruppati
-    // in un singolo ordine (una spedizione BRT con piu' colli).
-    // Calcola il subtotale sommando i prezzi dei pacchi lato server (mai fidarsi del frontend)
+    /**
+     * createOrder — Crea ordini a partire dai pacchi nel carrello, raggruppando per indirizzo.
+     *
+     * PERCHE': I pacchi con stessi indirizzi e stesso servizio devono diventare un unico ordine
+     *   (= una sola spedizione BRT multi-collo). Pacchi con indirizzi diversi o servizi diversi
+     *   generano ordini separati.
+     * COME LEGGERLO: 1) Carica pacchi (da ID specifici o dal carrello)  2) Raggruppa per indirizzo+servizio
+     *   3) Per ogni gruppo: calcola subtotale, rileva contrassegno e PUDO  4) Crea ordine + pivot
+     * COME MODIFICARLO: Per cambiare i criteri di raggruppamento, modificare groupPackagesByAddress().
+     *   Per aggiungere un campo all'ordine, aggiungerlo in Order::create().
+     * COSA EVITARE: Non calcolare il subtotale dal frontend — usare sempre sum(single_price) lato server.
+     */
     public function createOrder(Request $request) {
         $request->validate([
             'subtotal' => 'nullable|numeric',
@@ -207,13 +222,7 @@ class StripeController extends Controller
 
                 // Colleghiamo i pacchi all'ordine
                 foreach ($groupPackages as $package) {
-                    DB::table('package_order')->insert([
-                        'order_id' => $order->id,
-                        'package_id' => $package->id,
-                        'quantity' => $package->quantity ?? 1,
-                        'created_at' => now(),
-                        'updated_at' => now(),
-                    ]);
+                    Order::attachPackage($order->id, $package->id, $package->quantity ?? 1);
                 }
 
                 $orders[] = $order;
@@ -390,8 +399,16 @@ class StripeController extends Controller
         }
     }
 
-    // Conferma che un pagamento Stripe e' andato a buon fine e aggiorna l'ordine
-    // Viene chiamato dal frontend dopo che l'utente ha completato il pagamento
+    /**
+     * orderPaid — Conferma un pagamento Stripe e aggiorna lo stato dell'ordine.
+     *
+     * PERCHE': Dopo che l'utente completa il pagamento nel frontend, questa funzione verifica
+     *   con Stripe che il pagamento sia reale, aggiorna l'ordine e lancia l'evento OrderPaid.
+     * COME LEGGERLO: 1) Recupera PaymentIntent da Stripe  2) Verifica proprieta' e importo
+     *   3) Aggiorna stato ordine  4) Crea transazione  5) Lancia evento OrderPaid  6) Svuota carrello
+     * COME MODIFICARLO: Per aggiungere verifiche, inserirle prima dell'aggiornamento stato.
+     * COSA EVITARE: Non rimuovere la verifica importo — senza, un utente potrebbe pagare meno del dovuto.
+     */
     public function orderPaid(Request $request) {
         $stripe = new StripeClient($this->getStripeSecret());
 

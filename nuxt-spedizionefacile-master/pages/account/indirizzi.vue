@@ -1,3 +1,16 @@
+<!--
+  FILE: pages/account/indirizzi.vue
+  SCOPO: Versione alternativa della rubrica indirizzi (layout diverso da indirizzi/index.vue).
+         CRUD indirizzi con form modale, skeleton loading.
+  API: GET /api/user-addresses, POST /api/user-addresses,
+       PATCH /api/user-addresses/{id}, DELETE /api/user-addresses/{id}.
+  ROUTE: /account/indirizzi (middleware sanctum:auth).
+
+  NOTA: Potrebbe essere una versione precedente. La versione principale e' indirizzi/index.vue.
+
+  COLLEGAMENTI:
+    - pages/account/indirizzi/index.vue → versione principale rubrica indirizzi.
+-->
 <script setup>
 definePageMeta({
 	middleware: ["sanctum:auth"],

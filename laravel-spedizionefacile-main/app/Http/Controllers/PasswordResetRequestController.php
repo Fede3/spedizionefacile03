@@ -18,14 +18,25 @@
  *   - Database: crea/aggiorna record in password_reset_tokens (email, token hashato, created_at)
  *   - Email: invia ResetPasswordEmail con token in chiaro e email all'utente
  *
+ * VINCOLI:
+ *   - Il token viene salvato nel DB hashato con Hash::make (per sicurezza)
+ *   - Il token in chiaro viene inviato via email all'utente (64 caratteri, Str::random)
+ *   - Se l'utente richiede un nuovo reset, il vecchio token viene sovrascritto
+ *   - Non riveliamo se l'email esiste o meno nella risposta di errore (anti-enumerazione)
+ *     Nota: attualmente restituisce 404 se non trovata — valutare se cambiare per sicurezza
+ *
  * ERRORI TIPICI:
  *   - 404: email non registrata nel database
  *   - L'invio email puo' fallire se il server SMTP non e' configurato
  *
- * DOCUMENTI CORRELATI:
+ * PUNTI DI MODIFICA SICURI:
+ *   - Per cambiare la lunghezza del token: modificare Str::random(64) in createToken()
+ *   - Per cambiare il template email: modificare app/Mail/ResetPasswordEmail.php
+ *
+ * COLLEGAMENTI:
  *   - ChangePasswordController.php — seconda fase: verifica token e cambia la password
  *   - app/Mail/ResetPasswordEmail.php — template dell'email con link di reset
- *   - app/Http/Requests/UpdatePasswordRequest.php — validazione nuova password
+ *   - pages/recupera-password.vue — pagina frontend di recupero password
  */
 
 namespace App\Http\Controllers;

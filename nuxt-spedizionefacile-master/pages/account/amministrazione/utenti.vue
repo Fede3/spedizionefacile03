@@ -1,8 +1,44 @@
-/**
- * ADMIN - Gestione Utenti + Richieste Pro
- * Account registrati con approvazione, cambio ruolo, eliminazione.
- * Include sotto-sezione Richieste Partner Pro.
- */
+<!--
+  FILE: pages/account/amministrazione/utenti.vue
+  SCOPO: Pannello admin — gestione utenti registrati e richieste Partner Pro.
+         Due sotto-tab: "Utenti" (lista, ricerca, filtri ruolo, approvazione email,
+         cambio ruolo, eliminazione) e "Richieste Pro" (approvazione/rifiuto).
+  API: GET /api/admin/users — lista utenti,
+       PATCH /api/admin/users/{id}/approve — approva account (verifica email),
+       DELETE /api/admin/users/{id} — elimina account,
+       PATCH /api/admin/users/{id}/role — cambio ruolo,
+       GET /api/admin/pro-requests — lista richieste Pro,
+       PATCH /api/admin/pro-requests/{id}/approve — approva richiesta Pro,
+       PATCH /api/admin/pro-requests/{id}/reject — rifiuta richiesta Pro.
+  COMPONENTI: nessun componente custom.
+  ROUTE: /account/amministrazione/utenti (middleware sanctum:auth + admin).
+
+  DATI IN INGRESSO:
+    - usersData (da fetchUsers) — lista completa utenti.
+    - proRequests (da fetchProRequests) — lista richieste Partner Pro.
+    - useAdmin() — composable utility admin.
+
+  DATI IN USCITA:
+    - PATCH/DELETE su utenti e richieste Pro.
+
+  VINCOLI:
+    - Solo utenti Admin (middleware admin).
+    - L'eliminazione richiede conferma con window.confirm().
+    - Il badge "Richieste Pro" mostra il conteggio di quelle in attesa.
+
+  ERRORI TIPICI:
+    - Eliminazione admin stesso → il backend dovrebbe impedirlo.
+    - Errore di rete durante cambio ruolo → messaggio errore.
+
+  PUNTI DI MODIFICA SICURI:
+    - Aggiungere colonne alla tabella utenti: modificare <thead>/<tbody>.
+    - Aggiungere nuovi ruoli: modificare <select> ruolo e filtro.
+    - Aggiungere campi alle richieste Pro: modificare il template card.
+
+  COLLEGAMENTI:
+    - composables/useAdmin.js → utility condivise admin.
+    - pages/account/account-pro.vue → pagina utente per richiedere Partner Pro.
+-->
 <script setup>
 definePageMeta({
 	middleware: ["sanctum:auth", "admin"],

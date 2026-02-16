@@ -1,9 +1,20 @@
 <!--
   FILE: pages/carrello.vue
   SCOPO: Carrello spedizioni — lista pacchi raggruppati per indirizzo/servizio, modifica quantita', coupon, checkout.
-  API: GET/DELETE /api/cart o /api/guest-cart (via useCart), DELETE /api/cart/{id}.
-  COMPOSABLE: useCart (gestione carrello autenticato/ospite).
+
+  API: GET/DELETE /api/cart o /api/guest-cart (via useCart), DELETE /api/cart/{id},
+       PATCH /api/cart/{id}/quantity, DELETE /api/empty-cart o /api/empty-guest-cart,
+       POST /api/calculate-coupon.
+  COMPOSABLE: useCart (gestione carrello autenticato/ospite), usePriceBands (promo).
   ROUTE: /carrello (pubblica, funziona sia autenticato che ospite).
+
+  DATI IN INGRESSO: ?updated=timestamp (query param per forzare refresh cache dopo modifica).
+  DATI IN USCITA: navigazione a /checkout (procedi ordine) o /riepilogo?edit={id} (modifica pacco).
+
+  VINCOLI: single_price e' in centesimi nel DB. Il merge multi-collo avviene lato server.
+  ERRORI TIPICI: dimenticare clearNuxtData("cart") dopo operazioni CRUD sul carrello.
+  PUNTI DI MODIFICA SICURI: layout card, filtri, stili, testi UI.
+  COLLEGAMENTI: composables/useCart.js, pages/riepilogo.vue, pages/checkout.vue.
 -->
 <script setup>
 // Meta tag SEO

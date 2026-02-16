@@ -3,32 +3,43 @@
  * FILE: Package.php
  * SCOPO: Modello pacco con dimensioni, peso, prezzo, indirizzi partenza/destinazione e servizio.
  *
- * COSA ENTRA:
- *   - package_type, quantity, weight, first_size/second_size/third_size (cm)
- *   - weight_price, volume_price, single_price (centesimi)
- *   - origin_address_id, destination_address_id, service_id, user_id
- *   - content_description (descrizione contenuto per BRT)
- *
- * COSA ESCE:
- *   - Relazioni: user, originAddress, destinationAddress, service
- *   - Trait HasPrice: formattazione automatica prezzi
- *
- * CHIAMATO DA:
+ * DOVE SI USA:
  *   - CartController.php — CRUD pacchi nel carrello
  *   - SavedShipmentController.php — CRUD spedizioni configurate
  *   - OrderController.php — associazione pacchi agli ordini
  *   - BrtController.php/BrtService.php — lettura dati pacco per creazione spedizione BRT
  *
- * EFFETTI COLLATERALI:
- *   - single_price salvato in centesimi (900 = 9.00 EUR) per precisione
+ * DATI IN INGRESSO:
+ *   - package_type, quantity, weight, first_size/second_size/third_size (cm)
+ *   - weight_price, volume_price, single_price (centesimi)
+ *   - origin_address_id, destination_address_id, service_id, user_id
+ *   - content_description (descrizione contenuto per BRT)
+ *   Esempio: Package::create(['package_type' => 'Pacco', 'weight' => '5', 'single_price' => 1190])
+ *
+ * DATI IN USCITA:
+ *   - Relazioni: user, originAddress, destinationAddress, service
+ *   - Trait HasPrice: formattazione automatica prezzi
+ *   Esempio: $package->originAddress->city, $package->service->service_type
+ *
+ * VINCOLI:
+ *   - single_price e' in centesimi (1190 = 11,90 EUR) per evitare errori di arrotondamento
+ *   - weight_price e volume_price sono in euro (diverso da single_price!)
+ *   - Le relazioni originAddress e destinationAddress usano hasOne (non belongsTo)
+ *   - Tipi pacco validi: Pacco, Pallet, Valigia (Busta rimossa)
  *
  * ERRORI TIPICI:
- *   - Confusione centesimi/euro: single_price e' in centesimi, weight_price/volume_price in euro
+ *   - Confusione centesimi/euro: single_price in centesimi, weight_price/volume_price in euro
+ *   - Usare belongsTo per gli indirizzi: le relazioni sono hasOne (id -> origin_address_id)
  *
- * DOCUMENTI CORRELATI:
+ * PUNTI DI MODIFICA SICURI:
+ *   - Per aggiungere un nuovo tipo pacco: aggiungere la validazione nel controller
+ *   - Per aggiungere campi dimensione: aggiungere in $fillable (es. fourth_size)
+ *
+ * COLLEGAMENTI:
  *   - app/Models/PackageAddress.php — indirizzi partenza/destinazione
  *   - app/Models/Service.php — servizio di spedizione associato
  *   - app/Models/Traits/HasPrice.php — trait per formattazione prezzo
+ *   - app/Models/Order.php — relazione molti-a-molti tramite package_order
  */
 
 namespace App\Models;
@@ -86,19 +97,4 @@ class Package extends Model
         return $this->hasOne(Service::class, 'id', 'service_id');
     }
 
-    /* public function newCollection(array $models = []) {
-        return new PackageCollection($models);
-    } */
-
-    /* public function originAddress() {
-        return $this->belongsTo(Address::class, 'origin_address_id');
-    }
-
-    public function destinationAddress() {
-        return $this->belongsTo(Address::class, 'destination_address_id');
-    } */
-
-    /* public function shipment() {
-        return $this->belongsTo(Shipment::class);
-    } */
 }

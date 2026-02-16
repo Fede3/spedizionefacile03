@@ -1,12 +1,25 @@
 <!--
   FILE: pages/checkout.vue
   SCOPO: Checkout — pagamento spedizioni (Stripe carta/bonifico, wallet, coupon/referral).
+
   API: POST /api/stripe/create-order, POST /api/stripe/create-payment-intent,
-       POST /api/stripe/order-paid, POST /api/coupon, POST /api/wallet/pay,
-       GET /api/stripe-config, GET /api/wallet/balance, GET /api/referral/my-discount.
-  COMPOSABLE: useCart (dati carrello), useSanctumAuth (utente autenticato).
+       POST /api/stripe/order-paid, POST /api/stripe/mark-order-completed,
+       POST /api/stripe/create-payment, POST /api/stripe/existing-order-payment,
+       POST /api/calculate-coupon, POST /api/wallet/pay, POST /api/referral/apply,
+       GET /api/wallet/balance, GET /api/referral/my-discount,
+       GET /api/stripe/default-payment-method, GET /api/orders/{id}.
+  COMPOSABLE: useCart (dati carrello), useSanctumAuth (utente autenticato), usePriceBands (promo).
   ROUTE: /checkout (protetta, middleware sanctum:auth).
-  NOTE: Supporta ?order_id=XXX per pagamento ordine esistente.
+
+  DATI IN INGRESSO: ?order_id=XXX (query param per pagamento ordine esistente).
+  DATI IN USCITA: pagamento completato -> svuotamento carrello, navigazione a successo.
+
+  VINCOLI: Stripe viene caricato in modo dinamico (import asincrono), NON nel bundle iniziale.
+           I prezzi nel DB sono in centesimi. Il codice referral viene applicato DOPO il pagamento.
+  ERRORI TIPICI: non svuotare la cache del carrello dopo il pagamento (clearNuxtData).
+                 Non gestire lo stato 3D Secure di Stripe (confirmCardPayment).
+  PUNTI DI MODIFICA SICURI: metodi di pagamento (aggiungere PayPal), layout fatturazione, stili.
+  COLLEGAMENTI: composables/useCart.js, pages/carrello.vue, pages/account/spedizioni/.
 -->
 <script setup>
 // Ottimizzazione bundle: import dinamico di Stripe (non incluso nel chunk principale)

@@ -1,11 +1,22 @@
 <!--
-	COMPONENTE PIE' DI PAGINA (Footer.vue)
+	COMPONENTE: Footer (Footer.vue)
+	SCOPO: Pie' di pagina del sito, visibile in fondo a ogni pagina.
 
-	Il footer del sito, visibile in fondo a ogni pagina.
-	Design moderno a 3 sezioni:
+	DOVE SI USA: layouts/default.vue (layout principale)
+	PROPS: nessuna
+	EMITS: nessuno
+
+	DATI IN INGRESSO: nessuno (dati statici)
+	DATI IN USCITA: nessuno (solo visualizzazione e navigazione)
+
+	VINCOLI: usare content-visibility: auto (classe .cv-auto) per non bloccare il rendering
+	PUNTI DI MODIFICA SICURI: socials (link social media), linkColumns (colonne di link)
+	COLLEGAMENTI: components/Logo.vue
+
+	STRUTTURA (3 sezioni):
 	1. Parte superiore: logo + descrizione + social + 4 colonne di link
-	2. Separatore con CTA "Pronto a spedire?"
-	3. Parte inferiore: copyright + link legali + metodi di pagamento
+	2. Separatore con CTA "Pronto a spedire?" + pulsante preventivo
+	3. Parte inferiore: copyright + P.IVA + metodi di pagamento
 -->
 <script setup>
 /* Social media - icone uniformi con MDI */

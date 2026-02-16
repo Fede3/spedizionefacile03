@@ -1,11 +1,39 @@
-/**
- * PAGINA ACCOUNT PRO (Partner)
- * Per utenti NON Pro: mostra info su come diventare Partner Pro
- * e permette di inviare la richiesta all'admin.
- * Per utenti GIA' Pro: mostra il codice referral, il link da condividere,
- * le statistiche (commissioni totali, utilizzi, saldo prelevabile)
- * e lo storico delle commissioni guadagnate.
- */
+<!--
+  FILE: pages/account/account-pro.vue
+  SCOPO: Pagina Partner Pro — due viste in base al ruolo utente.
+         Non Pro: informazioni e form per richiedere il ruolo Partner Pro all'admin.
+         Gia' Pro: codice referral, link da condividere, statistiche commissioni,
+         saldo prelevabile e storico commissioni.
+  API: POST /api/pro-requests — invia richiesta Partner Pro,
+       GET /api/referral-stats — statistiche referral (solo Pro),
+       GET /api/commissions — storico commissioni (solo Pro).
+  COMPONENTI: nessun componente custom.
+  ROUTE: /account/account-pro (middleware sanctum:auth).
+
+  DATI IN INGRESSO:
+    - user (da useSanctumAuth) — ruolo, codice referral.
+    - referralStats, commissions (da API, solo Pro).
+
+  DATI IN USCITA:
+    - POST /api/pro-requests — richiesta Partner Pro.
+
+  VINCOLI:
+    - L'utente deve essere autenticato.
+    - La richiesta Pro richiede nome azienda e P.IVA.
+    - Il codice referral e' generato dal backend al momento dell'approvazione.
+
+  ERRORI TIPICI:
+    - Richiesta gia' inviata → messaggio "in attesa di approvazione".
+    - Campi aziendali mancanti → errore validazione.
+
+  PUNTI DI MODIFICA SICURI:
+    - Aggiungere campi alla richiesta Pro: modificare il form e il body API.
+    - Cambiare le statistiche mostrate: modificare il template card.
+
+  COLLEGAMENTI:
+    - pages/account/prelievi.vue → prelievo commissioni.
+    - pages/account/amministrazione/utenti.vue → admin approva/rifiuta richieste.
+-->
 <script setup>
 /* Richiede che l'utente sia autenticato */
 definePageMeta({

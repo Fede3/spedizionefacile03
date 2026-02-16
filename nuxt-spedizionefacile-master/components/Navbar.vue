@@ -1,18 +1,23 @@
 <!--
-	COMPONENTE BARRA DI NAVIGAZIONE (Navbar.vue)
+	COMPONENTE: Navbar (Navbar.vue)
+	SCOPO: Barra di navigazione principale del sito, visibile in cima a ogni pagina.
 
-	Questa e' la barra di navigazione principale del sito, visibile in cima a ogni pagina.
+	DOVE SI USA: components/Header.vue (unico padre)
+	PROPS: nessuna
+	EMITS: nessuno
 
-	Contiene:
-	- Il logo di SpedizioneFacile (a sinistra)
-	- I link di navigazione: Servizi, Preventivo Rapido, Guide, Contatti (al centro)
-	- Il pulsante "Accedi" o "Ciao [nome]" se l'utente e' loggato (a destra)
-	- Il pulsante del carrello con il numero di articoli (a destra)
+	DATI IN INGRESSO: useSanctumAuth() (stato autenticazione), useCart() (contatore carrello),
+	                  route (pagina corrente per evidenziare link attivo)
+	DATI IN USCITA: nessuno (navigazione tramite NuxtLink)
 
-	Su schermi piccoli (cellulare/tablet):
-	- I link di navigazione vengono nascosti e sostituiti da un menu hamburger animato
-	- Icona account/login visibile su mobile
-	- Il pulsante del carrello con il numero di articoli
+	VINCOLI: il menu mobile usa Teleport al body — serve ClientOnly per evitare errori SSR
+	PUNTI DI MODIFICA SICURI: navLinks (lista voci menu), icone SVG nel menu mobile
+	COLLEGAMENTI: components/Logo.vue, composables/useCart.js
+
+	STRUTTURA:
+	- Desktop: logo | link centrali | bottone login | carrello
+	- Mobile: logo | hamburger | icona account | carrello
+	  Il menu mobile si apre come dropdown con backdrop scuro (Teleportato al body)
 -->
 <script setup>
 const navLinks = [

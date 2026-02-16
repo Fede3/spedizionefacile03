@@ -13,8 +13,23 @@
  *   - JSON con success per aggiornamento massivo (bulkUpdate)
  *   - JSON con impostazioni promo (getPromoSettings/savePromoSettings)
  *
- * CHIAMATO DA:
- *   - routes/api.php — rotte /api/admin/price-bands e /api/admin/promo-settings
+ * VINCOLI:
+ *   - I prezzi base e scontati sono in CENTESIMI nel DB (890 = 8,90 EUR)
+ *   - La cache 'public_price_bands' viene invalidata dopo ogni modifica
+ *   - Le impostazioni promo sono salvate nella tabella settings (modello chiave-valore)
+ *   - L'immagine promo ha limite 2MB, l'immagine homepage 5MB
+ *
+ * ERRORI TIPICI:
+ *   - 422: ID banda non esistente, prezzo negativo, immagine troppo grande
+ *
+ * PUNTI DI MODIFICA SICURI:
+ *   - Per aggiungere una fascia: usare il seed o crearla da DB; il frontend si adatta automaticamente
+ *   - Per aggiungere un campo promo: aggiungerlo in getPromoSettings() e savePromoSettings()
+ *
+ * COLLEGAMENTI:
+ *   - PublicPriceBandController.php — endpoint pubblico che legge le fasce con cache
+ *   - SessionController.php — findBandPrice() legge le fasce per calcolare i preventivi
+ *   - pages/account/amministrazione/prezzi.vue — pannello admin prezzi
  */
 
 namespace App\Http\Controllers;

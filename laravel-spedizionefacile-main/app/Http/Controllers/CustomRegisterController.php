@@ -19,14 +19,27 @@
  *   - Email: invia codice di verifica a 6 cifre (SendVerificationEmailJob)
  *   - Referral: se referred_by presente, valida il codice e lo salva nel profilo utente
  *
+ * VINCOLI:
+ *   - Il ruolo viene FORZATO a "User" (non si puo' scegliere durante la registrazione)
+ *   - Il codice di verifica dura 30 minuti
+ *   - Se l'invio email fallisce, la registrazione prosegue (l'utente puo' richiedere un nuovo codice)
+ *   - La transazione DB garantisce atomicita': se qualcosa fallisce, nulla viene salvato
+ *   - Il codice referral (referred_by) viene validato: se non appartiene a un Partner Pro, viene ignorato
+ *
  * ERRORI TIPICI:
  *   - 422: email gia' registrata, password troppo corta (RegisterRequest)
  *   - 500: errore generico di registrazione (rollback transazione DB)
  *   - L'invio email puo' fallire senza bloccare la registrazione (warning nel log)
  *
- * DOCUMENTI CORRELATI:
+ * PUNTI DI MODIFICA SICURI:
+ *   - Per aggiungere campi alla registrazione: modificare RegisterRequest e il blocco User::create()
+ *   - Per cambiare la durata del codice: modificare "addMinutes(30)"
+ *   - Per disabilitare la verifica email: rimuovere la generazione del codice e verificare subito
+ *
+ * COLLEGAMENTI:
  *   - CustomLoginController.php — login e verifica codice dopo registrazione
  *   - app/Http/Requests/RegisterRequest.php — regole di validazione registrazione
+ *   - pages/autenticazione.vue — tab registrazione
  */
 
 namespace App\Http\Controllers;

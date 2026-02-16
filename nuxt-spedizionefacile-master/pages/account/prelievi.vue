@@ -1,10 +1,37 @@
-/**
- * PAGINA PRELIEVI (solo Partner Pro)
- * Permette ai Partner Pro di richiedere il prelievo delle commissioni
- * guadagnate tramite referral. Mostra il saldo prelevabile,
- * lo storico delle richieste e una guida "come funziona".
- * Se l'utente non e' Pro, viene mostrato un invito a diventarlo.
- */
+<!--
+  FILE: pages/account/prelievi.vue
+  SCOPO: Pagina prelievi commissioni — solo per Partner Pro.
+         Mostra saldo prelevabile, storico richieste di prelievo, guida "come funziona".
+         Se l'utente non e' Pro, mostra un invito a diventarlo.
+  API: GET /api/withdrawals — storico richieste prelievo,
+       POST /api/withdrawals — richiesta nuovo prelievo.
+  COMPONENTI: nessun componente custom.
+  ROUTE: /account/prelievi (middleware sanctum:auth).
+
+  DATI IN INGRESSO:
+    - user (da useSanctumAuth) — ruolo e saldo commissioni.
+    - withdrawals (da API) — storico richieste.
+
+  DATI IN USCITA:
+    - POST /api/withdrawals — nuova richiesta di prelievo.
+
+  VINCOLI:
+    - L'utente deve essere autenticato.
+    - Solo i Partner Pro vedono il form di prelievo.
+    - Il saldo prelevabile deve essere sufficiente.
+
+  ERRORI TIPICI:
+    - Saldo insufficiente → messaggio errore.
+    - Utente non Pro → mostra invito a diventarlo.
+
+  PUNTI DI MODIFICA SICURI:
+    - Cambiare il minimo prelevabile: modificare la validazione nel form.
+    - Aggiungere metodi di prelievo: modificare il form.
+
+  COLLEGAMENTI:
+    - pages/account/account-pro.vue → gestione Partner Pro.
+    - pages/account/bonus.vue → pagina bonus.
+-->
 <script setup>
 /* Richiede che l'utente sia autenticato */
 definePageMeta({

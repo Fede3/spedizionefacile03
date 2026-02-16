@@ -1,9 +1,18 @@
 <!--
   FILE: pages/index.vue
   SCOPO: Homepage — form preventivo rapido, sezioni informative, JSON-LD SEO.
+
   API: nessuna chiamata diretta (i componenti interni gestiscono le API).
-  COMPONENTI: PreventivoRapido, Servizi, Step, LoghiPartner, Recensioni.
+  COMPONENTI: Preventivo, LazyHomepageStep, LazyHomepageRecensioni, LazyHomepageServizi.
   ROUTE: / (pubblica, accessibile a tutti).
+
+  DATI IN INGRESSO: nessuno (pagina pubblica senza parametri).
+  DATI IN USCITA: nessuno (i componenti figli gestiscono i propri dati).
+
+  VINCOLI: non rimuovere i dati strutturati JSON-LD (servono per la SEO).
+  ERRORI TIPICI: modificare il testo "8,90" senza aggiornare anche ContenutoHeader.vue.
+  PUNTI DI MODIFICA SICURI: testi CTA, ordine sezioni lazy, meta tag SEO.
+  COLLEGAMENTI: components/Preventivo.vue, components/Homepage/*.vue, composables/usePriceBands.js.
 -->
 <script setup>
 // Promo settings per banner nella CTA.

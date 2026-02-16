@@ -3,14 +3,18 @@
 namespace App\Http\Controllers;
 
 /**
- * CONTROLLER BASE
+ * FILE: Controller.php
+ * SCOPO: Classe base (astratta) da cui ereditano tutti i controller dell'applicazione.
  *
- * Questo e' il "padre" di tutti i controller del sito.
- * Ogni altro controller (es. OrderController, CartController, ecc.)
- * "estende" questa classe, cioe' eredita le sue funzionalita' di base.
+ * DOVE SI USA: Tutti i controller del progetto estendono questa classe.
  *
- * E' una classe astratta, il che significa che non puo' essere usata direttamente,
- * ma serve solo come punto di partenza per creare altri controller.
+ * VINCOLI:
+ *   - E' una classe astratta: non puo' essere istanziata direttamente.
+ *   - Ogni nuovo controller DEVE estendere questa classe (es. "class NuovoController extends Controller").
+ *   - Se serve aggiungere logica comune a tutti i controller, va messa qui.
+ *
+ * COLLEGAMENTI:
+ *   - Tutti i file in app/Http/Controllers/ ereditano da questa classe.
  */
 abstract class Controller
 {

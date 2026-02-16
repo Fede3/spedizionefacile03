@@ -18,14 +18,25 @@
  *   - Database: aggiorna password utente (bcrypt) se token valido e non scaduto
  *   - Database: elimina record da password_reset_tokens dopo uso (token monouso)
  *
+ * VINCOLI:
+ *   - I token nella tabella password_reset_tokens sono hashati con Hash::make (non in chiaro)
+ *   - Il confronto avviene con Hash::check (token in chiaro vs hash salvato)
+ *   - I token scadono dopo 60 minuti dalla creazione
+ *   - Ogni token e' monouso: viene eliminato dal DB dopo l'uso
+ *
  * ERRORI TIPICI:
  *   - 422: token non valido o non corrispondente all'email
  *   - 401: token scaduto (durata massima 60 minuti)
  *   - 400: nuova password identica alla precedente
  *
- * DOCUMENTI CORRELATI:
+ * PUNTI DI MODIFICA SICURI:
+ *   - Per cambiare la durata del token: modificare "subMinutes(60)" in resetPassword()
+ *   - Per cambiare le regole della password: modificare UpdatePasswordRequest
+ *
+ * COLLEGAMENTI:
  *   - PasswordResetRequestController.php — prima fase: genera token e invia email
  *   - app/Http/Requests/UpdatePasswordRequest.php — regole di validazione password
+ *   - pages/aggiorna-password.vue — pagina frontend di cambio password
  */
 
 namespace App\Http\Controllers;

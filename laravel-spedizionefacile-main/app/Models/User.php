@@ -3,32 +3,43 @@
  * FILE: User.php
  * SCOPO: Modello utente registrato su SpedizioneFacile con ruoli (User, Partner Pro, Admin).
  *
- * COSA ENTRA:
- *   - Dati utente: name, surname, email, telephone_number, password, referral_code, referred_by
- *
- * COSA ESCE:
- *   - Relazioni: addresses, packages, orders, walletMovements, referralUsagesAsPro, withdrawalRequests, proRequests
- *   - Metodi: walletBalance() (saldo portafoglio), commissionBalance() (saldo commissioni Pro)
- *   - Helper: isAdmin(), isPro()
- *
- * CHIAMATO DA:
+ * DOVE SI USA:
  *   - Tutti i controller (auth()->user() restituisce questo modello)
  *   - WalletController.php — walletBalance(), commissionBalance()
  *   - ReferralController.php — referralUsagesAsPro(), isPro()
  *   - AdminController.php — gestione utenti, ruoli, portafogli
  *
- * EFFETTI COLLATERALI:
- *   - Boot: se ruolo "Partner Pro" e referral_code vuoto, genera codice 8 caratteri alla creazione
- *   - password: hashata automaticamente tramite cast 'hashed'
+ * DATI IN INGRESSO:
+ *   - Dati utente: name, surname, email, telephone_number, password, referral_code, referred_by
+ *   Esempio: User::create(['name' => 'Mario', 'email' => 'mario@test.it', 'password' => 'secret'])
+ *
+ * DATI IN USCITA:
+ *   - Relazioni: addresses, packages, orders, walletMovements, referralUsagesAsPro, withdrawalRequests
+ *   - Metodi: walletBalance() (saldo portafoglio in euro), commissionBalance() (commissioni Pro in euro)
+ *   - Helper: isAdmin() (true se role='Admin'), isPro() (true se role='Partner Pro')
+ *   Esempio: $user->walletBalance() => 15.50, $user->isAdmin() => false
+ *
+ * VINCOLI:
+ *   - role NON e' in $fillable (protezione mass assignment): va impostato con $user->role = 'Admin'
+ *   - password viene hashata automaticamente tramite cast 'hashed'
+ *   - Il referral_code viene generato automaticamente per i Partner Pro (boot creating)
+ *   - Ruoli validi: "User", "Partner Pro", "Admin"
  *
  * ERRORI TIPICI:
- *   - role non e' in $fillable (protezione mass assignment): va impostato manualmente ($user->role = ...)
+ *   - Usare User::create(['role' => 'Admin']): il campo role non e' in $fillable
+ *   - Hashare la password manualmente: il cast 'hashed' lo fa gia'
+ *   - Confondere walletBalance (portafoglio virtuale) con commissionBalance (commissioni referral)
  *
- * DOCUMENTI CORRELATI:
+ * PUNTI DI MODIFICA SICURI:
+ *   - Per aggiungere un nuovo ruolo: aggiungere il check in isAdmin()/isPro() o creare nuovo metodo
+ *   - Per aggiungere campi utente: aggiungere in $fillable e nella migrazione
+ *   - Per nascondere campi in JSON: aggiungere in $hidden
+ *
+ * COLLEGAMENTI:
  *   - app/Models/WalletMovement.php — movimenti portafoglio per calcolo saldo
  *   - app/Models/ReferralUsage.php — utilizzi referral per calcolo commissioni
  *   - app/Models/WithdrawalRequest.php — prelievi per calcolo commissionBalance
- *   - CustomRegisterController.php — creazione utente con ruolo "User"
+ *   - app/Http/Controllers/CustomRegisterController.php — creazione utente con ruolo "User"
  */
 
 namespace App\Models;

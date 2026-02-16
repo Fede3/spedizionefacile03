@@ -1,7 +1,40 @@
-/**
- * ADMIN - Gestione Ordini
- * Lista ordini con ricerca, filtri, cambio stato, dettaglio modale e vista raggruppata per utente.
- */
+<!--
+  FILE: pages/account/amministrazione/ordini.vue
+  SCOPO: Pannello admin — gestione ordini di tutti gli utenti.
+         Lista con ricerca, filtri per stato, cambio stato, dettaglio modale,
+         vista raggruppata per utente, gestione PUDO, download etichette BRT.
+  API: GET /api/admin/orders?page=&search=&status= — lista ordini paginata,
+       PATCH /api/admin/orders/{id}/status — cambio stato ordine,
+       PATCH /api/admin/orders/{id}/pudo — assegna/rimuovi punto PUDO,
+       PATCH /api/admin/users/{id}/user-type — cambio tipo account utente.
+  COMPONENTI: PudoSelector (selettore punto di ritiro BRT).
+  ROUTE: /account/amministrazione/ordini (middleware sanctum:auth + admin).
+
+  DATI IN INGRESSO:
+    - ordersData (da fetchOrders) — lista ordini paginata dal server.
+    - useAdmin() — composable con utility admin (formatCurrency, formatDate, statusConfig, ecc.).
+
+  DATI IN USCITA:
+    - PATCH su stato ordine, PUDO, tipo account utente.
+
+  VINCOLI:
+    - Solo utenti con ruolo Admin possono accedere (middleware admin).
+    - Non si possono annullare ordini consegnati o in transito.
+    - La ricerca ha debounce di 400ms.
+
+  ERRORI TIPICI:
+    - Errore di rete durante cambio stato → messaggio errore rosso.
+    - Ordine senza pacchetti → il dettaglio mostra sezione vuota.
+
+  PUNTI DI MODIFICA SICURI:
+    - Aggiungere nuovi stati: modificare getAvailableStatuses() e orderStatusConfig nel composable.
+    - Aggiungere colonne alla tabella: modificare il template <table>.
+
+  COLLEGAMENTI:
+    - composables/useAdmin.js → utility condivise per tutte le pagine admin.
+    - components/PudoSelector.vue → selettore punti di ritiro BRT.
+    - pages/account/amministrazione/spedizioni.vue → vista spedizioni BRT.
+-->
 <script setup>
 definePageMeta({
 	middleware: ["sanctum:auth", "admin"],

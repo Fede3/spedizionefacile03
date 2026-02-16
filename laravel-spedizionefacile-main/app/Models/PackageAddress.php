@@ -3,26 +3,33 @@
  * FILE: PackageAddress.php
  * SCOPO: Modello indirizzo specifico di un pacco (partenza o destinazione della spedizione).
  *
- * COSA ENTRA:
- *   - name, address, address_number, city, postal_code, province, country
- *   - telephone_number, email, additional_information, intercom_code
- *
- * COSA ESCE:
- *   - Relazioni: packagesAsOrigin, packagesAsDestination
- *
- * CHIAMATO DA:
+ * DOVE SI USA:
  *   - CartController.php / SavedShipmentController.php — creazione indirizzi con i pacchi
  *   - BrtService.php — lettura dati indirizzo per creazione spedizione BRT
- *     (city uppercase, postal_code 5 cifre, province 2 lettere per normalizzazione BRT)
  *
- * EFFETTI COLLATERALI:
- *   - Nessuno (modello semplice senza boot/observer)
+ * DATI IN INGRESSO:
+ *   - name, address, address_number, city, postal_code, province, country
+ *   - telephone_number, email, additional_information, intercom_code
+ *   Esempio: PackageAddress::create(['name' => 'Mario Rossi', 'city' => 'Milano', 'province' => 'MI'])
+ *
+ * DATI IN USCITA:
+ *   - Relazioni: packagesAsOrigin, packagesAsDestination
+ *   Esempio: $address->packagesAsOrigin()->count() — quanti pacchi partono da qui
+ *
+ * VINCOLI:
+ *   - province deve essere sigla 2 lettere (es. "MI") per compatibilita' BRT
+ *   - postal_code deve essere 5 cifre per il routing BRT
+ *   - Differenza con UserAddress: PackageAddress e' legato al pacco, UserAddress alla rubrica utente
  *
  * ERRORI TIPICI:
- *   - Differenza con UserAddress: PackageAddress e' legato al pacco, UserAddress alla rubrica utente
- *   - province deve essere sigla 2 lettere (es. "MI") per compatibilita' BRT
+ *   - Confusione con UserAddress: sono tabelle diverse con scopi diversi
+ *   - Salvare province come nome completo ("Milano") invece di sigla ("MI")
  *
- * DOCUMENTI CORRELATI:
+ * PUNTI DI MODIFICA SICURI:
+ *   - Per aggiungere campi indirizzo: aggiungere in $fillable e nella migrazione
+ *   - BrtService normalizza automaticamente city/postal_code/province prima di inviare a BRT
+ *
+ * COLLEGAMENTI:
  *   - app/Models/Package.php — relazione originAddress/destinationAddress
  *   - app/Models/UserAddress.php — rubrica indirizzi utente (diverso da indirizzi pacco)
  *   - app/Services/BrtService.php — normalizzazione indirizzi per API BRT

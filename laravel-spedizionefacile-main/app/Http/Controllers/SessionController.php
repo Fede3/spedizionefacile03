@@ -3,29 +3,37 @@
  * FILE: SessionController.php
  * SCOPO: Gestisce i dati temporanei della sessione di preventivo rapido (anche per utenti non registrati).
  *
- * COSA ENTRA:
- *   - Nessun parametro per show (legge dalla sessione)
- *   - Request con shipment_details (origin_city, origin_postal_code, destination_*), packages[] per firstStep
+ * DOVE SI USA: Homepage (PreventivoRapido.vue), pagina preventivo (preventivo.vue)
  *
- * COSA ESCE:
- *   - JSON con data contenente: shipment_details, packages, services, total_price, step
+ * DATI IN INGRESSO:
+ *   - show(): nessuno (legge dalla sessione corrente)
+ *   - firstStep(): {shipment_details: {origin_city, origin_postal_code, destination_city,
+ *     destination_postal_code}, packages: [{package_type, quantity, weight, first_size, second_size,
+ *     third_size, weight_price?, volume_price?, single_price?}]}
  *
- * CHIAMATO DA:
- *   - routes/api.php — GET /api/session, POST /api/session/first-step
- *   - nuxt: components/Homepage/PreventivoRapido.vue, pages/la-tua-spedizione/[step].vue
+ * DATI IN USCITA:
+ *   - {data: {shipment_details, packages, services, total_price, step}}
+ *   - Esempio: {data: {shipment_details: {origin_city: "Roma", ...}, packages: [{single_price: 8.90, ...}],
+ *     total_price: 8.90, step: 2}}
  *
- * EFFETTI COLLATERALI:
- *   - Sessione: salva shipment_details, packages, total_price, step
- *   - Calcolo prezzi: se weight_price/volume_price non forniti dal frontend, li calcola lato server
- *     7 fasce peso (0-2kg=8.90, 2-5kg=11.90, 5-10kg=14.90, 10-25kg=19.90, 25-50kg=29.90, 50-75kg=39.90, 75-100kg=49.90)
- *     7 fasce volume analoghe; supplemento +2.50EUR per CAP che inizia con "90"
+ * VINCOLI:
+ *   - Il calcolo prezzi DEVE usare la regola MAX(fascia_peso, fascia_volume) + supplemento CAP90
+ *   - Se si cambiano le fasce nel DB (tabella price_bands), il fallback hardcoded resta come riserva
+ *   - I prezzi nella sessione sono in EURO (non centesimi) — la conversione avviene in CartController
  *
  * ERRORI TIPICI:
  *   - 422: dati di validazione mancanti (citta', CAP, almeno un pacco con dimensioni)
  *
- * DOCUMENTI CORRELATI:
+ * PUNTI DI MODIFICA SICURI:
+ *   - Per cambiare le fasce di prezzo: modificare la tabella price_bands dal pannello admin
+ *   - Per cambiare il supplemento CAP90 (+2.50): cercare "capSupplement" in firstStep()
+ *   - Per aggiungere un nuovo campo al preventivo: aggiungerlo sia in validate() che in session()->put()
+ *
+ * COLLEGAMENTI:
  *   - GuestCartController.php — carrello di sessione per ospiti (step successivo)
  *   - CartController.php — carrello database per utenti autenticati
+ *   - components/Homepage/PreventivoRapido.vue — form preventivo homepage
+ *   - components/Preventivo.vue — componente preventivo completo
  */
 
 namespace App\Http\Controllers;
@@ -39,7 +47,7 @@ class SessionController extends Controller
      * Se non ci sono fasce nel DB, usa il fallback hardcoded.
      * Restituisce il prezzo in euro (float).
      */
-    private function findBandPrice(string $type, float $value): float
+    public static function findBandPrice(string $type, float $value): float
     {
         // Prova a caricare dal DB
         $band = PriceBand::where('type', $type)
@@ -58,13 +66,13 @@ class SessionController extends Controller
         }
 
         // Fallback hardcoded se il DB e' vuoto
-        return $this->fallbackPrice($type, $value);
+        return self::fallbackPrice($type, $value);
     }
 
     /**
      * Fallback hardcoded per quando la tabella price_bands e' vuota.
      */
-    private function fallbackPrice(string $type, float $value): float
+    public static function fallbackPrice(string $type, float $value): float
     {
         if ($type === 'weight') {
             if ($value <= 2) return 8.90;
@@ -100,9 +108,18 @@ class SessionController extends Controller
         ]);
     }
 
-    // Gestisce il primo passo del preventivo: l'utente inserisce da dove a dove spedire
-    // e le caratteristiche dei pacchi (peso, dimensioni, quantita')
-    // Il sistema calcola automaticamente il prezzo in base a peso e volume
+    /**
+     * firstStep — Calcola il preventivo per il primo passo (citta', pacchi, prezzi).
+     *
+     * PERCHE': Il frontend invia le dimensioni dei pacchi e gli indirizzi; il backend calcola
+     *   i prezzi autoritativamente usando le fasce dal DB (con fallback hardcoded).
+     * COME LEGGERLO: 1) Validazione dati  2) Calcolo supplemento CAP90  3) Per ogni pacco: fascia peso,
+     *   fascia volume, MAX dei due + supplemento, moltiplica per quantita'  4) Salva in sessione
+     * COME MODIFICARLO: Per aggiungere un supplemento, inserirlo nel blocco $capSupplement.
+     *   Per cambiare la logica dei prezzi, modificare findBandPrice() o fallbackPrice().
+     * COSA EVITARE: Non rimuovere il fallback hardcoded (fallbackPrice) — serve quando il DB e' vuoto.
+     *   Non cambiare "session()->put('step', 2)" senza aggiornare anche il frontend.
+     */
     public function firstStep(Request $request)
     {
         // Controlliamo che tutti i dati necessari siano stati inviati e siano validi
@@ -142,7 +159,7 @@ class SessionController extends Controller
             // Prezzo per peso: cerca nella tabella price_bands (con fallback hardcoded)
             if ($weightPrice === null) {
                 $weight = (float) preg_replace('/[^0-9.]/', '', $package['weight']);
-                $weightPrice = $this->findBandPrice('weight', $weight);
+                $weightPrice = self::findBandPrice('weight', $weight);
                 $package['weight_price'] = $weightPrice;
             }
 
@@ -152,7 +169,7 @@ class SessionController extends Controller
                 $s2 = (float) preg_replace('/[^0-9.]/', '', $package['second_size']);
                 $s3 = (float) preg_replace('/[^0-9.]/', '', $package['third_size']);
                 $vol = ($s1 / 100) * ($s2 / 100) * ($s3 / 100);
-                $volumePrice = $this->findBandPrice('volume', $vol);
+                $volumePrice = self::findBandPrice('volume', $vol);
                 $package['volume_price'] = $volumePrice;
             }
 

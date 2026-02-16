@@ -1,30 +1,37 @@
 /**
- * COMPOSABLE: VALIDAZIONE INTELLIGENTE DEI CAMPI (useSmartValidation)
+ * COMPOSABLE: useSmartValidation (useSmartValidation.js)
+ * SCOPO: Validazione reattiva dei campi form con regole specifiche per l'Italia.
  *
- * Questa e' una "funzione riutilizzabile" che fornisce validazione reattiva
- * per i campi dei form (moduli) con regole specifiche per l'Italia.
- * I composable sono funzioni che si possono usare in piu' pagine del sito
- * senza dover riscrivere lo stesso codice ogni volta.
+ * DOVE SI USA: components/Preventivo.vue (peso, dimensioni, CAP),
+ *              pages/la-tua-spedizione/[step].vue (telefono, email, indirizzo, provincia),
+ *              pages/checkout.vue (campi di fatturazione)
  *
- * Come funziona la validazione:
- * - "on blur" (quando il campo perde il focus): il campo viene segnato come "toccato"
- *   e viene validato per la prima volta
- * - "on input" (quando l'utente digita): il campo viene ri-validato SOLO se e' gia'
- *   stato toccato, cosi' non si mostrano errori mentre l'utente sta ancora scrivendo
+ * COSA RESTITUISCE:
+ *   - validateTelefono(key, value): valida telefono italiano (6-10 cifre, prefisso +39)
+ *   - validateCAP(key, value): valida CAP italiano (5 cifre, range 00010-98168)
+ *   - validateEmail(key, value): valida email (opzionale)
+ *   - validatePeso(key, value): valida peso (positivo, max 1000 kg)
+ *   - validateDimensione(key, value, label): valida dimensione (positiva, max 300 cm)
+ *   - validateNomeCognome(key, value): valida nome (no numeri)
+ *   - validateProvincia(key, value): valida sigla provincia (2 lettere, elenco ufficiale)
+ *   - filterCAP(value): rimuove caratteri non numerici, limita a 5 cifre
+ *   - filterProvincia(value): rimuove non-lettere, limita a 2 maiuscole
+ *   - autoCapitalize(value): capitalizza prima lettera di ogni parola
+ *   - getProvinceSuggestions(input): suggerimenti provincia (max 5)
+ *   - getError(key), hasError(key), errorClass(key, baseClass)
+ *   - onBlur(key, fn), onInput(key, fn), markTouched(key), isTouched(key)
+ *   - resetAll(): resetta tutti gli errori e lo stato toccato
+ * ESEMPIO D'USO: const sv = useSmartValidation()
+ *                sv.onBlur('telefono', () => sv.validateTelefono('telefono', value))
  *
- * Regole di validazione disponibili:
- * - Telefono: solo numeri, 10 cifre per cellulari italiani (con supporto prefisso +39)
- * - CAP: esattamente 5 cifre, range valido per CAP italiani (00010-98168)
- * - Email: validazione in tempo reale con espressione regolare
- * - Peso: numeri positivi, massimo 1000 kg
- * - Dimensioni: numeri positivi, massimo 300 cm
- * - Nome/Cognome: non puo' contenere numeri, auto-capitalizzazione prima lettera
- * - Provincia: 2 lettere maiuscole, con autocompletamento da elenco province italiane
+ * VINCOLI: la strategia "tocca prima, valida dopo" e' fondamentale per la UX —
+ *          non mostrare errori su campi mai toccati dall'utente
+ * ERRORI TIPICI: chiamare getError() senza aver prima chiamato onBlur() → ritorna sempre null
+ * COLLEGAMENTI: docs/guide/AGGIUNGERE-CAMPO.md
  *
- * Collegamento con altri file:
- * - pages/la-tua-spedizione/[step].vue: usa queste validazioni nel flusso di spedizione
- * - components/Preventivo.vue: usa queste validazioni nel form del preventivo
- * - pages/checkout.vue: usa queste validazioni nel form di fatturazione
+ * PATTERN DI VALIDAZIONE:
+ * - "on blur" (uscita dal campo): segna come "toccato" + prima validazione
+ * - "on input" (digitazione): ri-valida SOLO se gia' toccato
  */
 
 // Lista completa delle sigle delle province italiane (usata per la validazione della provincia)

@@ -1,18 +1,18 @@
 /**
- * MIDDLEWARE VERIFICA EMAIL (email-verification.js)
+ * MIDDLEWARE: email-verification (middleware/email-verification.js)
+ * SCOPO: Protegge la pagina di verifica email — accessibile solo con parametri dal link email.
  *
- * I middleware sono "controlli automatici" che vengono eseguiti PRIMA di mostrare una pagina.
- * Funzionano come un guardiano all'ingresso: controllano se l'utente ha il permesso
- * di entrare in quella pagina, e se non ce l'ha, lo mandano da un'altra parte.
+ * DOVE SI USA: pages/verifica-email.vue (definePageMeta → middleware: ['email-verification'])
+ * REDIRECT: se mancano i parametri query → / (homepage)
  *
- * Questo middleware protegge la pagina di verifica email.
- * Controlla che nell'indirizzo della pagina ci siano dei parametri (query).
- * Se l'indirizzo non contiene parametri (cioe' qualcuno ha aperto la pagina
- * direttamente senza il link di verifica ricevuto via email),
- * l'utente viene mandato alla homepage.
+ * COME FUNZIONA:
+ * Quando l'utente si registra, riceve un'email con un link tipo:
+ * /verifica-email?id=123&hash=abc&expires=1234567890&signature=xyz
+ * Questo middleware controlla che ci siano parametri nell'URL.
+ * Se qualcuno apre /verifica-email direttamente (senza parametri), viene mandato alla homepage.
  *
- * In pratica: la pagina di verifica email funziona solo se si arriva
- * cliccando il link inviato via email, che contiene parametri speciali.
+ * VINCOLI: i parametri query vengono poi inviati al backend per la verifica vera e propria
+ * COLLEGAMENTI: pages/verifica-email.vue
  */
 export default defineNuxtRouteMiddleware((to, from) => {
 	if (!to.query || String(to.query).trim() === "") {

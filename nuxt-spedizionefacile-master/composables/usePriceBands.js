@@ -1,23 +1,33 @@
 /**
- * COMPOSABLE: usePriceBands
- * Carica le fasce di prezzo dall'API pubblica con fallback hardcoded.
- * Usato da Preventivo.vue e ovunque servano i prezzi dinamici.
+ * COMPOSABLE: usePriceBands (usePriceBands.js)
+ * SCOPO: Carica le fasce di prezzo dall'API pubblica con fallback hardcoded.
  *
- * I prezzi vengono ricaricati dal server ogni 5 minuti (TTL),
- * cosi' quando l'admin modifica le fasce i nuovi prezzi appaiono rapidamente.
+ * DOVE SI USA: components/Preventivo.vue (calcolo prezzo),
+ *              components/ContenutoHeader.vue (prezzo minimo nel hero),
+ *              pages/account/amministrazione/prezzi.vue (gestione admin)
  *
- * Fornisce:
+ * COSA RESTITUISCE:
  *   - priceBands: ref con tutte le fasce {weight: [...], volume: [...]}
  *   - promoSettings: ref con impostazioni promo {active, label_text, label_color, label_image, show_badges}
- *   - getWeightPrice(weightKg): restituisce il prezzo in euro per il peso dato
- *   - getVolumePrice(volumeM3): restituisce il prezzo in euro per il volume dato
- *   - getWeightBandInfo(weightKg): restituisce info dettagliate sulla fascia peso
- *   - getVolumeBandInfo(volumeM3): restituisce info dettagliate sulla fascia volume
- *   - getMinPrice(): restituisce info sul prezzo minimo disponibile
- *   - loading: ref boolean
- *   - loaded: ref boolean
+ *   - getWeightPrice(weightKg): prezzo in euro per il peso dato
+ *   - getVolumePrice(volumeM3): prezzo in euro per il volume dato
+ *   - getWeightBandInfo(weightKg): info dettagliate sulla fascia peso
+ *   - getVolumeBandInfo(volumeM3): info dettagliate sulla fascia volume
+ *   - getMinPrice(): info sul prezzo minimo disponibile
+ *   - loading, loaded: stato del caricamento
  *   - loadPriceBands(): carica dal server (rispetta TTL di 5 min)
  *   - forceReload(): forza il ricaricamento ignorando il TTL
+ * ESEMPIO D'USO: const { loadPriceBands, getWeightPrice, getVolumePrice } = usePriceBands()
+ *
+ * VINCOLI: i prezzi nel DB sono in CENTESIMI (890 = 8.90€). Il composable converte in euro.
+ *          Se l'API non risponde, usa le fasce hardcoded (FALLBACK_WEIGHT_BANDS / FALLBACK_VOLUME_BANDS).
+ * ERRORI TIPICI: chiamare getWeightPrice() prima di loadPriceBands() → ritorna null
+ * COLLEGAMENTI: laravel-spedizionefacile-main/app/Http/Controllers/PublicPriceBandController.php,
+ *               docs/guide/MODIFICARE-REGOLA-PREZZO.md
+ *
+ * TTL: I prezzi vengono ricaricati dal server ogni 5 minuti,
+ * cosi' quando l'admin modifica le fasce i nuovi prezzi appaiono rapidamente.
+ * Le richieste concorrenti vengono deduplicate (una sola chiamata HTTP).
  */
 
 // Fasce hardcoded di fallback (stessi valori storici)

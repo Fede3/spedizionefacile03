@@ -1,9 +1,34 @@
-/**
- * FILE: pages/account/profilo.vue
- * SCOPO: Profilo utente — visualizza/modifica dati personali, aziendali, fatturazione, password.
- * API: PUT /api/user (aggiorna profilo), POST /api/user/change-password.
- * ROUTE: /account/profilo (middleware sanctum:auth).
- */
+<!--
+  FILE: pages/account/profilo.vue
+  SCOPO: Profilo utente — visualizza e modifica dati personali, aziendali, fatturazione, password.
+         Due viste: sola lettura (card profilo) e form di modifica inline.
+  API: PATCH /api/users/{id} (aggiorna profilo utente).
+  COMPONENTI: nessun componente custom (solo Icon di Nuxt).
+  ROUTE: /account/profilo (middleware sanctum:auth).
+
+  DATI IN INGRESSO:
+    - user (da useSanctumAuth) — dati dell'utente autenticato.
+
+  DATI IN USCITA:
+    - PATCH /api/users/{id} — salva i dati modificati nel backend.
+
+  VINCOLI:
+    - L'utente deve essere autenticato (middleware sanctum:auth).
+    - Se la sessione scade (401), redirect a /autenticazione.
+    - La password puo' essere lasciata vuota per non cambiarla.
+
+  ERRORI TIPICI:
+    - 401 → sessione scaduta, redirect automatico.
+    - Errori di validazione → mostra il primo errore dal backend.
+
+  PUNTI DI MODIFICA SICURI:
+    - Aggiungere campi al form: aggiungere in userInfo e nel template.
+    - Cambiare i colori del badge ruolo: modificare getRoleBadge().
+
+  COLLEGAMENTI:
+    - pages/autenticazione.vue → redirect se sessione scaduta.
+    - pages/account/index.vue → dashboard account (breadcrumb).
+-->
 <script setup>
 /* Richiede che l'utente sia autenticato */
 definePageMeta({

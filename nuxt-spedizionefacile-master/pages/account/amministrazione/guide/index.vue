@@ -1,7 +1,16 @@
-/**
- * ADMIN - Guide
- * Lista guide con pubblicazione, ordinamento e azioni CRUD.
- */
+<!--
+  FILE: pages/account/amministrazione/guide/index.vue
+  SCOPO: Pannello admin — lista guide con pubblicazione, ordinamento e azioni CRUD.
+  API: GET /api/admin/guides — lista guide,
+       PATCH /api/admin/guides/{id}/publish — pubblica/bozza,
+       DELETE /api/admin/guides/{id} — elimina guida.
+  ROUTE: /account/amministrazione/guide (middleware sanctum:auth + admin).
+
+  COLLEGAMENTI:
+    - pages/account/amministrazione/guide/nuovo.vue → crea nuova guida.
+    - pages/account/amministrazione/guide/[id].vue → modifica guida.
+    - pages/guide/index.vue → lista guide pubblica.
+-->
 <script setup>
 definePageMeta({
 	middleware: ["sanctum:auth", "admin"],

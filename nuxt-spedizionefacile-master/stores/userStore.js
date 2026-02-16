@@ -1,13 +1,33 @@
 /**
- * FILE: stores/userStore.js
- * SCOPO: Store Pinia — stato globale condiviso tra pagine (preventivo, spedizione, indirizzi).
- * STATO: stepNumber, shipmentDetails, isQuoteStarted, totalPrice, packages, servicesArray,
- *        pendingShipment, originAddressData, destinationAddressData, pickupDate.
- * USATO DA: pages/preventivo.vue, pages/la-tua-spedizione/[step].vue, pages/riepilogo.vue,
- *           components/Homepage/PreventivoRapido.vue, components/Preventivo.vue.
- * NOTE: pendingShipment contiene i dati completi per la pagina /riepilogo
- *       (pacchi, indirizzi, servizi, prezzo) prima dell'invio al carrello o checkout.
- *       Lo stato viene salvato in sessionStorage per non perderlo al refresh della pagina.
+ * STORE: userStore (stores/userStore.js)
+ * SCOPO: Store Pinia — stato globale condiviso tra pagine durante il flusso di spedizione.
+ *
+ * DOVE SI USA: components/Preventivo.vue (step 1 — misure e calcolo prezzo),
+ *              pages/la-tua-spedizione/[step].vue (step 2-3 — servizi e indirizzi),
+ *              pages/riepilogo.vue (step 4 — conferma e carrello)
+ *
+ * STATO PRINCIPALE:
+ *   - stepNumber: numero dello step corrente (1-5)
+ *   - shipmentDetails: citta'/CAP di partenza e destinazione + data
+ *   - packages: array dei pacchi con tipo, peso, dimensioni, prezzo
+ *   - totalPrice: prezzo totale calcolato (somma di tutti i pacchi)
+ *   - servicesArray: servizi aggiuntivi selezionati (es. "contrassegno")
+ *   - isQuoteStarted: true dopo il primo calcolo prezzo
+ *   - pendingShipment: dati completi per /riepilogo (pacchi, indirizzi, servizi, prezzo)
+ *   - originAddressData / destinationAddressData: indirizzi per navigazione all'indietro
+ *   - pickupDate: data di ritiro selezionata
+ *   - editingCartItemId: ID del pacco nel carrello in modifica (null = nuova spedizione)
+ *   - deliveryMode: 'home' (domicilio) o 'pudo' (punto BRT)
+ *   - selectedPudo: punto PUDO selezionato (oggetto con pudo_id, name, address, ecc.)
+ *   - contentDescription: descrizione del contenuto del pacco
+ *
+ * PERSISTENZA: lo stato viene salvato in sessionStorage ad ogni modifica (debounced 300ms)
+ *              per non perderlo al refresh della pagina.
+ *
+ * VINCOLI: non aggiungere troppi campi senza aggiornare anche la funzione persist()
+ * ERRORI TIPICI: dimenticare di aggiungere un nuovo campo nel watch e in persist()
+ * COLLEGAMENTI: composables/useSession.js (sessione server — dati diversi),
+ *               docs/architettura/MAPPA-DATI.md
  */
 import { defineStore } from "pinia";
 
@@ -41,43 +61,56 @@ function saveToSession(state) {
 }
 
 export const useUserStore = defineStore("user", () => {
+	// Carica lo stato precedente da sessionStorage (se presente, es. dopo refresh)
 	const saved = loadFromSession();
 
-	const stepNumber = ref(saved?.stepNumber ?? 1);
+	// --- STATO DEL FLUSSO DI SPEDIZIONE ---
+
+	const stepNumber = ref(saved?.stepNumber ?? 1);       // Step corrente del processo (1-5)
+
+	// --- DETTAGLI SPEDIZIONE (Step 1 — Preventivo) ---
 
 	const shipmentDetails = ref(saved?.shipmentDetails ?? {
-		origin_city: "",
-		origin_postal_code: "",
-		destination_city: "",
-		destination_postal_code: "",
-		date: "",
+		origin_city: "",              // Citta' di partenza (es. "Milano")
+		origin_postal_code: "",       // CAP di partenza (es. "20100")
+		destination_city: "",         // Citta' di destinazione
+		destination_postal_code: "",  // CAP di destinazione
+		date: "",                     // Data di ritiro (formato YYYY-MM-DD)
 	});
 
-	const isQuoteStarted = ref(saved?.isQuoteStarted ?? false);
+	const isQuoteStarted = ref(saved?.isQuoteStarted ?? false);  // true dopo il primo calcolo prezzo
 
-	const totalPrice = ref(saved?.totalPrice ?? 0);
+	const totalPrice = ref(saved?.totalPrice ?? 0);   // Prezzo totale in euro (somma di tutti i pacchi)
 
-	const packages = ref(saved?.packages ?? []);
+	const packages = ref(saved?.packages ?? []);       // Array pacchi: [{package_type, weight, first_size, ...}]
 
-	const servicesArray = ref(saved?.servicesArray ?? []);
+	// --- SERVIZI E CONTENUTO (Step 2) ---
 
-	// Content description for the package (e.g. "Elettronica", "Abbigliamento")
+	const servicesArray = ref(saved?.servicesArray ?? []);  // Servizi selezionati (es. ["contrassegno"])
+
+	// Descrizione contenuto del pacco (es. "Elettronica", "Abbigliamento")
 	const contentDescription = ref(saved?.contentDescription ?? "");
 
-	// Pending shipment payload (used for riepilogo and backward navigation)
+	// --- DATI PER IL RIEPILOGO E NAVIGAZIONE ALL'INDIETRO (Step 3-4) ---
+
+	// Payload completo della spedizione (usato da /riepilogo per mostrare il riepilogo)
 	const pendingShipment = ref(saved?.pendingShipment ?? null);
 
-	// Address data for pre-filling when navigating back
+	// Dati indirizzo per pre-compilare i campi quando l'utente torna indietro
 	const originAddressData = ref(saved?.originAddressData ?? null);
 	const destinationAddressData = ref(saved?.destinationAddressData ?? null);
 	const pickupDate = ref(saved?.pickupDate ?? "");
 
+	// --- MODIFICA CARRELLO ---
+
 	// ID del pacco nel carrello che si sta modificando (null = nuova spedizione)
 	const editingCartItemId = ref(saved?.editingCartItemId ?? null);
 
-	// PUDO: modalità di consegna ('home' = domicilio, 'pudo' = punto BRT)
+	// --- PUDO (Consegna presso punto BRT) ---
+
+	// Modalita' di consegna: 'home' = domicilio, 'pudo' = punto BRT
 	const deliveryMode = ref(saved?.deliveryMode ?? 'home');
-	// PUDO: punto di ritiro selezionato (oggetto con pudo_id, name, address, ecc.)
+	// Punto di ritiro selezionato (oggetto con pudo_id, name, address, ecc.)
 	const selectedPudo = ref(saved?.selectedPudo ?? null);
 
 	// Salva in sessionStorage ogni volta che cambia qualcosa.

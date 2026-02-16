@@ -1,7 +1,17 @@
-/**
- * ADMIN - Gestione Coupon
- * CRUD coupon: crea, modifica, attiva/disattiva, elimina codici sconto.
- */
+<!--
+  FILE: pages/account/amministrazione/coupon.vue
+  SCOPO: Pannello admin — gestione coupon (codici sconto).
+         CRUD completo: crea, modifica, attiva/disattiva, elimina.
+  API: GET /api/admin/coupons — lista coupon,
+       POST /api/admin/coupons — crea coupon,
+       PATCH /api/admin/coupons/{id} — modifica coupon,
+       DELETE /api/admin/coupons/{id} — elimina coupon.
+  ROUTE: /account/amministrazione/coupon (middleware sanctum:auth + admin).
+
+  COLLEGAMENTI:
+    - pages/checkout.vue → i coupon vengono applicati in fase di checkout.
+    - pages/carrello.vue → applicazione coupon nel carrello.
+-->
 <script setup>
 definePageMeta({
 	middleware: ["sanctum:auth", "admin"],

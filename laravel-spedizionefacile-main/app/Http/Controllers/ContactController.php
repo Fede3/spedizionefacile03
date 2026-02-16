@@ -20,12 +20,21 @@
  * EFFETTI COLLATERALI:
  *   - Database: crea record in contact_messages, aggiorna read_at
  *
+ * VINCOLI:
+ *   - Il messaggio ha un limite di 5000 caratteri
+ *   - Il campo read_at e' null finche' l'admin non lo segna come letto
+ *
  * ERRORI TIPICI:
  *   - 422: dati di validazione non corretti (nome, email, messaggio obbligatori)
  *
- * DOCUMENTI CORRELATI:
+ * PUNTI DI MODIFICA SICURI:
+ *   - Per aggiungere campi al form contatti: aggiungerli in validate() di store()
+ *   - Per inviare email di notifica all'admin: aggiungere logica dopo create() in store()
+ *
+ * COLLEGAMENTI:
  *   - app/Models/ContactMessage.php — modello messaggio di contatto
  *   - AdminController.php — dashboard admin con conteggio messaggi non letti
+ *   - pages/contatti.vue — pagina frontend del form contatti
  */
 
 namespace App\Http\Controllers;

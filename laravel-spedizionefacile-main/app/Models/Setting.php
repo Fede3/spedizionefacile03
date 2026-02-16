@@ -3,29 +3,35 @@
  * FILE: Setting.php
  * SCOPO: Modello chiave-valore per impostazioni dinamiche del sito (Stripe, BRT, generale).
  *
- * COSA ENTRA:
- *   - key (nome impostazione), value (valore stringa)
- *
- * COSA ESCE:
- *   - Setting::get('key', default) -> valore stringa o default
- *   - Setting::set('key', 'value') -> crea o aggiorna (updateOrCreate)
- *
- * CHIAMATO DA:
+ * DOVE SI USA:
  *   - SettingsController.php — getStripeConfig, saveStripeConfig
  *   - AdminController.php — settings, updateSettings
  *   - StripeController.php — legge stripe_key, stripe_secret come fallback a config()
  *   - WalletController.php — legge stripe_secret
- *   - BrtService.php — legge brt_customer_id, brt_username, brt_password
  *
- * EFFETTI COLLATERALI:
- *   - Database: updateOrCreate su tabella settings (upsert)
+ * DATI IN INGRESSO:
+ *   - key (nome impostazione), value (valore stringa)
+ *   Esempio: Setting::set('stripe_test_mode', 'true')
+ *
+ * DATI IN USCITA:
+ *   - Setting::get('key', default) -> valore stringa o default
+ *   Esempio: Setting::get('stripe_test_mode', 'false') => "true"
+ *
+ * VINCOLI:
+ *   - Tutti i valori sono stringhe (value e' text): la conversione in tipo e' responsabilita' del chiamante
+ *   - La chiave (key) deve essere unica: set() usa updateOrCreate
  *
  * ERRORI TIPICI:
- *   - Tutti i valori sono stringhe (value e' text), la conversione in tipo e' responsabilita' del chiamante
+ *   - Aspettarsi un boolean da get(): restituisce stringa "true"/"false", non true/false
+ *   - Usare create() invece di set(): set() gestisce automaticamente upsert
  *
- * DOCUMENTI CORRELATI:
- *   - SettingsController.php — configurazione Stripe dal frontend
- *   - AdminController.php — gestione impostazioni complete dal pannello admin
+ * PUNTI DI MODIFICA SICURI:
+ *   - Per aggiungere una nuova impostazione: usare Setting::set('nuova_chiave', 'valore')
+ *   - Per leggere con tipo: Setting::get('key') === 'true' (comparazione stringa)
+ *
+ * COLLEGAMENTI:
+ *   - app/Http/Controllers/SettingsController.php — configurazione Stripe dal frontend
+ *   - app/Http/Controllers/AdminController.php — gestione impostazioni dal pannello admin
  */
 
 namespace App\Models;

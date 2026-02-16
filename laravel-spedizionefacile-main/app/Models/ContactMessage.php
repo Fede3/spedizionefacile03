@@ -3,25 +3,31 @@
  * FILE: ContactMessage.php
  * SCOPO: Modello messaggio del modulo "Contattaci" con stato di lettura admin.
  *
- * COSA ENTRA:
- *   - name, surname, email, telephone_number, address, message, read_at
- *
- * COSA ESCE:
- *   - Record nella tabella contact_messages
- *
- * CHIAMATO DA:
+ * DOVE SI USA:
  *   - ContactController.php — store (creazione), index (lista admin), markAsRead
  *   - AdminController.php — dashboard (conteggio messaggi non letti: whereNull read_at)
  *
- * EFFETTI COLLATERALI:
- *   - Nessuno (modello semplice senza boot/observer)
+ * DATI IN INGRESSO:
+ *   - name, surname, email, telephone_number, address, message, read_at
+ *   Esempio: ContactMessage::create(['name' => 'Mario', 'email' => 'mario@test.it', 'message' => 'Info'])
+ *
+ * DATI IN USCITA:
+ *   - Record nella tabella contact_messages
+ *   - read_at=null indica messaggio non letto
+ *
+ * VINCOLI:
+ *   - read_at gestisce lo stato letto/non letto: null = non letto, datetime = letto
+ *   - Non ha relazione con User (i messaggi possono arrivare da utenti non registrati)
  *
  * ERRORI TIPICI:
- *   - read_at=null significa messaggio non letto (usato per conteggio notifiche admin)
+ *   - Usare where('read_at', false) invece di whereNull('read_at') per conteggio non letti
  *
- * DOCUMENTI CORRELATI:
- *   - ContactController.php — controller CRUD messaggi
- *   - AdminController.php — dashboard con conteggio non letti
+ * PUNTI DI MODIFICA SICURI:
+ *   - Per aggiungere campi (es. subject): aggiungere in $fillable e nella migrazione
+ *
+ * COLLEGAMENTI:
+ *   - app/Http/Controllers/ContactController.php — controller CRUD messaggi
+ *   - app/Http/Controllers/AdminController.php — dashboard con conteggio non letti
  */
 
 namespace App\Models;

@@ -1,10 +1,23 @@
 <!--
   FILE: pages/riepilogo.vue
   SCOPO: Riepilogo spedizione — revisione dati, modifica inline, invio a carrello/checkout/salvati.
+
   API: POST /api/cart o /api/guest-cart (aggiungi al carrello),
-       POST /api/saved-shipments (salva configurazione), POST /api/stripe/create-order (ordine diretto).
-  STORE: userStore.pendingShipment (dati spedizione da confermare).
+       PUT /api/cart/{id} (aggiorna pacco esistente), GET /api/cart/{id} (carica pacco per modifica),
+       POST /api/saved-shipments (salva configurazione), POST /api/create-direct-order (ordine diretto).
+  STORE: userStore.pendingShipment (dati spedizione da confermare), userStore.editingCartItemId.
+  COMPONENTI: Steps (indicatore progresso).
   ROUTE: /riepilogo (pubblica, ma i dati arrivano dallo store Pinia).
+
+  DATI IN INGRESSO: ?edit={id} (query param per modalita' modifica pacco dal carrello).
+  DATI IN USCITA: navigazione a /carrello?updated=ts, /checkout, /account/spedizioni-configurate.
+
+  VINCOLI: single_price arriva in centesimi dal DB, viene convertito in euro per la visualizzazione.
+           In modalita' edit, se i dati non sono nello store, vengono caricati via API.
+  ERRORI TIPICI: non pulire pendingShipment dopo il salvataggio (dati stantii al prossimo accesso).
+  PUNTI DI MODIFICA SICURI: layout sezioni, servizi disponibili, stili card.
+  COLLEGAMENTI: stores/userStore.js, composables/useCart.js, composables/useSession.js,
+                pages/carrello.vue, pages/checkout.vue.
 -->
 <script setup>
 // Meta tag SEO

@@ -3,33 +3,42 @@
  * FILE: OrderController.php
  * SCOPO: Gestisce il ciclo di vita degli ordini di spedizione (CRUD, creazione diretta, annullamento).
  *
- * COSA ENTRA:
- *   - PackageStoreRequest per createDirectOrder (es. {packages: [...], origin_address: {...}})
- *   - Request con order_id per cancel e addPackage
- *   - Parametro Order tramite route model binding per show/cancel/addPackage
+ * DOVE SI USA: Pagina spedizioni utente, pagina riepilogo, checkout, pannello admin
  *
- * COSA ESCE:
- *   - OrderResource collection (index) o singolo (show)
- *   - JSON con order_id e order_number per createDirectOrder (es. {order_id: 42, order_number: "SF-000042"})
- *   - JSON con success/error per cancel e addPackage
+ * DATI IN INGRESSO:
+ *   - index(): nessuno (filtra per utente autenticato o mostra tutti se admin)
+ *   - show(): Order via route model binding
+ *   - createDirectOrder(): PackageStoreRequest {packages: [...], origin_address, destination_address, services}
+ *   - cancel(): Order + {reason?}
+ *   - addPackage(): Order + {package_type, quantity, weight, first_size, second_size, third_size}
  *
- * CHIAMATO DA:
- *   - routes/api.php — GET /api/orders, GET /api/orders/{order}, POST /api/orders/direct
- *   - routes/api.php — POST /api/orders/{order}/cancel, POST /api/orders/{order}/add-package
- *   - nuxt: pages/checkout.vue, pages/riepilogo.vue, pages/account/spedizioni/
+ * DATI IN USCITA:
+ *   - index(): OrderResource[] con packages, indirizzi, servizi, transazioni
+ *   - show(): OrderResource singolo
+ *   - createDirectOrder(): {order_id: 42, order_number: "SF-000042"}
+ *   - cancel(): delega a RefundController.requestCancellation()
+ *   - addPackage(): {success, message, order: OrderResource}
  *
- * EFFETTI COLLATERALI:
- *   - Database: crea/modifica/elimina record in orders, packages, package_addresses, services, package_order
- *   - Pulizia automatica: rimuove ordini vuoti (senza pacchi validi) prima di mostrare la lista
- *   - Prezzi ricalcolati lato server in createDirectOrder (non si fidano del frontend)
+ * VINCOLI:
+ *   - I prezzi nel DB sono in CENTESIMI. createDirectOrder() converte: round(euro * 100)
+ *   - createDirectOrder() RICALCOLA i prezzi lato server (non si fida del frontend)
+ *   - La pulizia ordini vuoti avviene SOLO per ordini pending/payment_failed
+ *   - La tabella pivot package_order collega ordini a pacchi (relazione many-to-many)
  *
  * ERRORI TIPICI:
  *   - 403: utente non autorizzato (non proprietario dell'ordine)
  *   - 422: ordine non annullabile (stato non pending/payment_failed)
  *
- * DOCUMENTI CORRELATI:
+ * PUNTI DI MODIFICA SICURI:
+ *   - Per cambiare le fasce prezzo di createDirectOrder(): modificare i blocchi if/elseif
+ *   - Per aggiungere uno stato ordine: aggiungere la costante in Order.php e gestire qui
+ *   - Per cambiare la logica di annullamento: modificare RefundController (cancel() delega a quello)
+ *
+ * COLLEGAMENTI:
  *   - StripeController.php — creazione ordini dal carrello e gestione pagamenti
+ *   - RefundController.php — logica completa di annullamento e rimborso
  *   - BrtController.php — generazione etichette BRT per ordini pagati
+ *   - pages/account/spedizioni/ — interfaccia frontend lista ordini
  */
 
 namespace App\Http\Controllers;
@@ -47,6 +56,7 @@ use Illuminate\Support\Facades\DB;
 
 class OrderController extends Controller
 {
+    use Traits\NormalizesServiceData;
     // Mostra la lista degli ordini
     // Se l'utente e' un amministratore, vede gli ordini di TUTTI gli utenti
     // Se e' un utente normale, vede solo i PROPRI ordini
@@ -105,9 +115,16 @@ class OrderController extends Controller
     }
 
     /**
-     * Crea un ordine direttamente dalla pagina di riepilogo (senza passare dal carrello).
-     * Questo metodo salva tutto in un'unica operazione: indirizzi, servizi, pacchi e ordine.
-     * I prezzi vengono RICALCOLATI lato server per evitare manipolazioni dal frontend.
+     * createDirectOrder — Crea un ordine direttamente dalla pagina di riepilogo (senza carrello).
+     *
+     * PERCHE': Permette di creare un ordine in un solo passaggio, saltando il carrello.
+     *   I prezzi vengono RICALCOLATI lato server per evitare manipolazioni dal frontend.
+     * COME LEGGERLO: 1) Crea indirizzi  2) Crea servizi  3) Per ogni pacco: ricalcola prezzo
+     *   (peso, volume, MAX dei due)  4) Controlla contrassegno e PUDO  5) Crea ordine + pivot
+     * COME MODIFICARLO: Per aggiungere un servizio, inserirlo nel blocco $servicesData.
+     *   Per cambiare le fasce prezzo, modificare i blocchi if/elseif per peso e volume.
+     * COSA EVITARE: Non rimuovere il ricalcolo prezzi lato server — e' una misura di sicurezza.
+     *   Non fidarsi MAI dei prezzi inviati dal frontend in questo metodo.
      */
     public function createDirectOrder(PackageStoreRequest $request) {
         $data = $request->validated();
@@ -119,15 +136,7 @@ class OrderController extends Controller
             $destination = PackageAddress::create($data['destination_address']);
 
             // Creiamo i servizi aggiuntivi
-            $servicesData = $data['services'];
-            $servicesData['service_type'] = !empty($servicesData['service_type']) ? $servicesData['service_type'] : 'Nessuno';
-            $servicesData['date'] = $servicesData['date'] ?? '';
-            $servicesData['time'] = $servicesData['time'] ?? '';
-            // Salviamo i dati extra dei servizi (es. importo contrassegno) nel campo JSON
-            if (isset($servicesData['serviceData'])) {
-                $servicesData['service_data'] = $servicesData['serviceData'];
-                unset($servicesData['serviceData']);
-            }
+            $servicesData = $this->normalizeServiceData($data['services']);
             $service = Service::create($servicesData);
 
             $subtotalCents = 0;
@@ -144,18 +153,10 @@ class OrderController extends Controller
                 $s2 = (float) preg_replace('/[^0-9.]/', '', $packageData['second_size']);
                 $s3 = (float) preg_replace('/[^0-9.]/', '', $packageData['third_size']);
 
-                // Fasce di prezzo per peso: sotto 2kg = 9 euro, 2-5kg = 12 euro, ecc.
-                if ($weight > 0 && $weight < 2) $weightPrice = 9;
-                elseif ($weight >= 2 && $weight < 5) $weightPrice = 12;
-                elseif ($weight >= 5 && $weight < 10) $weightPrice = 18;
-                else $weightPrice = 20;
-
-                // Calcoliamo il volume in metri cubi e applichiamo le fasce di prezzo per volume
+                // Prezzi calcolati dalle fasce DB (con fallback hardcoded)
+                $weightPrice = SessionController::findBandPrice('weight', $weight);
                 $vol = ($s1 / 100) * ($s2 / 100) * ($s3 / 100);
-                if ($vol > 0 && $vol < 0.008) $volumePrice = 9;
-                elseif ($vol >= 0.008 && $vol < 0.02) $volumePrice = 12;
-                elseif ($vol >= 0.02 && $vol < 0.04) $volumePrice = 18;
-                else $volumePrice = 20;
+                $volumePrice = SessionController::findBandPrice('volume', $vol);
 
                 // Il prezzo e' il MAGGIORE tra prezzo per peso e prezzo per volume
                 $basePrice = max($weightPrice, $volumePrice);
@@ -216,13 +217,7 @@ class OrderController extends Controller
 
             // Colleghiamo i pacchi all'ordine tramite la tabella di relazione
             foreach ($packages as $package) {
-                DB::table('package_order')->insert([
-                    'order_id' => $order->id,
-                    'package_id' => $package->id,
-                    'quantity' => $package->quantity ?? 1,
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ]);
+                Order::attachPackage($order->id, $package->id, $package->quantity ?? 1);
             }
 
             return $order;
@@ -247,8 +242,14 @@ class OrderController extends Controller
     }
 
     /**
-     * Aggiunge un collo a un ordine in attesa di pagamento.
-     * Ricalcola il prezzo del nuovo collo e aggiorna il subtotale dell'ordine.
+     * addPackage — Aggiunge un collo a un ordine in attesa di pagamento.
+     *
+     * PERCHE': L'utente puo' aggiungere pacchi a un ordine non ancora pagato.
+     *   Il prezzo viene ricalcolato lato server e il subtotale dell'ordine aggiornato.
+     * COME LEGGERLO: 1) Verifica proprieta' e stato  2) Valida dati  3) Calcola prezzo (peso, volume)
+     *   4) Riusa indirizzi e servizi dal primo pacco  5) Crea pacco + pivot  6) Ricalcola subtotale
+     * COME MODIFICARLO: Per aggiungere campi al collo, aggiungerli in validate() e in Package::create().
+     * COSA EVITARE: Non permettere aggiunte a ordini gia' pagati (il controllo status e' essenziale).
      */
     public function addPackage(Request $request, Order $order) {
         if ($order->user_id !== auth()->id()) {
@@ -275,16 +276,10 @@ class OrderController extends Controller
             $s2 = (float) $request->second_size;
             $s3 = (float) $request->third_size;
 
-            if ($weight > 0 && $weight < 2) $weightPrice = 9;
-            elseif ($weight >= 2 && $weight < 5) $weightPrice = 12;
-            elseif ($weight >= 5 && $weight < 10) $weightPrice = 18;
-            else $weightPrice = 20;
-
+            // Prezzi calcolati dalle fasce DB (con fallback hardcoded)
+            $weightPrice = SessionController::findBandPrice('weight', $weight);
             $vol = ($s1 / 100) * ($s2 / 100) * ($s3 / 100);
-            if ($vol > 0 && $vol < 0.008) $volumePrice = 9;
-            elseif ($vol >= 0.008 && $vol < 0.02) $volumePrice = 12;
-            elseif ($vol >= 0.02 && $vol < 0.04) $volumePrice = 18;
-            else $volumePrice = 20;
+            $volumePrice = SessionController::findBandPrice('volume', $vol);
 
             $basePrice = max($weightPrice, $volumePrice);
             $quantity = (int) $request->quantity;
@@ -314,13 +309,7 @@ class OrderController extends Controller
                 'user_id' => auth()->id(),
             ]);
 
-            DB::table('package_order')->insert([
-                'order_id' => $order->id,
-                'package_id' => $package->id,
-                'quantity' => $quantity,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
+            Order::attachPackage($order->id, $package->id, $quantity);
 
             // Recalculate subtotal
             $newSubtotal = DB::table('package_order')
@@ -351,15 +340,6 @@ class OrderController extends Controller
         $this->deleteEmptyOrders(
             Order::where('user_id', $user->id)
                 ->whereIn('status', [Order::PENDING, Order::PAYMENT_FAILED])
-        );
-    }
-
-    /**
-     * Pulizia interna per l'admin: rimuove gli ordini vuoti di TUTTI gli utenti.
-     */
-    private function cleanupAllEmptyOrders() {
-        $this->deleteEmptyOrders(
-            Order::whereIn('status', [Order::PENDING, Order::PAYMENT_FAILED])
         );
     }
 

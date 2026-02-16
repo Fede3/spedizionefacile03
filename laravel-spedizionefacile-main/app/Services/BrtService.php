@@ -3,36 +3,47 @@
  * FILE: BrtService.php
  * SCOPO: Comunicazione con le API BRT per spedizioni, etichette, tracking e punti PUDO.
  *
- * COSA ENTRA:
- *   - Order (con pacchi e indirizzi) per createShipment
- *   - Options array: is_cod, cod_amount, pudo_id per opzioni spedizione
- *   - parcelId per confirmShipment, deleteShipment, getLabel
- *   - Coordinate lat/lng o CAP per searchPudo
- *
- * COSA ESCE:
- *   - Array con success, parcel_id, tracking_url, label_base64, tracking_number, raw_response
- *   - Array con punti PUDO (id, nome, indirizzo, coordinate)
- *   - URL di tracking BRT
- *
- * CHIAMATO DA:
+ * DOVE SI USA:
  *   - BrtController.php — endpoint HTTP per operazioni BRT
  *   - GenerateBrtLabel.php — listener che genera etichetta automaticamente dopo pagamento
  *   - AdminController.php — regenerateLabel per rigenerazione manuale admin
  *
- * EFFETTI COLLATERALI:
- *   - Rete: chiamate HTTP alle API BRT (shipments, PUDO, tracking)
- *   - Log: registra richieste/risposte BRT per debug
- *   - Normalizzazione indirizzi: citta' uppercase, CAP 5 cifre, provincia 2 lettere
+ * DATI IN INGRESSO:
+ *   - Order (con pacchi e indirizzi) per createShipment
+ *     Esempio: $brt->createShipment($order, ['is_cod' => true, 'cod_amount' => 1500])
+ *   - Options array: is_cod, cod_amount, pudo_id per opzioni spedizione
+ *   - numericSenderReference (int) per confirmShipment, deleteShipment
+ *   - Indirizzo o coordinate lat/lng per ricerca PUDO
+ *
+ * DATI IN USCITA:
+ *   - Array con success, parcel_id, tracking_url, label_base64, tracking_number, raw_response
+ *     Esempio: ['success' => true, 'parcel_id' => '12345', 'label_base64' => 'JVBERi0...']
+ *   - Array con punti PUDO (id, nome, indirizzo, coordinate)
+ *   - URL di tracking BRT (stringa)
+ *
+ * VINCOLI:
+ *   - Le credenziali BRT (client_id, password) devono essere configurate in config/services.php
+ *   - Gli indirizzi devono avere citta', CAP e provincia validi per il routing BRT
+ *   - Il CAP deve corrispondere alla citta', altrimenti BRT restituisce errore -63
+ *   - Le note BRT sono limitate a 50 caratteri
  *
  * ERRORI TIPICI:
  *   - BRT non configurato: client_id/password vuoti (restituisce success=false)
  *   - Errori API BRT: formato indirizzo non valido, dimensioni fuori range
  *   - SSL: in dev puo' servire verify_ssl=false (config services.brt.verify_ssl)
+ *   - Errore -63: citta' non corrisponde al CAP (routing BRT fallito)
  *
- * DOCUMENTI CORRELATI:
+ * PUNTI DI MODIFICA SICURI:
+ *   - Per aggiungere un nuovo servizio BRT: modificare $serviceMapping in addServicesToPayload()
+ *   - Per cambiare il formato dell'etichetta: modificare labelParameters in createShipment()
+ *   - Per aggiungere un nuovo paese: aggiungere una riga in countryToIso2()
+ *   - Per cambiare il raggio di ricerca PUDO: modificare maxDistanceSearch in getPudoByAddress()
+ *
+ * COLLEGAMENTI:
  *   - config/services.php — brt.api_url, brt.client_id, brt.password, brt.pudo_token
- *   - BrtController.php — controller HTTP che delega a questo servizio
+ *   - app/Http/Controllers/BrtController.php — controller HTTP che delega a questo servizio
  *   - app/Listeners/GenerateBrtLabel.php — generazione automatica post-pagamento
+ *   - app/Models/Location.php — tabella localita' usata per normalizzazione indirizzi
  */
 
 namespace App\Services;
@@ -63,12 +74,27 @@ class BrtService
     }
 
     /**
-     * Crea una spedizione BRT e genera l'etichetta.
+     * createShipment — Crea una spedizione BRT e genera l'etichetta PDF.
      *
-     * Questa e' la funzione principale: prende un ordine con i suoi pacchi e indirizzi,
-     * prepara i dati nel formato richiesto da BRT, e invia la richiesta.
-     * Se tutto va bene, riceve indietro l'etichetta in formato PDF (codificata in base64)
-     * e l'ID del pacco per il tracking.
+     * PERCHE': E' il metodo principale del servizio. Prende un ordine con pacchi e indirizzi,
+     *   prepara il payload nel formato richiesto da BRT, e invia la richiesta HTTP.
+     *
+     * COME LEGGERLO:
+     *   1. Caricamento dati (loadMissing) e validazione campi obbligatori
+     *   2. Normalizzazione indirizzo (citta' maiuscolo, CAP 5 cifre, provincia 2 lettere)
+     *   3. Costruzione payload JSON per API BRT
+     *   4. Invio richiesta HTTP e parsing risposta
+     *   5. Estrazione etichetta PDF e dati tracking dalla risposta
+     *
+     * COME MODIFICARLO:
+     *   - Per aggiungere campi al payload: modificare l'array $payload['createData']
+     *   - Per cambiare la logica contrassegno: modificare il blocco if is_cod
+     *   - Per cambiare il formato etichetta: modificare labelParameters
+     *
+     * COSA EVITARE:
+     *   - Non rimuovere la normalizzazione indirizzi (causa errore -63 routing BRT)
+     *   - Non loggare la password BRT (gia' mascherata nel log)
+     *   - Non aumentare il timeout oltre 30s (BRT risponde tipicamente in 5-15s)
      *
      * @param Order $order  L'ordine (con pacchi e indirizzi caricati)
      * @param array $options  Opzioni aggiuntive: contrassegno (is_cod, cod_amount), punto PUDO, note
@@ -673,18 +699,25 @@ class BrtService
     }
 
     /**
-     * Aggiunge i servizi/accessori selezionati dall'utente al payload BRT.
+     * addServicesToPayload — Mappa i servizi dell'app ai parametri API BRT.
      *
-     * I servizi dell'applicazione (dalla tabella "services") vengono mappati
-     * ai parametri corrispondenti dell'API BRT. Ogni servizio ha un codice
-     * specifico nel sistema BRT.
+     * PERCHE': I servizi dell'applicazione (dalla tabella "services") hanno nomi diversi
+     *   dai parametri dell'API BRT. Questa funzione traduce i nomi (es. "consegna al piano"
+     *   diventa il campo BRT 'particularitiesDeliveryManagement' con valore 'CP').
      *
-     * Servizi supportati:
-     * - Contrassegno (COD) -> isCODMandatory + cashOnDelivery (gestito separatamente)
-     * - Consegna al piano -> consegnaalpianoFlag / serviceType specifico
-     * - Ritiro al piano -> ritiroalpianoFlag
-     * - Avviso di consegna / Alert -> isAlertRequired (gia' attivo di default)
-     * - Assicurazione -> insuranceAmount
+     * COME LEGGERLO:
+     *   1. Definizione mappa servizio app → parametro BRT ($serviceMapping)
+     *   2. Ciclo sui pacchi dell'ordine per raccogliere i servizi richiesti
+     *   3. Aggiunta opzioni extra (assicurazione, appuntamento) dalle $options
+     *   4. Log dei servizi applicati per debug
+     *
+     * COME MODIFICARLO:
+     *   - Per aggiungere un nuovo servizio: aggiungere una riga in $serviceMapping
+     *   - Per cambiare il codice BRT di un servizio: modificare il 'value' nella mappa
+     *
+     * COSA EVITARE:
+     *   - Non sovrascrivere campi gia' impostati (controllato con isset)
+     *   - Non rimuovere il log dei servizi non mappati (utile per trovare servizi mancanti)
      *
      * @param array &$payload  Il payload da inviare a BRT (modificato per riferimento)
      * @param Order $order     L'ordine con i pacchi e servizi caricati
@@ -768,16 +801,25 @@ class BrtService
     }
 
     /**
-     * Normalizza i dati dell'indirizzo per renderli compatibili con il sistema di routing BRT.
+     * normalizeAddressForBrt — Normalizza indirizzo per il sistema di routing BRT.
      *
-     * BRT richiede:
-     * - Citta' in MAIUSCOLO (es. "MILANO", non "Milano")
-     * - CAP a esattamente 5 cifre, con zeri iniziali (es. "01234", non "1234")
-     * - Provincia come sigla a 2 lettere maiuscole (es. "MI", non "Milano")
-     * - Abbreviazioni espanse (es. "S." -> "SAN", "S.S." -> "SANTISSIMO")
+     * PERCHE': BRT rifiuta indirizzi non normalizzati con errore -63 (routing fallito).
+     *   Senza questa funzione, "S. Giovanni Lupatoto" fallirebbe perche' BRT vuole
+     *   "SAN GIOVANNI LUPATOTO". Stessa cosa per CAP senza zero iniziale o provincia estesa.
      *
-     * Inoltre, se il CAP e' noto nella tabella locations, verifica che la citta'
-     * corrisponda a quella registrata nel database (che corrisponde al routing BRT).
+     * COME LEGGERLO:
+     *   1. Normalizza CAP: solo cifre, zero-padded a 5 caratteri
+     *   2. Normalizza provincia: converte nome completo in sigla 2 lettere
+     *   3. Normalizza citta': maiuscolo + espansione abbreviazioni (S. → SAN)
+     *   4. Verifica con database locations: se il CAP e' noto, usa il nome citta' dal DB
+     *
+     * COME MODIFICARLO:
+     *   - Per aggiungere abbreviazioni: modificare $abbreviations in normalizeCityName()
+     *   - Per cambiare la strategia di matching: modificare resolveCityFromLocations()
+     *
+     * COSA EVITARE:
+     *   - Non rimuovere lo step 4 (risoluzione da DB): risolve molti casi ambigui
+     *   - Non rendere lo step 4 obbligatorio: se la tabella locations non esiste, deve continuare
      *
      * @param object $address  L'oggetto indirizzo (PackageAddress) con city, postal_code, province
      * @return array  Array con chiavi: city, postal_code, province (normalizzati per BRT)
@@ -855,14 +897,26 @@ class BrtService
     }
 
     /**
-     * Cerca nel database locations la citta' corrispondente a un dato CAP.
-     * Se trova una corrispondenza, restituisce il nome citta' dal database (che e' quello
-     * usato dal sistema postale italiano e quindi riconosciuto da BRT).
+     * resolveCityFromLocations — Risolve il nome citta' corretto dal database locations.
      *
-     * Strategia di ricerca:
-     * 1. Cerca per CAP esatto + nome citta' esatto (conferma che i dati sono corretti)
-     * 2. Cerca per CAP esatto + nome citta' che contiene il testo inserito
-     * 3. Se non trova nulla, restituisce la citta' cosi' com'e' (in maiuscolo)
+     * PERCHE': L'utente potrebbe scrivere "S. Giovanni" ma BRT vuole "SAN GIOVANNI LUPATOTO".
+     *   Il database locations contiene i nomi ufficiali del sistema postale italiano,
+     *   che corrispondono a quelli usati dal routing BRT.
+     *
+     * COME LEGGERLO:
+     *   1. Match esatto: CAP + nome citta' (conferma dati corretti)
+     *   2. Un solo risultato per CAP: usa quello (caso piu' comune)
+     *   3. Match parziale: una citta' contiene l'altra (es. "REGGIO" in "REGGIO EMILIA")
+     *   4. Match per provincia: se ci sono piu' citta' con lo stesso CAP, preferisce quella con provincia giusta
+     *   5. Nessun match: restituisce la citta' originale (fallback sicuro)
+     *
+     * COME MODIFICARLO:
+     *   - Per aggiungere un criterio di matching: aggiungere un blocco prima del return finale
+     *   - La strategia e' in ordine di priorita', i primi match vincono
+     *
+     * COSA EVITARE:
+     *   - Non lanciare eccezioni: se il DB non funziona, restituire la citta' originale
+     *   - Non cambiare l'ordine degli step senza testare (il match esatto deve restare primo)
      */
     private function resolveCityFromLocations(string $normalizedCity, string $postalCode, string $province): string
     {

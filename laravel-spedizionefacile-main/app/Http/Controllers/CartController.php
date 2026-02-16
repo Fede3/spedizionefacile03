@@ -3,32 +3,42 @@
  * FILE: CartController.php
  * SCOPO: Gestisce il carrello spedizioni per utenti autenticati, salvando i pacchi nel database.
  *
- * COSA ENTRA:
- *   - PackageStoreRequest con pacchi, indirizzi e servizi (es. {packages: [...], origin_address: {...}})
- *   - Request con quantity per aggiornamento quantita' (es. {quantity: 3})
- *   - ID pacco nella URL per show/update/destroy
+ * DOVE SI USA: Pagina carrello, pagina riepilogo, composable useCart.js
  *
- * COSA ESCE:
- *   - PackageResource collection con meta (empty, subtotal, total)
- *   - JSON con messaggio di conferma per operazioni di modifica/eliminazione
+ * DATI IN INGRESSO:
+ *   - store(): PackageStoreRequest {packages: [{package_type, quantity, weight, first_size, ...}],
+ *     origin_address: {name, address, city, postal_code, ...}, destination_address: {...}, services: {...}}
+ *   - update(): Request con {origin_address?, destination_address?, packages?, services?}
+ *   - updateQuantity(): {quantity: 3}
+ *   - show/destroy: ID pacco nella URL
  *
- * CHIAMATO DA:
- *   - routes/api.php — GET /api/cart, POST /api/cart, PUT /api/cart/{id}
- *   - routes/api.php — PATCH /api/cart/{id}/quantity, DELETE /api/cart/{id}
- *   - routes/api.php — POST /api/empty-cart
- *   - nuxt: pages/carrello.vue, pages/riepilogo.vue, composables/useCart.js
+ * DATI IN USCITA:
+ *   - index/store: PackageResource[] con meta {empty, subtotal: "9,00 EUR", total, address_groups}
+ *   - show: PackageResource singolo
+ *   - updateQuantity: {message, quantity, single_price}
+ *   - destroy: {message: "Spedizione rimossa dal carrello"}
  *
- * EFFETTI COLLATERALI:
- *   - Database: crea/modifica/elimina record in packages, package_addresses, services, cart_user
- *   - Pulizia automatica: rimuove pacchi senza dati validi (package_type vuoto, dimensioni mancanti)
+ * VINCOLI:
+ *   - I prezzi nel DB sono in CENTESIMI (900 = 9,00 EUR). Il frontend invia in euro.
+ *   - La conversione euro->centesimi avviene in store() e update(): round(euro * 100)
+ *   - single_price = prezzo_unitario * quantita' (NON il prezzo di un singolo pacco)
+ *   - L'auto-merge in index() unisce pacchi identici: stesse dimensioni + stessi indirizzi + stesso servizio
+ *   - La tabella pivot cart_user collega user_id a package_id (relazione many-to-many)
  *
  * ERRORI TIPICI:
  *   - 404: pacco non trovato nel carrello dell'utente
  *   - 422: dati di validazione non corretti (PackageStoreRequest)
  *
- * DOCUMENTI CORRELATI:
+ * PUNTI DI MODIFICA SICURI:
+ *   - Per cambiare i campi di confronto del merge: modificare la chiave in autoMergePackages()
+ *   - Per cambiare i campi del raggruppamento indirizzi: modificare buildAddressGroups()
+ *   - Per aggiungere un campo al pacco: aggiungere in store(), update() e PackageStoreRequest
+ *
+ * COLLEGAMENTI:
  *   - GuestCartController.php — stessa logica ma per utenti non autenticati (sessione)
  *   - SavedShipmentController.php — spedizioni salvate come template riutilizzabili
+ *   - StripeController.php — createOrder() legge i pacchi dal carrello per creare ordini
+ *   - pages/carrello.vue — interfaccia frontend del carrello
  */
 
 namespace App\Http\Controllers;
@@ -43,8 +53,18 @@ use App\Http\Requests\PackageStoreRequest;
 use Illuminate\Http\Request;
 class CartController extends Controller
 {
-    // Mostra il contenuto del carrello dell'utente
-    // Include i pacchi con tutti i dettagli (indirizzi e servizi) e le informazioni sul totale
+    use Traits\NormalizesServiceData;
+    /**
+     * index — Mostra il contenuto del carrello con auto-merge e pulizia automatica.
+     *
+     * PERCHE': Ogni volta che il carrello viene caricato, unisce automaticamente i pacchi
+     *   identici e rimuove quelli senza dati validi, per mantenere il carrello pulito.
+     * COME LEGGERLO: 1) Carica pacchi dal DB  2) Auto-merge pacchi identici  3) Ricarica
+     *   4) Pulizia pacchi non validi  5) Restituisce con meta (subtotale, gruppi indirizzi)
+     * COME MODIFICARLO: Per cambiare i criteri di merge, modificare autoMergePackages().
+     *   Per cambiare i criteri di pulizia, modificare il filtro $invalidPackages.
+     * COSA EVITARE: Non rimuovere il ricaricamento dopo il merge — i dati in memoria sarebbero obsoleti.
+     */
     public function index(Request $request) {
 
         $user = auth()->user();
@@ -124,6 +144,30 @@ class CartController extends Controller
     }
 
     /**
+     * Costruisce una chiave univoca per un pacco, usata per identificare pacchi identici.
+     * Due pacchi con la stessa chiave possono essere uniti (merge).
+     */
+    private function buildMergeKey($pkg): string
+    {
+        $normalize = fn($v) => mb_strtolower(trim($v ?? ''), 'UTF-8');
+
+        $o = $pkg->originAddress;
+        $d = $pkg->destinationAddress;
+        $s = $pkg->service;
+
+        return implode('|', [
+            $normalize($pkg->package_type),
+            (string) $pkg->weight,
+            (string) $pkg->first_size,
+            (string) $pkg->second_size,
+            (string) $pkg->third_size,
+            $o ? $normalize($o->name) . '|' . $normalize($o->address) . '|' . $normalize($o->city) . '|' . $normalize($o->postal_code) : 'no-origin',
+            $d ? $normalize($d->name) . '|' . $normalize($d->address) . '|' . $normalize($d->city) . '|' . $normalize($d->postal_code) : 'no-dest',
+            $s ? $normalize($s->service_type) : 'nessuno',
+        ]);
+    }
+
+    /**
      * Unisce automaticamente i pacchi identici nel carrello.
      * Due pacchi sono "identici" se hanno stessi: tipo, peso, dimensioni, indirizzi e servizio.
      */
@@ -131,25 +175,9 @@ class CartController extends Controller
     {
         if ($packages->count() < 2) return;
 
-        $normalize = fn($v) => mb_strtolower(trim($v ?? ''), 'UTF-8');
-
         $groups = [];
         foreach ($packages as $pkg) {
-            $o = $pkg->originAddress;
-            $d = $pkg->destinationAddress;
-            $s = $pkg->service;
-
-            $key = implode('|', [
-                $normalize($pkg->package_type),
-                (string) $pkg->weight,
-                (string) $pkg->first_size,
-                (string) $pkg->second_size,
-                (string) $pkg->third_size,
-                $o ? $normalize($o->name) . '|' . $normalize($o->address) . '|' . $normalize($o->city) . '|' . $normalize($o->postal_code) : 'no-origin',
-                $d ? $normalize($d->name) . '|' . $normalize($d->address) . '|' . $normalize($d->city) . '|' . $normalize($d->postal_code) : 'no-dest',
-                $s ? $normalize($s->service_type) : 'nessuno',
-            ]);
-
+            $key = $this->buildMergeKey($pkg);
             $groups[$key][] = $pkg;
         }
 
@@ -268,7 +296,15 @@ class CartController extends Controller
         return new PackageResource($package);
     }
 
-    // Aggiorna un pacco esistente nel carrello (modifica da carrello)
+    /**
+     * update — Aggiorna un pacco esistente nel carrello (modifica da pagina riepilogo).
+     *
+     * PERCHE': L'utente puo' modificare indirizzi, servizi e dimensioni di un pacco gia' nel carrello.
+     * COME LEGGERLO: 1) Verifica appartenenza  2) Aggiorna indirizzo partenza  3) Aggiorna indirizzo
+     *   destinazione  4) Aggiorna servizi (incluso PUDO)  5) Aggiorna dati pacco
+     * COME MODIFICARLO: Per aggiungere un campo al pacco, aggiungerlo nel blocco packages[0].
+     * COSA EVITARE: Non rimuovere la conversione euro->centesimi di single_price (round * 100).
+     */
     public function update(Request $request, $id) {
         $userId = auth()->id();
 
@@ -298,14 +334,7 @@ class CartController extends Controller
 
             // Aggiorniamo i servizi
             if (isset($data['services']) && $package->service) {
-                $servicesData = $data['services'];
-                $servicesData['service_type'] = !empty($servicesData['service_type']) ? $servicesData['service_type'] : 'Nessuno';
-                $servicesData['date'] = $servicesData['date'] ?? '';
-                $servicesData['time'] = $servicesData['time'] ?? '';
-                if (isset($servicesData['serviceData'])) {
-                    $servicesData['service_data'] = $servicesData['serviceData'];
-                    unset($servicesData['serviceData']);
-                }
+                $servicesData = $this->normalizeServiceData($data['services']);
                 // PUDO: aggiorniamo i dati del punto di ritiro nel service_data
                 if (!empty($data['pudo']) && ($data['delivery_mode'] ?? 'home') === 'pudo') {
                     $serviceData = $servicesData['service_data'] ?? $package->service->service_data ?? [];
@@ -346,8 +375,19 @@ class CartController extends Controller
         });
     }
 
-    // Aggiunge uno o piu' pacchi al carrello dell'utente
-    // Se un pacco identico esiste gia' (stesse dimensioni, stessi indirizzi), aumenta la quantita'
+    /**
+     * store — Aggiunge uno o piu' pacchi al carrello, con deduplicazione automatica.
+     *
+     * PERCHE': Quando l'utente aggiunge pacchi dal preventivo, se un pacco identico esiste gia'
+     *   nel carrello (stesse dimensioni, stessi indirizzi, stesso servizio), aumenta la quantita'
+     *   invece di creare un duplicato.
+     * COME LEGGERLO: 1) Carica pacchi esistenti  2) Per ogni nuovo pacco: cerca duplicato
+     *   3) Se duplicato: somma quantita'  4) Se nuovo: crea indirizzi + servizi + pacco
+     *   5) Collega alla tabella cart_user
+     * COME MODIFICARLO: Per cambiare i criteri di deduplicazione, modificare il confronto nel
+     *   blocco $duplicate. Per aggiungere campi, aggiungerli sia nel confronto che nel create().
+     * COSA EVITARE: Non rimuovere la transazione DB — senza, si rischia di creare indirizzi orfani.
+     */
     public function store(PackageStoreRequest $request) {
 
         $data = $request->validated();
@@ -365,15 +405,7 @@ class CartController extends Controller
         // Creiamo i pacchi in una transazione (tutto o niente)
         $outPackages = DB::transaction(function() use ($data, $authId, $existingPackages) {
             // Prepariamo i dati dei servizi aggiuntivi
-            $servicesData = $data['services'];
-            $servicesData['service_type'] = !empty($servicesData['service_type']) ? $servicesData['service_type'] : 'Nessuno';
-            $servicesData['date'] = $servicesData['date'] ?? '';
-            $servicesData['time'] = $servicesData['time'] ?? '';
-            // Salviamo i dati extra dei servizi (es. importo contrassegno) nel campo JSON
-            if (isset($servicesData['serviceData'])) {
-                $servicesData['service_data'] = $servicesData['serviceData'];
-                unset($servicesData['serviceData']);
-            }
+            $servicesData = $this->normalizeServiceData($data['services']);
 
             // PUDO: se l'utente ha scelto ritiro in un punto BRT, salviamo i dati nel service_data
             // Quando l'ordine verra' creato, leggeremo pudo_id da qui per salvarlo su brt_pudo_id
@@ -554,27 +586,12 @@ class CartController extends Controller
             return response()->json(['message' => 'Nulla da unire.', 'merged' => 0]);
         }
 
-        $normalize = fn($v) => mb_strtolower(trim($v ?? ''), 'UTF-8');
         $merged = 0;
 
         // Raggruppa per: tipo, peso, dimensioni, indirizzi, servizio
         $groups = [];
         foreach ($packages as $pkg) {
-            $o = $pkg->originAddress;
-            $d = $pkg->destinationAddress;
-            $s = $pkg->service;
-
-            $key = implode('|', [
-                $normalize($pkg->package_type),
-                (string) $pkg->weight,
-                (string) $pkg->first_size,
-                (string) $pkg->second_size,
-                (string) $pkg->third_size,
-                $o ? $normalize($o->name) . $normalize($o->address) . $normalize($o->city) . $normalize($o->postal_code) : '',
-                $d ? $normalize($d->name) . $normalize($d->address) . $normalize($d->city) . $normalize($d->postal_code) : '',
-                $s ? $normalize($s->service_type) : '',
-            ]);
-
+            $key = $this->buildMergeKey($pkg);
             $groups[$key][] = $pkg;
         }
 

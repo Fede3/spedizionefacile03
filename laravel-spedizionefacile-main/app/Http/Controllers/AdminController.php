@@ -3,40 +3,43 @@
  * FILE: AdminController.php
  * SCOPO: Gestisce il pannello di amministrazione (dashboard, utenti, ordini, spedizioni, impostazioni).
  *
- * COSA ENTRA:
- *   - Request con status/search per orders/shipments (filtri e ricerca)
- *   - Request con role per updateUserRole
- *   - Request con notes per approveWithdrawal/rejectWithdrawal
- *   - Request con chiavi impostazioni per updateSettings
- *   - User/Order/WithdrawalRequest via route model binding
+ * DOVE SI USA: Pannello admin (pages/account/amministrazione/*), tutte le route /api/admin/*
  *
- * COSA ESCE:
- *   - JSON con statistiche complete per dashboard (ordini, fatturato, utenti, spedizioni, grafico 30gg)
- *   - JSON con data paginata per orders/shipments (20 per pagina)
- *   - JSON con data (lista utenti/portafogli/movimenti/prelievi/referral/messaggi)
- *   - JSON con success per operazioni di modifica (approve, reject, delete, update)
+ * DATI IN INGRESSO:
+ *   - dashboard(): nessuno (calcola statistiche da tutto il DB)
+ *   - orders/shipments(): {status?, search?} per filtro e ricerca
+ *   - updateUserRole(): {role: "User"|"Partner Pro"|"Admin"}
+ *   - updateOrderStatus(): {status: "pending"|"completed"|...}
+ *   - approveWithdrawal/rejectWithdrawal(): {notes?}
+ *   - updateSettings(): chiavi impostazioni (stripe_*, brt_*, site_name, ...)
+ *   - storeCoupon(): {code, percentage, active?}
  *
- * CHIAMATO DA:
- *   - routes/api.php — tutte le route /api/admin/* (protette da middleware admin)
- *   - nuxt: pages/account/amministrazione/index.vue (pannello admin)
+ * DATI IN USCITA:
+ *   - dashboard(): {orders: {total, completed, pending, ...}, revenue, users, shipments, daily_orders[]}
+ *   - orders/shipments(): dati paginati (20 per pagina) con relazioni
+ *   - users(): [{id, name, surname, email, role, user_type, telephone_number, ...}]
+ *   - Operazioni: {success: true, message, data?}
  *
- * EFFETTI COLLATERALI:
- *   - Database: aggiorna email_verified_at utente (approveUser)
- *   - Database: aggiorna ruolo utente + genera referral_code (updateUserRole)
- *   - Database: elimina utente (deleteUser)
- *   - Database: aggiorna status ordine (updateOrderStatus)
- *   - Database: crea debit wallet_movement (approveWithdrawal)
- *   - Database: aggiorna impostazioni in tabella settings (updateSettings)
- *   - Rete: chiama BRT API per rigenerazione etichetta (regenerateLabel)
- *   - Email: invia etichetta BRT all'utente (regenerateLabel)
+ * VINCOLI:
+ *   - Tutte le route sono protette dal middleware admin (CheckAdmin)
+ *   - L'admin NON puo' eliminare il proprio account (controllo in deleteUser)
+ *   - updateSettings() accetta SOLO le chiavi nella whitelist $allowed
+ *   - I dati revenue sono in centesimi (sum di Transaction.total)
+ *   - Le impostazioni sono salvate nella tabella settings (modello chiave-valore)
  *
  * ERRORI TIPICI:
  *   - 422: richiesta prelievo non pending, admin tenta di eliminare se stesso, BRT non configurato
  *
- * DOCUMENTI CORRELATI:
+ * PUNTI DI MODIFICA SICURI:
+ *   - Per aggiungere una statistica alla dashboard: aggiungerla nel metodo dashboard()
+ *   - Per aggiungere una impostazione: aggiungerla alla lista $allowed in updateSettings()
+ *   - Per aggiungere un filtro agli ordini: modificare il blocco search/status in orders()
+ *
+ * COLLEGAMENTI:
  *   - app/Models/Setting.php — modello chiave-valore per impostazioni dinamiche
  *   - app/Services/BrtService.php — servizio BRT per rigenerazione etichette
- *   - CheckAdmin.php — middleware che verifica ruolo Admin prima di ogni richiesta
+ *   - app/Http/Middleware/CheckAdmin.php — middleware che verifica ruolo Admin
+ *   - pages/account/amministrazione/ — pagine frontend del pannello admin
  */
 
 namespace App\Http\Controllers;
@@ -284,8 +287,17 @@ class AdminController extends Controller
         ]);
     }
 
-    // Mostra la dashboard principale dell'admin con tutte le statistiche del sito
-    // Include: ordini, fatturato, utenti, spedizioni, messaggi non letti, ecc.
+    /**
+     * dashboard — Mostra la panoramica completa del sito con tutte le statistiche.
+     *
+     * PERCHE': L'admin ha bisogno di una vista d'insieme su ordini, fatturato, utenti e spedizioni.
+     * COME LEGGERLO: 1) Statistiche ordini (totali, per periodo)  2) Fatturato da transazioni
+     *   3) Statistiche utenti  4) Statistiche spedizioni BRT  5) Grafico ordini 30 giorni
+     *   6) Ultimi 5 ordini  7) Conteggio notifiche (messaggi, prelievi, richieste Pro)
+     * COME MODIFICARLO: Per aggiungere una statistica, aggiungerla nel blocco appropriato
+     *   e includerla nell'array di risposta JSON.
+     * COSA EVITARE: Non fare query pesanti senza indici — verificare le performance con molti ordini.
+     */
     public function dashboard(): JsonResponse
     {
         $now = now();
@@ -616,8 +628,16 @@ class AdminController extends Controller
         return response()->json(['success' => true, 'message' => 'Coupon eliminato.']);
     }
 
-    // Rigenera manualmente l'etichetta BRT per un ordine
-    // Utile quando la generazione automatica e' fallita
+    /**
+     * regenerateLabel — Rigenera manualmente l'etichetta BRT per un ordine.
+     *
+     * PERCHE': La generazione automatica puo' fallire (errore BRT, indirizzo non valido).
+     *   L'admin puo' ritentare manualmente dopo aver corretto i dati.
+     * COME LEGGERLO: 1) Verifica configurazione BRT  2) Prepara opzioni (contrassegno, PUDO)
+     *   3) Chiama BrtService.createShipment()  4) Salva campi brt_*  5) Invia email etichetta
+     * COME MODIFICARLO: Per passare opzioni extra a BRT, aggiungerle nell'array $options.
+     * COSA EVITARE: Non chiamare su ordini gia' con etichetta senza prima eliminare la vecchia.
+     */
     public function regenerateLabel(Order $order): JsonResponse
     {
         if (!config('services.brt.client_id')) {

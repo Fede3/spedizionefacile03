@@ -1,11 +1,24 @@
-/**
- * FILE: pages/account/carte.vue
- * SCOPO: Gestione carte Stripe — lista, aggiungi, predefinita, elimina. Config admin Stripe.
- * API: GET /api/stripe/payment-methods, POST /api/stripe/setup-intent,
- *      POST /api/stripe/save-payment-method, DELETE /api/stripe/payment-methods/{id},
- *      POST /api/stripe/default-payment-method, GET/POST /api/stripe-config.
- * ROUTE: /account/carte (middleware sanctum:auth).
- */
+<!--
+  FILE: pages/account/carte.vue
+  SCOPO: Gestione carte Stripe — lista, aggiungi, predefinita, elimina. Config admin chiavi Stripe.
+
+  API: GET /api/stripe/payment-methods (lista carte), POST /api/stripe/create-setup-intent (setup carta),
+       POST /api/stripe/set-default-payment-method (salva nuova carta come predefinita),
+       POST /api/stripe/change-default-payment-method (cambia predefinita),
+       DELETE /api/stripe/delete-card (elimina carta), GET/POST /api/settings/stripe (config chiavi).
+  COMPONENTI: nessuno di esterno (usa Icon di Nuxt UI, Stripe Elements montati manualmente).
+  ROUTE: /account/carte (middleware sanctum:auth).
+
+  DATI IN INGRESSO: nessuno (carica carte dell'utente autenticato).
+  DATI IN USCITA: carta salvata/eliminata/impostata come predefinita.
+
+  VINCOLI: Stripe.js viene caricato dinamicamente (import asincrono).
+           Se Stripe non e' configurato (mancano le chiavi API), il form non si apre.
+           I dati carta NON vengono mai salvati sul server — solo il token Stripe.
+  ERRORI TIPICI: non chiamare refreshIdentity() dopo aver aggiunto una carta (il customer_id potrebbe cambiare).
+  PUNTI DI MODIFICA SICURI: stili campi Stripe (style object), layout lista carte.
+  COLLEGAMENTI: pages/account/portafoglio.vue, pages/checkout.vue, controllers/StripeController.php.
+-->
 <script setup>
 // Ottimizzazione bundle: import dinamico di Stripe (non incluso nel chunk principale)
 // loadStripe viene importato solo quando serve, non al caricamento della pagina

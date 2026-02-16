@@ -1,8 +1,23 @@
-/**
- * PANNELLO DI AMMINISTRAZIONE - Dashboard
- * Solo panoramica: KPI, notifiche, grafico ordini, ultimi ordini espandibili.
- * Le card di navigazione sono nella pagina /account (sezioni admin viola).
- */
+<!--
+  FILE: pages/account/amministrazione/index.vue
+  SCOPO: Dashboard amministrazione — panoramica con KPI, notifiche, grafico ordini,
+         ultimi ordini espandibili. Le card di navigazione sono in /account (sezioni admin viola).
+  API: GET /api/admin/dashboard — dati KPI e ordini recenti.
+  COMPONENTI: nessun componente custom.
+  ROUTE: /account/amministrazione (middleware sanctum:auth + admin).
+
+  DATI IN INGRESSO:
+    - dashboardData (da API) — KPI, notifiche, grafico, ultimi ordini.
+
+  DATI IN USCITA: nessuna (pagina di sola lettura).
+
+  VINCOLI: solo utenti Admin.
+
+  COLLEGAMENTI:
+    - pages/account/amministrazione/ordini.vue → gestione ordini.
+    - pages/account/amministrazione/utenti.vue → gestione utenti.
+    - composables/useAdmin.js → utility condivise admin.
+-->
 <script setup>
 definePageMeta({
 	middleware: ["sanctum:auth", "admin"],

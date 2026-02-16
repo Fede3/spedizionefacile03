@@ -1,8 +1,45 @@
-/**
- * ADMIN - Prezzi, Fasce e Promozione
- * Editor delle fasce di peso e volume con prezzi base, scontati, percentuale sconto e toggle visibilita'.
- * Sezione promozione sito con etichetta personalizzabile, colore, immagine e switch globali.
- */
+<!--
+  FILE: pages/account/amministrazione/prezzi.vue
+  SCOPO: Pannello admin — editor fasce di prezzo (peso e volume) e gestione promozione sito.
+         Tabelle editabili inline con prezzi base, scontati, percentuale sconto, toggle visibilita'.
+         Sezione promozione: etichetta personalizzabile, colore, immagine, descrizione, anteprima live.
+  API: GET /api/admin/price-bands — leggi fasce prezzo,
+       PUT /api/admin/price-bands — salva modifiche fasce,
+       POST /api/admin/price-bands/seed — inizializza fasce nel DB,
+       GET /api/admin/promo-settings — leggi impostazioni promo,
+       POST /api/admin/promo-settings — salva impostazioni promo,
+       POST /api/admin/promo-settings/upload-image — carica immagine promo.
+  COMPONENTI: nessun componente custom.
+  ROUTE: /account/amministrazione/prezzi (middleware sanctum:auth + admin).
+
+  DATI IN INGRESSO:
+    - weightBands, volumeBands (da fetchPriceBands) — fasce dal server o default.
+    - promo (da fetchPromoSettings) — impostazioni promozione.
+    - usePriceBands().forceReload — ricarica fasce pubbliche dopo salvataggio.
+
+  DATI IN USCITA:
+    - PUT fasce prezzo, POST promo settings, POST upload immagine.
+
+  VINCOLI:
+    - Solo utenti Admin (middleware admin).
+    - I prezzi sono salvati in centesimi nel DB, visualizzati in euro nel frontend.
+    - Formula prezzo: MAX(prezzo_peso, prezzo_volume) + supplemento CAP90 (+2,50 per ogni CAP "90").
+    - Se discount_price e' null, il prezzo effettivo e' il base_price.
+
+  ERRORI TIPICI:
+    - Fasce non ancora nel DB → banner giallo con pulsante "Inizializza".
+    - Formato prezzo errato → euroToCents restituisce null.
+
+  PUNTI DI MODIFICA SICURI:
+    - Aggiungere fasce: modificare DEFAULT_WEIGHT_BANDS / DEFAULT_VOLUME_BANDS.
+    - Cambiare formula sconto: modificare discountInfo().
+    - Personalizzare anteprima promo: modificare il blocco "Anteprima header homepage".
+
+  COLLEGAMENTI:
+    - composables/usePriceBands.js → cache pubblica delle fasce prezzo.
+    - components/Preventivo.vue → usa le fasce per il calcolo preventivo.
+    - components/ContenutoHeader.vue → mostra etichetta promo e descrizione.
+-->
 <script setup>
 definePageMeta({
 	middleware: ["sanctum:auth", "admin"],

@@ -3,33 +3,40 @@
  * FILE: RefundController.php
  * SCOPO: Gestisce annullamento ordini e rimborsi (Stripe o portafoglio), cancellazione etichette BRT.
  *
- * COSA ENTRA:
- *   - Order (route model binding) per requestCancellation e checkRefundEligibility
- *   - Request con reason (opzionale) per requestCancellation
+ * DOVE SI USA: Dettaglio ordine utente, lista ordini utente, OrderController.cancel()
  *
- * COSA ESCE:
- *   - JSON con success, message, refund_amount, commission per requestCancellation
- *   - JSON con eligible, reason, refund_amount, commission, payment_method per checkRefundEligibility
+ * DATI IN INGRESSO:
+ *   - checkRefundEligibility(): Order via route model binding
+ *   - requestCancellation(): Order + {reason?: "motivo annullamento"}
  *
- * CHIAMATO DA:
- *   - routes/api.php — POST /api/orders/{order}/cancel, GET /api/orders/{order}/refund-eligibility
- *   - nuxt: pages/account/spedizioni/[id].vue, pages/account/spedizioni/index.vue
+ * DATI IN USCITA:
+ *   - checkRefundEligibility(): {eligible, reason, refund_amount_cents, commission_cents,
+ *     refund_amount_eur, commission_eur, payment_method, type}
+ *   - requestCancellation(): {success, message, refund_amount: "6,90", commission: "2,00",
+ *     refund_method: "stripe"|"wallet", brt_cancelled: true|false}
  *
- * EFFETTI COLLATERALI:
- *   - Rete: Stripe Refund API (per rimborsi carta), BRT deleteShipment (per cancellare etichette)
- *   - Database: aggiorna campi refund_* su orders, crea WalletMovement (per rimborsi wallet),
- *     crea Transaction (log rimborso)
+ * VINCOLI:
+ *   - Commissione di annullamento: 2 EUR (CANCELLATION_FEE_CENTS = 200 centesimi)
+ *   - Ordini in_transit: NON rimborsabili (il pacco e' gia' partito)
+ *   - Ordini pending/payment_failed: annullabili senza rimborso (non ancora pagati)
+ *   - Se BRT fallisce la cancellazione, l'annullamento prosegue comunque (errore loggato)
+ *   - Il rimborso via wallet e' il fallback se il metodo di pagamento originale e' sconosciuto
  *
  * ERRORI TIPICI:
  *   - 403: utente non proprietario dell'ordine
  *   - 422: ordine non rimborsabile (gia' ritirato, gia' annullato, ecc.)
  *   - 500: errore Stripe o BRT durante il rimborso
  *
- * DOCUMENTI CORRELATI:
+ * PUNTI DI MODIFICA SICURI:
+ *   - Per cambiare la commissione: modificare CANCELLATION_FEE_CENTS
+ *   - Per aggiungere stati rimborsabili: modificare calculateEligibility()
+ *   - Per aggiungere un metodo di rimborso: aggiungere un case in requestCancellation()
+ *
+ * COLLEGAMENTI:
  *   - app/Models/Order.php — stati ordine e campi refund_*
  *   - app/Services/BrtService.php — deleteShipment per cancellare etichette BRT
- *   - app/Http/Controllers/StripeController.php — pagamenti originali
- *   - app/Http/Controllers/WalletController.php — pattern per movimenti portafoglio
+ *   - StripeController.php — pagamenti originali
+ *   - WalletController.php — pattern per movimenti portafoglio
  */
 
 namespace App\Http\Controllers;

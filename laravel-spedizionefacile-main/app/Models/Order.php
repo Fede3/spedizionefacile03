@@ -3,33 +3,46 @@
  * FILE: Order.php
  * SCOPO: Modello ordine di spedizione con stati, dati BRT, relazioni utente/pacchi/transazioni.
  *
- * COSA ENTRA:
- *   - status, user_id, subtotal (centesimi), campi brt_* per spedizione, is_cod, cod_amount
- *
- * COSA ESCE:
- *   - Relazioni: user, transactions, packages (many-to-many via package_order)
- *   - Accessor: subtotal convertito in oggetto MyMoney per formattazione
- *   - Metodo: getStatus($status) traduce stato in italiano
- *
- * CHIAMATO DA:
+ * DOVE SI USA:
  *   - OrderController.php — creazione ordini e gestione ciclo vita
  *   - StripeController.php — pagamento e transizione stato
  *   - BrtController.php — aggiornamento campi brt_* dopo creazione spedizione
  *   - AdminController.php — dashboard, lista ordini, cambio stato
+ *   - GenerateBrtLabel.php — listener che aggiorna i dati BRT dopo pagamento
  *
- * EFFETTI COLLATERALI:
- *   - Boot: stato iniziale "pending" se non specificato alla creazione
- *   - brt_raw_response: cast automatico JSON <-> array
+ * DATI IN INGRESSO:
+ *   - status, user_id, subtotal (centesimi), campi brt_* per spedizione, is_cod, cod_amount
+ *   Esempio: Order::create(['user_id' => 1, 'subtotal' => 890, 'status' => 'pending'])
+ *
+ * DATI IN USCITA:
+ *   - Relazioni: user, transactions, packages (many-to-many via package_order)
+ *   - Accessor: subtotal convertito in oggetto MyMoney per formattazione
+ *   - Metodo: getStatus($status) traduce stato in italiano
+ *   Esempio: $order->user->name, $order->packages->count(), $order->getStatus('pending') => "In attesa"
+ *
+ * VINCOLI:
+ *   - subtotal e' in centesimi (890 = 8,90 EUR), non in euro
+ *   - brt_label_base64 e' un campo molto grande (PDF codificato), escluderlo dalle query per performance
+ *   - Lo stato iniziale e' sempre "pending" (impostato nel boot)
+ *   - Flusso stati: pending → processing → in_transit → delivered / completed
+ *   - in_transit: NON rimborsabile (spedizione gia' partita)
  *
  * ERRORI TIPICI:
- *   - subtotal e' in centesimi (1000 = 10.00 EUR), non in euro
- *   - brt_label_base64 e' un campo molto grande (PDF codificato), escluderlo dalle query per performance
+ *   - Passare subtotal in euro invece che centesimi: 8.90 invece di 890
+ *   - Caricare brt_label_base64 nelle liste: usare select() per escluderlo
+ *   - Confusione tra brt_parcel_id (dall'etichetta) e brt_tracking_number (dal routing)
  *
- * DOCUMENTI CORRELATI:
+ * PUNTI DI MODIFICA SICURI:
+ *   - Per aggiungere un nuovo stato: aggiungere costante e traduzione in getStatus()
+ *   - Per aggiungere campi BRT: aggiungere in $fillable (prefisso brt_)
+ *   - Per cambiare lo stato iniziale: modificare il boot creating
+ *
+ * COLLEGAMENTI:
  *   - app/Models/Transaction.php — transazioni di pagamento collegate all'ordine
  *   - app/Models/Package.php — pacchi contenuti nell'ordine (pivot package_order)
  *   - app/Events/OrderPaid.php — evento scatenato dopo pagamento riuscito
  *   - app/Listeners/GenerateBrtLabel.php — genera etichetta BRT in risposta a OrderPaid
+ *   - app/Http/Controllers/RefundController.php — gestione rimborsi ordini
  */
 
 namespace App\Models;
@@ -39,6 +52,7 @@ use App\Cart\MyMoney;
 use App\Models\Package;
 use App\Models\Transaction;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
 
 class Order extends Model
 {
@@ -144,14 +158,6 @@ class Order extends Model
         return $this->belongsTo(User::class);
     }
 
-    /* public function address() {
-        return $this->belongsTo(Address::class);
-    } */
-
-    /* public function shipping() {
-        return $this->belongsTo(Shipping::class);
-    } */
-
     // Relazione: un ordine ha MOLTE transazioni di pagamento
     // Esempio: un tentativo fallito e poi uno riuscito
     public function transactions() {
@@ -163,7 +169,19 @@ class Order extends Model
     // che collega ordini e pacchi (relazione molti-a-molti)
     public function packages() {
         return $this->belongsToMany(Package::class, 'package_order');
-                    /* ->withPivot(['quantity'])
-                    ->withTimestamps(); */
+    }
+
+    /**
+     * Collega un pacco all'ordine tramite la tabella pivot package_order.
+     */
+    public static function attachPackage(int $orderId, int $packageId, int $quantity = 1): void
+    {
+        DB::table('package_order')->insert([
+            'order_id' => $orderId,
+            'package_id' => $packageId,
+            'quantity' => $quantity,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
     }
 }

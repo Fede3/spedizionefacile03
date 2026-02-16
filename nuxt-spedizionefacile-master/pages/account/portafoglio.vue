@@ -1,10 +1,22 @@
-/**
- * FILE: pages/account/portafoglio.vue
- * SCOPO: Portafoglio — saldo, ricarica via Stripe, storico movimenti, saldo commissioni Pro.
- * API: GET /api/wallet/balance, GET /api/wallet/movements, POST /api/wallet/top-up,
- *      GET /api/stripe/payment-methods, GET /api/stripe-config.
- * ROUTE: /account/portafoglio (middleware sanctum:auth).
- */
+<!--
+  FILE: pages/account/portafoglio.vue
+  SCOPO: Portafoglio — saldo, ricarica via Stripe, storico movimenti, saldo commissioni Pro.
+
+  API: GET /api/wallet/balance (saldo principale + commissioni),
+       GET /api/wallet/movements (storico movimenti), POST /api/wallet/top-up (ricarica),
+       GET /api/stripe/default-payment-method (carta predefinita per la ricarica).
+  COMPONENTI: nessuno di esterno (usa Icon di Nuxt UI).
+  ROUTE: /account/portafoglio (middleware sanctum:auth).
+
+  DATI IN INGRESSO: nessuno (carica automaticamente saldo e movimenti dell'utente).
+  DATI IN USCITA: ricarica portafoglio con carta predefinita.
+
+  VINCOLI: la ricarica richiede una carta predefinita gia' salvata (pagina /account/carte).
+           Il saldo commissioni e' visibile solo ai Partner Pro (isPro computed).
+  ERRORI TIPICI: non aggiornare saldo e movimenti dopo una ricarica (fetchBalance + fetchMovements).
+  PUNTI DI MODIFICA SICURI: importi preimpostati (presetAmounts), stili card saldo, etichette fonti.
+  COLLEGAMENTI: pages/account/carte.vue, pages/account/prelievi.vue, controllers/WalletController.php.
+-->
 <script setup>
 // Nota: loadStripe non serve in questa pagina (il pagamento e' gestito dal backend via sanctum).
 // L'import e' stato rimosso per ridurre il bundle JS.

@@ -1,9 +1,26 @@
-/**
- * PAGINA DETTAGLIO SPEDIZIONE (VECCHIA VERSIONE)
- * Versione precedente della pagina dettaglio ordine.
- * Mostra i dati in tabelle semplici: cliente, colli, indirizzi e transazione.
- * Questa pagina usa il parametro "spedizione" nell'URL.
- */
+<!--
+  FILE: pages/account/spedizioni/[spedizione].vue
+  SCOPO: Dettaglio spedizione (versione precedente) — tabelle semplici con dati cliente,
+         colli, indirizzi e transazione. Usa il parametro "spedizione" nell'URL.
+  API: GET /api/orders/{spedizione} — dettaglio ordine.
+  COMPONENTI: nessun componente custom.
+  ROUTE: /account/spedizioni/{spedizione} (middleware sanctum:auth).
+
+  DATI IN INGRESSO:
+    - order (da useSanctumFetch) — dati ordine dal server.
+
+  DATI IN USCITA: nessuna (pagina di sola lettura).
+
+  VINCOLI:
+    - L'utente deve essere autenticato.
+    - Se errore 403, redirect alla dashboard.
+
+  NOTA: Questa e' la versione precedente. La versione attuale e' pages/account/spedizioni/[id].vue.
+
+  COLLEGAMENTI:
+    - pages/account/spedizioni/[id].vue → versione attuale del dettaglio.
+    - pages/account/spedizioni/index.vue → lista ordini.
+-->
 <script setup>
 /* Richiede che l'utente sia autenticato */
 definePageMeta({

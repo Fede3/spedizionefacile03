@@ -1,16 +1,17 @@
 /**
- * MIDDLEWARE ADMIN (admin.js)
+ * MIDDLEWARE: admin (middleware/admin.js)
+ * SCOPO: Protegge le pagine admin — solo utenti con ruolo "Admin" possono accedervi.
  *
- * I middleware sono "controlli automatici" che vengono eseguiti PRIMA di mostrare una pagina.
- * Funzionano come un guardiano all'ingresso: controllano se l'utente ha il permesso
- * di entrare in quella pagina, e se non ce l'ha, lo mandano da un'altra parte.
+ * DOVE SI USA: pages/account/amministrazione/*.vue (definePageMeta → middleware: ['admin'])
+ * REDIRECT: se l'utente non e' admin → /account
  *
- * Questo middleware controlla che l'utente sia un AMMINISTRATORE del sito.
- * Se l'utente non ha il ruolo "Admin", viene automaticamente mandato
- * alla pagina del suo account (/account) invece di vedere la pagina richiesta.
+ * COME FUNZIONA:
+ * I middleware sono "controlli automatici" eseguiti PRIMA di mostrare una pagina.
+ * Questo controlla il campo user.role: se non e' "Admin", l'utente viene
+ * reindirizzato alla pagina del suo account.
  *
- * Viene usato per proteggere le pagine del pannello di amministrazione,
- * in modo che solo gli admin possano accedervi.
+ * VINCOLI: richiede che l'utente sia gia' autenticato (usare insieme a sanctum:auth)
+ * COLLEGAMENTI: laravel-spedizionefacile-main/app/Models/User.php (campo role)
  */
 export default defineNuxtRouteMiddleware((to, from) => {
 	const { user } = useSanctumAuth();

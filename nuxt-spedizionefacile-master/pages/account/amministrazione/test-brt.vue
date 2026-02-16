@@ -1,7 +1,18 @@
-/**
- * ADMIN - Test BRT
- * Test creazione spedizioni e ricerca PUDO BRT.
- */
+<!--
+  FILE: pages/account/amministrazione/test-brt.vue
+  SCOPO: Pannello admin — pagina di test per le API BRT.
+         Permette di testare la creazione spedizioni e la ricerca punti PUDO
+         senza creare ordini reali.
+  API: POST /api/admin/brt/test-create — test creazione spedizione BRT,
+       POST /api/admin/brt/test-pudo — test ricerca punti PUDO.
+  ROUTE: /account/amministrazione/test-brt (middleware sanctum:auth + admin).
+
+  VINCOLI: solo ambiente di test/staging, non usare in produzione con dati reali.
+
+  COLLEGAMENTI:
+    - services/BrtService.php (backend) → servizio BRT SOAP/REST.
+    - pages/account/amministrazione/spedizioni.vue → spedizioni reali.
+-->
 <script setup>
 definePageMeta({
 	middleware: ["sanctum:auth", "admin"],

@@ -1,7 +1,35 @@
-/**
- * ADMIN - Spedizioni BRT
- * Lista spedizioni con tracking, etichette e cambio stato.
- */
+<!--
+  FILE: pages/account/amministrazione/spedizioni.vue
+  SCOPO: Pannello admin — lista di tutte le spedizioni BRT della piattaforma.
+         Ricerca, filtri per stato, download etichette, link tracking, cambio stato.
+  API: GET /api/admin/shipments?page=&search=&status= — lista spedizioni paginata,
+       PATCH /api/admin/orders/{id}/status — cambio stato ordine.
+  COMPONENTI: nessun componente custom.
+  ROUTE: /account/amministrazione/spedizioni (middleware sanctum:auth + admin).
+
+  DATI IN INGRESSO:
+    - shipmentsData (da fetchShipments) — lista spedizioni paginata.
+    - useAdmin() — composable con utility admin (formatDate, statusConfig, downloadLabel).
+
+  DATI IN USCITA:
+    - PATCH su stato ordine.
+
+  VINCOLI:
+    - Solo utenti Admin (middleware admin).
+    - La ricerca ha debounce di 400ms.
+    - Mostra solo spedizioni con brt_parcel_id (inviate a BRT).
+
+  ERRORI TIPICI:
+    - Nessuna spedizione trovata → empty state con icona camion.
+
+  PUNTI DI MODIFICA SICURI:
+    - Aggiungere colonne alla tabella: modificare <thead> e <tbody>.
+    - Aggiungere stati al filtro: aggiungere <option> nel <select>.
+
+  COLLEGAMENTI:
+    - composables/useAdmin.js → utility condivise admin.
+    - pages/account/amministrazione/ordini.vue → gestione ordini (complementare).
+-->
 <script setup>
 definePageMeta({
 	middleware: ["sanctum:auth", "admin"],

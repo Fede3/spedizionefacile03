@@ -3,28 +3,36 @@
  * FILE: WithdrawalRequest.php
  * SCOPO: Modello richiesta di prelievo commissioni Partner Pro (con approvazione admin).
  *
- * COSA ENTRA:
- *   - user_id, amount (euro), currency (EUR), status, admin_notes, reviewed_at, reviewed_by
- *
- * COSA ESCE:
- *   - Relazioni: user (Partner Pro richiedente), reviewer (admin che ha revisionato)
- *
- * CHIAMATO DA:
+ * DOVE SI USA:
  *   - WithdrawalController.php — index (lista), store (creazione con status pending)
  *   - AdminController.php — withdrawals, approveWithdrawal, rejectWithdrawal
  *   - User::commissionBalance() — somma amount dove status in (approved, completed)
  *
- * EFFETTI COLLATERALI:
- *   - Nessuno (modello semplice, il debit nel portafoglio e' creato dal controller admin)
+ * DATI IN INGRESSO:
+ *   - user_id, amount (euro), currency (EUR), status, admin_notes, reviewed_at, reviewed_by
+ *   Esempio: WithdrawalRequest::create(['user_id' => 1, 'amount' => 50.00, 'status' => 'pending'])
+ *
+ * DATI IN USCITA:
+ *   - Relazioni: user (Partner Pro richiedente), reviewer (admin che ha revisionato)
+ *   Esempio: $withdrawal->user->name, $withdrawal->reviewer->name
+ *
+ * VINCOLI:
+ *   - status: "pending", "approved", "rejected", "completed"
+ *   - amount in euro con 2 decimali (cast decimal:2), NON in centesimi
+ *   - Solo una richiesta pending alla volta per utente (controllato dal controller)
+ *   - L'approvazione crea un debit in wallet_movements (fatto dal controller admin)
  *
  * ERRORI TIPICI:
- *   - status: "pending", "approved", "rejected", "completed"
- *   - amount in euro con 2 decimali (cast decimal:2)
- *   - Solo una richiesta pending alla volta per utente (controllato dal controller)
+ *   - Approvare senza creare il debit nel portafoglio: il saldo non si aggiorna
+ *   - Passare amount in centesimi: qui si usa euro
  *
- * DOCUMENTI CORRELATI:
- *   - WithdrawalController.php — creazione richiesta lato utente
- *   - AdminController.php — approvazione/rifiuto lato admin (crea debit in wallet_movements)
+ * PUNTI DI MODIFICA SICURI:
+ *   - Per aggiungere metodo di prelievo (IBAN, PayPal): aggiungere campo in $fillable
+ *   - La logica di approvazione/rifiuto e' in AdminController, non qui
+ *
+ * COLLEGAMENTI:
+ *   - app/Http/Controllers/WithdrawalController.php — creazione richiesta lato utente
+ *   - app/Http/Controllers/AdminController.php — approvazione/rifiuto lato admin
  *   - app/Models/User.php — commissionBalance() sottrae i prelievi approvati
  */
 
