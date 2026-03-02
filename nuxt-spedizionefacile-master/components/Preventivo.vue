@@ -365,6 +365,20 @@ const onCapInputSmart = (fieldKey, value) => {
 };
 
 const deletePack = async (index) => {
+	const wasLastPack = userStore.packages.length === 1;
+
+	if (wasLastPack) {
+		// Calcola altezza sezione e fai salire il bottone immediatamente
+		const packSection = document.querySelector('.pack-section-wrapper');
+		const continueButton = document.querySelector('.continue-button-wrapper');
+
+		if (packSection && continueButton) {
+			const sectionHeight = packSection.offsetHeight;
+			continueButton.style.setProperty('--rise-distance', `-${sectionHeight}px`);
+			continueButton.classList.add('button-rise-up');
+		}
+	}
+
 	userStore.packages.splice(index, 1);
 
 	/* const index = session.value?.data?.packages */
@@ -808,7 +822,7 @@ const resetForm = () => {
 					</div>
 
 					<div
-						class="bg-[#E44203] w-full text-white font-semibold text-center rounded-[50px] tracking-[-0.48px] transition-[background-color,box-shadow,transform] duration-200 hover:bg-[#c93800] hover:shadow-[0_6px_20px_rgba(228,66,3,0.35)] active:scale-[0.98] overflow-hidden"
+						class="continue-button-wrapper bg-[#E44203] w-full text-white font-semibold text-center rounded-[50px] tracking-[-0.48px] transition-[background-color,box-shadow,transform] duration-200 hover:bg-[#c93800] hover:shadow-[0_6px_20px_rgba(228,66,3,0.35)] active:scale-[0.98] overflow-hidden"
 						:class="[
 							{ 'text-[1.5rem] tablet:text-[1.875rem] h-[64px] tablet:h-[80px]': !isRateCalculated, 'h-[90px] tablet:h-[113px]': isRateCalculated },
 							promoSettings?.active && promoSettings?.label_text ? 'mt-[12px]' : 'mt-[24px] desktop-xl:mt-[40px] desktop:mt-[20px]'
@@ -889,5 +903,15 @@ const resetForm = () => {
 	background-image: var(--before-service-bg);
 	width: var(--before-service-width);
 	height: var(--before-service-height);
+}
+
+/* Animazione bottone Continua che sale */
+.continue-button-wrapper {
+	will-change: transform;
+	transition: transform 1.5s cubic-bezier(0.4, 0.0, 0.2, 1);
+}
+
+.continue-button-wrapper.button-rise-up {
+	transform: translateY(var(--rise-distance, 0));
 }
 </style>
