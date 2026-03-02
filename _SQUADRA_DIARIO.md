@@ -5238,3 +5238,51 @@ DATA: 2026-03-01
 4. Verifica stile codice:
    - `cd nuxt-spedizionefacile-master && npx prettier --check components/Preventivo.vue`
    - Atteso: OK.
+
+## TURNO: INTERFACCIA
+DATA: 2026-03-02
+
+### Attivita' svolte
+- Eseguito congelamento forense dello stato post-reset su branch dedicato `recovery/forensics-2026-03-02`.
+- Creato inventario recovery in `_LOG/recovery/20260302-233518/` con:
+  - `git-status-sb.txt`
+  - `git-branch-avv.txt`
+  - `git-reflog-200.txt`
+  - `files-modified-last48h.txt`
+  - `files-mtime-48h-full.txt`
+  - `recovery-source-map.tsv`
+  - `recovery-restore-decisions.tsv`
+- Confermato limite Git forensics locale:
+  - reflog utile solo al reset del `2026-03-02`;
+  - nessun oggetto utile da `git fsck --lost-found`.
+- Eseguito recupero controllato file locali (sorgente A/B) con commit separati `RECOVERY`:
+  1. `c415a8f` - `RECOVERY: stato grezzo file persi da sorgenti locali`
+  2. `fecedb3` - `RECOVERY: riallineato Preventivo.vue con stato locale post-reset`
+- Preservato il backup locale `nuxt-spedizionefacile-master/components/Preventivo.vue.backup-1772462877` nel branch di recovery.
+
+### File toccati in questo turno
+- `_SQUADRA_DIARIO.md`
+- (commit recovery) file ripristinati locali in frontend/backend/documentazione, inclusi:
+  - `nuxt-spedizionefacile-master/components/Preventivo.vue`
+  - `nuxt-spedizionefacile-master/components/Preventivo.vue.backup-1772462877`
+  - `laravel-spedizionefacile-main/app/Http/Controllers/CryptoController.php`
+  - `laravel-spedizionefacile-main/app/Services/ShipmentExecutionService.php`
+  - `laravel-spedizionefacile-main/app/Services/ShipmentDocumentDispatcher.php`
+  - e gli altri file aggiunti nel commit `c415a8f`.
+
+### Verifica
+1. Verificare branch attivo:
+   - `git branch --show-current`
+   - Atteso: `recovery/forensics-2026-03-02`.
+2. Verificare commit recovery:
+   - `git log --oneline -n 4`
+   - Atteso: presenza di `c415a8f` e `fecedb3`.
+3. Verificare inventario forense:
+   - aprire `_LOG/recovery/20260302-233518/recovery-source-map.tsv`
+   - aprire `_LOG/recovery/20260302-233518/recovery-restore-decisions.tsv`.
+4. Verificare file chiave ripristinati:
+   - `git show --name-status c415a8f`
+   - `git show --name-status fecedb3`.
+5. Verifica tecnica minima eseguita nel turno:
+   - `npx prettier --check` (segnala solo questioni di formattazione su file esistenti)
+   - backend PHP non verificabile in questo ambiente: `php: command not found`.
