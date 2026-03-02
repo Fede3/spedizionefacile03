@@ -5286,3 +5286,33 @@ DATA: 2026-03-02
 5. Verifica tecnica minima eseguita nel turno:
    - `npx prettier --check` (segnala solo questioni di formattazione su file esistenti)
    - backend PHP non verificabile in questo ambiente: `php: command not found`.
+
+## TURNO: LOGICA
+DATA: 2026-03-03
+
+### Attivita' svolte
+- Richiesta utente: ripristino massimo possibile di tutto il sito (flusso preventivo + homepage) dopo reset.
+- Eseguito riallineamento del branch operativo `main` con i commit di recovery forense:
+  - `RECOVERY: stato grezzo file persi da sorgenti locali`
+  - `RECOVERY: riallineato Preventivo.vue con stato locale post-reset`
+  - `RECOVERY: tracciabilita forense e checklist verifica`
+- Verificata anche presenza di copie locali alternative (`Spedizionefacile03`, `tuttoinsieme`) per eventuale recupero aggiuntivo; nessuna evidenza di versione piu' recente dei file chiave rispetto allo stato recuperato su disco.
+- Verificata cronologia VS Code (`AppData/Roaming/Code/User/History`) per sorgente C del piano: trovate solo risorse editor/configurazione, non snapshot utili dei file applicativi chiave da ripristinare.
+
+### File toccati in questo turno
+- `_SQUADRA_DIARIO.md`
+- (allineamento branch) applicati su `main` i commit recovery gia' creati.
+
+### Verifica
+1. Verificare branch corrente:
+   - `git branch --show-current`
+   - atteso: `main`.
+2. Verificare presenza commit recovery su `main`:
+   - `git log --oneline -n 8`
+   - atteso: commit `4e5c14a`, `dca3796`, `9fb5732` (hash locali after cherry-pick).
+3. Verificare stato working tree:
+   - `git status -sb`
+   - atteso: nessuna modifica tracciata non committata.
+4. Verificare artefatti forensi disponibili:
+   - `_LOG/recovery/20260302-233518/spedizionefacile-forensics-20260302-233518.tar.gz`
+   - `_LOG/recovery/20260302-233518/recovery-restore-decisions.tsv`.
