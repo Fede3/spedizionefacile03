@@ -19,7 +19,7 @@ useSeoMeta({
 
 <template>
 	<section class="min-h-[500px] py-[40px] desktop:py-[60px]">
-		<div class="my-container max-w-[800px]">
+		<div class="my-container">
 			<h1 class="text-[2rem] font-bold text-[#252B42] mb-[8px]">Reclami</h1>
 			<p class="text-[#737373] text-[0.9375rem] leading-[1.8] mb-[24px]">Se hai riscontrato un problema con la tua spedizione, puoi presentare un reclamo.</p>
 

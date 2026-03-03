@@ -34,7 +34,7 @@ const props = defineProps({
 
 const emit = defineEmits(['navigate']);
 
-const steps = ["Misure", "Servizi", "Ritiro", "Conferma", "Pagamento"];
+const steps = ["Misure", "Servizi", "Indirizzi", "Conferma", "Pagamento"];
 
 const route = useRoute();
 
@@ -43,7 +43,7 @@ const activeStep = computed(() => {
 	if (props.currentStep >= 0) return props.currentStep;
 	if (route.name === 'index' || route.path === '/') return 0;
 	if (route.path.includes('la-tua-spedizione')) {
-		// Se la query contiene step=ritiro, siamo allo step Ritiro (2)
+		// Se la query contiene step=ritiro, siamo allo step Indirizzi (2)
 		if (route.query.step === 'ritiro') return 2;
 		// Altrimenti siamo allo step Servizi (1)
 		return 1;
@@ -81,7 +81,7 @@ const handleClick = (index) => {
 				:key="index"
 				class="min-h-[36px] leading-[36px] tablet:min-h-[44px] tablet:leading-[44px] tablet:leading-[48px] transition-[color,background-color,opacity] duration-200 select-none whitespace-nowrap px-[6px] tablet:px-[0px]"
 				:class="{
-					'bg-[#E44203] text-white tablet:w-auto !px-[12px] tablet:!px-[24px] text-center rounded-[38px] font-semibold step-active-pulse': index === activeStep,
+					'bg-[#E44203] text-white tablet:w-auto !px-[12px] tablet:!px-[24px] text-center rounded-[50px] font-semibold step-active-pulse': index === activeStep,
 					'cursor-pointer hover:text-[#095866]': canNavigate(index),
 					'opacity-40 cursor-default': index > activeStep,
 				}"

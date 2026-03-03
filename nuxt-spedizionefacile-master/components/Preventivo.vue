@@ -52,87 +52,351 @@ onMounted(() => { loadPriceBands(); });
 
 // --- AUTOCOMPLETE CITTA'/CAP ---
 // L'utente digita nel campo citta' o CAP, dopo 300ms parte la ricerca API
+const AUTOCOMPLETE_DEBOUNCE_MS = 180;
 const originSuggestions = ref([]);
 const destSuggestions = ref([]);
 const showOriginSuggestions = ref(false);
 const showDestSuggestions = ref(false);
+let originHideTimeout = null;
+let destHideTimeout = null;
 let originSearchTimeout = null;
 let destSearchTimeout = null;
+let originSearchSeq = 0;
+let destSearchSeq = 0;
 
-const searchLocations = async (query) => {
+const normalizeLocationText = (value = "") =>
+	String(value)
+		.toLowerCase()
+		.normalize("NFD")
+		.replace(/[\u0300-\u036f]/g, "")
+		.replace(/\s+/g, " ")
+		.trim();
+
+const getProvinceLabel = (loc) => {
+	const value = loc?.province ?? loc?.province_name ?? "";
+	return String(value).trim();
+};
+
+const locationKey = (loc) => `${loc?.postal_code || ""}-${loc?.place_name || ""}-${getProvinceLabel(loc)}`;
+
+const dedupeLocations = (list = []) => {
+	const map = new Map();
+	list.forEach((loc) => {
+		if (!loc?.place_name || !loc?.postal_code) return;
+		const key = locationKey(loc);
+		if (!map.has(key)) map.set(key, loc);
+	});
+	return Array.from(map.values());
+};
+
+const cityMatchesQuery = (cityValue, rawQuery) => {
+	const city = normalizeLocationText(cityValue);
+	const query = normalizeLocationText(rawQuery);
+	if (!query) return true;
+	return city.startsWith(query);
+};
+
+const sortLocations = (a, b) => {
+	const aName = normalizeLocationText(a?.place_name || "");
+	const bName = normalizeLocationText(b?.place_name || "");
+	if (aName !== bName) return aName.localeCompare(bName);
+	return String(a?.postal_code || "").localeCompare(String(b?.postal_code || ""));
+};
+
+const cityRelevanceScore = (loc, rawQuery) => {
+	const query = normalizeLocationText(rawQuery);
+	const city = normalizeLocationText(loc?.place_name || "");
+	if (!query) return 99;
+
+	if (city === query) return 0;
+	if (city.startsWith(`${query} `) || city.startsWith(`${query}'`) || city.startsWith(`${query}-`)) return 1;
+	if (city.startsWith(query)) return 2;
+	return 99;
+};
+
+const sortCitySuggestionsByRelevance = (list, query) => {
+	return [...list].sort((a, b) => {
+		const scoreA = cityRelevanceScore(a, query);
+		const scoreB = cityRelevanceScore(b, query);
+		if (scoreA !== scoreB) return scoreA - scoreB;
+
+		const nameA = normalizeLocationText(a?.place_name || "");
+		const nameB = normalizeLocationText(b?.place_name || "");
+		if (nameA.length !== nameB.length) return nameA.length - nameB.length;
+		if (nameA !== nameB) return nameA.localeCompare(nameB);
+
+		return String(a?.postal_code || "").localeCompare(String(b?.postal_code || ""));
+	});
+};
+
+const searchLocations = async (query, limit = 200) => {
 	if (!query || query.length < 2) return [];
 	try {
-		const results = await sanctum(`/api/locations/search?q=${encodeURIComponent(query)}`);
-		return results || [];
+		const q = encodeURIComponent(query.trim());
+		const results = await sanctum(`/api/locations/search?q=${q}&limit=${limit}`);
+		return dedupeLocations(results || []);
 	} catch (e) {
 		return [];
 	}
 };
 
+const searchLocationsByCap = async (cap) => {
+	if (!cap) return [];
+	try {
+		const q = encodeURIComponent(String(cap).trim());
+		const results = await sanctum(`/api/locations/by-cap?cap=${q}`);
+		return dedupeLocations(results || []);
+	} catch (e) {
+		return [];
+	}
+};
+
+const searchLocationsByCity = async (city) => {
+	if (!city || city.length < 2) return [];
+	try {
+		const q = encodeURIComponent(city.trim());
+		const results = await sanctum(`/api/locations/by-city?city=${q}`);
+		return dedupeLocations(results || []);
+	} catch (e) {
+		return [];
+	}
+};
+
+const getCitySuggestions = async (query) => {
+	if (!query || query.length < 2) return [];
+
+	let results = await searchLocationsByCity(query);
+	if (!results.length) {
+		results = await searchLocations(query, 500);
+	}
+
+	return sortCitySuggestionsByRelevance(
+		dedupeLocations(results)
+		.filter((loc) => cityMatchesQuery(loc.place_name, query))
+		.sort(sortLocations),
+		query
+	);
+};
+
+const getCapSuggestions = async (capQuery, linkedCityQuery = "") => {
+	if (!capQuery || capQuery.length < 3) return [];
+
+	let results = [];
+	if (capQuery.length === 5) {
+		results = await searchLocationsByCap(capQuery);
+	} else {
+		results = await searchLocations(capQuery, 500);
+	}
+
+	return dedupeLocations(results)
+		.filter((loc) => String(loc.postal_code || "").startsWith(capQuery))
+		.filter((loc) => !linkedCityQuery || cityMatchesQuery(loc.place_name, linkedCityQuery))
+		.sort(sortLocations);
+};
+
+const getCapSuggestionsFromCity = async (cityQuery) => {
+	if (!cityQuery || cityQuery.length < 2) return [];
+	const results = await getCitySuggestions(cityQuery);
+	return dedupeLocations(results).sort(sortLocations);
+};
+
 const onOriginCityInput = () => {
 	clearTimeout(originSearchTimeout);
+	clearTimeout(originHideTimeout);
 	originSearchTimeout = setTimeout(async () => {
-		const q = userStore.shipmentDetails.origin_city;
+		const q = String(userStore.shipmentDetails.origin_city || "").trim();
+		const seq = ++originSearchSeq;
 		if (q && q.length >= 2) {
-			originSuggestions.value = await searchLocations(q);
+			const suggestions = await getCitySuggestions(q);
+			if (seq !== originSearchSeq) return;
+			originSuggestions.value = suggestions;
 			showOriginSuggestions.value = originSuggestions.value.length > 0;
 		} else {
+			originSuggestions.value = [];
 			showOriginSuggestions.value = false;
 		}
-	}, 300);
+	}, AUTOCOMPLETE_DEBOUNCE_MS);
 };
 
 const onOriginCapInput = () => {
 	clearTimeout(originSearchTimeout);
-	filterCap(userStore.shipmentDetails);
+	clearTimeout(originHideTimeout);
+	userStore.shipmentDetails.origin_postal_code = sv.filterCAP(userStore.shipmentDetails.origin_postal_code);
 	originSearchTimeout = setTimeout(async () => {
-		const q = userStore.shipmentDetails.origin_postal_code;
+		const q = String(userStore.shipmentDetails.origin_postal_code || "").trim();
+		const linkedCity = String(userStore.shipmentDetails.origin_city || "").trim();
+		const seq = ++originSearchSeq;
 		if (q && q.length >= 3) {
-			originSuggestions.value = await searchLocations(q);
+			const suggestions = await getCapSuggestions(q, linkedCity);
+			if (seq !== originSearchSeq) return;
+			originSuggestions.value = suggestions;
 			showOriginSuggestions.value = originSuggestions.value.length > 0;
 		} else {
+			originSuggestions.value = [];
 			showOriginSuggestions.value = false;
 		}
-	}, 300);
+	}, AUTOCOMPLETE_DEBOUNCE_MS);
 };
 
 const selectOriginLocation = (loc) => {
 	userStore.shipmentDetails.origin_city = loc.place_name;
 	userStore.shipmentDetails.origin_postal_code = loc.postal_code;
+	onCapInputSmart("origin_cap", userStore.shipmentDetails.origin_postal_code);
+	sv.clearError("origin_cap");
+	clearTimeout(originHideTimeout);
 	showOriginSuggestions.value = false;
 };
 
 const onDestCityInput = () => {
 	clearTimeout(destSearchTimeout);
+	clearTimeout(destHideTimeout);
 	destSearchTimeout = setTimeout(async () => {
-		const q = userStore.shipmentDetails.destination_city;
+		const q = String(userStore.shipmentDetails.destination_city || "").trim();
+		const seq = ++destSearchSeq;
 		if (q && q.length >= 2) {
-			destSuggestions.value = await searchLocations(q);
+			const suggestions = await getCitySuggestions(q);
+			if (seq !== destSearchSeq) return;
+			destSuggestions.value = suggestions;
 			showDestSuggestions.value = destSuggestions.value.length > 0;
 		} else {
+			destSuggestions.value = [];
 			showDestSuggestions.value = false;
 		}
-	}, 300);
+	}, AUTOCOMPLETE_DEBOUNCE_MS);
 };
 
 const onDestCapInput = () => {
 	clearTimeout(destSearchTimeout);
-	filterCap(userStore.shipmentDetails);
+	clearTimeout(destHideTimeout);
+	userStore.shipmentDetails.destination_postal_code = sv.filterCAP(userStore.shipmentDetails.destination_postal_code);
 	destSearchTimeout = setTimeout(async () => {
-		const q = userStore.shipmentDetails.destination_postal_code;
+		const q = String(userStore.shipmentDetails.destination_postal_code || "").trim();
+		const linkedCity = String(userStore.shipmentDetails.destination_city || "").trim();
+		const seq = ++destSearchSeq;
 		if (q && q.length >= 3) {
-			destSuggestions.value = await searchLocations(q);
+			const suggestions = await getCapSuggestions(q, linkedCity);
+			if (seq !== destSearchSeq) return;
+			destSuggestions.value = suggestions;
 			showDestSuggestions.value = destSuggestions.value.length > 0;
 		} else {
+			destSuggestions.value = [];
 			showDestSuggestions.value = false;
 		}
-	}, 300);
+	}, AUTOCOMPLETE_DEBOUNCE_MS);
 };
 
 const selectDestLocation = (loc) => {
 	userStore.shipmentDetails.destination_city = loc.place_name;
 	userStore.shipmentDetails.destination_postal_code = loc.postal_code;
+	onCapInputSmart("dest_cap", userStore.shipmentDetails.destination_postal_code);
+	sv.clearError("dest_cap");
+	clearTimeout(destHideTimeout);
 	showDestSuggestions.value = false;
+};
+
+const onOriginCityFocus = async () => {
+	clearTimeout(originHideTimeout);
+	const cityQuery = String(userStore.shipmentDetails.origin_city || "").trim();
+	const capQuery = String(userStore.shipmentDetails.origin_postal_code || "").trim();
+	const seq = ++originSearchSeq;
+
+	if (cityQuery.length >= 2) {
+		const suggestions = await getCitySuggestions(cityQuery);
+		if (seq !== originSearchSeq) return;
+		originSuggestions.value = suggestions;
+		showOriginSuggestions.value = originSuggestions.value.length > 0;
+		return;
+	}
+
+	if (capQuery.length >= 3) {
+		const suggestions = await getCapSuggestions(capQuery);
+		if (seq !== originSearchSeq) return;
+		originSuggestions.value = suggestions;
+		showOriginSuggestions.value = originSuggestions.value.length > 0;
+	}
+};
+
+const onOriginCapFocus = async () => {
+	clearTimeout(originHideTimeout);
+	const capQuery = String(userStore.shipmentDetails.origin_postal_code || "").trim();
+	const cityQuery = String(userStore.shipmentDetails.origin_city || "").trim();
+	const seq = ++originSearchSeq;
+
+	if (capQuery.length >= 3) {
+		const suggestions = await getCapSuggestions(capQuery, cityQuery);
+		if (seq !== originSearchSeq) return;
+		originSuggestions.value = suggestions;
+		showOriginSuggestions.value = originSuggestions.value.length > 0;
+		return;
+	}
+
+	if (cityQuery.length >= 2) {
+		const suggestions = await getCapSuggestionsFromCity(cityQuery);
+		if (seq !== originSearchSeq) return;
+		originSuggestions.value = suggestions;
+		showOriginSuggestions.value = originSuggestions.value.length > 0;
+	}
+};
+
+const onDestCityFocus = async () => {
+	clearTimeout(destHideTimeout);
+	const cityQuery = String(userStore.shipmentDetails.destination_city || "").trim();
+	const capQuery = String(userStore.shipmentDetails.destination_postal_code || "").trim();
+	const seq = ++destSearchSeq;
+
+	if (cityQuery.length >= 2) {
+		const suggestions = await getCitySuggestions(cityQuery);
+		if (seq !== destSearchSeq) return;
+		destSuggestions.value = suggestions;
+		showDestSuggestions.value = destSuggestions.value.length > 0;
+		return;
+	}
+
+	if (capQuery.length >= 3) {
+		const suggestions = await getCapSuggestions(capQuery);
+		if (seq !== destSearchSeq) return;
+		destSuggestions.value = suggestions;
+		showDestSuggestions.value = destSuggestions.value.length > 0;
+	}
+};
+
+const onDestCapFocus = async () => {
+	clearTimeout(destHideTimeout);
+	const capQuery = String(userStore.shipmentDetails.destination_postal_code || "").trim();
+	const cityQuery = String(userStore.shipmentDetails.destination_city || "").trim();
+	const seq = ++destSearchSeq;
+
+	if (capQuery.length >= 3) {
+		const suggestions = await getCapSuggestions(capQuery, cityQuery);
+		if (seq !== destSearchSeq) return;
+		destSuggestions.value = suggestions;
+		showDestSuggestions.value = destSuggestions.value.length > 0;
+		return;
+	}
+
+	if (cityQuery.length >= 2) {
+		const suggestions = await getCapSuggestionsFromCity(cityQuery);
+		if (seq !== destSearchSeq) return;
+		destSuggestions.value = suggestions;
+		showDestSuggestions.value = destSuggestions.value.length > 0;
+	}
+};
+
+// Helper functions per nascondere suggerimenti con delay
+const hideOriginSuggestions = () => {
+	clearTimeout(originHideTimeout);
+	originHideTimeout = setTimeout(() => {
+		showOriginSuggestions.value = false;
+		originHideTimeout = null;
+	}, 200);
+};
+
+const hideDestSuggestions = () => {
+	clearTimeout(destHideTimeout);
+	destHideTimeout = setTimeout(() => {
+		showDestSuggestions.value = false;
+		destHideTimeout = null;
+	}, 200);
 };
 
 const getTodayDate = computed(() => {
@@ -173,9 +437,29 @@ const packageTypeList = [
 	},
 ];
 
+const normalizePackageType = (value) =>
+	String(value || "")
+		.toLowerCase()
+		.replace(/\s*#\d+\s*$/u, "")
+		.trim();
+
+const getPackVisual = (pack) => {
+	const fallback = packageTypeList[0];
+	const byType = packageTypeList.find(
+		(item) => normalizePackageType(item.text) === normalizePackageType(pack?.package_type),
+	);
+
+	const img = pack?.img || byType?.img || fallback.img;
+	const width = Number(pack?.width) > 0 ? Number(pack.width) : (byType?.width || fallback.width);
+	const height = Number(pack?.height) > 0 ? Number(pack.height) : (byType?.height || fallback.height);
+
+	return { img, width, height };
+};
+
 // --- GESTIONE PACCHI ---
 
 const isPackageSelected = ref(false);  // true quando l'utente ha aggiunto almeno un collo
+const showPackageSelector = ref(true); // Controlla visibilità selettore tipo collo
 
 const newPackage = ref({});            // Oggetto temporaneo per il pacco in fase di aggiunta
 
@@ -202,6 +486,7 @@ const selectPackageType = (packageType) => {
 	userStore.packages.push(newPackage.value);
 
 	isPackageSelected.value = true;
+	showPackageSelector.value = false; // Nascondi selettore dopo aver aggiunto un pacco
 };
 
 const myPack = ref(null);             // Riferimento al pacco attualmente in modifica
@@ -315,16 +600,6 @@ const calcPriceWithVolume = (pack) => {
 // Validazione intelligente: mostra errori solo dopo che l'utente ha interagito col campo
 const sv = useSmartValidation();
 
-const filterCap = (shipment_details) => {
-	if (shipment_details.origin_postal_code) {
-		shipment_details.origin_postal_code = sv.filterCAP(shipment_details.origin_postal_code);
-	}
-
-	if (shipment_details.destination_postal_code) {
-		shipment_details.destination_postal_code = sv.filterCAP(shipment_details.destination_postal_code);
-	}
-};
-
 // Validate weight with max limit
 const onWeightInput = (pack, packIndex) => {
 	calcPriceWithWeight(pack);
@@ -395,6 +670,7 @@ const deletePack = async (index) => {
 
 	if (userStore.packages.length === 0) {
 		isPackageSelected.value = false;
+		showPackageSelector.value = true; // Mostra di nuovo il selettore
 		/* userStore.isRateCalculated = false; */
 		/* firstClick.value = false; */
 		/* userStore.newPackage = {}; */
@@ -487,6 +763,9 @@ const calculateRate = async () => {
 				packages: userStore.packages,
 			},
 		});
+
+		// 5. Aggiorna la sessione
+		await refresh();
 	} catch (error) {
 		messageError.value = error?.data?.errors || { packages: ["Errore durante il calcolo. Riprova."] };
 		isRateCalculated.value = false;
@@ -499,7 +778,13 @@ const calculateRate = async () => {
 	messageError.value = null;
 	isRateCalculated.value = true;
 	userStore.isQuoteStarted = true;
-	await refresh();
+
+	// BACKUP: salva in localStorage per sicurezza
+	try {
+		localStorage.setItem('spedizionefacile_packages', JSON.stringify(userStore.packages));
+	} catch (e) {
+		console.error('Errore salvataggio localStorage:', e);
+	}
 
 	return true;
 };
@@ -594,16 +879,22 @@ const resetForm = () => {
 	isRateCalculated.value = false;
 	messageError.value = null;
 };
+
+// Cleanup timeout per evitare memory leak
+onBeforeUnmount(() => {
+	clearTimeout(originSearchTimeout);
+	clearTimeout(destSearchTimeout);
+});
 </script>
 
 <template>
 	<section :class="route.path === '/' ? 'mt-[-140px] tablet:mt-[-70px] desktop:mt-[-60px] relative z-50' : 'pt-[24px]'">
 		<div class="my-container">
 			<div
-				class="bg-white w-full rounded-[20px] tablet:rounded-[24px] desktop-xl:rounded-[32px] relative z-10 p-[16px_12px] tablet:p-[20px_40px] desktop:p-[30px_36px] mx-auto"
+				class="bg-white w-full rounded-[16px] relative z-10 p-[16px_12px] tablet:p-[20px_40px] desktop:p-[30px_36px] mx-auto"
 			:class="route.path === '/'
-				? 'max-w-[1260px] shadow-[0_8px_32px_rgba(0,0,0,0.12)]'
-				: 'mt-[20px] max-w-[1200px] shadow-[0_4px_20px_rgba(0,0,0,0.08)]'">
+				? 'shadow-[0_8px_32px_rgba(0,0,0,0.12)]'
+				: 'mt-[20px] shadow-[0_4px_20px_rgba(0,0,0,0.08)]'">
 				<div class="border-b-[1px] border-[#E6E6E6] pb-[8px] flex items-center justify-center relative">
 					<h2 class="text-[1.25rem] desktop:text-[2rem] text-black font-bold text-center">Preventivo Rapido</h2>
 					<button
@@ -620,40 +911,20 @@ const resetForm = () => {
 				<form ref="formRef" @submit.prevent="">
 					<Steps :current-step="0" />
 
-					<h3 class="font-semibold text-[0.875rem] tablet:text-[1rem] desktop:text-[1.25rem] text-black border-b-[1px] border-[#E6E6E6] desktop:w-[469px] h-[44px] tablet:h-[50px] pl-[10px] tablet:pl-[18px] leading-[44px] tablet:leading-[50px] scroll-mt-[80px]" title="Seleziona il tipo di pacco che vuoi spedire. Puoi aggiungere più colli alla stessa spedizione.">Aggiungi altri colli alla spedizione</h3>
-
-					<ul class="flex items-center flex-wrap gap-[12px] tablet:gap-[16px] desktop:gap-x-[30px] desktop-xl:gap-x-[40px] mt-[10px]">
-						<li
-							v-for="(packageType, packageTypeIndex) in packageTypeList"
-							:key="packageTypeIndex"
-							class="rounded-[21px] relative shadow-[6px_6px_5.3px_rgba(0,0,0,.32)] h-[50px] tablet:h-[77px] text-[0.875rem] tablet:text-[1rem] desktop-xl:text-[1.625rem] text-black font-medium tracking-[-0.624px] w-[calc(33.333%-8px)] tablet:w-[calc(25%-12px)] desktop-xl:w-[193px] transition-[transform,box-shadow] duration-200 hover:shadow-[6px_6px_12px_rgba(0,0,0,.2)] hover:-translate-y-[1px] active:scale-95">
-							<button
-								type="button"
-								@click="selectPackageType(packageType)"
-								class="w-full h-full flex justify-center items-center gap-x-[12px] tablet:gap-x-[31px] cursor-pointer package-card after:content-[''] after:bg-no-repeat after:bg-right"
-								:style="{ '--after-bg': `url(/img/quote/first-step/${packageType.img})`, '--after-width': `${packageType.width}px`, '--after-height': `${packageType.height}px` }"
-								:title="`Clicca per aggiungere un collo di tipo ${packageType.text}`">
-								{{ packageType.text }}
-							</button>
-							<input type="radio" name="package_type" class="absolute left-[50%] bottom-0 opacity-0 pointer-events-none" />
-							<!--  :required="!isPackageSelected" -->
-						</li>
-					</ul>
-
-					<p v-if="messageError?.packages" class="text-red-500 text-[1rem] mt-[10px]">
-						{{ messageError.packages[0] }}
-					</p>
-
-					<h3 class="font-semibold text-[0.875rem] tablet:text-[1rem] desktop:text-[1.25rem] text-black border-b-[1px] border-[#E6E6E6] desktop:w-[600px] h-auto min-h-[44px] tablet:min-h-[50px] pl-[10px] tablet:pl-[18px] mt-[20px] tablet:mt-[40px] py-[10px] tablet:py-0 tablet:leading-[50px] scroll-mt-[80px]">Inserisci la posizione di partenza e destinazione</h3>
+					<!-- SEZIONE 1: Indirizzi (spostata prima del selettore tipo collo) -->
+					<h3 class="preventivo-section-title font-semibold text-[0.875rem] tablet:text-[1rem] desktop:text-[1.25rem] text-black border-b-[1px] border-[#E6E6E6] h-auto min-h-[44px] tablet:min-h-[50px] py-[10px] tablet:py-0 tablet:leading-[50px] scroll-mt-[80px] mx-auto desktop:max-w-[600px]">Inserisci la posizione di partenza e destinazione</h3>
 
 					<div
-						class="flex items-start flex-wrap tablet:justify-center desktop-xl:justify-between tablet:gap-x-[20px] gap-y-[16px] tablet:gap-y-[20px] desktop:gap-y-[36px] desktop-xl:gap-y-0 border-[1px] border-[rgba(0,0,0,.2)] rounded-[20px] tablet:rounded-[30px] p-[12px] tablet:p-[15px] mt-[10px]">
+						class="flex items-start flex-wrap tablet:justify-center desktop-xl:justify-between tablet:gap-x-[20px] gap-y-[16px] tablet:gap-y-[20px] desktop:gap-y-[36px] desktop-xl:gap-y-0 border-[1px] border-[rgba(0,0,0,.2)] rounded-[16px] p-[12px] tablet:p-[15px] mt-[10px]">
 						<div class="w-full tablet:w-[30%] desktop:w-full desktop-xl:w-[200px] relative">
 							<label for="origin_city" class="label-preventivo-rapido">Città di Ritiro</label>
-							<input type="text" v-model="userStore.shipmentDetails.origin_city" id="origin_city" placeholder="Città" class="input-preventivo-rapido" required autocomplete="off" @input="onOriginCityInput" @blur="setTimeout(() => showOriginSuggestions = false, 200)" />
-							<ul v-if="showOriginSuggestions && originSuggestions.length" class="absolute z-50 top-full left-0 right-0 bg-white border border-[#D0D0D0] rounded-[10px] mt-[2px] max-h-[200px] overflow-y-auto shadow-lg">
-								<li v-for="loc in originSuggestions" :key="loc.id" @mousedown.prevent="selectOriginLocation(loc)" class="px-[14px] py-[12px] tablet:py-[10px] cursor-pointer hover:bg-[#f0fafb] text-[0.875rem] text-[#252B42] border-b border-[#F0F0F0] last:border-0">
-									<span class="font-semibold">{{ loc.place_name }}</span> <span class="text-[#737373]">({{ loc.province_name }}) - {{ loc.postal_code }}</span>
+							<input type="text" v-model="userStore.shipmentDetails.origin_city" id="origin_city" placeholder="Città" class="input-preventivo-rapido" required autocomplete="off" @focus="onOriginCityFocus" @input="onOriginCityInput" @blur="hideOriginSuggestions" />
+							<ul v-if="showOriginSuggestions && originSuggestions.length" role="listbox" class="absolute z-50 top-full left-0 right-0 bg-white border border-[#D0D0D0] rounded-[8px] mt-[2px] max-h-[200px] overflow-y-auto shadow-lg">
+								<li v-for="loc in originSuggestions" :key="locationKey(loc)" role="option" aria-selected="false" @mousedown.prevent="selectOriginLocation(loc)" class="px-[14px] py-[12px] tablet:py-[10px] cursor-pointer hover:bg-[#f0fafb] text-[0.875rem] text-[#252B42] border-b border-[#F0F0F0] last:border-0">
+									<span class="font-semibold">{{ loc.place_name }}</span>
+									<span class="text-[#737373]">
+										<template v-if="getProvinceLabel(loc)">({{ getProvinceLabel(loc) }}) - </template>{{ loc.postal_code }}
+									</span>
 								</li>
 							</ul>
 							<p v-if="messageError?.['shipment_details.origin_city']" class="text-red-500 text-[1rem] mt-[10px]">
@@ -663,10 +934,11 @@ const resetForm = () => {
 
 						<div class="w-full tablet:w-[30%] desktop:w-full desktop-xl:w-[200px] relative">
 							<label for="origin_postal_code" class="label-preventivo-rapido">CAP di Ritiro</label>
-							<input type="text" v-model="userStore.shipmentDetails.origin_postal_code" id="origin_postal_code" placeholder="CAP" :class="sv.errorClass('origin_cap', 'input-preventivo-rapido')" required autocomplete="off" maxlength="5" @input="onOriginCapInput(); onCapInputSmart('origin_cap', userStore.shipmentDetails.origin_postal_code)" @blur="setTimeout(() => showOriginSuggestions = false, 200); onCapBlur('origin_cap', userStore.shipmentDetails.origin_postal_code)" />
-							<ul v-if="showOriginSuggestions && originSuggestions.length" class="absolute z-50 top-full left-0 right-0 bg-white border border-[#D0D0D0] rounded-[10px] mt-[2px] max-h-[200px] overflow-y-auto shadow-lg">
-								<li v-for="loc in originSuggestions" :key="loc.id" @mousedown.prevent="selectOriginLocation(loc)" class="px-[14px] py-[12px] tablet:py-[10px] cursor-pointer hover:bg-[#f0fafb] text-[0.875rem] text-[#252B42] border-b border-[#F0F0F0] last:border-0">
-									<span class="font-semibold">{{ loc.postal_code }}</span> - {{ loc.place_name }} <span class="text-[#737373]">({{ loc.province_name }})</span>
+							<input type="text" v-model="userStore.shipmentDetails.origin_postal_code" id="origin_postal_code" placeholder="CAP" :class="sv.errorClass('origin_cap', 'input-preventivo-rapido')" required autocomplete="off" maxlength="5" inputmode="numeric" pattern="[0-9]{5}" @focus="onOriginCapFocus" @input="onOriginCapInput(); onCapInputSmart('origin_cap', userStore.shipmentDetails.origin_postal_code)" @blur="hideOriginSuggestions(); onCapBlur('origin_cap', userStore.shipmentDetails.origin_postal_code)" />
+							<ul v-if="showOriginSuggestions && originSuggestions.length" role="listbox" class="absolute z-50 top-full left-0 right-0 bg-white border border-[#D0D0D0] rounded-[8px] mt-[2px] max-h-[200px] overflow-y-auto shadow-lg">
+								<li v-for="loc in originSuggestions" :key="locationKey(loc)" role="option" aria-selected="false" @mousedown.prevent="selectOriginLocation(loc)" class="px-[14px] py-[12px] tablet:py-[10px] cursor-pointer hover:bg-[#f0fafb] text-[0.875rem] text-[#252B42] border-b border-[#F0F0F0] last:border-0">
+									<span class="font-semibold">{{ loc.postal_code }}</span> - {{ loc.place_name }}
+									<span v-if="getProvinceLabel(loc)" class="text-[#737373]"> ({{ getProvinceLabel(loc) }})</span>
 								</li>
 							</ul>
 							<p v-if="sv.getError('origin_cap')" class="text-red-500 text-[0.8125rem] mt-[4px]">{{ sv.getError('origin_cap') }}</p>
@@ -677,10 +949,13 @@ const resetForm = () => {
 
 						<div class="w-full tablet:w-[30%] desktop:w-full desktop-xl:w-[200px] relative">
 							<label for="destination_city" class="label-preventivo-rapido">Città Consegna</label>
-							<input type="text" v-model="userStore.shipmentDetails.destination_city" id="destination_city" placeholder="Città" class="input-preventivo-rapido" required autocomplete="off" @input="onDestCityInput" @blur="setTimeout(() => showDestSuggestions = false, 200)" />
-							<ul v-if="showDestSuggestions && destSuggestions.length" class="absolute z-50 top-full left-0 right-0 bg-white border border-[#D0D0D0] rounded-[10px] mt-[2px] max-h-[200px] overflow-y-auto shadow-lg">
-								<li v-for="loc in destSuggestions" :key="loc.id" @mousedown.prevent="selectDestLocation(loc)" class="px-[14px] py-[12px] tablet:py-[10px] cursor-pointer hover:bg-[#f0fafb] text-[0.875rem] text-[#252B42] border-b border-[#F0F0F0] last:border-0">
-									<span class="font-semibold">{{ loc.place_name }}</span> <span class="text-[#737373]">({{ loc.province_name }}) - {{ loc.postal_code }}</span>
+							<input type="text" v-model="userStore.shipmentDetails.destination_city" id="destination_city" placeholder="Città" class="input-preventivo-rapido" required autocomplete="off" @focus="onDestCityFocus" @input="onDestCityInput" @blur="hideDestSuggestions" />
+							<ul v-if="showDestSuggestions && destSuggestions.length" role="listbox" class="absolute z-50 top-full left-0 right-0 bg-white border border-[#D0D0D0] rounded-[8px] mt-[2px] max-h-[200px] overflow-y-auto shadow-lg">
+								<li v-for="loc in destSuggestions" :key="locationKey(loc)" role="option" aria-selected="false" @mousedown.prevent="selectDestLocation(loc)" class="px-[14px] py-[12px] tablet:py-[10px] cursor-pointer hover:bg-[#f0fafb] text-[0.875rem] text-[#252B42] border-b border-[#F0F0F0] last:border-0">
+									<span class="font-semibold">{{ loc.place_name }}</span>
+									<span class="text-[#737373]">
+										<template v-if="getProvinceLabel(loc)">({{ getProvinceLabel(loc) }}) - </template>{{ loc.postal_code }}
+									</span>
 								</li>
 							</ul>
 							<p v-if="messageError?.['shipment_details.destination_city']" class="text-red-500 text-[1rem] mt-[10px]">
@@ -690,10 +965,11 @@ const resetForm = () => {
 
 						<div class="w-full tablet:w-[30%] desktop:w-full desktop-xl:w-[200px] relative">
 							<label for="destination_postal_code" class="label-preventivo-rapido">CAP Consegna</label>
-							<input type="text" v-model="userStore.shipmentDetails.destination_postal_code" id="destination_postal_code" placeholder="CAP" :class="sv.errorClass('dest_cap', 'input-preventivo-rapido')" required autocomplete="off" maxlength="5" @input="onDestCapInput(); onCapInputSmart('dest_cap', userStore.shipmentDetails.destination_postal_code)" @blur="setTimeout(() => showDestSuggestions = false, 200); onCapBlur('dest_cap', userStore.shipmentDetails.destination_postal_code)" />
-							<ul v-if="showDestSuggestions && destSuggestions.length" class="absolute z-50 top-full left-0 right-0 bg-white border border-[#D0D0D0] rounded-[10px] mt-[2px] max-h-[200px] overflow-y-auto shadow-lg">
-								<li v-for="loc in destSuggestions" :key="loc.id" @mousedown.prevent="selectDestLocation(loc)" class="px-[14px] py-[12px] tablet:py-[10px] cursor-pointer hover:bg-[#f0fafb] text-[0.875rem] text-[#252B42] border-b border-[#F0F0F0] last:border-0">
-									<span class="font-semibold">{{ loc.postal_code }}</span> - {{ loc.place_name }} <span class="text-[#737373]">({{ loc.province_name }})</span>
+							<input type="text" v-model="userStore.shipmentDetails.destination_postal_code" id="destination_postal_code" placeholder="CAP" :class="sv.errorClass('dest_cap', 'input-preventivo-rapido')" required autocomplete="off" maxlength="5" inputmode="numeric" pattern="[0-9]{5}" @focus="onDestCapFocus" @input="onDestCapInput(); onCapInputSmart('dest_cap', userStore.shipmentDetails.destination_postal_code)" @blur="hideDestSuggestions(); onCapBlur('dest_cap', userStore.shipmentDetails.destination_postal_code)" />
+							<ul v-if="showDestSuggestions && destSuggestions.length" role="listbox" class="absolute z-50 top-full left-0 right-0 bg-white border border-[#D0D0D0] rounded-[8px] mt-[2px] max-h-[200px] overflow-y-auto shadow-lg">
+								<li v-for="loc in destSuggestions" :key="locationKey(loc)" role="option" aria-selected="false" @mousedown.prevent="selectDestLocation(loc)" class="px-[14px] py-[12px] tablet:py-[10px] cursor-pointer hover:bg-[#f0fafb] text-[0.875rem] text-[#252B42] border-b border-[#F0F0F0] last:border-0">
+									<span class="font-semibold">{{ loc.postal_code }}</span> - {{ loc.place_name }}
+									<span v-if="getProvinceLabel(loc)" class="text-[#737373]"> ({{ getProvinceLabel(loc) }})</span>
 								</li>
 							</ul>
 							<p v-if="sv.getError('dest_cap')" class="text-red-500 text-[0.8125rem] mt-[4px]">{{ sv.getError('dest_cap') }}</p>
@@ -701,16 +977,45 @@ const resetForm = () => {
 								{{ messageError["shipment_details.destination_postal_code"][0] }}
 							</p>
 						</div>
-
 					</div>
 
-					<div v-if="userStore.packages.length > 0">
-						<h3 class="font-semibold text-[0.875rem] tablet:text-[1rem] desktop:text-[1.25rem] text-black border-b-[1px] border-[#E6E6E6] desktop:w-[492px] min-h-[44px] tablet:min-h-[50px] pl-[10px] tablet:pl-[18px] mt-[20px] tablet:mt-[40px] py-[10px] tablet:py-0 flex items-center gap-[8px] scroll-mt-[80px]">
+					<!-- SEZIONE 2: Selettore tipo collo (spostato dopo indirizzi, con animazione) -->
+					<Transition name="package-selector" mode="out-in">
+						<div v-if="showPackageSelector" class="package-selector-wrapper">
+							<h3 class="preventivo-section-title font-semibold text-[0.875rem] tablet:text-[1rem] desktop:text-[1.25rem] text-black border-b-[1px] border-[#E6E6E6] h-[44px] tablet:h-[50px] leading-[44px] tablet:leading-[50px] scroll-mt-[80px] mt-[20px] tablet:mt-[40px] mx-auto desktop:max-w-[469px]" title="Seleziona il tipo di pacco che vuoi spedire. Puoi aggiungere più colli alla stessa spedizione.">Aggiungi altri colli alla spedizione</h3>
+
+							<ul class="flex items-center justify-center flex-wrap gap-[12px] tablet:gap-[16px] desktop:gap-x-[30px] desktop-xl:gap-x-[40px] mt-[10px]">
+								<li
+									v-for="(packageType, packageTypeIndex) in packageTypeList"
+									:key="packageTypeIndex"
+									class="rounded-[12px] relative shadow-[6px_6px_5.3px_rgba(0,0,0,.32)] h-[50px] tablet:h-[77px] text-[0.875rem] tablet:text-[1rem] desktop-xl:text-[1.625rem] text-black font-medium tracking-[-0.624px] w-[calc(33.333%-8px)] tablet:w-[193px] desktop-xl:w-[193px] transition-[transform,box-shadow] duration-300 hover:shadow-[6px_6px_12px_rgba(0,0,0,.2)] hover:-translate-y-[2px] active:scale-95">
+									<button
+										type="button"
+										@click="selectPackageType(packageType)"
+										class="rounded-[12px] w-full h-full flex justify-center items-center gap-x-[12px] tablet:gap-x-[31px] cursor-pointer package-card after:content-[''] after:bg-no-repeat after:bg-right"
+										:style="{ '--after-bg': `url(/img/quote/first-step/${packageType.img})`, '--after-width': `${packageType.width}px`, '--after-height': `${packageType.height}px` }"
+										:title="`Clicca per aggiungere un collo di tipo ${packageType.text}`">
+										{{ packageType.text }}
+									</button>
+									<input type="radio" name="package_type" class="absolute left-[50%] bottom-0 opacity-0 pointer-events-none" />
+								</li>
+							</ul>
+
+							<p v-if="messageError?.packages" class="text-red-500 text-[1rem] mt-[10px] text-center">
+								{{ messageError.packages[0] }}
+							</p>
+						</div>
+					</Transition>
+
+					<!-- SEZIONE 3: Dimensioni e peso (con animazione) -->
+					<Transition name="dimensions-section" mode="out-in">
+						<div v-if="userStore.packages.length > 0" class="dimensions-wrapper">
+						<h3 class="preventivo-section-title font-semibold text-[0.875rem] tablet:text-[1rem] desktop:text-[1.25rem] text-black border-b-[1px] border-[#E6E6E6] min-h-[44px] tablet:min-h-[50px] mt-[20px] tablet:mt-[40px] py-[10px] tablet:py-0 flex items-center justify-center gap-[8px] scroll-mt-[80px] mx-auto desktop:max-w-[492px]">
 							Inserisci le dimensioni e il peso dei colli
 							<!-- Info icon con tooltip avviso misure -->
 							<span class="relative group inline-flex">
 								<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[20px] h-[20px] text-[#737373] cursor-help shrink-0" fill="currentColor"><path d="M13,9H11V7H13M13,17H11V11H13M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z"/></svg>
-								<span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-[8px] w-[280px] bg-[#252B42] text-white text-[0.75rem] font-normal leading-[1.4] p-[12px] rounded-[10px] shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-[opacity,visibility] duration-200 z-50 pointer-events-none">
+								<span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-[8px] w-[280px] bg-[#252B42] text-white text-[0.75rem] font-normal leading-[1.4] p-[12px] rounded-[8px] shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-[opacity,visibility] duration-200 z-50 pointer-events-none">
 									Inserisci peso e dimensioni reali del collo. Il corriere verifica le misure: se risultano significativamente diverse, il pacco potrebbe essere bloccato e potrebbero essere addebitati costi aggiuntivi per lo svincolo.
 									<span class="absolute top-full left-1/2 -translate-x-1/2 border-[6px] border-transparent border-t-[#252B42]"></span>
 								</span>
@@ -721,25 +1026,35 @@ const resetForm = () => {
 							<li
 								v-for="(pack, packIndex) in userStore.packages"
 								:key="packIndex"
-								class="relative border-[1px] border-[rgba(0,0,0,.2)] rounded-[20px] tablet:rounded-[30px] p-[12px_14px] tablet:p-[15px_20px] mt-[10px] w-full scroll-mt-[80px]">
+								class="relative border-[1px] border-[rgba(0,0,0,.2)] rounded-[16px] p-[12px_14px] tablet:p-[15px_20px] mt-[10px] w-full scroll-mt-[80px]">
 								<!-- Header riga: icona pacco + cestino (mobile) -->
-								<div class="flex items-center justify-between desktop-xl:hidden mb-[12px]">
-									<div class="flex items-center gap-[10px]">
-										<!-- Ottimizzazione: lazy loading + decoding async -->
-										<NuxtImg :src="`/img/quote/first-step/${pack.img}`" :alt="pack.package_type" width="32" height="32" loading="lazy" decoding="async" class="h-[32px] w-auto object-contain" />
-										<span class="text-[0.875rem] font-semibold text-[#333]">{{ pack.package_type }}</span>
-									</div>
-									<button type="button" class="cursor-pointer text-[#DB9FA1] p-[4px] min-w-[36px] min-h-[36px] flex items-center justify-center hover:text-red-500 transition-colors" @click="deletePack(packIndex)" aria-label="Elimina elemento" title="Rimuovi questo collo dalla spedizione">
+									<div class="flex items-center justify-between desktop-xl:hidden mb-[12px]">
+										<div class="flex items-center gap-[10px]">
+											<!-- Ottimizzazione: lazy loading + decoding async -->
+											<NuxtImg :src="`/img/quote/first-step/${getPackVisual(pack).img}`" :alt="pack.package_type" :width="getPackVisual(pack).width" :height="getPackVisual(pack).height" loading="lazy" decoding="async" class="h-[32px] w-auto object-contain" />
+											<span class="text-[0.875rem] font-semibold text-[#333]">{{ pack.package_type }}</span>
+										</div>
+									<button type="button" class="cursor-pointer text-[#DB9FA1] p-[4px] min-w-[36px] min-h-[36px] flex items-center justify-center hover:text-red-500 transition-colors" @click="deletePack(packIndex)" :aria-label="'Elimina pacco ' + (packIndex + 1)" title="Rimuovi questo collo dalla spedizione">
 										<!-- Ottimizzazione: lazy loading + decoding async -->
 										<NuxtImg src="/img/quote/first-step/trash.png" alt="" width="24" height="28" loading="lazy" decoding="async" />
 									</button>
 								</div>
 
 								<!-- Contenuto: campi input -->
-								<div class="flex items-start flex-wrap tablet:justify-center desktop-xl:justify-between tablet:gap-x-[20px] gap-y-[16px] tablet:gap-y-[20px] desktop:gap-y-[36px] desktop-xl:gap-y-0 li-card before:content-[''] before:self-center before:hidden desktop-xl:before:block"
-									:style="{ '--before-bg': `url(/img/quote/first-step/${pack.img})`, '--before-width': `${pack.width}px`, '--before-height': `${pack.height}px` }">
+									<div class="flex items-start flex-wrap desktop-xl:flex-nowrap tablet:justify-center desktop-xl:justify-between tablet:gap-x-[20px] gap-y-[16px] tablet:gap-y-[20px] desktop:gap-y-[36px] desktop-xl:gap-y-0 desktop-xl:gap-x-[16px]">
 
-								<div class="self-center">
+									<div class="hidden desktop-xl:flex self-center items-center justify-center shrink-0 min-w-[48px]">
+										<NuxtImg
+											:src="`/img/quote/first-step/${getPackVisual(pack).img}`"
+											:alt="pack.package_type"
+											:width="getPackVisual(pack).width"
+											:height="getPackVisual(pack).height"
+											loading="lazy"
+											decoding="async"
+											class="w-auto object-contain max-h-[52px]" />
+									</div>
+
+									<div class="self-center">
 									<select v-model="pack.quantity" id="quantity" class="text-black text-[1.25rem] font-medium min-h-[44px] min-w-[44px]" @change="calcQuantity(pack)" title="Numero di colli identici da spedire. Il prezzo verrà moltiplicato per la quantità.">
 										<option v-for="quantity in 10" :key="quantity" :value="quantity" :disabled="quantity === pack.quantity">
 											{{ quantity }}
@@ -751,8 +1066,8 @@ const resetForm = () => {
 								</div>
 
 								<div class="w-full tablet:w-[30%] desktop:w-full desktop-xl:w-[200px]">
-									<label for="weight" class="label-preventivo-rapido" title="Inserisci il peso effettivo del collo in kilogrammi">Peso (Kg)</label>
-									<input type="text" placeholder="...Kg" v-model="pack.weight" id="weight" :class="sv.errorClass(`peso_${packIndex}`, 'input-preventivo-rapido')" @input="onWeightInput(pack, packIndex)" @blur="onWeightBlur(pack, packIndex)" required title="Peso effettivo del collo. Il prezzo viene calcolato in base al peso o al volume, a seconda di quale è maggiore." />
+									<label :for="'weight_' + packIndex" class="label-preventivo-rapido" title="Inserisci il peso effettivo del collo in kilogrammi">Peso (Kg)</label>
+									<input type="text" placeholder="...Kg" v-model="pack.weight" :id="'weight_' + packIndex" :class="sv.errorClass(`peso_${packIndex}`, 'input-preventivo-rapido')" @input="onWeightInput(pack, packIndex)" @blur="onWeightBlur(pack, packIndex)" required title="Peso effettivo del collo. Il prezzo viene calcolato in base al peso o al volume, a seconda di quale è maggiore." />
 									<p v-if="sv.getError(`peso_${packIndex}`)" class="text-red-500 text-[0.8125rem] mt-[4px]">{{ sv.getError(`peso_${packIndex}`) }}</p>
 									<p v-else-if="messageError?.[`packages.${packIndex}.weight`]" class="text-red-500 text-[1rem] mt-[10px]">
 										{{ messageError[`packages.${packIndex}.weight`][0] }}
@@ -760,8 +1075,8 @@ const resetForm = () => {
 								</div>
 
 								<div class="w-full tablet:w-[30%] desktop:w-full desktop-xl:w-[200px]">
-									<label for="first_size" class="label-preventivo-rapido" title="Misura in centimetri del primo lato del collo (lunghezza)">Lato 1 (Cm)</label>
-									<input type="text" placeholder="...Cm" v-model="pack.first_size" id="first_size" :class="sv.errorClass(`first_size_${packIndex}`, 'input-preventivo-rapido')" @input="onDimInput(pack, packIndex, 'first_size', 'Lato 1')" @blur="onDimBlur(pack, packIndex, 'first_size', 'Lato 1')" required />
+									<label :for="'first_size_' + packIndex" class="label-preventivo-rapido" title="Misura in centimetri del primo lato del collo (lunghezza)">Lato 1 (Cm)</label>
+									<input type="text" placeholder="...Cm" v-model="pack.first_size" :id="'first_size_' + packIndex" :class="sv.errorClass(`first_size_${packIndex}`, 'input-preventivo-rapido')" @input="onDimInput(pack, packIndex, 'first_size', 'Lato 1')" @blur="onDimBlur(pack, packIndex, 'first_size', 'Lato 1')" required />
 									<p v-if="sv.getError(`first_size_${packIndex}`)" class="text-red-500 text-[0.8125rem] mt-[4px]">{{ sv.getError(`first_size_${packIndex}`) }}</p>
 									<p v-else-if="messageError?.[`packages.${packIndex}.first_size`]" class="text-red-500 text-[1rem] mt-[10px]">
 										{{ messageError[`packages.${packIndex}.first_size`][0] }}
@@ -769,8 +1084,8 @@ const resetForm = () => {
 								</div>
 
 								<div class="w-full tablet:w-[30%] desktop:w-full desktop-xl:w-[200px]">
-									<label for="second_size" class="label-preventivo-rapido" title="Misura in centimetri del secondo lato del collo (larghezza)">Lato 2 (Cm)</label>
-									<input type="text" placeholder="...Cm" v-model="pack.second_size" id="second_size" :class="sv.errorClass(`second_size_${packIndex}`, 'input-preventivo-rapido')" @input="onDimInput(pack, packIndex, 'second_size', 'Lato 2')" @blur="onDimBlur(pack, packIndex, 'second_size', 'Lato 2')" required />
+									<label :for="'second_size_' + packIndex" class="label-preventivo-rapido" title="Misura in centimetri del secondo lato del collo (larghezza)">Lato 2 (Cm)</label>
+									<input type="text" placeholder="...Cm" v-model="pack.second_size" :id="'second_size_' + packIndex" :class="sv.errorClass(`second_size_${packIndex}`, 'input-preventivo-rapido')" @input="onDimInput(pack, packIndex, 'second_size', 'Lato 2')" @blur="onDimBlur(pack, packIndex, 'second_size', 'Lato 2')" required />
 									<p v-if="sv.getError(`second_size_${packIndex}`)" class="text-red-500 text-[0.8125rem] mt-[4px]">{{ sv.getError(`second_size_${packIndex}`) }}</p>
 									<p v-else-if="messageError?.[`packages.${packIndex}.second_size`]" class="text-red-500 text-[1rem] mt-[10px]">
 										{{ messageError[`packages.${packIndex}.second_size`][0] }}
@@ -778,22 +1093,39 @@ const resetForm = () => {
 								</div>
 
 								<div class="w-full tablet:w-[30%] desktop:w-full desktop-xl:w-[200px]">
-									<label for="third_size" class="label-preventivo-rapido" title="Misura in centimetri del terzo lato del collo (altezza)">Lato 3 (Cm)</label>
-									<input type="text" placeholder="...Cm" v-model="pack.third_size" id="third_size" :class="sv.errorClass(`third_size_${packIndex}`, 'input-preventivo-rapido')" @input="onDimInput(pack, packIndex, 'third_size', 'Lato 3')" @blur="onDimBlur(pack, packIndex, 'third_size', 'Lato 3')" required />
+									<label :for="'third_size_' + packIndex" class="label-preventivo-rapido" title="Misura in centimetri del terzo lato del collo (altezza)">Lato 3 (Cm)</label>
+									<input type="text" placeholder="...Cm" v-model="pack.third_size" :id="'third_size_' + packIndex" :class="sv.errorClass(`third_size_${packIndex}`, 'input-preventivo-rapido')" @input="onDimInput(pack, packIndex, 'third_size', 'Lato 3')" @blur="onDimBlur(pack, packIndex, 'third_size', 'Lato 3')" required />
 									<p v-if="sv.getError(`third_size_${packIndex}`)" class="text-red-500 text-[0.8125rem] mt-[4px]">{{ sv.getError(`third_size_${packIndex}`) }}</p>
 									<p v-else-if="messageError?.[`packages.${packIndex}.third_size`]" class="text-red-500 text-[1rem] mt-[10px]">
 										{{ messageError[`packages.${packIndex}.third_size`][0] }}
 									</p>
 								</div>
 
-								<button type="button" class="hidden desktop-xl:flex cursor-pointer text-[#DB9FA1] self-center p-[6px] min-w-[44px] min-h-[44px] items-center justify-center hover:text-red-500 transition-colors" @click="deletePack(packIndex)" aria-label="Elimina elemento" title="Rimuovi questo collo dalla spedizione">
+								<button type="button" class="hidden desktop-xl:flex cursor-pointer text-[#DB9FA1] self-center p-[6px] min-w-[44px] min-h-[44px] items-center justify-center hover:text-red-500 transition-colors" @click="deletePack(packIndex)" :aria-label="'Elimina pacco ' + (packIndex + 1)" title="Rimuovi questo collo dalla spedizione">
 									<!-- Ottimizzazione: lazy loading + decoding async -->
 									<NuxtImg src="/img/quote/first-step/trash.png" alt="" width="30" height="35" loading="lazy" decoding="async" />
 								</button>
 								</div>
 							</li>
 						</ul>
-					</div>
+
+						<!-- Bottone "Aggiungi altri colli" centrato - appare solo quando il selettore è nascosto -->
+						<Transition name="add-package-btn-fade" mode="out-in">
+							<div v-if="!showPackageSelector" class="add-package-button-wrapper">
+								<button
+									type="button"
+									@click="showPackageSelector = true"
+									class="add-package-btn">
+									<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+										<path d="M12 5v14"/>
+										<path d="M5 12h14"/>
+									</svg>
+									Aggiungi altri colli
+								</button>
+							</div>
+						</Transition>
+						</div>
+					</Transition>
 
 					<!-- <button
 							type="button"
@@ -814,7 +1146,7 @@ const resetForm = () => {
 					<div v-if="promoSettings?.active && promoSettings?.label_text" class="flex justify-center mt-[20px] desktop:mt-[16px]">
 						<span
 							:style="{ backgroundColor: promoSettings.label_color || '#E44203' }"
-							class="inline-flex items-center gap-[6px] px-[14px] py-[6px] rounded-[10px] text-white text-[0.875rem] font-bold tracking-wide shadow-sm">
+							class="inline-flex items-center gap-[6px] px-[14px] py-[6px] rounded-[8px] text-white text-[0.875rem] font-bold tracking-wide shadow-sm">
 							<!-- Ottimizzazione: lazy loading + decoding async + dimensioni per prevenire CLS -->
 							<img v-if="promoSettings.label_image" :src="promoSettings.label_image" alt="" loading="lazy" decoding="async" width="40" height="18" class="h-[18px] w-auto" />
 							{{ promoSettings.label_text }}
@@ -835,14 +1167,17 @@ const resetForm = () => {
 								class="w-full h-full rounded-[50px] cursor-pointer flex items-center justify-center gap-[10px] text-[1.5rem] tablet:text-[1.875rem] disabled:opacity-70 disabled:cursor-not-allowed">
 								<span v-if="!isRateCalculated">Continua</span>
 								<span v-else>
-									<span class="text-[1.75rem] tablet:text-[2.25rem] border-b-[1px] border-white pb-[4px]">Spedisci da {{ session?.data?.total_price }}€</span>
+									<span class="text-[1.75rem] tablet:text-[2.25rem] border-b-[1px] border-white pb-[4px]">Spedisci da {{ session?.data?.total_price || userStore.totalPrice.toFixed(2).replace('.', ',') }}€</span>
 									<span class="block text-center mt-[5px] text-[0.875rem] tablet:text-[1rem]">IVA inclusa</span>
 								</span>
 								<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="shrink-0"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg>
 							</button>
 
 						<p v-if="status === 'pending' || isCalculating" class="h-full flex justify-center items-center">
-							<Icon name="eos-icons:bubble-loading" style="font-size: 60px" />
+							<svg class="animate-spin h-[60px] w-[60px] text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+								<circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+								<path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+							</svg>
 						</p>
 					</div>
 
@@ -913,5 +1248,120 @@ const resetForm = () => {
 
 .continue-button-wrapper.button-rise-up {
 	transform: translateY(var(--rise-distance, 0));
+}
+
+/* Centrare titoli sezioni */
+.preventivo-section-title {
+	text-align: center;
+}
+
+/* Animazione selettore tipo collo */
+.package-selector-enter-active,
+.package-selector-leave-active {
+	transition: opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1), transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.package-selector-enter-from {
+	opacity: 0;
+	transform: scale(0.96) translateY(-15px);
+}
+
+.package-selector-enter-to {
+	opacity: 1;
+	transform: scale(1) translateY(0);
+}
+
+.package-selector-leave-from {
+	opacity: 1;
+	transform: scale(1) translateY(0);
+}
+
+.package-selector-leave-to {
+	opacity: 0;
+	transform: scale(0.96) translateY(-15px);
+}
+
+/* Animazione sezione dimensioni */
+.dimensions-section-enter-active,
+.dimensions-section-leave-active {
+	transition: opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1), transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.dimensions-section-enter-from {
+	opacity: 0;
+	transform: translateY(-20px);
+}
+
+.dimensions-section-enter-to {
+	opacity: 1;
+	transform: translateY(0);
+}
+
+.dimensions-section-leave-from {
+	opacity: 1;
+	transform: translateY(0);
+}
+
+.dimensions-section-leave-to {
+	opacity: 0;
+	transform: translateY(-20px);
+}
+
+/* Animazione bottone "Aggiungi altri colli" */
+.add-package-btn-fade-enter-active,
+.add-package-btn-fade-leave-active {
+	transition: opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1), transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.add-package-btn-fade-enter-from {
+	opacity: 0;
+	transform: translateY(-10px) scale(0.95);
+}
+
+.add-package-btn-fade-enter-to {
+	opacity: 1;
+	transform: translateY(0) scale(1);
+}
+
+.add-package-btn-fade-leave-from {
+	opacity: 1;
+	transform: translateY(0) scale(1);
+}
+
+.add-package-btn-fade-leave-to {
+	opacity: 0;
+	transform: translateY(-10px) scale(0.95);
+}
+
+/* Bottone "Aggiungi altri colli" centrato */
+.add-package-button-wrapper {
+	display: flex;
+	justify-content: center;
+	margin: 24px 0;
+}
+
+.add-package-btn {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	padding: 16px 32px;
+	background: #E44203;
+	color: white;
+	border-radius: 12px;
+	font-weight: 600;
+	font-size: 0.9375rem;
+	transition: background-color 0.3s cubic-bezier(0.4, 0, 0.2, 1), transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+}
+
+.add-package-btn:hover {
+	background: #c93800;
+	transform: translateY(-2px);
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+}
+
+.add-package-btn:active {
+	transform: translateY(0);
+	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
 }
 </style>

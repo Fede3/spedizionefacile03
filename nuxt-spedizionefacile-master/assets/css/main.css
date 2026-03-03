@@ -136,7 +136,7 @@
 	   ============================================================ */
 	/* Pulsante primario (azioni principali) */
 	.btn-primary {
-		@apply text-white font-semibold rounded-[12px] px-[24px] py-[12px] cursor-pointer;
+		@apply text-white font-semibold rounded-[50px] px-[24px] py-[12px] cursor-pointer;
 		background-color: var(--color-brand-primary);
 		transition: background-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease, opacity 0.2s ease;
 	}
@@ -156,7 +156,7 @@
 
 	/* Pulsante secondario (azioni secondarie) */
 	.btn-secondary {
-		@apply font-semibold rounded-[12px] px-[24px] py-[12px] cursor-pointer;
+		@apply font-semibold rounded-[50px] px-[24px] py-[12px] cursor-pointer;
 		border: 1px solid var(--color-brand-primary);
 		color: var(--color-brand-primary);
 		background: transparent;
@@ -170,7 +170,7 @@
 
 	/* Pulsante CTA arancione (call to action) */
 	.btn-cta {
-		@apply text-white font-semibold rounded-[12px] px-[24px] py-[12px] cursor-pointer;
+		@apply text-white font-semibold rounded-[50px] px-[24px] py-[12px] cursor-pointer;
 		background-color: var(--color-brand-accent);
 		transition: background-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
 	}
@@ -185,7 +185,7 @@
 
 	/* Pulsante pericolo (eliminazione, annullamento) */
 	.btn-danger {
-		@apply bg-red-500 text-white font-semibold rounded-[12px] px-[24px] py-[12px] cursor-pointer;
+		@apply bg-red-500 text-white font-semibold rounded-[50px] px-[24px] py-[12px] cursor-pointer;
 		transition: background-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
 	}
 	.btn-danger:hover {
@@ -275,8 +275,38 @@
 }
 
 @layer components {
+	/* ============================================================
+	   STANDARD BORDER-RADIUS - Coerenza su tutto il sito
+	   ============================================================ */
+	/* Input fields: 12px (stondatura media) */
+	input[type="text"],
+	input[type="email"],
+	input[type="tel"],
+	input[type="number"],
+	input[type="password"],
+	select,
+	textarea {
+		border-radius: 12px !important;
+	}
+
+	/* Buttons: 50px (completamente stondati come il bottone Continua) */
+	button:not(.no-radius),
+	.btn:not(.no-radius),
+	[role="button"]:not(.no-radius),
+	a.button:not(.no-radius),
+	input[type="submit"]:not(.no-radius),
+	input[type="button"]:not(.no-radius) {
+		border-radius: 50px !important;
+	}
+
+	/* Cards: 16px */
+	.card,
+	.card-base {
+		border-radius: 16px !important;
+	}
+
 	.input-preventivo-rapido {
-		@apply bg-[#F1F1F1] text-[#767676] text-[1rem] tablet:text-[0.875rem] font-medium w-full h-[54px] leading-[54px] rounded-[30px] px-[18px] placeholder:text-[#767676] block mt-[15px] tracking-[-0.336px];
+		@apply bg-[#F1F1F1] text-[#767676] text-[1rem] tablet:text-[0.875rem] font-medium w-full h-[54px] leading-[54px] rounded-[8px] px-[18px] placeholder:text-[#767676] block mt-[15px] tracking-[-0.336px];
 		transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
 		border: 2px solid transparent;
 	}
@@ -284,6 +314,7 @@
 		background-color: #fff;
 		border-color: #095866;
 		box-shadow: 0 0 0 3px rgba(9, 88, 102, 0.1);
+		outline: none;
 	}
 
 	.label-preventivo-rapido {
@@ -295,7 +326,7 @@
 	}
 
 	.input-popup {
-		@apply bg-white text-[#767676] placeholder:text-[#767676] placeholder:text-[0.875rem] text-[0.875rem] tracking-[-0.336px] h-[40px] leading-[40px] w-full rounded-[30px] px-[18px] mt-[12px] border border-[#E9EBEC];
+		@apply bg-white text-[#767676] placeholder:text-[#767676] placeholder:text-[0.875rem] text-[0.875rem] tracking-[-0.336px] h-[40px] leading-[40px] w-full rounded-[8px] px-[18px] mt-[12px] border border-[#E9EBEC];
 		transition: border-color 0.2s ease, box-shadow 0.2s ease;
 	}
 	.input-popup:focus {
@@ -304,7 +335,7 @@
 	}
 
 	.input-preventivo-step-2 {
-		@apply bg-white rounded-[20px] h-[44px] text-[#222222] text-[1rem] tracking-[0.2px] font-montserrat placeholder:text-[#222222] placeholder:text-[0.875rem] px-[20px] w-full;
+		@apply bg-white rounded-[8px] h-[44px] text-[#222222] text-[1rem] tracking-[0.2px] font-montserrat placeholder:text-[#999999] placeholder:text-[0.875rem] px-[20px] w-full;
 	}
 
 	/* Servizi */
@@ -316,7 +347,7 @@
 	}
 
 	.services-button {
-		@apply block text-[0.875rem] border border-[#095866] rounded-[37px] tracking-[0.2px] text-center text-[#095866] font-bold h-[42px] leading-[40px] mx-auto;
+		@apply block text-[0.875rem] border border-[#095866] rounded-[50px] tracking-[0.2px] text-center text-[#095866] font-bold h-[42px] leading-[40px] mx-auto;
 		transition: background-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
 	}
 	.services-button:hover {
@@ -327,7 +358,7 @@
 
 	/* Contatti */
 	.input-contatti {
-		@apply bg-white h-[80px] block w-full leading-[80px] text-[#737373] placeholder:text-[#737373] text-[1.25rem] rounded-[21px] tracking-[-0.28px] pl-[24px] pr-[13px] mt-[32px] bg-[url('/img/contacts/asterisk.svg')] bg-no-repeat bg-[100%_13px] bg-origin-content;
+		@apply bg-white h-[80px] block w-full leading-[80px] text-[#737373] placeholder:text-[#737373] text-[1.25rem] rounded-[8px] tracking-[-0.28px] pl-[24px] pr-[13px] mt-[32px] bg-[url('/img/contacts/asterisk.svg')] bg-no-repeat bg-[100%_13px] bg-origin-content;
 		transition: box-shadow 0.2s ease;
 	}
 	.input-contatti:focus {
@@ -453,7 +484,7 @@
 	.my-container {
 		padding-left: 40px;
 		padding-right: 40px;
-		max-width: 1000px !important;
+		max-width: 1280px !important;
 	}
 }
 @media (min-width: 1440px) {

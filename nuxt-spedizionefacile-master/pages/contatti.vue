@@ -103,7 +103,7 @@ const handleSubmit = async () => {
 				</div>
 				<h3 class="text-[1.25rem] font-bold text-[#252B42] mb-[8px]">Messaggio inviato!</h3>
 				<p class="text-[0.9375rem] text-[#737373] leading-[1.6] mb-[20px]">Grazie per averci contattato. Ti risponderemo il prima possibile.</p>
-				<button @click="submitSuccess = false" class="px-[24px] py-[12px] bg-[#095866] text-white rounded-[10px] font-semibold text-[0.9375rem] hover:bg-[#074a56] transition cursor-pointer">
+				<button @click="submitSuccess = false" class="px-[24px] py-[12px] bg-[#095866] text-white rounded-[50px] font-semibold text-[0.9375rem] hover:bg-[#074a56] transition cursor-pointer">
 					Invia un altro messaggio
 				</button>
 			</div>
@@ -136,7 +136,7 @@ const handleSubmit = async () => {
 					<span class="absolute bottom-[12px] right-[16px] text-[0.75rem] text-[#A0A5AB]">{{ contactForm.message.length }}/2000</span>
 				</div>
 
-				<p v-if="submitError" class="text-red-500 text-[0.875rem] mt-[12px] bg-red-50 p-[12px] rounded-[10px] border border-red-200">{{ submitError }}</p>
+				<p v-if="submitError" class="text-red-500 text-[0.875rem] mt-[12px] bg-red-50 p-[12px] rounded-[50px] border border-red-200">{{ submitError }}</p>
 
 				<!-- Miglioramento UX: btn-hover per effetto hover piu' evidente, target touch minimo 44px gia' rispettato -->
 			<button

@@ -78,7 +78,7 @@ onMounted(() => { fetchShipments(); });
 
 <template>
 	<section class="min-h-[600px] py-[40px] desktop:py-[60px] desktop-xl:py-[80px]">
-		<div class="my-container max-w-[1400px]">
+		<div class="my-container">
 			<!-- Breadcrumb -->
 			<div class="mb-[24px] text-[0.875rem] text-[#737373]">
 				<NuxtLink to="/account" class="hover:underline text-[#095866] font-medium">Il tuo account</NuxtLink>
@@ -107,9 +107,9 @@ onMounted(() => { fetchShipments(); });
 			<div class="flex flex-wrap gap-[12px] mb-[20px]">
 				<div class="relative flex-1 min-w-[200px]">
 					<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="absolute left-[12px] top-1/2 -translate-y-1/2 w-[18px] h-[18px] text-[#737373]" fill="currentColor"><path d="M9.5,3A6.5,6.5 0 0,1 16,9.5C16,11.11 15.41,12.59 14.44,13.73L14.71,14H15.5L20.5,19L19,20.5L14,15.5V14.71L13.73,14.44C12.59,15.41 11.11,16 9.5,16A6.5,6.5 0 0,1 3,9.5A6.5,6.5 0 0,1 9.5,3M9.5,5C7,5 5,7 5,9.5C5,12 7,14 9.5,14C12,14 14,12 14,9.5C14,7 12,5 9.5,5Z"/></svg>
-					<input v-model="shipmentsSearch" @input="onShipmentsSearch" type="text" placeholder="Cerca per Parcel ID, riferimento, utente..." class="w-full pl-[40px] pr-[14px] py-[10px] bg-white border border-[#E9EBEC] rounded-[10px] text-[0.875rem] focus:border-[#095866] focus:outline-none" />
+					<input v-model="shipmentsSearch" @input="onShipmentsSearch" type="text" placeholder="Cerca per Parcel ID, riferimento, utente..." class="w-full pl-[40px] pr-[14px] py-[10px] bg-white border border-[#E9EBEC] rounded-[50px] text-[0.875rem] focus:border-[#095866] focus:outline-none" />
 				</div>
-				<select v-model="shipmentsStatusFilter" @change="shipmentsPage = 1; fetchShipments()" class="px-[14px] py-[10px] bg-white border border-[#E9EBEC] rounded-[10px] text-[0.875rem] focus:border-[#095866] focus:outline-none cursor-pointer">
+				<select v-model="shipmentsStatusFilter" @change="shipmentsPage = 1; fetchShipments()" class="px-[14px] py-[10px] bg-white border border-[#E9EBEC] rounded-[50px] text-[0.875rem] focus:border-[#095866] focus:outline-none cursor-pointer">
 					<option value="">Tutti gli stati</option>
 					<option value="completed">Completato</option>
 					<option value="payed">Pagato</option>

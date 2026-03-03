@@ -81,19 +81,50 @@ class LocationController extends Controller
      */
     public function search(Request $request)
     {
-        $query = $request->input('q', '');
+        $query = trim((string) $request->input('q', ''));
+        $limit = (int) $request->input('limit', 120);
+        $limit = max(20, min($limit, 500));
 
         // Se l'utente ha scritto meno di 2 caratteri, non cerchiamo nulla
-        if (strlen($query) < 2) {
+        if (mb_strlen($query) < 2) {
             return response()->json([]);
         }
 
-        // Cerchiamo nel database tutte le citta' o i CAP che contengono il testo cercato
-        // Il simbolo "%" prima e dopo il testo significa "qualsiasi cosa prima e dopo"
-        $results = Location::where('place_name', 'LIKE', '%' . $query . '%')
-            ->orWhere('postal_code', 'LIKE', '%' . $query . '%')
+        // Ricerca CAP: prefisso numerico (es. 001 -> 00100, 00118, ...)
+        if (preg_match('/^\d+$/', $query)) {
+            $results = Location::where('postal_code', 'LIKE', $query . '%')
+                ->select('postal_code', 'place_name', 'province')
+                ->orderBy('postal_code')
+                ->orderBy('place_name')
+                ->limit($limit)
+                ->get();
+
+            return response()->json($results);
+        }
+
+        $queryLower = mb_strtolower($query);
+
+        // Ricerca citta': priorita' a match esatto, poi inizio parola, poi prefisso.
+        $results = Location::query()
             ->select('postal_code', 'place_name', 'province')
-            ->limit(20)
+            ->where(function ($q) use ($query, $queryLower) {
+                $q->whereRaw('LOWER(place_name) = ?', [$queryLower])
+                    ->orWhereRaw('LOWER(place_name) LIKE ?', [$queryLower . ' %'])
+                    ->orWhereRaw('LOWER(place_name) LIKE ?', ['% ' . $queryLower . ' %'])
+                    ->orWhereRaw('LOWER(place_name) LIKE ?', [$queryLower . '%']);
+            })
+            ->orderByRaw(
+                "CASE
+                    WHEN LOWER(place_name) = ? THEN 0
+                    WHEN LOWER(place_name) LIKE ? THEN 1
+                    WHEN LOWER(place_name) LIKE ? THEN 2
+                    ELSE 3
+                END",
+                [$queryLower, $queryLower . ' %', $queryLower . '%']
+            )
+            ->orderBy('place_name')
+            ->orderBy('postal_code')
+            ->limit($limit)
             ->get();
 
         return response()->json($results);
@@ -107,7 +138,7 @@ class LocationController extends Controller
      */
     public function byCap(Request $request)
     {
-        $cap = $request->input('cap', '');
+        $cap = trim((string) $request->input('cap', ''));
 
         if (empty($cap)) {
             return response()->json([]);
@@ -119,5 +150,45 @@ class LocationController extends Controller
             ->get();
 
         return response()->json($results);
+    }
+
+    /**
+     * Cerca localita' per nome citta' (priorita' match esatto).
+     * Se trova la citta' esatta, restituisce tutti i CAP di quella citta'.
+     * Se non trova match esatto, usa fallback per prefisso (city%).
+     */
+    public function byCity(Request $request)
+    {
+        $city = trim((string) $request->input('city', ''));
+        $limit = (int) $request->input('limit', 500);
+        $limit = max(20, min($limit, 1000));
+
+        if (mb_strlen($city) < 2) {
+            return response()->json([]);
+        }
+
+        $cityLower = mb_strtolower($city);
+
+        $exact = Location::query()
+            ->select('postal_code', 'place_name', 'province')
+            ->whereRaw('LOWER(place_name) = ?', [$cityLower])
+            ->distinct()
+            ->orderBy('postal_code')
+            ->get();
+
+        if ($exact->isNotEmpty()) {
+            return response()->json($exact);
+        }
+
+        $prefix = Location::query()
+            ->select('postal_code', 'place_name', 'province')
+            ->whereRaw('LOWER(place_name) LIKE ?', [$cityLower . '%'])
+            ->distinct()
+            ->orderBy('place_name')
+            ->orderBy('postal_code')
+            ->limit($limit)
+            ->get();
+
+        return response()->json($prefix);
     }
 }

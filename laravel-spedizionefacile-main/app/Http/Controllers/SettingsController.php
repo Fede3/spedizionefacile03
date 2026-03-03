@@ -42,12 +42,19 @@ class SettingsController extends Controller
      */
     public function getStripeConfig()
     {
-        // Cerchiamo le chiavi prima nel database, poi nel file .env come riserva
-        $key = Setting::get('stripe_key', config('services.stripe.key'));
-        $secret = Setting::get('stripe_secret', config('services.stripe.secret'));
+        // Cerchiamo le chiavi prima nel database (nuovo e legacy), poi nel file .env come riserva
+        $key = trim((string) (Setting::get('stripe_key')
+            ?: Setting::get('stripe_public_key')
+            ?: config('services.stripe.key')));
+
+        $secret = trim((string) (Setting::get('stripe_secret')
+            ?: Setting::get('stripe_secret_key')
+            ?: config('services.stripe.secret')));
+
+        $hasPlaceholder = str_contains($key, 'placeholder') || str_contains($secret, 'placeholder');
 
         return response()->json([
-            'configured' => !empty($secret) && !empty($key), // true se entrambe le chiavi sono presenti
+            'configured' => !empty($secret) && !empty($key) && !$hasPlaceholder, // true se entrambe le chiavi sono presenti
             'publishable_key' => $key ?: '',                  // Solo la chiave pubblica viene inviata al frontend
         ]);
     }
@@ -73,9 +80,27 @@ class SettingsController extends Controller
             'secret_key.starts_with' => 'La Secret Key deve iniziare con sk_',
         ]);
 
-        // Salviamo le chiavi nel database
-        Setting::set('stripe_key', $request->publishable_key);
-        Setting::set('stripe_secret', $request->secret_key);
+        // Ripulisce eventuali spazi/newline da copia-incolla
+        $publishable = preg_replace('/\s+/', '', (string) $request->publishable_key);
+        $secret = preg_replace('/\s+/', '', (string) $request->secret_key);
+
+        if (!preg_match('/^pk_(test|live)_[A-Za-z0-9]+$/', $publishable)) {
+            return response()->json([
+                'message' => 'Publishable Key non valida. Incolla la chiave completa (pk_test_... o pk_live_...) senza caratteri extra.',
+            ], 422);
+        }
+
+        if (!preg_match('/^sk_(test|live)_[A-Za-z0-9]+$/', $secret)) {
+            return response()->json([
+                'message' => 'Secret Key non valida. Incolla la chiave completa (sk_test_... o sk_live_...) senza caratteri extra.',
+            ], 422);
+        }
+
+        // Salviamo in doppia chiave (nuovo + legacy) per compatibilita' con tutto il progetto
+        Setting::set('stripe_key', $publishable);
+        Setting::set('stripe_public_key', $publishable);
+        Setting::set('stripe_secret', $secret);
+        Setting::set('stripe_secret_key', $secret);
 
         return response()->json([
             'success' => true,

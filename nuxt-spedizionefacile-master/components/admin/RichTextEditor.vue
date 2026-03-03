@@ -182,7 +182,7 @@ const setColor = (event) => {
 	justify-content: center;
 	width: 32px;
 	height: 32px;
-	border-radius: 6px;
+	border-radius: 12px;
 	color: #404040;
 	cursor: pointer;
 	transition: background-color 0.15s, color 0.15s;

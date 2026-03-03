@@ -153,7 +153,7 @@ const statusConfig = {
 
 <template>
 	<section class="min-h-[600px] py-[40px] desktop:py-[60px] desktop-xl:py-[80px]">
-		<div class="my-container max-w-[900px]">
+		<div class="my-container">
 			<!-- Breadcrumb -->
 			<div class="mb-[28px] text-[0.875rem] text-[#737373]">
 				<NuxtLink to="/account" class="hover:underline text-[#095866] font-medium">Il tuo account</NuxtLink>
@@ -170,7 +170,7 @@ const statusConfig = {
 				<p class="text-[#737373] text-[0.9375rem] max-w-[480px] mx-auto mb-[24px] leading-[1.6]">
 					I prelievi delle commissioni sono disponibili solo per gli account Partner Pro.
 				</p>
-				<NuxtLink to="/account/account-pro" class="inline-flex items-center gap-[8px] px-[24px] py-[12px] bg-[#095866] text-white rounded-[10px] font-semibold text-[0.9375rem] hover:bg-[#074a56] transition-colors">
+				<NuxtLink to="/account/account-pro" class="inline-flex items-center gap-[8px] px-[24px] py-[12px] bg-[#095866] text-white rounded-[50px] font-semibold text-[0.9375rem] hover:bg-[#074a56] transition-colors">
 					<Icon name="mdi:star-outline" class="text-[18px]" />
 					Scopri Account Pro
 				</NuxtLink>
@@ -184,7 +184,7 @@ const statusConfig = {
 					<div class="relative z-1 flex flex-col desktop:flex-row desktop:items-center desktop:justify-between gap-[20px]">
 						<div>
 							<div class="flex items-center gap-[10px] mb-[12px]">
-								<div class="w-[40px] h-[40px] rounded-[10px] bg-white/15 flex items-center justify-center">
+								<div class="w-[40px] h-[40px] rounded-[50px] bg-white/15 flex items-center justify-center">
 									<Icon name="mdi:bank-transfer-out" class="text-[22px]" />
 								</div>
 								<p class="text-[0.8125rem] uppercase tracking-[1.5px] opacity-80 font-medium">Saldo prelevabile</p>
@@ -214,7 +214,7 @@ const statusConfig = {
 						</div>
 					</div>
 
-					<div v-if="message" :class="['mt-[20px] text-[0.875rem] font-medium rounded-[10px] px-[16px] py-[12px] flex items-center gap-[8px]', messageType === 'success' ? 'bg-emerald-500/20' : 'bg-red-500/20']">
+					<div v-if="message" :class="['mt-[20px] text-[0.875rem] font-medium rounded-[50px] px-[16px] py-[12px] flex items-center gap-[8px]', messageType === 'success' ? 'bg-emerald-500/20' : 'bg-red-500/20']">
 						<Icon :name="messageType === 'success' ? 'mdi:check-circle' : 'mdi:alert-circle'" class="text-[18px]" />
 						{{ message }}
 					</div>
@@ -249,7 +249,7 @@ const statusConfig = {
 				<!-- Withdrawal History -->
 				<div class="bg-white rounded-[20px] p-[24px] desktop:p-[32px] shadow-sm border border-[#E9EBEC]">
 					<div class="flex items-center gap-[12px] mb-[24px]">
-						<div class="w-[40px] h-[40px] rounded-[10px] bg-purple-50 flex items-center justify-center">
+						<div class="w-[40px] h-[40px] rounded-[50px] bg-purple-50 flex items-center justify-center">
 							<Icon name="mdi:history" class="text-[22px] text-purple-600" />
 						</div>
 						<h2 class="text-[1.125rem] font-bold text-[#252B42]">Storico richieste</h2>

@@ -18,7 +18,7 @@ useSeoMeta({
 
 <template>
 	<section class="min-h-[500px] py-[40px] desktop:py-[60px]">
-		<div class="my-container max-w-[800px]">
+		<div class="my-container">
 			<h1 class="text-[2rem] font-bold text-[#252B42] mb-[24px]">Cookie Policy</h1>
 			<div class="prose text-[#737373] text-[0.9375rem] leading-[1.8] space-y-[16px]">
 				<p>Questo sito utilizza cookie tecnici necessari al funzionamento e cookie analitici per migliorare l'esperienza di navigazione.</p>

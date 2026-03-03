@@ -81,8 +81,26 @@ const onOrdersSearch = () => {
 	ordersSearchTimeout = setTimeout(() => { ordersPage.value = 1; fetchOrders(); }, 400);
 };
 
-const changeOrderStatus = async (orderId, status) => {
+const changeOrderStatus = async (orderId, status, currentStatus) => {
+	// Validate state transition
+	const validTransitions = {
+		'pending': ['processing', 'cancelled'],
+		'processing': ['completed', 'in_transit', 'cancelled'],
+		'completed': ['in_transit'],
+		'in_transit': ['delivered'],
+		'delivered': [],
+		'cancelled': [],
+		'payment_failed': ['pending'],
+	};
+
+	const allowedStates = validTransitions[currentStatus] || [];
+	if (!allowedStates.includes(status)) {
+		showError(null, `Transizione non valida: ${currentStatus} → ${status}. Stati permessi: ${allowedStates.join(', ') || 'nessuno'}`);
+		return;
+	}
+
 	actionLoading.value = `order-${orderId}`;
+	console.log(`[AUDIT] Admin changing order #${orderId} status: ${currentStatus} → ${status}`);
 	try {
 		await sanctum(`/api/admin/orders/${orderId}/status`, { method: "PATCH", body: { status } });
 		showSuccess(`Stato ordine #${orderId} aggiornato.`);
@@ -144,6 +162,7 @@ const getAvailableStatuses = (currentStatus) => {
 };
 
 const changeUserType = async (userId, newType) => {
+	console.log(`[AUDIT] Admin changing user #${userId} type to: ${newType}`);
 	try {
 		await sanctum(`/api/admin/users/${userId}/user-type`, { method: "PATCH", body: { user_type: newType } });
 		showSuccess(`Tipo account aggiornato a "${newType}".`);
@@ -216,7 +235,7 @@ onMounted(() => { fetchOrders(); });
 
 <template>
 	<section class="min-h-[600px] py-[40px] desktop:py-[60px] desktop-xl:py-[80px]">
-		<div class="my-container max-w-[1400px]">
+		<div class="my-container">
 			<!-- Breadcrumb -->
 			<div class="mb-[24px] text-[0.875rem] text-[#737373]">
 				<NuxtLink to="/account" class="hover:underline text-[#095866] font-medium">Il tuo account</NuxtLink>
@@ -242,9 +261,9 @@ onMounted(() => { fetchOrders(); });
 			<div class="flex flex-wrap gap-[12px] mb-[20px]">
 				<div class="relative flex-1 min-w-[200px]">
 					<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="absolute left-[12px] top-1/2 -translate-y-1/2 w-[18px] h-[18px] text-[#737373]" fill="currentColor"><path d="M9.5,3A6.5,6.5 0 0,1 16,9.5C16,11.11 15.41,12.59 14.44,13.73L14.71,14H15.5L20.5,19L19,20.5L14,15.5V14.71L13.73,14.44C12.59,15.41 11.11,16 9.5,16A6.5,6.5 0 0,1 3,9.5A6.5,6.5 0 0,1 9.5,3M9.5,5C7,5 5,7 5,9.5C5,12 7,14 9.5,14C12,14 14,12 14,9.5C14,7 12,5 9.5,5Z"/></svg>
-					<input v-model="ordersSearch" @input="onOrdersSearch" type="text" placeholder="Cerca per ID, nome, email..." class="w-full pl-[40px] pr-[14px] py-[10px] bg-white border border-[#E9EBEC] rounded-[10px] text-[0.875rem] focus:border-[#095866] focus:outline-none" />
+					<input v-model="ordersSearch" @input="onOrdersSearch" type="text" placeholder="Cerca per ID, nome, email..." class="w-full pl-[40px] pr-[14px] py-[10px] bg-white border border-[#E9EBEC] rounded-[50px] text-[0.875rem] focus:border-[#095866] focus:outline-none" />
 				</div>
-				<select v-model="ordersStatusFilter" @change="ordersPage = 1; fetchOrders()" class="px-[14px] py-[10px] bg-white border border-[#E9EBEC] rounded-[10px] text-[0.875rem] focus:border-[#095866] focus:outline-none cursor-pointer">
+				<select v-model="ordersStatusFilter" @change="ordersPage = 1; fetchOrders()" class="px-[14px] py-[10px] bg-white border border-[#E9EBEC] rounded-[50px] text-[0.875rem] focus:border-[#095866] focus:outline-none cursor-pointer">
 					<option value="">Tutti gli stati</option>
 					<option value="pending">In attesa</option>
 					<option value="processing">In lavorazione</option>
@@ -257,7 +276,7 @@ onMounted(() => { fetchOrders(); });
 				</select>
 				<button
 					@click="groupByUser = !groupByUser"
-					:class="['px-[14px] py-[10px] rounded-[10px] text-[0.875rem] font-medium transition-colors cursor-pointer inline-flex items-center gap-[6px]', groupByUser ? 'bg-[#095866] text-white' : 'bg-white border border-[#E9EBEC] text-[#404040] hover:border-[#095866]']">
+					:class="['px-[14px] py-[10px] rounded-[50px] text-[0.875rem] font-medium transition-colors cursor-pointer inline-flex items-center gap-[6px]', groupByUser ? 'bg-[#095866] text-white' : 'bg-white border border-[#E9EBEC] text-[#404040] hover:border-[#095866]']">
 					<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[16px] h-[16px]" fill="currentColor"><path d="M16,13C15.71,13 15.38,13 15.03,13.05C16.19,13.89 17,15 17,16.5V18H22V16.5C22,14.17 18.33,13 16,13M8,13C5.67,13 2,14.17 2,16.5V18H14V16.5C14,14.17 10.33,13 8,13M8,11A3,3 0 0,0 11,8A3,3 0 0,0 8,5A3,3 0 0,0 5,8A3,3 0 0,0 8,11M16,11A3,3 0 0,0 19,8A3,3 0 0,0 16,5A3,3 0 0,0 13,8A3,3 0 0,0 16,11Z"/></svg>
 					{{ groupByUser ? 'Vista lista' : 'Per utente' }}
 				</button>
@@ -274,7 +293,7 @@ onMounted(() => { fetchOrders(); });
 				<div v-else-if="fetchError" class="text-center py-[48px]">
 					<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[40px] h-[40px] text-red-300 mx-auto mb-[12px]" fill="currentColor"><path d="M13,13H11V7H13M13,17H11V15H13M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z"/></svg>
 					<p class="text-[#737373] mb-[12px]">Errore nel caricamento degli ordini.</p>
-					<button @click="fetchOrders" class="px-[20px] py-[10px] bg-[#095866] text-white rounded-[10px] text-[0.875rem] font-medium cursor-pointer hover:bg-[#074a56] transition-colors">Riprova</button>
+					<button @click="fetchOrders" class="px-[20px] py-[10px] bg-[#095866] text-white rounded-[50px] text-[0.875rem] font-medium cursor-pointer hover:bg-[#074a56] transition-colors">Riprova</button>
 				</div>
 
 				<div v-else-if="!ordersData.data?.length" class="text-center py-[48px] text-[#737373]">
@@ -349,7 +368,7 @@ onMounted(() => { fetchOrders(); });
 										</span>
 										<span class="text-[0.75rem] text-[#737373] hidden desktop:inline">{{ formatDate(order.created_at) }}</span>
 										<button @click="showOrderDetail(order)" class="px-[10px] py-[6px] rounded-[8px] bg-[#F0F0F0] hover:bg-[#E0E0E0] text-[#404040] text-[0.75rem] cursor-pointer font-medium">Dettagli</button>
-										<select @change="changeOrderStatus(order.id, $event.target.value); $event.target.value = ''" class="px-[8px] py-[6px] rounded-[8px] bg-[#095866] text-white text-[0.75rem] cursor-pointer border-0 font-medium">
+										<select @change="changeOrderStatus(order.id, $event.target.value, order.status); $event.target.value = ''" class="px-[8px] py-[6px] rounded-[8px] bg-[#095866] text-white text-[0.75rem] cursor-pointer border-0 font-medium">
 											<option value="" selected disabled>Stato</option>
 											<option v-for="s in getAvailableStatuses(order.status)" :key="s.value" :value="s.value">{{ s.label }}</option>
 										</select>
@@ -398,7 +417,7 @@ onMounted(() => { fetchOrders(); });
 								<td class="py-[14px] text-right">
 									<div class="flex justify-end gap-[6px]">
 										<button @click="showOrderDetail(order)" class="px-[10px] py-[6px] rounded-[8px] bg-[#F0F0F0] hover:bg-[#E0E0E0] text-[#404040] text-[0.75rem] cursor-pointer font-medium">Dettagli</button>
-										<select @change="changeOrderStatus(order.id, $event.target.value); $event.target.value = ''" class="px-[8px] py-[6px] rounded-[8px] bg-[#095866] text-white text-[0.75rem] cursor-pointer border-0 font-medium">
+										<select @change="changeOrderStatus(order.id, $event.target.value, order.status); $event.target.value = ''" class="px-[8px] py-[6px] rounded-[8px] bg-[#095866] text-white text-[0.75rem] cursor-pointer border-0 font-medium">
 											<option value="" selected disabled>Stato</option>
 											<option v-for="s in getAvailableStatuses(order.status)" :key="s.value" :value="s.value">{{ s.label }}</option>
 										</select>
@@ -517,7 +536,7 @@ onMounted(() => { fetchOrders(); });
 					<div v-if="selectedOrder.packages?.length" class="mb-[16px]">
 						<p class="text-[0.75rem] font-medium text-[#737373] mb-[8px] uppercase tracking-[0.5px]">Colli ({{ selectedOrder.packages.length }})</p>
 						<div class="space-y-[6px]">
-							<div v-for="pkg in selectedOrder.packages" :key="pkg.id" class="p-[12px] rounded-[10px] border border-[#E9EBEC] text-[0.8125rem]">
+							<div v-for="pkg in selectedOrder.packages" :key="pkg.id" class="p-[12px] rounded-[50px] border border-[#E9EBEC] text-[0.8125rem]">
 								<span class="font-medium text-[#252B42]">{{ pkg.weight }}kg</span>
 								<span class="text-[#737373] ml-[8px]">{{ pkg.first_size }}x{{ pkg.second_size }}x{{ pkg.third_size }} cm</span>
 								<span v-if="pkg.service" class="text-[0.75rem] ml-[8px] px-[6px] py-[1px] bg-[#F0F0F0] rounded text-[#737373]">{{ pkg.service.service_type }}</span>
@@ -528,7 +547,7 @@ onMounted(() => { fetchOrders(); });
 					<div v-if="selectedOrder.transactions?.length">
 						<p class="text-[0.75rem] font-medium text-[#737373] mb-[8px] uppercase tracking-[0.5px]">Transazioni</p>
 						<div class="space-y-[6px]">
-							<div v-for="tx in selectedOrder.transactions" :key="tx.id" class="flex items-center justify-between p-[12px] rounded-[10px] border border-[#E9EBEC] text-[0.8125rem]">
+							<div v-for="tx in selectedOrder.transactions" :key="tx.id" class="flex items-center justify-between p-[12px] rounded-[50px] border border-[#E9EBEC] text-[0.8125rem]">
 								<div>
 									<span class="font-medium text-[#252B42]">{{ tx.type }}</span>
 									<span :class="['ml-[8px] px-[6px] py-[2px] rounded-full text-[0.6875rem]', tx.status === 'succeeded' ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700']">{{ tx.status }}</span>

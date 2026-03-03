@@ -43,7 +43,7 @@ onMounted(() => { fetchSettings(); });
 
 <template>
 	<section class="min-h-[600px] py-[40px] desktop:py-[60px] desktop-xl:py-[80px]">
-		<div class="my-container max-w-[1400px]">
+		<div class="my-container">
 			<!-- Breadcrumb -->
 			<div class="mb-[24px] text-[0.875rem] text-[#737373]">
 				<NuxtLink to="/account" class="hover:underline text-[#095866] font-medium">Il tuo account</NuxtLink>
@@ -78,15 +78,15 @@ onMounted(() => { fetchSettings(); });
 					<div class="space-y-[16px] max-w-[600px]">
 						<div>
 							<label class="block text-[0.8125rem] font-medium text-[#404040] mb-[6px]">Public Key</label>
-							<input v-model="settingsData.stripe_public_key" type="text" class="w-full px-[14px] py-[10px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[10px] text-[0.875rem] font-mono focus:border-[#095866] focus:outline-none" placeholder="pk_..." />
+							<input v-model="settingsData.stripe_public_key" type="text" class="w-full px-[14px] py-[10px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[50px] text-[0.875rem] font-mono focus:border-[#095866] focus:outline-none" placeholder="pk_..." />
 						</div>
 						<div>
 							<label class="block text-[0.8125rem] font-medium text-[#404040] mb-[6px]">Secret Key</label>
-							<input v-model="settingsData.stripe_secret_key" type="password" class="w-full px-[14px] py-[10px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[10px] text-[0.875rem] font-mono focus:border-[#095866] focus:outline-none" placeholder="sk_..." />
+							<input v-model="settingsData.stripe_secret_key" type="password" class="w-full px-[14px] py-[10px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[50px] text-[0.875rem] font-mono focus:border-[#095866] focus:outline-none" placeholder="sk_..." />
 						</div>
 						<div>
 							<label class="block text-[0.8125rem] font-medium text-[#404040] mb-[6px]">Webhook Secret</label>
-							<input v-model="settingsData.stripe_webhook_secret" type="password" class="w-full px-[14px] py-[10px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[10px] text-[0.875rem] font-mono focus:border-[#095866] focus:outline-none" placeholder="whsec_..." />
+							<input v-model="settingsData.stripe_webhook_secret" type="password" class="w-full px-[14px] py-[10px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[50px] text-[0.875rem] font-mono focus:border-[#095866] focus:outline-none" placeholder="whsec_..." />
 						</div>
 					</div>
 				</div>
@@ -98,15 +98,15 @@ onMounted(() => { fetchSettings(); });
 					<div class="space-y-[16px] max-w-[600px]">
 						<div>
 							<label class="block text-[0.8125rem] font-medium text-[#404040] mb-[6px]">Customer ID</label>
-							<input v-model="settingsData.brt_customer_id" type="text" class="w-full px-[14px] py-[10px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[10px] text-[0.875rem] focus:border-[#095866] focus:outline-none" />
+							<input v-model="settingsData.brt_customer_id" type="text" class="w-full px-[14px] py-[10px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[50px] text-[0.875rem] focus:border-[#095866] focus:outline-none" />
 						</div>
 						<div>
 							<label class="block text-[0.8125rem] font-medium text-[#404040] mb-[6px]">Username</label>
-							<input v-model="settingsData.brt_username" type="text" class="w-full px-[14px] py-[10px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[10px] text-[0.875rem] focus:border-[#095866] focus:outline-none" />
+							<input v-model="settingsData.brt_username" type="text" class="w-full px-[14px] py-[10px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[50px] text-[0.875rem] focus:border-[#095866] focus:outline-none" />
 						</div>
 						<div>
 							<label class="block text-[0.8125rem] font-medium text-[#404040] mb-[6px]">Password</label>
-							<input v-model="settingsData.brt_password" type="password" class="w-full px-[14px] py-[10px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[10px] text-[0.875rem] focus:border-[#095866] focus:outline-none" />
+							<input v-model="settingsData.brt_password" type="password" class="w-full px-[14px] py-[10px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[50px] text-[0.875rem] focus:border-[#095866] focus:outline-none" />
 						</div>
 					</div>
 				</div>
@@ -118,21 +118,21 @@ onMounted(() => { fetchSettings(); });
 					<div class="space-y-[16px] max-w-[600px]">
 						<div>
 							<label class="block text-[0.8125rem] font-medium text-[#404040] mb-[6px]">Nome sito</label>
-							<input v-model="settingsData.site_name" type="text" class="w-full px-[14px] py-[10px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[10px] text-[0.875rem] focus:border-[#095866] focus:outline-none" />
+							<input v-model="settingsData.site_name" type="text" class="w-full px-[14px] py-[10px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[50px] text-[0.875rem] focus:border-[#095866] focus:outline-none" />
 						</div>
 						<div>
 							<label class="block text-[0.8125rem] font-medium text-[#404040] mb-[6px]">Email supporto</label>
-							<input v-model="settingsData.support_email" type="email" class="w-full px-[14px] py-[10px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[10px] text-[0.875rem] focus:border-[#095866] focus:outline-none" />
+							<input v-model="settingsData.support_email" type="email" class="w-full px-[14px] py-[10px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[50px] text-[0.875rem] focus:border-[#095866] focus:outline-none" />
 						</div>
 						<div>
 							<label class="block text-[0.8125rem] font-medium text-[#404040] mb-[6px]">Sovrapprezzo contrassegno (&euro;)</label>
-							<input v-model="settingsData.cod_surcharge" type="text" class="w-full px-[14px] py-[10px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[10px] text-[0.875rem] focus:border-[#095866] focus:outline-none" placeholder="3.50" />
+							<input v-model="settingsData.cod_surcharge" type="text" class="w-full px-[14px] py-[10px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[50px] text-[0.875rem] focus:border-[#095866] focus:outline-none" placeholder="3.50" />
 						</div>
 					</div>
 				</div>
 
 				<div class="flex justify-end">
-					<button @click="saveSettings" :disabled="savingSettings" class="px-[24px] py-[12px] bg-[#095866] hover:bg-[#074a56] text-white rounded-[10px] text-[0.875rem] font-medium transition-colors cursor-pointer disabled:opacity-50 flex items-center gap-[8px]">
+					<button @click="saveSettings" :disabled="savingSettings" class="px-[24px] py-[12px] bg-[#095866] hover:bg-[#074a56] text-white rounded-[50px] text-[0.875rem] font-medium transition-colors cursor-pointer disabled:opacity-50 flex items-center gap-[8px]">
 						<svg v-if="savingSettings" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[18px] h-[18px] animate-spin" fill="currentColor"><path d="M12,4V2A10,10 0 0,0 2,12H4A8,8 0 0,1 12,4Z"/></svg>
 						<svg v-else xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[18px] h-[18px]" fill="currentColor"><path d="M15,9H5V5H15M12,19A3,3 0 0,1 9,16A3,3 0 0,1 12,13A3,3 0 0,1 15,16A3,3 0 0,1 12,19M17,3H5C3.89,3 3,3.9 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V7L17,3Z"/></svg>
 						{{ savingSettings ? "Salvataggio..." : "Salva impostazioni" }}

@@ -1,0 +1,79 @@
+=== DIAGNOSTICA SPEDIZIONEFACILE ===
+Data: 2026-02-16 19:46:34 UTC
+Root: /mnt/c/Users/Feder/Desktop/spedizionefacile
+
+[1] Versioni strumenti
+- php: non trovato
+- composer: non trovato
+- node: v18.19.1
+- npm: 9.2.0
+- cloudflared: non trovato
+
+[2] Processi attivi
+47:fede      135455  0.0  0.0  11036  4864 ?        S    20:46   0:00 rg -n artisan serve|nuxt dev|nuxi dev|cloudflared tunnel
+
+[3] Porte locali
+
+[4] Endpoint locali
+- frontend (3000):
+- frontend (3001):
+- backend (8000):
+- endpoint 8787 (Caddy oppure metrics cloudflared):
+
+[5] URL tunnel rilevati
+- frontend log non trovato
+- backend log non trovato
+
+[6] Ultime righe log applicazione
+--- /tmp/nuxt.log ---
+
+> dev
+> nuxt dev --host 0.0.0.0 --port 3001
+
+
+--- /tmp/laravel.log ---
+/mnt/c/Users/Feder/Desktop/spedizionefacile/scripts/avvia-tutto.sh: line 122: php: command not found
+
+--- /tmp/cloudflared-frontend.log ---
+cloudflared-frontend.log non trovato
+
+--- /tmp/cloudflared-backend.log ---
+cloudflared-backend.log non trovato
+
+[7] Repo stato
+## main...origin/main
+ M laravel-spedizionefacile-main/app/Http/Controllers/BrtController.php
+ M laravel-spedizionefacile-main/app/Http/Controllers/ReferralController.php
+ M laravel-spedizionefacile-main/app/Http/Controllers/SavedShipmentController.php
+ M laravel-spedizionefacile-main/app/Http/Controllers/Traits/NormalizesServiceData.php
+ M laravel-spedizionefacile-main/app/Http/Requests/PackageStoreRequest.php
+ M laravel-spedizionefacile-main/app/Http/Resources/OrderResource.php
+ M laravel-spedizionefacile-main/app/Listeners/GenerateBrtLabel.php
+ M laravel-spedizionefacile-main/app/Models/Order.php
+ M laravel-spedizionefacile-main/app/Models/User.php
+ M laravel-spedizionefacile-main/app/Services/BrtService.php
+ M laravel-spedizionefacile-main/routes/api.php
+ M nuxt-spedizionefacile-master/package-lock.json
+ M nuxt-spedizionefacile-master/pages/account/account-pro.vue
+ M nuxt-spedizionefacile-master/pages/account/index.vue
+ M nuxt-spedizionefacile-master/pages/account/spedizioni/[id].vue
+ M nuxt-spedizionefacile-master/pages/la-tua-spedizione/[step].vue
+ M nuxt-spedizionefacile-master/pages/riepilogo.vue
+ M scripts/avvia-tutto.sh
+ M scripts/raccogli-stato.sh
+?? .codex/
+?? AGENTS.md
+?? TODO_SQUADRA.md
+?? _SQUADRA_DIARIO.md
+?? docs/architettura/GAP-ANALYSIS-RITIRO-BORDERO-NOTIFICHE.md
+?? laravel-spedizionefacile-main/app/Http/Controllers/ShipmentExecutionController.php
+?? laravel-spedizionefacile-main/app/Mail/ReferralUsedMail.php
+?? laravel-spedizionefacile-main/app/Mail/ShipmentDocumentsMail.php
+?? laravel-spedizionefacile-main/app/Models/UserNotification.php
+?? laravel-spedizionefacile-main/app/Models/UserNotificationPreference.php
+?? laravel-spedizionefacile-main/app/Services/ShipmentDocumentDispatcher.php
+?? laravel-spedizionefacile-main/app/Services/ShipmentExecutionService.php
+?? laravel-spedizionefacile-main/database/migrations/2026_02_16_210000_add_execution_fields_to_orders_table.php
+?? laravel-spedizionefacile-main/database/migrations/2026_02_16_210100_create_user_notification_preferences_table.php
+?? laravel-spedizionefacile-main/database/migrations/2026_02_16_210200_create_user_notifications_table.php
+?? tmp-diagnostica/

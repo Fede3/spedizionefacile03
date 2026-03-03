@@ -163,6 +163,8 @@ Route::get('/verify-email/{id}', [VerificationController::class, 'verify'])
 Route::get('/locations/search', [LocationController::class, 'search']);
 // GET /api/locations/by-cap?cap=20121 — Cerca localita' per CAP (es. "20121" → "Milano, MI")
 Route::get('/locations/by-cap', [LocationController::class, 'byCap']);
+// GET /api/locations/by-city?city=Roma — Cerca localita' per citta' con CAP coerenti
+Route::get('/locations/by-city', [LocationController::class, 'byCity']);
 
 /* ===== RECUPERO E MODIFICA PASSWORD ===== */
 // POST /api/forgot-password — Invia email con link per recuperare la password
@@ -197,6 +199,17 @@ Route::middleware(['throttle:15,1'])->get('/tracking/search', [BrtController::cl
 // POST /api/contact — Invia un messaggio dal form "Contattaci"
 // Salva il messaggio nel database per la revisione dell'admin
 Route::middleware(['throttle:5,1'])->post('/contact', [ContactController::class, 'store']);
+
+/* ===== BRT - PUDO PUBBLICO (Punti di ritiro/consegna) ===== */
+// PUDO = Pick Up / Drop Off — Punti dove ritirare o consegnare i pacchi
+// Accessibili senza autenticazione per permettere la ricerca durante il checkout
+
+// GET /api/brt/pudo/search — Cerca punti di ritiro BRT per indirizzo
+Route::middleware(['throttle:30,1'])->get('brt/pudo/search', [BrtController::class, 'pudoSearch']);
+// GET /api/brt/pudo/nearby — Cerca punti di ritiro BRT nelle vicinanze (per coordinate)
+Route::middleware(['throttle:30,1'])->get('brt/pudo/nearby', [BrtController::class, 'pudoNearby']);
+// GET /api/brt/pudo/{pudoId} — Dettagli di un punto di ritiro specifico
+Route::middleware(['throttle:30,1'])->get('brt/pudo/{pudoId}', [BrtController::class, 'pudoDetails']);
 
 /* ===================================================================== */
 /* ROTTE PROTETTE — Accessibili solo da utenti loggati (auth:sanctum)    */
@@ -336,16 +349,6 @@ Route::group(['middleware' => ['auth:sanctum']], function() {
     Route::get('brt/label/{order}', [BrtController::class, 'downloadLabel']);
     // GET /api/brt/tracking/{order} — Controlla lo stato della spedizione (tracking)
     Route::get('brt/tracking/{order}', [BrtController::class, 'tracking']);
-
-    /* ===== BRT - PUDO (Punti di ritiro/consegna) ===== */
-    // PUDO = Pick Up / Drop Off — Punti dove ritirare o consegnare i pacchi
-
-    // GET /api/brt/pudo/search — Cerca punti di ritiro BRT per indirizzo
-    Route::get('brt/pudo/search', [BrtController::class, 'pudoSearch']);
-    // GET /api/brt/pudo/nearby — Cerca punti di ritiro BRT nelle vicinanze (per coordinate)
-    Route::get('brt/pudo/nearby', [BrtController::class, 'pudoNearby']);
-    // GET /api/brt/pudo/{pudoId} — Dettagli di un punto di ritiro specifico
-    Route::get('brt/pudo/{pudoId}', [BrtController::class, 'pudoDetails']);
 });
 
 /* ===================================================================== */

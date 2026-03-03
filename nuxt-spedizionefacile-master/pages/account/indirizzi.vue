@@ -125,7 +125,7 @@ const addressList = computed(() => addresses.value?.data || []);
 
 <template>
 	<section class="min-h-[600px] py-[40px] desktop:py-[80px]">
-		<div class="my-container max-w-[800px]">
+		<div class="my-container">
 			<!-- Breadcrumb -->
 			<div class="mb-[24px] text-[0.875rem] text-[#737373]">
 				<NuxtLink to="/account" class="hover:underline text-[#095866]">Il tuo account</NuxtLink>
@@ -138,7 +138,7 @@ const addressList = computed(() => addresses.value?.data || []);
 				<button
 					v-if="!showForm"
 					@click="openNewForm"
-					class="px-[20px] py-[10px] bg-[#095866] hover:bg-[#074a56] text-white rounded-[10px] text-[0.875rem] font-semibold transition-colors cursor-pointer">
+					class="px-[20px] py-[10px] bg-[#095866] hover:bg-[#074a56] text-white rounded-[50px] text-[0.875rem] font-semibold transition-colors cursor-pointer">
 					+ Nuovo indirizzo
 				</button>
 			</div>
@@ -193,10 +193,10 @@ const addressList = computed(() => addresses.value?.data || []);
 					<p v-if="formError" class="text-red-500 text-[0.8125rem] bg-red-50 p-[10px] rounded-[6px]">{{ formError }}</p>
 
 					<div class="flex gap-[12px] pt-[8px]">
-						<button type="button" @click="closeForm" class="flex-1 py-[12px] rounded-[10px] bg-[#F0F0F0] hover:bg-[#E0E0E0] text-[#404040] font-semibold text-[0.875rem] transition-colors cursor-pointer">
+						<button type="button" @click="closeForm" class="flex-1 py-[12px] rounded-[50px] bg-[#F0F0F0] hover:bg-[#E0E0E0] text-[#404040] font-semibold text-[0.875rem] transition-colors cursor-pointer">
 							Annulla
 						</button>
-						<button type="submit" :disabled="formLoading" class="flex-1 py-[12px] rounded-[10px] bg-[#095866] hover:bg-[#074a56] text-white font-semibold text-[0.875rem] transition-colors cursor-pointer disabled:opacity-60">
+						<button type="submit" :disabled="formLoading" class="flex-1 py-[12px] rounded-[50px] bg-[#095866] hover:bg-[#074a56] text-white font-semibold text-[0.875rem] transition-colors cursor-pointer disabled:opacity-60">
 							{{ formLoading ? 'Salvataggio...' : (editingId ? 'Salva modifiche' : 'Aggiungi indirizzo') }}
 						</button>
 					</div>
@@ -241,7 +241,7 @@ const addressList = computed(() => addresses.value?.data || []);
 				</div>
 				<h2 class="text-[1.125rem] font-bold text-[#252B42] mb-[8px]">Nessun indirizzo salvato</h2>
 				<p class="text-[0.875rem] text-[#737373] mb-[20px]">Aggiungi il tuo primo indirizzo per velocizzare le spedizioni.</p>
-				<button @click="openNewForm" class="px-[24px] py-[12px] bg-[#095866] hover:bg-[#074a56] text-white rounded-[10px] font-semibold text-[0.875rem] transition-colors cursor-pointer">
+				<button @click="openNewForm" class="px-[24px] py-[12px] bg-[#095866] hover:bg-[#074a56] text-white rounded-[50px] font-semibold text-[0.875rem] transition-colors cursor-pointer">
 					+ Aggiungi indirizzo
 				</button>
 			</div>

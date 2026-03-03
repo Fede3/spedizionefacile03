@@ -84,6 +84,7 @@ const filteredUsers = computed(() => {
 
 const approveAccount = async (id) => {
 	actionLoading.value = id;
+	console.log(`[AUDIT] Admin approving account #${id} (email verification)`);
 	try {
 		await sanctum(`/api/admin/users/${id}/approve`, { method: "PATCH" });
 		showSuccess("Account approvato e email verificata.");
@@ -95,6 +96,7 @@ const approveAccount = async (id) => {
 const deleteAccount = async (id) => {
 	if (!window.confirm("Confermi l'eliminazione definitiva di questo account?")) return;
 	actionLoading.value = id;
+	console.log(`[AUDIT] Admin deleting account #${id}`);
 	try {
 		await sanctum(`/api/admin/users/${id}`, { method: "DELETE" });
 		showSuccess("Account eliminato correttamente.");
@@ -103,11 +105,29 @@ const deleteAccount = async (id) => {
 	finally { actionLoading.value = null; }
 };
 
-const changeUserRole = async (id, role) => {
-	actionLoading.value = `role-${id}`;
+// Role change confirmation
+const showRoleConfirm = ref(false);
+const roleChangeData = ref({ userId: null, newRole: '', userName: '', currentRole: '' });
+
+const askRoleChange = (user, newRole) => {
+	if (newRole === (user.role || 'User')) return; // No change
+	roleChangeData.value = {
+		userId: user.id,
+		newRole: newRole,
+		userName: `${user.name} ${user.surname}`,
+		currentRole: user.role || 'User',
+	};
+	showRoleConfirm.value = true;
+};
+
+const changeUserRole = async () => {
+	const { userId, newRole, userName, currentRole } = roleChangeData.value;
+	actionLoading.value = `role-${userId}`;
+	console.log(`[AUDIT] Admin changing user #${userId} (${userName}) role: ${currentRole} → ${newRole}`);
 	try {
-		await sanctum(`/api/admin/users/${id}/role`, { method: "PATCH", body: { role } });
-		showSuccess(`Ruolo aggiornato a '${role}'.`);
+		await sanctum(`/api/admin/users/${userId}/role`, { method: "PATCH", body: { role: newRole } });
+		showSuccess(`Ruolo aggiornato a '${newRole}'.`);
+		showRoleConfirm.value = false;
 		await fetchUsers();
 	} catch (e) { showError(e, "Errore durante l'aggiornamento ruolo."); }
 	finally { actionLoading.value = null; }
@@ -125,6 +145,7 @@ const fetchProRequests = async () => {
 
 const approveProRequest = async (id) => {
 	actionLoading.value = `pro-${id}`;
+	console.log(`[AUDIT] Admin approving Pro request #${id}`);
 	try {
 		await sanctum(`/api/admin/pro-requests/${id}/approve`, { method: "PATCH" });
 		showSuccess("Richiesta Pro approvata. L'utente e' ora Partner Pro.");
@@ -135,6 +156,7 @@ const approveProRequest = async (id) => {
 
 const rejectProRequest = async (id) => {
 	actionLoading.value = `pro-${id}`;
+	console.log(`[AUDIT] Admin rejecting Pro request #${id}`);
 	try {
 		await sanctum(`/api/admin/pro-requests/${id}/reject`, { method: "PATCH" });
 		showSuccess("Richiesta Pro rifiutata.");
@@ -153,7 +175,7 @@ onMounted(() => {
 
 <template>
 	<section class="min-h-[600px] py-[40px] desktop:py-[60px] desktop-xl:py-[80px]">
-		<div class="my-container max-w-[1400px]">
+		<div class="my-container">
 			<!-- Breadcrumb -->
 			<div class="mb-[24px] text-[0.875rem] text-[#737373]">
 				<NuxtLink to="/account" class="hover:underline text-[#095866] font-medium">Il tuo account</NuxtLink>
@@ -210,9 +232,9 @@ onMounted(() => {
 				<div class="flex flex-wrap gap-[12px] mb-[20px]">
 					<div class="relative flex-1 min-w-[200px]">
 						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="absolute left-[12px] top-1/2 -translate-y-1/2 w-[18px] h-[18px] text-[#737373]" fill="currentColor"><path d="M9.5,3A6.5,6.5 0 0,1 16,9.5C16,11.11 15.41,12.59 14.44,13.73L14.71,14H15.5L20.5,19L19,20.5L14,15.5V14.71L13.73,14.44C12.59,15.41 11.11,16 9.5,16A6.5,6.5 0 0,1 3,9.5A6.5,6.5 0 0,1 9.5,3M9.5,5C7,5 5,7 5,9.5C5,12 7,14 9.5,14C12,14 14,12 14,9.5C14,7 12,5 9.5,5Z"/></svg>
-						<input v-model="usersSearch" type="text" placeholder="Cerca per nome, email..." class="w-full pl-[40px] pr-[14px] py-[10px] bg-white border border-[#E9EBEC] rounded-[10px] text-[0.875rem] focus:border-[#095866] focus:outline-none" />
+						<input v-model="usersSearch" type="text" placeholder="Cerca per nome, email..." class="w-full pl-[40px] pr-[14px] py-[10px] bg-white border border-[#E9EBEC] rounded-[50px] text-[0.875rem] focus:border-[#095866] focus:outline-none" />
 					</div>
-					<select v-model="usersRoleFilter" class="px-[14px] py-[10px] bg-white border border-[#E9EBEC] rounded-[10px] text-[0.875rem] focus:border-[#095866] focus:outline-none cursor-pointer">
+					<select v-model="usersRoleFilter" class="px-[14px] py-[10px] bg-white border border-[#E9EBEC] rounded-[50px] text-[0.875rem] focus:border-[#095866] focus:outline-none cursor-pointer">
 						<option value="">Tutti i ruoli</option>
 						<option value="User">Cliente</option>
 						<option value="Partner Pro">Partner Pro</option>
@@ -272,7 +294,7 @@ onMounted(() => {
 									<td class="py-[14px] text-[#737373]">{{ u.email }}</td>
 									<td class="py-[14px] text-[#737373] text-[0.8125rem]">{{ u.telephone_number || '\u2014' }}</td>
 									<td class="py-[14px]">
-										<select :value="u.role || 'User'" @change="changeUserRole(u.id, $event.target.value)" :disabled="actionLoading === `role-${u.id}`" class="px-[8px] py-[4px] rounded-[6px] text-[0.75rem] font-medium border border-[#E9EBEC] cursor-pointer bg-white focus:border-[#095866] focus:outline-none">
+										<select :value="u.role || 'User'" @change="askRoleChange(u, $event.target.value); $event.target.value = u.role || 'User'" :disabled="actionLoading === `role-${u.id}`" class="px-[8px] py-[4px] rounded-[6px] text-[0.75rem] font-medium border border-[#E9EBEC] cursor-pointer bg-white focus:border-[#095866] focus:outline-none">
 											<option value="User">Cliente</option>
 											<option value="Partner Pro">Partner Pro</option>
 											<option value="Admin">Admin</option>
@@ -361,5 +383,33 @@ onMounted(() => {
 				</div>
 			</div>
 		</div>
+
+		<!-- Role change confirmation modal -->
+		<UModal v-model:open="showRoleConfirm" :dismissible="true" :close="false">
+			<template #title>
+				<h3 class="text-[1.125rem] font-bold text-[#252B42]">Conferma cambio ruolo</h3>
+			</template>
+			<template #body>
+				<p class="text-[0.9375rem] text-[#737373] leading-[1.6] mb-[12px]">
+					Stai per cambiare il ruolo di <strong class="text-[#252B42]">{{ roleChangeData.userName }}</strong>:
+				</p>
+				<div class="flex items-center gap-[12px] justify-center py-[12px]">
+					<span class="px-[12px] py-[6px] bg-gray-100 text-gray-700 rounded-[8px] text-[0.875rem] font-semibold">{{ roleChangeData.currentRole }}</span>
+					<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[20px] h-[20px] text-[#095866]" fill="currentColor"><path d="M4,11V13H16L10.5,18.5L11.92,19.92L19.84,12L11.92,4.08L10.5,5.5L16,11H4Z"/></svg>
+					<span class="px-[12px] py-[6px] bg-[#095866] text-white rounded-[8px] text-[0.875rem] font-semibold">{{ roleChangeData.newRole }}</span>
+				</div>
+				<p class="text-[0.8125rem] text-amber-700 bg-amber-50 border border-amber-200 rounded-[8px] p-[10px] mt-[12px]">
+					<strong>Attenzione:</strong> Questa azione modificherà i permessi dell'utente.
+				</p>
+			</template>
+			<template #footer>
+				<div class="flex justify-end gap-[10px]">
+					<button type="button" @click="showRoleConfirm = false" class="inline-flex items-center gap-[6px] px-[20px] py-[10px] rounded-[50px] border border-[#E9EBEC] text-[#737373] hover:bg-[#F8F9FB] transition text-[0.875rem] font-medium cursor-pointer">Annulla</button>
+					<button type="button" @click="changeUserRole" :disabled="actionLoading" class="inline-flex items-center gap-[6px] px-[20px] py-[10px] rounded-[50px] bg-[#095866] text-white hover:bg-[#074a56] transition text-[0.875rem] font-semibold disabled:opacity-60 cursor-pointer">
+						{{ actionLoading ? 'Aggiornamento...' : 'Conferma' }}
+					</button>
+				</div>
+			</template>
+		</UModal>
 	</section>
 </template>

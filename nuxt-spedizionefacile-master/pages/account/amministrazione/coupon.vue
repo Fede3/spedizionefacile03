@@ -61,14 +61,23 @@ const openEdit = (coupon) => {
 
 const saveCoupon = async () => {
 	if (!form.value.code.trim() || !form.value.percentage) return;
+
+	// Validate percentage range
+	const percentage = Number(form.value.percentage);
+	if (isNaN(percentage) || percentage < 0 || percentage > 100) {
+		showError(null, "La percentuale deve essere tra 0 e 100.");
+		return;
+	}
+
 	formSaving.value = true;
+	console.log(`[AUDIT] Admin ${editingId.value ? 'updating' : 'creating'} coupon: ${form.value.code} (${percentage}%)`);
 	try {
 		if (editingId.value) {
 			await sanctum(`/api/admin/coupons/${editingId.value}`, {
 				method: 'PUT',
 				body: {
 					code: form.value.code,
-					percentage: Number(form.value.percentage),
+					percentage: percentage,
 					active: form.value.active,
 				},
 			});
@@ -78,7 +87,7 @@ const saveCoupon = async () => {
 				method: 'POST',
 				body: {
 					code: form.value.code,
-					percentage: Number(form.value.percentage),
+					percentage: percentage,
 					active: form.value.active,
 				},
 			});
@@ -94,10 +103,12 @@ const saveCoupon = async () => {
 };
 
 const toggleActive = async (coupon) => {
+	const newStatus = !coupon.active;
+	console.log(`[AUDIT] Admin toggling coupon #${coupon.id} (${coupon.code}) active status: ${coupon.active} → ${newStatus}`);
 	try {
 		await sanctum(`/api/admin/coupons/${coupon.id}`, {
 			method: 'PUT',
-			body: { active: !coupon.active },
+			body: { active: newStatus },
 		});
 		await fetchCoupons();
 	} catch (e) {
@@ -116,6 +127,7 @@ const askDelete = (id) => {
 
 const confirmDelete = async () => {
 	deleteLoading.value = true;
+	console.log(`[AUDIT] Admin deleting coupon #${deleteTargetId.value}`);
 	try {
 		await sanctum(`/api/admin/coupons/${deleteTargetId.value}`, { method: 'DELETE' });
 		showSuccess("Coupon eliminato.");
@@ -134,7 +146,7 @@ onMounted(() => { fetchCoupons(); });
 
 <template>
 	<section class="min-h-[600px] py-[40px] desktop:py-[60px] desktop-xl:py-[80px]">
-		<div class="my-container max-w-[1400px]">
+		<div class="my-container">
 			<!-- Breadcrumb -->
 			<div class="mb-[24px] text-[0.875rem] text-[#737373]">
 				<NuxtLink to="/account" class="hover:underline text-[#095866] font-medium">Il tuo account</NuxtLink>
@@ -149,7 +161,7 @@ onMounted(() => { fetchCoupons(); });
 
 			<div class="flex items-center justify-between mb-[24px] flex-wrap gap-[12px]">
 				<h1 class="text-[1.75rem] font-bold text-[#252B42]">Coupon e sconti</h1>
-				<button @click="openCreate" class="inline-flex items-center gap-[6px] px-[20px] py-[10px] bg-[#095866] hover:bg-[#074a56] text-white rounded-[10px] text-[0.875rem] font-medium transition-colors cursor-pointer">
+				<button @click="openCreate" class="inline-flex items-center gap-[6px] px-[20px] py-[10px] bg-[#095866] hover:bg-[#074a56] text-white rounded-[50px] text-[0.875rem] font-medium transition-colors cursor-pointer">
 					<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[18px] h-[18px]" fill="currentColor"><path d="M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z"/></svg>
 					Nuovo coupon
 				</button>
@@ -170,22 +182,22 @@ onMounted(() => { fetchCoupons(); });
 				<div class="grid grid-cols-1 desktop:grid-cols-3 gap-[16px] mb-[20px]">
 					<div>
 						<label class="block text-[0.8125rem] font-medium text-[#404040] mb-[6px]">Codice</label>
-						<input v-model="form.code" type="text" placeholder="es. SCONTO10" class="w-full px-[14px] py-[10px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[10px] text-[0.875rem] focus:border-[#095866] focus:outline-none uppercase" />
+						<input v-model="form.code" type="text" placeholder="es. SCONTO10" class="w-full px-[14px] py-[10px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[50px] text-[0.875rem] focus:border-[#095866] focus:outline-none uppercase" />
 					</div>
 					<div>
 						<label class="block text-[0.8125rem] font-medium text-[#404040] mb-[6px]">Sconto (%)</label>
-						<input v-model="form.percentage" type="number" min="1" max="100" placeholder="10" class="w-full px-[14px] py-[10px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[10px] text-[0.875rem] focus:border-[#095866] focus:outline-none" />
+						<input v-model="form.percentage" type="number" min="0" max="100" step="1" placeholder="10" class="w-full px-[14px] py-[10px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[50px] text-[0.875rem] focus:border-[#095866] focus:outline-none" />
 					</div>
 					<div>
 						<label class="block text-[0.8125rem] font-medium text-[#404040] mb-[6px]">Stato</label>
-						<select v-model="form.active" class="w-full px-[14px] py-[10px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[10px] text-[0.875rem] focus:border-[#095866] focus:outline-none cursor-pointer">
+						<select v-model="form.active" class="w-full px-[14px] py-[10px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[50px] text-[0.875rem] focus:border-[#095866] focus:outline-none cursor-pointer">
 							<option :value="true">Attivo</option>
 							<option :value="false">Disattivato</option>
 						</select>
 					</div>
 				</div>
 				<div class="flex items-center gap-[12px]">
-					<button @click="saveCoupon" :disabled="formSaving" class="inline-flex items-center gap-[6px] px-[20px] py-[10px] bg-[#095866] hover:bg-[#074a56] text-white rounded-[10px] text-[0.875rem] font-medium transition-colors cursor-pointer disabled:opacity-50">
+					<button @click="saveCoupon" :disabled="formSaving" class="inline-flex items-center gap-[6px] px-[20px] py-[10px] bg-[#095866] hover:bg-[#074a56] text-white rounded-[50px] text-[0.875rem] font-medium transition-colors cursor-pointer disabled:opacity-50">
 						<svg v-if="formSaving" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[16px] h-[16px] animate-spin" fill="currentColor"><path d="M12,4V2A10,10 0 0,0 2,12H4A8,8 0 0,1 12,4Z"/></svg>
 						<svg v-else xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[16px] h-[16px]" fill="currentColor"><path d="M15,9H5V5H15M12,19A3,3 0 0,1 9,16A3,3 0 0,1 12,13A3,3 0 0,1 15,16A3,3 0 0,1 12,19M17,3H5C3.89,3 3,3.9 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V7L17,3Z"/></svg>
 						{{ formSaving ? 'Salvataggio...' : (editingId ? 'Aggiorna' : 'Crea coupon') }}
@@ -267,8 +279,8 @@ onMounted(() => { fetchCoupons(); });
 			</template>
 			<template #footer>
 				<div class="flex justify-end gap-[10px]">
-					<button type="button" @click="showDeleteConfirm = false" class="inline-flex items-center gap-[6px] px-[20px] py-[10px] rounded-[10px] border border-[#E9EBEC] text-[#737373] hover:bg-[#F8F9FB] transition text-[0.875rem] font-medium cursor-pointer">Annulla</button>
-					<button type="button" @click="confirmDelete" :disabled="deleteLoading" class="inline-flex items-center gap-[6px] px-[20px] py-[10px] rounded-[10px] bg-red-500 text-white hover:bg-red-600 transition text-[0.875rem] font-semibold disabled:opacity-60 cursor-pointer">
+					<button type="button" @click="showDeleteConfirm = false" class="inline-flex items-center gap-[6px] px-[20px] py-[10px] rounded-[50px] border border-[#E9EBEC] text-[#737373] hover:bg-[#F8F9FB] transition text-[0.875rem] font-medium cursor-pointer">Annulla</button>
+					<button type="button" @click="confirmDelete" :disabled="deleteLoading" class="inline-flex items-center gap-[6px] px-[20px] py-[10px] rounded-[50px] bg-red-500 text-white hover:bg-red-600 transition text-[0.875rem] font-semibold disabled:opacity-60 cursor-pointer">
 						{{ deleteLoading ? 'Eliminazione...' : 'Elimina' }}
 					</button>
 				</div>

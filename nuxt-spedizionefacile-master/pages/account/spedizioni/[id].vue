@@ -261,7 +261,7 @@ const paymentMethodLabel = (method) => {
 
 <template>
 	<section class="min-h-[600px] py-[40px] desktop:py-[80px]">
-		<div class="my-container max-w-[900px]">
+		<div class="my-container">
 			<!-- Breadcrumb -->
 			<div class="mb-[24px] text-[0.875rem] text-[#737373]">
 				<NuxtLink to="/account" class="hover:underline text-[#095866]">Il tuo account</NuxtLink>
@@ -381,7 +381,7 @@ const paymentMethodLabel = (method) => {
 						</div>
 
 						<!-- Origin Address -->
-						<div v-if="pkg.origin_address" class="bg-[#F8F9FB] rounded-[10px] p-[16px] mb-[10px]">
+						<div v-if="pkg.origin_address" class="bg-[#F8F9FB] rounded-[50px] p-[16px] mb-[10px]">
 							<p class="text-[0.75rem] text-[#737373] uppercase font-medium mb-[6px]">Mittente</p>
 							<p class="text-[0.875rem] font-semibold text-[#252B42]">{{ pkg.origin_address.name }}</p>
 							<p class="text-[0.8125rem] text-[#737373]">{{ pkg.origin_address.address }} {{ pkg.origin_address.address_number }}</p>
@@ -391,13 +391,13 @@ const paymentMethodLabel = (method) => {
 
 						<!-- Badge PUDO: visibile se l'ordine prevede ritiro in un punto BRT convenzionato -->
 						<!-- Il campo brt_pudo_id viene impostato quando l'utente sceglie "Ritira in Punto BRT" -->
-						<div v-if="order?.data?.brt_pudo_id" class="bg-[#095866]/10 rounded-[10px] p-[12px] flex items-center gap-[8px]">
+						<div v-if="order?.data?.brt_pudo_id" class="bg-[#095866]/10 rounded-[50px] p-[12px] flex items-center gap-[8px]">
 							<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#095866" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="shrink-0"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
 							<span class="text-[0.8125rem] font-bold text-[#095866]">Consegna presso Punto BRT</span>
 						</div>
 
 						<!-- Destination Address -->
-						<div v-if="pkg.destination_address" class="bg-[#F8F9FB] rounded-[10px] p-[16px]">
+						<div v-if="pkg.destination_address" class="bg-[#F8F9FB] rounded-[50px] p-[16px]">
 							<p class="text-[0.75rem] text-[#737373] uppercase font-medium mb-[6px]">Destinatario</p>
 							<p class="text-[0.875rem] font-semibold text-[#252B42]">{{ pkg.destination_address.name }}</p>
 							<p class="text-[0.8125rem] text-[#737373]">{{ pkg.destination_address.address }} {{ pkg.destination_address.address_number }}</p>
@@ -406,7 +406,7 @@ const paymentMethodLabel = (method) => {
 						</div>
 
 						<!-- Service -->
-						<div v-if="pkg.services" class="mt-[10px] bg-[#F8F9FB] rounded-[10px] p-[16px]">
+						<div v-if="pkg.services" class="mt-[10px] bg-[#F8F9FB] rounded-[50px] p-[16px]">
 							<p class="text-[0.75rem] text-[#737373] uppercase font-medium mb-[6px]">Servizio</p>
 							<p class="text-[0.875rem] text-[#252B42]">{{ pkg.services.service_type || 'Standard' }}</p>
 							<p v-if="pkg.services.date" class="text-[0.8125rem] text-[#737373]">Data: {{ pkg.services.date }}</p>
@@ -416,7 +416,7 @@ const paymentMethodLabel = (method) => {
 
 				<!-- Aggiungi collo (solo ordini in attesa di pagamento) -->
 				<div v-if="isPendingPayment" class="mt-[16px]">
-					<div v-if="addPackageSuccess" class="bg-emerald-50 border border-emerald-200 rounded-[10px] px-[14px] py-[10px] text-emerald-700 text-[0.8125rem] mb-[12px]">
+					<div v-if="addPackageSuccess" class="bg-emerald-50 border border-emerald-200 rounded-[50px] px-[14px] py-[10px] text-emerald-700 text-[0.8125rem] mb-[12px]">
 						Collo aggiunto con successo!
 					</div>
 
@@ -424,7 +424,7 @@ const paymentMethodLabel = (method) => {
 						v-if="!showAddPackageForm"
 						type="button"
 						@click="showAddPackageForm = true; addPackageSuccess = false"
-						class="inline-flex items-center gap-[6px] px-[16px] py-[10px] bg-[#095866] text-white rounded-[10px] text-[0.875rem] font-semibold hover:bg-[#074a56] transition cursor-pointer">
+						class="inline-flex items-center gap-[6px] px-[16px] py-[10px] bg-[#095866] text-white rounded-[50px] text-[0.875rem] font-semibold hover:bg-[#074a56] transition cursor-pointer">
 						<!-- Plus icon SVG -->
 						<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
 						Aggiungi collo
@@ -448,19 +448,19 @@ const paymentMethodLabel = (method) => {
 							</div>
 							<div>
 								<label class="block text-[0.75rem] text-[#737373] mb-[4px]">Peso (kg)</label>
-								<input type="number" v-model="newPackage.weight" min="0.1" step="0.1" class="w-full bg-[#F8F9FB] border border-[#E9EBEC] rounded-[8px] p-[8px] text-[0.875rem]" required />
+								<input type="number" v-model="newPackage.weight" min="0.1" max="1000" step="0.1" class="w-full bg-[#F8F9FB] border border-[#E9EBEC] rounded-[8px] p-[8px] text-[0.875rem]" required />
 							</div>
 							<div>
 								<label class="block text-[0.75rem] text-[#737373] mb-[4px]">Lunghezza (cm)</label>
-								<input type="number" v-model="newPackage.first_size" min="1" class="w-full bg-[#F8F9FB] border border-[#E9EBEC] rounded-[8px] p-[8px] text-[0.875rem]" required />
+								<input type="number" v-model="newPackage.first_size" min="0.1" max="1000" step="0.1" class="w-full bg-[#F8F9FB] border border-[#E9EBEC] rounded-[8px] p-[8px] text-[0.875rem]" required />
 							</div>
 							<div>
 								<label class="block text-[0.75rem] text-[#737373] mb-[4px]">Larghezza (cm)</label>
-								<input type="number" v-model="newPackage.second_size" min="1" class="w-full bg-[#F8F9FB] border border-[#E9EBEC] rounded-[8px] p-[8px] text-[0.875rem]" required />
+								<input type="number" v-model="newPackage.second_size" min="0.1" max="1000" step="0.1" class="w-full bg-[#F8F9FB] border border-[#E9EBEC] rounded-[8px] p-[8px] text-[0.875rem]" required />
 							</div>
 							<div>
 								<label class="block text-[0.75rem] text-[#737373] mb-[4px]">Altezza (cm)</label>
-								<input type="number" v-model="newPackage.third_size" min="1" class="w-full bg-[#F8F9FB] border border-[#E9EBEC] rounded-[8px] p-[8px] text-[0.875rem]" required />
+								<input type="number" v-model="newPackage.third_size" min="0.1" max="1000" step="0.1" class="w-full bg-[#F8F9FB] border border-[#E9EBEC] rounded-[8px] p-[8px] text-[0.875rem]" required />
 							</div>
 							<div class="col-span-2">
 								<label class="block text-[0.75rem] text-[#737373] mb-[4px]">Contenuto</label>
@@ -473,7 +473,7 @@ const paymentMethodLabel = (method) => {
 								type="button"
 								@click="submitAddPackage"
 								:disabled="addingPackage"
-								class="inline-flex items-center gap-[6px] px-[16px] py-[10px] bg-[#E44203] text-white rounded-[10px] text-[0.875rem] font-semibold hover:opacity-90 transition disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer">
+								class="inline-flex items-center gap-[6px] px-[16px] py-[10px] bg-[#E44203] text-white rounded-[50px] text-[0.875rem] font-semibold hover:opacity-90 transition disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer">
 								<!-- Plus icon SVG -->
 								<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
 								{{ addingPackage ? 'Aggiunta...' : 'Aggiungi' }}
@@ -481,7 +481,7 @@ const paymentMethodLabel = (method) => {
 							<button
 								type="button"
 								@click="showAddPackageForm = false"
-								class="inline-flex items-center gap-[6px] px-[16px] py-[10px] bg-[#E9EBEC] text-[#252B42] rounded-[10px] text-[0.875rem] font-semibold hover:bg-[#D0D0D0] transition cursor-pointer">
+								class="inline-flex items-center gap-[6px] px-[16px] py-[10px] bg-[#E9EBEC] text-[#252B42] rounded-[50px] text-[0.875rem] font-semibold hover:bg-[#D0D0D0] transition cursor-pointer">
 								<!-- Close icon SVG -->
 								<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
 								Annulla
@@ -531,7 +531,7 @@ const paymentMethodLabel = (method) => {
 							<button
 								@click="downloadLabel"
 								type="button"
-								class="inline-flex items-center gap-[6px] px-[16px] py-[10px] bg-[#095866] text-white rounded-[10px] text-[0.875rem] font-semibold hover:bg-[#074a56] transition cursor-pointer">
+								class="inline-flex items-center gap-[6px] px-[16px] py-[10px] bg-[#095866] text-white rounded-[50px] text-[0.875rem] font-semibold hover:bg-[#074a56] transition cursor-pointer">
 								<!-- Download icon SVG -->
 								<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
 								Scarica Etichetta Spedizione
@@ -542,7 +542,7 @@ const paymentMethodLabel = (method) => {
 					<!-- Label NOT available -->
 					<template v-else>
 						<!-- Se c'e' un errore BRT, mostra il messaggio di errore -->
-						<div v-if="orderData.brt_error" class="bg-red-50 border border-red-200 rounded-[10px] px-[16px] py-[12px] flex items-start gap-[12px] mb-[12px]">
+						<div v-if="orderData.brt_error" class="bg-red-50 border border-red-200 rounded-[50px] px-[16px] py-[12px] flex items-start gap-[12px] mb-[12px]">
 							<!-- Alert circle icon SVG -->
 							<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#EF4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="shrink-0 mt-[1px]"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
 							<div class="flex-1">
@@ -551,7 +551,7 @@ const paymentMethodLabel = (method) => {
 							</div>
 						</div>
 						<!-- Se non c'e' errore, mostra "in generazione" -->
-						<div v-else class="bg-amber-50 border border-amber-200 rounded-[10px] px-[16px] py-[12px] flex items-center gap-[12px] mb-[12px]">
+						<div v-else class="bg-amber-50 border border-amber-200 rounded-[50px] px-[16px] py-[12px] flex items-center gap-[12px] mb-[12px]">
 							<!-- Alert triangle icon SVG -->
 							<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#F59E0B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="shrink-0"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
 							<p class="text-[0.8125rem] text-amber-800 flex-1">Etichetta in generazione...</p>
@@ -560,7 +560,7 @@ const paymentMethodLabel = (method) => {
 							@click="regenerateLabel"
 							:disabled="regenerating"
 							type="button"
-							class="inline-flex items-center gap-[6px] px-[16px] py-[10px] bg-[#E44203] text-white rounded-[10px] text-[0.875rem] font-semibold hover:opacity-90 transition disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer">
+							class="inline-flex items-center gap-[6px] px-[16px] py-[10px] bg-[#E44203] text-white rounded-[50px] text-[0.875rem] font-semibold hover:opacity-90 transition disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer">
 							<!-- Refresh icon SVG -->
 							<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
 							{{ regenerating ? 'Rigenerazione...' : 'Rigenera Etichetta' }}
@@ -568,17 +568,17 @@ const paymentMethodLabel = (method) => {
 					</template>
 
 					<!-- Regenerate messages -->
-					<div v-if="regenerateError" class="mt-[10px] bg-red-50 border border-red-200 rounded-[10px] px-[14px] py-[10px] text-red-600 text-[0.8125rem]">
+					<div v-if="regenerateError" class="mt-[10px] bg-red-50 border border-red-200 rounded-[50px] px-[14px] py-[10px] text-red-600 text-[0.8125rem]">
 						{{ regenerateError }}
 					</div>
-					<div v-if="regenerateSuccess" class="mt-[10px] bg-emerald-50 border border-emerald-200 rounded-[10px] px-[14px] py-[10px] text-emerald-700 text-[0.8125rem]">
+					<div v-if="regenerateSuccess" class="mt-[10px] bg-emerald-50 border border-emerald-200 rounded-[50px] px-[14px] py-[10px] text-emerald-700 text-[0.8125rem]">
 						Etichetta generata con successo!
 					</div>
 				</div>
 
 				<!-- Back -->
 				<div class="mt-[24px]">
-					<NuxtLink to="/account/spedizioni" class="inline-flex items-center gap-[6px] px-[20px] py-[10px] bg-[#095866] text-white rounded-[10px] font-semibold text-[0.875rem] hover:bg-[#074a56] transition">
+					<NuxtLink to="/account/spedizioni" class="inline-flex items-center gap-[6px] px-[20px] py-[10px] bg-[#095866] text-white rounded-[50px] font-semibold text-[0.875rem] hover:bg-[#074a56] transition">
 						<!-- Arrow left icon SVG -->
 						<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
 						Torna alle spedizioni
@@ -589,7 +589,7 @@ const paymentMethodLabel = (method) => {
 			<!-- Not found -->
 			<div v-else class="bg-white rounded-[16px] p-[48px] border border-[#E9EBEC] text-center">
 				<p class="text-[1rem] text-[#737373]">Ordine non trovato.</p>
-				<NuxtLink to="/account/spedizioni" class="inline-flex items-center gap-[6px] mt-[16px] px-[20px] py-[10px] bg-[#095866] text-white rounded-[10px] font-semibold text-[0.875rem] hover:bg-[#074a56] transition">
+				<NuxtLink to="/account/spedizioni" class="inline-flex items-center gap-[6px] mt-[16px] px-[20px] py-[10px] bg-[#095866] text-white rounded-[50px] font-semibold text-[0.875rem] hover:bg-[#074a56] transition">
 					<!-- Arrow left icon SVG -->
 						<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
 					Torna alle spedizioni
@@ -627,7 +627,7 @@ const paymentMethodLabel = (method) => {
 						<!-- Eligibility loaded -->
 						<template v-else-if="refundEligibility">
 							<!-- Not eligible -->
-							<div v-if="!refundEligibility.eligible" class="bg-red-50 border border-red-200 rounded-[10px] px-[16px] py-[12px] mb-[16px]">
+							<div v-if="!refundEligibility.eligible" class="bg-red-50 border border-red-200 rounded-[50px] px-[16px] py-[12px] mb-[16px]">
 								<p class="text-[0.875rem] text-red-700">{{ refundEligibility.reason }}</p>
 							</div>
 
@@ -670,7 +670,7 @@ const paymentMethodLabel = (method) => {
 								</div>
 
 								<!-- Errore annullamento nel modale -->
-								<div v-if="cancelError" class="bg-red-50 border border-red-200 rounded-[10px] px-[14px] py-[10px] text-red-600 text-[0.8125rem] mb-[12px]">
+								<div v-if="cancelError" class="bg-red-50 border border-red-200 rounded-[50px] px-[14px] py-[10px] text-red-600 text-[0.8125rem] mb-[12px]">
 									{{ cancelError }}
 								</div>
 
@@ -680,7 +680,7 @@ const paymentMethodLabel = (method) => {
 										type="button"
 										@click="confirmCancellation"
 										:disabled="cancelling"
-										class="flex-1 inline-flex items-center justify-center gap-[6px] px-[16px] py-[12px] bg-red-600 text-white rounded-[10px] text-[0.875rem] font-semibold hover:bg-red-700 transition disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer">
+										class="flex-1 inline-flex items-center justify-center gap-[6px] px-[16px] py-[12px] bg-red-600 text-white rounded-[50px] text-[0.875rem] font-semibold hover:bg-red-700 transition disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer">
 										<!-- X icon SVG -->
 										<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
 										{{ cancelling ? 'Blocco in corso...' : 'Conferma blocco pacco' }}
@@ -689,7 +689,7 @@ const paymentMethodLabel = (method) => {
 										type="button"
 										@click="showCancelModal = false"
 										:disabled="cancelling"
-										class="px-[20px] py-[12px] bg-[#E9EBEC] text-[#252B42] rounded-[10px] text-[0.875rem] font-semibold hover:bg-[#D0D0D0] transition disabled:opacity-60 cursor-pointer">
+										class="px-[20px] py-[12px] bg-[#E9EBEC] text-[#252B42] rounded-[50px] text-[0.875rem] font-semibold hover:bg-[#D0D0D0] transition disabled:opacity-60 cursor-pointer">
 										Indietro
 									</button>
 								</div>
@@ -698,13 +698,13 @@ const paymentMethodLabel = (method) => {
 
 						<!-- Error loading eligibility -->
 						<template v-else>
-							<div v-if="cancelError" class="bg-red-50 border border-red-200 rounded-[10px] px-[14px] py-[10px] text-red-600 text-[0.8125rem] mb-[12px]">
+							<div v-if="cancelError" class="bg-red-50 border border-red-200 rounded-[50px] px-[14px] py-[10px] text-red-600 text-[0.8125rem] mb-[12px]">
 								{{ cancelError }}
 							</div>
 							<button
 								type="button"
 								@click="showCancelModal = false"
-								class="w-full px-[16px] py-[12px] bg-[#E9EBEC] text-[#252B42] rounded-[10px] text-[0.875rem] font-semibold hover:bg-[#D0D0D0] transition cursor-pointer">
+								class="w-full px-[16px] py-[12px] bg-[#E9EBEC] text-[#252B42] rounded-[50px] text-[0.875rem] font-semibold hover:bg-[#D0D0D0] transition cursor-pointer">
 								Chiudi
 							</button>
 						</template>

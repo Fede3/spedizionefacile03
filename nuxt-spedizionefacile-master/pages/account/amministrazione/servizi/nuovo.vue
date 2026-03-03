@@ -60,7 +60,7 @@ const saveService = async () => {
 
 <template>
 	<section class="min-h-[600px] py-[40px] desktop:py-[60px] desktop-xl:py-[80px]">
-		<div class="my-container max-w-[1400px]">
+		<div class="my-container">
 			<!-- Breadcrumb -->
 			<div class="mb-[24px] text-[0.875rem] text-[#737373]">
 				<NuxtLink to="/account" class="hover:underline text-[#095866] font-medium">Il tuo account</NuxtLink>
@@ -98,19 +98,19 @@ const saveService = async () => {
 					<div class="space-y-[16px] max-w-[700px]">
 						<div>
 							<label class="block text-[0.8125rem] font-medium text-[#404040] mb-[6px]">Titolo</label>
-							<input v-model="form.title" @input="generateSlug" type="text" class="w-full px-[14px] py-[10px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[10px] text-[0.875rem] focus:border-[#095866] focus:outline-none" placeholder="Titolo del servizio" />
+							<input v-model="form.title" @input="generateSlug" type="text" class="w-full px-[14px] py-[10px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[50px] text-[0.875rem] focus:border-[#095866] focus:outline-none" placeholder="Titolo del servizio" />
 						</div>
 						<div>
 							<label class="block text-[0.8125rem] font-medium text-[#404040] mb-[6px]">Slug (URL)</label>
-							<input v-model="form.slug" type="text" class="w-full px-[14px] py-[10px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[10px] text-[0.875rem] font-mono focus:border-[#095866] focus:outline-none" placeholder="titolo-del-servizio" />
+							<input v-model="form.slug" type="text" class="w-full px-[14px] py-[10px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[50px] text-[0.875rem] font-mono focus:border-[#095866] focus:outline-none" placeholder="titolo-del-servizio" />
 						</div>
 						<div>
 							<label class="block text-[0.8125rem] font-medium text-[#404040] mb-[6px]">Meta description</label>
-							<textarea v-model="form.meta_description" rows="2" class="w-full px-[14px] py-[10px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[10px] text-[0.875rem] focus:border-[#095866] focus:outline-none resize-none" placeholder="Descrizione per i motori di ricerca"></textarea>
+							<textarea v-model="form.meta_description" rows="2" class="w-full px-[14px] py-[10px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[50px] text-[0.875rem] focus:border-[#095866] focus:outline-none resize-none" placeholder="Descrizione per i motori di ricerca"></textarea>
 						</div>
 						<div>
 							<label class="block text-[0.8125rem] font-medium text-[#404040] mb-[6px]">Introduzione</label>
-							<textarea v-model="form.intro" rows="3" class="w-full px-[14px] py-[10px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[10px] text-[0.875rem] focus:border-[#095866] focus:outline-none resize-none" placeholder="Paragrafo introduttivo del servizio"></textarea>
+							<textarea v-model="form.intro" rows="3" class="w-full px-[14px] py-[10px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[50px] text-[0.875rem] focus:border-[#095866] focus:outline-none resize-none" placeholder="Paragrafo introduttivo del servizio"></textarea>
 						</div>
 						<div class="flex items-center gap-[12px]">
 							<button
@@ -177,7 +177,7 @@ const saveService = async () => {
 
 				<!-- Save -->
 				<div class="flex justify-end">
-					<button @click="saveService" :disabled="saving" class="px-[24px] py-[12px] bg-[#095866] hover:bg-[#074a56] text-white rounded-[10px] text-[0.875rem] font-medium transition-colors cursor-pointer disabled:opacity-50 flex items-center gap-[8px]">
+					<button @click="saveService" :disabled="saving" class="px-[24px] py-[12px] bg-[#095866] hover:bg-[#074a56] text-white rounded-[50px] text-[0.875rem] font-medium transition-colors cursor-pointer disabled:opacity-50 flex items-center gap-[8px]">
 						<svg v-if="saving" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[18px] h-[18px] animate-spin" fill="currentColor"><path d="M12,4V2A10,10 0 0,0 2,12H4A8,8 0 0,1 12,4Z"/></svg>
 						<svg v-else xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[18px] h-[18px]" fill="currentColor"><path d="M15,9H5V5H15M12,19A3,3 0 0,1 9,16A3,3 0 0,1 12,13A3,3 0 0,1 15,16A3,3 0 0,1 12,19M17,3H5C3.89,3 3,3.9 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V7L17,3Z"/></svg>
 						{{ saving ? "Salvataggio..." : "Crea servizio" }}

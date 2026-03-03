@@ -23,7 +23,7 @@ definePageMeta({
 });
 
 /* Filtri disponibili per lo stato delle spedizioni */
-const filters = ref(["Tutti", "Aperti", "Chiusi", "Annullati", "In giacenza", "Bozze"]);
+const filters = ref(["Tutti", "Aperti", "Chiusi", "Annullati", "In giacenza"]);
 /* Indice del filtro attivo (0 = Tutti) */
 const activeFilter = ref(0);
 /* Testo del filtro attivo, usato per filtrare la lista */
@@ -87,7 +87,6 @@ const filteredOrders = computed(() => {
 		'Chiusi': ['Completato', 'Consegnato'],
 		'Annullati': ['Annullato', 'Rimborsato', 'Fallito'],
 		'In giacenza': ['In giacenza'],
-		'Bozze': ['In attesa', 'Fallito'],
 	};
 
 	const allowed = filterMap[textFilter.value] || [];
@@ -138,6 +137,12 @@ const getSenderName = (order) => {
 const getRecipientName = (order) => {
 	if (!order.packages?.length) return '—';
 	return order.packages[0].destination_address?.name || '—';
+};
+
+/* Converte il prezzo da centesimi a euro con virgola (es. 1500 -> "15,00€") */
+const formatPrice = (cents) => {
+	if (!cents && cents !== 0) return '0,00€';
+	return (cents / 100).toFixed(2).replace('.', ',') + '€';
 };
 
 /* Controlla se l'ordine e' in attesa di pagamento o il pagamento e' fallito */
@@ -312,7 +317,7 @@ const saveToConfigured = async (order) => {
 
 <template>
 	<section class="min-h-[600px] py-[40px] desktop:py-[80px]">
-		<div class="my-container max-w-[1200px]">
+		<div class="my-container">
 			<!-- Breadcrumb -->
 			<div class="mb-[24px] text-[0.875rem] text-[#737373]">
 				<NuxtLink to="/account" class="hover:underline text-[#095866]">Il tuo account</NuxtLink>
@@ -342,7 +347,7 @@ const saveToConfigured = async (order) => {
 			<div v-if="ordersStatus === 'pending'" class="space-y-[12px]">
 				<div v-for="n in 3" :key="n" class="bg-white rounded-[16px] border border-[#E9EBEC] p-[20px_24px] animate-pulse">
 					<div class="flex items-center gap-[16px]">
-						<div class="w-[44px] h-[44px] rounded-[10px] bg-gray-200"></div>
+						<div class="w-[44px] h-[44px] rounded-[50px] bg-gray-200"></div>
 						<div class="flex-1 space-y-[8px]">
 							<div class="h-[14px] bg-gray-200 rounded w-[60%]"></div>
 							<div class="h-[12px] bg-gray-200 rounded w-[40%]"></div>
@@ -421,19 +426,19 @@ const saveToConfigured = async (order) => {
 					</div>
 
 					<!-- Pending payment alert -->
-					<div v-if="isPendingPayment(order)" class="mx-[20px] my-[12px] bg-amber-50 border border-amber-200 rounded-[10px] px-[16px] py-[12px] flex items-center gap-[12px]">
+					<div v-if="isPendingPayment(order)" class="mx-[20px] my-[12px] bg-amber-50 border border-amber-200 rounded-[50px] px-[16px] py-[12px] flex items-center gap-[12px]">
 						<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="#F59E0B" class="shrink-0"><path d="M12,2L1,21H23M12,6L19.53,19H4.47M11,10V14H13V10M11,16V18H13V16"/></svg>
 						<p class="text-[0.8125rem] text-amber-800 flex-1">{{ getPendingReason(order) }}</p>
 					</div>
 
 					<!-- Save error/success message -->
-					<div v-if="saveError[order.id]" class="mx-[20px] my-[8px] bg-red-50 border border-red-200 rounded-[10px] px-[16px] py-[10px] flex items-center gap-[10px]">
+					<div v-if="saveError[order.id]" class="mx-[20px] my-[8px] bg-red-50 border border-red-200 rounded-[50px] px-[16px] py-[10px] flex items-center gap-[10px]">
 						<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="#EF4444" class="shrink-0"><path d="M13,13H11V7H13M13,17H11V15H13M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z"/></svg>
 						<p class="text-red-600 text-[0.8125rem] font-medium">{{ saveError[order.id] }}</p>
 					</div>
 
 					<!-- Refund info (for refunded orders) -->
-					<div v-if="statusRaw(order.status) === 'refunded' && order.refund_amount" class="mx-[20px] my-[8px] bg-orange-50 border border-orange-200 rounded-[10px] px-[16px] py-[10px] flex items-center gap-[10px]">
+					<div v-if="statusRaw(order.status) === 'refunded' && order.refund_amount" class="mx-[20px] my-[8px] bg-orange-50 border border-orange-200 rounded-[50px] px-[16px] py-[10px] flex items-center gap-[10px]">
 						<!-- Refund icon SVG -->
 						<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#EA580C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="shrink-0"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
 						<p class="text-orange-700 text-[0.8125rem]">
@@ -448,7 +453,7 @@ const saveToConfigured = async (order) => {
 							<NuxtLink
 								v-if="isPendingPayment(order)"
 								:to="`/checkout?order_id=${order.id}`"
-								class="inline-flex items-center gap-[6px] px-[16px] py-[8px] bg-[#E44203] text-white rounded-[10px] text-[0.8125rem] font-semibold hover:bg-[#c93800] transition-all">
+								class="inline-flex items-center gap-[6px] px-[16px] py-[8px] bg-[#E44203] text-white rounded-[50px] text-[0.8125rem] font-semibold hover:bg-[#c93800] transition-all">
 								<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M20,8H4V6H20M20,18H4V12H20M20,4H4C2.89,4 2,4.89 2,6V18A2,2 0 0,0 4,20H20A2,2 0 0,0 22,18V6C22,4.89 21.1,4 20,4Z"/></svg>
 								Paga ora
 							</NuxtLink>
@@ -491,7 +496,7 @@ const saveToConfigured = async (order) => {
 				<p class="text-[#737373] text-[0.9375rem] max-w-[400px] mx-auto mb-[24px] leading-[1.6]">
 					Non hai ancora effettuato nessun ordine. Configura la tua prima spedizione per iniziare.
 				</p>
-				<NuxtLink to="/preventivo" class="inline-block px-[24px] py-[12px] bg-[#095866] hover:bg-[#074a56] text-white rounded-[10px] font-semibold text-[0.9375rem] transition-colors">
+				<NuxtLink to="/preventivo" class="inline-block px-[24px] py-[12px] bg-[#095866] hover:bg-[#074a56] text-white rounded-[50px] font-semibold text-[0.9375rem] transition-colors">
 					Crea nuova spedizione
 				</NuxtLink>
 			</div>

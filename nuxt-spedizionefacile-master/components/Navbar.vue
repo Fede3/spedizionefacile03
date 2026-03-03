@@ -54,13 +54,18 @@ watch(mobileMenuOpen, (val) => {
 // Aggiorna il carrello solo navigando da/verso pagine che modificano il carrello,
 // per evitare una chiamata API inutile su ogni singola navigazione.
 const cartRelatedPaths = ['/carrello', '/riepilogo', '/preventivo', '/la-tua-spedizione'];
-watch(() => route.fullPath, (newPath, oldPath) => {
+const stopRouteWatch = watch(() => route.fullPath, (newPath, oldPath) => {
 	mobileMenuOpen.value = false;
 	const isCartRelated = cartRelatedPaths.some(p => newPath.startsWith(p)) ||
 		(oldPath && cartRelatedPaths.some(p => oldPath.startsWith(p)));
 	if (isCartRelated) {
 		refresh();
 	}
+});
+
+// Cleanup watch to prevent memory leaks
+onBeforeUnmount(() => {
+	stopRouteWatch();
 });
 
 // Link per il pulsante di login: passa la pagina corrente come parametro redirect
@@ -108,7 +113,7 @@ watch(isAuthenticated, () => {
 				<!-- Hamburger mobile -->
 				<button
 					type="button"
-					class="mid-desktop-navbar:hidden min-w-[44px] min-h-[44px] flex items-center justify-center rounded-[12px] bg-[#095866] transition-colors duration-200"
+					class="mid-desktop-navbar:hidden min-w-[44px] min-h-[44px] flex items-center justify-center rounded-[50px] bg-[#095866] transition-colors duration-200"
 					aria-label="Apri menu di navigazione"
 					@click="mobileMenuOpen = !mobileMenuOpen"
 				>
@@ -140,7 +145,7 @@ watch(isAuthenticated, () => {
 				</NuxtLink>
 
 				<!-- Carrello -->
-				<NuxtLink to="/carrello" class="inline-flex items-center justify-center gap-[6px] bg-[#E44203] min-w-[44px] tablet:min-w-[88px] px-[10px] tablet:px-[20px] h-[44px] tablet:h-[48px] text-center text-white rounded-[24px] font-semibold whitespace-nowrap text-[0.875rem] tablet:text-[1rem] transition-[background-color,box-shadow] duration-200 hover:bg-[#c93800] hover:shadow-[0_4px_12px_rgba(228,66,3,0.3)]">
+				<NuxtLink to="/carrello" class="inline-flex items-center justify-center gap-[6px] bg-[#E44203] min-w-[44px] tablet:min-w-[88px] px-[10px] tablet:px-[20px] h-[44px] tablet:h-[48px] text-center text-white rounded-[50px] font-semibold whitespace-nowrap text-[0.875rem] tablet:text-[1rem] transition-[background-color,box-shadow] duration-200 hover:bg-[#c93800] hover:shadow-[0_4px_12px_rgba(228,66,3,0.3)]">
 					<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="shrink-0">
 						<circle cx="9" cy="21" r="1"/>
 						<circle cx="20" cy="21" r="1"/>
@@ -205,7 +210,7 @@ watch(isAuthenticated, () => {
 						<div class="border-t border-white/20 px-[20px] py-[12px]">
 							<NuxtLink
 								:to="authLink"
-								class="flex items-center justify-center gap-[8px] w-full h-[48px] bg-white text-[#095866] rounded-[12px] font-semibold text-[1rem] transition-[transform] duration-200 active:scale-[0.98]"
+								class="flex items-center justify-center gap-[8px] w-full h-[48px] bg-white text-[#095866] rounded-[50px] font-semibold text-[1rem] transition-[transform] duration-200 active:scale-[0.98]"
 							>
 								<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
 									<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
@@ -238,7 +243,7 @@ watch(isAuthenticated, () => {
 	width: 100%;
 	height: 2.5px;
 	background-color: #fff;
-	border-radius: 2px;
+	border-radius: 12px;
 	/* Ottimizzato: transizione solo sulle proprietà animate (transform, opacity) */
 	transition: transform 0.3s cubic-bezier(0.645, 0.045, 0.355, 1), opacity 0.3s cubic-bezier(0.645, 0.045, 0.355, 1);
 	transform-origin: center;

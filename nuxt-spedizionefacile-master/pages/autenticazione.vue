@@ -485,7 +485,7 @@ function onTabClick(newValue) {
 							</div>
 							<p v-if="verificationError" class="text-red-500 text-[0.8125rem] mb-[12px] bg-red-50 p-[10px] rounded-[6px] text-center">{{ verificationError }}</p>
 							<p v-if="verificationSuccess" class="text-emerald-600 text-[0.8125rem] mb-[12px] bg-emerald-50 p-[10px] rounded-[6px] text-center">{{ verificationSuccess }}</p>
-							<button type="button" @click="verifyCode" :disabled="verificationLoading" :class="['w-full py-[14px] rounded-[10px] text-white font-semibold text-[1rem] transition-[background-color,transform]', verificationLoading ? 'bg-gray-300 cursor-not-allowed' : 'bg-[#095866] hover:bg-[#074a56] cursor-pointer']">
+							<button type="button" @click="verifyCode" :disabled="verificationLoading" :class="['w-full py-[14px] rounded-[50px] text-white font-semibold text-[1rem] transition-[background-color,transform]', verificationLoading ? 'bg-gray-300 cursor-not-allowed' : 'bg-[#095866] hover:bg-[#074a56] cursor-pointer']">
 								<span v-if="verificationLoading">Verifica in corso...</span>
 								<span v-else>Verifica Account</span>
 							</button>
@@ -495,7 +495,7 @@ function onTabClick(newValue) {
 							</div>
 						</div>
 
-						<div v-if="showResendVerification && !verificationMode" class="bg-amber-50 border border-amber-200 p-[16px] rounded-[10px] text-[#252B42] mt-[24px] mb-[12px]">
+						<div v-if="showResendVerification && !verificationMode" class="bg-amber-50 border border-amber-200 p-[16px] rounded-[50px] text-[#252B42] mt-[24px] mb-[12px]">
 							<p class="text-[0.9375rem] font-medium">Email non confermata. Ti reinviamo subito una nuova email di verifica.</p>
 							<button
 								type="button"
@@ -583,7 +583,7 @@ function onTabClick(newValue) {
 								type="submit"
 								:disabled="isLoading"
 								:class="[
-									'w-full py-[14px] rounded-[10px] text-white font-semibold text-[1rem] transition-[background-color,transform]',
+									'w-full py-[14px] rounded-[50px] text-white font-semibold text-[1rem] transition-[background-color,transform]',
 									isLoading ? 'bg-gray-300 cursor-not-allowed' : 'bg-[#095866] hover:bg-[#074a56] cursor-pointer',
 								]">
 								<span v-if="isLoading">Accesso in corso...</span>
@@ -635,7 +635,7 @@ function onTabClick(newValue) {
 							<div class="flex items-center gap-[12px] justify-center mb-[20px]">
 								<label
 									:class="[
-										'flex items-center gap-[8px] px-[20px] py-[12px] rounded-[10px] cursor-pointer border transition-[background-color,color,border-color] text-[0.9375rem] font-medium',
+										'flex items-center gap-[8px] px-[20px] py-[12px] rounded-[50px] cursor-pointer border transition-[background-color,color,border-color] text-[0.9375rem] font-medium',
 										registerForm.role === 'Cliente'
 											? 'bg-[#095866] text-white border-[#095866] shadow-sm'
 											: 'bg-white text-[#252B42] border-[#E9EBEC] hover:border-[#095866]',
@@ -645,7 +645,7 @@ function onTabClick(newValue) {
 								</label>
 								<label
 									:class="[
-										'flex items-center gap-[8px] px-[20px] py-[12px] rounded-[10px] cursor-pointer border transition-[background-color,color,border-color] text-[0.9375rem] font-medium',
+										'flex items-center gap-[8px] px-[20px] py-[12px] rounded-[50px] cursor-pointer border transition-[background-color,color,border-color] text-[0.9375rem] font-medium',
 										registerForm.role === 'Partner Pro'
 											? 'bg-[#095866] text-white border-[#095866] shadow-sm'
 											: 'bg-white text-[#252B42] border-[#E9EBEC] hover:border-[#095866]',
@@ -660,7 +660,7 @@ function onTabClick(newValue) {
 								<div class="flex items-center gap-[12px] mb-[20px]">
 									<label
 										:class="[
-											'flex-1 flex items-center justify-center gap-[6px] px-[16px] py-[12px] rounded-[10px] cursor-pointer border transition-[background-color,color,border-color] text-[0.9375rem] font-medium text-center',
+											'flex-1 flex items-center justify-center gap-[6px] px-[16px] py-[12px] rounded-[50px] cursor-pointer border transition-[background-color,color,border-color] text-[0.9375rem] font-medium text-center',
 											registerForm.user_type === 'privato'
 												? 'bg-[#095866] text-white border-[#095866] shadow-sm'
 												: 'bg-white text-[#252B42] border-[#E9EBEC] hover:border-[#095866]',
@@ -671,7 +671,7 @@ function onTabClick(newValue) {
 									</label>
 									<label
 										:class="[
-											'flex-1 flex items-center justify-center gap-[6px] px-[16px] py-[12px] rounded-[10px] cursor-pointer border transition-[background-color,color,border-color] text-[0.9375rem] font-medium text-center',
+											'flex-1 flex items-center justify-center gap-[6px] px-[16px] py-[12px] rounded-[50px] cursor-pointer border transition-[background-color,color,border-color] text-[0.9375rem] font-medium text-center',
 											registerForm.user_type === 'commerciante'
 												? 'bg-[#095866] text-white border-[#095866] shadow-sm'
 												: 'bg-white text-[#252B42] border-[#E9EBEC] hover:border-[#095866]',
@@ -834,7 +834,7 @@ function onTabClick(newValue) {
 								type="submit"
 								:disabled="isLoading"
 								:class="[
-									'w-full py-[14px] rounded-[10px] text-white font-semibold text-[1rem] mt-[20px] transition-[background-color,transform]',
+									'w-full py-[14px] rounded-[50px] text-white font-semibold text-[1rem] mt-[20px] transition-[background-color,transform]',
 									isLoading ? 'bg-gray-300 cursor-not-allowed' : 'bg-[#095866] hover:bg-[#074a56] cursor-pointer',
 								]">
 								<span v-if="isLoading">Registrazione in corso...</span>

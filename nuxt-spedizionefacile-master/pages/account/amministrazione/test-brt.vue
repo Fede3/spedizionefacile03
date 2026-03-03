@@ -87,7 +87,7 @@ const downloadTestLabel = (base64) => {
 
 <template>
 	<section class="min-h-[600px] py-[40px] desktop:py-[60px] desktop-xl:py-[80px]">
-		<div class="my-container max-w-[1400px]">
+		<div class="my-container">
 			<!-- Breadcrumb -->
 			<div class="mb-[24px] text-[0.875rem] text-[#737373]">
 				<NuxtLink to="/account" class="hover:underline text-[#095866] font-medium">Il tuo account</NuxtLink>
@@ -166,7 +166,7 @@ const downloadTestLabel = (base64) => {
 						</div>
 					</div>
 
-					<button @click="runBrtTest" :disabled="brtTestLoading" class="mt-[20px] w-full px-[20px] py-[12px] bg-[#095866] hover:bg-[#074a56] text-white rounded-[10px] text-[0.875rem] font-medium transition-colors cursor-pointer disabled:opacity-50 flex items-center justify-center gap-[8px]">
+					<button @click="runBrtTest" :disabled="brtTestLoading" class="mt-[20px] w-full px-[20px] py-[12px] bg-[#095866] hover:bg-[#074a56] text-white rounded-[50px] text-[0.875rem] font-medium transition-colors cursor-pointer disabled:opacity-50 flex items-center justify-center gap-[8px]">
 						<svg v-if="brtTestLoading" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[18px] h-[18px] animate-spin" fill="currentColor"><path d="M12,4V2A10,10 0 0,0 2,12H4A8,8 0 0,1 12,4Z"/></svg>
 						<svg v-else xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[18px] h-[18px]" fill="currentColor"><path d="M8,5.14V19.14L19,12.14L8,5.14Z"/></svg>
 						{{ brtTestLoading ? "Invio in corso..." : "Invia Test Spedizione" }}
@@ -174,7 +174,7 @@ const downloadTestLabel = (base64) => {
 
 					<!-- RISULTATO TEST -->
 					<div v-if="brtTestResult" class="mt-[16px]">
-						<div :class="['rounded-[10px] p-[16px] border', brtTestResult.success ? 'bg-emerald-50 border-emerald-200' : 'bg-red-50 border-red-200']">
+						<div :class="['rounded-[50px] p-[16px] border', brtTestResult.success ? 'bg-emerald-50 border-emerald-200' : 'bg-red-50 border-red-200']">
 							<div class="flex items-center gap-[8px] mb-[10px]">
 								<template v-if="brtTestResult.success"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[20px] h-[20px] text-emerald-600" fill="currentColor"><path d="M12 2C6.5 2 2 6.5 2 12S6.5 22 12 22 22 17.5 22 12 17.5 2 12 2M10 17L5 12L6.41 10.59L10 14.17L17.59 6.58L19 8L10 17Z"/></svg></template>
 								<template v-else><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[20px] h-[20px] text-red-600" fill="currentColor"><path d="M13,13H11V7H13M13,17H11V15H13M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z"/></svg></template>
@@ -219,14 +219,14 @@ const downloadTestLabel = (base64) => {
 						</div>
 					</div>
 
-					<button @click="runBrtPudoTest" :disabled="brtTestPudoLoading" class="mt-[20px] w-full px-[20px] py-[12px] bg-[#095866] hover:bg-[#074a56] text-white rounded-[10px] text-[0.875rem] font-medium transition-colors cursor-pointer disabled:opacity-50 flex items-center justify-center gap-[8px]">
+					<button @click="runBrtPudoTest" :disabled="brtTestPudoLoading" class="mt-[20px] w-full px-[20px] py-[12px] bg-[#095866] hover:bg-[#074a56] text-white rounded-[50px] text-[0.875rem] font-medium transition-colors cursor-pointer disabled:opacity-50 flex items-center justify-center gap-[8px]">
 						<svg v-if="brtTestPudoLoading" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[18px] h-[18px] animate-spin" fill="currentColor"><path d="M12,4V2A10,10 0 0,0 2,12H4A8,8 0 0,1 12,4Z"/></svg>
 						<svg v-else xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[18px] h-[18px]" fill="currentColor"><path d="M9.5,3A6.5,6.5 0 0,1 16,9.5C16,11.11 15.41,12.59 14.44,13.73L14.71,14H15.5L20.5,19L19,20.5L14,15.5V14.71L13.73,14.44C12.59,15.41 11.11,16 9.5,16A6.5,6.5 0 0,1 3,9.5A6.5,6.5 0 0,1 9.5,3M9.5,5C7,5 5,7 5,9.5C5,12 7,14 9.5,14C12,14 14,12 14,9.5C14,7 12,5 9.5,5Z"/></svg>
 						{{ brtTestPudoLoading ? "Ricerca in corso..." : "Cerca PUDO" }}
 					</button>
 
 					<div v-if="brtTestPudoResult" class="mt-[16px]">
-						<div :class="['rounded-[10px] p-[16px] border', brtTestPudoResult.success ? 'bg-emerald-50 border-emerald-200' : 'bg-red-50 border-red-200']">
+						<div :class="['rounded-[50px] p-[16px] border', brtTestPudoResult.success ? 'bg-emerald-50 border-emerald-200' : 'bg-red-50 border-red-200']">
 							<div class="flex items-center gap-[8px] mb-[10px]">
 								<template v-if="brtTestPudoResult.success"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[20px] h-[20px] text-emerald-600" fill="currentColor"><path d="M12 2C6.5 2 2 6.5 2 12S6.5 22 12 22 22 17.5 22 12 17.5 2 12 2M10 17L5 12L6.41 10.59L10 14.17L17.59 6.58L19 8L10 17Z"/></svg></template>
 								<template v-else><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[20px] h-[20px] text-red-600" fill="currentColor"><path d="M13,13H11V7H13M13,17H11V15H13M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z"/></svg></template>
@@ -250,7 +250,7 @@ const downloadTestLabel = (base64) => {
 					</div>
 
 					<!-- INFO CREDENZIALI -->
-					<div class="mt-[24px] rounded-[10px] p-[16px] bg-[#F8F9FB] border border-[#E9EBEC]">
+					<div class="mt-[24px] rounded-[50px] p-[16px] bg-[#F8F9FB] border border-[#E9EBEC]">
 						<h3 class="text-[0.8125rem] font-bold text-[#252B42] mb-[8px] flex items-center gap-[6px]">
 							<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[16px] h-[16px] text-[#095866]" fill="currentColor"><path d="M13,9H11V7H13M13,17H11V11H13M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z"/></svg> Credenziali BRT configurate
 						</h3>

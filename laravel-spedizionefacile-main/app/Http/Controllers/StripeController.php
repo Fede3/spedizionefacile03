@@ -69,7 +69,9 @@ class StripeController extends Controller
      */
     private function getStripeSecret(): ?string
     {
-        return Setting::get('stripe_secret', config('services.stripe.secret'));
+        return Setting::get('stripe_secret')
+            ?: Setting::get('stripe_secret_key')
+            ?: config('services.stripe.secret');
     }
 
     /**

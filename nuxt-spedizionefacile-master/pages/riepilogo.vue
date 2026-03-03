@@ -14,10 +14,15 @@
 
   VINCOLI: single_price arriva in centesimi dal DB, viene convertito in euro per la visualizzazione.
            In modalita' edit, se i dati non sono nello store, vengono caricati via API.
+           IMPORTANTE: preparePayloadForBackend() converte prezzi centesimi→euro prima di inviarli al backend.
   ERRORI TIPICI: non pulire pendingShipment dopo il salvataggio (dati stantii al prossimo accesso).
   PUNTI DI MODIFICA SICURI: layout sezioni, servizi disponibili, stili card.
   COLLEGAMENTI: stores/userStore.js, composables/useCart.js, composables/useSession.js,
                 pages/carrello.vue, pages/checkout.vue.
+
+  BUGFIX CRITICI (Agent 5):
+  ✅ Conversione euro/centesimi: preparePayloadForBackend() converte prezzi da centesimi a euro
+     quando si modifica un pacco dal carrello, evitando prezzi 100x più alti nel DB.
 -->
 <script setup>
 // Meta tag SEO
@@ -62,8 +67,8 @@ if (editQueryId && !shipment.value) {
 	sanctumClient(`/api/cart/${editQueryId}`)
 		.then((res) => {
 			const pkg = res.data || res;
-			// single_price e' in centesimi nel DB, convertiamo in euro per la visualizzazione
-			const priceInEuro = pkg.single_price ? (Number(pkg.single_price) / 100) : 0;
+			// single_price e' in centesimi nel DB, manteniamo in centesimi internamente
+			const priceInCents = pkg.single_price ? Number(pkg.single_price) : 0;
 			// Popola lo store con i dati del pacco per il riepilogo
 			userStore.pendingShipment = {
 				packages: [{
@@ -75,7 +80,7 @@ if (editQueryId && !shipment.value) {
 					third_size: pkg.third_size,
 					weight_price: pkg.weight_price,
 					volume_price: pkg.volume_price,
-					single_price: priceInEuro,
+					single_price: priceInCents,
 					content_description: pkg.content_description || '',
 				}],
 				origin_address: pkg.origin_address || {},
@@ -94,23 +99,47 @@ if (editQueryId && !shipment.value) {
 	navigateTo('/la-tua-spedizione/2');
 }
 
-// Formatta il prezzo in euro con virgola (es. 9.50 -> "9,50€")
-const formatPrice = (price) => {
-	if (!price && price !== 0) return '0,00€';
-	const num = Number(price);
+// Formatta il prezzo da centesimi a euro con virgola (es. 950 -> "9,50€")
+const formatPrice = (cents) => {
+	if (!cents && cents !== 0) return '0,00€';
+	const num = Number(cents) / 100;
 	return num.toFixed(2).replace('.', ',') + '€';
 };
+
+// Converte euro in centesimi (es. 9.50 -> 950)
+const toCents = (euros) => Math.round(Number(euros) * 100);
 
 // Flag: arrivo dalla modifica di un pacco nel carrello
 const isEditFromCart = computed(() => !!editingId.value || !!editQueryId);
 
-// Prezzo totale: in edit mode calcolato dai pacchi, altrimenti dalla sessione
+// Prepara il payload per il backend convertendo i prezzi da centesimi a euro
+// IMPORTANTE: Il backend si aspetta prezzi in EURO e li moltiplica x100 per salvarli in centesimi
+// Quando carichiamo dal carrello (edit mode), i prezzi sono in CENTESIMI → convertiamo in EURO
+// Quando carichiamo dalla sessione (new mode), i prezzi sono già in EURO → nessuna conversione
+const preparePayloadForBackend = (shipmentData) => {
+	if (!shipmentData) return null;
+
+	const payload = { ...shipmentData };
+
+	// Se siamo in edit mode, i prezzi nei packages sono in centesimi → convertiamo in euro
+	if (isEditFromCart.value && payload.packages) {
+		payload.packages = payload.packages.map(pkg => ({
+			...pkg,
+			single_price: Number(pkg.single_price) / 100, // Centesimi → Euro
+		}));
+	}
+
+	return payload;
+};
+
+// Prezzo totale: in edit mode calcolato dai pacchi (in centesimi), altrimenti dalla sessione
 const totalPrice = computed(() => {
 	if (isEditFromCart.value && shipment.value?.packages) {
-		const total = shipment.value.packages.reduce((sum, pkg) => {
+		const totalCents = shipment.value.packages.reduce((sum, pkg) => {
 			return sum + (Number(pkg.single_price) || 0) * (Number(pkg.quantity) || 1);
 		}, 0);
-		return total.toFixed(2).replace('.', ',');
+		const totalEuros = totalCents / 100;
+		return totalEuros.toFixed(2).replace('.', ',');
 	}
 	const price = session.value?.data?.total_price;
 	if (!price && price !== 0) return '0,00';
@@ -235,15 +264,35 @@ const closeServicePopup = () => {
 	servicePopupData.value = {};
 };
 
+// Valida un indirizzo prima del salvataggio
+const validateAddress = (addr) => {
+	if (!addr.name?.trim()) return 'Nome obbligatorio';
+	if (!addr.address?.trim()) return 'Indirizzo obbligatorio';
+	if (!addr.city?.trim()) return 'Città obbligatoria';
+	if (!addr.postal_code?.trim()) return 'CAP obbligatorio';
+	if (!addr.province?.trim()) return 'Provincia obbligatoria';
+	return null;
+};
+
 // Salva le modifiche inline nello store Pinia (pendingShipment)
 const saveEdit = (section) => {
 	if (section === 'colli' && userStore.pendingShipment) {
 		userStore.pendingShipment.packages = editColli.value.map(p => ({ ...p }));
 	}
 	if (section === 'origin' && userStore.pendingShipment) {
+		const error = validateAddress(editOrigin.value);
+		if (error) {
+			toast.add({ title: error, color: 'error' });
+			return;
+		}
 		userStore.pendingShipment.origin_address = { ...editOrigin.value };
 	}
 	if (section === 'destination' && userStore.pendingShipment) {
+		const error = validateAddress(editDestination.value);
+		if (error) {
+			toast.add({ title: error, color: 'error' });
+			return;
+		}
 		userStore.pendingShipment.destination_address = { ...editDestination.value };
 	}
 	if (section === 'services' && userStore.pendingShipment) {
@@ -272,15 +321,19 @@ const proceedToCheckout = async () => {
 	isSubmitting.value = true;
 	submitError.value = null;
 	try {
+		// Prepara il payload convertendo i prezzi da centesimi a euro per il backend
+		const payload = preparePayloadForBackend(shipment.value);
+
 		// Se stiamo modificando un pacco, aggiorniamo prima nel carrello
 		if (editingId.value) {
 			await sanctumClient(`/api/cart/${editingId.value}`, {
 				method: "PUT",
-				body: shipment.value,
+				body: payload,
 			});
 			userStore.editingCartItemId = null;
 			userStore.pendingShipment = null;
 			clearNuxtData("cart");
+			toast.add({ title: 'Dati salvati con successo!', color: 'success' });
 			// Dopo l'aggiornamento, naviga al checkout normale (dal carrello)
 			navigateTo('/checkout');
 			return;
@@ -289,9 +342,10 @@ const proceedToCheckout = async () => {
 		// Create a standalone order directly (saves packages + creates order in one step)
 		const result = await sanctumClient("/api/create-direct-order", {
 			method: "POST",
-			body: shipment.value,
+			body: payload,
 		});
 
+		toast.add({ title: 'Ordine creato con successo!', color: 'success' });
 		// Navigate to checkout with only this order
 		navigateTo(`/checkout?order_id=${result.order_id}`);
 	} catch (error) {
@@ -313,9 +367,10 @@ const goToSavedShipments = async () => {
 	isSubmitting.value = true;
 	submitError.value = null;
 	try {
+		const payload = preparePayloadForBackend(shipment.value);
 		await sanctumClient("/api/saved-shipments", {
 			method: "POST",
-			body: shipment.value,
+			body: payload,
 		});
 		navigateTo('/account/spedizioni-configurate');
 	} catch (error) {
@@ -333,9 +388,10 @@ const addAnotherShipment = async () => {
 	isSubmitting.value = true;
 	if (isAuthenticated.value) {
 		try {
+			const payload = preparePayloadForBackend(shipment.value);
 			await sanctumClient("/api/saved-shipments", {
 				method: "POST",
-				body: shipment.value,
+				body: payload,
 			});
 		} catch (e) {
 			console.error('Add another save error:', e);
@@ -348,28 +404,57 @@ const addAnotherShipment = async () => {
 // Aggiunge la spedizione al carrello (o aggiorna se in modalita' modifica) e naviga alla pagina carrello
 const goToCart = async () => {
 	if (!shipment.value) return;
+
+	// Validazione indirizzi prima del salvataggio
+	const originError = validateAddress(shipment.value.origin_address);
+	if (originError) {
+		toast.add({ title: `Indirizzo partenza: ${originError}`, color: 'error', timeout: 5000 });
+		return;
+	}
+
+	const destError = validateAddress(shipment.value.destination_address);
+	if (destError) {
+		toast.add({ title: `Indirizzo destinazione: ${destError}`, color: 'error', timeout: 5000 });
+		return;
+	}
+
 	isSubmitting.value = true;
 	submitError.value = null;
 	try {
+		const payload = preparePayloadForBackend(shipment.value);
+
+		// DEBUG: Log per verificare endpoint e payload
+		console.log('goToCart - endpoint:', endpoint.value);
+		console.log('goToCart - payload:', payload);
+
 		if (editingId.value) {
 			// Modalita' modifica: aggiorniamo il pacco esistente nel carrello
 			await sanctumClient(`/api/cart/${editingId.value}`, {
 				method: "PUT",
-				body: shipment.value,
+				body: payload,
 			});
 			// Puliamo l'ID di modifica dallo store
 			userStore.editingCartItemId = null;
 			toast.add({ title: 'Spedizione aggiornata nel carrello.', color: 'success' });
 		} else {
 			// Nuova spedizione: aggiungiamo al carrello
-			await sanctumClient(endpoint.value, {
+			const cartEndpoint = endpoint.value || (isAuthenticated.value ? '/api/cart' : '/api/guest-cart');
+			console.log('goToCart - using endpoint:', cartEndpoint);
+
+			await sanctumClient(cartEndpoint, {
 				method: "POST",
-				body: shipment.value,
+				body: payload,
 			});
 			toast.add({ title: 'Spedizione aggiunta al carrello.', color: 'success' });
 		}
-		// Puliamo lo stato pendingShipment per evitare dati stali
+
+		// RESET COMPLETO: Puliamo tutti i dati per permettere nuovo preventivo
 		userStore.pendingShipment = null;
+		userStore.packages = [];
+		userStore.servicesArray = [];
+		userStore.contentDescription = '';
+		userStore.shipmentDetails = null;
+
 		// Invalidiamo la cache del carrello e forziamo il refresh
 		clearNuxtData("cart");
 		// Navighiamo al carrello con un query param per forzare il refresh
@@ -377,8 +462,15 @@ const goToCart = async () => {
 		navigateTo('/carrello?updated=' + Date.now());
 	} catch (error) {
 		console.error('Cart save error:', error);
+		console.error('Error details:', error?.response?._data || error?.data);
 		const errorData = error?.response?._data || error?.data;
 		submitError.value = errorData?.message || "Errore durante il salvataggio nel carrello. Riprova.";
+		toast.add({
+			title: 'Errore',
+			description: submitError.value,
+			color: 'error',
+			timeout: 8000
+		});
 	} finally {
 		isSubmitting.value = false;
 	}
@@ -414,7 +506,7 @@ const goBack = () => {
 				</NuxtLink>
 			</div>
 
-			<div v-else class="max-w-[900px] mx-auto">
+			<div v-else class="mx-auto">
 				<h1 class="text-[1.375rem] tablet:text-[1.75rem] font-bold text-[#252B42] text-center mb-[12px] font-montserrat">{{ editingId ? 'Modifica spedizione' : 'Riepilogo spedizione' }}</h1>
 				<p v-if="!isEditFromCart" class="text-center text-[0.875rem] text-[#737373] mb-[32px]">
 					N. ordine provvisorio: <span class="font-mono font-bold text-[#095866] bg-[#095866]/10 px-[10px] py-[3px] rounded-[6px]">{{ preOrderNumber }}</span>
@@ -424,7 +516,7 @@ const goBack = () => {
 				</p>
 
 				<!-- Colli -->
-				<div class="bg-[#E4E4E4] rounded-[20px] p-[16px] tablet:p-[28px_32px] mb-[16px]">
+				<div class="bg-[#E4E4E4] rounded-[8px] p-[16px] tablet:p-[28px_32px] mb-[16px]">
 					<div class="flex items-center justify-between mb-[16px]">
 						<h2 class="text-[1.125rem] font-bold text-[#252B42]">Colli</h2>
 						<button type="button" @click="startEdit('colli')" class="text-[#095866] hover:text-[#074a56] transition cursor-pointer" title="Modifica colli">
@@ -486,7 +578,7 @@ const goBack = () => {
 				<!-- Indirizzi -->
 				<div class="grid grid-cols-1 desktop:grid-cols-2 gap-[16px] mb-[16px]">
 					<!-- Partenza -->
-					<div class="bg-[#E4E4E4] rounded-[20px] p-[16px] tablet:p-[28px_32px]">
+					<div class="bg-[#E4E4E4] rounded-[16px] p-[16px] tablet:p-[28px_32px]">
 						<div class="flex items-center justify-between mb-[16px]">
 							<h2 class="text-[1.125rem] font-bold text-[#252B42] flex items-center gap-[8px]">
 								<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#E44203" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
@@ -525,15 +617,23 @@ const goBack = () => {
 							<div class="grid grid-cols-2 tablet:grid-cols-3 gap-[10px]">
 								<div>
 									<label class="text-[0.75rem] text-[#737373]">Città</label>
-									<input type="text" v-model="editOrigin.city" class="w-full bg-white rounded-[8px] h-[44px] px-[10px] text-[1rem] border border-[#D0D0D0] transition-[border-color,box-shadow,background-color] duration-200 focus:border-[#095866] focus:shadow-[0_0_0_3px_rgba(9,88,102,0.1)]" />
+									<input type="text" v-model="editOrigin.city" class="w-full bg-white rounded-[8px] h-[44px] px-[10px] text-[1rem] border border-[#D0D0D0] transition-[border-color,box-shadow,background-color] duration-200 focus:border-[#095866] focus:shadow-[0_0_0_3px_rgba(9,88,102,0.1)]" required />
 								</div>
 								<div>
 									<label class="text-[0.75rem] text-[#737373]">CAP</label>
-									<input type="text" v-model="editOrigin.postal_code" class="w-full bg-white rounded-[8px] h-[44px] px-[10px] text-[1rem] border border-[#D0D0D0] transition-[border-color,box-shadow,background-color] duration-200 focus:border-[#095866] focus:shadow-[0_0_0_3px_rgba(9,88,102,0.1)]" />
+									<input
+										type="text"
+										v-model="editOrigin.postal_code"
+										maxlength="5"
+										inputmode="numeric"
+										pattern="[0-9]{5}"
+										@input="editOrigin.postal_code = editOrigin.postal_code.replace(/\D/g, '')"
+										class="w-full bg-white rounded-[8px] h-[44px] px-[10px] text-[1rem] border border-[#D0D0D0] transition-[border-color,box-shadow,background-color] duration-200 focus:border-[#095866] focus:shadow-[0_0_0_3px_rgba(9,88,102,0.1)]"
+										required />
 								</div>
 								<div class="col-span-2 tablet:col-span-1">
 									<label class="text-[0.75rem] text-[#737373]">Provincia</label>
-									<input type="text" v-model="editOrigin.province" class="w-full bg-white rounded-[8px] h-[44px] px-[10px] text-[1rem] border border-[#D0D0D0] transition-[border-color,box-shadow,background-color] duration-200 focus:border-[#095866] focus:shadow-[0_0_0_3px_rgba(9,88,102,0.1)]" />
+									<input type="text" v-model="editOrigin.province" class="w-full bg-white rounded-[8px] h-[44px] px-[10px] text-[1rem] border border-[#D0D0D0] transition-[border-color,box-shadow,background-color] duration-200 focus:border-[#095866] focus:shadow-[0_0_0_3px_rgba(9,88,102,0.1)]" required />
 								</div>
 							</div>
 							<div class="grid grid-cols-1 tablet:grid-cols-2 gap-[10px]">
@@ -554,7 +654,7 @@ const goBack = () => {
 					</div>
 
 					<!-- Destinazione -->
-					<div class="bg-[#E4E4E4] rounded-[20px] p-[16px] tablet:p-[28px_32px]">
+					<div class="bg-[#E4E4E4] rounded-[16px] p-[16px] tablet:p-[28px_32px]">
 						<div class="flex items-center justify-between mb-[16px]">
 							<h2 class="text-[1.125rem] font-bold text-[#252B42] flex items-center gap-[8px]">
 								<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#095866" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
@@ -605,15 +705,23 @@ const goBack = () => {
 							<div class="grid grid-cols-2 tablet:grid-cols-3 gap-[10px]">
 								<div>
 									<label class="text-[0.75rem] text-[#737373]">Città</label>
-									<input type="text" v-model="editDestination.city" class="w-full bg-white rounded-[8px] h-[44px] px-[10px] text-[1rem] border border-[#D0D0D0] transition-[border-color,box-shadow,background-color] duration-200 focus:border-[#095866] focus:shadow-[0_0_0_3px_rgba(9,88,102,0.1)]" />
+									<input type="text" v-model="editDestination.city" class="w-full bg-white rounded-[8px] h-[44px] px-[10px] text-[1rem] border border-[#D0D0D0] transition-[border-color,box-shadow,background-color] duration-200 focus:border-[#095866] focus:shadow-[0_0_0_3px_rgba(9,88,102,0.1)]" required />
 								</div>
 								<div>
 									<label class="text-[0.75rem] text-[#737373]">CAP</label>
-									<input type="text" v-model="editDestination.postal_code" class="w-full bg-white rounded-[8px] h-[44px] px-[10px] text-[1rem] border border-[#D0D0D0] transition-[border-color,box-shadow,background-color] duration-200 focus:border-[#095866] focus:shadow-[0_0_0_3px_rgba(9,88,102,0.1)]" />
+									<input
+										type="text"
+										v-model="editDestination.postal_code"
+										maxlength="5"
+										inputmode="numeric"
+										pattern="[0-9]{5}"
+										@input="editDestination.postal_code = editDestination.postal_code.replace(/\D/g, '')"
+										class="w-full bg-white rounded-[8px] h-[44px] px-[10px] text-[1rem] border border-[#D0D0D0] transition-[border-color,box-shadow,background-color] duration-200 focus:border-[#095866] focus:shadow-[0_0_0_3px_rgba(9,88,102,0.1)]"
+										required />
 								</div>
 								<div class="col-span-2 tablet:col-span-1">
 									<label class="text-[0.75rem] text-[#737373]">Provincia</label>
-									<input type="text" v-model="editDestination.province" class="w-full bg-white rounded-[8px] h-[44px] px-[10px] text-[1rem] border border-[#D0D0D0] transition-[border-color,box-shadow,background-color] duration-200 focus:border-[#095866] focus:shadow-[0_0_0_3px_rgba(9,88,102,0.1)]" />
+									<input type="text" v-model="editDestination.province" class="w-full bg-white rounded-[8px] h-[44px] px-[10px] text-[1rem] border border-[#D0D0D0] transition-[border-color,box-shadow,background-color] duration-200 focus:border-[#095866] focus:shadow-[0_0_0_3px_rgba(9,88,102,0.1)]" required />
 								</div>
 							</div>
 							<div class="grid grid-cols-1 tablet:grid-cols-2 gap-[10px]">
@@ -635,7 +743,7 @@ const goBack = () => {
 				</div>
 
 				<!-- Servizi + Data -->
-				<div class="bg-[#E4E4E4] rounded-[20px] p-[16px] tablet:p-[28px_32px] mb-[16px]">
+				<div class="bg-[#E4E4E4] rounded-[16px] p-[16px] tablet:p-[28px_32px] mb-[16px]">
 					<div class="flex items-center justify-between mb-[12px]">
 						<h2 class="text-[1.125rem] font-bold text-[#252B42]">Servizi e data ritiro</h2>
 						<button type="button" @click="startEdit('services')" class="text-[#095866] hover:text-[#074a56] transition cursor-pointer" title="Modifica servizi">
@@ -651,7 +759,7 @@ const goBack = () => {
 								<span
 									v-for="svc in shipment.services.service_type.split(', ').filter(Boolean)"
 									:key="svc"
-									class="inline-block px-[12px] py-[4px] bg-[#095866]/10 text-[#095866] rounded-[20px] text-[0.8125rem] font-semibold">
+									class="inline-block px-[12px] py-[4px] bg-[#095866]/10 text-[#095866] rounded-[8px] text-[0.8125rem] font-semibold">
 									{{ svc }}
 								</span>
 							</div>
@@ -681,7 +789,7 @@ const goBack = () => {
 						</div>
 
 						<!-- Service popup (for services that need extra data) -->
-						<div v-if="showServiceModal && selectedServiceForEdit" class="bg-white rounded-[12px] border border-[#D0D0D0] p-[20px] mt-[12px]">
+						<div v-if="showServiceModal && selectedServiceForEdit" class="bg-white rounded-[50px] border border-[#D0D0D0] p-[20px] mt-[12px]">
 							<div class="flex items-center justify-between mb-[12px]">
 								<h3 class="text-[0.9375rem] font-bold text-[#252B42]">{{ selectedServiceForEdit.name }}</h3>
 								<button type="button" @click="closeServicePopup" class="text-[#737373] hover:text-[#252B42] cursor-pointer">
@@ -770,7 +878,7 @@ const goBack = () => {
 				</div>
 
 				<!-- Totale -->
-				<div class="bg-[#252B42] rounded-[20px] p-[16px] tablet:p-[24px_32px] mb-[24px]">
+				<div class="bg-[#252B42] rounded-[16px] p-[16px] tablet:p-[24px_32px] mb-[24px]">
 					<div class="flex items-center justify-between gap-[12px]">
 						<span class="text-white text-[1rem] tablet:text-[1.125rem] font-semibold">Totale (IVA inclusa)</span>
 						<span class="text-white text-[1.5rem] tablet:text-[1.75rem] font-bold">{{ totalPrice }}€</span>
@@ -788,14 +896,14 @@ const goBack = () => {
 				</div>
 
 				<!-- Error -->
-				<div v-if="submitError" class="mb-[16px] p-[14px] bg-red-50 border border-red-200 rounded-[12px] flex items-center gap-[10px]">
+				<div v-if="submitError" class="mb-[16px] p-[14px] bg-red-50 border border-red-200 rounded-[50px] flex items-center gap-[10px]">
 					<Icon name="mdi:alert-circle" class="text-[20px] text-red-500 shrink-0" />
 					<p class="text-red-600 text-[0.9375rem] font-medium">{{ submitError }}</p>
 				</div>
 
 				<!-- Indietro + Procedi al pagamento -->
 				<div class="flex flex-col tablet:flex-row items-stretch tablet:items-center justify-between gap-[12px] mb-[24px]">
-					<button @click="goBack" class="inline-flex items-center justify-center gap-[8px] px-[24px] min-h-[48px] rounded-[30px] bg-[#095866] text-white font-semibold hover:bg-[#074a56] transition-[background-color,transform] duration-200 cursor-pointer active:scale-[0.97]">
+					<button @click="goBack" class="inline-flex items-center justify-center gap-[8px] px-[24px] min-h-[48px] rounded-[50px] bg-[#095866] text-white font-semibold hover:bg-[#074a56] transition-[background-color,transform] duration-200 cursor-pointer active:scale-[0.97]">
 						<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
 						{{ isEditFromCart ? 'Torna al carrello' : 'Indietro' }}
 					</button>
@@ -803,7 +911,7 @@ const goBack = () => {
 						v-if="!isEditFromCart"
 						@click="proceedToCheckout"
 						:disabled="isSubmitting"
-						class="inline-flex items-center justify-center gap-[8px] px-[28px] min-h-[48px] rounded-[30px] bg-[#E44203] text-white font-semibold hover:opacity-90 transition-[opacity,transform] duration-200 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed active:scale-[0.97]">
+						class="inline-flex items-center justify-center gap-[8px] px-[28px] min-h-[48px] rounded-[50px] bg-[#E44203] text-white font-semibold hover:opacity-90 transition-[opacity,transform] duration-200 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed active:scale-[0.97]">
 						<span v-if="isSubmitting">Caricamento...</span>
 						<span v-else>Procedi al pagamento</span>
 						<svg v-if="!isSubmitting" width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8z"/></svg>
@@ -817,7 +925,7 @@ const goBack = () => {
 						v-if="isEditFromCart"
 						@click="goToCart"
 						:disabled="isSubmitting"
-						class="w-full flex items-center gap-[14px] p-[16px] rounded-[12px] border border-[#095866] bg-[#f0fafb] hover:bg-[#e0f4f7] transition-[background-color,opacity,transform] duration-200 cursor-pointer group disabled:opacity-60 active:scale-[0.98]">
+						class="w-full flex items-center gap-[14px] p-[16px] rounded-[50px] border border-[#095866] bg-[#f0fafb] hover:bg-[#e0f4f7] transition-[background-color,opacity,transform] duration-200 cursor-pointer group disabled:opacity-60 active:scale-[0.98]">
 						<div class="w-[44px] h-[44px] rounded-[10px] bg-[#095866]/10 flex items-center justify-center shrink-0">
 							<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" class="text-[#095866]"><path fill="currentColor" d="M15 9H5V5h10m-3 14a3 3 0 0 1-3-3a3 3 0 0 1 3-3a3 3 0 0 1 3 3a3 3 0 0 1-3 3m5-16H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V7z"/></svg>
 						</div>
@@ -833,7 +941,7 @@ const goBack = () => {
 						v-if="!isEditFromCart"
 						@click="goToCart"
 						:disabled="isSubmitting"
-						class="w-full flex items-center gap-[10px] tablet:gap-[14px] p-[12px] tablet:p-[16px] rounded-[12px] border border-[#E9EBEC] bg-white hover:border-[#095866] hover:bg-[#f0fafb] transition-[border-color,background-color,opacity,transform] duration-200 cursor-pointer group disabled:opacity-60 active:scale-[0.98]">
+						class="w-full flex items-center gap-[10px] tablet:gap-[14px] p-[12px] tablet:p-[16px] rounded-[50px] border border-[#E9EBEC] bg-white hover:border-[#095866] hover:bg-[#f0fafb] transition-[border-color,background-color,opacity,transform] duration-200 cursor-pointer group disabled:opacity-60 active:scale-[0.98]">
 						<div class="w-[44px] h-[44px] rounded-[10px] bg-[#095866]/10 flex items-center justify-center shrink-0">
 							<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" class="text-[#095866]"><path fill="currentColor" d="M17 18a2 2 0 0 1 2 2a2 2 0 0 1-2 2a2 2 0 0 1-2-2c0-1.11.89-2 2-2M1 2h3.27l.94 2H20a1 1 0 0 1 1 1c0 .17-.05.34-.12.5l-3.58 6.47c-.34.61-1 1.03-1.75 1.03H8.1l-.9 1.63l-.03.12a.25.25 0 0 0 .25.25H19v2H7a2 2 0 0 1-2-2c0-.35.09-.68.24-.96l1.36-2.45L3 4H1zm6 16a2 2 0 0 1 2 2a2 2 0 0 1-2 2a2 2 0 0 1-2-2c0-1.11.89-2 2-2"/></svg>
 						</div>
@@ -849,7 +957,7 @@ const goBack = () => {
 						<button
 							@click="goToSavedShipments"
 							:disabled="isSubmitting"
-							class="flex-1 flex items-center gap-[10px] tablet:gap-[14px] p-[12px] tablet:p-[16px] rounded-[12px] border border-[#E9EBEC] bg-white hover:border-[#095866] hover:bg-[#f0fafb] transition-[border-color,background-color,opacity,transform] duration-200 cursor-pointer group disabled:opacity-60 active:scale-[0.98]">
+							class="flex-1 flex items-center gap-[10px] tablet:gap-[14px] p-[12px] tablet:p-[16px] rounded-[50px] border border-[#E9EBEC] bg-white hover:border-[#095866] hover:bg-[#f0fafb] transition-[border-color,background-color,opacity,transform] duration-200 cursor-pointer group disabled:opacity-60 active:scale-[0.98]">
 							<div class="w-[44px] h-[44px] rounded-[10px] bg-blue-50 flex items-center justify-center shrink-0">
 								<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" class="text-blue-600"><path fill="currentColor" d="M21 16.5c0 .38-.21.71-.53.88l-7.9 4.44c-.16.12-.36.18-.57.18c-.21 0-.41-.06-.57-.18l-7.9-4.44A.99.99 0 0 1 3 16.5v-9c0-.38.21-.71.53-.88l7.9-4.44c.16-.12.36-.18.57-.18c.21 0 .41.06.57.18l7.9 4.44c.32.17.53.5.53.88zM12 4.15L6.04 7.5L12 10.85l5.96-3.35zM5 15.91l6 3.37v-6.73L5 9.18zm14 0V9.18l-6 3.37v6.73z"/></svg>
 							</div>
@@ -863,7 +971,7 @@ const goBack = () => {
 						<button
 							type="button"
 							@click="window.scrollTo({ top: 0, behavior: 'smooth' })"
-							class="w-[56px] shrink-0 flex items-center justify-center rounded-[12px] border border-[#E9EBEC] bg-white hover:border-[#095866] hover:bg-[#f0fafb] transition-[border-color,background-color] cursor-pointer"
+							class="w-[56px] shrink-0 flex items-center justify-center rounded-[50px] border border-[#E9EBEC] bg-white hover:border-[#095866] hover:bg-[#f0fafb] transition-[border-color,background-color] cursor-pointer"
 							title="Vedi dettagli spedizione">
 							<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#095866" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
 						</button>
@@ -872,7 +980,7 @@ const goBack = () => {
 					<button
 						@click="addAnotherShipment"
 						:disabled="isSubmitting"
-						class="w-full flex items-center gap-[10px] tablet:gap-[14px] p-[12px] tablet:p-[16px] rounded-[12px] border border-[#E9EBEC] bg-white hover:border-[#095866] hover:bg-[#f0fafb] transition-[border-color,background-color,opacity,transform] duration-200 cursor-pointer group disabled:opacity-60 active:scale-[0.98]">
+						class="w-full flex items-center gap-[10px] tablet:gap-[14px] p-[12px] tablet:p-[16px] rounded-[50px] border border-[#E9EBEC] bg-white hover:border-[#095866] hover:bg-[#f0fafb] transition-[border-color,background-color,opacity,transform] duration-200 cursor-pointer group disabled:opacity-60 active:scale-[0.98]">
 						<div class="w-[44px] h-[44px] rounded-[10px] bg-orange-50 flex items-center justify-center shrink-0">
 							<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" class="text-orange-600"><path fill="currentColor" d="M17 13h-4v4h-2v-4H7v-2h4V7h2v4h4m-5-9A10 10 0 0 0 2 12a10 10 0 0 0 10 10a10 10 0 0 0 10-10A10 10 0 0 0 12 2"/></svg>
 						</div>

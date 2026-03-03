@@ -76,7 +76,7 @@ onBeforeUnmount(() => {
 
 <template>
 	<section class="min-h-[600px] py-[40px] desktop:py-[60px] desktop-xl:py-[80px]">
-		<div class="my-container max-w-[1400px]">
+		<div class="my-container">
 			<!-- Breadcrumb -->
 			<div class="mb-[24px] text-[0.875rem] text-[#737373]">
 				<NuxtLink to="/account" class="hover:underline text-[#095866] font-medium">Il tuo account</NuxtLink>
@@ -161,14 +161,14 @@ onBeforeUnmount(() => {
 							v-if="selectedFile"
 							@click="uploadImage"
 							:disabled="uploading"
-							class="w-full px-[20px] py-[12px] bg-[#095866] hover:bg-[#074a56] text-white rounded-[10px] text-[0.875rem] font-medium transition-colors cursor-pointer disabled:opacity-50 flex items-center justify-center gap-[8px]">
+							class="w-full px-[20px] py-[12px] bg-[#095866] hover:bg-[#074a56] text-white rounded-[50px] text-[0.875rem] font-medium transition-colors cursor-pointer disabled:opacity-50 flex items-center justify-center gap-[8px]">
 							<svg v-if="uploading" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[18px] h-[18px] animate-spin" fill="currentColor"><path d="M12,4V2A10,10 0 0,0 2,12H4A8,8 0 0,1 12,4Z"/></svg>
 							<svg v-else xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[18px] h-[18px]" fill="currentColor"><path d="M15,9H5V5H15M12,19A3,3 0 0,1 9,16A3,3 0 0,1 12,13A3,3 0 0,1 15,16A3,3 0 0,1 12,19M17,3H5C3.89,3 3,3.9 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V7L17,3Z"/></svg>
 							{{ uploading ? "Caricamento in corso..." : "Salva immagine" }}
 						</button>
 
 						<!-- Info -->
-						<div class="mt-[20px] rounded-[10px] p-[16px] bg-[#F8F9FB] border border-[#E9EBEC]">
+						<div class="mt-[20px] rounded-[50px] p-[16px] bg-[#F8F9FB] border border-[#E9EBEC]">
 							<h3 class="text-[0.8125rem] font-bold text-[#252B42] mb-[8px] flex items-center gap-[6px]">
 								<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[16px] h-[16px] text-[#095866]" fill="currentColor"><path d="M13,9H11V7H13M13,17H11V11H13M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z"/></svg> Suggerimenti
 							</h3>

@@ -35,13 +35,10 @@ useHead({
 	],
 });
 
-// Carica fasce prezzo solo sulla homepage (dove il prezzo minimo viene mostrato nel hero).
-// Su altre pagine che usano i prezzi (Preventivo.vue), loadPriceBands viene chiamato li'.
+// Carica fasce prezzo sempre per garantire disponibilità su tutte le pagine
 const { loadPriceBands, getMinPrice, promoSettings } = usePriceBands();
 onMounted(() => {
-	if (route.path === '/' || route.path === '/preventivo') {
-		loadPriceBands();
-	}
+	loadPriceBands();
 });
 
 const minPriceInfo = computed(() => getMinPrice());
@@ -139,7 +136,7 @@ const props = defineProps({
 
 		<a
 			href="#servizi"
-			class="desktop:w-[146px] w-[123px] desktop:h-[60px] h-[48px] rounded-[35px] bg-[#E44203] leading-[48px] desktop:leading-[60px] font-semibold text-center text-white tracking-[-0.384px] mx-auto text-[0.875rem] desktop:text-[1rem] block">
+			class="desktop:w-[146px] w-[123px] desktop:h-[60px] h-[48px] rounded-[50px] bg-[#E44203] leading-[48px] desktop:leading-[60px] font-semibold text-center text-white tracking-[-0.384px] mx-auto text-[0.875rem] desktop:text-[1rem] block">
 			<span class="after:bg-[url('/img/arrow-down.svg')] after:bg-no-repeat after:inline-block after:size-[16px] after:ml-[11px] after:rotate-90 after:align-[-1px]">Scendi</span>
 		</a>
 	</div>
@@ -158,7 +155,7 @@ const props = defineProps({
 
 			<a
 				href="#pagamento-alla-consegna"
-				class="desktop:w-[146px] w-[123px] desktop:h-[60px] h-[48px] rounded-[35px] bg-[#E44203] leading-[48px] desktop:leading-[60px] font-semibold text-center text-white tracking-[-0.384px] text-[0.875rem] desktop:text-[1rem] block mt-[15px] desktop-xl:mt-[30px]">
+				class="desktop:w-[146px] w-[123px] desktop:h-[60px] h-[48px] rounded-[50px] bg-[#E44203] leading-[48px] desktop:leading-[60px] font-semibold text-center text-white tracking-[-0.384px] text-[0.875rem] desktop:text-[1rem] block mt-[15px] desktop-xl:mt-[30px]">
 				<span class="after:bg-[url('/img/arrow-down.svg')] after:bg-no-repeat after:inline-block after:size-[16px] after:ml-[11px] after:rotate-90 after:align-[-1px]">Scendi</span>
 			</a>
 		</div>
@@ -192,7 +189,7 @@ const props = defineProps({
 
 			<a
 				href="#chi-siamo"
-				class="desktop:w-[146px] w-[123px] desktop:h-[60px] h-[48px] rounded-[35px] bg-[#E44203] leading-[48px] desktop:leading-[60px] font-semibold text-center text-white tracking-[-0.384px] mx-auto text-[0.875rem] desktop:text-[1rem] block mt-[24px]">
+				class="desktop:w-[146px] w-[123px] desktop:h-[60px] h-[48px] rounded-[50px] bg-[#E44203] leading-[48px] desktop:leading-[60px] font-semibold text-center text-white tracking-[-0.384px] mx-auto text-[0.875rem] desktop:text-[1rem] block mt-[24px]">
 				<span class="after:bg-[url('/img/arrow-down.svg')] after:bg-no-repeat after:inline-block after:size-[16px] after:ml-[11px] after:rotate-90 after:align-[-1px]">Scendi</span>
 			</a>
 		</div>
@@ -212,7 +209,7 @@ const props = defineProps({
 
 			<a
 				href="#guide"
-				class="desktop:w-[146px] w-[123px] desktop:h-[60px] h-[48px] rounded-[35px] bg-[#E44203] leading-[48px] desktop:leading-[60px] font-semibold text-center text-white tracking-[-0.384px] mx-auto text-[0.875rem] desktop:text-[1rem] block mt-[24px]">
+				class="desktop:w-[146px] w-[123px] desktop:h-[60px] h-[48px] rounded-[50px] bg-[#E44203] leading-[48px] desktop:leading-[60px] font-semibold text-center text-white tracking-[-0.384px] mx-auto text-[0.875rem] desktop:text-[1rem] block mt-[24px]">
 				<span class="after:bg-[url('/img/arrow-down.svg')] after:bg-no-repeat after:inline-block after:size-[16px] after:ml-[11px] after:rotate-90 after:align-[-1px]">Scendi</span>
 			</a>
 		</div>
@@ -270,7 +267,7 @@ const props = defineProps({
 	width: 200px;
 	height: 220px;
 	background: linear-gradient(135deg, #095866 0%, #0b6d7d 100%);
-	border-radius: 24px 0 0 24px;
+	border-radius: 16px;
 	z-index: 1;
 	transform: rotate(6deg);
 	opacity: 0.15;
@@ -302,7 +299,7 @@ const props = defineProps({
 }
 
 .hero__card-body {
-	padding: 14px 18px;
+	padding: 16px 20px;
 	display: flex;
 	flex-direction: column;
 }
@@ -349,11 +346,11 @@ const props = defineProps({
 .hero__card-includes {
 	display: inline-flex;
 	align-items: center;
-	gap: 5px;
+	gap: 8px;
 	font-size: 0.75rem;
 	font-weight: 600;
 	color: rgba(255, 255, 255, 0.9);
-	margin-top: 6px;
+	margin-top: 8px;
 }
 
 /* --- Immagine --- */
@@ -374,7 +371,7 @@ const props = defineProps({
 	background-size: contain;
 	background-position: center top;
 	background-repeat: no-repeat;
-	border-radius: 20px 0 0 0;
+	border-radius: 16px;
 }
 
 /* ============================================================
@@ -435,7 +432,7 @@ const props = defineProps({
 		height: 200px;
 		right: 20px;
 		top: 20px;
-		border-radius: 32px;
+		border-radius: 16px;
 		opacity: 0.12;
 	}
 
@@ -446,8 +443,8 @@ const props = defineProps({
 
 	.hero__card {
 		max-width: 320px;
-		margin-top: 22px;
-		border-radius: 20px;
+		margin-top: 24px;
+		border-radius: 16px;
 	}
 
 	.hero__card-accent {
@@ -455,7 +452,7 @@ const props = defineProps({
 	}
 
 	.hero__card-body {
-		padding: 18px 24px;
+		padding: 20px 24px;
 	}
 
 	.hero__card-label {
@@ -473,7 +470,7 @@ const props = defineProps({
 
 	.hero__card-includes {
 		font-size: 0.8125rem;
-		gap: 6px;
+		gap: 8px;
 	}
 
 	.hero__image {
@@ -486,7 +483,7 @@ const props = defineProps({
 	}
 
 	.hero__image-bg {
-		border-radius: 28px;
+		border-radius: 16px;
 	}
 }
 
@@ -516,7 +513,7 @@ const props = defineProps({
 		height: 320px;
 		right: 5%;
 		top: 115px;
-		border-radius: 40px;
+		border-radius: 16px;
 		transform: rotate(8deg);
 		opacity: 0.08;
 		width: 480px;
@@ -530,9 +527,9 @@ const props = defineProps({
 
 	.hero__card {
 		max-width: 380px;
-		margin-top: 28px;
-		border-radius: 22px;
-		box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1), 0 2px 6px rgba(0, 0, 0, 0.04);
+		margin-top: 32px;
+		border-radius: 16px;
+		box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
 	}
 
 	.hero__card-accent {
@@ -540,7 +537,7 @@ const props = defineProps({
 	}
 
 	.hero__card-body {
-		padding: 22px 28px;
+		padding: 24px 32px;
 	}
 
 	.hero__card-label {
@@ -577,8 +574,8 @@ const props = defineProps({
 	}
 
 	.hero__image-bg {
-		border-radius: 28px;
-		box-shadow: 0 12px 40px rgba(9, 88, 102, 0.15);
+		border-radius: 16px;
+		box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
 	}
 
 	@keyframes accentIn {
@@ -601,7 +598,7 @@ const props = defineProps({
 		height: 540px;
 		right: 8%;
 		top: 125px;
-		border-radius: 48px;
+		border-radius: 16px;
 	}
 
 	.hero__heading {
@@ -612,11 +609,11 @@ const props = defineProps({
 	.hero__card {
 		max-width: 420px;
 		margin-top: 32px;
-		border-radius: 24px;
+		border-radius: 16px;
 	}
 
 	.hero__card-body {
-		padding: 26px 32px;
+		padding: 32px 40px;
 	}
 
 	.hero__card-label {
@@ -644,7 +641,7 @@ const props = defineProps({
 	}
 
 	.hero__image-bg {
-		border-radius: 36px;
+		border-radius: 16px;
 	}
 }
 </style>

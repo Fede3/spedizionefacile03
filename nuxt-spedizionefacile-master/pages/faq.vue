@@ -108,7 +108,7 @@ useHead({
 <!-- Miglioramento UX: aggiunto titolo, sottotitolo e spaziatura per migliorare la leggibilita' e la gerarchia visiva -->
 <template>
 	<section class="py-[40px] desktop:py-[80px]">
-		<div class="my-container max-w-[800px]">
+		<div class="my-container">
 			<!-- Icona e titolo sezione FAQ -->
 			<div class="flex justify-center mb-[12px]">
 				<div class="w-[56px] h-[56px] rounded-full bg-[#e8f4fb] flex items-center justify-center">

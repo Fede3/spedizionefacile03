@@ -48,6 +48,19 @@ onMounted(async () => {
 	}
 	// Il merge avviene automaticamente nel backend quando si carica il carrello
 	await refresh();
+
+	// Controlla se ci sono pacchi auto-uniti e mostra notifica
+	if (cart.value?.meta?.address_groups) {
+		const mergedGroups = cart.value.meta.address_groups.filter(g => g.package_ids?.length > 1);
+		if (mergedGroups.length > 0) {
+			const totalMerged = mergedGroups.reduce((sum, g) => sum + g.package_ids.length, 0);
+			toast.add({
+				title: `${totalMerged} pacchi identici sono stati uniti automaticamente`,
+				color: 'info',
+				timeout: 5000
+			});
+		}
+	}
 });
 
 // --- FILTRI ---
@@ -144,11 +157,12 @@ const formatPrice = (cents) => {
 	return num.toFixed(2).replace('.', ',') + '\u20AC';
 };
 
-// Calcola il prezzo unitario dividendo il totale per la quantita'
+// Calcola il prezzo unitario dividendo il totale per la quantita' (ritorna centesimi)
+// Non arrotonda qui - il formatPrice gestira' l'arrotondamento per il display
 const unitPrice = (item) => {
 	const total = Number(item.single_price) || 0;
 	const qty = Math.max(1, Number(item.quantity) || 1);
-	return Math.round(total / qty);
+	return total / qty;
 };
 
 // --- AGGIORNAMENTO QUANTITA' ---
@@ -156,7 +170,8 @@ const quantityUpdating = ref(null); // ID dell'elemento in fase di aggiornamento
 
 // Aggiorna la quantita' di una spedizione nel carrello tramite API
 const updateQuantity = async (itemId, newQty) => {
-	if (newQty < 1) return;
+	if (newQty < 1) newQty = 1;
+	if (newQty > 100) newQty = 100;
 	quantityUpdating.value = itemId;
 	try {
 		await sanctum(`/api/cart/${itemId}/quantity`, {
@@ -199,6 +214,23 @@ const groupColors = ['#095866', '#E44203', '#6B21A8', '#0369A1', '#B45309'];
 
 // Stato di espansione dei gruppi (true = espanso, default espanso)
 const expandedGroups = ref({});
+
+// Carica stato espansione da sessionStorage
+onMounted(() => {
+	const saved = sessionStorage.getItem('cart_expanded_groups');
+	if (saved) {
+		try {
+			expandedGroups.value = JSON.parse(saved);
+		} catch (e) {
+			console.error('Error loading expansion state:', e);
+		}
+	}
+});
+
+// Salva stato espansione quando cambia
+watch(expandedGroups, (newVal) => {
+	sessionStorage.setItem('cart_expanded_groups', JSON.stringify(newVal));
+}, { deep: true });
 
 // Toggle espansione gruppo
 const toggleGroup = (groupIdx) => {
@@ -280,9 +312,20 @@ const applyCoupon = async () => {
 	couponMessage.value = null;
 
 	try {
-		// Converti il totale dal formato stringa "12,50 EUR" a numero 12.50
+		// Converti il totale dal formato stringa "12,50 EUR" o "1.234,56 EUR" a numero
 		const total = cart.value?.meta?.total;
-		const numericTotal = Number(String(total).replace(/[\u20AC\s\u00A0EUR]/gi, '').replace(/\./g, '').replace(',', '.')) || 0;
+
+		// Se e' gia' un numero, usalo direttamente
+		if (typeof total === 'number') {
+			var numericTotal = total;
+		} else {
+			// Parsing robusto per formato italiano: "1.234,56 EUR"
+			const cleanTotal = String(total || '0')
+				.replace(/[€\s\u00A0EUR]/gi, '')  // Rimuovi simboli valuta e spazi
+				.replace(/\./g, '')                 // Rimuovi separatore migliaia (punto)
+				.replace(',', '.');                 // Converti virgola decimale in punto
+			var numericTotal = Number(cleanTotal) || 0;
+		}
 
 		const data = await sanctum('/api/calculate-coupon', {
 			method: 'POST',
@@ -319,14 +362,14 @@ const displayTotal = computed(() => {
 
 <template>
 	<section class="min-h-[600px] py-[30px] desktop:py-[50px] bg-[#F0F0F0]">
-		<div class="my-container max-w-[1200px]">
+		<div class="my-container">
 			<!-- Cart content -->
-			<div v-if="cart?.data?.length > 0" class="max-w-[1200px] mx-auto">
+			<div v-if="cart?.data?.length > 0" class="mx-auto">
 				<!-- Promo banner -->
 				<div v-if="promoSettings?.active && promoSettings?.label_text" class="flex justify-center mb-[16px]">
 					<span
 						:style="{ backgroundColor: promoSettings.label_color || '#E44203' }"
-						class="inline-flex items-center gap-[6px] px-[16px] py-[8px] rounded-[10px] text-white text-[0.9375rem] font-bold tracking-wide shadow-sm">
+						class="inline-flex items-center gap-[6px] px-[16px] py-[8px] rounded-[50px] text-white text-[0.9375rem] font-bold tracking-wide shadow-sm">
 						<!-- Ottimizzazione: lazy loading + decoding async + dimensioni per CLS -->
 						<img v-if="promoSettings.label_image" :src="promoSettings.label_image" alt="" loading="lazy" decoding="async" width="40" height="20" class="h-[20px] w-auto" />
 						{{ promoSettings.label_text }}
@@ -338,17 +381,17 @@ const displayTotal = computed(() => {
 				<div class="w-[40px] h-[3px] bg-[#E44203] mx-auto mb-[32px]"></div>
 
 				<!-- Main card -->
-				<div class="bg-[#E6E6E6] rounded-[20px] p-[16px] tablet:p-[30px_36px] border border-dashed border-[#B0B0B0]">
+				<div class="bg-[#E6E6E6] rounded-[16px] p-[16px] tablet:p-[30px_36px] border border-dashed border-[#B0B0B0]">
 					<!-- Filters row -->
 					<div class="flex flex-col tablet:flex-row gap-[12px] tablet:gap-[16px] items-stretch tablet:items-center mb-[20px]">
 						<div class="w-full tablet:flex-1 tablet:min-w-[200px] tablet:max-w-[400px]">
-							<select v-model="filterProvenienza" class="w-full bg-white border border-[#D0D0D0] rounded-[30px] h-[48px] tablet:h-[44px] px-[18px] text-[1rem] tablet:text-[0.875rem] text-[#404040] appearance-none cursor-pointer transition-[border-color,box-shadow] duration-200 focus:border-[#095866] focus:shadow-[0_0_0_3px_rgba(9,88,102,0.1)]">
+							<select v-model="filterProvenienza" class="w-full bg-white border border-[#D0D0D0] rounded-[8px] h-[48px] tablet:h-[44px] px-[18px] text-[1rem] tablet:text-[0.875rem] text-[#404040] appearance-none cursor-pointer transition-[border-color,box-shadow] duration-200 focus:border-[#095866] focus:shadow-[0_0_0_3px_rgba(9,88,102,0.1)]">
 								<option value="">Provenienza</option>
 								<option v-for="city in uniqueCities" :key="city" :value="city">{{ city }}</option>
 							</select>
 						</div>
 						<div class="w-full tablet:flex-1 tablet:min-w-[200px] tablet:max-w-[400px] tablet:ml-auto">
-							<input type="text" v-model="filterRiferimento" placeholder="Riferimento" class="w-full bg-white border border-[#D0D0D0] rounded-[30px] h-[48px] tablet:h-[44px] px-[18px] text-[1rem] tablet:text-[0.875rem] text-[#404040] placeholder:text-[#999] transition-[border-color,box-shadow] duration-200 focus:border-[#095866] focus:shadow-[0_0_0_3px_rgba(9,88,102,0.1)]" />
+							<input type="text" v-model="filterRiferimento" placeholder="Riferimento" class="w-full bg-white border border-[#D0D0D0] rounded-[8px] h-[48px] tablet:h-[44px] px-[18px] text-[1rem] tablet:text-[0.875rem] text-[#404040] placeholder:text-[#999] transition-[border-color,box-shadow] duration-200 focus:border-[#095866] focus:shadow-[0_0_0_3px_rgba(9,88,102,0.1)]" />
 						</div>
 					</div>
 
@@ -364,8 +407,8 @@ const displayTotal = computed(() => {
 								type="text"
 								v-model="couponCode"
 								placeholder="PROVA123"
-								class="w-full bg-white border border-[#D0D0D0] rounded-[30px] h-[48px] tablet:h-[44px] px-[18px] text-[1rem] tablet:text-[0.875rem] text-[#404040] placeholder:text-[#999] transition-[border-color,box-shadow] duration-200 focus:border-[#095866] focus:shadow-[0_0_0_3px_rgba(9,88,102,0.1)]" />
-							<div v-else class="flex items-center gap-[8px] bg-emerald-50 border border-emerald-200 rounded-[30px] h-[44px] px-[18px]">
+								class="w-full bg-white border border-[#D0D0D0] rounded-[8px] h-[48px] tablet:h-[44px] px-[18px] text-[1rem] tablet:text-[0.875rem] text-[#404040] placeholder:text-[#999] transition-[border-color,box-shadow] duration-200 focus:border-[#095866] focus:shadow-[0_0_0_3px_rgba(9,88,102,0.1)]" />
+							<div v-else class="flex items-center gap-[8px] bg-emerald-50 border border-emerald-200 rounded-[8px] h-[44px] px-[18px]">
 								<span class="text-emerald-700 font-semibold text-[0.875rem]">{{ couponCode.toUpperCase() }} (-{{ couponDiscount }}%)</span>
 								<button @click="removeCoupon" class="text-red-500 text-[0.75rem] hover:underline cursor-pointer ml-auto">X</button>
 							</div>
@@ -374,7 +417,7 @@ const displayTotal = computed(() => {
 							v-if="!couponApplied"
 							type="button"
 							@click="applyCoupon"
-							class="inline-flex items-center justify-center gap-[6px] bg-[#095866] text-white font-semibold text-[0.9375rem] px-[28px] min-h-[48px] w-full tablet:w-auto rounded-[30px] hover:bg-[#074a56] transition-[background-color,transform] duration-200 cursor-pointer active:scale-[0.97]">
+							class="inline-flex items-center justify-center gap-[6px] bg-[#095866] text-white font-semibold text-[0.9375rem] px-[28px] min-h-[48px] w-full tablet:w-auto rounded-[50px] hover:bg-[#074a56] transition-[background-color,transform] duration-200 cursor-pointer active:scale-[0.97]">
 							<Icon name="mdi:tag-outline" class="text-[18px]" />
 							Applica Coupon
 						</button>
@@ -404,7 +447,7 @@ const displayTotal = computed(() => {
 									@click="toggleGroup(entry.groupIndex)"
 									class="w-full flex items-center gap-[10px] tablet:gap-[16px] p-[14px] tablet:p-[20px] hover:bg-[#f8fafb] transition cursor-pointer text-left">
 									<!-- Merge icon -->
-									<div class="w-[36px] h-[36px] tablet:w-[44px] tablet:h-[44px] rounded-[10px] tablet:rounded-[12px] flex items-center justify-center shrink-0"
+									<div class="w-[36px] h-[36px] tablet:w-[44px] tablet:h-[44px] rounded-[50px] tablet:rounded-[50px] flex items-center justify-center shrink-0"
 										:style="{ backgroundColor: entry.color + '15' }">
 										<svg width="18" height="18" viewBox="0 0 24 24" fill="none" :stroke="entry.color" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="tablet:w-[22px] tablet:h-[22px]"><path d="M16 3h5v5"/><path d="M4 20L21 3"/><path d="M21 16v5h-5"/><path d="M15 15l6 6"/><path d="M4 4l5 5"/></svg>
 									</div>
@@ -465,7 +508,7 @@ const displayTotal = computed(() => {
 										<div
 											v-for="(item, pIdx) in entry.items"
 											:key="item.id"
-											class="flex flex-wrap tablet:flex-nowrap items-center gap-[8px] tablet:gap-[12px] py-[10px] px-[8px] tablet:px-[12px] rounded-[10px] mb-[6px]"
+											class="flex flex-wrap tablet:flex-nowrap items-center gap-[8px] tablet:gap-[12px] py-[10px] px-[8px] tablet:px-[12px] rounded-[50px] mb-[6px]"
 											:class="pIdx % 2 === 0 ? 'bg-[#F8F9FB]' : 'bg-white'">
 											<!-- Package icon -->
 											<div class="w-[32px] h-[32px] tablet:w-[36px] tablet:h-[36px] rounded-[8px] bg-[#F0F0F0] flex items-center justify-center shrink-0">
@@ -498,7 +541,7 @@ const displayTotal = computed(() => {
 												<div class="flex items-center gap-[4px] shrink-0">
 													<button type="button" @click="updateQuantity(item.id, (item.quantity || 1) - 1)" :disabled="(item.quantity || 1) <= 1" class="w-[32px] h-[32px] tablet:w-[24px] tablet:h-[24px] flex items-center justify-center rounded-full bg-[#E9EBEC] text-[#252B42] text-[0.875rem] tablet:text-[0.75rem] font-bold hover:bg-[#D0D0D0] disabled:opacity-30 cursor-pointer disabled:cursor-not-allowed transition-[background-color,transform] duration-200 active:scale-90">-</button>
 													<span class="min-w-[20px] text-center font-semibold text-[0.8125rem] text-[#252B42]">{{ item.quantity || 1 }}</span>
-													<button type="button" @click="updateQuantity(item.id, (item.quantity || 1) + 1)" class="w-[32px] h-[32px] tablet:w-[24px] tablet:h-[24px] flex items-center justify-center rounded-full bg-[#E9EBEC] text-[#252B42] text-[0.875rem] tablet:text-[0.75rem] font-bold hover:bg-[#D0D0D0] cursor-pointer transition-[background-color,transform] duration-200 active:scale-90">+</button>
+													<button type="button" @click="updateQuantity(item.id, (item.quantity || 1) + 1)" :disabled="(item.quantity || 1) >= 100" class="w-[32px] h-[32px] tablet:w-[24px] tablet:h-[24px] flex items-center justify-center rounded-full bg-[#E9EBEC] text-[#252B42] text-[0.875rem] tablet:text-[0.75rem] font-bold hover:bg-[#D0D0D0] disabled:opacity-30 cursor-pointer disabled:cursor-not-allowed transition-[background-color,transform] duration-200 active:scale-90">+</button>
 												</div>
 
 												<!-- Actions -->
@@ -530,7 +573,7 @@ const displayTotal = computed(() => {
 								<!-- Desktop layout -->
 								<div class="hidden desktop:flex items-center gap-[16px] p-[16px_20px]">
 									<!-- Package icon -->
-									<div class="w-[44px] h-[44px] rounded-[10px] bg-[#F8F9FB] flex items-center justify-center shrink-0">
+									<div class="w-[44px] h-[44px] rounded-[50px] bg-[#F8F9FB] flex items-center justify-center shrink-0">
 										<!-- Ottimizzazione: decoding async -->
 										<NuxtImg :src="getPackageIcon(entry.item)" alt="" width="28" height="28" loading="lazy" decoding="async" />
 									</div>
@@ -576,7 +619,7 @@ const displayTotal = computed(() => {
 									<div class="flex items-center gap-[4px] shrink-0">
 										<button type="button" @click="updateQuantity(entry.item.id, (entry.item.quantity || 1) - 1)" :disabled="(entry.item.quantity || 1) <= 1" class="w-[22px] h-[22px] flex items-center justify-center rounded-full bg-[#E9EBEC] text-[#252B42] text-[0.75rem] font-bold hover:bg-[#D0D0D0] disabled:opacity-30 cursor-pointer disabled:cursor-not-allowed transition-[background-color,transform] duration-200 active:scale-90">-</button>
 										<span class="min-w-[20px] text-center font-semibold text-[0.8125rem]">{{ entry.item.quantity || 1 }}</span>
-										<button type="button" @click="updateQuantity(entry.item.id, (entry.item.quantity || 1) + 1)" class="w-[22px] h-[22px] flex items-center justify-center rounded-full bg-[#E9EBEC] text-[#252B42] text-[0.75rem] font-bold hover:bg-[#D0D0D0] cursor-pointer transition-[background-color,transform] duration-200 active:scale-90">+</button>
+										<button type="button" @click="updateQuantity(entry.item.id, (entry.item.quantity || 1) + 1)" :disabled="(entry.item.quantity || 1) >= 100" class="w-[22px] h-[22px] flex items-center justify-center rounded-full bg-[#E9EBEC] text-[#252B42] text-[0.75rem] font-bold hover:bg-[#D0D0D0] disabled:opacity-30 cursor-pointer disabled:cursor-not-allowed transition-[background-color,transform] duration-200 active:scale-90">+</button>
 									</div>
 
 									<!-- Price -->
@@ -612,7 +655,7 @@ const displayTotal = computed(() => {
 										<div class="flex items-center gap-[8px]">
 											<button type="button" @click="updateQuantity(entry.item.id, (entry.item.quantity || 1) - 1)" :disabled="(entry.item.quantity || 1) <= 1" class="w-[36px] h-[36px] flex items-center justify-center rounded-full bg-[#E9EBEC] text-[#252B42] text-[0.875rem] font-bold hover:bg-[#D0D0D0] disabled:opacity-30 cursor-pointer disabled:cursor-not-allowed transition-[background-color,transform] duration-200 active:scale-90">-</button>
 											<span class="min-w-[24px] text-center font-semibold text-[0.875rem] text-[#252B42]">{{ entry.item.quantity || 1 }}x</span>
-											<button type="button" @click="updateQuantity(entry.item.id, (entry.item.quantity || 1) + 1)" class="w-[36px] h-[36px] flex items-center justify-center rounded-full bg-[#E9EBEC] text-[#252B42] text-[0.875rem] font-bold hover:bg-[#D0D0D0] cursor-pointer transition-[background-color,transform] duration-200 active:scale-90">+</button>
+											<button type="button" @click="updateQuantity(entry.item.id, (entry.item.quantity || 1) + 1)" :disabled="(entry.item.quantity || 1) >= 100" class="w-[36px] h-[36px] flex items-center justify-center rounded-full bg-[#E9EBEC] text-[#252B42] text-[0.875rem] font-bold hover:bg-[#D0D0D0] disabled:opacity-30 cursor-pointer disabled:cursor-not-allowed transition-[background-color,transform] duration-200 active:scale-90">+</button>
 										</div>
 										<div class="flex items-center gap-[12px]">
 											<NuxtLink :to="`/riepilogo?edit=${entry.item.id}`" class="inline-flex items-center gap-[4px] text-[0.8125rem] text-[#095866] font-semibold hover:underline cursor-pointer min-h-[44px] px-[4px]">
@@ -649,13 +692,13 @@ const displayTotal = computed(() => {
 						<button
 							type="button"
 							@click="showEmptyConfirm = true"
-							class="inline-flex items-center justify-center gap-[6px] px-[20px] min-h-[48px] rounded-[30px] border border-[#E9EBEC] text-[#737373] text-[0.875rem] font-medium hover:border-red-300 hover:text-red-500 hover:bg-red-50 transition-[border-color,color,background-color,transform] duration-200 cursor-pointer active:scale-[0.97]">
+							class="inline-flex items-center justify-center gap-[6px] px-[20px] min-h-[48px] rounded-[50px] border border-[#E9EBEC] text-[#737373] text-[0.875rem] font-medium hover:border-red-300 hover:text-red-500 hover:bg-red-50 transition-[border-color,color,background-color,transform] duration-200 cursor-pointer active:scale-[0.97]">
 							<Icon name="mdi:delete-sweep-outline" class="text-[18px]" />
 							Svuota carrello
 						</button>
 						<NuxtLink
 							to="/checkout"
-							class="inline-flex items-center justify-center gap-[8px] px-[40px] min-h-[52px] rounded-[30px] bg-[#E44203] text-white font-semibold text-[1rem] hover:bg-[#c93800] transition-[background-color,box-shadow,transform] duration-200 shadow-sm hover:shadow-[0_4px_12px_rgba(228,66,3,0.3)] active:scale-[0.97]">
+							class="inline-flex items-center justify-center gap-[8px] px-[40px] min-h-[52px] rounded-[50px] bg-[#E44203] text-white font-semibold text-[1rem] hover:bg-[#c93800] transition-[background-color,box-shadow,transform] duration-200 shadow-sm hover:shadow-[0_4px_12px_rgba(228,66,3,0.3)] active:scale-[0.97]">
 							Procedi con l'ordine
 							<Icon name="mdi:arrow-right" class="text-[20px]" />
 						</NuxtLink>
@@ -676,7 +719,7 @@ const displayTotal = computed(() => {
 				</p>
 				<NuxtLink
 					to="/preventivo"
-					class="inline-flex items-center gap-[6px] px-[24px] py-[14px] bg-[#095866] hover:bg-[#074a56] text-white rounded-[10px] font-semibold text-[0.9375rem] transition-[background-color,transform] duration-200 active:scale-[0.97] min-h-[48px]">
+					class="inline-flex items-center gap-[6px] px-[24px] py-[14px] bg-[#095866] hover:bg-[#074a56] text-white rounded-[50px] font-semibold text-[0.9375rem] transition-[background-color,transform] duration-200 active:scale-[0.97] min-h-[48px]">
 					<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
 					Crea nuova spedizione
 				</NuxtLink>
@@ -698,7 +741,7 @@ const displayTotal = computed(() => {
 					<button
 						type="button"
 						@click="showDeleteConfirm = false"
-						class="inline-flex items-center gap-[6px] px-[20px] py-[10px] rounded-[10px] border border-[#E9EBEC] text-[#737373] hover:bg-[#F8F9FB] transition text-[0.875rem] font-medium cursor-pointer">
+						class="inline-flex items-center gap-[6px] px-[20px] py-[10px] rounded-[50px] border border-[#E9EBEC] text-[#737373] hover:bg-[#F8F9FB] transition text-[0.875rem] font-medium cursor-pointer">
 						<Icon name="mdi:close" class="text-[18px]" />
 						Annulla
 					</button>
@@ -706,7 +749,7 @@ const displayTotal = computed(() => {
 						type="button"
 						@click="confirmDelete"
 						:disabled="deleteLoading"
-						class="inline-flex items-center gap-[6px] px-[20px] py-[10px] rounded-[10px] bg-red-500 text-white hover:bg-red-600 transition text-[0.875rem] font-semibold disabled:opacity-60 cursor-pointer">
+						class="inline-flex items-center gap-[6px] px-[20px] py-[10px] rounded-[50px] bg-red-500 text-white hover:bg-red-600 transition text-[0.875rem] font-semibold disabled:opacity-60 cursor-pointer">
 						<Icon name="mdi:delete-outline" class="text-[18px]" />
 						{{ deleteLoading ? 'Eliminazione...' : 'Elimina' }}
 					</button>
@@ -729,7 +772,7 @@ const displayTotal = computed(() => {
 					<button
 						type="button"
 						@click="showEmptyConfirm = false"
-						class="inline-flex items-center gap-[6px] px-[20px] py-[10px] rounded-[10px] border border-[#E9EBEC] text-[#737373] hover:bg-[#F8F9FB] transition text-[0.875rem] font-medium cursor-pointer">
+						class="inline-flex items-center gap-[6px] px-[20px] py-[10px] rounded-[50px] border border-[#E9EBEC] text-[#737373] hover:bg-[#F8F9FB] transition text-[0.875rem] font-medium cursor-pointer">
 						<Icon name="mdi:close" class="text-[18px]" />
 						Annulla
 					</button>
@@ -737,7 +780,7 @@ const displayTotal = computed(() => {
 						type="button"
 						@click="emptyCart"
 						:disabled="emptyCartLoading"
-						class="inline-flex items-center gap-[6px] px-[20px] py-[10px] rounded-[10px] bg-red-500 text-white hover:bg-red-600 transition text-[0.875rem] font-semibold disabled:opacity-60 cursor-pointer">
+						class="inline-flex items-center gap-[6px] px-[20px] py-[10px] rounded-[50px] bg-red-500 text-white hover:bg-red-600 transition text-[0.875rem] font-semibold disabled:opacity-60 cursor-pointer">
 						<Icon name="mdi:delete-sweep-outline" class="text-[18px]" />
 						{{ emptyCartLoading ? 'Svuotamento...' : 'Svuota tutto' }}
 					</button>

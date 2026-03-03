@@ -59,7 +59,7 @@ onMounted(() => { fetchArticles(); });
 
 <template>
 	<section class="min-h-[600px] py-[40px] desktop:py-[60px] desktop-xl:py-[80px]">
-		<div class="my-container max-w-[1400px]">
+		<div class="my-container">
 			<!-- Breadcrumb -->
 			<div class="mb-[24px] text-[0.875rem] text-[#737373]">
 				<NuxtLink to="/account" class="hover:underline text-[#095866] font-medium">Il tuo account</NuxtLink>
@@ -74,7 +74,7 @@ onMounted(() => { fetchArticles(); });
 
 			<div class="flex items-center justify-between mb-[24px]">
 				<h1 class="text-[1.75rem] font-bold text-[#252B42]">Gestione Blog</h1>
-				<NuxtLink to="/account/amministrazione/blog/nuovo" class="px-[16px] py-[10px] bg-[#095866] hover:bg-[#074a56] text-white rounded-[10px] text-[0.875rem] font-medium transition-colors inline-flex items-center gap-[6px]">
+				<NuxtLink to="/account/amministrazione/blog/nuovo" class="px-[16px] py-[10px] bg-[#095866] hover:bg-[#074a56] text-white rounded-[50px] text-[0.875rem] font-medium transition-colors inline-flex items-center gap-[6px]">
 					<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[18px] h-[18px]" fill="currentColor"><path d="M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z"/></svg> Nuovo articolo
 				</NuxtLink>
 			</div>

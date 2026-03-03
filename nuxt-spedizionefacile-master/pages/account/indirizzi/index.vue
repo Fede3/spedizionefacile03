@@ -235,7 +235,7 @@ const getProvinceCode = (provinceName) => {
 
 <template>
 	<section class="min-h-[600px] py-[40px] desktop:py-[80px]">
-		<div class="my-container max-w-[900px]">
+		<div class="my-container">
 			<!-- Breadcrumb -->
 			<div class="mb-[24px] text-[0.875rem] text-[#737373]">
 				<NuxtLink to="/account" class="hover:underline text-[#095866]">Il tuo account</NuxtLink>
@@ -249,11 +249,11 @@ const getProvinceCode = (provinceName) => {
 			</div>
 
 			<!-- Messaggi di feedback globali -->
-			<div v-if="messageSuccess" class="mb-[20px] px-[16px] py-[12px] rounded-[10px] text-[0.875rem] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-[8px]">
+			<div v-if="messageSuccess" class="mb-[20px] px-[16px] py-[12px] rounded-[50px] text-[0.875rem] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-[8px]">
 				<Icon name="mdi:check-circle-outline" class="text-[18px] shrink-0 text-emerald-600" />
 				{{ messageSuccess }}
 			</div>
-			<div v-if="messageError && !showEditForm && !showCreateForm" class="mb-[20px] px-[16px] py-[12px] rounded-[10px] text-[0.875rem] font-medium bg-red-50 text-red-700 border border-red-200">
+			<div v-if="messageError && !showEditForm && !showCreateForm" class="mb-[20px] px-[16px] py-[12px] rounded-[50px] text-[0.875rem] font-medium bg-red-50 text-red-700 border border-red-200">
 				{{ messageError }}
 			</div>
 
@@ -263,7 +263,7 @@ const getProvinceCode = (provinceName) => {
 					<h1 class="text-[1.5rem] desktop:text-[1.75rem] font-bold text-[#252B42]">I tuoi indirizzi</h1>
 					<button
 						@click="showCreateForm = true; messageError = null; messageSuccess = null;"
-						class="inline-flex items-center gap-[6px] px-[20px] py-[10px] bg-[#095866] hover:bg-[#074a56] text-white rounded-[10px] text-[0.875rem] font-semibold transition-colors cursor-pointer">
+						class="inline-flex items-center gap-[6px] px-[20px] py-[10px] bg-[#095866] hover:bg-[#074a56] text-white rounded-[50px] text-[0.875rem] font-semibold transition-colors cursor-pointer">
 						<Icon name="mdi:plus" class="text-[18px]" />
 						Aggiungi indirizzo
 					</button>
@@ -273,7 +273,7 @@ const getProvinceCode = (provinceName) => {
 				<div v-if="!addresses" class="space-y-[12px]">
 					<div v-for="n in 2" :key="n" class="bg-white rounded-[16px] p-[24px] border border-[#E9EBEC] animate-pulse">
 						<div class="flex items-center gap-[16px]">
-							<div class="w-[44px] h-[44px] rounded-[10px] bg-gray-200"></div>
+							<div class="w-[44px] h-[44px] rounded-[50px] bg-gray-200"></div>
 							<div class="flex-1 space-y-[8px]">
 								<div class="h-[14px] bg-gray-200 rounded w-[50%]"></div>
 								<div class="h-[12px] bg-gray-200 rounded w-[35%]"></div>
@@ -293,7 +293,7 @@ const getProvinceCode = (provinceName) => {
 					</p>
 					<button
 						@click="showCreateForm = true"
-						class="inline-flex items-center gap-[6px] px-[24px] py-[12px] bg-[#095866] hover:bg-[#074a56] text-white rounded-[10px] font-semibold text-[0.9375rem] transition-colors cursor-pointer">
+						class="inline-flex items-center gap-[6px] px-[24px] py-[12px] bg-[#095866] hover:bg-[#074a56] text-white rounded-[50px] font-semibold text-[0.9375rem] transition-colors cursor-pointer">
 						<Icon name="mdi:plus" class="text-[18px]" />
 						Aggiungi il tuo primo indirizzo
 					</button>
@@ -310,7 +310,7 @@ const getProvinceCode = (provinceName) => {
 						]">
 						<div class="flex items-start gap-[16px]">
 							<!-- Icona indirizzo -->
-							<div :class="['w-[44px] h-[44px] rounded-[10px] flex items-center justify-center shrink-0', address.default ? 'bg-[#095866]/10' : 'bg-[#F8F9FB]']">
+							<div :class="['w-[44px] h-[44px] rounded-[50px] flex items-center justify-center shrink-0', address.default ? 'bg-[#095866]/10' : 'bg-[#F8F9FB]']">
 								<Icon name="mdi:map-marker-outline" :class="['text-[22px]', address.default ? 'text-[#095866]' : 'text-[#737373]']" />
 							</div>
 
@@ -406,12 +406,21 @@ const getProvinceCode = (provinceName) => {
 							</div>
 							<div>
 								<label class="block text-[0.8125rem] font-semibold text-[#404040] mb-[4px]">CAP *</label>
-								<input type="text" v-model="editedAddress.postal_code" placeholder="00100" maxlength="5" class="w-full px-[12px] py-[10px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[8px] text-[0.875rem] focus:border-[#095866] focus:outline-none" required />
+								<input
+									type="text"
+									v-model="editedAddress.postal_code"
+									placeholder="00100"
+									maxlength="5"
+									inputmode="numeric"
+									pattern="[0-9]{5}"
+									@input="editedAddress.postal_code = editedAddress.postal_code.replace(/[^0-9]/g, '')"
+									class="w-full px-[12px] py-[10px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[8px] text-[0.875rem] focus:border-[#095866] focus:outline-none"
+									required />
 							</div>
 						</div>
 						<div class="mb-[24px]">
 							<label class="block text-[0.8125rem] font-semibold text-[#404040] mb-[4px]">Provincia *</label>
-							<select v-model="editedAddress.province_name" class="w-full px-[12px] py-[10px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[8px] text-[0.875rem] focus:border-[#095866] focus:outline-none cursor-pointer">
+							<select v-model="editedAddress.province_name" class="w-full px-[12px] py-[10px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[8px] text-[0.875rem] focus:border-[#095866] focus:outline-none cursor-pointer" required>
 								<option disabled :value="editedAddress.province_name">{{ editedAddress.province_name }}</option>
 								<option v-for="(province, index) in filteredProvinces(editedAddress)" :key="index" :value="province">{{ province }}</option>
 							</select>
@@ -421,11 +430,11 @@ const getProvinceCode = (provinceName) => {
 						<p v-if="messageError" class="text-center text-[0.875rem] text-red-600 font-medium mb-[16px] bg-red-50 p-[10px] rounded-[8px] border border-red-200">{{ messageError }}</p>
 
 						<div class="flex gap-[12px]">
-							<button type="button" @click.prevent="cancelEdit" class="flex-1 inline-flex items-center justify-center gap-[6px] py-[14px] rounded-[10px] bg-[#F0F0F0] hover:bg-[#E0E0E0] text-[#404040] font-semibold text-[0.9375rem] transition-colors cursor-pointer">
+							<button type="button" @click.prevent="cancelEdit" class="flex-1 inline-flex items-center justify-center gap-[6px] py-[14px] rounded-[50px] bg-[#F0F0F0] hover:bg-[#E0E0E0] text-[#404040] font-semibold text-[0.9375rem] transition-colors cursor-pointer">
 								<Icon name="mdi:close" class="text-[18px]" />
 								Annulla
 							</button>
-							<button type="submit" :disabled="!!messageLoading" class="flex-1 inline-flex items-center justify-center gap-[6px] py-[14px] rounded-[10px] bg-[#095866] hover:bg-[#074a56] text-white font-semibold text-[0.9375rem] transition-colors cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed">
+							<button type="submit" :disabled="!!messageLoading" class="flex-1 inline-flex items-center justify-center gap-[6px] py-[14px] rounded-[50px] bg-[#095866] hover:bg-[#074a56] text-white font-semibold text-[0.9375rem] transition-colors cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed">
 								<Icon name="mdi:content-save" class="text-[18px]" />
 								{{ messageLoading ? 'Salvataggio...' : 'Salva modifiche' }}
 							</button>
@@ -455,7 +464,16 @@ const getProvinceCode = (provinceName) => {
 							</div>
 							<div>
 								<label class="block text-[0.8125rem] font-semibold text-[#404040] mb-[4px]">CAP *</label>
-								<input type="text" v-model="newAddress.postal_code" placeholder="00100" maxlength="5" class="w-full px-[12px] py-[10px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[8px] text-[0.875rem] focus:border-[#095866] focus:outline-none" required />
+								<input
+									type="text"
+									v-model="newAddress.postal_code"
+									placeholder="00100"
+									maxlength="5"
+									inputmode="numeric"
+									pattern="[0-9]{5}"
+									@input="newAddress.postal_code = newAddress.postal_code.replace(/[^0-9]/g, '')"
+									class="w-full px-[12px] py-[10px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[8px] text-[0.875rem] focus:border-[#095866] focus:outline-none"
+									required />
 							</div>
 						</div>
 						<div class="mb-[16px]">
@@ -475,11 +493,11 @@ const getProvinceCode = (provinceName) => {
 						<p v-if="messageError" class="text-center text-[0.875rem] text-red-600 font-medium mb-[16px] bg-red-50 p-[10px] rounded-[8px] border border-red-200">{{ messageError }}</p>
 
 						<div class="flex gap-[12px]">
-							<button type="button" @click.prevent="cancelAdd" class="flex-1 inline-flex items-center justify-center gap-[6px] py-[14px] rounded-[10px] bg-[#F0F0F0] hover:bg-[#E0E0E0] text-[#404040] font-semibold text-[0.9375rem] transition-colors cursor-pointer">
+							<button type="button" @click.prevent="cancelAdd" class="flex-1 inline-flex items-center justify-center gap-[6px] py-[14px] rounded-[50px] bg-[#F0F0F0] hover:bg-[#E0E0E0] text-[#404040] font-semibold text-[0.9375rem] transition-colors cursor-pointer">
 								<Icon name="mdi:close" class="text-[18px]" />
 								Annulla
 							</button>
-							<button type="submit" :disabled="!!messageLoading" class="flex-1 inline-flex items-center justify-center gap-[6px] py-[14px] rounded-[10px] bg-[#095866] hover:bg-[#074a56] text-white font-semibold text-[0.9375rem] transition-colors cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed">
+							<button type="submit" :disabled="!!messageLoading" class="flex-1 inline-flex items-center justify-center gap-[6px] py-[14px] rounded-[50px] bg-[#095866] hover:bg-[#074a56] text-white font-semibold text-[0.9375rem] transition-colors cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed">
 								<Icon name="mdi:plus" class="text-[18px]" />
 								{{ messageLoading ? 'Aggiunta...' : 'Aggiungi indirizzo' }}
 							</button>

@@ -110,7 +110,7 @@ onMounted(() => {
 
 <template>
 	<section class="min-h-[500px] py-[40px] desktop:py-[60px]">
-		<div class="my-container max-w-[660px]">
+		<div class="my-container">
 			<h1 class="text-[2rem] font-bold text-[#252B42] mb-[8px] text-center">Traccia Spedizione</h1>
 			<p class="text-[#737373] text-[0.9375rem] text-center mb-[32px]">Inserisci il codice di tracking BRT, il numero d'ordine o il riferimento mittente per seguire la tua spedizione.</p>
 

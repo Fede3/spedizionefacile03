@@ -49,6 +49,7 @@
 namespace App\Services;
 
 use App\Models\Order;
+use App\Models\PudoPoint;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 class BrtService
@@ -536,6 +537,7 @@ class BrtService
      * ritirare o consegnare i pacchi. Comodo per chi non e' a casa durante la consegna.
      *
      * Cerca in un raggio di 10 km dall'indirizzo specificato.
+     * FALLBACK: Se l'API BRT fallisce, usa il database locale con punti PUDO mock.
      */
     public function getPudoByAddress(string $address, string $zipCode, string $city, string $countryCode = 'ITA', int $maxResults = 10): array
     {
@@ -563,16 +565,23 @@ class BrtService
             $body = $response->json();
 
             if (!$response->successful()) {
-                Log::warning('BRT PUDO API error', [
+                Log::warning('BRT PUDO API error - using fallback', [
                     'status' => $response->status(),
                     'body' => $response->body(),
                     'city' => $city,
                     'zip' => $zipCode,
                 ]);
-                return ['success' => false, 'error' => 'Errore PUDO API (HTTP ' . $response->status() . '): ' . ($body['message'] ?? $response->body()), 'pudo' => []];
+                // FALLBACK: usa database locale
+                return $this->getPudoFromDatabase($city, $zipCode, $maxResults);
             }
 
             $pudoList = $body['pudo'] ?? [];
+
+            // Se l'API non restituisce risultati, prova il fallback
+            if (empty($pudoList)) {
+                Log::info('BRT PUDO API returned no results - using fallback', ['city' => $city, 'zip' => $zipCode]);
+                return $this->getPudoFromDatabase($city, $zipCode, $maxResults);
+            }
 
             // Formattiamo i dati dei punti PUDO per il frontend
             return [
@@ -595,14 +604,16 @@ class BrtService
                 ], $pudoList),
             ];
         } catch (\Exception $e) {
-            Log::error('BRT PUDO exception', ['error' => $e->getMessage()]);
-            return ['success' => false, 'error' => $e->getMessage(), 'pudo' => []];
+            Log::error('BRT PUDO exception - using fallback', ['error' => $e->getMessage(), 'city' => $city, 'zip' => $zipCode]);
+            // FALLBACK: usa database locale
+            return $this->getPudoFromDatabase($city, $zipCode, $maxResults);
         }
     }
 
     /**
      * Cerca punti PUDO per coordinate GPS (latitudine e longitudine).
      * Utile quando l'utente condivide la propria posizione dal telefono.
+     * FALLBACK: Se l'API BRT fallisce, usa il database locale con punti PUDO mock.
      */
     public function getPudoByCoordinates(float $latitude, float $longitude, int $maxResults = 10): array
     {
@@ -624,10 +635,22 @@ class BrtService
             $body = $response->json();
 
             if (!$response->successful()) {
-                return ['success' => false, 'error' => 'Errore PUDO API', 'pudo' => []];
+                Log::warning('BRT PUDO coordinates API error - using fallback', [
+                    'status' => $response->status(),
+                    'lat' => $latitude,
+                    'lng' => $longitude,
+                ]);
+                // FALLBACK: usa database locale
+                return $this->getPudoFromDatabaseByCoordinates($latitude, $longitude, $maxResults);
             }
 
             $pudoList = $body['pudo'] ?? [];
+
+            // Se l'API non restituisce risultati, prova il fallback
+            if (empty($pudoList)) {
+                Log::info('BRT PUDO coordinates API returned no results - using fallback', ['lat' => $latitude, 'lng' => $longitude]);
+                return $this->getPudoFromDatabaseByCoordinates($latitude, $longitude, $maxResults);
+            }
 
             return [
                 'success' => true,
@@ -649,8 +672,9 @@ class BrtService
                 ], $pudoList),
             ];
         } catch (\Exception $e) {
-            Log::error('BRT PUDO coordinates exception', ['error' => $e->getMessage()]);
-            return ['success' => false, 'error' => $e->getMessage(), 'pudo' => []];
+            Log::error('BRT PUDO coordinates exception - using fallback', ['error' => $e->getMessage(), 'lat' => $latitude, 'lng' => $longitude]);
+            // FALLBACK: usa database locale
+            return $this->getPudoFromDatabaseByCoordinates($latitude, $longitude, $maxResults);
         }
     }
 
@@ -1188,5 +1212,86 @@ class BrtService
         }
 
         return $map[$lower] ?? 'IT';
+    }
+
+    /**
+     * FALLBACK: Cerca punti PUDO nel database locale quando l'API BRT non funziona.
+     * Usa la tabella pudo_points popolata con dati mock delle città principali.
+     */
+    private function getPudoFromDatabase(string $city, string $zipCode, int $maxResults): array
+    {
+        try {
+            $points = PudoPoint::searchByLocation($city, $zipCode, $maxResults);
+
+            Log::info('PUDO fallback database search', [
+                'city' => $city,
+                'zip' => $zipCode,
+                'results' => count($points),
+            ]);
+
+            return [
+                'success' => true,
+                'pudo' => array_map(fn($p) => [
+                    'pudo_id' => $p['id'],
+                    'carrier_pudo_id' => $p['id'],
+                    'name' => $p['name'],
+                    'address' => $p['address'],
+                    'city' => $p['city'],
+                    'zip_code' => $p['zip_code'],
+                    'province' => $p['province'],
+                    'country' => $p['country'],
+                    'latitude' => $p['latitude'],
+                    'longitude' => $p['longitude'],
+                    'distance_meters' => $p['distance'] ? (int)($p['distance'] * 1000) : null,
+                    'enabled' => true,
+                    'opening_hours' => $p['opening_hours'] ?? [],
+                    'localization_hint' => '',
+                ], $points),
+                'fallback' => true,
+            ];
+        } catch (\Exception $e) {
+            Log::error('PUDO fallback database error', ['error' => $e->getMessage()]);
+            return ['success' => false, 'error' => 'Nessun punto PUDO disponibile al momento.', 'pudo' => []];
+        }
+    }
+
+    /**
+     * FALLBACK: Cerca punti PUDO nel database locale per coordinate GPS.
+     */
+    private function getPudoFromDatabaseByCoordinates(float $latitude, float $longitude, int $maxResults): array
+    {
+        try {
+            $points = PudoPoint::searchByCoordinates($latitude, $longitude, $maxResults);
+
+            Log::info('PUDO fallback database search by coordinates', [
+                'lat' => $latitude,
+                'lng' => $longitude,
+                'results' => count($points),
+            ]);
+
+            return [
+                'success' => true,
+                'pudo' => array_map(fn($p) => [
+                    'pudo_id' => $p['id'],
+                    'carrier_pudo_id' => $p['id'],
+                    'name' => $p['name'],
+                    'address' => $p['address'],
+                    'city' => $p['city'],
+                    'zip_code' => $p['zip_code'],
+                    'province' => $p['province'],
+                    'country' => $p['country'],
+                    'latitude' => $p['latitude'],
+                    'longitude' => $p['longitude'],
+                    'distance_meters' => $p['distance'] ? (int)($p['distance'] * 1000) : null,
+                    'enabled' => true,
+                    'opening_hours' => $p['opening_hours'] ?? [],
+                    'localization_hint' => '',
+                ], $points),
+                'fallback' => true,
+            ];
+        } catch (\Exception $e) {
+            Log::error('PUDO fallback database error (coordinates)', ['error' => $e->getMessage()]);
+            return ['success' => false, 'error' => 'Nessun punto PUDO disponibile al momento.', 'pudo' => []];
+        }
     }
 }

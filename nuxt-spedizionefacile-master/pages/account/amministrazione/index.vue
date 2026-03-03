@@ -72,7 +72,7 @@ const unverifiedUsers = computed(() => usersData.value?.filter(u => !u.email_ver
 
 <template>
 	<section class="min-h-[600px] py-[40px] desktop:py-[60px] desktop-xl:py-[80px]">
-		<div class="my-container max-w-[1400px]">
+		<div class="my-container">
 			<!-- Breadcrumb -->
 			<div class="mb-[24px] text-[0.875rem] text-[#737373]">
 				<NuxtLink to="/account" class="hover:underline text-[#095866] font-medium">Il tuo account</NuxtLink>
@@ -94,7 +94,7 @@ const unverifiedUsers = computed(() => usersData.value?.filter(u => !u.email_ver
 					<div class="grid grid-cols-2 desktop:grid-cols-4 gap-[16px] mb-[16px]">
 						<div class="bg-white rounded-[16px] p-[20px] border border-[#E9EBEC] shadow-sm">
 							<div class="flex items-center gap-[8px] mb-[8px]">
-								<div class="w-[36px] h-[36px] rounded-[10px] bg-blue-50 flex items-center justify-center">
+								<div class="w-[36px] h-[36px] rounded-[50px] bg-blue-50 flex items-center justify-center">
 									<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[18px] h-[18px] text-blue-600" fill="currentColor"><path d="M13,12H20V13.5H13M13,9.5H20V11H13M13,14.5H20V16H13M21,4H3A2,2 0 0,0 1,6V19A2,2 0 0,0 3,21H21A2,2 0 0,0 23,19V6A2,2 0 0,0 21,4M21,19H12V6H21"/></svg>
 								</div>
 								<p class="text-[0.75rem] text-[#737373] uppercase tracking-[0.5px] font-medium">Ordini totali</p>
@@ -108,7 +108,7 @@ const unverifiedUsers = computed(() => usersData.value?.filter(u => !u.email_ver
 
 						<div class="bg-white rounded-[16px] p-[20px] border border-[#E9EBEC] shadow-sm">
 							<div class="flex items-center gap-[8px] mb-[8px]">
-								<div class="w-[36px] h-[36px] rounded-[10px] bg-emerald-50 flex items-center justify-center">
+								<div class="w-[36px] h-[36px] rounded-[50px] bg-emerald-50 flex items-center justify-center">
 									<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[18px] h-[18px] text-emerald-600" fill="currentColor"><path d="M15,18.5C12.49,18.5 10.32,17.08 9.24,15H15L16,13H8.58C8.53,12.67 8.5,12.34 8.5,12C8.5,11.66 8.53,11.33 8.58,11H15L16,9H9.24C10.32,6.92 12.5,5.5 15,5.5C16.61,5.5 18.09,6.09 19.23,7.07L21,5.29C19.41,3.86 17.31,3 15,3C11.08,3 7.76,5.51 6.52,9H3L2,11H6.06C6.02,11.33 6,11.66 6,12C6,12.34 6.02,12.67 6.06,13H3L2,15H6.52C7.76,18.49 11.08,21 15,21C17.31,21 19.41,20.14 21,18.71L19.22,16.93C18.09,17.91 16.62,18.5 15,18.5Z"/></svg>
 								</div>
 								<p class="text-[0.75rem] text-[#737373] uppercase tracking-[0.5px] font-medium">Fatturato totale</p>
@@ -121,7 +121,7 @@ const unverifiedUsers = computed(() => usersData.value?.filter(u => !u.email_ver
 
 						<div class="bg-white rounded-[16px] p-[20px] border border-[#E9EBEC] shadow-sm">
 							<div class="flex items-center gap-[8px] mb-[8px]">
-								<div class="w-[36px] h-[36px] rounded-[10px] bg-purple-50 flex items-center justify-center">
+								<div class="w-[36px] h-[36px] rounded-[50px] bg-purple-50 flex items-center justify-center">
 									<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[18px] h-[18px] text-purple-600" fill="currentColor"><path d="M16,13C15.71,13 15.38,13 15.03,13.05C16.19,13.89 17,15 17,16.5V18H22V16.5C22,14.17 18.33,13 16,13M8,13C5.67,13 2,14.17 2,16.5V18H14V16.5C14,14.17 10.33,13 8,13M8,11A3,3 0 0,0 11,8A3,3 0 0,0 8,5A3,3 0 0,0 5,8A3,3 0 0,0 8,11M16,11A3,3 0 0,0 19,8A3,3 0 0,0 16,5A3,3 0 0,0 13,8A3,3 0 0,0 16,11Z"/></svg>
 								</div>
 								<p class="text-[0.75rem] text-[#737373] uppercase tracking-[0.5px] font-medium">Utenti</p>
@@ -135,7 +135,7 @@ const unverifiedUsers = computed(() => usersData.value?.filter(u => !u.email_ver
 
 						<div class="bg-white rounded-[16px] p-[20px] border border-[#E9EBEC] shadow-sm">
 							<div class="flex items-center gap-[8px] mb-[8px]">
-								<div class="w-[36px] h-[36px] rounded-[10px] bg-indigo-50 flex items-center justify-center">
+								<div class="w-[36px] h-[36px] rounded-[50px] bg-indigo-50 flex items-center justify-center">
 									<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[18px] h-[18px] text-indigo-600" fill="currentColor"><path d="M18,18.5A1.5,1.5 0 0,1 16.5,17A1.5,1.5 0 0,1 18,15.5A1.5,1.5 0 0,1 19.5,17A1.5,1.5 0 0,1 18,18.5M19.5,9.5L21.46,12H17V9.5M6,18.5A1.5,1.5 0 0,1 4.5,17A1.5,1.5 0 0,1 6,15.5A1.5,1.5 0 0,1 7.5,17A1.5,1.5 0 0,1 6,18.5M20,8H17V4H3C1.89,4 1,4.89 1,6V17H3A3,3 0 0,0 6,20A3,3 0 0,0 9,17H15A3,3 0 0,0 18,20A3,3 0 0,0 21,17H23V12L20,8Z"/></svg>
 								</div>
 								<p class="text-[0.75rem] text-[#737373] uppercase tracking-[0.5px] font-medium">Spedizioni BRT</p>
@@ -277,7 +277,7 @@ const unverifiedUsers = computed(() => usersData.value?.filter(u => !u.email_ver
 				<!-- Fallback se dashboard non caricata -->
 				<div v-else class="text-center py-[60px] text-[#737373]">
 					<p class="text-[0.9375rem]">Impossibile caricare i dati della dashboard. Riprova.</p>
-					<button @click="fetchDashboard(); isLoading = true; fetchDashboard().then(() => isLoading = false)" class="mt-[12px] px-[20px] py-[10px] bg-[#095866] text-white rounded-[10px] text-[0.875rem] font-medium cursor-pointer">Riprova</button>
+					<button @click="fetchDashboard(); isLoading = true; fetchDashboard().then(() => isLoading = false)" class="mt-[12px] px-[20px] py-[10px] bg-[#095866] text-white rounded-[50px] text-[0.875rem] font-medium cursor-pointer">Riprova</button>
 				</div>
 			</template>
 		</div>

@@ -221,7 +221,7 @@ import { Scrollbar } from "swiper/modules";
 <style scoped>
 .swiper-slide {
 	background: white;
-	border-radius: 20px;
+	border-radius: 16px;
 	display: flex;
 	flex-direction: column;
 	justify-content: space-between;
@@ -230,7 +230,7 @@ import { Scrollbar } from "swiper/modules";
 
 @media (min-width: 720px) {
 	.swiper-slide {
-		border-radius: 32px;
+		border-radius: 16px;
 		padding: 32px;
 	}
 }
@@ -239,13 +239,13 @@ import { Scrollbar } from "swiper/modules";
 	background-color: #e8e8e8;
 	width: 100%;
 	height: 6px;
-	border-radius: 10px;
+	border-radius: 12px;
 }
 
 .my-scrollbar > * {
-	background-color: #e44203;
+	background-color: #E44203;
 	height: 6px;
-	border-radius: 10px;
+	border-radius: 12px;
 }
 
 @media (prefers-reduced-motion: no-preference) {
@@ -270,7 +270,7 @@ import { Scrollbar } from "swiper/modules";
 	}
 	.swiper-slide:hover {
 		transform: translateY(-2px);
-		box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+		box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
 	}
 }
 </style>

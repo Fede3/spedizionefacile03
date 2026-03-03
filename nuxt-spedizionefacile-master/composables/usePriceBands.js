@@ -51,8 +51,8 @@ const FALLBACK_VOLUME_BANDS = [
 	{ min_value: 0.300, max_value: 0.400, base_price: 4990 },
 ];
 
-// Stato condiviso tra componenti
-const priceBands = ref({ weight: [], volume: [] });
+// Stato condiviso tra componenti - INIZIALIZZATO CON FALLBACK
+const priceBands = ref({ weight: FALLBACK_WEIGHT_BANDS, volume: FALLBACK_VOLUME_BANDS });
 const promoSettings = ref({ active: false, label_text: '', label_color: '#E44203', label_image: null, show_badges: false, description: '' });
 const loading = ref(false);
 const loaded = ref(false);

@@ -61,12 +61,37 @@ export function useLocationAutocomplete() {
 			let results = [];
 
 			if (field === 'city') {
-				results = await sanctum(`/api/locations/by-city?city=${encodedQuery}`);
+				results = await sanctum(`/api/locations/by-city?city=${encodedQuery}&limit=200`);
 			} else if (query.length === 5) {
 				results = await sanctum(`/api/locations/by-cap?cap=${encodedQuery}`);
 			} else {
-				results = await sanctum(`/api/locations/search?q=${encodedQuery}`);
+				results = await sanctum(`/api/locations/search?q=${encodedQuery}&limit=200`);
 			}
+
+			// Ordina per rilevanza: exact match > starts-with (più corto prima) > contains
+			const queryLower = query.toLowerCase();
+			results.sort((a, b) => {
+				const aName = (a.place_name || '').toLowerCase();
+				const bName = (b.place_name || '').toLowerCase();
+
+				// 1. Exact match ha priorità ASSOLUTA
+				if (aName === queryLower && bName !== queryLower) return -1;
+				if (bName === queryLower && aName !== queryLower) return 1;
+
+				// 2. Starts-with ha priorità su contains
+				const aStarts = aName.startsWith(queryLower);
+				const bStarts = bName.startsWith(queryLower);
+				if (aStarts && !bStarts) return -1;
+				if (bStarts && !aStarts) return 1;
+
+				// 3. Se entrambi iniziano con la query, il PIÙ CORTO vince
+				if (aStarts && bStarts) {
+					return aName.length - bName.length;
+				}
+
+				// 4. Altrimenti ordine alfabetico
+				return aName.localeCompare(bName);
+			});
 
 			return sanitizeLocationRows(results);
 		} catch {

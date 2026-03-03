@@ -5316,3 +5316,276 @@ DATA: 2026-03-03
 4. Verificare artefatti forensi disponibili:
    - `_LOG/recovery/20260302-233518/spedizionefacile-forensics-20260302-233518.tar.gz`
    - `_LOG/recovery/20260302-233518/recovery-restore-decisions.tsv`.
+
+## TURNO: LOGICA
+DATA: 2026-03-03
+
+### Attivita' svolte
+- Corretto autocomplete Step 1 in `components/Preventivo.vue`:
+  - rimosse parentesi tonde vuote nelle tendine citta/CAP (provincia mostrata solo se presente);
+  - introdotto filtro coerente su citta' (match stretto da 4 caratteri in su) per evitare risultati tipo `Romans` quando si cerca `Roma`;
+  - introdotta ricerca CAP coerente per prefisso + filtro opzionale sulla citta' gia' digitata;
+  - risolto problema aggiornamento non coerente durante digitazione con guardia anti-race (`originSearchSeq`/`destSearchSeq`);
+  - aggiunto comportamento richiesto di riapertura tendina su `focus` (sia citta -> CAP sia CAP -> citta, in entrambe le sezioni origine/destinazione);
+  - selezione localita' ora pulisce in modo immediato l'errore CAP quando il valore diventa valido.
+- Esteso backend localita' in `LocationController`:
+  - `search()` ora supporta `limit` dinamico e usa ricerca piu' coerente (prefisso CAP numerico, priorita' match esatto/prefisso parola per citta');
+  - aggiunto endpoint `byCity()` per restituire CAP coerenti della citta' (match esatto prioritario, fallback prefisso).
+- Registrata nuova rotta API:
+  - `GET /api/locations/by-city` in `routes/api.php`.
+- Corretto bordo card giorno ritiro in `pages/la-tua-spedizione/[step].vue`:
+  - bordo esterno della card data allineato alla stessa stondatura del contenuto (`rounded-[10px]` + `overflow-hidden`).
+
+### File toccati in questo turno
+- `nuxt-spedizionefacile-master/components/Preventivo.vue`
+- `laravel-spedizionefacile-main/app/Http/Controllers/LocationController.php`
+- `laravel-spedizionefacile-main/routes/api.php`
+- `nuxt-spedizionefacile-master/pages/la-tua-spedizione/[step].vue`
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Step 1 autocomplete citta' -> CAP:
+   - digitare `Iglesias` e `Roma` in citta' ritiro/consegna;
+   - atteso: tendina aggiornata a ogni lettera, senza parentesi vuote, con CAP coerenti.
+2. Step 1 autocomplete CAP -> citta':
+   - digitare CAP parziale (3-4 cifre) e completo (5 cifre);
+   - atteso: tendina coerente, click su voce compila sempre entrambi i campi.
+3. Riapertura tendina su focus:
+   - scrivere `Roma`, uscire dal campo, rientrare nel campo citta' o CAP;
+   - atteso: tendina si riapre automaticamente senza dover cancellare caratteri.
+4. Giorno ritiro:
+   - aprire `/la-tua-spedizione/2?step=servizi` (sezione giorno ritiro);
+   - atteso: bordo card con stessa stondatura del contenuto, niente effetto pill disallineato.
+5. Nota ambiente:
+   - non e' stato possibile eseguire formatter/lint remoto per mancanza accesso rete npm nel container (`EAI_AGAIN`).
+
+## TURNO: INTERFACCIA
+DATA: 2026-03-03
+
+### Attivita' svolte
+- Rifinita card "Imposta giorno di ritiro" per eliminare mismatch bordo/card:
+  - bordo esterno, testata e corpo allineati con stesso raggio (`12px`);
+  - rimosso sfondo grigio del contenitore slide che creava doppio contorno visivo.
+- Rifinito autocomplete Step 1 per ricerca citta' per prefisso puro:
+  - match solo su citta' che iniziano con il testo digitato (es. `Mi` -> citta' che iniziano con `Mi`);
+  - ordinamento per probabilita': match esatto, poi prefisso piu' vicino, poi nome piu' corto/alfa;
+  - mantenuta corrispondenza CAP coerente alla localita' suggerita.
+
+### File toccati in questo turno
+- `nuxt-spedizionefacile-master/components/Preventivo.vue`
+- `nuxt-spedizionefacile-master/pages/la-tua-spedizione/[step].vue`
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Autocomplete citta': digitare `Mi` e `Roma` nei campi citta'.
+   - Atteso: solo citta' che iniziano con il prefisso, ordinate con match migliore in alto.
+2. Coerenza CAP: selezionare una voce citta'.
+   - Atteso: CAP sempre coerente con la localita' selezionata.
+3. Card data ritiro:
+   - Atteso: bordo esterno e card interna con stessa stondatura, senza doppio bordo disallineato.
+
+## TURNO: INTERFACCIA
+DATA: 2026-03-03
+
+### Attivita' svolte
+- Correzione geometria card selezione giorno ritiro per eliminare definitivamente il disallineamento tra bordo e contenuto interno:
+  - il contenitore card ora usa un unico raggio esterno;
+  - header e body non applicano piu' raggi separati tra loro;
+  - rimosso il gap verticale interno che falsava la percezione della curvatura.
+
+### File toccati in questo turno
+- `nuxt-spedizionefacile-master/pages/la-tua-spedizione/[step].vue`
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Aprire `/la-tua-spedizione/2?step=servizi`.
+2. Nella sezione `Imposta giorno di ritiro`, selezionare una card giorno (es. `Gio`).
+3. Atteso: la tondatura del bordo esterno e della card interna risulta identica, senza doppie curvature o angoli discordanti.
+
+## TURNO: LOGICA
+DATA: 2026-03-03
+
+### Attivita' svolte
+- Rafforzato controllo incrociato CAP/citta'/provincia nello step indirizzi (`/la-tua-spedizione/2`):
+  - introdotte tendine anche sui campi CAP (partenza + destinazione);
+  - focus su citta'/CAP ora riapre i suggerimenti in automatico;
+  - selezione da tendina CAP o citta' compila sempre il trio coerente: citta' + CAP + provincia;
+  - rimossi output con parentesi vuote nelle voci suggerite.
+- Aggiunta validazione geografica bloccante pre-submit:
+  - prima di continuare viene verificata la coerenza di `CAP + citta' + provincia` per partenza e destinazione;
+  - in caso mismatch vengono mostrati errori specifici sui campi coinvolti;
+  - in modalita' PUDO la coerenza destinazione viene saltata (indirizzo del punto BRT).
+- Migliorata la coerenza dei suggerimenti:
+  - ricerca citta' filtrata per prefisso reale;
+  - ricerca CAP filtrata anche per citta'/provincia gia' inserite;
+  - deduplica risultati per evitare duplicati sporchi in tendina.
+
+### File toccati in questo turno
+- `nuxt-spedizionefacile-master/pages/la-tua-spedizione/[step].vue`
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. In `Partenza` e `Destinazione`, scrivere una citta' valida (es. `Iglesias`, `Roma`):
+   - atteso: tendina coerente con CAP/provincia, senza parentesi vuote.
+2. Scrivere un CAP valido (3-5 cifre) nei campi CAP:
+   - atteso: tendina CAP coerente; selezionando una voce, citta' e provincia si aggiornano.
+3. Inserire combinazione errata (es. CAP corretto ma provincia non corrispondente):
+   - atteso: errore specifico su CAP/provincia/citta' e blocco del pulsante continua.
+4. Uscire e rientrare nel campo citta'/CAP con valore gia' presente:
+   - atteso: suggerimenti riaperti automaticamente.
+
+## TURNO: INTERFACCIA
+DATA: 2026-03-03
+
+### Attivita' svolte
+- Corretto comportamento menu "Dati default" e "Indirizzi salvati" nel box Partenza/Destinazione:
+  - menu resi lineari/coerenti (raggio uniforme `12px`, rimossa forma a pillola);
+  - fix toggle "Dati default" anche quando la lista e' vuota (prima si riapriva sempre e sembrava bloccato);
+  - aggiunta chiusura robusta con click fuori area e tasto `ESC`;
+  - apertura di un menu chiude gli altri menu concorrenti.
+
+### File toccati in questo turno
+- `nuxt-spedizionefacile-master/pages/la-tua-spedizione/[step].vue`
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. In `/la-tua-spedizione/2?step=ritiro`, cliccare `Dati default`:
+   - atteso: dropdown con bordo lineare (non stondato a pillola).
+2. Cliccare di nuovo `Dati default`:
+   - atteso: il menu si chiude anche con lista vuota.
+3. Cliccare fuori dal menu o premere `ESC`:
+   - atteso: il menu si chiude.
+4. Aprire `Indirizzi salvati` (partenza e destinazione):
+   - atteso: stesso stile lineare, apertura/chiusura corretta, senza blocchi.
+
+## TURNO: LOGICA
+DATA: 2026-03-03
+
+### Attivita' svolte
+- Checkout carta: allineata la stondatura della sezione carta ai campi input standard del preventivo.
+  - card salvata e campo `Dati carta` passati da forma pill a raggio medio (`12px`).
+- Abilitato salvataggio carta anche al primo inserimento:
+  - aggiunta opzione `Salva questa carta per i prossimi pagamenti`;
+  - se attiva, dopo `confirmCardPayment` la carta viene impostata come predefinita con `POST /api/stripe/set-default-payment-method`.
+- Riepilogo spedizione: sezione `Colli` resa non pill/stondata eccessivamente.
+  - contenitore `Colli` reso piu' lineare;
+  - card dei colli (view/edit) passate a raggio medio.
+
+### File toccati in questo turno
+- `nuxt-spedizionefacile-master/pages/checkout.vue`
+- `nuxt-spedizionefacile-master/pages/riepilogo.vue`
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Checkout (`/checkout`), metodo `Carta di credito/debito`:
+   - atteso: box carta con raggio uguale ai campi input (non pill).
+2. Primo inserimento carta (utente senza carta salvata):
+   - compilare carta, lasciare attiva `Salva questa carta per i prossimi pagamenti`, completare pagamento;
+   - atteso: nei pagamenti successivi compare la carta salvata come predefinita.
+3. Riepilogo (`/riepilogo`), sezione `Colli`:
+   - atteso: sezione e card colli con angoli piu' lineari (senza stondatura a pillola).
+
+## TURNO: LOGICA
+DATA: 2026-03-03
+
+### Attivita' svolte
+- Corretto caricamento chiave Stripe in checkout:
+  - prima veniva usata direttamente `runtimeConfig.public.stripeKey` (spesso `pk_test_placeholder`);
+  - ora `checkout.vue` legge prima `/api/settings/stripe` e usa `publishable_key` salvata lato backend;
+  - fallback a runtime config solo se API non disponibile.
+- Aggiunta protezione esplicita:
+  - se la chiave risolta e' vuota o contiene `placeholder`, il checkout mostra errore chiaro di configurazione invece di inizializzare Stripe con chiave invalida.
+
+### File toccati in questo turno
+- `nuxt-spedizionefacile-master/pages/checkout.vue`
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Aprire `/checkout` autenticato e controllare console:
+   - atteso: non compare piu' `Invalid API Key provided: pk_test_...placeholder`.
+2. In `Carte e pagamenti`, salvare chiavi Stripe test valide.
+3. Tornare su `/checkout` e selezionare `Carta di credito/debito`:
+   - atteso: campo Stripe renderizzato correttamente.
+4. Provare un pagamento test:
+   - atteso: Stripe inizializzato con chiave reale, senza errore chiave invalida.
+
+## TURNO: LOGICA
+DATA: 2026-03-03
+
+### Attivita' svolte
+- Correzione compatibilita' chiavi Stripe lato backend:
+  - `SettingsController@getStripeConfig` ora legge in fallback sia chiavi nuove (`stripe_key` / `stripe_secret`) sia chiavi legacy (`stripe_public_key` / `stripe_secret_key`);
+  - `SettingsController@saveStripeConfig` salva entrambe le coppie (nuova + legacy), con trim per evitare spazi accidentali;
+  - `StripeController@getStripeSecret` ora usa anche fallback `stripe_secret_key`.
+- Obiettivo: evitare errori "chiavi corrette ma non lette" quando le chiavi sono state salvate da pannelli diversi.
+
+### File toccati in questo turno
+- `laravel-spedizionefacile-main/app/Http/Controllers/SettingsController.php`
+- `laravel-spedizionefacile-main/app/Http/Controllers/StripeController.php`
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Salvare chiavi Stripe dal pannello admin carte/pagamenti.
+2. Aprire `/checkout` autenticato.
+3. Atteso:
+   - niente errore `Invalid API Key ... placeholder`;
+   - metodo carta inizializzato correttamente.
+4. Eseguire pagamento test Stripe:
+   - atteso: creazione PaymentIntent senza errore di configurazione chiavi.
+
+---
+
+## TURNO: LOGICA
+DATA: 2026-03-03
+
+### Problema
+- Errore frontend Stripe: `Invalid API Key provided: pk_test_...placeholder` anche con chiavi corrette inserite.
+- Root cause: fallback frontend a `runtimeConfig.public.stripeKey` (placeholder) quando la fetch config falliva, con init Stripe comunque eseguita.
+- Root cause secondaria: `configured=true` anche in presenza di chiavi placeholder.
+
+### Intervento
+1. Hardened backend configurazione Stripe:
+- `SettingsController@getStripeConfig` ora marca `configured=false` se rileva placeholder.
+- `SettingsController@saveStripeConfig` ora ripulisce whitespace/newline da copia-incolla e valida formato completo chiavi (`pk_(test|live)_...`, `sk_(test|live)_...`).
+
+2. Hardened frontend pagina carte:
+- `pages/account/carte.vue` ora usa `isValidStripePublishableKey()`.
+- Non inizializza piu Stripe con chiavi placeholder.
+- Fallback runtime usato solo se chiave valida (non placeholder).
+- Dopo salvataggio chiavi, ricarica Stripe solo se la chiave e valida.
+
+### File toccati
+- `laravel-spedizionefacile-main/app/Http/Controllers/SettingsController.php`
+- `nuxt-spedizionefacile-master/pages/account/carte.vue`
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Aprire `/account/carte` con utente admin.
+2. Inserire chiavi Stripe test corrette e salvare.
+3. Atteso: messaggio successo, nessun errore `Invalid API Key ...placeholder` in console.
+4. Se si incolla una chiave con caratteri extra/spazi, atteso: 422 con messaggio chiaro su formato chiave.
+5. Aprire `/checkout` e selezionare carta: atteso caricamento Stripe senza errore placeholder.
+
+---
+
+## TURNO: INTERFACCIA
+DATA: 2026-03-03
+
+### Problema
+- Nel blocco `Inserisci le dimensioni e il peso dei colli` l'icona collo a sinistra non era piu' visibile su desktop.
+
+### Intervento
+- In `components/Preventivo.vue` rimossa dipendenza dal pseudo-elemento CSS per l'icona desktop della riga collo.
+- Inserita icona reale (`NuxtImg`) sempre renderizzata nella riga desktop (`desktop-xl`) con fallback robusto:
+  - se `pack.img/width/height` mancano, recupero automatico in base a `package_type` (`Pacco`, `Pallet`, `Valigia`).
+- Allineato anche l'header mobile della riga a usare lo stesso resolver visuale (`getPackVisual`) per coerenza.
+
+### File toccati
+- `nuxt-spedizionefacile-master/components/Preventivo.vue`
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Aprire homepage preventivo Step 1 su desktop.
+2. Aggiungere un collo (`Pacco`/`Pallet`/`Valigia`).
+3. Atteso: nella riga `Peso (Kg) / Lato 1 / Lato 2 / Lato 3` l'icona del collo e' visibile a sinistra.
+4. Ripetere con tipo collo diverso e con refresh pagina: l'icona resta visibile.

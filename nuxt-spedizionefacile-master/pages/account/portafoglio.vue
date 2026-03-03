@@ -112,12 +112,14 @@ const handleTopUp = async () => {
 	if (!topUpAmount.value || topUpAmount.value < 1) {
 		message.value = "Inserisci un importo minimo di 1,00 EUR";
 		messageType.value = "error";
+		setTimeout(() => { message.value = null; }, 5000);
 		return;
 	}
 
 	if (!defaultPaymentMethod.value?.card) {
 		message.value = "Aggiungi una carta di pagamento prima di ricaricare.";
 		messageType.value = "error";
+		setTimeout(() => { message.value = null; }, 5000);
 		return;
 	}
 
@@ -139,14 +141,17 @@ const handleTopUp = async () => {
 			topUpAmount.value = "";
 			await fetchBalance();
 			await fetchMovements();
+			setTimeout(() => { message.value = null; }, 5000);
 		} else {
 			message.value = result?.message || "Errore durante la ricarica.";
 			messageType.value = "error";
+			setTimeout(() => { message.value = null; }, 5000);
 		}
 	} catch (e) {
 		const errorMsg = e?.response?._data?.message || e?.data?.message;
 		message.value = errorMsg || "Errore imprevisto. Riprova.";
 		messageType.value = "error";
+		setTimeout(() => { message.value = null; }, 5000);
 	} finally {
 		isLoading.value = false;
 	}
@@ -211,7 +216,7 @@ const isPro = computed(() => user.value?.role === "Partner Pro");
 
 <template>
 	<section class="min-h-[600px] py-[40px] desktop:py-[60px] desktop-xl:py-[80px]">
-		<div class="my-container max-w-[900px]">
+		<div class="my-container">
 			<!-- Breadcrumb -->
 			<div class="mb-[28px] text-[0.875rem] text-[#737373]">
 				<NuxtLink to="/account" class="hover:underline text-[#095866] font-medium">Il tuo account</NuxtLink>
@@ -227,7 +232,7 @@ const isPro = computed(() => user.value?.role === "Partner Pro");
 					<div class="absolute bottom-0 left-0 w-[120px] h-[120px] rounded-full bg-white/5 translate-y-1/2 -translate-x-1/2"></div>
 					<div class="relative z-1">
 						<div class="flex items-center gap-[10px] mb-[16px]">
-							<div class="w-[40px] h-[40px] rounded-[10px] bg-white/15 flex items-center justify-center">
+							<div class="w-[40px] h-[40px] rounded-[50px] bg-white/15 flex items-center justify-center">
 								<Icon name="mdi:wallet-outline" class="text-[22px]" />
 							</div>
 							<p class="text-[0.8125rem] uppercase tracking-[1.5px] opacity-80 font-medium">Saldo disponibile</p>
@@ -244,7 +249,7 @@ const isPro = computed(() => user.value?.role === "Partner Pro");
 					<div class="absolute top-0 right-0 w-[180px] h-[180px] rounded-full bg-amber-400/5 -translate-y-1/2 translate-x-1/2"></div>
 					<div class="relative z-1">
 						<div class="flex items-center gap-[10px] mb-[16px]">
-							<div class="w-[40px] h-[40px] rounded-[10px] bg-amber-400/15 flex items-center justify-center">
+							<div class="w-[40px] h-[40px] rounded-[50px] bg-amber-400/15 flex items-center justify-center">
 								<Icon name="mdi:account-cash-outline" class="text-[22px] text-amber-400" />
 							</div>
 							<p class="text-[0.8125rem] uppercase tracking-[1.5px] opacity-80 font-medium">Commissioni</p>
@@ -281,7 +286,7 @@ const isPro = computed(() => user.value?.role === "Partner Pro");
 			<!-- Top Up Section -->
 			<div class="bg-white rounded-[20px] p-[24px] desktop:p-[32px] shadow-sm border border-[#E9EBEC] mb-[24px]">
 				<div class="flex items-center gap-[12px] mb-[24px]">
-					<div class="w-[40px] h-[40px] rounded-[10px] bg-emerald-50 flex items-center justify-center">
+					<div class="w-[40px] h-[40px] rounded-[50px] bg-emerald-50 flex items-center justify-center">
 						<Icon name="mdi:plus-circle-outline" class="text-[22px] text-emerald-600" />
 					</div>
 					<div>
@@ -358,7 +363,7 @@ const isPro = computed(() => user.value?.role === "Partner Pro");
 				</button>
 
 				<!-- Feedback message -->
-				<div v-if="message" :class="['mt-[16px] p-[14px] rounded-[10px] text-[0.875rem] font-medium flex items-center gap-[8px]', messageType === 'success' ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-600']">
+				<div v-if="message" :class="['mt-[16px] p-[14px] rounded-[50px] text-[0.875rem] font-medium flex items-center gap-[8px]', messageType === 'success' ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-600']">
 					<Icon :name="messageType === 'success' ? 'mdi:check-circle' : 'mdi:alert-circle'" class="text-[18px] shrink-0" />
 					{{ message }}
 				</div>
@@ -368,7 +373,7 @@ const isPro = computed(() => user.value?.role === "Partner Pro");
 			<div class="bg-white rounded-[20px] p-[24px] desktop:p-[32px] shadow-sm border border-[#E9EBEC]">
 				<div class="flex items-center justify-between mb-[24px]">
 					<div class="flex items-center gap-[12px]">
-						<div class="w-[40px] h-[40px] rounded-[10px] bg-blue-50 flex items-center justify-center">
+						<div class="w-[40px] h-[40px] rounded-[50px] bg-blue-50 flex items-center justify-center">
 							<Icon name="mdi:history" class="text-[22px] text-blue-600" />
 						</div>
 						<h2 class="text-[1.125rem] font-bold text-[#252B42]">Movimenti</h2>
@@ -392,7 +397,7 @@ const isPro = computed(() => user.value?.role === "Partner Pro");
 
 				<ul v-else class="space-y-[4px]">
 					<li v-for="mov in movements" :key="mov.id" class="flex items-center gap-[14px] p-[14px] rounded-[12px] hover:bg-[#F8F9FB] transition-colors">
-						<div :class="['w-[42px] h-[42px] rounded-[10px] flex items-center justify-center shrink-0', mov.type === 'credit' ? 'bg-emerald-50' : 'bg-red-50']">
+						<div :class="['w-[42px] h-[42px] rounded-[50px] flex items-center justify-center shrink-0', mov.type === 'credit' ? 'bg-emerald-50' : 'bg-red-50']">
 							<Icon :name="getMovementIcon(mov)" :class="['text-[20px]', mov.type === 'credit' ? 'text-emerald-600' : 'text-red-500']" />
 						</div>
 						<div class="flex-1 min-w-0">

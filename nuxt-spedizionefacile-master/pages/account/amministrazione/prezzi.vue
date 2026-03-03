@@ -214,7 +214,17 @@ const confirmEdit = (type, idx, field) => {
 	if (editingCell.value !== key) return;
 	const bands = type === 'weight' ? weightBands.value : volumeBands.value;
 	const newCents = euroToCents(editValue.value);
+
+	// Validate that price is not negative
+	if (newCents !== null && newCents < 0) {
+		showError(null, "Il prezzo non può essere negativo.");
+		editingCell.value = null;
+		editValue.value = '';
+		return;
+	}
+
 	bands[idx][field] = newCents;
+	console.log(`[AUDIT] Admin updated ${type} band #${idx + 1} ${field}: ${newCents ? (newCents / 100).toFixed(2) + '€' : 'null'}`);
 	editingCell.value = null;
 	editValue.value = '';
 };
@@ -231,6 +241,7 @@ const toggleShowDiscount = (type, idx) => {
 
 const savePriceBands = async () => {
 	saving.value = true;
+	console.log(`[AUDIT] Admin saving price bands (${weightBands.value.length} weight + ${volumeBands.value.length} volume)`);
 	try {
 		const allBands = [...weightBands.value, ...volumeBands.value].map(b => ({
 			id: b.id,
@@ -252,6 +263,7 @@ const savePriceBands = async () => {
 
 const savePromo = async () => {
 	promoSaving.value = true;
+	console.log(`[AUDIT] Admin saving promo settings: active=${promo.value.active}, label="${promo.value.label_text}"`);
 	try {
 		await sanctum("/api/admin/promo-settings", {
 			method: "POST",
@@ -275,7 +287,25 @@ const savePromo = async () => {
 const uploadPromoImage = async (event) => {
 	const file = event.target.files?.[0];
 	if (!file) return;
+
+	// Validate file type
+	const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+	if (!validTypes.includes(file.type)) {
+		showError(null, "Formato file non valido. Usa JPG, PNG, GIF o WebP.");
+		event.target.value = ''; // Reset input
+		return;
+	}
+
+	// Validate file size (max 2MB)
+	const maxSize = 2 * 1024 * 1024; // 2MB in bytes
+	if (file.size > maxSize) {
+		showError(null, "File troppo grande. Dimensione massima: 2MB.");
+		event.target.value = ''; // Reset input
+		return;
+	}
+
 	promoImageUploading.value = true;
+	console.log(`[AUDIT] Admin uploading promo image: ${file.name} (${(file.size / 1024).toFixed(2)} KB)`);
 	try {
 		const formData = new FormData();
 		formData.append('image', file);
@@ -289,6 +319,7 @@ const uploadPromoImage = async (event) => {
 		showError(e, "Errore durante l'upload dell'immagine.");
 	} finally {
 		promoImageUploading.value = false;
+		event.target.value = ''; // Reset input
 	}
 };
 
@@ -300,7 +331,7 @@ onMounted(() => {
 
 <template>
 	<section class="min-h-[600px] py-[40px] desktop:py-[60px] desktop-xl:py-[80px]">
-		<div class="my-container max-w-[1400px]">
+		<div class="my-container">
 			<!-- Breadcrumb -->
 			<div class="mb-[24px] text-[0.875rem] text-[#737373]">
 				<NuxtLink to="/account" class="hover:underline text-[#095866] font-medium">Il tuo account</NuxtLink>
@@ -357,7 +388,7 @@ onMounted(() => {
 								<button
 									@click="seedBands"
 									:disabled="seeding"
-									class="inline-flex items-center gap-[8px] px-[20px] py-[10px] bg-amber-600 hover:bg-amber-700 text-white rounded-[10px] text-[0.875rem] font-medium transition-colors cursor-pointer disabled:opacity-50">
+									class="inline-flex items-center gap-[8px] px-[20px] py-[10px] bg-amber-600 hover:bg-amber-700 text-white rounded-[50px] text-[0.875rem] font-medium transition-colors cursor-pointer disabled:opacity-50">
 									<svg v-if="seeding" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[18px] h-[18px] animate-spin" fill="currentColor"><path d="M12,4V2A10,10 0 0,0 2,12H4A8,8 0 0,1 12,4Z"/></svg>
 									<svg v-else xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[18px] h-[18px]" fill="currentColor"><path d="M17,13H13V17H11V13H7V11H11V7H13V11H17M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z"/></svg>
 									{{ seeding ? "Inizializzazione..." : "Inizializza fasce nel database" }}
@@ -405,7 +436,9 @@ onMounted(() => {
 													@keydown.enter="confirmEdit('weight', idx, 'base_price')"
 													@keydown.esc="cancelEdit()"
 													@blur="confirmEdit('weight', idx, 'base_price')"
-													type="text"
+													type="number"
+													min="0"
+													step="0.01"
 													class="w-[100px] px-[10px] py-[8px] tablet:py-[6px] bg-white border-2 border-[#095866] rounded-[8px] text-[1rem] tablet:text-[0.8125rem] focus:outline-none"
 													placeholder="0,00"
 												/>
@@ -427,7 +460,9 @@ onMounted(() => {
 													@keydown.enter="confirmEdit('weight', idx, 'discount_price')"
 													@keydown.esc="cancelEdit()"
 													@blur="confirmEdit('weight', idx, 'discount_price')"
-													type="text"
+													type="number"
+													min="0"
+													step="0.01"
 													class="w-[100px] px-[10px] py-[8px] tablet:py-[6px] bg-white border-2 border-[#095866] rounded-[8px] text-[1rem] tablet:text-[0.8125rem] focus:outline-none"
 													placeholder="vuoto = usa base"
 												/>
@@ -510,7 +545,9 @@ onMounted(() => {
 													@keydown.enter="confirmEdit('volume', idx, 'base_price')"
 													@keydown.esc="cancelEdit()"
 													@blur="confirmEdit('volume', idx, 'base_price')"
-													type="text"
+													type="number"
+													min="0"
+													step="0.01"
 													class="w-[100px] px-[10px] py-[8px] tablet:py-[6px] bg-white border-2 border-[#095866] rounded-[8px] text-[1rem] tablet:text-[0.8125rem] focus:outline-none"
 													placeholder="0,00"
 												/>
@@ -532,7 +569,9 @@ onMounted(() => {
 													@keydown.enter="confirmEdit('volume', idx, 'discount_price')"
 													@keydown.esc="cancelEdit()"
 													@blur="confirmEdit('volume', idx, 'discount_price')"
-													type="text"
+													type="number"
+													min="0"
+													step="0.01"
 													class="w-[100px] px-[10px] py-[8px] tablet:py-[6px] bg-white border-2 border-[#095866] rounded-[8px] text-[1rem] tablet:text-[0.8125rem] focus:outline-none"
 													placeholder="vuoto = usa base"
 												/>
@@ -582,7 +621,7 @@ onMounted(() => {
 							<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[14px] h-[14px]" fill="currentColor"><path d="M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z"/></svg>
 							Modificato
 						</span>
-						<button @click="savePriceBands" :disabled="saving || !hasChanges" class="inline-flex items-center gap-[8px] px-[24px] py-[12px] bg-[#095866] hover:bg-[#074a56] text-white rounded-[10px] text-[0.875rem] font-medium transition-colors cursor-pointer disabled:opacity-50">
+						<button @click="savePriceBands" :disabled="saving || !hasChanges" class="inline-flex items-center gap-[8px] px-[24px] py-[12px] bg-[#095866] hover:bg-[#074a56] text-white rounded-[50px] text-[0.875rem] font-medium transition-colors cursor-pointer disabled:opacity-50">
 							<svg v-if="saving" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[18px] h-[18px] animate-spin" fill="currentColor"><path d="M12,4V2A10,10 0 0,0 2,12H4A8,8 0 0,1 12,4Z"/></svg>
 							<svg v-else xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[18px] h-[18px]" fill="currentColor"><path d="M15,9H5V5H15M12,19A3,3 0 0,1 9,16A3,3 0 0,1 12,13A3,3 0 0,1 15,16A3,3 0 0,1 12,19M17,3H5C3.89,3 3,3.9 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V7L17,3Z"/></svg>
 							{{ saving ? "Salvataggio..." : "Salva fasce" }}
@@ -627,7 +666,7 @@ onMounted(() => {
 									v-model="promo.label_text"
 									placeholder="es. OFFERTA LANCIO"
 									maxlength="100"
-									class="w-full max-w-[400px] bg-[#FAFBFC] border border-[#D0D0D0] rounded-[10px] h-[48px] tablet:h-[44px] px-[16px] text-[1rem] tablet:text-[0.875rem] text-[#252B42] placeholder:text-[#A0A5AB] focus:border-[#095866] focus:outline-none" />
+									class="w-full max-w-[400px] bg-[#FAFBFC] border border-[#D0D0D0] rounded-[50px] h-[48px] tablet:h-[44px] px-[16px] text-[1rem] tablet:text-[0.875rem] text-[#252B42] placeholder:text-[#A0A5AB] focus:border-[#095866] focus:outline-none" />
 							</div>
 
 							<!-- Descrizione sconto — testo libero mostrato nell'header homepage sotto il prezzo -->
@@ -638,7 +677,7 @@ onMounted(() => {
 									placeholder="es. Sconto del 20% su tutte le spedizioni nazionali! Valido fino al 31 marzo."
 									maxlength="300"
 									rows="3"
-									class="w-full max-w-[500px] bg-[#FAFBFC] border border-[#D0D0D0] rounded-[10px] px-[16px] py-[12px] text-[0.875rem] text-[#252B42] placeholder:text-[#A0A5AB] focus:border-[#095866] focus:outline-none resize-y"></textarea>
+									class="w-full max-w-[500px] bg-[#FAFBFC] border border-[#D0D0D0] rounded-[50px] px-[16px] py-[12px] text-[0.875rem] text-[#252B42] placeholder:text-[#A0A5AB] focus:border-[#095866] focus:outline-none resize-y"></textarea>
 								<p class="text-[0.6875rem] text-[#999] mt-[4px]">Massimo 300 caratteri. Questo testo appare sotto il prezzo nella homepage.</p>
 							</div>
 
@@ -655,7 +694,7 @@ onMounted(() => {
 										v-model="promo.label_color"
 										placeholder="#E44203"
 										maxlength="20"
-										class="w-[140px] bg-[#FAFBFC] border border-[#D0D0D0] rounded-[10px] h-[44px] px-[16px] text-[0.875rem] text-[#252B42] font-mono focus:border-[#095866] focus:outline-none" />
+										class="w-[140px] bg-[#FAFBFC] border border-[#D0D0D0] rounded-[50px] h-[44px] px-[16px] text-[0.875rem] text-[#252B42] font-mono focus:border-[#095866] focus:outline-none" />
 									<!-- Preview -->
 									<span
 										v-if="promo.label_text"
@@ -670,7 +709,7 @@ onMounted(() => {
 							<div>
 								<label class="block text-[0.8125rem] font-medium text-[#252B42] mb-[6px]">Immagine promozionale (opzionale)</label>
 								<div class="flex flex-wrap items-center gap-[12px] tablet:gap-[16px]">
-									<label class="inline-flex items-center gap-[8px] px-[16px] py-[10px] bg-[#FAFBFC] border border-[#D0D0D0] rounded-[10px] text-[0.875rem] text-[#252B42] hover:bg-[#E8F4FB] transition cursor-pointer">
+									<label class="inline-flex items-center gap-[8px] px-[16px] py-[10px] bg-[#FAFBFC] border border-[#D0D0D0] rounded-[50px] text-[0.875rem] text-[#252B42] hover:bg-[#E8F4FB] transition cursor-pointer">
 										<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[18px] h-[18px] text-[#095866]" fill="currentColor"><path d="M5,3A2,2 0 0,0 3,5V19A2,2 0 0,0 5,21H14.09C14.03,20.67 14,20.34 14,20C14,19.32 14.19,18.68 14.54,18H5L8.5,13.5L11,16.5L14.5,12L16.73,14.97C17.7,14.34 18.84,14 20,14C20.34,14 20.67,14.03 21,14.09V5A2,2 0 0,0 19,3H5M19,16V19H16V21H19V24H21V21H24V19H21V16H19Z"/></svg>
 										{{ promoImageUploading ? 'Caricamento...' : 'Carica immagine' }}
 										<input type="file" accept="image/*" class="hidden" @change="uploadPromoImage" :disabled="promoImageUploading" />
@@ -731,7 +770,7 @@ onMounted(() => {
 
 							<!-- Salva promozione -->
 							<div class="flex justify-end">
-								<button @click="savePromo" :disabled="promoSaving" class="inline-flex items-center gap-[8px] px-[24px] py-[12px] bg-[#E44203] hover:bg-[#c93800] text-white rounded-[10px] text-[0.875rem] font-medium transition-colors cursor-pointer disabled:opacity-50">
+								<button @click="savePromo" :disabled="promoSaving" class="inline-flex items-center gap-[8px] px-[24px] py-[12px] bg-[#E44203] hover:bg-[#c93800] text-white rounded-[50px] text-[0.875rem] font-medium transition-colors cursor-pointer disabled:opacity-50">
 									<svg v-if="promoSaving" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[18px] h-[18px] animate-spin" fill="currentColor"><path d="M12,4V2A10,10 0 0,0 2,12H4A8,8 0 0,1 12,4Z"/></svg>
 									<svg v-else xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[18px] h-[18px]" fill="currentColor"><path d="M15,9H5V5H15M12,19A3,3 0 0,1 9,16A3,3 0 0,1 12,13A3,3 0 0,1 15,16A3,3 0 0,1 12,19M17,3H5C3.89,3 3,3.9 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V7L17,3Z"/></svg>
 									{{ promoSaving ? "Salvataggio..." : "Salva promozione" }}

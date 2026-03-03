@@ -380,7 +380,7 @@ const handleLogout = async () => {
 				<path fill="rgba(255,255,255,0.25)" d="M0,160L48,144C96,128,192,96,288,106.7C384,117,480,171,576,181.3C672,192,768,160,864,138.7C960,117,1056,107,1152,117.3C1248,128,1344,160,1392,176L1440,192L1440,0L1392,0C1344,0,1248,0,1152,0C1056,0,960,0,864,0C768,0,672,0,576,0C480,0,384,0,288,0C192,0,96,0,48,0L0,0Z"></path>
 			</svg>
 		</div>
-		<div class="my-container max-w-[1100px] relative z-10">
+		<div class="my-container relative z-10">
 			<div class="flex items-center justify-between">
 				<div>
 					<h1 class="text-[1.75rem] desktop:text-[2.25rem] font-bold text-[#252B42] tracking-tight">
@@ -403,7 +403,7 @@ const handleLogout = async () => {
 	</div>
 
 	<!-- Quick actions -->
-	<div class="my-container max-w-[1100px] -mt-[28px] relative z-20">
+	<div class="my-container -mt-[28px] relative z-20">
 		<div class="flex flex-wrap gap-[10px]">
 			<NuxtLink
 				to="/preventivo"
@@ -428,7 +428,7 @@ const handleLogout = async () => {
 
 	<!-- Sections -->
 	<section class="py-[32px] desktop:py-[48px]">
-		<div class="my-container max-w-[1100px]">
+		<div class="my-container">
 			<div
 				v-for="(section, sectionIndex) in visibleSections"
 				:key="sectionIndex"

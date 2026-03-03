@@ -138,6 +138,7 @@ const getRoleBadge = (role) => {
 const handleLogout = async () => {
 	try {
 		await logout();
+		await navigateTo('/autenticazione');
 	} catch (error) {
 		navigateTo("/");
 	}
@@ -146,7 +147,7 @@ const handleLogout = async () => {
 
 <template>
 	<section class="min-h-[600px] py-[40px] desktop:py-[80px]">
-		<div class="my-container max-w-[800px]">
+		<div class="my-container">
 			<!-- Breadcrumb -->
 			<div class="mb-[24px] text-[0.875rem] text-[#737373]">
 				<NuxtLink to="/account" class="hover:underline text-[#095866]">Il tuo account</NuxtLink>
@@ -160,10 +161,10 @@ const handleLogout = async () => {
 			</div>
 
 			<!-- Success/Error Messages -->
-			<div v-if="messageSuccess" class="mb-[20px] px-[16px] py-[12px] rounded-[10px] text-[0.875rem] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
+			<div v-if="messageSuccess" class="mb-[20px] px-[16px] py-[12px] rounded-[50px] text-[0.875rem] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
 				{{ messageSuccess }}
 			</div>
-			<div v-if="messageError" class="mb-[20px] px-[16px] py-[12px] rounded-[10px] text-[0.875rem] font-medium bg-red-50 text-red-700 border border-red-200">
+			<div v-if="messageError" class="mb-[20px] px-[16px] py-[12px] rounded-[50px] text-[0.875rem] font-medium bg-red-50 text-red-700 border border-red-200">
 				{{ messageError }}
 			</div>
 
@@ -173,7 +174,7 @@ const handleLogout = async () => {
 					<h1 class="text-[1.5rem] desktop:text-[1.75rem] font-bold text-[#252B42]">Profilo e dati</h1>
 					<button
 						@click="showEditForm = true"
-						class="inline-flex items-center gap-[6px] px-[20px] py-[10px] bg-[#095866] hover:bg-[#074a56] text-white rounded-[10px] text-[0.875rem] font-semibold transition-colors cursor-pointer">
+						class="inline-flex items-center gap-[6px] px-[20px] py-[10px] bg-[#095866] hover:bg-[#074a56] text-white rounded-[50px] text-[0.875rem] font-semibold transition-colors cursor-pointer">
 						<Icon name="mdi:pencil-outline" class="text-[16px]" />
 						Modifica dati
 					</button>
@@ -252,7 +253,7 @@ const handleLogout = async () => {
 				<!-- Logout button -->
 				<button
 					@click.prevent="handleLogout"
-					class="w-full py-[14px] border border-[#E9EBEC] rounded-[10px] text-[0.9375rem] text-[#737373] hover:text-red-600 hover:border-red-200 hover:bg-red-50 transition-all cursor-pointer font-medium inline-flex items-center justify-center gap-[8px]">
+					class="w-full py-[14px] border border-[#E9EBEC] rounded-[50px] text-[0.9375rem] text-[#737373] hover:text-red-600 hover:border-red-200 hover:bg-red-50 transition-all cursor-pointer font-medium inline-flex items-center justify-center gap-[8px]">
 					<Icon name="mdi:logout" class="text-[18px]" />
 					Esci dall'account
 				</button>
@@ -269,7 +270,7 @@ const handleLogout = async () => {
 						<div class="flex items-center gap-[12px] mb-[20px]">
 							<label
 								:class="[
-									'flex-1 flex items-center justify-center gap-[6px] px-[16px] py-[12px] rounded-[10px] cursor-pointer border transition-all text-[0.9375rem] font-medium text-center',
+									'flex-1 flex items-center justify-center gap-[6px] px-[16px] py-[12px] rounded-[50px] cursor-pointer border transition-all text-[0.9375rem] font-medium text-center',
 									userInfo.user_type === 'privato'
 										? 'bg-[#095866] text-white border-[#095866] shadow-sm'
 										: 'bg-white text-[#252B42] border-[#E9EBEC] hover:border-[#095866]',
@@ -279,7 +280,7 @@ const handleLogout = async () => {
 							</label>
 							<label
 								:class="[
-									'flex-1 flex items-center justify-center gap-[6px] px-[16px] py-[12px] rounded-[10px] cursor-pointer border transition-all text-[0.9375rem] font-medium text-center',
+									'flex-1 flex items-center justify-center gap-[6px] px-[16px] py-[12px] rounded-[50px] cursor-pointer border transition-all text-[0.9375rem] font-medium text-center',
 									userInfo.user_type === 'commerciante'
 										? 'bg-[#095866] text-white border-[#095866] shadow-sm'
 										: 'bg-white text-[#252B42] border-[#E9EBEC] hover:border-[#095866]',
@@ -376,21 +377,33 @@ const handleLogout = async () => {
 						<div class="grid grid-cols-2 gap-[12px] mb-[24px]">
 							<div>
 								<label class="block text-[0.8125rem] font-semibold text-[#404040] mb-[4px]">Nuova password</label>
-								<input type="password" v-model="userInfo.password" placeholder="Lascia vuoto per mantenere" class="w-full px-[12px] py-[10px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[8px] text-[0.875rem] focus:border-[#095866] focus:outline-none" />
+								<input
+									type="password"
+									v-model="userInfo.password"
+									placeholder="Lascia vuoto per mantenere"
+									minlength="8"
+									pattern="^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$"
+									title="Minimo 8 caratteri, almeno una maiuscola, una minuscola e un numero"
+									class="w-full px-[12px] py-[10px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[8px] text-[0.875rem] focus:border-[#095866] focus:outline-none" />
 							</div>
 							<div>
 								<label class="block text-[0.8125rem] font-semibold text-[#404040] mb-[4px]">Conferma password</label>
-								<input type="password" v-model="userInfo.password_confirmation" placeholder="Conferma" class="w-full px-[12px] py-[10px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[8px] text-[0.875rem] focus:border-[#095866] focus:outline-none" />
+								<input
+									type="password"
+									v-model="userInfo.password_confirmation"
+									placeholder="Conferma"
+									minlength="8"
+									class="w-full px-[12px] py-[10px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[8px] text-[0.875rem] focus:border-[#095866] focus:outline-none" />
 							</div>
 						</div>
 
 						<!-- Bottoni salva/annulla con loading state sul pulsante -->
 						<div class="flex gap-[12px]">
-							<button type="button" @click.prevent="showEditForm = false" :disabled="!!messageLoading" class="flex-1 inline-flex items-center justify-center gap-[6px] py-[14px] rounded-[10px] bg-[#F0F0F0] hover:bg-[#E0E0E0] text-[#404040] font-semibold text-[0.9375rem] transition-colors cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed">
+							<button type="button" @click.prevent="showEditForm = false" :disabled="!!messageLoading" class="flex-1 inline-flex items-center justify-center gap-[6px] py-[14px] rounded-[50px] bg-[#F0F0F0] hover:bg-[#E0E0E0] text-[#404040] font-semibold text-[0.9375rem] transition-colors cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed">
 								<Icon name="mdi:close" class="text-[18px]" />
 								Annulla
 							</button>
-							<button type="submit" :disabled="!!messageLoading" class="flex-1 inline-flex items-center justify-center gap-[6px] py-[14px] rounded-[10px] bg-[#095866] hover:bg-[#074a56] text-white font-semibold text-[0.9375rem] transition-colors cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed">
+							<button type="submit" :disabled="!!messageLoading" class="flex-1 inline-flex items-center justify-center gap-[6px] py-[14px] rounded-[50px] bg-[#095866] hover:bg-[#074a56] text-white font-semibold text-[0.9375rem] transition-colors cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed">
 								<Icon name="mdi:content-save" class="text-[18px]" />
 								{{ messageLoading ? 'Salvataggio...' : 'Salva modifiche' }}
 							</button>

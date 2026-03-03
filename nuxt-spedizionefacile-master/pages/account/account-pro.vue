@@ -197,7 +197,7 @@ const formatDate = (dateStr) => {
 
 <template>
 	<section class="min-h-[600px] py-[40px] desktop:py-[60px] desktop-xl:py-[80px]">
-		<div class="my-container max-w-[900px]">
+		<div class="my-container">
 			<!-- Breadcrumb -->
 			<div class="mb-[28px] text-[0.875rem] text-[#737373]">
 				<NuxtLink to="/account" class="hover:underline text-[#095866] font-medium">Il tuo account</NuxtLink>
@@ -259,7 +259,7 @@ const formatDate = (dateStr) => {
 					<!-- Account Code -->
 					<div class="bg-white rounded-[20px] p-[28px] border border-[#E9EBEC] shadow-sm">
 						<div class="flex items-center gap-[10px] mb-[16px]">
-							<div class="w-[40px] h-[40px] rounded-[10px] bg-purple-50 flex items-center justify-center">
+							<div class="w-[40px] h-[40px] rounded-[50px] bg-purple-50 flex items-center justify-center">
 								<Icon name="mdi:identifier" class="text-[22px] text-purple-600" />
 							</div>
 							<p class="text-[0.8125rem] text-[#737373] uppercase tracking-[1px] font-medium">Codice Account</p>
@@ -280,7 +280,7 @@ const formatDate = (dateStr) => {
 						<div class="absolute top-0 right-0 w-[160px] h-[160px] rounded-full bg-white/5 -translate-y-1/2 translate-x-1/2"></div>
 						<div class="relative z-1">
 							<div class="flex items-center gap-[10px] mb-[16px]">
-								<div class="w-[40px] h-[40px] rounded-[10px] bg-white/15 flex items-center justify-center">
+								<div class="w-[40px] h-[40px] rounded-[50px] bg-white/15 flex items-center justify-center">
 									<Icon name="mdi:share-variant-outline" class="text-[22px]" />
 								</div>
 								<p class="text-[0.8125rem] uppercase tracking-[1px] opacity-80 font-medium">Codice Referral</p>
@@ -352,7 +352,7 @@ const formatDate = (dateStr) => {
 				<!-- Earnings History -->
 				<div class="bg-white rounded-[20px] p-[24px] desktop:p-[32px] shadow-sm border border-[#E9EBEC]">
 					<div class="flex items-center gap-[12px] mb-[24px]">
-						<div class="w-[40px] h-[40px] rounded-[10px] bg-amber-50 flex items-center justify-center">
+						<div class="w-[40px] h-[40px] rounded-[50px] bg-amber-50 flex items-center justify-center">
 							<Icon name="mdi:chart-timeline-variant" class="text-[22px] text-amber-600" />
 						</div>
 						<h2 class="text-[1.125rem] font-bold text-[#252B42]">Storico commissioni</h2>

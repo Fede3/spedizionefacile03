@@ -57,21 +57,28 @@ const configError = ref(null);
 /* Indica se il salvataggio configurazione e' in corso */
 const configSaving = ref(false);
 
+const isValidStripePublishableKey = (value) => {
+	const key = String(value || "").trim();
+	return key.startsWith("pk_") && !key.includes("placeholder");
+};
+
 // Fetch Stripe config dal backend
 try {
 	const config = await client("/api/settings/stripe");
-	stripeConfigured.value = config?.configured || false;
-	stripePublishableKey.value = config?.publishable_key || "";
+	const key = String(config?.publishable_key || "").trim();
+	stripePublishableKey.value = key;
+	stripeConfigured.value = Boolean(config?.configured) && isValidStripePublishableKey(key);
 } catch (e) {
-	// Fallback a runtime config
-	stripePublishableKey.value = runtimeConfig.public.stripeKey || "";
-	stripeConfigured.value = !!stripePublishableKey.value;
+	// Fallback a runtime config SOLO se non e' placeholder
+	const fallbackKey = String(runtimeConfig.public.stripeKey || "").trim();
+	stripePublishableKey.value = isValidStripePublishableKey(fallbackKey) ? fallbackKey : "";
+	stripeConfigured.value = isValidStripePublishableKey(fallbackKey);
 }
 configLoading.value = false;
 
 // Load Stripe.js con la chiave corretta (import dinamico per ridurre il bundle iniziale)
 let stripe = null;
-if (stripePublishableKey.value) {
+if (isValidStripePublishableKey(stripePublishableKey.value)) {
 	try {
 		const { loadStripe } = await import('@stripe/stripe-js');
 		stripe = await loadStripe(stripePublishableKey.value);
@@ -96,15 +103,20 @@ const saveStripeConfig = async () => {
 
 		if (res?.success) {
 			stripeConfigured.value = true;
-			stripePublishableKey.value = configPublishableKey.value;
+			stripePublishableKey.value = String(configPublishableKey.value || "").trim();
 			showConfigForm.value = false;
 
 			// Ricarica Stripe con la nuova chiave (import dinamico)
-			try {
-				const { loadStripe } = await import('@stripe/stripe-js');
-				stripe = await loadStripe(configPublishableKey.value);
-			} catch (e) {
-				console.error("Stripe.js non caricato:", e);
+			if (isValidStripePublishableKey(stripePublishableKey.value)) {
+				try {
+					const { loadStripe } = await import('@stripe/stripe-js');
+					stripe = await loadStripe(stripePublishableKey.value);
+				} catch (e) {
+					console.error("Stripe.js non caricato:", e);
+				}
+			} else {
+				stripe = null;
+				stripeConfigured.value = false;
 			}
 
 			textMessage.value = "Stripe configurato con successo!";
@@ -146,6 +158,31 @@ const deleteConfirmId = ref(null);
 const { data: payments, status, refresh } = useSanctumFetch("/api/stripe/payment-methods", { lazy: true });
 
 /**
+ * Mappa gli errori Stripe in messaggi user-friendly in italiano
+ */
+const getStripeErrorMessage = (error) => {
+	const errorMap = {
+		'card_declined': 'Carta rifiutata. Contatta la tua banca o prova con un\'altra carta.',
+		'expired_card': 'Carta scaduta. Verifica la data di scadenza.',
+		'incorrect_cvc': 'Codice CVC non corretto. Verifica il codice di sicurezza.',
+		'processing_error': 'Errore durante l\'elaborazione. Riprova tra qualche minuto.',
+		'incorrect_number': 'Numero carta non valido. Verifica il numero inserito.',
+		'invalid_number': 'Numero carta non valido. Verifica il numero inserito.',
+		'invalid_expiry_month': 'Mese di scadenza non valido.',
+		'invalid_expiry_year': 'Anno di scadenza non valido.',
+		'invalid_cvc': 'Codice CVC non valido.',
+		'incomplete_number': 'Numero carta incompleto.',
+		'incomplete_expiry': 'Data di scadenza incompleta.',
+		'incomplete_cvc': 'Codice CVC incompleto.',
+		'insufficient_funds': 'Fondi insufficienti sulla carta.',
+		'lost_card': 'Carta segnalata come smarrita. Contatta la tua banca.',
+		'stolen_card': 'Carta segnalata come rubata. Contatta la tua banca.',
+	};
+
+	return errorMap[error.code] || error.message || 'Errore durante il salvataggio della carta. Riprova.';
+};
+
+/**
  * Aggiunge una nuova carta di credito.
  * 1. Conferma il setup con Stripe (lato browser)
  * 2. Imposta la carta come predefinita sul server
@@ -177,7 +214,7 @@ const handleAddCard = async () => {
 		});
 
 		if (error) {
-			errorMessage.value = error.message;
+			errorMessage.value = getStripeErrorMessage(error);
 			textMessage.value = null;
 			return;
 		}
@@ -352,7 +389,7 @@ const getBrandIcon = (brand) => {
 
 <template>
 	<section class="min-h-[600px] py-[40px] desktop:py-[80px]">
-		<div class="my-container max-w-[800px]">
+		<div class="my-container">
 			<!-- Breadcrumb -->
 			<div class="mb-[24px] text-[0.875rem] text-[#737373]">
 				<NuxtLink to="/account" class="hover:underline text-[#095866]">Il tuo account</NuxtLink>
@@ -374,7 +411,7 @@ const getBrandIcon = (brand) => {
 			<div
 				v-if="textMessage"
 				:class="[
-					'mb-[20px] px-[16px] py-[12px] rounded-[10px] text-[0.875rem] font-medium transition-all',
+					'mb-[20px] px-[16px] py-[12px] rounded-[50px] text-[0.875rem] font-medium transition-all',
 					textMessageType === 'success' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : textMessageType === 'error' ? 'bg-red-50 text-red-700 border border-red-200' : 'bg-blue-50 text-blue-700 border border-blue-200',
 				]">
 				{{ textMessage }}
@@ -383,7 +420,7 @@ const getBrandIcon = (brand) => {
 			<!-- ===== STRIPE NOT CONFIGURED BANNER ===== -->
 			<div v-if="!stripeConfigured && !showConfigForm && !configLoading" class="mb-[24px] p-[20px] bg-amber-50 border border-amber-200 rounded-[12px]">
 				<div class="flex items-start gap-[14px]">
-					<div class="w-[44px] h-[44px] rounded-[10px] bg-amber-100 flex items-center justify-center shrink-0">
+					<div class="w-[44px] h-[44px] rounded-[50px] bg-amber-100 flex items-center justify-center shrink-0">
 						<Icon name="mdi:alert-outline" class="text-[24px] text-amber-600" />
 					</div>
 					<div class="flex-1">
@@ -437,14 +474,14 @@ const getBrandIcon = (brand) => {
 					<div class="flex gap-[12px]">
 						<button
 							@click="showConfigForm = false"
-							class="flex-1 inline-flex items-center justify-center gap-[6px] py-[14px] rounded-[10px] bg-[#F0F0F0] hover:bg-[#E0E0E0] text-[#404040] font-semibold text-[0.9375rem] transition-colors cursor-pointer">
+							class="flex-1 inline-flex items-center justify-center gap-[6px] py-[14px] rounded-[50px] bg-[#F0F0F0] hover:bg-[#E0E0E0] text-[#404040] font-semibold text-[0.9375rem] transition-colors cursor-pointer">
 							<Icon name="mdi:close" class="text-[18px]" />
 							Annulla
 						</button>
 						<button
 							@click="saveStripeConfig"
 							:disabled="configSaving || !configPublishableKey || !configSecretKey"
-							class="flex-1 inline-flex items-center justify-center gap-[6px] py-[14px] rounded-[10px] bg-[#095866] hover:bg-[#074a56] text-white font-semibold text-[0.9375rem] transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">
+							class="flex-1 inline-flex items-center justify-center gap-[6px] py-[14px] rounded-[50px] bg-[#095866] hover:bg-[#074a56] text-white font-semibold text-[0.9375rem] transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">
 							<Icon name="mdi:content-save" class="text-[18px]" />
 							{{ configSaving ? 'Salvataggio...' : 'Salva configurazione' }}
 						</button>
@@ -465,7 +502,7 @@ const getBrandIcon = (brand) => {
 						<button
 							type="button"
 							@click="showConfigForm = true"
-							class="px-[16px] py-[10px] bg-[#F0F0F0] hover:bg-[#E0E0E0] text-[#404040] rounded-[10px] text-[0.8125rem] font-medium transition-colors cursor-pointer"
+							class="px-[16px] py-[10px] bg-[#F0F0F0] hover:bg-[#E0E0E0] text-[#404040] rounded-[50px] text-[0.8125rem] font-medium transition-colors cursor-pointer"
 							title="Configura chiavi API Stripe">
 							<Icon name="mdi:cog-outline" class="text-[16px] align-middle mr-[4px]" />
 							Stripe
@@ -474,12 +511,15 @@ const getBrandIcon = (brand) => {
 							type="button"
 							@click="togglePaymentForm"
 							:disabled="!stripeConfigured"
-							class="inline-flex items-center gap-[6px] px-[20px] py-[10px] bg-[#095866] hover:bg-[#074a56] text-white rounded-[10px] text-[0.875rem] font-semibold transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">
+							class="inline-flex items-center gap-[6px] px-[20px] py-[10px] bg-[#095866] hover:bg-[#074a56] text-white rounded-[50px] text-[0.875rem] font-semibold transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">
 							<Icon name="mdi:plus" class="text-[18px]" />
 							Aggiungi carta
 						</button>
 					</div>
 				</div>
+				<p v-if="!stripeConfigured" class="text-red-500 text-[0.875rem] mt-[8px]">
+					Stripe non configurato. Contatta l'amministratore per abilitare i pagamenti.
+				</p>
 
 				<!-- Loading skeleton -->
 				<div v-if="status === 'pending'">
@@ -504,7 +544,7 @@ const getBrandIcon = (brand) => {
 						</div>
 						<h2 class="text-[1.25rem] font-bold text-[#252B42] mb-[10px]">Nessuna carta salvata</h2>
 						<p class="text-[#737373] text-[0.9375rem] max-w-[400px] mx-auto mb-[24px] leading-[1.6]">Aggiungi una carta di pagamento per velocizzare le tue spedizioni e ricaricare il portafoglio.</p>
-						<button @click="stripeConfigured ? togglePaymentForm() : (showConfigForm = true)" class="px-[24px] py-[12px] bg-[#095866] hover:bg-[#074a56] text-white rounded-[10px] font-semibold text-[0.9375rem] transition-colors cursor-pointer">
+						<button @click="stripeConfigured ? togglePaymentForm() : (showConfigForm = true)" class="px-[24px] py-[12px] bg-[#095866] hover:bg-[#074a56] text-white rounded-[50px] font-semibold text-[0.9375rem] transition-colors cursor-pointer">
 							{{ stripeConfigured ? 'Aggiungi la tua prima carta' : 'Configura Stripe' }}
 						</button>
 					</div>
@@ -590,7 +630,7 @@ const getBrandIcon = (brand) => {
 
 				<!-- Security note -->
 				<!-- Nota sicurezza con icona MDI -->
-				<div class="mt-[24px] flex items-start gap-[10px] p-[14px] bg-[#F8F9FB] rounded-[10px]">
+				<div class="mt-[24px] flex items-start gap-[10px] p-[14px] bg-[#F8F9FB] rounded-[50px]">
 					<Icon name="mdi:lock-outline" class="text-[18px] text-[#737373] shrink-0 mt-[1px]" />
 					<p class="text-[0.8125rem] text-[#737373] leading-[1.5]">
 						I dati delle carte sono gestiti in modo sicuro da Stripe. Non conserviamo mai i numeri completi delle tue carte.
@@ -636,13 +676,13 @@ const getBrandIcon = (brand) => {
 					<div class="flex gap-[12px]">
 						<button
 							@click.prevent="togglePaymentForm"
-							class="flex-1 inline-flex items-center justify-center gap-[6px] py-[14px] rounded-[10px] bg-[#F0F0F0] hover:bg-[#E0E0E0] text-[#404040] font-semibold text-[0.9375rem] transition-colors cursor-pointer">
+							class="flex-1 inline-flex items-center justify-center gap-[6px] py-[14px] rounded-[50px] bg-[#F0F0F0] hover:bg-[#E0E0E0] text-[#404040] font-semibold text-[0.9375rem] transition-colors cursor-pointer">
 							<Icon name="mdi:close" class="text-[18px]" />
 							Annulla
 						</button>
 						<button
 							@click="handleAddCard"
-							class="flex-1 inline-flex items-center justify-center gap-[6px] py-[14px] rounded-[10px] bg-[#095866] hover:bg-[#074a56] text-white font-semibold text-[0.9375rem] transition-colors cursor-pointer">
+							class="flex-1 inline-flex items-center justify-center gap-[6px] py-[14px] rounded-[50px] bg-[#095866] hover:bg-[#074a56] text-white font-semibold text-[0.9375rem] transition-colors cursor-pointer">
 							<Icon name="mdi:content-save" class="text-[18px]" />
 							Salva carta
 						</button>
@@ -661,9 +701,9 @@ const getBrandIcon = (brand) => {
 <style scoped>
 .stripe-field {
 	background-color: #f8f9fb;
-	padding: 12px 14px;
+	padding: 12px 16px;
 	border: 1px solid #e9ebec;
-	border-radius: 8px;
+	border-radius: 12px;
 	width: 100%;
 	transition: border-color 0.2s;
 }

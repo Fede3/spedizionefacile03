@@ -1,0 +1,74 @@
+# Netlify Configuration per SpedizioneFacile
+# Questo file configura il deploy del frontend Nuxt su Netlify
+
+[build]
+  # Comando per buildare Nuxt in modalità produzione
+  command = "npm run build"
+
+  # Directory dove Nuxt genera i file buildati
+  publish = ".output/public"
+
+  # Variabili d'ambiente per il build
+  [build.environment]
+    NODE_VERSION = "20"
+    NPM_FLAGS = "--legacy-peer-deps"
+
+# Configurazione per Nuxt SSR (Server-Side Rendering)
+[functions]
+  # Directory delle funzioni serverless (Nuxt SSR)
+  directory = ".output/server"
+
+  # Timeout aumentato per SSR
+  node_bundler = "esbuild"
+
+# Headers di sicurezza e CORS
+[[headers]]
+  for = "/*"
+  [headers.values]
+    # Sicurezza
+    X-Frame-Options = "SAMEORIGIN"
+    X-Content-Type-Options = "nosniff"
+    X-XSS-Protection = "1; mode=block"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+
+    # Permetti comunicazione con backend Cloudflare
+    Access-Control-Allow-Origin = "https://joins-branches-adipex-rand.trycloudflare.com"
+    Access-Control-Allow-Credentials = "true"
+    Access-Control-Allow-Methods = "GET, POST, PUT, DELETE, PATCH, OPTIONS"
+    Access-Control-Allow-Headers = "Content-Type, Authorization, X-XSRF-TOKEN, Accept"
+
+# Cache per asset statici
+[[headers]]
+  for = "/_nuxt/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/img/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+# Redirect per SPA (Single Page Application)
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+  force = false
+
+# Ottimizzazioni
+[build.processing]
+  skip_processing = false
+
+[build.processing.css]
+  bundle = true
+  minify = true
+
+[build.processing.js]
+  bundle = true
+  minify = true
+
+[build.processing.html]
+  pretty_urls = true
+
+[build.processing.images]
+  compress = true

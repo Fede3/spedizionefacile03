@@ -57,13 +57,17 @@ const filterDateTo = ref('');
 /* Indica se i filtri sono stati applicati */
 const filtersApplied = ref(false);
 
-const applyFilters = () => { filtersApplied.value = true; };
+const applyFilters = () => {
+	filtersApplied.value = true;
+	currentPage.value = 1;
+};
 const resetFilters = () => {
 	filterProvenienza.value = '';
 	filterRiferimento.value = '';
 	filterDateFrom.value = '';
 	filterDateTo.value = '';
 	filtersApplied.value = false;
+	currentPage.value = 1;
 };
 
 /* === SELEZIONE MULTIPLA === */
@@ -183,8 +187,11 @@ const confirmDelete = async () => {
 const bulkDeleteLoading = ref(false);
 const bulkDelete = async () => {
 	if (!selectedItems.value.length) return;
-	bulkDeleteLoading.value = true;
 	const count = selectedItems.value.length;
+	if (!confirm(`Sei sicuro di voler eliminare ${count} spedizion${count === 1 ? 'e configurata' : 'i configurate'}?`)) {
+		return;
+	}
+	bulkDeleteLoading.value = true;
 	try {
 		for (const id of selectedItems.value) {
 			await sanctum(`/api/saved-shipments/${id}`, { method: "DELETE" });
@@ -314,7 +321,7 @@ const feedbackType = ref('success');
 const showFeedback = (msg, type = 'success') => {
 	feedbackMessage.value = msg;
 	feedbackType.value = type;
-	setTimeout(() => { feedbackMessage.value = ''; }, 4000);
+	setTimeout(() => { feedbackMessage.value = ''; }, 5000);
 };
 
 /* Converte il prezzo da centesimi a euro con virgola (es. 1500 -> "15,00 EUR") */
@@ -370,7 +377,7 @@ const getPackageIcon = (item) => {
 
 <template>
 	<section class="min-h-[600px] py-[40px] desktop:py-[60px]">
-		<div class="my-container max-w-[1200px]">
+		<div class="my-container">
 			<!-- Breadcrumb - aggiunto per navigazione coerente con le altre pagine account -->
 			<div class="mb-[24px] text-[0.875rem] text-[#737373]">
 				<NuxtLink to="/account" class="hover:underline text-[#095866] font-medium">Il tuo account</NuxtLink>
@@ -384,7 +391,7 @@ const getPackageIcon = (item) => {
 
 			<!-- Feedback message - successo/errore -->
 			<Transition name="fade">
-				<div v-if="feedbackMessage" :class="['mb-[20px] px-[16px] py-[12px] rounded-[10px] text-[0.875rem] font-medium', feedbackType === 'success' ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-700 border border-red-200']">
+				<div v-if="feedbackMessage" :class="['mb-[20px] px-[16px] py-[12px] rounded-[50px] text-[0.875rem] font-medium', feedbackType === 'success' ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-700 border border-red-200']">
 					{{ feedbackMessage }}
 				</div>
 			</Transition>
@@ -539,7 +546,7 @@ const getPackageIcon = (item) => {
 						<p class="text-[#737373] text-[0.9375rem] max-w-[400px] mx-auto mb-[24px] leading-[1.6]">
 							Le spedizioni salvate appariranno qui. Puoi salvarle dalla pagina delle spedizioni o crearne una nuova.
 						</p>
-						<NuxtLink to="/preventivo" class="inline-flex items-center gap-[6px] px-[24px] py-[12px] bg-[#095866] hover:bg-[#074a56] text-white rounded-[10px] font-semibold text-[0.9375rem] transition-colors">
+						<NuxtLink to="/preventivo" class="inline-flex items-center gap-[6px] px-[24px] py-[12px] bg-[#095866] hover:bg-[#074a56] text-white rounded-[50px] font-semibold text-[0.9375rem] transition-colors">
 							<Icon name="mdi:plus" class="text-[18px]" />
 							Crea nuova spedizione
 						</NuxtLink>

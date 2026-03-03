@@ -45,7 +45,7 @@ const textColor = computed(() => props.banner.banner_text_color || '#ffffff');
 				<NuxtLink
 					v-if="banner.banner_cta_text && banner.banner_cta_url"
 					:to="banner.banner_cta_url"
-					class="inline-flex items-center gap-[8px] px-[24px] py-[12px] rounded-[35px] bg-white/20 hover:bg-white/30 font-semibold text-[0.875rem] desktop:text-[0.9375rem] transition-colors min-h-[44px]"
+					class="inline-flex items-center gap-[8px] px-[24px] py-[12px] rounded-[12px] bg-white/20 hover:bg-white/30 font-semibold text-[0.875rem] desktop:text-[0.9375rem] transition-colors min-h-[44px]"
 					:style="{ color: textColor }">
 					{{ banner.banner_cta_text }}
 					<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8h10"/><path d="M9 4l4 4-4 4"/></svg>
