@@ -1,214 +1,254 @@
-<!--
-	COMPONENTE: Servizi (Homepage/Servizi.vue)
-	SCOPO: Sezione homepage "Spedisci senza pensieri" — presenta i 5 servizi principali.
-
-	DOVE SI USA: pages/index.vue (homepage)
-	PROPS: nessuna
-	EMITS: nessuno
-
-	DATI IN INGRESSO: nessuno (dati statici nell'array services)
-	DATI IN USCITA: nessuno (solo visualizzazione e navigazione)
-
-	VINCOLI: le icone SVG sono in public/img/homepage/services/ — non rinominarle
-	PUNTI DI MODIFICA SICURI: array services (testi, icone, URL), testo descrittivo in fondo
-	COLLEGAMENTI: pages/contatti.vue, pages/servizi/*.vue, pages/account/portafoglio.vue
-
-	I 5 SERVIZI:
-	1. Assistenza rapida — ticket, chat o telefono con risposta in 30 minuti
-	2. Spedizione senza etichetta — il corriere porta l'etichetta gia' pronta
-	3. Ritiro a domicilio — prenota oggi, ritiro domani
-	4. Pagamento in contrassegno — il destinatario paga al corriere
-	5. Wallet e Punti Fedelta' — ricarica il portafoglio e accumula punti
-
-	ANIMAZIONE: IntersectionObserver per reveal-on-scroll (rispetta prefers-reduced-motion)
--->
 <script setup>
-onMounted(() => {
-	if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-	const observer = new IntersectionObserver((entries) => {
-		entries.forEach(entry => {
-			if (entry.isIntersecting) {
-				entry.target.classList.add('revealed');
-				observer.unobserve(entry.target);
-			}
-		});
-	}, { threshold: 0.15 });
-	document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
-});
-
-const items = ref([
+const services = [
 	{
-		label: "Team",
-		content: "Non serve stampante, il corriere porta il foglio",
-		/* ui: {
-			header: "bg-primary-500", // Adds a hover effect to the header
-			trigger: "p-4", // Adds padding to the button trigger area
-			content: "text-base font-semibold", // Styles the content text
-		}, */
-	},
-	{ label: "Assistenza", content: "Testo2" },
-	{ label: "Brt", content: "Testo3" },
-	{ label: "Qualità", content: "Testo4" },
-	{ label: "Rapidità", content: "Testo5" },
-]);
-
-const services = ref([
-	{
-		title: "Assistenza rapida",
-		icon: "/img/homepage/services/quick-assistance.svg",
-		width: 98,
-		height: 94,
-		description: "Ticket, chat o telefono dal lunedì al venerdì: primo feedback medio in 30 minuti. Ti seguiamo dal preventivo alla consegna, incluse pratiche di rimborso o giacenza.",
-		button: "Chiedi",
-		url: "/contatti",
+		title: 'Ritiro a domicilio',
+		icon: '/img/homepage/services/home-pickup.svg',
+		description: 'Prenoti online, scegli data e indirizzo e mantieni il flusso lineare anche da smartphone.',
+		button: 'Prenota ritiro',
+		url: '/servizi',
 	},
 	{
-		title: "Spedizione senza etichetta",
-		icon: "/img/homepage/services/label-free-shipping.svg",
-		width: 104,
-		height: 100,
-		description: "Il driver BRT arriva con l'etichetta digitale già pronta: tu non stampi nulla, risparmi carta e riduci l'impronta di CO₂. Basta indicare peso, misure e indirizzi: al resto pensiamo noi.",
-		button: "Leggi di più",
-		url: "/servizi",
+		title: 'Senza etichetta',
+		icon: '/img/homepage/services/label-free-shipping.svg',
+		description: 'Se non hai stampante, il corriere porta e gestisce l’etichetta al momento del ritiro.',
+		button: 'Scopri il servizio',
+		url: '/servizi',
 	},
 	{
-		title: "Ritiro a domicilio",
-		icon: "/img/homepage/services/home-pickup.svg",
-		width: 94,
-		height: 83,
-		description: "Prenota oggi, ritiro domani dove vuoi tu: abitazione, ufficio o negozio. Notifiche live e secondo tentativo gratuito se il destinatario è assente.",
-		button: "Leggi di più",
-		url: "/servizi",
+		title: 'Tracking live',
+		icon: '/img/homepage/services/tracking-live.svg',
+		description: 'Aggiornamenti in tempo reale sullo stato della spedizione fino alla consegna.',
+		button: 'Traccia ora',
+		url: '/traccia-spedizione',
 	},
 	{
-		title: "Pagamento in contrassegno",
-		icon: "/img/homepage/services/cash-on-delivery.svg",
-		width: 94,
-		height: 94,
-		description: "Il destinatario salda al corriere in contanti o POS; tu ricevi l'importo sul Wallet o su IBAN entro 5 giorni. Massimo gestibile 999 €. Azzera il rischio di insoluti.",
-		button: "Leggi di più",
-		url: "/servizi/pagamento-alla-consegna",
+		title: 'Contrassegno',
+		icon: '/img/homepage/services/cash-on-delivery.svg',
+		description: 'Incasso alla consegna con controllo diretto delle opzioni e riepilogo chiaro.',
+		button: 'Dettagli',
+		url: '/servizi/pagamento-alla-consegna',
 	},
 	{
-		title: "Wallet e Punti Fedeltà",
-		icon: "/img/homepage/services/loyalty-points.svg",
-		width: 82,
-		height: 106,
-		description: "Ricarica con tagli da 25/50/100 € e ottieni subito un bonus del 10 %. I punti si sommano ad ogni spedizione e li spendi al checkout per abbassare il prezzo.",
-		button: "Leggi di più",
-		url: "/account/portafoglio",
+		title: 'Assicurazione',
+		icon: '/img/quote/second-step/insurance-icon.png',
+		description: 'Proteggi il valore della spedizione con attivazione rapida in un click.',
+		button: 'Attiva copertura',
+		url: '/servizi',
 	},
-]);
-
-const firstService = services.value[0];
-
-const otherServices = computed(() => services.value.slice(1));
-
-/* const preventTextSelection = (event) => {
-	event.preventDefault();
-}; */
+	{
+		title: 'Assistenza rapida',
+		icon: '/img/homepage/services/quick-assistance.svg',
+		description: 'Supporto pratico dal preventivo alla consegna con risposte veloci e tracciabili.',
+		button: 'Contattaci',
+		url: '/contatti',
+	},
+];
 </script>
 
 <template>
-	<!-- content-visibility: auto — sezione below-the-fold, rendering differito -->
-	<section class="mt-[80px] tablet:mt-[120px] desktop:mt-[164px] desktop-xl:pb-[231px] pb-[60px] tablet:pb-[94px] desktop:pb-[172px] cv-auto">
-		<div class="my-container">
-			<div class="font-montserrat">
-				<h2 class="font-bold text-[0.875rem] tracking-[0.2px] text-[#095866] text-center reveal">Servizi</h2>
-
-				<p class="font-bold text-[1.5rem] tracking-[0.1px] text-[#252B42] text-center my-[10px] reveal">Spedisci senza pensieri</p>
-
-				<p class="text-[0.875rem] tracking-[0.2px] text-[#737373] text-center max-w-[756px] mx-auto leading-[20px] reveal">
-					Scegli il servizio che ti serve, ottieni il prezzo in tempo reale e affida il pacco a BRT in meno di due minuti. Niente file, niente carta, solo soluzioni fatte per te.
+	<section class="hp-services-section cv-auto">
+		<div class="my-container font-montserrat">
+			<header class="hp-services-header">
+				<p class="hp-services-eyebrow">Servizi</p>
+				<h2 class="hp-services-title">Tutto quello che ti serve in un unico flusso</h2>
+				<p class="hp-services-subtitle">
+					Opzioni chiare, attivabili in pochi secondi, pensate per spedire meglio senza aumentare la complessità operativa.
 				</p>
+			</header>
 
-				<div class="desktop-xl:flex desktop-xl:items-start desktop-xl:justify-between mt-[50px]">
-					<div class="tablet:w-[448px] tablet:mx-auto desktop-xl:mx-0">
-						<!-- contain: content — isola layout/paint per ogni card indipendente -->
-						<div class="bg-white rounded-[20px] tablet:rounded-[30px] p-[16px] tablet:p-[24px] desktop-xl:w-[364px] shadow-[0_13px_19px_rgba(0,0,0,0.07)] mx-auto card-hover reveal contain-content">
-							<!-- Ottimizzazione: decoding async per non bloccare il rendering -->
-						<NuxtImg :src="services[0].icon" :alt="services[0].title" :width="services[0].width" :height="services[0].height" loading="lazy" decoding="async" class="mx-auto max-w-[72px] tablet:max-w-[90px] desktop:max-w-none" />
-							<h3 class="services-title">{{ services[0].title }}</h3>
-
-							<p class="services-description">
-								{{ services[0].description }}
-							</p>
-
-							<!-- Miglioramento UX: aggiunto btn-hover per feedback visivo al passaggio del mouse -->
-						<NuxtLink :to="services[0].url" class="services-button w-[107px] flex items-center justify-center gap-x-[10px] btn-hover">
-								{{ services[0].button }}
-
-								<NuxtImg src="/img/homepage/services/arrow-right.svg" aria-hidden="true" width="9" height="16" alt="" loading="lazy" decoding="async" class="w-[9px] h-[16px]" />
-							</NuxtLink>
+			<div class="hp-services-grid">
+				<article
+					v-for="service in services"
+					:key="service.title"
+					class="hp-services-card">
+					<div class="hp-services-head">
+						<div class="hp-services-icon-wrap">
+							<NuxtImg
+								:src="service.icon"
+								:alt="service.title"
+								width="96"
+								height="96"
+								loading="lazy"
+								decoding="async"
+								class="hp-services-icon" />
 						</div>
+						<h3 class="hp-services-card-title">{{ service.title }}</h3>
 					</div>
 
-					<div class="tablet:flex tablet:items-start tablet:justify-between desktop-xl:justify-center tablet:flex-wrap mt-[60px] desktop-xl:mt-0 tablet:w-full">
-						<!-- contain: content — isola layout/paint per ogni card indipendente -->
-					<div v-for="(service, index) in otherServices" :key="index" class="tablet:w-[370px] min-h-[300px] tablet:min-h-[363px] p-[20px_16px_0_16px] tablet:p-[35px_27px_0_27px] desktop-xl:mb-[24px] mb-[40px] tablet:mb-[60px] tablet:mx-auto desktop-xl:mx-0 rounded-[20px] card-hover reveal contain-content" :style="{ transitionDelay: `${(index + 1) * 80}ms` }">
-							<!-- Ottimizzazione: decoding async per non bloccare il rendering -->
-							<NuxtImg :src="service.icon" :alt="service.title" :width="service.width" :height="service.height" loading="lazy" decoding="async" class="mx-auto max-w-[64px] tablet:max-w-[80px] desktop:max-w-none" />
+					<p class="hp-services-card-text">{{ service.description }}</p>
 
-							<h3 class="services-title">{{ service.title }}</h3>
-
-							<p class="services-description">
-								{{ service.description }}
-							</p>
-
-							<!-- Miglioramento UX: aggiunto btn-hover per feedback visivo -->
-							<NuxtLink :to="service.url" class="services-button w-[153px] flex items-center justify-center gap-x-[10px] btn-hover">
-								{{ service.button }}
-								<!-- <Icon name="fe:arrow-right" class="text-[22px] align-middle" /> -->
-								<NuxtImg src="/img/homepage/services/arrow-right.svg" aria-hidden="true" width="9" height="16" alt="" loading="lazy" decoding="async" class="w-[9px] h-[16px]" />
-							</NuxtLink>
-						</div>
-					</div>
-				</div>
-			</div>
-
-			<div class="flex items-start flex-wrap desktop:justify-between mt-[80px] tablet:mt-[120px] desktop:mt-[156px]">
-				<div class="desktop-xl:max-w-[563px] desktop-xl:mt-[124px] mt-[30px] tablet:mt-[50px] order-2 desktop:order-1 w-full tablet:w-auto desktop:w-[44%] desktop-xl:w-auto reveal">
-					<p class="desktop-xl:text-[1.5rem] tablet:text-[1rem] text-[0.875rem] font-semibold leading-[160%] text-black tracking-[-0.336px]">
-						Con pochi dati ottieni il prezzo in tempo reale, prenoti il corriere e ricevi l'etichetta via e-mail, tutto in meno di due minuti.
-					</p>
-
-					<p
-						class="desktop-xl:text-[1.5rem] text-[0.875rem] font-medium leading-[160%] text-[#404040] desktop-xl:mt-[40px] tracking-[-0.336px] mt-[20px] desktop:mb-[48px] mb-[20px] tablet:text-[1rem]">
-						Che tu debba inviare un singolo pacco o spedisca regolarmente per il tuo negozio online, Spediamofacile ti affianca passo dopo passo. Inserisci peso, dimensioni e indirizzi: il nostro
-						sistema calcola automaticamente la tariffa più conveniente fra peso reale e peso-volume, applica eventuali supplementi di zona e ti mostra subito il totale. Se non hai la stampante, scegli
-						l'opzione 'Senza Etichetta': il corriere porterà il documento già pronto al momento del ritiro. In più, grazie al tracciamento in tempo reale e al servizio clienti interno, sai sempre
-						dov'è il tuo pacco, dal ritiro fino alla consegna.
-					</p>
-
-					<NuxtLink
-						to="/servizi"
-						class="bg-[#E44203] text-white desktop-xl:w-[170px] desktop-xl:h-[60px] desktop-xl:block tablet:text-[1.25rem] tracking-[-0.48px] font-semibold text-center rounded-[35px] leading-[59px] p-[10px_20px] desktop-xl:p-0 btn-hover inline-block">
-						Scopri di più
-					</NuxtLink>
-				</div>
-
-				<div class="order-1 desktop:order-2 desktop:w-[48%] desktop-xl:w-auto reveal">
-					<h3 class="text-[#222222] desktop-xl:text-[4rem] text-[1.5rem] tablet:text-[1.875rem] font-medium leading-[120%] tablet:leading-[110%] max-w-[671px] tracking-[-0.5px] tablet:tracking-[-1.536px] desktop:text-[3rem]">
-						Spedire diventa facile, veloce e sicuro
-					</h3>
-
-					<!-- <NuxtImg src="/img/trasporti-2-img.png" alt="" width="539" height="499" class="mt-[82px] ml-auto" /> -->
-				</div>
+					<NuxtLink :to="service.url" class="hp-services-cta">{{ service.button }}</NuxtLink>
+				</article>
 			</div>
 		</div>
 	</section>
 </template>
 
 <style scoped>
-@media (prefers-reduced-motion: no-preference) {
-	.reveal {
-		opacity: 0;
-		transform: translateY(20px);
-		transition: opacity 0.5s ease, transform 0.5s ease;
+.hp-services-section {
+	margin-top: 92px;
+	padding: 74px 0 64px;
+	background: #f3f8fb;
+	border-top: 1px solid #dbe7ee;
+}
+
+.hp-services-header {
+	text-align: center;
+	max-width: 860px;
+	margin-inline: auto;
+}
+
+.hp-services-eyebrow {
+	font-size: 0.8125rem;
+	font-weight: 700;
+	letter-spacing: 0.28px;
+	text-transform: uppercase;
+	color: #0c6674;
+}
+
+.hp-services-title {
+	margin-top: 10px;
+	font-size: clamp(1.95rem, 3.6vw, 3rem);
+	line-height: 1.06;
+	letter-spacing: -0.02em;
+	font-weight: 800;
+	color: #1d2738;
+}
+
+.hp-services-subtitle {
+	margin-top: 12px;
+	font-size: 1rem;
+	line-height: 1.62;
+	color: #607083;
+}
+
+.hp-services-grid {
+	margin-top: 30px;
+	display: grid;
+	grid-template-columns: 1fr;
+	gap: 14px;
+}
+
+.hp-services-card {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+	padding: 18px;
+	border-radius: 20px;
+	border: 1px solid #d7e4eb;
+	background: #ffffff;
+	box-shadow: 0 4px 10px rgba(15, 23, 42, 0.05), 0 18px 30px rgba(15, 23, 42, 0.07);
+	min-height: 230px;
+}
+
+.hp-services-head {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+}
+
+.hp-services-icon-wrap {
+	width: 58px;
+	height: 58px;
+	border-radius: 16px;
+	border: 1px solid #d1e1ea;
+	background: #f7fbfd;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	flex-shrink: 0;
+}
+
+.hp-services-icon {
+	width: 40px;
+	height: 40px;
+	object-fit: contain;
+}
+
+.hp-services-card-title {
+	font-size: 1.24rem;
+	line-height: 1.18;
+	font-weight: 780;
+	color: #1f2937;
+}
+
+.hp-services-card-text {
+	font-size: 0.97rem;
+	line-height: 1.58;
+	color: #526172;
+}
+
+.hp-services-cta {
+	margin-top: auto;
+	height: 40px;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	align-self: flex-start;
+	padding: 0 15px;
+	border-radius: 12px;
+	background: #e44203;
+	color: #fff;
+	text-decoration: none;
+	font-size: 0.89rem;
+	font-weight: 700;
+	transition: background-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.hp-services-cta:hover {
+	background: #cb3a00;
+	transform: translateY(-1px);
+	box-shadow: 0 10px 20px rgba(228, 66, 3, 0.22);
+}
+
+.hp-services-cta:focus-visible {
+	outline: 2px solid #095866;
+	outline-offset: 2px;
+}
+
+@media (min-width: 48rem) {
+	.hp-services-section {
+		margin-top: 112px;
+		padding: 84px 0 72px;
 	}
-	.reveal.revealed {
-		opacity: 1;
-		transform: translateY(0);
+
+	.hp-services-grid {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		gap: 16px;
+	}
+}
+
+@media (min-width: 72rem) {
+	.hp-services-grid {
+		grid-template-columns: repeat(3, minmax(0, 1fr));
+		gap: 18px;
+	}
+}
+
+@media (max-width: 34rem) {
+	.hp-services-section {
+		padding: 60px 0 52px;
+	}
+
+	.hp-services-card {
+		padding: 15px;
+		border-radius: 18px;
+		min-height: 212px;
+	}
+
+	.hp-services-icon-wrap {
+		width: 52px;
+		height: 52px;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.hp-services-cta {
+		transition: none;
+	}
+
+	.hp-services-cta:hover {
+		transform: none;
 	}
 }
 </style>

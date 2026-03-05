@@ -29,7 +29,7 @@ useHead({
 		{
 			rel: 'preload',
 			as: 'image',
-			href: '/img/homepage/trasporti-img.png',
+			href: '/img/homepage/hero-truck-landscape.jpg',
 			fetchpriority: 'high',
 		},
 	],
@@ -77,7 +77,7 @@ const props = defineProps({
 			<!-- Colonna sinistra: testo + card prezzo -->
 			<div class="hero__content">
 				<h1 class="hero__heading anim-title">
-					Spedisci<br class="desktop:hidden" /> in Italia
+					Spedisci<br />in Italia
 				</h1>
 
 				<!-- Card prezzo bianca in risalto -->
@@ -120,8 +120,7 @@ const props = defineProps({
 			<div class="hero__image anim-image">
 				<div
 					class="hero__image-bg"
-					:style="{ backgroundImage: data?.image_url ? `url(${data.image_url})` : `url(/img/homepage/trasporti-img.png)` }">
-				</div>
+					:style="{ backgroundImage: data?.image_url ? `url(${data.image_url})` : `url(/img/homepage/hero-truck-landscape.jpg)` }"></div>
 			</div>
 		</div>
 	</div>
@@ -244,10 +243,10 @@ const props = defineProps({
 .hero {
 	position: relative;
 	z-index: 2;
-	padding-top: 20px;
+	padding-top: 28px;
 	overflow: hidden;
-	padding-bottom: 80px;
-	margin-bottom: -80px;
+	padding-bottom: 72px;
+	margin-bottom: 0;
 }
 
 .hero__layout {
@@ -262,15 +261,15 @@ const props = defineProps({
 /* --- Accento teal decorativo --- */
 .hero__teal-accent {
 	position: absolute;
-	right: -20px;
-	top: 35px;
-	width: 200px;
-	height: 220px;
+	right: -12px;
+	top: 102px;
+	width: 188px;
+	height: 204px;
 	background: linear-gradient(135deg, #095866 0%, #0b6d7d 100%);
 	border-radius: 16px;
 	z-index: 1;
 	transform: rotate(6deg);
-	opacity: 0.15;
+	opacity: 0.05;
 }
 
 /* --- Titolo --- */
@@ -356,22 +355,23 @@ const props = defineProps({
 /* --- Immagine --- */
 .hero__image {
 	position: absolute;
-	right: -85px;
-	top: 45px;
+	right: -28px;
+	top: 136px;
 	z-index: 2;
-	width: 80vw;
-	max-width: calc(100vw - 10px);
-	height: 600px;
-	opacity: 0.18;
+	width: 78vw;
+	max-width: 420px;
+	height: 340px;
+	opacity: 0.2;
 }
 
 .hero__image-bg {
 	width: 100%;
 	height: 100%;
-	background-size: contain;
-	background-position: center top;
-	background-repeat: no-repeat;
 	border-radius: 16px;
+	overflow: hidden;
+	background-size: cover;
+	background-position: center 48%;
+	background-repeat: no-repeat;
 }
 
 /* ============================================================
@@ -424,16 +424,17 @@ const props = defineProps({
    ============================================================ */
 @media (min-width: 45rem) {
 	.hero {
-		padding-top: 30px;
+		padding-top: 40px;
+		padding-bottom: 96px;
 	}
 
 	.hero__teal-accent {
 		width: 200px;
 		height: 200px;
-		right: 20px;
-		top: 20px;
+		right: 24px;
+		top: 104px;
 		border-radius: 16px;
-		opacity: 0.12;
+		opacity: 0.05;
 	}
 
 	.hero__heading {
@@ -443,7 +444,7 @@ const props = defineProps({
 
 	.hero__card {
 		max-width: 320px;
-		margin-top: 24px;
+		margin-top: 16px;
 		border-radius: 16px;
 	}
 
@@ -474,12 +475,12 @@ const props = defineProps({
 	}
 
 	.hero__image {
-		width: 480px;
-		height: 440px;
-		right: -40px;
-		bottom: -60px;
-		top: auto;
-		opacity: 0.2;
+		width: 520px;
+		height: 390px;
+		right: 0;
+		top: 148px;
+		bottom: auto;
+		opacity: 0.28;
 	}
 
 	.hero__image-bg {
@@ -492,32 +493,32 @@ const props = defineProps({
    ============================================================ */
 @media (min-width: 64rem) {
 	.hero {
-		padding-top: 0px;
-		margin-top: -60px;
+		padding-top: 72px;
+		margin-top: 0;
+		padding-bottom: 120px;
 	}
 
 	.hero__layout {
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-		gap: 0px;
+		display: grid;
+		grid-template-columns: minmax(0, 560px) minmax(0, 760px);
+		align-items: start;
+		gap: 56px;
 	}
 
 	.hero__content {
-		flex: 0 0 50%;
-		margin-top: -15px;
+		flex: none;
+		max-width: 560px;
+		margin-top: 0;
 	}
 
 	.hero__teal-accent {
-		width: 340px;
-		height: 320px;
-		right: 5%;
-		top: 115px;
+		width: 500px;
+		height: 460px;
+		right: 3%;
+		top: 170px;
 		border-radius: 16px;
-		transform: rotate(8deg);
-		opacity: 0.08;
-		width: 480px;
-		height: 450px;
+		transform: rotate(7deg);
+		opacity: 0.06;
 	}
 
 	.hero__heading {
@@ -527,7 +528,7 @@ const props = defineProps({
 
 	.hero__card {
 		max-width: 380px;
-		margin-top: 32px;
+		margin-top: 20px;
 		border-radius: 16px;
 		box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
 	}
@@ -564,13 +565,15 @@ const props = defineProps({
 	.hero__image {
 		position: relative;
 		right: auto;
-		top: 140px;
+		top: 0;
 		bottom: auto;
-		flex: 0 0 58%;
-		width: auto;
-		height: 600px;
+		flex: none;
+		width: 100%;
+		max-width: 760px;
+		height: 620px;
 		opacity: 1;
-		margin-left: -480px;
+		margin-left: 0;
+		justify-self: end;
 	}
 
 	.hero__image-bg {
@@ -589,15 +592,21 @@ const props = defineProps({
    ============================================================ */
 @media (min-width: 90rem) {
 	.hero {
-		padding-top: 0px;
-		margin-top: -70px;
+		padding-top: 76px;
+		margin-top: 0;
+		padding-bottom: 132px;
+	}
+
+	.hero__layout {
+		grid-template-columns: minmax(0, 560px) minmax(0, 820px);
+		gap: 62px;
 	}
 
 	.hero__teal-accent {
-		width: 580px;
-		height: 540px;
-		right: 8%;
-		top: 125px;
+		width: 560px;
+		height: 500px;
+		right: 5%;
+		top: 176px;
 		border-radius: 16px;
 	}
 
@@ -607,8 +616,8 @@ const props = defineProps({
 	}
 
 	.hero__card {
-		max-width: 420px;
-		margin-top: 32px;
+		max-width: 400px;
+		margin-top: 22px;
 		border-radius: 16px;
 	}
 
@@ -635,9 +644,10 @@ const props = defineProps({
 	}
 
 	.hero__image {
-		height: 700px;
-		margin-left: -540px;
-		top: 150px;
+		max-width: 820px;
+		height: 640px;
+		margin-left: 0;
+		top: 0;
 	}
 
 	.hero__image-bg {

@@ -55,8 +55,8 @@ const servicesList = ref([
 	},
 	{
 		img: "insurance.png",
-		width: 64,
-		height: 64,
+		width: 52,
+		height: 52,
 		name: "Assicurazione",
 		description: "Copri il valore: rimborso in caso di smarrimento, furto o danneggiamento.",
 		isSelected: false,
@@ -367,9 +367,16 @@ const savedAddresses = ref([]);
 const loadingSavedAddresses = ref(false);
 const showOriginAddressSelector = ref(false);
 const showDestAddressSelector = ref(false);
+const showOriginGuestPrompt = ref(false);
+const showDestGuestPrompt = ref(false);
+const showOriginConfigGuestPrompt = ref(false);
+const showDestConfigGuestPrompt = ref(false);
 const originSelectorRef = ref(null);
 const destSelectorRef = ref(null);
 const defaultDropdownRef = ref(null);
+const destDefaultDropdownRef = ref(null);
+const authRedirectPath = computed(() => `/autenticazione?redirect=${encodeURIComponent(route.fullPath)}`);
+const authRegisterRedirectPath = computed(() => `/autenticazione?mode=register&redirect=${encodeURIComponent(route.fullPath)}`);
 
 const loadSavedAddresses = async () => {
 	if (!isAuthenticated.value) return;
@@ -399,16 +406,21 @@ const destSavedSnapshot = ref(null);
 
 const applySavedAddress = (addr, target) => {
 	const addrRef = target === 'origin' ? originAddress : destinationAddress;
+	const isDestPudoContactOnly = target === 'dest' && deliveryMode.value === 'pudo';
+
 	addrRef.value.full_name = addr.name || "";
-	addrRef.value.address = addr.address || "";
-	addrRef.value.address_number = addr.address_number || "";
-	addrRef.value.city = addr.city || "";
-	addrRef.value.postal_code = addr.postal_code || "";
-	addrRef.value.province = addr.province || "";
 	addrRef.value.telephone_number = addr.telephone_number || "";
 	addrRef.value.email = addr.email || "";
 	addrRef.value.additional_information = addr.additional_information || "";
-	addrRef.value.intercom_code = addr.intercom_code || "";
+
+	if (!isDestPudoContactOnly) {
+		addrRef.value.address = addr.address || "";
+		addrRef.value.address_number = addr.address_number || "";
+		addrRef.value.city = addr.city || "";
+		addrRef.value.postal_code = addr.postal_code || "";
+		addrRef.value.province = addr.province || "";
+		addrRef.value.intercom_code = addr.intercom_code || "";
+	}
 	if (target === 'origin') {
 		showOriginAddressSelector.value = false;
 		originFromSaved.value = true;
@@ -498,8 +510,27 @@ const saveAddressToBook = async (target) => {
 };
 
 const toggleAddressSelector = (target) => {
-	loadSavedAddresses();
 	showDefaultDropdown.value = false;
+
+	if (!isAuthenticated.value) {
+		if (target === 'origin') {
+			showOriginGuestPrompt.value = !showOriginGuestPrompt.value;
+			showDestGuestPrompt.value = false;
+			showOriginAddressSelector.value = false;
+			showDestAddressSelector.value = false;
+		} else {
+			showDestGuestPrompt.value = !showDestGuestPrompt.value;
+			showOriginGuestPrompt.value = false;
+			showOriginAddressSelector.value = false;
+			showDestAddressSelector.value = false;
+		}
+		return;
+	}
+
+	loadSavedAddresses();
+	showOriginGuestPrompt.value = false;
+	showDestGuestPrompt.value = false;
+
 	if (target === 'origin') {
 		showOriginAddressSelector.value = !showOriginAddressSelector.value;
 		showDestAddressSelector.value = false;
@@ -992,16 +1023,29 @@ const validateForm = async () => {
 	}
 
 	// Mark all fields as touched and validate
+	const validateRequiredField = (key, value, message) => {
+		if (!value || !String(value).trim()) {
+			sv.setError(key, message);
+			return false;
+		}
+		sv.clearError(key);
+		return true;
+	};
+
 	const validateAddr = (section, addr) => {
-		const fields = [
+		const isDestPudoContactOnly = section === 'dest' && deliveryMode.value === 'pudo';
+		const commonFields = [
 			['full_name', addr.full_name, () => sv.validateNomeCognome(`${section}_full_name`, addr.full_name)],
-			['address', addr.address, () => { if (!addr.address?.trim()) { sv.setError(`${section}_address`, 'Indirizzo è obbligatorio'); return false; } sv.clearError(`${section}_address`); return true; }],
-			['address_number', addr.address_number, () => { if (!addr.address_number?.trim()) { sv.setError(`${section}_address_number`, 'Numero civico è obbligatorio'); return false; } sv.clearError(`${section}_address_number`); return true; }],
-			['city', addr.city, () => { if (!addr.city?.trim()) { sv.setError(`${section}_city`, 'Città è obbligatoria'); return false; } sv.clearError(`${section}_city`); return true; }],
-			['province', addr.province, () => sv.validateProvincia(`${section}_province`, addr.province)],
-			['postal_code', addr.postal_code, () => sv.validateCAP(`${section}_postal_code`, addr.postal_code)],
 			['telephone_number', addr.telephone_number, () => sv.validateTelefono(`${section}_telephone_number`, addr.telephone_number)],
 		];
+		const fullAddressFields = [
+			['address', addr.address, () => validateRequiredField(`${section}_address`, addr.address, 'Indirizzo è obbligatorio')],
+			['address_number', addr.address_number, () => validateRequiredField(`${section}_address_number`, addr.address_number, 'Numero civico è obbligatorio')],
+			['city', addr.city, () => validateRequiredField(`${section}_city`, addr.city, 'Città è obbligatoria')],
+			['province', addr.province, () => sv.validateProvincia(`${section}_province`, addr.province)],
+			['postal_code', addr.postal_code, () => sv.validateCAP(`${section}_postal_code`, addr.postal_code)],
+		];
+		const fields = isDestPudoContactOnly ? commonFields : [...commonFields, ...fullAddressFields];
 
 		for (const [field, , validateFn] of fields) {
 			sv.markTouched(`${section}_${field}`);
@@ -1027,6 +1071,98 @@ const validateForm = async () => {
 	}
 
 	return isValid;
+};
+
+const FIELD_ERROR_ORDER = [
+	'origin_full_name',
+	'origin_address',
+	'origin_address_number',
+	'origin_city',
+	'origin_province',
+	'origin_postal_code',
+	'origin_telephone_number',
+	'origin_email',
+	'dest_full_name',
+	'dest_address',
+	'dest_address_number',
+	'dest_city',
+	'dest_province',
+	'dest_postal_code',
+	'dest_telephone_number',
+	'dest_email',
+];
+
+const FIELD_ERROR_LABELS = {
+	origin_full_name: 'Nome e Cognome partenza',
+	origin_address: 'Indirizzo partenza',
+	origin_address_number: 'Numero civico partenza',
+	origin_city: 'Città partenza',
+	origin_province: 'Provincia partenza',
+	origin_postal_code: 'CAP partenza',
+	origin_telephone_number: 'Telefono partenza',
+	origin_email: 'Email partenza',
+	dest_full_name: 'Nome e Cognome destinazione',
+	dest_address: 'Indirizzo destinazione',
+	dest_address_number: 'Numero civico destinazione',
+	dest_city: 'Città destinazione',
+	dest_province: 'Provincia destinazione',
+	dest_postal_code: 'CAP destinazione',
+	dest_telephone_number: 'Telefono destinazione',
+	dest_email: 'Email destinazione',
+};
+
+const FIELD_ERROR_IDS = {
+	origin_full_name: 'name',
+	origin_address: 'origin_address',
+	origin_address_number: 'origin_address_number',
+	origin_city: 'origin_city',
+	origin_province: 'origin_province',
+	origin_postal_code: 'origin_postal_code',
+	origin_telephone_number: 'origin_telephone',
+	origin_email: 'origin_email',
+	dest_full_name: 'dest_name',
+	dest_address: 'dest_address',
+	dest_address_number: 'dest_address_number',
+	dest_city: 'dest_city',
+	dest_province: 'dest_province',
+	dest_postal_code: 'dest_postal_code',
+	dest_telephone_number: 'dest_telephone_number',
+	dest_email: 'dest_email',
+};
+
+const formErrorSummary = computed(() => {
+	const errors = sv.errors?.value || {};
+	const keys = Object.keys(errors || {}).sort((a, b) => {
+		const aIndex = FIELD_ERROR_ORDER.indexOf(a);
+		const bIndex = FIELD_ERROR_ORDER.indexOf(b);
+		return (aIndex === -1 ? 999 : aIndex) - (bIndex === -1 ? 999 : bIndex);
+	});
+
+	return keys
+		.filter((key) => Boolean(errors[key]))
+		.map((key) => ({
+			key,
+			message: errors[key],
+			label: FIELD_ERROR_LABELS[key] || key,
+			targetId: FIELD_ERROR_IDS[key] || '',
+		}));
+});
+
+const focusFormError = (errorItem) => {
+	const targetId = errorItem?.targetId;
+	if (!targetId) return;
+	const field = document.getElementById(targetId);
+	if (!field) return;
+	field.scrollIntoView({ behavior: 'smooth', block: 'center' });
+	window.setTimeout(() => {
+		field.focus?.();
+	}, 120);
+};
+
+const focusFirstFormError = () => {
+	const firstError = formErrorSummary.value[0];
+	if (!firstError) return;
+	focusFormError(firstError);
 };
 
 const getFieldError = (section, field) => {
@@ -1056,38 +1192,43 @@ const deliveryMode = computed({
 // e auto-compiliamo i campi indirizzo destinazione con i dati del punto.
 const onPudoSelected = (pudo) => {
 	userStore.selectedPudo = pudo;
-	// Auto-compiliamo i campi destinazione con l'indirizzo del punto PUDO
-	// cosi' il backend riceve un indirizzo valido anche per la spedizione PUDO.
-	// Il campo "province" non arriva dal PUDO, quindi usiamo 'ND' (Non Disponibile)
-	// perché BRT conosce gia' l'indirizzo esatto del punto tramite il pudo_id.
-	destinationAddress.value.full_name = pudo.name || '';
+	// In modalita' PUDO aggiorniamo solo i campi indirizzo readonly.
+	// I campi contatto restano modificabili dall'utente.
 	destinationAddress.value.address = pudo.address || '';
 	destinationAddress.value.address_number = 'SNC';
 	destinationAddress.value.city = pudo.city || '';
 	destinationAddress.value.postal_code = pudo.zip_code || '';
 	destinationAddress.value.province = pudo.province || 'ND';
-	destinationAddress.value.telephone_number = '0000000000';
+	if (!destinationAddress.value.full_name?.trim()) {
+		destinationAddress.value.full_name = pudo.name || '';
+	}
 };
 
 // Quando l'utente deseleziona il punto PUDO, puliamo lo store
 // e svuotiamo i campi destinazione per permettere l'inserimento manuale
 const onPudoDeselected = () => {
 	userStore.selectedPudo = null;
-	// Ripristiniamo i campi destinazione ai valori originali (dalla sessione del preventivo)
-	destinationAddress.value.full_name = '';
+	// Ripristiniamo solo il blocco indirizzo.
 	destinationAddress.value.address = '';
 	destinationAddress.value.address_number = '';
 	destinationAddress.value.city = session.value?.data?.shipment_details?.destination_city || '';
 	destinationAddress.value.postal_code = session.value?.data?.shipment_details?.destination_postal_code || '';
 	destinationAddress.value.province = '';
-	destinationAddress.value.telephone_number = '';
 };
 
 // Quando si cambia modalità consegna, resettiamo il PUDO se si torna a domicilio
 watch(deliveryMode, (newMode) => {
 	if (newMode === 'home') {
 		userStore.selectedPudo = null;
+		return;
 	}
+	[
+		'dest_address',
+		'dest_address_number',
+		'dest_city',
+		'dest_province',
+		'dest_postal_code',
+	].forEach((fieldKey) => sv.clearError(fieldKey));
 });
 const dateError = ref(null);
 const contentError = ref(null);
@@ -1262,18 +1403,219 @@ const loadCartItemForEdit = async () => {
 	}
 };
 
-// Prezzo totale dal pacco in modifica (convertito da centesimi a euro)
+const stepsRef = ref(null);
+const stepsVisible = ref(true);
+let stepsObserver = null;
+let stepsVisibilityRaf = null;
+
+const parsePriceAmount = (value) => {
+	if (value === null || value === undefined) return null;
+	if (typeof value === "number") {
+		return Number.isFinite(value) ? value : null;
+	}
+
+	const raw = String(value).trim();
+	if (!raw) return null;
+
+	let normalized = raw.replace(/[€\s]/g, "");
+	if (normalized.includes(",") && normalized.includes(".")) {
+		if (normalized.lastIndexOf(",") > normalized.lastIndexOf(".")) {
+			normalized = normalized.replace(/\./g, "").replace(",", ".");
+		} else {
+			normalized = normalized.replace(/,/g, "");
+		}
+	} else if (normalized.includes(",")) {
+		normalized = normalized.replace(",", ".");
+	}
+
+	const parsed = Number(normalized);
+	return Number.isFinite(parsed) ? parsed : null;
+};
+
+const formatPriceAmount = (amount) => Number(amount).toFixed(2).replace(".", ",");
+
+const pickBestPriceAmount = (candidates) => {
+	const valid = candidates.filter((v) => v !== null && Number.isFinite(v));
+	const positive = valid.find((v) => v > 0);
+	if (positive !== undefined) return positive;
+	return valid.length ? valid[0] : 0;
+};
+
+const normalizePackagePrice = (rawAmount) => {
+	const amount = Number(rawAmount) || 0;
+	if (!amount) return 0;
+	// Nei payload legacy single_price puo' essere in centesimi.
+	return amount > 1000 ? amount / 100 : amount;
+};
+
+const getPersistedStoreTotalPrice = () => {
+	if (!process.client) return null;
+	try {
+		const raw = sessionStorage.getItem("spedizionefacile_user_store");
+		if (!raw) return null;
+		const parsed = JSON.parse(raw);
+		return parsePriceAmount(parsed?.totalPrice);
+	} catch {
+		return null;
+	}
+};
+
+const getPackageLineAmount = (pack) => {
+	const single = parsePriceAmount(pack?.single_price);
+	if (single !== null && single > 0) return normalizePackagePrice(single);
+
+	const singleOrig = parsePriceAmount(pack?.single_priceOrig);
+	if (singleOrig !== null && singleOrig > 0) return normalizePackagePrice(singleOrig);
+
+	const weightPrice = parsePriceAmount(pack?.weight_price) || 0;
+	const volumePrice = parsePriceAmount(pack?.volume_price) || 0;
+	const base = Math.max(weightPrice, volumePrice);
+	if (base <= 0) return 0;
+
+	const qty = Number(pack?.quantity) || 1;
+	return base * qty;
+};
+
+const getPackagesTotal = (packages) => {
+	if (!Array.isArray(packages) || !packages.length) return null;
+	const total = packages.reduce((sum, pack) => sum + getPackageLineAmount(pack), 0);
+	return total > 0 ? total : null;
+};
+
+// Prezzo totale dal pacco in modifica.
 const editCartTotalPrice = computed(() => {
-	if (!editCartId || !userStore.packages?.length) return '';
-	const totalCents = userStore.packages.reduce((sum, p) => sum + (Number(p.single_price) || 0), 0);
-	return (totalCents / 100).toFixed(2).replace('.', ',');
+	if (!editCartId || !userStore.packages?.length) return null;
+	const rawTotal = userStore.packages.reduce((sum, p) => sum + (Number(p.single_price) || 0), 0);
+	if (!rawTotal) return null;
+	return formatPriceAmount(normalizePackagePrice(rawTotal));
 });
+
+const summaryPackageLabel = computed(() => {
+	const count = editablePackages.value.length;
+	return `${count} ${count === 1 ? "collo" : "colli"}`;
+});
+
+const summaryOriginCity = computed(() =>
+	session.value?.data?.shipment_details?.origin_city
+	|| userStore.shipmentDetails?.origin_city
+	|| originAddress.value?.city
+	|| "—"
+);
+
+const summaryDestinationCity = computed(() =>
+	session.value?.data?.shipment_details?.destination_city
+	|| userStore.shipmentDetails?.destination_city
+	|| destinationAddress.value?.city
+	|| "—"
+);
+
+const summaryRouteLabel = computed(() => `${summaryOriginCity.value} → ${summaryDestinationCity.value}`);
+const summaryServicesCount = computed(() => Number(userStore.servicesArray?.length || 0));
+
+const summaryTotalPrice = computed(() => {
+	const sessionAmount = parsePriceAmount(session.value?.data?.total_price);
+	const storeAmount = parsePriceAmount(userStore.totalPrice);
+	const persistedStoreAmount = getPersistedStoreTotalPrice();
+	const editAmount = parsePriceAmount(editCartTotalPrice.value);
+	const pendingAmount = getPackagesTotal(userStore.pendingShipment?.packages);
+	const editableAmount = getPackagesTotal(editablePackages.value);
+	const storePackagesAmount = getPackagesTotal(userStore.packages);
+
+	const bestAmount = pickBestPriceAmount([
+		sessionAmount,
+		storeAmount,
+		persistedStoreAmount,
+		pendingAmount,
+		storePackagesAmount,
+		editAmount,
+		editableAmount,
+	]);
+
+	return formatPriceAmount(bestAmount);
+});
+
+const currentShipmentStep = computed(() => (
+	showAddressFields.value || route.query.step === "ritiro" ? 3 : 2
+));
+
+const summaryMiniSteps = computed(() => {
+	const defs = [
+		{ id: 1, label: "Misure", to: "/#preventivo" },
+		{ id: 2, label: "Servizi", to: "/la-tua-spedizione/2" },
+		{ id: 3, label: "Indirizzi", to: "/la-tua-spedizione/2?step=ritiro" },
+		{ id: 4, label: "Conferma", to: "/riepilogo" },
+		{ id: 5, label: "Pagamento", to: "/checkout" },
+	];
+
+	return defs.map((step) => {
+		const isActive = step.id === currentShipmentStep.value;
+		const isCompleted = step.id < currentShipmentStep.value;
+		return {
+			...step,
+			isActive,
+			isCompleted,
+			isClickable: isCompleted,
+		};
+	});
+});
+
+const showSummaryMiniSteps = computed(() => currentStep.value === 2 && !stepsVisible.value);
+
+const goToSummaryMiniStep = async (step) => {
+	if (!step?.isClickable) return;
+	await navigateTo(step.to);
+};
+
+const updateStepsVisibility = () => {
+	if (!process.client || !stepsRef.value) return;
+	const rect = stepsRef.value.getBoundingClientRect();
+	const viewportHeight = window.innerHeight || document.documentElement.clientHeight;
+	const stickyOffset = 92;
+	const visibleHeight = Math.min(rect.bottom, viewportHeight) - Math.max(rect.top, stickyOffset);
+	stepsVisible.value = visibleHeight > 22 && rect.bottom > stickyOffset;
+};
+
+const scheduleStepsVisibilityUpdate = () => {
+	if (!process.client) return;
+	if (stepsVisibilityRaf) cancelAnimationFrame(stepsVisibilityRaf);
+	stepsVisibilityRaf = requestAnimationFrame(() => {
+		updateStepsVisibility();
+		stepsVisibilityRaf = null;
+	});
+};
+
+const initStepsVisibilityObserver = () => {
+	if (!process.client || !stepsRef.value) return;
+
+	if ("IntersectionObserver" in window) {
+		stepsObserver?.disconnect();
+		stepsObserver = new IntersectionObserver(
+			([entry]) => {
+				if (entry) {
+					stepsVisible.value = entry.isIntersecting && entry.intersectionRatio > 0.05;
+				}
+				scheduleStepsVisibilityUpdate();
+			},
+			{
+				root: null,
+				threshold: [0, 0.05, 0.15, 0.5],
+				rootMargin: "-92px 0px -10% 0px",
+			}
+		);
+		stepsObserver.observe(stepsRef.value);
+	}
+
+	window.addEventListener("scroll", scheduleStepsVisibilityUpdate, { passive: true });
+	window.addEventListener("resize", scheduleStepsVisibilityUpdate);
+	scheduleStepsVisibilityUpdate();
+};
 
 onMounted(async () => {
 	// Carica sempre la sessione all'avvio per avere i dati dei pacchi
 	await refresh();
 	document.addEventListener("click", handleTopDropdownClickOutside, true);
 	document.addEventListener("keydown", handleTopDropdownEsc);
+	nextTick(() => initStepsVisibilityObserver());
 
 	if (editCartId) {
 		loadCartItemForEdit();
@@ -1283,27 +1625,44 @@ onMounted(async () => {
 onBeforeUnmount(() => {
 	document.removeEventListener("click", handleTopDropdownClickOutside, true);
 	document.removeEventListener("keydown", handleTopDropdownEsc);
+	window.removeEventListener("scroll", scheduleStepsVisibilityUpdate);
+	window.removeEventListener("resize", scheduleStepsVisibilityUpdate);
+	if (stepsVisibilityRaf) {
+		cancelAnimationFrame(stepsVisibilityRaf);
+		stepsVisibilityRaf = null;
+	}
+	if (stepsObserver) {
+		stepsObserver.disconnect();
+		stepsObserver = null;
+	}
 });
 
 // --- SPEDIZIONI CONFIGURATE (DATI DEFAULT) ---
 // Permette di caricare indirizzi da spedizioni precedentemente salvate
 const showDefaultDropdown = ref(false);
+const showDefaultDropdownTarget = ref("origin");
 const savedConfigs = ref([]);
 const loadingConfigs = ref(false);
 const savedConfigsLoaded = ref(false);
 
 const closeTopDropdowns = () => {
 	showDefaultDropdown.value = false;
+	showDefaultDropdownTarget.value = "origin";
 	showOriginAddressSelector.value = false;
 	showDestAddressSelector.value = false;
+	showOriginGuestPrompt.value = false;
+	showDestGuestPrompt.value = false;
+	showOriginConfigGuestPrompt.value = false;
+	showDestConfigGuestPrompt.value = false;
 };
 
 const handleTopDropdownClickOutside = (event) => {
 	const target = event?.target;
-	const insideDefault = defaultDropdownRef.value?.contains?.(target);
+	const insideDefaultOrigin = defaultDropdownRef.value?.contains?.(target);
+	const insideDefaultDest = destDefaultDropdownRef.value?.contains?.(target);
 	const insideOrigin = originSelectorRef.value?.contains?.(target);
 	const insideDest = destSelectorRef.value?.contains?.(target);
-	if (!insideDefault && !insideOrigin && !insideDest) {
+	if (!insideDefaultOrigin && !insideDefaultDest && !insideOrigin && !insideDest) {
 		closeTopDropdowns();
 	}
 };
@@ -1314,14 +1673,33 @@ const handleTopDropdownEsc = (event) => {
 	}
 };
 
-const loadSavedConfigs = async () => {
-	if (!isAuthenticated.value) return;
-	if (showDefaultDropdown.value) {
+const loadSavedConfigs = async (targetSection = "origin") => {
+	if (!isAuthenticated.value) {
+		if (targetSection === "origin") {
+			showOriginConfigGuestPrompt.value = !showOriginConfigGuestPrompt.value;
+			showDestConfigGuestPrompt.value = false;
+		} else {
+			showDestConfigGuestPrompt.value = !showDestConfigGuestPrompt.value;
+			showOriginConfigGuestPrompt.value = false;
+		}
+		showOriginAddressSelector.value = false;
+		showDestAddressSelector.value = false;
+		showOriginGuestPrompt.value = false;
+		showDestGuestPrompt.value = false;
+		return;
+	}
+
+	showOriginConfigGuestPrompt.value = false;
+	showDestConfigGuestPrompt.value = false;
+	if (showDefaultDropdown.value && showDefaultDropdownTarget.value === targetSection) {
 		showDefaultDropdown.value = false;
 		return;
 	}
 	showOriginAddressSelector.value = false;
 	showDestAddressSelector.value = false;
+	showOriginGuestPrompt.value = false;
+	showDestGuestPrompt.value = false;
+	showDefaultDropdownTarget.value = targetSection;
 
 	if (savedConfigsLoaded.value) {
 		showDefaultDropdown.value = true;
@@ -1340,38 +1718,56 @@ const loadSavedConfigs = async () => {
 	}
 };
 
-const applyConfig = (item) => {
-	if (item.origin_address) {
-		originAddress.value.full_name = item.origin_address.name || "";
-		originAddress.value.address = item.origin_address.address || "";
-		originAddress.value.address_number = item.origin_address.address_number || "";
-		originAddress.value.city = item.origin_address.city || "";
-		originAddress.value.postal_code = item.origin_address.postal_code || "";
-		originAddress.value.province = item.origin_address.province || "";
-		originAddress.value.telephone_number = item.origin_address.telephone_number || "";
-		originAddress.value.email = item.origin_address.email || "";
-		originAddress.value.additional_information = item.origin_address.additional_information || "";
-		originAddress.value.intercom_code = item.origin_address.intercom_code || "";
-		originFromSaved.value = true;
-		originSaveSuccess.value = false;
-		originSavedSnapshot.value = JSON.stringify(originAddress.value);
+const applyConfigToOrigin = (configAddress) => {
+	if (!configAddress) return;
+	originAddress.value.full_name = configAddress.name || "";
+	originAddress.value.address = configAddress.address || "";
+	originAddress.value.address_number = configAddress.address_number || "";
+	originAddress.value.city = configAddress.city || "";
+	originAddress.value.postal_code = configAddress.postal_code || "";
+	originAddress.value.province = configAddress.province || "";
+	originAddress.value.telephone_number = configAddress.telephone_number || "";
+	originAddress.value.email = configAddress.email || "";
+	originAddress.value.additional_information = configAddress.additional_information || "";
+	originAddress.value.intercom_code = configAddress.intercom_code || "";
+	originFromSaved.value = true;
+	originSaveSuccess.value = false;
+	originSavedSnapshot.value = JSON.stringify(originAddress.value);
+};
+
+const applyConfigToDestination = (configAddress) => {
+	if (!configAddress) return;
+	// In modalita' PUDO aggiorniamo solo il blocco contatto.
+	const contactOnly = deliveryMode.value === "pudo";
+	destinationAddress.value.full_name = configAddress.name || destinationAddress.value.full_name || "";
+	destinationAddress.value.telephone_number = configAddress.telephone_number || destinationAddress.value.telephone_number || "";
+	destinationAddress.value.email = configAddress.email || destinationAddress.value.email || "";
+	destinationAddress.value.additional_information = configAddress.additional_information || destinationAddress.value.additional_information || "";
+
+	if (!contactOnly) {
+		destinationAddress.value.address = configAddress.address || "";
+		destinationAddress.value.address_number = configAddress.address_number || "";
+		destinationAddress.value.city = configAddress.city || "";
+		destinationAddress.value.postal_code = configAddress.postal_code || "";
+		destinationAddress.value.province = configAddress.province || "";
+		destinationAddress.value.intercom_code = configAddress.intercom_code || "";
 	}
-	if (item.destination_address) {
-		destinationAddress.value.full_name = item.destination_address.name || "";
-		destinationAddress.value.address = item.destination_address.address || "";
-		destinationAddress.value.address_number = item.destination_address.address_number || "";
-		destinationAddress.value.city = item.destination_address.city || "";
-		destinationAddress.value.postal_code = item.destination_address.postal_code || "";
-		destinationAddress.value.province = item.destination_address.province || "";
-		destinationAddress.value.telephone_number = item.destination_address.telephone_number || "";
-		destinationAddress.value.email = item.destination_address.email || "";
-		destinationAddress.value.additional_information = item.destination_address.additional_information || "";
-		destinationAddress.value.intercom_code = item.destination_address.intercom_code || "";
-		destFromSaved.value = true;
-		destSaveSuccess.value = false;
-		destSavedSnapshot.value = JSON.stringify(destinationAddress.value);
+
+	destFromSaved.value = true;
+	destSaveSuccess.value = false;
+	destSavedSnapshot.value = JSON.stringify(destinationAddress.value);
+};
+
+const applyConfig = (item, targetSection = "origin") => {
+	if (item.origin_address && (targetSection === "origin" || targetSection === "both")) {
+		applyConfigToOrigin(item.origin_address);
+	}
+	if (item.destination_address && (targetSection === "dest" || targetSection === "both")) {
+		applyConfigToDestination(item.destination_address);
 	}
 	showDefaultDropdown.value = false;
+	showOriginConfigGuestPrompt.value = false;
+	showDestConfigGuestPrompt.value = false;
 };
 const router = useRouter();
 
@@ -1425,8 +1821,7 @@ const continueToCart = async () => {
 	// Run custom field validation
 	if (!(await validateForm())) {
 		nextTick(() => {
-			const errorEl = document.querySelector('.text-red-500');
-			if (errorEl) errorEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+			focusFirstFormError();
 		});
 		return;
 	}
@@ -1499,7 +1894,9 @@ const continueToCart = async () => {
 		<div class="my-container mt-[72px] mb-[120px]">
 			<div v-if="status === 'pending' || loadingEditData" class="min-h-[720px] bg-[#E4E4E4] rounded-[16px] animate-pulse"></div>
 			<form v-else ref="formRef" @submit.prevent="continueToCart">
-				<Steps :current-step="showAddressFields ? 2 : 1" @navigate="onStepNavigate" />
+				<div ref="stepsRef">
+					<Steps :current-step="showAddressFields ? 2 : 1" @navigate="onStepNavigate" />
+				</div>
 
 				<!-- Popup servizi (sempre disponibile, anche dal riepilogo) -->
 				<UModal
@@ -1634,32 +2031,67 @@ const continueToCart = async () => {
 					<!-- Summary Box Collapsabile STICKY -->
 					<Transition name="summary-slide">
 						<div v-if="currentStep === 2" class="sticky top-0 z-30 mb-[20px] font-montserrat">
-							<div class="bg-white rounded-[16px] shadow-lg overflow-hidden border border-[#D0D0D0]">
-								<!-- Header collassabile -->
-								<button
-									type="button"
-									@click="summaryExpanded = !summaryExpanded"
-									class="w-full px-[20px] py-[14px] flex items-center justify-between hover:bg-[#F8F8F8] transition-colors cursor-pointer">
-									<span class="text-[0.9375rem] tablet:text-[1.0625rem] font-bold text-[#252B42]">
-										Riepilogo: {{ editablePackages.length }} {{ editablePackages.length === 1 ? 'collo' : 'colli' }},
-										{{ session?.data?.shipment_details?.origin_city || userStore.shipmentDetails?.origin_city }} →
-										{{ session?.data?.shipment_details?.destination_city || userStore.shipmentDetails?.destination_city }},
-										{{ session?.data?.total_price || editCartTotalPrice }}€
-									</span>
-									<svg
-										width="20"
-										height="20"
-										viewBox="0 0 24 24"
-										fill="none"
-										stroke="#095866"
-										stroke-width="2.5"
-										stroke-linecap="round"
-										stroke-linejoin="round"
-										class="transition-transform duration-300 flex-shrink-0"
-										:class="{ 'rotate-180': summaryExpanded }">
-										<polyline points="6 9 12 15 18 9"/>
-									</svg>
-								</button>
+							<div class="summary-sticky-card bg-white rounded-[16px] shadow-lg overflow-hidden border border-[#D0D0D0]">
+								<div class="summary-header-main">
+									<div class="summary-top-row">
+										<span class="summary-top-label">Riepilogo</span>
+										<div v-if="showSummaryMiniSteps" class="summary-mini-steps-row">
+											<button
+												v-for="stepItem in summaryMiniSteps"
+												:key="stepItem.id"
+												type="button"
+												class="summary-mini-step"
+												:class="{
+													'is-active': stepItem.isActive,
+													'is-completed': stepItem.isCompleted && !stepItem.isActive,
+													'is-disabled': !stepItem.isClickable && !stepItem.isActive
+												}"
+												:disabled="!stepItem.isClickable && !stepItem.isActive"
+												:aria-disabled="(!stepItem.isClickable && !stepItem.isActive) ? 'true' : 'false'"
+												:aria-current="stepItem.isActive ? 'step' : undefined"
+												@click.stop="goToSummaryMiniStep(stepItem)">
+												{{ stepItem.id }}. {{ stepItem.label }}
+											</button>
+										</div>
+									</div>
+
+									<button
+										type="button"
+										@click="summaryExpanded = !summaryExpanded"
+										class="summary-toggle-button w-full cursor-pointer"
+										:aria-expanded="summaryExpanded ? 'true' : 'false'">
+										<div class="summary-chips-row">
+											<span class="summary-chip">
+												<span class="summary-chip-label">Colli:</span>
+												<span class="summary-chip-value">{{ summaryPackageLabel }}</span>
+											</span>
+											<span class="summary-chip summary-chip-route">
+												<span class="summary-chip-label">Tratta:</span>
+												<span class="summary-chip-value">{{ summaryRouteLabel }}</span>
+											</span>
+											<span class="summary-chip summary-chip-total">
+												<span class="summary-chip-label">Totale:</span>
+												<span class="summary-chip-total-value">{{ summaryTotalPrice }}€</span>
+											</span>
+										</div>
+
+										<span class="summary-chevron-wrap">
+											<svg
+												width="20"
+												height="20"
+												viewBox="0 0 24 24"
+												fill="none"
+												stroke="#095866"
+												stroke-width="2.5"
+												stroke-linecap="round"
+												stroke-linejoin="round"
+												class="summary-chevron-icon flex-shrink-0"
+												:class="{ 'is-open': summaryExpanded }">
+												<polyline points="6 9 12 15 18 9"/>
+											</svg>
+										</span>
+									</button>
+								</div>
 
 								<!-- Contenuto espandibile -->
 								<Transition
@@ -1669,7 +2101,7 @@ const continueToCart = async () => {
 									@leave="onAccordionLeave">
 									<div v-show="summaryExpanded" class="accordion-content">
 										<!-- 1 RIGA con tutte le info -->
-										<div class="px-[16px] pb-[12px] pt-[8px] flex items-center gap-[20px] text-[0.8125rem] flex-wrap">
+										<div class="summary-details-row px-[22px] pb-[14px] pt-[8px] flex items-center gap-[20px] text-[0.8125rem] flex-wrap">
 											<!-- Indirizzi -->
 											<div class="flex items-center gap-[6px]">
 												<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#095866" stroke-width="2">
@@ -1677,40 +2109,40 @@ const continueToCart = async () => {
 													<circle cx="12" cy="10" r="3"/>
 												</svg>
 												<span class="text-[#737373]">Da:</span>
-												<span class="font-semibold text-[#252B42]">{{ session?.data?.shipment_details?.origin_city || userStore.shipmentDetails?.origin_city }}</span>
+												<span class="font-semibold text-[#252B42]">{{ summaryOriginCity }}</span>
 												<span class="text-[#737373]">→</span>
-												<span class="font-semibold text-[#252B42]">{{ session?.data?.shipment_details?.destination_city || userStore.shipmentDetails?.destination_city }}</span>
+												<span class="font-semibold text-[#252B42]">{{ summaryDestinationCity }}</span>
 											</div>
 
 											<!-- Separatore -->
-											<div class="w-[1px] h-[20px] bg-[#D0D0D0]"></div>
+											<div class="summary-details-separator w-[1px] h-[20px] bg-[#D0D0D0]"></div>
 
 											<!-- Colli -->
 											<div class="flex items-center gap-[6px]">
 												<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#095866" stroke-width="2">
 													<path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
 												</svg>
-												<span class="font-semibold text-[#252B42]">{{ editablePackages.length }} {{ editablePackages.length === 1 ? 'collo' : 'colli' }}</span>
+												<span class="font-semibold text-[#252B42]">{{ summaryPackageLabel }}</span>
 											</div>
 
 											<!-- Separatore -->
-											<div class="w-[1px] h-[20px] bg-[#D0D0D0]"></div>
+											<div class="summary-details-separator w-[1px] h-[20px] bg-[#D0D0D0]"></div>
 
 											<!-- Servizi -->
 											<div class="flex items-center gap-[6px]">
 												<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#095866" stroke-width="2">
 													<path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
 												</svg>
-												<span class="text-[#737373]">{{ userStore.servicesArray.length }} servizi</span>
+												<span class="text-[#737373]">{{ summaryServicesCount }} servizi</span>
 											</div>
 
 											<!-- Separatore -->
-											<div class="w-[1px] h-[20px] bg-[#D0D0D0]"></div>
+											<div class="summary-details-separator w-[1px] h-[20px] bg-[#D0D0D0]"></div>
 
 											<!-- Totale -->
-											<div class="flex items-center gap-[6px] ml-auto">
+											<div class="summary-total-wrap flex items-center gap-[6px] ml-auto">
 												<span class="text-[#737373]">Totale:</span>
-												<span class="text-[1.5rem] font-bold text-[#095866]">{{ session?.data?.total_price || editCartTotalPrice }}€</span>
+												<span class="summary-total-value text-[1.5rem] font-bold text-[#095866]">{{ summaryTotalPrice }}€</span>
 											</div>
 										</div>
 									</div>
@@ -1788,11 +2220,14 @@ const continueToCart = async () => {
 					<div class="w-full mx-auto">
 						<!-- Layout servizi: Senza etichetta hero + 3 sotto -->
 						<div class="w-full">
-							<!-- Servizio "Senza etichetta" - Hero COMPATTA -->
+							<!-- Servizio "Senza etichetta" - Hero Full-Width Verticale -->
 							<div v-if="featuredService" class="mb-[30px]">
 								<label
-									class="labelless-service-hero relative flex items-center justify-between gap-[20px] cursor-pointer min-h-[180px] tablet:min-h-[220px]"
+									class="labelless-service-hero relative block cursor-pointer"
 									:class="{ 'is-selected': featuredService.isSelected }">
+
+									<!-- Shimmer effect -->
+									<div class="shimmer"></div>
 
 									<!-- Badge container -->
 									<div class="badge-container">
@@ -1809,29 +2244,51 @@ const continueToCart = async () => {
 										</svg>
 									</div>
 
-									<!-- Left: Icon + Text -->
-									<div class="flex items-center gap-[20px] flex-1">
-										<!-- Icon -->
-										<div class="icon-wrapper-compact">
-											<svg class="service-icon-compact" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-												<path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-											</svg>
-										</div>
-
-										<!-- Text -->
-										<div class="flex-1">
-											<h3 class="service-title-compact">
-												Spedizione Senza Etichetta
-											</h3>
-											<p class="service-description-compact">
-												Il corriere stampa per te
-											</p>
-										</div>
+									<!-- Icona grande centrata -->
+									<div class="icon-wrapper">
+										<div class="icon-glow"></div>
+										<svg class="service-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+											<path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+										</svg>
 									</div>
 
-									<!-- Right: Price -->
-									<div class="price-compact">
-										<span class="price-value-compact">+1€</span>
+									<!-- Titolo centrato -->
+									<h3 class="service-title">
+										<span class="sparkle">Spedizione</span> Senza Etichetta
+									</h3>
+
+									<!-- Descrizione -->
+									<p class="service-description">
+										Niente stampanti, <strong>il corriere stampa per te</strong>
+									</p>
+
+									<!-- Sezione prezzo e value props -->
+									<div class="price-section">
+										<div class="price-badge">
+											<span class="price-label">Solo</span>
+											<span class="price-value">+1,00€</span>
+										</div>
+
+										<div class="value-props">
+											<div class="prop">
+												<svg class="check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+													<polyline points="20 6 9 17 4 12"/>
+												</svg>
+												<span>Nessuna stampante necessaria</span>
+											</div>
+											<div class="prop">
+												<svg class="check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+													<polyline points="20 6 9 17 4 12"/>
+												</svg>
+												<span>Il corriere porta l'etichetta</span>
+											</div>
+											<div class="prop">
+												<svg class="check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+													<polyline points="20 6 9 17 4 12"/>
+												</svg>
+												<span>Risparmia tempo e inchiostro</span>
+											</div>
+										</div>
 									</div>
 
 									<!-- Hidden checkbox -->
@@ -1843,12 +2300,12 @@ const continueToCart = async () => {
 								</label>
 							</div>
 
-							<!-- Servizi regolari (3 in riga) -->
-							<div class="grid grid-cols-1 tablet:grid-cols-3 gap-[20px] tablet:gap-[24px] desktop:gap-[30px]">
+							<!-- Servizi regolari (3 in riga) - padding ridotto -->
+							<div class="grid grid-cols-1 tablet:grid-cols-3 gap-[16px] tablet:gap-[18px] desktop:gap-[24px]">
 								<label
 									v-for="(service, serviceIndex) in regularServices"
 									:key="serviceIndex"
-									class="flex flex-col items-center justify-center min-h-[180px] tablet:min-h-[220px] text-center cursor-pointer rounded-[16px] transition-all duration-300 shadow-md hover:shadow-lg hover:-translate-y-[2px] p-[16px]"
+									class="flex flex-col items-center justify-center min-h-[160px] tablet:min-h-[180px] text-center cursor-pointer rounded-[16px] transition-all duration-300 shadow-md hover:shadow-lg hover:-translate-y-[2px] p-[12px] tablet:p-[14px]"
 									:class="{
 										'bg-[#095866] text-white': service.isSelected,
 										'bg-[#E6E6E6] hover:bg-[#DADADA]': !service.isSelected
@@ -1961,6 +2418,24 @@ const continueToCart = async () => {
 
 							<!-- PARTENZA -->
 							<template v-if="showAddressFields">
+							<div
+								v-if="formErrorSummary.length > 0"
+								class="mt-[18px] p-[14px] bg-red-50 border border-red-200 rounded-[12px]">
+								<div class="flex items-center gap-[8px] text-red-700 font-semibold text-[0.875rem]">
+									<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"><path fill="currentColor" d="M11 15h2v2h-2zm0-8h2v6h-2z"/><path fill="currentColor" d="M1 21h22L12 2zm12-3h-2v-2h2zm0-4h-2V8h2z"/></svg>
+									Errori da correggere
+								</div>
+								<ul class="mt-[8px] space-y-[4px]">
+									<li v-for="errorItem in formErrorSummary" :key="errorItem.key">
+										<button
+											type="button"
+											class="text-left text-[0.8125rem] text-red-700 underline decoration-red-300 hover:decoration-red-500 cursor-pointer"
+											@click="focusFormError(errorItem)">
+											{{ errorItem.label }}: {{ errorItem.message }}
+										</button>
+									</li>
+								</ul>
+							</div>
 							<div class="bg-[#E4E4E4] rounded-[16px] text-[#252B42] mt-[20px] px-[16px] tablet:px-[40px] pt-[24px] tablet:pt-[35px] pb-[24px] tablet:pb-[43px]">
 								<div class="flex items-center justify-between mb-[20px] tablet:mb-[39px] flex-wrap gap-[10px]">
 									<div class="flex items-center gap-[10px]">
@@ -1983,51 +2458,77 @@ const continueToCart = async () => {
 										Salvato
 									</span>
 								</div>
-								<div v-if="isAuthenticated" class="flex items-center gap-[10px]">
-									<!-- Immetti dati default -->
-										<div ref="defaultDropdownRef" class="relative">
-											<button type="button" @click="loadSavedConfigs" :disabled="loadingConfigs" class="inline-flex items-center gap-[6px] px-[14px] py-[8px] bg-[#996D47] text-white rounded-[8px] text-[0.8125rem] font-semibold hover:bg-[#7d5939] transition cursor-pointer disabled:opacity-60">
-												<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-												{{ loadingConfigs ? '...' : 'Dati default' }}
-											</button>
-											<div v-if="showDefaultDropdown && savedConfigs.length > 0" class="absolute z-50 top-full right-0 mt-[4px] bg-white border border-[#D0D0D0] rounded-[12px] shadow-xl max-h-[300px] overflow-y-auto w-[280px] tablet:w-[400px]">
-												<div class="p-[12px] border-b border-[#F0F0F0] text-[0.8125rem] font-bold text-[#252B42]">Seleziona una spedizione configurata</div>
-												<div v-for="item in savedConfigs" :key="item.id" @click="applyConfig(item)" class="px-[14px] py-[12px] cursor-pointer hover:bg-[#f0fafb] border-b border-[#F0F0F0] last:border-0 transition-colors">
-													<div class="flex items-center gap-[8px]">
-														<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#996D47" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-														<span class="text-[0.875rem] font-semibold text-[#252B42]">{{ item.origin_address?.city || 'Partenza' }}</span>
-														<span class="text-[#737373]">&rarr;</span>
-														<span class="text-[0.875rem] font-semibold text-[#252B42]">{{ item.destination_address?.city || 'Destinazione' }}</span>
-													</div>
-													<p class="text-[0.75rem] text-[#737373] mt-[2px]">{{ item.origin_address?.name || '' }} - {{ item.destination_address?.name || '' }}</p>
+								<div class="flex items-center gap-[10px] flex-wrap">
+									<!-- Spedizioni configurate (visibile anche ai guest) -->
+									<div ref="defaultDropdownRef" class="relative">
+										<button
+											type="button"
+											@click="loadSavedConfigs('origin')"
+											:aria-expanded="((isAuthenticated && showDefaultDropdown && showDefaultDropdownTarget === 'origin') || (!isAuthenticated && showOriginConfigGuestPrompt)) ? 'true' : 'false'"
+											aria-controls="origin-config-dropdown"
+											:disabled="isAuthenticated && loadingConfigs"
+											class="inline-flex items-center gap-[6px] px-[14px] py-[8px] bg-[#996D47] text-white rounded-[8px] text-[0.8125rem] font-semibold hover:bg-[#7d5939] transition cursor-pointer disabled:opacity-60">
+											<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+											{{ isAuthenticated && loadingConfigs ? '...' : 'Spedizioni configurate' }}
+										</button>
+										<div v-if="showDefaultDropdown && showDefaultDropdownTarget === 'origin' && savedConfigs.length > 0" id="origin-config-dropdown" class="absolute z-50 top-full right-0 mt-[4px] bg-white border border-[#D0D0D0] rounded-[12px] shadow-xl max-h-[300px] overflow-y-auto w-[280px] tablet:w-[400px]">
+											<div class="p-[12px] border-b border-[#F0F0F0] text-[0.8125rem] font-bold text-[#252B42]">Seleziona una spedizione configurata</div>
+											<div v-for="item in savedConfigs" :key="item.id" @click="applyConfig(item, 'origin')" class="px-[14px] py-[12px] cursor-pointer hover:bg-[#f0fafb] border-b border-[#F0F0F0] last:border-0 transition-colors">
+												<div class="flex items-center gap-[8px]">
+													<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#996D47" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+													<span class="text-[0.875rem] font-semibold text-[#252B42]">{{ item.origin_address?.city || 'Partenza' }}</span>
+													<span class="text-[#737373]">&rarr;</span>
+													<span class="text-[0.875rem] font-semibold text-[#252B42]">{{ item.destination_address?.city || 'Destinazione' }}</span>
 												</div>
-											</div>
-											<div v-if="showDefaultDropdown && savedConfigs.length === 0 && !loadingConfigs" class="absolute z-50 top-full right-0 mt-[4px] bg-white border border-[#D0D0D0] rounded-[12px] shadow-xl p-[20px] w-[300px]">
-												<p class="text-[0.875rem] text-[#737373]">Nessuna spedizione configurata salvata.</p>
-												<NuxtLink to="/account/spedizioni-configurate" class="text-[0.8125rem] text-[#095866] hover:underline font-semibold mt-[8px] inline-block">Vai a spedizioni configurate</NuxtLink>
+												<p class="text-[0.75rem] text-[#737373] mt-[2px]">{{ item.origin_address?.name || '' }} - {{ item.destination_address?.name || '' }}</p>
 											</div>
 										</div>
-										<!-- Indirizzi salvati -->
-										<div ref="originSelectorRef" class="relative">
-											<button type="button" @click="toggleAddressSelector('origin')" class="inline-flex items-center gap-[6px] px-[14px] py-[8px] bg-[#095866] text-white rounded-[8px] text-[0.8125rem] font-semibold hover:bg-[#074a56] transition cursor-pointer">
-												<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-												Indirizzi salvati
-											</button>
-											<div v-if="showOriginAddressSelector" class="absolute z-50 top-full right-0 mt-[4px] bg-white border border-[#D0D0D0] rounded-[12px] shadow-xl max-h-[250px] overflow-y-auto w-[260px] tablet:w-[320px]">
-												<div v-if="loadingSavedAddresses" class="p-[16px] text-center text-[0.8125rem] text-[#737373]">Caricamento...</div>
-												<template v-else-if="savedAddresses.length > 0">
-													<div v-for="addr in savedAddresses" :key="addr.id" @click="applySavedAddress(addr, 'origin')" class="px-[14px] py-[10px] cursor-pointer hover:bg-[#f0fafb] border-b border-[#F0F0F0] last:border-0 transition-colors">
-														<p class="text-[0.875rem] font-semibold text-[#252B42]">{{ addr.name }}</p>
-														<p class="text-[0.75rem] text-[#737373]">{{ addr.address }} {{ addr.address_number }}, {{ addr.postal_code }} {{ addr.city }}</p>
-													</div>
-												</template>
-												<div v-else class="p-[16px]">
-													<p class="text-[0.8125rem] text-[#737373]">Nessun indirizzo salvato.</p>
-													<NuxtLink to="/account/indirizzi" class="text-[0.8125rem] text-[#095866] hover:underline font-semibold mt-[4px] inline-block">Aggiungi indirizzo</NuxtLink>
-												</div>
+										<div v-if="showDefaultDropdown && showDefaultDropdownTarget === 'origin' && savedConfigs.length === 0 && !loadingConfigs" id="origin-config-dropdown" class="absolute z-50 top-full right-0 mt-[4px] bg-white border border-[#D0D0D0] rounded-[12px] shadow-xl p-[20px] w-[300px]">
+											<p class="text-[0.875rem] text-[#737373]">Nessuna spedizione configurata salvata.</p>
+											<NuxtLink to="/account/spedizioni-configurate" class="text-[0.8125rem] text-[#095866] hover:underline font-semibold mt-[8px] inline-block">Vai a spedizioni configurate</NuxtLink>
+										</div>
+										<div v-if="showOriginConfigGuestPrompt && !isAuthenticated" id="origin-config-dropdown" role="dialog" class="absolute z-50 top-full right-0 mt-[4px] bg-white border border-[#D0D0D0] rounded-[12px] shadow-xl p-[14px] w-[300px]">
+											<p class="text-[0.8125rem] text-[#4B5563] leading-[1.45]">Per usare le spedizioni configurate devi accedere.</p>
+											<div class="mt-[10px] flex items-center gap-[8px]">
+												<NuxtLink :to="authRedirectPath" class="inline-flex items-center justify-center h-[34px] px-[12px] rounded-[8px] bg-[#095866] text-white text-[0.75rem] font-semibold hover:bg-[#074a56] transition">Accedi</NuxtLink>
+												<NuxtLink :to="authRegisterRedirectPath" class="inline-flex items-center justify-center h-[34px] px-[12px] rounded-[8px] border border-[#C8D2D6] text-[#095866] text-[0.75rem] font-semibold hover:bg-[#F3F7F8] transition">Registrati</NuxtLink>
 											</div>
 										</div>
 									</div>
+
+									<!-- Indirizzi salvati (visibile anche ai guest) -->
+									<div ref="originSelectorRef" class="relative">
+										<button
+											type="button"
+											@click="toggleAddressSelector('origin')"
+											:aria-expanded="(isAuthenticated ? showOriginAddressSelector : showOriginGuestPrompt) ? 'true' : 'false'"
+											aria-controls="origin-addresses-dropdown"
+											class="inline-flex items-center gap-[6px] px-[14px] py-[8px] bg-[#095866] text-white rounded-[8px] text-[0.8125rem] font-semibold hover:bg-[#074a56] transition cursor-pointer">
+											<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+											Indirizzi salvati
+										</button>
+										<div v-if="showOriginAddressSelector && isAuthenticated" id="origin-addresses-dropdown" class="absolute z-50 top-full right-0 mt-[4px] bg-white border border-[#D0D0D0] rounded-[12px] shadow-xl max-h-[250px] overflow-y-auto w-[260px] tablet:w-[320px]">
+											<div v-if="loadingSavedAddresses" class="p-[16px] text-center text-[0.8125rem] text-[#737373]">Caricamento...</div>
+											<template v-else-if="savedAddresses.length > 0">
+												<div v-for="addr in savedAddresses" :key="addr.id" @click="applySavedAddress(addr, 'origin')" class="px-[14px] py-[10px] cursor-pointer hover:bg-[#f0fafb] border-b border-[#F0F0F0] last:border-0 transition-colors">
+													<p class="text-[0.875rem] font-semibold text-[#252B42]">{{ addr.name }}</p>
+													<p class="text-[0.75rem] text-[#737373]">{{ addr.address }} {{ addr.address_number }}, {{ addr.postal_code }} {{ addr.city }}</p>
+												</div>
+											</template>
+											<div v-else class="p-[16px]">
+												<p class="text-[0.8125rem] text-[#737373]">Nessun indirizzo salvato.</p>
+												<NuxtLink to="/account/indirizzi" class="text-[0.8125rem] text-[#095866] hover:underline font-semibold mt-[4px] inline-block">Aggiungi indirizzo</NuxtLink>
+											</div>
+										</div>
+										<div v-if="showOriginGuestPrompt && !isAuthenticated" id="origin-addresses-dropdown" role="dialog" class="absolute z-50 top-full right-0 mt-[4px] bg-white border border-[#D0D0D0] rounded-[12px] shadow-xl p-[14px] w-[280px]">
+											<p class="text-[0.8125rem] text-[#4B5563] leading-[1.45]">Per usare la rubrica indirizzi devi accedere.</p>
+											<div class="mt-[10px] flex items-center gap-[8px]">
+												<NuxtLink :to="authRedirectPath" class="inline-flex items-center justify-center h-[34px] px-[12px] rounded-[8px] bg-[#095866] text-white text-[0.75rem] font-semibold hover:bg-[#074a56] transition">Accedi</NuxtLink>
+												<NuxtLink :to="authRegisterRedirectPath" class="inline-flex items-center justify-center h-[34px] px-[12px] rounded-[8px] border border-[#C8D2D6] text-[#095866] text-[0.75rem] font-semibold hover:bg-[#F3F7F8] transition">Registrati</NuxtLink>
+											</div>
+										</div>
+									</div>
+								</div>
 								</div>
 
 								<div class="grid grid-cols-1 tablet:grid-cols-2 gap-[16px] tablet:gap-x-[30px]">
@@ -2193,13 +2694,51 @@ const continueToCart = async () => {
 										Salvato
 									</span>
 								</div>
-									<!-- In modalità PUDO non mostriamo "Indirizzi salvati" perché l'indirizzo è quello del punto BRT -->
-									<div v-if="isAuthenticated && deliveryMode !== 'pudo'" ref="destSelectorRef" class="relative">
-										<button type="button" @click="toggleAddressSelector('dest')" class="inline-flex items-center gap-[6px] px-[14px] py-[8px] bg-[#095866] text-white rounded-[8px] text-[0.8125rem] font-semibold hover:bg-[#074a56] transition cursor-pointer">
+									<div class="flex items-center gap-[10px] flex-wrap justify-end">
+									<div ref="destDefaultDropdownRef" class="relative">
+										<button
+											type="button"
+											@click="loadSavedConfigs('dest')"
+											:aria-expanded="((isAuthenticated && showDefaultDropdown && showDefaultDropdownTarget === 'dest') || (!isAuthenticated && showDestConfigGuestPrompt)) ? 'true' : 'false'"
+											aria-controls="dest-config-dropdown"
+											:disabled="isAuthenticated && loadingConfigs"
+											class="inline-flex items-center gap-[6px] px-[14px] py-[8px] bg-[#996D47] text-white rounded-[8px] text-[0.8125rem] font-semibold hover:bg-[#7d5939] transition cursor-pointer disabled:opacity-60">
+											<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+											{{ isAuthenticated && loadingConfigs ? '...' : 'Spedizioni configurate' }}
+										</button>
+										<div v-if="showDefaultDropdown && showDefaultDropdownTarget === 'dest' && savedConfigs.length > 0" id="dest-config-dropdown" class="absolute z-50 top-full right-0 mt-[4px] bg-white border border-[#D0D0D0] rounded-[12px] shadow-xl max-h-[300px] overflow-y-auto w-[280px] tablet:w-[400px]">
+											<div class="p-[12px] border-b border-[#F0F0F0] text-[0.8125rem] font-bold text-[#252B42]">Seleziona una spedizione configurata</div>
+											<div v-for="item in savedConfigs" :key="`dest-config-${item.id}`" @click="applyConfig(item, 'dest')" class="px-[14px] py-[12px] cursor-pointer hover:bg-[#f0fafb] border-b border-[#F0F0F0] last:border-0 transition-colors">
+												<div class="flex items-center gap-[8px]">
+													<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#996D47" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+													<span class="text-[0.875rem] font-semibold text-[#252B42]">{{ item.destination_address?.city || 'Destinazione' }}</span>
+												</div>
+												<p class="text-[0.75rem] text-[#737373] mt-[2px]">{{ item.destination_address?.name || '' }}</p>
+											</div>
+										</div>
+										<div v-if="showDefaultDropdown && showDefaultDropdownTarget === 'dest' && savedConfigs.length === 0 && !loadingConfigs" id="dest-config-dropdown" class="absolute z-50 top-full right-0 mt-[4px] bg-white border border-[#D0D0D0] rounded-[12px] shadow-xl p-[20px] w-[300px]">
+											<p class="text-[0.875rem] text-[#737373]">Nessuna spedizione configurata salvata.</p>
+											<NuxtLink to="/account/spedizioni-configurate" class="text-[0.8125rem] text-[#095866] hover:underline font-semibold mt-[8px] inline-block">Vai a spedizioni configurate</NuxtLink>
+										</div>
+										<div v-if="showDestConfigGuestPrompt && !isAuthenticated" id="dest-config-dropdown" role="dialog" class="absolute z-50 top-full right-0 mt-[4px] bg-white border border-[#D0D0D0] rounded-[12px] shadow-xl p-[14px] w-[300px]">
+											<p class="text-[0.8125rem] text-[#4B5563] leading-[1.45]">Per usare le spedizioni configurate devi accedere.</p>
+											<div class="mt-[10px] flex items-center gap-[8px]">
+												<NuxtLink :to="authRedirectPath" class="inline-flex items-center justify-center h-[34px] px-[12px] rounded-[8px] bg-[#095866] text-white text-[0.75rem] font-semibold hover:bg-[#074a56] transition">Accedi</NuxtLink>
+												<NuxtLink :to="authRegisterRedirectPath" class="inline-flex items-center justify-center h-[34px] px-[12px] rounded-[8px] border border-[#C8D2D6] text-[#095866] text-[0.75rem] font-semibold hover:bg-[#F3F7F8] transition">Registrati</NuxtLink>
+											</div>
+										</div>
+									</div>
+									<div ref="destSelectorRef" class="relative">
+										<button
+											type="button"
+											@click="toggleAddressSelector('dest')"
+											:aria-expanded="(isAuthenticated ? showDestAddressSelector : showDestGuestPrompt) ? 'true' : 'false'"
+											aria-controls="dest-addresses-dropdown"
+											class="inline-flex items-center gap-[6px] px-[14px] py-[8px] bg-[#095866] text-white rounded-[8px] text-[0.8125rem] font-semibold hover:bg-[#074a56] transition cursor-pointer">
 											<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
 											Indirizzi salvati
 										</button>
-										<div v-if="showDestAddressSelector" class="absolute z-50 top-full right-0 mt-[4px] bg-white border border-[#D0D0D0] rounded-[12px] shadow-xl max-h-[250px] overflow-y-auto w-[260px] tablet:w-[320px]">
+										<div v-if="showDestAddressSelector && isAuthenticated" id="dest-addresses-dropdown" class="absolute z-50 top-full right-0 mt-[4px] bg-white border border-[#D0D0D0] rounded-[12px] shadow-xl max-h-[250px] overflow-y-auto w-[260px] tablet:w-[320px]">
 											<div v-if="loadingSavedAddresses" class="p-[16px] text-center text-[0.8125rem] text-[#737373]">Caricamento...</div>
 											<template v-else-if="savedAddresses.length > 0">
 												<div v-for="addr in savedAddresses" :key="addr.id" @click="applySavedAddress(addr, 'dest')" class="px-[14px] py-[10px] cursor-pointer hover:bg-[#f0fafb] border-b border-[#F0F0F0] last:border-0 transition-colors">
@@ -2212,7 +2751,15 @@ const continueToCart = async () => {
 												<NuxtLink to="/account/indirizzi" class="text-[0.8125rem] text-[#095866] hover:underline font-semibold mt-[4px] inline-block">Aggiungi indirizzo</NuxtLink>
 											</div>
 										</div>
+										<div v-if="showDestGuestPrompt && !isAuthenticated" id="dest-addresses-dropdown" role="dialog" class="absolute z-50 top-full right-0 mt-[4px] bg-white border border-[#D0D0D0] rounded-[12px] shadow-xl p-[14px] w-[280px]">
+											<p class="text-[0.8125rem] text-[#4B5563] leading-[1.45]">Per usare la rubrica indirizzi devi accedere.</p>
+											<div class="mt-[10px] flex items-center gap-[8px]">
+												<NuxtLink :to="authRedirectPath" class="inline-flex items-center justify-center h-[34px] px-[12px] rounded-[8px] bg-[#095866] text-white text-[0.75rem] font-semibold hover:bg-[#074a56] transition">Accedi</NuxtLink>
+												<NuxtLink :to="authRegisterRedirectPath" class="inline-flex items-center justify-center h-[34px] px-[12px] rounded-[8px] border border-[#C8D2D6] text-[#095866] text-[0.75rem] font-semibold hover:bg-[#F3F7F8] transition">Registrati</NuxtLink>
+											</div>
+										</div>
 									</div>
+								</div>
 								</div>
 
 								<!-- In modalità PUDO: banner informativo + campi auto-compilati e non editabili -->
@@ -2225,8 +2772,7 @@ const continueToCart = async () => {
 									Seleziona un Punto BRT qui sopra per procedere.
 								</div>
 
-								<!-- Wrapper: in modalità PUDO i campi sono disabilitati visivamente (compilati automaticamente) -->
-								<div :class="{ 'opacity-60 pointer-events-none': deliveryMode === 'pudo' }">
+								<!-- Bloccco contatto: sempre editabile anche in modalità PUDO -->
 								<div class="grid grid-cols-1 tablet:grid-cols-2 gap-[16px] tablet:gap-x-[30px]">
 									<div>
 										<label for="dest_name" class="block text-[0.875rem] sr-only">Nome e Cognome*</label>
@@ -2240,64 +2786,7 @@ const continueToCart = async () => {
 									</div>
 								</div>
 
-								<div class="mt-[16px] tablet:mt-[39px] grid grid-cols-1 tablet:grid-cols-3 gap-[16px] tablet:gap-x-[25px]">
-									<div>
-										<label for="dest_address" class="block text-[0.875rem] sr-only">Indirizzo*</label>
-										<input type="text" placeholder="Indirizzo*" v-model="destinationAddress.address" id="dest_address" :class="fieldClass('dest', 'address')" required style="font-size: 16px;" />
-										<p v-if="getFieldError('dest', 'address')" class="text-red-500 text-[0.75rem] mt-[4px]">{{ getFieldError('dest', 'address') }}</p>
-									</div>
-
-									<div>
-										<label for="dest_address_number" class="block text-[0.875rem] sr-only">Numero civico*</label>
-										<input type="text" placeholder="Numero civico*" v-model="destinationAddress.address_number" id="dest_address_number" :class="fieldClass('dest', 'address_number')" required style="font-size: 16px;" />
-										<p v-if="getFieldError('dest', 'address_number')" class="text-red-500 text-[0.75rem] mt-[4px]">{{ getFieldError('dest', 'address_number') }}</p>
-									</div>
-
-									<div>
-										<label for="dest_intercom" class="block text-[0.875rem] sr-only">Citofono</label>
-										<input type="text" placeholder="Citofono" v-model="destinationAddress.intercom_code" id="dest_intercom" class="input-preventivo-step-2" style="font-size: 16px;" />
-									</div>
-								</div>
-
-								<div class="mt-[16px] tablet:mt-[39px] grid grid-cols-2 tablet:grid-cols-4 gap-[16px] tablet:gap-x-[25px]">
-									<div>
-										<label for="dest_country" class="block text-[0.875rem] sr-only">Paese*</label>
-										<input type="text" placeholder="Paese*" value="Italia" id="dest_country" class="input-preventivo-step-2" disabled style="font-size: 16px;" />
-									</div>
-
-									<div class="relative">
-										<label for="dest_city" class="block text-[0.875rem] sr-only">Citta*</label>
-										<input type="text" placeholder="Citta*" v-model="destinationAddress.city" id="dest_city" :class="fieldClass('dest', 'city')" required @input="onCityInput('dest', destinationAddress.city)" @focus="onCityFocus('dest')" @blur="smartBlur('dest', 'city')" style="font-size: 16px;" />
-										<p v-if="getFieldError('dest', 'city')" class="text-red-500 text-[0.75rem] mt-[4px]">{{ getFieldError('dest', 'city') }}</p>
-										<ul v-if="destCitySuggestions.length > 0" class="absolute z-50 top-full left-0 right-0 bg-white border border-[#D0D0D0] rounded-[8px] mt-[2px] shadow-lg max-h-[200px] overflow-y-auto">
-											<li v-for="loc in destCitySuggestions" :key="`${loc.postal_code}-${loc.place_name}`" @mousedown.prevent="selectCity('dest', loc)" class="px-[12px] py-[8px] cursor-pointer hover:bg-[#f0fafb] text-[0.875rem] text-[#252B42]">
-												<span class="font-semibold">{{ formatCitySuggestionLabel(loc) }}</span>
-											</li>
-										</ul>
-									</div>
-
-									<div class="relative">
-										<label for="dest_province" class="block text-[0.875rem] sr-only">Provincia*</label>
-										<input type="text" placeholder="Provincia* (es. MI)" v-model="destinationAddress.province" id="dest_province" :class="fieldClass('dest', 'province')" required maxlength="2" @input="onProvinciaInput('dest', destinationAddress.province)" @blur="smartBlur('dest', 'province')" style="font-size: 16px;" />
-										<p v-if="getFieldError('dest', 'province')" class="text-red-500 text-[0.75rem] mt-[4px]">{{ getFieldError('dest', 'province') }}</p>
-										<ul v-if="destProvinceSuggestions.length > 0" class="absolute z-50 top-full left-0 right-0 bg-white border border-[#D0D0D0] rounded-[8px] mt-[2px] shadow-lg">
-											<li v-for="prov in destProvinceSuggestions" :key="prov" @mousedown.prevent="selectProvincia('dest', prov)" class="px-[12px] py-[8px] cursor-pointer hover:bg-[#f0fafb] text-[0.875rem] text-[#252B42]">{{ prov }}</li>
-										</ul>
-									</div>
-
-									<div class="relative">
-										<label for="dest_postal_code" class="block text-[0.875rem] sr-only">CAP*</label>
-										<input type="text" placeholder="CAP*" v-model="destinationAddress.postal_code" id="dest_postal_code" :class="fieldClass('dest', 'postal_code')" required maxlength="5" @input="onCapInput('dest', destinationAddress.postal_code)" @focus="onCapFocus('dest')" @blur="smartBlur('dest', 'postal_code')" style="font-size: 16px;" />
-										<p v-if="getFieldError('dest', 'postal_code')" class="text-red-500 text-[0.75rem] mt-[4px]">{{ getFieldError('dest', 'postal_code') }}</p>
-										<ul v-if="destCapSuggestions.length > 0" class="absolute z-50 top-full left-0 right-0 bg-white border border-[#D0D0D0] rounded-[8px] mt-[2px] shadow-lg max-h-[220px] overflow-y-auto">
-											<li v-for="loc in destCapSuggestions" :key="`dest-cap-${loc.postal_code}-${loc.place_name}-${loc.province || ''}`" @mousedown.prevent="selectCap('dest', loc)" class="px-[12px] py-[8px] cursor-pointer hover:bg-[#f0fafb] text-[0.875rem] text-[#252B42]">
-												<span class="font-semibold">{{ formatCapSuggestionLabel(loc) }}</span>
-											</li>
-										</ul>
-									</div>
-								</div>
-
-								<div class="mt-[16px] tablet:mt-[39px] grid grid-cols-1 tablet:grid-cols-2 gap-[16px] tablet:gap-x-[30px]">
+								<div class="mt-[16px] tablet:mt-[20px] grid grid-cols-1 tablet:grid-cols-2 gap-[16px] tablet:gap-x-[30px]">
 									<div>
 										<label for="dest_telephone_number" class="block text-[0.875rem] sr-only">Telefono*</label>
 										<input type="tel" placeholder="Telefono*" v-model="destinationAddress.telephone_number" id="dest_telephone_number" :class="fieldClass('dest', 'telephone_number')" required @input="onTelefonoInput('dest', destinationAddress.telephone_number)" @blur="smartBlur('dest', 'telephone_number')" style="font-size: 16px;" />
@@ -2310,7 +2799,88 @@ const continueToCart = async () => {
 										<p v-if="getFieldError('dest', 'email')" class="text-red-500 text-[0.75rem] mt-[4px]">{{ getFieldError('dest', 'email') }}</p>
 									</div>
 								</div>
-								</div><!-- Fine wrapper PUDO readonly -->
+
+								<!-- Blocco indirizzo: readonly in modalità PUDO -->
+								<div class="mt-[16px] tablet:mt-[24px]">
+									<p
+										v-if="deliveryMode === 'pudo'"
+										class="text-[0.8125rem] text-[#4B5563] font-semibold mb-[10px]">
+										Indirizzo di consegna bloccato dal Punto BRT selezionato
+									</p>
+
+								<div class="grid grid-cols-1 tablet:grid-cols-3 gap-[16px] tablet:gap-x-[25px]" :class="deliveryMode === 'pudo' ? 'mt-[10px] tablet:mt-[14px]' : 'mt-[16px] tablet:mt-[39px]'">
+									<div>
+										<label for="dest_address" class="block text-[0.875rem] sr-only">Indirizzo*</label>
+										<input
+											type="text"
+											placeholder="Indirizzo*"
+											v-model="destinationAddress.address"
+											id="dest_address"
+											:class="[fieldClass('dest', 'address'), deliveryMode === 'pudo' ? '!bg-white !border-[#CBD5DF] !text-[#4B5563] cursor-not-allowed' : '']"
+											:readonly="deliveryMode === 'pudo'"
+											required
+											style="font-size: 16px;" />
+										<p v-if="getFieldError('dest', 'address')" class="text-red-500 text-[0.75rem] mt-[4px]">{{ getFieldError('dest', 'address') }}</p>
+									</div>
+
+									<div>
+										<label for="dest_address_number" class="block text-[0.875rem] sr-only">Numero civico*</label>
+										<input
+											type="text"
+											placeholder="Numero civico*"
+											v-model="destinationAddress.address_number"
+											id="dest_address_number"
+											:class="[fieldClass('dest', 'address_number'), deliveryMode === 'pudo' ? '!bg-white !border-[#CBD5DF] !text-[#4B5563] cursor-not-allowed' : '']"
+											:readonly="deliveryMode === 'pudo'"
+											required
+											style="font-size: 16px;" />
+										<p v-if="getFieldError('dest', 'address_number')" class="text-red-500 text-[0.75rem] mt-[4px]">{{ getFieldError('dest', 'address_number') }}</p>
+									</div>
+
+									<div>
+										<label for="dest_intercom" class="block text-[0.875rem] sr-only">Citofono</label>
+										<input type="text" placeholder="Citofono" v-model="destinationAddress.intercom_code" id="dest_intercom" :class="['input-preventivo-step-2', deliveryMode === 'pudo' ? '!bg-white !border-[#CBD5DF] !text-[#4B5563] cursor-not-allowed' : '']" :readonly="deliveryMode === 'pudo'" style="font-size: 16px;" />
+									</div>
+								</div>
+
+								<div class="mt-[16px] tablet:mt-[39px] grid grid-cols-2 tablet:grid-cols-4 gap-[16px] tablet:gap-x-[25px]">
+									<div>
+										<label for="dest_country" class="block text-[0.875rem] sr-only">Paese*</label>
+										<input type="text" placeholder="Paese*" value="Italia" id="dest_country" class="input-preventivo-step-2" disabled style="font-size: 16px;" />
+									</div>
+
+									<div class="relative">
+										<label for="dest_city" class="block text-[0.875rem] sr-only">Citta*</label>
+										<input type="text" placeholder="Citta*" v-model="destinationAddress.city" id="dest_city" :class="[fieldClass('dest', 'city'), deliveryMode === 'pudo' ? '!bg-white !border-[#CBD5DF] !text-[#4B5563] cursor-not-allowed' : '']" :readonly="deliveryMode === 'pudo'" required @input="onCityInput('dest', destinationAddress.city)" @focus="onCityFocus('dest')" @blur="smartBlur('dest', 'city')" style="font-size: 16px;" />
+										<p v-if="getFieldError('dest', 'city')" class="text-red-500 text-[0.75rem] mt-[4px]">{{ getFieldError('dest', 'city') }}</p>
+										<ul v-if="deliveryMode !== 'pudo' && destCitySuggestions.length > 0" class="absolute z-50 top-full left-0 right-0 bg-white border border-[#D0D0D0] rounded-[8px] mt-[2px] shadow-lg max-h-[200px] overflow-y-auto">
+											<li v-for="loc in destCitySuggestions" :key="`${loc.postal_code}-${loc.place_name}`" @mousedown.prevent="selectCity('dest', loc)" class="px-[12px] py-[8px] cursor-pointer hover:bg-[#f0fafb] text-[0.875rem] text-[#252B42]">
+												<span class="font-semibold">{{ formatCitySuggestionLabel(loc) }}</span>
+											</li>
+										</ul>
+									</div>
+
+									<div class="relative">
+										<label for="dest_province" class="block text-[0.875rem] sr-only">Provincia*</label>
+										<input type="text" placeholder="Provincia* (es. MI)" v-model="destinationAddress.province" id="dest_province" :class="[fieldClass('dest', 'province'), deliveryMode === 'pudo' ? '!bg-white !border-[#CBD5DF] !text-[#4B5563] cursor-not-allowed' : '']" :readonly="deliveryMode === 'pudo'" required maxlength="2" @input="onProvinciaInput('dest', destinationAddress.province)" @blur="smartBlur('dest', 'province')" style="font-size: 16px;" />
+										<p v-if="getFieldError('dest', 'province')" class="text-red-500 text-[0.75rem] mt-[4px]">{{ getFieldError('dest', 'province') }}</p>
+										<ul v-if="deliveryMode !== 'pudo' && destProvinceSuggestions.length > 0" class="absolute z-50 top-full left-0 right-0 bg-white border border-[#D0D0D0] rounded-[8px] mt-[2px] shadow-lg">
+											<li v-for="prov in destProvinceSuggestions" :key="prov" @mousedown.prevent="selectProvincia('dest', prov)" class="px-[12px] py-[8px] cursor-pointer hover:bg-[#f0fafb] text-[0.875rem] text-[#252B42]">{{ prov }}</li>
+										</ul>
+									</div>
+
+									<div class="relative">
+										<label for="dest_postal_code" class="block text-[0.875rem] sr-only">CAP*</label>
+										<input type="text" placeholder="CAP*" v-model="destinationAddress.postal_code" id="dest_postal_code" :class="[fieldClass('dest', 'postal_code'), deliveryMode === 'pudo' ? '!bg-white !border-[#CBD5DF] !text-[#4B5563] cursor-not-allowed' : '']" :readonly="deliveryMode === 'pudo'" required maxlength="5" @input="onCapInput('dest', destinationAddress.postal_code)" @focus="onCapFocus('dest')" @blur="smartBlur('dest', 'postal_code')" style="font-size: 16px;" />
+										<p v-if="getFieldError('dest', 'postal_code')" class="text-red-500 text-[0.75rem] mt-[4px]">{{ getFieldError('dest', 'postal_code') }}</p>
+										<ul v-if="deliveryMode !== 'pudo' && destCapSuggestions.length > 0" class="absolute z-50 top-full left-0 right-0 bg-white border border-[#D0D0D0] rounded-[8px] mt-[2px] shadow-lg max-h-[220px] overflow-y-auto">
+											<li v-for="loc in destCapSuggestions" :key="`dest-cap-${loc.postal_code}-${loc.place_name}-${loc.province || ''}`" @mousedown.prevent="selectCap('dest', loc)" class="px-[12px] py-[8px] cursor-pointer hover:bg-[#f0fafb] text-[0.875rem] text-[#252B42]">
+												<span class="font-semibold">{{ formatCapSuggestionLabel(loc) }}</span>
+											</li>
+										</ul>
+									</div>
+								</div>
+								</div>
 							</div>
 
 						</template>
@@ -2427,30 +2997,283 @@ const continueToCart = async () => {
 	}
 }
 
-/* Animazione entrata da destra */
+/* Animazione leggera sticky summary (senza spostamenti orizzontali) */
 .summary-slide-enter-active,
 .summary-slide-leave-active {
-	transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+	transition: opacity 0.24s ease;
 }
 
 .summary-slide-enter-from {
 	opacity: 0;
-	transform: translateX(100%);
 }
 
 .summary-slide-enter-to {
 	opacity: 1;
-	transform: translateX(0);
 }
 
 .summary-slide-leave-from {
 	opacity: 1;
-	transform: translateX(0);
 }
 
 .summary-slide-leave-to {
 	opacity: 0;
-	transform: translateX(100%);
+}
+
+.summary-sticky-card {
+	border-radius: 16px;
+}
+
+.summary-toggle-button {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) auto;
+	align-items: center;
+	gap: 14px;
+	padding: 10px 22px 14px;
+	border-top: none;
+	border: 0;
+	background: #ffffff;
+	text-align: left;
+	transform: none !important;
+	will-change: auto !important;
+	transition-property: background-color, border-color, color;
+	transition-duration: 0.2s;
+	transition-timing-function: ease;
+}
+
+.summary-toggle-button:hover {
+	background: #f8fbfc;
+}
+
+.summary-header-main {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	min-width: 0;
+}
+
+.summary-top-row {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	flex-wrap: wrap;
+	min-height: 28px;
+	padding: 12px 22px 0;
+}
+
+.summary-top-label {
+	font-size: 0.9375rem;
+	line-height: 1;
+	font-weight: 700;
+	color: #252b42;
+	flex-shrink: 0;
+}
+
+.summary-mini-steps-row {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
+}
+
+.summary-mini-step {
+	font-size: 0.75rem;
+	line-height: 1;
+	color: #737373;
+	padding: 6px 10px;
+	border-radius: 999px;
+	border: 1px solid transparent;
+	background: transparent;
+	font-weight: 500;
+	white-space: nowrap;
+	transform: none !important;
+	will-change: auto !important;
+	transition-property: background-color, color, border-color;
+	transition-duration: 0.2s;
+	transition-timing-function: ease;
+}
+
+.summary-mini-step.is-active {
+	background: #e44203;
+	color: #ffffff;
+	font-weight: 700;
+	padding-inline: 12px;
+}
+
+.summary-mini-step.is-completed {
+	color: #252b42;
+	cursor: pointer;
+}
+
+.summary-mini-step.is-completed:hover {
+	color: #095866;
+}
+
+.summary-mini-step.is-disabled {
+	opacity: 0.45;
+	cursor: default;
+}
+
+.summary-chips-row {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
+	min-width: 0;
+}
+
+.summary-chip {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	height: 30px;
+	padding: 0 10px;
+	border-radius: 999px;
+	background: #f3f6f8;
+	border: 1px solid #dbe5e9;
+	color: #252b42;
+	font-size: 0.8125rem;
+	min-width: 0;
+	transform: none !important;
+	will-change: auto !important;
+}
+
+.summary-chip-label {
+	color: #5f6b7a;
+	font-weight: 600;
+	transform: none !important;
+	transition-property: color;
+	transition-duration: 0.2s;
+}
+
+.summary-chip-value {
+	font-weight: 700;
+	color: #252b42;
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	transform: none !important;
+	transition-property: color;
+	transition-duration: 0.2s;
+}
+
+.summary-chip-route {
+	flex: 1 1 280px;
+}
+
+.summary-chip-total {
+	background: #eaf6f7;
+	border-color: #bdd9dd;
+	flex-shrink: 0;
+}
+
+.summary-chip-total-value {
+	font-size: 1.0625rem;
+	font-weight: 800;
+	color: #095866;
+	white-space: nowrap;
+	transform: none !important;
+	transition-property: color;
+	transition-duration: 0.2s;
+}
+
+.summary-chevron-wrap {
+	flex-shrink: 0;
+	width: 38px;
+	height: 38px;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	border-radius: 12px;
+	border: 1px solid #c7d8dc;
+	background: #edf5f7;
+}
+
+.summary-chevron-icon {
+	transition: transform 0.2s ease;
+	transform-origin: center;
+}
+
+.summary-chevron-icon.is-open {
+	transform: rotate(180deg);
+}
+
+.summary-toggle-button:hover,
+.summary-toggle-button:focus-visible,
+.summary-mini-step:hover,
+.summary-mini-step:focus-visible {
+	transform: none !important;
+}
+
+.summary-details-row {
+	border-top: 1px solid #eceef1;
+}
+
+.summary-total-value {
+	white-space: nowrap;
+}
+
+@media (max-width: 1024px) {
+	.summary-toggle-button {
+		padding: 12px 16px;
+	}
+
+	.summary-top-row {
+		padding: 10px 16px 0;
+	}
+
+	.summary-chip-route {
+		flex-basis: 220px;
+	}
+}
+
+@media (max-width: 720px) {
+	.summary-toggle-button {
+		padding: 8px 14px 12px;
+		grid-template-columns: minmax(0, 1fr) 38px;
+	}
+
+	.summary-top-row {
+		gap: 8px;
+		min-height: 0;
+		padding: 10px 14px 0;
+	}
+
+	.summary-mini-steps-row {
+		gap: 8px;
+	}
+
+	.summary-mini-step {
+		font-size: 0.75rem;
+		padding: 5px 8px;
+	}
+
+	.summary-chip {
+		height: 28px;
+		font-size: 0.75rem;
+		padding-inline: 8px;
+	}
+
+	.summary-chip-route {
+		flex-basis: 100%;
+	}
+
+	.summary-chip-total-value {
+		font-size: 0.98rem;
+	}
+
+	.summary-details-row {
+		padding-inline: 14px;
+	}
+
+	.summary-details-separator {
+		display: none;
+	}
+
+	.summary-total-wrap {
+		width: 100%;
+		justify-content: flex-end;
+	}
 }
 
 /* Card riepilogo */
@@ -2509,7 +3332,11 @@ const continueToCart = async () => {
 
 /* Smooth transitions for all interactive elements */
 button, a, input, select, label {
-	transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+	transition: color 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+		background-color 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+		border-color 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+		box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+		opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* Focus states for accessibility */
@@ -2587,17 +3414,20 @@ select:focus-visible {
 }
 
 /* ========================================
-   HERO CARD "SENZA ETICHETTA" - COMPATTA (1/4 altezza)
+   HERO CARD "SENZA ETICHETTA" - Full Width Verticale
+   Design: Gradiente Teal/Arancione brand
    ======================================== */
 
 .labelless-service-hero {
 	position: relative;
-	background: linear-gradient(135deg, #095866 0%, #E44203 100%);
+	background: linear-gradient(135deg, #095866 0%, #0a6b7a 30%, #E44203 100%);
 	background-size: 200% 200%;
-	border-radius: 16px;
-	padding: 24px 28px;
+	border-radius: 24px;
+	padding: 32px 28px;
 	overflow: hidden;
-	box-shadow: 0 8px 24px rgba(9, 88, 102, 0.3);
+	box-shadow:
+		0 20px 60px rgba(9, 88, 102, 0.4),
+		0 0 0 1px rgba(255, 255, 255, 0.1) inset;
 	animation: gradientShift 8s ease infinite;
 	transition: transform 0.3s ease, box-shadow 0.3s ease;
 	will-change: transform;
@@ -2605,13 +3435,16 @@ select:focus-visible {
 }
 
 .labelless-service-hero:hover {
-	transform: translateY(-2px) translateZ(0);
-	box-shadow: 0 12px 32px rgba(9, 88, 102, 0.4);
+	transform: translateY(-4px) translateZ(0);
+	box-shadow:
+		0 30px 80px rgba(9, 88, 102, 0.5),
+		0 0 0 1px rgba(255, 255, 255, 0.2) inset;
 }
 
 .labelless-service-hero.is-selected {
-	box-shadow: 0 12px 40px rgba(228, 66, 3, 0.5),
-	            0 0 0 4px #4ade80;
+	box-shadow:
+		0 30px 80px rgba(228, 66, 3, 0.5),
+		0 0 0 4px #4ade80;
 }
 
 /* Checkmark quando selezionato */
@@ -2619,8 +3452,8 @@ select:focus-visible {
 	position: absolute;
 	top: 16px;
 	left: 16px;
-	width: 32px;
-	height: 32px;
+	width: 36px;
+	height: 36px;
 	background: #4ade80;
 	border-radius: 50%;
 	display: flex;
@@ -2638,8 +3471,8 @@ select:focus-visible {
 }
 
 .checkmark-icon {
-	width: 20px;
-	height: 20px;
+	width: 22px;
+	height: 22px;
 	color: white;
 	stroke-width: 3;
 }
@@ -2652,12 +3485,12 @@ select:focus-visible {
 
 @keyframes badgePulse {
 	0%, 100% { transform: scale(1); }
-	50% { transform: scale(1.05); }
+	50% { transform: scale(1.08); }
 }
 
 @keyframes sparkle {
 	0%, 100% { opacity: 1; }
-	50% { opacity: 0.7; }
+	50% { opacity: 0.6; }
 }
 
 @keyframes shimmerSlide {
@@ -2665,112 +3498,12 @@ select:focus-visible {
 	100% { transform: translateX(200%) translateY(200%) rotate(45deg); }
 }
 
-/* Badge Container */
-.badge-container {
-	position: absolute;
-	top: 12px;
-	right: 12px;
-	z-index: 10;
+@keyframes iconGlow {
+	0%, 100% { opacity: 0.4; transform: translate(-50%, -50%) scale(1); }
+	50% { opacity: 0.8; transform: translate(-50%, -50%) scale(1.2); }
 }
 
-.badge-popular {
-	background: linear-gradient(135deg, #fbbf24, #f59e0b);
-	color: white;
-	padding: 8px 16px;
-	border-radius: 12px;
-	font-size: 0.8125rem;
-	font-weight: 800;
-	letter-spacing: 0.4px;
-	display: flex;
-	align-items: center;
-	gap: 4px;
-	animation: badgePulse 2s ease-in-out infinite;
-	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
-}
-
-.badge-icon {
-	font-size: 0.8125rem;
-	animation: sparkle 2s ease-in-out infinite;
-}
-
-/* Icon Compatto */
-.icon-wrapper-compact {
-	position: relative;
-	width: 64px;
-	height: 64px;
-	flex-shrink: 0;
-}
-
-.service-icon-compact {
-	width: 64px;
-	height: 64px;
-	color: white;
-	filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.2));
-}
-
-/* Title Compatto */
-.service-title-compact {
-	color: white;
-	font-size: 1.25rem;
-	font-weight: 700;
-	margin: 0 0 6px;
-	line-height: 1.2;
-	text-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
-}
-
-/* Description Compatta */
-.service-description-compact {
-	color: rgba(255, 255, 255, 0.9);
-	font-size: 0.875rem;
-	margin: 0;
-	line-height: 1.4;
-}
-
-/* Price Compatto */
-.price-compact {
-	flex-shrink: 0;
-	text-align: right;
-}
-
-.price-value-compact {
-	display: block;
-	color: white;
-	font-size: 2rem;
-	font-weight: 900;
-	text-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-	letter-spacing: -0.5px;
-	line-height: 1;
-}
-
-/* Responsive */
-@media (max-width: 768px) {
-	.labelless-service-hero {
-		padding: 20px;
-		min-height: 160px;
-	}
-
-	.icon-wrapper-compact {
-		width: 48px;
-		height: 48px;
-	}
-
-	.service-icon-compact {
-		width: 48px;
-		height: 48px;
-	}
-
-	.service-title-compact {
-		font-size: 1rem;
-	}
-
-	.service-description-compact {
-		font-size: 0.8125rem;
-	}
-
-	.price-value-compact {
-		font-size: 1.5rem;
-	}
-}
+/* Shimmer Effect */
 .shimmer {
 	position: absolute;
 	top: -50%;
@@ -2780,57 +3513,205 @@ select:focus-visible {
 	background: linear-gradient(
 		45deg,
 		transparent 30%,
-		rgba(255, 255, 255, 0.2) 50%,
+		rgba(255, 255, 255, 0.15) 50%,
 		transparent 70%
 	);
-	animation: shimmerSlide 3s ease-in-out infinite;
+	animation: shimmerSlide 4s ease-in-out infinite;
 	pointer-events: none;
+	z-index: 1;
 }
 
-/* Responsive */
+/* Badge Container */
+.badge-container {
+	position: absolute;
+	top: 16px;
+	right: 16px;
+	z-index: 10;
+}
+
+.badge-popular {
+	background: linear-gradient(135deg, #fbbf24, #f59e0b);
+	color: white;
+	padding: 8px 16px;
+	border-radius: 20px;
+	font-size: 0.75rem;
+	font-weight: 800;
+	letter-spacing: 0.5px;
+	display: flex;
+	align-items: center;
+	gap: 5px;
+	animation: badgePulse 2s ease-in-out infinite;
+	box-shadow: 0 4px 12px rgba(251, 191, 36, 0.4);
+}
+
+.badge-icon {
+	font-size: 0.8125rem;
+	animation: sparkle 2s ease-in-out infinite;
+}
+
+/* Icona grande centrata */
+.icon-wrapper {
+	position: relative;
+	width: 80px;
+	height: 80px;
+	margin: 0 auto 20px;
+}
+
+.service-icon {
+	width: 80px;
+	height: 80px;
+	color: white;
+	filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.3));
+	position: relative;
+	z-index: 2;
+}
+
+.icon-glow {
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+	width: 110px;
+	height: 110px;
+	background: radial-gradient(circle, rgba(255, 255, 255, 0.5) 0%, transparent 70%);
+	border-radius: 50%;
+	animation: iconGlow 3s ease-in-out infinite;
+	z-index: 1;
+}
+
+/* Titolo */
+.service-title {
+	color: white;
+	font-size: 1.625rem;
+	font-weight: 800;
+	text-align: center;
+	margin: 0 0 12px;
+	text-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+	line-height: 1.2;
+	position: relative;
+	z-index: 2;
+}
+
+.sparkle {
+	display: inline-block;
+	animation: sparkle 3s ease-in-out infinite;
+}
+
+/* Descrizione */
+.service-description {
+	color: rgba(255, 255, 255, 0.95);
+	font-size: 0.9375rem;
+	text-align: center;
+	margin: 0 0 24px;
+	line-height: 1.5;
+	position: relative;
+	z-index: 2;
+}
+
+.service-description strong {
+	color: white;
+	font-weight: 700;
+}
+
+/* Sezione Prezzo */
+.price-section {
+	background: rgba(255, 255, 255, 0.15);
+	border-radius: 16px;
+	padding: 20px;
+	backdrop-filter: blur(10px);
+	border: 1px solid rgba(255, 255, 255, 0.2);
+	position: relative;
+	z-index: 2;
+}
+
+.price-badge {
+	text-align: center;
+	margin-bottom: 16px;
+}
+
+.price-label {
+	display: block;
+	color: rgba(255, 255, 255, 0.85);
+	font-size: 0.875rem;
+	font-weight: 600;
+	margin-bottom: 4px;
+}
+
+.price-value {
+	display: block;
+	color: white;
+	font-size: 2.625rem;
+	font-weight: 900;
+	text-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+	letter-spacing: -1px;
+}
+
+.value-props {
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+}
+
+.prop {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	color: white;
+	font-size: 0.875rem;
+	font-weight: 600;
+}
+
+.check-icon {
+	width: 20px;
+	height: 20px;
+	color: #4ade80;
+	filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+	flex-shrink: 0;
+}
+
+/* Responsive Hero */
 @media (max-width: 768px) {
 	.labelless-service-hero {
-		padding: 32px 20px;
+		padding: 24px 20px;
+		border-radius: 20px;
 	}
 
-	.service-title-compact {
-		font-size: 1rem;
+	.icon-wrapper {
+		width: 64px;
+		height: 64px;
+		margin-bottom: 16px;
 	}
 
-	.service-description-compact {
+	.service-icon {
+		width: 64px;
+		height: 64px;
+	}
+
+	.icon-glow {
+		width: 90px;
+		height: 90px;
+	}
+
+	.service-title {
+		font-size: 1.375rem;
+	}
+
+	.service-description {
+		font-size: 0.875rem;
+		margin-bottom: 20px;
+	}
+
+	.price-value {
+		font-size: 2.25rem;
+	}
+
+	.prop {
 		font-size: 0.8125rem;
-		margin: 0 0 8px;
-	}
-
-	.service-benefits-compact {
-		gap: 8px;
-	}
-
-	.service-benefits-compact li {
-		font-size: 0.75rem;
-	}
-
-	.price-label-compact {
-		font-size: 0.75rem;
-	}
-
-	.price-value-compact {
-		font-size: 2rem;
-	}
-
-	.icon-wrapper-compact {
-		width: 60px;
-		height: 60px;
-	}
-
-	.service-icon-compact {
-		width: 60px;
-		height: 60px;
 	}
 
 	.badge-popular {
-		font-size: 10px;
-		padding: 5px 10px;
+		font-size: 0.6875rem;
+		padding: 6px 12px;
 	}
 }
 

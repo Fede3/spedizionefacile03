@@ -11,10 +11,27 @@ export default defineNuxtPlugin(async (nuxtApp) => {
 
   // Flag per indicare che il bootstrap è completato
   const authReady = ref(false)
+  const finish = () => {
+    authReady.value = true
+    nuxtApp.provide('authReady', authReady)
+  }
+
+  // Evita chiamate protette inutili in guest: se non esiste alcun cookie di sessione,
+  // non tentiamo init() e non interroghiamo /api/user.
+  const hasAuthSessionCookie = () => {
+    if (import.meta.server) return false
+    const cookie = document.cookie || ''
+    return /(?:^|;\s*)(laravel_session|session|remember_web_[^=]*)=/.test(cookie)
+  }
+
+  if (!hasAuthSessionCookie()) {
+    finish()
+    return
+  }
 
   try {
     await init()
-    authReady.value = true
+    finish()
   } catch (error) {
     const err = error as { status?: number; response?: { status?: number } }
     const status = Number(err?.status ?? err?.response?.status ?? 0)
@@ -22,15 +39,12 @@ export default defineNuxtPlugin(async (nuxtApp) => {
     // 401: non autenticato (normale per utenti non loggati)
     // 419: CSRF token scaduto (riprova automaticamente alla prossima richiesta)
     if ([401, 419].includes(status)) {
-      authReady.value = true // Anche se non autenticato, il bootstrap è "pronto"
+      finish() // Anche se non autenticato, il bootstrap è "pronto"
       return
     }
 
     // Errori inaspettati: loga per debug
     console.error('[sanctum] bootstrap identity failed', error)
-    authReady.value = true // Marca come pronto anche in caso di errore
+    finish() // Marca come pronto anche in caso di errore
   }
-
-  // Rendi disponibile globalmente per le composables
-  nuxtApp.provide('authReady', authReady)
 })

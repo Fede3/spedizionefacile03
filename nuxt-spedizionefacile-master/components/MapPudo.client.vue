@@ -28,6 +28,7 @@ let invalidateTimer = null;
 // Centro di default: Italia
 const defaultCenter = [41.9028, 12.4964];
 const defaultZoom = 6;
+const isFiniteCoordinate = (value) => Number.isFinite(Number.parseFloat(value));
 
 const parsedReferencePoint = computed(() => {
 	const latitude = Number.parseFloat(props.referencePoint?.latitude);
@@ -44,13 +45,29 @@ const parsedReferencePoint = computed(() => {
 });
 
 // Calcola il centro della mappa in base ai punti disponibili
+const getPointKey = (point, index = 0) => {
+	const explicit = String(point?.__mapKey || point?.ui_key || point?.pudo_id || point?.carrier_pudo_id || '').trim();
+	if (explicit) return explicit;
+	const lat = Number.parseFloat(point?.latitude ?? point?.lat);
+	const lng = Number.parseFloat(point?.longitude ?? point?.lng);
+	const latPart = Number.isFinite(lat) ? lat.toFixed(6) : 'na';
+	const lngPart = Number.isFinite(lng) ? lng.toFixed(6) : 'na';
+	return `map-fallback-${index}-${latPart}-${lngPart}`;
+};
+
+const validPoints = computed(() =>
+	(props.points || [])
+		.filter((p) => isFiniteCoordinate(p?.latitude) && isFiniteCoordinate(p?.longitude))
+		.map((p, index) => ({ ...p, __mapKey: getPointKey(p, index) }))
+);
+
 const mapCenter = computed(() => {
 	if (parsedReferencePoint.value) {
 		return [parsedReferencePoint.value.latitude, parsedReferencePoint.value.longitude];
 	}
-	if (!props.points.length) return defaultCenter;
-	const lats = props.points.filter(p => p.latitude && p.longitude).map(p => Number.parseFloat(p.latitude));
-	const lngs = props.points.filter(p => p.latitude && p.longitude).map(p => Number.parseFloat(p.longitude));
+	if (!validPoints.value.length) return defaultCenter;
+	const lats = validPoints.value.map((p) => Number.parseFloat(p.latitude));
+	const lngs = validPoints.value.map((p) => Number.parseFloat(p.longitude));
 	if (!lats.length) return defaultCenter;
 	return [
 		lats.reduce((a, b) => a + b, 0) / lats.length,
@@ -59,15 +76,20 @@ const mapCenter = computed(() => {
 });
 
 const mapZoom = computed(() => {
-	if (parsedReferencePoint.value && !props.points.length) return 14;
-	return props.points.length ? 13 : defaultZoom;
+	if (parsedReferencePoint.value && !validPoints.value.length) return 14;
+	return validPoints.value.length ? 13 : defaultZoom;
 });
 
+const withReadyMap = (cb) => {
+	const map = mapRef.value?.leafletObject;
+	if (!mapReady.value || !map) return;
+	cb(map);
+};
+
 // Quando cambiano punti/riferimento, adatta la vista della mappa
-watch([() => props.points, () => props.referencePoint], ([pts]) => {
-	if (!mapRef.value?.leafletObject) return;
+watch([validPoints, parsedReferencePoint], ([pts]) => {
+	if (!mapReady.value || !mapRef.value?.leafletObject) return;
 	const validPts = pts
-		.filter(p => p.latitude && p.longitude)
 		.map(p => [Number.parseFloat(p.latitude), Number.parseFloat(p.longitude)])
 		.filter(([lat, lng]) => Number.isFinite(lat) && Number.isFinite(lng));
 	const ref = parsedReferencePoint.value;
@@ -85,19 +107,20 @@ watch([() => props.points, () => props.referencePoint], ([pts]) => {
 			map.fitBounds(allBounds, { padding: [40, 40], maxZoom: 15 });
 		} catch { /* ignore */ }
 	});
-}, { immediate: true, deep: true });
+}, { immediate: true, flush: 'post' });
 
 // Quando cambia il punto selezionato, centra la mappa su di esso
 watch(() => props.selectedId, (id) => {
-	if (!id || !mapRef.value?.leafletObject) return;
-	const point = props.points.find(p => String(p.pudo_id) === String(id));
-	if (point?.latitude && point?.longitude) {
-		mapRef.value.leafletObject.setView(
+	if (!id) return;
+	withReadyMap((map) => {
+		const point = validPoints.value.find((p) => getPointKey(p) === String(id));
+		if (!point?.latitude || !point?.longitude) return;
+		map.setView(
 			[Number.parseFloat(point.latitude), Number.parseFloat(point.longitude)],
 			15,
 			{ animate: true }
 		);
-	}
+	});
 });
 
 const onMapReady = () => {
@@ -124,29 +147,18 @@ onBeforeUnmount(() => {
 		clearTimeout(invalidateTimer);
 		invalidateTimer = null;
 	}
-	// Destroy the Leaflet instance to prevent "Cannot read properties of null" during unmount
-	try {
-		const map = mapRef.value?.leafletObject;
-		if (map) {
-			map.off();
-			map.remove();
-		}
-	} catch {
-		// no-op — map already destroyed
-	}
-	mapRef.value = null;
 });
 </script>
 
 <template>
-	<div class="relative w-full h-full min-h-[300px] rounded-[12px] overflow-hidden border border-[#D0D0D0]">
+	<div class="relative w-full h-[320px] tablet:h-[360px] desktop:h-[420px] rounded-[12px] overflow-hidden border border-[#D0D0D0]">
 		<LMap
 			ref="mapRef"
 			:zoom="mapZoom"
 			:center="mapCenter"
 			:use-global-leaflet="false"
 			class="w-full h-full"
-			style="min-height: 300px; z-index: 0;"
+			style="z-index: 0;"
 			@ready="onMapReady"
 		>
 			<LTileLayer
@@ -193,26 +205,25 @@ onBeforeUnmount(() => {
 			</LMarker>
 
 			<LMarker
-				v-for="pudo in points.filter(p => p.latitude && p.longitude)"
-				:key="pudo.pudo_id"
+				v-for="(pudo, markerIndex) in validPoints"
+				:key="getPointKey(pudo, markerIndex)"
 				:lat-lng="[Number.parseFloat(pudo.latitude), Number.parseFloat(pudo.longitude)]"
 				@click="selectPoint(pudo)"
 			>
 				<LIcon
-					:icon-size="String(pudo.pudo_id) === String(selectedId) ? [36, 46] : [28, 38]"
-					:icon-anchor="String(pudo.pudo_id) === String(selectedId) ? [18, 46] : [14, 38]"
+					:icon-size="getPointKey(pudo) === String(selectedId) ? [36, 46] : [28, 38]"
+					:icon-anchor="getPointKey(pudo) === String(selectedId) ? [18, 46] : [14, 38]"
 					:popup-anchor="[0, -40]"
 					class-name="pudo-marker-icon"
 				>
 					<div
 						class="flex items-center justify-center rounded-full shadow-lg transition-all duration-200"
-						:class="String(pudo.pudo_id) === String(selectedId)
+						:class="getPointKey(pudo) === String(selectedId)
 							? 'w-[36px] h-[36px] bg-[#095866] ring-4 ring-[#095866]/30'
-							: 'w-[28px] h-[28px] bg-white border-[3px] border-[#095866] hover:bg-[#095866] hover:border-[#095866]'"
-						:style="String(pudo.pudo_id) === String(selectedId) ? '' : ''"
+							: 'w-[28px] h-[28px] bg-white border-[3px] border-[#095866]'"
 					>
 						<svg
-							v-if="String(pudo.pudo_id) === String(selectedId)"
+							v-if="getPointKey(pudo) === String(selectedId)"
 							width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
 						><polyline points="20 6 9 17 4 12"/></svg>
 						<div
@@ -226,7 +237,7 @@ onBeforeUnmount(() => {
 						:style="{
 							borderLeft: '8px solid transparent',
 							borderRight: '8px solid transparent',
-							borderTop: String(pudo.pudo_id) === String(selectedId)
+							borderTop: getPointKey(pudo) === String(selectedId)
 								? '10px solid #095866'
 								: '10px solid #095866'
 						}"

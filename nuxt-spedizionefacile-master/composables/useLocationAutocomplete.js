@@ -17,6 +17,14 @@ export function useLocationAutocomplete() {
 	const show = ref(false);
 	let searchTimeout = null;
 
+	// Cleanup timeout on component unmount to prevent memory leaks
+	onUnmounted(() => {
+		if (searchTimeout) {
+			clearTimeout(searchTimeout);
+			searchTimeout = null;
+		}
+	});
+
 	const sanitizeProvinceCode = (value) => {
 		const province = String(value || '')
 			.replace(/[^a-z]/gi, '')

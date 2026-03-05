@@ -1,136 +1,296 @@
-<!--
-	COMPONENTE: Step (Homepage/Step.vue)
-	SCOPO: Sezione homepage "Spedisci in 4 semplici passi" — spiega il processo visivamente.
-
-	DOVE SI USA: pages/index.vue (homepage)
-	PROPS: nessuna
-	EMITS: nessuno
-
-	DATI IN INGRESSO: nessuno (dati statici nell'array steps)
-	DATI IN USCITA: nessuno (solo visualizzazione e navigazione)
-
-	VINCOLI: le icone PNG sono in public/img/homepage/timeline/ — non rinominarle
-	PUNTI DI MODIFICA SICURI: array steps (testi, icone), testo nel riquadro verde
-	COLLEGAMENTI: pages/preventivo.vue (link "Calcola il prezzo")
-
-	I 4 PASSI:
-	1. Pacco & dimensioni — "Ti basta indicare quello che sai"
-	2. Ritiro & consegna — "Scegli l'indirizzo e l'orario che preferisci"
-	3. Personalizza i servizi — "Assicurazione, contrassegno, consegna express"
-	4. Paga e stampa l'etichetta — "Un clic con carta o portafoglio interno"
-
-	ANIMAZIONE: IntersectionObserver con reveal-step (slide da sinistra, rispetta prefers-reduced-motion)
--->
 <script setup>
-onMounted(() => {
-	if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-	const observer = new IntersectionObserver((entries) => {
-		entries.forEach(entry => {
-			if (entry.isIntersecting) {
-				entry.target.classList.add('revealed');
-				observer.unobserve(entry.target);
-			}
-		});
-	}, { threshold: 0.15 });
-	document.querySelectorAll('.reveal-step').forEach(el => observer.observe(el));
-});
-
-const steps = ref([
+const steps = [
 	{
-		title: "Pacco & dimensioni",
-		description: "Ti basta indicare quello che sai: niente dati inutili, niente sorprese sul prezzo.",
-		icon: "/img/homepage/timeline/weight.png",
-		width: 87,
-		height: 87,
+		indexLabel: '01',
+		title: 'Pacco e dimensioni',
+		description: 'Inserisci peso e misure: ottieni subito un totale leggibile e coerente.',
+		icon: '/img/homepage/timeline/weight.png',
 	},
 	{
-		title: "Ritiro & consegna",
-		description: "Scegli l'indirizzo e l'orario che preferisci; pensiamo noi al resto.",
-		icon: "/img/homepage/timeline/shipping.png",
-		width: 86,
-		height: 86,
+		indexLabel: '02',
+		title: 'Ritiro e consegna',
+		description: 'Definisci mittente, destinatario e data in un flusso lineare e guidato.',
+		icon: '/img/homepage/timeline/shipping.png',
 	},
 	{
-		title: "Personalizza i servizi",
-		description: "Assicurazione, contrassegno, consegna express: attiva solo ciò che ti serve.",
-		icon: "/img/homepage/timeline/services.png",
-		width: 80,
-		height: 78,
+		indexLabel: '03',
+		title: 'Servizi aggiuntivi',
+		description: 'Attiva solo ciò che serve: assicurazione, contrassegno, senza etichetta.',
+		icon: '/img/homepage/timeline/services.png',
 	},
 	{
-		title: "Paga e stampa l'etichetta",
-		description: "Un clic con carta o portafoglio interno, etichetta PDF subito pronta da attaccare.",
-		icon: "/img/homepage/timeline/pay.png",
-		width: 79,
-		height: 79,
+		indexLabel: '04',
+		title: 'Pagamento e conferma',
+		description: 'Conferma in sicurezza e ricevi un riepilogo completo della spedizione.',
+		icon: '/img/homepage/timeline/pay.png',
 	},
-]);
+];
 </script>
 
 <template>
-	<!-- Miglioramento UX: aggiunto sottotitolo per chiarire la proposta di valore -->
-	<!-- content-visibility: auto — sezione below-the-fold, rendering differito -->
-	<section class="mt-[80px] tablet:mt-[100px] desktop:mt-[140px] cv-auto">
+	<section class="hp-step-section cv-auto">
 		<div class="my-container font-montserrat">
-			<h2 class="font-bold text-[1.25rem] tablet:text-[1.5rem] desktop:text-[2.5rem] leading-[28px] tablet:leading-[32px] text-[#252B42] text-center tracking-[0.2px]">Spedisci in 4 semplici passi</h2>
-			<p class="text-[0.875rem] text-[#737373] text-center mt-[10px] max-w-[500px] mx-auto leading-[1.6] tracking-[0.2px]">Dal preventivo all'etichetta in meno di due minuti. Semplice, veloce, senza complicazioni.</p>
+			<div class="hp-step-shell">
+				<header class="hp-step-header">
+					<p class="hp-step-eyebrow">Come funziona</p>
+					<h2 class="hp-step-title">Spedisci in 4 passaggi, senza attriti</h2>
+					<p class="hp-step-subtitle">
+						Dalla quotazione alla conferma: un percorso chiaro, leggibile e stabile su desktop e mobile.
+					</p>
+				</header>
 
-			<div class="desktop:flex desktop:items-start desktop-xl:items-center desktop-xl:justify-start desktop:mt-[48px] mt-[20px] relative desktop-xl:gap-x-[126px]">
-				<div class="bg-green-400 w-full h-[240px] tablet:h-[300px] desktop:w-[554px] desktop:h-[629px] desktop:pl-[58px] desktop-xl:pl-0 rounded-[16px] tablet:rounded-none">
-					<div class="flex items-center justify-center desktop-xl:justify-center h-full text-center desktop:text-left desktop:justify-start">
-						<div class="px-[20px] desktop:px-0">
-							<p class="text-white font-bold desktop:text-[2.5rem] desktop:max-w-[294px] desktop-xl:max-w-[420px] desktop:leading-[50px] tracking-[0.2px] mb-[24px] tablet:mb-[43px] desktop:mb-[78px] text-[1.125rem] tablet:text-[1.25rem]">
-								Spedisci in 2 minuti Etichetta pronta subito
-							</p>
-
-							<NuxtLink to="/preventivo" class="mx-auto desktop:mx-0 block bg-[#095866] w-[202px] h-[52px] rounded-[12px] text-white text-[0.875rem] font-bold leading-[52px] text-center btn-hover hover:bg-[#074a56]">
-								Calcola il prezzo
-							</NuxtLink>
-						</div>
-					</div>
-				</div>
-
-				<ul
-					class="mt-[50px] desktop:mt-0 w-full desktop:w-[541px] tablet:flex tablet:flex-wrap tablet:items-start desktop:block tablet:gap-x-[20px] desktop:gap-x-0 desktop:absolute desktop:right-0 desktop:bottom-0 desktop-xl:relative">
+				<ol class="hp-step-timeline">
 					<li
-						v-for="(step, stepIndex) in steps"
-						:key="stepIndex"
-						class="bg-white mb-[30px] last:mb-0 p-[16px] tablet:p-[25px] desktop:py-0 flex items-center justify-between gap-x-[16px] tablet:gap-x-[24px] desktop:gap-x-[40px] tablet:w-[calc(50%-10px)] tablet:min-h-[204px] desktop:w-auto desktop:min-h-[132px] rounded-[4px] card-hover reveal-step"
-						:style="{ transitionDelay: `${stepIndex * 100}ms` }">
-						<!-- Ottimizzazione: decoding async per non bloccare il rendering -->
-						<NuxtImg :src="step.icon" :alt="step.title" :width="step.width" :height="step.height" loading="lazy" decoding="async" class="w-[56px] h-[56px] tablet:w-[70px] tablet:h-[70px] desktop:w-auto desktop:h-auto object-contain shrink-0 step-icon" />
-						<div>
-							<h3 class="desktop:ml-[5px] desktop:max-w-[360px] text-[1.125rem] tablet:text-[1.25rem] desktop:text-[1.5rem] font-bold text-[#252B42] tracking-[0.1px] leading-[26px] tablet:leading-[32px]">{{ stepIndex + 1 }}. {{ step.title }}</h3>
-							<p class="max-w-[350px] text-[0.875rem] text-[#737373] leading-[20px] tracking-[0.2px] mt-[10px] desktop:mt-[5px]">
-								{{ step.description }}
-							</p>
+						v-for="step in steps"
+						:key="step.title"
+						class="hp-step-card">
+						<span class="hp-step-ghost" aria-hidden="true">{{ step.indexLabel }}</span>
+						<div class="hp-step-icon-wrap">
+							<NuxtImg
+								:src="step.icon"
+								:alt="step.title"
+								width="88"
+								height="88"
+								loading="lazy"
+								decoding="async"
+								class="hp-step-icon" />
+						</div>
+						<div class="hp-step-content">
+							<h3 class="hp-step-card-title">{{ step.title }}</h3>
+							<p class="hp-step-card-text">{{ step.description }}</p>
 						</div>
 					</li>
-				</ul>
+				</ol>
+
+				<div class="hp-step-cta-row">
+					<NuxtLink to="/#preventivo" class="hp-step-cta">Calcola il prezzo</NuxtLink>
+				</div>
 			</div>
 		</div>
 	</section>
 </template>
 
 <style scoped>
-@media (prefers-reduced-motion: no-preference) {
-	.reveal-step {
-		opacity: 0;
-		transform: translateX(-24px);
-		transition: opacity 0.5s ease, transform 0.5s ease;
-	}
-	.reveal-step.revealed {
-		opacity: 1;
-		transform: translateX(0);
+.hp-step-section {
+	margin-top: 74px;
+}
+
+.hp-step-shell {
+	--hp-step-surface: rgba(255, 255, 255, 0.72);
+	--hp-step-stroke: rgba(255, 255, 255, 0.78);
+	--hp-step-shadow: 0 4px 8px rgba(15, 23, 42, 0.04), 0 20px 40px rgba(15, 23, 42, 0.08);
+	padding: 0;
+	border: 0;
+	background: transparent;
+	box-shadow: none;
+}
+
+.hp-step-header {
+	max-width: 760px;
+	margin-inline: auto;
+	text-align: center;
+}
+
+.hp-step-eyebrow {
+	font-size: 0.8125rem;
+	font-weight: 700;
+	letter-spacing: 0.28px;
+	text-transform: uppercase;
+	color: #0c6674;
+}
+
+.hp-step-title {
+	margin-top: 10px;
+	font-size: clamp(1.85rem, 3.4vw, 2.95rem);
+	line-height: 1.06;
+	letter-spacing: -0.02em;
+	font-weight: 800;
+	color: #1d2738;
+}
+
+.hp-step-subtitle {
+	margin-top: 12px;
+	font-size: 1rem;
+	line-height: 1.62;
+	color: #5f6d80;
+}
+
+.hp-step-timeline {
+	margin-top: 30px;
+	display: grid;
+	grid-template-columns: 1fr;
+	gap: 12px;
+	position: relative;
+}
+
+.hp-step-card {
+	position: relative;
+	overflow: hidden;
+	display: grid;
+	grid-template-columns: 62px minmax(0, 1fr);
+	align-items: center;
+	gap: 12px;
+	padding: 16px 16px 16px 14px;
+	border-radius: 22px;
+	border: 1px solid var(--hp-step-stroke);
+	background: var(--hp-step-surface);
+	backdrop-filter: blur(9px);
+	box-shadow: var(--hp-step-shadow);
+}
+
+.hp-step-ghost {
+	position: absolute;
+	right: 10px;
+	top: 6px;
+	font-size: 3rem;
+	line-height: 1;
+	font-weight: 800;
+	letter-spacing: -0.04em;
+	color: rgba(12, 102, 116, 0.08);
+	user-select: none;
+	pointer-events: none;
+}
+
+.hp-step-icon-wrap {
+	width: 58px;
+	height: 58px;
+	border-radius: 16px;
+	border: 1px solid rgba(210, 227, 235, 0.9);
+	background: rgba(247, 251, 253, 0.95);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	z-index: 1;
+}
+
+.hp-step-icon {
+	width: 42px;
+	height: 42px;
+	object-fit: contain;
+}
+
+.hp-step-content {
+	position: relative;
+	z-index: 1;
+}
+
+.hp-step-card-title {
+	font-size: 1.08rem;
+	line-height: 1.2;
+	font-weight: 750;
+	color: #1f2937;
+}
+
+.hp-step-card-text {
+	margin-top: 5px;
+	font-size: 0.93rem;
+	line-height: 1.58;
+	color: #536173;
+}
+
+.hp-step-cta-row {
+	margin-top: 24px;
+	display: flex;
+	justify-content: center;
+}
+
+.hp-step-cta {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	height: 50px;
+	padding: 0 24px;
+	border-radius: 14px;
+	background: #e44203;
+	color: #fff;
+	text-decoration: none;
+	font-size: 0.98rem;
+	font-weight: 700;
+	box-shadow: 0 12px 24px rgba(228, 66, 3, 0.24);
+	transition: background-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.hp-step-cta:hover {
+	background: #cb3a00;
+	box-shadow: 0 16px 28px rgba(228, 66, 3, 0.28);
+	transform: translateY(-1px);
+}
+
+.hp-step-cta:focus-visible {
+	outline: 2px solid #095866;
+	outline-offset: 2px;
+}
+
+@media (min-width: 48rem) {
+	.hp-step-section {
+		margin-top: 98px;
 	}
 
-	@keyframes subtlePulse {
-		0%, 100% { transform: scale(1); }
-		50% { transform: scale(1.06); }
+	.hp-step-shell {
+		padding: 0;
 	}
 
-	.reveal-step.revealed .step-icon {
-		animation: subtlePulse 2s ease-in-out 0.6s 1;
+	.hp-step-timeline {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		gap: 14px;
+	}
+}
+
+@media (min-width: 64rem) {
+	.hp-step-section {
+		margin-top: 124px;
+	}
+
+	.hp-step-shell {
+		padding: 0;
+	}
+
+	.hp-step-timeline {
+		margin-top: 34px;
+		grid-template-columns: repeat(4, minmax(0, 1fr));
+		gap: 16px;
+	}
+
+	.hp-step-timeline::before {
+		content: '';
+		position: absolute;
+		left: 4%;
+		right: 4%;
+		top: 62px;
+		height: 2px;
+		background: linear-gradient(90deg, rgba(9, 88, 102, 0.2) 0%, rgba(228, 66, 3, 0.25) 100%);
+		z-index: 0;
+	}
+
+	.hp-step-card {
+		grid-template-columns: 1fr;
+		align-content: start;
+		gap: 14px;
+		padding: 18px 18px 20px;
+		min-height: 240px;
+	}
+
+	.hp-step-icon-wrap {
+		width: 62px;
+		height: 62px;
+	}
+
+	.hp-step-card-title {
+		font-size: 1.14rem;
+	}
+
+	.hp-step-card-text {
+		font-size: 0.95rem;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.hp-step-cta {
+		transition: background-color 0.2s ease;
+	}
+
+	.hp-step-cta:hover {
+		transform: none;
 	}
 }
 </style>

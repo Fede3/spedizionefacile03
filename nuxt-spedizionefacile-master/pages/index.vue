@@ -15,11 +15,6 @@
   COLLEGAMENTI: components/Preventivo.vue, components/Homepage/*.vue, composables/usePriceBands.js.
 -->
 <script setup>
-// Promo settings per banner nella CTA.
-// loadPriceBands() non serve qui: viene gia' chiamato da ContenutoHeader e Preventivo.
-// Il composable ha un TTL di 5 minuti, quindi la prima chiamata carica e le altre sono no-op.
-const { promoSettings } = usePriceBands();
-
 // Imposta i meta tag SEO per la homepage (titolo, descrizione, Open Graph)
 useSeoMeta({
 	title: 'SpedizioneFacile - Spedizioni Economiche e Veloci | Confronta Prezzi',
@@ -77,34 +72,9 @@ useHead({
 	<!-- Sezione "Come funziona" con i passaggi da seguire (caricata in modo lazy) -->
 	<LazyHomepageStep />
 
-	<!-- Sezione recensioni dei clienti (caricata in modo lazy) -->
-	<LazyHomepageRecensioni />
-
 	<!-- Sezione servizi offerti (caricata in modo lazy) -->
 	<LazyHomepageServizi />
 
-	<!-- Miglioramento UX: CTA finale prima del footer per convertire gli utenti indecisi -->
-	<section class="bg-[#095866] py-[48px] tablet:py-[60px] desktop:py-[80px]">
-		<div class="my-container text-center">
-			<!-- Promo banner -->
-			<div v-if="promoSettings?.active && promoSettings?.label_text" class="flex justify-center mb-[16px]">
-				<span
-					:style="{ backgroundColor: promoSettings.label_color || '#E44203' }"
-					class="inline-flex items-center gap-[6px] px-[14px] tablet:px-[16px] py-[7px] tablet:py-[8px] rounded-[10px] text-white text-[0.875rem] tablet:text-[1rem] font-bold tracking-wide shadow-sm max-w-full">
-					<!-- Ottimizzazione: lazy loading + decoding async + dimensioni per CLS -->
-					<img v-if="promoSettings.label_image" :src="promoSettings.label_image" alt="" loading="lazy" decoding="async" width="40" height="18" class="h-[18px] tablet:h-[20px] w-auto shrink-0" />
-					{{ promoSettings.label_text }}
-				</span>
-			</div>
-			<h2 class="text-white text-[1.25rem] tablet:text-[1.5rem] desktop:text-[2.5rem] font-bold tracking-[-0.48px] mb-[12px]">Pronto a spedire?</h2>
-			<p class="text-white/80 text-[0.875rem] tablet:text-[0.9375rem] desktop:text-[1.125rem] max-w-[500px] mx-auto mb-[24px] tablet:mb-[28px] leading-[1.6]">
-				Calcola il preventivo in pochi secondi. Nessun costo nascosto, nessun vincolo.
-			</p>
-			<NuxtLink
-				to="/preventivo"
-				class="inline-block bg-[#E44203] text-white px-[28px] tablet:px-[32px] py-[14px] tablet:py-[16px] rounded-[35px] font-semibold text-[1rem] desktop:text-[1.125rem] btn-hover min-h-[48px]">
-				Calcola il tuo preventivo
-			</NuxtLink>
-		</div>
-	</section>
+	<!-- Sezione recensioni dei clienti (caricata in modo lazy) -->
+	<LazyHomepageRecensioni />
 </template>

@@ -70,10 +70,11 @@
 		font-family: "Inter", sans-serif;
 	}
 
-	/* Smooth transitions on buttons and links */
+	/* Transizioni base senza trasformazioni globali (evita drift/overflow) */
 	button,
 	a {
-		transition: color 0.2s ease, background-color 0.2s ease, border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+		transition: color 0.2s ease, background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+		will-change: auto;
 	}
 
 	/* Input transitions - only border and shadow, NOT all (causes mobile bugs) */

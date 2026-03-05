@@ -32,13 +32,29 @@ class PudoPoint extends Model
     /**
      * Cerca PUDO per città e CAP
      */
-    public static function searchByLocation(string $city, string $zipCode, int $limit = 10): array
+    public static function searchByLocation(string $city, string $zipCode, int $limit = 50): array
     {
-        $points = self::where('is_active', true)
-            ->where(function ($query) use ($city, $zipCode) {
-                $query->where('city', 'LIKE', "%{$city}%")
+        $city = trim($city);
+        $zipCode = preg_replace('/\D/', '', (string) $zipCode);
+        $limit = max(1, min((int) $limit, 50));
+
+        $query = self::query()->where('is_active', true);
+
+        // Evita match troppo larghi quando uno dei due campi e' vuoto.
+        if ($city !== '' && $zipCode !== '') {
+            $query->where(function ($nested) use ($city, $zipCode) {
+                $nested->where('city', 'LIKE', "%{$city}%")
                     ->orWhere('zip_code', $zipCode);
-            })
+            });
+        } elseif ($city !== '') {
+            $query->where('city', 'LIKE', "%{$city}%");
+        } elseif ($zipCode !== '') {
+            $query->where('zip_code', $zipCode);
+        } else {
+            return [];
+        }
+
+        $points = $query
             ->limit($limit)
             ->get();
 
@@ -46,10 +62,12 @@ class PudoPoint extends Model
     }
 
     /**
-     * Cerca PUDO per coordinate GPS (raggio ~10km)
+     * Cerca PUDO per coordinate GPS (raggio ~50km)
      */
-    public static function searchByCoordinates(float $lat, float $lng, int $limit = 10): array
+    public static function searchByCoordinates(float $lat, float $lng, int $limit = 50): array
     {
+        $limit = max(1, min((int) $limit, 50));
+
         // Formula Haversine semplificata per distanza approssimativa
         $points = self::where('is_active', true)
             ->whereNotNull('latitude')
@@ -62,7 +80,7 @@ class PudoPoint extends Model
                     sin(radians(?)) * sin(radians(latitude))
                 )) AS distance
             ", [$lat, $lng, $lat])
-            ->having('distance', '<', 10)
+            ->having('distance', '<', 50)
             ->orderBy('distance')
             ->limit($limit)
             ->get();
@@ -89,6 +107,7 @@ class PudoPoint extends Model
             'email' => $point->email,
             'opening_hours' => $point->opening_hours,
             'distance' => isset($point->distance) ? round($point->distance, 2) : null,
+            'provider' => 'BRT',
         ];
     }
 }

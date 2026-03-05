@@ -49,6 +49,7 @@
 namespace App\Services;
 
 use App\Models\Order;
+use App\Models\Location;
 use App\Models\PudoPoint;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -536,78 +537,129 @@ class BrtService
      * I PUDO sono negozi convenzionati (tabaccai, edicole, ecc.) dove si possono
      * ritirare o consegnare i pacchi. Comodo per chi non e' a casa durante la consegna.
      *
-     * Cerca in un raggio di 10 km dall'indirizzo specificato.
+     * Cerca in un raggio esteso (fino a 50 km) con strategia multi-pass dall'indirizzo specificato.
      * FALLBACK: Se l'API BRT fallisce, usa il database locale con punti PUDO mock.
      */
-    public function getPudoByAddress(string $address, string $zipCode, string $city, string $countryCode = 'ITA', int $maxResults = 10): array
+    public function getPudoByAddress(string $address, string $zipCode, string $city, string $countryCode = 'ITA', int $maxResults = 50): array
     {
-        try {
-            // Costruiamo gli header — il token è opzionale per gli endpoint "open"
-            $headers = ['Accept' => 'application/json'];
-            if (!empty($this->pudoToken)) {
-                $headers['X-API-Auth'] = $this->pudoToken;
+        $address = trim($address);
+        $zipCode = preg_replace('/\D/', '', (string) $zipCode);
+        $city = trim($city);
+        $maxResults = max(1, min($maxResults, 50));
+
+        $strategyUsed = [];
+        $combinedPoints = [];
+        $fallbackUsed = false;
+
+        $mergePoints = function (array $points) use (&$combinedPoints, $maxResults): void {
+            if (empty($points)) return;
+            $combinedPoints = $this->mergePudoPoints($combinedPoints, $points, $maxResults);
+        };
+
+        // Pass 1: citta + CAP (se disponibili entrambi)
+        if ($city !== '' && $zipCode !== '') {
+            $strategyUsed[] = 'city_zip';
+            $primaryResult = $this->queryPudoByAddressNoFallback($address, $zipCode, $city, $countryCode, $maxResults);
+            if (!empty($primaryResult['pudo'])) {
+                $mergePoints($primaryResult['pudo']);
             }
-
-            // withoutVerifying(): BRT usa un certificato self-signed nella chain SSL,
-            // senza questo flag cURL restituisce errore 60 e la richiesta fallisce.
-            $response = Http::timeout(15)
-                ->withoutVerifying()
-                ->withHeaders($headers)
-                ->get($this->pudoApiUrl . '/pudo/v1/open/pickup/get-pudo-by-address', [
-                    'address' => $address,
-                    'zipCode' => $zipCode,
-                    'city' => $city,
-                    'countryCode' => $countryCode,       // ISO 3166-1 alpha-3 (es. ITA, DEU, FRA)
-                    'max_pudo_number' => $maxResults,
-                    'maxDistanceSearch' => 10000,         // Raggio di ricerca in metri (max 50000)
-                ]);
-
-            $body = $response->json();
-
-            if (!$response->successful()) {
-                Log::warning('BRT PUDO API error - using fallback', [
-                    'status' => $response->status(),
-                    'body' => $response->body(),
-                    'city' => $city,
-                    'zip' => $zipCode,
-                ]);
-                // FALLBACK: usa database locale
-                return $this->getPudoFromDatabase($city, $zipCode, $maxResults);
-            }
-
-            $pudoList = $body['pudo'] ?? [];
-
-            // Se l'API non restituisce risultati, prova il fallback
-            if (empty($pudoList)) {
-                Log::info('BRT PUDO API returned no results - using fallback', ['city' => $city, 'zip' => $zipCode]);
-                return $this->getPudoFromDatabase($city, $zipCode, $maxResults);
-            }
-
-            // Formattiamo i dati dei punti PUDO per il frontend
-            return [
-                'success' => true,
-                'pudo' => array_map(fn($p) => [
-                    'pudo_id' => $p['pudoId'] ?? '',
-                    'carrier_pudo_id' => $p['carrierPudoId'] ?? '',
-                    'name' => $p['pointName'] ?? '',                      // Nome del punto PUDO
-                    'address' => $p['fullAddress'] ?? (($p['street'] ?? '') . ' ' . ($p['streetNumber'] ?? '')),
-                    'city' => $p['town'] ?? '',
-                    'zip_code' => $p['zipCode'] ?? '',
-                    'province' => $p['state'] ?? '',
-                    'country' => $p['country'] ?? 'ITA',
-                    'latitude' => $p['latitude'] ?? null,                // Coordinate GPS
-                    'longitude' => $p['longitude'] ?? null,
-                    'distance_meters' => $p['distanceFromPoint'] ?? null, // Distanza in metri
-                    'enabled' => $p['enabled'] ?? true,
-                    'opening_hours' => $p['hours'] ?? [],                // Orari di apertura
-                    'localization_hint' => $p['localizationHint'] ?? '', // Indicazioni per trovare il punto
-                ], $pudoList),
-            ];
-        } catch (\Exception $e) {
-            Log::error('BRT PUDO exception - using fallback', ['error' => $e->getMessage(), 'city' => $city, 'zip' => $zipCode]);
-            // FALLBACK: usa database locale
-            return $this->getPudoFromDatabase($city, $zipCode, $maxResults);
         }
+
+        // Pass 2: citta con CAP alternativi trovati nella tabella localita'
+        if (count($combinedPoints) < $maxResults && $city !== '') {
+            $alternativeZips = $this->resolveAlternativeZipsForCity($city, $zipCode);
+            if (!empty($alternativeZips)) {
+                $strategyUsed[] = 'city_alt_zip';
+                foreach ($alternativeZips as $alternativeZip) {
+                    if (count($combinedPoints) >= $maxResults) break;
+                    $altResult = $this->queryPudoByAddressNoFallback($address, $alternativeZip, $city, $countryCode, $maxResults);
+                    if (!empty($altResult['pudo'])) {
+                        $mergePoints($altResult['pudo']);
+                    }
+                }
+            }
+        }
+
+        // Pass 2b: solo citta (se ancora incompleto)
+        if (count($combinedPoints) < $maxResults && $city !== '') {
+            $strategyUsed[] = 'city_only';
+            $cityOnlyResult = $this->queryPudoByAddressNoFallback($address, '', $city, $countryCode, $maxResults);
+            if (!empty($cityOnlyResult['pudo'])) {
+                $mergePoints($cityOnlyResult['pudo']);
+            }
+        }
+
+        // Pass 3: solo CAP (utile se la citta non produce match)
+        if (count($combinedPoints) < $maxResults && $zipCode !== '') {
+            $strategyUsed[] = 'zip_only';
+            $zipOnlyResult = $this->queryPudoByAddressNoFallback($address, $zipCode, '', $countryCode, $maxResults);
+            if (!empty($zipOnlyResult['pudo'])) {
+                $mergePoints($zipOnlyResult['pudo']);
+            }
+        }
+
+        // Pass 4: nearby da coordinate geocodificate dell'input testuale
+        if (count($combinedPoints) < $maxResults) {
+            $geocoded = $this->geocodeInputToCoordinates($address, $city, $zipCode);
+            if ($geocoded) {
+                $strategyUsed[] = 'nearby_geo_input';
+                $nearbyResult = $this->getPudoByCoordinates(
+                    (float) $geocoded['latitude'],
+                    (float) $geocoded['longitude'],
+                    $maxResults
+                );
+                if (!empty($nearbyResult['pudo'])) {
+                    $mergePoints($nearbyResult['pudo']);
+                    if (!empty($nearbyResult['fallback'])) {
+                        $fallbackUsed = true;
+                    }
+                }
+            }
+        }
+
+        // Fallback finale database locale
+        if (empty($combinedPoints)) {
+            $fallbackResult = $this->getPudoFromDatabase($city, $zipCode, $maxResults);
+            if (!empty($fallbackResult['pudo'])) {
+                $mergePoints($fallbackResult['pudo']);
+                $fallbackUsed = true;
+                $strategyUsed[] = 'fallback_db';
+            }
+        }
+
+        $combinedPoints = $this->sortPudoByDistance($combinedPoints);
+        if (count($combinedPoints) > $maxResults) {
+            $combinedPoints = array_slice($combinedPoints, 0, $maxResults);
+        }
+
+        if (empty($combinedPoints)) {
+            return [
+                'success' => false,
+                'error' => 'Nessun punto PUDO trovato per i dati inseriti.',
+                'pudo' => [],
+                'fallback' => $fallbackUsed,
+                'meta' => [
+                    'strategy_used' => array_values(array_unique($strategyUsed)),
+                    'returned_count' => 0,
+                    'requested_count' => $maxResults,
+                    'fallback' => $fallbackUsed,
+                    'provider' => 'BRT',
+                ],
+            ];
+        }
+
+        return [
+            'success' => true,
+            'pudo' => $combinedPoints,
+            'fallback' => $fallbackUsed,
+            'meta' => [
+                'strategy_used' => array_values(array_unique($strategyUsed)),
+                'returned_count' => count($combinedPoints),
+                'requested_count' => $maxResults,
+                'fallback' => $fallbackUsed,
+                'provider' => 'BRT',
+            ],
+        ];
     }
 
     /**
@@ -615,8 +667,10 @@ class BrtService
      * Utile quando l'utente condivide la propria posizione dal telefono.
      * FALLBACK: Se l'API BRT fallisce, usa il database locale con punti PUDO mock.
      */
-    public function getPudoByCoordinates(float $latitude, float $longitude, int $maxResults = 10): array
+    public function getPudoByCoordinates(float $latitude, float $longitude, int $maxResults = 50): array
     {
+        $maxResults = max(1, min($maxResults, 50));
+
         try {
             // withoutVerifying(): certificato self-signed BRT (vedi searchPudo)
             $response = Http::timeout(15)
@@ -629,7 +683,7 @@ class BrtService
                     'latitude' => $latitude,
                     'longitude' => $longitude,
                     'max_pudo_number' => $maxResults,
-                    'maxDistanceSearch' => 10000,        // Raggio di ricerca in metri (max 50000)
+                    'maxDistanceSearch' => 50000,        // Raggio di ricerca in metri (max 50000)
                 ]);
 
             $body = $response->json();
@@ -669,7 +723,16 @@ class BrtService
                     'enabled' => $p['enabled'] ?? true,
                     'opening_hours' => $p['hours'] ?? [],
                     'localization_hint' => $p['localizationHint'] ?? '',
+                    'provider' => 'BRT',
                 ], $pudoList),
+                'fallback' => false,
+                'meta' => [
+                    'strategy_used' => ['nearby_geo'],
+                    'returned_count' => count($pudoList),
+                    'requested_count' => $maxResults,
+                    'fallback' => false,
+                    'provider' => 'BRT',
+                ],
             ];
         } catch (\Exception $e) {
             Log::error('BRT PUDO coordinates exception - using fallback', ['error' => $e->getMessage(), 'lat' => $latitude, 'lng' => $longitude]);
@@ -1215,6 +1278,243 @@ class BrtService
     }
 
     /**
+     * Chiamata singola API PUDO senza fallback automatico.
+     */
+    private function queryPudoByAddressNoFallback(string $address, string $zipCode, string $city, string $countryCode, int $maxResults): array
+    {
+        try {
+            $headers = ['Accept' => 'application/json'];
+            if (!empty($this->pudoToken)) {
+                $headers['X-API-Auth'] = $this->pudoToken;
+            }
+
+            $response = Http::timeout(15)
+                ->withoutVerifying()
+                ->withHeaders($headers)
+                ->get($this->pudoApiUrl . '/pudo/v1/open/pickup/get-pudo-by-address', [
+                    'address' => $address,
+                    'zipCode' => $zipCode,
+                    'city' => $city,
+                    'countryCode' => $countryCode,
+                    'max_pudo_number' => max(1, min($maxResults, 50)),
+                    'maxDistanceSearch' => 30000,
+                ]);
+
+            if (!$response->successful()) {
+                Log::warning('BRT PUDO API error (no fallback pass)', [
+                    'status' => $response->status(),
+                    'city' => $city,
+                    'zip' => $zipCode,
+                ]);
+                return ['success' => false, 'pudo' => []];
+            }
+
+            $body = $response->json();
+            $pudoList = $body['pudo'] ?? [];
+            if (empty($pudoList)) {
+                return ['success' => true, 'pudo' => []];
+            }
+
+            return [
+                'success' => true,
+                'pudo' => array_map(fn($item) => $this->mapBrtPudoPoint($item), $pudoList),
+            ];
+        } catch (\Exception $e) {
+            Log::warning('BRT PUDO API exception (no fallback pass)', [
+                'error' => $e->getMessage(),
+                'city' => $city,
+                'zip' => $zipCode,
+            ]);
+            return ['success' => false, 'pudo' => []];
+        }
+    }
+
+    /**
+     * Mappa payload PUDO BRT al formato usato dal frontend.
+     */
+    private function mapBrtPudoPoint(array $point): array
+    {
+        return [
+            'pudo_id' => $point['pudoId'] ?? '',
+            'carrier_pudo_id' => $point['carrierPudoId'] ?? '',
+            'name' => $point['pointName'] ?? '',
+            'address' => $point['fullAddress'] ?? trim(($point['street'] ?? '') . ' ' . ($point['streetNumber'] ?? '')),
+            'city' => $point['town'] ?? '',
+            'zip_code' => $point['zipCode'] ?? '',
+            'province' => $point['state'] ?? '',
+            'country' => $point['country'] ?? 'ITA',
+            'latitude' => $point['latitude'] ?? null,
+            'longitude' => $point['longitude'] ?? null,
+            'distance_meters' => isset($point['distanceFromPoint']) ? (int) round((float) $point['distanceFromPoint']) : null,
+            'enabled' => $point['enabled'] ?? true,
+            'opening_hours' => $point['hours'] ?? [],
+            'localization_hint' => $point['localizationHint'] ?? '',
+            'provider' => 'BRT',
+        ];
+    }
+
+    /**
+     * Geocodifica input testuale (via/citta/CAP) in coordinate per pass nearby.
+     */
+    private function geocodeInputToCoordinates(string $address, string $city, string $zipCode): ?array
+    {
+        try {
+            $parts = array_values(array_filter([
+                trim($address),
+                preg_replace('/\D/', '', (string) $zipCode),
+                trim($city),
+                'Italia',
+            ], fn($value) => (string) $value !== ''));
+
+            if (empty($parts)) {
+                return null;
+            }
+
+            $response = Http::timeout(8)
+                ->acceptJson()
+                ->withHeaders([
+                    'User-Agent' => 'SpedizioneFacile/1.0 (PUDO geocode)',
+                ])
+                ->get('https://nominatim.openstreetmap.org/search', [
+                    'format' => 'jsonv2',
+                    'limit' => 1,
+                    'q' => implode(', ', $parts),
+                ]);
+
+            if (!$response->successful()) {
+                return null;
+            }
+
+            $payload = $response->json();
+            $first = is_array($payload) ? ($payload[0] ?? null) : null;
+            if (!$first) {
+                return null;
+            }
+
+            if (!isset($first['lat'], $first['lon']) || !is_numeric($first['lat']) || !is_numeric($first['lon'])) {
+                return null;
+            }
+            $lat = (float) $first['lat'];
+            $lng = (float) $first['lon'];
+
+            return [
+                'latitude' => $lat,
+                'longitude' => $lng,
+            ];
+        } catch (\Exception $e) {
+            Log::debug('PUDO geocode input failed', ['error' => $e->getMessage()]);
+            return null;
+        }
+    }
+
+    /**
+     * Estrae CAP alternativi affidabili dalla tabella localita' per una citta.
+     */
+    private function resolveAlternativeZipsForCity(string $city, string $currentZip = ''): array
+    {
+        try {
+            $normalizedCity = mb_strtoupper(trim($city), 'UTF-8');
+            if ($normalizedCity === '') return [];
+
+            $exact = Location::query()
+                ->whereRaw('UPPER(place_name) = ?', [$normalizedCity])
+                ->pluck('postal_code')
+                ->map(fn($zip) => preg_replace('/\D/', '', (string) $zip))
+                ->filter()
+                ->unique()
+                ->values()
+                ->toArray();
+
+            $zips = $exact;
+            if (empty($zips)) {
+                $zips = Location::query()
+                    ->whereRaw('UPPER(place_name) LIKE ?', [$normalizedCity . '%'])
+                    ->limit(100)
+                    ->pluck('postal_code')
+                    ->map(fn($zip) => preg_replace('/\D/', '', (string) $zip))
+                    ->filter()
+                    ->unique()
+                    ->values()
+                    ->toArray();
+            }
+
+            $currentZip = preg_replace('/\D/', '', (string) $currentZip);
+            if ($currentZip !== '') {
+                $zips = array_values(array_filter($zips, fn($zip) => $zip !== $currentZip));
+            }
+
+            return array_slice($zips, 0, 8);
+        } catch (\Exception $e) {
+            Log::warning('PUDO alternative ZIP resolution failed', [
+                'city' => $city,
+                'error' => $e->getMessage(),
+            ]);
+            return [];
+        }
+    }
+
+    /**
+     * Merge + deduplica punti PUDO per id (o fallback chiave composita).
+     */
+    private function mergePudoPoints(array $base, array $incoming, int $maxResults): array
+    {
+        $combined = array_merge($base, $incoming);
+        $deduped = $this->dedupePudoPoints($combined);
+        $sorted = $this->sortPudoByDistance($deduped);
+        return array_slice($sorted, 0, max(1, min($maxResults, 50)));
+    }
+
+    private function dedupePudoPoints(array $points): array
+    {
+        $map = [];
+        foreach ($points as $point) {
+            $key = (string) ($point['pudo_id'] ?? '');
+            if ($key === '') {
+                $key = sprintf(
+                    '%s|%s|%s|%s',
+                    strtolower((string) ($point['name'] ?? '')),
+                    strtolower((string) ($point['address'] ?? '')),
+                    strtolower((string) ($point['zip_code'] ?? '')),
+                    strtolower((string) ($point['city'] ?? ''))
+                );
+            }
+
+            if (!isset($map[$key])) {
+                $map[$key] = $point;
+                continue;
+            }
+
+            $currentDistance = isset($map[$key]['distance_meters']) && is_numeric($map[$key]['distance_meters'])
+                ? (float) $map[$key]['distance_meters']
+                : INF;
+            $nextDistance = isset($point['distance_meters']) && is_numeric($point['distance_meters'])
+                ? (float) $point['distance_meters']
+                : INF;
+
+            if ($nextDistance < $currentDistance) {
+                $map[$key] = $point;
+            }
+        }
+
+        return array_values($map);
+    }
+
+    private function sortPudoByDistance(array $points): array
+    {
+        usort($points, function ($a, $b) {
+            $aDistance = isset($a['distance_meters']) && is_numeric($a['distance_meters']) ? (float) $a['distance_meters'] : INF;
+            $bDistance = isset($b['distance_meters']) && is_numeric($b['distance_meters']) ? (float) $b['distance_meters'] : INF;
+
+            if ($aDistance === $bDistance) {
+                return strcmp((string) ($a['name'] ?? ''), (string) ($b['name'] ?? ''));
+            }
+            return $aDistance <=> $bDistance;
+        });
+
+        return $points;
+    }
+
+    /**
      * FALLBACK: Cerca punti PUDO nel database locale quando l'API BRT non funziona.
      * Usa la tabella pudo_points popolata con dati mock delle città principali.
      */
@@ -1246,8 +1546,16 @@ class BrtService
                     'enabled' => true,
                     'opening_hours' => $p['opening_hours'] ?? [],
                     'localization_hint' => '',
+                    'provider' => 'BRT',
                 ], $points),
                 'fallback' => true,
+                'meta' => [
+                    'strategy_used' => ['fallback_db'],
+                    'returned_count' => count($points),
+                    'requested_count' => $maxResults,
+                    'fallback' => true,
+                    'provider' => 'BRT',
+                ],
             ];
         } catch (\Exception $e) {
             Log::error('PUDO fallback database error', ['error' => $e->getMessage()]);
@@ -1286,8 +1594,16 @@ class BrtService
                     'enabled' => true,
                     'opening_hours' => $p['opening_hours'] ?? [],
                     'localization_hint' => '',
+                    'provider' => 'BRT',
                 ], $points),
                 'fallback' => true,
+                'meta' => [
+                    'strategy_used' => ['fallback_db_coordinates'],
+                    'returned_count' => count($points),
+                    'requested_count' => $maxResults,
+                    'fallback' => true,
+                    'provider' => 'BRT',
+                ],
             ];
         } catch (\Exception $e) {
             Log::error('PUDO fallback database error (coordinates)', ['error' => $e->getMessage()]);

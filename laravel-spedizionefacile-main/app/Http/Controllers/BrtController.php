@@ -366,22 +366,41 @@ class BrtController extends Controller
      */
     public function pudoSearch(Request $request)
     {
-        $request->validate([
+        $data = $request->validate([
             'address' => 'nullable|string',
-            'zip_code' => 'required|string',
-            'city' => 'required|string',
+            'zip_code' => 'nullable|string|required_without:city',
+            'city' => 'nullable|string|required_without:zip_code',
             'country' => 'nullable|string',
             'max_results' => 'nullable|integer|min:1|max:50',
         ]);
 
+        $address = trim((string) ($data['address'] ?? ''));
+        $zipCode = preg_replace('/\D/', '', (string) ($data['zip_code'] ?? ''));
+        $city = trim((string) ($data['city'] ?? ''));
+
+        if ($zipCode === '' && $city === '') {
+            return response()->json([
+                'success' => false,
+                'error' => "Inserisci almeno citta o CAP per cercare i punti PUDO.",
+            ], 422);
+        }
+
         // L'API PUDO di BRT richiede il codice paese in formato ISO Alpha-3 (es. ITA, DEU, FRA)
         $result = $this->brt->getPudoByAddress(
-            $request->address ?? '',
-            $request->zip_code,
-            $request->city,
-            $request->country ?? 'ITA',
-            $request->max_results ?? 10
+            $address,
+            $zipCode,
+            $city,
+            $data['country'] ?? 'ITA',
+            (int) ($data['max_results'] ?? 50)
         );
+
+        if (isset($result['pudo']) && is_array($result['pudo'])) {
+            $result['pudo'] = array_values(array_filter(array_map(function ($point) {
+                $provider = strtoupper((string) ($point['provider'] ?? 'BRT'));
+                $point['provider'] = 'BRT';
+                return $provider === 'BRT' ? $point : null;
+            }, $result['pudo'])));
+        }
 
         return response()->json($result);
     }
@@ -401,8 +420,16 @@ class BrtController extends Controller
         $result = $this->brt->getPudoByCoordinates(
             (float) $request->latitude,
             (float) $request->longitude,
-            $request->max_results ?? 10
+            (int) ($request->max_results ?? 50)
         );
+
+        if (isset($result['pudo']) && is_array($result['pudo'])) {
+            $result['pudo'] = array_values(array_filter(array_map(function ($point) {
+                $provider = strtoupper((string) ($point['provider'] ?? 'BRT'));
+                $point['provider'] = 'BRT';
+                return $provider === 'BRT' ? $point : null;
+            }, $result['pudo'])));
+        }
 
         return response()->json($result);
     }

@@ -1,294 +1,864 @@
-<!--
-	COMPONENTE: PudoSelector (PudoSelector.vue)
-	SCOPO: Cerca e seleziona un punto PUDO BRT (Pick Up / Drop Off).
-
-	DOVE SI USA: pages/la-tua-spedizione/[step].vue (step 2, sezione Destinazione)
-	PROPS: initialCity (String), initialZip (String) — pre-compilati dalla destinazione del preventivo
-	EMITS: @select(pudo), @deselect — quando l'utente seleziona/deseleziona un punto
-
-	DATI IN INGRESSO: props (citta'/CAP iniziali), API BRT
-	DATI IN USCITA: emit('select', pudo) con oggetto {pudo_id, name, address, zip_code, city, ...}
-
-	VINCOLI: la ricerca PUDO dipende dall'API BRT — se BRT e' offline, mostra errore
-	PUNTI DI MODIFICA SICURI: stili CSS delle card, messaggi di errore
-	COLLEGAMENTI: laravel-spedizionefacile-main/app/Http/Controllers/BrtController.php
-
-	COS'E' UN PUDO?
-	PUDO = Pick Up / Drop Off. Sono negozi convenzionati con BRT (tabaccai, edicole, ecc.)
-	dove il destinatario puo' ritirare il pacco invece di farselo consegnare a casa.
-
-	FLUSSO:
-	1. L'utente inserisce citta' e/o CAP della zona dove vuole ritirare
-	2. Clicca "Cerca punti di ritiro" → chiama GET /api/brt/pudo/search
-	3. Appaiono card con nome, indirizzo, distanza di ogni punto
-	4. L'utente clicca una card per selezionare → il padre auto-compila la destinazione
-
-	API USATE:
-	- GET /api/brt/pudo/search?city=X&zip_code=Y  → lista punti PUDO (max 10)
-	- GET /api/brt/pudo/{pudoId}                   → dettagli (orari, indicazioni)
--->
 <script setup>
-// Props: citta' e CAP iniziali (pre-compilati dalla destinazione scelta nel preventivo)
+import MapPudo from '~/components/MapPudo.client.vue';
+
 const props = defineProps({
-	initialCity: { type: String, default: '' },   // es. "Milano" — dal campo destinazione del preventivo
-	initialZip: { type: String, default: '' },     // es. "20100" — dal campo CAP destinazione
+	initialCity: { type: String, default: '' },
+	initialZip: { type: String, default: '' },
 });
 
-// Eventi emessi al componente padre (la pagina [step].vue)
 const emit = defineEmits(['select', 'deselect']);
+const config = useRuntimeConfig();
+const apiBase = config.public?.apiBase || '';
 
-// Client HTTP autenticato (gestisce automaticamente cookie/CSRF di Sanctum)
-const sanctumClient = useSanctumClient();
+const publicApiFetch = async (path) => {
+	const url = path.startsWith('http') ? path : `${apiBase}${path}`;
+	return await $fetch(url, {
+		method: 'GET',
+		credentials: 'include',
+		timeout: 15000,
+	});
+};
 
-// Campi di ricerca — inizializzati dai props ma modificabili dall'utente
-const searchCity = ref(props.initialCity);     // Citta' inserita dall'utente nel campo di ricerca
-const searchZip = ref(props.initialZip);       // CAP inserito dall'utente nel campo di ricerca
-const pudoResults = ref([]);                   // Array dei punti PUDO trovati dalla ricerca
-const loading = ref(false);                    // true durante la chiamata API di ricerca
-const searched = ref(false);                   // true dopo la prima ricerca (per mostrare "nessun risultato")
-const searchError = ref(null);                 // Messaggio di errore se la ricerca fallisce
+const getErrorStatus = (error) => {
+	return Number(error?.status ?? error?.response?.status ?? error?.data?.statusCode ?? 0);
+};
 
-// Gestione dei dettagli espansi (orari completi, indicazioni)
-const expandedPudoId = ref(null);              // ID del PUDO di cui si stanno vedendo i dettagli (null = nessuno)
-const loadingDetails = ref(null);              // ID del PUDO di cui si stanno caricando i dettagli
-const pudoDetails = ref({});                   // Cache dei dettagli gia' scaricati { pudoId: {...dati...} }
+const getErrorMessage = (error) => {
+	return error?.data?.error || error?.data?.message || error?.response?._data?.message || error?.message || '';
+};
 
-// ID del PUDO attualmente selezionato dall'utente (null = nessuna selezione)
-const selectedPudoId = ref(null);
+const searchAddress = ref('');
+const searchCity = ref(props.initialCity || '');
+const searchZip = ref(props.initialZip || '');
 
-// Se il componente padre aggiorna citta'/CAP (es. l'utente cambia indirizzo),
-// aggiorniamo i campi di ricerca solo se l'utente non ha gia' scritto qualcosa
-watch(() => props.initialCity, (v) => { if (v && !searchCity.value) searchCity.value = v; });
-watch(() => props.initialZip, (v) => { if (v && !searchZip.value) searchZip.value = v; });
+const loading = ref(false);
+const geolocating = ref(false);
+const searched = ref(false);
+const searchError = ref(null);
+const searchMeta = ref(null);
 
-/**
- * Cerca i punti PUDO tramite l'API BRT.
- * Chiama GET /api/brt/pudo/search con citta' e CAP.
- * L'API di BRT restituisce max 10 punti ordinati per distanza.
- */
+const pudoResults = ref([]);
+const selectedPudoKey = ref(null);
+const expandedPudoKey = ref(null);
+const loadingDetailsKey = ref(null);
+const pudoDetails = ref({});
+const detailsErrors = ref({});
+
+const referencePoint = ref(null); // { latitude, longitude, address, city, zip_code, label, source }
+const nowTick = ref(Date.now());
+let nowTimer = null;
+
+const hasSearchInput = computed(() => Boolean(searchCity.value?.trim() || searchZip.value?.trim()));
+const mapPoints = computed(() => pudoResults.value.filter((p) => isFiniteCoordinate(p.latitude) && isFiniteCoordinate(p.longitude)));
+
+const mapReferencePoint = computed(() => {
+	if (!referencePoint.value) return null;
+	return {
+		latitude: referencePoint.value.latitude,
+		longitude: referencePoint.value.longitude,
+		address: referencePoint.value.address || '',
+		city: referencePoint.value.city || '',
+		zip_code: referencePoint.value.zip_code || '',
+		label: referencePoint.value.label || '',
+	};
+});
+
+const strategyListLabel = computed(() => {
+	const strategies = Array.isArray(searchMeta.value?.strategy_used) ? searchMeta.value.strategy_used : [];
+	if (!strategies.length) return '';
+
+	const labels = {
+		city_zip: 'citta + CAP',
+		city_only: 'solo citta',
+		city_alt_zip: 'citta con CAP alternativi',
+		zip_only: 'solo CAP',
+		nearby_geo: 'integrazione nearby geolocalizzata',
+		nearby_geo_input: 'nearby da geocodifica indirizzo',
+		fallback_db: 'fallback database locale',
+		fallback_db_coordinates: 'fallback database da coordinate',
+	};
+
+	return strategies.map((item) => labels[item] || item).join(' • ');
+});
+
+watch(
+	() => props.initialCity,
+	(value) => {
+		if (value && !searchCity.value) searchCity.value = value;
+	}
+);
+
+watch(
+	() => props.initialZip,
+	(value) => {
+		if (value && !searchZip.value) searchZip.value = value;
+	}
+);
+
+onMounted(() => {
+	nowTimer = window.setInterval(() => {
+		nowTick.value = Date.now();
+	}, 60000);
+});
+
+onBeforeUnmount(() => {
+	if (nowTimer) {
+		window.clearInterval(nowTimer);
+		nowTimer = null;
+	}
+});
+
+const parseCoordinate = (value) => {
+	if (value === null || value === undefined || value === '') return null;
+	const parsed = Number.parseFloat(String(value).trim().replace(',', '.'));
+	return Number.isFinite(parsed) ? parsed : null;
+};
+
+const isFiniteCoordinate = (value) => Number.isFinite(parseCoordinate(value));
+
+const normalizeTextKey = (value) => String(value || '').trim().toLowerCase();
+
+const getPudoUiKey = (point) => {
+	const primary = String(point?.pudo_id || point?.carrier_pudo_id || point?.id || '').trim();
+	if (primary) return primary;
+
+	const lat = parseCoordinate(point?.latitude ?? point?.lat);
+	const lng = parseCoordinate(point?.longitude ?? point?.lng);
+	const latPart = Number.isFinite(lat) ? lat.toFixed(6) : 'na';
+	const lngPart = Number.isFinite(lng) ? lng.toFixed(6) : 'na';
+	return [
+		normalizeTextKey(point?.name),
+		normalizeTextKey(point?.address),
+		normalizeTextKey(point?.zip_code),
+		normalizeTextKey(point?.city),
+		latPart,
+		lngPart,
+	].join('|');
+};
+
+const setReferencePoint = (latitude, longitude, source = 'fields', extra = {}) => {
+	const lat = parseCoordinate(latitude);
+	const lng = parseCoordinate(longitude);
+	if (!Number.isFinite(lat) || !Number.isFinite(lng)) return false;
+
+	referencePoint.value = {
+		latitude: lat,
+		longitude: lng,
+		source,
+		address: extra.address || searchAddress.value || '',
+		city: extra.city || searchCity.value || '',
+		zip_code: extra.zip_code || searchZip.value || '',
+		label: extra.label || '',
+	};
+	return true;
+};
+
+const toRadians = (deg) => deg * (Math.PI / 180);
+
+const distanceInMeters = (from, to) => {
+	if (!from || !to) return null;
+	const earthRadius = 6371000;
+	const dLat = toRadians(to.latitude - from.latitude);
+	const dLng = toRadians(to.longitude - from.longitude);
+	const a =
+		Math.sin(dLat / 2) ** 2 +
+		Math.cos(toRadians(from.latitude)) * Math.cos(toRadians(to.latitude)) * Math.sin(dLng / 2) ** 2;
+	const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+	return Math.round(earthRadius * c);
+};
+
+const normalizePudoPoint = (rawPoint) => {
+	const point = rawPoint || {};
+	const id = point.pudo_id || point.carrier_pudo_id || point.id || '';
+	const latitude = parseCoordinate(point.latitude ?? point.lat);
+	const longitude = parseCoordinate(point.longitude ?? point.lng);
+	const apiDistance = Number(point.distance_meters);
+	const distance = Number.isFinite(apiDistance) ? Math.round(apiDistance) : null;
+
+	return {
+		pudo_id: String(id),
+		carrier_pudo_id: String(point.carrier_pudo_id || id || ''),
+		ui_key: getPudoUiKey(point),
+		provider: String(point.provider || 'BRT'),
+		name: point.name || 'Punto di ritiro BRT',
+		address: point.address || '',
+		city: point.city || '',
+		zip_code: point.zip_code || '',
+		province: point.province || '',
+		country: point.country || 'ITA',
+		latitude,
+		longitude,
+		distance_meters: distance,
+		enabled: typeof point.enabled === 'boolean' ? point.enabled : true,
+		opening_hours: point.opening_hours || null,
+		localization_hint: point.localization_hint || '',
+	};
+};
+
+const dedupePudoPoints = (points) => {
+	const byKey = new Map();
+
+	points.forEach((point) => {
+		const key = getPudoUiKey(point);
+		if (!byKey.has(key)) {
+			byKey.set(key, point);
+			return;
+		}
+
+		const current = byKey.get(key);
+		const currentDistance = Number.isFinite(Number(current.distance_meters)) ? Number(current.distance_meters) : Number.POSITIVE_INFINITY;
+		const incomingDistance = Number.isFinite(Number(point.distance_meters)) ? Number(point.distance_meters) : Number.POSITIVE_INFINITY;
+		if (incomingDistance < currentDistance) {
+			byKey.set(key, point);
+		}
+	});
+
+	return Array.from(byKey.values());
+};
+
+const sortByDistance = (points) => {
+	return [...points].sort((a, b) => {
+		const aDistance = Number.isFinite(Number(a.distance_meters)) ? Number(a.distance_meters) : Number.POSITIVE_INFINITY;
+		const bDistance = Number.isFinite(Number(b.distance_meters)) ? Number(b.distance_meters) : Number.POSITIVE_INFINITY;
+		if (aDistance !== bDistance) return aDistance - bDistance;
+		return String(a.name || '').localeCompare(String(b.name || ''), 'it', { sensitivity: 'base' });
+	});
+};
+
+const applyResults = (rawPoints) => {
+	const normalized = (rawPoints || []).map(normalizePudoPoint);
+	const withComputedDistance = normalized.map((point) => {
+		if (
+			referencePoint.value &&
+			Number.isFinite(point.latitude) &&
+			Number.isFinite(point.longitude)
+		) {
+			const computedDistance = distanceInMeters(referencePoint.value, {
+				latitude: point.latitude,
+				longitude: point.longitude,
+			});
+			return {
+				...point,
+				distance_meters: computedDistance ?? point.distance_meters,
+			};
+		}
+		return point;
+	});
+
+	const deduped = dedupePudoPoints(withComputedDistance);
+	pudoResults.value = sortByDistance(deduped);
+
+	if (selectedPudoKey.value) {
+		const exists = pudoResults.value.some((point) => String(point.ui_key) === String(selectedPudoKey.value));
+		if (!exists) {
+			selectedPudoKey.value = null;
+			emit('deselect');
+		}
+	}
+
+};
+
+const fetchWithTimeout = async (url, options = {}, timeoutMs = 4500) => {
+	const controller = new AbortController();
+	const timeoutId = window.setTimeout(() => controller.abort(), timeoutMs);
+	try {
+		return await fetch(url, {
+			...options,
+			signal: controller.signal,
+		});
+	} finally {
+		window.clearTimeout(timeoutId);
+	}
+};
+
+const geocodeFromSearchFields = async () => {
+	const parts = [searchAddress.value, searchZip.value, searchCity.value, 'Italia']
+		.map((item) => String(item || '').trim())
+		.filter(Boolean);
+
+	if (!parts.length) return null;
+
+	const query = encodeURIComponent(parts.join(', '));
+	const url = `https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&q=${query}`;
+	const response = await fetchWithTimeout(url, {
+		method: 'GET',
+		headers: {
+			Accept: 'application/json',
+		},
+	}, 4000);
+
+	if (!response.ok) return null;
+	const payload = await response.json();
+	const first = Array.isArray(payload) ? payload[0] : null;
+	if (!first) return null;
+
+	const latitude = parseCoordinate(first.lat);
+	const longitude = parseCoordinate(first.lon);
+	if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) return null;
+
+	return {
+		latitude,
+		longitude,
+		label: first.display_name || '',
+	};
+};
+
+const reverseGeocodeFromCoordinates = async (latitude, longitude) => {
+	const lat = parseCoordinate(latitude);
+	const lng = parseCoordinate(longitude);
+	if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
+
+	try {
+		const params = new URLSearchParams({
+			format: 'jsonv2',
+			lat: String(lat),
+			lon: String(lng),
+			addressdetails: '1',
+		});
+
+		const response = await fetchWithTimeout(`https://nominatim.openstreetmap.org/reverse?${params.toString()}`, {
+			method: 'GET',
+			headers: {
+				Accept: 'application/json',
+			},
+		}, 4000);
+
+		if (!response.ok) return null;
+		const payload = await response.json();
+		const address = payload?.address || {};
+		const street = address.road || address.pedestrian || address.path || '';
+		const houseNumber = address.house_number || '';
+		const fullAddress = [street, houseNumber].filter(Boolean).join(' ').trim();
+		const city = address.city || address.town || address.village || address.municipality || '';
+		const zipCode = String(address.postcode || '').replace(/\D/g, '').slice(0, 5);
+
+		return {
+			address: fullAddress,
+			city,
+			zip_code: zipCode,
+			label: payload?.display_name || '',
+		};
+	} catch {
+		return null;
+	}
+};
+
+const fetchNearbyPudo = async (latitude, longitude, maxResults = 50) => {
+	const params = new URLSearchParams();
+	params.set('latitude', String(latitude));
+	params.set('longitude', String(longitude));
+	params.set('max_results', String(maxResults));
+	const result = await publicApiFetch(`/api/brt/pudo/nearby?${params.toString()}`);
+	return result?.pudo || result?.data?.pudo || [];
+};
+
 const searchPudo = async () => {
-	// Non cercare se entrambi i campi sono vuoti
-	if (!searchCity.value?.trim() && !searchZip.value?.trim()) return;
+	if (!hasSearchInput.value) return;
+
 	loading.value = true;
 	searched.value = true;
 	searchError.value = null;
+	searchMeta.value = null;
 	pudoResults.value = [];
+
 	try {
-		// Costruiamo i parametri della query string
 		const params = new URLSearchParams();
-		if (searchCity.value) params.set('city', searchCity.value.trim());
-		if (searchZip.value) params.set('zip_code', searchZip.value.trim());
-		params.set('country', 'ITA');       // Solo punti in Italia
-		params.set('max_results', '10');    // Massimo 10 risultati
-		const result = await sanctumClient(`/api/brt/pudo/search?${params.toString()}`);
-		// La risposta ha il formato { success: true/false, pudo: [...], error: "..." }
+		if (searchAddress.value?.trim()) params.set('address', searchAddress.value.trim());
+		if (searchCity.value?.trim()) params.set('city', searchCity.value.trim());
+		if (searchZip.value?.trim()) params.set('zip_code', searchZip.value.trim());
+		params.set('country', 'ITA');
+		params.set('max_results', '50');
+
+		const result = await publicApiFetch(`/api/brt/pudo/search?${params.toString()}`);
 		if (result?.success === false) {
-			searchError.value = result?.error || 'Errore dalla API BRT. Riprova.';
-			pudoResults.value = [];
-		} else {
-			pudoResults.value = result?.pudo || result?.data?.pudo || [];
+			searchError.value = result?.error || 'Errore durante la ricerca dei punti di ritiro.';
+			return;
 		}
-	} catch (e) {
-		console.error('Errore ricerca PUDO:', e);
-		// Mostra l'errore specifico dal backend se disponibile
-		const errorMsg = e?.response?._data?.message || e?.data?.error || e?.message || '';
-		searchError.value = errorMsg ? `Errore: ${errorMsg}` : 'Errore durante la ricerca. Controlla la connessione e riprova.';
+
+		let points = result?.pudo || result?.data?.pudo || [];
+		const apiMeta = result?.meta || result?.data?.meta || {};
+		let strategyUsed = Array.isArray(apiMeta.strategy_used) ? [...apiMeta.strategy_used] : [];
+
+		// Mostra subito i risultati base: geocode/nearby non devono mai bloccare la UI.
+		applyResults(points);
+		searchMeta.value = {
+			...apiMeta,
+			strategy_used: strategyUsed.length ? strategyUsed : apiMeta.strategy_used,
+			returned_count: pudoResults.value.length,
+			requested_count: 50,
+		};
+
+		if (!referencePoint.value || referencePoint.value.source !== 'manual') {
+			try {
+				const geocoded = await geocodeFromSearchFields();
+				if (geocoded) {
+					setReferencePoint(geocoded.latitude, geocoded.longitude, 'fields', {
+						label: geocoded.label,
+					});
+				}
+			} catch (error) {
+				console.warn('Geocoding non disponibile:', error);
+			}
+		}
+
+		if (referencePoint.value) {
+			try {
+				const nearbyPoints = await fetchNearbyPudo(referencePoint.value.latitude, referencePoint.value.longitude, 50);
+				if (nearbyPoints.length) {
+					points = dedupePudoPoints([...points.map(normalizePudoPoint), ...nearbyPoints.map(normalizePudoPoint)]);
+					strategyUsed = Array.from(new Set([...strategyUsed, 'nearby_geo']));
+					applyResults(points);
+				}
+			} catch (error) {
+				console.warn('Ricerca nearby non disponibile:', error);
+			}
+		}
+
+		searchMeta.value = {
+			...apiMeta,
+			strategy_used: strategyUsed.length ? strategyUsed : apiMeta.strategy_used,
+			returned_count: pudoResults.value.length,
+			requested_count: 50,
+		};
+	} catch (error) {
+		console.error('Errore ricerca PUDO:', error);
+		const status = getErrorStatus(error);
+		const backendMessage = getErrorMessage(error);
+
+		if (status === 401 || status === 403) {
+			searchError.value = 'Servizio punti di ritiro temporaneamente non disponibile. Riprova tra poco.';
+		} else if (status === 422) {
+			searchError.value = backendMessage || 'Inserisci almeno citta o CAP per cercare i punti di ritiro.';
+		} else if (status >= 500) {
+			searchError.value = 'Il servizio BRT non risponde al momento. Riprova tra qualche minuto.';
+		} else {
+			searchError.value = backendMessage ? `Errore: ${backendMessage}` : 'Errore durante la ricerca. Riprova.';
+		}
+		pudoResults.value = [];
 	} finally {
 		loading.value = false;
 	}
 };
 
-/**
- * Mostra/nasconde i dettagli di un punto PUDO (orari completi, indicazioni stradali).
- * Chiama GET /api/brt/pudo/{pudoId} solo la prima volta, poi usa la cache.
- */
-const toggleDetails = async (pudo) => {
-	// Se e' gia' espanso, lo chiudiamo
-	if (expandedPudoId.value === pudo.pudo_id) {
-		expandedPudoId.value = null;
+const useCurrentLocation = async () => {
+	if (!navigator?.geolocation) {
+		searchError.value = 'Geolocalizzazione non supportata dal browser.';
 		return;
 	}
-	expandedPudoId.value = pudo.pudo_id;
-	// Se abbiamo gia' scaricato i dettagli, non li riscarichiamo (cache)
-	if (pudoDetails.value[pudo.pudo_id]) return;
-	loadingDetails.value = pudo.pudo_id;
+
+	geolocating.value = true;
+	searchError.value = null;
+
 	try {
-		const result = await sanctumClient(`/api/brt/pudo/${pudo.pudo_id}`);
-		pudoDetails.value[pudo.pudo_id] = result?.data || result;
-	} catch (e) {
-		console.error('Errore dettagli PUDO:', e);
+		const position = await new Promise((resolve, reject) => {
+			navigator.geolocation.getCurrentPosition(resolve, reject, {
+				enableHighAccuracy: true,
+				timeout: 10000,
+				maximumAge: 30000,
+			});
+		});
+
+		const latitude = position?.coords?.latitude;
+		const longitude = position?.coords?.longitude;
+		const reversedAddress = await reverseGeocodeFromCoordinates(latitude, longitude);
+		if (reversedAddress?.address) searchAddress.value = reversedAddress.address;
+		if (reversedAddress?.city) searchCity.value = reversedAddress.city;
+		if (reversedAddress?.zip_code) searchZip.value = reversedAddress.zip_code;
+
+		if (!setReferencePoint(latitude, longitude, 'geo', {
+			label: reversedAddress?.label || 'Posizione attuale',
+			address: reversedAddress?.address || '',
+			city: reversedAddress?.city || '',
+			zip_code: reversedAddress?.zip_code || '',
+		})) {
+			throw new Error('Coordinate non valide.');
+		}
+
+		// Se reverse geocode ha compilato almeno città o CAP, avvia la ricerca completa
+		// (search + nearby merge) senza richiedere click manuale.
+		if (hasSearchInput.value) {
+			await searchPudo();
+			return;
+		}
+
+		// Fallback: se non abbiamo campi testuali, usa comunque ricerca coordinate nearby.
+		loading.value = true;
+		searched.value = true;
+		const nearbyPoints = await fetchNearbyPudo(latitude, longitude, 50);
+		applyResults(nearbyPoints);
+		searchMeta.value = {
+			strategy_used: ['nearby_geo'],
+			returned_count: pudoResults.value.length,
+			requested_count: 50,
+			provider: 'BRT',
+			fallback: false,
+		};
+	} catch (error) {
+		console.error('Errore geolocalizzazione:', error);
+		const status = getErrorStatus(error);
+		const geoCode = Number(error?.code || 0);
+		if (status >= 500) {
+			searchError.value = 'Servizio geolocalizzazione temporaneamente non disponibile.';
+		} else if (geoCode === 1) {
+			searchError.value = 'Permesso posizione negato. Attiva la geolocalizzazione per cercare i punti vicini.';
+		} else if (geoCode === 3) {
+			searchError.value = 'Timeout posizione. Riprova oppure usa citta e CAP.';
+		} else {
+			searchError.value = 'Impossibile recuperare la posizione attuale.';
+		}
+		pudoResults.value = [];
+		searched.value = true;
 	} finally {
-		loadingDetails.value = null;
+		loading.value = false;
+		geolocating.value = false;
 	}
 };
 
-/**
- * Seleziona o deseleziona un punto PUDO.
- * Se l'utente clicca su un punto gia' selezionato → lo deseleziona (toggle).
- * Emette 'select' o 'deselect' al componente padre.
- */
 const selectPudo = (pudo) => {
-	if (selectedPudoId.value === pudo.pudo_id) {
-		// L'utente ha cliccato di nuovo sullo stesso punto → deseleziona
-		selectedPudoId.value = null;
+	if (selectedPudoKey.value === pudo.ui_key) {
+		selectedPudoKey.value = null;
 		emit('deselect');
-	} else {
-		// L'utente ha selezionato un nuovo punto
-		selectedPudoId.value = pudo.pudo_id;
-		emit('select', pudo);
+		return;
+	}
+
+	selectedPudoKey.value = pudo.ui_key;
+	emit('select', pudo);
+};
+
+const toggleDetails = async (pudo) => {
+	const detailKey = String(pudo.pudo_id || pudo.ui_key);
+	if (expandedPudoKey.value === detailKey) {
+		expandedPudoKey.value = null;
+		return;
+	}
+
+	expandedPudoKey.value = detailKey;
+	if (pudoDetails.value[detailKey]) return;
+	detailsErrors.value[detailKey] = null;
+
+	if (!pudo?.pudo_id) {
+		detailsErrors.value[detailKey] = 'Dettagli non disponibili per questo punto.';
+		return;
+	}
+
+	loadingDetailsKey.value = detailKey;
+	try {
+		const result = await publicApiFetch(`/api/brt/pudo/${pudo.pudo_id}`);
+		const payload = result?.pudo || result?.data?.pudo || result?.data || result || {};
+		pudoDetails.value[detailKey] = {
+			opening_hours: payload.opening_hours ?? payload.hours ?? pudo.opening_hours ?? '',
+			localization_hint: payload.localization_hint ?? payload.localizationHint ?? pudo.localization_hint ?? '',
+			enabled: typeof payload.enabled === 'boolean' ? payload.enabled : pudo.enabled,
+		};
+	} catch (error) {
+		console.error('Errore caricamento dettagli PUDO:', error);
+		const status = getErrorStatus(error);
+		if (status === 401) {
+			detailsErrors.value[detailKey] = 'Dettagli non disponibili al momento.';
+		} else if (status >= 500) {
+			detailsErrors.value[detailKey] = 'Errore server nel caricamento dettagli.';
+		} else {
+			detailsErrors.value[detailKey] = 'Impossibile caricare i dettagli di questo punto.';
+		}
+	} finally {
+		loadingDetailsKey.value = null;
 	}
 };
 
-/**
- * Formatta la distanza in metri in una stringa leggibile.
- * Esempio: 850 → "850 m", 1500 → "1.5 km"
- */
 const formatDistance = (meters) => {
-	if (!meters) return '';
-	const m = Number(meters);
-	if (m >= 1000) return (m / 1000).toFixed(1) + ' km';
-	return Math.round(m) + ' m';
+	const value = Number(meters);
+	if (!Number.isFinite(value)) return '';
+	if (value >= 1000) return `${(value / 1000).toFixed(1)} km`;
+	return `${Math.round(value)} m`;
 };
 
-/**
- * Formatta gli orari di apertura. Puo' essere una stringa ("Lun-Ven 9-18")
- * o un array (["Lun 9-13", "Mar 9-13", ...]) a seconda della risposta BRT.
- */
+const splitHoursParts = (rawHours) => {
+	if (!rawHours) return [];
+	if (Array.isArray(rawHours)) return rawHours.map((item) => String(item || '').trim()).filter(Boolean);
+	if (typeof rawHours === 'object') {
+		return Object.entries(rawHours)
+			.map(([key, value]) => `${key}: ${value}`)
+			.filter(Boolean);
+	}
+	return String(rawHours)
+		.split(/\n|\||;/g)
+		.map((item) => item.trim())
+		.filter(Boolean);
+};
+
+const dayTokenMap = {
+	0: ['dom', 'domenica', 'sun', 'sunday'],
+	1: ['lun', 'lunedi', 'lunedi', 'mon', 'monday'],
+	2: ['mar', 'martedi', 'martedi', 'tue', 'tuesday'],
+	3: ['mer', 'mercoledi', 'mercoledi', 'wed', 'wednesday'],
+	4: ['gio', 'giovedi', 'giovedi', 'thu', 'thursday'],
+	5: ['ven', 'venerdi', 'venerdi', 'fri', 'friday'],
+	6: ['sab', 'sabato', 'sat', 'saturday'],
+};
+
+const extractTodayHours = (rawHours) => {
+	const dayTokens = dayTokenMap[new Date(nowTick.value).getDay()] || [];
+	const parts = splitHoursParts(rawHours);
+	if (!parts.length) return '';
+
+	const dayMatches = parts.filter((part) => dayTokens.some((token) => part.toLowerCase().includes(token)));
+	if (dayMatches.length) return dayMatches.join(' | ');
+
+	if (parts.length === 1) return parts[0];
+	return '';
+};
+
+const parseHourToMinutes = (hourText) => {
+	const normalized = String(hourText || '').trim().replace('.', ':');
+	const match = normalized.match(/^(\d{1,2}):(\d{2})$/);
+	if (!match) return null;
+	const hours = Number(match[1]);
+	const minutes = Number(match[2]);
+	if (!Number.isFinite(hours) || !Number.isFinite(minutes)) return null;
+	return hours * 60 + minutes;
+};
+
+const isCurrentlyOpen = (hoursText) => {
+	if (!hoursText) return null;
+	const lower = hoursText.toLowerCase();
+	if (lower.includes('chiuso')) return false;
+
+	const ranges = [...hoursText.matchAll(/(\d{1,2}[:.]\d{2})\s*[-–]\s*(\d{1,2}[:.]\d{2})/g)];
+	if (!ranges.length) return null;
+
+	const now = new Date(nowTick.value);
+	const nowMinutes = now.getHours() * 60 + now.getMinutes();
+
+	return ranges.some((range) => {
+		const start = parseHourToMinutes(range[1]);
+		const end = parseHourToMinutes(range[2]);
+		if (start === null || end === null) return false;
+		return nowMinutes >= start && nowMinutes <= end;
+	});
+};
+
+const getRawOpeningHours = (pudo) => {
+	const detailKey = String(pudo.pudo_id || pudo.ui_key);
+	const details = pudoDetails.value[detailKey] || {};
+	return details.opening_hours ?? pudo.opening_hours;
+};
+
+const getTodayHoursText = (pudo) => {
+	const text = extractTodayHours(getRawOpeningHours(pudo));
+	return text || 'Orari di oggi non disponibili';
+};
+
+const getPudoStatus = (pudo) => {
+	const detailKey = String(pudo.pudo_id || pudo.ui_key);
+	const details = pudoDetails.value[detailKey] || {};
+	const enabled = typeof details.enabled === 'boolean' ? details.enabled : pudo.enabled;
+	const openFromHours = isCurrentlyOpen(getTodayHoursText(pudo));
+
+	if (enabled === false) return { label: 'Chiuso', className: 'text-rose-700 bg-rose-50 border-rose-200' };
+	if (openFromHours === true) return { label: 'Aperto ora', className: 'text-emerald-700 bg-emerald-50 border-emerald-200' };
+	if (openFromHours === false) return { label: 'Chiuso ora', className: 'text-rose-700 bg-rose-50 border-rose-200' };
+	return { label: 'Da verificare', className: 'text-slate-700 bg-slate-100 border-slate-200' };
+};
+
 const formatOpeningHours = (hours) => {
 	if (!hours) return '';
 	if (typeof hours === 'string') return hours;
 	if (Array.isArray(hours)) return hours.join(' | ');
+	if (typeof hours === 'object') {
+		return Object.entries(hours)
+			.map(([day, value]) => `${day}: ${value}`)
+			.join(' | ');
+	}
 	return '';
 };
 </script>
 
 <template>
 	<div class="mt-[16px]">
-		<!-- BARRA DI RICERCA: citta' + CAP + bottone cerca -->
-		<!-- L'utente inserisce la zona dove vuole ritirare e clicca "Cerca punti di ritiro" -->
-		<div class="flex flex-col tablet:flex-row gap-[10px] items-end">
-			<!-- Campo citta' -->
-			<div class="flex-1 w-full">
-				<label class="block text-[0.75rem] text-[#737373] mb-[4px]">Città</label>
+		<div class="grid grid-cols-1 tablet:grid-cols-[minmax(0,1fr)_190px_120px_auto] gap-[10px] items-end">
+			<div class="w-full">
+				<label class="block text-[0.75rem] text-[#737373] mb-[4px]">Via / Indirizzo (opzionale)</label>
 				<input
+					v-model="searchAddress"
 					type="text"
-					v-model="searchCity"
-					placeholder="es. Milano"
+					placeholder="es. Via Roma 10"
 					class="w-full bg-white rounded-[8px] h-[44px] px-[10px] text-[1rem] border border-[#D0D0D0] transition-[border-color,box-shadow] duration-200 focus:border-[#095866] focus:shadow-[0_0_0_3px_rgba(9,88,102,0.1)]"
 					style="font-size: 16px;"
 					@keydown.enter.prevent="searchPudo" />
 			</div>
-			<!-- Campo CAP -->
-			<div class="w-full tablet:w-[120px]">
+
+			<div class="w-full">
+				<label class="block text-[0.75rem] text-[#737373] mb-[4px]">Citta</label>
+				<input
+					v-model="searchCity"
+					type="text"
+					placeholder="es. Iglesias"
+					class="w-full bg-white rounded-[8px] h-[44px] px-[10px] text-[1rem] border border-[#D0D0D0] transition-[border-color,box-shadow] duration-200 focus:border-[#095866] focus:shadow-[0_0_0_3px_rgba(9,88,102,0.1)]"
+					style="font-size: 16px;"
+					@keydown.enter.prevent="searchPudo" />
+			</div>
+
+			<div class="w-full tablet:max-w-[130px]">
 				<label class="block text-[0.75rem] text-[#737373] mb-[4px]">CAP</label>
 				<input
-					type="text"
 					v-model="searchZip"
-					placeholder="es. 20100"
+					type="text"
 					maxlength="5"
+					placeholder="es. 09016"
 					class="w-full bg-white rounded-[8px] h-[44px] px-[10px] text-[1rem] border border-[#D0D0D0] transition-[border-color,box-shadow] duration-200 focus:border-[#095866] focus:shadow-[0_0_0_3px_rgba(9,88,102,0.1)]"
 					style="font-size: 16px;"
 					@keydown.enter.prevent="searchPudo" />
 			</div>
-			<!-- Bottone di ricerca: disabilitato se entrambi i campi sono vuoti o se sta gia' cercando -->
-			<button
-				type="button"
-				@click="searchPudo"
-				:disabled="loading || (!searchCity?.trim() && !searchZip?.trim())"
-				class="inline-flex items-center justify-center gap-[6px] h-[44px] px-[18px] bg-[#095866] text-white rounded-[8px] text-[0.875rem] font-semibold hover:bg-[#074a56] transition cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed whitespace-nowrap w-full tablet:w-auto">
-				<!-- Icona lente (quando non sta caricando) -->
-				<svg v-if="!loading" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-				<!-- Spinner (quando sta cercando) -->
-				<span v-if="loading" class="inline-block w-[16px] h-[16px] border-2 border-white border-t-transparent rounded-full animate-spin"></span>
-				{{ loading ? 'Ricerca...' : 'Cerca punti di ritiro' }}
-			</button>
+
+			<div class="flex flex-col tablet:flex-row items-stretch tablet:items-end gap-[8px] w-full tablet:w-auto">
+				<button
+					type="button"
+					@click="searchPudo"
+					:disabled="loading || !hasSearchInput"
+					class="inline-flex items-center justify-center gap-[6px] h-[44px] px-[16px] bg-[#095866] text-white rounded-[8px] text-[0.875rem] font-semibold hover:bg-[#074a56] transition cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed whitespace-nowrap min-w-[142px]">
+					<svg v-if="!loading" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+					<span v-if="loading" class="inline-block w-[16px] h-[16px] border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+					{{ loading ? 'Ricerca...' : 'Cerca punti' }}
+				</button>
+				<button
+					type="button"
+					@click="useCurrentLocation"
+					:disabled="geolocating || loading"
+					class="inline-flex items-center justify-center gap-[6px] h-[44px] px-[14px] bg-white text-[#095866] border border-[#C6D2D5] rounded-[8px] text-[0.8125rem] font-semibold hover:bg-[#F2F8F9] transition cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed whitespace-nowrap min-w-[150px]">
+					<span v-if="geolocating" class="inline-block w-[14px] h-[14px] border-2 border-[#095866] border-t-transparent rounded-full animate-spin"></span>
+					<span v-else class="inline-flex items-center gap-[6px]">
+						<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+							<path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
+							<circle cx="12" cy="12" r="3"/>
+						</svg>
+						Usa posizione
+					</span>
+				</button>
+			</div>
 		</div>
 
-		<!-- Messaggio di errore (se la chiamata API fallisce) -->
 		<p v-if="searchError" class="text-red-500 text-[0.875rem] mt-[12px]">{{ searchError }}</p>
 
-		<!-- RISULTATI DELLA RICERCA -->
-		<div v-if="searched && !loading" class="mt-[16px]">
-			<!-- Nessun punto trovato -->
-			<p v-if="pudoResults.length === 0 && !searchError" class="text-[0.875rem] text-[#737373] py-[20px] text-center">
-				Nessun punto di ritiro trovato per questa zona. Prova con un'altra città o CAP.
-			</p>
+		<div v-if="searched && !loading" class="mt-[12px] flex flex-wrap items-center gap-[8px] text-[0.8125rem]">
+			<span class="inline-flex items-center h-[28px] px-[10px] rounded-full bg-[#ECF6F7] text-[#095866] font-semibold">
+				{{ pudoResults.length }} risultati trovati
+			</span>
+			<span class="inline-flex items-center h-[28px] px-[10px] rounded-full bg-[#F4FAFB] text-[#095866] border border-[#CBE0E4] font-semibold">
+				Provider: BRT
+			</span>
+			<span v-if="searchMeta?.fallback" class="inline-flex items-center h-[28px] px-[10px] rounded-full bg-amber-50 text-amber-700 border border-amber-200 font-medium">
+				Fallback attivo
+			</span>
+			<span v-if="strategyListLabel" class="text-[#64748B]">Strategia: {{ strategyListLabel }}</span>
+		</div>
 
-			<!-- Griglia delle card dei punti PUDO trovati -->
-			<!-- Su mobile: 1 colonna. Su tablet/desktop: 2 colonne -->
-			<div v-else class="grid grid-cols-1 tablet:grid-cols-2 gap-[10px]">
-				<!-- Card singolo PUDO -->
-				<!-- Bordo teal + ombra se selezionato, bordo grigio se non selezionato -->
-				<div
-					v-for="pudo in pudoResults"
-					:key="pudo.pudo_id"
-					class="bg-white rounded-[12px] border-2 p-[14px] transition-[border-color,box-shadow] duration-200 cursor-pointer"
-					:class="selectedPudoId === pudo.pudo_id ? 'border-[#095866] shadow-md' : 'border-[#D0D0D0] hover:border-[#095866]/50'"
-					@click="selectPudo(pudo)">
+			<div v-if="searched" class="mt-[12px] grid grid-cols-1 desktop:grid-cols-[minmax(0,1fr)_380px] gap-[12px] items-start">
+			<div class="order-2 desktop:order-1">
+				<div v-if="loading" class="flex items-center justify-center py-[30px]">
+					<span class="inline-block w-[28px] h-[28px] border-3 border-[#E9EBEC] border-t-[#095866] rounded-full animate-spin"></span>
+				</div>
 
-					<!-- Riga superiore: icona casa + nome + indirizzo | checkmark se selezionato -->
-					<div class="flex items-start justify-between gap-[8px]">
+				<div v-else class="mt-[2px]">
+					<p v-if="pudoResults.length === 0 && !searchError" class="text-[0.875rem] text-[#737373] py-[20px] text-center">
+						Nessun punto di ritiro trovato per questa zona. Prova con un'altra citta o CAP.
+					</p>
+
+					<div v-else class="grid grid-cols-1 tablet:grid-cols-2 gap-[10px]">
+						<div
+							v-for="pudo in pudoResults"
+							:key="pudo.ui_key"
+							class="bg-white rounded-[12px] border-2 p-[14px] transition-[border-color,box-shadow] duration-200 cursor-pointer"
+							:class="selectedPudoKey === pudo.ui_key ? 'border-[#095866] shadow-md' : 'border-[#D0D0D0] hover:border-[#095866]/50'"
+							@click="selectPudo(pudo)">
+					<div class="flex items-start justify-between gap-[10px]">
 						<div class="flex-1 min-w-0">
 							<div class="flex items-center gap-[6px]">
-								<!-- Icona casa/negozio -->
 								<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#095866" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="shrink-0"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
 								<span class="text-[0.875rem] font-bold text-[#252B42] truncate">{{ pudo.name }}</span>
 							</div>
+							<div class="mt-[6px] flex flex-wrap items-center gap-[6px]">
+								<span class="inline-flex items-center h-[22px] px-[9px] rounded-full border border-[#CBE0E4] bg-[#F4FAFB] text-[#095866] text-[0.6875rem] font-semibold uppercase tracking-[0.2px]">
+									Punto BRT
+								</span>
+								<span
+									v-if="pudo.distance_meters"
+									class="inline-flex items-center h-[24px] px-[10px] rounded-full bg-[#ECF6F7] text-[#095866] text-[0.75rem] font-extrabold tracking-[0.1px]">
+									Distanza: {{ formatDistance(pudo.distance_meters) }}
+								</span>
+							</div>
 							<p class="text-[0.8125rem] text-[#737373] mt-[2px]">{{ pudo.address }}, {{ pudo.zip_code }} {{ pudo.city }}</p>
 						</div>
-						<!-- Cerchio teal con checkmark bianco: visibile solo quando questo PUDO e' selezionato -->
-						<div v-if="selectedPudoId === pudo.pudo_id" class="w-[24px] h-[24px] rounded-full bg-[#095866] flex items-center justify-center shrink-0">
-							<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+
+						<div class="flex flex-col items-end gap-[6px] shrink-0">
+							<span class="inline-flex items-center px-[8px] h-[24px] rounded-full border text-[0.6875rem] font-semibold" :class="getPudoStatus(pudo).className">
+								{{ getPudoStatus(pudo).label }}
+							</span>
+							<div
+								class="w-[22px] h-[22px] rounded-full border-[2px] flex items-center justify-center"
+								:class="selectedPudoKey === pudo.ui_key ? 'border-[#095866] bg-[#095866]' : 'border-[#95A3B3] bg-transparent'">
+								<div v-if="selectedPudoKey === pudo.ui_key" class="w-[10px] h-[10px] rounded-full bg-white"></div>
+							</div>
 						</div>
 					</div>
 
-					<!-- Info aggiuntive: distanza dal punto cercato + orari sintetici -->
-					<div class="flex items-center gap-[12px] mt-[8px] text-[0.75rem] text-[#737373]">
-						<!-- Distanza (es. "850 m" o "1.5 km") -->
-						<span v-if="pudo.distance_meters" class="inline-flex items-center gap-[3px]">
-							<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-							{{ formatDistance(pudo.distance_meters) }}
-						</span>
-						<!-- Orari sintetici -->
-						<span v-if="pudo.opening_hours" class="inline-flex items-center gap-[3px] truncate">
+					<div class="mt-[9px] grid gap-[4px] text-[0.75rem] text-[#64748B]">
+						<p class="inline-flex items-center gap-[4px]">
 							<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-							{{ typeof pudo.opening_hours === 'string' ? pudo.opening_hours : 'Vedi orari' }}
-						</span>
+							{{ getTodayHoursText(pudo) }}
+						</p>
 					</div>
 
-					<!-- Pannello dettagli espanso (visibile solo quando l'utente clicca "Dettagli e orari") -->
-					<!-- Chiama l'API /api/brt/pudo/{id} per gli orari completi -->
-					<div v-if="expandedPudoId === pudo.pudo_id" class="mt-[10px] pt-[10px] border-t border-[#E4E4E4] text-[0.8125rem]" @click.stop>
-						<!-- Spinner durante il caricamento dei dettagli -->
-						<div v-if="loadingDetails === pudo.pudo_id" class="flex items-center gap-[6px] text-[#737373]">
+					<div v-if="expandedPudoKey === String(pudo.pudo_id || pudo.ui_key)" class="mt-[10px] pt-[10px] border-t border-[#E4E4E4] text-[0.8125rem]" @click.stop>
+						<div v-if="loadingDetailsKey === String(pudo.pudo_id || pudo.ui_key)" class="flex items-center gap-[6px] text-[#737373]">
 							<span class="inline-block w-[14px] h-[14px] border-2 border-[#095866] border-t-transparent rounded-full animate-spin"></span>
 							Caricamento dettagli...
 						</div>
-						<!-- Dettagli caricati: orari completi e indicazioni per trovare il punto -->
-						<template v-else-if="pudoDetails[pudo.pudo_id]">
-							<p v-if="pudoDetails[pudo.pudo_id].opening_hours" class="text-[#252B42]">
-								<span class="font-semibold">Orari:</span> {{ formatOpeningHours(pudoDetails[pudo.pudo_id].opening_hours) }}
+						<template v-else-if="pudoDetails[String(pudo.pudo_id || pudo.ui_key)]">
+							<p v-if="pudoDetails[String(pudo.pudo_id || pudo.ui_key)].opening_hours" class="text-[#252B42]">
+								<span class="font-semibold">Orari completi:</span>
+								{{ formatOpeningHours(pudoDetails[String(pudo.pudo_id || pudo.ui_key)].opening_hours) }}
 							</p>
-							<p v-if="pudoDetails[pudo.pudo_id].localization_hint" class="text-[#737373] mt-[4px]">
-								{{ pudoDetails[pudo.pudo_id].localization_hint }}
+							<p v-if="pudoDetails[String(pudo.pudo_id || pudo.ui_key)].localization_hint" class="text-[#737373] mt-[4px]">
+								{{ pudoDetails[String(pudo.pudo_id || pudo.ui_key)].localization_hint }}
 							</p>
 						</template>
+						<p v-else-if="detailsErrors[String(pudo.pudo_id || pudo.ui_key)]" class="text-rose-600">
+							{{ detailsErrors[String(pudo.pudo_id || pudo.ui_key)] }}
+						</p>
 					</div>
 
-					<!-- Link per espandere/chiudere i dettagli -->
 					<button
 						type="button"
 						@click.stop="toggleDetails(pudo)"
 						class="mt-[8px] text-[0.75rem] text-[#095866] font-semibold hover:underline cursor-pointer">
-						{{ expandedPudoId === pudo.pudo_id ? 'Chiudi dettagli' : 'Dettagli e orari' }}
+						{{ expandedPudoKey === String(pudo.pudo_id || pudo.ui_key) ? 'Chiudi dettagli' : 'Dettagli e orari' }}
 					</button>
+						</div>
+					</div>
 				</div>
 			</div>
-		</div>
 
-		<!-- Spinner di caricamento durante la ricerca -->
-		<div v-if="loading" class="flex items-center justify-center py-[30px]">
-			<span class="inline-block w-[28px] h-[28px] border-3 border-[#E9EBEC] border-t-[#095866] rounded-full animate-spin"></span>
+				<div class="order-1 desktop:order-2">
+					<div class="bg-white rounded-[12px] border border-[#D0D0D0] p-[8px] min-h-[320px] tablet:min-h-[360px] desktop:min-h-[420px] desktop:sticky desktop:top-[92px]">
+						<ClientOnly>
+							<MapPudo
+								:points="mapPoints"
+								:selected-id="selectedPudoKey"
+								:reference-point="mapReferencePoint"
+								@select="selectPudo" />
+							<template #fallback>
+								<div class="w-full min-h-[300px] flex items-center justify-center text-[0.8125rem] text-[#6B7280]">
+									Caricamento mappa...
+								</div>
+							</template>
+						</ClientOnly>
+					</div>
+				<p
+					v-if="!loading && mapPoints.length === 0 && !searchError"
+					class="mt-[8px] text-[0.8125rem] text-[#6B7280]">
+					Nessun punto trovato: la mappa mostra il riferimento inserito oppure la vista Italia.
+				</p>
+			</div>
 		</div>
 	</div>
 </template>

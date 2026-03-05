@@ -5589,3 +5589,2383 @@ DATA: 2026-03-03
 2. Aggiungere un collo (`Pacco`/`Pallet`/`Valigia`).
 3. Atteso: nella riga `Peso (Kg) / Lato 1 / Lato 2 / Lato 3` l'icona del collo e' visibile a sinistra.
 4. Ripetere con tipo collo diverso e con refresh pagina: l'icona resta visibile.
+
+## TURNO: LOGICA
+DATA: 2026-03-05
+
+### Attivita' svolte
+- Ripristino chirurgico del blocco riepilogo sticky in `pages/la-tua-spedizione/[step].vue`:
+  - reintegrata mini-barra step nel box riepilogo (`Misure`, `Servizi`, `Indirizzi`, `Conferma`, `Pagamento`) con stato attivo/completato e guardie click;
+  - riepilogo header reso coerente con route e fallback (`summaryPackageLabel`, `summaryRouteLabel`);
+  - fix definitivo totale prezzo: sostituiti riferimenti inconsistenti con `summaryTotalPrice` in header e dettaglio;
+  - eliminata animazione di drift del testo nel riepilogo (nessuno spostamento laterale in hover/focus/active).
+- Riprogettata card hero `Spedizione Senza Etichetta` in variante nuova (`labelless-v4-*`):
+  - struttura e stili dedicati split contenuto/azione;
+  - pallino radio con dot pieno in stato selezionato (senza checkmark);
+  - icona no-label vettoriale chiara;
+  - CTA e pricing ordinati nella colonna azione;
+  - mantenuto binding funzionale (`chooseService`, tastiera, aria-pressed).
+- Coerenza servizi standard:
+  - ridotta icona `Assicurazione` a `52x52` nel dataset servizi.
+- Ripristino completo `PudoSelector.vue` (file incoerente e non compilabile):
+  - ricostruito script+template con variabili definite e flusso coerente;
+  - ricerca con campi effettivi `address`, `city`, `zip_code`, `country`, `max_results=50`;
+  - integrazione mappa `MapPudo` con marker punti + marker riferimento;
+  - distanza calcolata/ordinata e visualizzazione stato `Aperto/Chiuso` con orari del giorno corrente;
+  - meta ricerca in UI (`strategy_used`, fallback, conteggio risultati);
+  - mantenuti dettagli PUDO (`/api/brt/pudo/{id}`) con pannello espandibile.
+- Backend PUDO ripristinato e allineato:
+  - `BrtController@pudoSearch`: validazione `required_without` tra `city` e `zip_code`, normalizzazione input, default `max_results=50`;
+  - `BrtController@pudoNearby`: default `max_results=50`;
+  - `BrtService@getPudoByAddress`: strategia multi-pass (`city_zip`, `city_alt_zip`, `city_only`, `zip_only`) + fallback DB;
+  - aggiunti helper di deduplica `pudo_id`, merge e ordinamento distanza;
+  - aggiunta `meta` non-breaking in risposta (`strategy_used`, `returned_count`, `requested_count`, `fallback`).
+
+### File toccati in questo turno
+- `nuxt-spedizionefacile-master/pages/la-tua-spedizione/[step].vue`
+- `nuxt-spedizionefacile-master/components/PudoSelector.vue`
+- `laravel-spedizionefacile-main/app/Http/Controllers/BrtController.php`
+- `laravel-spedizionefacile-main/app/Services/BrtService.php`
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Parse SFC frontend:
+   - `pages/la-tua-spedizione/[step].vue` -> OK (nessun errore parser Vue SFC).
+   - `components/PudoSelector.vue` -> OK (nessun errore parser Vue SFC).
+2. Smoke UI step 2 (`/la-tua-spedizione/2`):
+   - atteso: nel box riepilogo compare totale valorizzato (`summaryTotalPrice`) e non piu stringa vuota con solo `€`;
+   - atteso: quando la barra step principale esce dalla viewport, mini-step appaiono nel riepilogo sticky;
+   - atteso: hover sul riepilogo non sposta il testo.
+3. Card `Senza Etichetta`:
+   - atteso: nuova struttura `labelless-v4-*`, radio vuoto/pieno, nessun checkmark.
+4. PUDO:
+   - atteso: ricerca valida anche con solo citta o solo CAP;
+   - atteso: risultati fino a 50, mappa visibile con marker e meta strategia/fallback.
+5. Nota ambiente:
+   - `php -l` non eseguibile in questo ambiente shell (`php: command not found`), quindi lint PHP da eseguire nel tuo ambiente locale.
+
+## TURNO: REVISIONE
+DATA: 2026-03-05
+
+### Attivita' svolte
+- Analizzato errore Vite in produzione/frontend: `Failed to resolve import "leaflet/dist/leaflet.css"` da `components/MapPudo.client.vue`.
+- Verificata root cause: dipendenze `leaflet` e `@vue-leaflet/vue-leaflet` assenti in `nuxt-spedizionefacile-master/package.json`.
+- Applicato fix dipendenze nel frontend con installazione pacchetti mancanti.
+- Verifica post-fix eseguita con risoluzione moduli Node:
+  - `require.resolve('leaflet/dist/leaflet.css')` -> OK
+  - `require.resolve('@vue-leaflet/vue-leaflet')` -> OK
+
+### File toccati in questo turno
+- `nuxt-spedizionefacile-master/package.json`
+- `nuxt-spedizionefacile-master/package-lock.json`
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. In `nuxt-spedizionefacile-master`, eseguire install dipendenze (`npm i`) se necessario.
+2. Avviare frontend (`npm run dev`) con Node >= 20.
+3. Aprire pagina con mappa PUDO.
+4. Atteso: non compare piu' overlay Vite su `leaflet/dist/leaflet.css`.
+
+### Nota ambiente
+- In questa shell locale e' presente Node `v18.19.1`; Nuxt 4 richiede Node >= 20.19 e il comando `npm run dev` qui fallisce per engine (`styleText` non disponibile in Node 18).
+
+## TURNO: CAPO
+DATA: 2026-03-05
+
+### Attivita' svolte
+- Hotfix urgente richiesto utente su `/la-tua-spedizione/2` per ripristinare il box riepilogo sticky come versione concordata.
+- Ripristinata mini-barra step nel riepilogo (5 step) con stato attivo/completato e click consentito solo sui completati.
+- Corretto prezzo riepilogo: eliminato binding fragile (`session.total_price || editCartTotalPrice` nel template) e introdotto `summaryTotalPrice` con fallback robusti (sessione, edit, somma pacchi).
+- Sistemato layout testo riepilogo (padding/spaziature/freccia) e rimossa la sensazione di spostamento testo in hover:
+  - transizioni del summary rese solo opacity/background;
+  - rimossa transizione globale `all` su elementi interattivi.
+- Aggiunto tracking visibilita' barra step principale (IntersectionObserver + fallback scroll) per mostrare i mini-step solo quando la barra principale esce dalla viewport.
+
+### File toccati in questo turno
+- `nuxt-spedizionefacile-master/pages/la-tua-spedizione/[step].vue`
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Parse SFC: `pages/la-tua-spedizione/[step].vue` -> OK.
+2. Aprire `/la-tua-spedizione/2`:
+   - quando la barra step principale e' visibile, nel riepilogo non devono comparire mini-step;
+   - quando la barra step principale esce dalla viewport, nel riepilogo compaiono i 5 mini-step con stile coerente.
+3. Verificare header riepilogo:
+   - mostra `Riepilogo: {colli}, {origine -> destinazione}, {prezzo}€`;
+   - il prezzo non resta vuoto (`€,`), ma usa valore reale con fallback.
+4. Hover su riepilogo:
+   - nessuno spostamento laterale della scritta.
+
+## TURNO: ARCHITETTURA
+DATA: 2026-03-05
+
+### Attivita' svolte
+- Hotfix logica prezzo riepilogo sticky in `/la-tua-spedizione/2` per i casi in cui la sessione ritorna `total_price=0` nonostante prezzo reale disponibile nello store.
+- Introdotta strategia di selezione prezzo robusta (`pickBestPriceAmount`) con priorita' al primo valore valido e positivo tra fonti multiple:
+  - `session.data.total_price`
+  - `userStore.totalPrice`
+  - somma `pendingShipment.packages`
+  - `editCartTotalPrice`
+  - somma `editablePackages`
+- Mantenuto fallback `0,00` solo se tutte le fonti risultano non valorizzate.
+- Corretto calcolo somme pacchi includendo `quantity`.
+
+### File toccati in questo turno
+- `nuxt-spedizionefacile-master/pages/la-tua-spedizione/[step].vue`
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Aprire `/la-tua-spedizione/2` dopo un preventivo con prezzo noto (>0).
+2. Atteso: nel riepilogo sticky il totale non e' `0,00€`, ma il prezzo reale del preventivo.
+3. Conferma parser SFC: OK (nessun errore tag/struttura).
+
+## TURNO: INTERFACCIA
+DATA: 2026-03-05
+
+### Attivita' svolte
+- Fix ulteriore su riepilogo sticky per prezzo mostrato a `0,00€` in presenza di dati reali nel browser.
+- Estese le fonti di fallback prezzo in `[step].vue`:
+  - `session.data.total_price`
+  - `userStore.totalPrice`
+  - `sessionStorage['spedizionefacile_user_store'].totalPrice`
+  - somma pacchi da `pendingShipment`, `userStore.packages`, `editablePackages`
+  - `editCartTotalPrice`
+- Migliorato calcolo somma pacchi con fallback su `single_price`, `single_priceOrig`, `weight_price/volume_price`.
+
+### File toccati in questo turno
+- `nuxt-spedizionefacile-master/pages/la-tua-spedizione/[step].vue`
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Aprire `/la-tua-spedizione/2` dopo preventivo valido.
+2. Atteso: nel riepilogo sticky compare il prezzo reale (>0) e non `0,00€`.
+3. Parse SFC del file: OK.
+
+## TURNO: LOGICA
+DATA: 2026-03-05
+
+### Attivita' svolte
+- Completato fix coordinato Step 2/3 su frontend senza reset globale.
+- `PudoSelector.vue`:
+  - rimosso uso di client autenticato per ricerca/dettagli PUDO; ora usa fetch pubblico verso `/api/brt/pudo/search`, `/api/brt/pudo/nearby`, `/api/brt/pudo/{id}`;
+  - corretto layout ricerca in 2 righe (riga campi + bottone cerca, riga separata con `Usa posizione` compatto) per eliminare bottone troppo lungo;
+  - mantenuta mappa visibile dopo ricerca anche con 0 risultati (`shouldShowMap`), con messaggio esplicativo;
+  - aggiunta gestione errori per stato HTTP (`401`, `422`, `5xx`) con messaggi UX dedicati;
+  - aggiunta gestione errore dettagli punto (`detailsErrors`) senza rompere la lista.
+- `[step].vue`:
+  - rinforzata stabilita' visuale del box riepilogo sticky per rimuovere micro-shift del testo su hover/focus (override transform/will-change e transizioni solo colore/bordo);
+  - mantenuta struttura `2 righe + chip` con mini-step non invasivi nel riepilogo;
+  - aggiunti attributi ARIA completi al dropdown `Indirizzi salvati` anche lato destinazione guest (`aria-expanded`, `aria-controls`, id univoci) con prompt login.
+- `01.sanctum-bootstrap.client.ts` gia' allineato al comportamento guest-safe:
+  - skip `init()` quando non esiste cookie sessione, per ridurre chiamate protette inutili in guest.
+
+### File toccati in questo turno
+- `nuxt-spedizionefacile-master/components/PudoSelector.vue`
+- `nuxt-spedizionefacile-master/pages/la-tua-spedizione/[step].vue`
+- `nuxt-spedizionefacile-master/plugins/01.sanctum-bootstrap.client.ts`
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Parse SFC locale:
+   - `pages/la-tua-spedizione/[step].vue` -> OK
+   - `components/PudoSelector.vue` -> OK
+   - `components/MapPudo.client.vue` -> OK
+2. Verifica tecnica rapida codice:
+   - in `PudoSelector.vue` non ci sono piu' riferimenti a `sanctumClient`.
+3. Smoke atteso UI:
+   - riepilogo sticky: nessuno spostamento testo in hover/focus;
+   - ricerca PUDO: layout 2 righe senza bottone lungo;
+   - mappa: visibile dopo ricerca anche con 0 risultati;
+   - guest: click su `Indirizzi salvati` apre prompt accesso senza chiamate protette inutili.
+
+### Nota ambiente
+- Avvio completo `nuxt dev` non verificato in questa shell Linux per limiti engine Node del progetto; validazione runtime finale da confermare nel tuo ambiente Windows dove gira il proxy locale.
+
+### Addendum TURNO LOGICA (2026-03-05)
+- Micro-fix `PudoSelector.vue`: `shouldShowMap` aggiornato a `searched === true` per mantenere la mappa sempre visibile subito dopo l'avvio ricerca (anche durante loading), riducendo salti layout.
+- Verifica parse SFC ripetuta: OK su `[step].vue`, `PudoSelector.vue`, `MapPudo.client.vue`.
+
+## TURNO: REVISIONE
+DATA: 2026-03-05
+
+### Attivita' svolte
+- Stabilizzazione finale Step 2/3 con fix runtime mappa e coerenza UX campi destinazione in modalita' PUDO.
+- `MapPudo.client.vue` hardening:
+  - introdotte chiavi marker deterministiche con fallback robusto (`__mapKey`) per evitare keyed diff instabile;
+  - introdotta `validPoints` computata e watcher mappa su dati normalizzati;
+  - mantenuto teardown non distruttivo (niente `map.remove()` manuale).
+- `PudoSelector.vue` refinements UX:
+  - layout ricerca consolidato in 2 righe pulite;
+  - bottone `Usa posizione` reso azione secondaria coerente (non full-width desktop), con testo guida;
+  - `Usa posizione` disabilitato durante loading e con spinner dedicato.
+- `[step].vue`:
+  - ridotta icona servizio `Assicurazione` a `52x52` per bilanciamento visuale;
+  - `applySavedAddress` ora in destinazione PUDO applica solo i campi contatto (nome, telefono, email, info), lasciando indirizzo bloccato al punto BRT;
+  - sezione header Destinazione riallineata con gruppo azioni coerente a destra;
+  - bottone `Indirizzi salvati` mantenuto visibile anche in PUDO (guest incluso), con comportamento coerente.
+- `assets/css/main.css`:
+  - rimossa scala hover globale su tutti `button/a` (causa drift e overflow trasversali);
+  - interazioni globali ridotte a colori/bordi/opacita' (motion solo opt-in).
+- `pages/riepilogo.vue`:
+  - rimosso uso di `transform/scale` da CTA principali e card azioni finali;
+  - uniformate le 3 card azione (`Aggiungi al carrello`, `Salva nelle spedizioni configurate`, `Aggiungi un'altra spedizione`) con stessa altezza minima/radius/border e transizioni non invasive.
+- Fase 2 homepage sotto preventivo:
+  - redesign completo sezioni `Homepage/Step.vue`, `Homepage/Recensioni.vue`, `Homepage/Servizi.vue` con gerarchia tipografica piu' chiara, card uniformi, copy leggibile, animazioni leggere e non invasive;
+  - CTA finale homepage riprogettata in `pages/index.vue` con layout piu' pulito e coerenza visuale.
+
+### File toccati in questo turno
+- `nuxt-spedizionefacile-master/components/MapPudo.client.vue`
+- `nuxt-spedizionefacile-master/components/PudoSelector.vue`
+- `nuxt-spedizionefacile-master/pages/la-tua-spedizione/[step].vue`
+- `nuxt-spedizionefacile-master/assets/css/main.css`
+- `nuxt-spedizionefacile-master/pages/riepilogo.vue`
+- `nuxt-spedizionefacile-master/components/Homepage/Step.vue`
+- `nuxt-spedizionefacile-master/components/Homepage/Recensioni.vue`
+- `nuxt-spedizionefacile-master/components/Homepage/Servizi.vue`
+- `nuxt-spedizionefacile-master/pages/index.vue`
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Parse SFC locale (eseguito):
+   - `pages/la-tua-spedizione/[step].vue` -> OK
+   - `components/PudoSelector.vue` -> OK
+   - `components/MapPudo.client.vue` -> OK
+   - `pages/riepilogo.vue` -> OK
+   - `components/Homepage/Step.vue` -> OK
+   - `components/Homepage/Recensioni.vue` -> OK
+   - `components/Homepage/Servizi.vue` -> OK
+   - `pages/index.vue` -> OK
+2. Smoke UI consigliato:
+   - `/la-tua-spedizione/2` modalita' PUDO: contatto editabile + indirizzo readonly, `Indirizzi salvati` visibile;
+   - ricerca PUDO + `Usa posizione`: nessun freeze, mappa visibile dopo ricerca;
+   - `/riepilogo`: hover su card azioni senza shift/overflow;
+   - homepage `/`: verificare nuove sezioni Step/Recensioni/Servizi + CTA finale.
+
+## TURNO: CAPO
+DATA: 2026-03-05
+
+### Sign-off
+- Confermato completamento operativo della fase prioritaria: stabilizzazione Step 2/3 + riepilogo + correzione motion globale.
+- Confermato avvio Fase 2 homepage con redesign sezioni sotto preventivo (Step, Recensioni, Servizi, CTA finale).
+- Nessuna modifica a contratti API/backend in questo turno; intervento confinato a frontend/UX.
+
+### Residuo da validare in ambiente utente
+- Verifica runtime completa nel tuo ambiente Windows (Nuxt/Laravel/proxy) per confermare assenza errore `instance.update is not a function` su ricerca PUDO e geolocalizzazione.
+- Verifica E2E finale flusso `/ -> /la-tua-spedizione/2 -> /riepilogo -> /checkout` con utente guest e autenticato.
+
+### File toccati in questo turno
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Aprire `_SQUADRA_DIARIO.md` e confermare sequenza aggiornata `... -> LOGICA -> REVISIONE -> CAPO`.
+2. Eseguire smoke browser sui 4 percorsi indicati in sign-off.
+
+## TURNO: ARCHITETTURA
+DATA: 2026-03-05
+
+### Attivita' svolte
+- Riesaminata UX della chiusura homepage su feedback utente: rilevata ridondanza CTA (sezione servizi + CTA finale pagina + CTA footer).
+- Definita correzione architetturale della sequenza contenuti below-the-fold:
+  1) mantenere una sola CTA globale in footer,
+  2) ripristinare in `Servizi` un blocco editoriale di valore (non duplicato CTA),
+  3) eliminare la CTA finale aggiuntiva in `index.vue` per evitare ripetizione e competizione visiva.
+
+### File toccati in questo turno
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Footer mantiene CTA globale finale.
+2. `Servizi.vue` torna ad avere blocco conclusivo di contenuto (story + highlight) sotto la griglia.
+3. `index.vue` non include piu' la CTA duplicata pre-footer.
+
+## TURNO: INTERFACCIA
+DATA: 2026-03-05
+
+### Attivita' svolte
+- `Homepage/Servizi.vue` aggiornato con nuovo blocco finale non ripetitivo:
+  - rimosso il micro-box CTA `Inizia ora` sotto la griglia servizi;
+  - introdotto blocco editoriale a 2 colonne (`hp-services-story`) con:
+    - eyebrow + titolo forte,
+    - due paragrafi narrativi,
+    - CTA contestuale `Scopri di più`,
+    - pannello highlight laterale con punti di valore.
+- `pages/index.vue` semplificata la chiusura pagina:
+  - rimossa CTA finale duplicata (band teal/orange) per lasciare il ruolo di conversione finale al footer;
+  - rimosso `promoSettings` inutilizzato dal `script setup`.
+
+### File toccati in questo turno
+- `nuxt-spedizionefacile-master/components/Homepage/Servizi.vue`
+- `nuxt-spedizionefacile-master/pages/index.vue`
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Parse SFC eseguito:
+   - `components/Homepage/Servizi.vue` -> OK
+   - `pages/index.vue` -> OK
+2. Smoke UX homepage:
+   - sotto servizi compare blocco editoriale finale (non il piccolo box CTA ripetitivo);
+   - sopra footer non compare piu' la CTA duplicata;
+   - resta un'unica CTA finale nel footer.
+
+## TURNO: LOGICA
+DATA: 2026-03-05
+
+### Attivita' svolte
+- Aggiornata la sezione homepage `Servizi` con una sesta card per bilanciare la griglia (3x2) ed eliminare il vuoto visivo dell'ultima riga.
+- Nuova card inserita nel dataset:
+  - Titolo: `Tracking live`
+  - Icona: `/img/homepage/services/tracking-live.svg`
+  - CTA: `Traccia ora`
+  - URL: `/traccia-spedizione`
+
+### File toccati in questo turno
+- `nuxt-spedizionefacile-master/components/Homepage/Servizi.vue`
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Parse SFC eseguito: `components/Homepage/Servizi.vue` -> OK.
+2. Smoke UI homepage:
+   - la griglia servizi mostra 6 card totali;
+   - layout desktop risulta bilanciato in due righe complete (3 + 3).
+
+## TURNO: REVISIONE
+DATA: 2026-03-05
+
+### Attivita' svolte
+- Uniformate le CTA testuali delle card nella sezione homepage `Servizi` al colore arancione brand (coerenza con card `Contrassegno`).
+- Rimosso colore dinamico per-link basato su `accent`; ora tutte le CTA usano palette conversione coerente:
+  - default `#E44203`
+  - hover `#c93800`
+
+### File toccati in questo turno
+- `nuxt-spedizionefacile-master/components/Homepage/Servizi.vue`
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Parse SFC eseguito: `components/Homepage/Servizi.vue` -> OK.
+2. Smoke UI homepage:
+   - CTA `Contattaci`, `Scopri il servizio`, `Prenota ritiro`, `Traccia ora` ora tutte arancioni come `Dettagli`.
+
+## TURNO: CAPO
+DATA: 2026-03-05
+
+### Attivita' svolte
+- Hotfix critico homepage su richiesta utente: sezione `Recensioni` resa sempre visibile per eliminare area vuota tra titolo e sezione successiva.
+- In `Recensioni.vue` rimosso il meccanismo di reveal (IntersectionObserver + classi `hp-reviews-reveal`) che in combinazione con `ClientOnly` lasciava i nodi in stato nascosto (`opacity: 0`) in alcuni render/hydration.
+- Mantenuti invariati Swiper, scrollbar e contenuto recensioni; nessuna modifica API o struttura dati.
+
+### File toccati in questo turno
+- `nuxt-spedizionefacile-master/components/Homepage/Recensioni.vue`
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Parse SFC eseguito: `components/Homepage/Recensioni.vue` -> OK.
+2. Smoke UX homepage (atteso):
+   - titolo recensioni + card visibili subito;
+   - nessuna sezione vuota prima di `Servizi`;
+   - comportamento Swiper invariato (drag/scrollbar).
+
+## TURNO: CAPO
+DATA: 2026-03-05
+
+### Attivita' svolte
+- Confermato piano V6 con priorita' operative bloccate:
+  - PUDO affidabile su citta' piccole (Iglesias inclusa), provider unico BRT, max 50 risultati.
+  - UX ricerca con `Cerca punti` + `Usa posizione` nello stesso gruppo azione.
+  - Mappa sempre visibile/interattiva dopo ricerca.
+  - Redesign homepage in direzione `editoriale pulita`.
+- Bloccata esecuzione sequenziale ruoli: `CAPO -> ARCHITETTURA -> INTERFACCIA -> LOGICA -> REVISIONE -> CAPO`.
+
+### File toccati in questo turno
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Piano V6 tradotto in task implementativi concreti su backend PUDO + frontend PUDO + homepage.
+
+---
+
+## TURNO: ARCHITETTURA
+DATA: 2026-03-05
+
+### Attivita' svolte
+- Rinforzata architettura backend PUDO per copertura citta' piccole:
+  - merge multi-pass con deduplica/ordinamento distanza;
+  - pass aggiuntivo `nearby_geo_input` da geocodifica input testuale;
+  - output `meta` esteso e provider esplicito `BRT`.
+- Allineato fallback database con output coerente allo stesso schema (`provider`, `meta`, `fallback`).
+- Esteso modello locale PUDO per evitare query troppo larghe con input parziali e aumentare copertura operativa.
+
+### File toccati in questo turno
+- `laravel-spedizionefacile-main/app/Services/BrtService.php`
+- `laravel-spedizionefacile-main/app/Models/PudoPoint.php`
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Controllo statico diff su metodi:
+   - `getPudoByAddress`, `getPudoByCoordinates`, `mapBrtPudoPoint`, `geocodeInputToCoordinates`.
+2. Presenza `provider: BRT` e `meta.strategy_used/returned_count/requested_count/fallback` nei rientri principali.
+
+---
+
+## TURNO: INTERFACCIA
+DATA: 2026-03-05
+
+### Attivita' svolte
+- Rifatto layout UX della ricerca PUDO:
+  - input `Via/Citta/CAP` + gruppo azioni unificato a destra con `Cerca punti` e `Usa posizione` affiancati;
+  - rimosso schema precedente con bottone secondario isolato e meno coerente.
+- Migliorata leggibilita' card risultato:
+  - badge fisso `Punto BRT`;
+  - distanza resa prominente con chip ad alto contrasto;
+  - ordine informazioni piu' leggibile.
+- Redesign homepage (direzione editoriale pulita):
+  - `Step.vue` riscritto senza reveal bloccanti e senza numerini decorativi;
+  - `Servizi.vue` riscritto (griglia 3x2 + blocco editoriale finale piu' moderno e meno ripetitivo);
+  - `Recensioni.vue` mantenuta sempre visibile con ritocco spaziature/contrasto.
+
+### File toccati in questo turno
+- `nuxt-spedizionefacile-master/components/PudoSelector.vue`
+- `nuxt-spedizionefacile-master/components/Homepage/Step.vue`
+- `nuxt-spedizionefacile-master/components/Homepage/Servizi.vue`
+- `nuxt-spedizionefacile-master/components/Homepage/Recensioni.vue`
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Parse SFC:
+   - `components/PudoSelector.vue` -> OK
+   - `components/Homepage/Step.vue` -> OK
+   - `components/Homepage/Servizi.vue` -> OK
+   - `components/Homepage/Recensioni.vue` -> OK
+2. Check semantico:
+   - nessuna classe reveal attiva in `Step.vue`/`Servizi.vue`;
+   - badge provider BRT e distanza in evidenza presenti in lista PUDO.
+
+---
+
+## TURNO: LOGICA
+DATA: 2026-03-05
+
+### Attivita' svolte
+- Estesa logica geolocalizzazione frontend PUDO:
+  - aggiunto reverse geocoding (Nominatim) per auto-compilare `via/citta/CAP` da posizione corrente;
+  - mantenuta ricerca nearby automatica dopo acquisizione coordinate;
+  - messaggi errore geolocalizzazione distinti per `permesso negato` e `timeout`.
+- Stabilizzato payload normalizzato punti PUDO con `provider` e chiavi UI stabili.
+- Estesa semantica strategia lato frontend (`nearby_geo_input`, `fallback_db_coordinates`).
+
+### File toccati in questo turno
+- `nuxt-spedizionefacile-master/components/PudoSelector.vue`
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Controllo statico presenza funzioni:
+   - `reverseGeocodeFromCoordinates`;
+   - aggiornamento `useCurrentLocation` con auto-fill campi.
+2. Controllo output UI:
+   - chip `Provider: BRT` e label strategia coerenti.
+
+---
+
+## TURNO: REVISIONE
+DATA: 2026-03-05
+
+### Attivita' svolte
+- Eseguita revisione tecnica locale su file toccati (frontend + backend).
+- Confermato parse SFC su tutti i componenti modificati.
+- Verificata assenza di errori di template nei componenti riscritti.
+- Verificata coerenza del contratto backend meta/provider su PUDO.
+
+### File toccati in questo turno
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Comando parse Vue eseguito con esito OK su 4 componenti.
+2. Verifica PHP lint non eseguibile in questo ambiente: `php: command not found`.
+
+---
+
+## TURNO: CAPO
+DATA: 2026-03-05
+
+### Chiusura
+- Completata implementazione piano V6 in sequenza con focus su:
+  1. PUDO citta' piccole + provider lock BRT;
+  2. UX ricerca/geo/map piu' robusta;
+  3. homepage aggiornata in stile editoriale pulito.
+- Pronto per smoke test runtime in ambiente Windows locale (`nuxt dev` + `laravel`) e validazione visuale finale.
+
+### File toccati in questo turno
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Sequenza turni registrata integralmente in diario.
+2. Checklist tecnica pronta per test manuale end-to-end.
+
+### Addendum tecnico (post-revisione)
+- Hardening mappa: in `components/MapPudo.client.vue` applicato filtro coordinate finite su `validPoints` per ridurre input sporchi e render instabili marker.
+- Verifica: parse SFC OK anche su `MapPudo.client.vue`.
+- Addendum API lock: in `app/Http/Controllers/BrtController.php` aggiunto filtro output per forzare provider `BRT` e scartare eventuali record non BRT sia su `pudoSearch` che `pudoNearby`.
+- Addendum homepage recensioni: aggiunto fallback SSR nel `ClientOnly` in `components/Homepage/Recensioni.vue` per evitare sezione vuota anche prima dell'hydration dello Swiper.
+
+---
+
+## TURNO: ARCHITETTURA
+DATA: 2026-03-05
+
+### Attivita' svolte
+- Definito pacchetto correttivo V7 su feedback utente:
+  1) mappa PUDO in colonna destra rispetto alle card risultati su desktop;
+  2) `Usa posizione` con ricerca automatica completa (senza click aggiuntivo);
+  3) blocco destinazione PUDO senza wrapper bianco interno;
+  4) redesign homepage sotto preventivo con struttura realmente nuova e recensioni in stile "verificate".
+- Decisa strategia anti-instabilita' mappa: key di remount controllata (`mapRenderVersion`) per evitare stati corrotti nel ciclo aggiornamenti.
+
+### File toccati in questo turno
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Piano V7 tradotto in modifiche concrete sui soli file target frontend.
+
+---
+
+## TURNO: INTERFACCIA
+DATA: 2026-03-05
+
+### Attivita' svolte
+- `components/PudoSelector.vue`:
+  - layout risultati/mappa riprogettato: lista card a sinistra, mappa interattiva a destra (desktop), con fallback mobile ordinato;
+  - mantenuti i bottoni `Cerca punti` e `Usa posizione` affiancati nel gruppo azione;
+  - distanza resa piu' evidente nel badge risultati.
+- `pages/la-tua-spedizione/[step].vue`:
+  - rimosso wrapper visuale "bianco nel bianco" nel blocco indirizzo destinazione in modalita' PUDO;
+  - mantenuto sfondo sezione grigio, input readonly in bianco con contrasto coerente.
+- Homepage redesign completo sotto preventivo:
+  - `components/Homepage/Step.vue` riscritta con layout editoriale nuovo (hero + board flusso);
+  - `components/Homepage/Servizi.vue` riscritta con griglia moderna e card featured;
+  - `components/Homepage/Recensioni.vue` riscritta con pattern recensioni verificate (stile feedaty-inspired), punteggio sintetico e card piu' leggibili.
+
+### File toccati in questo turno
+- `nuxt-spedizionefacile-master/components/PudoSelector.vue`
+- `nuxt-spedizionefacile-master/pages/la-tua-spedizione/[step].vue`
+- `nuxt-spedizionefacile-master/components/Homepage/Step.vue`
+- `nuxt-spedizionefacile-master/components/Homepage/Servizi.vue`
+- `nuxt-spedizionefacile-master/components/Homepage/Recensioni.vue`
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Controllo visivo atteso:
+   - mappa PUDO in colonna destra delle card (desktop);
+   - box indirizzo bloccato PUDO senza pannello bianco aggiuntivo;
+   - homepage con layout chiaramente diverso dal precedente.
+
+---
+
+## TURNO: LOGICA
+DATA: 2026-03-05
+
+### Attivita' svolte
+- `components/PudoSelector.vue`:
+  - introdotto `mapRenderVersion` per remount controllato della mappa e maggiore stabilita';
+  - `useCurrentLocation()` ora:
+    - geolocalizza,
+    - reverse-geocode e compila `via/citta/CAP` quando disponibili,
+    - avvia automaticamente la ricerca completa (`searchPudo`) senza click manuale;
+  - fallback automatico su nearby da coordinate quando reverse geocode non produce input testuale.
+- Consolidata coerenza meta ricerca lato UI (`provider BRT`, conteggio risultati, strategy).
+
+### File toccati in questo turno
+- `nuxt-spedizionefacile-master/components/PudoSelector.vue`
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Click `Usa posizione` -> ricerca avviata automaticamente.
+2. Ricerca completata senza click su `Cerca punti` aggiuntivo.
+3. Mappa continua a renderizzare anche in assenza risultati (con stato esplicativo).
+
+---
+
+## TURNO: REVISIONE
+DATA: 2026-03-05
+
+### Attivita' svolte
+- Eseguita validazione sintattica SFC sui file modificati.
+- Confermata assenza errori parse su:
+  - `components/PudoSelector.vue`
+  - `pages/la-tua-spedizione/[step].vue`
+  - `components/Homepage/Step.vue`
+  - `components/Homepage/Servizi.vue`
+  - `components/Homepage/Recensioni.vue`
+
+### File toccati in questo turno
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Comandi parse `@vue/compiler-sfc` tutti con esito `OK`.
+
+---
+
+## TURNO: CAPO
+DATA: 2026-03-05
+
+### Chiusura
+- Applicato il piano richiesto con fix concreti su PUDO/indirizzi e redesign homepage.
+- Focus completato su:
+  1. mappa PUDO affiancata ai risultati;
+  2. `Usa posizione` realmente automatico;
+  3. blocco indirizzo PUDO ripulito visivamente;
+  4. sezioni `Step`, `Servizi`, `Recensioni` riscritte in stile piu' moderno.
+
+### File toccati in questo turno
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Eseguire smoke visuale homepage e step 2/3 in ambiente locale Windows (`nuxt dev` + `laravel`) per confermare comportamento runtime end-to-end.
+
+### Addendum rapido (fix runtime mappa)
+- Corretto rendering mappa PUDO collassata lato destro:
+  - in `components/PudoSelector.vue` rimossi wrapper `ClientOnly` ridondanti attorno a `MapPudo` e forzata altezza minima del pannello mappa.
+  - in `components/MapPudo.client.vue` impostata altezza esplicita responsiva del contenitore (`320/360/420px`) per impedire collapse verticale.
+- Parse SFC ricontrollato: `PudoSelector.vue` e `MapPudo.client.vue` -> OK.
+
+---
+
+## TURNO: ARCHITETTURA
+DATA: 2026-03-05
+
+### Attivita' svolte
+- Raccolto nuovo requisito utente: rendere l'immagine iniziale homepage "molto piu' larga".
+- Definita modifica mirata sul solo layer hero immagine (`hero__image`) in `ContenutoHeader.vue`, mantenendo invariati contenuti e logica.
+
+### File toccati in questo turno
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Strategia: aumentare footprint immagine su mobile/tablet/desktop senza introdurre overflow orizzontale.
+
+---
+
+## TURNO: INTERFACCIA
+DATA: 2026-03-05
+
+### Attivita' svolte
+- Aggiornata UI hero homepage in `components/ContenutoHeader.vue`:
+  - base: `width` da `80vw` a `95vw`, `height` da `600px` a `660px`;
+  - tablet: immagine ampliata (`620x520`) e spostata per maggiore presenza visuale;
+  - desktop: colonna immagine allargata (`flex-basis 68%`) con altezza `760px`;
+  - desktop XL: altezza portata a `860px`.
+- Obiettivo raggiunto: immagine iniziale visibilmente piu' larga e dominante.
+
+### File toccati in questo turno
+- `nuxt-spedizionefacile-master/components/ContenutoHeader.vue`
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Aprire homepage `/` e verificare che l'immagine hero occupi piu' spazio orizzontale in tutte le viewport principali.
+
+---
+
+## TURNO: LOGICA
+DATA: 2026-03-05
+
+### Attivita' svolte
+- Nessuna modifica logica applicativa necessaria: intervento esclusivamente presentazionale (CSS hero).
+- Mantenuto invariato il comportamento del pricing card e dei badge promo.
+
+### File toccati in questo turno
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Nessun impatto su store/API/router; solo resa visiva hero.
+
+---
+
+## TURNO: REVISIONE
+DATA: 2026-03-05
+
+### Attivita' svolte
+- Validazione sintattica SFC su `components/ContenutoHeader.vue` con parser Vue.
+- Nessun errore template/script/style rilevato.
+
+### File toccati in questo turno
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Parse SFC: `components/ContenutoHeader.vue` -> `OK`.
+
+---
+
+## TURNO: CAPO
+DATA: 2026-03-05
+
+### Chiusura
+- Completato fix richiesto: immagine iniziale home resa molto piu' larga con comportamento responsive.
+
+### File toccati in questo turno
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Hard refresh homepage e controllo visuale su desktop/tablet/mobile.
+
+---
+
+## TURNO: ARCHITETTURA
+DATA: 2026-03-05
+
+### Attivita' svolte
+- Nuovo requisito utente su hero homepage:
+  - ripristinare la posizione percepita di "Spedisci in Italia" e box prezzo come prima;
+  - evitare che si allarghi il contenitore "vuoto";
+  - allargare invece l'immagine reale.
+- Definita correzione mirata su `hero__image`/`hero__image-bg` senza toccare logica prezzi.
+
+### File toccati in questo turno
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Modifiche solo CSS hero, nessun impatto su API/store.
+
+---
+
+## TURNO: INTERFACCIA
+DATA: 2026-03-05
+
+### Attivita' svolte
+- `components/ContenutoHeader.vue`:
+  - ripristinate proporzioni/posizionamenti hero verso assetto precedente;
+  - impostato `background-size: cover` e `background-position: center center` su `hero__image-bg` per allargare l'immagine effettiva e rimuovere effetto area bianca;
+  - affinati i valori responsive tablet/desktop/XL per mantenere immagine ampia ma non invadente.
+
+### File toccati in questo turno
+- `nuxt-spedizionefacile-master/components/ContenutoHeader.vue`
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Homepage: titolo e card prezzo tornano leggibili in alto/sinistra.
+2. Immagine hero risulta ampia con area effettiva piena (senza "quadro bianco").
+
+---
+
+## TURNO: LOGICA
+DATA: 2026-03-05
+
+### Attivita' svolte
+- Nessuna modifica logica applicativa necessaria (intervento solo su presentazione hero).
+
+### File toccati in questo turno
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Nessuna regressione su composable prezzi e rendering dinamico `minPriceFormatted`.
+
+---
+
+## TURNO: REVISIONE
+DATA: 2026-03-05
+
+### Attivita' svolte
+- Parse SFC rieseguito su `components/ContenutoHeader.vue` con esito positivo.
+
+### File toccati in questo turno
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. `@vue/compiler-sfc`: `components/ContenutoHeader.vue` -> OK.
+
+---
+
+## TURNO: CAPO
+DATA: 2026-03-05
+
+### Chiusura
+- Completato hotfix hero homepage richiesto dall'utente (riposizionamento + allargamento immagine reale).
+
+### File toccati in questo turno
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Eseguire hard refresh (`Ctrl+F5`) e controllo visuale sulla parte alta homepage.
+
+---
+
+## TURNO: ARCHITETTURA
+DATA: 2026-03-05
+
+### Attivita' svolte
+- Ricevuto refinement utente sul hero: alzare leggermente tre elementi specifici senza cambiare composizione:
+  1) box immagine,
+  2) rettangolo obliquo teal,
+  3) card prezzo "a partire da 8,90".
+- Scelta tecnica: micro-tuning di offset verticali (`top/bottom`) e `margin-top` nei breakpoint.
+
+### File toccati in questo turno
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Nessuna modifica a markup o logica dati; solo CSS.
+
+---
+
+## TURNO: INTERFACCIA
+DATA: 2026-03-05
+
+### Attivita' svolte
+- In `components/ContenutoHeader.vue` alzati i tre elementi richiesti:
+  - `hero__teal-accent`: top ridotto su base/tablet/desktop/XL;
+  - `hero__image`: top ridotto su base/desktop/XL e bottom meno negativo su tablet;
+  - `hero__card`: margin-top ridotto su base/tablet/desktop/XL.
+- Alzato anche il blocco sinistro in desktop tramite `hero__content` (`margin-top` piu' negativo) per mantenere allineamento visivo.
+
+### File toccati in questo turno
+- `nuxt-spedizionefacile-master/components/ContenutoHeader.vue`
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Hero homepage: titolo+card e immagine risultano visivamente piu' in alto.
+
+---
+
+## TURNO: LOGICA
+DATA: 2026-03-05
+
+### Attivita' svolte
+- Nessuna modifica logica applicativa (intervento UI/CSS puro).
+
+### File toccati in questo turno
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Nessun impatto su pricing dinamico (`minPriceFormatted`) e promo labels.
+
+---
+
+## TURNO: REVISIONE
+DATA: 2026-03-05
+
+### Attivita' svolte
+- Parse SFC rieseguito su `components/ContenutoHeader.vue`.
+
+### File toccati in questo turno
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. `@vue/compiler-sfc`: `components/ContenutoHeader.vue` -> OK.
+
+---
+
+## TURNO: CAPO
+DATA: 2026-03-05
+
+### Chiusura
+- Completato micro-refinement richiesto: immagine, rettangolo obliquo e card prezzo alzati.
+
+### File toccati in questo turno
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Hard refresh homepage e controllo allineamento verticale del blocco hero.
+
+---
+
+## TURNO: ARCHITETTURA
+DATA: 2026-03-05
+
+### Attivita' svolte
+- Ricevuto micro-feedback utente:
+  - abbassare il blocco immagine hero;
+  - alzare il box prezzo `8,90€`.
+- Definito intervento limitato a offset verticali CSS in `ContenutoHeader.vue`.
+
+### File toccati in questo turno
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Nessuna modifica di struttura/markup/logica; solo tuning layout.
+
+---
+
+## TURNO: INTERFACCIA
+DATA: 2026-03-05
+
+### Attivita' svolte
+- `components/ContenutoHeader.vue` aggiornato:
+  - `hero__image` abbassata su base/tablet/desktop/XL;
+  - `hero__card` alzata riducendo `margin-top` su base/tablet/desktop/XL.
+
+### File toccati in questo turno
+- `nuxt-spedizionefacile-master/components/ContenutoHeader.vue`
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Hero homepage: immagine piu' bassa, card prezzo piu' alta.
+
+---
+
+## TURNO: LOGICA
+DATA: 2026-03-05
+
+### Attivita' svolte
+- Nessuna modifica logica applicativa necessaria.
+
+### File toccati in questo turno
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Nessun impatto sui dati prezzo dinamico.
+
+---
+
+## TURNO: REVISIONE
+DATA: 2026-03-05
+
+### Attivita' svolte
+- Parse SFC rieseguito su `components/ContenutoHeader.vue`.
+
+### File toccati in questo turno
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. `@vue/compiler-sfc`: `components/ContenutoHeader.vue` -> OK.
+
+---
+
+## TURNO: CAPO
+DATA: 2026-03-05
+
+### Chiusura
+- Applicato refinement richiesto: immagine abbassata e box `8,90€` alzato.
+
+### File toccati in questo turno
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Hard refresh homepage e controllo finale sulle proporzioni del hero.
+
+---
+
+## TURNO: ARCHITETTURA
+DATA: 2026-03-05
+
+### Attivita' svolte
+- Nuovo micro-refinement utente sul hero:
+  - abbassare ancora il blocco immagine,
+  - alzare ancora la card `8,90€`.
+- Definito ulteriore tuning verticale su `ContenutoHeader.vue` per tutti i breakpoint.
+
+### File toccati in questo turno
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Intervento limitato ai soli offset/margini CSS hero.
+
+---
+
+## TURNO: INTERFACCIA
+DATA: 2026-03-05
+
+### Attivita' svolte
+- `components/ContenutoHeader.vue` aggiornato:
+  - card prezzo alzata ulteriormente (`margin-top` ridotto/negativo su base/tablet/desktop/XL);
+  - immagine abbassata ulteriormente (`top` aumentato su base/desktop/XL e `bottom` piu' negativo su tablet).
+
+### File toccati in questo turno
+- `nuxt-spedizionefacile-master/components/ContenutoHeader.vue`
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Hero: immagine visivamente piu' bassa rispetto al blocco titolo/prezzo.
+2. Card `8,90€` visivamente piu' in alto.
+
+---
+
+## TURNO: LOGICA
+DATA: 2026-03-05
+
+### Attivita' svolte
+- Nessuna modifica logica applicativa (CSS only).
+
+### File toccati in questo turno
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Nessun impatto su rendering dati dinamici prezzo/promozione.
+
+---
+
+## TURNO: REVISIONE
+DATA: 2026-03-05
+
+### Attivita' svolte
+- Parse SFC rieseguito su `components/ContenutoHeader.vue` con esito positivo.
+
+### File toccati in questo turno
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. `@vue/compiler-sfc`: `components/ContenutoHeader.vue` -> OK.
+
+---
+
+## TURNO: CAPO
+DATA: 2026-03-05
+
+### Chiusura
+- Applicato secondo pass di micro-tuning richiesto (immagine piu' bassa + card prezzo piu' alta).
+
+### File toccati in questo turno
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Hard refresh homepage e confronto visivo immediato del blocco hero.
+
+---
+
+## TURNO: ARCHITETTURA
+DATA: 2026-03-05
+
+### Attivita' svolte
+- Nuovo feedback utente sul hero:
+  - titolo su due righe fisse (`Spedisci` / `in Italia`);
+  - abbassare il rettangolo obliquo teal.
+- Definito intervento minimo su template H1 + offset verticali `hero__teal-accent`.
+
+### File toccati in questo turno
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Nessun impatto su logica/prezzo/API; solo markup/CSS hero.
+
+---
+
+## TURNO: INTERFACCIA
+DATA: 2026-03-05
+
+### Attivita' svolte
+- `components/ContenutoHeader.vue` aggiornato:
+  - H1 home cambiato in `Spedisci<br />in Italia` (a capo fisso).
+  - Rettangolo obliquo teal abbassato su tutti i breakpoint:
+    - base: `top 16 -> 34`
+    - tablet: `top 4 -> 24`
+    - desktop: `top 90 -> 118`
+    - desktop XL: `top 98 -> 126`
+
+### File toccati in questo turno
+- `nuxt-spedizionefacile-master/components/ContenutoHeader.vue`
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Hero: titolo su due righe.
+2. Rettangolo obliquo visivamente piu' basso.
+
+---
+
+## TURNO: LOGICA
+DATA: 2026-03-05
+
+### Attivita' svolte
+- Nessuna modifica logica applicativa necessaria (tuning UI puro).
+
+### File toccati in questo turno
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Nessun impatto su rendering dinamico del prezzo.
+
+---
+
+## TURNO: REVISIONE
+DATA: 2026-03-05
+
+### Attivita' svolte
+- Parse SFC rieseguito su `components/ContenutoHeader.vue`.
+
+### File toccati in questo turno
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. `@vue/compiler-sfc`: `components/ContenutoHeader.vue` -> OK.
+
+---
+
+## TURNO: CAPO
+DATA: 2026-03-05
+
+### Chiusura
+- Applicato il refinement richiesto: titolo in due righe + rettangolo obliquo abbassato.
+
+### File toccati in questo turno
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Hard refresh homepage e controllo visivo del blocco hero.
+
+---
+
+## TURNO: ARCHITETTURA
+DATA: 2026-03-05
+
+### Attivita' svolte
+- Richiesto ulteriore abbassamento del rettangolo obliquo teal.
+- Definito secondo micro-step su `hero__teal-accent` per base/tablet/desktop/XL.
+
+### File toccati in questo turno
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Solo tuning CSS su posizione verticale del rettangolo obliquo.
+
+---
+
+## TURNO: INTERFACCIA
+DATA: 2026-03-05
+
+### Attivita' svolte
+- `components/ContenutoHeader.vue`:
+  - `hero__teal-accent` ulteriormente abbassato:
+    - base `top: 34 -> 52`
+    - tablet `top: 24 -> 42`
+    - desktop `top: 118 -> 144`
+    - XL `top: 126 -> 152`
+
+### File toccati in questo turno
+- `nuxt-spedizionefacile-master/components/ContenutoHeader.vue`
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Rettangolo obliquo visibilmente piu' basso rispetto al precedente pass.
+
+---
+
+## TURNO: LOGICA
+DATA: 2026-03-05
+
+### Attivita' svolte
+- Nessuna modifica logica applicativa.
+
+### File toccati in questo turno
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Nessun impatto su dati dinamici o comportamento hero.
+
+---
+
+## TURNO: REVISIONE
+DATA: 2026-03-05
+
+### Attivita' svolte
+- Parse SFC rieseguito su `components/ContenutoHeader.vue` (OK).
+
+### File toccati in questo turno
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. `@vue/compiler-sfc`: `components/ContenutoHeader.vue` -> OK.
+
+---
+
+## TURNO: CAPO
+DATA: 2026-03-05
+
+### Chiusura
+- Completato ulteriore abbassamento del rettangolo obliquo richiesto dall'utente.
+
+### File toccati in questo turno
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Hard refresh homepage e controllo visuale del rettangolo obliquo.
+
+---
+
+## TURNO: ARCHITETTURA
+DATA: 2026-03-05
+
+### Attivita' svolte
+- Ricevuta richiesta: rendere l'immagine hero "leggermente piu' larga".
+- Deciso micro-intervento su `hero__image` per base/tablet/desktop/XL.
+
+### File toccati in questo turno
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Solo modifica CSS larghezza/flex immagine, nessun impatto logico.
+
+---
+
+## TURNO: INTERFACCIA
+DATA: 2026-03-05
+
+### Attivita' svolte
+- `components/ContenutoHeader.vue` aggiornato:
+  - base: `width 80vw -> 84vw`, `max-width` ampliata;
+  - tablet: `width 500 -> 530`;
+  - desktop: `flex-basis 60% -> 63%`;
+  - desktop/XL: `margin-left` ritoccato per mantenere il framing.
+
+### File toccati in questo turno
+- `nuxt-spedizionefacile-master/components/ContenutoHeader.vue`
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Hero: immagine percepita leggermente piu' larga in tutte le viewport.
+
+---
+
+## TURNO: LOGICA
+DATA: 2026-03-05
+
+### Attivita' svolte
+- Nessuna modifica logica applicativa.
+
+### File toccati in questo turno
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Rendering prezzo dinamico invariato.
+
+---
+
+## TURNO: REVISIONE
+DATA: 2026-03-05
+
+### Attivita' svolte
+- Parse SFC rieseguito su `components/ContenutoHeader.vue` (OK).
+
+### File toccati in questo turno
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. `@vue/compiler-sfc`: `components/ContenutoHeader.vue` -> OK.
+
+---
+
+## TURNO: CAPO
+DATA: 2026-03-05
+
+### Chiusura
+- Completato micro-aumento richiesto della larghezza immagine hero.
+
+### File toccati in questo turno
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Hard refresh homepage e controllo visivo.
+
+---
+
+## TURNO: ARCHITETTURA
+DATA: 2026-03-05
+
+### Attivita' svolte
+- Nuova segnalazione utente: immagine hero sembra entrare sotto al blocco `Preventivo Rapido`.
+- Definita correzione combinata:
+  1) ridurre overlap globale hero/section successiva,
+  2) ridurre altezza immagine desktop/XL mantenendo larghezza.
+
+### File toccati in questo turno
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Layout overlap ridotto senza cambiare contenuti o logica.
+
+---
+
+## TURNO: INTERFACCIA
+DATA: 2026-03-05
+
+### Attivita' svolte
+- `components/ContenutoHeader.vue`:
+  - `.hero`: overlap ridotto (`padding-bottom/margin-bottom` da `80/-80` a `52/-52`);
+  - desktop: immagine `height 640 -> 600`;
+  - XL: immagine `height 740 -> 700`, `top 132 -> 120`.
+- Obiettivo: evitare percezione di immagine "sotto" il box preventivo.
+
+### File toccati in questo turno
+- `nuxt-spedizionefacile-master/components/ContenutoHeader.vue`
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Hero e blocco `Preventivo Rapido` con separazione visiva piu' pulita.
+
+---
+
+## TURNO: LOGICA
+DATA: 2026-03-05
+
+### Attivita' svolte
+- Nessuna modifica logica applicativa.
+
+### File toccati in questo turno
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Nessun impatto su pricing e funzionalita' del preventivo.
+
+---
+
+## TURNO: REVISIONE
+DATA: 2026-03-05
+
+### Attivita' svolte
+- Parse SFC rieseguito su `components/ContenutoHeader.vue` (OK).
+
+### File toccati in questo turno
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. `@vue/compiler-sfc`: `components/ContenutoHeader.vue` -> OK.
+
+---
+
+## TURNO: CAPO
+DATA: 2026-03-05
+
+### Chiusura
+- Applicato fix anti-sovrapposizione immagine/box preventivo sul hero homepage.
+
+### File toccati in questo turno
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Hard refresh homepage e controllo visuale del bordo inferiore immagine rispetto al box preventivo.
+
+---
+
+## TURNO: ARCHITETTURA
+DATA: 2026-03-05
+
+### Attivita' svolte
+- Feedback utente confermato: il problema e' l'immagine hero che "entra" nel blocco preventivo, non la card prezzo.
+- Definita strategia:
+  1) ridurre overlap globale hero/section successiva,
+  2) risalire leggermente l'immagine su tablet/desktop/XL,
+  3) non toccare card `8,90€`.
+
+### File toccati in questo turno
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Intervento CSS mirato solo al layer immagine e al wrapping hero.
+
+---
+
+## TURNO: INTERFACCIA
+DATA: 2026-03-05
+
+### Attivita' svolte
+- `components/ContenutoHeader.vue` aggiornato:
+  - ridotto overlap hero: `padding-bottom 52 -> 24`, `margin-bottom -52 -> -16`;
+  - tablet: `hero__image bottom -46 -> -14`;
+  - desktop: `hero__image top 122 -> 102`;
+  - XL: `hero__image top 120 -> 98`.
+- Card prezzo lasciata invariata.
+
+### File toccati in questo turno
+- `nuxt-spedizionefacile-master/components/ContenutoHeader.vue`
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. L'immagine non deve piu' "entrare" pesantemente nel box `Preventivo Rapido`.
+
+---
+
+## TURNO: LOGICA
+DATA: 2026-03-05
+
+### Attivita' svolte
+- Nessuna modifica logica applicativa.
+
+### File toccati in questo turno
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Nessun impatto su dati prezzo e flusso preventivo.
+
+---
+
+## TURNO: REVISIONE
+DATA: 2026-03-05
+
+### Attivita' svolte
+- Parse SFC rieseguito su `components/ContenutoHeader.vue` (OK).
+
+### File toccati in questo turno
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. `@vue/compiler-sfc`: `components/ContenutoHeader.vue` -> OK.
+
+---
+
+## TURNO: CAPO
+DATA: 2026-03-05
+
+### Chiusura
+- Applicato fix mirato: ridotto ingresso immagine hero nel box `Preventivo Rapido`, mantenendo invariata la card `8,90€`.
+
+### File toccati in questo turno
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Hard refresh homepage e controllo visuale della separazione immagine/preventivo.
+
+---
+
+## TURNO: ARCHITETTURA
+DATA: 2026-03-05
+
+### Attivita' svolte
+- Nuovo feedback utente: immagine hero percepita "tagliata/ingrandita".
+- Root cause identificata: render con `background-size: cover` nel blocco immagine.
+- Decisione: passare a media reale (`img`) con `object-fit: contain` per evitare crop.
+
+### File toccati in questo turno
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Strategia non tocca testi/card prezzo; agisce solo sul rendering dell'immagine.
+
+---
+
+## TURNO: INTERFACCIA
+DATA: 2026-03-05
+
+### Attivita' svolte
+- `components/ContenutoHeader.vue`:
+  - sostituito rendering immagine da `background-image` a `<img>`;
+  - aggiunta classe `hero__image-media` con:
+    - `object-fit: contain`
+    - `object-position: center bottom`
+  - mantenuto contenitore con `overflow: hidden` e radius.
+- Obiettivo: eliminare zoom/crop percepito nella hero image.
+
+### File toccati in questo turno
+- `nuxt-spedizionefacile-master/components/ContenutoHeader.vue`
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Immagine non deve piu' essere croppata come in modalita' cover.
+
+---
+
+## TURNO: LOGICA
+DATA: 2026-03-05
+
+### Attivita' svolte
+- Nessuna modifica logica applicativa.
+
+### File toccati in questo turno
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Nessun impatto su dati dinamici header.
+
+---
+
+## TURNO: REVISIONE
+DATA: 2026-03-05
+
+### Attivita' svolte
+- Parse SFC rieseguito su `components/ContenutoHeader.vue` con esito OK.
+
+### File toccati in questo turno
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. `@vue/compiler-sfc`: `components/ContenutoHeader.vue` -> OK.
+
+---
+
+## TURNO: CAPO
+DATA: 2026-03-05
+
+### Chiusura
+- Applicato fix richiesto: immagine hero non piu' in `cover` (niente crop/zoom aggressivo).
+
+### File toccati in questo turno
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Hard refresh homepage e controllo visivo immagine hero.
+
+---
+
+## TURNO: ARCHITETTURA
+DATA: 2026-03-05
+
+### Attivita' svolte
+- Nuovo feedback utente: immagine hero troppo tagliata nella parte bassa.
+- Definita correzione: alzare leggermente il blocco immagine nei breakpoint principali per recuperare porzione inferiore visibile.
+
+### File toccati in questo turno
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Intervento confinato ai parametri verticali di `.hero__image`.
+
+---
+
+## TURNO: INTERFACCIA
+DATA: 2026-03-05
+
+### Attivita' svolte
+- `components/ContenutoHeader.vue`:
+  - tablet: `bottom -66 -> -46`;
+  - desktop: `top 144 -> 122`;
+  - XL: `top 154 -> 132`.
+- Risultato atteso: meno taglio inferiore dell'immagine.
+
+### File toccati in questo turno
+- `nuxt-spedizionefacile-master/components/ContenutoHeader.vue`
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Parte bassa dell'immagine piu' visibile rispetto al pass precedente.
+
+---
+
+## TURNO: LOGICA
+DATA: 2026-03-05
+
+### Attivita' svolte
+- Nessuna modifica logica (solo tuning visuale hero).
+
+### File toccati in questo turno
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Nessun impatto su dati/prezzo.
+
+---
+
+## TURNO: REVISIONE
+DATA: 2026-03-05
+
+### Attivita' svolte
+- Parse SFC rieseguito su `components/ContenutoHeader.vue`.
+
+### File toccati in questo turno
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. `@vue/compiler-sfc`: `components/ContenutoHeader.vue` -> OK.
+
+---
+
+## TURNO: CAPO
+DATA: 2026-03-05
+
+### Chiusura
+- Applicato il fix richiesto per ridurre il taglio inferiore dell'immagine hero.
+
+### File toccati in questo turno
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Hard refresh homepage e controllo visivo sulla parte bassa dell'immagine.
+
+---
+
+## TURNO: ARCHITETTURA
+DATA: 2026-03-05
+
+### Attivita' svolte
+- Nuovo feedback utente: resa hero non accettabile, presenza di "rettangoli bianchi" dietro immagine.
+- Root cause: rendering con `<img>` nel box hero ha reintrodotto artefatti visivi percepiti.
+- Decisione: ripristinare rendering immagine via `background-image` piena nel box e alleggerire l'accento obliquo.
+
+### File toccati in questo turno
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Strategia: eliminare artefatti senza toccare copy/card prezzo.
+
+---
+
+## TURNO: INTERFACCIA
+DATA: 2026-03-05
+
+### Attivita' svolte
+- `components/ContenutoHeader.vue`:
+  - ripristinato `hero__image-bg` con `background-image` dinamica;
+  - rimosso markup `<img>` interno;
+  - impostato `background-size: cover`, `background-position: center 62%`, `background-repeat: no-repeat`;
+  - ridotta opacita' dell'accento obliquo (`0.15 -> 0.06`, tablet `0.12 -> 0.05`).
+
+### File toccati in questo turno
+- `nuxt-spedizionefacile-master/components/ContenutoHeader.vue`
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Immagine hero senza rettangoli bianchi interni.
+2. Accento obliquo molto piu' leggero.
+
+---
+
+## TURNO: LOGICA
+DATA: 2026-03-05
+
+### Attivita' svolte
+- Nessuna modifica logica applicativa.
+
+### File toccati in questo turno
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Nessun impatto su rendering dinamico prezzo.
+
+---
+
+## TURNO: REVISIONE
+DATA: 2026-03-05
+
+### Attivita' svolte
+- Parse SFC rieseguito su `components/ContenutoHeader.vue` con esito OK.
+
+### File toccati in questo turno
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. `@vue/compiler-sfc`: `components/ContenutoHeader.vue` -> OK.
+
+---
+
+## TURNO: CAPO
+DATA: 2026-03-05
+
+### Chiusura
+- Applicato fix correttivo hero (render immagine piena + riduzione rettangoli percepiti dietro).
+
+### File toccati in questo turno
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Hard refresh homepage e conferma visiva lato utente.
+
+---
+
+## TURNO: ARCHITETTURA
+DATA: 2026-03-05
+
+### Attivita' svolte
+- Nuovo feedback utente: hero troppo vicino alla navbar, disallineato con la colonna sinistra e immagine non adatta al box.
+- Root cause confermata: layout desktop basato su offset negativi (`margin-top` e `margin-left`) e immagine fallback verticale che genera crop aggressivo.
+- Decisione tecnica: migrazione a layout desktop a griglia stabile, eliminazione offset negativi e introduzione fallback image landscape locale.
+
+### File toccati in questo turno
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Strategia definita: allineamento top tra testo e immagine, maggiore distanza dalla navbar, nessun overlap con preventivo.
+
+---
+
+## TURNO: INTERFACCIA
+DATA: 2026-03-05
+
+### Attivita' svolte
+- `components/ContenutoHeader.vue`:
+  - aggiornato preload hero su `/img/homepage/hero-truck-landscape.jpg`;
+  - aggiornato fallback hero image nel template sulla nuova risorsa landscape;
+  - rifatto il layout desktop hero con `grid` (colonna testo + colonna immagine) eliminando spostamenti negativi;
+  - aumentata spaziatura superiore hero per separarlo dalla navbar;
+  - riallineata l'immagine alla partenza della colonna sinistra;
+  - regolata altezza/width immagine su mobile/tablet/desktop/XL per evitare effetto taglio e sovrapposizione sul box preventivo;
+  - ridotto rumore del blocco obliquo teal.
+- Nuovo asset aggiunto:
+  - `public/img/homepage/hero-truck-landscape.jpg` (landscape 1600x1067).
+
+### File toccati in questo turno
+- `nuxt-spedizionefacile-master/components/ContenutoHeader.vue`
+- `nuxt-spedizionefacile-master/public/img/homepage/hero-truck-landscape.jpg`
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Hero non ancorato alla navbar su desktop.
+2. Immagine e blocco testo con partenza top coerente.
+3. Fallback image adatta al box orizzontale.
+
+---
+
+## TURNO: LOGICA
+DATA: 2026-03-05
+
+### Attivita' svolte
+- Nessuna modifica logica applicativa.
+- Confermata invarianza di pricing e route handling nel componente hero.
+
+### File toccati in questo turno
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Nessun impatto su composables `usePriceBands` e `useAdminImage`.
+
+---
+
+## TURNO: REVISIONE
+DATA: 2026-03-05
+
+### Attivita' svolte
+- Eseguito parse SFC su `components/ContenutoHeader.vue` con `@vue/compiler-sfc`.
+
+### File toccati in questo turno
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. `@vue/compiler-sfc`: `components/ContenutoHeader.vue` -> OK.
+
+---
+
+## TURNO: CAPO
+DATA: 2026-03-05
+
+### Chiusura
+- Applicato redesign correttivo hero richiesto: distanza dalla navbar, allineamento con colonna sinistra e nuova fallback image landscape.
+
+### File toccati in questo turno
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Hard refresh homepage e controllo visivo hero su desktop.
+2. Verifica che l'immagine non risulti piu' "schiacciata/tagliata" come nella versione precedente.
+
+---
+
+## TURNO: CAPO
+DATA: 2026-03-05
+
+### Attivita' svolte
+- Presa in carico esecuzione piano V7 completo homepage.
+- Obiettivi bloccati: hero riallineata e piu' ampia, redesign completo Step/Servizi/Recensioni, ordine sezioni `Step -> Servizi -> Recensioni`.
+
+### File toccati in questo turno
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Scope confermato solo homepage (no PUDO/backend).
+
+---
+
+## TURNO: ARCHITETTURA
+DATA: 2026-03-05
+
+### Attivita' svolte
+- Definita architettura visuale e tecnica per homepage:
+  - Hero con griglia desktop fissa (`560/760`) e spaziature deterministiche per evitare overlap con preventivo.
+  - Step trasformata in timeline editoriale 4 card con ghost indices.
+  - Servizi ricostruita come bento asimmetrico a 7 card con aree nominate e varianti (`hero`, `tall`, `mini`, `wide`).
+  - Recensioni con slider senza scrollbar visibile, edge-fade e autoplay rispettoso di `prefers-reduced-motion`.
+
+### File toccati in questo turno
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Nessuna decisione lasciata aperta per implementazione UI.
+
+---
+
+## TURNO: INTERFACCIA
+DATA: 2026-03-05
+
+### Attivita' svolte
+- `components/ContenutoHeader.vue`:
+  - applicate spaziature hero (`mobile 28/72`, `tablet 40/96`, `desktop 72/120`) e grid desktop `minmax(0,560px) minmax(0,760px)`;
+  - immagine resa piu' grande e proporzionata (`desktop height 620`, `bg cover`, `position center 48%`), mantenendo fallback locale landscape;
+  - titolo forzato su due righe `Spedisci / in Italia`.
+- `components/Homepage/Step.vue`:
+  - sezione riscritta da zero in stile editoriale con timeline 4 step, ghost numbers, card translucide e CTA finale unica.
+- `components/Homepage/Servizi.vue`:
+  - sezione riscritta da zero in bento asimmetrico;
+  - aggiunta 7a card `Assicurazione`;
+  - CTA uniformate in arancione brand;
+  - rimossa estetica legacy con topline/bordi rigidi.
+- `components/Homepage/Recensioni.vue`:
+  - sezione riscritta da zero con badge punteggio integrato, card con avatar floating, slider senza scrollbar visuale;
+  - introdotto autoplay controllato e disattivazione in `prefers-reduced-motion`.
+- `pages/index.vue`:
+  - riordinato rendering sezioni: Step -> Servizi -> Recensioni.
+
+### File toccati in questo turno
+- `nuxt-spedizionefacile-master/components/ContenutoHeader.vue`
+- `nuxt-spedizionefacile-master/components/Homepage/Step.vue`
+- `nuxt-spedizionefacile-master/components/Homepage/Servizi.vue`
+- `nuxt-spedizionefacile-master/components/Homepage/Recensioni.vue`
+- `nuxt-spedizionefacile-master/pages/index.vue`
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Nuova UI visivamente non piu' assimilabile alla versione template precedente.
+2. CTA servizi uniformate e 7 card presenti.
+
+---
+
+## TURNO: LOGICA
+DATA: 2026-03-05
+
+### Attivita' svolte
+- Applicata logica di accessibilita'/motion su recensioni:
+  - rilevazione `prefers-reduced-motion`;
+  - autoplay disattivato quando richiesto.
+- Mantenuta invarianza dei contratti dati esterni (nessuna modifica API/backend).
+
+### File toccati in questo turno
+- `nuxt-spedizionefacile-master/components/Homepage/Recensioni.vue`
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Nessun cambiamento su contratti backend o composables di business.
+
+---
+
+## TURNO: REVISIONE
+DATA: 2026-03-05
+
+### Attivita' svolte
+- Eseguita validazione parse SFC con `@vue/compiler-sfc` sui file modificati:
+  - `components/ContenutoHeader.vue`
+  - `components/Homepage/Step.vue`
+  - `components/Homepage/Servizi.vue`
+  - `components/Homepage/Recensioni.vue`
+  - `pages/index.vue`
+
+### File toccati in questo turno
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Tutti i file sopra -> `OK` in parse SFC.
+
+---
+
+## TURNO: CAPO
+DATA: 2026-03-05
+
+### Chiusura
+- Completata implementazione piano V7 su homepage: hero riallineata/ingrandita + redesign totale delle 3 sezioni informative + ordine sezioni aggiornato.
+
+### File toccati in questo turno
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Hard refresh homepage e controllo layout desktop/mobile.
+2. Verifica che non siano presenti errori Vue parse sui file toccati.
+
+---
+
+## TURNO: CAPO
+DATA: 2026-03-05
+
+### Attivita' svolte
+- Nuovo feedback utente: risultato percepito come "disastro" con troppi macro-box annidati.
+- Decisione: passaggio a layout piu' moderno e meno "container-in-container" mantenendo card informative, ma rimuovendo gusci rigidi esterni per Step/Servizi/Recensioni.
+
+### File toccati in questo turno
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Target UX definito: gerarchia per spaziatura e ritmo, non con box esterni pesanti.
+
+---
+
+## TURNO: ARCHITETTURA
+DATA: 2026-03-05
+
+### Attivita' svolte
+- Ridefinita architettura della sezione servizi per correggere compressione testi (card troppo strette in desktop).
+- Nuove aree griglia:
+  - tablet: `pickup pickup / tracking labelFree / support wallet / cod insurance`
+  - desktop: `pickup pickup tracking / pickup pickup tracking / labelFree support wallet / cod insurance wallet`
+- Confermata rimozione macro-shell visuale da Step e Recensioni.
+
+### File toccati in questo turno
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Eliminata causa principale del testo verticale/compressione card nei servizi.
+
+---
+
+## TURNO: INTERFACCIA
+DATA: 2026-03-05
+
+### Attivita' svolte
+- `components/Homepage/Step.vue`:
+  - rimosso effetto macro-container (sfondo/bordo/ombra del wrapper) mantenendo timeline card.
+- `components/Homepage/Servizi.vue`:
+  - sezione ricomposta per ridurre effetto "box dentro box";
+  - mantenuta griglia bento ma con aree piu' leggibili;
+  - ridotte altezze forzate e migliorata distribuzione CTA/testi;
+  - confermate 7 card (inclusa `Assicurazione`) e CTA arancioni coerenti.
+- `components/Homepage/Recensioni.vue`:
+  - rimosso macro-shell esterno;
+  - header + cards direttamente su sezione con edge-fade slider.
+
+### File toccati in questo turno
+- `nuxt-spedizionefacile-master/components/Homepage/Step.vue`
+- `nuxt-spedizionefacile-master/components/Homepage/Servizi.vue`
+- `nuxt-spedizionefacile-master/components/Homepage/Recensioni.vue`
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Sezioni sotto preventivo senza contenitori esterni "pesanti".
+2. Testi card servizi non piu' compressi verticalmente nel layout desktop.
+
+---
+
+## TURNO: LOGICA
+DATA: 2026-03-05
+
+### Attivita' svolte
+- Mantenuta invarianza della logica dati su Step/Servizi/Recensioni.
+- Confermato mantenimento `prefers-reduced-motion` nelle recensioni.
+
+### File toccati in questo turno
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Nessun cambio contratti dati/backend.
+
+---
+
+## TURNO: REVISIONE
+DATA: 2026-03-05
+
+### Attivita' svolte
+- Eseguito parse SFC su:
+  - `components/Homepage/Step.vue`
+  - `components/Homepage/Servizi.vue`
+  - `components/Homepage/Recensioni.vue`
+
+### File toccati in questo turno
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Tutti i file -> `OK` con `@vue/compiler-sfc`.
+
+---
+
+## TURNO: CAPO
+DATA: 2026-03-05
+
+### Chiusura
+- Applicato refinement UX richiesto: riduzione netta dell'effetto "box annidati" e griglia servizi riequilibrata.
+
+### File toccati in questo turno
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Hard refresh homepage per confronto visivo con versione precedente.
+
+---
+
+## TURNO: CAPO
+DATA: 2026-03-05
+
+### Attivita' svolte
+- Nuovo feedback utente: layout percepito ancora confuso (card non bilanciate, recensioni poco convincenti, 3 mini-card finali senza significato).
+- Obiettivo bloccato: revisione sensata orientata a chiarezza, non solo esecuzione letterale.
+
+### File toccati in questo turno
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Priorita' UX ridefinite su chiarezza gerarchica e coerenza card.
+
+---
+
+## TURNO: ARCHITETTURA
+DATA: 2026-03-05
+
+### Attivita' svolte
+- Ridefinita struttura Servizi per eliminare elementi ambigui:
+  - rimozione delle 3 mini-card informative finali;
+  - nuova griglia bento con aree piu' leggibili e senza compressione verticale dei contenuti.
+- Ridefinita struttura Recensioni con card altezza coerente e sezione distinta dal fondo pagina.
+
+### File toccati in questo turno
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Eliminati elementi a bassa comprensibilita' (mini-card).
+2. Definite regole di uniformita' altezze card recensioni.
+
+---
+
+## TURNO: INTERFACCIA
+DATA: 2026-03-05
+
+### Attivita' svolte
+- `components/Homepage/Servizi.vue`:
+  - sezione ricostruita con background di sezione dedicato (separazione dal resto della pagina);
+  - rimosso blocco `hp-services-foot` (le 3 card piccole);
+  - griglia desktop aggiornata in schema piu' bilanciato:
+    - `pickup pickup tracking`
+    - `labelFree support tracking`
+    - `cod insurance wallet`
+  - ridotta eterogeneita' delle altezze e corretto ritmo visuale.
+- `components/Homepage/Recensioni.vue`:
+  - sezione con background dedicato e migliore contrasto;
+  - uniformate altezze card (`min-height`) e stretching slide Swiper;
+  - mantenuto badge punteggio e stile recensioni brandizzato.
+- `components/Homepage/Step.vue`:
+  - mantenuta versione alleggerita senza macro-box esterno.
+
+### File toccati in questo turno
+- `nuxt-spedizionefacile-master/components/Homepage/Servizi.vue`
+- `nuxt-spedizionefacile-master/components/Homepage/Recensioni.vue`
+- `nuxt-spedizionefacile-master/components/Homepage/Step.vue`
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Eliminazione visiva dell'effetto "box dentro box" nelle sezioni contestate.
+2. Servizi con card non piu' compresse/verticali.
+3. Recensioni con card allineate e piu' leggibili.
+
+---
+
+## TURNO: LOGICA
+DATA: 2026-03-05
+
+### Attivita' svolte
+- Nessuna modifica ai contratti dati; mantenuto comportamento `prefers-reduced-motion` in recensioni.
+
+### File toccati in questo turno
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Nessun impatto su API/backend.
+
+---
+
+## TURNO: REVISIONE
+DATA: 2026-03-05
+
+### Attivita' svolte
+- Parse SFC rieseguito su:
+  - `components/Homepage/Step.vue`
+  - `components/Homepage/Servizi.vue`
+  - `components/Homepage/Recensioni.vue`
+
+### File toccati in questo turno
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Tutti i file -> `OK` con `@vue/compiler-sfc`.
+
+---
+
+## TURNO: CAPO
+DATA: 2026-03-05
+
+### Chiusura
+- Applicato refinement UX orientato a chiarezza: rimosse mini-card ambigue, migliorata leggibilita' e bilanciamento sezioni Servizi/Recensioni.
+
+### File toccati in questo turno
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Hard refresh homepage e verifica visiva sui blocchi contestati.
+
+---
+
+## TURNO: CAPO
+DATA: 2026-03-05
+
+### Attivita' svolte
+- Nuova priorita' bloccante utente: sezione PUDO BRT non funzionante (card e mappa non visualizzate in modo affidabile).
+- Scope ridotto a hotfix stabilizzazione runtime su selettore PUDO + mappa.
+
+### File toccati in questo turno
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Definito intervento chirurgico senza modifiche backend/API.
+
+---
+
+## TURNO: ARCHITETTURA
+DATA: 2026-03-05
+
+### Attivita' svolte
+- Individuati due punti critici front-end:
+  - remount forzati della mappa (key dinamica) con rischio instabilita' runtime;
+  - fetch geocoding/reverse-geocoding potenzialmente bloccanti senza timeout.
+- Definita strategia: risultati PUDO base visibili subito, arricchimento nearby non bloccante.
+
+### File toccati in questo turno
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Confermata strategia parser-safe e UI-safe.
+
+---
+
+## TURNO: INTERFACCIA
+DATA: 2026-03-05
+
+### Attivita' svolte
+- `components/PudoSelector.vue`:
+  - import esplicito di `MapPudo.client.vue`;
+  - rimossa key dinamica del componente mappa;
+  - aggiunto `ClientOnly` con fallback di caricamento mappa;
+  - mantenuto layout ricerca e pannello risultati.
+
+### File toccati in questo turno
+- `nuxt-spedizionefacile-master/components/PudoSelector.vue`
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Struttura template PUDO valida e con fallback visuale mappa.
+
+---
+
+## TURNO: LOGICA
+DATA: 2026-03-05
+
+### Attivita' svolte
+- `components/PudoSelector.vue`:
+  - aggiunta utility `fetchWithTimeout` (AbortController) per geocoding/reverse geocoding;
+  - in `searchPudo()` applicazione immediata risultati base per evitare UI bloccata;
+  - arricchimento nearby mantenuto ma non bloccante la prima visualizzazione;
+  - gestione error path con reset coerente risultati.
+- `components/MapPudo.client.vue`:
+  - watcher bounds aggiornato con `flush: 'post'`;
+  - rimossa mutazione `mapRef.value = null` in unmount.
+
+### File toccati in questo turno
+- `nuxt-spedizionefacile-master/components/PudoSelector.vue`
+- `nuxt-spedizionefacile-master/components/MapPudo.client.vue`
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Nessuna modifica ai contratti API.
+2. Nessun impatto su pagine homepage.
+
+---
+
+## TURNO: REVISIONE
+DATA: 2026-03-05
+
+### Attivita' svolte
+- Eseguito parse SFC sui file modificati:
+  - `components/PudoSelector.vue`
+  - `components/MapPudo.client.vue`
+
+### File toccati in questo turno
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Entrambi i file -> `OK` con `@vue/compiler-sfc`.
+
+---
+
+## TURNO: CAPO
+DATA: 2026-03-05
+
+### Chiusura
+- Hotfix PUDO applicato: ridotta instabilita' runtime, ricerca non piu' bloccata da geocoding, mappa con mount/fallback piu' robusto.
+
+### File toccati in questo turno
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Da verificare nel browser utente: ricerca PUDO mostra card base subito e mappa renderizzata nella colonna destra.
+
+---
+
+## TURNO: CAPO
+DATA: 2026-03-05
+
+### Attivita' svolte
+- Nuovo feedback homepage: card recensioni percepite "tagliate" e stacco cromatico/linea tra sezioni Servizi e Recensioni.
+- Obiettivo bloccato: fix immediato di continuita' visuale e integrita' card recensioni.
+
+### File toccati in questo turno
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Scope limitato a `Servizi.vue` e `Recensioni.vue`.
+
+---
+
+## TURNO: ARCHITETTURA
+DATA: 2026-03-05
+
+### Attivita' svolte
+- Root cause identificata:
+  - avatar recensioni con offset negativo e clipping nel layer Swiper/slide;
+  - doppio bordo + sfondi differenti tra due sezioni adiacenti.
+- Strategia: rendere continuo il fondo tra sezioni e rimuovere clipping del carosello.
+
+### File toccati in questo turno
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Nessun impatto su logica dati/API.
+
+---
+
+## TURNO: INTERFACCIA
+DATA: 2026-03-05
+
+### Attivita' svolte
+- `components/Homepage/Recensioni.vue`:
+  - aggiunto spazio superiore al track (`padding-top`) per avatar floating;
+  - impostato `overflow: visible` sulle slide Swiper;
+  - ridotte spaziature iniziali per integrazione fluida con sezione precedente.
+- `components/Homepage/Servizi.vue`:
+  - uniformato sfondo sezione a quello recensioni;
+  - ridotto padding bottom per eliminare fascia percepita/stacco tra sezioni.
+
+### File toccati in questo turno
+- `nuxt-spedizionefacile-master/components/Homepage/Recensioni.vue`
+- `nuxt-spedizionefacile-master/components/Homepage/Servizi.vue`
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Le card recensioni non devono piu' risultare troncate in alto.
+2. Transizione Servizi -> Recensioni resa continua.
+
+---
+
+## TURNO: LOGICA
+DATA: 2026-03-05
+
+### Attivita' svolte
+- Nessuna modifica comportamentale: mantenuti autoplay condizionale e contenuti dati recensioni invariati.
+
+### File toccati in questo turno
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Nessun cambiamento ai contratti/component API.
+
+---
+
+## TURNO: REVISIONE
+DATA: 2026-03-05
+
+### Attivita' svolte
+- Parse SFC eseguito su:
+  - `components/Homepage/Servizi.vue`
+  - `components/Homepage/Recensioni.vue`
+
+### File toccati in questo turno
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Entrambi i file -> `OK` con `@vue/compiler-sfc`.
+
+---
+
+## TURNO: CAPO
+DATA: 2026-03-05
+
+### Chiusura
+- Corretto il clipping recensioni e rimosso lo stacco a fasce tra Servizi e Recensioni con continuita' visuale.
+
+### File toccati in questo turno
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Hard refresh homepage e controllo della continuita' tra sezioni.
+
+---
+
+## TURNO: CAPO
+DATA: 2026-03-05
+
+### Attivita' svolte
+- Nuovo feedback critico homepage: sezione Servizi percepita "incasinata" e card Recensioni poco leggibili/tagliate.
+- Decisione: rifacimento diretto delle sole sezioni `Servizi` e `Recensioni` con layout piu' pulito e stabile.
+
+### File toccati in questo turno
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Scope limitato a UI locale homepage.
+
+---
+
+## TURNO: ARCHITETTURA
+DATA: 2026-03-05
+
+### Attivita' svolte
+- Rimossa complessita' non necessaria:
+  - sezione Servizi da bento asimmetrico a griglia regolare 3x2;
+  - sezione Recensioni da carosello (source di clipping) a griglia responsive stabile.
+- Obiettivo tecnico: eliminare overflow/clipping e aumentare contrasto card/sfondo.
+
+### File toccati in questo turno
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Nessun impatto su API/backend.
+
+---
+
+## TURNO: INTERFACCIA
+DATA: 2026-03-05
+
+### Attivita' svolte
+- `components/Homepage/Servizi.vue` riscritto:
+  - griglia uniforme e leggibile (1 col mobile, 2 tablet, 3 desktop);
+  - card con altezze coerenti, icone allineate, CTA arancioni uniformi;
+  - eliminata gerarchia visiva confusa delle card alte/basse.
+- `components/Homepage/Recensioni.vue` riscritto:
+  - card recensioni ad alto contrasto su sfondo sezione;
+  - rimozione carosello/clip, layout a griglia responsive;
+  - rimosso avatar floating che contribuiva a tagli percepiti.
+
+### File toccati in questo turno
+- `nuxt-spedizionefacile-master/components/Homepage/Servizi.vue`
+- `nuxt-spedizionefacile-master/components/Homepage/Recensioni.vue`
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Card servizi bilanciate e non "fuse".
+2. Card recensioni complete, senza tagli sopra/sotto.
+
+---
+
+## TURNO: LOGICA
+DATA: 2026-03-05
+
+### Attivita' svolte
+- Nessuna modifica logica business; aggiornamento esclusivamente visuale/strutturale.
+
+### File toccati in questo turno
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Nessuna regressione su contratti dati.
+
+---
+
+## TURNO: REVISIONE
+DATA: 2026-03-05
+
+### Attivita' svolte
+- Parse SFC eseguito su:
+  - `components/Homepage/Servizi.vue`
+  - `components/Homepage/Recensioni.vue`
+
+### File toccati in questo turno
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Entrambi i file -> `OK` con `@vue/compiler-sfc`.
+
+---
+
+## TURNO: CAPO
+DATA: 2026-03-05
+
+### Chiusura
+- Rifatte da zero le due sezioni contestate con layout pulito e leggibile.
+- Eliminato il problema di recensioni troncate legato al vecchio carosello.
+
+### File toccati in questo turno
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Hard refresh homepage e controllo visuale su Servizi + Recensioni.

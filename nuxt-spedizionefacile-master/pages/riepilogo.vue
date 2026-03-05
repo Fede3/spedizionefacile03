@@ -132,15 +132,21 @@ const preparePayloadForBackend = (shipmentData) => {
 	return payload;
 };
 
-// Prezzo totale: in edit mode calcolato dai pacchi (in centesimi), altrimenti dalla sessione
+// Prezzo totale: calcolato dai pacchi se disponibili, altrimenti dalla sessione
 const totalPrice = computed(() => {
-	if (isEditFromCart.value && shipment.value?.packages) {
-		const totalCents = shipment.value.packages.reduce((sum, pkg) => {
-			return sum + (Number(pkg.single_price) || 0) * (Number(pkg.quantity) || 1);
+	// Se abbiamo i pacchi nel shipment, calcoliamo da quelli
+	if (shipment.value?.packages && shipment.value.packages.length > 0) {
+		const total = shipment.value.packages.reduce((sum, pkg) => {
+			// In edit mode i prezzi sono in centesimi, altrimenti in euro
+			const price = isEditFromCart.value
+				? (Number(pkg.single_price) || 0) / 100
+				: (Number(pkg.single_price) || 0);
+			const qty = Number(pkg.quantity) || 1;
+			return sum + (price * qty);
 		}, 0);
-		const totalEuros = totalCents / 100;
-		return totalEuros.toFixed(2).replace('.', ',');
+		return total.toFixed(2).replace('.', ',');
 	}
+	// Fallback: prova dalla sessione
 	const price = session.value?.data?.total_price;
 	if (!price && price !== 0) return '0,00';
 	return Number(price).toFixed(2).replace('.', ',');
@@ -903,7 +909,7 @@ const goBack = () => {
 
 				<!-- Indietro + Procedi al pagamento -->
 				<div class="flex flex-col tablet:flex-row items-stretch tablet:items-center justify-between gap-[12px] mb-[24px]">
-					<button @click="goBack" class="inline-flex items-center justify-center gap-[8px] px-[24px] min-h-[48px] rounded-[50px] bg-[#095866] text-white font-semibold hover:bg-[#074a56] transition-[background-color,transform] duration-200 cursor-pointer active:scale-[0.97]">
+					<button @click="goBack" class="inline-flex items-center justify-center gap-[8px] px-[24px] min-h-[48px] rounded-[50px] bg-[#095866] text-white font-semibold hover:bg-[#074a56] transition-colors duration-200 cursor-pointer">
 						<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
 						{{ isEditFromCart ? 'Torna al carrello' : 'Indietro' }}
 					</button>
@@ -911,7 +917,7 @@ const goBack = () => {
 						v-if="!isEditFromCart"
 						@click="proceedToCheckout"
 						:disabled="isSubmitting"
-						class="inline-flex items-center justify-center gap-[8px] px-[28px] min-h-[48px] rounded-[50px] bg-[#E44203] text-white font-semibold hover:opacity-90 transition-[opacity,transform] duration-200 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed active:scale-[0.97]">
+						class="inline-flex items-center justify-center gap-[8px] px-[28px] min-h-[48px] rounded-[50px] bg-[#E44203] text-white font-semibold hover:opacity-90 transition-opacity duration-200 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed">
 						<span v-if="isSubmitting">Caricamento...</span>
 						<span v-else>Procedi al pagamento</span>
 						<svg v-if="!isSubmitting" width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8z"/></svg>
@@ -925,7 +931,7 @@ const goBack = () => {
 						v-if="isEditFromCart"
 						@click="goToCart"
 						:disabled="isSubmitting"
-						class="w-full flex items-center gap-[14px] p-[16px] rounded-[50px] border border-[#095866] bg-[#f0fafb] hover:bg-[#e0f4f7] transition-[background-color,opacity,transform] duration-200 cursor-pointer group disabled:opacity-60 active:scale-[0.98]">
+						class="w-full min-h-[82px] flex items-center gap-[14px] p-[16px] rounded-[16px] border border-[#095866] bg-[#f0fafb] hover:bg-[#e0f4f7] transition-[background-color,opacity,border-color] duration-200 cursor-pointer group disabled:opacity-60">
 						<div class="w-[44px] h-[44px] rounded-[10px] bg-[#095866]/10 flex items-center justify-center shrink-0">
 							<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" class="text-[#095866]"><path fill="currentColor" d="M15 9H5V5h10m-3 14a3 3 0 0 1-3-3a3 3 0 0 1 3-3a3 3 0 0 1 3 3a3 3 0 0 1-3 3m5-16H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V7z"/></svg>
 						</div>
@@ -936,60 +942,51 @@ const goBack = () => {
 						<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" class="text-[#095866] shrink-0"><path fill="currentColor" d="M8.59 16.59L13.17 12L8.59 7.41L10 6l6 6l-6 6z"/></svg>
 					</button>
 
-					<!-- In modalita' nuova spedizione: "Aggiungi al carrello" -->
-					<button
-						v-if="!isEditFromCart"
-						@click="goToCart"
-						:disabled="isSubmitting"
-						class="w-full flex items-center gap-[10px] tablet:gap-[14px] p-[12px] tablet:p-[16px] rounded-[50px] border border-[#E9EBEC] bg-white hover:border-[#095866] hover:bg-[#f0fafb] transition-[border-color,background-color,opacity,transform] duration-200 cursor-pointer group disabled:opacity-60 active:scale-[0.98]">
-						<div class="w-[44px] h-[44px] rounded-[10px] bg-[#095866]/10 flex items-center justify-center shrink-0">
-							<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" class="text-[#095866]"><path fill="currentColor" d="M17 18a2 2 0 0 1 2 2a2 2 0 0 1-2 2a2 2 0 0 1-2-2c0-1.11.89-2 2-2M1 2h3.27l.94 2H20a1 1 0 0 1 1 1c0 .17-.05.34-.12.5l-3.58 6.47c-.34.61-1 1.03-1.75 1.03H8.1l-.9 1.63l-.03.12a.25.25 0 0 0 .25.25H19v2H7a2 2 0 0 1-2-2c0-.35.09-.68.24-.96l1.36-2.45L3 4H1zm6 16a2 2 0 0 1 2 2a2 2 0 0 1-2 2a2 2 0 0 1-2-2c0-1.11.89-2 2-2"/></svg>
-						</div>
-						<div class="text-left flex-1">
-							<p class="text-[0.9375rem] font-semibold text-[#252B42] group-hover:text-[#095866]">Aggiungi al carrello</p>
-							<p class="text-[0.8125rem] text-[#737373]">Aggiungi la spedizione al carrello per pagare dopo</p>
-						</div>
-						<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" class="text-[#C8CCD0] shrink-0"><path fill="currentColor" d="M8.59 16.59L13.17 12L8.59 7.41L10 6l6 6l-6 6z"/></svg>
-					</button>
+					<template v-if="!isEditFromCart">
+						<button
+							@click="goToCart"
+							:disabled="isSubmitting"
+							class="w-full min-h-[82px] flex items-center gap-[10px] tablet:gap-[14px] p-[12px] tablet:p-[16px] rounded-[16px] border border-[#E9EBEC] bg-white hover:border-[#095866] hover:bg-[#f0fafb] transition-[border-color,background-color,opacity] duration-200 cursor-pointer group disabled:opacity-60">
+							<div class="w-[44px] h-[44px] rounded-[10px] bg-[#095866]/10 flex items-center justify-center shrink-0">
+								<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" class="text-[#095866]"><path fill="currentColor" d="M17 18a2 2 0 0 1 2 2a2 2 0 0 1-2 2a2 2 0 0 1-2-2c0-1.11.89-2 2-2M1 2h3.27l.94 2H20a1 1 0 0 1 1 1c0 .17-.05.34-.12.5l-3.58 6.47c-.34.61-1 1.03-1.75 1.03H8.1l-.9 1.63l-.03.12a.25.25 0 0 0 .25.25H19v2H7a2 2 0 0 1-2-2c0-.35.09-.68.24-.96l1.36-2.45L3 4H1zm6 16a2 2 0 0 1 2 2a2 2 0 0 1-2 2a2 2 0 0 1-2-2c0-1.11.89-2 2-2"/></svg>
+							</div>
+							<div class="text-left flex-1">
+								<p class="text-[0.9375rem] font-semibold text-[#252B42] group-hover:text-[#095866]">Aggiungi al carrello</p>
+								<p class="text-[0.8125rem] text-[#737373]">Aggiungi la spedizione al carrello per pagare dopo</p>
+							</div>
+							<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" class="text-[#C8CCD0] shrink-0"><path fill="currentColor" d="M8.59 16.59L13.17 12L8.59 7.41L10 6l6 6l-6 6z"/></svg>
+						</button>
 
-					<!-- "Salva configurate" solo in modalita' nuova spedizione -->
-					<div v-if="isAuthenticated && !isEditFromCart" class="flex flex-col tablet:flex-row gap-[8px]">
 						<button
 							@click="goToSavedShipments"
-							:disabled="isSubmitting"
-							class="flex-1 flex items-center gap-[10px] tablet:gap-[14px] p-[12px] tablet:p-[16px] rounded-[50px] border border-[#E9EBEC] bg-white hover:border-[#095866] hover:bg-[#f0fafb] transition-[border-color,background-color,opacity,transform] duration-200 cursor-pointer group disabled:opacity-60 active:scale-[0.98]">
+							:disabled="isSubmitting || !isAuthenticated"
+							class="w-full min-h-[82px] flex items-center gap-[10px] tablet:gap-[14px] p-[12px] tablet:p-[16px] rounded-[16px] border border-[#E9EBEC] bg-white hover:border-[#095866] hover:bg-[#f0fafb] transition-[border-color,background-color,opacity] duration-200 cursor-pointer group disabled:opacity-60 disabled:cursor-not-allowed">
 							<div class="w-[44px] h-[44px] rounded-[10px] bg-blue-50 flex items-center justify-center shrink-0">
 								<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" class="text-blue-600"><path fill="currentColor" d="M21 16.5c0 .38-.21.71-.53.88l-7.9 4.44c-.16.12-.36.18-.57.18c-.21 0-.41-.06-.57-.18l-7.9-4.44A.99.99 0 0 1 3 16.5v-9c0-.38.21-.71.53-.88l7.9-4.44c.16-.12.36-.18.57-.18c.21 0 .41.06.57.18l7.9 4.44c.32.17.53.5.53.88zM12 4.15L6.04 7.5L12 10.85l5.96-3.35zM5 15.91l6 3.37v-6.73L5 9.18zm14 0V9.18l-6 3.37v6.73z"/></svg>
 							</div>
 							<div class="text-left flex-1">
 								<p class="text-[0.9375rem] font-semibold text-[#252B42] group-hover:text-[#095866]">Salva nelle spedizioni configurate</p>
-								<p class="text-[0.8125rem] text-[#737373]">Salva la spedizione per riutilizzarla in futuro</p>
+								<p class="text-[0.8125rem] text-[#737373]">
+									{{ isAuthenticated ? 'Salva la spedizione per riutilizzarla in futuro' : 'Accedi per salvare questa configurazione' }}
+								</p>
 							</div>
 							<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" class="text-[#C8CCD0] shrink-0"><path fill="currentColor" d="M8.59 16.59L13.17 12L8.59 7.41L10 6l6 6l-6 6z"/></svg>
 						</button>
-						<!-- Icona dettagli: scrolla al riepilogo in alto -->
-						<button
-							type="button"
-							@click="window.scrollTo({ top: 0, behavior: 'smooth' })"
-							class="w-[56px] shrink-0 flex items-center justify-center rounded-[50px] border border-[#E9EBEC] bg-white hover:border-[#095866] hover:bg-[#f0fafb] transition-[border-color,background-color] cursor-pointer"
-							title="Vedi dettagli spedizione">
-							<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#095866" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-						</button>
-					</div>
 
-					<button
-						@click="addAnotherShipment"
-						:disabled="isSubmitting"
-						class="w-full flex items-center gap-[10px] tablet:gap-[14px] p-[12px] tablet:p-[16px] rounded-[50px] border border-[#E9EBEC] bg-white hover:border-[#095866] hover:bg-[#f0fafb] transition-[border-color,background-color,opacity,transform] duration-200 cursor-pointer group disabled:opacity-60 active:scale-[0.98]">
-						<div class="w-[44px] h-[44px] rounded-[10px] bg-orange-50 flex items-center justify-center shrink-0">
-							<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" class="text-orange-600"><path fill="currentColor" d="M17 13h-4v4h-2v-4H7v-2h4V7h2v4h4m-5-9A10 10 0 0 0 2 12a10 10 0 0 0 10 10a10 10 0 0 0 10-10A10 10 0 0 0 12 2"/></svg>
-						</div>
-						<div class="text-left flex-1">
-							<p class="text-[0.9375rem] font-semibold text-[#252B42] group-hover:text-[#095866]">Aggiungi un'altra spedizione</p>
-							<p class="text-[0.8125rem] text-[#737373]">Configura una nuova spedizione</p>
-						</div>
-						<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" class="text-[#C8CCD0] shrink-0"><path fill="currentColor" d="M8.59 16.59L13.17 12L8.59 7.41L10 6l6 6l-6 6z"/></svg>
-					</button>
+						<button
+							@click="addAnotherShipment"
+							:disabled="isSubmitting"
+							class="w-full min-h-[82px] flex items-center gap-[10px] tablet:gap-[14px] p-[12px] tablet:p-[16px] rounded-[16px] border border-[#E9EBEC] bg-white hover:border-[#095866] hover:bg-[#f0fafb] transition-[border-color,background-color,opacity] duration-200 cursor-pointer group disabled:opacity-60">
+							<div class="w-[44px] h-[44px] rounded-[10px] bg-orange-50 flex items-center justify-center shrink-0">
+								<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" class="text-orange-600"><path fill="currentColor" d="M17 13h-4v4h-2v-4H7v-2h4V7h2v4h4m-5-9A10 10 0 0 0 2 12a10 10 0 0 0 10 10a10 10 0 0 0 10-10A10 10 0 0 0 12 2"/></svg>
+							</div>
+							<div class="text-left flex-1">
+								<p class="text-[0.9375rem] font-semibold text-[#252B42] group-hover:text-[#095866]">Aggiungi un'altra spedizione</p>
+								<p class="text-[0.8125rem] text-[#737373]">Configura una nuova spedizione</p>
+							</div>
+							<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" class="text-[#C8CCD0] shrink-0"><path fill="currentColor" d="M8.59 16.59L13.17 12L8.59 7.41L10 6l6 6l-6 6z"/></svg>
+						</button>
+					</template>
 				</div>
 			</div>
 		</div>
