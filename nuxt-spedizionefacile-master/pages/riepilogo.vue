@@ -27,8 +27,8 @@
 <script setup>
 // Meta tag SEO
 useSeoMeta({
-	title: 'Riepilogo Spedizione | SpedizioneFacile',
-	ogTitle: 'Riepilogo Spedizione | SpedizioneFacile',
+	title: 'Riepilogo Spedizione | SpediamoFacile',
+	ogTitle: 'Riepilogo Spedizione | SpediamoFacile',
 });
 
 const userStore = useUserStore();
@@ -36,7 +36,7 @@ const { isAuthenticated } = useSanctumAuth();
 const sanctumClient = useSanctumClient();
 const { endpoint, refresh: refreshCart } = useCart();
 const { session } = useSession();
-const toast = useToast();
+const uiFeedback = useUiFeedback();
 
 // Promo settings per badge
 const { loadPriceBands, promoSettings } = usePriceBands();
@@ -288,7 +288,7 @@ const saveEdit = (section) => {
 	if (section === 'origin' && userStore.pendingShipment) {
 		const error = validateAddress(editOrigin.value);
 		if (error) {
-			toast.add({ title: error, color: 'error' });
+			uiFeedback.error('Controlla i dati di partenza', error);
 			return;
 		}
 		userStore.pendingShipment.origin_address = { ...editOrigin.value };
@@ -296,7 +296,7 @@ const saveEdit = (section) => {
 	if (section === 'destination' && userStore.pendingShipment) {
 		const error = validateAddress(editDestination.value);
 		if (error) {
-			toast.add({ title: error, color: 'error' });
+			uiFeedback.error('Controlla i dati di destinazione', error);
 			return;
 		}
 		userStore.pendingShipment.destination_address = { ...editDestination.value };
@@ -310,7 +310,7 @@ const saveEdit = (section) => {
 		};
 	}
 	editingSection.value = null;
-	toast.add({ title: 'Modifiche salvate.', color: 'success' });
+	uiFeedback.success('Modifiche salvate.');
 };
 
 // --- AZIONI PRINCIPALI ---
@@ -339,7 +339,7 @@ const proceedToCheckout = async () => {
 			userStore.editingCartItemId = null;
 			userStore.pendingShipment = null;
 			clearNuxtData("cart");
-			toast.add({ title: 'Dati salvati con successo!', color: 'success' });
+			uiFeedback.success('Dati salvati con successo!');
 			// Dopo l'aggiornamento, naviga al checkout normale (dal carrello)
 			navigateTo('/checkout');
 			return;
@@ -351,7 +351,7 @@ const proceedToCheckout = async () => {
 			body: payload,
 		});
 
-		toast.add({ title: 'Ordine creato con successo!', color: 'success' });
+		uiFeedback.success('Ordine creato con successo!');
 		// Navigate to checkout with only this order
 		navigateTo(`/checkout?order_id=${result.order_id}`);
 	} catch (error) {
@@ -414,13 +414,13 @@ const goToCart = async () => {
 	// Validazione indirizzi prima del salvataggio
 	const originError = validateAddress(shipment.value.origin_address);
 	if (originError) {
-		toast.add({ title: `Indirizzo partenza: ${originError}`, color: 'error', timeout: 5000 });
+		uiFeedback.error('Indirizzo partenza', originError, { timeout: 5000 });
 		return;
 	}
 
 	const destError = validateAddress(shipment.value.destination_address);
 	if (destError) {
-		toast.add({ title: `Indirizzo destinazione: ${destError}`, color: 'error', timeout: 5000 });
+		uiFeedback.error('Indirizzo destinazione', destError, { timeout: 5000 });
 		return;
 	}
 
@@ -441,7 +441,7 @@ const goToCart = async () => {
 			});
 			// Puliamo l'ID di modifica dallo store
 			userStore.editingCartItemId = null;
-			toast.add({ title: 'Spedizione aggiornata nel carrello.', color: 'success' });
+			uiFeedback.success('Spedizione aggiornata nel carrello.');
 		} else {
 			// Nuova spedizione: aggiungiamo al carrello
 			const cartEndpoint = endpoint.value || (isAuthenticated.value ? '/api/cart' : '/api/guest-cart');
@@ -451,7 +451,7 @@ const goToCart = async () => {
 				method: "POST",
 				body: payload,
 			});
-			toast.add({ title: 'Spedizione aggiunta al carrello.', color: 'success' });
+			uiFeedback.success('Spedizione aggiunta al carrello.');
 		}
 
 		// RESET COMPLETO: Puliamo tutti i dati per permettere nuovo preventivo
@@ -471,12 +471,7 @@ const goToCart = async () => {
 		console.error('Error details:', error?.response?._data || error?.data);
 		const errorData = error?.response?._data || error?.data;
 		submitError.value = errorData?.message || "Errore durante il salvataggio nel carrello. Riprova.";
-		toast.add({
-			title: 'Errore',
-			description: submitError.value,
-			color: 'error',
-			timeout: 8000
-		});
+		uiFeedback.critical('Errore durante il salvataggio', submitError.value, { timeout: 8000 });
 	} finally {
 		isSubmitting.value = false;
 	}
@@ -672,22 +667,23 @@ const goBack = () => {
 							</button>
 						</div>
 
-						<!-- Badge PUDO: visibile quando la spedizione è diretta a un Punto BRT -->
-						<!-- Mostra il nome e l'indirizzo del punto di ritiro scelto dall'utente -->
-						<div v-if="shipment.pudo" class="mb-[12px] p-[10px] bg-[#095866]/10 rounded-[10px] flex items-start gap-[8px]">
-							<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#095866" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="shrink-0 mt-[2px]"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-							<div class="text-[0.8125rem]">
-								<span class="font-bold text-[#095866]">Ritiro in Punto BRT</span>
-								<p class="text-[#252B42] font-semibold mt-[2px]">{{ shipment.pudo.name }}</p>
-								<p class="text-[#737373]">{{ shipment.pudo.address }}, {{ shipment.pudo.zip_code }} {{ shipment.pudo.city }}</p>
-							</div>
-						</div>
-
 						<!-- View mode -->
 						<div v-if="editingSection !== 'destination'" class="text-[0.875rem] text-[#252B42] space-y-[4px]">
 							<p class="font-semibold">{{ shipment.destination_address?.name }}</p>
-							<p>{{ shipment.destination_address?.address }} {{ shipment.destination_address?.address_number }}</p>
-							<p>{{ shipment.destination_address?.postal_code }} {{ shipment.destination_address?.city }} ({{ shipment.destination_address?.province }})</p>
+							<template v-if="!shipment.pudo">
+								<p>{{ shipment.destination_address?.address }} {{ shipment.destination_address?.address_number }}</p>
+								<p>{{ shipment.destination_address?.postal_code }} {{ shipment.destination_address?.city }} ({{ shipment.destination_address?.province }})</p>
+							</template>
+							<template v-else>
+								<div class="my-[8px] p-[10px] bg-[#095866]/10 rounded-[10px] flex items-start gap-[8px]">
+									<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#095866" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="shrink-0 mt-[2px]"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+									<div class="text-[0.8125rem]">
+										<span class="font-bold text-[#095866]">Ritiro in Punto BRT</span>
+										<p class="text-[#252B42] font-semibold mt-[2px]">{{ shipment.pudo.name }}</p>
+										<p class="text-[#737373]">{{ shipment.pudo.address }}, {{ shipment.pudo.zip_code }} {{ shipment.pudo.city }}</p>
+									</div>
+								</div>
+							</template>
 							<p v-if="shipment.destination_address?.telephone_number && shipment.destination_address.telephone_number !== '0000000000'" class="text-[#737373]">Tel: {{ shipment.destination_address.telephone_number }}</p>
 							<p v-if="shipment.destination_address?.email" class="text-[#737373]">{{ shipment.destination_address.email }}</p>
 						</div>
@@ -902,9 +898,9 @@ const goBack = () => {
 				</div>
 
 				<!-- Error -->
-				<div v-if="submitError" class="mb-[16px] p-[14px] bg-red-50 border border-red-200 rounded-[50px] flex items-center gap-[10px]">
-					<Icon name="mdi:alert-circle" class="text-[20px] text-red-500 shrink-0" />
-					<p class="text-red-600 text-[0.9375rem] font-medium">{{ submitError }}</p>
+				<div v-if="submitError" class="ux-alert ux-alert--soft mb-[16px]">
+					<Icon name="mdi:alert-circle-outline" class="ux-alert__icon" />
+					<span>{{ submitError }}</span>
 				</div>
 
 				<!-- Indietro + Procedi al pagamento -->

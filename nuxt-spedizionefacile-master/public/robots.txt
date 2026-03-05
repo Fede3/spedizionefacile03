@@ -9,4 +9,4 @@ Disallow: /la-tua-spedizione/
 Disallow: /riepilogo
 Disallow: /recupera-password
 
-Sitemap: https://spedizionefacile.it/sitemap.xml
+Sitemap: https://spediamofacile.it/sitemap.xml

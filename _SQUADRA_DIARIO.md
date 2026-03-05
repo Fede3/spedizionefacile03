@@ -7969,3 +7969,1385 @@ DATA: 2026-03-05
 
 ### Verifica
 1. Hard refresh homepage e controllo visuale su Servizi + Recensioni.
+
+---
+
+## TURNO: CAPO
+DATA: 2026-03-05
+
+### Attivita' svolte
+- Richiesta utente netta: recensioni in una sola riga, non su due righe.
+- Scope ridotto al solo componente `Recensioni.vue`.
+
+### File toccati in questo turno
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Definita modifica rapida senza impatto su altre sezioni.
+
+---
+
+## TURNO: ARCHITETTURA
+DATA: 2026-03-05
+
+### Attivita' svolte
+- Scelta tecnica: limitare il dataset renderizzato a 3 card e fissare griglia a 3 colonne da tablet in su.
+
+### File toccati in questo turno
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Layout one-row garantito su viewport >= 48rem.
+
+---
+
+## TURNO: INTERFACCIA
+DATA: 2026-03-05
+
+### Attivita' svolte
+- `components/Homepage/Recensioni.vue` aggiornato:
+  - aggiunto `visibleReviews = reviews.slice(0, 3)`;
+  - `v-for` aggiornato su `visibleReviews`;
+  - griglia impostata a `repeat(3, minmax(0,1fr))` da tablet in su.
+
+### File toccati in questo turno
+- `nuxt-spedizionefacile-master/components/Homepage/Recensioni.vue`
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Sezione recensioni su una sola riga (desktop/tablet).
+
+---
+
+## TURNO: LOGICA
+DATA: 2026-03-05
+
+### Attivita' svolte
+- Nessuna modifica di logica business/API; intervento solo di presentazione.
+
+### File toccati in questo turno
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Nessun effetto collaterale sui flussi applicativi.
+
+---
+
+## TURNO: REVISIONE
+DATA: 2026-03-05
+
+### Attivita' svolte
+- Parse SFC su `components/Homepage/Recensioni.vue`.
+
+### File toccati in questo turno
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. `OK` con `@vue/compiler-sfc`.
+
+---
+
+## TURNO: CAPO
+DATA: 2026-03-05
+
+### Chiusura
+- Applicato fix richiesto: recensioni in riga singola su viewport principali.
+
+### File toccati in questo turno
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Hard refresh homepage e controllo visuale sezione recensioni.
+
+---
+
+## TURNO: CAPO
+DATA: 2026-03-05
+
+### Attivita' svolte
+- Segnalazione utente: dominio trycloudflare in `HTTP 502`.
+- Avviato debug infrastrutturale (tunnel/proxy), non applicativo.
+
+### File toccati in questo turno
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Scope limitato a processi runtime (cloudflared/caddy).
+
+---
+
+## TURNO: ARCHITETTURA
+DATA: 2026-03-05
+
+### Attivita' svolte
+- Diagnosi: presenza di due tunnel cloudflared contemporanei:
+  - uno corretto su `http://127.0.0.1:8787`
+  - uno errato su `http://127.0.0.1:3000` (porta non valida nello stack corrente)
+- Possibile causa diretta del 502 per URL pubblico associato al tunnel errato.
+
+### File toccati in questo turno
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Caddy/Nuxt/Laravel risultano attivi su 8787/3001/8000.
+
+---
+
+## TURNO: INTERFACCIA
+DATA: 2026-03-05
+
+### Attivita' svolte
+- Nessuna modifica UI in questo intervento.
+
+### File toccati in questo turno
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. N/A (intervento infrastrutturale).
+
+---
+
+## TURNO: LOGICA
+DATA: 2026-03-05
+
+### Attivita' svolte
+- Chiuso processo cloudflared errato puntato a `127.0.0.1:3000`.
+- Mantenuto solo cloudflared verso `127.0.0.1:8787`.
+
+### File toccati in questo turno
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Verifica comandi:
+   - `http://127.0.0.1:3001 -> 200`
+   - `http://127.0.0.1:8000 -> 200`
+   - `http://127.0.0.1:8787 -> 200`
+
+---
+
+## TURNO: REVISIONE
+DATA: 2026-03-05
+
+### Attivita' svolte
+- Controllo processi runtime:
+  - unico `cloudflared` attivo con `tunnel --url http://127.0.0.1:8787`.
+
+### File toccati in questo turno
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Configurazione tunnel allineata allo stack corrente.
+
+---
+
+## TURNO: CAPO
+DATA: 2026-03-05
+
+### Chiusura
+- Stabilizzato il routing tunnel: eliminata la sorgente principale dei 502 causata dal tunnel su porta sbagliata.
+
+### File toccati in questo turno
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Usare esclusivamente il dominio generato dal tunnel `127.0.0.1:8787`.
+
+---
+
+## TURNO: ARCHITETTURA
+DATA: 2026-03-05
+
+### Attivita' svolte
+- Analizzato ritardo visualizzazione del blocco `Riepilogo` nello step 2.
+- Individuata causa principale: riepilogo dentro `ClientOnly` + inizializzazione observer dopo `await refresh()`.
+- Spostato il riepilogo fuori da `ClientOnly` (render immediato SSR/hydration), lasciando `ClientOnly` solo sul blocco Swiper del calendario.
+- Rimossa transizione di mount del riepilogo (`summary-slide`) dal template per evitare comparsa in fade.
+- Anticipata inizializzazione observer sticky: `refresh()` non blocca piu il primo render.
+- Reso piu reattivo il trigger observer (`threshold`/`rootMargin`) e forzato `updateStepsVisibility()` immediato all'avvio.
+
+### File toccati in questo turno
+- `nuxt-spedizionefacile-master/pages/la-tua-spedizione/[step].vue`
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Parse SFC: `node -e ... @vue/compiler-sfc` -> `SFC parse OK`.
+2. Verifica manuale attesa:
+   - Aprire `/la-tua-spedizione/2`.
+   - Il box `Riepilogo` deve comparire subito senza ritardo/fade.
+   - Scorrendo la pagina, i mini-step devono entrare/uscire senza lag.
+
+---
+
+## TURNO: INTERFACCIA
+DATA: 2026-03-05
+
+### Attivita' svolte
+- Uniformata icona `Assicurazione` nella sezione servizi homepage con nuova risorsa SVG coerente (derivazione vettoriale da shape web/MIT, resa cromatica allineata al brand).
+- Resa cliccabile l'intera card di ogni servizio (non solo CTA): il wrapper card ora e' un `NuxtLink` con focus state accessibile.
+- Resa cliccabile l'intera card recensione: ogni recensione apre la pagina Google Reviews in nuova scheda (`target=_blank`).
+- Aggiunta etichetta secondaria `Apri su Google` nel footer card recensioni per affordance esplicita.
+
+### File toccati in questo turno
+- `nuxt-spedizionefacile-master/components/Homepage/Servizi.vue`
+- `nuxt-spedizionefacile-master/components/Homepage/Recensioni.vue`
+- `nuxt-spedizionefacile-master/public/img/homepage/services/insurance-shield-check.svg`
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Parse SFC OK:
+   - `components/Homepage/Servizi.vue`
+   - `components/Homepage/Recensioni.vue`
+2. Verifica manuale homepage:
+   - click su area card servizi (anche fuori bottone) -> navigazione corretta
+   - icona `Assicurazione` visivamente coerente con le altre
+   - click su card recensione -> apertura Google Reviews in nuova scheda
+
+### Aggiornamento (stesso turno INTERFACCIA)
+- Raffinato link recensioni: ogni card usa query Google dedicata per singola recensione (`nome + citta`) invece di URL unico condiviso.
+- Parse SFC ripetuto su `Recensioni.vue` dopo il refinement (`SFC parse OK`).
+
+---
+
+## TURNO: LOGICA
+DATA: 2026-03-05
+
+### Attivita' svolte
+- Corretto layout PUDO per split reale 50/50 tra lista punti e mappa su desktop.
+- Allargata area mappa e resa stabilmente visibile: rimosso `ClientOnly` extra attorno a `MapPudo` (il componente e' gia `.client.vue`).
+- In `MapPudo.client.vue` aggiunta robustezza rendering:
+  - invalidazione size in piu' passaggi (0/120/360/900ms)
+  - stato `tileLayerReady`/`tileLayerError`
+  - fallback esplicito se i tiles non arrivano entro 5s
+  - caricamento mappa non lascia piu box bianco senza feedback.
+- Adeguata card list PUDO per la nuova composizione: lista in colonna singola per migliore leggibilita' con mappa al 50%.
+
+### File toccati in questo turno
+- `nuxt-spedizionefacile-master/components/PudoSelector.vue`
+- `nuxt-spedizionefacile-master/components/MapPudo.client.vue`
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Parse SFC OK:
+   - `components/PudoSelector.vue`
+   - `components/MapPudo.client.vue`
+2. Verifica manuale richiesta:
+   - Step indirizzi -> ricerca PUDO (es. Iglesias 09016)
+   - layout desktop: lista/mappa 50/50
+   - mappa visibile con tiles o fallback messaggio (mai box bianco muto)
+   - click card <-> marker sincronizzati
+
+---
+
+## TURNO: REVISIONE
+DATA: 2026-03-05
+
+### Attivita' svolte
+- Verificata stabilita' sintattica dopo hotfix PUDO runtime:
+  - parse SFC `MapPudo.client.vue` OK.
+  - parse SFC `PudoSelector.vue` rimane OK.
+- Verificata coerenza route backend: `brt/pudo/search`, `brt/pudo/nearby`, `brt/pudo/{pudoId}` pubbliche (non protette da `auth:sanctum`).
+- Verificato rischio 401 guest: mitigato bootstrap auth su pagine pubbliche (`/api/user` non necessario fuori area account).
+
+### File toccati in questo turno
+- `nuxt-spedizionefacile-master/components/MapPudo.client.vue`
+- `nuxt-spedizionefacile-master/plugins/01.sanctum-bootstrap.client.ts`
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Parse SFC OK su file mappa.
+2. Controllo codice route API Laravel su PUDO (pubbliche).
+3. Nota ambiente locale: `npm run dev` non avviabile in questa shell per incompatibilita' Node 18 con Nuxt CLI (`styleText`), validazione runtime da fare nel tuo ambiente Windows attivo.
+
+---
+
+## TURNO: CAPO
+DATA: 2026-03-05
+
+### Chiusura
+- Applicato fix anti-crash Vue PUDO sostituendo il layer `@vue-leaflet/vue-leaflet` con Leaflet diretto e gestione marker/layer manuale.
+- Forzato layout PUDO desktop 50/50 reale tra lista e mappa.
+- Ridotto rumore 401 guest su pagine pubbliche disattivando bootstrap identity fuori da area account.
+
+### File toccati in questo turno
+- `nuxt-spedizionefacile-master/components/MapPudo.client.vue`
+- `nuxt-spedizionefacile-master/components/PudoSelector.vue`
+- `nuxt-spedizionefacile-master/plugins/01.sanctum-bootstrap.client.ts`
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Ricerca PUDO -> mappa deve comparire nel 50% destro del box.
+2. Se tile non caricati: messaggio esplicito (non box bianco).
+3. Nessun `instance.update is not a function` durante ricerca/selezione marker.
+4. Nessun 401 `/api/user` su pagine pubbliche.
+
+---
+
+## TURNO: ARCHITETTURA
+DATA: 2026-03-05
+
+### Attivita' svolte
+- Corretto il bug di navigazione step: cliccando `Misure` non viene piu' forzato uno stato locale intermedio che evidenziava `Servizi`.
+- Rimosso il listener `@navigate` dalla barra `Steps` nello step spedizione, evitando il race tra update locale (`showAddressFields`) e `navigateTo` del componente.
+- Allineato lo step attivo della barra alla sorgente route-driven (`currentShipmentStep - 1`) per coerenza immediata UI/URL.
+
+### File toccati in questo turno
+- `nuxt-spedizionefacile-master/pages/la-tua-spedizione/[step].vue`
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Aprire `/la-tua-spedizione/2?step=ritiro`.
+2. Cliccare `1. Misure` nella barra step.
+3. Atteso: non appare piu' il passaggio visivo su `2. Servizi`; la navigazione va direttamente a Misure (`/#preventivo`).
+4. Parse SFC: `SFC parse OK` su `pages/la-tua-spedizione/[step].vue`.
+
+---
+
+## TURNO: INTERFACCIA
+DATA: 2026-03-05
+
+### Attivita' svolte
+- Fix UI barra step: eliminato effetto "rettangolo" durante il click su step diversi mantenendo `rounded-[50px]` anche nello stato transitorio non attivo.
+- Fix crash pagina `window is not defined`: in `MapPudo.client.vue` rimosso import top-level di Leaflet e convertito a caricamento dinamico solo client in `onMounted`.
+- Caricamento CSS Leaflet spostato in import dinamico client per evitare valutazione server-side.
+
+### File toccati in questo turno
+- `nuxt-spedizionefacile-master/components/Steps.vue`
+- `nuxt-spedizionefacile-master/components/MapPudo.client.vue`
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Parse SFC OK:
+   - `components/Steps.vue`
+   - `components/MapPudo.client.vue`
+2. Navigazione step:
+   - su `/la-tua-spedizione/2?step=ritiro`, clic su `Misure`/`Servizi`: lo step corrente non deve trasformarsi in rettangolo durante il cambio pagina.
+3. Runtime SSR:
+   - su refresh pagina step spedizione non deve apparire errore `window is not defined` con stack Leaflet.
+
+---
+
+## TURNO: LOGICA
+DATA: 2026-03-05
+
+### Attivita' svolte
+- Sostituita l'icona `tracking-live.svg` con una versione vettoriale piu' coerente con le altre icone servizi.
+- Base grafica ricavata da source online affidabile (Tabler MIT via Iconify `map-route`) e adattata ai colori brand (`#203A72`, `#14A0DE`, `#E44203`).
+- Mantenuto percorso asset invariato per evitare regressioni nel componente `Servizi.vue`.
+
+### File toccati in questo turno
+- `nuxt-spedizionefacile-master/public/img/homepage/services/tracking-live.svg`
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Aprire homepage e controllare card `Tracking live`:
+   - icona piu' leggibile e stilisticamente allineata alle altre.
+2. Verificare che il percorso immagine resti valido:
+   - `/img/homepage/services/tracking-live.svg`.
+
+---
+
+## TURNO: REVISIONE
+DATA: 2026-03-05
+
+### Attivita' svolte
+- Corretto glitch visuale barra step durante navigazione: rimosso il fade del background nella transition del singolo step (`transition-[color,opacity]` al posto di `transition-[color,background-color,opacity]`).
+- Ripristinato comportamento visivo consistente evitando pill "corta" transitoria prima del cambio pagina.
+
+### File toccati in questo turno
+- `nuxt-spedizionefacile-master/components/Steps.vue`
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Parse SFC `components/Steps.vue` = OK.
+2. Da `/la-tua-spedizione/2?step=ritiro`, cliccare su step precedenti:
+   - non deve comparire piu' il rettangolo/pill corta transitoria.
+
+---
+
+## TURNO: CAPO
+DATA: 2026-03-05
+
+### Attivita' svolte
+- Migliorata UX validazione campi nello step indirizzi (`/la-tua-spedizione/2`) con messaggistica piu' gentile e suggerimenti assistiti per correzione rapida.
+- Corretto wiring template dei campi con errori (messaggi ora contestuali al campo corretto) e sistemati attributi input provincia non validi.
+- Aggiunta assistenza smart per campi con errore: suggerimenti applicabili con un click (`Nome`, `Telefono`, `Email`, `Indirizzo/Civico`, `Citta/Provincia/CAP`) usando il contesto degli altri campi.
+- Ammorbidita UI errori: riepilogo errori in stile avviso non aggressivo, bordi campo warning non rossi, submit error soft.
+
+### File toccati in questo turno
+- `nuxt-spedizionefacile-master/pages/la-tua-spedizione/[step].vue`
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Parse SFC:
+   - `node -e "...@vue/compiler-sfc..."` su `pages/la-tua-spedizione/[step].vue` -> `SFC parse OK`.
+2. UX errori (manuale):
+   - Inserire dati incoerenti (es. CAP/provincia/citta').
+   - Atteso: messaggi color ambra + tono guida, non errore rosso aggressivo.
+3. Suggerimenti campo:
+   - Con errore visibile, sotto il campo compare chip “Suggerimento...”.
+   - Click chip applica la correzione proposta e aggiorna i campi collegati.
+4. Provincia:
+   - Focus su provincia apre suggerimenti contestuali senza attributi rotti nel template.
+
+---
+
+## TURNO: ARCHITETTURA
+DATA: 2026-03-05
+
+### Attivita' svolte
+- Rivisto layout PUDO per allineare l'altezza delle colonne lista/mappa su desktop.
+- Bloccata altezza colonna lista risultati a `520px` (come mappa) con `overflow-y` interno: i punti extra ora si vedono con scroll a rotellina dentro la colonna sinistra.
+- Resa la distanza sempre presente su ogni card PUDO in posizione alta e ben visibile (badge dedicato in evidenza), con fallback `n/d` quando non disponibile.
+- Rimossa la distanza duplicata dalla riga tag per evitare rumore visivo.
+
+### File toccati in questo turno
+- `nuxt-spedizionefacile-master/components/PudoSelector.vue`
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Parse SFC:
+   - `components/PudoSelector.vue` -> `SFC parse OK`.
+2. Verifica UI desktop PUDO:
+   - ricerca punti con molti risultati;
+   - colonna sinistra deve terminare allineata alla mappa (nessun allungamento oltre la destra);
+   - card extra visibili tramite scroll interno con rotellina.
+3. Verifica card punti:
+   - ogni card mostra badge `Distanza: ...` in evidenza in alto a destra.
+
+---
+
+## TURNO: INTERFACCIA
+DATA: 2026-03-05
+
+### Attivita' svolte
+- Aggiornato il box `Riepilogo` nello step spedizione per rimuovere il simbolo visivo tipo valuta nella sezione servizi (icona ora neutra a lista/punti).
+- Sostituito il conteggio servizi (`N servizi`) con i nomi reali dei servizi selezionati (`summaryServicesLabel`).
+- Aggiunta informazione `Misure` nel riepilogo, coerente col layout esistente:
+  - chip in testata riepilogo;
+  - voce dedicata anche nella riga dettagli espandibile.
+- Rifinita gestione overflow testo con truncation per evitare rotture layout su nomi servizi/misure lunghi.
+- Mantenuta la logica toggle servizi gia' introdotta (click su card selezionata = deseleziona), senza alterare i flussi popup.
+
+### File toccati in questo turno
+- `nuxt-spedizionefacile-master/pages/la-tua-spedizione/[step].vue`
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Parse SFC:
+   - `pages/la-tua-spedizione/[step].vue` -> `SFC parse OK`.
+2. Verifica manuale riepilogo step 2:
+   - i servizi mostrano i nomi selezionati (non solo il numero);
+   - non compare piu' icona tipo `$` nella voce servizi;
+   - le misure collo sono visibili in riepilogo (chip + dettaglio).
+3. Verifica manuale card servizi:
+   - selezione evidenziata a colore;
+   - click su card gia' selezionata deseleziona.
+
+---
+
+## TURNO: LOGICA
+DATA: 2026-03-05
+
+### Attivita' svolte
+- Corretto calcolo distanza PUDO anche quando non e' inserita la via:
+  - introdotto fallback riferimento da risultati (`inferReferenceFromResults`) quando manca un punto di riferimento esplicito;
+  - in assenza via, le distanze non restano tutte a `0 m` ma vengono calcolate da un riferimento geografico coerente.
+- Migliorata UX mappa PUDO con selezione diretta punto riferimento da mappa:
+  - aggiunto evento `map-click` in `MapPudo.client.vue`;
+  - click singolo sulla mappa ora aggiorna riferimento, prova reverse geocoding e lancia ricerca automatica (senza doppio click).
+- Inserita micro-copy esplicativa nella colonna mappa:
+  - testo guida "Clicca una volta sulla mappa..." + stato "Aggiornamento in corso...".
+- Rifinita spaziatura card punti PUDO:
+  - ridotto gap verticale tra indirizzo e orari (`mt-[4px]`) per coerenza con le altre sezioni.
+
+### File toccati in questo turno
+- `nuxt-spedizionefacile-master/components/PudoSelector.vue`
+- `nuxt-spedizionefacile-master/components/MapPudo.client.vue`
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Parse SFC:
+   - `components/PudoSelector.vue` -> `SFC parse OK`.
+   - `components/MapPudo.client.vue` -> `SFC parse OK`.
+2. Verifica manuale PUDO:
+   - ricerca con sola citta/CAP (via vuota): distanza valorizzata per ogni card;
+   - click singolo sulla mappa: aggiorna riferimento e avvia ricerca automatica;
+   - comparsa testo guida click mappa;
+   - gap indirizzo/orari nelle card ridotto e uniforme.
+
+---
+
+## TURNO: REVISIONE
+DATA: 2026-03-05
+
+### Attivita' svolte
+- Rifinita in modo sostanziale la UI del box `Riepilogo` nello step 2 dopo feedback utente su layout non gradevole.
+- Sostituito layout a chip ripetitivo con struttura piu' bilanciata:
+  - griglia overview pulita (`Colli`, `Misure`, `Tratta`, `Totale`) con gerarchia visiva piu' netta;
+  - totale in card dedicata meno invasiva ma leggibile.
+- Semplificata la sezione espandibile per ridurre rumore:
+  - eliminata duplicazione eccessiva;
+  - dettagli convertiti in 3 blocchi coerenti (`Da`, `Misure`, `Servizi`) con spaziature uniformi.
+- Migliorata responsivita' del riepilogo:
+  - desktop: layout 4 colonne bilanciato;
+  - tablet: 2 colonne;
+  - mobile: stack verticale ordinato.
+
+### File toccati in questo turno
+- `nuxt-spedizionefacile-master/pages/la-tua-spedizione/[step].vue`
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Parse SFC:
+   - `pages/la-tua-spedizione/[step].vue` -> `SFC parse OK`.
+2. Verifica manuale UX:
+   - il riepilogo non deve apparire "schiacciato" o disallineato;
+   - overview leggibile al primo colpo (Colli/Misure/Tratta/Totale);
+   - sezione espansa con info pulite e senza duplicazioni pesanti.
+
+---
+
+## TURNO: CAPO
+DATA: 2026-03-05
+
+### Attivita' svolte
+- Applicata miglioria UX al riepilogo sticky per gestire correttamente contenuti lunghi/non visibili senza occupare spazio fisso.
+- Aggiunta modalita' compatta + espansione su richiesta per i campi piu' lunghi:
+  - `Misure`: pulsante `Vedi/Chiudi` con elenco completo dei colli;
+  - `Servizi`: pulsante `Vedi/Chiudi` con elenco completo dei servizi selezionati.
+- Implementata logica di supporto:
+  - `summaryServicesItems` (array servizi completo),
+  - `summaryDimensionsItems` (array completo misure per collo),
+  - `canExpandSummaryServices/canExpandSummaryDimensions` (abilitazione espansione),
+  - `summaryDetailPanel` per switch pannello attivo e reset automatico alla chiusura accordion.
+- Mantenuto layout compatto di default e aggiunte pill espandibili solo quando servono (nessuna occupazione permanente extra).
+
+### File toccati in questo turno
+- `nuxt-spedizionefacile-master/pages/la-tua-spedizione/[step].vue`
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Parse SFC:
+   - `pages/la-tua-spedizione/[step].vue` -> `SFC parse OK`.
+2. Verifica manuale riepilogo:
+   - con piu' colli, su `Misure` compare `Vedi` e apre elenco completo;
+   - con piu' servizi (o testo lungo), su `Servizi` compare `Vedi` e apre elenco completo;
+   - `Chiudi` richiude pannello e il box torna compatto.
+3. Verifica comportamento accordion:
+   - chiudendo il riepilogo, il pannello espanso viene azzerato automaticamente.
+
+---
+
+## TURNO: ARCHITETTURA
+DATA: 2026-03-05
+
+### Attivita' svolte
+- Stabilizzata la strategia backend PUDO per copertura estesa:
+  - raggio ricerca indirizzo aumentato a `80km` (`maxDistanceSearch=80000`);
+  - aggiunto pass `nearby_geo_grid` su punti geografici attorno al seed geocodificato quando i risultati sono bassi;
+  - mantenuta deduplica + ordinamento distanza come priorita' finale.
+- Rafforzata deduplica fallback senza `pudo_id` con chiave composita che include anche coordinate.
+- Forzato provider finale a `BRT` per evitare punti fuori scope.
+- Arricchita `meta` risposta con indicatori non-breaking:
+  - `coverage_km`;
+  - `search_passes`.
+
+### File toccati in questo turno
+- `laravel-spedizionefacile-main/app/Services/BrtService.php`
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Controllo statico codice:
+   - presenza `maxDistanceSearch => 80000`;
+   - presenza strategia `nearby_geo_grid`;
+   - presenza `meta.coverage_km` e `meta.search_passes`.
+2. Nota ambiente:
+   - lint PHP locale non eseguibile in questo runtime (`php` non installato).
+
+---
+
+## TURNO: INTERFACCIA
+DATA: 2026-03-05
+
+### Attivita' svolte
+- Rifatto layout sezione risultati PUDO in split desktop stabile `50/50` (lista / mappa) con altezza uniforme.
+- Resa la colonna lista a scroll interno per evitare che superi visivamente la colonna mappa.
+- Spostata la guida mappa in header dedicato dentro il pannello mappa, non copribile durante scroll sticky.
+- Aggiornata microcopy UX: da "clicca una volta" a "doppio clic".
+- Aggiunto bubble assistenza in basso a destra anche per guest:
+  - loggato: link diretto a `/account/assistenza`;
+  - guest: popover con CTA `Contattaci` e `Accedi per ticket`.
+
+### File toccati in questo turno
+- `nuxt-spedizionefacile-master/components/PudoSelector.vue`
+- `nuxt-spedizionefacile-master/layouts/default.vue`
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Parse SFC:
+   - `components/PudoSelector.vue` -> `OK`.
+   - `layouts/default.vue` -> `OK`.
+2. Verifica visuale attesa:
+   - hint mappa in blocco dedicato sopra la mappa;
+   - layout desktop PUDO bilanciato a due colonne.
+
+---
+
+## TURNO: LOGICA
+DATA: 2026-03-05
+
+### Attivita' svolte
+- Modificata interazione mappa:
+  - il riferimento ora si imposta con `dblclick` (non click singolo);
+  - disattivato `doubleClickZoom` per evitare conflitti.
+- Aggiornata logica distanza:
+  - se API fornisce `distance_meters`, valore preservato;
+  - calcolo client applicato solo quando la distanza manca.
+- Migliorata logica aggiornamento riferimento:
+  - geocoding campi ricerca anticipato prima di applicare risultati;
+  - dopo `Usa posizione` e dopo doppio clic mappa: reverse geocode + ricerca automatica senza click extra;
+  - aggiunto messaggio esplicito di aggiornamento riferimento.
+
+### File toccati in questo turno
+- `nuxt-spedizionefacile-master/components/MapPudo.client.vue`
+- `nuxt-spedizionefacile-master/components/PudoSelector.vue`
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Parse SFC:
+   - `components/MapPudo.client.vue` -> `OK`.
+   - `components/PudoSelector.vue` -> `OK`.
+2. Verifica statica:
+   - listener mappa su `dblclick`;
+   - testo guida mappa coerente con doppio clic.
+
+---
+
+## TURNO: REVISIONE
+DATA: 2026-03-05
+
+### Attivita' svolte
+- Eseguito pass di controllo regressioni tecniche sui file toccati.
+- Validato che le modifiche non introducano errori parser Vue SFC.
+- Rivista coerenza tra strategia backend (`nearby_geo_grid`) e label frontend strategia.
+
+### File verificati
+- `nuxt-spedizionefacile-master/components/PudoSelector.vue`
+- `nuxt-spedizionefacile-master/components/MapPudo.client.vue`
+- `nuxt-spedizionefacile-master/layouts/default.vue`
+- `laravel-spedizionefacile-main/app/Services/BrtService.php`
+
+### Verifica
+1. `@vue/compiler-sfc`: parse `OK` per i 3 file Vue toccati.
+2. Diff inspection: confermata presenza dei cambi richiesti da piano V8.
+3. Limite ambiente: impossibile eseguire lint PHP locale (binary non disponibile).
+
+---
+
+## TURNO: CAPO
+DATA: 2026-03-05
+
+### Attivita' svolte
+- Chiusura implementazione Piano V8 con focus su:
+  - stabilita' PUDO/mappa UX;
+  - copertura backend citta piccole;
+  - assistenza guest sempre visibile.
+- Confermata assenza di cambi breaking lato API pubbliche.
+- Confermata aderenza decisioni bloccate:
+  - doppio clic mappa;
+  - copertura 80km;
+  - bubble aiuto guest.
+
+### File toccati nel ciclo
+- `nuxt-spedizionefacile-master/components/MapPudo.client.vue`
+- `nuxt-spedizionefacile-master/components/PudoSelector.vue`
+- `nuxt-spedizionefacile-master/layouts/default.vue`
+- `laravel-spedizionefacile-main/app/Services/BrtService.php`
+- `_SQUADRA_DIARIO.md`
+
+### Verifica finale
+1. Parse SFC `OK` sui file frontend toccati.
+2. Controllo statico backend `BrtService` su pass e meta estesi completato.
+3. Prossimo controllo consigliato su ambiente utente:
+   - smoke e2e ricerca PUDO (Iglesias + vie limitrofe);
+   - conferma UX doppio clic mappa e bubble aiuto guest.
+
+---
+
+## TURNO: ARCHITETTURA
+DATA: 2026-03-05
+
+### Attivita' svolte
+- Ridotto rumore auth lato guest su pagine di autenticazione:
+  - rimosso `middleware: ["sanctum:guest"]` da `pages/autenticazione.vue`;
+  - rimosso `middleware: ["sanctum:guest"]` da `pages/login.vue`.
+- Inserito redirect leggero in `autenticazione.vue` solo se stato auth gia' valido (`isAuthenticated`) senza forzare bootstrap identity.
+- Ridotto verbosita' log Sanctum in ambiente dev/prod impostando `logLevel: 3` in `nuxt.config.ts`.
+- Aggiunto supporto dominio dinamico tunnel in Sanctum stateful:
+  - wildcard `*.trycloudflare.com` nel default di `SANCTUM_STATEFUL_DOMAINS`.
+- Allineata anche la configurazione ambiente:
+  - aggiornato `.env` corrente con wildcard `*.trycloudflare.com`;
+  - aggiornato `.env.example` per evitare regressioni su nuovi setup.
+
+### File toccati in questo turno
+- `nuxt-spedizionefacile-master/pages/autenticazione.vue`
+- `nuxt-spedizionefacile-master/pages/login.vue`
+- `nuxt-spedizionefacile-master/nuxt.config.ts`
+- `laravel-spedizionefacile-main/config/sanctum.php`
+- `laravel-spedizionefacile-main/.env`
+- `laravel-spedizionefacile-main/.env.example`
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Parse SFC:
+   - `pages/autenticazione.vue` -> `OK`.
+   - `pages/login.vue` -> `OK`.
+2. Verifica statica config:
+   - `nuxt.config.ts` contiene `sanctum.logLevel: 3`.
+
+---
+
+## TURNO: INTERFACCIA
+DATA: 2026-03-05
+
+### Attivita' svolte
+- Aggiornato il chip `Colli` nel riepilogo sticky per mostrare anche la tipologia collo con icona dedicata.
+- Aggiunta logica visuale per tipo collo con mapping asset:
+  - `Pacco` -> `pack.png`
+  - `Pallet` -> `pallet.png`
+  - `Valigia` -> `suitcase.png`
+  - `Busta` -> `envelope.png`
+  - fallback/multi-tipo -> icona pacco + label `Misto`.
+- Layout del valore `Colli` rifinito con allineamento icona + testo, mantenendo il conteggio colli gia' esistente.
+
+### File toccati in questo turno
+- `nuxt-spedizionefacile-master/pages/la-tua-spedizione/[step].vue`
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Parse SFC:
+   - `pages/la-tua-spedizione/[step].vue` -> `OK` con `@vue/compiler-sfc`.
+2. Verifica funzionale attesa:
+   - nel riepilogo, `Colli` mostra ora conteggio + icona tipo collo + label tipo (`Pacco/Pallet/Valigia/Busta/Misto`).
+
+---
+
+## TURNO: LOGICA
+DATA: 2026-03-05
+
+### Attivita' svolte
+- Corretto il calcolo distanza PUDO per evitare `0 m` fittizi:
+  - parsing robusto di `distance_meters` (anche con stringhe/formati non puliti);
+  - quando API ritorna `0` su tutti i punti, la distanza viene ricalcolata lato client dal riferimento geografico;
+  - mantenuto `0 m` solo se realmente coerente (punto praticamente coincidente col riferimento, <= 50m).
+- Stabilizzata l'altezza card risultati PUDO:
+  - lista risultati con `content-start` per evitare stretch verticale quando i risultati sono pochi;
+  - card a altezza fissa in stato normale (`h-[168px]`), con espansione automatica solo quando si apre "Dettagli e orari".
+
+### File toccati in questo turno
+- `nuxt-spedizionefacile-master/components/PudoSelector.vue`
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Parse SFC:
+   - `components/PudoSelector.vue` -> `OK` con `@vue/compiler-sfc`.
+2. Verifica funzionale attesa:
+   - distanze non bloccate a `0 m` su tutti i risultati;
+   - card con altezza coerente anche con 1-2 risultati.
+
+---
+
+## TURNO: REVISIONE
+DATA: 2026-03-05
+
+### Attivita' svolte
+- Rifinita la sezione espandibile "Tutte le misure collo" nel riepilogo:
+  - rimosso il prefisso numerico `Collo 1`, `Collo 2`, ...
+  - ogni riga ora mostra la tipologia reale del collo (`Pacco`, `Pallet`, `Valigia`, `Busta`, `Wallet`) seguita dalle misure.
+- Aggiunto helper di normalizzazione per label tipologia con fallback robusto.
+
+### File toccati in questo turno
+- `nuxt-spedizionefacile-master/pages/la-tua-spedizione/[step].vue`
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Parse SFC:
+   - `pages/la-tua-spedizione/[step].vue` -> `OK` con `@vue/compiler-sfc`.
+2. Verifica funzionale attesa:
+   - nel dettaglio misure compaiono righe nel formato `Tipologia: LxWxH cm` senza numerazione `Collo N`.
+
+---
+
+## TURNO: CAPO
+DATA: 2026-03-05
+
+### Attivita' svolte
+- Ripristinata la visibilita' degli step nel box `Riepilogo` su `/la-tua-spedizione/2`.
+- Corretto il comportamento della mini-barra step nel riepilogo rimuovendo il vincolo che la mostrava solo quando la barra principale usciva dalla viewport.
+
+### File toccati in questo turno
+- `nuxt-spedizionefacile-master/pages/la-tua-spedizione/[step].vue`
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Parse SFC:
+   - `pages/la-tua-spedizione/[step].vue` -> `OK` con `@vue/compiler-sfc`.
+2. Verifica funzionale attesa:
+   - gli step (`Misure`, `Servizi`, `Indirizzi`, `Conferma`, `Pagamento`) sono nuovamente visibili dentro il riepilogo come richiesto.
+
+---
+
+## TURNO: ARCHITETTURA
+DATA: 2026-03-05
+
+### Attivita' svolte
+- Evoluta la struttura dati `summaryDimensionsItems` da array stringhe a array oggetti (`label`, `icon`, `type`) per supportare icona+testo nelle pill della sezione "Tutte le misure collo".
+- Aggiunto resolver centralizzato icona tipologia collo (`getPackageTypeIcon`) riusando il mapping tipi esistente.
+- Aggiornato rendering pill espanse misure per mostrare icona tipologia + testo mantenendo fallback robusto.
+
+### File toccati in questo turno
+- `nuxt-spedizionefacile-master/pages/la-tua-spedizione/[step].vue`
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Parse SFC:
+   - `pages/la-tua-spedizione/[step].vue` -> `OK` con `@vue/compiler-sfc`.
+2. Verifica funzionale attesa:
+   - in "Tutte le misure collo" ogni voce mostra icona della tipologia (`Pacco/Pallet/Valigia/Busta`) + testo.
+
+---
+
+## TURNO: INTERFACCIA
+DATA: 2026-03-05
+
+### Attivita' svolte
+- Ripristinato il comportamento originale della mini-barra step nel `Riepilogo` sticky:
+  - visibile solo quando la barra step principale non e' in viewport;
+  - nascosta quando gli step principali sono nuovamente visibili.
+- Mantenuta invariata tutta la logica observer/scroll gia' presente (`stepsVisible`).
+
+### File toccati in questo turno
+- `nuxt-spedizionefacile-master/pages/la-tua-spedizione/[step].vue`
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Parse SFC:
+   - `pages/la-tua-spedizione/[step].vue` -> `OK` con `@vue/compiler-sfc`.
+2. Verifica funzionale attesa:
+   - scorrendo in basso: mini-step appaiono nel riepilogo;
+   - tornando in alto: mini-step spariscono dal riepilogo.
+
+---
+
+## TURNO: LOGICA
+DATA: 2026-03-05
+
+### Attivita' svolte
+- Implementato raggruppamento dei colli identici nella sezione espansa "Tutte le misure collo".
+- Criterio di merge: stessa tipologia collo + stesse dimensioni.
+- Output aggiornato con contatore:
+  - esempio `2x Pacco: 33x33x33 cm`
+  - mantiene icona tipologia su ogni pill.
+
+### File toccati in questo turno
+- `nuxt-spedizionefacile-master/pages/la-tua-spedizione/[step].vue`
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Parse SFC:
+   - `pages/la-tua-spedizione/[step].vue` -> `OK` con `@vue/compiler-sfc`.
+2. Verifica funzionale attesa:
+   - colli duplicati non sono piu' ripetuti come voci separate, ma accorpati con contatore `Nx`.
+
+---
+
+## TURNO: REVISIONE
+DATA: 2026-03-05
+
+### Attivita' svolte
+- Corretto bug intermittente mini-step nel riepilogo sticky (step che a volte non appaiono in scroll con box gia' aperto).
+- Resa idempotente l'inizializzazione observer/listener visibilita' step:
+  - aggiunto `teardownStepsVisibilityObserver()` centralizzato;
+  - `initStepsVisibilityObserver()` ora pulisce e reinizializza sempre in modo sicuro.
+- Aggiunte re-inizializzazioni reattive quando il nodo `stepsRef` compare dopo il loading (`status` da pending a ready) per coprire i casi in cui il `ref` non esisteva al `mounted`.
+- Aggiornato refresh stato visibilita' anche al toggle `summaryExpanded` per evitare stale-state.
+
+### File toccati in questo turno
+- `nuxt-spedizionefacile-master/pages/la-tua-spedizione/[step].vue`
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Parse SFC:
+   - `pages/la-tua-spedizione/[step].vue` -> `OK` con `@vue/compiler-sfc`.
+2. Verifica funzionale attesa:
+   - mini-step appaiono in riepilogo quando la barra step principale esce dalla viewport;
+   - mini-step spariscono quando la barra principale torna visibile;
+   - comportamento stabile anche con riepilogo gia' aperto.
+
+---
+
+## TURNO: CAPO
+DATA: 2026-03-05
+
+### Attivita' svolte
+- Migliorata UX validazione campo `Contenuto del pacco`:
+  - quando manca il contenuto, il form porta esplicitamente al campo `content_description`;
+  - aggiunto suggerimento gentile **sopra** il campo che spiega il motivo dello scroll/focus.
+- Rimosso il messaggio duplicato sotto input per mantenere una gerarchia chiara.
+
+### File toccati in questo turno
+- `nuxt-spedizionefacile-master/pages/la-tua-spedizione/[step].vue`
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Parse SFC:
+   - `pages/la-tua-spedizione/[step].vue` -> `OK` con `@vue/compiler-sfc`.
+2. Verifica funzionale attesa:
+   - submit senza contenuto pacco -> scroll/focus su campo;
+   - messaggio guida visibile sopra il campo: "Ti ho portato qui perché manca il contenuto del pacco...".
+
+---
+
+## TURNO: ARCHITETTURA
+DATA: 2026-03-05
+
+### Attivita' svolte
+- Corretto feedback cursore del bottone submit `Continua al riepilogo`:
+  - aggiunto `cursor-pointer` nello stato normale;
+  - mantenuto `disabled:cursor-not-allowed` quando il bottone e' disabilitato.
+- Obiettivo UX: evitare ambiguita' di cliccabilita' quando il form e' completo.
+
+### File toccati in questo turno
+- `nuxt-spedizionefacile-master/pages/la-tua-spedizione/[step].vue`
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Parse SFC:
+   - `pages/la-tua-spedizione/[step].vue` -> `OK` con `@vue/compiler-sfc`.
+2. Verifica funzionale attesa:
+   - su bottone attivo compare la "manina" al passaggio mouse;
+   - su bottone disabilitato resta `not-allowed`.
+
+---
+
+## TURNO: INTERFACCIA
+DATA: 2026-03-05
+
+### Attivita' svolte
+- Rifinita la sezione `Destinazione` in `riepilogo.vue` per evitare duplicazione dati in modalita' Punto BRT.
+- In view mode, quando `shipment.pudo` e' attivo:
+  - resta visibile il box "Ritiro in Punto BRT" con nome e indirizzo del punto;
+  - sotto non viene piu' ristampato l'indirizzo destinatario (via/CAP/citta/provincia);
+  - restano visibili solo i contatti destinatario (nome, telefono, email) per chiarezza UX.
+- In modalita' consegna standard (non PUDO) il riepilogo indirizzo destinazione resta invariato.
+
+### File toccati in questo turno
+- `nuxt-spedizionefacile-master/pages/riepilogo.vue`
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Parse SFC:
+   - `pages/riepilogo.vue` -> `OK` con `@vue/compiler-sfc`.
+2. Verifica funzionale attesa:
+   - spedizione con `Punto BRT`: nel riquadro Destinazione non c'e' doppione indirizzo;
+   - spedizione non PUDO: indirizzo destinatario completo visibile come prima.
+
+---
+
+## TURNO: LOGICA
+DATA: 2026-03-05
+
+### Attivita' svolte
+- Implementato in `carrello.vue` il flusso auth inline quando utente guest clicca `Procedi con l'ordine`.
+- Sostituito il link diretto a `/checkout` con una funzione gate:
+  - utente autenticato -> naviga subito a checkout;
+  - guest -> apre modal nella stessa pagina (senza redirect esterno).
+- Aggiunta modal con due tab:
+  - `Accedi`: email/password -> `POST /api/custom-login` -> `refreshIdentity()` -> continua automaticamente su `/checkout`.
+  - `Registrati`: form rapido -> `POST /api/custom-register` -> login automatico -> continua su `/checkout`.
+- Gestione errori UX inline nel modal (messaggio chiaro) e CTA a verifica account quando backend richiede verifica email.
+
+### File toccati in questo turno
+- `nuxt-spedizionefacile-master/pages/carrello.vue`
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Parse SFC:
+   - `pages/carrello.vue` -> `OK` con `@vue/compiler-sfc`.
+2. Verifica funzionale attesa:
+   - guest su `/carrello` clicca `Procedi con l'ordine` -> compare modal login/registrazione nella stessa pagina;
+   - login riuscito -> passaggio automatico a `/checkout` senza perdere carrello;
+   - registrazione + login automatico riusciti -> passaggio automatico a `/checkout`.
+
+---
+
+## TURNO: REVISIONE
+DATA: 2026-03-05
+
+### Attivita' svolte
+- Corretto aggiornamento tratta nel riepilogo sticky su `/la-tua-spedizione/2` quando cambia destinazione/Punto BRT:
+  - priorita' ai dati correnti del form (`destinationAddress.city`) e al `selectedPudo.city` rispetto ai valori iniziali di sessione.
+- Aggiunta sincronizzazione `shipmentDetails.destination_city/destination_postal_code` quando viene selezionato un Punto BRT (`onPudoSelected`) per mantenere coerenza tra store e riepilogo.
+- Reso obbligatorio `Contenuto del pacco` prima del passaggio da Servizi a Indirizzi:
+  - in `openAddressFields`, se manca contenuto viene mostrato l'avviso e focus/scroll sul campo `content_description`.
+  - solo con contenuto valorizzato si apre lo step indirizzi.
+
+### File toccati in questo turno
+- `nuxt-spedizionefacile-master/pages/la-tua-spedizione/[step].vue`
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Parse SFC:
+   - `pages/la-tua-spedizione/[step].vue` -> `OK` con `@vue/compiler-sfc`.
+2. Verifica funzionale attesa:
+   - cambiando citta' destinazione o selezionando un nuovo Punto BRT, la `Tratta` nel riepilogo si aggiorna subito;
+   - clic su `Compila dati ritiro e destinazione` senza contenuto pacco -> blocco avanzamento + focus sul campo contenuto.
+
+---
+
+## TURNO: CAPO
+DATA: 2026-03-05
+
+### Attivita' svolte
+- Applicata correzione UX su destinazione PUDO per evitare errori anagrafici:
+  - rimosso l'autofill implicito del campo `Nome e Cognome` con il nome del Punto BRT;
+  - aggiunto hint esplicito nel form: il nome deve essere quello della persona che ritira.
+- Introdotto controllo tratta anomala in step indirizzi:
+  - warning non bloccante per tratte locali stessa citta/CAP;
+  - blocco esplicito solo se partenza e destinazione coincidono (stesso indirizzo), con focus al campo destinazione.
+- Migliorata resilienza visuale della hero homepage al refresh:
+  - aggiunte classi utility fallback direttamente nel markup above-the-fold;
+  - rimosse animazioni iniziali sulla hero che potevano causare first paint instabile.
+
+### File toccati in questo turno
+- `nuxt-spedizionefacile-master/pages/la-tua-spedizione/[step].vue`
+- `nuxt-spedizionefacile-master/components/ContenutoHeader.vue`
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Parse SFC:
+   - `pages/la-tua-spedizione/[step].vue` -> `OK` con `@vue/compiler-sfc`.
+   - `components/ContenutoHeader.vue` -> `OK` con `@vue/compiler-sfc`.
+2. Verifica funzionale attesa:
+   - selezione Punto BRT non compila il nome destinatario con il nome tabaccheria;
+   - se nome destinatario = nome punto BRT, submit bloccato con messaggio guidato;
+   - tratta identica (stesso indirizzo) bloccata; tratta locale stessa citta/CAP segnalata con warning gentile;
+   - al refresh homepage la hero mantiene una resa piu' stabile mentre caricano gli stili scoped.
+
+---
+
+## TURNO: ARCHITETTURA
+DATA: 2026-03-05
+
+### Attivita' svolte
+- Definita base unificata per feedback UX (errori/notifiche) su flusso principale:
+  - creato composable condiviso `useUiFeedback` per toast coerenti (icone, colori, timing);
+  - introdotte classi globali `ux-alert` in `assets/css/main.css` per avere stesso linguaggio visivo tra warning/info/success/critical.
+- Applicata architettura errori contestuali in `/la-tua-spedizione/[step]`:
+  - mantenuto suggerimento vicino al campo errato;
+  - aggiunti hint di sezione vicini ai blocchi `Partenza` e `Destinazione`;
+  - riepilogo errori globale mostrato solo quando gli errori coinvolgono sezioni multiple (riduce rumore).
+- Uniformata la messaggistica runtime nel flusso checkout/carrello/riepilogo:
+  - sostituiti `toast.add` eterogenei con `useUiFeedback` in `carrello.vue` e `riepilogo.vue`.
+
+### File toccati in questo turno
+- `nuxt-spedizionefacile-master/composables/useUiFeedback.js`
+- `nuxt-spedizionefacile-master/assets/css/main.css`
+- `nuxt-spedizionefacile-master/pages/la-tua-spedizione/[step].vue`
+- `nuxt-spedizionefacile-master/pages/carrello.vue`
+- `nuxt-spedizionefacile-master/pages/riepilogo.vue`
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Parse SFC/JS:
+   - `pages/la-tua-spedizione/[step].vue` -> `OK`
+   - `pages/carrello.vue` -> `OK`
+   - `pages/riepilogo.vue` -> `OK`
+   - `components/ContenutoHeader.vue` -> `OK`
+2. Verifica UX attesa:
+   - errori singoli: suggerimento vicino al campo/sezione;
+   - errori multipli: appare anche riepilogo generale coerente;
+   - toast (success/warning/error) con stile e comportamento uniforme su step/carrello/riepilogo.
+
+---
+
+## TURNO: INTERFACCIA
+DATA: 2026-03-05
+
+### Attivita' svolte
+- Uniformata la UX errori nel flusso step indirizzi:
+  - aggiunti hint contestuali vicino ai blocchi `Partenza` e `Destinazione`;
+  - mantenuto il riepilogo errori generale solo quando gli errori coinvolgono piu' sezioni;
+  - convertiti i banner di avviso principali (date/submit/route/pudo) al nuovo stile comune `ux-alert`.
+- Uniformata la grafica feedback sito:
+  - introdotte classi globali `ux-alert` (`soft`, `info`, `success`, `critical`) in `assets/css/main.css`.
+- Uniformate le notifiche toast con composable condiviso:
+  - creato `useUiFeedback` (icone + colori + timeout coerenti);
+  - migrati i toast in `pages/la-tua-spedizione/[step].vue`, `pages/carrello.vue`, `pages/riepilogo.vue`;
+  - sostituiti gli `alert()` nativi in `components/admin/RichTextEditor.vue` con feedback coerente.
+
+### File toccati in questo turno
+- `nuxt-spedizionefacile-master/composables/useUiFeedback.js`
+- `nuxt-spedizionefacile-master/assets/css/main.css`
+- `nuxt-spedizionefacile-master/pages/la-tua-spedizione/[step].vue`
+- `nuxt-spedizionefacile-master/pages/carrello.vue`
+- `nuxt-spedizionefacile-master/pages/riepilogo.vue`
+- `nuxt-spedizionefacile-master/components/admin/RichTextEditor.vue`
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Parse SFC:
+   - `pages/la-tua-spedizione/[step].vue` -> `OK`
+   - `pages/carrello.vue` -> `OK`
+   - `pages/riepilogo.vue` -> `OK`
+   - `components/admin/RichTextEditor.vue` -> `OK`
+2. Verifica funzionale attesa:
+   - errori singoli visibili vicino alla sezione che li contiene;
+   - errori multipli mostrano anche riepilogo generale in alto;
+   - notifiche toast coerenti nello stile tra step/carrello/riepilogo.
+
+---
+
+## TURNO: LOGICA
+DATA: 2026-03-05
+
+### Attivita' svolte
+- Corretto il blocco `Destinazione` in `riepilogo.vue` per modalita' Punto BRT con ordine dati piu' chiaro:
+  - prima il nome destinatario,
+  - poi box del punto BRT (nome + indirizzo punto),
+  - poi contatti `Tel`/`Email`.
+- Rimossa la riga ridondante "Contatto destinatario per il ritiro al Punto BRT".
+- Rafforzata validazione data ritiro in `/la-tua-spedizione/2`:
+  - la data e' ora validata anche nel submit finale (`validateForm`), non solo nel passaggio Servizi -> Indirizzi;
+  - in assenza data viene mostrato l'avviso e viene forzato focus/scroll alla sezione giorno di ritiro.
+- Migliorata sincronizzazione del riepilogo tratta quando i campi sono vuoti in step indirizzi:
+  - durante step `ritiro`, se citta' form vuota, il riepilogo mostra `—` invece di usare fallback stale da store/sessione;
+  - resta prioritaria la citta' del Punto BRT selezionato quando presente.
+
+### File toccati in questo turno
+- `nuxt-spedizionefacile-master/pages/riepilogo.vue`
+- `nuxt-spedizionefacile-master/pages/la-tua-spedizione/[step].vue`
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Parse SFC:
+   - `pages/riepilogo.vue` -> `OK` con `@vue/compiler-sfc`.
+   - `pages/la-tua-spedizione/[step].vue` -> `OK` con `@vue/compiler-sfc`.
+2. Verifica funzionale attesa:
+   - in riepilogo con PUDO: nome destinatario in alto, box Punto BRT subito sotto, poi `Tel` e `Email`;
+   - senza data ritiro: avviso sempre visibile e scroll automatico su sezione date;
+   - in step indirizzi con campi citta' vuoti: tratta nel riepilogo coerente (`—`) senza valori vecchi residui.
+
+---
+
+## TURNO: REVISIONE
+DATA: 2026-03-05
+
+### Attivita' svolte
+- Corretto ordine dei passaggi nella sezione homepage `Come funziona` per renderlo coerente con il wizard reale del preventivo.
+- Nuovo ordine allineato:
+  1. Pacco e dimensioni
+  2. Servizi aggiuntivi
+  3. Ritiro e consegna
+  4. Pagamento e conferma
+
+### File toccati in questo turno
+- `nuxt-spedizionefacile-master/components/Homepage/Step.vue`
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Parse SFC:
+   - `components/Homepage/Step.vue` -> `OK` con `@vue/compiler-sfc`.
+2. Verifica UI attesa:
+   - nella homepage la card `Servizi aggiuntivi` e' al passo 2;
+   - `Ritiro e consegna` e' al passo 3;
+   - sequenza coerente con i passi del form preventivo.
+
+---
+
+## TURNO: CAPO
+DATA: 2026-03-05
+
+### Attivita' svolte
+- Riposizionato l'avviso data ritiro mancante (`dateError`) in un punto UX piu' coerente con l'azione utente:
+  - rimosso dalla zona centrale del form;
+  - mostrato sopra il blocco bottoni finali, quindi vicino al click su `Continua`.
+- Obiettivo: feedback immediatamente contestuale al trigger dell'errore e meno dispersione visiva.
+
+### File toccati in questo turno
+- `nuxt-spedizionefacile-master/pages/la-tua-spedizione/[step].vue`
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Parse SFC:
+   - `pages/la-tua-spedizione/[step].vue` -> `OK` con `@vue/compiler-sfc`.
+2. Verifica UI attesa:
+   - click su `Compila dati ritiro e destinazione` o submit senza data ritiro -> alert mostrato sopra i bottoni CTA finali.
+
+---
+
+## TURNO: ARCHITETTURA
+DATA: 2026-03-05
+
+### Attivita' svolte
+- Aggiornata etichetta pulsante account in navbar per ruolo Admin con copy piu' professionale.
+- Sostituzione copy:
+  - desktop: da `Ciao {{ user.name }}` a `Area Admin` quando `user.role === 'Admin'`;
+  - mobile menu: da `Il mio account` a `Area Admin` quando `user.role === 'Admin'`.
+- Per utenti non admin il comportamento resta invariato.
+
+### File toccati in questo turno
+- `nuxt-spedizionefacile-master/components/Navbar.vue`
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Parse SFC:
+   - `components/Navbar.vue` -> `OK` con `@vue/compiler-sfc`.
+2. Verifica UI attesa:
+   - account Admin autenticato: bottone mostra `Area Admin` (desktop + menu mobile);
+   - account non Admin autenticato: copy precedente mantenuta;
+   - guest: `Accedi!` / `Accedi o Registrati` invariati.
+
+---
+
+## TURNO: INTERFACCIA
+DATA: 2026-03-05
+
+### Attivita' svolte
+- Corretto contrasto del brand text nel footer:
+  - il testo `SpediamoFacile` nel componente `Logo.vue` non e' piu' hardcoded grigio;
+  - ora usa colore condizionale per contesto:
+    - Navbar (`isNavbar=true`): grigio `#404040` invariato.
+    - Footer (`isNavbar=false`): bianco pieno `#FFFFFF`.
+
+### File toccati in questo turno
+- `nuxt-spedizionefacile-master/components/Logo.vue`
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Parse SFC:
+   - `components/Logo.vue` -> `OK` con `@vue/compiler-sfc`.
+2. Verifica UI attesa:
+   - nel footer, `SpediamoFacile` visibile in bianco come le altre scritte;
+   - in navbar il colore testo resta quello precedente.
+
+---
+
+## TURNO: LOGICA
+DATA: 2026-03-05
+
+### Attivita' svolte
+- Eseguito rebrand globale testuale del brand da `SpedizioneFacile` a `SpediamoFacile` su frontend, backend, configurazioni SEO e contenuti statici.
+- Esteso il rebrand anche ai riferimenti dominio/email pubblici:
+  - `spedizionefacile.it` -> `spediamofacile.it`
+  - `spedizionefacileaccount.com` -> `spediamofacileaccount.com`
+- Mantenuti invariati i nomi tecnici delle cartelle di progetto (`nuxt-spedizionefacile-master`, `laravel-spedizionefacile-main`) per evitare rotture operative.
+
+### File toccati in questo turno
+- Bulk replace sui file che contenevano i pattern del brand nei seguenti ambiti:
+  - `nuxt-spedizionefacile-master/**` (pagine, componenti, config, sitemap/robots)
+  - `laravel-spedizionefacile-main/**` (seeders, mail, middleware, config)
+  - documentazione root (`README*`, `docs/**`, changelog)
+- Esempi verificati:
+  - `nuxt-spedizionefacile-master/nuxt.config.ts`
+  - `nuxt-spedizionefacile-master/pages/index.vue`
+  - `nuxt-spedizionefacile-master/components/Footer.vue`
+  - `laravel-spedizionefacile-main/database/seeders/DatabaseSeeder.php`
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Assenza occorrenze legacy principali:
+   - `rg -n --hidden -g '!**/node_modules/**' -g '!**/.git/**' "SpedizioneFacile|Spedizione Facile" /mnt/c/Users/Feder/Desktop/spedizionefacile`
+   - `rg -n --hidden -g '!**/node_modules/**' -g '!**/.git/**' "spedizionefacile\.it|spedizionefacileaccount\.com" /mnt/c/Users/Feder/Desktop/spedizionefacile`
+2. Presenza nuovi riferimenti brand:
+   - `rg -n "SpediamoFacile|Spediamo Facile|spediamofacile\.it" nuxt-spedizionefacile-master laravel-spedizionefacile-main`
+
+---
+
+## TURNO: REVISIONE
+DATA: 2026-03-05
+
+### Attivita' svolte
+- Fixato il problema di rendering iniziale della hero homepage al refresh (flash con layout "spaccato" e testi senza card/immagine correttamente strutturate).
+- In `ContenutoHeader.vue` la hero e' stata resa robusta al first paint:
+  - spostata la maggior parte degli stili critici direttamente nel markup con utility classes;
+  - mantenuti fallback immagine e posizionamento esplicito con `backgroundPosition` inline;
+  - ridotta dipendenza dagli stili scoped per la struttura above-the-fold.
+
+### File toccati in questo turno
+- `nuxt-spedizionefacile-master/components/ContenutoHeader.vue`
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Parse SFC:
+   - `cd nuxt-spedizionefacile-master && node -e "...@vue/compiler-sfc parse..."` -> `OK`.
+2. Verifica UI attesa:
+   - hard refresh homepage: hero gia' correttamente impaginata al primo caricamento;
+   - niente testo "sparso" senza card/immagine;
+   - distanza da navbar e allineamento colonne stabili.
+
+---
+
+## TURNO: CAPO
+DATA: 2026-03-05
+
+### Attivita' svolte
+- Corretto definitivamente il contrasto del brand nel footer (`SpediamoFacile`) per evitare che appaia grigio su sfondo teal.
+- In `Logo.vue` aggiunto fallback inline solo in contesto non-navbar:
+  - navbar: colore invariato `#404040`;
+  - footer: colore forzato `#FFFFFF` (anche in presenza di cache/stili vecchi o override CSS).
+
+### File toccati in questo turno
+- `nuxt-spedizionefacile-master/components/Logo.vue`
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Parse SFC:
+   - `components/Logo.vue` -> `OK` con `@vue/compiler-sfc`.
+2. Verifica UI attesa:
+   - nel footer la scritta `SpediamoFacile` e' bianca e leggibile;
+   - in navbar la scritta resta grigio scuro come prima.
+
+---
+
+## TURNO: ARCHITETTURA
+DATA: 2026-03-05
+
+### Attivita' svolte
+- Corretto copy della card step 04 in homepage (`Come funziona`) come richiesto:
+  - da `Pagamento e conferma`
+  - a `Conferma e pagamento`.
+
+### File toccati in questo turno
+- `nuxt-spedizionefacile-master/components/Homepage/Step.vue`
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Parse SFC:
+   - `components/Homepage/Step.vue` -> `OK` con `@vue/compiler-sfc`.
+2. Verifica UI attesa:
+   - nella quarta card step compare il titolo `Conferma e pagamento`.
+
+---
+
+## TURNO: ARCHITETTURA
+DATA: 2026-03-05
+
+### Attivita' svolte
+- Ottimizzato il caricamento hero homepage per ridurre ritardo percepito del box prezzo/immagine.
+- Rimosso uso di `useSanctumFetch` per l'immagine hero pubblica in `ContenutoHeader.vue`.
+- Introdotto fallback immediato locale con fetch pubblico non bloccante:
+  - render iniziale sempre su `/img/homepage/hero-truck-landscape.jpg`;
+  - aggiornamento eventuale a immagine admin solo dopo mount (`$fetch('/api/public/homepage-image')`).
+- Obiettivo: first paint stabile e piu' veloce, senza dipendenze dal bootstrap auth per contenuti pubblici.
+
+### File toccati in questo turno
+- `nuxt-spedizionefacile-master/components/ContenutoHeader.vue`
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Parse SFC:
+   - `components/ContenutoHeader.vue` -> `OK` con `@vue/compiler-sfc`.
+2. Verifica UI attesa:
+   - hard refresh homepage: titolo + box prezzo + immagine compaiono subito;
+   - nessun ritardo dovuto a fetch sanctum per l'immagine hero.

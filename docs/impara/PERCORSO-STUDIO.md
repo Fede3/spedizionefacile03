@@ -1,6 +1,6 @@
 # Percorso di Studio
 
-Tre percorsi per imparare SpedizioneFacile, dal primo sguardo alla padronanza completa.
+Tre percorsi per imparare SpediamoFacile, dal primo sguardo alla padronanza completa.
 
 Scegli il percorso in base al tuo obiettivo.
 
@@ -12,7 +12,7 @@ Scegli il percorso in base al tuo obiettivo.
 
 ### Cosa saprai fare alla fine di questo percorso
 
-Saprai spiegare a parole tue come funziona SpedizioneFacile: dalla homepage al pacco consegnato.
+Saprai spiegare a parole tue come funziona SpediamoFacile: dalla homepage al pacco consegnato.
 Saprai trovare qualsiasi file nel progetto sapendo dove cercare.
 Saprai leggere un pezzo di codice e capire cosa fa, anche senza conoscere PHP o JavaScript.
 

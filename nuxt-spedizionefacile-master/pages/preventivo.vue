@@ -17,8 +17,8 @@
 <script setup>
 // Meta tag SEO per la pagina preventivo
 useSeoMeta({
-	title: 'Preventivo Spedizione Gratuito | SpedizioneFacile',
-	ogTitle: 'Preventivo Spedizione Gratuito | SpedizioneFacile',
+	title: 'Preventivo Spedizione Gratuito | SpediamoFacile',
+	ogTitle: 'Preventivo Spedizione Gratuito | SpediamoFacile',
 	description: 'Calcola il preventivo per la tua spedizione in pochi secondi. Confronta tariffe di corrieri nazionali e internazionali e scegli la soluzione migliore.',
 	ogDescription: 'Calcola il preventivo per la tua spedizione in pochi secondi. Confronta tariffe e risparmia.',
 });
@@ -33,8 +33,8 @@ useHead({
 				name: 'Preventivo Spedizione',
 				provider: {
 					'@type': 'Organization',
-					name: 'SpedizioneFacile',
-					url: 'https://spedizionefacile.it',
+					name: 'SpediamoFacile',
+					url: 'https://spediamofacile.it',
 				},
 				description: 'Calcola il preventivo per la tua spedizione in pochi secondi. Confronta tariffe di corrieri nazionali e internazionali.',
 				serviceType: 'Confronto tariffe spedizioni',

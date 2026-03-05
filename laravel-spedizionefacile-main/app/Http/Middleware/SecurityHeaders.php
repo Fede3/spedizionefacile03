@@ -69,7 +69,7 @@ class SecurityHeaders
         // Referrer-Policy: controlla quali informazioni vengono inviate nell'header
         // "Referer" quando l'utente clicca un link esterno.
         // strict-origin-when-cross-origin: invia l'URL completo solo per link interni,
-        // per link esterni invia solo il dominio (es. "spedizionefacile.it" senza il percorso).
+        // per link esterni invia solo il dominio (es. "spediamofacile.it" senza il percorso).
         $response->headers->set('Referrer-Policy', 'strict-origin-when-cross-origin');
 
         // Permissions-Policy: blocca l'accesso a funzionalita' sensibili del dispositivo.

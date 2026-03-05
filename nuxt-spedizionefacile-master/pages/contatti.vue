@@ -8,10 +8,10 @@
 <script setup>
 // Meta tag SEO
 useSeoMeta({
-	title: 'Contatti | SpedizioneFacile - Assistenza e Supporto',
-	ogTitle: 'Contatti | SpedizioneFacile',
-	description: 'Hai bisogno di aiuto? Contatta il team di SpedizioneFacile per assistenza sulle tue spedizioni, preventivi personalizzati o informazioni sui nostri servizi.',
-	ogDescription: 'Contatta SpedizioneFacile per assistenza e supporto sulle tue spedizioni.',
+	title: 'Contatti | SpediamoFacile - Assistenza e Supporto',
+	ogTitle: 'Contatti | SpediamoFacile',
+	description: 'Hai bisogno di aiuto? Contatta il team di SpediamoFacile per assistenza sulle tue spedizioni, preventivi personalizzati o informazioni sui nostri servizi.',
+	ogDescription: 'Contatta SpediamoFacile per assistenza e supporto sulle tue spedizioni.',
 });
 
 useHead({
@@ -21,12 +21,12 @@ useHead({
 			innerHTML: JSON.stringify({
 				'@context': 'https://schema.org',
 				'@type': 'ContactPage',
-				name: 'Contatti SpedizioneFacile',
-				url: 'https://spedizionefacile.it/contatti',
+				name: 'Contatti SpediamoFacile',
+				url: 'https://spediamofacile.it/contatti',
 				mainEntity: {
 					'@type': 'Organization',
-					name: 'SpedizioneFacile',
-					url: 'https://spedizionefacile.it',
+					name: 'SpediamoFacile',
+					url: 'https://spediamofacile.it',
 					contactPoint: {
 						'@type': 'ContactPoint',
 						contactType: 'customer service',

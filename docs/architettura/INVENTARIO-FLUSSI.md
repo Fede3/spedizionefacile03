@@ -1,4 +1,4 @@
-# INVENTARIO FLUSSI - SpedizioneFacile
+# INVENTARIO FLUSSI - SpediamoFacile
 
 Inventario completo dei flussi, moduli e dipendenze esterne del progetto.
 Basato sulla lettura diretta del codice sorgente.

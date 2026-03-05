@@ -44,7 +44,7 @@ class ShipmentLabelMail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'SpedizioneFacile - Etichetta spedizione ordine #' . $this->order->id,
+            subject: 'SpediamoFacile - Etichetta spedizione ordine #' . $this->order->id,
         );
     }
 

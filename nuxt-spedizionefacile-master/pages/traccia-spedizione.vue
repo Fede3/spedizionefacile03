@@ -18,9 +18,9 @@
 <script setup>
 // Meta tag SEO per la pagina di tracking
 useSeoMeta({
-	title: 'Traccia Spedizione | SpedizioneFacile',
-	ogTitle: 'Traccia Spedizione | SpedizioneFacile',
-	description: 'Traccia la tua spedizione in tempo reale con SpedizioneFacile.',
+	title: 'Traccia Spedizione | SpediamoFacile',
+	ogTitle: 'Traccia Spedizione | SpediamoFacile',
+	description: 'Traccia la tua spedizione in tempo reale con SpediamoFacile.',
 });
 
 const config = useRuntimeConfig();

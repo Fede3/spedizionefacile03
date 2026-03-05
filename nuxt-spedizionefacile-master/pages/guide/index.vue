@@ -1,16 +1,16 @@
 <!--
   PAGINA: Guide (guide/index.vue)
-  Pagina che elenca tutte le guide disponibili per gli utenti di SpedizioneFacile.
+  Pagina che elenca tutte le guide disponibili per gli utenti di SpediamoFacile.
   Carica le guide dall'API pubblica /api/public/guides, con fallback hardcoded.
   Mostra una griglia di card con icona SVG, titolo, descrizione e link alla guida completa.
   Include dati strutturati JSON-LD per il SEO (CollectionPage).
 -->
 <script setup>
 useSeoMeta({
-	title: 'Guide alle Spedizioni | SpedizioneFacile',
-	ogTitle: 'Guide alle Spedizioni | SpedizioneFacile',
+	title: 'Guide alle Spedizioni | SpediamoFacile',
+	ogTitle: 'Guide alle Spedizioni | SpediamoFacile',
 	description: 'Consulta le nostre guide pratiche su come preparare pacchi, scegliere il corriere giusto, risparmiare sulle spedizioni e molto altro.',
-	ogDescription: 'Guide pratiche per spedire in modo semplice e conveniente con SpedizioneFacile.',
+	ogDescription: 'Guide pratiche per spedire in modo semplice e conveniente con SpediamoFacile.',
 });
 
 useHead({
@@ -20,13 +20,13 @@ useHead({
 			innerHTML: JSON.stringify({
 				'@context': 'https://schema.org',
 				'@type': 'CollectionPage',
-				name: 'Guide alle Spedizioni - SpedizioneFacile',
-				url: 'https://spedizionefacile.it/guide',
+				name: 'Guide alle Spedizioni - SpediamoFacile',
+				url: 'https://spediamofacile.it/guide',
 				description: 'Raccolta di guide pratiche per spedire pacchi in Italia e all\'estero.',
 				mainEntity: {
 					'@type': 'Organization',
-					name: 'SpedizioneFacile',
-					url: 'https://spedizionefacile.it',
+					name: 'SpediamoFacile',
+					url: 'https://spediamofacile.it',
 				},
 			}),
 		},

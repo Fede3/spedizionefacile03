@@ -1,4 +1,4 @@
-# 🚀 GUIDA DEPLOY NETLIFY - SpedizioneFacile
+# 🚀 GUIDA DEPLOY NETLIFY - SpediamoFacile
 
 ## 📋 PREREQUISITI
 

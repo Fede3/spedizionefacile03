@@ -1,4 +1,4 @@
-# Moduli - SpedizioneFacile
+# Moduli - SpediamoFacile
 
 Questo documento definisce i confini di ogni modulo dell'applicazione: quali file ne fanno parte, cosa entra, cosa esce, e cosa NON deve essere mescolato.
 

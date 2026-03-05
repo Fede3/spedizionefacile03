@@ -7,10 +7,10 @@
 -->
 <script setup>
 useSeoMeta({
-	title: 'Blog - SpedizioneFacile',
-	ogTitle: 'Blog - SpedizioneFacile',
+	title: 'Blog - SpediamoFacile',
+	ogTitle: 'Blog - SpediamoFacile',
 	description: 'Leggi i nostri articoli su spedizioni, logistica, consigli pratici e novita dal mondo delle consegne.',
-	ogDescription: 'Articoli e approfondimenti su spedizioni e logistica da SpedizioneFacile.',
+	ogDescription: 'Articoli e approfondimenti su spedizioni e logistica da SpediamoFacile.',
 });
 
 useHead({
@@ -20,13 +20,13 @@ useHead({
 			innerHTML: JSON.stringify({
 				'@context': 'https://schema.org',
 				'@type': 'CollectionPage',
-				name: 'Blog - SpedizioneFacile',
-				url: 'https://spedizionefacile.it/blog',
+				name: 'Blog - SpediamoFacile',
+				url: 'https://spediamofacile.it/blog',
 				description: 'Articoli e approfondimenti su spedizioni e logistica.',
 				mainEntity: {
 					'@type': 'Organization',
-					name: 'SpedizioneFacile',
-					url: 'https://spedizionefacile.it',
+					name: 'SpediamoFacile',
+					url: 'https://spediamofacile.it',
 				},
 			}),
 		},

@@ -3,7 +3,7 @@
 ## Cosa imparerai
 
 - Il significato di ogni termine tecnico usato nel progetto
-- Esempi concreti da SpedizioneFacile
+- Esempi concreti da SpediamoFacile
 - Dove trovare ogni cosa nel codice
 
 
@@ -386,7 +386,7 @@ laravel-spedizionefacile-main/app/Models/Order.php    (campi is_cod, cod_amount)
 
 ### Corriere
 
-**Cosa significa:** L'azienda che trasporta fisicamente i pacchi. In SpedizioneFacile, il corriere principale e' **BRT** (Bartolini).
+**Cosa significa:** L'azienda che trasporta fisicamente i pacchi. In SpediamoFacile, il corriere principale e' **BRT** (Bartolini).
 
 **Esempio dal progetto:** Quando l'ordine viene pagato, il sistema crea una spedizione nel sistema BRT e genera l'etichetta.
 

@@ -46,8 +46,8 @@ onMounted(async () => {
 watchEffect(() => {
 	if (article.value) {
 		useSeoMeta({
-			title: `${article.value.title} | Blog - SpedizioneFacile`,
-			ogTitle: `${article.value.title} | Blog - SpedizioneFacile`,
+			title: `${article.value.title} | Blog - SpediamoFacile`,
+			ogTitle: `${article.value.title} | Blog - SpediamoFacile`,
 			description: article.value.meta_description,
 			ogDescription: article.value.meta_description,
 		});

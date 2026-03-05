@@ -12,7 +12,7 @@ File: `laravel-spedizionefacile-main/.env`
 
 | Variabile | Descrizione | Esempio |
 |---|---|---|
-| `APP_NAME` | Nome dell'applicazione | `SpedizioneFacile` |
+| `APP_NAME` | Nome dell'applicazione | `SpediamoFacile` |
 | `APP_ENV` | Ambiente (local, staging, production) | `local` |
 | `APP_KEY` | Chiave di crittografia (generata con `php artisan key:generate`) | `base64:xxxxx` |
 | `APP_DEBUG` | Mostra errori dettagliati (true solo in dev) | `true` |
@@ -54,8 +54,8 @@ Per SQLite non servono host, porta, username e password.
 | `MAIL_USERNAME` | Username SMTP | `resend` |
 | `MAIL_PASSWORD` | Password o API key | `re_xxxxxxxx` |
 | `MAIL_ENCRYPTION` | Crittografia | `ssl`, `tls`, `null` |
-| `MAIL_FROM_ADDRESS` | Indirizzo mittente | `noreply@spedizionefacile.it` |
-| `MAIL_FROM_NAME` | Nome mittente | `SpedizioneFacile` |
+| `MAIL_FROM_ADDRESS` | Indirizzo mittente | `noreply@spediamofacile.it` |
+| `MAIL_FROM_NAME` | Nome mittente | `SpediamoFacile` |
 
 Per lo sviluppo locale usa `MAIL_MAILER=log`.
 Vedi [Configurare email](../guide/CONFIGURARE-EMAIL.md) per i dettagli.
@@ -130,7 +130,7 @@ File: `nuxt-spedizionefacile-master/.env`
 ### Backend (.env)
 
 ```env
-APP_NAME=SpedizioneFacile
+APP_NAME=SpediamoFacile
 APP_ENV=local
 APP_KEY=          # Generato con php artisan key:generate
 APP_DEBUG=true

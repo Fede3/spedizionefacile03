@@ -1,4 +1,4 @@
-# Changelog Completo - SpedizioneFacile
+# Changelog Completo - SpediamoFacile
 
 ## Data: 2026-03-02
 

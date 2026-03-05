@@ -19,7 +19,7 @@ Una **applicazione web** e' un programma che funziona nel browser.
 Il browser e' il programma che usi per navigare su Internet.
 Per esempio: Chrome, Firefox, Safari, Edge.
 
-SpedizioneFacile e' una applicazione web.
+SpediamoFacile e' una applicazione web.
 L'utente apre il sito, inserisce i dati del pacco e paga la spedizione.
 Tutto questo succede nel browser.
 
@@ -51,7 +51,7 @@ Il **frontend** e' tutto quello che vedi nel browser.
 - I colori e le immagini
 - Il testo che leggi
 
-In SpedizioneFacile, il frontend e' scritto con **Nuxt** (basato su **Vue.js**).
+In SpediamoFacile, il frontend e' scritto con **Nuxt** (basato su **Vue.js**).
 I file del frontend sono nella cartella:
 
 ```
@@ -76,7 +76,7 @@ Il **backend** e' la parte che lavora dietro le quinte.
 Non la vedi nel browser.
 Riceve le richieste, controlla i dati e risponde.
 
-In SpedizioneFacile, il backend e' scritto con **Laravel** (basato su **PHP**).
+In SpediamoFacile, il backend e' scritto con **Laravel** (basato su **PHP**).
 I file del backend sono nella cartella:
 
 ```
@@ -113,7 +113,7 @@ Ogni riga e' un dato, ogni colonna e' un tipo di informazione.
 | 2 | Anna | Bianchi | anna@email.it | Admin |
 | 3 | Luca | Verdi | luca@email.it | Partner Pro |
 
-### Cosa salva SpedizioneFacile nel database
+### Cosa salva SpediamoFacile nel database
 
 Ecco le tabelle principali:
 

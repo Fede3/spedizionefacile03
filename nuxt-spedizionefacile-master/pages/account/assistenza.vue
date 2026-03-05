@@ -93,7 +93,7 @@ const handleSubmit = async () => {
 						</div>
 						<h3 class="text-[0.9375rem] font-bold text-[#252B42]">Email</h3>
 					</div>
-					<p class="text-[0.875rem] text-[#737373]">assistenza@spedizionefacile.it</p>
+					<p class="text-[0.875rem] text-[#737373]">assistenza@spediamofacile.it</p>
 				</div>
 				<div class="bg-white rounded-[16px] p-[24px] border border-[#E9EBEC] shadow-sm">
 					<div class="flex items-center gap-[12px] mb-[12px]">

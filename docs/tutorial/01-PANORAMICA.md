@@ -1,8 +1,8 @@
 # Panoramica del progetto
 
-## Cos'e' SpedizioneFacile
+## Cos'e' SpediamoFacile
 
-SpedizioneFacile e' una piattaforma web per confrontare e prenotare spedizioni nazionali e internazionali.
+SpediamoFacile e' una piattaforma web per confrontare e prenotare spedizioni nazionali e internazionali.
 Gli utenti possono configurare i pacchi, scegliere il servizio di spedizione e pagare online.
 
 Il sistema genera automaticamente le etichette di spedizione BRT e invia il tracking all'utente via email.

@@ -79,7 +79,7 @@ const handleClick = (index) => {
 			<li
 				v-for="(step, index) in steps"
 				:key="index"
-				class="min-h-[36px] leading-[36px] tablet:min-h-[44px] tablet:leading-[44px] tablet:leading-[48px] transition-[color,background-color,opacity] duration-200 select-none whitespace-nowrap px-[6px] tablet:px-[0px]"
+				class="min-h-[36px] leading-[36px] tablet:min-h-[44px] tablet:leading-[44px] tablet:leading-[48px] transition-[color,opacity] duration-200 select-none whitespace-nowrap px-[6px] tablet:px-[0px]"
 				:class="{
 					'bg-[#E44203] text-white tablet:w-auto !px-[12px] tablet:!px-[24px] text-center rounded-[50px] font-semibold step-active-pulse': index === activeStep,
 					'cursor-pointer hover:text-[#095866]': canNavigate(index),

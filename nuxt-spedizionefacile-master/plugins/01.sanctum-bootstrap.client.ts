@@ -8,6 +8,7 @@
  */
 export default defineNuxtPlugin(async (nuxtApp) => {
   const { init } = useSanctumAuth()
+  const route = useRoute()
 
   // Flag per indicare che il bootstrap è completato
   const authReady = ref(false)
@@ -16,15 +17,10 @@ export default defineNuxtPlugin(async (nuxtApp) => {
     nuxtApp.provide('authReady', authReady)
   }
 
-  // Evita chiamate protette inutili in guest: se non esiste alcun cookie di sessione,
-  // non tentiamo init() e non interroghiamo /api/user.
-  const hasAuthSessionCookie = () => {
-    if (import.meta.server) return false
-    const cookie = document.cookie || ''
-    return /(?:^|;\s*)(laravel_session|session|remember_web_[^=]*)=/.test(cookie)
-  }
-
-  if (!hasAuthSessionCookie()) {
+  // Su pagine pubbliche non inizializziamo identity bootstrap:
+  // evita richieste /api/user non necessarie (401 rumoroso lato guest).
+  const requiresImmediateAuthBootstrap = route.path.startsWith('/account')
+  if (!requiresImmediateAuthBootstrap) {
     finish()
     return
   }

@@ -30,7 +30,7 @@ const services = [
 	},
 	{
 		title: 'Assicurazione',
-		icon: '/img/quote/second-step/insurance-icon.png',
+		icon: '/img/homepage/services/insurance-shield-check.svg',
 		description: 'Proteggi il valore della spedizione con attivazione rapida in un click.',
 		button: 'Attiva copertura',
 		url: '/servizi',
@@ -57,10 +57,12 @@ const services = [
 			</header>
 
 			<div class="hp-services-grid">
-				<article
+				<NuxtLink
 					v-for="service in services"
 					:key="service.title"
-					class="hp-services-card">
+					:to="service.url"
+					class="hp-services-card"
+					:aria-label="`${service.title}: ${service.button}`">
 					<div class="hp-services-head">
 						<div class="hp-services-icon-wrap">
 							<NuxtImg
@@ -77,8 +79,8 @@ const services = [
 
 					<p class="hp-services-card-text">{{ service.description }}</p>
 
-					<NuxtLink :to="service.url" class="hp-services-cta">{{ service.button }}</NuxtLink>
-				</article>
+					<span class="hp-services-cta">{{ service.button }}</span>
+				</NuxtLink>
 			</div>
 		</div>
 	</section>
@@ -130,6 +132,7 @@ const services = [
 }
 
 .hp-services-card {
+	position: relative;
 	display: flex;
 	flex-direction: column;
 	gap: 12px;
@@ -139,6 +142,38 @@ const services = [
 	background: #ffffff;
 	box-shadow: 0 4px 10px rgba(15, 23, 42, 0.05), 0 18px 30px rgba(15, 23, 42, 0.07);
 	min-height: 230px;
+	overflow: hidden;
+	text-decoration: none;
+	color: inherit;
+	will-change: transform;
+	transition: transform 0.24s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.24s ease, border-color 0.24s ease;
+}
+
+.hp-services-card::after {
+	content: '';
+	position: absolute;
+	inset: 0;
+	background: radial-gradient(circle at 18% 14%, rgba(9, 88, 102, 0.12), transparent 48%);
+	opacity: 0;
+	transition: opacity 0.24s ease;
+	pointer-events: none;
+}
+
+.hp-services-card:hover,
+.hp-services-card:focus-within {
+	transform: translateY(-4px);
+	border-color: #c6dde8;
+	box-shadow: 0 12px 24px rgba(15, 23, 42, 0.08), 0 22px 36px rgba(15, 23, 42, 0.1);
+}
+
+.hp-services-card:focus-visible {
+	outline: 2px solid #095866;
+	outline-offset: 3px;
+}
+
+.hp-services-card:hover::after,
+.hp-services-card:focus-within::after {
+	opacity: 1;
 }
 
 .hp-services-head {
@@ -157,6 +192,7 @@ const services = [
 	align-items: center;
 	justify-content: center;
 	flex-shrink: 0;
+	transition: transform 0.24s ease, box-shadow 0.24s ease, border-color 0.24s ease;
 }
 
 .hp-services-icon {
@@ -170,12 +206,25 @@ const services = [
 	line-height: 1.18;
 	font-weight: 780;
 	color: #1f2937;
+	transition: color 0.24s ease;
 }
 
 .hp-services-card-text {
 	font-size: 0.97rem;
 	line-height: 1.58;
 	color: #526172;
+}
+
+.hp-services-card:hover .hp-services-icon-wrap,
+.hp-services-card:focus-within .hp-services-icon-wrap {
+	transform: translateY(-2px) scale(1.04);
+	border-color: #b7d5e0;
+	box-shadow: 0 8px 16px rgba(15, 23, 42, 0.08);
+}
+
+.hp-services-card:hover .hp-services-card-title,
+.hp-services-card:focus-within .hp-services-card-title {
+	color: #0a5f6d;
 }
 
 .hp-services-cta {
@@ -199,6 +248,11 @@ const services = [
 	background: #cb3a00;
 	transform: translateY(-1px);
 	box-shadow: 0 10px 20px rgba(228, 66, 3, 0.22);
+}
+
+.hp-services-card:hover .hp-services-cta,
+.hp-services-card:focus-within .hp-services-cta {
+	box-shadow: 0 10px 20px rgba(228, 66, 3, 0.24);
 }
 
 .hp-services-cta:focus-visible {
@@ -243,10 +297,16 @@ const services = [
 }
 
 @media (prefers-reduced-motion: reduce) {
+	.hp-services-card,
+	.hp-services-card::after,
+	.hp-services-icon-wrap,
+	.hp-services-card-title,
 	.hp-services-cta {
 		transition: none;
 	}
 
+	.hp-services-card:hover,
+	.hp-services-card:focus-within,
 	.hp-services-cta:hover {
 		transform: none;
 	}

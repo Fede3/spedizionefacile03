@@ -1,4 +1,4 @@
-# Audit Leggibilita del Codice — SpedizioneFacile
+# Audit Leggibilita del Codice — SpediamoFacile
 
 Data audit: 2026-02-16
 Fase: 0 (Inventario)

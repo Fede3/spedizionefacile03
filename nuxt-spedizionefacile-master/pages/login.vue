@@ -5,11 +5,6 @@
   ROUTE: /login (middleware sanctum:guest).
 -->
 <script setup>
-// Solo utenti non autenticati
-definePageMeta({
-	middleware: ["sanctum:guest"],
-});
-
 // Redirect permanente alla pagina unificata di autenticazione
 // Preserva il parametro redirect se presente nell'URL
 const route = useRoute();

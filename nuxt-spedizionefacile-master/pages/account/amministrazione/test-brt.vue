@@ -33,7 +33,7 @@ const brtTestForm = ref({
 	consignee_phone: '3331234567',
 	weight_kg: 2,
 	parcels: 1,
-	notes: 'Test SpedizioneFacile',
+	notes: 'Test SpediamoFacile',
 });
 
 const brtTestPudoLoading = ref(false);

@@ -1,4 +1,4 @@
-# Mappa dei Flussi - SpedizioneFacile
+# Mappa dei Flussi - SpediamoFacile
 
 Questo documento descrive passo per passo tutti i flussi principali dell'applicazione, con riferimenti ai file sorgente.
 

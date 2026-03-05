@@ -1,7 +1,7 @@
 <?php
 /**
  * FILE: User.php
- * SCOPO: Modello utente registrato su SpedizioneFacile con ruoli (User, Partner Pro, Admin).
+ * SCOPO: Modello utente registrato su SpediamoFacile con ruoli (User, Partner Pro, Admin).
  *
  * DOVE SI USA:
  *   - Tutti i controller (auth()->user() restituisce questo modello)

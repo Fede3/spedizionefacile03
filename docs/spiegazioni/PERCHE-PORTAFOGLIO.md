@@ -1,6 +1,6 @@
 # Perche' esiste un sistema portafoglio
 
-Spiega le motivazioni dietro il portafoglio virtuale in SpedizioneFacile.
+Spiega le motivazioni dietro il portafoglio virtuale in SpediamoFacile.
 
 ---
 

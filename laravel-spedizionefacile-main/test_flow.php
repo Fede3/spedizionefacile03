@@ -125,7 +125,7 @@ echo "\n";
 // =====================
 echo "--- TEST 2: Coupon System ---\n";
 
-$client = User::where('email', 'cliente@spedizionefacile.it')->first();
+$client = User::where('email', 'cliente@spediamofacile.it')->first();
 Auth::login($client);
 
 $couponReq = Request::create('/api/calculate-coupon', 'POST', [
@@ -343,7 +343,7 @@ echo "\n";
 // TEST 6: Referral / Pro
 // =====================
 echo "--- TEST 6: Referral / Pro System ---\n";
-$proUser = User::where('email', 'pro@spedizionefacile.it')->first();
+$proUser = User::where('email', 'pro@spediamofacile.it')->first();
 
 if ($proUser->referral_code) {
     ok("Pro user has referral code: " . $proUser->referral_code);

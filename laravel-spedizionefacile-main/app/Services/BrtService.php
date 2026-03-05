@@ -387,7 +387,7 @@ class BrtService
                 'weightKG' => max(1, (int) ($data['weight_kg'] ?? 1)),
                 'numericSenderReference' => $numericSenderReference,
                 'alphanumericSenderReference' => 'TEST-' . $numericSenderReference,
-                'notes' => $data['notes'] ?? 'Test SpedizioneFacile',
+                'notes' => $data['notes'] ?? 'Test SpediamoFacile',
                 'isAlertRequired' => '1',
                 'isCODMandatory' => '0',
             ],
@@ -546,10 +546,12 @@ class BrtService
         $zipCode = preg_replace('/\D/', '', (string) $zipCode);
         $city = trim($city);
         $maxResults = max(1, min($maxResults, 50));
+        $coverageKm = 80;
 
         $strategyUsed = [];
         $combinedPoints = [];
         $fallbackUsed = false;
+        $geocodedSeed = null;
 
         $mergePoints = function (array $points) use (&$combinedPoints, $maxResults): void {
             if (empty($points)) return;
@@ -600,17 +602,47 @@ class BrtService
 
         // Pass 4: nearby da coordinate geocodificate dell'input testuale
         if (count($combinedPoints) < $maxResults) {
-            $geocoded = $this->geocodeInputToCoordinates($address, $city, $zipCode);
-            if ($geocoded) {
+            $geocodedSeed = $this->geocodeInputToCoordinates($address, $city, $zipCode);
+            if ($geocodedSeed) {
                 $strategyUsed[] = 'nearby_geo_input';
                 $nearbyResult = $this->getPudoByCoordinates(
-                    (float) $geocoded['latitude'],
-                    (float) $geocoded['longitude'],
+                    (float) $geocodedSeed['latitude'],
+                    (float) $geocodedSeed['longitude'],
                     $maxResults
                 );
                 if (!empty($nearbyResult['pudo'])) {
                     $mergePoints($nearbyResult['pudo']);
                     if (!empty($nearbyResult['fallback'])) {
+                        $fallbackUsed = true;
+                    }
+                }
+            }
+        }
+
+        // Pass 5: griglia geografica attorno al seed per aumentare la copertura in citta piccole.
+        if (
+            count($combinedPoints) < min($maxResults, 30) &&
+            is_array($geocodedSeed) &&
+            isset($geocodedSeed['latitude'], $geocodedSeed['longitude'])
+        ) {
+            $strategyUsed[] = 'nearby_geo_grid';
+            $gridPoints = $this->buildGeoGridSearchPoints((float) $geocodedSeed['latitude'], (float) $geocodedSeed['longitude']);
+            $gridBatchResults = min($maxResults, 30);
+
+            foreach ($gridPoints as $gridPoint) {
+                if (count($combinedPoints) >= $maxResults) {
+                    break;
+                }
+
+                $gridNearbyResult = $this->getPudoByCoordinates(
+                    (float) $gridPoint['latitude'],
+                    (float) $gridPoint['longitude'],
+                    $gridBatchResults
+                );
+
+                if (!empty($gridNearbyResult['pudo'])) {
+                    $mergePoints($gridNearbyResult['pudo']);
+                    if (!empty($gridNearbyResult['fallback'])) {
                         $fallbackUsed = true;
                     }
                 }
@@ -627,6 +659,15 @@ class BrtService
             }
         }
 
+        $combinedPoints = array_values(array_filter($combinedPoints, function ($point) {
+            $provider = strtoupper(trim((string) ($point['provider'] ?? 'BRT')));
+            return $provider === '' || $provider === 'BRT';
+        }));
+        $combinedPoints = array_map(function ($point) {
+            $point['provider'] = 'BRT';
+            return $point;
+        }, $combinedPoints);
+
         $combinedPoints = $this->sortPudoByDistance($combinedPoints);
         if (count($combinedPoints) > $maxResults) {
             $combinedPoints = array_slice($combinedPoints, 0, $maxResults);
@@ -640,6 +681,8 @@ class BrtService
                 'fallback' => $fallbackUsed,
                 'meta' => [
                     'strategy_used' => array_values(array_unique($strategyUsed)),
+                    'search_passes' => count(array_unique($strategyUsed)),
+                    'coverage_km' => $coverageKm,
                     'returned_count' => 0,
                     'requested_count' => $maxResults,
                     'fallback' => $fallbackUsed,
@@ -654,6 +697,8 @@ class BrtService
             'fallback' => $fallbackUsed,
             'meta' => [
                 'strategy_used' => array_values(array_unique($strategyUsed)),
+                'search_passes' => count(array_unique($strategyUsed)),
+                'coverage_km' => $coverageKm,
                 'returned_count' => count($combinedPoints),
                 'requested_count' => $maxResults,
                 'fallback' => $fallbackUsed,
@@ -1139,7 +1184,7 @@ class BrtService
             return $options['notes'];
         }
 
-        $notes = 'SpedizioneFacile ordine #' . $order->id;
+        $notes = 'SpediamoFacile ordine #' . $order->id;
 
         // Aggiungiamo la descrizione del contenuto dai pacchi (campo content_description)
         $descriptions = $order->packages
@@ -1297,7 +1342,7 @@ class BrtService
                     'city' => $city,
                     'countryCode' => $countryCode,
                     'max_pudo_number' => max(1, min($maxResults, 50)),
-                    'maxDistanceSearch' => 30000,
+                    'maxDistanceSearch' => 80000,
                 ]);
 
             if (!$response->successful()) {
@@ -1373,7 +1418,7 @@ class BrtService
             $response = Http::timeout(8)
                 ->acceptJson()
                 ->withHeaders([
-                    'User-Agent' => 'SpedizioneFacile/1.0 (PUDO geocode)',
+                    'User-Agent' => 'SpediamoFacile/1.0 (PUDO geocode)',
                 ])
                 ->get('https://nominatim.openstreetmap.org/search', [
                     'format' => 'jsonv2',
@@ -1470,12 +1515,16 @@ class BrtService
         foreach ($points as $point) {
             $key = (string) ($point['pudo_id'] ?? '');
             if ($key === '') {
+                $lat = isset($point['latitude']) && is_numeric($point['latitude']) ? number_format((float) $point['latitude'], 6, '.', '') : 'na';
+                $lng = isset($point['longitude']) && is_numeric($point['longitude']) ? number_format((float) $point['longitude'], 6, '.', '') : 'na';
                 $key = sprintf(
-                    '%s|%s|%s|%s',
+                    '%s|%s|%s|%s|%s|%s',
                     strtolower((string) ($point['name'] ?? '')),
                     strtolower((string) ($point['address'] ?? '')),
                     strtolower((string) ($point['zip_code'] ?? '')),
-                    strtolower((string) ($point['city'] ?? ''))
+                    strtolower((string) ($point['city'] ?? '')),
+                    $lat,
+                    $lng
                 );
             }
 
@@ -1512,6 +1561,40 @@ class BrtService
         });
 
         return $points;
+    }
+
+    private function buildGeoGridSearchPoints(float $latitude, float $longitude): array
+    {
+        $latKmFactor = 110.574;
+        $lngKmFactor = max(111.320 * cos(deg2rad($latitude)), 30.0);
+
+        $distancesKm = [40, 75];
+        $directions = [
+            [1, 0], [-1, 0], [0, 1], [0, -1],
+            [1, 1], [1, -1], [-1, 1], [-1, -1],
+        ];
+
+        $points = [];
+        foreach ($distancesKm as $distanceKm) {
+            foreach ($directions as [$latDirection, $lngDirection]) {
+                // Nel ring esterno manteniamo i diagonali solo per evitare troppe chiamate.
+                if ($distanceKm >= 75 && abs($latDirection) + abs($lngDirection) === 2) {
+                    continue;
+                }
+
+                $latDelta = ($distanceKm / $latKmFactor) * $latDirection;
+                $lngDelta = ($distanceKm / $lngKmFactor) * $lngDirection;
+                $candidateLat = $latitude + $latDelta;
+                $candidateLng = $longitude + $lngDelta;
+                $key = sprintf('%.5f|%.5f', $candidateLat, $candidateLng);
+                $points[$key] = [
+                    'latitude' => $candidateLat,
+                    'longitude' => $candidateLng,
+                ];
+            }
+        }
+
+        return array_values($points);
     }
 
     /**

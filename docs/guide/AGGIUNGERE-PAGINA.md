@@ -33,7 +33,7 @@ Crea il file `nuxt-spedizionefacile-master/pages/lavora-con-noi.vue`:
     <h1 class="text-3xl font-bold mb-6">Lavora con noi</h1>
 
     <p class="mb-4">
-      SpedizioneFacile e' sempre alla ricerca di persone motivate.
+      SpediamoFacile e' sempre alla ricerca di persone motivate.
     </p>
 
     <h2 class="text-xl font-semibold mb-3">Posizioni aperte</h2>
@@ -47,9 +47,9 @@ Crea il file `nuxt-spedizionefacile-master/pages/lavora-con-noi.vue`:
 
 <script setup>
 useHead({
-  title: 'Lavora con noi - SpedizioneFacile',
+  title: 'Lavora con noi - SpediamoFacile',
   meta: [
-    { name: 'description', content: 'Posizioni aperte in SpedizioneFacile' },
+    { name: 'description', content: 'Posizioni aperte in SpediamoFacile' },
   ],
 });
 </script>
@@ -199,7 +199,7 @@ Ogni pagina dovrebbe avere i metadati SEO:
 
 ```javascript
 useHead({
-  title: 'Titolo pagina - SpedizioneFacile',
+  title: 'Titolo pagina - SpediamoFacile',
   meta: [
     { name: 'description', content: 'Descrizione della pagina per Google' },
   ],

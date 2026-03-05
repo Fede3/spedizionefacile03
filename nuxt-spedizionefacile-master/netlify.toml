@@ -1,4 +1,4 @@
-# Netlify Configuration per SpedizioneFacile
+# Netlify Configuration per SpediamoFacile
 # Questo file configura il deploy del frontend Nuxt su Netlify
 
 [build]

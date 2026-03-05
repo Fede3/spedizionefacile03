@@ -3,7 +3,7 @@
  *
  * Questo file personalizza l'aspetto dei componenti della libreria Nuxt UI.
  * Nuxt UI fornisce componenti pronti all'uso (accordion, modal, tabs, breadcrumb, ecc.)
- * e qui si modificano colori, dimensioni e stili per adattarli al design di SpedizioneFacile.
+ * e qui si modificano colori, dimensioni e stili per adattarli al design di SpediamoFacile.
  *
  * Componenti personalizzati:
  *

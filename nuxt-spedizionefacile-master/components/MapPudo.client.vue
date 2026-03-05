@@ -1,17 +1,10 @@
 <!--
 	COMPONENTE: MapPudo (MapPudo.client.vue)
-	SCOPO: Mappa interattiva Leaflet per visualizzare e selezionare i punti PUDO.
-
-	DOVE SI USA: components/PudoSelector.vue
-	PROPS: points (Array di punti PUDO con lat/lng), selectedId (String), referencePoint (Object)
-	EMITS: @select(pudo) — quando l'utente clicca un marker sulla mappa
-
-	Il suffisso .client.vue fa sì che Nuxt lo renda solo lato client (Leaflet richiede window/document).
+	SCOPO: Mappa interattiva Leaflet robusta per visualizzare/selezionare punti PUDO.
+	NOTE: implementazione senza wrapper vue-leaflet per evitare errori di patch runtime.
 -->
 <script setup>
-// Import espliciti: necessari in .client.vue per inizializzazione corretta di Leaflet
-import { LMap, LMarker, LIcon, LPopup, LTileLayer } from '@vue-leaflet/vue-leaflet';
-import 'leaflet/dist/leaflet.css';
+let L = null;
 
 const props = defineProps({
 	points: { type: Array, default: () => [] },
@@ -19,20 +12,46 @@ const props = defineProps({
 	referencePoint: { type: Object, default: null },
 });
 
-const emit = defineEmits(['select']);
+const emit = defineEmits(['select', 'map-click']);
 
-const mapRef = ref(null);
+const mapEl = ref(null);
 const mapReady = ref(false);
-let invalidateTimer = null;
+const tileLayerReady = ref(false);
+const tileLayerError = ref(false);
 
-// Centro di default: Italia
 const defaultCenter = [41.9028, 12.4964];
 const defaultZoom = 6;
-const isFiniteCoordinate = (value) => Number.isFinite(Number.parseFloat(value));
+
+let mapInstance = null;
+let tileLayer = null;
+let pointsLayer = null;
+let referenceLayer = null;
+let mapSlowTimer = null;
+let invalidateTimers = [];
+let resizeHandler = null;
+let mapDblClickHandler = null;
+
+const parseCoordinate = (value) => {
+	if (value === null || value === undefined || value === '') return null;
+	const parsed = Number.parseFloat(String(value).trim().replace(',', '.'));
+	return Number.isFinite(parsed) ? parsed : null;
+};
+
+const isFiniteCoordinate = (value) => Number.isFinite(parseCoordinate(value));
+
+const getPointKey = (point, index = 0) => {
+	const explicit = String(point?.ui_key || point?.pudo_id || point?.carrier_pudo_id || '').trim();
+	if (explicit) return explicit;
+	const lat = parseCoordinate(point?.latitude ?? point?.lat);
+	const lng = parseCoordinate(point?.longitude ?? point?.lng);
+	const latPart = Number.isFinite(lat) ? lat.toFixed(6) : 'na';
+	const lngPart = Number.isFinite(lng) ? lng.toFixed(6) : 'na';
+	return `map-fallback-${index}-${latPart}-${lngPart}`;
+};
 
 const parsedReferencePoint = computed(() => {
-	const latitude = Number.parseFloat(props.referencePoint?.latitude);
-	const longitude = Number.parseFloat(props.referencePoint?.longitude);
+	const latitude = parseCoordinate(props.referencePoint?.latitude);
+	const longitude = parseCoordinate(props.referencePoint?.longitude);
 	if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) return null;
 	return {
 		latitude,
@@ -44,243 +63,327 @@ const parsedReferencePoint = computed(() => {
 	};
 });
 
-// Calcola il centro della mappa in base ai punti disponibili
-const getPointKey = (point, index = 0) => {
-	const explicit = String(point?.__mapKey || point?.ui_key || point?.pudo_id || point?.carrier_pudo_id || '').trim();
-	if (explicit) return explicit;
-	const lat = Number.parseFloat(point?.latitude ?? point?.lat);
-	const lng = Number.parseFloat(point?.longitude ?? point?.lng);
-	const latPart = Number.isFinite(lat) ? lat.toFixed(6) : 'na';
-	const lngPart = Number.isFinite(lng) ? lng.toFixed(6) : 'na';
-	return `map-fallback-${index}-${latPart}-${lngPart}`;
-};
-
 const validPoints = computed(() =>
 	(props.points || [])
 		.filter((p) => isFiniteCoordinate(p?.latitude) && isFiniteCoordinate(p?.longitude))
 		.map((p, index) => ({ ...p, __mapKey: getPointKey(p, index) }))
 );
 
-const mapCenter = computed(() => {
-	if (parsedReferencePoint.value) {
-		return [parsedReferencePoint.value.latitude, parsedReferencePoint.value.longitude];
-	}
-	if (!validPoints.value.length) return defaultCenter;
-	const lats = validPoints.value.map((p) => Number.parseFloat(p.latitude));
-	const lngs = validPoints.value.map((p) => Number.parseFloat(p.longitude));
-	if (!lats.length) return defaultCenter;
-	return [
-		lats.reduce((a, b) => a + b, 0) / lats.length,
-		lngs.reduce((a, b) => a + b, 0) / lngs.length,
-	];
-});
+const escapeHtml = (value) =>
+	String(value || '')
+		.replace(/&/g, '&amp;')
+		.replace(/</g, '&lt;')
+		.replace(/>/g, '&gt;')
+		.replace(/"/g, '&quot;')
+		.replace(/'/g, '&#039;');
 
-const mapZoom = computed(() => {
-	if (parsedReferencePoint.value && !validPoints.value.length) return 14;
-	return validPoints.value.length ? 13 : defaultZoom;
-});
-
-const withReadyMap = (cb) => {
-	const map = mapRef.value?.leafletObject;
-	if (!mapReady.value || !map) return;
-	cb(map);
+const formatDistance = (meters) => {
+	const value = Number(meters);
+	if (!Number.isFinite(value)) return '';
+	if (value >= 1000) return `${(value / 1000).toFixed(1)} km`;
+	return `${Math.round(value)} m`;
 };
 
-// Quando cambiano punti/riferimento, adatta la vista della mappa
-watch([validPoints, parsedReferencePoint], ([pts]) => {
-	if (!mapReady.value || !mapRef.value?.leafletObject) return;
-	const validPts = pts
-		.map(p => [Number.parseFloat(p.latitude), Number.parseFloat(p.longitude)])
-		.filter(([lat, lng]) => Number.isFinite(lat) && Number.isFinite(lng));
-	const ref = parsedReferencePoint.value;
-	const allBounds = ref ? [[ref.latitude, ref.longitude], ...validPts] : validPts;
-	if (!allBounds.length) return;
+const createPointIcon = (isSelected) => {
+	const size = isSelected ? 36 : 28;
+	const inner = isSelected
+		? '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>'
+		: '<span class="pudo-marker-dot"></span>';
 
-	nextTick(() => {
-		try {
-			const map = mapRef.value.leafletObject;
-			map.invalidateSize({ animate: false });
-			if (allBounds.length === 1) {
-				map.setView(allBounds[0], ref ? 14 : 13, { animate: true });
-				return;
+	const html = `
+		<div class="pudo-marker ${isSelected ? 'is-selected' : ''}" style="width:${size}px;height:${size}px;">
+			${inner}
+		</div>
+		<div class="pudo-marker-tip ${isSelected ? 'is-selected' : ''}"></div>
+	`;
+
+	return L.divIcon({
+		className: 'pudo-marker-icon-wrap',
+		html,
+		iconSize: [size, size + 10],
+		iconAnchor: [Math.round(size / 2), size + 10],
+		popupAnchor: [0, -(size + 4)],
+	});
+};
+
+const createReferenceIcon = () => {
+	const html = `
+		<div class="pudo-ref-marker">
+			<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+				<path d="M12 2a7 7 0 0 0-7 7c0 5 7 13 7 13s7-8 7-13a7 7 0 0 0-7-7z"></path>
+				<circle cx="12" cy="9" r="2.5"></circle>
+			</svg>
+		</div>
+		<div class="pudo-ref-tip"></div>
+	`;
+
+	return L.divIcon({
+		className: 'pudo-reference-icon-wrap',
+		html,
+		iconSize: [32, 42],
+		iconAnchor: [16, 42],
+		popupAnchor: [0, -36],
+	});
+};
+
+const clearInvalidateTimers = () => {
+	invalidateTimers.forEach((timer) => window.clearTimeout(timer));
+	invalidateTimers = [];
+};
+
+const queueInvalidateMapSize = () => {
+	if (!mapInstance) return;
+	clearInvalidateTimers();
+	[0, 120, 360, 900].forEach((delay) => {
+		const timer = window.setTimeout(() => {
+			if (!mapInstance) return;
+			try {
+				mapInstance.invalidateSize({ animate: false });
+			} catch {
+				// no-op
 			}
-			map.fitBounds(allBounds, { padding: [40, 40], maxZoom: 15 });
-		} catch { /* ignore */ }
+		}, delay);
+		invalidateTimers.push(timer);
 	});
-}, { immediate: true, flush: 'post' });
+};
 
-// Quando cambia il punto selezionato, centra la mappa su di esso
-watch(() => props.selectedId, (id) => {
-	if (!id) return;
-	withReadyMap((map) => {
-		const point = validPoints.value.find((p) => getPointKey(p) === String(id));
-		if (!point?.latitude || !point?.longitude) return;
-		map.setView(
-			[Number.parseFloat(point.latitude), Number.parseFloat(point.longitude)],
-			15,
-			{ animate: true }
-		);
+const clearLayers = () => {
+	if (pointsLayer) pointsLayer.clearLayers();
+	if (referenceLayer) referenceLayer.clearLayers();
+};
+
+const renderMapData = () => {
+	if (!mapInstance || !mapReady.value || !pointsLayer || !referenceLayer) return;
+
+	clearLayers();
+
+	const bounds = [];
+	const reference = parsedReferencePoint.value;
+
+	if (reference) {
+		const refLatLng = [reference.latitude, reference.longitude];
+		bounds.push(refLatLng);
+		const popupLabel = reference.label || [reference.address, [reference.zip_code, reference.city].filter(Boolean).join(' ')].filter(Boolean).join(', ');
+
+		L.marker(refLatLng, { icon: createReferenceIcon() })
+			.bindPopup(`<div style="font-size:13px;line-height:1.4"><b>Punto di riferimento</b><br>${escapeHtml(popupLabel || 'Posizione selezionata')}</div>`)
+			.addTo(referenceLayer);
+	}
+
+	validPoints.value.forEach((point, index) => {
+		const key = String(point.__mapKey || getPointKey(point, index));
+		const isSelected = key === String(props.selectedId || '');
+		const lat = parseCoordinate(point.latitude);
+		const lng = parseCoordinate(point.longitude);
+		if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
+
+		const marker = L.marker([lat, lng], { icon: createPointIcon(isSelected) });
+		marker.on('click', (event) => {
+			event?.originalEvent?.stopPropagation?.();
+			emit('select', point);
+		});
+
+		const popupHtml = `
+			<div style="font-size:13px;line-height:1.4;min-width:180px;">
+				<b>${escapeHtml(point.name || 'Punto BRT')}</b><br>
+				${escapeHtml(point.address || '')}<br>
+				${escapeHtml([point.zip_code, point.city].filter(Boolean).join(' '))}
+				${point.distance_meters ? `<br><span style="color:#095866;font-weight:600">Distanza: ${escapeHtml(formatDistance(point.distance_meters))}</span>` : ''}
+			</div>
+		`;
+		marker.bindPopup(popupHtml);
+		marker.addTo(pointsLayer);
+		bounds.push([lat, lng]);
 	});
+
+	queueInvalidateMapSize();
+
+	if (!bounds.length) {
+		mapInstance.setView(defaultCenter, defaultZoom, { animate: false });
+		return;
+	}
+
+	if (bounds.length === 1) {
+		mapInstance.setView(bounds[0], reference ? 14 : 13, { animate: true });
+		return;
+	}
+
+	mapInstance.fitBounds(bounds, { padding: [40, 40], maxZoom: 15 });
+};
+
+const onTileLayerLoad = () => {
+	tileLayerReady.value = true;
+	tileLayerError.value = false;
+	if (mapSlowTimer) {
+		window.clearTimeout(mapSlowTimer);
+		mapSlowTimer = null;
+	}
+};
+
+const onTileLayerError = () => {
+	if (!tileLayerReady.value) tileLayerError.value = true;
+};
+
+onMounted(async () => {
+	const leafletModule = await import('leaflet');
+	await import('leaflet/dist/leaflet.css');
+	L = leafletModule.default || leafletModule;
+
+	if (!mapEl.value) return;
+
+	mapInstance = L.map(mapEl.value, {
+		zoomControl: true,
+		preferCanvas: true,
+		doubleClickZoom: false,
+	});
+	mapInstance.setView(defaultCenter, defaultZoom);
+	mapDblClickHandler = (event) => {
+		const latitude = parseCoordinate(event?.latlng?.lat);
+		const longitude = parseCoordinate(event?.latlng?.lng);
+		if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) return;
+		emit('map-click', { latitude, longitude });
+	};
+	mapInstance.on('dblclick', mapDblClickHandler);
+
+	tileLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+		attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+	});
+	tileLayer.on('load', onTileLayerLoad);
+	tileLayer.on('tileerror', onTileLayerError);
+	tileLayer.addTo(mapInstance);
+
+	pointsLayer = L.layerGroup().addTo(mapInstance);
+	referenceLayer = L.layerGroup().addTo(mapInstance);
+
+	mapReady.value = true;
+	tileLayerReady.value = false;
+	tileLayerError.value = false;
+
+	if (mapSlowTimer) window.clearTimeout(mapSlowTimer);
+	mapSlowTimer = window.setTimeout(() => {
+		if (!tileLayerReady.value) tileLayerError.value = true;
+	}, 5000);
+
+	resizeHandler = () => queueInvalidateMapSize();
+	window.addEventListener('resize', resizeHandler, { passive: true });
+
+	renderMapData();
 });
 
-const onMapReady = () => {
-	mapReady.value = true;
-	// Invalida la size dopo mount: evita mappe bianche quando il contenitore
-	// viene creato dinamicamente dopo la ricerca PUDO.
-	// Delay piu' lungo: il container potrebbe non avere ancora le dimensioni
-	// definitive quando sticky + Tailwind finiscono di applicare gli stili
-	invalidateTimer = window.setTimeout(() => {
-		try {
-			mapRef.value?.leafletObject?.invalidateSize({ animate: false });
-		} catch {
-			// no-op
-		}
-	}, 300);
-};
-
-const selectPoint = (pudo) => {
-	emit('select', pudo);
-};
+watch([validPoints, parsedReferencePoint, () => props.selectedId], () => {
+	nextTick(() => renderMapData());
+}, { flush: 'post' });
 
 onBeforeUnmount(() => {
-	if (invalidateTimer) {
-		clearTimeout(invalidateTimer);
-		invalidateTimer = null;
+	if (mapSlowTimer) {
+		window.clearTimeout(mapSlowTimer);
+		mapSlowTimer = null;
 	}
+	clearInvalidateTimers();
+	if (resizeHandler) {
+		window.removeEventListener('resize', resizeHandler);
+		resizeHandler = null;
+	}
+
+	if (tileLayer) {
+		tileLayer.off('load', onTileLayerLoad);
+		tileLayer.off('tileerror', onTileLayerError);
+	}
+	if (mapInstance && mapDblClickHandler) {
+		mapInstance.off('dblclick', mapDblClickHandler);
+		mapDblClickHandler = null;
+	}
+
+	if (mapInstance) {
+		mapInstance.remove();
+		mapInstance = null;
+	}
+
+	tileLayer = null;
+	pointsLayer = null;
+	referenceLayer = null;
 });
 </script>
 
 <template>
-	<div class="relative w-full h-[320px] tablet:h-[360px] desktop:h-[420px] rounded-[12px] overflow-hidden border border-[#D0D0D0]">
-		<LMap
-			ref="mapRef"
-			:zoom="mapZoom"
-			:center="mapCenter"
-			:use-global-leaflet="false"
-			class="w-full h-full"
-			style="z-index: 0;"
-			@ready="onMapReady"
-		>
-			<LTileLayer
-				url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-				attribution="&copy; <a href='https://www.openstreetmap.org/copyright'>OpenStreetMap</a>"
-				layer-type="base"
-				name="OpenStreetMap"
-			/>
-
-			<!-- Marker di riferimento: posizione geolocalizzata o via/civico inseriti -->
-			<LMarker
-				v-if="parsedReferencePoint"
-				:lat-lng="[parsedReferencePoint.latitude, parsedReferencePoint.longitude]">
-				<LIcon
-					:icon-size="[32, 44]"
-					:icon-anchor="[16, 44]"
-					:popup-anchor="[0, -38]"
-					class-name="pudo-reference-marker-icon">
-					<div class="w-[32px] h-[32px] rounded-full bg-[#E44203] border-[3px] border-white shadow-[0_6px_18px_rgba(228,66,3,0.45)] flex items-center justify-center">
-						<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
-							<path d="M12 2a7 7 0 0 0-7 7c0 5 7 13 7 13s7-8 7-13a7 7 0 0 0-7-7z" />
-							<circle cx="12" cy="9" r="2.5" />
-						</svg>
-					</div>
-					<div
-						class="w-0 h-0 mx-auto -mt-[1px]"
-						:style="{
-							borderLeft: '8px solid transparent',
-							borderRight: '8px solid transparent',
-							borderTop: '10px solid #E44203',
-						}"
-					/>
-				</LIcon>
-
-				<LPopup :options="{ closeButton: true, maxWidth: 280 }">
-					<div class="text-[0.8125rem] leading-[1.4]">
-						<p class="font-bold text-[#252B42] text-[0.875rem]">Punto di riferimento</p>
-						<p v-if="parsedReferencePoint.label" class="text-[#737373] mt-[2px]">{{ parsedReferencePoint.label }}</p>
-						<p v-else class="text-[#737373] mt-[2px]">
-							{{ [parsedReferencePoint.address, [parsedReferencePoint.zip_code, parsedReferencePoint.city].filter(Boolean).join(' ')].filter(Boolean).join(', ') }}
-						</p>
-					</div>
-				</LPopup>
-			</LMarker>
-
-			<LMarker
-				v-for="(pudo, markerIndex) in validPoints"
-				:key="getPointKey(pudo, markerIndex)"
-				:lat-lng="[Number.parseFloat(pudo.latitude), Number.parseFloat(pudo.longitude)]"
-				@click="selectPoint(pudo)"
-			>
-				<LIcon
-					:icon-size="getPointKey(pudo) === String(selectedId) ? [36, 46] : [28, 38]"
-					:icon-anchor="getPointKey(pudo) === String(selectedId) ? [18, 46] : [14, 38]"
-					:popup-anchor="[0, -40]"
-					class-name="pudo-marker-icon"
-				>
-					<div
-						class="flex items-center justify-center rounded-full shadow-lg transition-all duration-200"
-						:class="getPointKey(pudo) === String(selectedId)
-							? 'w-[36px] h-[36px] bg-[#095866] ring-4 ring-[#095866]/30'
-							: 'w-[28px] h-[28px] bg-white border-[3px] border-[#095866]'"
-					>
-						<svg
-							v-if="getPointKey(pudo) === String(selectedId)"
-							width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
-						><polyline points="20 6 9 17 4 12"/></svg>
-						<div
-							v-else
-							class="w-[10px] h-[10px] rounded-full bg-[#095866]"
-						/>
-					</div>
-					<!-- Punta triangolare sotto il marker -->
-					<div
-						class="w-0 h-0 mx-auto -mt-[1px]"
-						:style="{
-							borderLeft: '8px solid transparent',
-							borderRight: '8px solid transparent',
-							borderTop: getPointKey(pudo) === String(selectedId)
-								? '10px solid #095866'
-								: '10px solid #095866'
-						}"
-					/>
-				</LIcon>
-
-				<LPopup :options="{ closeButton: true, maxWidth: 250 }">
-					<div class="text-[0.8125rem] leading-[1.4]">
-						<p class="font-bold text-[#252B42] text-[0.875rem]">{{ pudo.name }}</p>
-						<p class="text-[#737373] mt-[2px]">{{ pudo.address }}</p>
-						<p class="text-[#737373]">{{ pudo.zip_code }} {{ pudo.city }}</p>
-						<p v-if="pudo.distance_meters" class="text-[#095866] font-semibold mt-[4px]">
-							Distanza: {{ pudo.distance_meters >= 1000 ? (pudo.distance_meters / 1000).toFixed(1) + ' km' : Math.round(pudo.distance_meters) + ' m' }}
-						</p>
-						<button
-							type="button"
-							class="mt-[8px] w-full py-[6px] bg-[#095866] text-white text-[0.8125rem] font-semibold rounded-[6px] hover:bg-[#074a56] transition cursor-pointer"
-							@click.stop="selectPoint(pudo)"
-						>
-							Seleziona questo punto
-						</button>
-					</div>
-				</LPopup>
-			</LMarker>
-		</LMap>
+	<div class="relative w-full h-full min-h-[320px] tablet:min-h-[360px] desktop:min-h-[420px] rounded-[12px] overflow-hidden border border-[#D0D0D0] bg-[#F4F7F9]">
+		<div ref="mapEl" class="w-full h-full" />
 
 		<div
-			v-if="!mapReady"
+			v-if="!mapReady || (!tileLayerReady && !tileLayerError)"
 			class="absolute inset-0 flex items-center justify-center bg-[#F8F9FB]/90 text-[#737373] text-[0.875rem]">
 			Caricamento mappa...
+		</div>
+
+		<div
+			v-else-if="tileLayerError"
+			class="absolute inset-0 flex items-center justify-center bg-[#F8F9FB]/95 text-[#64748B] text-[0.875rem] text-center px-[14px]">
+			Impossibile caricare la mappa ora. Riprova tra qualche secondo.
 		</div>
 	</div>
 </template>
 
 <style>
-/* Fix: Leaflet CSS per i marker custom con LIcon slot */
-.pudo-marker-icon {
+.pudo-marker-icon-wrap,
+.pudo-reference-icon-wrap {
 	background: none !important;
 	border: none !important;
 }
 
-.pudo-reference-marker-icon {
-	background: none !important;
-	border: none !important;
+.pudo-marker {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	border-radius: 9999px;
+	background: #ffffff;
+	border: 3px solid #095866;
+	box-shadow: 0 8px 16px rgba(15, 23, 42, 0.2);
+}
+
+.pudo-marker.is-selected {
+	background: #095866;
+	border-color: #095866;
+	box-shadow: 0 10px 20px rgba(9, 88, 102, 0.42);
+}
+
+.pudo-marker-dot {
+	width: 10px;
+	height: 10px;
+	border-radius: 9999px;
+	background: #095866;
+}
+
+.pudo-marker-tip {
+	width: 0;
+	height: 0;
+	margin: -1px auto 0;
+	border-left: 8px solid transparent;
+	border-right: 8px solid transparent;
+	border-top: 10px solid #095866;
+}
+
+.pudo-marker-tip.is-selected {
+	border-top-color: #095866;
+}
+
+.pudo-ref-marker {
+	width: 32px;
+	height: 32px;
+	border-radius: 9999px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background: #e44203;
+	border: 3px solid #ffffff;
+	box-shadow: 0 8px 16px rgba(228, 66, 3, 0.42);
+}
+
+.pudo-ref-tip {
+	width: 0;
+	height: 0;
+	margin: -1px auto 0;
+	border-left: 8px solid transparent;
+	border-right: 8px solid transparent;
+	border-top: 10px solid #e44203;
 }
 </style>

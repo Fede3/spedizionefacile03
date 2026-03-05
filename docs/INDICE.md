@@ -1,6 +1,6 @@
-# Documentazione SpedizioneFacile
+# Documentazione SpediamoFacile
 
-Benvenuto nella documentazione completa del progetto SpedizioneFacile.
+Benvenuto nella documentazione completa del progetto SpediamoFacile.
 Questa guida copre tutto: dalla panoramica del progetto fino ai dettagli tecnici.
 
 ---
@@ -9,7 +9,7 @@ Questa guida copre tutto: dalla panoramica del progetto fino ai dettagli tecnici
 
 Parti da qui se sei nuovo al progetto.
 
-1. [Panoramica del progetto](tutorial/01-PANORAMICA.md) - Cos'e' SpedizioneFacile e come e' strutturato
+1. [Panoramica del progetto](tutorial/01-PANORAMICA.md) - Cos'e' SpediamoFacile e come e' strutturato
 2. [Primo avvio](tutorial/02-PRIMO-AVVIO.md) - Come configurare il progetto da zero
 3. [Struttura del progetto](tutorial/03-STRUTTURA-PROGETTO.md) - Dove si trovano le cose: cartelle, file, convenzioni
 4. [Primo cambiamento](tutorial/04-PRIMO-CAMBIAMENTO.md) - Aggiungere un campo al profilo utente

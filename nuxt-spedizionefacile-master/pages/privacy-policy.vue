@@ -2,7 +2,7 @@
   PAGINA: Privacy Policy (privacy-policy.vue)
 
   Pagina statica che mostra l'informativa sulla privacy del sito.
-  Descrive come SpedizioneFacile raccoglie, utilizza e protegge i dati personali
+  Descrive come SpediamoFacile raccoglie, utilizza e protegge i dati personali
   degli utenti, in conformita' con il GDPR (Regolamento Europeo sulla Privacy).
 
   Al momento il contenuto e' in fase di redazione (placeholder).
@@ -10,9 +10,9 @@
 <script setup>
 // Meta tag SEO per la pagina privacy policy
 useSeoMeta({
-	title: 'Privacy Policy | SpedizioneFacile',
-	ogTitle: 'Privacy Policy | SpedizioneFacile',
-	description: 'Informativa sulla privacy di SpedizioneFacile. Scopri come trattiamo i tuoi dati personali.',
+	title: 'Privacy Policy | SpediamoFacile',
+	ogTitle: 'Privacy Policy | SpediamoFacile',
+	description: 'Informativa sulla privacy di SpediamoFacile. Scopri come trattiamo i tuoi dati personali.',
 });
 </script>
 

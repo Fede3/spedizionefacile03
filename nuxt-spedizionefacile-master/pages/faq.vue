@@ -8,16 +8,16 @@
 <script setup>
 // Meta tag SEO
 useSeoMeta({
-	title: 'FAQ - Domande Frequenti | SpedizioneFacile',
-	ogTitle: 'FAQ | SpedizioneFacile',
-	description: 'Trova risposte alle domande più frequenti su SpedizioneFacile: prezzi, servizi, tracking, assicurazione, contrassegno e molto altro.',
-	ogDescription: 'Domande frequenti su SpedizioneFacile: tutto quello che devi sapere sulle spedizioni.',
+	title: 'FAQ - Domande Frequenti | SpediamoFacile',
+	ogTitle: 'FAQ | SpediamoFacile',
+	description: 'Trova risposte alle domande più frequenti su SpediamoFacile: prezzi, servizi, tracking, assicurazione, contrassegno e molto altro.',
+	ogDescription: 'Domande frequenti su SpediamoFacile: tutto quello che devi sapere sulle spedizioni.',
 });
 
 // Lista delle domande frequenti mostrate nell'accordion (UAccordion)
 const items = ref([
 	{
-		label: "1. Come viene calcolato il prezzo di una spedizione su SpedizioneFacile?",
+		label: "1. Come viene calcolato il prezzo di una spedizione su SpediamoFacile?",
 		content:
 			"Il costo di ogni spedizione dipende da diversi fattori: peso e dimensioni del collo, destinazione, tipologia di servizio scelto (standard, espresso, internazionale) ed eventuali servizi aggiuntivi (assicurazione, contrassegno, consegna su appuntamento, ecc.). Il sistema calcola automaticamente il prezzo in tempo reale prima della conferma, così puoi vedere subito tutte le opzioni disponibili e scegliere quella più conveniente per te, senza sorprese finali.",
 	},
@@ -34,7 +34,7 @@ const items = ref([
 	{
 		label: "4. Posso provare il servizio prima di impegnarmi?",
 		content:
-			"La registrazione a SpedizioneFacile è gratuita e senza vincoli. Puoi creare il tuo account, simulare preventivi, salvare indirizzi e testare il flusso di creazione spedizione. Paghi solo quando confermi un ordine reale. Per le aziende è possibile richiedere anche una sessione di affiancamento iniziale per configurare al meglio profilo, rubrica, centri di costo e modalità di pagamento.",
+			"La registrazione a SpediamoFacile è gratuita e senza vincoli. Puoi creare il tuo account, simulare preventivi, salvare indirizzi e testare il flusso di creazione spedizione. Paghi solo quando confermi un ordine reale. Per le aziende è possibile richiedere anche una sessione di affiancamento iniziale per configurare al meglio profilo, rubrica, centri di costo e modalità di pagamento.",
 	},
 	{
 		label: "5. Ci sono vincoli contrattuali o posso smettere di usare il servizio quando voglio?",
@@ -44,7 +44,7 @@ const items = ref([
 	{
 		label: "6. Come posso controllare lo stato delle mie spedizioni?",
 		content:
-			"Ogni spedizione viene associata a un codice di monitoraggio. Dal pannello di SpedizioneFacile puoi vedere in tempo reale lo stato di tutti gli invii: ritiro effettuato, in transito, in consegna, consegnato, eventuali giacenze o problemi segnalati dal corriere. Puoi consultare lo storico completo, scaricare le prove di consegna (dove disponibili) e ricevere avvisi in caso di anomalie, così da intervenire subito.",
+			"Ogni spedizione viene associata a un codice di monitoraggio. Dal pannello di SpediamoFacile puoi vedere in tempo reale lo stato di tutti gli invii: ritiro effettuato, in transito, in consegna, consegnato, eventuali giacenze o problemi segnalati dal corriere. Puoi consultare lo storico completo, scaricare le prove di consegna (dove disponibili) e ricevere avvisi in caso di anomalie, così da intervenire subito.",
 	},
 	{
 		label: "7. Cosa succede se un pacco viene danneggiato o non arriva a destinazione?",
@@ -52,7 +52,7 @@ const items = ref([
 			"In caso di smarrimento, danneggiamento o consegna problematica, puoi aprire una segnalazione direttamente dalla tua area riservata. Ti guidiamo nella raccolta dei documenti necessari (foto del danno, prova di valore della merce, ecc.) e inoltriamo la richiesta al corriere secondo le procedure previste. L'eventuale rimborso dipende dalle condizioni del vettore e dall'eventuale copertura assicurativa aggiuntiva selezionata in fase di ordine.",
 	},
 	{
-		label: "8. Come funziona il portafoglio ricaricabile di SpedizioneFacile?",
+		label: "8. Come funziona il portafoglio ricaricabile di SpediamoFacile?",
 		content:
 			"Il portafoglio digitale è un credito prepagato che puoi utilizzare per pagare rapidamente tutte le spedizioni. Puoi ricaricarlo con i metodi di pagamento disponibili (ad esempio carta, bonifico, altri sistemi elettronici), vedere in qualsiasi momento saldo e movimenti, associare le spese a diversi centri di costo e scaricare i relativi documenti contabili. Il portafoglio ti permette di velocizzare il processo di acquisto, evitare pagamenti ripetuti per ogni singola spedizione e avere sempre sotto controllo quanto stai spendendo.",
 	},
@@ -68,7 +68,7 @@ useHead({
 				mainEntity: [
 					{
 						'@type': 'Question',
-						name: 'Come viene calcolato il prezzo di una spedizione su SpedizioneFacile?',
+						name: 'Come viene calcolato il prezzo di una spedizione su SpediamoFacile?',
 						acceptedAnswer: {
 							'@type': 'Answer',
 							text: 'Il costo di ogni spedizione dipende da peso e dimensioni del collo, destinazione, tipologia di servizio scelto ed eventuali servizi aggiuntivi. Il sistema calcola automaticamente il prezzo in tempo reale prima della conferma.',
@@ -87,12 +87,12 @@ useHead({
 						name: 'Come posso controllare lo stato delle mie spedizioni?',
 						acceptedAnswer: {
 							'@type': 'Answer',
-							text: 'Ogni spedizione viene associata a un codice di monitoraggio. Dal pannello di SpedizioneFacile puoi vedere in tempo reale lo stato di tutti gli invii.',
+							text: 'Ogni spedizione viene associata a un codice di monitoraggio. Dal pannello di SpediamoFacile puoi vedere in tempo reale lo stato di tutti gli invii.',
 						},
 					},
 					{
 						'@type': 'Question',
-						name: 'Come funziona il portafoglio ricaricabile di SpedizioneFacile?',
+						name: 'Come funziona il portafoglio ricaricabile di SpediamoFacile?',
 						acceptedAnswer: {
 							'@type': 'Answer',
 							text: 'Il portafoglio digitale è un credito prepagato che puoi utilizzare per pagare rapidamente tutte le spedizioni. Puoi ricaricarlo con i metodi di pagamento disponibili.',
@@ -116,7 +116,7 @@ useHead({
 				</div>
 			</div>
 			<h1 class="text-[1.75rem] desktop:text-[2.5rem] font-bold text-[#252B42] text-center mb-[8px]">Domande Frequenti</h1>
-			<p class="text-[0.9375rem] text-[#737373] text-center max-w-[500px] mx-auto mb-[40px] leading-[1.6]">Trova risposte alle domande piu' comuni su SpedizioneFacile.</p>
+			<p class="text-[0.9375rem] text-[#737373] text-center max-w-[500px] mx-auto mb-[40px] leading-[1.6]">Trova risposte alle domande piu' comuni su SpediamoFacile.</p>
 			<UAccordion :items="items" />
 			<!-- CTA finale: se l'utente non trova la risposta, lo indirizziamo al form di contatto -->
 			<div class="mt-[40px] text-center bg-[#F8F9FB] rounded-[16px] p-[32px]">

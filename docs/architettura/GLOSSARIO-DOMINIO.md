@@ -1,4 +1,4 @@
-# Glossario di Dominio - SpedizioneFacile
+# Glossario di Dominio - SpediamoFacile
 
 Vocabolario dei termini usati nel codice.
 Per ogni termine: significato, dove si trova e possibili fonti di confusione.
@@ -406,7 +406,7 @@ Lo stato corrente dell'ordine nel suo ciclo di vita.
 
 **Attenzione:**
 Lo stato `in_giacenza` appare nella traduzione ma non ha una costante dedicata.
-Non confondere `completed` (spedizione conclusa dal lato SpedizioneFacile) con `delivered` (pacco consegnato al destinatario).
+Non confondere `completed` (spedizione conclusa dal lato SpediamoFacile) con `delivered` (pacco consegnato al destinatario).
 
 ---
 

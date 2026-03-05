@@ -3,7 +3,7 @@
 
   Pagina che spiega all'utente come presentare un reclamo per una spedizione.
   Mostra due opzioni per contattare l'assistenza:
-  1. Via email: scrivendo a assistenza@spedizionefacile.it
+  1. Via email: scrivendo a assistenza@spediamofacile.it
   2. Dall'area personale: aprendo un ticket dalla sezione Assistenza
 
   E' una pagina informativa senza form interattivi.
@@ -11,9 +11,9 @@
 <script setup>
 // Meta tag SEO per la pagina reclami
 useSeoMeta({
-	title: 'Reclami | SpedizioneFacile',
-	ogTitle: 'Reclami | SpedizioneFacile',
-	description: 'Presenta un reclamo per la tua spedizione con SpedizioneFacile.',
+	title: 'Reclami | SpediamoFacile',
+	ogTitle: 'Reclami | SpediamoFacile',
+	description: 'Presenta un reclamo per la tua spedizione con SpediamoFacile.',
 });
 </script>
 
@@ -28,7 +28,7 @@ useSeoMeta({
 					<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#095866" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="shrink-0 mt-[2px]"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
 					<div>
 						<p class="text-[0.9375rem] font-semibold text-[#252B42]">Via email</p>
-						<p class="text-[0.875rem] text-[#737373]">Scrivi a <strong>assistenza@spedizionefacile.it</strong> indicando il numero d'ordine e una descrizione del problema.</p>
+						<p class="text-[0.875rem] text-[#737373]">Scrivi a <strong>assistenza@spediamofacile.it</strong> indicando il numero d'ordine e una descrizione del problema.</p>
 					</div>
 				</div>
 				<div class="flex items-start gap-[12px] p-[16px] bg-[#F8F9FB] rounded-[10px]">

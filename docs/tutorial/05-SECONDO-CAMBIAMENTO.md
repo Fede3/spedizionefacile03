@@ -7,7 +7,7 @@ E' un cambiamento di media complessita' che tocca la logica di business e l'inte
 
 ## Panoramica
 
-Un "servizio" in SpedizioneFacile e' un'opzione aggiuntiva che l'utente puo' scegliere per la spedizione.
+Un "servizio" in SpediamoFacile e' un'opzione aggiuntiva che l'utente puo' scegliere per la spedizione.
 Ogni servizio ha un nome, un prezzo e una corrispondenza con i parametri BRT.
 
 File coinvolti:

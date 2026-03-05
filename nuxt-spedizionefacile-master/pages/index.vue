@@ -17,14 +17,14 @@
 <script setup>
 // Imposta i meta tag SEO per la homepage (titolo, descrizione, Open Graph)
 useSeoMeta({
-	title: 'SpedizioneFacile - Spedizioni Economiche e Veloci | Confronta Prezzi',
-	ogTitle: 'SpedizioneFacile - Spedizioni Economiche e Veloci',
+	title: 'SpediamoFacile - Spedizioni Economiche e Veloci | Confronta Prezzi',
+	ogTitle: 'SpediamoFacile - Spedizioni Economiche e Veloci',
 	description: 'Confronta i migliori corrieri e risparmia sulle tue spedizioni. Preventivo gratuito in pochi click, ritiro a domicilio e tracking in tempo reale.',
 	ogDescription: 'Confronta i migliori corrieri e risparmia sulle tue spedizioni. Preventivo gratuito in pochi click.',
 });
 
 // Aggiunge dati strutturati JSON-LD per i motori di ricerca
-// - Organization: identifica SpedizioneFacile come organizzazione
+// - Organization: identifica SpediamoFacile come organizzazione
 // - WebSite: abilita la ricerca diretta dal motore di ricerca (SearchAction)
 useHead({
 	script: [
@@ -33,8 +33,8 @@ useHead({
 			innerHTML: JSON.stringify({
 				'@context': 'https://schema.org',
 				'@type': 'Organization',
-				name: 'SpedizioneFacile',
-				url: 'https://spedizionefacile.it',
+				name: 'SpediamoFacile',
+				url: 'https://spediamofacile.it',
 				description: 'Piattaforma di confronto e prenotazione spedizioni nazionali e internazionali.',
 				contactPoint: {
 					'@type': 'ContactPoint',
@@ -48,11 +48,11 @@ useHead({
 			innerHTML: JSON.stringify({
 				'@context': 'https://schema.org',
 				'@type': 'WebSite',
-				name: 'SpedizioneFacile',
-				url: 'https://spedizionefacile.it',
+				name: 'SpediamoFacile',
+				url: 'https://spediamofacile.it',
 				potentialAction: {
 					'@type': 'SearchAction',
-					target: 'https://spedizionefacile.it/preventivo?q={search_term_string}',
+					target: 'https://spediamofacile.it/preventivo?q={search_term_string}',
 					'query-input': 'required name=search_term_string',
 				},
 			}),

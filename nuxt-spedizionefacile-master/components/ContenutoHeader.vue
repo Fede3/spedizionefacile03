@@ -19,8 +19,8 @@
 	         Pagamento alla consegna, Guide, FAQ, Account
 -->
 <script setup>
-const { data } = useAdminImage();
 const route = useRoute();
+const heroImageUrl = ref('/img/homepage/hero-truck-landscape.jpg');
 
 // Ottimizzazione: precarica l'immagine hero di default per evitare ritardo nel rendering above-the-fold.
 // Se l'admin ha impostato un'immagine personalizzata, quella verra' caricata dinamicamente.
@@ -37,8 +37,17 @@ useHead({
 
 // Carica fasce prezzo sempre per garantire disponibilità su tutte le pagine
 const { loadPriceBands, getMinPrice, promoSettings } = usePriceBands();
-onMounted(() => {
+onMounted(async () => {
 	loadPriceBands();
+	try {
+		const res = await $fetch('/api/public/homepage-image', { method: 'GET' });
+		const maybeUrl = res?.image_url || res?.data?.image_url;
+		if (typeof maybeUrl === 'string' && maybeUrl.trim().length > 0) {
+			heroImageUrl.value = maybeUrl;
+		}
+	} catch {
+		// Mantiene il fallback locale senza bloccare il first paint.
+	}
 });
 
 const minPriceInfo = computed(() => getMinPrice());
@@ -69,27 +78,29 @@ const props = defineProps({
 	<!-- ============================================================
 	     HOMEPAGE HERO
 	     ============================================================ -->
-	<div class="hero" v-if="route.path === '/'">
+	<div class="relative z-[2] overflow-hidden pt-[28px] pb-[72px] tablet:pt-[40px] tablet:pb-[96px] desktop:pt-[72px] desktop:pb-[120px] desktop-xl:pt-[76px] desktop-xl:pb-[132px]" v-if="route.path === '/'">
 		<!-- Decorazione teal dietro la card -->
-		<div class="hero__teal-accent anim-accent"></div>
+		<div
+			class="pointer-events-none absolute right-[-12px] top-[102px] h-[204px] w-[188px] rotate-[6deg] rounded-[16px] bg-gradient-to-br from-[#095866] to-[#0b6d7d] opacity-[0.05] tablet:right-[24px] tablet:top-[104px] tablet:h-[200px] tablet:w-[200px] desktop:right-[3%] desktop:top-[170px] desktop:h-[460px] desktop:w-[500px] desktop:rotate-[7deg] desktop:opacity-[0.06] desktop-xl:right-[5%] desktop-xl:top-[176px] desktop-xl:h-[500px] desktop-xl:w-[560px]"></div>
 
-		<div class="hero__layout">
+		<div class="relative desktop:grid desktop:grid-cols-[minmax(0,560px)_minmax(0,760px)] desktop:items-start desktop:gap-[56px] desktop-xl:grid-cols-[minmax(0,560px)_minmax(0,820px)] desktop-xl:gap-[62px]">
 			<!-- Colonna sinistra: testo + card prezzo -->
-			<div class="hero__content">
-				<h1 class="hero__heading anim-title">
+			<div class="relative z-[5] desktop:max-w-[560px]">
+				<h1 class="text-[#1a1a1a] text-[2.25rem] leading-[1.05] tracking-[-1.2px] font-extrabold tablet:text-[3.25rem] desktop:text-[4.5rem] desktop:tracking-[-2.5px] desktop-xl:text-[5.5rem] desktop-xl:tracking-[-3px]">
 					Spedisci<br />in Italia
 				</h1>
 
 				<!-- Card prezzo bianca in risalto -->
-				<div class="hero__card anim-pill">
-					<div class="hero__card-accent"></div>
-					<div class="hero__card-body">
-						<span class="hero__card-label">a partire da</span>
-						<div class="hero__card-price-row">
-							<span v-if="showMinPriceDiscount" class="hero__price-old">{{ minBasePriceFormatted }}€</span>
-							<span class="hero__card-price">{{ minPriceFormatted }}<span class="hero__card-eur">€</span></span>
+				<div
+					class="relative z-[7] mt-[12px] flex w-[200px] overflow-hidden rounded-[16px] shadow-[0_4px_12px_rgba(0,0,0,0.15)] tablet:mt-[16px] tablet:w-[320px] desktop:mt-[20px] desktop:w-[380px] desktop:shadow-[0_8px_24px_rgba(0,0,0,0.15)] desktop-xl:mt-[22px] desktop-xl:w-[400px]"
+					style="background: linear-gradient(135deg, #E44203 0%, #095866 100%);">
+					<div class="flex flex-col px-[20px] py-[16px] tablet:px-[24px] tablet:py-[20px] desktop:px-[32px] desktop:py-[24px] desktop-xl:px-[40px] desktop-xl:py-[32px]">
+						<span class="text-[0.8125rem] font-medium uppercase tracking-[0.8px] text-white/75 tablet:text-[0.875rem] desktop:text-[1rem] desktop:tracking-[1px] desktop-xl:text-[1.0625rem]">a partire da</span>
+						<div class="mt-[2px] flex items-baseline gap-[8px]">
+							<span v-if="showMinPriceDiscount" class="text-[0.9375rem] font-medium text-white/50 line-through">{{ minBasePriceFormatted }}€</span>
+							<span class="text-[3rem] font-extrabold leading-[1] tracking-[-2px] text-white tablet:text-[4rem] tablet:tracking-[-2.5px] desktop:text-[5rem] desktop:tracking-[-3px] desktop-xl:text-[6rem] desktop-xl:tracking-[-3.5px]">{{ minPriceFormatted }}<span class="ml-[1px] align-super text-[1.5rem] font-bold tracking-[0] text-white tablet:text-[1.75rem] desktop:text-[2.25rem] desktop-xl:text-[2.75rem]">€</span></span>
 						</div>
-						<span class="hero__card-includes">
+						<span class="mt-[8px] inline-flex items-center gap-[8px] text-[0.75rem] font-semibold text-white/90 tablet:text-[0.8125rem] desktop:mt-[8px] desktop:text-[0.9375rem] desktop-xl:mt-[10px] desktop-xl:text-[1rem]">
 							<svg width="14" height="14" viewBox="0 0 24 24" fill="none" class="shrink-0"><circle cx="12" cy="12" r="12" fill="rgba(255,255,255,0.3)"/><path d="M7 12.5l3 3 7-7" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
 							IVA e ritiro incluso
 						</span>
@@ -97,12 +108,12 @@ const props = defineProps({
 				</div>
 
 				<!-- Promo badges -->
-				<div v-if="showMinPriceDiscount" class="mt-[10px] anim-tagline">
+				<div v-if="showMinPriceDiscount" class="mt-[10px]">
 					<span class="inline-flex items-center gap-[4px] px-[10px] py-[4px] rounded-[8px] bg-emerald-500 text-white text-[0.8125rem] font-bold">
 						-{{ minPriceInfo.discountPercent }}%
 					</span>
 				</div>
-				<div v-if="promoSettings?.active && promoSettings?.label_text" class="mt-[8px] anim-tagline">
+				<div v-if="promoSettings?.active && promoSettings?.label_text" class="mt-[8px]">
 					<span
 						:style="{ backgroundColor: promoSettings.label_color || '#E44203' }"
 						class="inline-flex items-center gap-[6px] px-[10px] py-[4px] rounded-[8px] text-white text-[0.75rem] font-bold tracking-wide shadow-sm">
@@ -111,16 +122,19 @@ const props = defineProps({
 						{{ promoSettings.label_text }}
 					</span>
 				</div>
-				<p v-if="promoSettings?.active && promoSettings?.description" class="text-[0.8125rem] text-[#555] font-medium mt-[6px] anim-tagline">
+				<p v-if="promoSettings?.active && promoSettings?.description" class="text-[0.8125rem] text-[#555] font-medium mt-[6px]">
 					{{ promoSettings.description }}
 				</p>
 			</div>
 
 			<!-- Colonna destra: immagine -->
-			<div class="hero__image anim-image">
+			<div class="relative z-[2] mt-[18px] h-[340px] w-full max-w-[420px] tablet:mt-[20px] tablet:h-[390px] tablet:max-w-[520px] desktop:mt-0 desktop:h-[620px] desktop:w-full desktop:max-w-[760px] desktop:justify-self-end desktop-xl:h-[640px] desktop-xl:max-w-[820px]">
 				<div
-					class="hero__image-bg"
-					:style="{ backgroundImage: data?.image_url ? `url(${data.image_url})` : `url(/img/homepage/hero-truck-landscape.jpg)` }"></div>
+					class="h-full w-full rounded-[16px] bg-cover bg-no-repeat shadow-[0_8px_24px_rgba(0,0,0,0.15)]"
+					:style="{
+						backgroundImage: `url(${heroImageUrl})`,
+						backgroundPosition: 'center 48%',
+					}"></div>
 			</div>
 		</div>
 	</div>

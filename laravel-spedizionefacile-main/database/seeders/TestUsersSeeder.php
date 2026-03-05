@@ -11,10 +11,10 @@ class TestUsersSeeder extends Seeder
     {
         // Admin account
         User::updateOrCreate(
-            ['email' => 'admin@spedizionefacile.it'],
+            ['email' => 'admin@spediamofacile.it'],
             [
                 'name' => 'Admin',
-                'surname' => 'SpedizioneFacile',
+                'surname' => 'SpediamoFacile',
                 'telephone_number' => '+39 3331234567',
                 'password' => 'Password1!',
                 'role' => 'Admin',

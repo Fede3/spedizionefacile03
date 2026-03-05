@@ -10,9 +10,9 @@
 <script setup>
 // Meta tag SEO per la pagina cookie policy
 useSeoMeta({
-	title: 'Cookie Policy | SpedizioneFacile',
-	ogTitle: 'Cookie Policy | SpedizioneFacile',
-	description: 'Informativa sui cookie utilizzati da SpedizioneFacile.',
+	title: 'Cookie Policy | SpediamoFacile',
+	ogTitle: 'Cookie Policy | SpediamoFacile',
+	description: 'Informativa sui cookie utilizzati da SpediamoFacile.',
 });
 </script>
 

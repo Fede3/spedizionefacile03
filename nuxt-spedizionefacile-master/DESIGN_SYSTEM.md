@@ -1,7 +1,7 @@
-# SpedizioneFacile - Design System
+# SpediamoFacile - Design System
 
 ## Overview
-Questo documento definisce il design system di SpedizioneFacile per garantire coerenza visiva e UX su tutto il sito.
+Questo documento definisce il design system di SpediamoFacile per garantire coerenza visiva e UX su tutto il sito.
 
 ---
 

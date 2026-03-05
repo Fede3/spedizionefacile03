@@ -24,7 +24,7 @@ class ShipmentDocumentsMail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'SpedizioneFacile - Documenti spedizione ordine #'.$this->order->id,
+            subject: 'SpediamoFacile - Documenti spedizione ordine #'.$this->order->id,
         );
     }
 

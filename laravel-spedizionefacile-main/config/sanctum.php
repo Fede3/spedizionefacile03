@@ -3,7 +3,7 @@
  * FILE: config/sanctum.php
  * SCOPO: Configura Laravel Sanctum per l'autenticazione SPA (Single Page Application).
  *
- * SpedizioneFacile usa Sanctum in modalita' "SPA cookie-based":
+ * SpediamoFacile usa Sanctum in modalita' "SPA cookie-based":
  * il frontend Nuxt comunica con il backend Laravel usando cookie di sessione
  * (NON token Bearer). Questo approccio e' piu' sicuro per le SPA perche':
  * - I cookie sono automaticamente gestiti dal browser
@@ -49,7 +49,7 @@ return [
 
     'stateful' => explode(',', env('SANCTUM_STATEFUL_DOMAINS', sprintf(
         '%s%s',
-        'localhost,localhost:3000,localhost:3001,localhost:8787,127.0.0.1,127.0.0.1:3001,127.0.0.1:8000,127.0.0.1:8787,::1',
+        'localhost,localhost:3000,localhost:3001,localhost:8787,127.0.0.1,127.0.0.1:3001,127.0.0.1:8000,127.0.0.1:8787,::1,*.trycloudflare.com',
         Sanctum::currentApplicationUrlWithPort(),
     ))),
 

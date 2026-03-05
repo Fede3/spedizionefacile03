@@ -27,6 +27,7 @@ const props = defineProps({
 const emit = defineEmits(['update:modelValue']);
 
 const sanctumClient = useSanctumClient();
+const uiFeedback = useUiFeedback();
 const imageUploading = ref(false);
 
 const editor = useEditor({
@@ -79,7 +80,7 @@ const addImage = async () => {
 		const file = e.target.files[0];
 		if (!file) return;
 		if (file.size > 2 * 1024 * 1024) {
-			alert('L\'immagine deve essere inferiore a 2 MB.');
+			uiFeedback.warn("Immagine troppo grande", "L'immagine deve essere inferiore a 2 MB.");
 			return;
 		}
 		imageUploading.value = true;
@@ -95,7 +96,7 @@ const addImage = async () => {
 				editor.value.chain().focus().setImage({ src: url }).run();
 			}
 		} catch (err) {
-			alert('Errore durante il caricamento dell\'immagine.');
+			uiFeedback.error("Errore caricamento immagine", "Riprova tra qualche secondo.");
 			console.error(err);
 		} finally {
 			imageUploading.value = false;

@@ -1,4 +1,4 @@
-# Mappa dei Dati - SpedizioneFacile
+# Mappa dei Dati - SpediamoFacile
 
 Questo documento descrive tutti i modelli di dati, i loro campi, le relazioni e i file che li utilizzano.
 

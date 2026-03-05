@@ -1,4 +1,4 @@
-# SpedizioneFacile Monorepo
+# SpediamoFacile Monorepo
 
 Questo repository contiene:
 
@@ -108,10 +108,10 @@ Output atteso: `OK: creato ...support_bundle_*.zip`
 
 Dopo `php artisan migrate --seed` trovi questi account pronti:
 
-- **Admin**: `admin@spedizionefacile.it` / `Admin2026!`
-- **Cliente**: `cliente@spedizionefacile.it` / `Cliente2026!`
-- **Cliente test**: `prova@spedizionefacile.it` / `Prova2026!`
-- **Partner Pro**: `pro@spedizionefacile.it` / `Partner2026!`
+- **Admin**: `admin@spediamofacile.it` / `Admin2026!`
+- **Cliente**: `cliente@spediamofacile.it` / `Cliente2026!`
+- **Cliente test**: `prova@spediamofacile.it` / `Prova2026!`
+- **Partner Pro**: `pro@spediamofacile.it` / `Partner2026!`
 
 ### Dove controllare tutti gli account registrati
 

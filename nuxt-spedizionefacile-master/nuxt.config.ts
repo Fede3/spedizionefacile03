@@ -83,29 +83,29 @@ export default defineNuxtConfig({
       htmlAttrs: { lang: 'it' },
       charset: 'utf-8',
       viewport: 'width=device-width, initial-scale=1',
-      title: 'SpedizioneFacile - Spedizioni Nazionali e Internazionali a Prezzi Competitivi',
+      title: 'SpediamoFacile - Spedizioni Nazionali e Internazionali a Prezzi Competitivi',
       meta: [
-        { name: 'description', content: 'SpedizioneFacile: confronta e prenota spedizioni nazionali e internazionali ai migliori prezzi. Ritiro a domicilio, tracking in tempo reale e assistenza dedicata.' },
+        { name: 'description', content: 'SpediamoFacile: confronta e prenota spedizioni nazionali e internazionali ai migliori prezzi. Ritiro a domicilio, tracking in tempo reale e assistenza dedicata.' },
         { name: 'keywords', content: 'spedizioni, corriere, pacco, spedizione economica, spedire pacco, corriere espresso, spedizioni Italia, spedizioni internazionali, confronta spedizioni' },
-        { name: 'author', content: 'SpedizioneFacile' },
+        { name: 'author', content: 'SpediamoFacile' },
         { name: 'robots', content: 'index, follow' },
         { property: 'og:type', content: 'website' },
-        { property: 'og:site_name', content: 'SpedizioneFacile' },
+        { property: 'og:site_name', content: 'SpediamoFacile' },
         { property: 'og:locale', content: 'it_IT' },
-        { property: 'og:title', content: 'SpedizioneFacile - Spedizioni Nazionali e Internazionali' },
+        { property: 'og:title', content: 'SpediamoFacile - Spedizioni Nazionali e Internazionali' },
         { property: 'og:description', content: 'Confronta e prenota spedizioni ai migliori prezzi. Ritiro a domicilio, tracking in tempo reale e assistenza dedicata.' },
         { name: 'twitter:card', content: 'summary_large_image' },
-        { name: 'twitter:title', content: 'SpedizioneFacile - Spedizioni Nazionali e Internazionali' },
+        { name: 'twitter:title', content: 'SpediamoFacile - Spedizioni Nazionali e Internazionali' },
         { name: 'twitter:description', content: 'Confronta e prenota spedizioni ai migliori prezzi.' },
         { name: 'theme-color', content: '#095866' },
         { name: 'format-detection', content: 'telephone=no' },
       ],
       link: [
-        { rel: 'canonical', href: 'https://spedizionefacile.it' },
+        { rel: 'canonical', href: 'https://spediamofacile.it' },
         // Preconnect to API origin for faster first API call
-        { rel: 'preconnect', href: 'https://spedizionefacile.it', crossorigin: '' },
+        { rel: 'preconnect', href: 'https://spediamofacile.it', crossorigin: '' },
         // DNS-prefetch as fallback for browsers that don't support preconnect
-        { rel: 'dns-prefetch', href: 'https://spedizionefacile.it' },
+        { rel: 'dns-prefetch', href: 'https://spediamofacile.it' },
         // Stripe preconnect is NOT here on purpose: it is added only on pages
         // that actually use Stripe (checkout, carte, portafoglio) via useHead()
         // to avoid wasting a connection on every page load.
@@ -186,9 +186,8 @@ export default defineNuxtConfig({
     },
 
     // logLevel: livello di log del modulo sanctum nella console del browser.
-    // 5 = debug (mostra tutto: richieste CSRF, header, cookie) — utile per sviluppo
-    // 3 = warn (mostra solo avvisi ed errori) — usato in produzione per non inquinare i log
-    logLevel: process.env.NODE_ENV === 'development' ? 5 : 3,
+    // Usiamo warn anche in sviluppo per evitare spam debug su flussi guest.
+    logLevel: 3,
   },
 
   // Regole per pagine statiche: caching SWR di 1 ora.

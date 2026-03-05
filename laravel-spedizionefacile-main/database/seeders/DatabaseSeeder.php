@@ -14,15 +14,15 @@ class DatabaseSeeder extends Seeder
     {
         $accounts = [
             [
-                'email' => 'admin@spedizionefacile.it',
+                'email' => 'admin@spediamofacile.it',
                 'name' => 'Admin',
-                'surname' => 'SpedizioneFacile',
+                'surname' => 'SpediamoFacile',
                 'telephone_number' => '+39 000 0000000',
                 'password' => 'Admin2026!',
                 'role' => 'Admin',
             ],
             [
-                'email' => 'cliente@spedizionefacile.it',
+                'email' => 'cliente@spediamofacile.it',
                 'name' => 'Luca',
                 'surname' => 'Bianchi',
                 'telephone_number' => '+39 333 7654321',
@@ -30,7 +30,7 @@ class DatabaseSeeder extends Seeder
                 'role' => 'Cliente',
             ],
             [
-                'email' => 'prova@spedizionefacile.it',
+                'email' => 'prova@spediamofacile.it',
                 'name' => 'Prova',
                 'surname' => 'Test',
                 'telephone_number' => '+39 333 1111111',
@@ -38,7 +38,7 @@ class DatabaseSeeder extends Seeder
                 'role' => 'Cliente',
             ],
             [
-                'email' => 'pro@spedizionefacile.it',
+                'email' => 'pro@spediamofacile.it',
                 'name' => 'Mario',
                 'surname' => 'Rossi',
                 'telephone_number' => '+39 333 1234567',

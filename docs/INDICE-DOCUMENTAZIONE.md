@@ -1,4 +1,4 @@
-# Indice Documentazione - SpedizioneFacile
+# Indice Documentazione - SpediamoFacile
 
 Mappa completa di tutta la documentazione del progetto.
 Ogni documento ha un titolo, una descrizione e lo stato attuale.
@@ -17,7 +17,7 @@ Si leggono in ordine, dal primo all'ultimo.
 
 | Documento | Descrizione | Stato |
 |-----------|-------------|-------|
-| [01 - Panoramica](tutorial/01-PANORAMICA.md) | Cos'e' SpedizioneFacile e come funziona | esistente |
+| [01 - Panoramica](tutorial/01-PANORAMICA.md) | Cos'e' SpediamoFacile e come funziona | esistente |
 | [02 - Primo avvio](tutorial/02-PRIMO-AVVIO.md) | Configurare il progetto da zero sul proprio PC | esistente |
 | [03 - Struttura progetto](tutorial/03-STRUTTURA-PROGETTO.md) | Dove si trovano le cartelle, i file e le convenzioni | esistente |
 | [04 - Primo cambiamento](tutorial/04-PRIMO-CAMBIAMENTO.md) | Aggiungere un campo al profilo utente (esempio pratico) | esistente |

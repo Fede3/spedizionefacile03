@@ -43,7 +43,7 @@ class VerificationEmail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Il tuo codice di verifica SpedizioneFacile',
+            subject: 'Il tuo codice di verifica SpediamoFacile',
         );
     }
 

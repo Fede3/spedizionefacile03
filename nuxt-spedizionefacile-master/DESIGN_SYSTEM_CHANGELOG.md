@@ -3,7 +3,7 @@
 ## 2026-03-03 - Global UI/UX Consistency Update
 
 ### 🎯 Mission Accomplished
-Unified design system across the entire SpedizioneFacile site to ensure consistency, performance, and maintainability.
+Unified design system across the entire SpediamoFacile site to ensure consistency, performance, and maintainability.
 
 ---
 

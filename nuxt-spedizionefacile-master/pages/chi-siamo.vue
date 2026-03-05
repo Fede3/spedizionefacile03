@@ -1,16 +1,16 @@
 <!--
   PAGINA: Chi Siamo (chi-siamo.vue)
-  Pagina informativa che descrive l'azienda SpedizioneFacile:
+  Pagina informativa che descrive l'azienda SpediamoFacile:
   cosa facciamo, la nostra visione, come lavoriamo, perche' sceglierci.
   Contiene dati strutturati JSON-LD per il SEO (AboutPage).
 -->
 <script setup>
 // Meta tag SEO
 useSeoMeta({
-	title: 'Chi Siamo | SpedizioneFacile - La Tua Piattaforma di Spedizioni',
-	ogTitle: 'Chi Siamo | SpedizioneFacile',
-	description: 'Scopri SpedizioneFacile: la piattaforma italiana che ti aiuta a spedire senza stress con prezzi trasparenti, procedure snelle e assistenza dedicata.',
-	ogDescription: 'Scopri SpedizioneFacile: spedizioni senza stress con prezzi trasparenti e assistenza dedicata.',
+	title: 'Chi Siamo | SpediamoFacile - La Tua Piattaforma di Spedizioni',
+	ogTitle: 'Chi Siamo | SpediamoFacile',
+	description: 'Scopri SpediamoFacile: la piattaforma italiana che ti aiuta a spedire senza stress con prezzi trasparenti, procedure snelle e assistenza dedicata.',
+	ogDescription: 'Scopri SpediamoFacile: spedizioni senza stress con prezzi trasparenti e assistenza dedicata.',
 });
 
 useHead({
@@ -20,12 +20,12 @@ useHead({
 			innerHTML: JSON.stringify({
 				'@context': 'https://schema.org',
 				'@type': 'AboutPage',
-				name: 'Chi Siamo - SpedizioneFacile',
-				url: 'https://spedizionefacile.it/chi-siamo',
+				name: 'Chi Siamo - SpediamoFacile',
+				url: 'https://spediamofacile.it/chi-siamo',
 				mainEntity: {
 					'@type': 'Organization',
-					name: 'SpedizioneFacile',
-					url: 'https://spedizionefacile.it',
+					name: 'SpediamoFacile',
+					url: 'https://spediamofacile.it',
 					description: 'Piattaforma italiana per confrontare e prenotare spedizioni nazionali e internazionali ai migliori prezzi.',
 				},
 			}),
@@ -84,7 +84,7 @@ const sections = [
 
 			<p
 				class="font-[General_Sans] text-[1.25rem] desktop-xl:text-[2.5rem] leading-[160%] tracking-[-0.48px] desktop:tracking-[-0.96px] text-[#222222] mt-[32px] border-[#C4C4C4] border-b-[1px] pb-[32px] desktop:text-[1.75rem]">
-				Siamo SpedizioneFacile, la piattaforma che rende semplice e accessibile la spedizione di pacchi in Italia e all'estero. Mettiamo insieme tecnologia, esperienza nei trasporti e assistenza umana
+				Siamo SpediamoFacile, la piattaforma che rende semplice e accessibile la spedizione di pacchi in Italia e all'estero. Mettiamo insieme tecnologia, esperienza nei trasporti e assistenza umana
 				per trasformare un'attività complessa in un servizio chiaro, veloce e affidabile. Il nostro obiettivo è farti risparmiare tempo ed energie: inserisci i dati essenziali, scegli il ritiro,
 				ricevi l'etichetta in pochi minuti, segui il pacco fino alla consegna.
 			</p>

@@ -154,7 +154,7 @@ class CryptoController extends Controller
             'price_currency' => 'eur',
             'pay_currency' => strtolower($request->pay_currency),
             'order_id' => (string) $order->id,
-            'order_description' => 'SpedizioneFacile - Spedizione #'.$order->id,
+            'order_description' => 'SpediamoFacile - Spedizione #'.$order->id,
             'ipn_callback_url' => $ipnUrl,
             'success_url' => $successUrl,
             'cancel_url' => $cancelUrl,

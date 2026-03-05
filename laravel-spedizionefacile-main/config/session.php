@@ -3,7 +3,7 @@
  * FILE: config/session.php
  * SCOPO: Configura la sessione PHP usata per l'autenticazione Sanctum SPA e il preventivo rapido.
  *
- * La sessione e' fondamentale per SpedizioneFacile:
+ * La sessione e' fondamentale per SpediamoFacile:
  * 1. AUTENTICAZIONE: Sanctum usa il cookie di sessione per riconoscere l'utente loggato
  * 2. PREVENTIVO RAPIDO: i dati del preventivo (pacchi, indirizzi, prezzi) sono salvati in sessione
  *    (SessionController.php) per utenti non registrati
@@ -37,7 +37,7 @@ return [
     |
     | Determina dove vengono salvati i dati della sessione.
     | 'database': i dati sono salvati nella tabella 'sessions' del database.
-    | Questa e' la scelta migliore per SpedizioneFacile perche':
+    | Questa e' la scelta migliore per SpediamoFacile perche':
     | - Le sessioni sopravvivono al riavvio del server
     | - Funzionano con piu' server (se necessario in futuro)
     | - Permettono di vedere le sessioni attive nel database
@@ -174,7 +174,7 @@ return [
     |
     | Il dominio per cui il cookie e' valido. Se vuoto/null, il browser lo imposta
     | automaticamente al dominio corrente. Per supportare i sottodomini,
-    | si puo' impostare ".spedizionefacile.it" (con il punto davanti).
+    | si puo' impostare ".spediamofacile.it" (con il punto davanti).
     |
     */
 

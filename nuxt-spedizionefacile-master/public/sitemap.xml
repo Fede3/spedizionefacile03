@@ -1,72 +1,72 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>https://spedizionefacile.it/</loc>
+    <loc>https://spediamofacile.it/</loc>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://spedizionefacile.it/preventivo</loc>
+    <loc>https://spediamofacile.it/preventivo</loc>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://spedizionefacile.it/servizi</loc>
+    <loc>https://spediamofacile.it/servizi</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://spedizionefacile.it/servizi/pagamento-alla-consegna</loc>
+    <loc>https://spediamofacile.it/servizi/pagamento-alla-consegna</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://spedizionefacile.it/chi-siamo</loc>
+    <loc>https://spediamofacile.it/chi-siamo</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://spedizionefacile.it/contatti</loc>
+    <loc>https://spediamofacile.it/contatti</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://spedizionefacile.it/faq</loc>
+    <loc>https://spediamofacile.it/faq</loc>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://spedizionefacile.it/autenticazione</loc>
+    <loc>https://spediamofacile.it/autenticazione</loc>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://spedizionefacile.it/guide</loc>
+    <loc>https://spediamofacile.it/guide</loc>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://spedizionefacile.it/traccia-spedizione</loc>
+    <loc>https://spediamofacile.it/traccia-spedizione</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://spedizionefacile.it/reclami</loc>
+    <loc>https://spediamofacile.it/reclami</loc>
     <changefreq>monthly</changefreq>
     <priority>0.4</priority>
   </url>
   <url>
-    <loc>https://spedizionefacile.it/privacy-policy</loc>
+    <loc>https://spediamofacile.it/privacy-policy</loc>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
   </url>
   <url>
-    <loc>https://spedizionefacile.it/cookie-policy</loc>
+    <loc>https://spediamofacile.it/cookie-policy</loc>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
   </url>
   <url>
-    <loc>https://spedizionefacile.it/termini-condizioni</loc>
+    <loc>https://spediamofacile.it/termini-condizioni</loc>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
   </url>

@@ -44,8 +44,8 @@ useHead({ link: [
 
 // Meta tag SEO
 useSeoMeta({
-	title: 'Checkout | SpedizioneFacile',
-	ogTitle: 'Checkout | SpedizioneFacile',
+	title: 'Checkout | SpediamoFacile',
+	ogTitle: 'Checkout | SpediamoFacile',
 });
 
 const { user } = useSanctumAuth();

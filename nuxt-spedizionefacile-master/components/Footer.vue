@@ -129,12 +129,12 @@ const linkColumns = [
 
 						<!-- Contatto rapido -->
 						<div class="mt-[24px] flex flex-col gap-[8px]">
-							<a href="mailto:info@spedizionefacile.it" class="flex items-center gap-[8px] text-white/70 text-[0.875rem] hover:text-white transition-colors duration-200 min-h-[44px]">
+							<a href="mailto:info@spediamofacile.it" class="flex items-center gap-[8px] text-white/70 text-[0.875rem] hover:text-white transition-colors duration-200 min-h-[44px]">
 								<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
 									<path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
 									<polyline points="22,6 12,13 2,6"/>
 								</svg>
-								info@spedizionefacile.it
+								info@spediamofacile.it
 							</a>
 						</div>
 					</div>
@@ -179,7 +179,7 @@ const linkColumns = [
 		<div class="bg-[#052f38]">
 			<div class="my-container py-[16px] flex flex-col tablet:flex-row items-center justify-between gap-[8px]">
 				<p class="text-white text-[0.75rem] text-center tablet:text-left">
-					&copy; {{ currentYear }} SpedizioneFacile. Tutti i diritti riservati. P.IVA 00000000000
+					&copy; {{ currentYear }} SpediamoFacile. Tutti i diritti riservati. P.IVA 00000000000
 				</p>
 				<div class="flex items-center gap-[16px] text-white/40 text-[0.75rem]">
 					<span class="flex items-center gap-[4px]">

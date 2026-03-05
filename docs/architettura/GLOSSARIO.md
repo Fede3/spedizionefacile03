@@ -1,4 +1,4 @@
-# Glossario - SpedizioneFacile
+# Glossario - SpediamoFacile
 
 Definizioni dei termini di dominio utilizzati nel progetto. Scritto per chi legge il codice per la prima volta.
 
@@ -48,7 +48,7 @@ Una citta o frazione italiana con il suo CAP e provincia. Memorizzata nel modell
 ## Termini BRT (corriere)
 
 **BRT / Bartolini**
-Il corriere che si occupa del trasporto fisico dei pacchi. SpedizioneFacile comunica con le API REST di BRT per creare spedizioni e generare etichette.
+Il corriere che si occupa del trasporto fisico dei pacchi. SpediamoFacile comunica con le API REST di BRT per creare spedizioni e generare etichette.
 
 **Etichetta**
 Il foglio (PDF) con codice a barre da stampare e attaccare al pacco. Generata dalle API BRT. Nel codice salvata come `brt_label_base64` (codificata in base64).

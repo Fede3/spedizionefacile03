@@ -1,16 +1,16 @@
 <!--
   PAGINA: Pagamento alla Consegna (servizi/pagamento-alla-consegna.vue)
   Pagina informativa dedicata al servizio di contrassegno (pagamento alla consegna).
-  Spiega: cos'e', quando usarlo, come funziona con SpedizioneFacile,
+  Spiega: cos'e', quando usarlo, come funziona con SpediamoFacile,
   requisiti, limiti, costi, dati richiesti e domande frequenti.
   Include dati strutturati JSON-LD per il SEO (FAQPage).
 -->
 <script setup>
 // Meta tag SEO per la pagina contrassegno
 useSeoMeta({
-	title: 'Pagamento alla Consegna (Contrassegno) | SpedizioneFacile',
-	ogTitle: 'Pagamento alla Consegna | SpedizioneFacile',
-	description: 'Spedisci con pagamento alla consegna: il corriere incassa per tuo conto al momento della consegna. Scopri come funziona il contrassegno con SpedizioneFacile.',
+	title: 'Pagamento alla Consegna (Contrassegno) | SpediamoFacile',
+	ogTitle: 'Pagamento alla Consegna | SpediamoFacile',
+	description: 'Spedisci con pagamento alla consegna: il corriere incassa per tuo conto al momento della consegna. Scopri come funziona il contrassegno con SpediamoFacile.',
 	ogDescription: 'Spedisci con contrassegno: il corriere incassa per tuo conto alla consegna. Scopri come funziona.',
 });
 
@@ -104,7 +104,7 @@ const faqs = [
 				<div class="mt-[70px]">
 					<div class="desktop:flex desktop:items-start desktop:justify-between">
 						<div class="desktop-xl:max-w-[655px] desktop:max-w-[505px] mr-auto">
-							<h3 class="desktop:text-[2.5rem] font-medium leading-[110%] tracking-[-0.96px] desktop:mb-[30px] text-[#222222] text-[1.875rem] mb-[20px]">Come funziona con SpedizioneFacile</h3>
+							<h3 class="desktop:text-[2.5rem] font-medium leading-[110%] tracking-[-0.96px] desktop:mb-[30px] text-[#222222] text-[1.875rem] mb-[20px]">Come funziona con SpediamoFacile</h3>
 
 							<h4>1. Impostazione in checkout</h4>
 

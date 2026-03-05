@@ -1,12 +1,12 @@
 # Come configurare l'invio email
 
-Questa guida spiega come configurare il sistema email per SpedizioneFacile.
+Questa guida spiega come configurare il sistema email per SpediamoFacile.
 
 ---
 
 ## Le email del sistema
 
-SpedizioneFacile invia email in questi casi:
+SpediamoFacile invia email in questi casi:
 
 - **Verifica email** - Quando un utente si registra
 - **Recupero password** - Quando un utente dimentica la password
@@ -62,7 +62,7 @@ MAIL_USERNAME=resend
 MAIL_PASSWORD=re_INCOLLA_QUI_LA_TUA_API_KEY
 MAIL_ENCRYPTION=ssl
 MAIL_FROM_ADDRESS="noreply@tuodominio.com"
-MAIL_FROM_NAME="SpedizioneFacile"
+MAIL_FROM_NAME="SpediamoFacile"
 ```
 
 In alternativa, puoi usare il mailer `resend` gia' configurato in `config/mail.php`:
@@ -71,7 +71,7 @@ In alternativa, puoi usare il mailer `resend` gia' configurato in `config/mail.p
 MAIL_MAILER=resend
 MAIL_PASSWORD=re_INCOLLA_QUI_LA_TUA_API_KEY
 MAIL_FROM_ADDRESS="noreply@tuodominio.com"
-MAIL_FROM_NAME="SpedizioneFacile"
+MAIL_FROM_NAME="SpediamoFacile"
 ```
 
 ---
@@ -91,7 +91,7 @@ MAIL_USERNAME=tuoemail@gmail.com
 MAIL_PASSWORD=la_password_per_le_app
 MAIL_ENCRYPTION=tls
 MAIL_FROM_ADDRESS="tuoemail@gmail.com"
-MAIL_FROM_NAME="SpedizioneFacile"
+MAIL_FROM_NAME="SpediamoFacile"
 ```
 
 ---
@@ -142,8 +142,8 @@ Il file `laravel-spedizionefacile-main/config/mail.php` definisce i mailer dispo
 | `MAIL_USERNAME` | Username SMTP | `resend` |
 | `MAIL_PASSWORD` | Password o API key | `re_xxxx` |
 | `MAIL_ENCRYPTION` | Tipo di crittografia | `ssl`, `tls`, `null` |
-| `MAIL_FROM_ADDRESS` | Indirizzo mittente | `noreply@spedizionefacile.it` |
-| `MAIL_FROM_NAME` | Nome mittente | `SpedizioneFacile` |
+| `MAIL_FROM_ADDRESS` | Indirizzo mittente | `noreply@spediamofacile.it` |
+| `MAIL_FROM_NAME` | Nome mittente | `SpediamoFacile` |
 
 ---
 

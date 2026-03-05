@@ -1,6 +1,6 @@
 # Mappa dei Concetti
 
-Come si collegano tra loro i concetti principali di SpedizioneFacile.
+Come si collegano tra loro i concetti principali di SpediamoFacile.
 
 Questa mappa ti aiuta a vedere le relazioni tra le parti del sistema. Usala come riferimento quando lavori su una funzionalita' e vuoi capire cosa tocca.
 
@@ -255,11 +255,11 @@ Le due strade per pagare una spedizione.
 
 ## 6. Le integrazioni esterne
 
-SpedizioneFacile comunica con due servizi esterni.
+SpediamoFacile comunica con due servizi esterni.
 
 ```
     +------------------+                +------------------+
-    |  SpedizioneFacile |               |  SpedizioneFacile |
+    |  SpediamoFacile |               |  SpediamoFacile |
     |  (Backend)        |               |  (Backend)        |
     +--------+---------+                +--------+---------+
              |                                   |

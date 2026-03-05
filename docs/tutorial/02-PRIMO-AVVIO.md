@@ -1,6 +1,6 @@
 # Primo avvio
 
-Questa guida spiega come configurare e avviare il progetto SpedizioneFacile da zero.
+Questa guida spiega come configurare e avviare il progetto SpediamoFacile da zero.
 
 ---
 
@@ -163,7 +163,7 @@ Il progetto include degli script che avviano tutto automaticamente.
 ## 6. Verifica che funzioni
 
 1. Apri `http://127.0.0.1:8787` nel browser
-2. Dovresti vedere la homepage di SpedizioneFacile
+2. Dovresti vedere la homepage di SpediamoFacile
 3. Prova a registrare un nuovo utente
 4. Se usi `MAIL_MAILER=log`, controlla il codice di verifica nei log:
    ```bash

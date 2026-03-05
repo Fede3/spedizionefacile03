@@ -6,7 +6,7 @@ Spiega le motivazioni dietro la scelta di Laravel + Nuxt come architettura del p
 
 ## La scelta: due applicazioni separate
 
-SpedizioneFacile e' composto da due applicazioni:
+SpediamoFacile e' composto da due applicazioni:
 
 - **Backend**: Laravel (PHP) - gestisce la logica, il database, le API esterne
 - **Frontend**: Nuxt (Vue.js) - gestisce l'interfaccia utente nel browser

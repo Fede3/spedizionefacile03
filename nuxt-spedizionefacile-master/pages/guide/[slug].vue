@@ -45,8 +45,8 @@ onMounted(async () => {
 watchEffect(() => {
 	if (guide.value) {
 		useSeoMeta({
-			title: `${guide.value.title} | SpedizioneFacile`,
-			ogTitle: `${guide.value.title} | SpedizioneFacile`,
+			title: `${guide.value.title} | SpediamoFacile`,
+			ogTitle: `${guide.value.title} | SpediamoFacile`,
 			description: guide.value.meta_description,
 			ogDescription: guide.value.meta_description,
 		});

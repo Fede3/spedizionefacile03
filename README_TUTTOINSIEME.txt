@@ -1,7 +1,7 @@
 SPEDIZIONEFACILE - NOTE STORICHE INSTALLAZIONE
 =====================================
 
-Il pannello per SpedizioneFacile segue la stessa logica di BianchiPro.
+Il pannello per SpediamoFacile segue la stessa logica di BianchiPro.
 
 MODIFICHE DA FARE:
 

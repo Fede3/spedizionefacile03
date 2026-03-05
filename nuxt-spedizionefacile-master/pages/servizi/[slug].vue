@@ -33,8 +33,8 @@ onMounted(async () => {
 watchEffect(() => {
 	if (service.value) {
 		useSeoMeta({
-			title: `${service.value.title} | SpedizioneFacile`,
-			ogTitle: `${service.value.title} | SpedizioneFacile`,
+			title: `${service.value.title} | SpediamoFacile`,
+			ogTitle: `${service.value.title} | SpediamoFacile`,
 			description: service.value.meta_description,
 			ogDescription: service.value.meta_description,
 		});
@@ -47,11 +47,11 @@ watchEffect(() => {
 						'@context': 'https://schema.org',
 						'@type': 'Service',
 						name: service.value.title,
-						url: `https://spedizionefacile.it/servizi/${slug}`,
+						url: `https://spediamofacile.it/servizi/${slug}`,
 						provider: {
 							'@type': 'Organization',
-							name: 'SpedizioneFacile',
-							url: 'https://spedizionefacile.it',
+							name: 'SpediamoFacile',
+							url: 'https://spediamofacile.it',
 						},
 						description: service.value.meta_description,
 					}),

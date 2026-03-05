@@ -140,7 +140,7 @@ watch(isAuthenticated, () => {
 				<NuxtLink
 					:to="authLink"
 					class="hidden mid-desktop-navbar:inline-block bg-[#E44203] desktop-xl:w-[143px] mid-desktop-navbar:w-[91px] mid-desktop-navbar:h-[41px] desktop-xl:h-full mid-desktop-navbar:leading-[41px] desktop-xl:leading-[65px] text-center text-white rounded-[50px] font-semibold desktop-xl:text-[1.25rem] desktop:text-[0.875rem] tracking-[-0.48px] transition-[background-color,box-shadow] duration-200 hover:bg-[#c93800] hover:shadow-[0_4px_12px_rgba(228,66,3,0.3)]">
-					<span v-if="isAuthenticated">Ciao {{ user?.name }}</span>
+					<span v-if="isAuthenticated">{{ user?.role === 'Admin' ? 'Area Admin' : `Ciao ${user?.name}` }}</span>
 					<span v-else>Accedi!</span>
 				</NuxtLink>
 
@@ -216,7 +216,7 @@ watch(isAuthenticated, () => {
 									<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
 									<circle cx="12" cy="7" r="4"/>
 								</svg>
-								<span v-if="isAuthenticated">Il mio account</span>
+								<span v-if="isAuthenticated">{{ user?.role === 'Admin' ? 'Area Admin' : 'Il mio account' }}</span>
 								<span v-else>Accedi o Registrati</span>
 							</NuxtLink>
 						</div>

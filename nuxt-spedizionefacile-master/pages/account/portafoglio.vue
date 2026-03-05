@@ -240,7 +240,7 @@ const isPro = computed(() => user.value?.role === "Partner Pro");
 						<p class="text-[2.25rem] desktop:text-[2.75rem] font-bold tracking-tight leading-none">
 							&euro;{{ balance ? Number(balance.balance).toFixed(2) : "0.00" }}
 						</p>
-						<p class="text-[0.8125rem] opacity-60 mt-[8px]">Portafoglio SpedizioneFacile</p>
+						<p class="text-[0.8125rem] opacity-60 mt-[8px]">Portafoglio SpediamoFacile</p>
 					</div>
 				</div>
 

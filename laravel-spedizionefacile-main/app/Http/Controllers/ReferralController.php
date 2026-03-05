@@ -71,7 +71,7 @@ class ReferralController extends Controller
         // Costruiamo i link per condividere il codice facilmente
         $baseUrl = config('app.frontend_url', config('app.url'));
         $referralLink = $baseUrl . '?ref=' . $user->referral_code;
-        $whatsappMessage = urlencode("Spedisci con SpedizioneFacile e ottieni il 5% di sconto! Usa il mio codice: {$user->referral_code} oppure registrati da qui: {$referralLink}");
+        $whatsappMessage = urlencode("Spedisci con SpediamoFacile e ottieni il 5% di sconto! Usa il mio codice: {$user->referral_code} oppure registrati da qui: {$referralLink}");
         $whatsappLink = "https://wa.me/?text={$whatsappMessage}";
 
         return response()->json([

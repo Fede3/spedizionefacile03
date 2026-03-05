@@ -19,17 +19,17 @@
 <script setup>
 // Meta tag SEO
 useSeoMeta({
-	title: 'Carrello | SpedizioneFacile',
-	ogTitle: 'Carrello | SpedizioneFacile',
+	title: 'Carrello | SpediamoFacile',
+	ogTitle: 'Carrello | SpediamoFacile',
 });
 
 // Recupera i dati del carrello dal composable useCart
 const { cart, refresh, status } = useCart();
-const { isAuthenticated } = useSanctumAuth();
+const { isAuthenticated, refreshIdentity } = useSanctumAuth();
 const sanctum = useSanctumClient();
 const router = useRouter();
 const route = useRoute();
-const toast = useToast();
+const uiFeedback = useUiFeedback();
 
 // Promo settings per banner e badge
 const { loadPriceBands, promoSettings } = usePriceBands();
@@ -37,6 +37,147 @@ onMounted(async () => { await loadPriceBands(); });
 
 // Endpoint diverso per svuotare il carrello in base a se l'utente e' loggato o ospite
 const endpoint = computed(() => (isAuthenticated.value ? "/api/empty-cart" : "/api/empty-guest-cart"));
+
+// --- AUTH INLINE GATE (checkout da guest) ---
+const showAuthCheckoutModal = ref(false);
+const authCheckoutTab = ref('login');
+const authCheckoutLoading = ref(false);
+const authCheckoutError = ref('');
+const authCheckoutSuccess = ref('');
+const authCheckoutRedirect = '/checkout';
+
+const authLoginForm = ref({
+	email: '',
+	password: '',
+});
+
+const authRegisterForm = ref({
+	name: '',
+	surname: '',
+	email: '',
+	email_confirmation: '',
+	prefix: '+39',
+	telephone_number: '',
+	password: '',
+	password_confirmation: '',
+	role: 'Cliente',
+	user_type: 'privato',
+});
+
+const extractFirstApiError = (error) => {
+	const data = error?.response?._data || error?.data || {};
+	const explicit = data?.message || error?.message;
+	if (explicit) return explicit;
+	const errors = data?.errors;
+	if (errors && typeof errors === 'object') {
+		const firstKey = Object.keys(errors)[0];
+		const firstVal = Array.isArray(errors[firstKey]) ? errors[firstKey][0] : errors[firstKey];
+		if (firstVal) return String(firstVal);
+	}
+	return 'Operazione non riuscita. Riprova.';
+};
+
+const openCheckoutWithAuthGate = () => {
+	if (isAuthenticated.value) {
+		navigateTo(authCheckoutRedirect);
+		return;
+	}
+	authCheckoutError.value = '';
+	authCheckoutSuccess.value = '';
+	authCheckoutTab.value = 'login';
+	showAuthCheckoutModal.value = true;
+};
+
+const loginForCheckout = async () => {
+	authCheckoutError.value = '';
+	authCheckoutSuccess.value = '';
+
+	if (!authLoginForm.value.email || !authLoginForm.value.password) {
+		authCheckoutError.value = 'Inserisci email e password per continuare.';
+		return;
+	}
+
+	authCheckoutLoading.value = true;
+	try {
+		await sanctum('/api/custom-login', {
+			method: 'POST',
+			body: {
+				email: authLoginForm.value.email,
+				password: authLoginForm.value.password,
+			},
+		});
+		await refreshIdentity();
+		showAuthCheckoutModal.value = false;
+		uiFeedback.success('Accesso effettuato', 'Continuiamo con il pagamento.');
+		navigateTo(authCheckoutRedirect);
+	} catch (error) {
+		const statusCode = error?.response?.status || error?.statusCode;
+		if (statusCode === 403) {
+			authCheckoutError.value = "Account da verificare. Completa la verifica e poi continua il pagamento.";
+			return;
+		}
+		authCheckoutError.value = extractFirstApiError(error);
+	} finally {
+		authCheckoutLoading.value = false;
+	}
+};
+
+const registerForCheckout = async () => {
+	authCheckoutError.value = '';
+	authCheckoutSuccess.value = '';
+
+	if (!authRegisterForm.value.name || !authRegisterForm.value.surname) {
+		authCheckoutError.value = 'Inserisci nome e cognome.';
+		return;
+	}
+	if (!authRegisterForm.value.email || !authRegisterForm.value.email_confirmation) {
+		authCheckoutError.value = 'Inserisci e conferma la tua email.';
+		return;
+	}
+	if (authRegisterForm.value.email !== authRegisterForm.value.email_confirmation) {
+		authCheckoutError.value = 'Le email non coincidono.';
+		return;
+	}
+	if (!authRegisterForm.value.password || !authRegisterForm.value.password_confirmation) {
+		authCheckoutError.value = 'Inserisci e conferma la password.';
+		return;
+	}
+	if (authRegisterForm.value.password !== authRegisterForm.value.password_confirmation) {
+		authCheckoutError.value = 'Le password non coincidono.';
+		return;
+	}
+
+	authCheckoutLoading.value = true;
+	try {
+		await sanctum('/api/custom-register', {
+			method: 'POST',
+			body: authRegisterForm.value,
+		});
+
+		// Tentativo login automatico per continuare direttamente il checkout
+		await sanctum('/api/custom-login', {
+			method: 'POST',
+			body: {
+				email: authRegisterForm.value.email,
+				password: authRegisterForm.value.password,
+			},
+		});
+		await refreshIdentity();
+		showAuthCheckoutModal.value = false;
+		uiFeedback.success('Registrazione completata', 'Continuiamo con il pagamento.');
+		navigateTo(authCheckoutRedirect);
+	} catch (error) {
+		const statusCode = error?.response?.status || error?.statusCode;
+		if (statusCode === 403) {
+			authCheckoutError.value = "Registrazione completata, ma devi verificare l'email prima del pagamento.";
+			authCheckoutSuccess.value = "Apri la verifica account e poi torni al checkout.";
+			return;
+		}
+		authCheckoutError.value = extractFirstApiError(error);
+	} finally {
+		authCheckoutLoading.value = false;
+	}
+};
 
 // Aggiorna i dati del carrello ogni volta che la pagina viene visitata
 // Se arriviamo da un edit (query param 'updated'), forziamo invalidazione cache
@@ -54,11 +195,7 @@ onMounted(async () => {
 		const mergedGroups = cart.value.meta.address_groups.filter(g => g.package_ids?.length > 1);
 		if (mergedGroups.length > 0) {
 			const totalMerged = mergedGroups.reduce((sum, g) => sum + g.package_ids.length, 0);
-			toast.add({
-				title: `${totalMerged} pacchi identici sono stati uniti automaticamente`,
-				color: 'info',
-				timeout: 5000
-			});
+			uiFeedback.info(`${totalMerged} pacchi identici sono stati uniti automaticamente`, '', { timeout: 5000 });
 		}
 	}
 });
@@ -115,10 +252,10 @@ const confirmDelete = async () => {
 		await sanctum(`/api/cart/${deleteTargetId.value}`, { method: "DELETE" });
 		clearNuxtData("cart");
 		await refreshNuxtData("cart");
-		toast.add({ title: 'Spedizione rimossa dal carrello.', color: 'success' });
+		uiFeedback.success('Spedizione rimossa dal carrello.');
 	} catch (e) {
 		console.error(e);
-		toast.add({ title: 'Errore durante la rimozione. Riprova.', color: 'error' });
+		uiFeedback.error('Errore durante la rimozione', 'Riprova.');
 	} finally {
 		deleteLoading.value = false;
 		showDeleteConfirm.value = false;
@@ -138,10 +275,10 @@ const emptyCart = async () => {
 		clearNuxtData("cart");
 		await refreshNuxtData("cart");
 		showEmptyConfirm.value = false;
-		toast.add({ title: 'Carrello svuotato.', color: 'success' });
+		uiFeedback.success('Carrello svuotato.');
 	} catch (error) {
 		console.error(error);
-		toast.add({ title: 'Errore durante lo svuotamento del carrello.', color: 'error' });
+		uiFeedback.error('Errore durante lo svuotamento del carrello', 'Riprova.');
 	} finally {
 		emptyCartLoading.value = false;
 	}
@@ -182,7 +319,7 @@ const updateQuantity = async (itemId, newQty) => {
 		await refreshNuxtData("cart");
 	} catch (e) {
 		console.error('Errore aggiornamento quantita:', e);
-		toast.add({ title: 'Errore nell\'aggiornamento della quantita. Riprova.', color: 'error' });
+		uiFeedback.error('Errore nell\'aggiornamento della quantità', 'Riprova.');
 	} finally {
 		quantityUpdating.value = null;
 	}
@@ -696,13 +833,14 @@ const displayTotal = computed(() => {
 							<Icon name="mdi:delete-sweep-outline" class="text-[18px]" />
 							Svuota carrello
 						</button>
-						<NuxtLink
-							to="/checkout"
-							class="inline-flex items-center justify-center gap-[8px] px-[40px] min-h-[52px] rounded-[50px] bg-[#E44203] text-white font-semibold text-[1rem] hover:bg-[#c93800] transition-[background-color,box-shadow,transform] duration-200 shadow-sm hover:shadow-[0_4px_12px_rgba(228,66,3,0.3)] active:scale-[0.97]">
-							Procedi con l'ordine
-							<Icon name="mdi:arrow-right" class="text-[20px]" />
-						</NuxtLink>
-					</div>
+							<button
+								type="button"
+								@click="openCheckoutWithAuthGate"
+								class="inline-flex items-center justify-center gap-[8px] px-[40px] min-h-[52px] rounded-[50px] bg-[#E44203] text-white font-semibold text-[1rem] hover:bg-[#c93800] transition-[background-color,box-shadow,transform] duration-200 shadow-sm hover:shadow-[0_4px_12px_rgba(228,66,3,0.3)] active:scale-[0.97] cursor-pointer">
+								Procedi con l'ordine
+								<Icon name="mdi:arrow-right" class="text-[20px]" />
+							</button>
+						</div>
 				</div>
 			</div>
 
@@ -758,7 +896,7 @@ const displayTotal = computed(() => {
 		</UModal>
 
 		<!-- Empty cart confirm popup -->
-		<UModal v-model:open="showEmptyConfirm" :dismissible="true" :close="false">
+			<UModal v-model:open="showEmptyConfirm" :dismissible="true" :close="false">
 			<template #title>
 				<h3 class="text-[1.125rem] font-bold text-[#252B42]">Svuota carrello</h3>
 			</template>
@@ -786,6 +924,173 @@ const displayTotal = computed(() => {
 					</button>
 				</div>
 			</template>
-		</UModal>
-	</section>
+			</UModal>
+
+			<!-- Auth inline per proseguire al checkout senza uscire dal carrello -->
+			<UModal v-model:open="showAuthCheckoutModal" :dismissible="!authCheckoutLoading" :close="false">
+				<template #title>
+					<h3 class="text-[1.125rem] font-bold text-[#252B42]">Continua senza perdere il carrello</h3>
+				</template>
+				<template #body>
+					<div class="space-y-[14px]">
+						<p class="text-[0.875rem] text-[#737373] leading-[1.5]">
+							Accedi o registrati qui. Dopo il successo continui direttamente al pagamento.
+						</p>
+
+						<div class="inline-flex rounded-[10px] bg-[#F2F4F5] p-[4px]">
+							<button
+								type="button"
+								@click="authCheckoutTab = 'login'; authCheckoutError = ''; authCheckoutSuccess = '';"
+								:class="authCheckoutTab === 'login' ? 'bg-white text-[#252B42] shadow-sm' : 'text-[#737373]'"
+								class="px-[14px] py-[8px] rounded-[8px] text-[0.8125rem] font-semibold transition cursor-pointer">
+								Accedi
+							</button>
+							<button
+								type="button"
+								@click="authCheckoutTab = 'register'; authCheckoutError = ''; authCheckoutSuccess = '';"
+								:class="authCheckoutTab === 'register' ? 'bg-white text-[#252B42] shadow-sm' : 'text-[#737373]'"
+								class="px-[14px] py-[8px] rounded-[8px] text-[0.8125rem] font-semibold transition cursor-pointer">
+								Registrati
+							</button>
+						</div>
+
+						<div v-if="authCheckoutTab === 'login'" class="space-y-[10px]">
+							<div>
+								<label class="block text-[0.8125rem] text-[#737373] mb-[4px]">Email</label>
+								<input
+									v-model="authLoginForm.email"
+									type="email"
+									autocomplete="email"
+									class="w-full bg-white rounded-[10px] h-[44px] px-[12px] text-[0.9375rem] border border-[#D0D0D0] focus:border-[#095866] focus:shadow-[0_0_0_3px_rgba(9,88,102,0.1)] transition" />
+							</div>
+							<div>
+								<label class="block text-[0.8125rem] text-[#737373] mb-[4px]">Password</label>
+								<input
+									v-model="authLoginForm.password"
+									type="password"
+									autocomplete="current-password"
+									class="w-full bg-white rounded-[10px] h-[44px] px-[12px] text-[0.9375rem] border border-[#D0D0D0] focus:border-[#095866] focus:shadow-[0_0_0_3px_rgba(9,88,102,0.1)] transition" />
+							</div>
+						</div>
+
+						<div v-else class="space-y-[10px]">
+							<div class="grid grid-cols-1 tablet:grid-cols-2 gap-[10px]">
+								<div>
+									<label class="block text-[0.8125rem] text-[#737373] mb-[4px]">Nome</label>
+									<input
+										v-model="authRegisterForm.name"
+										type="text"
+										autocomplete="given-name"
+										class="w-full bg-white rounded-[10px] h-[44px] px-[12px] text-[0.9375rem] border border-[#D0D0D0] focus:border-[#095866] focus:shadow-[0_0_0_3px_rgba(9,88,102,0.1)] transition" />
+								</div>
+								<div>
+									<label class="block text-[0.8125rem] text-[#737373] mb-[4px]">Cognome</label>
+									<input
+										v-model="authRegisterForm.surname"
+										type="text"
+										autocomplete="family-name"
+										class="w-full bg-white rounded-[10px] h-[44px] px-[12px] text-[0.9375rem] border border-[#D0D0D0] focus:border-[#095866] focus:shadow-[0_0_0_3px_rgba(9,88,102,0.1)] transition" />
+								</div>
+							</div>
+
+							<div class="grid grid-cols-1 tablet:grid-cols-2 gap-[10px]">
+								<div>
+									<label class="block text-[0.8125rem] text-[#737373] mb-[4px]">Email</label>
+									<input
+										v-model="authRegisterForm.email"
+										type="email"
+										autocomplete="email"
+										class="w-full bg-white rounded-[10px] h-[44px] px-[12px] text-[0.9375rem] border border-[#D0D0D0] focus:border-[#095866] focus:shadow-[0_0_0_3px_rgba(9,88,102,0.1)] transition" />
+								</div>
+								<div>
+									<label class="block text-[0.8125rem] text-[#737373] mb-[4px]">Conferma email</label>
+									<input
+										v-model="authRegisterForm.email_confirmation"
+										type="email"
+										autocomplete="email"
+										class="w-full bg-white rounded-[10px] h-[44px] px-[12px] text-[0.9375rem] border border-[#D0D0D0] focus:border-[#095866] focus:shadow-[0_0_0_3px_rgba(9,88,102,0.1)] transition" />
+								</div>
+							</div>
+
+							<div class="grid grid-cols-1 tablet:grid-cols-[120px_1fr] gap-[10px]">
+								<div>
+									<label class="block text-[0.8125rem] text-[#737373] mb-[4px]">Prefisso</label>
+									<input
+										v-model="authRegisterForm.prefix"
+										type="text"
+										class="w-full bg-white rounded-[10px] h-[44px] px-[12px] text-[0.9375rem] border border-[#D0D0D0] focus:border-[#095866] focus:shadow-[0_0_0_3px_rgba(9,88,102,0.1)] transition" />
+								</div>
+								<div>
+									<label class="block text-[0.8125rem] text-[#737373] mb-[4px]">Telefono</label>
+									<input
+										v-model="authRegisterForm.telephone_number"
+										type="tel"
+										autocomplete="tel"
+										class="w-full bg-white rounded-[10px] h-[44px] px-[12px] text-[0.9375rem] border border-[#D0D0D0] focus:border-[#095866] focus:shadow-[0_0_0_3px_rgba(9,88,102,0.1)] transition" />
+								</div>
+							</div>
+
+							<div class="grid grid-cols-1 tablet:grid-cols-2 gap-[10px]">
+								<div>
+									<label class="block text-[0.8125rem] text-[#737373] mb-[4px]">Password</label>
+									<input
+										v-model="authRegisterForm.password"
+										type="password"
+										autocomplete="new-password"
+										class="w-full bg-white rounded-[10px] h-[44px] px-[12px] text-[0.9375rem] border border-[#D0D0D0] focus:border-[#095866] focus:shadow-[0_0_0_3px_rgba(9,88,102,0.1)] transition" />
+								</div>
+								<div>
+									<label class="block text-[0.8125rem] text-[#737373] mb-[4px]">Conferma password</label>
+									<input
+										v-model="authRegisterForm.password_confirmation"
+										type="password"
+										autocomplete="new-password"
+										class="w-full bg-white rounded-[10px] h-[44px] px-[12px] text-[0.9375rem] border border-[#D0D0D0] focus:border-[#095866] focus:shadow-[0_0_0_3px_rgba(9,88,102,0.1)] transition" />
+								</div>
+							</div>
+						</div>
+
+						<p v-if="authCheckoutError" class="text-[0.8125rem] text-red-600 bg-red-50 border border-red-200 rounded-[10px] px-[10px] py-[8px]">
+							{{ authCheckoutError }}
+						</p>
+						<p v-if="authCheckoutSuccess" class="text-[0.8125rem] text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-[10px] px-[10px] py-[8px]">
+							{{ authCheckoutSuccess }}
+						</p>
+
+						<div v-if="authCheckoutError && authCheckoutError.toLowerCase().includes('verific')" class="text-[0.8125rem]">
+							<NuxtLink :to="`/autenticazione?redirect=${encodeURIComponent(authCheckoutRedirect)}`" class="text-[#095866] font-semibold hover:underline cursor-pointer">
+								Apri verifica account
+							</NuxtLink>
+						</div>
+					</div>
+				</template>
+				<template #footer>
+					<div class="flex flex-col-reverse tablet:flex-row justify-end gap-[10px]">
+						<button
+							type="button"
+							@click="showAuthCheckoutModal = false"
+							:disabled="authCheckoutLoading"
+							class="inline-flex items-center justify-center gap-[6px] px-[16px] min-h-[42px] rounded-[10px] border border-[#D0D0D0] text-[#737373] hover:bg-[#F7F9FA] transition cursor-pointer disabled:opacity-60">
+							Annulla
+						</button>
+						<button
+							v-if="authCheckoutTab === 'login'"
+							type="button"
+							@click="loginForCheckout"
+							:disabled="authCheckoutLoading"
+							class="inline-flex items-center justify-center gap-[6px] px-[16px] min-h-[42px] rounded-[10px] bg-[#E44203] text-white font-semibold hover:bg-[#c93800] transition cursor-pointer disabled:opacity-60">
+							{{ authCheckoutLoading ? 'Accesso...' : 'Accedi e continua' }}
+						</button>
+						<button
+							v-else
+							type="button"
+							@click="registerForCheckout"
+							:disabled="authCheckoutLoading"
+							class="inline-flex items-center justify-center gap-[6px] px-[16px] min-h-[42px] rounded-[10px] bg-[#E44203] text-white font-semibold hover:bg-[#c93800] transition cursor-pointer disabled:opacity-60">
+							{{ authCheckoutLoading ? 'Registrazione...' : 'Registrati e continua' }}
+						</button>
+					</div>
+				</template>
+			</UModal>
+		</section>
 </template>

@@ -1,16 +1,16 @@
 <!--
   PAGINA: Servizi (servizi/index.vue)
-  Pagina che elenca tutti i servizi offerti da SpedizioneFacile.
+  Pagina che elenca tutti i servizi offerti da SpediamoFacile.
   Carica i servizi dall'API pubblica /api/public/services, con fallback hardcoded.
   Mostra una lista di card con titolo, descrizione, icona e link alla pagina di dettaglio.
 -->
 <script setup>
 // Meta tag SEO per la pagina servizi
 useSeoMeta({
-	title: 'Servizi di Spedizione | SpedizioneFacile',
-	ogTitle: 'Servizi di Spedizione | SpedizioneFacile',
-	description: 'Scopri tutti i servizi di spedizione SpedizioneFacile: pagamento alla consegna, documenti con prova di consegna, corriere nazionale ed internazionale.',
-	ogDescription: 'Tutti i servizi di spedizione SpedizioneFacile: contrassegno, prova di consegna, corriere nazionale.',
+	title: 'Servizi di Spedizione | SpediamoFacile',
+	ogTitle: 'Servizi di Spedizione | SpediamoFacile',
+	description: 'Scopri tutti i servizi di spedizione SpediamoFacile: pagamento alla consegna, documenti con prova di consegna, corriere nazionale ed internazionale.',
+	ogDescription: 'Tutti i servizi di spedizione SpediamoFacile: contrassegno, prova di consegna, corriere nazionale.',
 });
 
 // Fallback hardcoded
@@ -18,7 +18,7 @@ const fallbackServices = [
 	{ title: "Pagamento alla consegna", description: "Il pagamento alla consegna è utile quando vuoi far pagare il destinatario al momento del ritiro del pacco. Il corriere incassa per tuo conto e poi riversa l'importo al mittente secondo le tempistiche previste dal servizio. È una soluzione comoda per vendite occasionali o quando il cliente finale preferisce pagare solo alla consegna.", icon: "mdi:cash-register", slug: "pagamento-alla-consegna" },
 	{ title: "Spedizione senza etichetta", description: "Non hai una stampante? Nessun problema. Con il servizio senza etichetta prepari il pacco e la gestione dell'etichetta viene affidata al corriere o al punto di raccolta. Ti basta un codice QR sul telefono per spedire comodamente.", icon: "mdi:qrcode", slug: "spedizione-senza-etichetta" },
 	{ title: "Ritiro a domicilio", description: "Il corriere viene direttamente al tuo indirizzo per prelevare il pacco. Non devi portare nulla in posta o al punto di raccolta: prepari il pacco, prenoti il ritiro e aspetti comodamente. Il servizio è incluso nel prezzo della maggior parte delle spedizioni.", icon: "mdi:home-clock-outline", slug: "ritiro-a-domicilio" },
-	{ title: "Assicurazione sulla spedizione", description: "Proteggi i tuoi pacchi con l'assicurazione SpedizioneFacile. Per un costo minimo rispetto al valore della merce, ottieni copertura per danni, smarrimento e furto durante il trasporto. Dichiara il valore e spedisci con tranquillità.", icon: "mdi:shield-check-outline", slug: "assicurazione-spedizione" },
+	{ title: "Assicurazione sulla spedizione", description: "Proteggi i tuoi pacchi con l'assicurazione SpediamoFacile. Per un costo minimo rispetto al valore della merce, ottieni copertura per danni, smarrimento e furto durante il trasporto. Dichiara il valore e spedisci con tranquillità.", icon: "mdi:shield-check-outline", slug: "assicurazione-spedizione" },
 	{ title: "Sponda idraulica", description: "Per colli pesanti o voluminosi che non possono essere caricati manualmente. Una piattaforma mobile montata sul veicolo solleva il pacco dal livello strada al pianale del mezzo. Indispensabile per elettrodomestici, macchinari e pallet.", icon: "mdi:forklift", slug: "sponda-idraulica" },
 	{ title: "Spedizione programmata", description: "Pianifica le tue spedizioni in anticipo scegliendo la data di ritiro che preferisci. Ideale per aziende con flussi regolari e per chi vuole organizzare il lavoro senza sorprese. Programma il ritiro fino a 30 giorni prima.", icon: "mdi:calendar-clock-outline", slug: "spedizione-programmata" },
 	{ title: "Chiamata pre-consegna", description: "Il corriere contatta telefonicamente il destinatario prima di effettuare la consegna. Riduce i tentativi a vuoto e migliora l'esperienza del destinatario, garantendo la presenza al momento della consegna.", icon: "mdi:phone-ring-outline", slug: "chiamata-pre-consegna" },

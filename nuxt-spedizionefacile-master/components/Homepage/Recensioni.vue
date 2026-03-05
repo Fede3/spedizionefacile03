@@ -1,4 +1,9 @@
 <script setup>
+const buildGoogleReviewUrl = (review) => {
+	const query = `SpediamoFacile recensione ${review.name} ${review.city}`;
+	return `https://www.google.com/search?q=${encodeURIComponent(query)}`;
+};
+
 const reviews = [
 	{
 		name: 'Marco P.',
@@ -50,7 +55,10 @@ const reviews = [
 	},
 ];
 
-const visibleReviews = reviews.slice(0, 3);
+const visibleReviews = reviews.slice(0, 3).map((review) => ({
+	...review,
+	googleUrl: review.googleUrl || buildGoogleReviewUrl(review),
+}));
 </script>
 
 <template>
@@ -66,10 +74,14 @@ const visibleReviews = reviews.slice(0, 3);
 			</header>
 
 				<div class="hp-rev-grid">
-					<article
+					<a
 						v-for="(review, index) in visibleReviews"
 						:key="`${review.name}-${index}`"
-						class="hp-rev-card">
+						class="hp-rev-card"
+						:href="review.googleUrl"
+						target="_blank"
+						rel="noopener noreferrer nofollow"
+						:aria-label="`Apri recensione Google di ${review.name}`">
 					<div class="hp-rev-card-head">
 						<div class="hp-rev-person">
 							<div class="hp-rev-avatar" aria-hidden="true">{{ review.name.charAt(0) }}</div>
@@ -90,8 +102,9 @@ const visibleReviews = reviews.slice(0, 3);
 
 					<div class="hp-rev-foot">
 						<span class="hp-rev-service">{{ review.service }}</span>
+						<span class="hp-rev-open">Apri su Google</span>
 					</div>
-				</article>
+				</a>
 			</div>
 		</div>
 	</section>
@@ -164,6 +177,7 @@ const visibleReviews = reviews.slice(0, 3);
 }
 
 .hp-rev-card {
+	position: relative;
 	width: 100%;
 	min-height: 228px;
 	padding: 18px;
@@ -174,6 +188,38 @@ const visibleReviews = reviews.slice(0, 3);
 	display: flex;
 	flex-direction: column;
 	gap: 10px;
+	overflow: hidden;
+	text-decoration: none;
+	color: inherit;
+	will-change: transform;
+	transition: transform 0.24s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.24s ease, border-color 0.24s ease;
+}
+
+.hp-rev-card::after {
+	content: '';
+	position: absolute;
+	inset: 0;
+	background: radial-gradient(circle at 16% 12%, rgba(9, 88, 102, 0.1), transparent 45%);
+	opacity: 0;
+	transition: opacity 0.24s ease;
+	pointer-events: none;
+}
+
+.hp-rev-card:hover,
+.hp-rev-card:focus-within {
+	transform: translateY(-4px);
+	border-color: #c6dde8;
+	box-shadow: 0 12px 24px rgba(15, 23, 42, 0.08), 0 22px 36px rgba(15, 23, 42, 0.1);
+}
+
+.hp-rev-card:focus-visible {
+	outline: 2px solid #095866;
+	outline-offset: 3px;
+}
+
+.hp-rev-card:hover::after,
+.hp-rev-card:focus-within::after {
+	opacity: 1;
 }
 
 .hp-rev-card-head {
@@ -202,12 +248,14 @@ const visibleReviews = reviews.slice(0, 3);
 	align-items: center;
 	justify-content: center;
 	flex-shrink: 0;
+	transition: transform 0.24s ease, box-shadow 0.24s ease;
 }
 
 .hp-rev-name {
 	font-size: 1rem;
 	font-weight: 760;
 	color: #1f2937;
+	transition: color 0.24s ease;
 }
 
 .hp-rev-role {
@@ -255,6 +303,10 @@ const visibleReviews = reviews.slice(0, 3);
 
 .hp-rev-foot {
 	margin-top: auto;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 10px;
 }
 
 .hp-rev-service {
@@ -268,6 +320,32 @@ const visibleReviews = reviews.slice(0, 3);
 	color: #0a5f6d;
 	background: #ebf7fb;
 	border: 1px solid #d0e4ec;
+	transition: transform 0.24s ease, border-color 0.24s ease, background-color 0.24s ease;
+}
+
+.hp-rev-open {
+	font-size: 0.75rem;
+	font-weight: 700;
+	color: #0c6674;
+	opacity: 0.9;
+}
+
+.hp-rev-card:hover .hp-rev-avatar,
+.hp-rev-card:focus-within .hp-rev-avatar {
+	transform: translateY(-1px) scale(1.06);
+	box-shadow: 0 10px 18px rgba(15, 23, 42, 0.2);
+}
+
+.hp-rev-card:hover .hp-rev-name,
+.hp-rev-card:focus-within .hp-rev-name {
+	color: #0a5f6d;
+}
+
+.hp-rev-card:hover .hp-rev-service,
+.hp-rev-card:focus-within .hp-rev-service {
+	transform: translateY(-1px);
+	border-color: #bfd9e4;
+	background: #e5f3f9;
 }
 
 @media (min-width: 48rem) {
@@ -293,6 +371,21 @@ const visibleReviews = reviews.slice(0, 3);
 
 	.hp-rev-title-row {
 		gap: 8px;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.hp-rev-card,
+	.hp-rev-card::after,
+	.hp-rev-avatar,
+	.hp-rev-name,
+	.hp-rev-service {
+		transition: none;
+	}
+
+	.hp-rev-card:hover,
+	.hp-rev-card:focus-within {
+		transform: none;
 	}
 }
 </style>

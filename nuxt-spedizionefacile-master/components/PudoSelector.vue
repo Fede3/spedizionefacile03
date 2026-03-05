@@ -36,6 +36,7 @@ const geolocating = ref(false);
 const searched = ref(false);
 const searchError = ref(null);
 const searchMeta = ref(null);
+const referenceUpdateMessage = ref('');
 
 const pudoResults = ref([]);
 const selectedPudoKey = ref(null);
@@ -43,6 +44,7 @@ const expandedPudoKey = ref(null);
 const loadingDetailsKey = ref(null);
 const pudoDetails = ref({});
 const detailsErrors = ref({});
+const mapClickLoading = ref(false);
 
 const referencePoint = ref(null); // { latitude, longitude, address, city, zip_code, label, source }
 const nowTick = ref(Date.now());
@@ -74,6 +76,7 @@ const strategyListLabel = computed(() => {
 		zip_only: 'solo CAP',
 		nearby_geo: 'integrazione nearby geolocalizzata',
 		nearby_geo_input: 'nearby da geocodifica indirizzo',
+		nearby_geo_grid: 'copertura geografica estesa (griglia)',
 		fallback_db: 'fallback database locale',
 		fallback_db_coordinates: 'fallback database da coordinate',
 	};
@@ -112,6 +115,17 @@ const parseCoordinate = (value) => {
 	if (value === null || value === undefined || value === '') return null;
 	const parsed = Number.parseFloat(String(value).trim().replace(',', '.'));
 	return Number.isFinite(parsed) ? parsed : null;
+};
+
+const parseDistanceMeters = (value) => {
+	if (value === null || value === undefined || value === '') return null;
+	const cleaned = String(value)
+		.trim()
+		.replace(',', '.')
+		.replace(/[^\d.-]/g, '');
+	if (!cleaned) return null;
+	const parsed = Number.parseFloat(cleaned);
+	return Number.isFinite(parsed) ? Math.round(parsed) : null;
 };
 
 const isFiniteCoordinate = (value) => Number.isFinite(parseCoordinate(value));
@@ -172,8 +186,7 @@ const normalizePudoPoint = (rawPoint) => {
 	const id = point.pudo_id || point.carrier_pudo_id || point.id || '';
 	const latitude = parseCoordinate(point.latitude ?? point.lat);
 	const longitude = parseCoordinate(point.longitude ?? point.lng);
-	const apiDistance = Number(point.distance_meters);
-	const distance = Number.isFinite(apiDistance) ? Math.round(apiDistance) : null;
+	const distance = parseDistanceMeters(point.distance_meters);
 
 	return {
 		pudo_id: String(id),
@@ -225,21 +238,80 @@ const sortByDistance = (points) => {
 	});
 };
 
+const inferReferenceFromResults = (points = []) => {
+	const coords = points
+		.map((point) => ({
+			latitude: parseCoordinate(point?.latitude ?? point?.lat),
+			longitude: parseCoordinate(point?.longitude ?? point?.lng),
+		}))
+		.filter((coord) => Number.isFinite(coord.latitude) && Number.isFinite(coord.longitude));
+
+	if (!coords.length) return null;
+
+	const latitude = coords.reduce((sum, coord) => sum + coord.latitude, 0) / coords.length;
+	const longitude = coords.reduce((sum, coord) => sum + coord.longitude, 0) / coords.length;
+
+	return {
+		latitude,
+		longitude,
+		source: 'results',
+		address: searchAddress.value || '',
+		city: searchCity.value || '',
+		zip_code: searchZip.value || '',
+		label: [searchCity.value, searchZip.value].filter(Boolean).join(' ').trim() || 'Area selezionata',
+	};
+};
+
 const applyResults = (rawPoints) => {
 	const normalized = (rawPoints || []).map(normalizePudoPoint);
+	let distanceReference = referencePoint.value;
+	const allApiDistancesZero =
+		normalized.length > 0 &&
+		normalized.every((point) => Number.isFinite(Number(point.distance_meters)) && Number(point.distance_meters) === 0);
+
+	// Se l'utente non ha indicato la via, usiamo comunque un riferimento stabile (centro risultati)
+	// per calcolare distanze coerenti ed evitare "0 m" su tutti i punti.
+	if (!distanceReference) {
+		const inferredReference = inferReferenceFromResults(normalized);
+		if (inferredReference) {
+			referencePoint.value = inferredReference;
+			distanceReference = inferredReference;
+		}
+	}
+
 	const withComputedDistance = normalized.map((point) => {
+		const apiDistance = Number(point.distance_meters);
+		const hasApiDistance = Number.isFinite(apiDistance);
+		const isReliableZeroFromApi =
+			apiDistance === 0 &&
+			distanceReference &&
+			Number.isFinite(point.latitude) &&
+			Number.isFinite(point.longitude) &&
+			distanceInMeters(distanceReference, {
+				latitude: point.latitude,
+				longitude: point.longitude,
+			}) <= 50;
+		const canTrustApiDistance =
+			hasApiDistance &&
+			!allApiDistancesZero &&
+			(apiDistance > 0 || isReliableZeroFromApi);
+
+		if (canTrustApiDistance) {
+			return point;
+		}
+
 		if (
-			referencePoint.value &&
+			distanceReference &&
 			Number.isFinite(point.latitude) &&
 			Number.isFinite(point.longitude)
 		) {
-			const computedDistance = distanceInMeters(referencePoint.value, {
+			const computedDistance = distanceInMeters(distanceReference, {
 				latitude: point.latitude,
 				longitude: point.longitude,
 			});
 			return {
 				...point,
-				distance_meters: computedDistance ?? point.distance_meters,
+				distance_meters: computedDistance ?? null,
 			};
 		}
 		return point;
@@ -379,15 +451,6 @@ const searchPudo = async () => {
 		const apiMeta = result?.meta || result?.data?.meta || {};
 		let strategyUsed = Array.isArray(apiMeta.strategy_used) ? [...apiMeta.strategy_used] : [];
 
-		// Mostra subito i risultati base: geocode/nearby non devono mai bloccare la UI.
-		applyResults(points);
-		searchMeta.value = {
-			...apiMeta,
-			strategy_used: strategyUsed.length ? strategyUsed : apiMeta.strategy_used,
-			returned_count: pudoResults.value.length,
-			requested_count: 50,
-		};
-
 		if (!referencePoint.value || referencePoint.value.source !== 'manual') {
 			try {
 				const geocoded = await geocodeFromSearchFields();
@@ -400,6 +463,15 @@ const searchPudo = async () => {
 				console.warn('Geocoding non disponibile:', error);
 			}
 		}
+
+		// Mostra subito i risultati base: geocode/nearby non devono mai bloccare la UI.
+		applyResults(points);
+		searchMeta.value = {
+			...apiMeta,
+			strategy_used: strategyUsed.length ? strategyUsed : apiMeta.strategy_used,
+			returned_count: pudoResults.value.length,
+			requested_count: 50,
+		};
 
 		if (referencePoint.value) {
 			try {
@@ -448,6 +520,7 @@ const useCurrentLocation = async () => {
 
 	geolocating.value = true;
 	searchError.value = null;
+	referenceUpdateMessage.value = '';
 
 	try {
 		const position = await new Promise((resolve, reject) => {
@@ -473,6 +546,7 @@ const useCurrentLocation = async () => {
 		})) {
 			throw new Error('Coordinate non valide.');
 		}
+		referenceUpdateMessage.value = 'Riferimento aggiornato dalla tua posizione. Ricerca punti avviata automaticamente.';
 
 		// Se reverse geocode ha compilato almeno città o CAP, avvia la ricerca completa
 		// (search + nearby merge) senza richiedere click manuale.
@@ -511,6 +585,54 @@ const useCurrentLocation = async () => {
 	} finally {
 		loading.value = false;
 		geolocating.value = false;
+	}
+};
+
+const onMapReferenceClick = async (payload) => {
+	const latitude = parseCoordinate(payload?.latitude);
+	const longitude = parseCoordinate(payload?.longitude);
+	if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) return;
+
+	mapClickLoading.value = true;
+	searchError.value = null;
+	referenceUpdateMessage.value = '';
+
+	try {
+		const reversedAddress = await reverseGeocodeFromCoordinates(latitude, longitude);
+		if (reversedAddress?.address) searchAddress.value = reversedAddress.address;
+		if (reversedAddress?.city) searchCity.value = reversedAddress.city;
+		if (reversedAddress?.zip_code) searchZip.value = reversedAddress.zip_code;
+
+		setReferencePoint(latitude, longitude, 'manual', {
+			label: reversedAddress?.label || 'Punto selezionato da mappa',
+			address: reversedAddress?.address || '',
+			city: reversedAddress?.city || '',
+			zip_code: reversedAddress?.zip_code || '',
+		});
+		referenceUpdateMessage.value = 'Riferimento mappa aggiornato. Ricerca punti avviata automaticamente.';
+
+		if (hasSearchInput.value) {
+			await searchPudo();
+			return;
+		}
+
+		loading.value = true;
+		searched.value = true;
+		const nearbyPoints = await fetchNearbyPudo(latitude, longitude, 50);
+		applyResults(nearbyPoints);
+		searchMeta.value = {
+			strategy_used: ['nearby_geo'],
+			returned_count: pudoResults.value.length,
+			requested_count: 50,
+			provider: 'BRT',
+			fallback: false,
+		};
+	} catch (error) {
+		console.error('Errore click mappa PUDO:', error);
+		searchError.value = 'Posizione mappa rilevata, ma non sono riuscito ad aggiornare i punti ora. Riprova.';
+	} finally {
+		loading.value = false;
+		mapClickLoading.value = false;
 	}
 };
 
@@ -570,6 +692,13 @@ const formatDistance = (meters) => {
 	if (!Number.isFinite(value)) return '';
 	if (value >= 1000) return `${(value / 1000).toFixed(1)} km`;
 	return `${Math.round(value)} m`;
+};
+
+const hasDistance = (pudo) => Number.isFinite(Number(pudo?.distance_meters));
+
+const distanceLabel = (pudo) => {
+	if (hasDistance(pudo)) return formatDistance(pudo.distance_meters);
+	return 'n/d';
 };
 
 const splitHoursParts = (rawHours) => {
@@ -752,112 +881,118 @@ const formatOpeningHours = (hours) => {
 			<span v-if="strategyListLabel" class="text-[#64748B]">Strategia: {{ strategyListLabel }}</span>
 		</div>
 
-			<div v-if="searched" class="mt-[12px] grid grid-cols-1 desktop:grid-cols-[minmax(0,1fr)_380px] gap-[12px] items-start">
-			<div class="order-2 desktop:order-1">
-				<div v-if="loading" class="flex items-center justify-center py-[30px]">
+		<div v-if="searched" class="mt-[12px] grid grid-cols-1 desktop:grid-cols-2 gap-[14px] items-stretch">
+			<div class="order-2 desktop:order-1 h-[360px] tablet:h-[420px] desktop:h-[520px]">
+				<div v-if="loading" class="flex items-center justify-center h-full">
 					<span class="inline-block w-[28px] h-[28px] border-3 border-[#E9EBEC] border-t-[#095866] rounded-full animate-spin"></span>
 				</div>
 
-				<div v-else class="mt-[2px]">
-					<p v-if="pudoResults.length === 0 && !searchError" class="text-[0.875rem] text-[#737373] py-[20px] text-center">
+				<div v-else class="h-full flex flex-col">
+					<p v-if="pudoResults.length === 0 && !searchError" class="text-[0.875rem] text-[#737373] px-[10px] text-center flex-1 flex items-center justify-center">
 						Nessun punto di ritiro trovato per questa zona. Prova con un'altra citta o CAP.
 					</p>
 
-					<div v-else class="grid grid-cols-1 tablet:grid-cols-2 gap-[10px]">
+					<div v-else class="grid grid-cols-1 gap-[10px] content-start flex-1 overflow-y-auto pr-[4px]">
 						<div
 							v-for="pudo in pudoResults"
 							:key="pudo.ui_key"
-							class="bg-white rounded-[12px] border-2 p-[14px] transition-[border-color,box-shadow] duration-200 cursor-pointer"
-							:class="selectedPudoKey === pudo.ui_key ? 'border-[#095866] shadow-md' : 'border-[#D0D0D0] hover:border-[#095866]/50'"
+							class="bg-white rounded-[12px] border-2 p-[14px] transition-[border-color,box-shadow] duration-200 cursor-pointer min-h-[168px]"
+							:class="[
+								expandedPudoKey === String(pudo.pudo_id || pudo.ui_key) ? 'h-auto' : 'h-[168px]',
+								selectedPudoKey === pudo.ui_key ? 'border-[#095866] shadow-md' : 'border-[#D0D0D0] hover:border-[#095866]/50'
+							]"
 							@click="selectPudo(pudo)">
-					<div class="flex items-start justify-between gap-[10px]">
-						<div class="flex-1 min-w-0">
-							<div class="flex items-center gap-[6px]">
-								<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#095866" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="shrink-0"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-								<span class="text-[0.875rem] font-bold text-[#252B42] truncate">{{ pudo.name }}</span>
+							<div class="flex items-start justify-between gap-[10px]">
+								<div class="flex-1 min-w-0">
+									<div class="flex items-center gap-[6px]">
+										<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#095866" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="shrink-0"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+										<span class="text-[0.875rem] font-bold text-[#252B42] truncate">{{ pudo.name }}</span>
+									</div>
+									<div class="mt-[6px] flex flex-wrap items-center gap-[6px]">
+										<span class="inline-flex items-center h-[22px] px-[9px] rounded-full border border-[#CBE0E4] bg-[#F4FAFB] text-[#095866] text-[0.6875rem] font-semibold uppercase tracking-[0.2px]">
+											Punto BRT
+										</span>
+									</div>
+									<p class="text-[0.8125rem] text-[#737373] mt-[3px]">{{ pudo.address }}, {{ pudo.zip_code }} {{ pudo.city }}</p>
+								</div>
+
+								<div class="flex flex-col items-end gap-[6px] shrink-0">
+									<span class="inline-flex items-center h-[26px] px-[10px] rounded-full bg-[#E7F3F6] border border-[#C0DFE6] text-[#0B5F70] text-[0.8125rem] font-black tracking-[0.15px] leading-none">
+										Distanza: {{ distanceLabel(pudo) }}
+									</span>
+									<span class="inline-flex items-center px-[8px] h-[24px] rounded-full border text-[0.6875rem] font-semibold" :class="getPudoStatus(pudo).className">
+										{{ getPudoStatus(pudo).label }}
+									</span>
+									<div
+										class="w-[22px] h-[22px] rounded-full border-[2px] flex items-center justify-center"
+										:class="selectedPudoKey === pudo.ui_key ? 'border-[#095866] bg-[#095866]' : 'border-[#95A3B3] bg-transparent'">
+										<div v-if="selectedPudoKey === pudo.ui_key" class="w-[10px] h-[10px] rounded-full bg-white"></div>
+									</div>
+								</div>
 							</div>
-							<div class="mt-[6px] flex flex-wrap items-center gap-[6px]">
-								<span class="inline-flex items-center h-[22px] px-[9px] rounded-full border border-[#CBE0E4] bg-[#F4FAFB] text-[#095866] text-[0.6875rem] font-semibold uppercase tracking-[0.2px]">
-									Punto BRT
-								</span>
-								<span
-									v-if="pudo.distance_meters"
-									class="inline-flex items-center h-[24px] px-[10px] rounded-full bg-[#ECF6F7] text-[#095866] text-[0.75rem] font-extrabold tracking-[0.1px]">
-									Distanza: {{ formatDistance(pudo.distance_meters) }}
-								</span>
+
+							<div class="mt-[2px] grid gap-[2px] text-[0.75rem] text-[#64748B]">
+								<p class="inline-flex items-center gap-[4px]">
+									<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+									{{ getTodayHoursText(pudo) }}
+								</p>
 							</div>
-							<p class="text-[0.8125rem] text-[#737373] mt-[2px]">{{ pudo.address }}, {{ pudo.zip_code }} {{ pudo.city }}</p>
-						</div>
 
-						<div class="flex flex-col items-end gap-[6px] shrink-0">
-							<span class="inline-flex items-center px-[8px] h-[24px] rounded-full border text-[0.6875rem] font-semibold" :class="getPudoStatus(pudo).className">
-								{{ getPudoStatus(pudo).label }}
-							</span>
-							<div
-								class="w-[22px] h-[22px] rounded-full border-[2px] flex items-center justify-center"
-								:class="selectedPudoKey === pudo.ui_key ? 'border-[#095866] bg-[#095866]' : 'border-[#95A3B3] bg-transparent'">
-								<div v-if="selectedPudoKey === pudo.ui_key" class="w-[10px] h-[10px] rounded-full bg-white"></div>
+							<div v-if="expandedPudoKey === String(pudo.pudo_id || pudo.ui_key)" class="mt-[10px] pt-[10px] border-t border-[#E4E4E4] text-[0.8125rem]" @click.stop>
+								<div v-if="loadingDetailsKey === String(pudo.pudo_id || pudo.ui_key)" class="flex items-center gap-[6px] text-[#737373]">
+									<span class="inline-block w-[14px] h-[14px] border-2 border-[#095866] border-t-transparent rounded-full animate-spin"></span>
+									Caricamento dettagli...
+								</div>
+								<template v-else-if="pudoDetails[String(pudo.pudo_id || pudo.ui_key)]">
+									<p v-if="pudoDetails[String(pudo.pudo_id || pudo.ui_key)].opening_hours" class="text-[#252B42]">
+										<span class="font-semibold">Orari completi:</span>
+										{{ formatOpeningHours(pudoDetails[String(pudo.pudo_id || pudo.ui_key)].opening_hours) }}
+									</p>
+									<p v-if="pudoDetails[String(pudo.pudo_id || pudo.ui_key)].localization_hint" class="text-[#737373] mt-[4px]">
+										{{ pudoDetails[String(pudo.pudo_id || pudo.ui_key)].localization_hint }}
+									</p>
+								</template>
+								<p v-else-if="detailsErrors[String(pudo.pudo_id || pudo.ui_key)]" class="text-rose-600">
+									{{ detailsErrors[String(pudo.pudo_id || pudo.ui_key)] }}
+								</p>
 							</div>
-						</div>
-					</div>
 
-					<div class="mt-[9px] grid gap-[4px] text-[0.75rem] text-[#64748B]">
-						<p class="inline-flex items-center gap-[4px]">
-							<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-							{{ getTodayHoursText(pudo) }}
-						</p>
-					</div>
-
-					<div v-if="expandedPudoKey === String(pudo.pudo_id || pudo.ui_key)" class="mt-[10px] pt-[10px] border-t border-[#E4E4E4] text-[0.8125rem]" @click.stop>
-						<div v-if="loadingDetailsKey === String(pudo.pudo_id || pudo.ui_key)" class="flex items-center gap-[6px] text-[#737373]">
-							<span class="inline-block w-[14px] h-[14px] border-2 border-[#095866] border-t-transparent rounded-full animate-spin"></span>
-							Caricamento dettagli...
-						</div>
-						<template v-else-if="pudoDetails[String(pudo.pudo_id || pudo.ui_key)]">
-							<p v-if="pudoDetails[String(pudo.pudo_id || pudo.ui_key)].opening_hours" class="text-[#252B42]">
-								<span class="font-semibold">Orari completi:</span>
-								{{ formatOpeningHours(pudoDetails[String(pudo.pudo_id || pudo.ui_key)].opening_hours) }}
-							</p>
-							<p v-if="pudoDetails[String(pudo.pudo_id || pudo.ui_key)].localization_hint" class="text-[#737373] mt-[4px]">
-								{{ pudoDetails[String(pudo.pudo_id || pudo.ui_key)].localization_hint }}
-							</p>
-						</template>
-						<p v-else-if="detailsErrors[String(pudo.pudo_id || pudo.ui_key)]" class="text-rose-600">
-							{{ detailsErrors[String(pudo.pudo_id || pudo.ui_key)] }}
-						</p>
-					</div>
-
-					<button
-						type="button"
-						@click.stop="toggleDetails(pudo)"
-						class="mt-[8px] text-[0.75rem] text-[#095866] font-semibold hover:underline cursor-pointer">
-						{{ expandedPudoKey === String(pudo.pudo_id || pudo.ui_key) ? 'Chiudi dettagli' : 'Dettagli e orari' }}
-					</button>
+							<button
+								type="button"
+								@click.stop="toggleDetails(pudo)"
+								class="mt-[6px] text-[0.75rem] text-[#095866] font-semibold hover:underline cursor-pointer">
+								{{ expandedPudoKey === String(pudo.pudo_id || pudo.ui_key) ? 'Chiudi dettagli' : 'Dettagli e orari' }}
+							</button>
 						</div>
 					</div>
 				</div>
 			</div>
 
-				<div class="order-1 desktop:order-2">
-					<div class="bg-white rounded-[12px] border border-[#D0D0D0] p-[8px] min-h-[320px] tablet:min-h-[360px] desktop:min-h-[420px] desktop:sticky desktop:top-[92px]">
-						<ClientOnly>
-							<MapPudo
-								:points="mapPoints"
-								:selected-id="selectedPudoKey"
-								:reference-point="mapReferencePoint"
-								@select="selectPudo" />
-							<template #fallback>
-								<div class="w-full min-h-[300px] flex items-center justify-center text-[0.8125rem] text-[#6B7280]">
-									Caricamento mappa...
-								</div>
-							</template>
-						</ClientOnly>
+			<div class="order-1 desktop:order-2 h-[360px] tablet:h-[420px] desktop:h-[520px] desktop:sticky desktop:top-[92px]">
+				<div class="h-full bg-white rounded-[12px] border border-[#D0D0D0] p-[8px] flex flex-col">
+					<div class="shrink-0 rounded-[10px] border border-[#D8E6EB] bg-[#F8FCFD] px-[10px] py-[8px]">
+						<p class="text-[0.75rem] text-[#506070]">
+							Doppio clic sulla mappa per impostare il punto di riferimento e aggiornare automaticamente via, citta e CAP.
+						</p>
+						<p v-if="mapClickLoading" class="text-[0.75rem] font-semibold text-[#095866] mt-[4px]">Aggiornamento in corso...</p>
+						<p v-else-if="referenceUpdateMessage" class="text-[0.75rem] text-emerald-700 mt-[4px]">{{ referenceUpdateMessage }}</p>
 					</div>
-				<p
-					v-if="!loading && mapPoints.length === 0 && !searchError"
-					class="mt-[8px] text-[0.8125rem] text-[#6B7280]">
-					Nessun punto trovato: la mappa mostra il riferimento inserito oppure la vista Italia.
-				</p>
+
+					<div class="mt-[8px] flex-1 min-h-0">
+						<MapPudo
+							:points="mapPoints"
+							:selected-id="selectedPudoKey"
+							:reference-point="mapReferencePoint"
+							@select="selectPudo"
+							@map-click="onMapReferenceClick" />
+					</div>
+
+					<p
+						v-if="!loading && mapPoints.length === 0 && !searchError"
+						class="mt-[8px] text-[0.8125rem] text-[#6B7280]">
+						Nessun punto trovato: la mappa mostra il riferimento inserito oppure la vista Italia.
+					</p>
+				</div>
 			</div>
 		</div>
 	</div>

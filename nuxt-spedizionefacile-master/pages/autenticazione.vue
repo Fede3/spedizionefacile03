@@ -23,14 +23,14 @@
 // Nota: rimosso import inutilizzato di FetchError da "ofetch" (dead code, riduce parse time)
 
 useSeoMeta({
-	title: 'Accedi o Registrati | SpedizioneFacile',
-	ogTitle: 'Accedi o Registrati | SpedizioneFacile',
-	description: 'Accedi al tuo account SpedizioneFacile o registrati gratuitamente per gestire le tue spedizioni, tracciare i pacchi e risparmiare sui corrieri.',
-	ogDescription: 'Accedi o registrati su SpedizioneFacile per gestire le tue spedizioni.',
+	title: 'Accedi o Registrati | SpediamoFacile',
+	ogTitle: 'Accedi o Registrati | SpediamoFacile',
+	description: 'Accedi al tuo account SpediamoFacile o registrati gratuitamente per gestire le tue spedizioni, tracciare i pacchi e risparmiare sui corrieri.',
+	ogDescription: 'Accedi o registrati su SpediamoFacile per gestire le tue spedizioni.',
 });
 
 // Funzione di login da nuxt-auth-sanctum
-const { login } = useSanctumAuth();
+const { login, isAuthenticated } = useSanctumAuth();
 
 // Tab per alternare tra Login e Registrazione
 const items = ref([
@@ -325,9 +325,12 @@ const passwordStrength = computed(() => {
 	return passed;
 });
 
-// Solo utenti NON autenticati possono accedere a questa pagina
-definePageMeta({
-	middleware: ["sanctum:guest"],
+// Pagina pubblica: evitiamo middleware sanctum:guest per non forzare
+// chiamate /api/user rumorose in sessione guest.
+onMounted(() => {
+	if (isAuthenticated.value) {
+		navigateTo('/');
+	}
 });
 
 const apiBase = useRuntimeConfig().public.apiBase;

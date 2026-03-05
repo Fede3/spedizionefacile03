@@ -8,19 +8,19 @@ const steps = [
 	},
 	{
 		indexLabel: '02',
-		title: 'Ritiro e consegna',
-		description: 'Definisci mittente, destinatario e data in un flusso lineare e guidato.',
-		icon: '/img/homepage/timeline/shipping.png',
-	},
-	{
-		indexLabel: '03',
 		title: 'Servizi aggiuntivi',
 		description: 'Attiva solo ciò che serve: assicurazione, contrassegno, senza etichetta.',
 		icon: '/img/homepage/timeline/services.png',
 	},
 	{
+		indexLabel: '03',
+		title: 'Ritiro e consegna',
+		description: 'Definisci mittente, destinatario e data in un flusso lineare e guidato.',
+		icon: '/img/homepage/timeline/shipping.png',
+	},
+	{
 		indexLabel: '04',
-		title: 'Pagamento e conferma',
+		title: 'Conferma e pagamento',
 		description: 'Conferma in sicurezza e ricevi un riepilogo completo della spedizione.',
 		icon: '/img/homepage/timeline/pay.png',
 	},
