@@ -109,6 +109,7 @@ const refreshCsrf = async () => {
 // Se il backend risponde 403 con requires_verification, attiva la modalita' verifica codice
 // In caso di errore 419 (CSRF scaduto), rinfresca automaticamente il token e riprova
 const handleLogin = async (isRetry = false) => {
+	let loginCompleted = false;
 	messageError.value = null;
 	showResendVerification.value = false;
 	resendMessage.value = null;
@@ -135,6 +136,7 @@ const handleLogin = async (isRetry = false) => {
 		items.value.forEach((item) => {
 			item.disabled = true;
 		});
+		loginCompleted = true;
 
 		// Login riuscito: non svuotiamo i campi perche' la pagina sta per cambiare
 		// (il modulo sanctum fa il redirect automatico dopo il login).
@@ -179,8 +181,10 @@ const handleLogin = async (isRetry = false) => {
 			messageError.value = { email: ["Errore di connessione. Verifica che il server sia attivo e riprova."] };
 		}
 	} finally {
-		messageLoading.value = null;
-		isLoading.value = false;
+		if (!loginCompleted) {
+			messageLoading.value = null;
+			isLoading.value = false;
+		}
 	}
 };
 

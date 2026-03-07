@@ -9351,3 +9351,926 @@ DATA: 2026-03-05
 2. Verifica UI attesa:
    - hard refresh homepage: titolo + box prezzo + immagine compaiono subito;
    - nessun ritardo dovuto a fetch sanctum per l'immagine hero.
+
+---
+
+## TURNO: INTERFACCIA
+DATA: 2026-03-05
+
+### Attivita' svolte
+- Correzione anti-sparizione del box prezzo nella hero homepage.
+- Rimossa dipendenza da `style` inline sul container della card prezzo.
+- Applicato sfondo stabile tramite classe utility (`bg-[#0b6d7d]`) per garantire visibilita' costante anche nei reload con cache/CSP non allineati.
+
+### File toccati in questo turno
+- `nuxt-spedizionefacile-master/components/ContenutoHeader.vue`
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Parse SFC:
+   - `components/ContenutoHeader.vue` -> `OK` con `@vue/compiler-sfc`.
+2. Verifica UI attesa:
+   - hard refresh homepage: box prezzo sempre visibile sotto `Spedisci in Italia`.
+
+---
+
+## TURNO: LOGICA
+DATA: 2026-03-06
+
+### Attivita' svolte
+- Ripristinato il gradiente della card prezzo nella hero homepage (`a partire da 8,90€`) come richiesto.
+- La card era stata resa tinta unita teal per un fix anti-sparizione; ora e' tornata alla resa originale arancio→teal mantenendo la stabilita' del layout.
+
+### File toccati in questo turno
+- `nuxt-spedizionefacile-master/components/ContenutoHeader.vue`
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Parse SFC:
+   - `cd nuxt-spedizionefacile-master && node -e "...parse('components/ContenutoHeader.vue')..."` -> `OK ContenutoHeader.vue`.
+2. Verifica codice:
+   - In `ContenutoHeader.vue` la card prezzo usa `bg-gradient-to-br from-[#E44203] to-[#095866]`.
+3. Verifica UI:
+   - Hard refresh homepage: la card prezzo sotto "Spedisci in Italia" torna con gradiente arancio/teal.
+
+---
+
+## TURNO: REVISIONE
+DATA: 2026-03-06
+
+### Attivita' svolte
+- Corretto il colore della linea verticale del logo nel footer: ora e' bianca, come richiesto.
+- Mantiene comportamento differenziato:
+  - navbar: linea verticale scura (`#333333`);
+  - footer: linea verticale bianca.
+- Applicato fix con `class` statica + `:class` condizionale per evitare errori di parsing Vue.
+
+### File toccati in questo turno
+- `nuxt-spedizionefacile-master/components/Logo.vue`
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Parse SFC:
+   - `components/Logo.vue` -> `OK Logo.vue` con `@vue/compiler-sfc`.
+2. Verifica codice:
+   - presente `:class="isNavbarLogo ? 'after:bg-[#333333]' : 'after:bg-white'"`.
+3. Verifica UI:
+   - nel footer la linea verticale accanto al logo appare bianca.
+
+---
+
+## TURNO: CAPO
+DATA: 2026-03-06
+
+### Attivita' svolte
+- Ripristinata in area admin `Immagine Homepage` l'anteprima in versione reale per entrambe le viewport:
+  - preview desktop;
+  - preview mobile.
+- Aggiunta preview doppia sia per:
+  - immagine attuale configurata;
+  - nuova immagine selezionata prima del salvataggio.
+- Mantenuta UX esistente (rimozione preview, upload e suggerimenti) senza cambiare API.
+
+### File toccati in questo turno
+- `nuxt-spedizionefacile-master/pages/account/amministrazione/immagine-homepage.vue`
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Parse SFC:
+   - `pages/account/amministrazione/immagine-homepage.vue` -> `OK immagine-homepage.vue` con `@vue/compiler-sfc`.
+2. Verifica UI in pagina admin:
+   - blocco "Anteprima reale homepage" visibile con card `Desktop` e `Mobile`.
+   - selezionando file, nella preview upload compaiono entrambe le varianti con crop reale.
+
+---
+
+## TURNO: ARCHITETTURA
+DATA: 2026-03-06
+
+### Attivita' svolte
+- Corretto il comportamento della preview admin `Immagine Homepage` quando non esiste ancora un'immagine caricata.
+- `livePreviewSource` ora usa fallback fisso alla hero di default (`/img/homepage/hero-truck-landscape.jpg`), quindi l'anteprima Desktop/Mobile e' sempre visibile anche a stato iniziale vuoto.
+
+### File toccati in questo turno
+- `nuxt-spedizionefacile-master/pages/account/amministrazione/immagine-homepage.vue`
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Parse SFC:
+   - `pages/account/amministrazione/immagine-homepage.vue` -> `OK immagine-homepage.vue`.
+2. Verifica codice:
+   - `livePreviewSource = previewUrl || currentImageUrl || '/img/homepage/hero-truck-landscape.jpg'`.
+3. Verifica UI:
+   - in admin, anche con "Nessuna immagine configurata", la preview reale Desktop/Mobile e' visibile.
+
+---
+
+## TURNO: CAPO
+DATA: 2026-03-06
+
+### Attivita' svolte
+- Bloccata esecuzione piano "Riproduzione Hero Home in Admin (stile Figma)".
+- Confermate decisioni implementative operative:
+  - preview reale in admin con doppia viewport (desktop/mobile);
+  - controlli separati per viewport (mode/zoom/x/y);
+  - pubblicazione sul sito solo al click su "Salva immagine".
+- Confermato mantenimento compatibilita' API (campo storico `image_url` invariato).
+
+### File toccati in questo turno
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Aprire questo diario e verificare presenza blocco CAPO con decisioni bloccate.
+
+---
+
+## TURNO: ARCHITETTURA
+DATA: 2026-03-06
+
+### Attivita' svolte
+- Esteso backend config hero con modello dati unico (`image_url`, `desktop`, `mobile`, `updated_at`).
+- Aggiornati endpoint admin/public homepage-image per restituire/salvare i metadati trasformazione.
+- Implementata normalizzazione robusta con default/limiti (`mode: fill|fit|crop`, zoom clamp, offset clamp).
+- Preservata backward compatibility su `homepage_image_url`.
+
+### File toccati in questo turno
+- `laravel-spedizionefacile-main/app/Http/Controllers/AdminController.php`
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. `GET /api/admin/homepage-image` restituisce `image_url`, `desktop`, `mobile`, `updated_at`, `config`.
+2. `POST /api/admin/homepage-image` accetta file opzionale + `config` JSON e salva anche senza upload file.
+3. `GET /api/public/homepage-image` mantiene `image_url` e aggiunge i metadati.
+
+---
+
+## TURNO: INTERFACCIA
+DATA: 2026-03-06
+
+### Attivita' svolte
+- Rifatta da zero la pagina admin `Immagine Homepage` in layout editor 2 colonne:
+  - sinistra: preview reale desktop (sopra) + mobile (sotto);
+  - destra: controlli viewport, mode, zoom, offset, reset, upload.
+- Introdotto comportamento bozza locale: i cambi in UI non pubblicano finche' non si salva.
+- Aggiunto drag "grab" e wheel zoom direttamente sulle aree preview.
+
+### File toccati in questo turno
+- `nuxt-spedizionefacile-master/pages/account/amministrazione/immagine-homepage.vue`
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. In admin si vedono entrambe le viewport preview.
+2. Modificando slider/drag cambia solo la viewport attiva.
+3. Senza click su "Salva immagine" la homepage pubblica non cambia.
+
+---
+
+## TURNO: LOGICA
+DATA: 2026-03-06
+
+### Attivita' svolte
+- Aggiunta route preview leggera dedicata (solo hero) per iframe runtime in admin.
+- Implementata sincronizzazione parent->iframe via `postMessage` (`hero-preview:update`) e handshake ready.
+- Implementato trigger cross-tab dopo salvataggio (`localStorage` + evento custom) per refresh hero frontend.
+
+### File toccati in questo turno
+- `nuxt-spedizionefacile-master/pages/preview/home-hero.vue`
+- `nuxt-spedizionefacile-master/pages/account/amministrazione/immagine-homepage.vue`
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Gli iframe ricevono update live senza ricaricare l'intera homepage.
+2. Dopo salvataggio, tab homepage aperte recepiscono aggiornamento immagine/config.
+
+---
+
+## TURNO: REVISIONE
+DATA: 2026-03-06
+
+### Attivita' svolte
+- Integrata la configurazione pubblica della hero nel rendering reale homepage.
+- Hero pubblica ora applica per viewport corrente i parametri admin (`mode/zoom/x/y`).
+- Eseguiti controlli parse SFC sui file Vue toccati.
+
+### File toccati in questo turno
+- `nuxt-spedizionefacile-master/components/ContenutoHeader.vue`
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Parse Vue ok:
+   - `components/ContenutoHeader.vue`
+   - `pages/account/amministrazione/immagine-homepage.vue`
+   - `pages/preview/home-hero.vue`
+2. Hero homepage applica trasformazioni distinte desktop/mobile da API pubblica.
+
+---
+
+## TURNO: CAPO
+DATA: 2026-03-06
+
+### Attivita' svolte
+- Chiusura ciclo implementativo con allineamento finale ai vincoli:
+  - preview reale admin completa;
+  - controlli Figma-like base pro;
+  - persistenza separata desktop/mobile;
+  - publish solo su salvataggio.
+- Consolidata strategia di fallback: se config assente, default sicuro (`fill`, `zoom=1`, `x=0`, `y=0`).
+
+### File toccati in questo turno
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Aprire pagina admin immagine homepage e verificare: preview desktop+mobile, controlli, save.
+2. Verificare in homepage pubblica l'applicazione dei valori salvati.
+3. Verificare che client legacy continui a leggere `image_url` senza breaking.
+
+---
+
+## TURNO: ARCHITETTURA
+DATA: 2026-03-06
+
+### Attivita' svolte
+- Eseguito controllo tecnico post-implementazione su frontend Nuxt per chiusura qualità richiesta utente.
+- Verificata compilazione runtime locale: `npm run build` e `npm run dev` falliscono in questo ambiente Linux per incompatibilità Node (`v18.19.1`) con Nuxt 4/Clack (`styleText` non disponibile in `node:util`).
+- Eseguito fallback di verifica sintattica SFC sui file critici toccati nel ciclo precedente.
+
+### Esito test
+- Parse Vue SFC: OK
+  - `nuxt-spedizionefacile-master/components/ContenutoHeader.vue`
+  - `nuxt-spedizionefacile-master/pages/account/amministrazione/immagine-homepage.vue`
+  - `nuxt-spedizionefacile-master/pages/preview/home-hero.vue`
+- Build/dev Nuxt locale (WSL): BLOCCATI da versione Node ambiente corrente.
+
+### File toccati in questo turno
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Eseguire in ambiente con Node >= 20:
+   - `cd nuxt-spedizionefacile-master && npm run build`
+   - `cd nuxt-spedizionefacile-master && npm run dev -- --host 127.0.0.1 --port 3001`
+2. Confermare assenza errore `The requested module 'node:util' does not provide an export named 'styleText'`.
+3. In caso di Node 18, considerare ambiente non valido per test Nuxt 4.
+
+---
+
+## TURNO: INTERFACCIA
+DATA: 2026-03-06
+
+### Attivita' svolte
+- Corretto editor admin hero per ottenere preview realmente coerente con il rendering homepage, eliminando la simulazione custom precedente.
+- La route preview ora usa il componente reale `ContenutoHeader` (stesso markup/stili runtime), invece di un layout duplicato semplificato.
+- Aggiornata la pagina admin immagine homepage con canvas reali scalati:
+  - desktop su base `1280x680`
+  - mobile su base `390x844`
+  per mantenere breakpoint/rendering piu' aderenti al sito reale.
+- Mantenuti drag/wheel/slider con sincronizzazione live via `postMessage` senza pubblicare finche' non si salva.
+
+### File toccati in questo turno
+- `nuxt-spedizionefacile-master/components/ContenutoHeader.vue`
+- `nuxt-spedizionefacile-master/pages/preview/home-hero.vue`
+- `nuxt-spedizionefacile-master/pages/account/amministrazione/immagine-homepage.vue`
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Aprire `/account/amministrazione/immagine-homepage`.
+2. Verificare che anteprima desktop/mobile mostri la stessa hero runtime (stesse classi/gerarchia) e non la vecchia simulazione.
+3. Modificare zoom/x/y e controllare aggiornamento live di entrambe le preview (in base viewport attiva).
+4. Controllare che homepage pubblica cambi solo dopo click su `Salva immagine`.
+
+---
+
+## TURNO: REVISIONE
+DATA: 2026-03-06
+
+### Attivita' svolte
+- Eseguita verifica parse SFC sui file toccati per evitare regressioni template/script.
+- Confermata coerenza eventi preview (`hero-preview:update` / `hero-preview:ready`) e fallback viewport forzata da query (`?viewport=desktop|mobile`).
+
+### Esito test
+- OK `components/ContenutoHeader.vue`
+- OK `pages/account/amministrazione/immagine-homepage.vue`
+- OK `pages/preview/home-hero.vue`
+
+### File toccati in questo turno
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Da shell: parse SFC con `@vue/compiler-sfc` sui tre file sopra -> nessun errore.
+2. In ambiente Node >=20: avviare Nuxt e verificare visualmente preview 1:1 in admin.
+
+---
+
+## TURNO: CAPO
+DATA: 2026-03-06
+
+### Attivita' svolte
+- Validata richiesta utente: preview admin doveva essere 1:1 con homepage reale, non una simulazione.
+- Bloccata correzione con priorita' assoluta su coerenza visiva runtime e sincronizzazione live drag/zoom.
+
+### File toccati in questo turno
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Anteprima admin deve mostrare lo stesso header reale del sito (navbar + hero reali), non una versione semplificata.
+
+---
+
+## TURNO: INTERFACCIA
+DATA: 2026-03-06
+
+### Attivita' svolte
+- Aggiornata route preview hero per usare `Header` reale invece di markup custom simulato.
+- Aggiornato `Header.vue` per trattare `/preview/home-hero` come homepage-like route, applicando la stessa altezza/comportamento hero della home.
+- Riallineate dimensioni canvas preview admin alle dimensioni runtime header:
+  - desktop: 1440x722
+  - mobile: 390x480
+- Mantenuto editing live con drag/wheel/slider e sincronizzazione in tempo reale su iframe.
+
+### File toccati in questo turno
+- `nuxt-spedizionefacile-master/components/Header.vue`
+- `nuxt-spedizionefacile-master/pages/preview/home-hero.vue`
+- `nuxt-spedizionefacile-master/pages/account/amministrazione/immagine-homepage.vue`
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. In admin, anteprima desktop mostra navbar + hero con stesse proporzioni della home.
+2. In admin, anteprima mobile mostra la versione mobile reale del blocco iniziale.
+3. Drag/wheel/slider aggiornano live l'immagine in preview senza salvataggio.
+
+---
+
+## TURNO: REVISIONE
+DATA: 2026-03-06
+
+### Attivita' svolte
+- Verifica sintattica SFC sui file toccati nel fix 1:1 preview.
+- Confermato wiring eventi preview (`hero-preview:update` / `hero-preview:ready`) non regressivo.
+
+### Esito test
+- OK `components/Header.vue`
+- OK `components/ContenutoHeader.vue`
+- OK `pages/account/amministrazione/immagine-homepage.vue`
+- OK `pages/preview/home-hero.vue`
+
+### File toccati in questo turno
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Parse SFC senza errori sui 4 file indicati.
+2. Controllo manuale UI in admin necessario in ambiente runtime utente.
+
+---
+
+## TURNO: CAPO
+DATA: 2026-03-06
+
+### Attivita' svolte
+- Chiusura fix: preview admin impostata su rendering runtime reale del blocco iniziale homepage.
+- Confermata continuita' workflow: modifica in bozza + pubblicazione solo con `Salva immagine`.
+
+### File toccati in questo turno
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Hard refresh pagina admin e controllo confronto visuale con homepage pubblica.
+2. Verifica che il risultato live cambi solo dopo salvataggio.
+
+---
+
+## TURNO: ARCHITETTURA
+DATA: 2026-03-06
+
+### Attivita' svolte
+- Riallineata la strategia preview admin per usare la stessa composizione della homepage iniziale: `Header` reale + `Preventivo` reale, invece della sola hero isolata.
+- Esteso `Preventivo.vue` con riconoscimento `homepage-like` anche sulla route `/preview/home-hero`, cosi' mantiene lo stesso overlap del box `Preventivo Rapido` usato in homepage.
+- Aggiornato il canvas della preview admin per includere l'above-the-fold reale:
+  - desktop `1440x980`
+  - mobile `390x844`
+- Corretto il motore di drag live: il delta mouse ora viene normalizzato rispetto alla scala della preview, quindi lo spostamento corrisponde al risultato reale invece di apparire quasi fermo.
+- Sostituito il debounce `setTimeout` con sync via `requestAnimationFrame` per rendere l'anteprima piu' reattiva durante drag, wheel e slider.
+
+### File toccati in questo turno
+- `nuxt-spedizionefacile-master/components/Preventivo.vue`
+- `nuxt-spedizionefacile-master/pages/preview/home-hero.vue`
+- `nuxt-spedizionefacile-master/pages/account/amministrazione/immagine-homepage.vue`
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Aprire `/account/amministrazione/immagine-homepage` e controllare che la preview desktop mostri hero + top del box `Preventivo Rapido`, non solo la hero.
+2. Trascinare l'immagine nella preview attiva: il frame deve aggiornarsi subito durante il drag, non solo dopo il rilascio.
+3. Usare zoom e slider X/Y: la preview deve reagire in tempo reale.
+4. Verificare che desktop e mobile restino separati come configurazione.
+5. Parse SFC eseguito con esito OK su:
+   - `components/Preventivo.vue`
+   - `pages/preview/home-hero.vue`
+   - `pages/account/amministrazione/immagine-homepage.vue`
+
+---
+
+## TURNO: LOGICA
+DATA: 2026-03-06
+
+### Attivita' svolte
+- Rafforzata la reattivita' dell'editor hero admin: gli slider `Zoom`, `Offset X`, `Offset Y` ora aggiornano direttamente la viewport attiva con scrittura immediata del valore e sync live della preview.
+- Ingrandita in modo netto la preview mobile nell'editor per rendere leggibile il taglio reale durante l'editing.
+- Mantenuto il drag live e la sincronizzazione separata desktop/mobile.
+
+### File toccati in questo turno
+- `nuxt-spedizionefacile-master/pages/account/amministrazione/immagine-homepage.vue`
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Aprire `/account/amministrazione/immagine-homepage`.
+2. Muovere `Zoom`, `Offset X`, `Offset Y` con viewport Desktop attiva: la preview desktop deve reagire subito durante il movimento slider.
+3. Passare a Mobile: la preview deve essere visibilmente piu' grande e reagire allo stesso modo.
+4. Parse SFC eseguito con esito OK su `pages/account/amministrazione/immagine-homepage.vue`.
+
+---
+
+## TURNO: REVISIONE
+DATA: 2026-03-06
+
+### Attivita' svolte
+- Rafforzata la preview live hero admin con doppio canale di sync: `postMessage` + hook diretto sull'iframe preview (`__applyHeroPreviewPayload`).
+- Ridotta l'altezza del canvas mobile alla sola hero mobile (`390x480`) e aumentata la dimensione visibile del riquadro mobile nell'editor.
+- Confermato parse SFC dei file toccati dopo la correzione live preview.
+
+### File toccati in questo turno
+- `nuxt-spedizionefacile-master/components/ContenutoHeader.vue`
+- `nuxt-spedizionefacile-master/pages/account/amministrazione/immagine-homepage.vue`
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Aprire `/account/amministrazione/immagine-homepage` e fare hard refresh.
+2. In Desktop, muovere `Zoom`, `Offset X`, `Offset Y`: la preview sinistra deve cambiare subito.
+3. In Mobile, verificare riquadro piu' grande ma piu' basso, tagliato alla hero senza entrare nel preventivo.
+4. Parse SFC eseguito con esito OK su:
+   - `components/ContenutoHeader.vue`
+   - `pages/account/amministrazione/immagine-homepage.vue`
+
+---
+
+## TURNO: CAPO
+DATA: 2026-03-06
+
+### Attivita' svolte
+- Priorita' bloccata su due requisiti non negoziabili dell'editor hero admin:
+  1) preview mobile molto piu' grande ma piu' bassa (solo hero, senza entrare nel preventivo),
+  2) update visuale immediato della preview desktop durante zoom/offset/drag.
+- Confermata scelta tecnica: preview 1:1 mantenuta con componenti reali e sincronizzazione live senza attese.
+
+### File toccati in questo turno
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. In admin, viewport mobile: riquadro grande e corto (hero-only).
+2. In admin, viewport desktop: slider/drag devono riflettersi subito sulla preview a sinistra.
+
+---
+
+## TURNO: ARCHITETTURA
+DATA: 2026-03-06
+
+### Attivita' svolte
+- Eliminato il race condition della route preview: in `ContenutoHeader.vue` la route `/preview/home-hero` non ricarica piu' config da API al mount, evitando overwrite del live edit.
+- Rafforzata la pipeline parent -> iframe:
+  - push immediato su `onFrameLoad` e `hero-preview:ready`,
+  - invio payload anche via hook diretto `__applyHeroPreviewPayload` oltre al `postMessage`,
+  - rimozione gate stretto su `frameReady` per il canale diretto.
+- Aumentata dimensione visibile preview mobile nell'editor mantenendo altezza hero-only.
+
+### File toccati in questo turno
+- `nuxt-spedizionefacile-master/components/ContenutoHeader.vue`
+- `nuxt-spedizionefacile-master/pages/account/amministrazione/immagine-homepage.vue`
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Hard refresh pagina admin.
+2. Muovere slider zoom/x/y in Desktop: la preview deve cambiare in tempo reale.
+3. Passare a Mobile: preview piu' grande ma non alta come prima.
+4. Parse SFC OK sui file toccati.
+
+---
+
+## TURNO: INTERFACCIA
+DATA: 2026-03-06
+
+### Attivita' svolte
+- Aumentata ulteriormente la dimensione visibile della preview mobile in admin mantenendo altezza ridotta (hero-only).
+- Introdotto canale di sincronizzazione fallback parent->preview tramite `localStorage` (`hero-preview-live-draft`) per rendere la preview live affidabile anche quando il canale eventi non aggiorna in tempo.
+- Mantenuti e affiancati tutti i canali live: `postMessage`, hook diretto iframe e polling storage in preview route.
+
+### File toccati in questo turno
+- `nuxt-spedizionefacile-master/pages/account/amministrazione/immagine-homepage.vue`
+- `nuxt-spedizionefacile-master/components/ContenutoHeader.vue`
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Hard refresh su `/account/amministrazione/immagine-homepage`.
+2. In Desktop: muovere `Zoom` + `Offset X/Y` e verificare cambiamento immediato dell'immagine nella preview grande.
+3. In Mobile: verificare preview piu' ampia ma con altezza ridotta, limitata alla hero.
+4. Parse SFC OK su entrambi i file toccati.
+
+---
+
+## TURNO: LOGICA
+DATA: 2026-03-06
+
+### Attivita' svolte
+- Corretto il mismatch di adattamento preview mobile: la scala del canvas ora puo' superare `1x`, quindi la preview riempie realmente il box editor invece di restare piccola con area vuota a destra.
+- Bloccato lo scroll interno della preview iframe (`scrolling=no` + `overflow:hidden` lato route preview) per eliminare il comportamento non coerente con la viewport fissa dell'editor.
+- Mantenuta la viewport mobile corta (`390x480`) per fermare la preview all'inizio del preventivo.
+
+### File toccati in questo turno
+- `nuxt-spedizionefacile-master/pages/account/amministrazione/immagine-homepage.vue`
+- `nuxt-spedizionefacile-master/pages/preview/home-hero.vue`
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Hard refresh su `/account/amministrazione/immagine-homepage`.
+2. In MOBILE: la preview deve riempire il riquadro (senza colonna vuota) e restare bassa.
+3. In DESKTOP: offset/zoom devono riflettersi subito nella preview a sinistra.
+4. Parse SFC OK per i file toccati.
+
+---
+
+## TURNO: REVISIONE
+DATA: 2026-03-06
+
+### Attivita' svolte
+- Migliorata la resa dello spostamento immagine hero in preview: il pan ora e' applicato tramite `object-position` (con `object-fit`) e non piu' tramite `translate` sull'intero elemento.
+- Mantenuto lo zoom via `scale`, con risultato visivo piu' prevedibile su offset X/Y durante editing admin.
+
+### File toccati in questo turno
+- `nuxt-spedizionefacile-master/components/ContenutoHeader.vue`
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. In admin, viewport Desktop attiva: muovere `Offset X` e verificare spostamento evidente dell'immagine a destra/sinistra.
+2. Muovere `Offset Y` e verificare spostamento verticale evidente.
+3. Muovere `Zoom` e verificare ingrandimento/riduzione immediata.
+4. Parse SFC OK su `components/ContenutoHeader.vue`.
+
+---
+
+## TURNO: CAPO
+DATA: 2026-03-06
+
+### Attivita' svolte
+- Aggiunto hardening anti-cache al preview frame admin (`editor_nonce` in URL iframe) per forzare bundle aggiornato ad ogni apertura editor ed evitare casi in cui la preview resta ferma su codice vecchio.
+
+### File toccati in questo turno
+- `nuxt-spedizionefacile-master/pages/account/amministrazione/immagine-homepage.vue`
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Riaprire la pagina admin editor in una nuova tab.
+2. Verificare che la preview reagisca subito a zoom/offset.
+3. Parse SFC OK su `immagine-homepage.vue`.
+
+---
+
+## TURNO: ARCHITETTURA
+DATA: 2026-03-06
+
+### Attivita' svolte
+- Ridotta l'altezza delle due viewport anteprima nell'editor hero homepage come richiesto:
+  - Desktop da `1440x980` a `1440x840`
+  - Mobile da `390x480` a `390x360`
+- Allineate le classi `aspect-*` ai nuovi canvas per mantenere scaling coerente.
+
+### File toccati in questo turno
+- `nuxt-spedizionefacile-master/pages/account/amministrazione/immagine-homepage.vue`
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Aprire `/account/amministrazione/immagine-homepage`.
+2. Verificare che entrambi i box anteprima (desktop/mobile) siano visibilmente meno alti.
+3. Parse SFC OK su `immagine-homepage.vue`.
+
+---
+
+## TURNO: INTERFACCIA
+DATA: 2026-03-06
+
+### Attivita' svolte
+- Fix mirato per la riga bianca a destra nella preview mobile: applicato hard-hide delle scrollbar nella route preview (`overflow:hidden !important` + reset scrollbar cross-browser).
+- Rimosso bordo nativo iframe anche lato editor (`border-0`) per evitare artefatti verticali in alcuni browser.
+
+### File toccati in questo turno
+- `nuxt-spedizionefacile-master/pages/preview/home-hero.vue`
+- `nuxt-spedizionefacile-master/pages/account/amministrazione/immagine-homepage.vue`
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Hard refresh su `/account/amministrazione/immagine-homepage`.
+2. In preview mobile verificare assenza della linea bianca verticale a destra.
+3. Parse SFC OK sui file toccati.
+
+---
+
+## TURNO: LOGICA
+DATA: 2026-03-06
+
+### Attivita' svolte
+- Risolto blocco scroll pagina nell'editor hero: la wheel sulla preview non blocca piu' lo scroll del documento.
+- Lo zoom da wheel ora si attiva solo con tasto modificatore (`Ctrl`/`Meta`/`Alt`), mantenendo drag e slider come controlli principali.
+- Rimossa la direttiva template `@wheel.prevent` sui layer preview desktop/mobile.
+
+### File toccati in questo turno
+- `nuxt-spedizionefacile-master/pages/account/amministrazione/immagine-homepage.vue`
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Aprire `/account/amministrazione/immagine-homepage` e scrollare con rotellina sopra la preview: la pagina deve scorrere normalmente.
+2. Usare `Ctrl+wheel` (o `Alt+wheel`) sopra preview: deve funzionare lo zoom live.
+3. Parse SFC OK su `immagine-homepage.vue`.
+
+---
+
+## TURNO: REVISIONE
+DATA: 2026-03-06
+
+### Attivita' svolte
+- Verificata correzione anti-blocco scroll in editor hero con parse SFC e controllo logico del comportamento eventi wheel.
+- Confermato che la page wheel non e' piu' forzata in `prevent` salvo modalita' zoom con modificatore tastiera.
+
+### File toccati in questo turno
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Scroll normale sopra preview: pagina non bloccata.
+2. Zoom con wheel + modificatore: attivo.
+3. Parse SFC confermato su `pages/account/amministrazione/immagine-homepage.vue`.
+
+---
+
+## TURNO: CAPO
+DATA: 2026-03-06
+
+### Attivita' svolte
+- Chiusa priorita' urgente su UX editor: ripristinata navigazione pagina (scroll verticale) mantenendo controlli di editing immagine.
+- Confermato mantenimento requisiti gia' richiesti: preview mobile ampia ma piu' bassa, sincronizzazione live attiva.
+
+### File toccati in questo turno
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Editor navigabile verticalmente senza blocchi.
+2. Editing immagine funzionante con drag/slider e zoom su richiesta.
+
+---
+
+## TURNO: CAPO
+DATA: 2026-03-07
+
+### Attivita' svolte
+- Avviata task-force UX/UI a 5 ruoli in sequenza con priorita' mobile-first e stabilita' runtime.
+- Bloccati obiettivi intervento: hero homepage robusta, preview admin realmente live, riduzione clipping mobile, uniformita' footer/logo.
+
+### File toccati in questo turno
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Confermare presenza ciclo turni sequenziale in questa sezione (CAPO -> ARCHITETTURA -> INTERFACCIA -> LOGICA -> REVISIONE -> CAPO).
+
+---
+
+## TURNO: ARCHITETTURA
+DATA: 2026-03-07
+
+### Attivita' svolte
+- Rinforzata la normalizzazione configurazione hero per evitare stati invalidi cross-device:
+  - `fill/crop` con zoom minimo 1.
+  - clamp offset ridotto per prevenire frame vuoti.
+- Resa piu' resiliente la struttura header homepage su mobile con altezze minime e non fisse.
+
+### File toccati in questo turno
+- `nuxt-spedizionefacile-master/components/ContenutoHeader.vue`
+- `nuxt-spedizionefacile-master/components/Header.vue`
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. In homepage hero, con configurazioni estreme non devono comparire buchi bianchi dovuti a zoom < 1 in modalita' fill/crop.
+2. Su mobile l'header home non deve tagliare il contenuto per altezza fissa.
+
+---
+
+## TURNO: INTERFACCIA
+DATA: 2026-03-07
+
+### Attivita' svolte
+- Ottimizzato layout hero home e posizionamento colonna immagine su mobile (`mx-auto`) per allineamento piu' pulito.
+- Aggiornato branding nel footer/logo per leggibilita' alta (testo marchio forzato bianco in contesto footer).
+- Ritoccata sovrapposizione `Preventivo` sulla home per evitare collisioni aggressive su schermi piccoli.
+
+### File toccati in questo turno
+- `nuxt-spedizionefacile-master/components/ContenutoHeader.vue`
+- `nuxt-spedizionefacile-master/components/Logo.vue`
+- `nuxt-spedizionefacile-master/components/Preventivo.vue`
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Footer: la scritta brand e la linea verticale del logo devono risultare visibili su sfondo teal.
+2. Home mobile: card prezzo e blocco preventivo non devono sovrapporsi in modo anomalo.
+
+---
+
+## TURNO: LOGICA
+DATA: 2026-03-07
+
+### Attivita' svolte
+- Fix live editor hero admin:
+  - canvas desktop/mobile ribasati per preview piu' utile.
+  - clamp offset coerente con slider.
+  - riduzione artefatti bordo destro via compensazione iframe (+2 px, -1 px).
+- Sincronizzati limiti slider con limiti interni (`x/y`), evitando valori non applicabili.
+
+### File toccati in questo turno
+- `nuxt-spedizionefacile-master/pages/account/amministrazione/immagine-homepage.vue`
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. In admin, muovendo slider X/Y, l'immagine deve spostarsi realmente in anteprima.
+2. In admin, mobile preview deve risultare piu' ampia e meno alta rispetto alla versione precedente.
+3. Assenza della riga bianca laterale in preview mobile (o artefatto drasticamente ridotto).
+
+---
+
+## TURNO: REVISIONE
+DATA: 2026-03-07
+
+### Attivita' svolte
+- Eseguito check sintattico SFC con `@vue/compiler-sfc` sui file Vue toccati: OK.
+- Eseguito test build Nuxt: fallisce per vincolo ambiente (`Node.js v18`, `styleText` non disponibile), non per errori template introdotti.
+- Aggiunta mitigazione performance mobile in CSS: `cv-auto` disattivata su viewport piccole per ridurre comparsa ritardata sezioni.
+
+### File toccati in questo turno
+- `nuxt-spedizionefacile-master/assets/css/main.css`
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Parse SFC: nessun errore su file modificati.
+2. Mobile: sezioni con `cv-auto` devono apparire in modo piu' stabile e meno "a scatti".
+3. Nota ambiente: aggiornare Node a >=20 per eseguire `nuxt build` completo.
+
+---
+
+## TURNO: CAPO
+DATA: 2026-03-07
+
+### Attivita' svolte
+- Consolidato il pacchetto mobile-first su Home + editor admin hero + base CSS globale.
+- Confermata strategia di rilascio: prima stabilita' visiva/runtime, poi rifiniture UX avanzate pagina-per-pagina.
+
+### File toccati in questo turno
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Homepage e admin editor hero controllati con hard refresh lato browser.
+2. Controllare la fluidita' su mobile reale (390/430 px) in: `/`, `/la-tua-spedizione/2`, `/checkout`, `/riepilogo`, `/account/amministrazione/immagine-homepage`.
+
+---
+
+## TURNO: ARCHITETTURA
+DATA: 2026-03-07
+
+### Attivita' svolte
+- Stabilizzato l'editor hero admin per rendere il pan/zoom realmente applicabile in anteprima live:
+  - range offset esteso e coerente in tutta la pipeline (`-1200..1200`),
+  - clamp allineato tra normalizzazione, slider e drag,
+  - guardia drag su click sinistro per evitare input anomali.
+- Riallineata la geometria viewport anteprima per ridurre l'altezza dei box e migliorare la lettura in admin:
+  - desktop `1440x700`,
+  - mobile `390x220`.
+- Rifattorizzata la route preview `home-hero` per evitare side-effect globali:
+  - rimossi override invasivi (`.my-container` globale),
+  - confinato `overflow:hidden` alla sola preview tramite classe body dedicata,
+  - fissate larghezze canvas desktop/mobile nel frame.
+- Migliorata la resa del movimento immagine hero nel runtime reale (`ContenutoHeader.vue`):
+  - trasformazione centrata (`translate(-50%, -50%) + offset + scale`),
+  - offset 1:1 (senza moltiplicatori opachi),
+  - transizione rapida per feedback immediato.
+- Correzioni UX collaterali richieste:
+  - `Steps.vue`: rimossa transizione background che causava glitch a rettangolo durante switch step,
+  - `Logo.vue`: rinforzato rendering bianco logo/footer (testo + linea verticale),
+  - `PudoSelector.vue`: hardening distanze (stop ai falsi `0 m`) e spacing card piu' compatto.
+
+### File toccati in questo turno
+- `nuxt-spedizionefacile-master/pages/account/amministrazione/immagine-homepage.vue`
+- `nuxt-spedizionefacile-master/pages/preview/home-hero.vue`
+- `nuxt-spedizionefacile-master/components/ContenutoHeader.vue`
+- `nuxt-spedizionefacile-master/components/Steps.vue`
+- `nuxt-spedizionefacile-master/components/Logo.vue`
+- `nuxt-spedizionefacile-master/components/PudoSelector.vue`
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Parse SFC locale eseguito con `@vue/compiler-sfc` sui file toccati: OK.
+2. `npm run build` e `npm run dev` non eseguibili in questo ambiente per vincolo Node (`v18`, errore `styleText` su `node:util` richiesto da Nuxt 4). Non e' un errore introdotto dalle patch.
+3. Verifica browser da fare su ambiente utente:
+   - editor hero: offset X/Y e drag devono muovere subito l'immagine in anteprima;
+   - preview mobile/desktop meno alte;
+   - assenza blocco scroll pagina admin;
+   - footer: brand e linea logo visibili in bianco.
+
+### Addendum turno ARCHITETTURA (2026-03-07)
+- Uniformata la logica zoom dell'editor: eliminata forzatura a `1x` quando si cambia modalita' e slider zoom ora sempre `0.5..4`.
+- Motivazione: evitare comportamento percepito come "immagine bloccata" durante passaggio Fill/Fit/Crop.
+- File aggiornato: `nuxt-spedizionefacile-master/pages/account/amministrazione/immagine-homepage.vue`.
+- Verifica: cambiare modalita' (Fill/Fit/Crop) e muovere zoom, l'immagine resta manipolabile senza snap forzati.
+
+## TURNO: INTERFACCIA
+DATA: 2026-03-07
+
+### Attivita' svolte
+- Fix anti-blocco scroll globale:
+  - rimossa la logica di lock body/html dalla route `preview/home-hero` (niente piu' classi `hero-preview-body` e niente `overflow:hidden` globale).
+  - aggiunto failsafe in `app.vue` che, su mount e cambio route non-preview, ripulisce eventuali classi/stili overflow rimasti appesi su `html/body`.
+- Obiettivo: eliminare i casi in cui il sito resta "bloccato" senza scroll dopo passaggi in preview/admin.
+
+### File toccati in questo turno
+- `nuxt-spedizionefacile-master/pages/preview/home-hero.vue`
+- `nuxt-spedizionefacile-master/app.vue`
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Parse SFC locale:
+   - `app.vue` OK
+   - `pages/preview/home-hero.vue` OK
+2. Verifica browser richiesta:
+   - hard refresh sulla pagina dove era bloccato lo scroll;
+   - navigazione da/verso `/account/amministrazione/immagine-homepage` e poi homepage: lo scroll deve restare sempre disponibile.
+
+## TURNO: LOGICA
+DATA: 2026-03-07
+
+### Attivita' svolte
+- Applicato fix strutturale mobile su hero homepage in chiave 60/40:
+  - layout base mobile a 2 colonne (testo+prezzo / immagine),
+  - immagine meno invasiva (altezza ridotta),
+  - decorazione teal mobile ridotta/opacizzata,
+  - clamp morbido mobile su offset/zoom hero (`x/y` limitati, `zoom` massimo ridotto) per evitare inquadrature estreme dovute a config admin.
+- Stabilizzata barra step mobile in `Steps.vue`:
+  - nomi step sempre visibili anche su mobile,
+  - classi attive/inattive separate,
+  - pill attiva hardenizzata con classe dedicata (`steps-pill-active`) per evitare perdita del riempimento arancione.
+- Migliorata gerarchia blocco preventivo iniziale su homepage:
+  - margine-top mobile del box preventivo corretto per evitare collisione visiva con la hero.
+
+### File toccati in questo turno
+- `nuxt-spedizionefacile-master/components/ContenutoHeader.vue`
+- `nuxt-spedizionefacile-master/components/Steps.vue`
+- `nuxt-spedizionefacile-master/components/Preventivo.vue`
+- `nuxt-spedizionefacile-master/assets/css/main.css`
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Parse SFC locale OK su:
+   - `components/ContenutoHeader.vue`
+   - `components/Steps.vue`
+   - `components/Preventivo.vue`
+2. Verifica regole CSS nuove presenti:
+   - `.steps-pill-item`
+   - `.steps-pill-active`
+   - disattivazione pulse su mobile.
+
+---
+
+## TURNO: REVISIONE
+DATA: 2026-03-07
+
+### Attivita' svolte
+- Review coerenza UI mobile:
+  - confermata visualizzazione testi step su mobile (non piu' solo numeri),
+  - confermata separazione classi attivo/inattivo per eliminare conflitti di background,
+  - confermato allineamento preventivo-home meno aggressivo su mobile.
+- Review rischio regressione:
+  - nessuna modifica API/backend,
+  - impatto confinato a hero + step + spacing blocco preventivo.
+
+### File verificati
+- `nuxt-spedizionefacile-master/components/ContenutoHeader.vue`
+- `nuxt-spedizionefacile-master/components/Steps.vue`
+- `nuxt-spedizionefacile-master/components/Preventivo.vue`
+- `nuxt-spedizionefacile-master/assets/css/main.css`
+
+### Verifica
+1. Nessun errore parser SFC.
+2. Nessuna modifica a contratti pubblici/API.
+
+---
+
+## TURNO: CAPO
+DATA: 2026-03-07
+
+### Attivita' svolte
+- Validato il pacchetto fix "Mobile Hero + Step Preventivo" come baseline correttiva:
+  - Hero mobile riequilibrata,
+  - Step mobile leggibili e stabili,
+  - Box preventivo non piu' in collisione visiva in apertura.
+
+### Prossima verifica richiesta lato browser
+1. Device 390/430: confermare che la hero non domini la viewport e che il preventivo resti leggibile subito.
+2. Hard refresh multipli: pill attiva sempre arancione piena (mai vuota/rettangolare).
+3. Tap sugli step completati: navigazione invariata.

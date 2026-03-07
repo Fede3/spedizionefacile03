@@ -19,11 +19,13 @@ export default defineNuxtRouteMiddleware((to, from) => {
 	/* const { session } = useSession(); */
 
 	// Permetti l'accesso allo step 1 se c'e' il parametro edit (modifica carrello)
-	if (to.query.edit) {
+	const editId = Number(to.query.edit);
+	if (to.query.edit && Number.isFinite(editId) && editId > 0) {
 		return;
 	}
 
-	if (to.fullPath.endsWith("1") || to.fullPath.endsWith("5")) {
+	const stepParam = Number(to.params.step ?? to.path.split('/').pop());
+	if (Number.isFinite(stepParam) && (stepParam === 1 || stepParam === 5)) {
 		return navigateTo("/");
 	}
 

@@ -75,20 +75,18 @@ const handleClick = (index) => {
 
 <template>
 	<nav class="overflow-x-auto scrollbar-hide scroll-smooth" id="preventivo">
-		<ul class="flex justify-center gap-x-[6px] tablet:gap-x-[30px] desktop-xl:gap-x-[50px] desktop-xl:my-[50px] my-[16px] tablet:my-[30px] text-[0.6875rem] tablet:text-[0.875rem] desktop-xl:text-[1rem] text-[#737373] tracking-[-0.252px] min-h-[36px] tablet:min-h-[44px] px-[4px]">
+		<ul class="inline-flex min-w-max justify-start tablet:justify-center gap-x-[8px] tablet:gap-x-[30px] desktop-xl:gap-x-[50px] desktop-xl:my-[50px] my-[16px] tablet:my-[30px] text-[0.75rem] tablet:text-[0.875rem] desktop-xl:text-[1rem] tracking-[-0.252px] min-h-[36px] tablet:min-h-[44px] px-[6px] tablet:px-[4px]">
 			<li
 				v-for="(step, index) in steps"
 				:key="index"
-				class="min-h-[36px] leading-[36px] tablet:min-h-[44px] tablet:leading-[44px] tablet:leading-[48px] transition-[color,opacity] duration-200 select-none whitespace-nowrap px-[6px] tablet:px-[0px]"
+				class="steps-pill-item min-h-[36px] leading-[36px] tablet:min-h-[44px] tablet:leading-[44px] transition-[background-color,color,opacity,border-color] duration-150 select-none whitespace-nowrap rounded-[999px] border border-transparent"
 				:class="{
-					'bg-[#E44203] text-white tablet:w-auto !px-[12px] tablet:!px-[24px] text-center rounded-[50px] font-semibold step-active-pulse': index === activeStep,
-					'cursor-pointer hover:text-[#095866]': canNavigate(index),
-					'opacity-40 cursor-default': index > activeStep,
+					'steps-pill-active text-white !px-[14px] tablet:!px-[24px] font-semibold shadow-[0_2px_0_rgba(0,0,0,0.08)]': index === activeStep,
+					'text-[#737373] px-[8px] tablet:px-[12px] cursor-pointer hover:text-[#095866]': canNavigate(index) && index !== activeStep,
+					'text-[#A7A7A7] px-[8px] tablet:px-[12px] opacity-60 cursor-default': index > activeStep,
 				}"
 				@click="handleClick(index)">
-				<span class="tablet:hidden" v-if="index !== activeStep">{{ index + 1 }}</span>
-				<span class="tablet:hidden" v-if="index === activeStep">{{ index + 1 }}. {{ step }}</span>
-				<span class="hidden tablet:inline">{{ index + 1 }}. {{ step }}</span>
+				<span>{{ index + 1 }}. {{ step }}</span>
 			</li>
 		</ul>
 	</nav>

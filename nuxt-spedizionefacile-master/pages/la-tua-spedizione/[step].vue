@@ -1686,6 +1686,10 @@ const loadingEditData = ref(!!editCartId);
 
 const loadCartItemForEdit = async () => {
 	if (!editCartId) return;
+	if (!isAuthenticated.value) {
+		loadingEditData.value = false;
+		return;
+	}
 	try {
 		const result = await sanctumClient(`/api/cart/${editCartId}`);
 		const item = result?.data || result;
@@ -2130,7 +2134,7 @@ const summaryMiniSteps = computed(() => {
 	});
 });
 
-const showSummaryMiniSteps = computed(() => currentStep.value === 2 && !stepsVisible.value);
+const showSummaryMiniSteps = computed(() => !stepsVisible.value);
 
 const goToSummaryMiniStep = async (step) => {
 	if (!step?.isClickable) return;
@@ -2142,8 +2146,8 @@ const updateStepsVisibility = () => {
 	const rect = stepsRef.value.getBoundingClientRect();
 	const viewportHeight = window.innerHeight || document.documentElement.clientHeight;
 	const stickyOffset = 92;
-	const visibleHeight = Math.min(rect.bottom, viewportHeight) - Math.max(rect.top, stickyOffset);
-	stepsVisible.value = visibleHeight > 22 && rect.bottom > stickyOffset;
+	const intersectsViewport = rect.top < viewportHeight - 12 && rect.bottom > stickyOffset + 12;
+	stepsVisible.value = intersectsViewport;
 };
 
 const scheduleStepsVisibilityUpdate = () => {
@@ -2201,8 +2205,10 @@ onMounted(() => {
 		console.error("Errore refresh sessione step 2:", err);
 	});
 
-	if (editCartId) {
+	if (editCartId && isAuthenticated.value) {
 		loadCartItemForEdit();
+	} else if (editCartId && !isAuthenticated.value) {
+		loadingEditData.value = false;
 	}
 });
 
@@ -2419,93 +2425,100 @@ const toAddressPayload = (addressData) => ({
 // Valida il form e naviga alla pagina di riepilogo (/riepilogo)
 // Salva tutti i dati (indirizzi, servizi, pacchi) nello userStore per la pagina successiva
 const continueToCart = async () => {
+	if (isSubmitting.value) return;
+	isSubmitting.value = true;
 	submitError.value = null;
 
-	// Run custom field validation
-	if (!(await validateForm())) {
-		nextTick(() => {
-			if (dateError.value && !services.value.date) {
-				focusPickupDateSection();
-				return;
-			}
-			focusFirstFormError();
-		});
-		return;
-	}
-
-	if (!formRef.value || !formRef.value.checkValidity()) {
-		formRef.value?.reportValidity();
-		return;
-	}
-
-	const packages = editablePackages.value;
-	if (!packages.length) {
-		submitError.value = "Nessun collo disponibile. Torna al preventivo rapido.";
-		return;
-	}
-
-	// Se l'utente ha scelto ritiro in un Punto BRT, deve averne selezionato uno
-	if (userStore.deliveryMode === 'pudo' && !userStore.selectedPudo) {
-		submitError.value = "Seleziona un Punto BRT per la consegna prima di procedere.";
-		return;
-	}
-
-	if (userStore.deliveryMode === 'pudo' && userStore.selectedPudo) {
-		const recipientNameNorm = normalizeLocationText(destinationAddress.value.full_name || '');
-		const pudoNameNorm = normalizeLocationText(userStore.selectedPudo?.name || '');
-		if (recipientNameNorm && pudoNameNorm && recipientNameNorm === pudoNameNorm) {
-			submitError.value = "Nel campo Nome e Cognome inserisci il destinatario (persona), non il nome del Punto BRT.";
+	try {
+		// Run custom field validation
+		if (!(await validateForm())) {
 			nextTick(() => {
-				document.getElementById('dest_name')?.focus();
+				if (dateError.value && !services.value.date) {
+					focusPickupDateSection();
+					return;
+				}
+				focusFirstFormError();
 			});
 			return;
 		}
+
+		if (!formRef.value || !formRef.value.checkValidity()) {
+			formRef.value?.reportValidity();
+			return;
+		}
+
+		const packages = editablePackages.value;
+		if (!packages.length) {
+			submitError.value = "Nessun collo disponibile. Torna al preventivo rapido.";
+			return;
+		}
+
+		// Se l'utente ha scelto ritiro in un Punto BRT, deve averne selezionato uno
+		if (userStore.deliveryMode === 'pudo' && !userStore.selectedPudo) {
+			submitError.value = "Seleziona un Punto BRT per la consegna prima di procedere.";
+			return;
+		}
+
+		if (userStore.deliveryMode === 'pudo' && userStore.selectedPudo) {
+			const recipientNameNorm = normalizeLocationText(destinationAddress.value.full_name || '');
+			const pudoNameNorm = normalizeLocationText(userStore.selectedPudo?.name || '');
+			if (recipientNameNorm && pudoNameNorm && recipientNameNorm === pudoNameNorm) {
+				submitError.value = "Nel campo Nome e Cognome inserisci il destinatario (persona), non il nome del Punto BRT.";
+				nextTick(() => {
+					document.getElementById('dest_name')?.focus();
+				});
+				return;
+			}
+		}
+
+		if (routeConsistencyState.value.blocking) {
+			submitError.value = routeConsistencyState.value.message;
+			nextTick(() => {
+				const focusId = userStore.deliveryMode === 'pudo' ? 'dest_name' : 'dest_address';
+				document.getElementById(focusId)?.focus();
+			});
+			return;
+		}
+
+		const payload = {
+			origin_address: toAddressPayload(originAddress.value),
+			destination_address: toAddressPayload(destinationAddress.value),
+			services: {
+				service_type: userStore.servicesArray.join(", "),
+				date: services.value.date || "",
+				time: services.value.time || "",
+			},
+			packages,
+			content_description: userStore.contentDescription || "",
+			// PUDO: se l'utente ha scelto ritiro in punto BRT, includiamo i dati del punto
+			// Il backend usera' pudo.pudo_id per salvare brt_pudo_id nell'ordine
+			delivery_mode: userStore.deliveryMode,
+			pudo: userStore.deliveryMode === 'pudo' ? userStore.selectedPudo : null,
+			sms_email_notification: smsEmailNotification.value,
+		};
+
+		// Store in userStore for riepilogo page and backward navigation
+		userStore.pendingShipment = payload;
+		userStore.originAddressData = { ...originAddress.value };
+		userStore.destinationAddressData = { ...destinationAddress.value };
+		userStore.pickupDate = services.value.date || "";
+		userStore.smsEmailNotification = smsEmailNotification.value;
+
+		// Se stiamo modificando un pacco dal carrello, manteniamo l'ID
+		if (editCartId) {
+			userStore.editingCartItemId = editCartId;
+		}
+
+		// Feedback unificato prima della navigazione
+		uiFeedback.success('Dati salvati', 'Reindirizzamento al riepilogo...', { timeout: 2000 });
+
+		// Piccolo delay per permettere al toast di essere visibile
+		await new Promise(resolve => setTimeout(resolve, 300));
+
+		await navigateTo('/riepilogo');
+	} finally {
+		isSubmitting.value = false;
 	}
-
-	if (routeConsistencyState.value.blocking) {
-		submitError.value = routeConsistencyState.value.message;
-		nextTick(() => {
-			document.getElementById('dest_address')?.focus();
-		});
-		return;
-	}
-
-	const payload = {
-		origin_address: toAddressPayload(originAddress.value),
-		destination_address: toAddressPayload(destinationAddress.value),
-		services: {
-			service_type: userStore.servicesArray.join(", "),
-			date: services.value.date || "",
-			time: services.value.time || "",
-		},
-		packages,
-		content_description: userStore.contentDescription || "",
-		// PUDO: se l'utente ha scelto ritiro in punto BRT, includiamo i dati del punto
-		// Il backend usera' pudo.pudo_id per salvare brt_pudo_id nell'ordine
-		delivery_mode: userStore.deliveryMode,
-		pudo: userStore.deliveryMode === 'pudo' ? userStore.selectedPudo : null,
-		sms_email_notification: smsEmailNotification.value,
-	};
-
-	// Store in userStore for riepilogo page and backward navigation
-	userStore.pendingShipment = payload;
-	userStore.originAddressData = { ...originAddress.value };
-	userStore.destinationAddressData = { ...destinationAddress.value };
-	userStore.pickupDate = services.value.date || "";
-	userStore.smsEmailNotification = smsEmailNotification.value;
-
-	// Se stiamo modificando un pacco dal carrello, manteniamo l'ID
-	if (editCartId) {
-		userStore.editingCartItemId = editCartId;
-	}
-
-	// Feedback unificato prima della navigazione
-	uiFeedback.success('Dati salvati', 'Reindirizzamento al riepilogo...', { timeout: 2000 });
-
-	// Piccolo delay per permettere al toast di essere visibile
-	await new Promise(resolve => setTimeout(resolve, 300));
-
-	navigateTo('/riepilogo');
 };
 
 </script>
@@ -2632,13 +2645,13 @@ const continueToCart = async () => {
 					</template>
 
 					<template #footer>
-						<div class="mx-auto mt-[27px]">
+						<div class="w-full mt-[27px] flex flex-col tablet:flex-row items-center justify-center gap-[10px]">
 							<UButton
 								label="Annulla"
-								class="active:bg-[#996D47] bg-[#996D47] text-white cursor-pointer font-normal text-[1.125rem] rounded-[15px] hover:bg-[#996D47] h-[39px] leading-[39px] px-[25px] justify-center"
+								class="w-full tablet:w-auto active:bg-[#996D47] bg-[#996D47] text-white cursor-pointer font-normal text-[1.125rem] rounded-[15px] hover:bg-[#996D47] h-[39px] leading-[39px] px-[25px] justify-center"
 								@click="myClose" />
 
-							<button type="button" class="bg-[#203A72] text-white px-[25px] cursor-pointer ml-[125px] font-normal text-[1.125rem] rounded-[15px] h-[39px] leading-[39px]" @click="addService()">
+							<button type="button" class="w-full tablet:w-auto bg-[#203A72] text-white px-[25px] cursor-pointer font-normal text-[1.125rem] rounded-[15px] h-[39px] leading-[39px]" @click="addService()">
 								Aggiungi
 							</button>
 						</div>
@@ -3095,7 +3108,7 @@ const continueToCart = async () => {
 											<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
 											{{ isAuthenticated && loadingConfigs ? '...' : 'Spedizioni configurate' }}
 										</button>
-										<div v-if="showDefaultDropdown && showDefaultDropdownTarget === 'origin' && savedConfigs.length > 0" id="origin-config-dropdown" class="absolute z-50 top-full right-0 mt-[4px] bg-white border border-[#D0D0D0] rounded-[12px] shadow-xl max-h-[300px] overflow-y-auto w-[280px] tablet:w-[400px]">
+										<div v-if="showDefaultDropdown && showDefaultDropdownTarget === 'origin' && savedConfigs.length > 0" id="origin-config-dropdown" class="absolute z-50 top-full right-0 mt-[4px] bg-white border border-[#D0D0D0] rounded-[12px] shadow-xl max-h-[300px] overflow-y-auto w-[min(92vw,400px)]">
 											<div class="p-[12px] border-b border-[#F0F0F0] text-[0.8125rem] font-bold text-[#252B42]">Seleziona una spedizione configurata</div>
 											<div v-for="item in savedConfigs" :key="item.id" @click="applyConfig(item, 'origin')" class="px-[14px] py-[12px] cursor-pointer hover:bg-[#f0fafb] border-b border-[#F0F0F0] last:border-0 transition-colors">
 												<div class="flex items-center gap-[8px]">
@@ -3107,11 +3120,11 @@ const continueToCart = async () => {
 												<p class="text-[0.75rem] text-[#737373] mt-[2px]">{{ item.origin_address?.name || '' }} - {{ item.destination_address?.name || '' }}</p>
 											</div>
 										</div>
-										<div v-if="showDefaultDropdown && showDefaultDropdownTarget === 'origin' && savedConfigs.length === 0 && !loadingConfigs" id="origin-config-dropdown" class="absolute z-50 top-full right-0 mt-[4px] bg-white border border-[#D0D0D0] rounded-[12px] shadow-xl p-[20px] w-[300px]">
+										<div v-if="showDefaultDropdown && showDefaultDropdownTarget === 'origin' && savedConfigs.length === 0 && !loadingConfigs" id="origin-config-dropdown" class="absolute z-50 top-full right-0 mt-[4px] bg-white border border-[#D0D0D0] rounded-[12px] shadow-xl p-[20px] w-[min(92vw,300px)]">
 											<p class="text-[0.875rem] text-[#737373]">Nessuna spedizione configurata salvata.</p>
 											<NuxtLink to="/account/spedizioni-configurate" class="text-[0.8125rem] text-[#095866] hover:underline font-semibold mt-[8px] inline-block">Vai a spedizioni configurate</NuxtLink>
 										</div>
-										<div v-if="showOriginConfigGuestPrompt && !isAuthenticated" id="origin-config-dropdown" role="dialog" class="absolute z-50 top-full right-0 mt-[4px] bg-white border border-[#D0D0D0] rounded-[12px] shadow-xl p-[14px] w-[300px]">
+										<div v-if="showOriginConfigGuestPrompt && !isAuthenticated" id="origin-config-dropdown" role="dialog" class="absolute z-50 top-full right-0 mt-[4px] bg-white border border-[#D0D0D0] rounded-[12px] shadow-xl p-[14px] w-[min(92vw,300px)]">
 											<p class="text-[0.8125rem] text-[#4B5563] leading-[1.45]">Per usare le spedizioni configurate devi accedere.</p>
 											<div class="mt-[10px] flex items-center gap-[8px]">
 												<NuxtLink :to="authRedirectPath" class="inline-flex items-center justify-center h-[34px] px-[12px] rounded-[8px] bg-[#095866] text-white text-[0.75rem] font-semibold hover:bg-[#074a56] transition">Accedi</NuxtLink>
@@ -3131,7 +3144,7 @@ const continueToCart = async () => {
 											<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
 											Indirizzi salvati
 										</button>
-										<div v-if="showOriginAddressSelector && isAuthenticated" id="origin-addresses-dropdown" class="absolute z-50 top-full right-0 mt-[4px] bg-white border border-[#D0D0D0] rounded-[12px] shadow-xl max-h-[250px] overflow-y-auto w-[260px] tablet:w-[320px]">
+										<div v-if="showOriginAddressSelector && isAuthenticated" id="origin-addresses-dropdown" class="absolute z-50 top-full right-0 mt-[4px] bg-white border border-[#D0D0D0] rounded-[12px] shadow-xl max-h-[250px] overflow-y-auto w-[min(92vw,320px)]">
 											<div v-if="loadingSavedAddresses" class="p-[16px] text-center text-[0.8125rem] text-[#737373]">Caricamento...</div>
 											<template v-else-if="savedAddresses.length > 0">
 												<div v-for="addr in savedAddresses" :key="addr.id" @click="applySavedAddress(addr, 'origin')" class="px-[14px] py-[10px] cursor-pointer hover:bg-[#f0fafb] border-b border-[#F0F0F0] last:border-0 transition-colors">
@@ -3144,7 +3157,7 @@ const continueToCart = async () => {
 												<NuxtLink to="/account/indirizzi" class="text-[0.8125rem] text-[#095866] hover:underline font-semibold mt-[4px] inline-block">Aggiungi indirizzo</NuxtLink>
 											</div>
 										</div>
-										<div v-if="showOriginGuestPrompt && !isAuthenticated" id="origin-addresses-dropdown" role="dialog" class="absolute z-50 top-full right-0 mt-[4px] bg-white border border-[#D0D0D0] rounded-[12px] shadow-xl p-[14px] w-[280px]">
+										<div v-if="showOriginGuestPrompt && !isAuthenticated" id="origin-addresses-dropdown" role="dialog" class="absolute z-50 top-full right-0 mt-[4px] bg-white border border-[#D0D0D0] rounded-[12px] shadow-xl p-[14px] w-[min(92vw,280px)]">
 											<p class="text-[0.8125rem] text-[#4B5563] leading-[1.45]">Per usare la rubrica indirizzi devi accedere.</p>
 											<div class="mt-[10px] flex items-center gap-[8px]">
 												<NuxtLink :to="authRedirectPath" class="inline-flex items-center justify-center h-[34px] px-[12px] rounded-[8px] bg-[#095866] text-white text-[0.75rem] font-semibold hover:bg-[#074a56] transition">Accedi</NuxtLink>
@@ -3399,7 +3412,7 @@ const continueToCart = async () => {
 											<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
 											{{ isAuthenticated && loadingConfigs ? '...' : 'Spedizioni configurate' }}
 										</button>
-										<div v-if="showDefaultDropdown && showDefaultDropdownTarget === 'dest' && savedConfigs.length > 0" id="dest-config-dropdown" class="absolute z-50 top-full right-0 mt-[4px] bg-white border border-[#D0D0D0] rounded-[12px] shadow-xl max-h-[300px] overflow-y-auto w-[280px] tablet:w-[400px]">
+										<div v-if="showDefaultDropdown && showDefaultDropdownTarget === 'dest' && savedConfigs.length > 0" id="dest-config-dropdown" class="absolute z-50 top-full right-0 mt-[4px] bg-white border border-[#D0D0D0] rounded-[12px] shadow-xl max-h-[300px] overflow-y-auto w-[min(92vw,400px)]">
 											<div class="p-[12px] border-b border-[#F0F0F0] text-[0.8125rem] font-bold text-[#252B42]">Seleziona una spedizione configurata</div>
 											<div v-for="item in savedConfigs" :key="`dest-config-${item.id}`" @click="applyConfig(item, 'dest')" class="px-[14px] py-[12px] cursor-pointer hover:bg-[#f0fafb] border-b border-[#F0F0F0] last:border-0 transition-colors">
 												<div class="flex items-center gap-[8px]">
@@ -3409,11 +3422,11 @@ const continueToCart = async () => {
 												<p class="text-[0.75rem] text-[#737373] mt-[2px]">{{ item.destination_address?.name || '' }}</p>
 											</div>
 										</div>
-										<div v-if="showDefaultDropdown && showDefaultDropdownTarget === 'dest' && savedConfigs.length === 0 && !loadingConfigs" id="dest-config-dropdown" class="absolute z-50 top-full right-0 mt-[4px] bg-white border border-[#D0D0D0] rounded-[12px] shadow-xl p-[20px] w-[300px]">
+										<div v-if="showDefaultDropdown && showDefaultDropdownTarget === 'dest' && savedConfigs.length === 0 && !loadingConfigs" id="dest-config-dropdown" class="absolute z-50 top-full right-0 mt-[4px] bg-white border border-[#D0D0D0] rounded-[12px] shadow-xl p-[20px] w-[min(92vw,300px)]">
 											<p class="text-[0.875rem] text-[#737373]">Nessuna spedizione configurata salvata.</p>
 											<NuxtLink to="/account/spedizioni-configurate" class="text-[0.8125rem] text-[#095866] hover:underline font-semibold mt-[8px] inline-block">Vai a spedizioni configurate</NuxtLink>
 										</div>
-										<div v-if="showDestConfigGuestPrompt && !isAuthenticated" id="dest-config-dropdown" role="dialog" class="absolute z-50 top-full right-0 mt-[4px] bg-white border border-[#D0D0D0] rounded-[12px] shadow-xl p-[14px] w-[300px]">
+										<div v-if="showDestConfigGuestPrompt && !isAuthenticated" id="dest-config-dropdown" role="dialog" class="absolute z-50 top-full right-0 mt-[4px] bg-white border border-[#D0D0D0] rounded-[12px] shadow-xl p-[14px] w-[min(92vw,300px)]">
 											<p class="text-[0.8125rem] text-[#4B5563] leading-[1.45]">Per usare le spedizioni configurate devi accedere.</p>
 											<div class="mt-[10px] flex items-center gap-[8px]">
 												<NuxtLink :to="authRedirectPath" class="inline-flex items-center justify-center h-[34px] px-[12px] rounded-[8px] bg-[#095866] text-white text-[0.75rem] font-semibold hover:bg-[#074a56] transition">Accedi</NuxtLink>
@@ -3431,7 +3444,7 @@ const continueToCart = async () => {
 											<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
 											Indirizzi salvati
 										</button>
-										<div v-if="showDestAddressSelector && isAuthenticated" id="dest-addresses-dropdown" class="absolute z-50 top-full right-0 mt-[4px] bg-white border border-[#D0D0D0] rounded-[12px] shadow-xl max-h-[250px] overflow-y-auto w-[260px] tablet:w-[320px]">
+										<div v-if="showDestAddressSelector && isAuthenticated" id="dest-addresses-dropdown" class="absolute z-50 top-full right-0 mt-[4px] bg-white border border-[#D0D0D0] rounded-[12px] shadow-xl max-h-[250px] overflow-y-auto w-[min(92vw,320px)]">
 											<div v-if="loadingSavedAddresses" class="p-[16px] text-center text-[0.8125rem] text-[#737373]">Caricamento...</div>
 											<template v-else-if="savedAddresses.length > 0">
 												<div v-for="addr in savedAddresses" :key="addr.id" @click="applySavedAddress(addr, 'dest')" class="px-[14px] py-[10px] cursor-pointer hover:bg-[#f0fafb] border-b border-[#F0F0F0] last:border-0 transition-colors">
@@ -3444,7 +3457,7 @@ const continueToCart = async () => {
 												<NuxtLink to="/account/indirizzi" class="text-[0.8125rem] text-[#095866] hover:underline font-semibold mt-[4px] inline-block">Aggiungi indirizzo</NuxtLink>
 											</div>
 										</div>
-										<div v-if="showDestGuestPrompt && !isAuthenticated" id="dest-addresses-dropdown" role="dialog" class="absolute z-50 top-full right-0 mt-[4px] bg-white border border-[#D0D0D0] rounded-[12px] shadow-xl p-[14px] w-[280px]">
+										<div v-if="showDestGuestPrompt && !isAuthenticated" id="dest-addresses-dropdown" role="dialog" class="absolute z-50 top-full right-0 mt-[4px] bg-white border border-[#D0D0D0] rounded-[12px] shadow-xl p-[14px] w-[min(92vw,280px)]">
 											<p class="text-[0.8125rem] text-[#4B5563] leading-[1.45]">Per usare la rubrica indirizzi devi accedere.</p>
 											<div class="mt-[10px] flex items-center gap-[8px]">
 												<NuxtLink :to="authRedirectPath" class="inline-flex items-center justify-center h-[34px] px-[12px] rounded-[8px] bg-[#095866] text-white text-[0.75rem] font-semibold hover:bg-[#074a56] transition">Accedi</NuxtLink>

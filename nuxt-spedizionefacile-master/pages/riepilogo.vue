@@ -59,41 +59,46 @@ const route = useRoute();
 const editQueryId = route.query.edit;
 
 if (editQueryId && !shipment.value) {
-	// Imposta l'ID di modifica nello store
-	userStore.editingCartItemId = editQueryId;
-	loadingEditData.value = true;
+	if (!isAuthenticated.value) {
+		loadingEditData.value = false;
+		navigateTo('/carrello');
+	} else {
+		// Imposta l'ID di modifica nello store
+		userStore.editingCartItemId = editQueryId;
+		loadingEditData.value = true;
 
-	// Carica i dati dal carrello in modo asincrono
-	sanctumClient(`/api/cart/${editQueryId}`)
-		.then((res) => {
-			const pkg = res.data || res;
-			// single_price e' in centesimi nel DB, manteniamo in centesimi internamente
-			const priceInCents = pkg.single_price ? Number(pkg.single_price) : 0;
-			// Popola lo store con i dati del pacco per il riepilogo
-			userStore.pendingShipment = {
-				packages: [{
-					package_type: pkg.package_type,
-					quantity: pkg.quantity || 1,
-					weight: pkg.weight,
-					first_size: pkg.first_size,
-					second_size: pkg.second_size,
-					third_size: pkg.third_size,
-					weight_price: pkg.weight_price,
-					volume_price: pkg.volume_price,
-					single_price: priceInCents,
-					content_description: pkg.content_description || '',
-				}],
-				origin_address: pkg.origin_address || {},
-				destination_address: pkg.destination_address || {},
-				services: pkg.services || {},
-			};
-			loadingEditData.value = false;
-		})
-		.catch((err) => {
-			console.error('Errore caricamento pacco per modifica:', err);
-			loadingEditData.value = false;
-			navigateTo('/carrello');
-		});
+		// Carica i dati dal carrello in modo asincrono
+		sanctumClient(`/api/cart/${editQueryId}`)
+			.then((res) => {
+				const pkg = res.data || res;
+				// single_price e' in centesimi nel DB, manteniamo in centesimi internamente
+				const priceInCents = pkg.single_price ? Number(pkg.single_price) : 0;
+				// Popola lo store con i dati del pacco per il riepilogo
+				userStore.pendingShipment = {
+					packages: [{
+						package_type: pkg.package_type,
+						quantity: pkg.quantity || 1,
+						weight: pkg.weight,
+						first_size: pkg.first_size,
+						second_size: pkg.second_size,
+						third_size: pkg.third_size,
+						weight_price: pkg.weight_price,
+						volume_price: pkg.volume_price,
+						single_price: priceInCents,
+						content_description: pkg.content_description || '',
+					}],
+					origin_address: pkg.origin_address || {},
+					destination_address: pkg.destination_address || {},
+					services: pkg.services || {},
+				};
+				loadingEditData.value = false;
+			})
+			.catch((err) => {
+				console.error('Errore caricamento pacco per modifica:', err);
+				loadingEditData.value = false;
+				navigateTo('/carrello');
+			});
+	}
 } else if (!shipment.value && !editQueryId) {
 	// Se non c'e' nessuna spedizione e non stiamo modificando, redirect
 	navigateTo('/la-tua-spedizione/2');
@@ -459,7 +464,13 @@ const goToCart = async () => {
 		userStore.packages = [];
 		userStore.servicesArray = [];
 		userStore.contentDescription = '';
-		userStore.shipmentDetails = null;
+		userStore.shipmentDetails = {
+			origin_city: '',
+			origin_postal_code: '',
+			destination_city: '',
+			destination_postal_code: '',
+			date: '',
+		};
 
 		// Invalidiamo la cache del carrello e forziamo il refresh
 		clearNuxtData("cart");
@@ -491,7 +502,7 @@ const goBack = () => {
 
 <template>
 	<section class="min-h-[600px]">
-		<div class="my-container mt-[40px] tablet:mt-[72px] mb-[60px] tablet:mb-[120px] px-[12px] tablet:px-0 overflow-x-hidden">
+		<div class="my-container mt-[40px] tablet:mt-[72px] mb-[60px] tablet:mb-[120px] px-[12px] tablet:px-0">
 			<Steps v-if="!isEditFromCart" :current-step="3" />
 
 			<!-- Loading state per modifica dal carrello -->

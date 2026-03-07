@@ -464,6 +464,23 @@
 	pointer-events: none;
 }
 
+/* Hardening step pills: evita conflitti colore/sfondo sul primo render mobile */
+.steps-pill-item {
+	background-color: transparent;
+}
+
+.steps-pill-active {
+	background-color: #E44203 !important;
+	border-color: #E44203 !important;
+	color: #ffffff !important;
+}
+
+@media (max-width: 44.99rem) {
+	.step-active-pulse::after {
+		display: none;
+	}
+}
+
 /* Fade-in utility for lazy-loaded sections */
 .fade-in-section {
 	animation: fadeInUp 0.4s ease forwards;
@@ -531,6 +548,17 @@
 	.my-container {
 		padding-left: 40px;
 		padding-right: 40px;
+	}
+}
+@media (max-width: 719px) {
+	.my-container {
+		padding-left: 14px !important;
+		padding-right: 14px !important;
+	}
+	/* Su mobile privilegi la stabilita' visiva: niente lazy paint aggressivo below-the-fold. */
+	.cv-auto {
+		content-visibility: visible;
+		contain-intrinsic-size: auto;
 	}
 }
 @media (min-width: 1024px) {

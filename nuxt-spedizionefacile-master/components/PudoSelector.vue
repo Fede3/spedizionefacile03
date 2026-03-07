@@ -117,15 +117,57 @@ const parseCoordinate = (value) => {
 	return Number.isFinite(parsed) ? parsed : null;
 };
 
+const extractLatitude = (point = {}) =>
+	parseCoordinate(
+		point.latitude ??
+		point.lat ??
+		point?.coordinates?.latitude ??
+		point?.coordinates?.lat ??
+		point?.coordinate?.latitude ??
+		point?.coordinate?.lat ??
+		point?.geo?.latitude ??
+		point?.geo?.lat ??
+		point?.location?.latitude ??
+		point?.location?.lat ??
+		point?.address_coordinates?.latitude ??
+		point?.address_coordinates?.lat
+	);
+
+const extractLongitude = (point = {}) =>
+	parseCoordinate(
+		point.longitude ??
+		point.lng ??
+		point.lon ??
+		point?.coordinates?.longitude ??
+		point?.coordinates?.lng ??
+		point?.coordinates?.lon ??
+		point?.coordinate?.longitude ??
+		point?.coordinate?.lng ??
+		point?.coordinate?.lon ??
+		point?.geo?.longitude ??
+		point?.geo?.lng ??
+		point?.geo?.lon ??
+		point?.location?.longitude ??
+		point?.location?.lng ??
+		point?.location?.lon ??
+		point?.address_coordinates?.longitude ??
+		point?.address_coordinates?.lng ??
+		point?.address_coordinates?.lon
+	);
+
 const parseDistanceMeters = (value) => {
 	if (value === null || value === undefined || value === '') return null;
-	const cleaned = String(value)
+	const raw = String(value).trim().toLowerCase();
+	const cleaned = raw
 		.trim()
 		.replace(',', '.')
 		.replace(/[^\d.-]/g, '');
 	if (!cleaned) return null;
 	const parsed = Number.parseFloat(cleaned);
-	return Number.isFinite(parsed) ? Math.round(parsed) : null;
+	if (!Number.isFinite(parsed)) return null;
+	// Alcune sorgenti ritornano distanze in km (es. "0.45 km"), convertiamo correttamente in metri.
+	if (raw.includes('km')) return Math.round(parsed * 1000);
+	return Math.round(parsed);
 };
 
 const isFiniteCoordinate = (value) => Number.isFinite(parseCoordinate(value));
@@ -136,8 +178,8 @@ const getPudoUiKey = (point) => {
 	const primary = String(point?.pudo_id || point?.carrier_pudo_id || point?.id || '').trim();
 	if (primary) return primary;
 
-	const lat = parseCoordinate(point?.latitude ?? point?.lat);
-	const lng = parseCoordinate(point?.longitude ?? point?.lng);
+	const lat = extractLatitude(point);
+	const lng = extractLongitude(point);
 	const latPart = Number.isFinite(lat) ? lat.toFixed(6) : 'na';
 	const lngPart = Number.isFinite(lng) ? lng.toFixed(6) : 'na';
 	return [
@@ -184,9 +226,9 @@ const distanceInMeters = (from, to) => {
 const normalizePudoPoint = (rawPoint) => {
 	const point = rawPoint || {};
 	const id = point.pudo_id || point.carrier_pudo_id || point.id || '';
-	const latitude = parseCoordinate(point.latitude ?? point.lat);
-	const longitude = parseCoordinate(point.longitude ?? point.lng);
-	const distance = parseDistanceMeters(point.distance_meters);
+	const latitude = extractLatitude(point);
+	const longitude = extractLongitude(point);
+	const distance = parseDistanceMeters(point.distance_meters ?? point.distance ?? point.distance_text ?? point.distance_label);
 
 	return {
 		pudo_id: String(id),
@@ -282,36 +324,46 @@ const applyResults = (rawPoints) => {
 	const withComputedDistance = normalized.map((point) => {
 		const apiDistance = Number(point.distance_meters);
 		const hasApiDistance = Number.isFinite(apiDistance);
-		const isReliableZeroFromApi =
-			apiDistance === 0 &&
-			distanceReference &&
-			Number.isFinite(point.latitude) &&
-			Number.isFinite(point.longitude) &&
-			distanceInMeters(distanceReference, {
-				latitude: point.latitude,
-				longitude: point.longitude,
-			}) <= 50;
-		const canTrustApiDistance =
-			hasApiDistance &&
-			!allApiDistancesZero &&
-			(apiDistance > 0 || isReliableZeroFromApi);
-
-		if (canTrustApiDistance) {
-			return point;
-		}
-
-		if (
-			distanceReference &&
-			Number.isFinite(point.latitude) &&
-			Number.isFinite(point.longitude)
-		) {
+		if (distanceReference && Number.isFinite(point.latitude) && Number.isFinite(point.longitude)) {
 			const computedDistance = distanceInMeters(distanceReference, {
 				latitude: point.latitude,
 				longitude: point.longitude,
 			});
+
+			const shouldReplaceApiDistance =
+				!hasApiDistance ||
+				apiDistance <= 0 ||
+				allApiDistancesZero;
+
+			if (shouldReplaceApiDistance && Number.isFinite(computedDistance)) {
+				return {
+					...point,
+					distance_meters: computedDistance,
+				};
+			}
+
+			if (hasApiDistance && apiDistance > 0 && Number.isFinite(computedDistance)) {
+				// Mantiene la distanza API ma evita outlier grossolani.
+				const delta = Math.abs(apiDistance - computedDistance);
+				if (delta > 200000) {
+					return {
+						...point,
+						distance_meters: computedDistance,
+					};
+				}
+			}
+
 			return {
 				...point,
-				distance_meters: computedDistance ?? null,
+				distance_meters: hasApiDistance ? apiDistance : computedDistance ?? null,
+			};
+		}
+
+		// Evita di mostrare "0 m" non affidabili quando non possiamo calcolare.
+		if (allApiDistancesZero && Number(point.distance_meters) === 0) {
+			return {
+				...point,
+				distance_meters: null,
 			};
 		}
 		return point;
@@ -804,10 +856,11 @@ const formatOpeningHours = (hours) => {
 
 <template>
 	<div class="mt-[16px]">
-		<div class="grid grid-cols-1 tablet:grid-cols-[minmax(0,1fr)_190px_120px_auto] gap-[10px] items-end">
+		<div class="grid grid-cols-1 tablet:grid-cols-2 desktop:grid-cols-[minmax(0,1fr)_190px_120px_auto] gap-[10px] items-end">
 			<div class="w-full">
 				<label class="block text-[0.75rem] text-[#737373] mb-[4px]">Via / Indirizzo (opzionale)</label>
 				<input
+					id="pudo_search_address"
 					v-model="searchAddress"
 					type="text"
 					placeholder="es. Via Roma 10"
@@ -819,6 +872,7 @@ const formatOpeningHours = (hours) => {
 			<div class="w-full">
 				<label class="block text-[0.75rem] text-[#737373] mb-[4px]">Citta</label>
 				<input
+					id="pudo_search_city"
 					v-model="searchCity"
 					type="text"
 					placeholder="es. Iglesias"
@@ -830,6 +884,7 @@ const formatOpeningHours = (hours) => {
 			<div class="w-full tablet:max-w-[130px]">
 				<label class="block text-[0.75rem] text-[#737373] mb-[4px]">CAP</label>
 				<input
+					id="pudo_search_zip"
 					v-model="searchZip"
 					type="text"
 					maxlength="5"
@@ -839,12 +894,12 @@ const formatOpeningHours = (hours) => {
 					@keydown.enter.prevent="searchPudo" />
 			</div>
 
-			<div class="flex flex-col tablet:flex-row items-stretch tablet:items-end gap-[8px] w-full tablet:w-auto">
+			<div class="col-span-1 tablet:col-span-2 desktop:col-span-1 flex flex-col tablet:flex-row items-stretch tablet:items-end gap-[8px] w-full tablet:w-auto">
 				<button
 					type="button"
 					@click="searchPudo"
 					:disabled="loading || !hasSearchInput"
-					class="inline-flex items-center justify-center gap-[6px] h-[44px] px-[16px] bg-[#095866] text-white rounded-[8px] text-[0.875rem] font-semibold hover:bg-[#074a56] transition cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed whitespace-nowrap min-w-[142px]">
+					class="inline-flex items-center justify-center gap-[6px] h-[44px] px-[16px] bg-[#095866] text-white rounded-[8px] text-[0.875rem] font-semibold hover:bg-[#074a56] transition cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed whitespace-nowrap min-w-0 tablet:min-w-[142px]">
 					<svg v-if="!loading" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
 					<span v-if="loading" class="inline-block w-[16px] h-[16px] border-2 border-white border-t-transparent rounded-full animate-spin"></span>
 					{{ loading ? 'Ricerca...' : 'Cerca punti' }}
@@ -853,7 +908,7 @@ const formatOpeningHours = (hours) => {
 					type="button"
 					@click="useCurrentLocation"
 					:disabled="geolocating || loading"
-					class="inline-flex items-center justify-center gap-[6px] h-[44px] px-[14px] bg-white text-[#095866] border border-[#C6D2D5] rounded-[8px] text-[0.8125rem] font-semibold hover:bg-[#F2F8F9] transition cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed whitespace-nowrap min-w-[150px]">
+					class="inline-flex items-center justify-center gap-[6px] h-[44px] px-[14px] bg-white text-[#095866] border border-[#C6D2D5] rounded-[8px] text-[0.8125rem] font-semibold hover:bg-[#F2F8F9] transition cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed whitespace-nowrap min-w-0 tablet:min-w-[150px]">
 					<span v-if="geolocating" class="inline-block w-[14px] h-[14px] border-2 border-[#095866] border-t-transparent rounded-full animate-spin"></span>
 					<span v-else class="inline-flex items-center gap-[6px]">
 						<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
