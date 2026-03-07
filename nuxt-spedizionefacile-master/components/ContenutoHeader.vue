@@ -306,7 +306,7 @@ const props = defineProps({
 
 				<!-- Card prezzo bianca in risalto -->
 				<div
-					class="relative z-[7] mt-[10px] flex w-[170px] overflow-hidden rounded-[16px] bg-gradient-to-br from-[#E44203] to-[#095866] shadow-[0_4px_12px_rgba(0,0,0,0.15)] tablet:mt-[16px] tablet:w-[320px] desktop:mt-[20px] desktop:w-[380px] desktop:shadow-[0_8px_24px_rgba(0,0,0,0.15)] desktop-xl:mt-[22px] desktop-xl:w-[400px]">
+					class="relative z-[7] mt-[10px] flex w-[170px] overflow-hidden rounded-[16px] bg-gradient-to-br from-[#FF6B35] to-[#E44203] shadow-[0_4px_12px_rgba(0,0,0,0.15)] tablet:mt-[16px] tablet:w-[320px] desktop:mt-[20px] desktop:w-[380px] desktop:shadow-[0_8px_24px_rgba(0,0,0,0.15)] desktop-xl:mt-[22px] desktop-xl:w-[400px]">
 					<div class="flex flex-col px-[20px] py-[16px] tablet:px-[24px] tablet:py-[20px] desktop:px-[32px] desktop:py-[24px] desktop-xl:px-[40px] desktop-xl:py-[32px]">
 						<span class="text-[0.8125rem] font-medium uppercase tracking-[0.8px] text-white/75 tablet:text-[0.875rem] desktop:text-[1rem] desktop:tracking-[1px] desktop-xl:text-[1.0625rem]">a partire da</span>
 						<div class="mt-[2px] flex items-baseline gap-[8px]">
