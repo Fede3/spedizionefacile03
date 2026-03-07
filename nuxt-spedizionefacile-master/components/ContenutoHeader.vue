@@ -20,7 +20,58 @@
 -->
 <script setup>
 const route = useRoute();
-const heroImageUrl = ref('/img/homepage/hero-truck-landscape.jpg');
+const DEFAULT_HOMEPAGE_HERO = '/img/homepage/hero-truck-landscape.jpg';
+const PREVIEW_DRAFT_STORAGE_KEY = 'hero-preview-live-draft';
+const createViewportDefaults = () => ({
+	mode: 'fill',
+	zoom: 1,
+	x: 0,
+	y: 0,
+});
+const heroConfig = ref({
+	image_url: DEFAULT_HOMEPAGE_HERO,
+	desktop: createViewportDefaults(),
+	mobile: createViewportDefaults(),
+	updated_at: null,
+});
+const isPreviewHeroRoute = computed(() => route.path === '/preview/home-hero');
+const isHomepageHeroRoute = computed(() => route.path === '/' || isPreviewHeroRoute.value);
+const isDesktopViewport = ref(true);
+let homepageHeroPoll = null;
+let previewDraftPoll = null;
+let previewDraftLastTs = null;
+
+const clamp = (value, min, max) => {
+	const numeric = Number(value);
+	if (!Number.isFinite(numeric)) return min;
+	return Math.min(max, Math.max(min, numeric));
+};
+
+const normalizeViewport = (viewport, fallback = createViewportDefaults()) => {
+	const allowedModes = ['fill', 'fit', 'crop'];
+	const mode = allowedModes.includes(viewport?.mode) ? viewport.mode : fallback.mode;
+	const minZoom = 0.5;
+	return {
+		mode,
+		zoom: clamp(viewport?.zoom ?? fallback.zoom ?? 1, minZoom, 4),
+		x: clamp(viewport?.x ?? fallback.x ?? 0, -1200, 1200),
+		y: clamp(viewport?.y ?? fallback.y ?? 0, -1200, 1200),
+	};
+};
+
+const normalizeHeroConfig = (payload) => {
+	const source = payload?.config && typeof payload.config === 'object' ? payload.config : payload;
+	const imageUrl = typeof source?.image_url === 'string' && source.image_url.trim().length > 0
+		? source.image_url
+		: DEFAULT_HOMEPAGE_HERO;
+
+	return {
+		image_url: imageUrl,
+		desktop: normalizeViewport(source?.desktop, createViewportDefaults()),
+		mobile: normalizeViewport(source?.mobile, createViewportDefaults()),
+		updated_at: source?.updated_at || null,
+	};
+};
 
 // Ottimizzazione: precarica l'immagine hero di default per evitare ritardo nel rendering above-the-fold.
 // Se l'admin ha impostato un'immagine personalizzata, quella verra' caricata dinamicamente.
@@ -37,17 +88,180 @@ useHead({
 
 // Carica fasce prezzo sempre per garantire disponibilità su tutte le pagine
 const { loadPriceBands, getMinPrice, promoSettings } = usePriceBands();
-onMounted(async () => {
-	loadPriceBands();
+
+const applyHomepageImage = async () => {
 	try {
 		const res = await $fetch('/api/public/homepage-image', { method: 'GET' });
-		const maybeUrl = res?.image_url || res?.data?.image_url;
-		if (typeof maybeUrl === 'string' && maybeUrl.trim().length > 0) {
-			heroImageUrl.value = maybeUrl;
-		}
+		heroConfig.value = normalizeHeroConfig(res);
 	} catch {
-		// Mantiene il fallback locale senza bloccare il first paint.
+		heroConfig.value = normalizeHeroConfig({
+			image_url: DEFAULT_HOMEPAGE_HERO,
+			desktop: createViewportDefaults(),
+			mobile: createViewportDefaults(),
+		});
 	}
+};
+
+const refreshHomepageImage = () => {
+	if (!isHomepageHeroRoute.value) return;
+	void applyHomepageImage();
+};
+
+const onHomepageImageStorage = (event) => {
+	if (event.key === 'homepage-image-updated-at') {
+		refreshHomepageImage();
+	}
+};
+
+const onHomepageImageEvent = () => {
+	refreshHomepageImage();
+};
+
+const onVisibilityChange = () => {
+	if (document.visibilityState === 'visible') {
+		refreshHomepageImage();
+	}
+};
+
+const getForcedPreviewViewport = () => {
+	if (!isPreviewHeroRoute.value) return null;
+	const requested = typeof route.query.viewport === 'string' ? route.query.viewport.toLowerCase() : '';
+	if (requested === 'desktop') return true;
+	if (requested === 'mobile') return false;
+	return null;
+};
+
+const updateViewportFlag = () => {
+	if (typeof window === 'undefined') return;
+	const forcedViewport = getForcedPreviewViewport();
+	if (forcedViewport !== null) {
+		isDesktopViewport.value = forcedViewport;
+		return;
+	}
+	isDesktopViewport.value = window.innerWidth >= 1024;
+};
+
+const onHeroPreviewMessage = (event) => {
+	if (!isPreviewHeroRoute.value) return;
+	if (event.origin !== window.location.origin) return;
+	if (!event.data || event.data.type !== 'hero-preview:update') return;
+	heroConfig.value = normalizeHeroConfig(event.data.payload || {});
+};
+
+const applyHeroPreviewPayload = (payload) => {
+	if (!isPreviewHeroRoute.value) return;
+	heroConfig.value = normalizeHeroConfig(payload || {});
+};
+
+const applyPreviewDraftFromStorage = () => {
+	if (typeof window === 'undefined' || !isPreviewHeroRoute.value) return;
+	try {
+		const raw = window.localStorage.getItem(PREVIEW_DRAFT_STORAGE_KEY);
+		if (!raw) return;
+		const parsed = JSON.parse(raw);
+		if (!parsed || typeof parsed !== 'object') return;
+		if (!parsed.ts || parsed.ts === previewDraftLastTs) return;
+		previewDraftLastTs = parsed.ts;
+		applyHeroPreviewPayload(parsed.payload || {});
+	} catch {
+		// Ignore malformed localStorage data.
+	}
+};
+
+const onPreviewDraftStorageEvent = (event) => {
+	if (!isPreviewHeroRoute.value) return;
+	if (event.key !== PREVIEW_DRAFT_STORAGE_KEY) return;
+	applyPreviewDraftFromStorage();
+};
+
+const notifyHeroPreviewReady = () => {
+	if (typeof window === 'undefined' || !isPreviewHeroRoute.value) return;
+	const viewport = getForcedPreviewViewport() === false ? 'mobile' : 'desktop';
+	window.parent?.postMessage(
+		{
+			type: 'hero-preview:ready',
+			viewport,
+		},
+		window.location.origin
+	);
+};
+
+onMounted(() => {
+	loadPriceBands();
+	updateViewportFlag();
+	if (!isPreviewHeroRoute.value) {
+		refreshHomepageImage();
+	}
+
+	window.addEventListener('resize', updateViewportFlag);
+
+	if (route.path === '/') {
+		// Near real-time: refresh periodico leggero per recepire update admin anche su tab aperta.
+		homepageHeroPoll = setInterval(refreshHomepageImage, 30000);
+		window.addEventListener('focus', refreshHomepageImage);
+		window.addEventListener('storage', onHomepageImageStorage);
+		window.addEventListener('homepage-image-updated', onHomepageImageEvent);
+		document.addEventListener('visibilitychange', onVisibilityChange);
+	}
+
+	if (isPreviewHeroRoute.value) {
+		window.__applyHeroPreviewPayload = applyHeroPreviewPayload;
+		window.addEventListener('message', onHeroPreviewMessage);
+		window.addEventListener('storage', onPreviewDraftStorageEvent);
+		previewDraftPoll = setInterval(applyPreviewDraftFromStorage, 120);
+		applyPreviewDraftFromStorage();
+		notifyHeroPreviewReady();
+	}
+});
+
+onBeforeUnmount(() => {
+	if (homepageHeroPoll) {
+		clearInterval(homepageHeroPoll);
+		homepageHeroPoll = null;
+	}
+	window.removeEventListener('focus', refreshHomepageImage);
+	window.removeEventListener('storage', onHomepageImageStorage);
+	window.removeEventListener('homepage-image-updated', onHomepageImageEvent);
+	document.removeEventListener('visibilitychange', onVisibilityChange);
+	window.removeEventListener('resize', updateViewportFlag);
+	window.removeEventListener('message', onHeroPreviewMessage);
+	window.removeEventListener('storage', onPreviewDraftStorageEvent);
+	if (previewDraftPoll) {
+		clearInterval(previewDraftPoll);
+		previewDraftPoll = null;
+	}
+	if (typeof window !== 'undefined' && window.__applyHeroPreviewPayload) {
+		delete window.__applyHeroPreviewPayload;
+	}
+});
+
+const heroImageUrl = computed(() => heroConfig.value.image_url || DEFAULT_HOMEPAGE_HERO);
+const activeViewportConfig = computed(() => (
+	isDesktopViewport.value ? heroConfig.value.desktop : heroConfig.value.mobile
+));
+const heroImageStyle = computed(() => {
+	const transform = activeViewportConfig.value || createViewportDefaults();
+	const objectFit = transform.mode === 'fit' ? 'contain' : 'cover';
+	const isMobileViewport = !isDesktopViewport.value;
+	const offsetLimit = isMobileViewport ? 260 : 1200;
+	const maxZoom = isMobileViewport ? 2.4 : 4;
+	const offsetX = Math.round(clamp(transform.x, -offsetLimit, offsetLimit));
+	const offsetY = Math.round(clamp(transform.y, -offsetLimit, offsetLimit));
+	const zoom = clamp(transform.zoom, 0.5, maxZoom);
+
+	return {
+		position: 'absolute',
+		top: '50%',
+		left: '50%',
+		width: '100%',
+		height: '100%',
+		objectFit,
+		objectPosition: '50% 50%',
+		transform: `translate(-50%, -50%) translate3d(${offsetX}px, ${offsetY}px, 0) scale(${zoom})`,
+		transformOrigin: 'center center',
+		willChange: 'transform',
+		transition: 'transform 90ms linear',
+	};
 });
 
 const minPriceInfo = computed(() => getMinPrice());
@@ -78,27 +292,26 @@ const props = defineProps({
 	<!-- ============================================================
 	     HOMEPAGE HERO
 	     ============================================================ -->
-	<div class="relative z-[2] overflow-hidden pt-[28px] pb-[72px] tablet:pt-[40px] tablet:pb-[96px] desktop:pt-[72px] desktop:pb-[120px] desktop-xl:pt-[76px] desktop-xl:pb-[132px]" v-if="route.path === '/'">
+	<div class="relative z-[2] overflow-hidden pt-[28px] pb-[72px] tablet:pt-[40px] tablet:pb-[96px] desktop:pt-[72px] desktop:pb-[120px] desktop-xl:pt-[76px] desktop-xl:pb-[132px]" v-if="isHomepageHeroRoute">
 		<!-- Decorazione teal dietro la card -->
 		<div
-			class="pointer-events-none absolute right-[-12px] top-[102px] h-[204px] w-[188px] rotate-[6deg] rounded-[16px] bg-gradient-to-br from-[#095866] to-[#0b6d7d] opacity-[0.05] tablet:right-[24px] tablet:top-[104px] tablet:h-[200px] tablet:w-[200px] desktop:right-[3%] desktop:top-[170px] desktop:h-[460px] desktop:w-[500px] desktop:rotate-[7deg] desktop:opacity-[0.06] desktop-xl:right-[5%] desktop-xl:top-[176px] desktop-xl:h-[500px] desktop-xl:w-[560px]"></div>
+			class="pointer-events-none absolute right-[0px] top-[142px] h-[164px] w-[132px] rotate-[6deg] rounded-[16px] bg-gradient-to-br from-[#095866] to-[#0b6d7d] opacity-[0.035] tablet:right-[24px] tablet:top-[104px] tablet:h-[200px] tablet:w-[200px] tablet:opacity-[0.05] desktop:right-[3%] desktop:top-[170px] desktop:h-[460px] desktop:w-[500px] desktop:rotate-[7deg] desktop:opacity-[0.06] desktop-xl:right-[5%] desktop-xl:top-[176px] desktop-xl:h-[500px] desktop-xl:w-[560px]"></div>
 
-		<div class="relative desktop:grid desktop:grid-cols-[minmax(0,560px)_minmax(0,760px)] desktop:items-start desktop:gap-[56px] desktop-xl:grid-cols-[minmax(0,560px)_minmax(0,820px)] desktop-xl:gap-[62px]">
+		<div class="relative grid grid-cols-[minmax(0,1fr)_minmax(0,0.9fr)] items-start gap-x-[10px] gap-y-[6px] tablet:block desktop:grid desktop:grid-cols-[minmax(0,560px)_minmax(0,760px)] desktop:items-start desktop:gap-[56px] desktop-xl:grid-cols-[minmax(0,560px)_minmax(0,820px)] desktop-xl:gap-[62px]">
 			<!-- Colonna sinistra: testo + card prezzo -->
-			<div class="relative z-[5] desktop:max-w-[560px]">
-				<h1 class="text-[#1a1a1a] text-[2.25rem] leading-[1.05] tracking-[-1.2px] font-extrabold tablet:text-[3.25rem] desktop:text-[4.5rem] desktop:tracking-[-2.5px] desktop-xl:text-[5.5rem] desktop-xl:tracking-[-3px]">
+			<div class="relative z-[5] col-start-1 row-start-1 desktop:max-w-[560px]">
+				<h1 class="text-[#1a1a1a] text-[3rem] leading-[0.98] tracking-[-1.5px] font-extrabold tablet:text-[3.25rem] desktop:text-[4.5rem] desktop:tracking-[-2.5px] desktop-xl:text-[5.5rem] desktop-xl:tracking-[-3px]">
 					Spedisci<br />in Italia
 				</h1>
 
 				<!-- Card prezzo bianca in risalto -->
 				<div
-					class="relative z-[7] mt-[12px] flex w-[200px] overflow-hidden rounded-[16px] shadow-[0_4px_12px_rgba(0,0,0,0.15)] tablet:mt-[16px] tablet:w-[320px] desktop:mt-[20px] desktop:w-[380px] desktop:shadow-[0_8px_24px_rgba(0,0,0,0.15)] desktop-xl:mt-[22px] desktop-xl:w-[400px]"
-					style="background: linear-gradient(135deg, #E44203 0%, #095866 100%);">
+					class="relative z-[7] mt-[10px] flex w-[170px] overflow-hidden rounded-[16px] bg-gradient-to-br from-[#E44203] to-[#095866] shadow-[0_4px_12px_rgba(0,0,0,0.15)] tablet:mt-[16px] tablet:w-[320px] desktop:mt-[20px] desktop:w-[380px] desktop:shadow-[0_8px_24px_rgba(0,0,0,0.15)] desktop-xl:mt-[22px] desktop-xl:w-[400px]">
 					<div class="flex flex-col px-[20px] py-[16px] tablet:px-[24px] tablet:py-[20px] desktop:px-[32px] desktop:py-[24px] desktop-xl:px-[40px] desktop-xl:py-[32px]">
 						<span class="text-[0.8125rem] font-medium uppercase tracking-[0.8px] text-white/75 tablet:text-[0.875rem] desktop:text-[1rem] desktop:tracking-[1px] desktop-xl:text-[1.0625rem]">a partire da</span>
 						<div class="mt-[2px] flex items-baseline gap-[8px]">
 							<span v-if="showMinPriceDiscount" class="text-[0.9375rem] font-medium text-white/50 line-through">{{ minBasePriceFormatted }}€</span>
-							<span class="text-[3rem] font-extrabold leading-[1] tracking-[-2px] text-white tablet:text-[4rem] tablet:tracking-[-2.5px] desktop:text-[5rem] desktop:tracking-[-3px] desktop-xl:text-[6rem] desktop-xl:tracking-[-3.5px]">{{ minPriceFormatted }}<span class="ml-[1px] align-super text-[1.5rem] font-bold tracking-[0] text-white tablet:text-[1.75rem] desktop:text-[2.25rem] desktop-xl:text-[2.75rem]">€</span></span>
+							<span class="text-[3.25rem] font-extrabold leading-[1] tracking-[-2px] text-white tablet:text-[4rem] tablet:tracking-[-2.5px] desktop:text-[5rem] desktop:tracking-[-3px] desktop-xl:text-[6rem] desktop-xl:tracking-[-3.5px]">{{ minPriceFormatted }}<span class="ml-[1px] align-super text-[1.5rem] font-bold tracking-[0] text-white tablet:text-[1.75rem] desktop:text-[2.25rem] desktop-xl:text-[2.75rem]">€</span></span>
 						</div>
 						<span class="mt-[8px] inline-flex items-center gap-[8px] text-[0.75rem] font-semibold text-white/90 tablet:text-[0.8125rem] desktop:mt-[8px] desktop:text-[0.9375rem] desktop-xl:mt-[10px] desktop-xl:text-[1rem]">
 							<svg width="14" height="14" viewBox="0 0 24 24" fill="none" class="shrink-0"><circle cx="12" cy="12" r="12" fill="rgba(255,255,255,0.3)"/><path d="M7 12.5l3 3 7-7" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -128,13 +341,16 @@ const props = defineProps({
 			</div>
 
 			<!-- Colonna destra: immagine -->
-			<div class="relative z-[2] mt-[18px] h-[340px] w-full max-w-[420px] tablet:mt-[20px] tablet:h-[390px] tablet:max-w-[520px] desktop:mt-0 desktop:h-[620px] desktop:w-full desktop:max-w-[760px] desktop:justify-self-end desktop-xl:h-[640px] desktop-xl:max-w-[820px]">
-				<div
-					class="h-full w-full rounded-[16px] bg-cover bg-no-repeat shadow-[0_8px_24px_rgba(0,0,0,0.15)]"
-					:style="{
-						backgroundImage: `url(${heroImageUrl})`,
-						backgroundPosition: 'center 48%',
-					}"></div>
+			<div class="relative z-[2] col-start-2 row-start-1 mt-[4px] h-[248px] w-full max-w-none tablet:mt-[20px] tablet:h-[390px] tablet:max-w-[520px] tablet:mx-auto desktop:mt-0 desktop:h-[620px] desktop:w-full desktop:max-w-[760px] desktop:justify-self-end desktop-xl:h-[640px] desktop-xl:max-w-[820px]">
+				<div class="relative h-full w-full overflow-hidden rounded-[16px] border border-[#DDE5EB] bg-[#EAF1F6] shadow-[0_8px_24px_rgba(0,0,0,0.15)]">
+					<img
+						:src="heroImageUrl"
+						alt="Hero SpediamoFacile"
+						class="h-full w-full select-none pointer-events-none"
+						:style="heroImageStyle"
+						loading="eager"
+						decoding="async" />
+				</div>
 			</div>
 		</div>
 	</div>
@@ -375,7 +591,8 @@ const props = defineProps({
 	width: 78vw;
 	max-width: 420px;
 	height: 340px;
-	opacity: 0.2;
+	opacity: 0;
+	display: none;
 }
 
 .hero__image-bg {
@@ -489,6 +706,7 @@ const props = defineProps({
 	}
 
 	.hero__image {
+		display: block;
 		width: 520px;
 		height: 390px;
 		right: 0;
@@ -577,6 +795,7 @@ const props = defineProps({
 
 	/* Immagine — colonna propria, si avvicina al testo da sinistra */
 	.hero__image {
+		display: block;
 		position: relative;
 		right: auto;
 		top: 0;
@@ -658,6 +877,7 @@ const props = defineProps({
 	}
 
 	.hero__image {
+		display: block;
 		max-width: 820px;
 		height: 640px;
 		margin-left: 0;
