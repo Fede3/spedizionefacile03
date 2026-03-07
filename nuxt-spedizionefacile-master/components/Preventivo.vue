@@ -41,6 +41,7 @@
 
 const userStore = useUserStore();   // Store Pinia: stato globale condiviso (pacchi, indirizzi, prezzo)
 const route = useRoute();           // Route corrente: serve per adattare lo stile (homepage vs pagina dedicata)
+const isHomepageLikeRoute = computed(() => route.path === '/' || route.path === '/preview/home-hero');
 
 const formRef = ref(null);          // Riferimento al <form> HTML per la validazione nativa del browser
 
@@ -697,6 +698,21 @@ const isCalculating = ref(false);    // true durante la chiamata API di calcolo 
 
 const scrollToFirstError = () => {
 	nextTick(() => {
+		// Priorita': campo HTML5 invalido -> campo richiesto senza valore -> fallback testo errore
+		const invalidField = formRef.value?.querySelector(':invalid');
+		if (invalidField) {
+			invalidField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+			setTimeout(() => invalidField.focus?.(), 120);
+			return;
+		}
+
+		const requiredField = formRef.value?.querySelector('input[required], select[required], textarea[required]');
+		if (requiredField && !requiredField.value) {
+			requiredField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+			setTimeout(() => requiredField.focus?.(), 120);
+			return;
+		}
+
 		const errorEl = document.querySelector('.text-red-500');
 		if (errorEl) {
 			errorEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -888,11 +904,11 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-	<section :class="route.path === '/' ? 'mt-[-140px] tablet:mt-[-70px] desktop:mt-[-60px] relative z-50' : 'pt-[24px]'">
+	<section :class="isHomepageLikeRoute ? 'mt-[12px] tablet:mt-[-30px] desktop:mt-[-60px] relative z-50' : 'pt-[24px]'">
 		<div class="my-container">
 			<div
 				class="bg-white w-full rounded-[16px] relative z-10 p-[16px_12px] tablet:p-[20px_40px] desktop:p-[30px_36px] mx-auto"
-			:class="route.path === '/'
+			:class="isHomepageLikeRoute
 				? 'shadow-[0_8px_32px_rgba(0,0,0,0.12)]'
 				: 'mt-[20px] shadow-[0_4px_20px_rgba(0,0,0,0.08)]'">
 				<div class="border-b-[1px] border-[#E6E6E6] pb-[8px] flex items-center justify-center relative">
@@ -908,7 +924,7 @@ onBeforeUnmount(() => {
 					</button>
 				</div>
 
-				<form ref="formRef" @submit.prevent="">
+				<form ref="formRef" @submit.prevent="continueToNextStep">
 					<Steps :current-step="0" />
 
 					<!-- SEZIONE 1: Indirizzi (spostata prima del selettore tipo collo) -->
@@ -1156,7 +1172,7 @@ onBeforeUnmount(() => {
 					<div
 						class="continue-button-wrapper bg-[#E44203] w-full text-white font-semibold text-center rounded-[50px] tracking-[-0.48px] transition-[background-color,box-shadow,transform] duration-200 hover:bg-[#c93800] hover:shadow-[0_6px_20px_rgba(228,66,3,0.35)] active:scale-[0.98] overflow-hidden"
 						:class="[
-							{ 'text-[1.5rem] tablet:text-[1.875rem] h-[64px] tablet:h-[80px]': !isRateCalculated, 'h-[90px] tablet:h-[113px]': isRateCalculated },
+							{ 'text-[1.25rem] tablet:text-[1.875rem] h-[64px] tablet:h-[80px]': !isRateCalculated, 'min-h-[90px] tablet:h-[113px] py-[8px] tablet:py-0': isRateCalculated },
 							promoSettings?.active && promoSettings?.label_text ? 'mt-[12px]' : 'mt-[24px] desktop-xl:mt-[40px] desktop:mt-[20px]'
 						]">
 							<button
@@ -1164,10 +1180,10 @@ onBeforeUnmount(() => {
 								type="button"
 								@click="continueToNextStep"
 								:disabled="isCalculating"
-								class="w-full h-full rounded-[50px] cursor-pointer flex items-center justify-center gap-[10px] text-[1.5rem] tablet:text-[1.875rem] disabled:opacity-70 disabled:cursor-not-allowed">
+								class="w-full h-full rounded-[50px] cursor-pointer flex items-center justify-center gap-[10px] text-[1.25rem] tablet:text-[1.875rem] disabled:opacity-70 disabled:cursor-not-allowed">
 								<span v-if="!isRateCalculated">Continua</span>
 								<span v-else>
-									<span class="text-[1.75rem] tablet:text-[2.25rem] border-b-[1px] border-white pb-[4px]">Spedisci da {{ session?.data?.total_price || userStore.totalPrice.toFixed(2).replace('.', ',') }}€</span>
+									<span class="text-[1.5rem] tablet:text-[2.25rem] border-b-[1px] border-white pb-[4px]">Spedisci da {{ session?.data?.total_price || userStore.totalPrice.toFixed(2).replace('.', ',') }}€</span>
 									<span class="block text-center mt-[5px] text-[0.875rem] tablet:text-[1rem]">IVA inclusa</span>
 								</span>
 								<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="shrink-0"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg>

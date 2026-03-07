@@ -797,13 +797,13 @@ const processPayment = async () => {
 							class="bg-white rounded-[14px] p-[18px_20px] border border-[#E9EBEC] shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
 
 							<!-- Package header row: type + price -->
-							<div class="flex items-center justify-between mb-[14px]">
-								<div class="flex items-center gap-[8px]">
+							<div class="flex flex-wrap items-start gap-[8px] mb-[14px]">
+								<div class="flex items-center gap-[8px] min-w-0 flex-1">
 									<span class="inline-flex items-center justify-center w-[28px] h-[28px] bg-[#095866]/10 text-[#095866] rounded-[8px] text-[0.75rem] font-bold">{{ pkgIdx + 1 }}</span>
 									<span class="text-[0.9375rem] font-semibold text-[#252B42]">{{ pkg.package_type || 'Pacco' }}</span>
-									<span v-if="pkg.content_description" class="text-[0.75rem] text-[#737373] bg-[#F5F5F5] px-[8px] py-[2px] rounded-[4px]">{{ pkg.content_description }}</span>
+									<span v-if="pkg.content_description" class="text-[0.75rem] text-[#737373] bg-[#F5F5F5] px-[8px] py-[2px] rounded-[4px] max-w-[150px] tablet:max-w-[240px] truncate">{{ pkg.content_description }}</span>
 								</div>
-								<span class="text-[1.0625rem] font-bold text-[#095866]"
+								<span class="text-[1.0625rem] font-bold text-[#095866] shrink-0 ml-auto"
 									:title="'Prezzo unitario per questo collo: ' + formatPrice(pkg.single_price) + (pkg.quantity > 1 ? ' x ' + pkg.quantity + ' = ' + formatPrice(pkg.single_price * pkg.quantity) : '')">
 									{{ formatPrice(pkg.single_price) }}
 								</span>
@@ -967,15 +967,15 @@ const processPayment = async () => {
 						</div>
 					</div>
 
-					<div class="flex gap-[12px] mt-[20px]">
+					<div class="flex flex-wrap gap-[10px] mt-[20px]">
 						<button type="button" @click="fatturazioneType = 'ricevuta'"
 							:class="fatturazioneType === 'ricevuta' ? 'bg-white border-[#252B42] text-[#252B42]' : 'bg-white border-[#D0D0D0] text-[#737373]'"
-							class="px-[24px] min-h-[44px] rounded-[8px] text-[0.875rem] font-medium cursor-pointer transition-colors border">
+							class="flex-1 tablet:flex-none min-w-[140px] px-[24px] min-h-[44px] rounded-[8px] text-[0.875rem] font-medium cursor-pointer transition-colors border">
 							Ricevuta
 						</button>
 						<button type="button" @click="fatturazioneType = 'fattura'"
 							:class="fatturazioneType === 'fattura' ? 'bg-white border-[#252B42] text-[#252B42]' : 'bg-white border-[#D0D0D0] text-[#737373]'"
-							class="px-[24px] min-h-[44px] rounded-[8px] text-[0.875rem] font-medium cursor-pointer transition-colors border">
+							class="flex-1 tablet:flex-none min-w-[140px] px-[24px] min-h-[44px] rounded-[8px] text-[0.875rem] font-medium cursor-pointer transition-colors border">
 							Fattura
 						</button>
 					</div>
@@ -1090,7 +1090,7 @@ const processPayment = async () => {
 					<div class="mt-[20px]">
 						<label class="flex items-start gap-[10px] cursor-pointer py-[4px]">
 							<input type="checkbox" v-model="termsAccepted" class="w-[20px] h-[20px] min-w-[20px] accent-[#095866] mt-[2px] shrink-0 cursor-pointer" />
-							<span class="text-[0.8125rem] text-[#737373] leading-[1.5]">Ho letto e accetto i <NuxtLink to="/termini" class="text-[#095866] hover:underline font-medium">Termini e condizioni</NuxtLink></span>
+							<span class="text-[0.8125rem] text-[#737373] leading-[1.5]">Ho letto e accetto i <NuxtLink to="/termini-condizioni" class="text-[#095866] hover:underline font-medium">Termini e condizioni</NuxtLink></span>
 						</label>
 					</div>
 				</div>

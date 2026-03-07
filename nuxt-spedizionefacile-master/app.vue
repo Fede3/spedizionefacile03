@@ -21,6 +21,7 @@
 <script setup>
 const { session } = useSession();
 const userStore = useUserStore();
+const route = useRoute();
 
 const restoreSession = (data) => {
 	if (data?.packages && data?.shipment_details) {
@@ -39,6 +40,23 @@ watch(() => session.value?.data, (data) => {
 		restoreSession(data);
 	}
 }, { once: true });
+
+// Failsafe: evita lock scroll globale se una route preview lascia classi/stili sul body.
+if (process.client) {
+	const unlockGlobalScroll = () => {
+		const isPreviewRoute = route.path.startsWith('/preview/home-hero');
+		if (isPreviewRoute) return;
+		document.documentElement.classList.remove('hero-preview-body');
+		document.body.classList.remove('hero-preview-body');
+		document.documentElement.style.overflow = '';
+		document.documentElement.style.overflowY = '';
+		document.body.style.overflow = '';
+		document.body.style.overflowY = '';
+	};
+
+	onMounted(unlockGlobalScroll);
+	watch(() => route.path, unlockGlobalScroll);
+}
 </script>
 
 <template>
