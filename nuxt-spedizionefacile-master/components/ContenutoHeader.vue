@@ -297,9 +297,9 @@ const props = defineProps({
 		<div
 			class="pointer-events-none absolute right-[0px] top-[142px] h-[164px] w-[132px] rotate-[6deg] rounded-[16px] bg-gradient-to-br from-[#095866] to-[#0b6d7d] opacity-[0.035] tablet:right-[24px] tablet:top-[104px] tablet:h-[200px] tablet:w-[200px] tablet:opacity-[0.05] desktop:right-[3%] desktop:top-[170px] desktop:h-[460px] desktop:w-[500px] desktop:rotate-[7deg] desktop:opacity-[0.06] desktop-xl:right-[5%] desktop-xl:top-[176px] desktop-xl:h-[500px] desktop-xl:w-[560px]"></div>
 
-		<div class="relative grid grid-cols-[minmax(0,1fr)_minmax(0,0.9fr)] items-start gap-x-[10px] gap-y-[6px] tablet:block desktop:grid desktop:grid-cols-[minmax(0,560px)_minmax(0,760px)] desktop:items-start desktop:gap-[56px] desktop-xl:grid-cols-[minmax(0,560px)_minmax(0,820px)] desktop-xl:gap-[62px]">
+		<div class="relative block tablet:grid tablet:grid-cols-[minmax(0,1fr)_minmax(0,0.9fr)] tablet:items-start tablet:gap-x-[10px] tablet:gap-y-[6px] desktop:grid desktop:grid-cols-[minmax(0,560px)_minmax(0,760px)] desktop:items-start desktop:gap-[56px] desktop-xl:grid-cols-[minmax(0,560px)_minmax(0,820px)] desktop-xl:gap-[62px]">
 			<!-- Colonna sinistra: testo + card prezzo -->
-			<div class="relative z-[5] col-start-1 row-start-1 desktop:max-w-[560px]">
+			<div class="relative z-[5] tablet:col-start-1 tablet:row-start-1 desktop:max-w-[560px]">
 				<h1 class="text-[#1a1a1a] text-[3rem] leading-[0.98] tracking-[-1.5px] font-extrabold tablet:text-[3.25rem] desktop:text-[4.5rem] desktop:tracking-[-2.5px] desktop-xl:text-[5.5rem] desktop-xl:tracking-[-3px]">
 					Spedisci<br />in Italia
 				</h1>
@@ -341,7 +341,7 @@ const props = defineProps({
 			</div>
 
 			<!-- Colonna destra: immagine -->
-			<div class="relative z-[2] col-start-2 row-start-1 mt-[4px] h-[248px] w-full max-w-none tablet:mt-[20px] tablet:h-[390px] tablet:max-w-[520px] tablet:mx-auto desktop:mt-0 desktop:h-[620px] desktop:w-full desktop:max-w-[760px] desktop:justify-self-end desktop-xl:h-[640px] desktop-xl:max-w-[820px]">
+			<div class="relative z-[2] hidden mt-[4px] h-[248px] w-full max-w-none tablet:block tablet:col-start-2 tablet:row-start-1 tablet:mt-[20px] tablet:h-[390px] tablet:max-w-[520px] tablet:mx-auto desktop:mt-0 desktop:h-[620px] desktop:w-full desktop:max-w-[760px] desktop:justify-self-end desktop-xl:h-[640px] desktop-xl:max-w-[820px]">
 				<div class="relative h-full w-full overflow-hidden rounded-[16px] border border-[#DDE5EB] bg-[#EAF1F6] shadow-[0_8px_24px_rgba(0,0,0,0.15)]">
 					<img
 						:src="heroImageUrl"
