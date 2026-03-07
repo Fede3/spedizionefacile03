@@ -904,7 +904,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-	<section :class="isHomepageLikeRoute ? 'mt-[12px] tablet:mt-[-30px] desktop:mt-[-60px] relative z-50' : 'pt-[24px]'">
+	<section :class="isHomepageLikeRoute ? 'mt-[-82px] tablet:mt-[-56px] desktop:mt-[-72px] relative z-50' : 'pt-[24px]'">
 		<div class="my-container">
 			<div
 				class="bg-white w-full rounded-[16px] relative z-10 p-[16px_12px] tablet:p-[20px_40px] desktop:p-[30px_36px] mx-auto"
