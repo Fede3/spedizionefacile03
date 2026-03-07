@@ -10274,3 +10274,18 @@ DATA: 2026-03-07
 1. Device 390/430: confermare che la hero non domini la viewport e che il preventivo resti leggibile subito.
 2. Hard refresh multipli: pill attiva sempre arancione piena (mai vuota/rettangolare).
 3. Tap sugli step completati: navigazione invariata.
+
+## TURNO: ARCHITETTURA
+DATA: 2026-03-07
+
+### Attivita' svolte
+- Spostato il blocco `Preventivo Rapido` molto piu' in alto sulla homepage (solo `isHomepageLikeRoute`) aumentando il margine negativo del wrapper sezione.
+- Obiettivo: rendere il preventivo visibile gia' nella prima vista iniziale, senza dover scendere.
+
+### File toccati in questo turno
+- `nuxt-spedizionefacile-master/components/Preventivo.vue`
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Parse SFC locale: `components/Preventivo.vue` OK.
+2. Verifica browser: in homepage il box preventivo deve comparire piu' in alto, gia' in prima schermata.
