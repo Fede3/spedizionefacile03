@@ -10289,3 +10289,775 @@ DATA: 2026-03-07
 ### Verifica
 1. Parse SFC locale: `components/Preventivo.vue` OK.
 2. Verifica browser: in homepage il box preventivo deve comparire piu' in alto, gia' in prima schermata.
+
+## TURNO: INTERFACCIA
+DATA: 2026-03-07
+
+### Attivita' svolte
+- Rifinita la hero mobile in `ContenutoHeader.vue` per rispettare il layout richiesto:
+  - colonna sinistra con titolo su 2 righe (`Spedisci` / `in Italia`),
+  - card prezzo mobile ridotta (~meta' rispetto alla versione precedente),
+  - colonna destra con immagine e decorazione inclinata spostate stabilmente a destra del blocco testo/prezzo.
+- Bilanciate proporzioni e spacing mobile (`grid-cols-[54%_46%]`, altezze/top immagine, posizione decorazione) mantenendo invariati tablet/desktop.
+
+### File toccati in questo turno
+- `nuxt-spedizionefacile-master/components/ContenutoHeader.vue`
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Parse SFC locale: `components/ContenutoHeader.vue` OK (`@vue/compiler-sfc`).
+2. Nessuna modifica backend/API.
+
+## TURNO: LOGICA
+DATA: 2026-03-07
+
+### Attivita' svolte
+- Sollevato ulteriormente il blocco `Preventivo Rapido` sulla homepage, aumentando il margine negativo solo quando `isHomepageLikeRoute` e lasciando invariata la pagina dedicata `/preventivo`.
+- Nuovi valori wrapper sezione home: `mt-[-86px] tablet:mt-[-78px] desktop:mt-[-28px] desktop-xl:mt-[-30px]`.
+
+### File toccati in questo turno
+- `nuxt-spedizionefacile-master/components/Preventivo.vue`
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Parse SFC locale: `components/Preventivo.vue` OK (`@vue/compiler-sfc`).
+2. Nessuna modifica backend/API.
+
+## TURNO: REVISIONE
+DATA: 2026-03-07
+
+### Attivita' svolte
+- Fix warning preload hero non usato: in `ContenutoHeader.vue` il preload della hero viene ora inserito solo nelle route homepage/preview-home-hero, evitando warning su `/autenticazione`.
+- Fix hydration mismatch probabile su navbar: introdotto `authReady` in `Navbar.vue` per rendere deterministico il primo render SSR/CSR su elementi variabili (stato login e contatore carrello).
+  - `authLink` usa account solo quando `authReady && isAuthenticated`.
+  - Label account desktop/mobile e badge count carrello mostrati solo quando `authReady`.
+
+### File toccati in questo turno
+- `nuxt-spedizionefacile-master/components/ContenutoHeader.vue`
+- `nuxt-spedizionefacile-master/components/Navbar.vue`
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Parse SFC locale OK: `ContenutoHeader.vue`, `Navbar.vue`.
+2. Nessuna modifica API/backend.
+
+## TURNO: CAPO
+DATA: 2026-03-08
+
+### Attivita' svolte
+- Avviato piano definitivo listino nazionale personalizzabile da admin.
+- Bloccate decisioni implementative: fasce standard + regole extra dinamiche oltre 7a fascia + supplementi CAP completamente configurabili.
+- Confermata interpretazione extra: 101-150, 151-200, ... e volume 0.401-0.600, 0.601-0.800, ... con incremento configurabile (default +5€).
+
+### File toccati in questo turno
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Decisioni allineate a requisito utente e coerenti con motore unico backend/frontend.
+
+---
+
+## TURNO: ARCHITETTURA
+DATA: 2026-03-08
+
+### Attivita' svolte
+- Hardening configurazione supplementi nel motore prezzi:
+  - rimosso fallback forzato quando lista supplementi e' vuota (ora puo' essere realmente vuota, quindi fully-custom).
+- Confermata architettura API non-breaking:
+  - `GET/PUT /api/admin/price-bands` con `weight`, `volume`, `extra_rules`, `supplements`, `version`.
+  - `GET /api/public/price-bands` estesa in modo coerente.
+
+### File toccati in questo turno
+- `laravel-spedizionefacile-main/app/Services/PriceEngineService.php`
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Lettura codice: save/get config coerenti con struttura unificata.
+2. Supplementi vuoti non vengono piu' rimpiazzati automaticamente nel normalize step.
+
+---
+
+## TURNO: INTERFACCIA
+DATA: 2026-03-08
+
+### Attivita' svolte
+- Rifatta la sezione admin `Prezzi e fasce` per renderla davvero completa:
+  - Fasce volume ora con CRUD pieno (min/max editabili, move up/down, remove, add).
+  - Sezione nuova "Regole oltre 7ª fascia" con campi completi (`start/step/resolution`, incremento, base mode manual/last band).
+  - Sezione nuova "Supplementi CAP" con tabella dinamica (prefisso, importo, apply_to, enabled, add/remove).
+  - Sezione nuova "Casi rapidi" con preview calcolo reale su casi 100/101/151kg e 0.400/0.401/0.601m3.
+  - Save area unificata "Salva configurazione nazionale" sempre visibile (non piu' legata solo a `bandsFromDb`).
+
+### File toccati in questo turno
+- `nuxt-spedizionefacile-master/pages/account/amministrazione/prezzi.vue`
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Parse SFC locale `prezzi.vue` con `@vue/compiler-sfc`: OK.
+2. Controllo template: presenti blocchi Regole extra + Supplementi + Preview + Salva unificato.
+
+---
+
+## TURNO: LOGICA
+DATA: 2026-03-08
+
+### Attivita' svolte
+- Allineata la serializzazione/salvataggio frontend del listino:
+  - payload supplementi filtrato su prefissi validi (evita errori su righe vuote in bozza);
+  - al salvataggio riuscito, `bandsFromDb` viene forzato a `true` per sbloccare stato coerente delle modifiche.
+- Allineato composable pubblico:
+  - `normalizeSupplements([])` ora mantiene lista vuota (non reintroduce default), garantendo personalizzazione completa.
+
+### File toccati in questo turno
+- `nuxt-spedizionefacile-master/pages/account/amministrazione/prezzi.vue`
+- `nuxt-spedizionefacile-master/composables/usePriceBands.js`
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Coerenza salvataggio: dopo `PUT`, stato locale originale aggiornato correttamente.
+2. Composable: supplementi vuoti rispettati quando API restituisce array vuoto.
+
+---
+
+## TURNO: REVISIONE
+DATA: 2026-03-08
+
+### Attivita' svolte
+- Eseguiti check tecnici sui file modificati:
+  - `prezzi.vue` parse SFC: OK.
+  - `usePriceBands.js` parse ESM (`node --check` su copia `.mjs`): OK.
+- Verificata assenza regressioni strutturali immediate su API contracts (nessun endpoint rimosso, solo campi estesi/coerenti).
+
+### File verificati
+- `nuxt-spedizionefacile-master/pages/account/amministrazione/prezzi.vue`
+- `nuxt-spedizionefacile-master/composables/usePriceBands.js`
+- `laravel-spedizionefacile-main/app/Services/PriceEngineService.php`
+
+### Nota ambiente
+- `php` non disponibile in questa shell: impossibile eseguire `php -l` o test Laravel runtime qui.
+
+---
+
+## TURNO: CAPO
+DATA: 2026-03-08
+
+### Attivita' svolte
+- Chiuso rilascio tecnico del piano "Prezzi Nazionali 100% personalizzabili" lato codice.
+- Confermato comportamento atteso per fasce extra:
+  - peso: 101-150 (extra 1), 151-200 (extra 2), ...
+  - volume: 0.401-0.600 (extra 1), 0.601-0.800 (extra 2), ...
+- Pronta la base per fase successiva Europa sullo stesso framework configurabile.
+
+### File toccati in questo turno
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Eseguire test funzionali in ambiente con Laravel/Nuxt avviati:
+   - `GET /api/admin/price-bands`
+   - `PUT /api/admin/price-bands`
+   - `GET /api/public/price-bands`
+2. Verificare in admin pagina prezzi:
+   - CRUD bande peso/volume,
+   - regole extra,
+   - supplementi CAP,
+   - casi preview,
+   - salvataggio e ricarica coerenti.
+
+---
+
+## TURNO: CAPO
+DATA: 2026-03-08
+
+### Obiettivo
+- Chiudere in modo definitivo il piano "Prezzi Nazionali 100% personalizzabili da admin" con focus su:
+  1. scaglioni extra da 101-150 / 151-200 ...
+  2. coerenza frontend-backend (no hardcode residui),
+  3. admin realmente libero di azzerare o personalizzare i supplementi CAP.
+
+### File target
+- `laravel-spedizionefacile-main/app/Http/Controllers/SessionController.php`
+- `nuxt-spedizionefacile-master/pages/account/amministrazione/prezzi.vue`
+- `nuxt-spedizionefacile-master/components/Preventivo.vue`
+- `_SQUADRA_DIARIO.md`
+
+### Verifica prevista
+- Parse SFC admin/preventivo.
+- Check sintassi JS composable prezzi.
+- Verifica logica: ricalcolo server obbligatorio + supplementi vuoti persistenti.
+
+---
+
+## TURNO: ARCHITETTURA
+DATA: 2026-03-08
+
+### Attività svolte
+- Identificato gap funzionale nel pannello admin: se API ritornava `supplements: []`, la UI reintroduceva default CAP `90` (comportamento non voluto).
+- Identificato gap di sicurezza/coerenza in `SessionController::firstStep`: presenza di campi opzionali `weight_price/volume_price/single_price` consentiva bypass del ricalcolo server.
+- Confermata logica extra-slab corrente:
+  - peso: `weight_start=101`, `weight_step=50`
+  - volume: `volume_start=0.401`, `volume_step=0.200`
+  - incremento: configurabile (`increment_cents`).
+
+### File analizzati
+- `laravel-spedizionefacile-main/app/Services/PriceEngineService.php`
+- `laravel-spedizionefacile-main/app/Http/Controllers/SessionController.php`
+- `nuxt-spedizionefacile-master/pages/account/amministrazione/prezzi.vue`
+- `nuxt-spedizionefacile-master/composables/usePriceBands.js`
+
+### Verifica
+- Root cause confermate su codice corrente (no ipotesi).
+
+---
+
+## TURNO: INTERFACCIA
+DATA: 2026-03-08
+
+### Attività svolte
+- Corretto fetch admin in `prezzi.vue` per rispettare anche array supplementi vuoto:
+  - prima: fallback automatico al default CAP90 quando `data.supplements.length === 0`;
+  - ora: se `data.supplements` è un array (anche vuoto) viene rispettato senza reintegro automatico.
+- Aggiornata comunicazione nel componente preventivo per eliminare riferimenti hardcoded a "CAP 90 +2,50" e renderla aderente a regole configurabili da admin.
+
+### File toccati
+- `nuxt-spedizionefacile-master/pages/account/amministrazione/prezzi.vue`
+- `nuxt-spedizionefacile-master/components/Preventivo.vue`
+
+### Verifica
+- Ricerca testuale: eliminati riferimenti `CAP90`/`+2.50` nei file di pricing interessati.
+
+---
+
+## TURNO: LOGICA
+DATA: 2026-03-08
+
+### Attività svolte
+- Reso `SessionController::firstStep` deterministicamente server-driven:
+  - rimossi da validazione i campi prezzo opzionali lato client (`single_price`, `weight_price`, `volume_price`),
+  - ricalcolo sempre eseguito server-side con `PriceEngineService` per peso e volume,
+  - prezzo finale pacco sempre `MAX(peso, volume) + supplementi CAP configurati`.
+
+### File toccati
+- `laravel-spedizionefacile-main/app/Http/Controllers/SessionController.php`
+
+### Verifica
+- Revisione logica riga-per-riga: nessun branch rimasto che usa prezzo inviato dal client.
+
+---
+
+## TURNO: REVISIONE
+DATA: 2026-03-08
+
+### Verifiche eseguite
+1. Parse Vue SFC:
+   - `nuxt-spedizionefacile-master/pages/account/amministrazione/prezzi.vue` → OK
+   - `nuxt-spedizionefacile-master/components/Preventivo.vue` → OK
+2. Check sintassi JS:
+   - `nuxt-spedizionefacile-master/composables/usePriceBands.js` (`node --check`) → OK
+3. Verifica semantica:
+   - `weight_start=101` e `volume_start=0.401` presenti in default backend/frontend.
+   - `supplements: []` ora preservato in admin senza fallback forzato.
+
+### Limite ambiente
+- Esecuzione `php -l` non disponibile in questa shell WSL (errore di bridge esecuzione `.exe`).
+
+---
+
+## TURNO: CAPO
+DATA: 2026-03-08
+
+### Chiusura
+- Piano prezzi nazionali completato sui punti bloccanti richiesti:
+  1. scaglioni extra coerenti da 101/0.401,
+  2. coerenza formula lato sessione/order/preventivo,
+  3. personalizzazione admin completa inclusa gestione supplementi vuoti.
+
+### Come verificare manualmente (smoke)
+1. In admin `/account/amministrazione/prezzi`:
+   - svuota tutti i supplementi CAP,
+   - salva,
+   - ricarica pagina: lista supplementi deve restare vuota.
+2. In preventivo:
+   - prova 100kg + 0.400 m³ (ultima standard),
+   - 101kg + 0.390 m³ (primo extra),
+   - 151kg + 0.601 m³ (secondo extra),
+   - verifica progressione prezzo coerente.
+3. Verifica coerenza backend:
+   - invia `first-step` anche con prezzi client alterati: totale deve essere ricalcolato lato server.
+
+---
+
+## TURNO: CAPO
+DATA: 2026-03-08
+
+### Obiettivo
+- Chiudere il piano prezzi nazionali con un hardening finale: salvataggio configurazione atomico (no scritture parziali) e verifica runtime reale dei casi extra oltre 7ª fascia.
+
+### Scope del turno
+- Nessun cambio UI funzionale.
+- Focus su robustezza backend e test di regressione.
+
+### File toccati
+- `_SQUADRA_DIARIO.md`
+
+### Verifica prevista
+1. Lint PHP file pricing principali.
+2. Test runtime `PriceEngineService` sui casi: 100/101/150/151/200 kg e 0.400/0.401/0.600/0.601/0.800 m³.
+
+---
+
+## TURNO: ARCHITETTURA
+DATA: 2026-03-08
+
+### Attività svolte
+- Identificato gap residuo rispetto al requisito “salvataggio unico”: `savePricingConfig()` e `clearPricingSettings()` scrivevano più setting senza transazione DB.
+- Applicata transazione atomica in `PriceEngineService` per persistenza di:
+  - bande peso,
+  - bande volume,
+  - extra rules,
+  - supplements,
+  - version.
+
+### File toccati
+- `laravel-spedizionefacile-main/app/Services/PriceEngineService.php`
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Presenza `DB::transaction(...)` in `savePricingConfig()`.
+2. Presenza `DB::transaction(...)` in `clearPricingSettings()`.
+
+---
+
+## TURNO: INTERFACCIA
+DATA: 2026-03-08
+
+### Attività svolte
+- Nessuna modifica markup/stile in questo intervento.
+- Confermato che la sezione admin prezzi continua a inviare payload completo (`weight`, `volume`, `extra_rules`, `supplements`) compatibile con il salvataggio atomico backend.
+
+### File toccati
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Parse SFC admin prezzi e preventivo: OK.
+
+---
+
+## TURNO: LOGICA
+DATA: 2026-03-08
+
+### Attività svolte
+- Eseguito test runtime reale `PriceEngineService` via PHP 8.4 CLI su app Laravel bootstrap.
+- Risultati attesi confermati:
+  - Peso: `100 -> 49.90`, `101 -> 54.90`, `150 -> 54.90`, `151 -> 59.90`, `200 -> 59.90`.
+  - Volume: `0.400 -> 49.90`, `0.401 -> 54.90`, `0.600 -> 54.90`, `0.601 -> 59.90`, `0.800 -> 59.90`.
+- Confermata quindi la progressione richiesta:
+  - primo extra `101–150` / `0.401–0.600`,
+  - secondo extra `151–200` / `0.601–0.800`.
+
+### File toccati
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Output CLI test riportato con valori numerici coerenti.
+
+---
+
+## TURNO: REVISIONE
+DATA: 2026-03-08
+
+### Verifiche eseguite
+1. Lint PHP:
+- `app/Services/PriceEngineService.php` → OK
+- `app/Http/Controllers/PriceBandController.php` → OK
+- `app/Http/Controllers/PublicPriceBandController.php` → OK
+- `app/Http/Controllers/SessionController.php` → OK
+- `app/Http/Controllers/OrderController.php` → OK
+
+2. Parse frontend:
+- `pages/account/amministrazione/prezzi.vue` → OK
+- `components/Preventivo.vue` → OK
+- `composables/usePriceBands.js` (`node --check`) → OK
+
+3. Regressione logica:
+- extra rules attive con start `101` e `0.401`.
+- supplements vuoti consentiti (nessun fallback forzato).
+
+### File toccati
+- `_SQUADRA_DIARIO.md`
+
+---
+
+## TURNO: CAPO
+DATA: 2026-03-08
+
+### Chiusura
+- Intervento di consolidamento completato.
+- Requisiti del piano rispettati su nazionale:
+  1. scaglioni extra oltre 7ª fascia con start richiesti,
+  2. incremento configurabile da admin,
+  3. configurazione interamente personalizzabile (incl. supplements vuoti),
+  4. persistenza atomica backend.
+
+### File toccati
+- `laravel-spedizionefacile-main/app/Services/PriceEngineService.php`
+- `_SQUADRA_DIARIO.md`
+
+### Come verificare rapidamente
+1. Admin `/account/amministrazione/prezzi`: salva config completa (anche supplements vuoti).
+2. API `GET /api/public/price-bands`: verificare `weight`, `volume`, `extra_rules`, `supplements`, `version`.
+3. Caso runtime: 100/101/151 kg e 0.400/0.401/0.601 m³ con progressione prezzo corretta.
+
+## TURNO: CAPO
+DATA: 2026-03-08
+
+### Obiettivo
+- Chiudere l'implementazione del piano prezzi nazionali 100% configurabili da admin, con verifica tecnica reale dei confini extra richiesti (101–150, 151–200 e 0.401–0.600, 0.601–0.800).
+
+### Scope del turno
+- Nessuna nuova regola business.
+- Consolidamento + test runtime + rifinitura preview admin sui confini di fascia.
+
+### File toccati
+- `_SQUADRA_DIARIO.md`
+
+### Verifica prevista
+1. Test runtime `PriceEngineService` su casi confine peso/volume.
+2. Verifica shape config (`weight`, `volume`, `extra_rules`, `supplements`, `version`).
+3. Parse SFC pagina admin prezzi.
+
+---
+
+## TURNO: ARCHITETTURA
+DATA: 2026-03-08
+
+### Attività svolte
+- Verificata coerenza architetturale del motore unico `PriceEngineService` su:
+  - lettura setting JSON,
+  - fallback da `price_bands` DB,
+  - extra rules configurabili,
+  - supplements CAP configurabili,
+  - versioning config.
+- Confermato utilizzo del motore in:
+  - `SessionController::firstStep`
+  - `OrderController::createDirectOrder`
+  - `OrderController::addPackage`
+
+### File toccati
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Nessun hardcode residuo nel calcolo centrale peso/volume oltre al fallback default.
+2. Prezzo finale sempre `MAX(peso, volume) + supplementi`.
+
+---
+
+## TURNO: INTERFACCIA
+DATA: 2026-03-08
+
+### Attività svolte
+- Rifinita anteprima casi admin in `prezzi.vue` per rendere espliciti i confini richiesti dal cliente:
+  - `Primo extra (inizio)` = 101 kg / 0.401 m³
+  - `Primo extra (limite)` = 150 kg / 0.600 m³
+  - `Secondo extra` = 151 kg / 0.601 m³
+
+### File toccati
+- `nuxt-spedizionefacile-master/pages/account/amministrazione/prezzi.vue`
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Parse SFC `prezzi.vue` OK.
+
+---
+
+## TURNO: LOGICA
+DATA: 2026-03-08
+
+### Attività svolte
+- Eseguito test runtime reale via PHP CLI bootstrap Laravel.
+- Output verificato:
+  - `W100:49.90`
+  - `W101:54.90`
+  - `W150:54.90`
+  - `W151:59.90`
+  - `W200:59.90`
+  - `V0.400:49.90`
+  - `V0.401:54.90`
+  - `V0.600:54.90`
+  - `V0.601:59.90`
+  - `V0.800:59.90`
+- Verificata shape config motore:
+  - keys: `weight`, `volume`, `extra_rules`, `supplements`, `version`
+  - conteggi bande: peso 7, volume 7
+  - presenza completa campi `extra_rules`
+
+### File toccati
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Confini extra rispettati esattamente come richiesto (101/150, 151/200; 0.401/0.600, 0.601/0.800).
+
+---
+
+## TURNO: REVISIONE
+DATA: 2026-03-08
+
+### Verifiche eseguite
+1. Lint PHP:
+- `app/Services/PriceEngineService.php` → OK
+- `app/Http/Controllers/PriceBandController.php` → OK
+- `app/Http/Controllers/PublicPriceBandController.php` → OK
+- `app/Http/Controllers/SessionController.php` → OK
+- `app/Http/Controllers/OrderController.php` → OK
+
+2. Parse frontend:
+- `pages/account/amministrazione/prezzi.vue` → OK
+- `components/Preventivo.vue` → OK
+- `composables/usePriceBands.js` (`node --check`) → OK
+
+3. Regressione API:
+- Admin/public `price-bands` con campi estesi presenti.
+
+### File toccati
+- `_SQUADRA_DIARIO.md`
+
+---
+
+## TURNO: CAPO
+DATA: 2026-03-08
+
+### Chiusura
+- Piano prezzi nazionale implementato e consolidato.
+- Confermati i requisiti:
+  1. fasce extra oltre 7ª con start a 101 kg e 0.401 m³;
+  2. progressione a scaglioni (50 kg / 0.200 m³) e incremento configurabile;
+  3. gestione completa admin (`bande`, `extra_rules`, `supplements`) via settings;
+  4. coerenza calcolo frontend/backend.
+
+### File toccati
+- `nuxt-spedizionefacile-master/pages/account/amministrazione/prezzi.vue`
+- `_SQUADRA_DIARIO.md`
+
+### Come verificare rapidamente
+1. Vai su `/account/amministrazione/prezzi` e controlla la preview casi confine.
+2. Salva una configurazione e verifica `GET /api/public/price-bands` (campi `extra_rules`, `supplements`, `version`).
+3. Testa input 100/101/150/151 kg e 0.400/0.401/0.600/0.601 m³ sul preventivo: i salti prezzo devono rispettare gli scaglioni.
+
+### Addendum verifica supplementi CAP (post-chiusura)
+- Test runtime aggiuntivo eseguito su `PriceEngineService`:
+  - `90100 -> 45100` => `2.50`
+  - `45100 -> 90100` => `2.50`
+  - `90100 -> 90100` => `5.00`
+- Confermata applicazione corretta delle regole `apply_to=both` con prefisso configurato.
+
+## TURNO: ARCHITETTURA
+DATA: 2026-03-09
+
+### Attività svolte
+- Ricevuta precisazione cliente: i valori `100/101/150/...` erano esempi, non vincoli hardcoded.
+- Disegnata estensione del motore extra-fasce a modalità doppia:
+  - `flat` (incremento fisso per scaglione),
+  - `ladder` (incrementi diversi per intervalli di step, estesi all'infinito).
+- Definita compatibilità retroattiva: se le nuove ladder non sono presenti, resta valido il comportamento storico con `increment_cents`.
+
+### File toccati
+- `laravel-spedizionefacile-main/app/Services/PriceEngineService.php`
+- `laravel-spedizionefacile-main/app/Http/Controllers/PriceBandController.php`
+- `nuxt-spedizionefacile-master/composables/usePriceBands.js`
+- `nuxt-spedizionefacile-master/pages/account/amministrazione/prezzi.vue`
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Config supporta entrambe le modalità (`flat`, `ladder`) senza breaking change payload.
+
+---
+
+## TURNO: INTERFACCIA
+DATA: 2026-03-09
+
+### Attività svolte
+- Aggiornata UI admin prezzi (`/account/amministrazione/prezzi`) nella sezione “Regole oltre 7ª fascia”:
+  - selettore modalità incremento (`Fisso` / `A scaglioni personalizzati`),
+  - editor ladder peso (righe `da step`, `a step`, `+€/step`),
+  - editor ladder volume (stesso schema),
+  - pulsanti aggiunta/rimozione riga.
+- Aggiornata preview casi rapidi con confini dinamici, derivati dai parametri configurati (non più fissi a 101/150/151).
+
+### File toccati
+- `nuxt-spedizionefacile-master/pages/account/amministrazione/prezzi.vue`
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Parse SFC `prezzi.vue` eseguito con `@vue/compiler-sfc`: OK.
+
+---
+
+## TURNO: LOGICA
+DATA: 2026-03-09
+
+### Attività svolte
+- Backend `PriceEngineService` esteso:
+  - nuovi campi default `increment_mode`, `weight_increment_ladder`, `volume_increment_ladder`,
+  - normalizzazione ladder con estensione automatica a infinito (ultima riga open-ended),
+  - validazione ladder (contiguità step, no overlap, ultimo scaglione infinito),
+  - calcolo prezzo extra con cumulativo per step in modalità ladder.
+- Controller admin validazione payload estesa ai nuovi campi ladder.
+- Frontend `usePriceBands` allineato 1:1 a backend:
+  - normalizzazione nuovi campi,
+  - calcolo extra in `flat` e `ladder` con cumulativo coerente.
+
+### File toccati
+- `laravel-spedizionefacile-main/app/Services/PriceEngineService.php`
+- `laravel-spedizionefacile-main/app/Http/Controllers/PriceBandController.php`
+- `nuxt-spedizionefacile-master/composables/usePriceBands.js`
+- `nuxt-spedizionefacile-master/pages/account/amministrazione/prezzi.vue`
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. `node --check nuxt-spedizionefacile-master/composables/usePriceBands.js` → OK.
+2. Parse SFC admin prezzi → OK.
+
+---
+
+## TURNO: REVISIONE
+DATA: 2026-03-09
+
+### Verifiche eseguite
+1. Coerenza contratto API:
+- `GET /api/admin/price-bands` e `GET /api/public/price-bands` continuano a restituire `extra_rules` senza breaking.
+- Nuovi campi ladder sono opzionali e retrocompatibili.
+
+2. Static checks disponibili in ambiente:
+- `usePriceBands.js` sintassi OK.
+- `prezzi.vue` parse OK.
+
+3. Limite ambiente:
+- lint PHP CLI non eseguibile in questa sessione WSL (`UtilBindVsockAnyPort` su binario PHP Windows), quindi verifica PHP runtime va fatta nel tuo ambiente locale dove PHP CLI è disponibile.
+
+### File toccati
+- `_SQUADRA_DIARIO.md`
+
+---
+
+## TURNO: CAPO
+DATA: 2026-03-09
+
+### Chiusura
+- Requisito aggiornato recepito: le fasce successive non sono più “solo esempio”, ma pienamente configurabili per estensione teoricamente infinita.
+- Sistema ora supporta:
+  1. modalità classica a incremento fisso,
+  2. modalità a salti progressivi personalizzati per step extra (peso e volume separati).
+- Rimane 100% personalizzabile da admin senza introdurre nuove tabelle (settings JSON).
+
+### File toccati
+- `laravel-spedizionefacile-main/app/Services/PriceEngineService.php`
+- `laravel-spedizionefacile-main/app/Http/Controllers/PriceBandController.php`
+- `nuxt-spedizionefacile-master/composables/usePriceBands.js`
+- `nuxt-spedizionefacile-master/pages/account/amministrazione/prezzi.vue`
+- `_SQUADRA_DIARIO.md`
+
+### Come verificare rapidamente
+1. Vai su `/account/amministrazione/prezzi`.
+2. In “Regole oltre 7ª fascia” scegli `A scaglioni personalizzati`.
+3. Imposta ladder peso/volume con incrementi diversi per blocchi step.
+4. Salva e verifica in preview e nel preventivo che i salti cambino secondo le righe configurate.
+
+---
+
+## TURNO: ARCHITETTURA
+DATA: 2026-03-09
+
+### Attività svolte
+- Allineata la configurazione di default al requisito chiarito dal cliente: comportamento extra-fasce orientato a scaglioni estendibili, non a incremento fisso nascosto.
+- Impostato default `increment_mode` su `ladder` in backend, composable pubblico e pagina admin prezzi.
+- Mantenuta retrocompatibilità piena: se in settings è già salvato `flat`, il sistema continua a rispettarlo.
+
+### File toccati
+- `laravel-spedizionefacile-main/app/Services/PriceEngineService.php`
+- `nuxt-spedizionefacile-master/composables/usePriceBands.js`
+- `nuxt-spedizionefacile-master/pages/account/amministrazione/prezzi.vue`
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Ricerca configurazioni: `increment_mode` default ora risulta `ladder` nei tre punti principali.
+2. Controllo sintassi JS: `node --check nuxt-spedizionefacile-master/composables/usePriceBands.js` OK.
+
+## TURNO: INTERFACCIA
+DATA: 2026-03-10
+
+### Attività svolte
+- Semplificata la UI admin prezzi in `/account/amministrazione/prezzi` per il requisito cliente: incremento extra sempre fisso.
+- Rimossa dal template la scelta `Modalità incremento` e rimossa l'editor ladder peso/volume.
+- Lasciato un solo campo chiaro: `Incremento fisso per ogni fascia extra (€)`.
+- Mantenuta la scelta `Base prezzo extra` (ultima fascia effettiva/manuale).
+
+### File toccati
+- `nuxt-spedizionefacile-master/pages/account/amministrazione/prezzi.vue`
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. Parse SFC `prezzi.vue` con `@vue/compiler-sfc`: OK.
+
+---
+
+## TURNO: LOGICA
+DATA: 2026-03-10
+
+### Attività svolte
+- Forzata la logica extra-fasce a incremento lineare fisso (no ladder attiva):
+  - backend `PriceEngineService`: `increment_mode` normalizzato sempre a `flat`.
+  - calcolo extra: `base_extra + (bandNumber * increment_cents)`.
+  - default aggiornati a `flat`.
+- Frontend composable `usePriceBands` allineato alla stessa regola (sempre lineare fisso).
+- Validazione controller admin allineata: `extra_rules.increment_mode` accetta solo `flat`.
+
+### File toccati
+- `laravel-spedizionefacile-main/app/Services/PriceEngineService.php`
+- `laravel-spedizionefacile-main/app/Http/Controllers/PriceBandController.php`
+- `nuxt-spedizionefacile-master/composables/usePriceBands.js`
+- `nuxt-spedizionefacile-master/pages/account/amministrazione/prezzi.vue`
+- `_SQUADRA_DIARIO.md`
+
+### Verifica
+1. `node --check nuxt-spedizionefacile-master/composables/usePriceBands.js`: OK.
+2. Coerenza formula extra verificata nel codice backend/frontend: solo incremento fisso.
+
+---
+
+## TURNO: REVISIONE
+DATA: 2026-03-10
+
+### Verifiche eseguite
+1. Admin UI: non sono più presenti controlli ladder; è presente solo l'incremento fisso in euro.
+2. Contratto payload: backend continua a essere retrocompatibile sui campi extra, ma la modalità effettiva è forzata a `flat`.
+3. Sintassi frontend:
+- `usePriceBands.js` check OK.
+- `prezzi.vue` parse OK.
+
+### Limiti ambiente
+- `php -l` non eseguibile in questa sessione (`php: command not found`); verifica PHP runtime da eseguire nel tuo ambiente locale Windows dove PHP CLI è disponibile.
+
+### File toccati
+- `_SQUADRA_DIARIO.md`
+
+---
+
+## TURNO: CAPO
+DATA: 2026-03-10
+
+### Chiusura
+- Recepita richiesta cliente: oltre la 7ª fascia il sistema ora è guidato da incremento fisso configurabile da admin.
+- Scelta tecnica finale:
+  1. nessuna selezione ladder nel pannello admin,
+  2. incremento sempre costante in euro per ogni fascia extra,
+  3. comportamento coerente su backend, API e frontend.
+
+### Come verificare rapidamente
+1. Vai su `/account/amministrazione/prezzi`.
+2. Modifica `Incremento fisso per ogni fascia extra (€)` (es. 5,00 → 6,00) e salva.
+3. Verifica sul preventivo i salti oltre la 7ª:
+- 8ª = base + 1*incremento
+- 9ª = base + 2*incremento
+- 10ª = base + 3*incremento
+
+### File toccati
+- `_SQUADRA_DIARIO.md`
