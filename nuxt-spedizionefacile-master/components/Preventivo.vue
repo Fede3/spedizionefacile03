@@ -27,10 +27,10 @@
 	6. Se tutto va bene, appare il prezzo totale e l'utente puo' procedere allo step successivo
 
 	FORMULA PREZZO:
-	- Si calcola un prezzo basato sul peso (7 fasce dinamiche da API, fallback hardcoded)
-	- Si calcola un prezzo basato sul volume (7 fasce analoghe in m3)
+	- Si calcola un prezzo basato sul peso (fasce dinamiche da API + eventuali scaglioni extra)
+	- Si calcola un prezzo basato sul volume (fasce dinamiche da API + eventuali scaglioni extra)
 	- Si prende il prezzo PIU' ALTO tra i due → MAX(peso, volume)
-	- Si aggiunge il supplemento CAP 90 (+2.50€ per ogni CAP che inizia con 90)
+	- Si aggiungono gli eventuali supplementi CAP configurati da admin
 	- Si moltiplica per la quantita' di colli uguali
 
 	I dati del preventivo vengono salvati nello "store" Pinia (memoria condivisa del sito)
@@ -48,7 +48,7 @@ const formRef = ref(null);          // Riferimento al <form> HTML per la validaz
 const isRateCalculated = ref(false); // true quando il prezzo e' stato calcolato e confermato dal server
 
 // Carica fasce prezzo dinamiche dall'API (con fallback hardcoded)
-const { loadPriceBands, getWeightPrice, getVolumePrice, promoSettings, getMinPrice } = usePriceBands();
+const { loadPriceBands, getWeightPrice, getVolumePrice, getCapSupplement, promoSettings, getMinPrice } = usePriceBands();
 onMounted(() => { loadPriceBands(); });
 
 // --- AUTOCOMPLETE CITTA'/CAP ---
@@ -496,7 +496,7 @@ const myPack = ref(null);             // Riferimento al pacco attualmente in mod
 const sanctum = useSanctumClient();
 
 /* Controllo se il prezzo con il volume e con il peso esistono e calcolo la quantità
- * Il prezzo finale e' il MAX tra peso e volume + supplemento CAP 90 (+2.50€ per ogni CAP che inizia con 90)
+ * Il prezzo finale e' il MAX tra peso e volume + supplementi CAP configurati da admin
  */
 const checkPrices = (pack) => {
 	let basePrice = null;
@@ -513,12 +513,10 @@ const checkPrices = (pack) => {
 	}
 
 	if (basePrice != null && basePrice > 0) {
-		// Supplemento per CAP che iniziano con "90" (+2.50€ per ritiro e/o destinazione)
-		let supplement = 0;
-		const originCap = userStore.shipmentDetails.origin_postal_code || '';
-		const destCap = userStore.shipmentDetails.destination_postal_code || '';
-		if (originCap.startsWith('90')) supplement += 2.50;
-		if (destCap.startsWith('90')) supplement += 2.50;
+		// Supplementi CAP configurati da pannello admin (origine/destinazione)
+		const originCap = userStore.shipmentDetails.origin_postal_code || "";
+		const destCap = userStore.shipmentDetails.destination_postal_code || "";
+		const supplement = Number(getCapSupplement(originCap, destCap) || 0);
 
 		pack.single_price = Number((basePrice + supplement).toFixed(2));
 		pack.single_priceOrig = pack.single_price;
@@ -863,11 +861,11 @@ watch(
 	{ deep: true },
 );
 
-// Ricalcola supplementi CAP90 quando i CAP cambiano
+// Ricalcola supplementi CAP quando i CAP cambiano
 watch(
 	() => [userStore.shipmentDetails.origin_postal_code, userStore.shipmentDetails.destination_postal_code],
 	() => {
-		// Ricalcola i prezzi di tutti i pacchi per aggiornare il supplemento CAP90
+		// Ricalcola i prezzi di tutti i pacchi per aggiornare i supplementi CAP
 		for (const pack of userStore.packages) {
 			if (pack.weight_price != null || pack.volume_price != null) {
 				checkPrices(pack);
@@ -904,7 +902,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-	<section :class="isHomepageLikeRoute ? 'mt-[-82px] tablet:mt-[-56px] desktop:mt-[-72px] relative z-50' : 'pt-[24px]'">
+		<section :class="isHomepageLikeRoute ? 'mt-[-86px] tablet:mt-[-78px] desktop:mt-[-28px] desktop-xl:mt-[-30px] relative z-50' : 'pt-[24px]'">
 		<div class="my-container">
 			<div
 				class="bg-white w-full rounded-[16px] relative z-10 p-[16px_12px] tablet:p-[20px_40px] desktop:p-[30px_36px] mx-auto"

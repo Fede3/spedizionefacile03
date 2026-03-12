@@ -23,7 +23,7 @@
   VINCOLI:
     - Solo utenti Admin (middleware admin).
     - I prezzi sono salvati in centesimi nel DB, visualizzati in euro nel frontend.
-    - Formula prezzo: MAX(prezzo_peso, prezzo_volume) + supplemento CAP90 (+2,50 per ogni CAP "90").
+    - Formula prezzo: MAX(prezzo_peso, prezzo_volume) + supplementi CAP configurabili (prefisso, importo, origine/destinazione).
     - Se discount_price e' null, il prezzo effettivo e' il base_price.
 
   ERRORI TIPICI:
@@ -57,6 +57,27 @@ const volumeBands = ref([]);
 const bandsFromDb = ref(false);
 const originalWeightBands = ref([]);
 const originalVolumeBands = ref([]);
+const extraRules = ref({
+	enabled: true,
+	weight_start: 101,
+	weight_step: 50,
+	volume_start: 0.401,
+	volume_step: 0.2,
+	increment_cents: 500,
+	increment_mode: 'flat',
+	weight_increment_ladder: [{ from_step: 1, to_step: null, increment_cents: 500 }],
+	volume_increment_ladder: [{ from_step: 1, to_step: null, increment_cents: 500 }],
+	base_price_cents_mode: 'last_band_effective',
+	base_price_cents_manual: null,
+	weight_resolution: 1,
+	volume_resolution: 0.001,
+});
+const supplementRules = ref([
+	{ id: 'supplement-1', prefix: '90', amount_cents: 250, apply_to: 'both', enabled: true },
+]);
+const originalExtraRules = ref(null);
+const originalSupplementRules = ref([]);
+const pricingVersion = ref(null);
 
 // --- PROMO ---
 const promoLoading = ref(false);
@@ -71,22 +92,64 @@ const promo = ref({
 	description: '', // Descrizione testuale dello sconto mostrata nell'header homepage
 });
 
-// Confronta se ci sono modifiche rispetto ai valori originali
+const buildPricingPayload = () => ({
+	weight: weightBands.value.map((band, idx) => ({
+		id: band.id || `w-${idx + 1}`,
+		min_value: Number(band.min_value),
+		max_value: Number(band.max_value),
+		base_price: Number(band.base_price || 0),
+		discount_price: band.discount_price === null || band.discount_price === '' ? null : Number(band.discount_price),
+		show_discount: band.show_discount !== false,
+		sort_order: idx + 1,
+	})),
+	volume: volumeBands.value.map((band, idx) => ({
+		id: band.id || `v-${idx + 1}`,
+		min_value: Number(band.min_value),
+		max_value: Number(band.max_value),
+		base_price: Number(band.base_price || 0),
+		discount_price: band.discount_price === null || band.discount_price === '' ? null : Number(band.discount_price),
+		show_discount: band.show_discount !== false,
+		sort_order: idx + 1,
+	})),
+	extra_rules: {
+		enabled: extraRules.value.enabled !== false,
+		weight_start: Number(extraRules.value.weight_start),
+		weight_step: Number(extraRules.value.weight_step),
+		volume_start: Number(extraRules.value.volume_start),
+		volume_step: Number(extraRules.value.volume_step),
+		increment_cents: Number(extraRules.value.increment_cents || 0),
+		increment_mode: 'flat',
+		weight_increment_ladder: normalizeLadderForPayload([{ from_step: 1, to_step: null, increment_cents: Number(extraRules.value.increment_cents || 0) }], Number(extraRules.value.increment_cents || 0)),
+		volume_increment_ladder: normalizeLadderForPayload([{ from_step: 1, to_step: null, increment_cents: Number(extraRules.value.increment_cents || 0) }], Number(extraRules.value.increment_cents || 0)),
+		base_price_cents_mode: extraRules.value.base_price_cents_mode === 'manual' ? 'manual' : 'last_band_effective',
+		base_price_cents_manual: extraRules.value.base_price_cents_mode === 'manual'
+			? Number(extraRules.value.base_price_cents_manual || 0)
+			: null,
+		weight_resolution: Number(extraRules.value.weight_resolution || 1),
+		volume_resolution: Number(extraRules.value.volume_resolution || 0.001),
+	},
+	supplements: supplementRules.value
+		.map((rule, idx) => ({
+			id: rule.id || `supplement-${idx + 1}`,
+			prefix: String(rule.prefix || '').replace(/\D+/g, ''),
+			amount_cents: Number(rule.amount_cents || 0),
+			apply_to: ['origin', 'destination', 'both'].includes(rule.apply_to) ? rule.apply_to : 'both',
+			enabled: rule.enabled !== false,
+		}))
+		.filter((rule) => rule.prefix.length > 0),
+});
+
+const toComparable = (obj) => JSON.stringify(obj);
+
 const hasChanges = computed(() => {
-	if (!bandsFromDb.value) return false;
-	if (weightBands.value.length !== originalWeightBands.value.length) return true;
-	if (volumeBands.value.length !== originalVolumeBands.value.length) return true;
-	for (let i = 0; i < weightBands.value.length; i++) {
-		if (weightBands.value[i].base_price !== originalWeightBands.value[i].base_price) return true;
-		if (weightBands.value[i].discount_price !== originalWeightBands.value[i].discount_price) return true;
-		if (weightBands.value[i].show_discount !== originalWeightBands.value[i].show_discount) return true;
-	}
-	for (let i = 0; i < volumeBands.value.length; i++) {
-		if (volumeBands.value[i].base_price !== originalVolumeBands.value[i].base_price) return true;
-		if (volumeBands.value[i].discount_price !== originalVolumeBands.value[i].discount_price) return true;
-		if (volumeBands.value[i].show_discount !== originalVolumeBands.value[i].show_discount) return true;
-	}
-	return false;
+	const current = toComparable(buildPricingPayload());
+	const original = toComparable({
+		weight: originalWeightBands.value,
+		volume: originalVolumeBands.value,
+		extra_rules: originalExtraRules.value || extraRules.value,
+		supplements: originalSupplementRules.value || supplementRules.value,
+	});
+	return !bandsFromDb.value || current !== original;
 });
 
 // Fasce di default
@@ -108,6 +171,24 @@ const DEFAULT_VOLUME_BANDS = [
 	{ min_value: 0.200, max_value: 0.300, base_price: 3990, discount_price: null, show_discount: true },
 	{ min_value: 0.300, max_value: 0.400, base_price: 4990, discount_price: null, show_discount: true },
 ];
+const DEFAULT_EXTRA_RULES = {
+	enabled: true,
+	weight_start: 101,
+	weight_step: 50,
+	volume_start: 0.401,
+	volume_step: 0.2,
+	increment_cents: 500,
+	increment_mode: 'flat',
+	weight_increment_ladder: [{ from_step: 1, to_step: null, increment_cents: 500 }],
+	volume_increment_ladder: [{ from_step: 1, to_step: null, increment_cents: 500 }],
+	base_price_cents_mode: 'last_band_effective',
+	base_price_cents_manual: null,
+	weight_resolution: 1,
+	volume_resolution: 0.001,
+};
+const DEFAULT_SUPPLEMENTS = [
+	{ id: 'supplement-1', prefix: '90', amount_cents: 250, apply_to: 'both', enabled: true },
+];
 
 // Stato editing
 const editingCell = ref(null);
@@ -117,7 +198,8 @@ const fetchPriceBands = async () => {
 	isLoading.value = true;
 	try {
 		const res = await sanctum("/api/admin/price-bands");
-		const data = res?.data || res || {};
+		const payload = res?.data || res || {};
+		const data = payload?.data || payload || {};
 		const w = data.weight || [];
 		const v = data.volume || [];
 		if (w.length > 0 || v.length > 0) {
@@ -125,15 +207,43 @@ const fetchPriceBands = async () => {
 			volumeBands.value = v.map(b => ({ ...b }));
 			originalWeightBands.value = w.map(b => ({ ...b }));
 			originalVolumeBands.value = v.map(b => ({ ...b }));
+			extraRules.value = {
+				...DEFAULT_EXTRA_RULES,
+				...(data.extra_rules || {}),
+			};
+			extraRules.value.increment_mode = 'flat';
+			extraRules.value.weight_increment_ladder = normalizeLadderForPayload(extraRules.value.weight_increment_ladder, extraRules.value.increment_cents);
+			extraRules.value.volume_increment_ladder = normalizeLadderForPayload(extraRules.value.volume_increment_ladder, extraRules.value.increment_cents);
+			const supplementsFromApi = Array.isArray(data.supplements) ? data.supplements : DEFAULT_SUPPLEMENTS;
+			supplementRules.value = supplementsFromApi.map((rule, idx) => ({ id: rule.id || `supplement-${idx + 1}`, ...rule }));
+			originalExtraRules.value = JSON.parse(JSON.stringify(extraRules.value));
+			originalSupplementRules.value = JSON.parse(JSON.stringify(supplementRules.value));
+			pricingVersion.value = data.version || null;
 			bandsFromDb.value = true;
 		} else {
 			weightBands.value = DEFAULT_WEIGHT_BANDS.map((b, i) => ({ ...b, id: `new-w-${i}` }));
 			volumeBands.value = DEFAULT_VOLUME_BANDS.map((b, i) => ({ ...b, id: `new-v-${i}` }));
+			extraRules.value = { ...DEFAULT_EXTRA_RULES };
+			extraRules.value.increment_mode = 'flat';
+			extraRules.value.weight_increment_ladder = normalizeLadderForPayload(extraRules.value.weight_increment_ladder, extraRules.value.increment_cents);
+			extraRules.value.volume_increment_ladder = normalizeLadderForPayload(extraRules.value.volume_increment_ladder, extraRules.value.increment_cents);
+			supplementRules.value = DEFAULT_SUPPLEMENTS.map(rule => ({ ...rule }));
+			originalExtraRules.value = JSON.parse(JSON.stringify(extraRules.value));
+			originalSupplementRules.value = JSON.parse(JSON.stringify(supplementRules.value));
+			pricingVersion.value = null;
 			bandsFromDb.value = false;
 		}
 	} catch (e) {
 		weightBands.value = DEFAULT_WEIGHT_BANDS.map((b, i) => ({ ...b, id: `new-w-${i}` }));
 		volumeBands.value = DEFAULT_VOLUME_BANDS.map((b, i) => ({ ...b, id: `new-v-${i}` }));
+		extraRules.value = { ...DEFAULT_EXTRA_RULES };
+		extraRules.value.increment_mode = 'flat';
+		extraRules.value.weight_increment_ladder = normalizeLadderForPayload(extraRules.value.weight_increment_ladder, extraRules.value.increment_cents);
+		extraRules.value.volume_increment_ladder = normalizeLadderForPayload(extraRules.value.volume_increment_ladder, extraRules.value.increment_cents);
+		supplementRules.value = DEFAULT_SUPPLEMENTS.map(rule => ({ ...rule }));
+		originalExtraRules.value = JSON.parse(JSON.stringify(extraRules.value));
+		originalSupplementRules.value = JSON.parse(JSON.stringify(supplementRules.value));
+		pricingVersion.value = null;
 		bandsFromDb.value = false;
 	} finally {
 		isLoading.value = false;
@@ -197,6 +307,205 @@ const discountInfo = (band) => {
 	return Math.round(diff);
 };
 
+const normalizeLadderForPayload = (rows, fallbackIncrement) => {
+	const fallback = Math.max(0, Number(fallbackIncrement || 0));
+	const source = Array.isArray(rows) ? rows : [];
+	const normalized = source
+		.map((row, idx) => {
+			const fromStep = Math.max(1, Number.parseInt(row?.from_step ?? (idx + 1), 10) || 1);
+			const toRaw = row?.to_step;
+			const toStep = toRaw === null || toRaw === '' || toRaw === undefined
+				? null
+				: Math.max(fromStep, Number.parseInt(toRaw, 10) || fromStep);
+			const increment = Math.max(0, Number.parseInt(row?.increment_cents ?? fallback, 10) || 0);
+			return { from_step: fromStep, to_step: toStep, increment_cents: increment };
+		})
+		.sort((a, b) => a.from_step - b.from_step);
+
+	if (!normalized.length) {
+		return [{ from_step: 1, to_step: null, increment_cents: fallback }];
+	}
+
+	normalized[normalized.length - 1].to_step = null;
+	return normalized;
+};
+
+const ladderRowsFor = (kind) => {
+	return kind === 'weight' ? extraRules.value.weight_increment_ladder : extraRules.value.volume_increment_ladder;
+};
+
+const addLadderRow = (kind) => {
+	const rows = ladderRowsFor(kind);
+	const payloadRows = normalizeLadderForPayload(rows, extraRules.value.increment_cents);
+	const last = payloadRows[payloadRows.length - 1] || { from_step: 1, to_step: null, increment_cents: Number(extraRules.value.increment_cents || 0) };
+	const fromStep = last.to_step == null ? (last.from_step + 1) : (last.to_step + 1);
+	rows.push({
+		from_step: fromStep,
+		to_step: null,
+		increment_cents: Number(last.increment_cents || extraRules.value.increment_cents || 0),
+	});
+};
+
+const removeLadderRow = (kind, idx) => {
+	const rows = ladderRowsFor(kind);
+	if (rows.length <= 1) {
+		showError(null, 'Deve rimanere almeno uno scaglione incremento.');
+		return;
+	}
+	rows.splice(idx, 1);
+};
+
+const ensureLadderContinuity = (kind) => {
+	const rows = ladderRowsFor(kind);
+	const normalized = normalizeLadderForPayload(rows, extraRules.value.increment_cents);
+	const rebuilt = normalized.map((row, idx) => ({
+		from_step: idx === 0 ? 1 : normalized[idx - 1].to_step + 1,
+		to_step: idx === normalized.length - 1 ? null : (row.to_step ?? row.from_step),
+		increment_cents: row.increment_cents,
+	}));
+	if (kind === 'weight') {
+		extraRules.value.weight_increment_ladder = rebuilt;
+	} else {
+		extraRules.value.volume_increment_ladder = rebuilt;
+	}
+};
+
+const incrementCentsToEuro = (value) => (Number(value || 0) / 100).toFixed(2).replace('.', ',');
+
+const updateLadderIncrementFromEuro = (row, rawValue) => {
+	const cents = euroToCents(rawValue);
+	row.increment_cents = Math.max(0, cents ?? 0);
+};
+
+const PREVIEW_EPSILON = 0.0000001;
+
+const effectivePriceCentsLocal = (band) => {
+	if (!band) return 0;
+	if (band.discount_price != null && Number(band.discount_price) >= 0) {
+		return Number(band.discount_price);
+	}
+	return Number(band.base_price || 0);
+};
+
+const ceilByResolutionLocal = (value, resolution) => {
+	const safeResolution = Number(resolution) > 0 ? Number(resolution) : 1;
+	const multiplier = 1 / safeResolution;
+	return Number((Math.ceil((Number(value) * multiplier) - PREVIEW_EPSILON) / multiplier).toFixed(4));
+};
+
+const findBandLocal = (bands, rawValue) => {
+	const value = Number(rawValue);
+	if (!Array.isArray(bands) || !bands.length || !Number.isFinite(value) || value <= 0) return null;
+	for (let idx = 0; idx < bands.length; idx += 1) {
+		const band = bands[idx];
+		const min = Number(band.min_value);
+		const max = Number(band.max_value);
+		const lowerOk = idx === 0 ? value >= (min - PREVIEW_EPSILON) : value > (min + PREVIEW_EPSILON);
+		const upperOk = value <= (max + PREVIEW_EPSILON);
+		if (lowerOk && upperOk) return band;
+	}
+	return null;
+};
+
+const calculateExtraPriceCentsLocal = (type, rawValue) => {
+	if (!extraRules.value?.enabled) return null;
+
+	const isWeight = type === 'weight';
+	const start = Number(isWeight ? extraRules.value.weight_start : extraRules.value.volume_start);
+	const step = Number(isWeight ? extraRules.value.weight_step : extraRules.value.volume_step);
+	const resolution = Number(isWeight ? extraRules.value.weight_resolution : extraRules.value.volume_resolution);
+	const increment = Number(extraRules.value.increment_cents || 0);
+	if (!Number.isFinite(start) || !Number.isFinite(step) || !Number.isFinite(resolution) || step <= 0 || resolution <= 0 || increment < 0) {
+		return null;
+	}
+
+	const value = ceilByResolutionLocal(rawValue, resolution);
+	if (value + PREVIEW_EPSILON < start) return null;
+
+	let baseCents = 0;
+	if (extraRules.value.base_price_cents_mode === 'manual') {
+		baseCents = Number(extraRules.value.base_price_cents_manual || 0);
+	} else {
+		const sourceBands = isWeight ? weightBands.value : volumeBands.value;
+		const lastBand = sourceBands[sourceBands.length - 1];
+		baseCents = effectivePriceCentsLocal(lastBand);
+	}
+
+	const stepsFromStart = Math.floor(((value - start) + PREVIEW_EPSILON) / step);
+	const bandNumber = Math.max(0, stepsFromStart) + 1;
+
+	// Regola business corrente: incremento fisso per ogni fascia extra.
+	return Math.max(0, Math.round(baseCents + (bandNumber * increment)));
+};
+
+const calculateBandPriceCentsLocal = (type, rawValue) => {
+	const bands = type === 'weight' ? weightBands.value : volumeBands.value;
+	const band = findBandLocal(bands, rawValue);
+	if (band) return effectivePriceCentsLocal(band);
+	const extraPrice = calculateExtraPriceCentsLocal(type, rawValue);
+	if (extraPrice !== null) return extraPrice;
+	const lastBand = bands[bands.length - 1];
+	return effectivePriceCentsLocal(lastBand);
+};
+
+const extraRuleExamples = computed(() => {
+	const firstWeightFrom = Number(extraRules.value.weight_start || 101);
+	const firstWeightTo = Number((firstWeightFrom + Number(extraRules.value.weight_step || 50) - Number(extraRules.value.weight_resolution || 1)).toFixed(4));
+	const secondWeightFrom = Number((firstWeightFrom + Number(extraRules.value.weight_step || 50)).toFixed(4));
+	const secondWeightTo = Number((secondWeightFrom + Number(extraRules.value.weight_step || 50) - Number(extraRules.value.weight_resolution || 1)).toFixed(4));
+
+	const firstVolumeFrom = Number(extraRules.value.volume_start || 0.401);
+	const firstVolumeTo = Number((firstVolumeFrom + Number(extraRules.value.volume_step || 0.2) - Number(extraRules.value.volume_resolution || 0.001)).toFixed(4));
+	const secondVolumeFrom = Number((firstVolumeFrom + Number(extraRules.value.volume_step || 0.2)).toFixed(4));
+	const secondVolumeTo = Number((secondVolumeFrom + Number(extraRules.value.volume_step || 0.2) - Number(extraRules.value.volume_resolution || 0.001)).toFixed(4));
+
+	return {
+		firstWeightFrom,
+		firstWeightTo,
+		secondWeightFrom,
+		secondWeightTo,
+		firstVolumeFrom,
+		firstVolumeTo,
+		secondVolumeFrom,
+		secondVolumeTo,
+	};
+});
+
+const pricingPreviewCases = computed(() => {
+	const weightStart = Number(extraRules.value.weight_start || 101);
+	const weightStep = Number(extraRules.value.weight_step || 50);
+	const weightResolution = Number(extraRules.value.weight_resolution || 1);
+	const volumeStart = Number(extraRules.value.volume_start || 0.401);
+	const volumeStep = Number(extraRules.value.volume_step || 0.2);
+	const volumeResolution = Number(extraRules.value.volume_resolution || 0.001);
+
+	const standardWeight = Number((weightStart - weightResolution).toFixed(4));
+	const standardVolume = Number((volumeStart - volumeResolution).toFixed(4));
+	const firstExtraWeightMax = Number((weightStart + weightStep - weightResolution).toFixed(4));
+	const firstExtraVolumeMax = Number((volumeStart + volumeStep - volumeResolution).toFixed(4));
+	const secondExtraWeightStart = Number((weightStart + weightStep).toFixed(4));
+	const secondExtraVolumeStart = Number((volumeStart + volumeStep).toFixed(4));
+
+	const rows = [
+		{ id: 'standard', label: 'Ultima fascia standard', weight: standardWeight, volume: standardVolume },
+		{ id: 'extra1w', label: 'Primo extra (inizio)', weight: weightStart, volume: volumeStart },
+		{ id: 'extra1max', label: 'Primo extra (limite)', weight: firstExtraWeightMax, volume: firstExtraVolumeMax },
+		{ id: 'extra2', label: 'Secondo extra', weight: secondExtraWeightStart, volume: secondExtraVolumeStart },
+	];
+
+	return rows.map((row) => {
+		const weightPriceCents = calculateBandPriceCentsLocal('weight', row.weight);
+		const volumePriceCents = calculateBandPriceCentsLocal('volume', row.volume);
+		const totalCents = Math.max(weightPriceCents, volumePriceCents);
+		return {
+			...row,
+			weightPriceLabel: centsToEuro(weightPriceCents),
+			volumePriceLabel: centsToEuro(volumePriceCents),
+			totalLabel: centsToEuro(totalCents),
+		};
+	});
+});
+
 const startEdit = (type, idx, field) => {
 	const key = `${type}-${idx}-${field}`;
 	editingCell.value = key;
@@ -239,23 +548,86 @@ const toggleShowDiscount = (type, idx) => {
 	bands[idx].show_discount = !bands[idx].show_discount;
 };
 
+const addBand = (type) => {
+	const bands = type === 'weight' ? weightBands.value : volumeBands.value;
+	const last = bands[bands.length - 1];
+	const step = type === 'weight' ? 1 : 0.001;
+	const min = last ? Number(last.max_value) : 0;
+	const max = Number((min + (type === 'weight' ? 50 : 0.2)).toFixed(3));
+	bands.push({
+		id: `${type}-new-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+		type,
+		min_value: Number(min.toFixed(3)),
+		max_value: max,
+		base_price: last ? Number(last.base_price || 0) : 0,
+		discount_price: null,
+		show_discount: true,
+		sort_order: bands.length + 1,
+	});
+};
+
+const removeBand = (type, idx) => {
+	const bands = type === 'weight' ? weightBands.value : volumeBands.value;
+	if (bands.length <= 1) {
+		showError(null, "Deve rimanere almeno una fascia.");
+		return;
+	}
+	bands.splice(idx, 1);
+};
+
+const moveBand = (type, idx, direction) => {
+	const bands = type === 'weight' ? weightBands.value : volumeBands.value;
+	const target = idx + direction;
+	if (target < 0 || target >= bands.length) return;
+	[bands[idx], bands[target]] = [bands[target], bands[idx]];
+};
+
+const addSupplement = () => {
+	supplementRules.value.push({
+		id: `supplement-${Date.now()}`,
+		prefix: '',
+		amount_cents: 0,
+		apply_to: 'both',
+		enabled: true,
+	});
+};
+
+const removeSupplement = (idx) => {
+	supplementRules.value.splice(idx, 1);
+};
+
+const supplementAmountToEuro = (rule) => {
+	const cents = Number(rule?.amount_cents || 0);
+	return (cents / 100).toFixed(2).replace('.', ',');
+};
+
+const updateSupplementAmountFromEuro = (rule, rawValue) => {
+	const cleaned = String(rawValue || '').replace(/[€\s]/g, '').replace(',', '.');
+	const value = Number.parseFloat(cleaned);
+	if (!Number.isFinite(value) || value < 0) {
+		rule.amount_cents = 0;
+		return;
+	}
+	rule.amount_cents = Math.round(value * 100);
+};
+
 const savePriceBands = async () => {
 	saving.value = true;
-	console.log(`[AUDIT] Admin saving price bands (${weightBands.value.length} weight + ${volumeBands.value.length} volume)`);
+	console.log(`[AUDIT] Admin saving price config (${weightBands.value.length} weight + ${volumeBands.value.length} volume + ${supplementRules.value.length} supplements)`);
 	try {
-		const allBands = [...weightBands.value, ...volumeBands.value].map(b => ({
-			id: b.id,
-			base_price: b.base_price,
-			discount_price: b.discount_price,
-			show_discount: b.show_discount ?? true,
-		}));
-		await sanctum("/api/admin/price-bands", { method: "PUT", body: { bands: allBands } });
-		showSuccess("Fasce di prezzo salvate con successo. I nuovi prezzi sono attivi per tutti gli utenti.");
-		originalWeightBands.value = weightBands.value.map(b => ({ ...b }));
-		originalVolumeBands.value = volumeBands.value.map(b => ({ ...b }));
+		const payload = buildPricingPayload();
+		const response = await sanctum("/api/admin/price-bands", { method: "PUT", body: payload });
+		const data = response?.data || {};
+		showSuccess("Configurazione prezzi nazionale salvata con successo.");
+		bandsFromDb.value = true;
+		originalWeightBands.value = (data.weight || payload.weight).map(b => ({ ...b }));
+		originalVolumeBands.value = (data.volume || payload.volume).map(b => ({ ...b }));
+		originalExtraRules.value = JSON.parse(JSON.stringify(data.extra_rules || payload.extra_rules));
+		originalSupplementRules.value = JSON.parse(JSON.stringify(data.supplements || payload.supplements));
+		pricingVersion.value = data.version || pricingVersion.value;
 		await reloadPublicPriceBands();
 	} catch (e) {
-		showError(e, "Errore durante il salvataggio delle fasce.");
+		showError(e, "Errore durante il salvataggio della configurazione prezzi.");
 	} finally {
 		saving.value = false;
 	}
@@ -349,9 +721,9 @@ onMounted(() => {
 					Come funziona il calcolatore
 				</h3>
 				<ul class="text-[0.8125rem] text-purple-700 space-y-[4px] list-disc list-inside">
-					<li><strong>Prezzo finale = MAX(prezzo_peso, prezzo_volume)</strong> + supplemento CAP90</li>
+					<li><strong>Prezzo finale = MAX(prezzo_peso, prezzo_volume)</strong> + supplementi CAP configurati</li>
 					<li><strong>Peso volumetrico:</strong> (Lunghezza x Larghezza x Altezza) / 5000 (dimensioni in cm)</li>
-					<li><strong>Supplemento CAP90:</strong> +2,50&euro; per ogni CAP che inizia con "90" (mittente e/o destinatario)</li>
+					<li><strong>Supplementi CAP:</strong> definibili da admin per prefisso, importo e applicazione (origine/destinazione/entrambi)</li>
 					<li>Se c'e' un <strong>prezzo scontato</strong>, viene usato al posto del prezzo base</li>
 					<li>Il prezzo visualizzato dal cliente e' il <strong>"Prezzo effettivo"</strong> in verde</li>
 					<li><strong>Sconto %:</strong> calcolato automaticamente come (1 - scontato/base) &times; 100</li>
@@ -420,13 +792,18 @@ onMounted(() => {
 										<th class="pb-[12px] font-medium">Effettivo</th>
 										<th class="pb-[12px] font-medium">Sconto %</th>
 										<th class="pb-[12px] font-medium text-center">Visibile</th>
+										<th class="pb-[12px] font-medium text-right">Azioni</th>
 									</tr>
 								</thead>
 								<tbody>
 									<tr v-for="(band, idx) in weightBands" :key="band.id || idx" :class="['border-b border-[#F0F0F0] last:border-0', idx % 2 === 1 ? 'bg-[#FAFBFC]' : '']">
 										<td class="py-[14px] font-bold text-[#252B42]">{{ idx + 1 }}</td>
-										<td class="py-[14px] text-[#404040]">{{ band.min_value }} kg</td>
-										<td class="py-[14px] text-[#404040]">{{ band.max_value }} kg</td>
+										<td class="py-[14px] text-[#404040]">
+											<input v-model.number="band.min_value" type="number" min="0" step="1" class="w-[86px] h-[34px] px-[8px] rounded-[8px] border border-[#C8CCD0] bg-white text-[0.8125rem]">
+										</td>
+										<td class="py-[14px] text-[#404040]">
+											<input v-model.number="band.max_value" type="number" min="0" step="1" class="w-[86px] h-[34px] px-[8px] rounded-[8px] border border-[#C8CCD0] bg-white text-[0.8125rem]">
+										</td>
 										<td class="py-[14px]">
 											<div v-if="editingCell === `weight-${idx}-base_price`" class="flex items-center gap-[6px]">
 												<span class="text-[#737373]">&euro;</span>
@@ -500,9 +877,21 @@ onMounted(() => {
 													class="inline-block h-[26px] w-[26px] tablet:h-[20px] tablet:w-[20px] transform rounded-full bg-white transition-transform shadow-sm" />
 											</button>
 										</td>
+										<td class="py-[14px]">
+											<div class="flex items-center justify-end gap-[6px]">
+												<button type="button" class="px-[8px] py-[4px] rounded-[8px] border border-[#D5DDE1] text-[0.75rem] hover:bg-[#F4F8FA] cursor-pointer" @click="moveBand('weight', idx, -1)">↑</button>
+												<button type="button" class="px-[8px] py-[4px] rounded-[8px] border border-[#D5DDE1] text-[0.75rem] hover:bg-[#F4F8FA] cursor-pointer" @click="moveBand('weight', idx, 1)">↓</button>
+												<button type="button" class="px-[8px] py-[4px] rounded-[8px] border border-red-200 text-red-600 text-[0.75rem] hover:bg-red-50 cursor-pointer" @click="removeBand('weight', idx)">Elimina</button>
+											</div>
+										</td>
 									</tr>
 								</tbody>
 							</table>
+						</div>
+						<div class="mt-[14px] flex justify-end">
+							<button type="button" class="px-[16px] py-[8px] rounded-[999px] bg-[#095866] text-white text-[0.8125rem] font-medium hover:bg-[#074a56] cursor-pointer" @click="addBand('weight')">
+								Aggiungi fascia peso
+							</button>
 						</div>
 					</div>
 
@@ -511,14 +900,14 @@ onMounted(() => {
 						<h2 class="text-[1.125rem] font-bold text-[#252B42] mb-[6px] flex items-center gap-[8px]">
 							<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[20px] h-[20px] text-indigo-600" fill="currentColor"><path d="M21,16.5C21,16.88 20.79,17.21 20.47,17.38L12.57,21.82C12.41,21.94 12.21,22 12,22C11.79,22 11.59,21.94 11.43,21.82L3.53,17.38C3.21,17.21 3,16.88 3,16.5V7.5C3,7.12 3.21,6.79 3.53,6.62L11.43,2.18C11.59,2.06 11.79,2 12,2C12.21,2 12.41,2.06 12.57,2.18L20.47,6.62C20.79,6.79 21,7.12 21,7.5V16.5M12,4.15L6.04,7.5L12,10.85L17.96,7.5L12,4.15M5,15.91L11,19.29V12.58L5,9.21V15.91M19,15.91V9.21L13,12.58V19.29L19,15.91Z"/></svg> Fasce volume
 						</h2>
-						<p class="text-[0.75rem] text-[#737373] mb-[20px]">Fasce basate sul peso volumetrico (L x P x H / 5000). Clicca sul prezzo per modificarlo.</p>
+						<p class="text-[0.75rem] text-[#737373] mb-[20px]">Fasce basate sul peso volumetrico (L x P x H / 5000). Completamente editabili (min/max/prezzo).</p>
 
 						<div v-if="!volumeBands.length" class="text-center py-[32px] text-[#737373]">
 							<p>Nessuna fascia volume configurata.</p>
 						</div>
 
 						<div v-else class="overflow-x-auto">
-							<table class="w-full text-[0.875rem] min-w-[700px]">
+							<table class="w-full text-[0.875rem] min-w-[760px]">
 								<thead>
 									<tr class="border-b border-[#E9EBEC] text-left text-[#737373]">
 										<th class="pb-[12px] font-medium">#</th>
@@ -529,13 +918,18 @@ onMounted(() => {
 										<th class="pb-[12px] font-medium">Effettivo</th>
 										<th class="pb-[12px] font-medium">Sconto %</th>
 										<th class="pb-[12px] font-medium text-center">Visibile</th>
+										<th class="pb-[12px] font-medium text-right">Azioni</th>
 									</tr>
 								</thead>
 								<tbody>
 									<tr v-for="(band, idx) in volumeBands" :key="band.id || idx" :class="['border-b border-[#F0F0F0] last:border-0', idx % 2 === 1 ? 'bg-[#FAFBFC]' : '']">
 										<td class="py-[14px] font-bold text-[#252B42]">{{ idx + 1 }}</td>
-										<td class="py-[14px] text-[#404040]">{{ band.min_value }} m&sup3;</td>
-										<td class="py-[14px] text-[#404040]">{{ band.max_value }} m&sup3;</td>
+										<td class="py-[14px] text-[#404040]">
+											<input v-model.number="band.min_value" type="number" min="0" step="0.001" class="w-[98px] h-[34px] px-[8px] rounded-[8px] border border-[#C8CCD0] bg-white text-[0.8125rem]">
+										</td>
+										<td class="py-[14px] text-[#404040]">
+											<input v-model.number="band.max_value" type="number" min="0" step="0.001" class="w-[98px] h-[34px] px-[8px] rounded-[8px] border border-[#C8CCD0] bg-white text-[0.8125rem]">
+										</td>
 										<td class="py-[14px]">
 											<div v-if="editingCell === `volume-${idx}-base_price`" class="flex items-center gap-[6px]">
 												<span class="text-[#737373]">&euro;</span>
@@ -609,22 +1003,188 @@ onMounted(() => {
 													class="inline-block h-[26px] w-[26px] tablet:h-[20px] tablet:w-[20px] transform rounded-full bg-white transition-transform shadow-sm" />
 											</button>
 										</td>
+										<td class="py-[14px]">
+											<div class="flex items-center justify-end gap-[6px]">
+												<button type="button" class="px-[8px] py-[4px] rounded-[8px] border border-[#D5DDE1] text-[0.75rem] hover:bg-[#F4F8FA] cursor-pointer" @click="moveBand('volume', idx, -1)">↑</button>
+												<button type="button" class="px-[8px] py-[4px] rounded-[8px] border border-[#D5DDE1] text-[0.75rem] hover:bg-[#F4F8FA] cursor-pointer" @click="moveBand('volume', idx, 1)">↓</button>
+												<button type="button" class="px-[8px] py-[4px] rounded-[8px] border border-red-200 text-red-600 text-[0.75rem] hover:bg-red-50 cursor-pointer" @click="removeBand('volume', idx)">Elimina</button>
+											</div>
+										</td>
 									</tr>
 								</tbody>
 							</table>
 						</div>
+						<div class="mt-[14px] flex justify-end">
+							<button type="button" class="px-[16px] py-[8px] rounded-[999px] bg-[#095866] text-white text-[0.8125rem] font-medium hover:bg-[#074a56] cursor-pointer" @click="addBand('volume')">
+								Aggiungi fascia volume
+							</button>
+						</div>
 					</div>
 
-					<!-- Save button (solo se le bande vengono dal DB) -->
-					<div v-if="bandsFromDb" class="flex items-center justify-end gap-[12px]">
-						<span v-if="hasChanges" class="inline-flex items-center gap-[4px] px-[10px] py-[4px] rounded-full bg-amber-50 text-amber-700 text-[0.75rem] font-medium border border-amber-200">
-							<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[14px] h-[14px]" fill="currentColor"><path d="M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z"/></svg>
-							Modificato
-						</span>
-						<button @click="savePriceBands" :disabled="saving || !hasChanges" class="inline-flex items-center gap-[8px] px-[24px] py-[12px] bg-[#095866] hover:bg-[#074a56] text-white rounded-[50px] text-[0.875rem] font-medium transition-colors cursor-pointer disabled:opacity-50">
+					<!-- Regole oltre 7ª fascia -->
+					<div class="bg-white rounded-[20px] p-[24px] desktop:p-[32px] shadow-sm border border-[#E9EBEC]">
+						<div class="flex flex-wrap items-center justify-between gap-[12px] mb-[18px]">
+							<div>
+								<h2 class="text-[1.125rem] font-bold text-[#252B42] mb-[4px]">Regole oltre 7ª fascia</h2>
+								<p class="text-[0.75rem] text-[#737373]">Configurazione scaglioni dinamici (es. 101-150, 151-200 e 0,401-0,600, 0,601-0,800).</p>
+							</div>
+							<button
+								type="button"
+								@click="extraRules.enabled = !extraRules.enabled"
+								:class="extraRules.enabled ? 'bg-[#095866]' : 'bg-[#C8CCD0]'"
+								class="relative inline-flex h-[32px] w-[56px] items-center rounded-full transition-colors cursor-pointer">
+								<span
+									:class="extraRules.enabled ? 'translate-x-[28px]' : 'translate-x-[2px]'"
+									class="inline-block h-[26px] w-[26px] transform rounded-full bg-white transition-transform shadow-sm" />
+							</button>
+						</div>
+
+						<div class="grid grid-cols-1 desktop:grid-cols-2 gap-[16px]">
+							<div class="space-y-[12px] p-[14px] rounded-[14px] border border-[#E9EBEC] bg-[#FAFBFC]">
+								<h3 class="text-[0.875rem] font-semibold text-[#252B42]">Scaglioni Peso</h3>
+								<div class="grid grid-cols-3 gap-[10px]">
+									<label class="text-[0.75rem] text-[#737373]">Start
+										<input v-model.number="extraRules.weight_start" type="number" min="0" step="1" class="mt-[4px] w-full h-[38px] px-[10px] rounded-[10px] border border-[#C8CCD0] bg-white text-[0.8125rem]">
+									</label>
+									<label class="text-[0.75rem] text-[#737373]">Step
+										<input v-model.number="extraRules.weight_step" type="number" min="0.0001" step="1" class="mt-[4px] w-full h-[38px] px-[10px] rounded-[10px] border border-[#C8CCD0] bg-white text-[0.8125rem]">
+									</label>
+									<label class="text-[0.75rem] text-[#737373]">Risoluzione
+										<input v-model.number="extraRules.weight_resolution" type="number" min="0.0001" step="1" class="mt-[4px] w-full h-[38px] px-[10px] rounded-[10px] border border-[#C8CCD0] bg-white text-[0.8125rem]">
+									</label>
+								</div>
+								<p class="text-[0.75rem] text-[#4F5D75]">Preview: {{ extraRuleExamples.firstWeightFrom }}-{{ extraRuleExamples.firstWeightTo }} / {{ extraRuleExamples.secondWeightFrom }}-{{ extraRuleExamples.secondWeightTo }}</p>
+							</div>
+
+							<div class="space-y-[12px] p-[14px] rounded-[14px] border border-[#E9EBEC] bg-[#FAFBFC]">
+								<h3 class="text-[0.875rem] font-semibold text-[#252B42]">Scaglioni Volume (m&sup3;)</h3>
+								<div class="grid grid-cols-3 gap-[10px]">
+									<label class="text-[0.75rem] text-[#737373]">Start
+										<input v-model.number="extraRules.volume_start" type="number" min="0" step="0.001" class="mt-[4px] w-full h-[38px] px-[10px] rounded-[10px] border border-[#C8CCD0] bg-white text-[0.8125rem]">
+									</label>
+									<label class="text-[0.75rem] text-[#737373]">Step
+										<input v-model.number="extraRules.volume_step" type="number" min="0.0001" step="0.001" class="mt-[4px] w-full h-[38px] px-[10px] rounded-[10px] border border-[#C8CCD0] bg-white text-[0.8125rem]">
+									</label>
+									<label class="text-[0.75rem] text-[#737373]">Risoluzione
+										<input v-model.number="extraRules.volume_resolution" type="number" min="0.0001" step="0.001" class="mt-[4px] w-full h-[38px] px-[10px] rounded-[10px] border border-[#C8CCD0] bg-white text-[0.8125rem]">
+									</label>
+								</div>
+								<p class="text-[0.75rem] text-[#4F5D75]">Preview: {{ extraRuleExamples.firstVolumeFrom.toFixed(3) }}-{{ extraRuleExamples.firstVolumeTo.toFixed(3) }} / {{ extraRuleExamples.secondVolumeFrom.toFixed(3) }}-{{ extraRuleExamples.secondVolumeTo.toFixed(3) }}</p>
+							</div>
+
+							<div class="space-y-[12px] p-[14px] rounded-[14px] border border-[#E9EBEC] bg-[#FAFBFC]">
+								<h3 class="text-[0.875rem] font-semibold text-[#252B42]">Incrementi oltre 7ª fascia</h3>
+								<div class="grid grid-cols-1 tablet:grid-cols-2 gap-[10px]">
+									<label class="text-[0.75rem] text-[#737373]">Base prezzo extra
+										<select v-model="extraRules.base_price_cents_mode" class="mt-[4px] w-full h-[38px] px-[10px] rounded-[10px] border border-[#C8CCD0] bg-white text-[0.8125rem]">
+											<option value="last_band_effective">Ultima fascia effettiva</option>
+											<option value="manual">Manuale</option>
+										</select>
+									</label>
+									<label class="text-[0.75rem] text-[#737373]">Incremento fisso per ogni fascia extra (&euro;)
+										<input
+											:value="(Number(extraRules.increment_cents || 0) / 100).toFixed(2).replace('.', ',')"
+											@input="extraRules.increment_cents = Math.max(0, euroToCents($event.target.value) ?? 0)"
+											type="text"
+											class="mt-[4px] w-full h-[38px] px-[10px] rounded-[10px] border border-[#C8CCD0] bg-white text-[0.8125rem]">
+									</label>
+								</div>
+
+								<label v-if="extraRules.base_price_cents_mode === 'manual'" class="text-[0.75rem] text-[#737373]">Prezzo base extra manuale (&euro;)
+									<input
+										:value="extraRules.base_price_cents_manual == null ? '' : (Number(extraRules.base_price_cents_manual || 0) / 100).toFixed(2).replace('.', ',')"
+										@input="extraRules.base_price_cents_manual = euroToCents($event.target.value)"
+										type="text"
+										class="mt-[4px] w-full h-[38px] px-[10px] rounded-[10px] border border-[#C8CCD0] bg-white text-[0.8125rem]">
+								</label>
+							</div>
+
+							<div class="p-[14px] rounded-[14px] border border-[#D8E9F0] bg-[#F4FAFC]">
+								<h3 class="text-[0.875rem] font-semibold text-[#095866] mb-[10px]">Casi rapidi</h3>
+								<div class="overflow-x-auto">
+									<table class="w-full min-w-[450px] text-[0.75rem]">
+										<thead>
+											<tr class="text-left text-[#67778E] border-b border-[#D8E9F0]">
+												<th class="py-[6px]">Caso</th>
+												<th class="py-[6px]">Peso</th>
+												<th class="py-[6px]">Volume</th>
+												<th class="py-[6px]">Prezzo peso</th>
+												<th class="py-[6px]">Prezzo volume</th>
+												<th class="py-[6px]">Totale (MAX)</th>
+											</tr>
+										</thead>
+										<tbody>
+											<tr v-for="row in pricingPreviewCases" :key="row.id" class="border-b border-[#EAF2F5] last:border-0 text-[#24344D]">
+												<td class="py-[7px] font-semibold">{{ row.label }}</td>
+												<td class="py-[7px]">{{ row.weight }}</td>
+												<td class="py-[7px]">{{ row.volume }}</td>
+												<td class="py-[7px]">{{ row.weightPriceLabel }}</td>
+												<td class="py-[7px]">{{ row.volumePriceLabel }}</td>
+												<td class="py-[7px] font-bold text-[#095866]">{{ row.totalLabel }}</td>
+											</tr>
+										</tbody>
+									</table>
+								</div>
+							</div>
+						</div>
+					</div>
+
+					<!-- Supplementi CAP -->
+					<div class="bg-white rounded-[20px] p-[24px] desktop:p-[32px] shadow-sm border border-[#E9EBEC]">
+						<div class="flex flex-wrap items-center justify-between gap-[12px] mb-[14px]">
+							<div>
+								<h2 class="text-[1.125rem] font-bold text-[#252B42] mb-[4px]">Supplementi CAP</h2>
+								<p class="text-[0.75rem] text-[#737373]">Prefisso CAP + importo + applicazione (origine / destinazione / entrambi).</p>
+							</div>
+							<button type="button" class="px-[14px] py-[8px] rounded-[999px] bg-[#095866] text-white text-[0.8125rem] font-medium hover:bg-[#074a56] cursor-pointer" @click="addSupplement">
+								Aggiungi supplemento
+							</button>
+						</div>
+
+						<div v-if="!supplementRules.length" class="p-[14px] rounded-[12px] border border-dashed border-[#C8CCD0] text-[#6A7486] text-[0.8125rem]">
+							Nessun supplemento attivo. Aggiungi una regola se necessario.
+						</div>
+
+						<div v-else class="space-y-[10px]">
+							<div v-for="(rule, idx) in supplementRules" :key="rule.id || idx" class="grid grid-cols-1 tablet:grid-cols-[120px_160px_1fr_auto_auto] gap-[8px] items-center p-[12px] rounded-[12px] border border-[#E9EBEC] bg-[#FAFBFC]">
+								<label class="text-[0.75rem] text-[#6A7486]">Prefisso CAP
+									<input v-model="rule.prefix" type="text" inputmode="numeric" maxlength="5" class="mt-[4px] w-full h-[36px] px-[10px] rounded-[10px] border border-[#C8CCD0] bg-white text-[0.8125rem]">
+								</label>
+								<label class="text-[0.75rem] text-[#6A7486]">Importo (&euro;)
+									<input :value="supplementAmountToEuro(rule)" @input="updateSupplementAmountFromEuro(rule, $event.target.value)" type="text" class="mt-[4px] w-full h-[36px] px-[10px] rounded-[10px] border border-[#C8CCD0] bg-white text-[0.8125rem]">
+								</label>
+								<label class="text-[0.75rem] text-[#6A7486]">Applica a
+									<select v-model="rule.apply_to" class="mt-[4px] w-full h-[36px] px-[10px] rounded-[10px] border border-[#C8CCD0] bg-white text-[0.8125rem]">
+										<option value="both">Origine + Destinazione</option>
+										<option value="origin">Solo origine</option>
+										<option value="destination">Solo destinazione</option>
+									</select>
+								</label>
+								<button type="button" @click="rule.enabled = !rule.enabled" :class="rule.enabled ? 'bg-[#095866]' : 'bg-[#C8CCD0]'" class="relative inline-flex h-[28px] w-[48px] items-center rounded-full transition-colors cursor-pointer mt-[16px]">
+									<span :class="rule.enabled ? 'translate-x-[24px]' : 'translate-x-[2px]'" class="inline-block h-[22px] w-[22px] transform rounded-full bg-white transition-transform shadow-sm" />
+								</button>
+								<button type="button" class="px-[10px] py-[7px] rounded-[8px] border border-red-200 text-red-600 text-[0.75rem] hover:bg-red-50 cursor-pointer mt-[16px]" @click="removeSupplement(idx)">
+									Elimina
+								</button>
+							</div>
+						</div>
+					</div>
+
+					<!-- Save configurazione prezzi -->
+					<div class="flex flex-col tablet:flex-row tablet:items-center tablet:justify-between gap-[10px]">
+						<div class="flex items-center gap-[8px] text-[0.75rem]">
+							<span v-if="pricingVersion" class="inline-flex items-center gap-[4px] px-[8px] py-[3px] rounded-[999px] bg-[#E8F4FB] text-[#095866] border border-[#B0D4E8]">
+								Versione {{ pricingVersion }}
+							</span>
+							<span v-if="hasChanges" class="inline-flex items-center gap-[4px] px-[10px] py-[4px] rounded-full bg-amber-50 text-amber-700 font-medium border border-amber-200">
+								<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[14px] h-[14px]" fill="currentColor"><path d="M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z"/></svg>
+								Modifiche non salvate
+							</span>
+						</div>
+						<button @click="savePriceBands" :disabled="saving || !hasChanges" class="inline-flex items-center justify-center gap-[8px] px-[24px] py-[12px] bg-[#095866] hover:bg-[#074a56] text-white rounded-[50px] text-[0.875rem] font-medium transition-colors cursor-pointer disabled:opacity-50">
 							<svg v-if="saving" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[18px] h-[18px] animate-spin" fill="currentColor"><path d="M12,4V2A10,10 0 0,0 2,12H4A8,8 0 0,1 12,4Z"/></svg>
 							<svg v-else xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[18px] h-[18px]" fill="currentColor"><path d="M15,9H5V5H15M12,19A3,3 0 0,1 9,16A3,3 0 0,1 12,13A3,3 0 0,1 15,16A3,3 0 0,1 12,19M17,3H5C3.89,3 3,3.9 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V7L17,3Z"/></svg>
-							{{ saving ? "Salvataggio..." : "Salva fasce" }}
+							{{ saving ? "Salvataggio..." : "Salva configurazione nazionale" }}
 						</button>
 					</div>
 
