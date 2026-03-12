@@ -73,18 +73,22 @@ const normalizeHeroConfig = (payload) => {
 	};
 };
 
-// Ottimizzazione: precarica l'immagine hero di default per evitare ritardo nel rendering above-the-fold.
-// Se l'admin ha impostato un'immagine personalizzata, quella verra' caricata dinamicamente.
-useHead({
-	link: [
-		{
-			rel: 'preload',
-			as: 'image',
-			href: '/img/homepage/hero-truck-landscape.jpg',
-			fetchpriority: 'high',
-		},
-	],
-});
+// Preload hero solo nelle route che usano realmente l'immagine,
+// per evitare warning su pagine come autenticazione.
+useHead(() => (
+	isHomepageHeroRoute.value
+		? {
+				link: [
+					{
+						rel: 'preload',
+						as: 'image',
+						href: '/img/homepage/hero-truck-landscape.jpg',
+						fetchpriority: 'high',
+					},
+				],
+			}
+		: {}
+));
 
 // Carica fasce prezzo sempre per garantire disponibilità su tutte le pagine
 const { loadPriceBands, getMinPrice, promoSettings } = usePriceBands();
@@ -292,28 +296,29 @@ const props = defineProps({
 	<!-- ============================================================
 	     HOMEPAGE HERO
 	     ============================================================ -->
-	<div class="relative z-[2] overflow-hidden pt-[28px] pb-[72px] tablet:pt-[40px] tablet:pb-[96px] desktop:pt-[72px] desktop:pb-[120px] desktop-xl:pt-[76px] desktop-xl:pb-[132px]" v-if="isHomepageHeroRoute">
+	<div class="relative z-[2] overflow-hidden pt-[20px] pb-[48px] tablet:pt-[32px] tablet:pb-[60px] desktop:pt-[64px] desktop:pb-[40px] desktop-xl:pt-[68px] desktop-xl:pb-[48px]" v-if="isHomepageHeroRoute">
 		<!-- Decorazione teal dietro la card -->
 		<div
-			class="pointer-events-none absolute right-[0px] top-[142px] h-[164px] w-[132px] rotate-[6deg] rounded-[16px] bg-gradient-to-br from-[#095866] to-[#0b6d7d] opacity-[0.035] tablet:right-[24px] tablet:top-[104px] tablet:h-[200px] tablet:w-[200px] tablet:opacity-[0.05] desktop:right-[3%] desktop:top-[170px] desktop:h-[460px] desktop:w-[500px] desktop:rotate-[7deg] desktop:opacity-[0.06] desktop-xl:right-[5%] desktop-xl:top-[176px] desktop-xl:h-[500px] desktop-xl:w-[560px]"></div>
+			class="pointer-events-none absolute right-[8px] top-[128px] h-[108px] w-[94px] rotate-[6deg] rounded-[12px] bg-gradient-to-br from-[#095866] to-[#0b6d7d] opacity-[0.05] tablet:right-[24px] tablet:top-[104px] tablet:h-[200px] tablet:w-[200px] tablet:opacity-[0.05] desktop:right-[2%] desktop:top-[48px] desktop:h-[140px] desktop:w-[620px] desktop:rotate-[5deg] desktop:opacity-[0.06] desktop-xl:right-[3%] desktop-xl:top-[48px] desktop-xl:h-[150px] desktop-xl:w-[700px]"></div>
 
-		<div class="relative block tablet:grid tablet:grid-cols-[minmax(0,1fr)_minmax(0,0.9fr)] tablet:items-start tablet:gap-x-[10px] tablet:gap-y-[6px] desktop:grid desktop:grid-cols-[minmax(0,560px)_minmax(0,760px)] desktop:items-start desktop:gap-[56px] desktop-xl:grid-cols-[minmax(0,560px)_minmax(0,820px)] desktop-xl:gap-[62px]">
+		<div class="relative grid grid-cols-[54%_46%] items-start gap-x-[10px] gap-y-[4px] tablet:grid-cols-[minmax(0,1fr)_minmax(0,0.9fr)] tablet:gap-x-[10px] tablet:gap-y-[6px] desktop:grid-cols-[minmax(0,420px)_minmax(0,1fr)] desktop:items-start desktop:gap-[24px] desktop-xl:grid-cols-[minmax(0,440px)_minmax(0,1fr)] desktop-xl:gap-[28px]">
 			<!-- Colonna sinistra: testo + card prezzo -->
-			<div class="relative z-[5] tablet:col-start-1 tablet:row-start-1 desktop:max-w-[560px]">
-				<h1 class="text-[#1a1a1a] text-[3rem] leading-[0.98] tracking-[-1.5px] font-extrabold tablet:text-[3.25rem] desktop:text-[4.5rem] desktop:tracking-[-2.5px] desktop-xl:text-[5.5rem] desktop-xl:tracking-[-3px]">
-					Spedisci<br />in Italia
+			<div class="relative z-[5] col-start-1 row-start-1 tablet:col-start-1 tablet:row-start-1 desktop:max-w-[560px] desktop:mt-[12px] desktop-xl:mt-[14px]">
+				<h1 class="max-w-[160px] text-[#1a1a1a] text-[2.25rem] leading-[0.95] tracking-[-1px] font-extrabold tablet:max-w-none tablet:text-[3.25rem] desktop:text-[4.75rem] desktop:tracking-[-2.5px] desktop-xl:text-[5.5rem] desktop-xl:tracking-[-3px]">
+					<span class="block">Spedisci</span>
+					<span class="block">in Italia</span>
 				</h1>
 
 				<!-- Card prezzo bianca in risalto -->
 				<div
-					class="relative z-[7] mt-[10px] flex w-[170px] overflow-hidden rounded-[16px] bg-gradient-to-br from-[#FF6B35] to-[#E44203] shadow-[0_4px_12px_rgba(0,0,0,0.15)] tablet:mt-[16px] tablet:w-[320px] desktop:mt-[20px] desktop:w-[380px] desktop:shadow-[0_8px_24px_rgba(0,0,0,0.15)] desktop-xl:mt-[22px] desktop-xl:w-[400px]">
-					<div class="flex flex-col px-[20px] py-[16px] tablet:px-[24px] tablet:py-[20px] desktop:px-[32px] desktop:py-[24px] desktop-xl:px-[40px] desktop-xl:py-[32px]">
+					class="relative z-[7] mt-[8px] flex w-[140px] overflow-hidden rounded-[14px] bg-gradient-to-br from-[#E44203] to-[#095866] shadow-[0_4px_12px_rgba(0,0,0,0.15)] tablet:mt-[16px] tablet:w-[320px] tablet:rounded-[16px] desktop:mt-[36px] desktop:w-[380px] desktop:shadow-[0_8px_24px_rgba(0,0,0,0.15)] desktop-xl:mt-[36px] desktop-xl:w-[400px]">
+					<div class="flex flex-col px-[10px] py-[8px] tablet:px-[24px] tablet:py-[20px] desktop:px-[30px] desktop:py-[22px] desktop-xl:px-[36px] desktop-xl:py-[26px]">
 						<span class="text-[0.8125rem] font-medium uppercase tracking-[0.8px] text-white/75 tablet:text-[0.875rem] desktop:text-[1rem] desktop:tracking-[1px] desktop-xl:text-[1.0625rem]">a partire da</span>
 						<div class="mt-[2px] flex items-baseline gap-[8px]">
 							<span v-if="showMinPriceDiscount" class="text-[0.9375rem] font-medium text-white/50 line-through">{{ minBasePriceFormatted }}€</span>
-							<span class="text-[3.25rem] font-extrabold leading-[1] tracking-[-2px] text-white tablet:text-[4rem] tablet:tracking-[-2.5px] desktop:text-[5rem] desktop:tracking-[-3px] desktop-xl:text-[6rem] desktop-xl:tracking-[-3.5px]">{{ minPriceFormatted }}<span class="ml-[1px] align-super text-[1.5rem] font-bold tracking-[0] text-white tablet:text-[1.75rem] desktop:text-[2.25rem] desktop-xl:text-[2.75rem]">€</span></span>
+							<span class="text-[2.7rem] font-extrabold leading-[1] tracking-[-1.8px] text-white tablet:text-[4rem] tablet:tracking-[-2.5px] desktop:text-[4.25rem] desktop:tracking-[-2.5px] desktop-xl:text-[5rem] desktop-xl:tracking-[-3px]">{{ minPriceFormatted }}<span class="ml-[1px] align-super text-[1.1rem] font-bold tracking-[0] text-white tablet:text-[1.75rem] desktop:text-[2.25rem] desktop-xl:text-[2.75rem]">€</span></span>
 						</div>
-						<span class="mt-[8px] inline-flex items-center gap-[8px] text-[0.75rem] font-semibold text-white/90 tablet:text-[0.8125rem] desktop:mt-[8px] desktop:text-[0.9375rem] desktop-xl:mt-[10px] desktop-xl:text-[1rem]">
+						<span class="mt-[4px] inline-flex items-center gap-[4px] text-[0.58rem] font-semibold text-white/90 tablet:text-[0.8125rem] desktop:mt-[8px] desktop:text-[0.9375rem] desktop-xl:mt-[10px] desktop-xl:text-[1rem]">
 							<svg width="14" height="14" viewBox="0 0 24 24" fill="none" class="shrink-0"><circle cx="12" cy="12" r="12" fill="rgba(255,255,255,0.3)"/><path d="M7 12.5l3 3 7-7" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
 							IVA e ritiro incluso
 						</span>
@@ -341,7 +346,7 @@ const props = defineProps({
 			</div>
 
 			<!-- Colonna destra: immagine -->
-			<div class="relative z-[2] hidden mt-[4px] h-[248px] w-full max-w-none tablet:block tablet:col-start-2 tablet:row-start-1 tablet:mt-[20px] tablet:h-[390px] tablet:max-w-[520px] tablet:mx-auto desktop:mt-0 desktop:h-[620px] desktop:w-full desktop:max-w-[760px] desktop:justify-self-end desktop-xl:h-[640px] desktop-xl:max-w-[820px]">
+			<div class="relative z-[2] col-start-2 row-start-1 row-span-2 mt-[10px] h-[194px] w-full max-w-none rounded-[12px] tablet:col-start-2 tablet:row-start-1 tablet:row-span-1 tablet:mt-[20px] tablet:h-[390px] tablet:max-w-[520px] tablet:mx-auto desktop:mt-0 desktop:h-[320px] desktop:w-full desktop:max-w-[760px] desktop:justify-self-end desktop-xl:h-[340px] desktop-xl:max-w-[820px]">
 				<div class="relative h-full w-full overflow-hidden rounded-[16px] border border-[#DDE5EB] bg-[#EAF1F6] shadow-[0_8px_24px_rgba(0,0,0,0.15)]">
 					<img
 						:src="heroImageUrl"
