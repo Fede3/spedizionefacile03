@@ -74,8 +74,8 @@ const handleClick = (index) => {
 </script>
 
 <template>
-	<nav class="overflow-x-auto scrollbar-hide scroll-smooth" id="preventivo">
-		<ul class="inline-flex min-w-max justify-start tablet:justify-center gap-x-[8px] tablet:gap-x-[30px] desktop-xl:gap-x-[50px] desktop-xl:my-[50px] my-[16px] tablet:my-[30px] text-[0.75rem] tablet:text-[0.875rem] desktop-xl:text-[1rem] tracking-[-0.252px] min-h-[36px] tablet:min-h-[44px] px-[6px] tablet:px-[4px]">
+	<nav class="overflow-x-auto scrollbar-hide scroll-smooth flex justify-center" id="preventivo">
+		<ul class="inline-flex justify-center gap-x-[8px] tablet:gap-x-[30px] desktop-xl:gap-x-[50px] desktop-xl:my-[50px] my-[16px] tablet:my-[30px] text-[0.75rem] tablet:text-[0.875rem] desktop-xl:text-[1rem] tracking-[-0.252px] min-h-[36px] tablet:min-h-[44px] px-[6px] tablet:px-[4px]">
 			<li
 				v-for="(step, index) in steps"
 				:key="index"
@@ -86,7 +86,7 @@ const handleClick = (index) => {
 					'text-[#A7A7A7] px-[8px] tablet:px-[12px] opacity-60 cursor-default': index > activeStep,
 				}"
 				@click="handleClick(index)">
-				<span>{{ index + 1 }}. {{ step }}</span>
+				<span>{{ index + 1 }}<span :class="index !== activeStep ? 'hidden tablet:inline' : ''">.&nbsp;{{ step }}</span></span>
 			</li>
 		</ul>
 	</nav>

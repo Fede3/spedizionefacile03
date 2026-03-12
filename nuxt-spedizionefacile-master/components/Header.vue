@@ -35,7 +35,7 @@ const isHomepageLikeRoute = computed(() => route.path === '/' || route.path === 
 	<header
 		class="relative bg-[#E3E3E3] z-40"
 		:class="{
-			'h-auto min-h-[480px] tablet:min-h-[540px] desktop:min-h-[680px] desktop-xl:min-h-[722px] overflow-visible desktop:overflow-hidden after:absolute after:content-[\'\'] after:h-[80px] after:w-full after:bg-[#eeeeee] after:z-1 after:bottom-0 desktop:after:hidden':
+			'h-auto min-h-[380px] tablet:min-h-[480px] desktop:min-h-[480px] desktop-xl:min-h-[520px] overflow-visible desktop:overflow-hidden after:absolute after:content-[\'\'] after:h-[80px] after:w-full after:bg-[#eeeeee] after:z-1 after:bottom-0 desktop:after:hidden':
 				isHomepageLikeRoute,
 			'desktop:h-[359px] desktop-xl:h-[457px] h-[308px] overflow-hidden': route.path === '/servizi',
 			'desktop:h-[722px] desktop-xl:h-[783px] h-[432px] overflow-hidden': route.path === '/contatti',

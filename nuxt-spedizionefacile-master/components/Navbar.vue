@@ -30,6 +30,7 @@ const navLinks = [
 const { isAuthenticated, user } = useSanctumAuth();
 const { cart, status, refresh } = useCart();
 const route = useRoute();
+const authReady = ref(false);
 
 // Stato menu mobile
 const mobileMenuOpen = ref(false);
@@ -71,7 +72,7 @@ onBeforeUnmount(() => {
 // Link per il pulsante di login: passa la pagina corrente come parametro redirect
 // cosi' dopo il login l'utente torna dove si trovava
 const authLink = computed(() => {
-	if (isAuthenticated.value) {
+	if (authReady.value && isAuthenticated.value) {
 		return '/account';
 	}
 	const currentPath = route.fullPath;
@@ -84,6 +85,10 @@ const authLink = computed(() => {
 
 watch(isAuthenticated, () => {
 	refresh();
+});
+
+onMounted(() => {
+	authReady.value = true;
 });
 
 </script>
@@ -137,12 +142,12 @@ watch(isAuthenticated, () => {
 				</NuxtLink>
 
 				<!-- Account/Login button (desktop) -->
-				<NuxtLink
-					:to="authLink"
-					class="hidden mid-desktop-navbar:inline-block bg-[#E44203] desktop-xl:w-[143px] mid-desktop-navbar:w-[91px] mid-desktop-navbar:h-[41px] desktop-xl:h-full mid-desktop-navbar:leading-[41px] desktop-xl:leading-[65px] text-center text-white rounded-[50px] font-semibold desktop-xl:text-[1.25rem] desktop:text-[0.875rem] tracking-[-0.48px] transition-[background-color,box-shadow] duration-200 hover:bg-[#c93800] hover:shadow-[0_4px_12px_rgba(228,66,3,0.3)]">
-					<span v-if="isAuthenticated">{{ user?.role === 'Admin' ? 'Area Admin' : `Ciao ${user?.name}` }}</span>
-					<span v-else>Accedi!</span>
-				</NuxtLink>
+					<NuxtLink
+						:to="authLink"
+						class="hidden mid-desktop-navbar:inline-block bg-[#E44203] desktop-xl:w-[143px] mid-desktop-navbar:w-[91px] mid-desktop-navbar:h-[41px] desktop-xl:h-full mid-desktop-navbar:leading-[41px] desktop-xl:leading-[65px] text-center text-white rounded-[50px] font-semibold desktop-xl:text-[1.25rem] desktop:text-[0.875rem] tracking-[-0.48px] transition-[background-color,box-shadow] duration-200 hover:bg-[#c93800] hover:shadow-[0_4px_12px_rgba(228,66,3,0.3)]">
+						<span v-if="authReady && isAuthenticated">{{ user?.role === 'Admin' ? 'Area Admin' : `Ciao ${user?.name}` }}</span>
+						<span v-else>Accedi!</span>
+					</NuxtLink>
 
 				<!-- Carrello -->
 				<NuxtLink to="/carrello" class="inline-flex items-center justify-center gap-[6px] bg-[#E44203] min-w-[44px] tablet:min-w-[88px] px-[10px] tablet:px-[20px] h-[44px] tablet:h-[48px] text-center text-white rounded-[50px] font-semibold whitespace-nowrap text-[0.875rem] tablet:text-[1rem] transition-[background-color,box-shadow] duration-200 hover:bg-[#c93800] hover:shadow-[0_4px_12px_rgba(228,66,3,0.3)]">
@@ -151,7 +156,7 @@ watch(isAuthenticated, () => {
 						<circle cx="20" cy="21" r="1"/>
 						<path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
 					</svg>
-					<span v-if="cart?.data?.length > 0">{{ cart.data.length }}</span>
+						<span v-if="authReady && cart?.data?.length > 0">{{ cart.data.length }}</span>
 				</NuxtLink>
 			</div>
 		</div>
@@ -216,8 +221,8 @@ watch(isAuthenticated, () => {
 									<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
 									<circle cx="12" cy="7" r="4"/>
 								</svg>
-								<span v-if="isAuthenticated">{{ user?.role === 'Admin' ? 'Area Admin' : 'Il mio account' }}</span>
-								<span v-else>Accedi o Registrati</span>
+									<span v-if="authReady && isAuthenticated">{{ user?.role === 'Admin' ? 'Area Admin' : 'Il mio account' }}</span>
+									<span v-else>Accedi o Registrati</span>
 							</NuxtLink>
 						</div>
 					</div>
