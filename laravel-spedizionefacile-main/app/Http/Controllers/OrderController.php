@@ -48,6 +48,7 @@ use App\Models\Order;
 use App\Models\Package;
 use App\Models\PackageAddress;
 use App\Models\Service;
+use App\Services\PriceEngineService;
 use Illuminate\Http\Request;
 use App\Http\Requests\PackageStoreRequest;
 use App\Http\Resources\OrderResource;
@@ -134,6 +135,8 @@ class OrderController extends Controller
             // Creiamo gli indirizzi di partenza e destinazione
             $origin = PackageAddress::create($data['origin_address']);
             $destination = PackageAddress::create($data['destination_address']);
+            $priceEngine = app(PriceEngineService::class);
+            $capSupplementCents = $priceEngine->calculateCapSupplementCents($origin->postal_code ?? null, $destination->postal_code ?? null);
 
             // Creiamo i servizi aggiuntivi
             $servicesData = $this->normalizeServiceData($data['services']);
@@ -153,15 +156,15 @@ class OrderController extends Controller
                 $s2 = (float) preg_replace('/[^0-9.]/', '', $packageData['second_size']);
                 $s3 = (float) preg_replace('/[^0-9.]/', '', $packageData['third_size']);
 
-                // Prezzi calcolati dalle fasce DB (con fallback hardcoded)
-                $weightPrice = SessionController::findBandPrice('weight', $weight);
+                // Prezzi calcolati dal motore centrale (stessa logica del preventivo/sessione)
+                $weightPrice = $priceEngine->calculateBandPrice('weight', $weight);
                 $vol = ($s1 / 100) * ($s2 / 100) * ($s3 / 100);
-                $volumePrice = SessionController::findBandPrice('volume', $vol);
+                $volumePrice = $priceEngine->calculateBandPrice('volume', $vol);
 
                 // Il prezzo e' il MAGGIORE tra prezzo per peso e prezzo per volume
-                $basePrice = max($weightPrice, $volumePrice);
+                $basePriceCents = max((int) round($weightPrice * 100), (int) round($volumePrice * 100)) + $capSupplementCents;
                 $quantity = (int) ($packageData['quantity'] ?? 1);
-                $singlePriceEur = round($basePrice * $quantity, 2);
+                $singlePriceEur = round(($basePriceCents / 100) * $quantity, 2);
                 $singlePriceCents = (int) round($singlePriceEur * 100);
                 $subtotalCents += $singlePriceCents;
 
@@ -271,23 +274,34 @@ class OrderController extends Controller
         ]);
 
         $result = DB::transaction(function () use ($request, $order) {
+            $priceEngine = app(PriceEngineService::class);
             $weight = (float) $request->weight;
             $s1 = (float) $request->first_size;
             $s2 = (float) $request->second_size;
             $s3 = (float) $request->third_size;
 
-            // Prezzi calcolati dalle fasce DB (con fallback hardcoded)
-            $weightPrice = SessionController::findBandPrice('weight', $weight);
+            // Prezzi calcolati dal motore centrale
+            $weightPrice = $priceEngine->calculateBandPrice('weight', $weight);
             $vol = ($s1 / 100) * ($s2 / 100) * ($s3 / 100);
-            $volumePrice = SessionController::findBandPrice('volume', $vol);
+            $volumePrice = $priceEngine->calculateBandPrice('volume', $vol);
 
-            $basePrice = max($weightPrice, $volumePrice);
+            $originCap = null;
+            $destinationCap = null;
+            $existingPackage = $order->packages()->first();
+            if ($existingPackage?->originAddress) {
+                $originCap = $existingPackage->originAddress->postal_code ?? null;
+            }
+            if ($existingPackage?->destinationAddress) {
+                $destinationCap = $existingPackage->destinationAddress->postal_code ?? null;
+            }
+            $capSupplementCents = $priceEngine->calculateCapSupplementCents($originCap, $destinationCap);
+
+            $basePriceCents = max((int) round($weightPrice * 100), (int) round($volumePrice * 100)) + $capSupplementCents;
             $quantity = (int) $request->quantity;
-            $singlePriceEur = round($basePrice * $quantity, 2);
+            $singlePriceEur = round(($basePriceCents / 100) * $quantity, 2);
             $singlePriceCents = (int) round($singlePriceEur * 100);
 
             // Reuse origin/destination from existing packages
-            $existingPackage = $order->packages()->first();
             $originId = $existingPackage?->origin_address_id;
             $destinationId = $existingPackage?->destination_address_id;
             $serviceId = $existingPackage?->service_id;

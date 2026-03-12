@@ -28,24 +28,31 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\PriceBand;
 use App\Models\Setting;
+use App\Services\PriceEngineService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Cache;
 
 class PublicPriceBandController extends Controller
 {
+    public function __construct(private readonly PriceEngineService $priceEngine)
+    {
+    }
+
     // Ritorna tutte le fasce di prezzo + promo, con cache di 60 minuti
     public function index(): JsonResponse
     {
         try {
             $result = Cache::remember('public_price_bands', 3600, function () {
-                $all = PriceBand::orderBy('sort_order')->get();
+                $config = $this->priceEngine->getPricingConfig();
 
                 return [
                     'data' => [
-                        'weight' => $all->where('type', 'weight')->values(),
-                        'volume' => $all->where('type', 'volume')->values(),
+                        'weight' => $config['weight'] ?? [],
+                        'volume' => $config['volume'] ?? [],
+                        'extra_rules' => $config['extra_rules'] ?? [],
+                        'supplements' => $config['supplements'] ?? [],
+                        'version' => $config['version'] ?? null,
                     ],
                     'promo' => $this->getPromoSettings(),
                 ];
@@ -53,17 +60,20 @@ class PublicPriceBandController extends Controller
         } catch (\Exception $e) {
             // Cache non disponibile: query diretta al DB
             try {
-                $all = PriceBand::orderBy('sort_order')->get();
+                $config = $this->priceEngine->getPricingConfig();
                 $result = [
                     'data' => [
-                        'weight' => $all->where('type', 'weight')->values(),
-                        'volume' => $all->where('type', 'volume')->values(),
+                        'weight' => $config['weight'] ?? [],
+                        'volume' => $config['volume'] ?? [],
+                        'extra_rules' => $config['extra_rules'] ?? [],
+                        'supplements' => $config['supplements'] ?? [],
+                        'version' => $config['version'] ?? null,
                     ],
                     'promo' => $this->getPromoSettings(),
                 ];
             } catch (\Exception $e2) {
                 $result = [
-                    'data' => ['weight' => [], 'volume' => []],
+                    'data' => ['weight' => [], 'volume' => [], 'extra_rules' => [], 'supplements' => [], 'version' => null],
                     'promo' => ['active' => false, 'label_text' => '', 'label_color' => '#E44203', 'label_image' => null, 'show_badges' => false, 'description' => ''],
                 ];
             }

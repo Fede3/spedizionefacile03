@@ -36,22 +36,31 @@ namespace App\Http\Controllers;
 
 use App\Models\PriceBand;
 use App\Models\Setting;
+use App\Services\PriceEngineService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\ValidationException;
 
 class PriceBandController extends Controller
 {
+    public function __construct(private readonly PriceEngineService $priceEngine)
+    {
+    }
+
     // Lista tutte le bande raggruppate per tipo
     public function index(): JsonResponse
     {
-        $bands = PriceBand::orderBy('sort_order')->get();
+        $config = $this->priceEngine->getPricingConfig();
 
         return response()->json([
             'data' => [
-                'weight' => $bands->where('type', 'weight')->values(),
-                'volume' => $bands->where('type', 'volume')->values(),
+                'weight' => $config['weight'] ?? [],
+                'volume' => $config['volume'] ?? [],
+                'extra_rules' => $config['extra_rules'] ?? [],
+                'supplements' => $config['supplements'] ?? [],
+                'version' => $config['version'] ?? null,
             ],
         ]);
     }
@@ -61,6 +70,7 @@ class PriceBandController extends Controller
     {
         $seeder = new \Database\Seeders\PriceBandSeeder();
         $seeder->run();
+        $this->priceEngine->clearPricingSettings();
 
         try { Cache::forget('public_price_bands'); } catch (\Exception $e) {}
 
@@ -73,23 +83,96 @@ class PriceBandController extends Controller
     // Aggiornamento massivo delle bande di prezzo
     public function bulkUpdate(Request $request): JsonResponse
     {
-        $data = $request->validate([
-            'bands' => 'required|array',
-            'bands.*.id' => 'required|exists:price_bands,id',
-            'bands.*.base_price' => 'required|integer|min:0',
-            'bands.*.discount_price' => 'nullable|integer|min:0',
-            'bands.*.show_discount' => 'sometimes|boolean',
-        ]);
+        try {
+            $payload = [];
 
-        foreach ($data['bands'] as $bandData) {
-            $updateData = [
-                'base_price' => $bandData['base_price'],
-                'discount_price' => $bandData['discount_price'] ?? null,
-            ];
-            if (isset($bandData['show_discount'])) {
-                $updateData['show_discount'] = $bandData['show_discount'];
+            // Compatibilità legacy: body con array "bands" basato su ID DB
+            if ($request->has('bands') && !$request->has('weight') && !$request->has('volume')) {
+                $legacy = $request->validate([
+                    'bands' => 'required|array|min:1',
+                    'bands.*.id' => 'required',
+                    'bands.*.base_price' => 'required|integer|min:0',
+                    'bands.*.discount_price' => 'nullable|integer|min:0',
+                    'bands.*.show_discount' => 'sometimes|boolean',
+                ]);
+
+                $current = $this->priceEngine->getPricingConfig();
+                $map = [];
+                foreach ($legacy['bands'] as $item) {
+                    $map[(string) $item['id']] = $item;
+                }
+
+                $payload['weight'] = collect($current['weight'] ?? [])->map(function (array $band) use ($map) {
+                    $id = (string) ($band['id'] ?? '');
+                    if (isset($map[$id])) {
+                        $band['base_price'] = (int) $map[$id]['base_price'];
+                        $band['discount_price'] = $map[$id]['discount_price'] ?? null;
+                        if (array_key_exists('show_discount', $map[$id])) {
+                            $band['show_discount'] = (bool) $map[$id]['show_discount'];
+                        }
+                    }
+                    return $band;
+                })->values()->all();
+
+                $payload['volume'] = collect($current['volume'] ?? [])->map(function (array $band) use ($map) {
+                    $id = (string) ($band['id'] ?? '');
+                    if (isset($map[$id])) {
+                        $band['base_price'] = (int) $map[$id]['base_price'];
+                        $band['discount_price'] = $map[$id]['discount_price'] ?? null;
+                        if (array_key_exists('show_discount', $map[$id])) {
+                            $band['show_discount'] = (bool) $map[$id]['show_discount'];
+                        }
+                    }
+                    return $band;
+                })->values()->all();
+
+                $payload['extra_rules'] = $current['extra_rules'] ?? [];
+                $payload['supplements'] = $current['supplements'] ?? [];
+            } else {
+                $payload = $request->validate([
+                    'weight' => 'required|array|min:1',
+                    'weight.*.min_value' => 'required|numeric|min:0',
+                    'weight.*.max_value' => 'required|numeric|min:0',
+                    'weight.*.base_price' => 'required|integer|min:0',
+                    'weight.*.discount_price' => 'nullable|integer|min:0',
+                    'weight.*.show_discount' => 'nullable|boolean',
+                    'weight.*.sort_order' => 'nullable|integer|min:1',
+                    'weight.*.id' => 'nullable',
+                    'volume' => 'required|array|min:1',
+                    'volume.*.min_value' => 'required|numeric|min:0',
+                    'volume.*.max_value' => 'required|numeric|min:0',
+                    'volume.*.base_price' => 'required|integer|min:0',
+                    'volume.*.discount_price' => 'nullable|integer|min:0',
+                    'volume.*.show_discount' => 'nullable|boolean',
+                    'volume.*.sort_order' => 'nullable|integer|min:1',
+                    'volume.*.id' => 'nullable',
+                    'extra_rules' => 'required|array',
+                    'extra_rules.enabled' => 'required|boolean',
+                    'extra_rules.weight_start' => 'required|numeric|min:0',
+                    'extra_rules.weight_step' => 'required|numeric|min:0.0001',
+                    'extra_rules.volume_start' => 'required|numeric|min:0',
+                    'extra_rules.volume_step' => 'required|numeric|min:0.0001',
+                    'extra_rules.increment_cents' => 'required|integer|min:0',
+                    'extra_rules.increment_mode' => 'nullable|in:flat',
+                    'extra_rules.base_price_cents_mode' => 'required|in:last_band_effective,manual',
+                    'extra_rules.base_price_cents_manual' => 'nullable|integer|min:0',
+                    'extra_rules.weight_resolution' => 'required|numeric|min:0.0001',
+                    'extra_rules.volume_resolution' => 'required|numeric|min:0.0001',
+                    'supplements' => 'nullable|array',
+                    'supplements.*.id' => 'nullable',
+                    'supplements.*.prefix' => 'required|string',
+                    'supplements.*.amount_cents' => 'required|integer|min:0',
+                    'supplements.*.apply_to' => 'required|in:origin,destination,both',
+                    'supplements.*.enabled' => 'nullable|boolean',
+                ]);
             }
-            PriceBand::where('id', $bandData['id'])->update($updateData);
+
+            $config = $this->priceEngine->savePricingConfig($payload);
+        } catch (ValidationException $e) {
+            return response()->json([
+                'message' => 'Configurazione prezzi non valida.',
+                'errors' => $e->errors(),
+            ], 422);
         }
 
         // Invalida la cache pubblica: i nuovi prezzi sono visibili subito
@@ -98,6 +181,13 @@ class PriceBandController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Fasce di prezzo aggiornate con successo.',
+            'data' => [
+                'weight' => $config['weight'] ?? [],
+                'volume' => $config['volume'] ?? [],
+                'extra_rules' => $config['extra_rules'] ?? [],
+                'supplements' => $config['supplements'] ?? [],
+                'version' => $config['version'] ?? null,
+            ],
         ]);
     }
 
