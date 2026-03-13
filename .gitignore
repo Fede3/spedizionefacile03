@@ -21,6 +21,9 @@ Desktop.ini
 .idea/
 .vscode/
 
+# Git worktrees
+.worktrees/
+
 *.swp
 *.swo
 
