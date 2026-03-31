@@ -128,7 +128,7 @@ const parsedFaqs = computed(() => {
 				</div>
 			</div>
 
-			<div class="border-t border-[#E0E0E0] pt-[28px] mb-[56px] desktop:mb-[96px]">
+			<div class="border-t border-[#E9EBEC] pt-[28px] mb-[56px] desktop:mb-[96px]">
 				<p class="text-[1.125rem] desktop:text-[1.25rem] font-medium text-[#222222] mb-[16px]">Vuoi provare questo servizio?</p>
 				<NuxtLink to="/preventivo" class="inline-block h-[48px] px-[28px] rounded-[35px] bg-[#E44203] leading-[48px] text-center text-white font-semibold tracking-[-0.336px] text-[0.9375rem] hover:opacity-90 transition-opacity">
 					Calcola il preventivo

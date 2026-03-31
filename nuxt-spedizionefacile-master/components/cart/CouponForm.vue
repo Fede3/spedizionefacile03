@@ -29,7 +29,7 @@ const onInput = (e) => {
         :value="couponCode"
         @input="onInput"
         placeholder="PROVA123"
-        class="w-full bg-white border border-[#D0D0D0] rounded-[12px] h-[48px] tablet:h-[44px] px-[18px] text-[1rem] tablet:text-[0.875rem] text-[#404040] placeholder:text-[#999] transition-[border-color,box-shadow] duration-200 focus:border-[#095866] focus:shadow-[0_0_0_3px_rgba(9,88,102,0.1)]" />
+        class="w-full bg-white border border-[#E9EBEC] rounded-[12px] h-[48px] tablet:h-[44px] px-[18px] text-[1rem] tablet:text-[0.875rem] text-[#404040] placeholder:text-[#999] transition-[border-color,box-shadow] duration-200 focus:border-[#095866] focus:shadow-[0_0_0_3px_rgba(9,88,102,0.1)]" />
       <div v-else class="flex items-center gap-2 bg-emerald-50 border border-emerald-200 rounded-[12px] h-[44px] px-[18px]">
         <span class="text-emerald-700 font-semibold text-[0.875rem]">{{ couponCode.toUpperCase() }} (-{{ couponDiscount }}%)</span>
         <button @click="emit('remove')" class="text-red-500 text-[0.75rem] hover:underline cursor-pointer ml-auto">X</button>

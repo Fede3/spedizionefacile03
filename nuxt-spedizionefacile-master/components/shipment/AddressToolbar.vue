@@ -50,7 +50,7 @@ defineExpose({ configDropdownRef, addressSelectorRef });
 				{{ isAuthenticated && loadingConfigs ? '...' : 'Spedizioni configurate' }}
 			</button>
 			<!-- Dropdown con configurazioni -->
-			<div v-if="showConfigDropdown && savedConfigs.length > 0" :id="`${type}-config-dropdown`" class="absolute z-50 top-full right-0 mt-[4px] bg-white border border-[#D0D0D0] rounded-[12px] shadow-xl max-h-[300px] overflow-y-auto w-[min(92vw,400px)]">
+			<div v-if="showConfigDropdown && savedConfigs.length > 0" :id="`${type}-config-dropdown`" class="absolute z-50 top-full right-0 mt-[4px] bg-white border border-[#E9EBEC] rounded-[12px] shadow-xl max-h-[300px] overflow-y-auto w-[min(92vw,400px)]">
 				<div class="p-[12px] border-b border-[#F0F0F0] text-[0.8125rem] font-bold text-[#252B42]">Seleziona una spedizione configurata completa</div>
 				<div v-for="item in savedConfigs" :key="`${type}-config-${item.id}`" @click="$emit('apply-config', item, 'both')" class="px-[14px] py-[12px] cursor-pointer hover:bg-[#f0fafb] border-b border-[#F0F0F0] last:border-0 transition-colors">
 					<div class="flex items-center gap-[8px]">
@@ -71,12 +71,12 @@ defineExpose({ configDropdownRef, addressSelectorRef });
 				</div>
 			</div>
 			<!-- Nessuna configurazione -->
-			<div v-if="showConfigDropdown && savedConfigs.length === 0 && !loadingConfigs" :id="`${type}-config-dropdown`" class="absolute z-50 top-full right-0 mt-[4px] bg-white border border-[#D0D0D0] rounded-[12px] shadow-xl p-[20px] w-[min(92vw,300px)]">
+			<div v-if="showConfigDropdown && savedConfigs.length === 0 && !loadingConfigs" :id="`${type}-config-dropdown`" class="absolute z-50 top-full right-0 mt-[4px] bg-white border border-[#E9EBEC] rounded-[12px] shadow-xl p-[20px] w-[min(92vw,300px)]">
 				<p class="text-[0.875rem] text-[#737373]">Nessuna spedizione configurata salvata.</p>
 				<NuxtLink to="/account/spedizioni-configurate" class="text-[0.8125rem] text-[#095866] hover:underline font-semibold mt-[8px] inline-block">Vai a spedizioni configurate</NuxtLink>
 			</div>
 			<!-- Guest prompt -->
-			<div v-if="showConfigGuestPrompt && !isAuthenticated" :id="`${type}-config-dropdown`" role="dialog" class="absolute z-50 top-full right-0 mt-[4px] bg-white border border-[#D0D0D0] rounded-[12px] shadow-xl p-[14px] w-[min(92vw,300px)]">
+			<div v-if="showConfigGuestPrompt && !isAuthenticated" :id="`${type}-config-dropdown`" role="dialog" class="absolute z-50 top-full right-0 mt-[4px] bg-white border border-[#E9EBEC] rounded-[12px] shadow-xl p-[14px] w-[min(92vw,300px)]">
 				<p class="text-[0.8125rem] text-[#4B5563] leading-[1.45]">Per usare le spedizioni configurate devi accedere.</p>
 				<div class="mt-[10px] flex items-center gap-[8px]">
 					<button type="button" class="inline-flex items-center justify-center h-[34px] px-[12px] rounded-[12px] bg-[#095866] text-white text-[0.75rem] font-semibold hover:bg-[#074a56] transition cursor-pointer" @click="$emit('open-auth-modal', 'login')">Accedi</button>
@@ -96,7 +96,7 @@ defineExpose({ configDropdownRef, addressSelectorRef });
 				<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
 				Indirizzi salvati
 			</button>
-			<div v-if="showAddressSelector && isAuthenticated" :id="`${type}-addresses-dropdown`" class="absolute z-50 top-full right-0 mt-[4px] bg-white border border-[#D0D0D0] rounded-[12px] shadow-xl max-h-[250px] overflow-y-auto w-[min(92vw,320px)]">
+			<div v-if="showAddressSelector && isAuthenticated" :id="`${type}-addresses-dropdown`" class="absolute z-50 top-full right-0 mt-[4px] bg-white border border-[#E9EBEC] rounded-[12px] shadow-xl max-h-[250px] overflow-y-auto w-[min(92vw,320px)]">
 				<div v-if="loadingSavedAddresses" class="p-[16px] text-center text-[0.8125rem] text-[#737373]">Caricamento...</div>
 				<template v-else-if="savedAddresses.length > 0">
 					<div v-for="addr in savedAddresses" :key="addr.id" @click="$emit('apply-saved-address', addr, type)" class="px-[14px] py-[10px] cursor-pointer hover:bg-[#f0fafb] border-b border-[#F0F0F0] last:border-0 transition-colors">
@@ -109,7 +109,7 @@ defineExpose({ configDropdownRef, addressSelectorRef });
 					<NuxtLink to="/account/indirizzi" class="text-[0.8125rem] text-[#095866] hover:underline font-semibold mt-[4px] inline-block">Aggiungi indirizzo</NuxtLink>
 				</div>
 			</div>
-			<div v-if="showGuestPrompt && !isAuthenticated" :id="`${type}-addresses-dropdown`" role="dialog" class="absolute z-50 top-full right-0 mt-[4px] bg-white border border-[#D0D0D0] rounded-[12px] shadow-xl p-[14px] w-[min(92vw,280px)]">
+			<div v-if="showGuestPrompt && !isAuthenticated" :id="`${type}-addresses-dropdown`" role="dialog" class="absolute z-50 top-full right-0 mt-[4px] bg-white border border-[#E9EBEC] rounded-[12px] shadow-xl p-[14px] w-[min(92vw,280px)]">
 				<p class="text-[0.8125rem] text-[#4B5563] leading-[1.45]">Per usare la rubrica indirizzi devi accedere.</p>
 				<div class="mt-[10px] flex items-center gap-[8px]">
 					<button type="button" class="inline-flex items-center justify-center h-[34px] px-[12px] rounded-[12px] bg-[#095866] text-white text-[0.75rem] font-semibold hover:bg-[#074a56] transition cursor-pointer" @click="$emit('open-auth-modal', 'login')">Accedi</button>

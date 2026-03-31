@@ -118,7 +118,7 @@ const getDescription = (guide) => {
 					v-for="guide in guides"
 					:key="guide.slug"
 					:to="`/guide/${guide.slug}`"
-					class="guide-card block rounded-[22px] overflow-hidden border border-[#E0E0E0] shadow-sm hover:shadow-lg hover:border-[#095866] transition-all group">
+					class="guide-card block rounded-[22px] overflow-hidden border border-[#E9EBEC] shadow-sm hover:shadow-lg hover:border-[#095866] transition-all group">
 					<!-- Accent line -->
 					<div class="h-[3px] bg-[#E44203]"></div>
 

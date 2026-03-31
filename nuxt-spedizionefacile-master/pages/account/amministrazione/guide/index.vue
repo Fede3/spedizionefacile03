@@ -100,10 +100,16 @@ onMounted(() => { fetchArticles(); });
 			<div v-else class="bg-white rounded-[20px] p-[24px] desktop:p-[32px] shadow-sm border border-[#E9EBEC]">
 				<h2 class="text-[1.125rem] font-bold text-[#252B42] mb-[20px]">Tutte le guide</h2>
 
-				<div v-if="!articles.length" class="text-center py-[48px] text-[#737373]">
-					<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[40px] h-[40px] text-[#C8CCD0] mx-auto mb-[12px]" fill="currentColor"><path d="M13,12H20V13.5H13M13,9.5H20V11H13M13,14.5H20V16H13M21,4H3A2,2 0 0,0 1,6V19A2,2 0 0,0 3,21H21A2,2 0 0,0 23,19V6A2,2 0 0,0 21,4M21,19H12V6H21"/></svg>
-					<p>Nessuna guida presente.</p>
-					<NuxtLink to="/account/amministrazione/guide/nuovo" class="inline-block mt-[12px] text-[#095866] hover:underline font-medium text-[0.875rem]">Crea la prima guida</NuxtLink>
+				<div v-if="!articles.length" class="text-center py-[48px]">
+					<div class="w-[64px] h-[64px] mx-auto mb-[16px] bg-[#F8F9FB] rounded-full flex items-center justify-center">
+						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[28px] h-[28px]" fill="#C8CCD0"><path d="M13,12H20V13.5H13M13,9.5H20V11H13M13,14.5H20V16H13M21,4H3A2,2 0 0,0 1,6V19A2,2 0 0,0 3,21H21A2,2 0 0,0 23,19V6A2,2 0 0,0 21,4M21,19H12V6H21"/></svg>
+					</div>
+					<h2 class="text-[1.125rem] font-bold text-[#252B42] mb-[8px]">Nessuna guida presente</h2>
+					<p class="text-[#737373] text-[0.875rem] mb-[16px]">Crea la prima guida per iniziare.</p>
+					<NuxtLink to="/account/amministrazione/guide/nuovo" class="btn-primary btn-compact inline-flex items-center gap-[6px] text-[0.875rem]">
+						<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+						Crea guida
+					</NuxtLink>
 				</div>
 
 				<div v-else class="overflow-x-auto">

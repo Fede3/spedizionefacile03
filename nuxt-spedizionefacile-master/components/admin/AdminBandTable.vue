@@ -65,10 +65,10 @@ const onEditInput = (event) => {
 					<tr v-for="(band, idx) in bands" :key="band.id || idx" :class="['border-b border-[#F0F0F0] last:border-0', idx % 2 === 1 ? 'bg-[#FAFBFC]' : '']">
 						<td class="py-[14px] font-bold text-[#252B42]">{{ idx + 1 }}</td>
 						<td class="py-[14px] text-[#404040]">
-							<input v-model.number="band.min_value" type="number" min="0" :step="minMaxStep" class="w-[86px] h-[34px] px-[8px] rounded-[12px] border border-[#C8CCD0] bg-white text-[0.8125rem]">
+							<input v-model.number="band.min_value" type="number" min="0" :step="minMaxStep" class="w-[86px] h-[34px] px-[8px] rounded-[12px] border border-[#E9EBEC] bg-white text-[0.8125rem]">
 						</td>
 						<td class="py-[14px] text-[#404040]">
-							<input v-model.number="band.max_value" type="number" min="0" :step="minMaxStep" class="w-[86px] h-[34px] px-[8px] rounded-[12px] border border-[#C8CCD0] bg-white text-[0.8125rem]">
+							<input v-model.number="band.max_value" type="number" min="0" :step="minMaxStep" class="w-[86px] h-[34px] px-[8px] rounded-[12px] border border-[#E9EBEC] bg-white text-[0.8125rem]">
 						</td>
 						<!-- Prezzo base -->
 						<td class="py-[14px]">

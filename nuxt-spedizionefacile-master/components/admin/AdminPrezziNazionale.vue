@@ -126,13 +126,13 @@ const bandTableShared = computed(() => ({
 				<h3 class="text-[0.875rem] font-semibold text-[#252B42]">Scaglioni Peso</h3>
 				<div class="grid grid-cols-3 gap-[10px]">
 					<label class="text-[0.75rem] text-[#737373]">Start
-						<input v-model.number="extraRules.weight_start" type="number" min="0" step="1" class="mt-[4px] w-full h-[38px] px-[10px] rounded-[12px] border border-[#C8CCD0] bg-white text-[0.8125rem]">
+						<input v-model.number="extraRules.weight_start" type="number" min="0" step="1" class="mt-[4px] w-full h-[38px] px-[10px] rounded-[12px] border border-[#E9EBEC] bg-white text-[0.8125rem]">
 					</label>
 					<label class="text-[0.75rem] text-[#737373]">Step
-						<input v-model.number="extraRules.weight_step" type="number" min="0.0001" step="1" class="mt-[4px] w-full h-[38px] px-[10px] rounded-[12px] border border-[#C8CCD0] bg-white text-[0.8125rem]">
+						<input v-model.number="extraRules.weight_step" type="number" min="0.0001" step="1" class="mt-[4px] w-full h-[38px] px-[10px] rounded-[12px] border border-[#E9EBEC] bg-white text-[0.8125rem]">
 					</label>
 					<label class="text-[0.75rem] text-[#737373]">Risoluzione
-						<input v-model.number="extraRules.weight_resolution" type="number" min="0.0001" step="1" class="mt-[4px] w-full h-[38px] px-[10px] rounded-[12px] border border-[#C8CCD0] bg-white text-[0.8125rem]">
+						<input v-model.number="extraRules.weight_resolution" type="number" min="0.0001" step="1" class="mt-[4px] w-full h-[38px] px-[10px] rounded-[12px] border border-[#E9EBEC] bg-white text-[0.8125rem]">
 					</label>
 				</div>
 				<p class="text-[0.75rem] text-[#4F5D75]">Preview: {{ extraRuleExamples.firstWeightFrom }}-{{ extraRuleExamples.firstWeightTo }} / {{ extraRuleExamples.secondWeightFrom }}-{{ extraRuleExamples.secondWeightTo }}</p>
@@ -142,13 +142,13 @@ const bandTableShared = computed(() => ({
 				<h3 class="text-[0.875rem] font-semibold text-[#252B42]">Scaglioni Volume (m&sup3;)</h3>
 				<div class="grid grid-cols-3 gap-[10px]">
 					<label class="text-[0.75rem] text-[#737373]">Start
-						<input v-model.number="extraRules.volume_start" type="number" min="0" step="0.001" class="mt-[4px] w-full h-[38px] px-[10px] rounded-[12px] border border-[#C8CCD0] bg-white text-[0.8125rem]">
+						<input v-model.number="extraRules.volume_start" type="number" min="0" step="0.001" class="mt-[4px] w-full h-[38px] px-[10px] rounded-[12px] border border-[#E9EBEC] bg-white text-[0.8125rem]">
 					</label>
 					<label class="text-[0.75rem] text-[#737373]">Step
-						<input v-model.number="extraRules.volume_step" type="number" min="0.0001" step="0.001" class="mt-[4px] w-full h-[38px] px-[10px] rounded-[12px] border border-[#C8CCD0] bg-white text-[0.8125rem]">
+						<input v-model.number="extraRules.volume_step" type="number" min="0.0001" step="0.001" class="mt-[4px] w-full h-[38px] px-[10px] rounded-[12px] border border-[#E9EBEC] bg-white text-[0.8125rem]">
 					</label>
 					<label class="text-[0.75rem] text-[#737373]">Risoluzione
-						<input v-model.number="extraRules.volume_resolution" type="number" min="0.0001" step="0.001" class="mt-[4px] w-full h-[38px] px-[10px] rounded-[12px] border border-[#C8CCD0] bg-white text-[0.8125rem]">
+						<input v-model.number="extraRules.volume_resolution" type="number" min="0.0001" step="0.001" class="mt-[4px] w-full h-[38px] px-[10px] rounded-[12px] border border-[#E9EBEC] bg-white text-[0.8125rem]">
 					</label>
 				</div>
 				<p class="text-[0.75rem] text-[#4F5D75]">Preview: {{ extraRuleExamples.firstVolumeFrom.toFixed(3) }}-{{ extraRuleExamples.firstVolumeTo.toFixed(3) }} / {{ extraRuleExamples.secondVolumeFrom.toFixed(3) }}-{{ extraRuleExamples.secondVolumeTo.toFixed(3) }}</p>
@@ -158,7 +158,7 @@ const bandTableShared = computed(() => ({
 				<h3 class="text-[0.875rem] font-semibold text-[#252B42]">Incrementi oltre 7ª fascia</h3>
 				<div class="grid grid-cols-1 tablet:grid-cols-2 gap-[10px]">
 					<label class="text-[0.75rem] text-[#737373]">Base prezzo extra
-						<select v-model="extraRules.base_price_cents_mode" class="mt-[4px] w-full h-[38px] px-[10px] rounded-[12px] border border-[#C8CCD0] bg-white text-[0.8125rem]">
+						<select v-model="extraRules.base_price_cents_mode" class="mt-[4px] w-full h-[38px] px-[10px] rounded-[12px] border border-[#E9EBEC] bg-white text-[0.8125rem]">
 							<option value="last_band_effective">Ultima fascia effettiva</option>
 							<option value="manual">Manuale</option>
 						</select>
@@ -168,7 +168,7 @@ const bandTableShared = computed(() => ({
 							:value="(Number(extraRules.increment_cents || 0) / 100).toFixed(2).replace('.', ',')"
 							@input="extraRules.increment_cents = Math.max(0, euroToCents($event.target.value) ?? 0)"
 							type="text"
-							class="mt-[4px] w-full h-[38px] px-[10px] rounded-[12px] border border-[#C8CCD0] bg-white text-[0.8125rem]">
+							class="mt-[4px] w-full h-[38px] px-[10px] rounded-[12px] border border-[#E9EBEC] bg-white text-[0.8125rem]">
 					</label>
 				</div>
 				<label v-if="extraRules.base_price_cents_mode === 'manual'" class="text-[0.75rem] text-[#737373]">Prezzo base extra manuale (&euro;)
@@ -176,7 +176,7 @@ const bandTableShared = computed(() => ({
 						:value="extraRules.base_price_cents_manual == null ? '' : (Number(extraRules.base_price_cents_manual || 0) / 100).toFixed(2).replace('.', ',')"
 						@input="extraRules.base_price_cents_manual = euroToCents($event.target.value)"
 						type="text"
-						class="mt-[4px] w-full h-[38px] px-[10px] rounded-[12px] border border-[#C8CCD0] bg-white text-[0.8125rem]">
+						class="mt-[4px] w-full h-[38px] px-[10px] rounded-[12px] border border-[#E9EBEC] bg-white text-[0.8125rem]">
 				</label>
 			</div>
 
@@ -222,7 +222,7 @@ const bandTableShared = computed(() => ({
 			</button>
 		</div>
 
-		<div v-if="!supplementRules.length" class="p-[14px] rounded-[12px] border border-dashed border-[#C8CCD0] text-[#6A7486] text-[0.8125rem]">
+		<div v-if="!supplementRules.length" class="p-[14px] rounded-[12px] border border-dashed border-[#E9EBEC] text-[#6A7486] text-[0.8125rem]">
 			Nessun supplemento attivo. Aggiungi una regola se necessario.
 		</div>
 

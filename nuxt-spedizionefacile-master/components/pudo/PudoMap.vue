@@ -31,7 +31,7 @@ const emit = defineEmits(['select', 'map-click']);
 </script>
 
 <template>
-  <div class="h-full bg-white rounded-[12px] border border-[#D0D0D0] p-[8px] flex flex-col">
+  <div class="h-full bg-white rounded-[12px] border border-[#E9EBEC] p-[8px] flex flex-col">
     <div class="shrink-0 rounded-[12px] border border-[#D8E6EB] bg-[#F8FCFD] px-[10px] py-[8px]">
       <p class="text-[0.75rem] text-[#506070]">
         Doppio clic sulla mappa per impostare il punto di riferimento e aggiornare automaticamente via, citta e CAP.

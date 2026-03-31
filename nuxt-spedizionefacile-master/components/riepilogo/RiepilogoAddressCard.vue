@@ -76,22 +76,22 @@ const onCapInput = (event) => {
 		<div v-else class="space-y-[10px]">
 			<div>
 				<label class="text-[0.75rem] text-[#737373]">Nome e Cognome</label>
-				<input type="text" :value="editAddress.name" @input="onFieldInput('name', $event.target.value)" class="w-full bg-white rounded-[12px] h-[44px] px-[10px] text-[1rem] border border-[#D0D0D0] transition-[border-color,box-shadow,background-color] duration-200 focus:border-[#095866] focus:shadow-[0_0_0_3px_rgba(9,88,102,0.1)]" />
+				<input type="text" :value="editAddress.name" @input="onFieldInput('name', $event.target.value)" class="w-full bg-white rounded-[12px] h-[44px] px-[10px] text-[1rem] border border-[#E9EBEC] transition-[border-color,box-shadow,background-color] duration-200 focus:border-[#095866] focus:shadow-[0_0_0_3px_rgba(9,88,102,0.1)]" />
 			</div>
 			<div class="grid grid-cols-1 tablet:grid-cols-2 gap-[10px]">
 				<div>
 					<label class="text-[0.75rem] text-[#737373]">Indirizzo</label>
-					<input type="text" :value="editAddress.address" @input="onFieldInput('address', $event.target.value)" class="w-full bg-white rounded-[12px] h-[44px] px-[10px] text-[1rem] border border-[#D0D0D0] transition-[border-color,box-shadow,background-color] duration-200 focus:border-[#095866] focus:shadow-[0_0_0_3px_rgba(9,88,102,0.1)]" />
+					<input type="text" :value="editAddress.address" @input="onFieldInput('address', $event.target.value)" class="w-full bg-white rounded-[12px] h-[44px] px-[10px] text-[1rem] border border-[#E9EBEC] transition-[border-color,box-shadow,background-color] duration-200 focus:border-[#095866] focus:shadow-[0_0_0_3px_rgba(9,88,102,0.1)]" />
 				</div>
 				<div>
 					<label class="text-[0.75rem] text-[#737373]">N. Civico</label>
-					<input type="text" :value="editAddress.address_number" @input="onFieldInput('address_number', $event.target.value)" class="w-full bg-white rounded-[12px] h-[44px] px-[10px] text-[1rem] border border-[#D0D0D0] transition-[border-color,box-shadow,background-color] duration-200 focus:border-[#095866] focus:shadow-[0_0_0_3px_rgba(9,88,102,0.1)]" />
+					<input type="text" :value="editAddress.address_number" @input="onFieldInput('address_number', $event.target.value)" class="w-full bg-white rounded-[12px] h-[44px] px-[10px] text-[1rem] border border-[#E9EBEC] transition-[border-color,box-shadow,background-color] duration-200 focus:border-[#095866] focus:shadow-[0_0_0_3px_rgba(9,88,102,0.1)]" />
 				</div>
 			</div>
 			<div class="grid grid-cols-2 tablet:grid-cols-3 gap-[10px]">
 				<div>
 					<label class="text-[0.75rem] text-[#737373]">Città</label>
-					<input type="text" :value="editAddress.city" @input="onFieldInput('city', $event.target.value)" class="w-full bg-white rounded-[12px] h-[44px] px-[10px] text-[1rem] border border-[#D0D0D0] transition-[border-color,box-shadow,background-color] duration-200 focus:border-[#095866] focus:shadow-[0_0_0_3px_rgba(9,88,102,0.1)]" required />
+					<input type="text" :value="editAddress.city" @input="onFieldInput('city', $event.target.value)" class="w-full bg-white rounded-[12px] h-[44px] px-[10px] text-[1rem] border border-[#E9EBEC] transition-[border-color,box-shadow,background-color] duration-200 focus:border-[#095866] focus:shadow-[0_0_0_3px_rgba(9,88,102,0.1)]" required />
 				</div>
 				<div>
 					<label class="text-[0.75rem] text-[#737373]">CAP</label>
@@ -102,22 +102,22 @@ const onCapInput = (event) => {
 						inputmode="numeric"
 						pattern="[0-9]{5}"
 						@input="onCapInput"
-						class="w-full bg-white rounded-[12px] h-[44px] px-[10px] text-[1rem] border border-[#D0D0D0] transition-[border-color,box-shadow,background-color] duration-200 focus:border-[#095866] focus:shadow-[0_0_0_3px_rgba(9,88,102,0.1)]"
+						class="w-full bg-white rounded-[12px] h-[44px] px-[10px] text-[1rem] border border-[#E9EBEC] transition-[border-color,box-shadow,background-color] duration-200 focus:border-[#095866] focus:shadow-[0_0_0_3px_rgba(9,88,102,0.1)]"
 						required />
 				</div>
 				<div class="col-span-2 tablet:col-span-1">
 					<label class="text-[0.75rem] text-[#737373]">Provincia</label>
-					<input type="text" :value="editAddress.province" @input="onFieldInput('province', $event.target.value)" class="w-full bg-white rounded-[12px] h-[44px] px-[10px] text-[1rem] border border-[#D0D0D0] transition-[border-color,box-shadow,background-color] duration-200 focus:border-[#095866] focus:shadow-[0_0_0_3px_rgba(9,88,102,0.1)]" required />
+					<input type="text" :value="editAddress.province" @input="onFieldInput('province', $event.target.value)" class="w-full bg-white rounded-[12px] h-[44px] px-[10px] text-[1rem] border border-[#E9EBEC] transition-[border-color,box-shadow,background-color] duration-200 focus:border-[#095866] focus:shadow-[0_0_0_3px_rgba(9,88,102,0.1)]" required />
 				</div>
 			</div>
 			<div class="grid grid-cols-1 tablet:grid-cols-2 gap-[10px]">
 				<div>
 					<label class="text-[0.75rem] text-[#737373]">Telefono</label>
-					<input type="tel" :value="editAddress.telephone_number" @input="onFieldInput('telephone_number', $event.target.value)" class="w-full bg-white rounded-[12px] h-[44px] px-[10px] text-[1rem] border border-[#D0D0D0] transition-[border-color,box-shadow,background-color] duration-200 focus:border-[#095866] focus:shadow-[0_0_0_3px_rgba(9,88,102,0.1)]" />
+					<input type="tel" :value="editAddress.telephone_number" @input="onFieldInput('telephone_number', $event.target.value)" class="w-full bg-white rounded-[12px] h-[44px] px-[10px] text-[1rem] border border-[#E9EBEC] transition-[border-color,box-shadow,background-color] duration-200 focus:border-[#095866] focus:shadow-[0_0_0_3px_rgba(9,88,102,0.1)]" />
 				</div>
 				<div>
 					<label class="text-[0.75rem] text-[#737373]">Email</label>
-					<input type="email" :value="editAddress.email" @input="onFieldInput('email', $event.target.value)" class="w-full bg-white rounded-[12px] h-[44px] px-[10px] text-[1rem] border border-[#D0D0D0] transition-[border-color,box-shadow,background-color] duration-200 focus:border-[#095866] focus:shadow-[0_0_0_3px_rgba(9,88,102,0.1)]" />
+					<input type="email" :value="editAddress.email" @input="onFieldInput('email', $event.target.value)" class="w-full bg-white rounded-[12px] h-[44px] px-[10px] text-[1rem] border border-[#E9EBEC] transition-[border-color,box-shadow,background-color] duration-200 focus:border-[#095866] focus:shadow-[0_0_0_3px_rgba(9,88,102,0.1)]" />
 				</div>
 			</div>
 			<div class="flex gap-[10px] justify-end">

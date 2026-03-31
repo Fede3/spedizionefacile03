@@ -32,7 +32,7 @@ onBeforeUnmount(() => stopNowTimer());
 					v-model="searchAddress"
 					type="text"
 					placeholder="es. Via Roma 10"
-					class="w-full bg-white rounded-[12px] h-[44px] px-[10px] text-[1rem] border border-[#D0D0D0] transition-[border-color,box-shadow] duration-200 focus:border-[#095866] focus:shadow-[0_0_0_3px_rgba(9,88,102,0.1)]"
+					class="w-full bg-white rounded-[12px] h-[44px] px-[10px] text-[1rem] border border-[#E9EBEC] transition-[border-color,box-shadow] duration-200 focus:border-[#095866] focus:shadow-[0_0_0_3px_rgba(9,88,102,0.1)]"
 					@keydown.enter.prevent="searchPudo" />
 			</div>
 
@@ -43,7 +43,7 @@ onBeforeUnmount(() => stopNowTimer());
 					v-model="searchCity"
 					type="text"
 					placeholder="es. Iglesias"
-					class="w-full bg-white rounded-[12px] h-[44px] px-[10px] text-[1rem] border border-[#D0D0D0] transition-[border-color,box-shadow] duration-200 focus:border-[#095866] focus:shadow-[0_0_0_3px_rgba(9,88,102,0.1)]"
+					class="w-full bg-white rounded-[12px] h-[44px] px-[10px] text-[1rem] border border-[#E9EBEC] transition-[border-color,box-shadow] duration-200 focus:border-[#095866] focus:shadow-[0_0_0_3px_rgba(9,88,102,0.1)]"
 					@keydown.enter.prevent="searchPudo" />
 			</div>
 
@@ -55,7 +55,7 @@ onBeforeUnmount(() => stopNowTimer());
 					type="text"
 					maxlength="5"
 					placeholder="es. 09016"
-					class="w-full bg-white rounded-[12px] h-[44px] px-[10px] text-[1rem] border border-[#D0D0D0] transition-[border-color,box-shadow] duration-200 focus:border-[#095866] focus:shadow-[0_0_0_3px_rgba(9,88,102,0.1)]"
+					class="w-full bg-white rounded-[12px] h-[44px] px-[10px] text-[1rem] border border-[#E9EBEC] transition-[border-color,box-shadow] duration-200 focus:border-[#095866] focus:shadow-[0_0_0_3px_rgba(9,88,102,0.1)]"
 					@keydown.enter.prevent="searchPudo" />
 			</div>
 
@@ -119,7 +119,7 @@ onBeforeUnmount(() => stopNowTimer());
 							class="bg-white rounded-[12px] border-2 p-[14px] transition-[border-color,box-shadow] duration-200 cursor-pointer min-h-[168px]"
 							:class="[
 								expandedPudoKey === String(pudo.pudo_id || pudo.ui_key) ? 'h-auto' : 'h-[168px]',
-								selectedPudoKey === pudo.ui_key ? 'border-[#095866] shadow-md' : 'border-[#D0D0D0] hover:border-[#095866]/50'
+								selectedPudoKey === pudo.ui_key ? 'border-[#095866] shadow-md' : 'border-[#E9EBEC] hover:border-[#095866]/50'
 							]"
 							@click="selectPudo(pudo)">
 							<div class="flex items-start justify-between gap-[10px]">
@@ -189,8 +189,8 @@ onBeforeUnmount(() => stopNowTimer());
 			</div>
 
 			<div class="order-1 desktop:order-2 h-[360px] tablet:h-[420px] desktop:h-[520px] desktop:sticky desktop:top-[92px]">
-				<div class="h-full bg-white rounded-[12px] border border-[#D0D0D0] p-[8px] flex flex-col">
-					<div class="shrink-0 rounded-[10px] border border-[#D8E6EB] bg-[#F8FCFD] px-[10px] py-[8px]">
+				<div class="h-full bg-white rounded-[12px] border border-[#E9EBEC] p-[8px] flex flex-col">
+					<div class="shrink-0 rounded-[12px] border border-[#D8E6EB] bg-[#F8FCFD] px-[10px] py-[8px]">
 						<p class="text-[0.75rem] text-[#506070]">
 							Doppio clic sulla mappa per impostare il punto di riferimento e aggiornare automaticamente via, citta e CAP.
 						</p>

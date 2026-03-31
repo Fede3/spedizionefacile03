@@ -84,7 +84,7 @@ const getProvinceCode = (provinceName) => {
 		<div
 			v-for="address in addresses.data"
 			:key="address.id"
-			:class="['bg-white rounded-[16px] p-[16px] desktop:p-[20px] border transition-all', address.default ? 'border-[#095866] shadow-sm' : 'border-[#E9EBEC] hover:border-[#D0D0D0]']">
+			:class="['bg-white rounded-[16px] p-[16px] desktop:p-[20px] border transition-all', address.default ? 'border-[#095866] shadow-sm' : 'border-[#E9EBEC] hover:border-[#D7E1E4]']">
 			<div class="flex flex-col gap-[12px] desktop:flex-row desktop:items-start desktop:gap-[16px]">
 				<!-- Icona -->
 				<div :class="['w-[40px] h-[40px] rounded-[50px] flex items-center justify-center shrink-0', address.default ? 'bg-[#095866]/10' : 'bg-[#F8F9FB]']">

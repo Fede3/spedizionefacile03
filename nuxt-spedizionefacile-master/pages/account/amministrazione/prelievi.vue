@@ -144,7 +144,7 @@ onMounted(() => { fetchWithdrawals(); });
 					<p>Nessuna richiesta di prelievo.</p>
 				</div>
 				<div v-else class="space-y-[12px]">
-					<div v-for="w in withdrawalsData" :key="w.id" class="rounded-[16px] border border-[#E9EBEC] bg-white p-[16px] tablet:p-[18px] hover:border-[#D0D0D0] transition-colors">
+					<div v-for="w in withdrawalsData" :key="w.id" class="rounded-[16px] border border-[#E9EBEC] bg-white p-[16px] tablet:p-[18px] hover:border-[#D7E1E4] transition-colors">
 						<div class="flex flex-col desktop:flex-row desktop:items-center justify-between gap-[12px]">
 							<div class="flex-1">
 								<div class="flex flex-wrap items-center gap-[10px] mb-[6px]">

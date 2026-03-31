@@ -29,7 +29,7 @@ const emit = defineEmits([
         <!-- Info icon con tooltip -->
         <span class="relative group inline-flex">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[20px] h-[20px] text-[#737373] cursor-help shrink-0" fill="currentColor"><path d="M13,9H11V7H13M13,17H11V11H13M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z"/></svg>
-          <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-[8px] w-[280px] bg-[#252B42] text-white text-[0.75rem] font-normal leading-[1.4] p-[12px] rounded-[8px] shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-[opacity,visibility] duration-200 z-50 pointer-events-none">
+          <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-[8px] w-[280px] bg-[#252B42] text-white text-[0.75rem] font-normal leading-[1.4] p-[12px] rounded-[12px] shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-[opacity,visibility] duration-200 z-50 pointer-events-none">
             Inserisci peso e dimensioni reali del collo. Il corriere verifica le misure: se risultano significativamente diverse, il pacco potrebbe essere bloccato e potrebbero essere addebitati costi aggiuntivi per lo svincolo.
             <span class="absolute top-full left-1/2 -translate-x-1/2 border-[6px] border-transparent border-t-[#252B42]"></span>
           </span>

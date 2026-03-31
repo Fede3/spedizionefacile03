@@ -22,7 +22,7 @@ const emit = defineEmits([
 		<h2 class="text-[1rem] font-bold text-[#252B42] mb-[12px]">Controlli immagine</h2>
 
 		<!-- Upload -->
-		<label class="flex flex-col items-center justify-center py-[24px] rounded-[12px] border-2 border-dashed border-[#C8CCD0] hover:border-[#095866] bg-white cursor-pointer transition-colors">
+		<label class="flex flex-col items-center justify-center py-[24px] rounded-[12px] border-2 border-dashed border-[#E9EBEC] hover:border-[#095866] bg-white cursor-pointer transition-colors">
 			<p class="text-[0.875rem] font-medium text-[#404040]">Carica nuova immagine</p>
 			<p class="text-[0.75rem] text-[#737373] mt-[4px]">JPG, PNG, WebP - max 5MB</p>
 			<input type="file" accept="image/jpeg,image/png,image/webp" @change="emit('file-selected', $event)" class="hidden" />

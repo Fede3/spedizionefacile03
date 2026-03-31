@@ -147,19 +147,19 @@ onUnmounted(() => {
 				v-if="showGuestHelp && !isAuthenticatedForUi"
 				id="guest-help-popover"
 				role="dialog"
-				class="absolute bottom-[58px] right-0 w-[280px] bg-white border border-[#D0D0D0] rounded-[12px] shadow-xl p-[14px]">
+				class="absolute bottom-[58px] right-0 w-[280px] bg-white border border-[#E9EBEC] rounded-[12px] shadow-xl p-[14px]">
 				<p class="text-[0.875rem] font-semibold text-[#252B42]">Serve supporto?</p>
 				<p class="text-[0.8125rem] text-[#64748B] mt-[4px]">Puoi contattarci subito oppure accedere per aprire e seguire i ticket.</p>
 				<div class="mt-[10px] grid grid-cols-1 gap-[8px]">
 					<NuxtLink
 						to="/contatti"
-						class="inline-flex items-center justify-center h-[36px] rounded-[8px] bg-[#095866] text-white text-[0.8125rem] font-semibold hover:bg-[#074a56] transition-colors"
+						class="inline-flex items-center justify-center h-[36px] rounded-[12px] bg-[#095866] text-white text-[0.8125rem] font-semibold hover:bg-[#074a56] transition-colors"
 						@click="closeGuestHelp">
 						Contattaci
 					</NuxtLink>
 					<button
 						type="button"
-						class="inline-flex items-center justify-center h-[36px] rounded-[8px] border border-[#C7D1D8] text-[#1F2937] text-[0.8125rem] font-semibold hover:bg-[#F7FAFC] transition-colors cursor-pointer"
+						class="inline-flex items-center justify-center h-[36px] rounded-[12px] border border-[#E9EBEC] text-[#1F2937] text-[0.8125rem] font-semibold hover:bg-[#F7FAFC] transition-colors cursor-pointer"
 						@click="openSupportAuthModal">
 						Accedi per ticket
 					</button>

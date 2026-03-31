@@ -119,12 +119,15 @@ onMounted(() => { fetchContactMessages(); });
 					<h2 class="text-[1.125rem] font-bold text-[#252B42]">Messaggi</h2>
 					<p class="text-[0.8125rem] text-[#737373]">{{ filteredMessages.length }} visibili</p>
 				</div>
-				<div v-if="!filteredMessages?.length" class="text-center py-[40px] text-[#737373]">
-					<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[40px] h-[40px] text-[#C8CCD0] mx-auto mb-[12px]" fill="currentColor"><path d="M20,8L12,13L4,8V6L12,11L20,6M20,4H4C2.89,4 2,4.89 2,6V18A2,2 0 0,0 4,20H20A2,2 0 0,0 22,18V6C22,4.89 21.1,4 20,4Z"/></svg>
-					<p>Nessun messaggio ricevuto.</p>
+				<div v-if="!filteredMessages?.length" class="text-center py-[40px]">
+					<div class="w-[64px] h-[64px] mx-auto mb-[16px] bg-[#F8F9FB] rounded-full flex items-center justify-center">
+						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[28px] h-[28px]" fill="#C8CCD0"><path d="M20,8L12,13L4,8V6L12,11L20,6M20,4H4C2.89,4 2,4.89 2,6V18A2,2 0 0,0 4,20H20A2,2 0 0,0 22,18V6C22,4.89 21.1,4 20,4Z"/></svg>
+					</div>
+					<h2 class="text-[1.125rem] font-bold text-[#252B42] mb-[8px]">Nessun messaggio ricevuto</h2>
+					<p class="text-[#737373] text-[0.875rem]">I messaggi dal form contatti appariranno qui.</p>
 				</div>
 				<div v-else class="grid grid-cols-1 tablet:grid-cols-2 desktop:grid-cols-1 gap-[10px]">
-					<div v-for="msg in filteredMessages" :key="msg.id" @click="showMessageDetail(msg)" :class="['p-[14px] rounded-[14px] border cursor-pointer transition-colors', msg.read_at ? 'border-[#E9EBEC] hover:border-[#D0D0D0]' : 'border-blue-200 bg-blue-50/30 hover:border-blue-300']">
+					<div v-for="msg in filteredMessages" :key="msg.id" @click="showMessageDetail(msg)" :class="['p-[14px] rounded-[14px] border cursor-pointer transition-colors', msg.read_at ? 'border-[#E9EBEC] hover:border-[#D7E1E4]' : 'border-blue-200 bg-blue-50/30 hover:border-blue-300']">
 						<div class="flex items-start justify-between gap-[10px]">
 							<div class="flex-1 min-w-0">
 								<div class="flex flex-wrap items-center gap-[8px] mb-[4px]">

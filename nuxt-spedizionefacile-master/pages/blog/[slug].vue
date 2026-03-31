@@ -137,12 +137,12 @@ const formatDate = (dateStr) => {
 			</div>
 
 			<!-- Previous / Next navigation -->
-			<div v-if="prevArticle || nextArticle" class="border-t border-[#E0E0E0] pt-[32px] pb-[16px] mb-[32px]">
+			<div v-if="prevArticle || nextArticle" class="border-t border-[#E9EBEC] pt-[32px] pb-[16px] mb-[32px]">
 				<div class="flex flex-col tablet:flex-row gap-[16px]" :class="prevArticle ? 'justify-between' : 'justify-end'">
 					<NuxtLink
 						v-if="prevArticle"
 						:to="`/blog/${prevArticle.slug}`"
-						class="group flex items-center gap-[12px] p-[16px] desktop:p-[20px] rounded-[16px] border border-[#E0E0E0] hover:border-[#095866] hover:shadow-sm transition-all flex-1 max-w-[400px]">
+						class="group flex items-center gap-[12px] p-[16px] desktop:p-[20px] rounded-[16px] border border-[#E9EBEC] hover:border-[#095866] hover:shadow-sm transition-all flex-1 max-w-[400px]">
 						<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="#095866" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="shrink-0"><path d="M14 10H6"/><path d="M10 6l-4 4 4 4"/></svg>
 						<div>
 							<p class="text-[0.75rem] text-[#737373] font-medium mb-[4px]">Articolo precedente</p>
@@ -152,7 +152,7 @@ const formatDate = (dateStr) => {
 					<NuxtLink
 						v-if="nextArticle"
 						:to="`/blog/${nextArticle.slug}`"
-						class="group flex items-center gap-[12px] p-[16px] desktop:p-[20px] rounded-[16px] border border-[#E0E0E0] hover:border-[#095866] hover:shadow-sm transition-all flex-1 max-w-[400px] tablet:text-right tablet:ml-auto">
+						class="group flex items-center gap-[12px] p-[16px] desktop:p-[20px] rounded-[16px] border border-[#E9EBEC] hover:border-[#095866] hover:shadow-sm transition-all flex-1 max-w-[400px] tablet:text-right tablet:ml-auto">
 						<div class="flex-1">
 							<p class="text-[0.75rem] text-[#737373] font-medium mb-[4px]">Articolo successivo</p>
 							<p class="text-[0.875rem] desktop:text-[0.9375rem] text-[#222222] font-medium leading-[130%] group-hover:text-[#095866] transition-colors">{{ nextArticle.title }}</p>
@@ -163,7 +163,7 @@ const formatDate = (dateStr) => {
 			</div>
 
 			<!-- CTA -->
-			<div class="border-t border-[#E0E0E0] pt-[40px] mb-[80px] desktop:mb-[120px]">
+			<div class="border-t border-[#E9EBEC] pt-[40px] mb-[80px] desktop:mb-[120px]">
 				<p class="text-[1.25rem] font-medium text-[#222222] mb-[20px]">Hai bisogno di spedire?</p>
 				<NuxtLink to="/preventivo" class="inline-flex items-center gap-[8px] h-[52px] px-[32px] rounded-[35px] bg-[#E44203] text-white font-semibold tracking-[-0.384px] text-[1rem] hover:opacity-90 transition-opacity">
 					Calcola il preventivo

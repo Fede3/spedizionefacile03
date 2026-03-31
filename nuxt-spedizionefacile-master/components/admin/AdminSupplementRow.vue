@@ -16,13 +16,13 @@ defineEmits(['remove']);
 <template>
 	<div class="grid grid-cols-1 tablet:grid-cols-[120px_160px_1fr_auto_auto] gap-[8px] items-center p-[12px] rounded-[12px] border border-[#E9EBEC] bg-[#FAFBFC]">
 		<label class="text-[0.75rem] text-[#6A7486]">Prefisso CAP
-			<input v-model="rule.prefix" type="text" inputmode="numeric" maxlength="5" class="mt-[4px] w-full h-[36px] px-[10px] rounded-[10px] border border-[#C8CCD0] bg-white text-[0.8125rem]">
+			<input v-model="rule.prefix" type="text" inputmode="numeric" maxlength="5" class="mt-[4px] w-full h-[36px] px-[10px] rounded-[12px] border border-[#E9EBEC] bg-white text-[0.8125rem]">
 		</label>
 		<label class="text-[0.75rem] text-[#6A7486]">Importo (&euro;)
-			<input :value="supplementAmountToEuro(rule)" @input="updateSupplementAmountFromEuro(rule, $event.target.value)" type="text" class="mt-[4px] w-full h-[36px] px-[10px] rounded-[10px] border border-[#C8CCD0] bg-white text-[0.8125rem]">
+			<input :value="supplementAmountToEuro(rule)" @input="updateSupplementAmountFromEuro(rule, $event.target.value)" type="text" class="mt-[4px] w-full h-[36px] px-[10px] rounded-[12px] border border-[#E9EBEC] bg-white text-[0.8125rem]">
 		</label>
 		<label class="text-[0.75rem] text-[#6A7486]">Applica a
-			<select v-model="rule.apply_to" class="mt-[4px] w-full h-[36px] px-[10px] rounded-[10px] border border-[#C8CCD0] bg-white text-[0.8125rem]">
+			<select v-model="rule.apply_to" class="mt-[4px] w-full h-[36px] px-[10px] rounded-[12px] border border-[#E9EBEC] bg-white text-[0.8125rem]">
 				<option value="both">Origine + Destinazione</option>
 				<option value="origin">Solo origine</option>
 				<option value="destination">Solo destinazione</option>
