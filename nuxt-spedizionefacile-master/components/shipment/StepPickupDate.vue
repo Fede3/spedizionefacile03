@@ -90,10 +90,10 @@ defineEmits(["choose-date"]);
 							</SwiperSlide>
 						</Swiper>
 
-						<button class="pickup-date-nav custom-prev absolute top-1/2 left-[8px] -translate-y-1/2 cursor-pointer bg-white rounded-[50px] px-[14px] py-[10px] flex items-center justify-center shadow-sm hover:shadow-md transition-shadow duration-300 z-10 border border-[#D0D0D0] hover:border-[#6da8b4]">
+						<button class="pickup-date-nav custom-prev absolute top-1/2 left-[8px] -translate-y-1/2 cursor-pointer bg-white rounded-[50px] px-[14px] py-[10px] flex items-center justify-center shadow-sm hover:shadow-md transition-shadow duration-300 z-10 border border-[#E9EBEC] hover:border-[#6da8b4]">
 							<NuxtImg src="/img/quote/second-step/arrow-left.png" alt="Precedente" width="11" height="19" loading="lazy" decoding="async" />
 						</button>
-						<button class="pickup-date-nav custom-next absolute top-1/2 right-[8px] -translate-y-1/2 cursor-pointer bg-white rounded-[50px] px-[14px] py-[10px] flex items-center justify-center shadow-sm hover:shadow-md transition-shadow duration-300 z-10 border border-[#D0D0D0] hover:border-[#6da8b4]">
+						<button class="pickup-date-nav custom-next absolute top-1/2 right-[8px] -translate-y-1/2 cursor-pointer bg-white rounded-[50px] px-[14px] py-[10px] flex items-center justify-center shadow-sm hover:shadow-md transition-shadow duration-300 z-10 border border-[#E9EBEC] hover:border-[#6da8b4]">
 							<NuxtImg src="/img/quote/second-step/arrow-right.png" alt="Successivo" width="11" height="19" loading="lazy" decoding="async" />
 						</button>
 					</div>

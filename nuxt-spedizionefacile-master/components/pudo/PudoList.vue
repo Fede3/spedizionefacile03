@@ -72,7 +72,7 @@ const getDetailKey = (pudo) => String(pudo.pudo_id || pudo.ui_key);
             expandedPudoKey === getDetailKey(pudo) ? 'h-auto' : 'h-[168px]',
             selectedPudoKey === pudo.ui_key
               ? 'border-[#095866] shadow-md'
-              : 'border-[#D0D0D0] hover:border-[#095866]/50',
+              : 'border-[#E9EBEC] hover:border-[#095866]/50',
           ]"
           @click="emit('select', pudo)">
 

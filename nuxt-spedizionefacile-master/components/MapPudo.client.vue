@@ -306,7 +306,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-	<div class="relative w-full h-full min-h-[320px] tablet:min-h-[360px] desktop:min-h-[420px] rounded-[12px] overflow-hidden border border-[#D0D0D0] bg-[#F4F7F9]">
+	<div class="relative w-full h-full min-h-[320px] tablet:min-h-[360px] desktop:min-h-[420px] rounded-[12px] overflow-hidden border border-[#E9EBEC] bg-[#F4F7F9]">
 		<div ref="mapEl" class="w-full h-full" />
 
 		<div

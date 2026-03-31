@@ -31,7 +31,7 @@ const props = defineProps({
 		</div>
 
 		<div class="space-y-[16px]">
-			<div v-if="!filteredEuropeBands.length" class="p-[16px] rounded-[14px] border border-dashed border-[#C8CCD0] text-[#6A7486] text-[0.8125rem]">
+			<div v-if="!filteredEuropeBands.length" class="p-[16px] rounded-[14px] border border-dashed border-[#E9EBEC] text-[#6A7486] text-[0.8125rem]">
 				Nessun paese trovato con i filtri attuali.
 			</div>
 			<div
@@ -79,7 +79,7 @@ const props = defineProps({
 							:disabled="rate.quote_required"
 							type="text"
 							placeholder="0,00"
-							class="w-full h-[38px] px-[10px] rounded-[12px] border border-[#C8CCD0] bg-white text-[#252B42] disabled:bg-[#F3F4F6] disabled:text-[#9AA3B2]">
+							class="w-full h-[38px] px-[10px] rounded-[12px] border border-[#E9EBEC] bg-white text-[#252B42] disabled:bg-[#F3F4F6] disabled:text-[#9AA3B2]">
 					</div>
 				</div>
 
@@ -109,7 +109,7 @@ const props = defineProps({
 										:disabled="rate.quote_required"
 										type="text"
 										placeholder="0,00"
-										class="w-[120px] h-[38px] px-[10px] rounded-[12px] border border-[#C8CCD0] bg-white text-[#252B42] disabled:bg-[#F3F4F6] disabled:text-[#9AA3B2]">
+										class="w-[120px] h-[38px] px-[10px] rounded-[12px] border border-[#E9EBEC] bg-white text-[#252B42] disabled:bg-[#F3F4F6] disabled:text-[#9AA3B2]">
 								</td>
 								<td class="px-[16px] py-[10px]">
 									<button

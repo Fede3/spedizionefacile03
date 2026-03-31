@@ -54,7 +54,7 @@ const props = defineProps({
 					v-model="promo.label_text"
 					placeholder="es. OFFERTA LANCIO"
 					maxlength="100"
-					class="w-full max-w-[400px] bg-[#FAFBFC] border border-[#D0D0D0] rounded-[50px] h-[48px] tablet:h-[44px] px-[16px] text-[1rem] tablet:text-[0.875rem] text-[#252B42] placeholder:text-[#A0A5AB] focus:border-[#095866] focus:outline-none" />
+					class="w-full max-w-[400px] bg-[#FAFBFC] border border-[#E9EBEC] rounded-[50px] h-[48px] tablet:h-[44px] px-[16px] text-[1rem] tablet:text-[0.875rem] text-[#252B42] placeholder:text-[#A0A5AB] focus:border-[#095866] focus:outline-none" />
 			</div>
 
 			<!-- Descrizione sconto -->
@@ -65,7 +65,7 @@ const props = defineProps({
 					placeholder="es. Sconto del 20% su tutte le spedizioni nazionali! Valido fino al 31 marzo."
 					maxlength="300"
 					rows="3"
-					class="w-full max-w-[500px] bg-[#FAFBFC] border border-[#D0D0D0] rounded-[50px] px-[16px] py-[12px] text-[0.875rem] text-[#252B42] placeholder:text-[#A0A5AB] focus:border-[#095866] focus:outline-none resize-y"></textarea>
+					class="w-full max-w-[500px] bg-[#FAFBFC] border border-[#E9EBEC] rounded-[50px] px-[16px] py-[12px] text-[0.875rem] text-[#252B42] placeholder:text-[#A0A5AB] focus:border-[#095866] focus:outline-none resize-y"></textarea>
 				<p class="text-[0.6875rem] text-[#999] mt-[4px]">Massimo 300 caratteri. Questo testo appare sotto il prezzo nella homepage.</p>
 			</div>
 
@@ -76,13 +76,13 @@ const props = defineProps({
 					<input
 						type="color"
 						v-model="promo.label_color"
-						class="w-[44px] h-[44px] rounded-[12px] border border-[#D0D0D0] cursor-pointer" />
+						class="w-[44px] h-[44px] rounded-[12px] border border-[#E9EBEC] cursor-pointer" />
 					<input
 						type="text"
 						v-model="promo.label_color"
 						placeholder="#E44203"
 						maxlength="20"
-						class="w-[140px] bg-[#FAFBFC] border border-[#D0D0D0] rounded-[50px] h-[44px] px-[16px] text-[0.875rem] text-[#252B42] font-mono focus:border-[#095866] focus:outline-none" />
+						class="w-[140px] bg-[#FAFBFC] border border-[#E9EBEC] rounded-[50px] h-[44px] px-[16px] text-[0.875rem] text-[#252B42] font-mono focus:border-[#095866] focus:outline-none" />
 					<span
 						v-if="promo.label_text"
 						:style="{ backgroundColor: promo.label_color }"
@@ -96,13 +96,13 @@ const props = defineProps({
 			<div>
 				<label class="block text-[0.8125rem] font-medium text-[#252B42] mb-[6px]">Immagine promozionale (opzionale)</label>
 				<div class="flex flex-wrap items-center gap-[12px] tablet:gap-[16px]">
-					<label class="inline-flex items-center gap-[8px] px-[16px] py-[10px] bg-[#FAFBFC] border border-[#D0D0D0] rounded-[50px] text-[0.875rem] text-[#252B42] hover:bg-[#E8F4FB] transition cursor-pointer">
+					<label class="inline-flex items-center gap-[8px] px-[16px] py-[10px] bg-[#FAFBFC] border border-[#E9EBEC] rounded-[50px] text-[0.875rem] text-[#252B42] hover:bg-[#E8F4FB] transition cursor-pointer">
 						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[18px] h-[18px] text-[#095866]" fill="currentColor"><path d="M5,3A2,2 0 0,0 3,5V19A2,2 0 0,0 5,21H14.09C14.03,20.67 14,20.34 14,20C14,19.32 14.19,18.68 14.54,18H5L8.5,13.5L11,16.5L14.5,12L16.73,14.97C17.7,14.34 18.84,14 20,14C20.34,14 20.67,14.03 21,14.09V5A2,2 0 0,0 19,3H5M19,16V19H16V21H19V24H21V21H24V19H21V16H19Z"/></svg>
 						{{ promoImageUploading ? 'Caricamento...' : 'Carica immagine' }}
 						<input type="file" accept="image/*" class="hidden" @change="uploadPromoImage" :disabled="promoImageUploading" />
 					</label>
 					<div v-if="promo.label_image" class="flex items-center gap-[8px]">
-						<img :src="promo.label_image" alt="Promo" loading="lazy" decoding="async" width="80" height="40" class="h-[40px] w-auto rounded-[6px] border border-[#D0D0D0]" />
+						<img :src="promo.label_image" alt="Promo" loading="lazy" decoding="async" width="80" height="40" class="h-[40px] w-auto rounded-[6px] border border-[#E9EBEC]" />
 						<button type="button" @click="promo.label_image = null" class="text-red-500 text-[0.75rem] hover:underline cursor-pointer">Rimuovi</button>
 					</div>
 				</div>

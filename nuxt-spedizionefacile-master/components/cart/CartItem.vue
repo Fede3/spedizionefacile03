@@ -101,7 +101,7 @@ const getPackageIcon = (item) => {
 
     <!-- Expanded: individual parcels -->
     <div v-if="isGroupExpanded" class="px-[12px] tablet:px-[20px] pb-[16px] pt-[8px]">
-      <div class="border-t border-dashed border-[#D0D0D0] pt-[12px]">
+      <div class="border-t border-dashed border-[#E9EBEC] pt-[12px]">
         <div
           v-for="(item, pIdx) in entry.items"
           :key="item.id"

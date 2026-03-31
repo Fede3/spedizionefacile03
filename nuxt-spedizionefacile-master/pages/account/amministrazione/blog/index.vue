@@ -99,10 +99,16 @@ onMounted(() => { fetchArticles(); });
 			<div v-else class="bg-white rounded-[20px] p-[24px] desktop:p-[32px] shadow-sm border border-[#E9EBEC]">
 				<h2 class="text-[1.125rem] font-bold text-[#252B42] mb-[20px]">Tutti gli articoli del blog</h2>
 
-				<div v-if="!articles.length" class="text-center py-[48px] text-[#737373]">
-					<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[40px] h-[40px] text-[#C8CCD0] mx-auto mb-[12px]" fill="currentColor"><path d="M20,11H4V8H20M20,15.5H4V12.5H20M20,20H4V17H20M21,3H3A1,1 0 0,0 2,4V20A2,2 0 0,0 4,22H20A2,2 0 0,0 22,20V4A1,1 0 0,0 21,3Z"/></svg>
-					<p>Nessun articolo presente.</p>
-					<NuxtLink to="/account/amministrazione/blog/nuovo" class="inline-block mt-[12px] text-[#095866] hover:underline font-medium text-[0.875rem]">Crea il primo articolo</NuxtLink>
+				<div v-if="!articles.length" class="text-center py-[48px]">
+					<div class="w-[64px] h-[64px] mx-auto mb-[16px] bg-[#F8F9FB] rounded-full flex items-center justify-center">
+						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[28px] h-[28px]" fill="#C8CCD0"><path d="M20,11H4V8H20M20,15.5H4V12.5H20M20,20H4V17H20M21,3H3A1,1 0 0,0 2,4V20A2,2 0 0,0 4,22H20A2,2 0 0,0 22,20V4A1,1 0 0,0 21,3Z"/></svg>
+					</div>
+					<h2 class="text-[1.125rem] font-bold text-[#252B42] mb-[8px]">Nessun articolo presente</h2>
+					<p class="text-[#737373] text-[0.875rem] mb-[16px]">Crea il primo articolo per iniziare.</p>
+					<NuxtLink to="/account/amministrazione/blog/nuovo" class="btn-primary btn-compact inline-flex items-center gap-[6px] text-[0.875rem]">
+						<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+						Crea articolo
+					</NuxtLink>
 				</div>
 
 				<div v-else class="overflow-x-auto">

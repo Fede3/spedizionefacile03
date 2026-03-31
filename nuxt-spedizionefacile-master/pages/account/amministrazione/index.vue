@@ -255,7 +255,7 @@ const adminAlerts = computed(() => {
 						</div>
 
 						<div v-else class="space-y-[8px]">
-							<div v-for="order in visibleOrders" :key="order.id" class="flex items-center justify-between p-[12px] rounded-[12px] border border-[#F0F0F0] hover:border-[#E0E0E0] transition-colors">
+							<div v-for="order in visibleOrders" :key="order.id" class="flex items-center justify-between p-[12px] rounded-[12px] border border-[#F0F0F0] hover:border-[#E9EBEC] transition-colors">
 								<div class="flex items-center gap-[14px]">
 									<span class="text-[0.8125rem] font-bold text-[#252B42]">#{{ order.id }}</span>
 									<span class="text-[0.8125rem] text-[#404040]">{{ order.user?.name }} {{ order.user?.surname }}</span>

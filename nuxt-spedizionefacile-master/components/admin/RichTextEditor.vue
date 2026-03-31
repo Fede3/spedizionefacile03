@@ -111,7 +111,7 @@ const setColor = (event) => {
 </script>
 
 <template>
-	<div class="border border-[#D0D0D0] rounded-[12px] overflow-hidden bg-white">
+	<div class="border border-[#E9EBEC] rounded-[12px] overflow-hidden bg-white">
 		<!-- Toolbar -->
 		<div v-if="editor" class="flex flex-wrap items-center gap-[2px] px-[8px] py-[6px] bg-[#F8F9FB] border-b border-[#E9EBEC]">
 			<!-- Bold -->

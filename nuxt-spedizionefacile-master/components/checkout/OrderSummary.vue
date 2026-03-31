@@ -180,7 +180,7 @@ const localCouponPanelOpen = computed({
       </div>
 
       <!-- Divider -->
-      <div class="border-t-2 border-[#E0E0E0] mt-[4px] mb-[4px]"></div>
+      <div class="border-t-2 border-[#E9EBEC] mt-[4px] mb-[4px]"></div>
 
       <!-- Final total -->
       <div class="flex items-center justify-between py-[8px]">
@@ -241,7 +241,7 @@ const localCouponPanelOpen = computed({
                 type="text"
                 placeholder="Inserisci codice promozionale"
                 maxlength="20"
-                class="flex-1 bg-white p-[12px_14px] border border-[#D0D0D0] rounded-[14px] text-[0.9375rem] placeholder:text-[#A0A5AB] uppercase tracking-[0.04em] focus:border-[#095866] focus:outline-none"
+                class="flex-1 bg-white p-[12px_14px] border border-[#E9EBEC] rounded-[14px] text-[0.9375rem] placeholder:text-[#A0A5AB] uppercase tracking-[0.04em] focus:border-[#095866] focus:outline-none"
                 @keyup.enter="emit('validate-coupon')" />
               <button
                 type="button"

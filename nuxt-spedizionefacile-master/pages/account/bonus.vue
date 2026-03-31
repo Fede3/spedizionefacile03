@@ -129,7 +129,7 @@ const bonusHeaderStats = computed(() => [
 					v-for="(bonus, index) in filteredBonuses"
 					:key="index"
 					:to="bonus.action"
-					class="group flex flex-col gap-[16px] bg-white rounded-[20px] p-[20px] desktop:flex-row desktop:items-start desktop:p-[24px] border border-[#E9EBEC] shadow-sm hover:shadow-md hover:border-[#C8CCD0] transition-all">
+					class="group flex flex-col gap-[16px] bg-white rounded-[20px] p-[20px] desktop:flex-row desktop:items-start desktop:p-[24px] border border-[#E9EBEC] shadow-sm hover:shadow-md hover:border-[#E9EBEC] transition-all">
 					<!-- Icon -->
 					<div class="w-[52px] h-[52px] rounded-[14px] bg-[#e8f4fb] flex items-center justify-center shrink-0">
 						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[26px] h-[26px] text-[#1a7fba]" v-html="bonus.iconSvg"></svg>

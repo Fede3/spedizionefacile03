@@ -108,7 +108,7 @@ const {
 				<!-- Table -->
 				<div class="bg-white border border-[#E9EBEC] rounded-[18px] overflow-hidden mb-[12px] shadow-sm">
 					<!-- Header -->
-					<div class="hidden desktop:grid grid-cols-[3%_10%_10%_9%_8%_10%_22%_7%_9%_12%] gap-[4px] px-[14px] py-[12px] text-[0.75rem] font-bold text-[#252B42] border-b border-[#D0D0D0] bg-[#FBFCFD]">
+					<div class="hidden desktop:grid grid-cols-[3%_10%_10%_9%_8%_10%_22%_7%_9%_12%] gap-[4px] px-[14px] py-[12px] text-[0.75rem] font-bold text-[#252B42] border-b border-[#E9EBEC] bg-[#FBFCFD]">
 						<span class="flex items-center"><input type="checkbox" v-model="selectAll" @change="toggleSelectAll" class="w-[16px] h-[16px] accent-[#095866] cursor-pointer" /></span>
 						<span>Data creazione</span><span>Provenienza</span><span>Riferimento</span><span>Servizio</span><span>Colli</span><span>Indirizzi</span><span>Accessori</span><span>Importo</span><span class="text-center">Azioni</span>
 					</div>

@@ -110,7 +110,7 @@ onMounted(() => {
 								<option value="status">Per stato</option>
 							</select>
 							<label class="inline-flex min-h-[42px] items-center gap-[8px] whitespace-nowrap text-[0.8125rem] text-[#4F5D75] desktop:justify-self-end">
-								<input v-model="compactEuropeView" type="checkbox" class="rounded border-[#C8CCD0] text-[#095866] focus:ring-[#095866]">
+								<input v-model="compactEuropeView" type="checkbox" class="rounded border-[#E9EBEC] text-[#095866] focus:ring-[#095866]">
 								Vista compatta
 							</label>
 						</div>

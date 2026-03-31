@@ -59,7 +59,7 @@ const getBrandIcon = (brand) => {
     <!-- Card items -->
     <div v-else class="space-y-[12px]">
       <div v-for="(payment, index) in payments.data" :key="index"
-        :class="['bg-white rounded-[14px] p-[14px] desktop:p-[18px] border transition-all', payment.default ? 'border-[#095866] shadow-sm' : 'border-[#E9EBEC] hover:border-[#D0D0D0]']">
+        :class="['bg-white rounded-[14px] p-[14px] desktop:p-[18px] border transition-all', payment.default ? 'border-[#095866] shadow-sm' : 'border-[#E9EBEC] hover:border-[#D7E1E4]']">
         <div class="flex flex-col gap-[12px] tablet:flex-row tablet:items-center tablet:gap-[14px]">
           <!-- Brand icon -->
           <div :class="['w-[48px] h-[32px] rounded-[6px] flex items-center justify-center text-[0.6875rem] font-bold uppercase shrink-0', payment.default ? 'bg-[#095866] text-white' : 'bg-[#F0F0F0] text-[#404040]']">

@@ -12,9 +12,12 @@ const emit = defineEmits(['approve', 'delete', 'role-change']);
 </script>
 
 <template>
-	<div v-if="!users?.length" class="text-center py-[48px] text-[#737373]">
-		<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[40px] h-[40px] text-[#C8CCD0] mx-auto mb-[12px]" fill="currentColor"><path d="M12,4A4,4 0 0,1 16,8A4,4 0 0,1 12,12A4,4 0 0,1 8,8A4,4 0 0,1 12,4M12,14C16.42,14 20,15.79 20,18V20H4V18C4,15.79 7.58,14 12,14Z"/></svg>
-		<p>Nessun account trovato.</p>
+	<div v-if="!users?.length" class="text-center py-[48px]">
+		<div class="w-[64px] h-[64px] mx-auto mb-[16px] bg-[#F8F9FB] rounded-full flex items-center justify-center">
+			<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[28px] h-[28px]" fill="#C8CCD0"><path d="M12,4A4,4 0 0,1 16,8A4,4 0 0,1 12,12A4,4 0 0,1 8,8A4,4 0 0,1 12,4M12,14C16.42,14 20,15.79 20,18V20H4V18C4,15.79 7.58,14 12,14Z"/></svg>
+		</div>
+		<h2 class="text-[1.125rem] font-bold text-[#252B42] mb-[8px]">Nessun account trovato</h2>
+		<p class="text-[#737373] text-[0.875rem]">Nessun utente corrisponde ai filtri selezionati.</p>
 	</div>
 
 	<template v-else>

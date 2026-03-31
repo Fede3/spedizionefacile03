@@ -82,9 +82,11 @@ const formatDate = (dateStr) => {
 
 			<!-- Nessun articolo -->
 			<div v-else-if="!articles.length" class="text-center py-[80px]">
-				<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[48px] h-[48px] text-[#C8CCD0] mx-auto mb-[16px]" fill="currentColor"><path d="M13,12H20V13.5H13M13,9.5H20V11H13M13,14.5H20V16H13M21,4H3A2,2 0 0,0 1,6V19A2,2 0 0,0 3,21H21A2,2 0 0,0 23,19V6A2,2 0 0,0 21,4M21,19H12V6H21"/></svg>
-				<p class="text-[1.125rem] text-[#737373]">Nessun articolo pubblicato al momento.</p>
-				<p class="text-[0.875rem] text-[#A0A0A0] mt-[8px]">Torna a trovarci presto!</p>
+				<div class="w-[72px] h-[72px] mx-auto mb-[20px] bg-[#F8F9FB] rounded-full flex items-center justify-center">
+					<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[32px] h-[32px]" fill="#C8CCD0"><path d="M13,12H20V13.5H13M13,9.5H20V11H13M13,14.5H20V16H13M21,4H3A2,2 0 0,0 1,6V19A2,2 0 0,0 3,21H21A2,2 0 0,0 23,19V6A2,2 0 0,0 21,4M21,19H12V6H21"/></svg>
+				</div>
+				<h2 class="text-[1.25rem] font-bold text-[#252B42] mb-[10px]">Nessun articolo pubblicato</h2>
+				<p class="text-[#737373] text-[0.9375rem]">Torna a trovarci presto!</p>
 			</div>
 
 			<!-- Grid articoli -->
@@ -93,7 +95,7 @@ const formatDate = (dateStr) => {
 					v-for="article in articles"
 					:key="article.slug"
 					:to="`/blog/${article.slug}`"
-					class="blog-card block rounded-[20px] overflow-hidden border border-[#E0E0E0] shadow-sm hover:shadow-lg hover:border-[#095866] transition-all group bg-white">
+					class="blog-card block rounded-[20px] overflow-hidden border border-[#E9EBEC] shadow-sm hover:shadow-lg hover:border-[#095866] transition-all group bg-white">
 
 					<!-- Immagine di copertina -->
 					<div class="blog-card__image relative h-[200px] overflow-hidden bg-gradient-to-br from-[#095866] to-[#0b6d7d]">
