@@ -49,11 +49,189 @@ const DEFAULT_PROMO = {
 	description: "",
 };
 
+const DEFAULT_EUROPE_PRICING = {
+	enabled: false,
+	scope: "europe_monocollo",
+	origin_country_code: "IT",
+	max_packages: 1,
+	max_quantity_per_package: 1,
+	supported_country_codes: [],
+	bands: [],
+	version: null,
+};
+
+const DEFAULT_SERVICE_PRICING = {
+	senza_etichetta: {
+		label: "Senza etichetta",
+		description: "Il corriere stampa e applica l'etichetta al ritiro.",
+		pricing_type: "fixed",
+		price_cents: 99,
+		enabled: true,
+		application: "per_spedizione",
+		note: "",
+	},
+	notifications: {
+		label: "Notifiche spedizione",
+		description: "SMS ed email al ritiro, in transito e alla consegna.",
+		pricing_type: "fixed",
+		price_cents: 50,
+		enabled: true,
+		application: "per_spedizione",
+		note: "",
+	},
+	sponda_idraulica: {
+		label: "Sponda idraulica",
+		description: "Supplemento per mezzo con pedana.",
+		pricing_type: "fixed",
+		price_cents: 1500,
+		enabled: true,
+		application: "per_spedizione",
+		note: "",
+	},
+	contrassegno: {
+		label: "Contrassegno",
+		description: "Incasso alla consegna comprensivo di bonifico.",
+		pricing_type: "threshold_percentage",
+		threshold_amount_eur: 300,
+		min_fee_cents: 700,
+		percentage_rate: 2,
+		enabled: true,
+		application: "per_spedizione",
+		note: "",
+	},
+	assicurazione: {
+		label: "Assicurazione",
+		description: "Protezione economica sulla merce dichiarata.",
+		pricing_type: "threshold_percentage",
+		threshold_amount_eur: 300,
+		min_fee_cents: 700,
+		percentage_rate: 2,
+		enabled: true,
+		application: "per_spedizione",
+		note: "",
+	},
+};
+
+const DEFAULT_AUTOMATIC_SUPPLEMENTS = {
+	calabria_sardegna_sicilia: {
+		label: "Calabria / Sardegna / Sicilia",
+		description: "Supplemento automatico destinazione per collo.",
+		enabled: true,
+		pricing_type: "tiered_weight",
+		application: "automatic_destination_per_package",
+		province_codes: ["AG","CL","CT","EN","ME","PA","RG","SR","TP","CA","CI","NU","OG","OR","OT","SS","SU","VS","CS","CZ","KR","RC","VV"],
+		tiers: [
+			{ up_to_kg: 10, price_cents: 600 },
+			{ up_to_kg: 25, price_cents: 700 },
+			{ up_to_kg: 50, price_cents: 800 },
+			{ up_to_kg: 100, price_cents: 1500 },
+			{ up_to_kg: null, price_cents: 2000 },
+		],
+		note: "",
+	},
+	brt_point_csi: {
+		label: "BRT Point Calabria / Sardegna / Sicilia",
+		description: "Supplemento ridotto per consegna presso punto BRT fino a 20 kg/collo.",
+		enabled: true,
+		pricing_type: "fixed_with_threshold",
+		application: "automatic_destination_per_package",
+		province_codes: ["AG","CL","CT","EN","ME","PA","RG","SR","TP","CA","CI","NU","OG","OR","OT","SS","SU","VS","CS","CZ","KR","RC","VV"],
+		delivery_modes: ["pudo"],
+		max_weight_kg: 20,
+		price_cents: 200,
+		note: "",
+	},
+	isole_minori_italia: {
+		label: "Isole minori Italia",
+		description: "Supplemento automatico per località italiane insulari minori.",
+		enabled: true,
+		pricing_type: "fixed",
+		application: "automatic_destination",
+		country_codes: ["IT"],
+		keyword_list: ["la maddalena","carloforte","calasetta","pantelleria","lampedusa","linosa","favignana","levanzo","marettimo","lipari","vulcano","salina","panarea","stromboli","filicudi","alicudi","ustica","ponza","ventotene","procida","ischia","capri","elba","giglio","giannutri","tremiti","capraia"],
+		price_cents: 2000,
+		note: "",
+	},
+	isole_minori_europa: {
+		label: "Isole minori Europa",
+		description: "Supplemento automatico per località europee insulari minori.",
+		enabled: true,
+		pricing_type: "fixed",
+		application: "automatic_destination",
+		country_codes: ["ES","PT","FR","GR","HR","MT","CY"],
+		keyword_list: ["ibiza","formentera","menorca","minorca","mallorca","majorca","canarie","canary","tenerife","gran canaria","fuerteventura","lanzarote","madeira","azores","porto santo","corsica","corfu","santorini","mykonos","rodos","rhodes","crete"],
+		price_cents: 2500,
+		note: "",
+	},
+	fuori_sagoma: {
+		label: "Fuori sagoma",
+		description: "Supplemento automatico per colli fuori sagoma.",
+		enabled: true,
+		pricing_type: "tiered_weight",
+		application: "automatic_package_shape",
+		flag_keys: ["fuori_sagoma", "out_of_gauge", "oversized"],
+		longest_side_threshold_cm: 100,
+		girth_threshold_cm: 260,
+		tiers: [
+			{ up_to_kg: 10, price_cents: 300 },
+			{ up_to_kg: null, price_cents: 500 },
+		],
+		note: "",
+	},
+	lato_superiore_130cm: {
+		label: "Lato superiore a 130 cm",
+		description: "Supplemento automatico per colli con lato massimo oltre 130 cm.",
+		enabled: true,
+		pricing_type: "fixed",
+		application: "automatic_per_package",
+		threshold_cm: 130,
+		price_cents: 500,
+		note: "",
+	},
+	aste_tubi: {
+		label: "Aste / Tubi",
+		description: "Supplemento per colli molto lunghi e stretti.",
+		enabled: true,
+		pricing_type: "fixed",
+		application: "automatic_per_package",
+		flag_keys: ["aste_tubi", "tubi", "tubo", "rod_tube"],
+		min_longest_side_cm: 100,
+		max_secondary_side_cm: 20,
+		price_cents: 500,
+		note: "",
+	},
+	eu_manual_extra: {
+		label: "Extra Europa su preventivo manuale",
+		description: "Fee extra per pratiche Europa con preventivo manuale.",
+		enabled: true,
+		pricing_type: "fixed",
+		application: "manual_quote_only",
+		price_cents: 1500,
+		note: "",
+	},
+};
+
+const DEFAULT_OPERATIONAL_FEES = {
+	giacenza: {
+		label: "Giacenza",
+		description: "Costo operativo per gestione giacenza.",
+		pricing_type: "fixed",
+		price_cents: 1000,
+		enabled: true,
+		application: "manual_admin",
+		note: "",
+	},
+};
+
 const priceBands = ref({
 	weight: FALLBACK_WEIGHT_BANDS,
 	volume: FALLBACK_VOLUME_BANDS,
 	extra_rules: DEFAULT_EXTRA_RULES,
 	supplements: DEFAULT_SUPPLEMENTS,
+	europe: DEFAULT_EUROPE_PRICING,
+	service_pricing: DEFAULT_SERVICE_PRICING,
+	automatic_supplements: DEFAULT_AUTOMATIC_SUPPLEMENTS,
+	operational_fees: DEFAULT_OPERATIONAL_FEES,
 	version: null,
 });
 
@@ -158,6 +336,102 @@ const normalizeSupplements = (rules = []) => {
 			enabled: rule?.enabled !== false,
 		}))
 		.filter((rule) => rule.prefix.length > 0);
+};
+
+const normalizeEuropePricing = (config = {}) => {
+	const bands = Array.isArray(config?.bands)
+		? [...config.bands]
+			.map((band, idx) => ({
+				id: String(band?.id ?? `eu-band-${idx + 1}`),
+				label: String(band?.label ?? "").trim(),
+				max_weight_kg: normalizeDecimal(band?.max_weight_kg ?? 0),
+				max_volume_m3: Number(toNumber(band?.max_volume_m3 ?? 0, 0).toFixed(6)),
+				volumetric_factor: Math.max(1, toInt(band?.volumetric_factor ?? 250, 250)),
+				rates: Array.isArray(band?.rates)
+					? band.rates
+						.map((rate) => ({
+							country_code: String(rate?.country_code ?? "").trim().toUpperCase(),
+							country_name: String(rate?.country_name ?? "").trim(),
+							price_cents: rate?.price_cents === null || rate?.price_cents === undefined || rate?.price_cents === ""
+								? null
+								: Math.max(0, toInt(rate.price_cents, 0)),
+							quote_required: rate?.quote_required === true,
+						}))
+						.filter((rate) => rate.country_code)
+					: [],
+			}))
+			.filter((band) => band.max_weight_kg > 0 && band.max_volume_m3 > 0)
+			.sort((a, b) => a.max_weight_kg - b.max_weight_kg)
+		: [];
+
+	const supportedCountryCodes = Array.isArray(config?.supported_country_codes)
+		? [...new Set(config.supported_country_codes.map((code) => String(code || "").trim().toUpperCase()).filter(Boolean))].sort()
+		: [...new Set(bands.flatMap((band) => band.rates.map((rate) => rate.country_code)))].sort();
+
+	return {
+		enabled: config?.enabled !== false && bands.length > 0,
+		scope: "europe_monocollo",
+		origin_country_code: String(config?.origin_country_code ?? "IT").trim().toUpperCase() || "IT",
+		max_packages: Math.max(1, toInt(config?.max_packages ?? 1, 1)),
+		max_quantity_per_package: Math.max(1, toInt(config?.max_quantity_per_package ?? 1, 1)),
+		supported_country_codes: supportedCountryCodes,
+		bands,
+		version: config?.version || null,
+	};
+};
+
+const normalizeKeyedPricingGroup = (config = {}, defaults = {}) => {
+	return Object.fromEntries(
+		Object.entries(defaults).map(([key, fallback]) => {
+			const source = config?.[key] && typeof config[key] === "object" ? config[key] : {};
+			return [key, {
+				...fallback,
+				...source,
+				enabled: source?.enabled !== false && fallback?.enabled !== false,
+				price_cents: source?.price_cents === null || source?.price_cents === undefined
+					? fallback?.price_cents ?? null
+					: Math.max(0, toInt(source.price_cents, fallback?.price_cents ?? 0)),
+				min_fee_cents: source?.min_fee_cents === null || source?.min_fee_cents === undefined
+					? fallback?.min_fee_cents ?? null
+					: Math.max(0, toInt(source.min_fee_cents, fallback?.min_fee_cents ?? 0)),
+				percentage_rate: source?.percentage_rate === null || source?.percentage_rate === undefined
+					? fallback?.percentage_rate ?? null
+					: toNumber(source.percentage_rate, fallback?.percentage_rate ?? 0),
+				threshold_amount_eur: source?.threshold_amount_eur === null || source?.threshold_amount_eur === undefined
+					? fallback?.threshold_amount_eur ?? null
+					: toNumber(source.threshold_amount_eur, fallback?.threshold_amount_eur ?? 0),
+				max_weight_kg: source?.max_weight_kg === null || source?.max_weight_kg === undefined
+					? fallback?.max_weight_kg ?? null
+					: toNumber(source.max_weight_kg, fallback?.max_weight_kg ?? 0),
+				threshold_cm: source?.threshold_cm === null || source?.threshold_cm === undefined
+					? fallback?.threshold_cm ?? null
+					: toNumber(source.threshold_cm, fallback?.threshold_cm ?? 0),
+				longest_side_threshold_cm: source?.longest_side_threshold_cm === null || source?.longest_side_threshold_cm === undefined
+					? fallback?.longest_side_threshold_cm ?? null
+					: toNumber(source.longest_side_threshold_cm, fallback?.longest_side_threshold_cm ?? 0),
+				girth_threshold_cm: source?.girth_threshold_cm === null || source?.girth_threshold_cm === undefined
+					? fallback?.girth_threshold_cm ?? null
+					: toNumber(source.girth_threshold_cm, fallback?.girth_threshold_cm ?? 0),
+				min_longest_side_cm: source?.min_longest_side_cm === null || source?.min_longest_side_cm === undefined
+					? fallback?.min_longest_side_cm ?? null
+					: toNumber(source.min_longest_side_cm, fallback?.min_longest_side_cm ?? 0),
+				max_secondary_side_cm: source?.max_secondary_side_cm === null || source?.max_secondary_side_cm === undefined
+					? fallback?.max_secondary_side_cm ?? null
+					: toNumber(source.max_secondary_side_cm, fallback?.max_secondary_side_cm ?? 0),
+				province_codes: Array.isArray(source?.province_codes) ? source.province_codes.map((item) => String(item).trim().toUpperCase()).filter(Boolean) : [...(fallback?.province_codes || [])],
+				country_codes: Array.isArray(source?.country_codes) ? source.country_codes.map((item) => String(item).trim().toUpperCase()).filter(Boolean) : [...(fallback?.country_codes || [])],
+				keyword_list: Array.isArray(source?.keyword_list) ? source.keyword_list.map((item) => String(item).trim().toLowerCase()).filter(Boolean) : [...(fallback?.keyword_list || [])],
+				flag_keys: Array.isArray(source?.flag_keys) ? source.flag_keys.map((item) => String(item).trim().toLowerCase()).filter(Boolean) : [...(fallback?.flag_keys || [])],
+				delivery_modes: Array.isArray(source?.delivery_modes) ? source.delivery_modes.map((item) => String(item).trim().toLowerCase()).filter(Boolean) : [...(fallback?.delivery_modes || [])],
+				tiers: Array.isArray(source?.tiers)
+					? source.tiers.map((tier) => ({
+						up_to_kg: tier?.up_to_kg === null || tier?.up_to_kg === undefined || tier?.up_to_kg === "" ? null : toNumber(tier.up_to_kg, 0),
+						price_cents: Math.max(0, toInt(tier?.price_cents, 0)),
+					}))
+					: [...(fallback?.tiers || [])],
+			}];
+		}),
+	);
 };
 
 const effectivePriceCents = (band) => {
@@ -281,6 +555,7 @@ export const usePriceBands = () => {
 			const volume = normalizeBandArray(data?.volume, "volume");
 			const extraRules = normalizeExtraRules(data?.extra_rules || DEFAULT_EXTRA_RULES);
 			const supplements = normalizeSupplements(data?.supplements || DEFAULT_SUPPLEMENTS);
+			const europe = normalizeEuropePricing(data?.europe || DEFAULT_EUROPE_PRICING);
 			const version = data?.version || payload?.version || String(Date.now());
 
 			priceBands.value = {
@@ -288,6 +563,10 @@ export const usePriceBands = () => {
 				volume,
 				extra_rules: extraRules,
 				supplements: supplements,
+				europe,
+				service_pricing: normalizeKeyedPricingGroup(data?.service_pricing || {}, DEFAULT_SERVICE_PRICING),
+				automatic_supplements: normalizeKeyedPricingGroup(data?.automatic_supplements || {}, DEFAULT_AUTOMATIC_SUPPLEMENTS),
+				operational_fees: normalizeKeyedPricingGroup(data?.operational_fees || {}, DEFAULT_OPERATIONAL_FEES),
 				version,
 			};
 
@@ -304,6 +583,10 @@ export const usePriceBands = () => {
 				volume: [...FALLBACK_VOLUME_BANDS],
 				extra_rules: { ...DEFAULT_EXTRA_RULES },
 				supplements: [...DEFAULT_SUPPLEMENTS],
+				europe: { ...DEFAULT_EUROPE_PRICING },
+				service_pricing: normalizeKeyedPricingGroup({}, DEFAULT_SERVICE_PRICING),
+				automatic_supplements: normalizeKeyedPricingGroup({}, DEFAULT_AUTOMATIC_SUPPLEMENTS),
+				operational_fees: normalizeKeyedPricingGroup({}, DEFAULT_OPERATIONAL_FEES),
 				version: String(Date.now()),
 			};
 			promoSettings.value = { ...DEFAULT_PROMO };
@@ -380,6 +663,64 @@ export const usePriceBands = () => {
 
 	const getCapSupplement = (originCap, destinationCap) => getCapSupplementCents(originCap, destinationCap) / 100;
 
+	const getEuropeQuote = (destinationCountryCode, weightKg, volumeM3) => {
+		const pricing = priceBands.value.europe || DEFAULT_EUROPE_PRICING;
+		const countryCode = String(destinationCountryCode || "").trim().toUpperCase();
+		if (!pricing.enabled || !countryCode || countryCode === "IT") {
+			return { status: "not_europe", message: "Destinazione non europea o nazionale." };
+		}
+
+		if (!pricing.supported_country_codes.includes(countryCode)) {
+			return { status: "not_supported", message: "Destinazione europea non configurata nel listino attuale." };
+		}
+
+		const weight = Number(weightKg);
+		const volume = Number(volumeM3);
+		if (!Number.isFinite(weight) || weight <= 0 || !Number.isFinite(volume) || volume <= 0) {
+			return { status: "incomplete", message: "Inserisci peso e dimensioni per calcolare il listino Europa." };
+		}
+
+		const findEuropeBand = () => {
+			const bandByRange = (matcher) => pricing.bands.find((entry) => matcher(entry) && volume <= entry.max_volume_m3);
+			return (
+				bandByRange((entry) => weight <= 10 && entry.max_weight_kg <= 10 + EPSILON)
+				|| bandByRange((entry) => weight > 10 + EPSILON && weight < 25 && entry.max_weight_kg > 10 && entry.max_weight_kg <= 30 + EPSILON)
+				|| bandByRange((entry) => weight >= 25 && weight <= 50 + EPSILON && entry.max_weight_kg > 25 && entry.max_weight_kg <= 50 + EPSILON)
+				|| bandByRange((entry) => weight > 50 + EPSILON && weight <= 75 + EPSILON && entry.max_weight_kg > 50 && entry.max_weight_kg <= 75 + EPSILON)
+				|| bandByRange((entry) => weight > 75 + EPSILON && weight <= 100 + EPSILON && entry.max_weight_kg > 75 && entry.max_weight_kg <= 100 + EPSILON)
+				|| pricing.bands.find((entry) => weight <= entry.max_weight_kg && volume <= entry.max_volume_m3)
+				|| null
+			);
+		};
+
+		const band = findEuropeBand();
+		if (!band) {
+			return { status: "requires_quote", message: "Per questo peso o volume verso l'Europa serve un preventivo manuale." };
+		}
+
+		const rate = band.rates.find((entry) => entry.country_code === countryCode);
+		if (!rate) {
+			return { status: "not_supported", message: "Destinazione europea non configurata nel listino attuale.", band };
+		}
+
+		if (rate.quote_required || rate.price_cents === null) {
+			return {
+				status: "requires_quote",
+				message: `Per ${rate.country_name || countryCode} in questa fascia va richiesto un preventivo manuale.`,
+				band,
+				rate,
+			};
+		}
+
+		return {
+			status: "priced",
+			price_cents: rate.price_cents,
+			price: Number((rate.price_cents / 100).toFixed(2)),
+			band,
+			rate,
+		};
+	};
+
 	const getMinPrice = () => {
 		const firstBand = priceBands.value.weight?.[0];
 		if (!firstBand) {
@@ -401,6 +742,7 @@ export const usePriceBands = () => {
 		getVolumeBandInfo,
 		getCapSupplement,
 		getCapSupplementCents,
+		getEuropeQuote,
 		getMinPrice,
 	};
 };

@@ -13,7 +13,7 @@
 -->
 <script setup>
 definePageMeta({
-	middleware: ["sanctum:auth", "admin"],
+	middleware: ["app-auth", "admin"],
 });
 
 const sanctum = useSanctumClient();
@@ -61,24 +61,24 @@ onMounted(() => { fetchArticles(); });
 <template>
 	<section class="min-h-[600px] py-[40px] desktop:py-[60px] desktop-xl:py-[80px]">
 		<div class="my-container">
-			<!-- Breadcrumb -->
-			<div class="mb-[24px] text-[0.875rem] text-[#737373]">
-				<NuxtLink to="/account" class="hover:underline text-[#095866] font-medium">Il tuo account</NuxtLink>
-				<span class="mx-[8px] text-[#C8CCD0]">/</span>
-				<span class="font-semibold text-[#252B42]">Servizi</span>
-			</div>
-
-			<NuxtLink to="/account" class="inline-flex items-center gap-[6px] text-[0.8125rem] text-[#095866] hover:underline font-medium mb-[20px]">
-				<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[16px] h-[16px]" fill="currentColor"><path d="M20,11V13H8L13.5,18.5L12.08,19.92L4.16,12L12.08,4.08L13.5,5.5L8,11H20Z"/></svg>
-				Torna all'account
-			</NuxtLink>
-
-			<div class="flex items-center justify-between mb-[24px]">
-				<h1 class="text-[1.75rem] font-bold text-[#252B42]">Servizi</h1>
-				<NuxtLink to="/account/amministrazione/servizi/nuovo" class="px-[16px] py-[10px] bg-[#095866] hover:bg-[#074a56] text-white rounded-[50px] text-[0.875rem] font-medium transition-colors inline-flex items-center gap-[6px]">
-					<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[18px] h-[18px]" fill="currentColor"><path d="M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z"/></svg> Nuovo servizio
-				</NuxtLink>
-			</div>
+			<AccountPageHeader
+				eyebrow="Admin"
+				title="Servizi"
+				description="Gestisci i servizi editoriali visibili nel catalogo pubblico: pubblicazione, ordine, modifica e rimozione da un'unica console."
+				:crumbs="[
+					{ label: 'Account', to: '/account' },
+					{ label: 'Amministrazione', to: '/account/amministrazione' },
+					{ label: 'Servizi' },
+				]"
+				back-to="/account/amministrazione"
+				back-label="Torna all'amministrazione">
+				<template #actions>
+					<NuxtLink to="/account/amministrazione/servizi/nuovo" class="inline-flex items-center justify-center gap-[6px] px-[18px] py-[10px] bg-[#095866] hover:bg-[#074a56] text-white rounded-[999px] text-[0.875rem] font-semibold transition-colors">
+						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[18px] h-[18px]" fill="currentColor"><path d="M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z"/></svg>
+						Nuovo servizio
+					</NuxtLink>
+				</template>
+			</AccountPageHeader>
 
 			<!-- Action message -->
 			<div

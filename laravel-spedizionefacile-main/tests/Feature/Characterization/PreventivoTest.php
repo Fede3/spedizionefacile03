@@ -650,11 +650,11 @@ class PreventivoTest extends TestCase
     }
 
     /**
-     * TEST DI CARATTERIZZAZIONE — Se il frontend manda gia' weight_price e volume_price, il server li usa
+     * TEST DI CARATTERIZZAZIONE — Il server ricalcola comunque i prezzi anche se il frontend li manda gia'
      *
-     * Cosa verifica: se weight_price e volume_price sono gia' nel payload, non vengono ricalcolati
-     * Comportamento attuale: il calcolo server avviene solo se weight_price o volume_price sono null
-     * File sorgente: app/Http/Controllers/SessionController.php:139-157
+     * Cosa verifica: weight_price e volume_price nel payload non sono considerati affidabili
+     * e vengono sostituiti dal calcolo server-side.
+     * File sorgente: app/Http/Controllers/SessionController.php:33-80
      */
     public function test_frontend_puo_mandare_prezzi_gia_calcolati(): void
     {
@@ -673,11 +673,11 @@ class PreventivoTest extends TestCase
 
         $response->assertOk();
         $packages = $response->json('data.packages');
-        // Il server usa i prezzi dal frontend, non li ricalcola
-        $this->assertEquals(15.00, $packages[0]['weight_price']);
-        $this->assertEquals(12.00, $packages[0]['volume_price']);
-        // single_price = max(15.00, 12.00) * 1 = 15.00
-        $this->assertEquals(15.00, $packages[0]['single_price']);
+        // Peso 1 kg -> 8.90 EUR, volume 10x10x10 cm = 0.001 m3 -> 8.90 EUR
+        $this->assertEquals(8.90, $packages[0]['weight_price']);
+        $this->assertEquals(8.90, $packages[0]['volume_price']);
+        // single_price = max(8.90, 8.90) * 1 = 8.90
+        $this->assertEquals(8.90, $packages[0]['single_price']);
     }
 
     // ========================================================================
@@ -793,5 +793,123 @@ class PreventivoTest extends TestCase
         $packages = $response->json('data.packages');
         // Deve usare l'ultima fascia DB: 1490 centesimi = 14.90 EUR
         $this->assertEquals(14.90, $packages[0]['weight_price']);
+    }
+
+    public function test_preventivo_europa_monocollo_calcola_la_tariffa_del_listino(): void
+    {
+        $user = User::factory()->create();
+        $payload = $this->basePayload(
+            [
+                'weight' => '8',
+                'first_size' => '40',
+                'second_size' => '30',
+                'third_size' => '20',
+            ],
+            [
+                'destination_city' => 'Vienna',
+                'destination_postal_code' => '1010',
+                'destination_country_code' => 'AT',
+                'destination_country' => 'Austria',
+            ],
+        );
+
+        $response = $this->actingAs($user)
+            ->postJson('/api/session/first-step', $payload);
+
+        $response->assertOk();
+        $response->assertJsonPath('data.total_price', 30);
+        $response->assertJsonPath('data.packages.0.pricing_scope', 'europe_monocollo');
+        $response->assertJsonPath('data.packages.0.single_price', 30);
+    }
+
+    public function test_preventivo_europa_puo_calcolare_anche_senza_cap_destinazione(): void
+    {
+        $user = User::factory()->create();
+        $payload = $this->basePayload(
+            [
+                'weight' => '8',
+                'first_size' => '40',
+                'second_size' => '30',
+                'third_size' => '20',
+            ],
+            [
+                'destination_city' => 'Vienna',
+                'destination_postal_code' => '',
+                'destination_country_code' => 'AT',
+                'destination_country' => 'Austria',
+            ],
+        );
+
+        $response = $this->actingAs($user)
+            ->postJson('/api/session/first-step', $payload);
+
+        $response->assertOk();
+        $response->assertJsonPath('data.total_price', 30);
+    }
+
+    public function test_preventivo_europa_blocca_più_colli(): void
+    {
+        $user = User::factory()->create();
+        $payload = [
+            'shipment_details' => [
+                'origin_city' => 'Milano',
+                'origin_postal_code' => '20100',
+                'origin_country_code' => 'IT',
+                'origin_country' => 'Italia',
+                'destination_city' => 'Vienna',
+                'destination_postal_code' => '1010',
+                'destination_country_code' => 'AT',
+                'destination_country' => 'Austria',
+            ],
+            'packages' => [
+                [
+                    'package_type' => 'Pacco',
+                    'quantity' => 1,
+                    'weight' => '5',
+                    'first_size' => '30',
+                    'second_size' => '20',
+                    'third_size' => '15',
+                ],
+                [
+                    'package_type' => 'Pacco',
+                    'quantity' => 1,
+                    'weight' => '5',
+                    'first_size' => '30',
+                    'second_size' => '20',
+                    'third_size' => '15',
+                ],
+            ],
+        ];
+
+        $response = $this->actingAs($user)
+            ->postJson('/api/session/first-step', $payload);
+
+        $response->assertStatus(422);
+        $response->assertJsonValidationErrors(['packages']);
+    }
+
+    public function test_preventivo_europa_segnala_quando_serve_preventivo_manuale(): void
+    {
+        $user = User::factory()->create();
+        $payload = $this->basePayload(
+            [
+                'weight' => '45',
+                'first_size' => '55',
+                'second_size' => '50',
+                'third_size' => '58',
+            ],
+            [
+                'destination_city' => 'Copenaghen',
+                'destination_postal_code' => '2100',
+                'destination_country_code' => 'DK',
+                'destination_country' => 'Danimarca',
+            ],
+        );
+
+        $response = $this->actingAs($user)
+            ->postJson('/api/session/first-step', $payload);
+
+        $response->assertStatus(422);
+        $response->assertJsonValidationErrors(['packages']);
     }
 }

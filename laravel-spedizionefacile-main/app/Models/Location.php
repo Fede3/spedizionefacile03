@@ -44,6 +44,7 @@ class Location extends Model
     protected $fillable = [
         'postal_code',  // CAP della localita' (es. "20121")
         'place_name',   // Nome della citta'/localita' (es. "Milano")
-        'province'      // Sigla della provincia (es. "MI")
+        'province',     // Sigla della provincia (es. "MI")
+        'country_code'  // Codice ISO del paese (es. "IT", "AT")
     ];
 }

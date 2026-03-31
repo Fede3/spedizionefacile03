@@ -66,6 +66,7 @@ return Application::configure(basePath: dirname(__DIR__))
         //   automaticamente dal frontend tramite il cookie XSRF-TOKEN
         $middleware->validateCsrfTokens(except: [
             'stripe/webhook',
+            'auth/apple/callback',
             'api/*',
         ]);
 

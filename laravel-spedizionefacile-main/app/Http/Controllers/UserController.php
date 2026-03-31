@@ -50,7 +50,15 @@ class UserController extends Controller
         // Se l'utente vuole cambiare la password, deve essere lunga almeno 8 caratteri
         // e deve essere confermata (cioe' scritta due volte uguale)
         if ($request->password) {
-            $rules['password'] = 'string|min:8|confirmed';
+            $rules['password'] = [
+                'string',
+                'min:8',
+                'confirmed',
+                'regex:/[a-z]/',
+                'regex:/[A-Z]/',
+                'regex:/[0-9]/',
+                'regex:/[^a-zA-Z0-9\s]/',
+            ];
         }
 
         // Controlliamo che i dati inviati rispettino le regole che abbiamo definito sopra

@@ -72,6 +72,10 @@ class PackageStoreRequest extends FormRequest
             'services.service_type' => 'nullable|string|max:500',
             'services.date' => 'nullable|string|max:20',
             'services.time' => 'nullable|string|max:20',
+            'services.serviceData' => 'nullable|array',
+            'services.service_data' => 'nullable|array',
+            'services.sms_email_notification' => 'nullable|boolean',
+            'sms_email_notification' => 'nullable|boolean',
 
             /* Pacchi - almeno 1 pacco, massimo 50 */
             'packages' => 'required|array|min:1|max:50',

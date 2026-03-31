@@ -11,13 +11,16 @@
 -->
 <script setup>
 definePageMeta({
-	middleware: ["sanctum:auth", "admin"],
+	middleware: ["app-auth", "admin"],
 });
 
 const sanctum = useSanctumClient();
 const { formatCurrency, formatDate } = useAdmin();
 
 const walletOverview = ref([]);
+const walletUsersCount = computed(() => walletOverview.value.length);
+const totalWalletBalance = computed(() => walletOverview.value.reduce((sum, user) => sum + Number(user.wallet_balance || 0), 0));
+const totalCommissionBalance = computed(() => walletOverview.value.reduce((sum, user) => sum + Number(user.commission_balance || 0), 0));
 
 const fetchWallet = async () => {
 	try {
@@ -52,19 +55,16 @@ onMounted(() => { fetchWallet(); });
 <template>
 	<section class="min-h-[600px] py-[40px] desktop:py-[60px] desktop-xl:py-[80px]">
 		<div class="my-container">
-			<!-- Breadcrumb -->
-			<div class="mb-[24px] text-[0.875rem] text-[#737373]">
-				<NuxtLink to="/account" class="hover:underline text-[#095866] font-medium">Il tuo account</NuxtLink>
-				<span class="mx-[8px] text-[#C8CCD0]">/</span>
-				<span class="font-semibold text-[#252B42]">Portafogli</span>
-			</div>
-
-			<NuxtLink to="/account" class="inline-flex items-center gap-[6px] text-[0.8125rem] text-[#095866] hover:underline font-medium mb-[20px]">
-				<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[16px] h-[16px]" fill="currentColor"><path d="M20,11V13H8L13.5,18.5L12.08,19.92L4.16,12L12.08,4.08L13.5,5.5L8,11H20Z"/></svg>
-				Torna all'account
-			</NuxtLink>
-
-			<h1 class="text-[1.75rem] font-bold text-[#252B42] mb-[24px]">Portafogli</h1>
+			<AccountPageHeader
+				eyebrow="Area amministrazione"
+				title="Portafogli"
+				description="Saldi e movimenti utenti."
+				:crumbs="[
+					{ label: 'Account', to: '/account' },
+					{ label: 'Amministrazione', to: '/account/amministrazione' },
+					{ label: 'Portafogli' },
+				]"
+			/>
 
 			<!-- User movements modal -->
 			<div v-if="selectedUserId" class="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-[20px]" @click.self="closeUserMovements">
@@ -93,13 +93,80 @@ onMounted(() => { fetchWallet(); });
 				</div>
 			</div>
 
+			<div class="mb-[20px] rounded-[18px] border border-[#E9EBEC] bg-[#F8FAFB] p-[14px] tablet:p-[18px]">
+				<div class="flex flex-col gap-[14px] desktop:flex-row desktop:items-center desktop:justify-between">
+					<div>
+						<p class="text-[0.75rem] font-semibold uppercase tracking-[0.6px] text-[#6B7280]">Toolbar finanze</p>
+						<h2 class="mt-[4px] text-[1rem] font-semibold text-[#252B42]">Saldi e movimenti</h2>
+					</div>
+					<div class="flex flex-wrap items-center gap-[8px]">
+						<span class="inline-flex min-h-[34px] items-center rounded-full border border-[#DCE7E8] bg-white px-[12px] text-[0.75rem] font-medium text-[#095866]">
+							{{ walletUsersCount }} utenti
+						</span>
+						<span class="inline-flex min-h-[34px] items-center rounded-full border border-[#E7ECEE] bg-white px-[12px] text-[0.75rem] font-medium text-[#5F6C75]">
+							Saldo €{{ formatCurrency(totalWalletBalance) }}
+						</span>
+					</div>
+				</div>
+			</div>
+
+			<div class="grid grid-cols-1 sm:grid-cols-3 gap-[12px] mb-[22px]">
+				<div class="bg-white rounded-[16px] p-[16px] tablet:p-[18px] border border-[#E9EBEC] shadow-sm">
+					<div class="flex items-center gap-[8px] mb-[8px]">
+						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[18px] h-[18px] text-[#252B42]" fill="currentColor"><path d="M12,4A4,4 0 0,1 16,8A4,4 0 0,1 12,12A4,4 0 0,1 8,8A4,4 0 0,1 12,4M12,14C16.42,14 20,15.79 20,18V20H4V18C4,15.79 7.58,14 12,14Z"/></svg>
+						<p class="text-[0.75rem] text-[#737373] uppercase tracking-[0.5px] font-medium">Utenti attivi</p>
+					</div>
+					<p class="text-[1.75rem] font-bold text-[#252B42]">{{ walletUsersCount }}</p>
+				</div>
+				<div class="bg-white rounded-[16px] p-[16px] tablet:p-[18px] border border-[#E9EBEC] shadow-sm">
+					<div class="flex items-center gap-[8px] mb-[8px]">
+						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[18px] h-[18px] text-[#095866]" fill="currentColor"><path d="M5,6H23V18H5V6M14,9A3,3 0 0,1 17,12A3,3 0 0,1 14,15A3,3 0 0,1 11,12A3,3 0 0,1 14,9M9,8A2,2 0 0,1 7,10V14A2,2 0 0,1 9,16H19A2,2 0 0,1 21,14V10A2,2 0 0,1 19,8H9M1,10H3V20H19V22H1V10Z"/></svg>
+						<p class="text-[0.75rem] text-[#737373] uppercase tracking-[0.5px] font-medium">Saldo totale</p>
+					</div>
+					<p class="text-[1.75rem] font-bold text-[#252B42]">&euro;{{ formatCurrency(totalWalletBalance) }}</p>
+				</div>
+				<div class="bg-white rounded-[16px] p-[16px] tablet:p-[18px] border border-[#E9EBEC] shadow-sm">
+					<div class="flex items-center gap-[8px] mb-[8px]">
+						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[18px] h-[18px] text-emerald-600" fill="currentColor"><path d="M3,6H21V18H3V6M12,9A3,3 0 0,1 15,12A3,3 0 0,1 12,15A3,3 0 0,1 9,12A3,3 0 0,1 12,9M7,8A2,2 0 0,1 5,10V14A2,2 0 0,1 7,16H17A2,2 0 0,1 19,14V10A2,2 0 0,1 17,8H7Z"/></svg>
+						<p class="text-[0.75rem] text-[#737373] uppercase tracking-[0.5px] font-medium">Commissioni residue</p>
+					</div>
+					<p class="text-[1.75rem] font-bold text-emerald-600">&euro;{{ formatCurrency(totalCommissionBalance) }}</p>
+				</div>
+			</div>
+
 			<div class="bg-white rounded-[20px] p-[24px] desktop:p-[32px] shadow-sm border border-[#E9EBEC]">
 				<h2 class="text-[1.125rem] font-bold text-[#252B42] mb-[20px]">Utenti con movimenti</h2>
 				<div v-if="!walletOverview?.length" class="text-center py-[48px] text-[#737373]">
 					<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[40px] h-[40px] text-[#C8CCD0] mx-auto mb-[12px]" fill="currentColor"><path d="M5,6H23V18H5V6M14,9A3,3 0 0,1 17,12A3,3 0 0,1 14,15A3,3 0 0,1 11,12A3,3 0 0,1 14,9M9,8A2,2 0 0,1 7,10V14A2,2 0 0,1 9,16H19A2,2 0 0,1 21,14V10A2,2 0 0,1 19,8H9M1,10H3V20H19V22H1V10Z"/></svg>
 					<p>Nessun utente con movimenti.</p>
 				</div>
-				<div v-else class="overflow-x-auto">
+				<div v-else class="space-y-[12px]">
+					<div class="desktop:hidden grid grid-cols-1 tablet:grid-cols-2 gap-[12px]">
+						<div v-for="u in walletOverview" :key="u.id" class="rounded-[16px] border border-[#E9EBEC] bg-white p-[14px] shadow-sm">
+							<div class="flex items-start justify-between gap-[12px]">
+								<div class="min-w-0">
+									<p class="text-[0.9375rem] font-semibold text-[#252B42] truncate">{{ u.name }}</p>
+									<p class="text-[0.75rem] text-[#737373] truncate">{{ u.email }}</p>
+									<span :class="['inline-block mt-[8px] px-[8px] py-[2px] rounded-full text-[0.6875rem] font-medium', u.role === 'Partner Pro' ? 'bg-[#095866]/10 text-[#095866]' : u.role === 'Admin' ? 'bg-purple-50 text-purple-700' : 'bg-gray-100 text-gray-600']">{{ u.role || "Cliente" }}</span>
+								</div>
+								<div class="text-right shrink-0">
+									<p class="text-[0.75rem] text-[#737373] uppercase tracking-[0.5px]">Saldo</p>
+									<p class="text-[1rem] font-bold text-[#252B42]">&euro;{{ formatCurrency(u.wallet_balance) }}</p>
+								</div>
+							</div>
+							<div class="grid grid-cols-2 gap-[10px] mt-[12px]">
+								<div class="rounded-[12px] bg-[#F8F9FB] border border-[#E9EBEC] p-[10px]">
+									<p class="text-[0.6875rem] text-[#737373] uppercase tracking-[0.5px] mb-[2px]">Commissioni</p>
+									<p class="text-[0.9375rem] font-bold text-emerald-600">&euro;{{ formatCurrency(u.commission_balance) }}</p>
+								</div>
+								<button @click="viewUserMovements(u.id, u.name)" class="inline-flex items-center justify-center gap-[6px] rounded-[12px] bg-[#095866] px-[12px] py-[10px] text-[0.8125rem] font-medium text-white cursor-pointer hover:bg-[#074a56] transition-colors">
+									Movimenti
+								</button>
+							</div>
+						</div>
+					</div>
+
+					<div class="hidden desktop:block overflow-x-auto">
 					<table class="w-full text-[0.875rem]">
 						<thead>
 							<tr class="border-b border-[#E9EBEC] text-left text-[#737373]">
@@ -126,6 +193,7 @@ onMounted(() => { fetchWallet(); });
 							</tr>
 						</tbody>
 					</table>
+					</div>
 				</div>
 			</div>
 		</div>

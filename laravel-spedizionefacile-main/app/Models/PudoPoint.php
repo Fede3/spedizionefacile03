@@ -68,6 +68,26 @@ class PudoPoint extends Model
     {
         $limit = max(1, min((int) $limit, 50));
 
+        $driver = self::query()->getConnection()->getDriverName();
+        if ($driver === 'sqlite') {
+            $points = self::where('is_active', true)
+                ->whereNotNull('latitude')
+                ->whereNotNull('longitude')
+                ->get()
+                ->map(function ($point) use ($lat, $lng) {
+                    $distance = self::haversineKm($lat, $lng, (float) $point->latitude, (float) $point->longitude);
+                    $point->distance = round($distance, 2);
+
+                    return $point;
+                })
+                ->filter(fn ($point) => isset($point->distance) && $point->distance < 50)
+                ->sortBy('distance')
+                ->take($limit)
+                ->values();
+
+            return $points->map(fn ($p) => self::formatForApi($p))->toArray();
+        }
+
         // Formula Haversine semplificata per distanza approssimativa
         $points = self::where('is_active', true)
             ->whereNotNull('latitude')
@@ -109,5 +129,24 @@ class PudoPoint extends Model
             'distance' => isset($point->distance) ? round($point->distance, 2) : null,
             'provider' => 'BRT',
         ];
+    }
+
+    private static function haversineKm(float $lat1, float $lng1, float $lat2, float $lng2): float
+    {
+        $earthRadius = 6371;
+        $latFrom = deg2rad($lat1);
+        $lngFrom = deg2rad($lng1);
+        $latTo = deg2rad($lat2);
+        $lngTo = deg2rad($lng2);
+
+        $latDelta = $latTo - $latFrom;
+        $lngDelta = $lngTo - $lngFrom;
+
+        $angle = 2 * asin(sqrt(
+            pow(sin($latDelta / 2), 2) +
+            cos($latFrom) * cos($latTo) * pow(sin($lngDelta / 2), 2)
+        ));
+
+        return $angle * $earthRadius;
     }
 }

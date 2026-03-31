@@ -37,6 +37,7 @@ namespace App\Models;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class ProRequest extends Model
 {
@@ -63,7 +64,7 @@ class ProRequest extends Model
     }
 
     // Relazione: la richiesta appartiene a UN utente
-    public function user()
+    public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }

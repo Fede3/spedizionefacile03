@@ -33,7 +33,7 @@
 <script setup>
 /* Richiede che l'utente sia autenticato */
 definePageMeta({
-	middleware: ["sanctum:auth"],
+	middleware: ["app-auth"],
 });
 
 const sanctum = useSanctumClient();
@@ -145,6 +145,16 @@ const paginatedItems = computed(() => {
 	return filteredItems.value.slice(start, start + itemsPerPage);
 });
 
+const totalShipmentsCount = computed(() => savedShipments.value?.data?.length || 0);
+const visibleShipmentsCount = computed(() => filteredItems.value.length);
+const selectedShipmentsCount = computed(() => selectedItems.value.length);
+const activeFiltersCount = computed(() => [
+	filterProvenienza.value,
+	filterRiferimento.value,
+	filterDateFrom.value,
+	filterDateTo.value,
+].filter(Boolean).length);
+
 const prevPage = () => { if (currentPage.value > 1) currentPage.value--; };
 const nextPage = () => { if (currentPage.value < totalPages.value) currentPage.value++; };
 
@@ -174,7 +184,6 @@ const confirmDelete = async () => {
 		await refresh();
 		showFeedback('Spedizione eliminata con successo.');
 	} catch (e) {
-		console.error(e);
 		showFeedback('Errore durante l\'eliminazione.', 'error');
 	} finally {
 		deleteLoading.value = false;
@@ -185,12 +194,14 @@ const confirmDelete = async () => {
 
 /* Elimina tutte le spedizioni selezionate (una per una) */
 const bulkDeleteLoading = ref(false);
+const showBulkDeleteConfirm = ref(false);
+const askBulkDelete = () => {
+	if (!selectedItems.value.length) return;
+	showBulkDeleteConfirm.value = true;
+};
 const bulkDelete = async () => {
 	if (!selectedItems.value.length) return;
 	const count = selectedItems.value.length;
-	if (!confirm(`Sei sicuro di voler eliminare ${count} spedizion${count === 1 ? 'e configurata' : 'i configurate'}?`)) {
-		return;
-	}
 	bulkDeleteLoading.value = true;
 	try {
 		for (const id of selectedItems.value) {
@@ -201,10 +212,10 @@ const bulkDelete = async () => {
 		await refresh();
 		showFeedback(`${count} spedizion${count === 1 ? 'e eliminata' : 'i eliminate'} con successo.`);
 	} catch (e) {
-		console.error(e);
 		showFeedback('Errore durante l\'eliminazione.', 'error');
 		await refresh();
 	} finally {
+		showBulkDeleteConfirm.value = false;
 		bulkDeleteLoading.value = false;
 	}
 };
@@ -225,7 +236,6 @@ const bulkAddToCart = async () => {
 		await refresh();
 		router.push('/carrello');
 	} catch (e) {
-		console.error(e);
 	} finally {
 		addToCartLoading.value = false;
 	}
@@ -307,7 +317,6 @@ const saveEdit = async () => {
 		showEdit.value = false;
 		showFeedback('Spedizione aggiornata con successo.');
 	} catch (e) {
-		console.error(e);
 		showFeedback('Errore durante il salvataggio.', 'error');
 	} finally {
 		editSaving.value = false;
@@ -376,29 +385,42 @@ const getPackageIcon = (item) => {
 </script>
 
 <template>
-	<section class="min-h-[600px] py-[40px] desktop:py-[60px]">
+	<section class="min-h-[600px] py-[32px] desktop:py-[56px]">
 		<div class="my-container">
-			<!-- Breadcrumb - aggiunto per navigazione coerente con le altre pagine account -->
-			<div class="mb-[24px] text-[0.875rem] text-[#737373]">
-				<NuxtLink to="/account" class="hover:underline text-[#095866] font-medium">Il tuo account</NuxtLink>
-				<span class="mx-[8px] text-[#C8CCD0]">/</span>
-				<span class="font-semibold text-[#252B42]">Spedizioni configurate</span>
-			</div>
+			<AccountPageHeader
+				title="Spedizioni configurate"
+				description="Riusa i modelli che usi piu' spesso, aggiornali quando servono e aggiungili al carrello senza ripartire da zero."
+				:crumbs="[
+					{ label: 'Account', to: '/account' },
+					{ label: 'Spedizioni configurate' },
+				]"
+			/>
 
-			<!-- Titolo - allineato a sinistra coerente con le altre pagine -->
-			<h1 class="text-[1.75rem] font-bold text-[#252B42] mb-[8px]">Spedizioni configurate</h1>
-			<p class="text-[#737373] text-[0.9375rem] mb-[32px]">Gestisci le spedizioni salvate, modificale o aggiungile al carrello.</p>
+			<div class="mb-[16px] grid grid-cols-1 tablet:grid-cols-3 gap-[10px]">
+				<div class="rounded-[16px] border border-[#E9EBEC] bg-white px-[14px] py-[12px] shadow-sm">
+					<p class="text-[0.75rem] font-semibold uppercase tracking-[0.08em] text-[#737373]">Spedizioni salvate</p>
+					<p class="mt-[2px] text-[1.125rem] font-bold text-[#252B42]">{{ totalShipmentsCount }}</p>
+				</div>
+				<div class="rounded-[16px] border border-[#E9EBEC] bg-white px-[14px] py-[12px] shadow-sm">
+					<p class="text-[0.75rem] font-semibold uppercase tracking-[0.08em] text-[#737373]">Filtri attivi</p>
+					<p class="mt-[2px] text-[1.125rem] font-bold text-[#252B42]">{{ activeFiltersCount }}</p>
+				</div>
+				<div class="rounded-[16px] border border-[#E9EBEC] bg-white px-[14px] py-[12px] shadow-sm">
+					<p class="text-[0.75rem] font-semibold uppercase tracking-[0.08em] text-[#737373]">Selezionate</p>
+					<p class="mt-[2px] text-[1.125rem] font-bold text-[#252B42]">{{ selectedShipmentsCount }}</p>
+				</div>
+			</div>
 
 			<!-- Feedback message - successo/errore -->
 			<Transition name="fade">
-				<div v-if="feedbackMessage" :class="['mb-[20px] px-[16px] py-[12px] rounded-[50px] text-[0.875rem] font-medium', feedbackType === 'success' ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-700 border border-red-200']">
+				<div v-if="feedbackMessage" :class="['mb-[16px] px-[14px] py-[10px] rounded-[14px] text-[0.8125rem] font-medium', feedbackType === 'success' ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-700 border border-red-200']">
 					{{ feedbackMessage }}
 				</div>
 			</Transition>
 
 			<!-- Loading -->
-			<div v-if="savedStatus === 'pending'" class="space-y-[12px]">
-				<div v-for="n in 3" :key="n" class="bg-white rounded-[8px] border border-dashed border-[#A8C4D0] p-[20px] animate-pulse">
+			<div v-if="savedStatus === 'pending'" class="space-y-[10px]">
+				<div v-for="n in 3" :key="n" class="bg-white rounded-[12px] border border-dashed border-[#A8C4D0] p-[16px] animate-pulse">
 					<div class="h-[14px] bg-gray-200 rounded w-[60%] mb-[8px]"></div>
 					<div class="h-[12px] bg-gray-200 rounded w-[40%]"></div>
 				</div>
@@ -406,49 +428,55 @@ const getPackageIcon = (item) => {
 
 			<!-- Content -->
 			<div v-else>
-				<!-- Filter section 1: Provenienza + Riferimento -->
-				<div class="border border-dashed border-[#A8C4D0] rounded-[8px] p-[20px_24px] mb-[12px]">
-					<div class="flex flex-wrap gap-[20px] items-center">
-						<div class="flex-1 min-w-[200px] max-w-[450px]">
-							<select v-model="filterProvenienza" class="w-full bg-white border border-[#D0D0D0] rounded-[30px] h-[44px] px-[18px] text-[0.875rem] text-[#404040] appearance-none cursor-pointer">
+				<!-- Toolbar filtri + import -->
+				<div class="bg-white border border-[#E9EBEC] rounded-[18px] p-[14px] tablet:p-[18px_20px] mb-[12px] shadow-sm">
+					<div class="flex flex-col gap-[10px] tablet:flex-row tablet:items-start tablet:justify-between">
+						<div class="min-w-0">
+							<p class="text-[0.75rem] font-semibold uppercase tracking-[0.08em] text-[#737373]">Filtri rapidi</p>
+							<p class="mt-[2px] text-[0.9375rem] font-semibold text-[#252B42]">Trova, ordina e riusa le configurazioni salvate senza perdere il contesto.</p>
+						</div>
+						<div class="flex flex-wrap items-center gap-[8px]">
+							<button @click="resetFilters" type="button" class="inline-flex items-center justify-center gap-[6px] bg-[#E9EBEC] text-[#252B42] font-semibold text-[0.875rem] px-[16px] h-[42px] rounded-[14px] hover:opacity-90 transition cursor-pointer">
+								<Icon name="mdi:close" class="text-[17px]" />
+								Annulla
+							</button>
+							<button @click="applyFilters" type="button" class="inline-flex items-center justify-center gap-[6px] bg-[#252B42] text-white font-semibold text-[0.875rem] px-[16px] h-[42px] rounded-[14px] hover:opacity-90 transition cursor-pointer">
+								<Icon name="mdi:filter-outline" class="text-[17px]" />
+								Applica filtro
+							</button>
+						</div>
+					</div>
+
+					<div class="mt-[12px] grid grid-cols-1 tablet:grid-cols-2 desktop:grid-cols-[1.1fr_1fr_1fr] gap-[10px]">
+						<div class="min-w-0">
+							<select v-model="filterProvenienza" class="w-full bg-[#F8F9FB] border border-[#D0D0D0] rounded-[14px] h-[44px] px-[14px] text-[0.8125rem] text-[#404040] appearance-none cursor-pointer">
 								<option value="">Provenienza</option>
 								<option v-for="city in uniqueCities" :key="city" :value="city">{{ city }}</option>
 							</select>
 						</div>
-						<div class="flex-1 min-w-[200px] max-w-[450px]">
-							<input type="text" v-model="filterRiferimento" placeholder="Riferimento" class="w-full bg-white border border-[#D0D0D0] rounded-[30px] h-[44px] px-[18px] text-[0.875rem] text-[#404040] placeholder:text-[#999]" />
+						<div class="min-w-0">
+							<input type="text" v-model="filterRiferimento" placeholder="Riferimento" class="w-full bg-[#F8F9FB] border border-[#D0D0D0] rounded-[14px] h-[44px] px-[14px] text-[0.8125rem] text-[#404040] placeholder:text-[#999]" />
+						</div>
+						<div class="grid grid-cols-2 gap-[10px] tablet:col-span-2 desktop:col-span-1">
+							<input type="date" v-model="filterDateFrom" placeholder="Da: (data creazione)" class="w-full bg-[#F8F9FB] border border-[#D0D0D0] rounded-[14px] h-[44px] px-[12px] text-[0.8125rem] text-[#404040]" />
+							<input type="date" v-model="filterDateTo" placeholder="A: (data creazione)" class="w-full bg-[#F8F9FB] border border-[#D0D0D0] rounded-[14px] h-[44px] px-[12px] text-[0.8125rem] text-[#404040]" />
 						</div>
 					</div>
-				</div>
 
-				<!-- Filter section 2: Date range + buttons -->
-				<div class="border border-dashed border-[#A8C4D0] rounded-[8px] p-[20px_24px] mb-[12px]">
-					<div class="flex flex-wrap gap-[16px] items-center">
-						<div class="flex-1 min-w-[180px] max-w-[280px]">
-							<input type="date" v-model="filterDateFrom" placeholder="Da: (data creazione)" class="w-full bg-white border border-[#D0D0D0] rounded-[30px] h-[44px] px-[18px] text-[0.875rem] text-[#404040]" />
+					<div class="mt-[12px] flex flex-col gap-[10px] tablet:flex-row tablet:items-center tablet:justify-between border-t border-[#F0F0F0] pt-[12px]">
+						<div class="flex flex-wrap items-center gap-[8px] text-[0.75rem] text-[#737373]">
+							<span class="inline-flex items-center gap-[6px] rounded-full bg-[#F8F9FB] px-[10px] py-[5px] font-semibold text-[#252B42]">Visibili {{ visibleShipmentsCount }}</span>
+							<span class="inline-flex items-center gap-[6px] rounded-full bg-[#F8F9FB] px-[10px] py-[5px] font-semibold text-[#252B42]">{{ selectedShipmentsCount }} selezionate</span>
+							<span v-if="activeFiltersCount" class="inline-flex items-center gap-[6px] rounded-full bg-[#EAF4F6] px-[10px] py-[5px] font-semibold text-[#095866]">{{ activeFiltersCount }} filtri attivi</span>
 						</div>
-						<div class="flex-1 min-w-[180px] max-w-[280px]">
-							<input type="date" v-model="filterDateTo" placeholder="A: (data creazione)" class="w-full bg-white border border-[#D0D0D0] rounded-[30px] h-[44px] px-[18px] text-[0.875rem] text-[#404040]" />
-						</div>
-						<div class="flex gap-[12px] ml-auto">
-							<button @click="resetFilters" type="button" class="inline-flex items-center gap-[6px] bg-[#E9EBEC] text-[#252B42] font-semibold text-[0.9375rem] px-[28px] h-[44px] rounded-[30px] hover:opacity-90 transition cursor-pointer"><Icon name="mdi:close" class="text-[18px]" />Annulla</button>
-							<button @click="applyFilters" type="button" class="inline-flex items-center gap-[6px] bg-[#252B42] text-white font-semibold text-[0.9375rem] px-[28px] h-[44px] rounded-[30px] hover:opacity-90 transition cursor-pointer"><Icon name="mdi:filter-outline" class="text-[18px]" />Applica filtro</button>
-						</div>
+						<!-- CSV upload rimosso: funzionalita' non implementata -->
 					</div>
-				</div>
-
-				<!-- CSV upload section -->
-				<div class="border border-dashed border-[#A8C4D0] rounded-[8px] p-[20px_24px] mb-[12px]">
-					<button type="button" class="inline-flex items-center gap-[6px] bg-[#252B42] text-white font-semibold text-[0.9375rem] px-[28px] h-[44px] rounded-[30px] hover:opacity-90 transition cursor-pointer">
-						<Icon name="mdi:file-upload-outline" class="text-[18px]" />
-						Carica da file CSV
-					</button>
 				</div>
 
 				<!-- Table section -->
-				<div class="border border-dashed border-[#A8C4D0] rounded-[8px] overflow-hidden mb-[12px]">
+				<div class="bg-white border border-[#E9EBEC] rounded-[18px] overflow-hidden mb-[12px] shadow-sm">
 					<!-- Table header -->
-					<div class="hidden desktop:grid grid-cols-[3%_10%_10%_9%_8%_10%_22%_7%_9%_12%] gap-[4px] px-[16px] py-[12px] text-[0.8125rem] font-bold text-[#252B42] border-b border-[#D0D0D0]">
+					<div class="hidden desktop:grid grid-cols-[3%_10%_10%_9%_8%_10%_22%_7%_9%_12%] gap-[4px] px-[14px] py-[12px] text-[0.75rem] font-bold text-[#252B42] border-b border-[#D0D0D0] bg-[#FBFCFD]">
 						<span class="flex items-center">
 							<input type="checkbox" v-model="selectAll" @change="toggleSelectAll" class="w-[16px] h-[16px] accent-[#095866] cursor-pointer" />
 						</span>
@@ -470,7 +498,7 @@ const getPackageIcon = (item) => {
 							v-for="(item, idx) in paginatedItems"
 							:key="item.id"
 							@dblclick="openEdit(item)"
-							:class="['hidden desktop:grid grid-cols-[3%_10%_10%_9%_8%_10%_22%_7%_9%_12%] gap-[4px] items-center px-[16px] py-[12px] border-b border-[#E9EBEC] hover:bg-[#EDF5F7] transition-colors text-[0.8125rem] text-[#252B42] cursor-pointer', idx % 2 === 1 ? 'bg-[#F8F9FB]' : '', isDuplicateDest(item) ? 'ring-1 ring-amber-400 ring-inset' : '']">
+							:class="['hidden desktop:grid grid-cols-[3%_10%_10%_9%_8%_10%_22%_7%_9%_12%] gap-[4px] items-center px-[14px] py-[10px] border-b border-[#E9EBEC] hover:bg-[#EDF5F7] transition-colors text-[0.75rem] text-[#252B42] cursor-pointer', idx % 2 === 1 ? 'bg-[#F8F9FB]' : '', isDuplicateDest(item) ? 'ring-1 ring-amber-400 ring-inset' : '']">
 							<span class="flex items-center">
 								<input type="checkbox" :checked="selectedItems.includes(item.id)" @change="toggleItem(item.id)" class="w-[16px] h-[16px] accent-[#095866] cursor-pointer" />
 							</span>
@@ -510,27 +538,52 @@ const getPackageIcon = (item) => {
 						</div>
 
 						<!-- Mobile rows -->
-						<div v-for="item in paginatedItems" :key="'m-'+item.id" :class="['desktop:hidden p-[16px] border-b border-[#E9EBEC]', isDuplicateDest(item) ? 'bg-amber-50 border-l-[3px] border-l-amber-400' : '']">
-							<div class="flex items-center justify-between mb-[10px]">
-								<div class="flex items-center gap-[10px]">
+						<div v-for="item in paginatedItems" :key="'m-'+item.id" :class="['desktop:hidden p-[14px] tablet:p-[16px] border-b border-[#E9EBEC] bg-white', isDuplicateDest(item) ? 'bg-amber-50 border-l-[3px] border-l-amber-400' : '']">
+							<div class="flex items-start justify-between gap-[10px]">
+								<div class="flex items-start gap-[8px] min-w-0">
 									<input type="checkbox" :checked="selectedItems.includes(item.id)" @change="toggleItem(item.id)" class="w-[16px] h-[16px] accent-[#095866] cursor-pointer" />
-									<div>
-										<p class="text-[0.875rem] font-semibold text-[#252B42]">{{ item.origin_address?.city || 'Partenza' }} &rarr; {{ item.destination_address?.city || 'Dest.' }}</p>
-										<p class="text-[0.75rem] text-[#737373]">{{ item.quantity }}x - {{ item.weight }} kg - {{ formatCreatedDate(item) }}</p>
-										<p v-if="isDuplicateDest(item)" class="text-[0.6875rem] text-amber-600 font-medium mt-[2px] flex items-center gap-[4px]">
+									<div class="min-w-0">
+										<p class="text-[0.875rem] font-semibold text-[#252B42] leading-[1.25]">{{ item.origin_address?.city || 'Partenza' }} &rarr; {{ item.destination_address?.city || 'Dest.' }}</p>
+										<p class="mt-[3px] text-[0.75rem] text-[#737373] leading-[1.35]">{{ item.quantity }}x - {{ item.weight }} kg - {{ formatCreatedDate(item) }}</p>
+										<p v-if="isDuplicateDest(item)" class="text-[0.6875rem] text-amber-600 font-medium mt-[4px] flex items-center gap-[4px]">
 											<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
 											Destinazione duplicata
 										</p>
 									</div>
 								</div>
-								<span class="text-[0.9375rem] font-bold text-[#252B42]">{{ formatPrice(item.single_price) }}</span>
+								<span class="shrink-0 text-[0.9375rem] font-bold text-[#252B42]">{{ formatPrice(item.single_price) }}</span>
 							</div>
-							<div class="flex gap-[12px] justify-end">
-								<button @click="openEdit(item)" class="inline-flex items-center gap-[4px] text-[0.75rem] text-[#095866] font-semibold hover:underline cursor-pointer">
+							<div class="mt-[10px] flex flex-wrap gap-[8px]">
+								<span class="inline-flex items-center gap-[6px] rounded-full bg-[#F8F9FB] px-[10px] py-[5px] text-[0.75rem] font-medium text-[#252B42]">
+									<NuxtImg :src="getPackageIcon(item)" alt="" width="16" height="18" loading="lazy" decoding="async" class="shrink-0" />
+									{{ item.package_type || 'Pacco' }}
+								</span>
+								<span class="inline-flex items-center gap-[6px] rounded-full bg-[#F8F9FB] px-[10px] py-[5px] text-[0.75rem] font-medium text-[#252B42]">
+									{{ item.services?.service_type?.split(',')[0]?.trim() || 'BRT' }}
+								</span>
+								<span class="inline-flex items-center gap-[6px] rounded-full bg-[#F8F9FB] px-[10px] py-[5px] text-[0.75rem] font-medium text-[#252B42]">
+									{{ item.quantity || 1 }} colli
+								</span>
+								<span class="inline-flex items-center gap-[6px] rounded-full bg-[#EAF4F6] px-[10px] py-[5px] text-[0.75rem] font-medium text-[#095866]">
+									{{ item.origin_address?.name?.split(' ')[0] || '—' }} → {{ item.destination_address?.name?.split(' ')[0] || '—' }}
+								</span>
+							</div>
+							<div class="mt-[12px] grid grid-cols-1 sm:grid-cols-2 gap-[8px]">
+								<div class="rounded-[14px] bg-[#F8F9FB] px-[12px] py-[10px]">
+									<p class="text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-[#737373]">Da</p>
+									<p class="mt-[2px] text-[0.8125rem] font-semibold text-[#252B42] leading-[1.25]">{{ item.origin_address?.city || '—' }}</p>
+								</div>
+								<div class="rounded-[14px] bg-[#F8F9FB] px-[12px] py-[10px]">
+									<p class="text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-[#737373]">A</p>
+									<p class="mt-[2px] text-[0.8125rem] font-semibold text-[#252B42] leading-[1.25]">{{ item.destination_address?.city || '—' }}</p>
+								</div>
+							</div>
+							<div class="mt-[12px] flex flex-wrap gap-[10px] justify-end">
+								<button @click="openEdit(item)" class="inline-flex items-center gap-[4px] rounded-full border border-[#E9EBEC] bg-white px-[12px] py-[7px] text-[0.75rem] text-[#095866] font-semibold hover:border-[#095866] cursor-pointer">
 									<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
 									Modifica
 								</button>
-								<button @click="askDelete(item.id)" class="text-red-500 hover:text-red-700 cursor-pointer" title="Elimina">
+								<button @click="askDelete(item.id)" class="inline-flex items-center gap-[4px] rounded-full border border-red-200 bg-white px-[12px] py-[7px] text-[0.75rem] text-red-600 font-semibold hover:border-red-300 cursor-pointer" title="Elimina">
 									<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
 								</button>
 							</div>
@@ -538,42 +591,42 @@ const getPackageIcon = (item) => {
 					</div>
 
 					<!-- Empty state migliorato con icona, messaggio e CTA -->
-					<div v-else class="p-[48px] text-center">
-						<div class="w-[72px] h-[72px] mx-auto mb-[20px] bg-[#F8F9FB] rounded-full flex items-center justify-center">
-							<Icon name="mdi:package-variant-closed" class="text-[32px] text-[#C8CCD0]" />
+					<div v-else class="p-[36px] text-center">
+						<div class="w-[60px] h-[60px] mx-auto mb-[16px] bg-[#F8F9FB] rounded-full flex items-center justify-center">
+							<Icon name="mdi:package-variant-closed" class="text-[28px] text-[#C8CCD0]" />
 						</div>
-						<h2 class="text-[1.25rem] font-bold text-[#252B42] mb-[10px]">Nessuna spedizione configurata</h2>
-						<p class="text-[#737373] text-[0.9375rem] max-w-[400px] mx-auto mb-[24px] leading-[1.6]">
+						<h2 class="text-[1.125rem] font-bold text-[#252B42] mb-[8px]">Nessuna spedizione configurata</h2>
+						<p class="text-[#737373] text-[0.875rem] max-w-[400px] mx-auto mb-[20px] leading-[1.55]">
 							Le spedizioni salvate appariranno qui. Puoi salvarle dalla pagina delle spedizioni o crearne una nuova.
 						</p>
-						<NuxtLink to="/preventivo" class="inline-flex items-center gap-[6px] px-[24px] py-[12px] bg-[#095866] hover:bg-[#074a56] text-white rounded-[50px] font-semibold text-[0.9375rem] transition-colors">
-							<Icon name="mdi:plus" class="text-[18px]" />
+						<NuxtLink to="/preventivo" class="inline-flex items-center gap-[6px] px-[20px] py-[10px] bg-[#095866] hover:bg-[#074a56] text-white rounded-[50px] font-semibold text-[0.875rem] transition-colors">
+							<Icon name="mdi:plus" class="text-[17px]" />
 							Crea nuova spedizione
 						</NuxtLink>
 					</div>
 
 					<!-- Pagination -->
-					<div class="flex items-center justify-center gap-[8px] py-[16px] border-t border-[#E9EBEC]">
-						<button @click="prevPage" :disabled="currentPage <= 1" class="inline-flex items-center gap-[4px] text-[0.875rem] font-medium text-[#252B42] hover:text-[#095866] disabled:text-[#C0C0C0] cursor-pointer disabled:cursor-not-allowed"><Icon name="mdi:chevron-left" class="text-[18px]" />Precedente</button>
+					<div class="flex flex-wrap items-center justify-center gap-[8px] py-[14px] border-t border-[#E9EBEC]">
+						<button @click="prevPage" :disabled="currentPage <= 1" class="inline-flex items-center gap-[4px] text-[0.8125rem] font-medium text-[#252B42] hover:text-[#095866] disabled:text-[#C0C0C0] cursor-pointer disabled:cursor-not-allowed"><Icon name="mdi:chevron-left" class="text-[17px]" />Precedente</button>
 						<span
 							v-for="page in totalPages"
 							:key="page"
 							@click="currentPage = page"
-							:class="['w-[32px] h-[32px] flex items-center justify-center rounded-[6px] text-[0.875rem] font-semibold cursor-pointer', currentPage === page ? 'bg-[#095866] text-white' : 'text-[#252B42] hover:bg-[#F0F0F0]']">
+							:class="['w-[30px] h-[30px] flex items-center justify-center rounded-[6px] text-[0.8125rem] font-semibold cursor-pointer', currentPage === page ? 'bg-[#095866] text-white' : 'text-[#252B42] hover:bg-[#F0F0F0]']">
 							{{ page }}
 						</span>
-						<button @click="nextPage" :disabled="currentPage >= totalPages" class="inline-flex items-center gap-[4px] text-[0.875rem] font-medium text-[#252B42] hover:text-[#095866] disabled:text-[#C0C0C0] cursor-pointer disabled:cursor-not-allowed">Successivo<Icon name="mdi:chevron-right" class="text-[18px]" /></button>
+						<button @click="nextPage" :disabled="currentPage >= totalPages" class="inline-flex items-center gap-[4px] text-[0.8125rem] font-medium text-[#252B42] hover:text-[#095866] disabled:text-[#C0C0C0] cursor-pointer disabled:cursor-not-allowed">Successivo<Icon name="mdi:chevron-right" class="text-[17px]" /></button>
 					</div>
 				</div>
 
 				<!-- Bottom action buttons -->
-				<div class="flex items-center justify-center gap-[24px] mt-[20px]">
-					<button @click="bulkDelete" :disabled="selectedItems.length === 0 || bulkDeleteLoading" type="button" class="inline-flex items-center gap-[6px] bg-red-500 text-white font-semibold text-[0.9375rem] px-[36px] h-[48px] rounded-[30px] hover:bg-red-600 transition cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">
-						<Icon name="mdi:delete-outline" class="text-[18px]" />
+				<div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-[10px] sm:gap-[16px] mt-[16px]">
+					<button @click="askBulkDelete" :disabled="selectedItems.length === 0 || bulkDeleteLoading" type="button" class="inline-flex items-center justify-center gap-[6px] bg-red-500 text-white font-semibold text-[0.875rem] px-[20px] desktop:px-[28px] h-[46px] rounded-[24px] hover:bg-red-600 transition cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">
+						<Icon name="mdi:delete-outline" class="text-[17px]" />
 						{{ bulkDeleteLoading ? 'Eliminazione...' : `Elimina${selectedItems.length ? ` (${selectedItems.length})` : ''}` }}
 					</button>
-					<button @click="bulkAddToCart" :disabled="selectedItems.length === 0 || addToCartLoading" type="button" class="inline-flex items-center gap-[6px] bg-[#252B42] text-white font-semibold text-[0.9375rem] px-[36px] h-[48px] rounded-[30px] hover:opacity-90 transition cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">
-						<Icon name="mdi:cart-plus" class="text-[18px]" />
+					<button @click="bulkAddToCart" :disabled="selectedItems.length === 0 || addToCartLoading" type="button" class="inline-flex items-center justify-center gap-[6px] bg-[#252B42] text-white font-semibold text-[0.875rem] px-[20px] desktop:px-[28px] h-[46px] rounded-[24px] hover:opacity-90 transition cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">
+						<Icon name="mdi:cart-plus" class="text-[17px]" />
 						{{ addToCartLoading ? 'Aggiungendo...' : 'Aggiungi al carrello' }}
 					</button>
 				</div>
@@ -581,22 +634,34 @@ const getPackageIcon = (item) => {
 		</div>
 
 		<!-- Edit popup -->
-		<UModal v-model:open="showEdit" :dismissible="true" :close="false">
-			<template #title>
-				<div class="flex items-center justify-between">
-					<h3 class="text-[1.125rem] font-bold text-[#252B42]">Modifica spedizione</h3>
-					<button type="button" @click="showEdit = false" class="text-[#737373] hover:text-[#252B42] cursor-pointer">
-						<Icon name="mdi:close" class="text-[20px]" />
-					</button>
-				</div>
-			</template>
+		<UModal
+			v-model:open="showEdit"
+			:dismissible="true"
+			:close="false"
+			:ui="{ overlay: 'bg-[#09131c]/36 backdrop-blur-[6px]', content: '!divide-y-0 !ring-0 !p-0 sf-modal-surface w-[min(calc(100vw-1rem),56rem)]', body: '!p-0' }">
 			<template #body>
-				<div v-if="editItem" class="space-y-[16px]">
+				<div v-if="editItem" class="sf-modal-content">
+					<div class="sf-modal-header">
+						<div class="sf-modal-header__main">
+							<div class="sf-modal-icon" aria-hidden="true">
+								<Icon name="mdi:pencil-outline" class="text-[1.15rem]" />
+							</div>
+							<div>
+								<h3 class="sf-modal-title">Modifica spedizione</h3>
+								<p class="sf-modal-description">Aggiorna i dati essenziali mantenendo lo stesso formato del resto dell'account.</p>
+							</div>
+						</div>
+						<button type="button" @click="showEdit = false" class="sf-modal-close">
+							<Icon name="mdi:close" class="text-[1.05rem]" />
+						</button>
+					</div>
+					<div class="sf-modal-divider" />
+					<div class="space-y-[16px] px-[24px] pt-[20px]">
 					<!-- Partenza -->
 					<div class="bg-[#F8F9FB] rounded-[12px] p-[16px]">
 						<h4 class="text-[0.75rem] font-bold text-[#737373] uppercase tracking-wider mb-[10px]">Partenza</h4>
-						<div class="grid grid-cols-2 gap-[8px]">
-							<input v-model="editForm.origin_name" placeholder="Nome e Cognome" class="col-span-2 bg-white border border-[#D0D0D0] rounded-[8px] h-[38px] px-[12px] text-[0.8125rem]" />
+						<div class="grid grid-cols-1 sm:grid-cols-2 gap-[8px]">
+							<input v-model="editForm.origin_name" placeholder="Nome e Cognome" class="sm:col-span-2 bg-white border border-[#D0D0D0] rounded-[8px] h-[38px] px-[12px] text-[0.8125rem]" />
 							<input v-model="editForm.origin_address" placeholder="Indirizzo" class="bg-white border border-[#D0D0D0] rounded-[8px] h-[38px] px-[12px] text-[0.8125rem]" />
 							<input v-model="editForm.origin_address_number" placeholder="N. civico" class="bg-white border border-[#D0D0D0] rounded-[8px] h-[38px] px-[12px] text-[0.8125rem]" />
 							<input v-model="editForm.origin_city" placeholder="Citta" class="bg-white border border-[#D0D0D0] rounded-[8px] h-[38px] px-[12px] text-[0.8125rem]" />
@@ -608,8 +673,8 @@ const getPackageIcon = (item) => {
 					<!-- Destinazione -->
 					<div class="bg-[#F8F9FB] rounded-[12px] p-[16px]">
 						<h4 class="text-[0.75rem] font-bold text-[#737373] uppercase tracking-wider mb-[10px]">Destinazione</h4>
-						<div class="grid grid-cols-2 gap-[8px]">
-							<input v-model="editForm.dest_name" placeholder="Nome e Cognome" class="col-span-2 bg-white border border-[#D0D0D0] rounded-[8px] h-[38px] px-[12px] text-[0.8125rem]" />
+						<div class="grid grid-cols-1 sm:grid-cols-2 gap-[8px]">
+							<input v-model="editForm.dest_name" placeholder="Nome e Cognome" class="sm:col-span-2 bg-white border border-[#D0D0D0] rounded-[8px] h-[38px] px-[12px] text-[0.8125rem]" />
 							<input v-model="editForm.dest_address" placeholder="Indirizzo" class="bg-white border border-[#D0D0D0] rounded-[8px] h-[38px] px-[12px] text-[0.8125rem]" />
 							<input v-model="editForm.dest_address_number" placeholder="N. civico" class="bg-white border border-[#D0D0D0] rounded-[8px] h-[38px] px-[12px] text-[0.8125rem]" />
 							<input v-model="editForm.dest_city" placeholder="Citta" class="bg-white border border-[#D0D0D0] rounded-[8px] h-[38px] px-[12px] text-[0.8125rem]" />
@@ -621,7 +686,7 @@ const getPackageIcon = (item) => {
 					<!-- Collo -->
 					<div class="bg-[#F8F9FB] rounded-[12px] p-[16px]">
 						<h4 class="text-[0.75rem] font-bold text-[#737373] uppercase tracking-wider mb-[10px]">Collo</h4>
-						<div class="grid grid-cols-3 gap-[8px]">
+						<div class="grid grid-cols-1 sm:grid-cols-2 desktop:grid-cols-3 gap-[8px]">
 							<div>
 								<label class="text-[0.6875rem] text-[#737373]">Tipo</label>
 								<input v-model="editForm.package_type" class="w-full bg-white border border-[#D0D0D0] rounded-[8px] h-[38px] px-[12px] text-[0.8125rem]" />
@@ -649,9 +714,10 @@ const getPackageIcon = (item) => {
 						</div>
 					</div>
 
-					<div class="flex justify-end gap-[10px] pt-[8px]">
-						<button type="button" @click="showEdit = false" class="inline-flex items-center gap-[6px] px-[20px] py-[10px] rounded-[30px] bg-[#E9EBEC] text-[#252B42] text-[0.875rem] font-semibold hover:opacity-90 transition cursor-pointer"><Icon name="mdi:close" class="text-[18px]" />Annulla</button>
-						<button type="button" @click="saveEdit" :disabled="editSaving" class="inline-flex items-center gap-[6px] px-[20px] py-[10px] rounded-[30px] bg-[#252B42] text-white text-[0.875rem] font-semibold hover:opacity-90 transition cursor-pointer disabled:opacity-60">
+					</div>
+					<div class="sf-modal-actions">
+						<button type="button" @click="showEdit = false" class="btn-secondary inline-flex items-center justify-center gap-[6px]"><Icon name="mdi:close" class="text-[18px]" />Annulla</button>
+						<button type="button" @click="saveEdit" :disabled="editSaving" class="btn-primary inline-flex items-center justify-center gap-[6px] disabled:opacity-60">
 							<Icon name="mdi:content-save" class="text-[18px]" />
 							{{ editSaving ? 'Salvataggio...' : 'Salva modifiche' }}
 						</button>
@@ -660,26 +726,23 @@ const getPackageIcon = (item) => {
 			</template>
 		</UModal>
 
-		<!-- Delete confirm popup -->
-		<UModal v-model:open="showDeleteConfirm" :dismissible="true" :close="false">
-			<template #title>
-				<h3 class="text-[1.125rem] font-bold text-[#252B42]">Conferma eliminazione</h3>
-			</template>
-			<template #body>
-				<p class="text-[0.9375rem] text-[#737373] leading-[1.6]">
-					Sei sicuro di voler eliminare questa spedizione configurata?
-				</p>
-			</template>
-			<template #footer>
-				<div class="flex justify-end gap-[10px]">
-					<button type="button" @click="showDeleteConfirm = false" class="inline-flex items-center gap-[6px] px-[20px] py-[10px] rounded-[30px] bg-[#E9EBEC] text-[#252B42] text-[0.875rem] font-semibold hover:opacity-90 transition cursor-pointer"><Icon name="mdi:close" class="text-[18px]" />Annulla</button>
-					<button type="button" @click="confirmDelete" :disabled="deleteLoading" class="inline-flex items-center gap-[6px] px-[20px] py-[10px] rounded-[30px] bg-red-500 text-white hover:bg-red-600 transition text-[0.875rem] font-semibold disabled:opacity-60 cursor-pointer">
-						<Icon name="mdi:delete-outline" class="text-[18px]" />
-						{{ deleteLoading ? 'Eliminazione...' : 'Elimina' }}
-					</button>
-				</div>
-			</template>
-		</UModal>
+		<AccountConfirmDialog
+			v-model:open="showDeleteConfirm"
+			title="Elimina spedizione configurata"
+			description="Questa configurazione verra' rimossa dal tuo archivio personale. L'azione non si puo' annullare."
+			confirm-label="Elimina spedizione"
+			:loading="deleteLoading"
+			@confirm="confirmDelete"
+		/>
+
+		<AccountConfirmDialog
+			v-model:open="showBulkDeleteConfirm"
+			title="Elimina selezione"
+			:description="`Stai per eliminare ${selectedItems.length} spedizion${selectedItems.length === 1 ? 'e configurata' : 'i configurate'}. L'azione non si puo' annullare.`"
+			confirm-label="Elimina selezionate"
+			:loading="bulkDeleteLoading"
+			@confirm="bulkDelete"
+		/>
 	</section>
 </template>
 

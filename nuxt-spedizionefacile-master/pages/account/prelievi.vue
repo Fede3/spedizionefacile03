@@ -35,7 +35,7 @@
 <script setup>
 /* Richiede che l'utente sia autenticato */
 definePageMeta({
-	middleware: ["sanctum:auth"],
+	middleware: ["app-auth"],
 });
 
 const { user } = useSanctumAuth();
@@ -142,154 +142,239 @@ const formatDate = (dateStr) => {
 	});
 };
 
+const withdrawalHeader = computed(() => ({
+	eyebrow: 'Partner Pro',
+	title: isPro.value ? 'Prelievi' : 'Prelievi Pro',
+	description: '',
+}));
+
+const withdrawalHeaderStats = computed(() => [
+	{ label: 'Minimo', value: '1,00€' },
+	{ label: 'Storico', value: `${withdrawals.value.length || 0} richieste` },
+]);
+
+const pendingWithdrawals = computed(() => {
+	if (!Array.isArray(withdrawals.value)) return 0;
+	return withdrawals.value.filter((withdrawal) => withdrawal.status === "pending").length;
+});
+
+const lastWithdrawalLabel = computed(() => {
+	if (!Array.isArray(withdrawals.value) || !withdrawals.value.length) {
+		return "Nessuna richiesta ancora";
+	}
+	const latest = withdrawals.value[0];
+	return statusConfig[latest.status]?.label || latest.status;
+});
+
+const withdrawalOverview = computed(() => [
+	{
+		label: "Disponibile",
+		value: `€${availableBalance.value.toFixed(2)}`,
+		tone: "bg-[#F0F6F7] text-[#095866]",
+	},
+	{
+		label: "In attesa",
+		value: pendingWithdrawals.value ? `${pendingWithdrawals.value} richiesta` : "Nessuna",
+		tone: "bg-[#FFF7E8] text-[#B45309]",
+	},
+	{
+		label: "Ultimo stato",
+		value: lastWithdrawalLabel.value,
+		tone: "bg-[#F8F9FB] text-[#404040]",
+	},
+]);
+
 /* Configurazione colori e icone per ogni stato della richiesta di prelievo */
 const statusConfig = {
-	pending: { label: "In attesa", icon: "mdi:clock-outline", bg: "bg-amber-50", text: "text-amber-700", border: "border-amber-200" },
-	approved: { label: "Approvata", icon: "mdi:check-circle-outline", bg: "bg-emerald-50", text: "text-emerald-700", border: "border-emerald-200" },
-	rejected: { label: "Rifiutata", icon: "mdi:close-circle-outline", bg: "bg-red-50", text: "text-red-700", border: "border-red-200" },
-	completed: { label: "Completata", icon: "mdi:check-all", bg: "bg-blue-50", text: "text-blue-700", border: "border-blue-200" },
+	pending: { label: "In attesa", icon: "mdi:clock-outline", bg: "bg-[#fff4e8]", text: "text-[#b45309]", border: "border-[#f3d1a7]" },
+	approved: { label: "Approvata", icon: "mdi:check-circle-outline", bg: "bg-[#edf7f8]", text: "text-[#095866]", border: "border-[#bfe0e6]" },
+	rejected: { label: "Rifiutata", icon: "mdi:close-circle-outline", bg: "bg-[#fef2f2]", text: "text-[#b42318]", border: "border-[#f3c1c1]" },
+	completed: { label: "Completata", icon: "mdi:check-all", bg: "bg-[#f5f7f8]", text: "text-[#4b5563]", border: "border-[#d9e1e5]" },
 };
 </script>
 
 <template>
-	<section class="min-h-[600px] py-[40px] desktop:py-[60px] desktop-xl:py-[80px]">
+	<section class="min-h-[600px] py-[28px] desktop:py-[64px]">
 		<div class="my-container">
-			<!-- Breadcrumb -->
-			<div class="mb-[28px] text-[0.875rem] text-[#737373]">
-				<NuxtLink to="/account" class="hover:underline text-[#095866] font-medium">Il tuo account</NuxtLink>
-				<span class="mx-[8px] text-[#C8CCD0]">/</span>
-				<span class="font-semibold text-[#252B42]">Prelievi</span>
-			</div>
+				<AccountPageHeader
+				:eyebrow="withdrawalHeader.eyebrow"
+				:title="withdrawalHeader.title"
+				:description="withdrawalHeader.description"
+				:crumbs="[
+					{ label: 'Account', to: '/account' },
+					{ label: 'Prelievi' },
+				]"
+			>
+				<template #meta>
+					<div class="flex flex-wrap gap-[8px]">
+						<span
+							v-for="stat in withdrawalHeaderStats"
+							:key="stat.label"
+							class="inline-flex items-center gap-[6px] rounded-full bg-[#F0F6F7] px-[12px] py-[6px] text-[0.8125rem] font-semibold text-[#095866]">
+							{{ stat.label }}: {{ stat.value }}
+						</span>
+					</div>
+				</template>
+				<template #actions v-if="!isPro">
+					<NuxtLink to="/account/account-pro" class="btn-secondary btn-compact inline-flex items-center justify-center gap-[8px]">
+						<Icon name="mdi:star-outline" class="text-[18px]" />
+						Scopri Pro
+					</NuxtLink>
+					</template>
+			</AccountPageHeader>
 
-			<!-- Not Pro -->
-			<div v-if="!isPro" class="bg-white rounded-[20px] p-[32px] desktop:p-[48px] shadow-sm border border-[#E9EBEC] text-center">
-				<div class="w-[80px] h-[80px] mx-auto mb-[24px] bg-gradient-to-br from-teal-50 to-teal-100 rounded-full flex items-center justify-center">
-					<Icon name="mdi:cash-multiple" class="text-[36px] text-teal-500" />
+				<div v-if="isPro" class="mb-[18px] rounded-[18px] border border-[#E9EBEC] bg-white px-[16px] py-[14px] shadow-sm desktop:px-[20px] desktop:py-[16px]">
+					<div class="grid gap-[12px] desktop:grid-cols-[minmax(0,1.05fr)_repeat(3,minmax(0,0.55fr))] desktop:items-center">
+						<div>
+							<p class="text-[0.75rem] font-semibold uppercase tracking-[1px] text-[#095866]">Panoramica prelievi</p>
+							<h2 class="mt-[4px] text-[1rem] font-bold text-[#252B42]">Saldo e stato richieste</h2>
+						</div>
+						<div
+							v-for="item in withdrawalOverview"
+							:key="item.label"
+							class="rounded-[16px] border border-[#E9EBEC] px-[14px] py-[12px]">
+							<p class="text-[0.75rem] font-semibold uppercase tracking-[0.8px] text-[#737373]">{{ item.label }}</p>
+							<span :class="['mt-[8px] inline-flex rounded-full px-[10px] py-[5px] text-[0.75rem] font-semibold', item.tone]">
+								{{ item.value }}
+							</span>
+						</div>
+					</div>
 				</div>
-				<h2 class="text-[1.5rem] font-bold text-[#252B42] mb-[12px]">Sezione riservata ai Partner Pro</h2>
-				<p class="text-[#737373] text-[0.9375rem] max-w-[480px] mx-auto mb-[24px] leading-[1.6]">
-					I prelievi delle commissioni sono disponibili solo per gli account Partner Pro.
+
+				<!-- Not Pro -->
+				<div v-if="!isPro" class="bg-white rounded-[18px] p-[18px] desktop:p-[28px] shadow-sm border border-[#E9EBEC] text-center">
+				<div class="w-[64px] h-[64px] mx-auto mb-[16px] bg-[#edf7f8] rounded-full flex items-center justify-center">
+					<Icon name="mdi:cash-multiple" class="text-[28px] text-[#095866]" />
+				</div>
+				<h2 class="text-[1.15rem] desktop:text-[1.25rem] font-bold text-[#252B42] mb-[8px]">Partner Pro richiesto</h2>
+				<p class="text-[#667281] text-[0.85rem] max-w-[420px] mx-auto mb-[16px] leading-[1.5]">
+					Attiva Pro per i prelievi.
 				</p>
-				<NuxtLink to="/account/account-pro" class="inline-flex items-center gap-[8px] px-[24px] py-[12px] bg-[#095866] text-white rounded-[50px] font-semibold text-[0.9375rem] hover:bg-[#074a56] transition-colors">
-					<Icon name="mdi:star-outline" class="text-[18px]" />
-					Scopri Account Pro
+				<NuxtLink to="/account/account-pro" class="btn-secondary btn-compact inline-flex items-center gap-[8px]">
+					<Icon name="mdi:star-outline" class="text-[17px]" />
+					Scopri Pro
 				</NuxtLink>
 			</div>
 
-			<!-- Pro User Content -->
-			<template v-else>
-				<!-- Balance + Request Card -->
-				<div class="relative bg-gradient-to-br from-[#095866] to-[#0b6d7d] rounded-[20px] p-[32px] text-white mb-[24px] shadow-[0_8px_32px_rgba(9,88,102,0.25)] overflow-hidden">
-					<div class="absolute top-0 right-0 w-[200px] h-[200px] rounded-full bg-white/5 -translate-y-1/2 translate-x-1/2"></div>
-					<div class="relative z-1 flex flex-col desktop:flex-row desktop:items-center desktop:justify-between gap-[20px]">
-						<div>
-							<div class="flex items-center gap-[10px] mb-[12px]">
-								<div class="w-[40px] h-[40px] rounded-[50px] bg-white/15 flex items-center justify-center">
-									<Icon name="mdi:bank-transfer-out" class="text-[22px]" />
-								</div>
-								<p class="text-[0.8125rem] uppercase tracking-[1.5px] opacity-80 font-medium">Saldo prelevabile</p>
+				<!-- Pro User Content -->
+				<template v-else>
+					<div class="mb-[18px] grid gap-[18px] desktop:grid-cols-[minmax(0,1.12fr)_minmax(320px,0.88fr)] desktop:items-stretch">
+						<div class="rounded-[20px] border border-[#E5EDF2] bg-white p-[18px] desktop:p-[24px] shadow-sm">
+							<div class="flex flex-col gap-[14px] desktop:flex-row desktop:items-center desktop:justify-between">
+								<div>
+									<div class="flex items-center gap-[8px] mb-[10px]">
+										<div class="w-[36px] h-[36px] rounded-[50px] bg-[#edf7f8] flex items-center justify-center">
+											<Icon name="mdi:bank-transfer-out" class="text-[20px] text-[#095866]" />
+										</div>
+								<p class="text-[0.75rem] uppercase tracking-[1.2px] font-medium text-[#095866]">Saldo</p>
 							</div>
-							<p class="text-[2.5rem] desktop:text-[3rem] font-bold tracking-tight leading-none">
-								&euro;{{ availableBalance.toFixed(2) }}
-							</p>
-							<p class="text-[0.8125rem] opacity-60 mt-[8px]">Commissioni accumulate dalle referral</p>
-						</div>
-						<div class="flex flex-col items-start desktop:items-end gap-[8px]">
-							<button
-								@click="requestWithdrawal"
-								:disabled="isLoading || hasPending || availableBalance < 1"
-								:class="[
-									'px-[28px] py-[14px] rounded-[12px] font-semibold text-[0.9375rem] transition-all flex items-center gap-[8px]',
-									isLoading || hasPending || availableBalance < 1
-										? 'bg-white/20 cursor-not-allowed text-white/50'
-										: 'bg-white text-[#095866] hover:bg-white/90 cursor-pointer shadow-lg',
-								]">
-								<Icon v-if="!isLoading && !hasPending" name="mdi:bank-transfer-out" class="text-[18px]" />
-								<Icon v-if="hasPending && !isLoading" name="mdi:clock-outline" class="text-[18px]" />
-								<span v-if="isLoading">Invio in corso...</span>
-								<span v-else-if="hasPending">Richiesta in attesa</span>
-								<span v-else>Richiedi prelievo</span>
-							</button>
-							<p v-if="hasPending" class="text-[0.75rem] opacity-60">In attesa di approvazione dall'admin.</p>
-						</div>
-					</div>
-
-					<div v-if="message" :class="['mt-[20px] text-[0.875rem] font-medium rounded-[50px] px-[16px] py-[12px] flex items-center gap-[8px]', messageType === 'success' ? 'bg-emerald-500/20' : 'bg-red-500/20']">
-						<Icon :name="messageType === 'success' ? 'mdi:check-circle' : 'mdi:alert-circle'" class="text-[18px]" />
-						{{ message }}
-					</div>
-				</div>
-
-				<!-- How it works -->
-				<div class="bg-white rounded-[16px] p-[24px] border border-[#E9EBEC] shadow-sm mb-[24px]">
-					<h3 class="text-[0.9375rem] font-bold text-[#252B42] mb-[16px] flex items-center gap-[8px]">
-						<Icon name="mdi:information-outline" class="text-[18px] text-[#095866]" />
-						Come funziona il prelievo
-					</h3>
-					<div class="grid grid-cols-1 account-pages:grid-cols-2 desktop:grid-cols-4 gap-[16px]">
-						<div class="flex items-start gap-[12px]">
-							<div class="w-[32px] h-[32px] rounded-full bg-[#095866]/10 flex items-center justify-center shrink-0 text-[0.8125rem] font-bold text-[#095866]">1</div>
-							<p class="text-[0.8125rem] text-[#404040] leading-[1.5]">Il saldo include tutte le commissioni confermate.</p>
-						</div>
-						<div class="flex items-start gap-[12px]">
-							<div class="w-[32px] h-[32px] rounded-full bg-[#095866]/10 flex items-center justify-center shrink-0 text-[0.8125rem] font-bold text-[#095866]">2</div>
-							<p class="text-[0.8125rem] text-[#404040] leading-[1.5]">Invia richiesta per l'intero saldo disponibile.</p>
-						</div>
-						<div class="flex items-start gap-[12px]">
-							<div class="w-[32px] h-[32px] rounded-full bg-[#095866]/10 flex items-center justify-center shrink-0 text-[0.8125rem] font-bold text-[#095866]">3</div>
-							<p class="text-[0.8125rem] text-[#404040] leading-[1.5]">L'admin verifica e approva la richiesta.</p>
-						</div>
-						<div class="flex items-start gap-[12px]">
-							<div class="w-[32px] h-[32px] rounded-full bg-[#095866]/10 flex items-center justify-center shrink-0 text-[0.8125rem] font-bold text-[#095866]">4</div>
-							<p class="text-[0.8125rem] text-[#404040] leading-[1.5]">L'importo viene accreditato sulla tua carta.</p>
-						</div>
-					</div>
-				</div>
-
-				<!-- Withdrawal History -->
-				<div class="bg-white rounded-[20px] p-[24px] desktop:p-[32px] shadow-sm border border-[#E9EBEC]">
-					<div class="flex items-center gap-[12px] mb-[24px]">
-						<div class="w-[40px] h-[40px] rounded-[50px] bg-purple-50 flex items-center justify-center">
-							<Icon name="mdi:history" class="text-[22px] text-purple-600" />
-						</div>
-						<h2 class="text-[1.125rem] font-bold text-[#252B42]">Storico richieste</h2>
-					</div>
-
-					<div v-if="isLoadingData" class="py-[40px] flex justify-center">
-						<div class="w-[32px] h-[32px] border-3 border-[#E9EBEC] border-t-[#095866] rounded-full animate-spin"></div>
-					</div>
-
-					<div v-else-if="!withdrawals?.length" class="text-center py-[48px]">
-						<div class="w-[64px] h-[64px] mx-auto mb-[16px] rounded-full bg-[#F8F9FB] flex items-center justify-center">
-							<Icon name="mdi:bank-transfer" class="text-[28px] text-[#C8CCD0]" />
-						</div>
-						<p class="text-[1rem] font-medium text-[#252B42]">Nessuna richiesta di prelievo</p>
-						<p class="text-[0.8125rem] text-[#737373] mt-[6px]">Le tue richieste appariranno qui.</p>
-					</div>
-
-					<div v-else class="space-y-[12px]">
-						<div
-							v-for="withdrawal in withdrawals"
-							:key="withdrawal.id"
-							:class="['p-[20px] rounded-[14px] border transition-colors', statusConfig[withdrawal.status]?.border || 'border-[#E9EBEC]', statusConfig[withdrawal.status]?.bg || 'bg-white']">
-							<div class="flex items-center justify-between mb-[8px]">
-								<div class="flex items-center gap-[10px]">
-									<span class="text-[1.125rem] font-bold text-[#252B42]">&euro;{{ Number(withdrawal.amount).toFixed(2) }}</span>
-									<span
+									<p class="text-[2rem] desktop:text-[2.5rem] font-bold tracking-tight leading-none text-[#252B42]">
+										&euro;{{ availableBalance.toFixed(2) }}
+									</p>
+									<p class="text-[0.75rem] text-[#667281] mt-[6px]">Commissioni accumulate</p>
+								</div>
+								<div class="flex flex-col items-start desktop:items-end gap-[8px]">
+									<button
+										@click="requestWithdrawal"
+										:disabled="isLoading || hasPending || availableBalance < 1"
 										:class="[
-											'inline-flex items-center gap-[4px] px-[10px] py-[3px] rounded-full text-[0.6875rem] font-medium',
-											statusConfig[withdrawal.status]?.text || 'text-gray-700',
+											'w-full desktop:w-auto px-[24px] py-[12px] rounded-[12px] font-semibold text-[0.875rem] transition-all flex items-center justify-center gap-[8px]',
+												isLoading || hasPending || availableBalance < 1
+													? 'bg-[#edf1f3] cursor-not-allowed text-[#a5b3bb]'
+													: 'bg-[#095866] text-white hover:bg-[#074a56] cursor-pointer shadow-[0_2px_8px_rgba(9,88,102,0.2)]',
 										]">
-										<Icon :name="statusConfig[withdrawal.status]?.icon || 'mdi:help-circle-outline'" class="text-[14px]" />
-										{{ statusConfig[withdrawal.status]?.label || withdrawal.status }}
-									</span>
+										<Icon v-if="!isLoading && !hasPending" name="mdi:bank-transfer-out" class="text-[17px]" />
+										<Icon v-if="hasPending && !isLoading" name="mdi:clock-outline" class="text-[17px]" />
+										<span v-if="isLoading">Invio in corso...</span>
+										<span v-else-if="hasPending">Richiesta in attesa</span>
+										<span v-else>Preleva</span>
+									</button>
+									<p v-if="hasPending" class="text-[0.6875rem] opacity-60">In attesa di approvazione dall'admin.</p>
 								</div>
-								<span class="text-[0.75rem] text-[#737373]">{{ formatDate(withdrawal.created_at) }}</span>
 							</div>
-							<p v-if="withdrawal.admin_notes" class="text-[0.8125rem] text-[#737373] italic mt-[4px]">
-								Note: {{ withdrawal.admin_notes }}
+
+							<div v-if="message" :class="['relative z-1 mt-[16px] text-[0.8125rem] font-medium rounded-[16px] px-[14px] py-[10px] flex items-center gap-[8px]', messageType === 'success' ? 'bg-emerald-500/20' : 'bg-red-500/20']">
+								<Icon :name="messageType === 'success' ? 'mdi:check-circle' : 'mdi:alert-circle'" class="text-[17px]" />
+								{{ message }}
+							</div>
+						</div>
+
+						<div class="bg-white rounded-[18px] p-[16px] desktop:p-[20px] border border-[#E9EBEC] shadow-sm">
+								<h3 class="text-[0.875rem] font-bold text-[#252B42] mb-[12px] flex items-center gap-[8px]">
+									<Icon name="mdi:information-outline" class="text-[17px] text-[#095866]" />
+								Come funziona
+							</h3>
+							<div class="space-y-[10px]">
+								<div class="flex items-start gap-[8px]">
+									<div class="w-[30px] h-[30px] rounded-full bg-[#095866]/10 flex items-center justify-center shrink-0 text-[0.75rem] font-bold text-[#095866]">1</div>
+									<p class="text-[0.8125rem] text-[#404040] leading-[1.5]">Saldo confermato.</p>
+								</div>
+								<div class="flex items-start gap-[8px]">
+									<div class="w-[30px] h-[30px] rounded-full bg-[#095866]/10 flex items-center justify-center shrink-0 text-[0.75rem] font-bold text-[#095866]">2</div>
+									<p class="text-[0.8125rem] text-[#404040] leading-[1.5]">Richiedi l&apos;intero saldo disponibile.</p>
+								</div>
+								<div class="flex items-start gap-[8px]">
+									<div class="w-[30px] h-[30px] rounded-full bg-[#095866]/10 flex items-center justify-center shrink-0 text-[0.75rem] font-bold text-[#095866]">3</div>
+									<p class="text-[0.8125rem] text-[#404040] leading-[1.5]">L&apos;admin verifica e aggiorna lo stato.</p>
+								</div>
+								<div class="flex items-start gap-[8px]">
+									<div class="w-[30px] h-[30px] rounded-full bg-[#095866]/10 flex items-center justify-center shrink-0 text-[0.75rem] font-bold text-[#095866]">4</div>
+									<p class="text-[0.8125rem] text-[#404040] leading-[1.5]">Se approvato, l&apos;importo viene accreditato.</p>
+								</div>
+							</div>
+						</div>
+					</div>
+
+					<!-- Withdrawal History -->
+				<div class="bg-white rounded-[20px] p-[16px] desktop:p-[24px] shadow-sm border border-[#E9EBEC]">
+					<div class="flex items-center gap-[10px] mb-[14px] desktop:mb-[16px]">
+						<div class="w-[36px] h-[36px] rounded-[50px] bg-[#edf7f8] flex items-center justify-center">
+							<Icon name="mdi:history" class="text-[20px] text-[#095866]" />
+						</div>
+						<h2 class="text-[1rem] font-bold text-[#252B42]">Storico</h2>
+					</div>
+
+					<div v-if="isLoadingData" class="py-[24px] flex justify-center">
+						<div class="w-[30px] h-[30px] border-3 border-[#E9EBEC] border-t-[#095866] rounded-full animate-spin"></div>
+					</div>
+
+					<div v-else-if="!withdrawals?.length" class="text-center py-[32px]">
+						<div class="w-[56px] h-[56px] mx-auto mb-[14px] rounded-full bg-[#F8F9FB] flex items-center justify-center">
+							<Icon name="mdi:bank-transfer" class="text-[24px] text-[#C8CCD0]" />
+						</div>
+						<p class="text-[0.9375rem] font-medium text-[#252B42]">Ancora nessuna richiesta</p>
+						<p class="text-[0.75rem] text-[#737373] mt-[6px]">Qui appariranno le richieste.</p>
+					</div>
+
+						<div v-else class="space-y-[10px]">
+							<div
+								v-for="withdrawal in withdrawals"
+								:key="withdrawal.id"
+								:class="['p-[14px] rounded-[14px] border transition-colors', statusConfig[withdrawal.status]?.border || 'border-[#E9EBEC]', statusConfig[withdrawal.status]?.bg || 'bg-white']">
+								<div class="flex flex-col gap-[10px] tablet:flex-row tablet:items-start tablet:justify-between">
+									<div class="min-w-0">
+										<div class="flex items-center gap-[8px] flex-wrap">
+											<span class="text-[1rem] font-bold text-[#252B42]">&euro;{{ Number(withdrawal.amount).toFixed(2) }}</span>
+											<span
+												:class="[
+													'inline-flex items-center gap-[4px] px-[9px] py-[3px] rounded-full text-[0.6875rem] font-medium',
+													statusConfig[withdrawal.status]?.text || 'text-gray-700',
+												]">
+												<Icon :name="statusConfig[withdrawal.status]?.icon || 'mdi:help-circle-outline'" class="text-[13px]" />
+												{{ statusConfig[withdrawal.status]?.label || withdrawal.status }}
+											</span>
+										</div>
+										<p class="mt-[6px] text-[0.75rem] font-medium text-[#737373]">Richiesta #{{ withdrawal.id }}</p>
+									</div>
+									<div class="text-[0.6875rem] text-[#737373] tablet:text-right">
+										<p class="font-medium">Inviata il</p>
+										<p class="mt-[2px] whitespace-nowrap">{{ formatDate(withdrawal.created_at) }}</p>
+									</div>
+								</div>
+								<p v-if="withdrawal.admin_notes" class="text-[0.75rem] text-[#737373] italic mt-[4px]">
+									Note: {{ withdrawal.admin_notes }}
 							</p>
-							<p v-if="withdrawal.reviewed_at" class="text-[0.75rem] text-[#737373] mt-[4px]">
+							<p v-if="withdrawal.reviewed_at" class="text-[0.6875rem] text-[#737373] mt-[4px]">
 								Verificata il {{ formatDate(withdrawal.reviewed_at) }}
 							</p>
 						</div>

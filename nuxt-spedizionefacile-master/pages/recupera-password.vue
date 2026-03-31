@@ -36,6 +36,7 @@ const sendEmailResetPassword = async () => {
 };
 
 definePageMeta({
+	layout: 'auth',
 	middleware: ["sanctum:guest"],
 });
 </script>

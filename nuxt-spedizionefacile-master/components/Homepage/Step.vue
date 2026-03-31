@@ -63,7 +63,7 @@ const steps = [
 				</ol>
 
 				<div class="hp-step-cta-row">
-					<NuxtLink to="/#preventivo" class="hp-step-cta">Calcola il prezzo</NuxtLink>
+					<a href="/#preventivo" class="hp-step-cta">Calcola il prezzo</a>
 				</div>
 			</div>
 		</div>
@@ -72,7 +72,7 @@ const steps = [
 
 <style scoped>
 .hp-step-section {
-	margin-top: 74px;
+	margin-top: 56px;
 }
 
 .hp-step-shell {
@@ -116,7 +116,7 @@ const steps = [
 }
 
 .hp-step-timeline {
-	margin-top: 30px;
+	margin-top: 24px;
 	display: grid;
 	grid-template-columns: 1fr;
 	gap: 12px;
@@ -233,6 +233,34 @@ const steps = [
 	.hp-step-timeline {
 		grid-template-columns: repeat(2, minmax(0, 1fr));
 		gap: 14px;
+	}
+}
+
+@media (min-width: 23.4375rem) and (max-width: 47.99rem) {
+	.hp-step-timeline {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+
+	.hp-step-card {
+		grid-template-columns: 1fr;
+		align-content: start;
+		gap: 10px;
+		padding: 15px 15px 16px;
+		min-height: 208px;
+	}
+
+	.hp-step-icon-wrap {
+		width: 54px;
+		height: 54px;
+	}
+
+	.hp-step-card-title {
+		font-size: 1rem;
+	}
+
+	.hp-step-card-text {
+		font-size: 0.88rem;
+		line-height: 1.5;
 	}
 }
 

@@ -124,10 +124,20 @@ export function useSmartValidation() {
 
 	// Valida un Codice di Avviamento Postale (CAP) italiano
 	// Deve essere esattamente 5 cifre e nel range valido (00010-98168)
-	const validateCAP = (key, value) => {
+	const validateCAP = (key, value, options = {}) => {
+		const countryCode = String(options?.countryCode || 'IT').trim().toUpperCase() || 'IT';
 		if (!value || !String(value).trim()) {
 			setError(key, 'CAP è obbligatorio');
 			return false;
+		}
+		if (countryCode !== 'IT') {
+			const cleanedForeign = String(value).trim().toUpperCase().replace(/[^A-Z0-9-\s]/g, '');
+			if (cleanedForeign.length < 2) {
+				setError(key, 'Inserisci un CAP valido');
+				return false;
+			}
+			clearError(key);
+			return true;
 		}
 		const cleaned = String(value).replace(/[^0-9]/g, '');
 		if (cleaned.length !== 5) {
@@ -145,8 +155,12 @@ export function useSmartValidation() {
 	};
 
 	// Filtra l'input del CAP: rimuove caratteri non numerici e limita a 5 cifre
-	const filterCAP = (value) => {
+	const filterCAP = (value, options = {}) => {
+		const countryCode = String(options?.countryCode || 'IT').trim().toUpperCase() || 'IT';
 		if (!value) return value;
+		if (countryCode !== 'IT') {
+			return String(value).toUpperCase().replace(/[^A-Z0-9-\s]/g, '').slice(0, 12);
+		}
 		return String(value).replace(/[^0-9]/g, '').slice(0, 5);
 	};
 

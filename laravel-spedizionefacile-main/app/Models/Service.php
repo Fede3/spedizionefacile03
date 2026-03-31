@@ -1,4 +1,5 @@
 <?php
+
 /**
  * FILE: Service.php
  * SCOPO: Modello servizio di spedizione (tipo servizio, data e orario di ritiro).
@@ -35,9 +36,14 @@
 
 namespace App\Models;
 
-use App\Models\Package;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * @property array<string, mixed>|null $service_data
+ * @property-read Collection<int, Package> $packages
+ */
 class Service extends Model
 {
     /**
@@ -55,7 +61,8 @@ class Service extends Model
     ];
 
     // Relazione: un servizio e' usato da MOLTI pacchi
-    public function packages() {
+    public function packages(): HasMany
+    {
         return $this->hasMany(Package::class, 'service_id');
     }
 }

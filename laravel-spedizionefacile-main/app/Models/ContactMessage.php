@@ -43,6 +43,7 @@ class ContactMessage extends Model
         'name',              // Nome di chi scrive
         'surname',           // Cognome di chi scrive
         'email',             // Email di chi scrive (per poter rispondere)
+        'subject',           // Oggetto della richiesta (contatto pubblico o ticket assistenza)
         'telephone_number',  // Telefono di chi scrive
         'address',           // Indirizzo di chi scrive
         'message',           // Il testo del messaggio

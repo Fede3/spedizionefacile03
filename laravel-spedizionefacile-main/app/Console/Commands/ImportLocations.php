@@ -10,6 +10,7 @@ class ImportLocations extends Command
 {
     protected $signature = 'locations:import
         {--fresh : Truncate the table before importing}
+        {--if-empty : Skip import when the selected countries already have rows}
         {--country=* : Country codes to import (default: all .txt files in database/)}';
 
     protected $description = 'Import postal codes from GeoNames .txt files into the locations table';
@@ -22,15 +23,32 @@ class ImportLocations extends Command
             return self::FAILURE;
         }
 
+        $countries = $this->option('country');
+        $normalizedCountries = array_values(array_filter(array_map(
+            static fn ($code) => strtoupper(trim((string) $code)),
+            $countries
+        )));
+
+        if ($this->option('if-empty')) {
+            $existingRows = empty($normalizedCountries)
+                ? DB::table('locations')->count()
+                : DB::table('locations')->whereIn('country_code', $normalizedCountries)->count();
+
+            if ($existingRows > 0) {
+                $scope = empty($normalizedCountries) ? 'all countries' : implode(', ', $normalizedCountries);
+                $this->info("Locations already present for {$scope}: import skipped.");
+
+                return self::SUCCESS;
+            }
+        }
+
         if ($this->option('fresh')) {
             DB::table('locations')->truncate();
             $this->info('Table truncated.');
         }
 
-        $countries = $this->option('country');
-
         // Se nessun paese specificato, importa tutti i file .txt nella directory database/
-        if (empty($countries)) {
+        if (empty($normalizedCountries)) {
             $files = glob(database_path('*.txt'));
             $files = array_filter($files, function ($f) {
                 $basename = basename($f, '.txt');
@@ -39,8 +57,7 @@ class ImportLocations extends Command
             });
         } else {
             $files = [];
-            foreach ($countries as $code) {
-                $code = strtoupper(trim($code));
+            foreach ($normalizedCountries as $code) {
                 $file = database_path("{$code}.txt");
                 if (file_exists($file)) {
                     $files[] = $file;

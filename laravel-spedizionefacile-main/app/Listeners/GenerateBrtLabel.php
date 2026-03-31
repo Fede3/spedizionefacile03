@@ -1,4 +1,5 @@
 <?php
+
 /**
  * FILE: GenerateBrtLabel.php
  * SCOPO: Listener che genera automaticamente l'etichetta BRT dopo il pagamento di un ordine.
@@ -35,7 +36,7 @@
  * COLLEGAMENTI:
  *   - app/Services/BrtService.php — servizio che comunica con API BRT
  *   - app/Events/OrderPaid.php — evento che scatena questo listener
- *   - app/Mail/ShipmentLabelMail.php — email con etichetta PDF allegata
+ *   - app/Services/ShipmentExecutionService.php — completa pickup/borderò/documenti
  *   - app/Listeners/MarkOrderProcessing.php — altro listener OrderPaid (cambia stato a processing)
  */
 
@@ -44,9 +45,8 @@ namespace App\Listeners;
 use App\Events\OrderPaid;
 use App\Models\Order;
 use App\Services\BrtService;
+use App\Services\ShipmentExecutionService;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Mail;
-use App\Mail\ShipmentLabelMail;
 
 class GenerateBrtLabel
 {
@@ -85,8 +85,13 @@ class GenerateBrtLabel
 
         // Se BRT non e' configurato (manca il client_id), salta la generazione
         // Questo succede ad esempio in ambiente di sviluppo locale
-        if (!config('services.brt.client_id')) {
-            Log::info('BRT not configured, skipping label generation for order #' . $order->id);
+        if (! config('services.brt.client_id')) {
+            $order->documents_status = 'skipped';
+            $order->execution_error = trim(($order->execution_error ? $order->execution_error.' | ' : '').'BRT non configurato: etichetta e documenti non generati.');
+            $order->save();
+
+            Log::info('BRT not configured, skipping label generation for order #'.$order->id);
+
             return;
         }
 
@@ -123,12 +128,12 @@ class GenerateBrtLabel
                 }
 
                 $lastError = $result['error'] ?? 'Errore sconosciuto';
-                Log::warning("BRT label generation attempt {$attempt}/" . self::MAX_RETRIES . " failed for order #{$order->id}", [
+                Log::warning("BRT label generation attempt {$attempt}/".self::MAX_RETRIES." failed for order #{$order->id}", [
                     'error' => $lastError,
                 ]);
             } catch (\Exception $e) {
                 $lastError = $e->getMessage();
-                Log::warning("BRT label generation attempt {$attempt}/" . self::MAX_RETRIES . " exception for order #{$order->id}", [
+                Log::warning("BRT label generation attempt {$attempt}/".self::MAX_RETRIES." exception for order #{$order->id}", [
                     'error' => $lastError,
                 ]);
                 $result = ['success' => false, 'error' => $lastError];
@@ -140,7 +145,7 @@ class GenerateBrtLabel
             }
         }
 
-        if ($result && $result['success']) {
+        if (($result['success'] ?? false) === true) {
             // Ricarica l'ordine dal database per avere lo stato piu' aggiornato
             // (MarkOrderProcessing potrebbe averlo gia' modificato)
             $order->refresh();
@@ -165,21 +170,21 @@ class GenerateBrtLabel
                 'brt_error' => null, // Pulisci eventuali errori precedenti
             ]);
 
-            // Invia l'email con l'etichetta di spedizione all'utente
             try {
-                $order->loadMissing('user');
-                if ($order->user && $order->user->email) {
-                    Mail::to($order->user->email)->send(new ShipmentLabelMail($order));
-                }
+                app(ShipmentExecutionService::class)->runAutomaticPostLabelFlow($order->fresh());
             } catch (\Exception $e) {
-                // Se l'invio email fallisce, registra l'errore ma non blocca tutto
-                Log::error('Failed to send BRT label email after payment', [
+                $order->refresh();
+                $order->documents_status = 'failed';
+                $order->execution_error = trim(($order->execution_error ? $order->execution_error.' | ' : '').'Post-elaborazione documenti fallita: '.$e->getMessage());
+                $order->save();
+
+                Log::error('Failed to complete shipment documents flow after label generation', [
                     'order_id' => $order->id,
                     'error' => $e->getMessage(),
                 ]);
             }
 
-            Log::info('BRT label generated automatically for order #' . $order->id, [
+            Log::info('BRT label generated automatically for order #'.$order->id, [
                 'parcel_id' => $result['parcel_id'],
                 'tracking_number' => $result['tracking_number'] ?? null,
                 'tracking_url' => $result['tracking_url'] ?? null,
@@ -194,7 +199,7 @@ class GenerateBrtLabel
             $order->brt_error = $lastError;
             $order->save();
 
-            Log::error('BRT auto label generation failed after ' . self::MAX_RETRIES . ' attempts for order #' . $order->id, [
+            Log::error('BRT auto label generation failed after '.self::MAX_RETRIES.' attempts for order #'.$order->id, [
                 'error' => $lastError,
             ]);
         }

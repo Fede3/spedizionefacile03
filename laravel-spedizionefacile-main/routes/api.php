@@ -50,6 +50,8 @@ use App\Http\Controllers\CartController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\CouponController;
+use App\Http\Controllers\AppleController;
+use App\Http\Controllers\FacebookController;
 use App\Http\Controllers\GoogleController;
 use App\Http\Controllers\StripeController;
 use App\Http\Controllers\AddressController;
@@ -72,12 +74,19 @@ use App\Http\Controllers\WithdrawalController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\BrtController;
 use App\Http\Controllers\RefundController;
-use App\Http\Controllers\AdminController;
+use App\Http\Controllers\Admin\ContentController as AdminContentController;
+use App\Http\Controllers\Admin\CouponController as AdminCouponController;
+use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
+use App\Http\Controllers\Admin\OrderManagementController;
+use App\Http\Controllers\Admin\ReferralStatsController;
+use App\Http\Controllers\Admin\UserManagementController;
+use App\Http\Controllers\Admin\WalletManagementController;
 use App\Http\Controllers\ArticleController;
 use App\Http\Controllers\PriceBandController;
 use App\Http\Controllers\ProRequestController;
 use App\Http\Controllers\PublicArticleController;
 use App\Http\Controllers\PublicPriceBandController;
+use App\Support\AuthUiCookie;
 
 /* ===================================================================== */
 /* UTENTE CORRENTE E LOGOUT                                              */
@@ -91,7 +100,8 @@ use App\Http\Controllers\PublicPriceBandController;
 // Se la sessione e' valida, restituisce l'oggetto User (JSON).
 // Se la sessione e' scaduta o invalida, restituisce 401 "Unauthenticated".
 Route::get('/user', function (Request $request) {
-    return $request->user();
+    return response()->json($request->user())
+        ->cookie(AuthUiCookie::issueForUser($request->user(), Auth::guard('web')->viaRemember()));
 })->middleware('auth:sanctum');
 
 // POST /api/logout — Esegue il logout dell'utente
@@ -108,7 +118,8 @@ Route::post('/logout', function (Request $request) {
         $request->session()->invalidate();
         $request->session()->regenerateToken();
     }
-    return response()->json(['message' => 'Logged out']);
+    return response()->json(['message' => 'Logged out'])
+        ->cookie(AuthUiCookie::forget());
 })->middleware('auth:sanctum');
 
 /* ===================================================================== */
@@ -124,7 +135,32 @@ Route::middleware(['throttle:5,1'])->post('/custom-register', [CustomRegisterCon
 // GET /api/auth/google/redirect — Reindirizza l'utente alla pagina di login di Google
 // Quando l'utente clicca "Accedi con Google", viene mandato prima qui,
 // poi questo controller lo redirige a Google per l'autenticazione OAuth
+Route::get('/auth/providers', function () {
+    $isConfigured = static fn (string $provider) => filled(config("services.{$provider}.client_id"))
+        && filled(config("services.{$provider}.client_secret"))
+        && filled(config("services.{$provider}.redirect"));
+
+    $isAppleConfigured = static function (): bool {
+        $hasDirectSecret = filled(config('services.apple.client_secret'));
+        $hasDerivedSecret = filled(config('services.apple.team_id'))
+            && filled(config('services.apple.key_id'))
+            && filled(config('services.apple.private_key'));
+
+        return filled(config('services.apple.client_id'))
+            && filled(config('services.apple.redirect'))
+            && ($hasDirectSecret || $hasDerivedSecret);
+    };
+
+    return response()->json([
+        'google' => $isConfigured('google'),
+        'facebook' => $isConfigured('facebook'),
+        'apple' => $isAppleConfigured(),
+    ]);
+});
+
+Route::get('/auth/apple/redirect', [AppleController::class, 'redirectToApple']);
 Route::get('/auth/google/redirect', [GoogleController::class, 'redirectToGoogle']);
+Route::get('/auth/facebook/redirect', [FacebookController::class, 'redirectToFacebook']);
 
 // POST /api/upload-file — Carica un'immagine (solo per admin)
 // Usato dall'admin per caricare immagini del sito (es. homepage)
@@ -181,6 +217,8 @@ Route::get('/session', [SessionController::class, 'show']);
 // POST /api/session/first-step — Salva i dati del primo step del preventivo
 // Calcola il prezzo in base a peso e volume e salva tutto nella sessione
 Route::post('/session/first-step', [SessionController::class, 'firstStep']);
+// POST /api/session/second-step — Salva servizi, data e indirizzi del funnel
+Route::post('/session/second-step', [SessionController::class, 'secondStep']);
 
 /* ===== CARRELLO OSPITE (utenti non loggati) ===== */
 // CRUD completo per il carrello degli ospiti (salvato nella sessione PHP)
@@ -218,6 +256,8 @@ Route::middleware(['throttle:30,1'])->get('brt/pudo/{pudoId}', [BrtController::c
 /* ===================================================================== */
 Route::group(['middleware' => ['auth:sanctum']], function() {
 
+    Route::post('/auth/confirm-password', [CustomLoginController::class, 'confirmPassword']);
+
     /* ===== INFORMAZIONI UTENTE ===== */
     // CRUD completo per l'utente: GET (profilo), PUT (modifica dati), DELETE (elimina account)
     Route::apiResource('users', UserController::class);
@@ -226,6 +266,10 @@ Route::group(['middleware' => ['auth:sanctum']], function() {
     // CRUD completo per la rubrica indirizzi dell'utente
     // Permette di salvare indirizzi frequenti per riusarli nelle spedizioni
     Route::apiResource('user-addresses', UserAddressController::class);
+
+    /* ===== ASSISTENZA UTENTE ===== */
+    // POST /api/support-tickets — Apre un ticket dal pannello account usando i dati dell'utente autenticato
+    Route::middleware(['throttle:10,1'])->post('/support-tickets', [ContactController::class, 'storeSupportTicket']);
 
     /* ===== STRIPE CONNECT (per Partner Pro) ===== */
     // GET /api/stripe/connect — Avvia il collegamento dell'account Stripe dell'utente
@@ -419,73 +463,42 @@ Route::middleware('auth:sanctum')->prefix('pro-request')->group(function () {
 Route::middleware(['auth:sanctum', CheckAdmin::class])->prefix('admin')->group(function () {
 
     // --- Dashboard ---
-    // GET /api/admin/dashboard — Statistiche generali del sito (ordini totali, ricavi, utenti)
-    Route::get('/dashboard', [AdminController::class, 'dashboard']);
+    Route::get('/dashboard', [AdminDashboardController::class, 'dashboard']);
 
-    // --- Gestione Ordini ---
-    // GET /api/admin/orders — Lista tutti gli ordini di tutti gli utenti
-    Route::get('/orders', [AdminController::class, 'orders']);
-    // PATCH /api/admin/orders/{order}/status — Cambia lo stato di un ordine
-    // (es. pending → processing → in_transit → delivered)
-    Route::patch('/orders/{order}/status', [AdminController::class, 'updateOrderStatus']);
+    // --- Ordini e Spedizioni ---
+    Route::get('/orders', [OrderManagementController::class, 'orders']);
+    Route::patch('/orders/{order}/status', [OrderManagementController::class, 'updateOrderStatus']);
+    Route::get('/shipments', [OrderManagementController::class, 'shipments']);
+    Route::patch('/orders/{order}/pudo', [OrderManagementController::class, 'updateOrderPudo']);
+    Route::post('/orders/{order}/regenerate-label', [OrderManagementController::class, 'regenerateLabel']);
 
-    // --- Gestione Spedizioni BRT ---
-    // GET /api/admin/shipments — Lista tutte le spedizioni BRT con dettagli tracking
-    Route::get('/shipments', [AdminController::class, 'shipments']);
-    // PATCH /api/admin/orders/{order}/pudo — Imposta o rimuove il punto PUDO per un ordine
-    Route::patch('/orders/{order}/pudo', [AdminController::class, 'updateOrderPudo']);
-    // POST /api/admin/orders/{order}/regenerate-label — Rigenera l'etichetta BRT per un ordine
-    Route::post('/orders/{order}/regenerate-label', [AdminController::class, 'regenerateLabel']);
-
-    // --- Portafoglio (panoramica admin) ---
-    // GET /api/admin/wallet/overview — Panoramica di tutti i portafogli degli utenti
-    Route::get('/wallet/overview', [AdminController::class, 'walletOverview']);
-    // GET /api/admin/wallet/users/{user}/movements — Movimenti del portafoglio di un utente specifico
-    Route::get('/wallet/users/{user}/movements', [AdminController::class, 'userMovements']);
-
-    // --- Prelievi ---
-    // GET /api/admin/withdrawals — Lista tutte le richieste di prelievo
-    Route::get('/withdrawals', [AdminController::class, 'withdrawals']);
-    // POST /api/admin/withdrawals/{withdrawal}/approve — Approva una richiesta di prelievo
-    Route::post('/withdrawals/{withdrawal}/approve', [AdminController::class, 'approveWithdrawal']);
-    // POST /api/admin/withdrawals/{withdrawal}/reject — Rifiuta una richiesta di prelievo
-    Route::post('/withdrawals/{withdrawal}/reject', [AdminController::class, 'rejectWithdrawal']);
+    // --- Portafoglio e Prelievi ---
+    Route::get('/wallet/overview', [WalletManagementController::class, 'walletOverview']);
+    Route::get('/wallet/users/{user}/movements', [WalletManagementController::class, 'userMovements']);
+    Route::get('/withdrawals', [WalletManagementController::class, 'withdrawals']);
+    Route::post('/withdrawals/{withdrawal}/approve', [WalletManagementController::class, 'approveWithdrawal']);
+    Route::post('/withdrawals/{withdrawal}/reject', [WalletManagementController::class, 'rejectWithdrawal']);
 
     // --- Referral ---
-    // GET /api/admin/referrals — Statistiche sui codici referral (utilizzi, guadagni)
-    Route::get('/referrals', [AdminController::class, 'referralStats']);
+    Route::get('/referrals', [ReferralStatsController::class, 'referralStats']);
 
     // --- Richieste Partner Pro ---
-    // GET /api/admin/pro-requests — Lista tutte le richieste pendenti
     Route::get('/pro-requests', [ProRequestController::class, 'index']);
-    // PATCH /api/admin/pro-requests/{proRequest}/approve — Approva un utente come Partner Pro
     Route::patch('/pro-requests/{proRequest}/approve', [ProRequestController::class, 'approve']);
-    // PATCH /api/admin/pro-requests/{proRequest}/reject — Rifiuta la richiesta Partner Pro
     Route::patch('/pro-requests/{proRequest}/reject', [ProRequestController::class, 'reject']);
 
-    // --- Gestione Utenti ---
-    // GET /api/admin/users — Lista tutti gli utenti registrati
-    Route::get('/users', [AdminController::class, 'users']);
-    // PATCH /api/admin/users/{user}/approve — Approva un utente (se richiede approvazione manuale)
-    Route::patch('/users/{user}/approve', [AdminController::class, 'approveUser']);
-    // PATCH /api/admin/users/{user}/role — Cambia il ruolo dell'utente (User, Partner Pro, Admin)
-    Route::patch('/users/{user}/role', [AdminController::class, 'updateUserRole']);
-    // PATCH /api/admin/users/{user}/user-type — Cambia il tipo utente (privato/commerciante)
-    Route::patch('/users/{user}/user-type', [AdminController::class, 'updateUserType']);
-    // DELETE /api/admin/users/{user} — Elimina un utente dal sistema
-    Route::delete('/users/{user}', [AdminController::class, 'deleteUser']);
+    // --- Utenti ---
+    Route::get('/users', [UserManagementController::class, 'users']);
+    Route::patch('/users/{user}/approve', [UserManagementController::class, 'approveUser']);
+    Route::patch('/users/{user}/role', [UserManagementController::class, 'updateUserRole']);
+    Route::patch('/users/{user}/user-type', [UserManagementController::class, 'updateUserType']);
+    Route::delete('/users/{user}', [UserManagementController::class, 'deleteUser']);
 
-    // --- Messaggi di Contatto ---
-    // GET /api/admin/contact-messages — Lista tutti i messaggi ricevuti dal form "Contattaci"
-    Route::get('/contact-messages', [AdminController::class, 'contactMessages']);
-    // PATCH /api/admin/contact-messages/{id}/read — Segna un messaggio come letto
-    Route::patch('/contact-messages/{id}/read', [AdminController::class, 'markContactMessageRead']);
-
-    // --- Impostazioni del sito ---
-    // GET /api/admin/settings — Legge le impostazioni del sito (nome, email, ecc.)
-    Route::get('/settings', [AdminController::class, 'settings']);
-    // POST /api/admin/settings — Aggiorna le impostazioni del sito
-    Route::post('/settings', [AdminController::class, 'updateSettings']);
+    // --- Contenuti (messaggi, impostazioni) ---
+    Route::get('/contact-messages', [AdminContentController::class, 'contactMessages']);
+    Route::patch('/contact-messages/{id}/read', [AdminContentController::class, 'markContactMessageRead']);
+    Route::get('/settings', [AdminContentController::class, 'settings']);
+    Route::post('/settings', [AdminContentController::class, 'updateSettings']);
 
     // --- Articoli (guide e servizi) ---
     // CRUD completo per gli articoli del blog/guide/servizi
@@ -512,17 +525,15 @@ Route::middleware(['auth:sanctum', CheckAdmin::class])->prefix('admin')->group(f
     Route::post('/promo-settings', [PriceBandController::class, 'savePromoSettings']);
     Route::post('/promo-settings/upload-image', [PriceBandController::class, 'uploadPromoImage']);
 
-    // --- Immagine Homepage ---
-    // Gestisce l'immagine principale mostrata nella homepage del sito
-    Route::post('/homepage-image', [AdminController::class, 'uploadHomepageImage']);
-    Route::get('/homepage-image', [AdminController::class, 'getHomepageImage']);
+    // --- Homepage ---
+    Route::post('/homepage-image', [AdminContentController::class, 'uploadHomepageImage']);
+    Route::get('/homepage-image', [AdminContentController::class, 'getHomepageImage']);
 
     // --- Coupon ---
-    // CRUD completo per i codici coupon (sconti applicabili al checkout)
-    Route::get('/coupons', [AdminController::class, 'coupons']);            // Lista coupon
-    Route::post('/coupons', [AdminController::class, 'storeCoupon']);       // Crea nuovo coupon
-    Route::put('/coupons/{coupon}', [AdminController::class, 'updateCoupon']); // Modifica coupon
-    Route::delete('/coupons/{coupon}', [AdminController::class, 'deleteCoupon']); // Elimina coupon
+    Route::get('/coupons', [AdminCouponController::class, 'coupons']);
+    Route::post('/coupons', [AdminCouponController::class, 'storeCoupon']);
+    Route::put('/coupons/{coupon}', [AdminCouponController::class, 'updateCoupon']);
+    Route::delete('/coupons/{coupon}', [AdminCouponController::class, 'deleteCoupon']);
 });
 
 /* ===================================================================== */
@@ -542,5 +553,5 @@ Route::prefix('public')->group(function () {
     // GET /api/public/price-bands — Fasce di prezzo pubbliche (mostrate nel preventivo)
     Route::get('/price-bands', [PublicPriceBandController::class, 'index']);
     // GET /api/public/homepage-image — Immagine principale della homepage
-    Route::get('/homepage-image', [AdminController::class, 'getHomepageImage']);
+    Route::get('/homepage-image', [AdminContentController::class, 'getHomepageImage']);
 });

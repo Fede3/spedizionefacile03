@@ -14,7 +14,7 @@
 -->
 <script setup>
 definePageMeta({
-	middleware: ["sanctum:auth", "admin"],
+	middleware: ["app-auth", "admin"],
 });
 
 const sanctum = useSanctumClient();
@@ -70,7 +70,6 @@ const saveCoupon = async () => {
 	}
 
 	formSaving.value = true;
-	console.log(`[AUDIT] Admin ${editingId.value ? 'updating' : 'creating'} coupon: ${form.value.code} (${percentage}%)`);
 	try {
 		if (editingId.value) {
 			await sanctum(`/api/admin/coupons/${editingId.value}`, {
@@ -104,7 +103,6 @@ const saveCoupon = async () => {
 
 const toggleActive = async (coupon) => {
 	const newStatus = !coupon.active;
-	console.log(`[AUDIT] Admin toggling coupon #${coupon.id} (${coupon.code}) active status: ${coupon.active} → ${newStatus}`);
 	try {
 		await sanctum(`/api/admin/coupons/${coupon.id}`, {
 			method: 'PUT',
@@ -127,7 +125,6 @@ const askDelete = (id) => {
 
 const confirmDelete = async () => {
 	deleteLoading.value = true;
-	console.log(`[AUDIT] Admin deleting coupon #${deleteTargetId.value}`);
 	try {
 		await sanctum(`/api/admin/coupons/${deleteTargetId.value}`, { method: 'DELETE' });
 		showSuccess("Coupon eliminato.");
@@ -147,25 +144,24 @@ onMounted(() => { fetchCoupons(); });
 <template>
 	<section class="min-h-[600px] py-[40px] desktop:py-[60px] desktop-xl:py-[80px]">
 		<div class="my-container">
-			<!-- Breadcrumb -->
-			<div class="mb-[24px] text-[0.875rem] text-[#737373]">
-				<NuxtLink to="/account" class="hover:underline text-[#095866] font-medium">Il tuo account</NuxtLink>
-				<span class="mx-[8px] text-[#C8CCD0]">/</span>
-				<span class="font-semibold text-[#252B42]">Coupon e sconti</span>
-			</div>
-
-			<NuxtLink to="/account" class="inline-flex items-center gap-[6px] text-[0.8125rem] text-[#095866] hover:underline font-medium mb-[20px]">
-				<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[16px] h-[16px]" fill="currentColor"><path d="M20,11V13H8L13.5,18.5L12.08,19.92L4.16,12L12.08,4.08L13.5,5.5L8,11H20Z"/></svg>
-				Torna all'account
-			</NuxtLink>
-
-			<div class="flex items-center justify-between mb-[24px] flex-wrap gap-[12px]">
-				<h1 class="text-[1.75rem] font-bold text-[#252B42]">Coupon e sconti</h1>
-				<button @click="openCreate" class="inline-flex items-center gap-[6px] px-[20px] py-[10px] bg-[#095866] hover:bg-[#074a56] text-white rounded-[50px] text-[0.875rem] font-medium transition-colors cursor-pointer">
-					<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[18px] h-[18px]" fill="currentColor"><path d="M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z"/></svg>
-					Nuovo coupon
-				</button>
-			</div>
+			<AccountPageHeader
+				eyebrow="Admin"
+				title="Coupon e sconti"
+				description="Gestisci i codici promozionali del checkout, aggiorna lo sconto e attiva o disattiva le campagne da un'unica console."
+				:crumbs="[
+					{ label: 'Account', to: '/account' },
+					{ label: 'Amministrazione', to: '/account/amministrazione' },
+					{ label: 'Coupon e sconti' },
+				]"
+				back-to="/account/amministrazione"
+				back-label="Torna all'amministrazione">
+				<template #actions>
+					<button @click="openCreate" class="inline-flex items-center justify-center gap-[6px] px-[18px] py-[10px] bg-[#095866] hover:bg-[#074a56] text-white rounded-[999px] text-[0.875rem] font-semibold transition-colors cursor-pointer">
+						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[18px] h-[18px]" fill="currentColor"><path d="M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z"/></svg>
+						Nuovo coupon
+					</button>
+				</template>
+			</AccountPageHeader>
 
 			<!-- Action message -->
 			<div v-if="actionMessage" :class="['mb-[20px] px-[16px] py-[12px] rounded-[12px] text-[0.875rem] font-medium flex items-center gap-[8px]', actionMessage.type === 'success' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-red-50 text-red-700 border border-red-200']">
@@ -270,20 +266,28 @@ onMounted(() => { fetchCoupons(); });
 		</div>
 
 		<!-- Delete confirm popup -->
-		<UModal v-model:open="showDeleteConfirm" :dismissible="true" :close="false">
-			<template #title>
-				<h3 class="text-[1.125rem] font-bold text-[#252B42]">Elimina coupon</h3>
-			</template>
+		<UModal v-model:open="showDeleteConfirm" :dismissible="true" :close="false" :ui="{ overlay: 'bg-[#09131c]/36 backdrop-blur-[6px]', content: '!divide-y-0 !ring-0 !p-0 sf-modal-surface w-[min(calc(100vw-1rem),30rem)]', body: '!p-0' }">
 			<template #body>
-				<p class="text-[0.9375rem] text-[#737373] leading-[1.6]">Sei sicuro di voler eliminare questo coupon? L'azione non puo' essere annullata.</p>
-			</template>
-			<template #footer>
-				<div class="flex justify-end gap-[10px]">
-					<button type="button" @click="showDeleteConfirm = false" class="inline-flex items-center gap-[6px] px-[20px] py-[10px] rounded-[50px] border border-[#E9EBEC] text-[#737373] hover:bg-[#F8F9FB] transition text-[0.875rem] font-medium cursor-pointer">Annulla</button>
-					<button type="button" @click="confirmDelete" :disabled="deleteLoading" class="inline-flex items-center gap-[6px] px-[20px] py-[10px] rounded-[50px] bg-red-500 text-white hover:bg-red-600 transition text-[0.875rem] font-semibold disabled:opacity-60 cursor-pointer">
-						{{ deleteLoading ? 'Eliminazione...' : 'Elimina' }}
-					</button>
-				</div>
+				<section class="sf-modal-content">
+					<div class="sf-modal-header">
+						<div class="sf-modal-header__main">
+							<div class="sf-modal-icon sf-modal-icon--accent" aria-hidden="true">
+								<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[18px] h-[18px]" fill="currentColor"><path d="M19,4H15.5L14.5,3H9.5L8.5,4H5V6H19M6,19A2,2 0 0,0 8,21H16A2,2 0 0,0 18,19V7H6V19Z"/></svg>
+							</div>
+							<div>
+								<h3 class="sf-modal-title">Elimina coupon</h3>
+								<p class="sf-modal-description">Sei sicuro di voler eliminare questo coupon? L'azione non puo' essere annullata.</p>
+							</div>
+						</div>
+					</div>
+					<div class="sf-modal-divider" />
+					<div class="sf-modal-actions">
+						<button type="button" @click="showDeleteConfirm = false" class="btn-secondary">Annulla</button>
+						<button type="button" @click="confirmDelete" :disabled="deleteLoading" class="btn-danger disabled:opacity-60">
+							{{ deleteLoading ? 'Eliminazione...' : 'Elimina' }}
+						</button>
+					</div>
+				</section>
 			</template>
 		</UModal>
 	</section>

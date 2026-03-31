@@ -77,52 +77,247 @@ const sections = [
 </script>
 
 <template>
-	<!-- Miglioramento UX: aggiunto padding inferiore per evitare che il contenuto tocchi il footer -->
-	<section id="chi-siamo" class="pb-[60px] desktop:pb-[100px]">
-		<div class="my-container mt-[32px]">
-			<p class="text-[0.875rem] desktop-xl:text-[1.25rem] font-medium text-[rgba(0,0,0,.6)] tracking-[1.8px] border-[#C4C4C4] border-b-[1px] pb-[30px] desktop:text-[1.25rem]">Chi siamo</p>
-
-			<p
-				class="font-[General_Sans] text-[1.25rem] desktop-xl:text-[2.5rem] leading-[160%] tracking-[-0.48px] desktop:tracking-[-0.96px] text-[#222222] mt-[32px] border-[#C4C4C4] border-b-[1px] pb-[32px] desktop:text-[1.75rem]">
-				Siamo SpediamoFacile, la piattaforma che rende semplice e accessibile la spedizione di pacchi in Italia e all'estero. Mettiamo insieme tecnologia, esperienza nei trasporti e assistenza umana
-				per trasformare un'attività complessa in un servizio chiaro, veloce e affidabile. Il nostro obiettivo è farti risparmiare tempo ed energie: inserisci i dati essenziali, scegli il ritiro,
-				ricevi l'etichetta in pochi minuti, segui il pacco fino alla consegna.
-			</p>
-
-			<div
-				v-for="(section, sectionIndex) in sections"
-				:key="sectionIndex"
-				class="flex items-center justify-center desktop:gap-x-[56px] flex-wrap odd:desktop:flex-nowrap before:content-[''] before:bg-red-400 before:block desktop:before:w-[519px] desktop:before:h-[607px] mt-[40px] desktop:mt-[70px] first:mt-0 even:desktop:before:mx-auto even:desktop:before:w-[928px] even:desktop:before:h-[441px] before:mt-[20px] desktop:even:before:mt-[37px] group before:w-[337px] before:h-[191px] last:border-b-0 before:rounded-[18px] desktop:before:rounded-[38px] tablet:before:w-[700px] tablet:before:h-[300px] tablet:before:mt-[32px] after:content-[''] after:border-[#C4C4C4] after:absolute after:border-b-[1px] after:block pb-[40px] desktop:pb-[70px] after:w-full desktop:after:w-[685px] desktop-xl:after:w-[1082px] relative after:bottom-0 even:desktop:before:order-2 odd:desktop:before:order-[-1] before:order-2">
-				<!--  -->
-				<div class="group-odd:desktop:max-w-[361px] group-odd:desktop-xl:max-w-[596px] group-even:desktop:px-[50px] group-even:text-center text-center desktop:text-left">
-					<!-- Icona sezione -->
-					<div class="w-[44px] h-[44px] rounded-[10px] bg-[#e8f4fb] flex items-center justify-center mb-[16px] mx-auto desktop:mx-0 group-even:mx-auto">
-						<Icon :name="section.icon" class="text-[22px] text-[#095866]" />
-					</div>
-
-					<h2
-						class="desktop:text-[3rem] desktop-xl:group-odd:text-[4rem] group-odd:tracking-[-1.536px] font-medium text-[#222222] leading-[110%] group-odd:mb-[40px] group-even:desktop-xl:text-[3rem] group-even:tracking-[-1.152px] group-even:text-center group-even:mb-[32px] text-[2.25rem]">
-						{{ section.title }}
-					</h2>
-
-					<!-- <p v-if="section.second_title" class="text-[4rem] tracking-[-1.536px] font-medium text-[#222222] leading-[110%] mt-[32px] mb-[40px]">
-						{{ section.second_title }}
-					</p> -->
-
-					<p
-						v-if="section.first_description && section.second_description"
-						class="desktop:text-[1.25rem] desktop-xl:text-[1.5rem] leading-[160%] tracking-[-0.336px] font-medium text-[#404040] text-[1.125rem]">
-						<span>{{ section.first_description }}</span>
-						<span v-if="section.second_description" class="block mt-[30px]">
-							{{ section.second_description }}
-						</span>
-					</p>
-
-					<p v-if="section.description" class="desktop:text-[1.25rem] desktop-xl:text-[1.5rem] leading-[160%] tracking-[-0.336px] font-medium text-[#404040] text-[1.125rem]">
-						{{ section.description }}
+	<section id="chi-siamo" class="about-page-shell">
+		<div class="my-container">
+			<div class="about-hero-panel">
+				<div class="about-hero-panel__copy">
+					<p class="about-hero-panel__eyebrow">Chi siamo</p>
+					<h1 class="about-hero-panel__title">Spedizioni chiare, veloci e senza stress.</h1>
+					<p class="about-hero-panel__text">
+						Siamo SpediamoFacile: rendiamo il percorso dal preventivo alla consegna più leggibile, più rapido e più affidabile, mantenendo tecnologia e assistenza umana nello stesso flusso.
 					</p>
 				</div>
+
+				<div class="about-hero-panel__actions">
+					<NuxtLink to="/preventivo" class="about-hero-panel__cta about-hero-panel__cta--primary">Calcola un preventivo</NuxtLink>
+					<NuxtLink to="/contatti" class="about-hero-panel__cta about-hero-panel__cta--secondary">Contattaci</NuxtLink>
+				</div>
+			</div>
+
+			<div class="about-pill-row">
+				<span class="about-pill">Prezzi trasparenti</span>
+				<span class="about-pill">Ritiro a domicilio</span>
+				<span class="about-pill">Supporto dedicato</span>
+			</div>
+
+			<div class="about-card-grid">
+				<article
+					v-for="(section, sectionIndex) in sections"
+					:key="sectionIndex"
+					class="about-story-card"
+				>
+					<div class="about-story-card__icon-shell">
+						<Icon :name="section.icon" class="about-story-card__icon" />
+					</div>
+
+					<div class="about-story-card__body">
+						<h2 class="about-story-card__title">{{ section.title }}</h2>
+
+						<p
+							v-if="section.first_description && section.second_description"
+							class="about-story-card__text"
+						>
+							<span>{{ section.first_description }}</span>
+							<span class="block mt-[14px]">{{ section.second_description }}</span>
+						</p>
+
+						<p v-else class="about-story-card__text">
+							{{ section.description }}
+						</p>
+					</div>
+				</article>
 			</div>
 		</div>
 	</section>
 </template>
+
+<style scoped>
+.about-page-shell {
+	padding: 22px 0 76px;
+}
+
+.about-hero-panel {
+	display: grid;
+	gap: 18px;
+	padding: 22px 20px;
+	border-radius: 24px;
+	background:
+		radial-gradient(circle at top right, rgba(228, 66, 3, 0.12), transparent 34%),
+		linear-gradient(180deg, rgba(9, 88, 102, 0.06) 0%, rgba(9, 88, 102, 0.015) 100%);
+	border: 1px solid rgba(9, 88, 102, 0.1);
+	box-shadow: 0 18px 38px rgba(9, 88, 102, 0.06);
+}
+
+.about-hero-panel__eyebrow {
+	margin: 0;
+	font-size: 0.75rem;
+	font-weight: 700;
+	letter-spacing: 0.12em;
+	text-transform: uppercase;
+	color: #095866;
+}
+
+.about-hero-panel__title {
+	margin: 8px 0 0;
+	font-size: 1.7rem;
+	line-height: 1.05;
+	letter-spacing: -0.045em;
+	font-weight: 700;
+	color: #1f2937;
+}
+
+.about-hero-panel__text {
+	margin: 12px 0 0;
+	font-size: 0.95rem;
+	line-height: 1.65;
+	color: #546171;
+	max-width: 66ch;
+}
+
+.about-hero-panel__actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 10px;
+}
+
+.about-hero-panel__cta {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-height: 46px;
+	padding: 0 18px;
+	border-radius: 999px;
+	font-size: 0.875rem;
+	font-weight: 700;
+	transition: transform .24s ease, box-shadow .24s ease, background-color .24s ease, color .24s ease;
+}
+
+.about-hero-panel__cta--primary {
+	background: #E44203;
+	color: #fff;
+	box-shadow: 0 12px 24px rgba(228, 66, 3, 0.18);
+}
+
+.about-hero-panel__cta--secondary {
+	background: #fff;
+	color: #095866;
+	border: 1px solid rgba(9, 88, 102, 0.14);
+}
+
+.about-pill-row {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	margin: 16px 0 0;
+}
+
+.about-pill {
+	display: inline-flex;
+	align-items: center;
+	min-height: 34px;
+	padding: 0 12px;
+	border-radius: 999px;
+	font-size: 0.79rem;
+	font-weight: 700;
+	color: #095866;
+	background: #eef7f9;
+	border: 1px solid rgba(9, 88, 102, 0.08);
+}
+
+.about-card-grid {
+	display: grid;
+	grid-template-columns: 1fr;
+	gap: 16px;
+	margin-top: 22px;
+}
+
+.about-story-card {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+	height: 100%;
+	padding: 20px;
+	border-radius: 22px;
+	background: #fff;
+	border: 1px solid rgba(9, 88, 102, 0.1);
+	box-shadow: 0 16px 34px rgba(17, 24, 39, 0.05);
+}
+
+.about-story-card__icon-shell {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 48px;
+	height: 48px;
+	border-radius: 14px;
+	background: linear-gradient(135deg, rgba(9, 88, 102, 0.14), rgba(9, 88, 102, 0.04));
+}
+
+.about-story-card__icon {
+	font-size: 24px;
+	color: #095866;
+}
+
+.about-story-card__body {
+	display: grid;
+	gap: 10px;
+	flex: 1;
+}
+
+.about-story-card__title {
+	margin: 0;
+	font-size: 1.2rem;
+	line-height: 1.18;
+	letter-spacing: -0.03em;
+	font-weight: 700;
+	color: #1f2937;
+}
+
+.about-story-card__text {
+	margin: 0;
+	font-size: 0.95rem;
+	line-height: 1.7;
+	color: #546171;
+}
+
+@media (min-width: 48rem) {
+	.about-page-shell {
+		padding: 28px 0 92px;
+	}
+
+	.about-hero-panel {
+		padding: 28px 28px;
+	}
+
+	.about-card-grid {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		gap: 18px;
+		margin-top: 26px;
+	}
+}
+
+@media (min-width: 80rem) {
+	.about-page-shell {
+		padding: 32px 0 116px;
+	}
+
+	.about-hero-panel {
+		grid-template-columns: minmax(0, 1.15fr) auto;
+		align-items: end;
+		padding: 32px;
+	}
+
+	.about-hero-panel__title {
+		font-size: 2.6rem;
+	}
+
+	.about-card-grid {
+		grid-template-columns: repeat(3, minmax(0, 1fr));
+		gap: 20px;
+	}
+
+	.about-story-card {
+		padding: 22px;
+	}
+}
+</style>

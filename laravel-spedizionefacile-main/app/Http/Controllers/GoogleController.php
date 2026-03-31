@@ -1,4 +1,5 @@
 <?php
+
 /**
  * FILE: GoogleController.php
  * SCOPO: Gestisce login/registrazione tramite Google OAuth (Socialite).
@@ -48,29 +49,117 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
-use Illuminate\Support\Str;
+use App\Support\AuthUiCookie;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
 use Laravel\Socialite\Facades\Socialite;
+use Laravel\Socialite\Two\GoogleProvider;
+
 class GoogleController extends Controller
 {
+    private function isGoogleConfigured(): bool
+    {
+        return filled(config('services.google.client_id'))
+            && filled(config('services.google.client_secret'))
+            && filled(config('services.google.redirect'));
+    }
+
+    private function statefulHosts(): array
+    {
+        $stateful = config('sanctum.stateful', []);
+        $items = is_array($stateful) ? $stateful : explode(',', (string) $stateful);
+
+        return collect($items)
+            ->map(fn ($item) => trim(strtolower((string) $item)))
+            ->filter()
+            ->map(fn ($item) => explode(':', $item)[0])
+            ->values()
+            ->all();
+    }
+
+    private function fallbackFrontendUrl(): string
+    {
+        return rtrim((string) config('app.frontend_url', config('app.url')), '/');
+    }
+
+    private function resolveAllowedFrontendUrl(?string $frontend): string
+    {
+        $fallback = $this->fallbackFrontendUrl();
+        $value = trim((string) $frontend);
+
+        if (! filter_var($value, FILTER_VALIDATE_URL)) {
+            return $fallback;
+        }
+
+        $parts = parse_url($value);
+        $host = strtolower((string) ($parts['host'] ?? ''));
+        $scheme = strtolower((string) ($parts['scheme'] ?? ''));
+
+        if (! in_array($scheme, ['http', 'https'], true) || $host === '') {
+            return $fallback;
+        }
+
+        $fallbackHost = strtolower((string) parse_url($fallback, PHP_URL_HOST));
+        $stateful = $this->statefulHosts();
+
+        $allowed = array_unique(array_filter([
+            $fallbackHost,
+            ...$stateful,
+            'localhost',
+            '127.0.0.1',
+        ]));
+
+        $isAllowed = in_array($host, $allowed, true) || str_ends_with($host, '.trycloudflare.com');
+
+        return $isAllowed ? rtrim($value, '/') : $fallback;
+    }
+
+    private function normalizeRedirectPath(?string $redirectPath): string
+    {
+        $path = trim((string) $redirectPath);
+
+        return str_starts_with($path, '/') ? $path : '/';
+    }
+
+    private function buildFrontendUrl(string $frontendUrl, string $redirectPath, array $query = []): string
+    {
+        $base = $frontendUrl.$redirectPath;
+        if (empty($query)) {
+            return $base;
+        }
+
+        $glue = str_contains($base, '?') ? '&' : '?';
+
+        return $base.$glue.http_build_query($query);
+    }
+
+    private function redirectWithFrontendError(string $frontendUrl, string $redirectPath, string $error)
+    {
+        return redirect($this->buildFrontendUrl($frontendUrl, $redirectPath, [
+            'auth_modal' => 'login',
+            'auth_error' => $error,
+        ]));
+    }
+
     // Reindirizza l'utente alla pagina di accesso di Google
     // L'utente scegliera' quale account Google usare
     public function redirectToGoogle(Request $request)
     {
         // Recuperiamo l'URL del frontend (il sito che l'utente sta usando)
         // per sapere dove rimandarlo dopo l'accesso
-        $frontend = trim((string) $request->query('frontend', ''));
-        $fallbackFrontend = rtrim((string) config('app.frontend_url', config('app.url')), '/');
+        $frontend = $this->resolveAllowedFrontendUrl((string) $request->query('frontend', ''));
+        $redirectPath = $this->normalizeRedirectPath((string) $request->query('redirect', '/'));
 
-        // Se l'URL del frontend non e' valido, usiamo quello predefinito
-        if (!filter_var($frontend, FILTER_VALIDATE_URL)) {
-            $frontend = $fallbackFrontend;
+        if (! $this->isGoogleConfigured()) {
+            return $this->redirectWithFrontendError($frontend, $redirectPath, 'google_unavailable');
         }
 
         // Prepariamo il reindirizzamento verso Google
         $redirectUri = config('services.google.redirect');
-        $response = Socialite::driver('google')
+        /** @var GoogleProvider $google */
+        $google = Socialite::driver('google');
+        $response = $google
             ->stateless()
             ->redirectUrl($redirectUri)
             ->with(['prompt' => 'select_account consent']) // Chiede sempre di scegliere l'account
@@ -78,15 +167,16 @@ class GoogleController extends Controller
 
         // Salviamo l'URL del frontend e la pagina di redirect in cookie
         // per ricordare dove rimandare l'utente dopo che Google risponde
-        $redirectPath = trim((string) $request->query('redirect', '/'));
-        // Accettiamo solo percorsi relativi (iniziano con /) per sicurezza
-        if (!str_starts_with($redirectPath, '/')) {
-            $redirectPath = '/';
-        }
+        $intent = trim((string) $request->query('intent', 'login'));
+        $referral = trim((string) $request->query('ref', ''));
+        $userType = trim((string) $request->query('user_type', ''));
 
         return $response
             ->withCookie(cookie('frontend_redirect', $frontend, 15, '/', null, false, false))
-            ->withCookie(cookie('frontend_redirect_path', $redirectPath, 15, '/', null, false, false));
+            ->withCookie(cookie('frontend_redirect_path', $redirectPath, 15, '/', null, false, false))
+            ->withCookie(cookie('frontend_social_intent', $intent === 'register' ? 'register' : 'login', 15, '/', null, false, false))
+            ->withCookie(cookie('frontend_social_referral', $referral !== '' ? strtoupper($referral) : '', 15, '/', null, false, false))
+            ->withCookie(cookie('frontend_social_user_type', in_array($userType, ['privato', 'commerciante'], true) ? $userType : 'privato', 15, '/', null, false, false));
     }
 
     // Questa funzione viene chiamata quando Google rimanda l'utente al nostro sito
@@ -94,51 +184,89 @@ class GoogleController extends Controller
     public function handleGoogleCallback(Request $request)
     {
         // Recuperiamo l'URL del frontend dal cookie salvato prima
-        $frontendUrl = rtrim((string) ($request->cookie('frontend_redirect') ?: config('app.frontend_url', config('app.url'))), '/');
+        $frontendUrl = $this->resolveAllowedFrontendUrl((string) ($request->cookie('frontend_redirect') ?: $this->fallbackFrontendUrl()));
+        $redirectPath = $this->normalizeRedirectPath((string) ($request->cookie('frontend_redirect_path') ?: '/'));
+
+        if (! $this->isGoogleConfigured()) {
+            return $this->redirectWithFrontendError($frontendUrl, $redirectPath, 'google_unavailable')
+                ->withoutCookie('frontend_redirect')
+                ->withoutCookie('frontend_redirect_path')
+                ->withoutCookie('frontend_social_intent')
+                ->withoutCookie('frontend_social_referral')
+                ->withoutCookie('frontend_social_user_type');
+        }
 
         try {
             // Chiediamo a Google i dati dell'utente che ha fatto l'accesso
             $redirectUri = config('services.google.redirect');
-            $googleUser = Socialite::driver('google')
+            /** @var GoogleProvider $google */
+            $google = Socialite::driver('google');
+            $googleUser = $google
                 ->stateless()
                 ->redirectUrl($redirectUri)
                 ->user();
         } catch (\Exception $e) {
             // Se qualcosa va storto con Google, rimandiamo l'utente alla pagina di login con un errore
-            return redirect($frontendUrl . '/autenticazione?error=google_failed')
+            return $this->redirectWithFrontendError($frontendUrl, $redirectPath, 'google_failed')
                 ->withoutCookie('frontend_redirect')
-                ->withoutCookie('frontend_redirect_path');
+                ->withoutCookie('frontend_redirect_path')
+                ->withoutCookie('frontend_social_intent')
+                ->withoutCookie('frontend_social_referral')
+                ->withoutCookie('frontend_social_user_type');
+        }
+
+        $googleEmail = $googleUser->getEmail();
+        if (! $googleEmail) {
+            return $this->redirectWithFrontendError($frontendUrl, $redirectPath, 'google_email_missing')
+                ->withoutCookie('frontend_redirect')
+                ->withoutCookie('frontend_redirect_path')
+                ->withoutCookie('frontend_social_intent')
+                ->withoutCookie('frontend_social_referral')
+                ->withoutCookie('frontend_social_user_type');
         }
 
         // Cerchiamo se esiste gia' un utente con questa email nel nostro database
-        $user = User::where('email', $googleUser->email)->first();
+        $user = User::where('email', $googleEmail)->first();
 
         if ($user) {
             // Utente esistente - aggiorniamo google_id e avatar se non presenti
             $updates = [];
-            if (!$user->google_id) {
+            if (! $user->google_id) {
                 $updates['google_id'] = $googleUser->getId();
             }
-            if (!$user->avatar && $googleUser->getAvatar()) {
+            if (! $user->avatar && $googleUser->getAvatar()) {
                 $updates['avatar'] = $googleUser->getAvatar();
             }
-            if (!$user->email_verified_at) {
+            if (! $user->email_verified_at) {
                 $updates['email_verified_at'] = now();
             }
-            if (!empty($updates)) {
+            if (! empty($updates)) {
                 $user->update($updates);
             }
         } else {
+            $socialIntent = $request->cookie('frontend_social_intent');
+            $referralCode = strtoupper(trim((string) $request->cookie('frontend_social_referral', '')));
+            $userType = trim((string) $request->cookie('frontend_social_user_type', 'privato'));
+            $validatedReferral = null;
+
+            if ($socialIntent === 'register' && $referralCode !== '') {
+                $validatedReferral = User::where('referral_code', $referralCode)
+                    ->where('role', 'Partner Pro')
+                    ->value('referral_code');
+            }
+
             // Se l'utente non esiste, lo creiamo con i dati di Google
             $user = new User([
-                'email' => $googleUser->email,
+                'email' => $googleEmail,
                 'name' => $googleUser->user['given_name'] ?? $googleUser->getName(),
                 'surname' => $googleUser->user['family_name'] ?? '',
-                'telephone_number' => '0',
+                'telephone_number' => '',
                 'email_verified_at' => now(), // L'email e' automaticamente verificata (Google l'ha gia' controllata)
                 'password' => Str::random(16), // Password casuale (l'utente usa Google per accedere)
                 'google_id' => $googleUser->getId(),
                 'avatar' => $googleUser->getAvatar(),
+                'referred_by' => $validatedReferral,
+                'user_type' => in_array($userType, ['privato', 'commerciante'], true) ? $userType : 'privato',
             ]);
             // Il ruolo va impostato esplicitamente perche' non e' tra i campi $fillable
             // (per sicurezza: nessuno puo' auto-assegnarsi un ruolo tramite richiesta HTTP)
@@ -147,17 +275,18 @@ class GoogleController extends Controller
         }
 
         // Facciamo il login automatico dell'utente nel sistema
-        Auth::login($user);
-
-        // Recuperiamo il percorso di redirect salvato nel cookie (default: homepage)
-        $redirectPath = trim((string) ($request->cookie('frontend_redirect_path') ?: '/'));
-        if (!str_starts_with($redirectPath, '/')) {
-            $redirectPath = '/';
+        Auth::login($user, true);
+        if ($request->hasSession()) {
+            $request->session()->regenerate();
         }
 
         // Reindirizziamo l'utente alla pagina dove si trovava prima del login
-        return redirect($frontendUrl . $redirectPath)
+        return redirect($frontendUrl.$redirectPath)
+            ->withCookie(AuthUiCookie::issueForUser($user, true))
             ->withoutCookie('frontend_redirect')
-            ->withoutCookie('frontend_redirect_path');
+            ->withoutCookie('frontend_redirect_path')
+            ->withoutCookie('frontend_social_intent')
+            ->withoutCookie('frontend_social_referral')
+            ->withoutCookie('frontend_social_user_type');
     }
 }

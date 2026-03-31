@@ -97,7 +97,6 @@ const addImage = async () => {
 			}
 		} catch (err) {
 			uiFeedback.error("Errore caricamento immagine", "Riprova tra qualche secondo.");
-			console.error(err);
 		} finally {
 			imageUploading.value = false;
 		}

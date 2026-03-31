@@ -20,11 +20,11 @@
 -->
 <script setup>
 definePageMeta({
-	middleware: ["sanctum:auth", "admin"],
+	middleware: ["app-auth", "admin"],
 });
 
 const sanctum = useSanctumClient();
-const { formatCurrency, formatCents, formatDate, orderStatusConfig } = useAdmin();
+const { formatCents, formatDate, orderStatusConfig } = useAdmin();
 
 const isLoading = ref(true);
 const dashboardData = ref(null);
@@ -54,6 +54,56 @@ const visibleOrders = computed(() => {
 	return dashboardData.value.recent_orders.slice(0, ordersToShow.value);
 });
 
+const adminQuickLinks = [
+	{ label: 'Ordini', to: '/account/amministrazione/ordini', icon: 'mdi:receipt-text-outline' },
+	{ label: 'Utenti', to: '/account/amministrazione/utenti', icon: 'mdi:account-group-outline' },
+	{ label: 'Prezzi', to: '/account/amministrazione/prezzi', icon: 'mdi:cash-multiple' },
+	{ label: 'Messaggi', to: '/account/amministrazione/messaggi', icon: 'mdi:email-outline' },
+	{ label: 'Impostazioni', to: '/account/amministrazione/impostazioni', icon: 'mdi:cog-outline' },
+];
+
+const adminAlerts = computed(() => {
+	if (!dashboardData.value) return [];
+
+	return [
+		dashboardData.value.pending_withdrawals > 0 ? {
+			key: 'withdrawals',
+			to: '/account/amministrazione/prelievi',
+			label: `${dashboardData.value.pending_withdrawals} prelievi in attesa`,
+			icon: 'mdi:cash-refund',
+			tone: 'warning',
+		} : null,
+		dashboardData.value.unread_messages > 0 ? {
+			key: 'messages',
+			to: '/account/amministrazione/messaggi',
+			label: `${dashboardData.value.unread_messages} messaggi non letti`,
+			icon: 'mdi:email-outline',
+			tone: 'info',
+		} : null,
+		dashboardData.value.orders.payment_failed > 0 ? {
+			key: 'payments',
+			to: '/account/amministrazione/ordini',
+			label: `${dashboardData.value.orders.payment_failed} pagamenti falliti`,
+			icon: 'mdi:credit-card-alert-outline',
+			tone: 'critical',
+		} : null,
+		dashboardData.value.shipments.without_label > 0 ? {
+			key: 'labels',
+			to: '/account/amministrazione/ordini',
+			label: `${dashboardData.value.shipments.without_label} senza etichetta`,
+			icon: 'mdi:package-variant-closed-remove',
+			tone: 'warning',
+		} : null,
+		dashboardData.value.pending_pro_requests > 0 ? {
+			key: 'pro',
+			to: '/account/amministrazione/utenti',
+			label: `${dashboardData.value.pending_pro_requests} richieste Pro`,
+			icon: 'mdi:account-star-outline',
+			tone: 'info',
+		} : null,
+	].filter(Boolean);
+});
+
 const hasMoreOrders = computed(() => {
 	if (!dashboardData.value?.recent_orders?.length) return false;
 	return ordersToShow.value < dashboardData.value.recent_orders.length;
@@ -63,85 +113,95 @@ const showMoreOrders = () => {
 	ordersToShow.value += 5;
 };
 
-// Computed stats
-const pendingWithdrawals = computed(() => withdrawalsData.value?.filter(w => w.status === 'pending') || []);
-const approvedWithdrawals = computed(() => withdrawalsData.value?.filter(w => w.status === 'approved') || []);
-const totalApproved = computed(() => approvedWithdrawals.value.reduce((sum, w) => sum + Number(w.amount), 0));
-const unverifiedUsers = computed(() => usersData.value?.filter(u => !u.email_verified_at) || []);
 </script>
 
 <template>
-	<section class="min-h-[600px] py-[40px] desktop:py-[60px] desktop-xl:py-[80px]">
+	<section class="min-h-[600px] py-[24px] desktop:py-[40px]">
 		<div class="my-container">
-			<!-- Breadcrumb -->
-			<div class="mb-[24px] text-[0.875rem] text-[#737373]">
-				<NuxtLink to="/account" class="hover:underline text-[#095866] font-medium">Il tuo account</NuxtLink>
-				<span class="mx-[8px] text-[#C8CCD0]">/</span>
-				<span class="font-semibold text-[#252B42]">Amministrazione</span>
+			<AccountPageHeader
+				eyebrow="Area amministrazione"
+				title="Dashboard admin"
+				description=""
+				:crumbs="[
+					{ label: 'Account', to: '/account' },
+					{ label: 'Amministrazione' },
+				]"
+			/>
+
+			<div class="mb-[16px] grid grid-cols-2 tablet:grid-cols-3 desktop:grid-cols-5 gap-[8px]">
+				<NuxtLink
+					v-for="link in adminQuickLinks"
+					:key="link.to"
+					:to="link.to"
+					class="group flex items-center gap-[10px] min-h-[52px] px-[14px] py-[10px] rounded-[16px] bg-white border border-[#E9EBEC] shadow-sm hover:border-[#B7D7DF] hover:bg-[#F8FBFC] transition-colors">
+					<div class="w-[32px] h-[32px] rounded-[12px] bg-[#F4FAFC] flex items-center justify-center text-[#095866] shrink-0">
+						<Icon :name="link.icon" class="text-[18px]" />
+					</div>
+					<div class="min-w-0">
+						<p class="text-[0.8125rem] font-semibold text-[#252B42] leading-[1.15]">{{ link.label }}</p>
+					</div>
+				</NuxtLink>
 			</div>
 
-			<h1 class="text-[1.75rem] font-bold text-[#252B42] mb-[8px]">Pannello Amministrazione</h1>
-			<p class="text-[0.875rem] text-[#737373] mb-[32px]">Panoramica generale, notifiche e attivita' recenti.</p>
-
 			<!-- Loading -->
-			<div v-if="isLoading" class="py-[60px] flex justify-center">
+			<div v-if="isLoading" class="py-[48px] flex justify-center">
 				<div class="w-[40px] h-[40px] border-3 border-[#E9EBEC] border-t-[#095866] rounded-full animate-spin"></div>
 			</div>
 
 			<template v-else>
 				<div v-if="dashboardData">
 					<!-- Stats cards row 1: main KPIs -->
-					<div class="grid grid-cols-2 desktop:grid-cols-4 gap-[16px] mb-[16px]">
-						<div class="bg-white rounded-[16px] p-[20px] border border-[#E9EBEC] shadow-sm">
-							<div class="flex items-center gap-[8px] mb-[8px]">
-								<div class="w-[36px] h-[36px] rounded-[50px] bg-blue-50 flex items-center justify-center">
+					<div class="grid grid-cols-1 tablet:grid-cols-2 desktop:grid-cols-4 gap-[12px] desktop:gap-[14px] mb-[14px]">
+						<div class="bg-white rounded-[16px] p-[14px] tablet:p-[16px] border border-[#E9EBEC] shadow-sm">
+							<div class="flex items-center gap-[8px] mb-[6px]">
+								<div class="w-[32px] h-[32px] rounded-[50px] bg-blue-50 flex items-center justify-center">
 									<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[18px] h-[18px] text-blue-600" fill="currentColor"><path d="M13,12H20V13.5H13M13,9.5H20V11H13M13,14.5H20V16H13M21,4H3A2,2 0 0,0 1,6V19A2,2 0 0,0 3,21H21A2,2 0 0,0 23,19V6A2,2 0 0,0 21,4M21,19H12V6H21"/></svg>
 								</div>
 								<p class="text-[0.75rem] text-[#737373] uppercase tracking-[0.5px] font-medium">Ordini totali</p>
 							</div>
-							<p class="text-[1.75rem] font-bold text-[#252B42]">{{ dashboardData.orders.total }}</p>
-							<div class="flex gap-[12px] mt-[6px] text-[0.6875rem] text-[#737373]">
+							<p class="text-[1.5rem] font-bold text-[#252B42]">{{ dashboardData.orders.total }}</p>
+							<div class="flex gap-[10px] mt-[6px] text-[0.6875rem] text-[#737373]">
 								<span class="text-amber-600">{{ dashboardData.orders.pending }} in attesa</span>
 								<span class="text-emerald-600">{{ dashboardData.orders.completed }} completati</span>
 							</div>
 						</div>
 
-						<div class="bg-white rounded-[16px] p-[20px] border border-[#E9EBEC] shadow-sm">
-							<div class="flex items-center gap-[8px] mb-[8px]">
-								<div class="w-[36px] h-[36px] rounded-[50px] bg-emerald-50 flex items-center justify-center">
+						<div class="bg-white rounded-[16px] p-[14px] tablet:p-[16px] border border-[#E9EBEC] shadow-sm">
+							<div class="flex items-center gap-[8px] mb-[6px]">
+								<div class="w-[32px] h-[32px] rounded-[50px] bg-emerald-50 flex items-center justify-center">
 									<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[18px] h-[18px] text-emerald-600" fill="currentColor"><path d="M15,18.5C12.49,18.5 10.32,17.08 9.24,15H15L16,13H8.58C8.53,12.67 8.5,12.34 8.5,12C8.5,11.66 8.53,11.33 8.58,11H15L16,9H9.24C10.32,6.92 12.5,5.5 15,5.5C16.61,5.5 18.09,6.09 19.23,7.07L21,5.29C19.41,3.86 17.31,3 15,3C11.08,3 7.76,5.51 6.52,9H3L2,11H6.06C6.02,11.33 6,11.66 6,12C6,12.34 6.02,12.67 6.06,13H3L2,15H6.52C7.76,18.49 11.08,21 15,21C17.31,21 19.41,20.14 21,18.71L19.22,16.93C18.09,17.91 16.62,18.5 15,18.5Z"/></svg>
 								</div>
 								<p class="text-[0.75rem] text-[#737373] uppercase tracking-[0.5px] font-medium">Fatturato totale</p>
 							</div>
-							<p class="text-[1.75rem] font-bold text-emerald-600">&euro;{{ formatCents(dashboardData.revenue) }}</p>
+							<p class="text-[1.5rem] font-bold text-emerald-600">&euro;{{ formatCents(dashboardData.revenue) }}</p>
 							<div class="mt-[6px] text-[0.6875rem] text-[#737373]">
 								<span class="text-emerald-600">&euro;{{ formatCents(dashboardData.revenue_month) }} questo mese</span>
 							</div>
 						</div>
 
-						<div class="bg-white rounded-[16px] p-[20px] border border-[#E9EBEC] shadow-sm">
-							<div class="flex items-center gap-[8px] mb-[8px]">
-								<div class="w-[36px] h-[36px] rounded-[50px] bg-purple-50 flex items-center justify-center">
+						<div class="bg-white rounded-[16px] p-[14px] tablet:p-[16px] border border-[#E9EBEC] shadow-sm">
+							<div class="flex items-center gap-[8px] mb-[6px]">
+								<div class="w-[32px] h-[32px] rounded-[50px] bg-purple-50 flex items-center justify-center">
 									<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[18px] h-[18px] text-purple-600" fill="currentColor"><path d="M16,13C15.71,13 15.38,13 15.03,13.05C16.19,13.89 17,15 17,16.5V18H22V16.5C22,14.17 18.33,13 16,13M8,13C5.67,13 2,14.17 2,16.5V18H14V16.5C14,14.17 10.33,13 8,13M8,11A3,3 0 0,0 11,8A3,3 0 0,0 8,5A3,3 0 0,0 5,8A3,3 0 0,0 8,11M16,11A3,3 0 0,0 19,8A3,3 0 0,0 16,5A3,3 0 0,0 13,8A3,3 0 0,0 16,11Z"/></svg>
 								</div>
 								<p class="text-[0.75rem] text-[#737373] uppercase tracking-[0.5px] font-medium">Utenti</p>
 							</div>
-							<p class="text-[1.75rem] font-bold text-[#252B42]">{{ dashboardData.users.total }}</p>
-							<div class="flex gap-[12px] mt-[6px] text-[0.6875rem] text-[#737373]">
+							<p class="text-[1.5rem] font-bold text-[#252B42]">{{ dashboardData.users.total }}</p>
+							<div class="flex gap-[10px] mt-[6px] text-[0.6875rem] text-[#737373]">
 								<span class="text-emerald-600">{{ dashboardData.users.verified }} verificati</span>
 								<span class="text-[#095866]">{{ dashboardData.users.pro }} Pro</span>
 							</div>
 						</div>
 
-						<div class="bg-white rounded-[16px] p-[20px] border border-[#E9EBEC] shadow-sm">
-							<div class="flex items-center gap-[8px] mb-[8px]">
-								<div class="w-[36px] h-[36px] rounded-[50px] bg-indigo-50 flex items-center justify-center">
+						<div class="bg-white rounded-[16px] p-[14px] tablet:p-[16px] border border-[#E9EBEC] shadow-sm">
+							<div class="flex items-center gap-[8px] mb-[6px]">
+								<div class="w-[32px] h-[32px] rounded-[50px] bg-indigo-50 flex items-center justify-center">
 									<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[18px] h-[18px] text-indigo-600" fill="currentColor"><path d="M18,18.5A1.5,1.5 0 0,1 16.5,17A1.5,1.5 0 0,1 18,15.5A1.5,1.5 0 0,1 19.5,17A1.5,1.5 0 0,1 18,18.5M19.5,9.5L21.46,12H17V9.5M6,18.5A1.5,1.5 0 0,1 4.5,17A1.5,1.5 0 0,1 6,15.5A1.5,1.5 0 0,1 7.5,17A1.5,1.5 0 0,1 6,18.5M20,8H17V4H3C1.89,4 1,4.89 1,6V17H3A3,3 0 0,0 6,20A3,3 0 0,0 9,17H15A3,3 0 0,0 18,20A3,3 0 0,0 21,17H23V12L20,8Z"/></svg>
 								</div>
-								<p class="text-[0.75rem] text-[#737373] uppercase tracking-[0.5px] font-medium">Spedizioni BRT</p>
+								<p class="text-[0.75rem] text-[#737373] uppercase tracking-[0.5px] font-medium">Tracking BRT</p>
 							</div>
-							<p class="text-[1.75rem] font-bold text-[#252B42]">{{ dashboardData.shipments.with_label }}</p>
-							<div class="flex gap-[12px] mt-[6px] text-[0.6875rem] text-[#737373]">
+							<p class="text-[1.5rem] font-bold text-[#252B42]">{{ dashboardData.shipments.with_label }}</p>
+							<div class="flex gap-[10px] mt-[6px] text-[0.6875rem] text-[#737373]">
 								<span class="text-indigo-600">{{ dashboardData.shipments.in_transit }} in transito</span>
 								<span class="text-teal-600">{{ dashboardData.shipments.delivered }} consegnate</span>
 							</div>
@@ -149,74 +209,45 @@ const unverifiedUsers = computed(() => usersData.value?.filter(u => !u.email_ver
 					</div>
 
 					<!-- Stats cards row 2: period KPIs -->
-					<div class="grid grid-cols-3 desktop:grid-cols-3 gap-[16px] mb-[24px]">
-						<div class="bg-white rounded-[16px] p-[16px] border border-[#E9EBEC] shadow-sm">
+					<div class="grid grid-cols-1 tablet:grid-cols-3 gap-[12px] desktop:gap-[14px] mb-[20px]">
+						<div class="bg-white rounded-[16px] p-[13px] tablet:p-[14px] border border-[#E9EBEC] shadow-sm">
 							<p class="text-[0.6875rem] text-[#737373] uppercase tracking-[0.5px] font-medium mb-[4px]">Ordini oggi</p>
 							<p class="text-[1.5rem] font-bold text-[#252B42]">{{ dashboardData.orders.today }}</p>
 						</div>
-						<div class="bg-white rounded-[16px] p-[16px] border border-[#E9EBEC] shadow-sm">
+						<div class="bg-white rounded-[16px] p-[13px] tablet:p-[14px] border border-[#E9EBEC] shadow-sm">
 							<p class="text-[0.6875rem] text-[#737373] uppercase tracking-[0.5px] font-medium mb-[4px]">Questa settimana</p>
 							<p class="text-[1.5rem] font-bold text-[#252B42]">{{ dashboardData.orders.week }}</p>
 						</div>
-						<div class="bg-white rounded-[16px] p-[16px] border border-[#E9EBEC] shadow-sm">
+						<div class="bg-white rounded-[16px] p-[13px] tablet:p-[14px] border border-[#E9EBEC] shadow-sm">
 							<p class="text-[0.6875rem] text-[#737373] uppercase tracking-[0.5px] font-medium mb-[4px]">Questo mese</p>
 							<p class="text-[1.5rem] font-bold text-[#252B42]">{{ dashboardData.orders.month }}</p>
 						</div>
 					</div>
 
 					<!-- Quick alerts / notifiche -->
-					<div class="grid grid-cols-1 desktop:grid-cols-4 gap-[12px] mb-[24px]">
-						<NuxtLink v-if="dashboardData.pending_withdrawals > 0" to="/account/amministrazione/prelievi" class="bg-amber-50 rounded-[14px] p-[14px] border border-amber-200 cursor-pointer hover:border-amber-300 transition-colors">
-							<div class="flex items-center gap-[10px]">
-								<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[20px] h-[20px] text-amber-600 shrink-0" fill="currentColor"><path d="M2,5H22V7H2V5M15,10H22V12H15V10M15,16H22V18H15V16M2,10H13L8,15H2V10M2,16H8L13,21H2V16Z"/></svg>
-								<div>
-									<p class="text-[0.8125rem] font-semibold text-amber-800">{{ dashboardData.pending_withdrawals }} prelievi in attesa</p>
-									<p class="text-[0.6875rem] text-amber-600">Clicca per gestire</p>
-								</div>
+					<div v-if="adminAlerts.length" class="grid grid-cols-1 tablet:grid-cols-2 desktop:grid-cols-4 gap-[10px] mb-[20px]">
+						<NuxtLink
+							v-for="alert in adminAlerts"
+							:key="alert.key"
+							:to="alert.to"
+							class="sf-action-card sf-action-card--locked min-h-[58px] rounded-[16px] border-l-[3px]"
+							:class="alert.tone === 'critical' ? 'border-l-[#E44203]' : 'border-l-[#0E6572]'">
+							<div
+								class="sf-action-card__icon-shell"
+								:class="alert.tone === 'critical' ? 'sf-action-card__icon-shell--accent' : ''">
+								<Icon :name="alert.icon" class="text-[18px]" />
 							</div>
-						</NuxtLink>
-						<NuxtLink v-if="dashboardData.unread_messages > 0" to="/account/amministrazione/messaggi" class="bg-blue-50 rounded-[14px] p-[14px] border border-blue-200 cursor-pointer hover:border-blue-300 transition-colors">
-							<div class="flex items-center gap-[10px]">
-								<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[20px] h-[20px] text-blue-600 shrink-0" fill="currentColor"><path d="M20,8L12,13L4,8V6L12,11L20,6M20,4H4C2.89,4 2,4.89 2,6V18A2,2 0 0,0 4,20H20A2,2 0 0,0 22,18V6C22,4.89 21.1,4 20,4Z"/></svg>
-								<div>
-									<p class="text-[0.8125rem] font-semibold text-blue-800">{{ dashboardData.unread_messages }} messaggi non letti</p>
-									<p class="text-[0.6875rem] text-blue-600">Clicca per leggere</p>
-								</div>
-							</div>
-						</NuxtLink>
-						<NuxtLink v-if="dashboardData.orders.payment_failed > 0" to="/account/amministrazione/ordini" class="bg-red-50 rounded-[14px] p-[14px] border border-red-200 cursor-pointer hover:border-red-300 transition-colors">
-							<div class="flex items-center gap-[10px]">
-								<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[20px] h-[20px] text-red-600 shrink-0" fill="currentColor"><path d="M20,8H4V6H20M20,18H4V12H20M20,4H4C2.89,4 2,4.89 2,6V18A2,2 0 0,0 4,20H20A2,2 0 0,0 22,18V6C22,4.89 21.1,4 20,4Z"/></svg>
-								<div>
-									<p class="text-[0.8125rem] font-semibold text-red-800">{{ dashboardData.orders.payment_failed }} pagamenti falliti</p>
-									<p class="text-[0.6875rem] text-red-600">Clicca per vedere</p>
-								</div>
-							</div>
-						</NuxtLink>
-						<NuxtLink v-if="dashboardData.shipments.without_label > 0" to="/account/amministrazione/ordini" class="bg-orange-50 rounded-[14px] p-[14px] border border-orange-200 cursor-pointer hover:border-orange-300 transition-colors">
-							<div class="flex items-center gap-[10px]">
-								<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[20px] h-[20px] text-orange-600 shrink-0" fill="currentColor"><path d="M18.73,18L20.47,6.62C20.79,6.79 21,7.12 21,7.5V16.5C21,16.88 20.79,17.21 20.47,17.38L18.73,18M3.53,6.62L11.43,2.18C11.59,2.06 11.79,2 12,2C12.21,2 12.41,2.06 12.57,2.18L20.47,6.62C20.79,6.79 21,7.12 21,7.5V16.5C21,16.88 20.79,17.21 20.47,17.38L12.57,21.82C12.41,21.94 12.21,22 12,22C11.79,22 11.59,21.94 11.43,21.82L3.53,17.38C3.21,17.21 3,16.88 3,16.5V7.5C3,7.12 3.21,6.79 3.53,6.62Z"/></svg>
-								<div>
-									<p class="text-[0.8125rem] font-semibold text-orange-800">{{ dashboardData.shipments.without_label }} senza etichetta</p>
-									<p class="text-[0.6875rem] text-orange-600">Ordini completati senza label BRT</p>
-								</div>
-							</div>
-						</NuxtLink>
-						<NuxtLink v-if="dashboardData.pending_pro_requests > 0" to="/account/amministrazione/utenti" class="bg-purple-50 rounded-[14px] p-[14px] border border-purple-200 cursor-pointer hover:border-purple-300 transition-colors">
-							<div class="flex items-center gap-[10px]">
-								<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[20px] h-[20px] text-purple-600 shrink-0" fill="currentColor"><path d="M12,15.39L8.24,17.66L9.23,13.38L5.91,10.5L10.29,10.13L12,6.09L13.71,10.13L18.09,10.5L14.77,13.38L15.76,17.66M22,9.24L14.81,8.63L12,2L9.19,8.63L2,9.24L7.46,13.97L5.82,21L12,17.27L18.18,21L16.54,13.97L22,9.24Z"/></svg>
-								<div>
-									<p class="text-[0.8125rem] font-semibold text-purple-800">{{ dashboardData.pending_pro_requests }} richieste Pro</p>
-									<p class="text-[0.6875rem] text-purple-600">Clicca per gestire</p>
-								</div>
+							<div class="min-w-0">
+								<p class="text-[0.8125rem] font-semibold leading-[1.2] text-[#252B42]">{{ alert.label }}</p>
+								<p class="mt-[2px] text-[0.6875rem] text-[#67788A]">Apri gestione</p>
 							</div>
 						</NuxtLink>
 					</div>
 
 					<!-- Orders chart (CSS bars, last 30 days) -->
-					<div v-if="dashboardData.daily_orders?.length" class="bg-white rounded-[20px] p-[24px] desktop:p-[32px] shadow-sm border border-[#E9EBEC] mb-[24px]">
-						<h2 class="text-[1.125rem] font-bold text-[#252B42] mb-[16px]">Ordini ultimi 30 giorni</h2>
-						<div class="flex items-end gap-[4px] h-[120px]">
+					<div v-if="dashboardData.daily_orders?.length" class="bg-white rounded-[20px] p-[20px] desktop:p-[28px] shadow-sm border border-[#E9EBEC] mb-[20px]">
+						<h2 class="text-[1.0625rem] font-bold text-[#252B42] mb-[14px]">Ordini ultimi 30 giorni</h2>
+						<div class="flex items-end gap-[4px] h-[108px]">
 							<div
 								v-for="(day, i) in dashboardData.daily_orders"
 								:key="i"
@@ -234,21 +265,21 @@ const unverifiedUsers = computed(() => usersData.value?.filter(u => !u.email_ver
 					</div>
 
 					<!-- Recent orders (espandibile) -->
-					<div class="bg-white rounded-[20px] p-[24px] desktop:p-[32px] shadow-sm border border-[#E9EBEC]">
-						<div class="flex items-center justify-between mb-[20px]">
-							<h2 class="text-[1.125rem] font-bold text-[#252B42]">Ultimi ordini</h2>
+					<div class="bg-white rounded-[20px] p-[20px] desktop:p-[28px] shadow-sm border border-[#E9EBEC]">
+						<div class="flex items-center justify-between mb-[16px]">
+							<h2 class="text-[1.0625rem] font-bold text-[#252B42]">Ultimi ordini</h2>
 							<NuxtLink to="/account/amministrazione/ordini" class="inline-flex items-center gap-[4px] text-[0.75rem] text-[#737373] hover:text-[#095866] hover:underline font-medium">
 								Gestione completa
 								<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[14px] h-[14px]" fill="currentColor"><path d="M4,11V13H16L10.5,18.5L11.92,19.92L19.84,12L11.92,4.08L10.5,5.5L16,11H4Z"/></svg>
 							</NuxtLink>
 						</div>
 
-						<div v-if="!dashboardData.recent_orders?.length" class="text-center py-[32px] text-[#737373]">
+						<div v-if="!dashboardData.recent_orders?.length" class="text-center py-[28px] text-[#737373]">
 							<p>Nessun ordine recente.</p>
 						</div>
 
 						<div v-else class="space-y-[8px]">
-							<div v-for="order in visibleOrders" :key="order.id" class="flex items-center justify-between p-[14px] rounded-[12px] border border-[#F0F0F0] hover:border-[#E0E0E0] transition-colors">
+							<div v-for="order in visibleOrders" :key="order.id" class="flex items-center justify-between p-[12px] rounded-[12px] border border-[#F0F0F0] hover:border-[#E0E0E0] transition-colors">
 								<div class="flex items-center gap-[14px]">
 									<span class="text-[0.8125rem] font-bold text-[#252B42]">#{{ order.id }}</span>
 									<span class="text-[0.8125rem] text-[#404040]">{{ order.user?.name }} {{ order.user?.surname }}</span>
@@ -266,8 +297,8 @@ const unverifiedUsers = computed(() => usersData.value?.filter(u => !u.email_ver
 					</div>
 
 					<!-- Espandi - mostra altri 5 ordini -->
-					<div v-if="hasMoreOrders" class="text-center mt-[16px]">
-						<button @click="showMoreOrders" class="inline-flex items-center gap-[6px] px-[24px] py-[12px] text-[#095866] hover:bg-[#f0f7f8] rounded-[12px] text-[0.875rem] font-medium transition-colors cursor-pointer border border-[#E9EBEC] hover:border-[#095866]">
+					<div v-if="hasMoreOrders" class="text-center mt-[14px]">
+						<button @click="showMoreOrders" class="inline-flex items-center gap-[6px] px-[22px] py-[11px] text-[#095866] hover:bg-[#f0f7f8] rounded-[12px] text-[0.875rem] font-medium transition-colors cursor-pointer border border-[#E9EBEC] hover:border-[#095866]">
 							<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[16px] h-[16px]" fill="currentColor"><path d="M7.41,8.58L12,13.17L16.59,8.58L18,10L12,16L6,10L7.41,8.58Z"/></svg>
 							Espandi (+5 ordini)
 						</button>

@@ -88,8 +88,8 @@ const services = [
 
 <style scoped>
 .hp-services-section {
-	margin-top: 92px;
-	padding: 74px 0 64px;
+	margin-top: 64px;
+	padding: 56px 0 48px;
 	background: #f3f8fb;
 	border-top: 1px solid #dbe7ee;
 }
@@ -125,7 +125,7 @@ const services = [
 }
 
 .hp-services-grid {
-	margin-top: 30px;
+	margin-top: 22px;
 	display: grid;
 	grid-template-columns: 1fr;
 	gap: 14px;
@@ -293,6 +293,49 @@ const services = [
 	.hp-services-icon-wrap {
 		width: 52px;
 		height: 52px;
+	}
+}
+
+@media (min-width: 23.4375rem) and (max-width: 47.99rem) {
+	.hp-services-grid {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		gap: 12px;
+	}
+
+	.hp-services-card {
+		min-height: 198px;
+		padding: 14px;
+	}
+
+	.hp-services-head {
+		align-items: flex-start;
+	}
+
+	.hp-services-icon-wrap {
+		width: 48px;
+		height: 48px;
+		border-radius: 14px;
+	}
+
+	.hp-services-icon {
+		width: 34px;
+		height: 34px;
+	}
+
+	.hp-services-card-title {
+		font-size: 1.02rem;
+	}
+
+	.hp-services-card-text {
+		font-size: 0.84rem;
+		line-height: 1.45;
+	}
+
+	.hp-services-cta {
+		height: 36px;
+		padding: 0 12px;
+		font-size: 0.78rem;
+		border-radius: 10px;
 	}
 }
 

@@ -10,11 +10,39 @@
  * Questo controlla il campo user.role: se non e' "Admin", l'utente viene
  * reindirizzato alla pagina del suo account.
  *
- * VINCOLI: richiede che l'utente sia gia' autenticato (usare insieme a sanctum:auth)
+ * VINCOLI: richiede che l'utente sia gia' autenticato (usare insieme a app-auth)
  * COLLEGAMENTI: laravel-spedizionefacile-main/app/Models/User.php (campo role)
  */
-export default defineNuxtRouteMiddleware((to, from) => {
-	const { user } = useSanctumAuth();
+export default defineNuxtRouteMiddleware(async () => {
+	if (import.meta.server) {
+		return;
+	}
+
+	const { init, user } = useSanctumAuth();
+	const bootstrapReady = useState('auth-bootstrap-ready', () => false);
+	const bootstrapStatus = useState('auth-bootstrap-status', () => 'idle');
+	bootstrapReady.value = false;
+	bootstrapStatus.value = 'pending';
+
+	try {
+		await init();
+		bootstrapStatus.value = 'resolved';
+	} catch (error) {
+		const err = /** @type {{ status?: number; response?: { status?: number } }} */ (error);
+		const status = Number(err?.status ?? err?.response?.status ?? 0);
+		if ([401, 419].includes(status)) {
+			bootstrapStatus.value = 'resolved';
+		} else {
+			bootstrapStatus.value = 'failed';
+		}
+		// app-auth gestisce gia' il redirect degli utenti non autenticati
+	} finally {
+		bootstrapReady.value = true;
+	}
+
+	if (bootstrapStatus.value === 'failed') {
+		return;
+	}
 
 	if (user.value?.role !== "Admin") {
 		return navigateTo("/account");

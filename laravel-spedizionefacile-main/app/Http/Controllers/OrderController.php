@@ -1,4 +1,5 @@
 <?php
+
 /**
  * FILE: OrderController.php
  * SCOPO: Gestisce il ciclo di vita degli ordini di spedizione (CRUD, creazione diretta, annullamento).
@@ -22,7 +23,6 @@
  * VINCOLI:
  *   - I prezzi nel DB sono in CENTESIMI. createDirectOrder() converte: round(euro * 100)
  *   - createDirectOrder() RICALCOLA i prezzi lato server (non si fida del frontend)
- *   - La pulizia ordini vuoti avviene SOLO per ordini pending/payment_failed
  *   - La tabella pivot package_order collega ordini a pacchi (relazione many-to-many)
  *
  * ERRORI TIPICI:
@@ -30,7 +30,7 @@
  *   - 422: ordine non annullabile (stato non pending/payment_failed)
  *
  * PUNTI DI MODIFICA SICURI:
- *   - Per cambiare le fasce prezzo di createDirectOrder(): modificare i blocchi if/elseif
+ *   - Per cambiare le fasce prezzo di createDirectOrder(): intervenire su PriceEngineService
  *   - Per aggiungere uno stato ordine: aggiungere la costante in Order.php e gestire qui
  *   - Per cambiare la logica di annullamento: modificare RefundController (cancel() delega a quello)
  *
@@ -43,34 +43,32 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\User;
+use App\Http\Requests\PackageStoreRequest;
+use App\Http\Resources\OrderResource;
 use App\Models\Order;
 use App\Models\Package;
 use App\Models\PackageAddress;
 use App\Models\Service;
 use App\Services\PriceEngineService;
+use App\Services\ShipmentServicePricingService;
 use Illuminate\Http\Request;
-use App\Http\Requests\PackageStoreRequest;
-use App\Http\Resources\OrderResource;
-use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 
 class OrderController extends Controller
 {
     use Traits\NormalizesServiceData;
+
     // Mostra la lista degli ordini
     // Se l'utente e' un amministratore, vede gli ordini di TUTTI gli utenti
     // Se e' un utente normale, vede solo i PROPRI ordini
-    public function index(Request $request) {
+    public function index(Request $request)
+    {
 
         // Controllo dei permessi: verifica che l'utente possa vedere gli ordini
         Gate::authorize('viewAny', Order::class);
 
         $user = $request->user();
-
-        // Pulizia automatica: rimuoviamo gli ordini vuoti (senza pacchi) dell'utente
-        // che possono essere rimasti per errore (es. pagamento non completato)
-        $this->cleanupEmptyOrders($user);
 
         // Specifichiamo quali dati collegati caricare insieme agli ordini
         // per evitare di fare troppe richieste al database
@@ -99,7 +97,8 @@ class OrderController extends Controller
     }
 
     // Mostra i dettagli di un singolo ordine
-    public function show(Order $order) {
+    public function show(Order $order)
+    {
 
         // Controllo dei permessi: verifica che l'utente possa vedere questo ordine
         Gate::authorize('view', $order);
@@ -127,7 +126,8 @@ class OrderController extends Controller
      * COSA EVITARE: Non rimuovere il ricalcolo prezzi lato server — e' una misura di sicurezza.
      *   Non fidarsi MAI dei prezzi inviati dal frontend in questo metodo.
      */
-    public function createDirectOrder(PackageStoreRequest $request) {
+    public function createDirectOrder(PackageStoreRequest $request)
+    {
         $data = $request->validated();
         $userId = auth()->id();
 
@@ -136,11 +136,13 @@ class OrderController extends Controller
             $origin = PackageAddress::create($data['origin_address']);
             $destination = PackageAddress::create($data['destination_address']);
             $priceEngine = app(PriceEngineService::class);
+            $servicePricing = app(ShipmentServicePricingService::class);
             $capSupplementCents = $priceEngine->calculateCapSupplementCents($origin->postal_code ?? null, $destination->postal_code ?? null);
 
             // Creiamo i servizi aggiuntivi
             $servicesData = $this->normalizeServiceData($data['services']);
             $service = Service::create($servicesData);
+            $serviceData = $servicesData['service_data'] ?? [];
 
             $subtotalCents = 0;
             $packages = [];
@@ -187,34 +189,39 @@ class OrderController extends Controller
             }
 
             // Controlliamo se e' stato selezionato il servizio Contrassegno
-            $isCod = false;
-            $codAmount = null;
             $serviceType = $servicesData['service_type'] ?? '';
-            if (str_contains($serviceType, 'Contrassegno')) {
-                $serviceData = $data['services']['serviceData'] ?? [];
-                $contrassegnoData = $serviceData['Contrassegno'] ?? [];
-                $importo = $contrassegnoData['importo'] ?? null;
-                if ($importo) {
-                    $isCod = true;
-                    // L'importo arriva come stringa (es. "50.00" o "50,00")
-                    $codAmount = (float) str_replace(',', '.', $importo);
-                }
-            }
+            $isCod = in_array('contrassegno', $servicePricing->normalizeSelectedServices($serviceType), true);
+            $codAmount = $isCod ? $servicePricing->extractContrassegnoAmount($serviceData) : null;
+            $serviceSurchargeCents = $servicePricing->calculateSurchargeCents(
+                $serviceType,
+                $serviceData,
+                (bool) ($serviceData['sms_email_notification'] ?? false),
+                [
+                    'packages' => $data['packages'] ?? [],
+                    'origin_address' => $data['origin_address'] ?? [],
+                    'destination_address' => (($data['delivery_mode'] ?? ($serviceData['delivery_mode'] ?? 'home')) === 'pudo' && ! empty($data['pudo']))
+                        ? $data['pudo']
+                        : ($data['destination_address'] ?? []),
+                    'delivery_mode' => $data['delivery_mode'] ?? ($serviceData['delivery_mode'] ?? 'home'),
+                    'selected_pudo' => $data['selected_pudo'] ?? $data['pudo'] ?? ($serviceData['pudo'] ?? null),
+                    'requires_manual_quote' => (bool) ($data['requires_manual_quote'] ?? $serviceData['requires_manual_quote'] ?? false),
+                ],
+            );
 
             // PUDO: se l'utente ha scelto ritiro in un punto BRT, salviamo l'ID del punto
             // nell'ordine (campo brt_pudo_id) per passarlo a BRT quando creeremo la spedizione
             $pudoId = null;
-            if (!empty($data['pudo']['pudo_id']) && ($data['delivery_mode'] ?? 'home') === 'pudo') {
+            if (! empty($data['pudo']['pudo_id']) && ($data['delivery_mode'] ?? 'home') === 'pudo') {
                 $pudoId = $data['pudo']['pudo_id'];
             }
 
             // Creiamo l'ordine con il subtotale calcolato
             $order = Order::create([
                 'user_id' => $userId,
-                'subtotal' => $subtotalCents,
+                'subtotal' => $subtotalCents + $serviceSurchargeCents,
                 'status' => Order::PENDING, // In attesa di pagamento
                 'is_cod' => $isCod,
-                'cod_amount' => $codAmount,
+                'cod_amount' => $codAmount > 0 ? $codAmount : null,
                 'brt_pudo_id' => $pudoId,
             ]);
 
@@ -228,7 +235,7 @@ class OrderController extends Controller
 
         return response()->json([
             'order_id' => $result->id,
-            'order_number' => 'SF-' . str_pad($result->id, 6, '0', STR_PAD_LEFT), // Es. "SF-000042"
+            'order_number' => 'SF-'.str_pad((string) $result->id, 6, '0', STR_PAD_LEFT), // Es. "SF-000042"
         ]);
     }
 
@@ -239,8 +246,10 @@ class OrderController extends Controller
      * Ordini non pagati (pending/payment_failed): annullamento semplice
      * Ordini pagati (completed/processing/in_transit): rimborso con commissione di 2 EUR
      */
-    public function cancel(Request $request, Order $order) {
-        $refundController = new \App\Http\Controllers\RefundController();
+    public function cancel(Request $request, Order $order)
+    {
+        $refundController = new RefundController;
+
         return $refundController->requestCancellation($request, $order);
     }
 
@@ -254,12 +263,13 @@ class OrderController extends Controller
      * COME MODIFICARLO: Per aggiungere campi al collo, aggiungerli in validate() e in Package::create().
      * COSA EVITARE: Non permettere aggiunte a ordini gia' pagati (il controllo status e' essenziale).
      */
-    public function addPackage(Request $request, Order $order) {
+    public function addPackage(Request $request, Order $order)
+    {
         if ($order->user_id !== auth()->id()) {
             return response()->json(['error' => 'Non autorizzato.'], 403);
         }
 
-        if (!in_array($order->status, [Order::PENDING, Order::PAYMENT_FAILED])) {
+        if (! in_array($order->status, [Order::PENDING, Order::PAYMENT_FAILED])) {
             return response()->json(['error' => 'Si possono aggiungere colli solo agli ordini in attesa di pagamento.'], 422);
         }
 
@@ -275,6 +285,7 @@ class OrderController extends Controller
 
         $result = DB::transaction(function () use ($request, $order) {
             $priceEngine = app(PriceEngineService::class);
+            $servicePricing = app(ShipmentServicePricingService::class);
             $weight = (float) $request->weight;
             $s1 = (float) $request->first_size;
             $s2 = (float) $request->second_size;
@@ -287,7 +298,9 @@ class OrderController extends Controller
 
             $originCap = null;
             $destinationCap = null;
-            $existingPackage = $order->packages()->first();
+            $order->loadMissing(['packages.originAddress', 'packages.destinationAddress']);
+            /** @var Package|null $existingPackage */
+            $existingPackage = $order->packages->first();
             if ($existingPackage?->originAddress) {
                 $originCap = $existingPackage->originAddress->postal_code ?? null;
             }
@@ -331,7 +344,26 @@ class OrderController extends Controller
                 ->where('package_order.order_id', $order->id)
                 ->sum('packages.single_price');
 
-            $order->subtotal = (int) $newSubtotal;
+            $serviceModel = $existingPackage?->service;
+            $serviceSurchargeCents = $serviceModel
+                ? $servicePricing->calculateSurchargeCents(
+                    $serviceModel->service_type ?? '',
+                    $serviceModel->service_data ?? [],
+                    (bool) (($serviceModel->service_data ?? [])['sms_email_notification'] ?? false),
+                    [
+                        'packages' => $order->packages()->get()->all(),
+                        'origin_address' => $existingPackage?->originAddress?->toArray() ?? [],
+                        'destination_address' => (($serviceModel->service_data['delivery_mode'] ?? 'home') === 'pudo' && ! empty($serviceModel->service_data['pudo']))
+                            ? $serviceModel->service_data['pudo']
+                            : ($existingPackage?->destinationAddress?->toArray() ?? []),
+                        'delivery_mode' => $serviceModel->service_data['delivery_mode'] ?? 'home',
+                        'selected_pudo' => $serviceModel->service_data['pudo'] ?? null,
+                        'requires_manual_quote' => (bool) ($serviceModel->service_data['requires_manual_quote'] ?? false),
+                    ],
+                )
+                : 0;
+
+            $order->subtotal = (int) $newSubtotal + $serviceSurchargeCents;
             $order->save();
 
             return $package;
@@ -344,47 +376,5 @@ class OrderController extends Controller
             'message' => 'Collo aggiunto con successo.',
             'order' => new OrderResource($order),
         ]);
-    }
-
-    /**
-     * Pulizia interna: rimuove gli ordini senza pacchi (orfani) di un utente specifico.
-     * Questo puo' succedere quando un utente inizia a creare un ordine ma non lo completa.
-     */
-    private function cleanupEmptyOrders(User $user) {
-        $this->deleteEmptyOrders(
-            Order::where('user_id', $user->id)
-                ->whereIn('status', [Order::PENDING, Order::PAYMENT_FAILED])
-        );
-    }
-
-    /**
-     * Logica di pulizia: trova ed elimina gli ordini che non hanno pacchi validi collegati.
-     * Un pacco e' valido se ha un tipo e almeno il peso o le dimensioni.
-     */
-    private function deleteEmptyOrders($query) {
-        // Troviamo gli ordini che hanno almeno un pacco valido
-        $ordersWithValidPackages = DB::table('package_order')
-            ->join('packages', 'package_order.package_id', '=', 'packages.id')
-            ->where(function ($q) {
-                $q->whereNotNull('packages.package_type')
-                  ->where('packages.package_type', '!=', '')
-                  ->where(function ($q2) {
-                      $q2->where('packages.weight', '>', 0)
-                         ->orWhere('packages.first_size', '>', 0);
-                  });
-            })
-            ->pluck('package_order.order_id')
-            ->unique();
-
-        // Gli ordini vuoti sono quelli che NON hanno pacchi validi
-        $emptyOrderIds = (clone $query)
-            ->whereNotIn('id', $ordersWithValidPackages)
-            ->pluck('id');
-
-        // Eliminiamo gli ordini vuoti e i loro collegamenti ai pacchi
-        if ($emptyOrderIds->isNotEmpty()) {
-            DB::table('package_order')->whereIn('order_id', $emptyOrderIds)->delete();
-            Order::whereIn('id', $emptyOrderIds)->delete();
-        }
     }
 }

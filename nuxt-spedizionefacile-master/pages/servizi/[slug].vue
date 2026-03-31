@@ -87,50 +87,50 @@ const parsedFaqs = computed(() => {
 
 	<section v-else-if="service">
 		<div class="my-container">
-			<div class="mt-[32px] mb-[16px]">
+			<div class="mt-[24px] mb-[12px] tablet:mt-[28px] desktop:mt-[32px]">
 				<NuxtLink to="/servizi" class="text-[0.875rem] text-[#095866] font-medium hover:underline">
 					&larr; Tutti i servizi
 				</NuxtLink>
 			</div>
 
-			<h1 class="desktop-xl:text-[4rem] font-medium tracking-[-1.536px] text-[#222222] mt-[20px] mb-[24px] text-[2rem] desktop:text-[3rem] leading-[110%]">
+			<h1 class="desktop-xl:text-[3.75rem] font-medium tracking-[-1.32px] text-[#222222] mt-[12px] mb-[18px] tablet:mb-[20px] text-[1.875rem] desktop:text-[2.75rem] leading-[108%]">
 				{{ service.title }}
 			</h1>
 
-			<p class="desktop:text-[1.25rem] leading-[160%] tracking-[-0.336px] font-medium text-[#404040] text-[1.125rem] mb-[40px] desktop:mb-[60px] desktop:max-w-[800px]">
+			<p class="desktop:text-[1.125rem] leading-[160%] tracking-[-0.252px] font-medium text-[#404040] text-[1rem] mb-[28px] desktop:mb-[44px] desktop:max-w-[760px]">
 				{{ service.intro }}
 			</p>
 
-			<div class="mb-[60px]">
-				<div v-for="(section, index) in parsedSections" :key="index" class="mb-[40px] desktop:mb-[50px]">
-					<h2 class="text-[1.5rem] desktop:text-[2rem] font-medium tracking-[-0.576px] text-[#222222] mb-[16px] leading-[120%]">
+			<div class="mb-[44px] desktop:mb-[64px]">
+				<div v-for="(section, index) in parsedSections" :key="index" class="mb-[28px] desktop:mb-[40px]">
+					<h2 class="text-[1.375rem] tablet:text-[1.5rem] desktop:text-[1.875rem] font-medium tracking-[-0.48px] text-[#222222] mb-[12px] leading-[118%]">
 						{{ section.heading }}
 					</h2>
-					<p class="desktop:text-[1.125rem] leading-[160%] tracking-[-0.252px] text-[#737373] text-[0.875rem] desktop:text-[1rem]">
+					<p class="desktop:text-[1rem] leading-[160%] tracking-[-0.252px] text-[#737373] text-[0.875rem]">
 						{{ section.text }}
 					</p>
 				</div>
 			</div>
 
-			<div v-if="parsedFaqs.length" class="mb-[80px] desktop:mb-[120px]">
-				<h2 class="desktop:text-[2.5rem] font-medium leading-[110%] tracking-[-0.96px] desktop:mb-[30px] text-[#222222] text-[1.875rem] mb-[20px]">
+			<div v-if="parsedFaqs.length" class="mb-[56px] desktop:mb-[96px]">
+				<h2 class="desktop:text-[2.125rem] font-medium leading-[110%] tracking-[-0.84px] desktop:mb-[24px] text-[#222222] text-[1.625rem] mb-[16px]">
 					Domande frequenti
 				</h2>
-				<div class="desktop:flex desktop:items-start desktop:justify-between desktop:flex-wrap desktop:gap-x-[24px] desktop:gap-y-[40px] gap-y-[20px]">
+				<div class="desktop:flex desktop:items-start desktop:justify-between desktop:flex-wrap desktop:gap-x-[24px] desktop:gap-y-[32px] gap-y-[18px]">
 					<div v-for="(faq, faqIndex) in parsedFaqs" :key="faqIndex" class="desktop:w-[calc(50%-20px)]">
-						<h3 class="desktop:text-[1.5rem] text-[1.25rem] font-medium tracking-[-0.576px] leading-[110%] text-[#222222] mb-[12px] mt-[20px] desktop:mt-0">
+						<h3 class="desktop:text-[1.375rem] text-[1.125rem] font-medium tracking-[-0.432px] leading-[110%] text-[#222222] mb-[10px] mt-[16px] desktop:mt-0">
 							{{ faq.title }}
 						</h3>
-						<p class="desktop:text-[1.125rem] tracking-[-0.252px] leading-[160%] text-[rgba(82,82,82,.6)]">
+						<p class="desktop:text-[1rem] tracking-[-0.252px] leading-[160%] text-[rgba(82,82,82,.6)] text-[0.875rem]">
 							{{ faq.text }}
 						</p>
 					</div>
 				</div>
 			</div>
 
-			<div class="border-t border-[#E0E0E0] pt-[40px] mb-[80px] desktop:mb-[120px]">
-				<p class="text-[1.25rem] font-medium text-[#222222] mb-[20px]">Vuoi provare questo servizio?</p>
-				<NuxtLink to="/preventivo" class="inline-block h-[52px] px-[32px] rounded-[35px] bg-[#E44203] leading-[52px] text-center text-white font-semibold tracking-[-0.384px] text-[1rem] hover:opacity-90 transition-opacity">
+			<div class="border-t border-[#E0E0E0] pt-[28px] mb-[56px] desktop:mb-[96px]">
+				<p class="text-[1.125rem] desktop:text-[1.25rem] font-medium text-[#222222] mb-[16px]">Vuoi provare questo servizio?</p>
+				<NuxtLink to="/preventivo" class="inline-block h-[48px] px-[28px] rounded-[35px] bg-[#E44203] leading-[48px] text-center text-white font-semibold tracking-[-0.336px] text-[0.9375rem] hover:opacity-90 transition-opacity">
 					Calcola il preventivo
 				</NuxtLink>
 			</div>

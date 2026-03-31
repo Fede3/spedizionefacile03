@@ -53,7 +53,9 @@ class Setting extends Model
      */
     public static function get(string $key, $default = null): ?string
     {
-        return static::where('key', $key)->first()?->value ?? $default;
+        $setting = static::where('key', $key)->first();
+
+        return $setting ? $setting->value : $default;
     }
 
     /**

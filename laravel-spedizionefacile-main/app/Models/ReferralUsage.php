@@ -39,6 +39,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class ReferralUsage extends Model
 {
@@ -64,19 +65,19 @@ class ReferralUsage extends Model
     ];
 
     // Relazione: questo utilizzo e' stato fatto da UN acquirente
-    public function buyer()
+    public function buyer(): BelongsTo
     {
         return $this->belongsTo(User::class, 'buyer_id');
     }
 
     // Relazione: questo utilizzo riguarda il codice di UN Partner Pro
-    public function proUser()
+    public function proUser(): BelongsTo
     {
         return $this->belongsTo(User::class, 'pro_user_id');
     }
 
     // Relazione: questo utilizzo e' collegato a UN ordine specifico
-    public function order()
+    public function order(): BelongsTo
     {
         return $this->belongsTo(Order::class);
     }

@@ -60,6 +60,23 @@ return [
         'redirect' => env('GOOGLE_REDIRECT_URI'),          // URL dove Google rimanda dopo il login
     ],
 
+    // Facebook OAuth - permette agli utenti di registrarsi/loggarsi con Facebook
+    'facebook' => [
+        'client_id' => env('FACEBOOK_CLIENT_ID'),
+        'client_secret' => env('FACEBOOK_CLIENT_SECRET'),
+        'redirect' => env('FACEBOOK_REDIRECT_URI'),
+    ],
+
+    // Apple OAuth - disponibile solo quando credenziali e callback sono configurati
+    'apple' => [
+        'client_id' => env('APPLE_CLIENT_ID'),
+        'client_secret' => env('APPLE_CLIENT_SECRET'),
+        'redirect' => env('APPLE_REDIRECT_URI'),
+        'team_id' => env('APPLE_TEAM_ID'),
+        'key_id' => env('APPLE_KEY_ID'),
+        'private_key' => env('APPLE_PRIVATE_KEY'),
+    ],
+
     // Stripe - sistema di pagamento con carta di credito
     'stripe' => [
         'key' => env('STRIPE_KEY'),                        // Chiave pubblica (visibile nel frontend)

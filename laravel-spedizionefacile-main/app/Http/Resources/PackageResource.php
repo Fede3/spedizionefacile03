@@ -15,6 +15,7 @@ use App\Http\Resources\ServiceResource;
 use App\Http\Resources\PackageAddressResource;
 use Illuminate\Http\Resources\Json\JsonResource;
 
+/** @mixin \App\Models\Package */
 class PackageResource extends JsonResource
 {
     /**

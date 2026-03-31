@@ -30,14 +30,18 @@
     - pages/account/index.vue → dashboard account (breadcrumb).
 -->
 <script setup>
+import { useAuthUiSnapshotPersistence } from '~/composables/useAuthUiSnapshotPersistence';
+
 /* Richiede che l'utente sia autenticato */
 definePageMeta({
-	middleware: ["sanctum:auth"],
+	middleware: ["app-auth"],
 });
 
 /* refreshIdentity ricarica i dati utente dopo un salvataggio,
    user contiene i dati dell'utente, logout serve per uscire */
 const { refreshIdentity, user, logout } = useSanctumAuth();
+const { clearSnapshot } = useAuthUiSnapshotPersistence();
+const profileUiReady = ref(false);
 
 /* Messaggi mostrati all'utente: errore, successo e caricamento */
 const messageError = ref(null);
@@ -137,28 +141,45 @@ const getRoleBadge = (role) => {
 /* Esegue il logout e in caso di errore riporta alla homepage */
 const handleLogout = async () => {
 	try {
+		clearSnapshot();
 		await logout();
 		await navigateTo('/autenticazione');
 	} catch (error) {
 		navigateTo("/");
 	}
 };
+
+onMounted(() => {
+	profileUiReady.value = true;
+});
 </script>
 
 <template>
-	<section class="min-h-[600px] py-[40px] desktop:py-[80px]">
+	<section v-if="profileUiReady" class="min-h-[600px] py-[40px] desktop:py-[80px]">
 		<div class="my-container">
-			<!-- Breadcrumb -->
-			<div class="mb-[24px] text-[0.875rem] text-[#737373]">
-				<NuxtLink to="/account" class="hover:underline text-[#095866]">Il tuo account</NuxtLink>
-				<span class="mx-[6px]">/</span>
-				<span v-if="!showEditForm" class="font-semibold text-[#252B42]">Profilo e dati</span>
-				<template v-else>
-					<NuxtLink class="hover:underline text-[#095866] cursor-pointer" @click.prevent="showEditForm = false">Profilo e dati</NuxtLink>
-					<span class="mx-[6px]">/</span>
-					<span class="font-semibold text-[#252B42]">Modifica dati</span>
+			<AccountPageHeader
+				:title="showEditForm ? 'Modifica dati' : 'Profilo e dati'"
+				description="Dati personali e di fatturazione."
+				:crumbs="showEditForm
+					? [
+						{ label: 'Account', to: '/account' },
+						{ label: 'Profilo e dati', to: '/account/profilo' },
+						{ label: 'Modifica dati' },
+					]
+					: [
+						{ label: 'Account', to: '/account' },
+						{ label: 'Profilo e dati' },
+					]"
+			>
+				<template v-if="!showEditForm" #actions>
+					<button
+						@click="showEditForm = true"
+						class="inline-flex items-center gap-[6px] px-[20px] py-[10px] bg-[#095866] hover:bg-[#074a56] text-white rounded-[50px] text-[0.875rem] font-semibold transition-colors cursor-pointer">
+						<Icon name="mdi:pencil-outline" class="text-[16px]" />
+						Modifica dati
+					</button>
 				</template>
-			</div>
+			</AccountPageHeader>
 
 			<!-- Success/Error Messages -->
 			<div v-if="messageSuccess" class="mb-[20px] px-[16px] py-[12px] rounded-[50px] text-[0.875rem] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
@@ -170,35 +191,35 @@ const handleLogout = async () => {
 
 			<!-- ===== PROFILE VIEW ===== -->
 			<template v-if="!showEditForm">
-				<div class="flex items-center justify-between mb-[24px]">
-					<h1 class="text-[1.5rem] desktop:text-[1.75rem] font-bold text-[#252B42]">Profilo e dati</h1>
-					<button
-						@click="showEditForm = true"
-						class="inline-flex items-center gap-[6px] px-[20px] py-[10px] bg-[#095866] hover:bg-[#074a56] text-white rounded-[50px] text-[0.875rem] font-semibold transition-colors cursor-pointer">
-						<Icon name="mdi:pencil-outline" class="text-[16px]" />
-						Modifica dati
-					</button>
-				</div>
-
 				<!-- Profile Card -->
-				<div class="bg-white rounded-[16px] p-[24px] desktop:p-[32px] shadow-sm border border-[#E9EBEC] mb-[20px]">
+				<div class="bg-white rounded-[20px] p-[20px] tablet:p-[24px] desktop:p-[32px] shadow-sm border border-[#E9EBEC] mb-[20px]">
 					<!-- User header -->
-					<div class="flex items-center gap-[16px] mb-[24px] pb-[24px] border-b border-[#F0F0F0]">
+					<div class="flex flex-col tablet:flex-row tablet:items-center gap-[16px] mb-[24px] pb-[24px] border-b border-[#F0F0F0]">
 						<div class="w-[56px] h-[56px] rounded-full bg-[#095866] flex items-center justify-center text-white text-[1.25rem] font-bold shrink-0">
 							{{ user?.name?.charAt(0)?.toUpperCase() }}{{ user?.surname?.charAt(0)?.toUpperCase() || '' }}
 						</div>
-						<div>
-							<h2 class="text-[1.125rem] font-bold text-[#252B42]">{{ user?.name }} {{ user?.surname }}</h2>
+						<div class="min-w-0 flex-1">
+							<h2 class="text-[1.125rem] tablet:text-[1.25rem] font-bold text-[#252B42]">{{ user?.name }} {{ user?.surname }}</h2>
 							<span :class="['inline-block px-[10px] py-[3px] rounded-full text-[0.75rem] font-medium mt-[4px]', getRoleBadge(user?.role).class]">
 								{{ getRoleBadge(user?.role).label }}
 							</span>
+							<div class="mt-[12px] flex flex-wrap gap-[8px]">
+								<span class="inline-flex items-center gap-[6px] rounded-full bg-[#F5F8FA] px-[10px] py-[6px] text-[0.75rem] font-medium text-[#4E5D6C]">
+									<Icon name="mdi:email-outline" class="text-[15px]" />
+									{{ user?.email }}
+								</span>
+								<span class="inline-flex items-center gap-[6px] rounded-full bg-[#F5F8FA] px-[10px] py-[6px] text-[0.75rem] font-medium text-[#4E5D6C]">
+									<Icon name="mdi:phone-outline" class="text-[15px]" />
+									{{ getTelephoneNumber(user?.telephone_number) }}
+								</span>
+							</div>
 						</div>
 					</div>
 
 					<!-- Info list -->
-					<div class="space-y-[16px]">
-						<div class="flex items-start gap-[12px]">
-							<div class="w-[36px] h-[36px] rounded-[8px] bg-[#F8F9FB] flex items-center justify-center shrink-0">
+					<div class="grid grid-cols-1 tablet:grid-cols-2 gap-[12px]">
+						<div class="flex items-start gap-[12px] rounded-[14px] border border-[#EEF1F3] bg-[#FAFBFC] p-[14px]">
+							<div class="w-[36px] h-[36px] rounded-[10px] bg-white flex items-center justify-center shrink-0 border border-[#E9EBEC]">
 								<Icon name="mdi:email-outline" class="text-[18px] text-[#737373]" />
 							</div>
 							<div>
@@ -207,8 +228,8 @@ const handleLogout = async () => {
 							</div>
 						</div>
 
-						<div class="flex items-start gap-[12px]">
-							<div class="w-[36px] h-[36px] rounded-[8px] bg-[#F8F9FB] flex items-center justify-center shrink-0">
+						<div class="flex items-start gap-[12px] rounded-[14px] border border-[#EEF1F3] bg-[#FAFBFC] p-[14px]">
+							<div class="w-[36px] h-[36px] rounded-[10px] bg-white flex items-center justify-center shrink-0 border border-[#E9EBEC]">
 								<Icon name="mdi:phone-outline" class="text-[18px] text-[#737373]" />
 							</div>
 							<div>
@@ -217,8 +238,8 @@ const handleLogout = async () => {
 							</div>
 						</div>
 
-						<div class="flex items-start gap-[12px]">
-							<div class="w-[36px] h-[36px] rounded-[8px] bg-[#F8F9FB] flex items-center justify-center shrink-0">
+						<div class="flex items-start gap-[12px] rounded-[14px] border border-[#EEF1F3] bg-[#FAFBFC] p-[14px]">
+							<div class="w-[36px] h-[36px] rounded-[10px] bg-white flex items-center justify-center shrink-0 border border-[#E9EBEC]">
 								<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[18px] h-[18px] text-[#737373]" fill="currentColor"><path d="M12,5.5A3.5,3.5 0 0,1 15.5,9A3.5,3.5 0 0,1 12,12.5A3.5,3.5 0 0,1 8.5,9A3.5,3.5 0 0,1 12,5.5M5,8C5.56,8 6.08,8.15 6.53,8.42C6.38,9.85 6.8,11.27 7.66,12.38C7.16,13.34 6.16,14 5,14A3,3 0 0,1 2,11A3,3 0 0,1 5,8M19,8A3,3 0 0,1 22,11A3,3 0 0,1 19,14C17.84,14 16.84,13.34 16.34,12.38C17.2,11.27 17.62,9.85 17.47,8.42C17.92,8.15 18.44,8 19,8M5.5,18.25C5.5,16.18 8.41,14.5 12,14.5C15.59,14.5 18.5,16.18 18.5,18.25V20H5.5V18.25Z"/></svg>
 							</div>
 							<div>
@@ -227,8 +248,8 @@ const handleLogout = async () => {
 							</div>
 						</div>
 
-						<div v-if="user?.company_name" class="flex items-start gap-[12px]">
-							<div class="w-[36px] h-[36px] rounded-[8px] bg-[#F8F9FB] flex items-center justify-center shrink-0">
+						<div v-if="user?.company_name" class="flex items-start gap-[12px] rounded-[14px] border border-[#EEF1F3] bg-[#FAFBFC] p-[14px]">
+							<div class="w-[36px] h-[36px] rounded-[10px] bg-white flex items-center justify-center shrink-0 border border-[#E9EBEC]">
 								<Icon name="mdi:domain" class="text-[18px] text-[#737373]" />
 							</div>
 							<div>
@@ -238,8 +259,8 @@ const handleLogout = async () => {
 							</div>
 						</div>
 
-						<div class="flex items-start gap-[12px]">
-							<div class="w-[36px] h-[36px] rounded-[8px] bg-[#F8F9FB] flex items-center justify-center shrink-0">
+						<div class="flex items-start gap-[12px] rounded-[14px] border border-[#EEF1F3] bg-[#FAFBFC] p-[14px]">
+							<div class="w-[36px] h-[36px] rounded-[10px] bg-white flex items-center justify-center shrink-0 border border-[#E9EBEC]">
 								<Icon name="mdi:lock-outline" class="text-[18px] text-[#737373]" />
 							</div>
 							<div>
@@ -263,11 +284,11 @@ const handleLogout = async () => {
 			<template v-if="showEditForm">
 				<h1 class="text-[1.5rem] desktop:text-[1.75rem] font-bold text-[#252B42] mb-[24px]">Modifica dati</h1>
 
-				<div class="bg-white rounded-[16px] p-[24px] desktop:p-[32px] shadow-sm border border-[#E9EBEC] max-w-[600px] mx-auto">
+				<div class="bg-white rounded-[18px] p-[20px] tablet:p-[24px] desktop:p-[32px] shadow-sm border border-[#E9EBEC] max-w-[880px] mx-auto">
 					<form @submit.prevent="updateInfo">
 						<!-- Tipo account -->
 						<h3 class="text-[1rem] font-bold text-[#252B42] mb-[12px]">Tipo account</h3>
-						<div class="flex items-center gap-[12px] mb-[20px]">
+						<div class="flex flex-col tablet:flex-row items-stretch gap-[12px] mb-[20px]">
 							<label
 								:class="[
 									'flex-1 flex items-center justify-center gap-[6px] px-[16px] py-[12px] rounded-[50px] cursor-pointer border transition-all text-[0.9375rem] font-medium text-center',
@@ -292,7 +313,7 @@ const handleLogout = async () => {
 
 						<!-- Personal data -->
 						<h3 class="text-[1rem] font-bold text-[#252B42] mb-[16px]">Dati personali</h3>
-						<div class="grid grid-cols-2 gap-[12px] mb-[16px]">
+						<div class="grid grid-cols-1 tablet:grid-cols-2 gap-[12px] mb-[16px]">
 							<div>
 								<label class="block text-[0.8125rem] font-semibold text-[#404040] mb-[4px]">Nome *</label>
 								<input type="text" v-model="userInfo.name" class="w-full px-[12px] py-[10px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[8px] text-[0.875rem] focus:border-[#095866] focus:outline-none" required />
@@ -314,7 +335,7 @@ const handleLogout = async () => {
 						<!-- Business data -->
 						<h3 class="text-[1rem] font-bold text-[#252B42] mb-[12px] mt-[24px] pt-[20px] border-t border-[#F0F0F0]">Dati aziendali (opzionale)</h3>
 						<p class="text-[0.8125rem] text-[#737373] mb-[14px]">Compila solo se sei un commerciante o un'azienda.</p>
-						<div class="grid grid-cols-2 gap-[12px] mb-[12px]">
+						<div class="grid grid-cols-1 tablet:grid-cols-2 gap-[12px] mb-[12px]">
 							<div>
 								<label class="block text-[0.8125rem] font-semibold text-[#404040] mb-[4px]">Ragione Sociale</label>
 								<input type="text" v-model="userInfo.company_name" placeholder="Nome azienda" class="w-full px-[12px] py-[10px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[8px] text-[0.875rem] focus:border-[#095866] focus:outline-none" />
@@ -324,7 +345,7 @@ const handleLogout = async () => {
 								<input type="text" v-model="userInfo.vat_number" placeholder="IT12345678901" class="w-full px-[12px] py-[10px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[8px] text-[0.875rem] focus:border-[#095866] focus:outline-none" />
 							</div>
 						</div>
-						<div class="grid grid-cols-2 gap-[12px] mb-[12px]">
+						<div class="grid grid-cols-1 tablet:grid-cols-2 gap-[12px] mb-[12px]">
 							<div>
 								<label class="block text-[0.8125rem] font-semibold text-[#404040] mb-[4px]">Codice Fiscale</label>
 								<input type="text" v-model="userInfo.fiscal_code" placeholder="RSSMRA80A01H501U" class="w-full px-[12px] py-[10px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[8px] text-[0.875rem] focus:border-[#095866] focus:outline-none" />
@@ -356,7 +377,7 @@ const handleLogout = async () => {
 								<label class="block text-[0.8125rem] font-semibold text-[#404040] mb-[4px]">Indirizzo fatturazione</label>
 								<input type="text" v-model="userInfo.billing_address" placeholder="Via Roma 10" class="w-full px-[12px] py-[10px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[8px] text-[0.875rem] focus:border-[#095866] focus:outline-none" />
 							</div>
-							<div class="grid grid-cols-3 gap-[12px] mb-[12px]">
+							<div class="grid grid-cols-1 tablet:grid-cols-3 gap-[12px] mb-[12px]">
 								<div>
 									<label class="block text-[0.8125rem] font-semibold text-[#404040] mb-[4px]">Città</label>
 									<input type="text" v-model="userInfo.billing_city" placeholder="Roma" class="w-full px-[12px] py-[10px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[8px] text-[0.875rem] focus:border-[#095866] focus:outline-none" />
@@ -374,7 +395,7 @@ const handleLogout = async () => {
 
 						<!-- Password -->
 						<h3 class="text-[1rem] font-bold text-[#252B42] mb-[12px] mt-[24px] pt-[20px] border-t border-[#F0F0F0]">Cambia password</h3>
-						<div class="grid grid-cols-2 gap-[12px] mb-[24px]">
+						<div class="grid grid-cols-1 tablet:grid-cols-2 gap-[12px] mb-[24px]">
 							<div>
 								<label class="block text-[0.8125rem] font-semibold text-[#404040] mb-[4px]">Nuova password</label>
 								<input
@@ -398,7 +419,7 @@ const handleLogout = async () => {
 						</div>
 
 						<!-- Bottoni salva/annulla con loading state sul pulsante -->
-						<div class="flex gap-[12px]">
+						<div class="flex flex-col-reverse tablet:flex-row gap-[12px]">
 							<button type="button" @click.prevent="showEditForm = false" :disabled="!!messageLoading" class="flex-1 inline-flex items-center justify-center gap-[6px] py-[14px] rounded-[50px] bg-[#F0F0F0] hover:bg-[#E0E0E0] text-[#404040] font-semibold text-[0.9375rem] transition-colors cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed">
 								<Icon name="mdi:close" class="text-[18px]" />
 								Annulla
@@ -411,6 +432,32 @@ const handleLogout = async () => {
 					</form>
 				</div>
 			</template>
+		</div>
+	</section>
+
+	<section v-else class="min-h-[600px] py-[40px] desktop:py-[80px]">
+		<div class="my-container space-y-[18px]">
+			<div class="rounded-[22px] border border-[#E3EBF0] bg-white px-[18px] py-[18px] shadow-[0_12px_30px_rgba(9,88,102,0.06)] tablet:px-[22px] tablet:py-[22px] desktop:px-[28px] desktop:py-[26px]">
+				<div class="space-y-[10px]">
+					<div class="h-[32px] w-[220px] rounded-[10px] bg-[#EEF3F7] animate-pulse"></div>
+					<div class="h-[16px] w-full max-w-[560px] rounded-[8px] bg-[#F2F5F8] animate-pulse"></div>
+				</div>
+			</div>
+
+			<div class="rounded-[20px] border border-[#E9EBEC] bg-white p-[20px] tablet:p-[24px] desktop:p-[32px] shadow-sm">
+				<div class="flex flex-col gap-[18px]">
+					<div class="flex items-center gap-[16px]">
+						<div class="h-[56px] w-[56px] rounded-full bg-[#EEF3F7] animate-pulse"></div>
+						<div class="space-y-[8px] flex-1">
+							<div class="h-[22px] w-[180px] rounded-[10px] bg-[#EEF3F7] animate-pulse"></div>
+							<div class="h-[14px] w-[120px] rounded-full bg-[#F2F5F8] animate-pulse"></div>
+						</div>
+					</div>
+					<div class="grid grid-cols-1 tablet:grid-cols-2 gap-[12px]">
+						<div v-for="index in 6" :key="`profile-skeleton-${index}`" class="h-[84px] rounded-[14px] border border-[#EEF1F3] bg-[#FAFBFC] animate-pulse"></div>
+					</div>
+				</div>
+			</div>
 		</div>
 	</section>
 </template>

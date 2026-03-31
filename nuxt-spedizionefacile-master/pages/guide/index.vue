@@ -74,7 +74,6 @@ const fallbackIcons = {
 // Carica guide dall'API pubblica con fallback
 const sanctum = useSanctumClient();
 const guides = ref(fallbackGuides);
-const loading = ref(true);
 
 onMounted(async () => {
 	try {
@@ -86,7 +85,6 @@ onMounted(async () => {
 	} catch (e) {
 		// API non disponibile, usa fallback hardcoded
 	}
-	loading.value = false;
 });
 
 // Restituisce l'icona SVG per una guida (da DB o fallback)
@@ -103,39 +101,40 @@ const getDescription = (guide) => {
 <template>
 	<section id="guide">
 		<div class="my-container">
-			<p class="text-[0.875rem] desktop-xl:text-[1.25rem] font-medium text-[rgba(0,0,0,.6)] tracking-[1.8px] border-[#C4C4C4] border-b-[1px] pb-[30px] mt-[32px] desktop:text-[1.25rem]">Guide</p>
+			<div class="guide-intro-panel mt-[24px] desktop:mt-[28px]">
+				<div class="guide-intro-panel__copy">
+					<p class="guide-intro-panel__eyebrow">Guide</p>
+					<h1 class="guide-intro-panel__title">Guide pratiche per spedire meglio, capire il flusso e ridurre gli errori.</h1>
+					<p class="guide-intro-panel__text">Scegli l’argomento che ti serve e vai subito al punto: preparazione del pacco, contrassegno, assicurazione, tracking e gestione operativa.</p>
+				</div>
 
-			<p class="font-[General_Sans] text-[1.25rem] desktop-xl:text-[2.5rem] leading-[160%] tracking-[-0.48px] desktop:tracking-[-0.96px] text-[#222222] mt-[32px] border-[#C4C4C4] border-b-[1px] pb-[32px] desktop:text-[1.75rem]">
-				Le nostre guide pratiche ti aiutano a spedire in modo semplice, sicuro e conveniente. Scegli l'argomento che ti interessa e scopri tutti i consigli utili.
-			</p>
-
-			<!-- Loading -->
-			<div v-if="loading" class="flex justify-center py-[60px]">
-				<div class="w-[40px] h-[40px] border-3 border-[#E9EBEC] border-t-[#095866] rounded-full animate-spin"></div>
+				<NuxtLink to="/preventivo" class="guide-intro-panel__cta">
+					Vai al preventivo
+				</NuxtLink>
 			</div>
 
-			<div v-else class="grid grid-cols-1 tablet:grid-cols-2 desktop:grid-cols-3 gap-[24px] mt-[40px] mb-[80px] desktop:mb-[120px]">
+			<div class="grid grid-cols-1 tablet:grid-cols-2 desktop:grid-cols-3 gap-[16px] tablet:gap-[20px] desktop:gap-[22px] mt-[24px] tablet:mt-[28px] mb-[64px] desktop:mb-[112px]">
 				<NuxtLink
 					v-for="guide in guides"
 					:key="guide.slug"
 					:to="`/guide/${guide.slug}`"
-					class="guide-card block rounded-[20px] overflow-hidden border border-[#E0E0E0] shadow-sm hover:shadow-lg hover:border-[#095866] transition-all group">
+					class="guide-card block rounded-[22px] overflow-hidden border border-[#E0E0E0] shadow-sm hover:shadow-lg hover:border-[#095866] transition-all group">
 					<!-- Accent line -->
 					<div class="h-[3px] bg-[#E44203]"></div>
 
 					<!-- Icon banner area -->
-					<div class="guide-card__banner flex items-center justify-center h-[120px]" v-html="getGuideIcon(guide)">
+					<div class="guide-card__banner flex items-center justify-center h-[104px] tablet:h-[116px] desktop:h-[120px]" v-html="getGuideIcon(guide)">
 					</div>
 
 					<!-- Card body -->
-					<div class="p-[24px] desktop:p-[28px]">
-						<h2 class="text-[1.125rem] desktop:text-[1.25rem] font-medium text-[#222222] leading-[130%] tracking-[-0.48px] mb-[10px] group-hover:text-[#095866] transition-colors">
+					<div class="guide-card__body p-[20px] tablet:p-[22px] desktop:p-[24px]">
+						<h2 class="text-[1rem] tablet:text-[1.0625rem] desktop:text-[1.125rem] font-medium text-[#222222] leading-[130%] tracking-[-0.4px] mb-[8px] group-hover:text-[#095866] transition-colors">
 							{{ guide.title }}
 						</h2>
-						<p class="text-[0.875rem] desktop:text-[0.9375rem] text-[#737373] leading-[160%] tracking-[-0.252px] mb-[20px]">
+						<p class="text-[0.8125rem] tablet:text-[0.875rem] desktop:text-[0.9375rem] text-[#737373] leading-[160%] tracking-[-0.24px] mb-[16px]">
 							{{ getDescription(guide) }}
 						</p>
-						<span class="inline-flex items-center gap-[6px] h-[42px] px-[20px] rounded-[35px] bg-[#E44203] text-white font-semibold tracking-[-0.336px] text-[0.875rem] group-hover:bg-[#c93800] transition-colors">
+						<span class="guide-card__cta inline-flex items-center gap-[6px] h-[40px] px-[18px] rounded-[35px] bg-[#E44203] text-white font-semibold tracking-[-0.32px] text-[0.8125rem] group-hover:bg-[#c93800] transition-colors">
 							Leggi
 							<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8h10"/><path d="M9 4l4 4-4 4"/></svg>
 						</span>
@@ -147,7 +146,92 @@ const getDescription = (guide) => {
 </template>
 
 <style scoped>
+.guide-intro-panel {
+	display: grid;
+	gap: 18px;
+	padding: 22px 20px;
+	border-radius: 24px;
+	background:
+		radial-gradient(circle at top right, rgba(228, 66, 3, 0.12), transparent 32%),
+		linear-gradient(180deg, rgba(9, 88, 102, 0.06) 0%, rgba(9, 88, 102, 0.015) 100%);
+	border: 1px solid rgba(9, 88, 102, 0.1);
+	box-shadow: 0 18px 38px rgba(9, 88, 102, 0.06);
+}
+
+.guide-intro-panel__eyebrow {
+	margin: 0;
+	font-size: 0.75rem;
+	font-weight: 700;
+	letter-spacing: 0.12em;
+	text-transform: uppercase;
+	color: #095866;
+}
+
+.guide-intro-panel__title {
+	margin: 8px 0 0;
+	font-size: 1.55rem;
+	line-height: 1.08;
+	letter-spacing: -0.04em;
+	font-weight: 700;
+	color: #1f2937;
+}
+
+.guide-intro-panel__text {
+	margin: 12px 0 0;
+	font-size: 0.95rem;
+	line-height: 1.62;
+	color: #546171;
+	max-width: 64ch;
+}
+
+.guide-intro-panel__cta {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-height: 46px;
+	padding: 0 18px;
+	border-radius: 999px;
+	background: #E44203;
+	color: #fff;
+	font-size: 0.875rem;
+	font-weight: 700;
+	box-shadow: 0 12px 24px rgba(228, 66, 3, 0.18);
+	transition: transform .24s ease, box-shadow .24s ease;
+}
+
+.guide-intro-panel__cta:hover {
+	transform: translateY(-1px);
+}
+
 .guide-card__banner {
 	background: linear-gradient(135deg, #095866 0%, #0b6d7d 100%);
+}
+
+.guide-card {
+	display: flex;
+	flex-direction: column;
+	height: 100%;
+}
+
+.guide-card__body {
+	display: flex;
+	flex-direction: column;
+	flex: 1;
+}
+
+.guide-card__cta {
+	margin-top: auto;
+}
+
+@media (min-width: 80rem) {
+	.guide-intro-panel {
+		grid-template-columns: minmax(0, 1.15fr) auto;
+		align-items: end;
+		padding: 30px 32px;
+	}
+
+	.guide-intro-panel__title {
+		font-size: 2.35rem;
+	}
 }
 </style>

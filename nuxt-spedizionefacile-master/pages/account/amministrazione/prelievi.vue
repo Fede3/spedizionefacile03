@@ -12,7 +12,7 @@
 -->
 <script setup>
 definePageMeta({
-	middleware: ["sanctum:auth", "admin"],
+	middleware: ["app-auth", "admin"],
 });
 
 const sanctum = useSanctumClient();
@@ -30,6 +30,7 @@ const fetchWithdrawals = async () => {
 const pendingWithdrawals = computed(() => withdrawalsData.value?.filter(w => w.status === 'pending') || []);
 const approvedWithdrawals = computed(() => withdrawalsData.value?.filter(w => w.status === 'approved') || []);
 const totalApproved = computed(() => approvedWithdrawals.value.reduce((sum, w) => sum + Number(w.amount), 0));
+const totalRejected = computed(() => withdrawalsData.value?.filter(w => w.status === 'rejected').length || 0);
 
 const rejectNotes = ref("");
 const rejectingId = ref(null);
@@ -65,19 +66,16 @@ onMounted(() => { fetchWithdrawals(); });
 <template>
 	<section class="min-h-[600px] py-[40px] desktop:py-[60px] desktop-xl:py-[80px]">
 		<div class="my-container">
-			<!-- Breadcrumb -->
-			<div class="mb-[24px] text-[0.875rem] text-[#737373]">
-				<NuxtLink to="/account" class="hover:underline text-[#095866] font-medium">Il tuo account</NuxtLink>
-				<span class="mx-[8px] text-[#C8CCD0]">/</span>
-				<span class="font-semibold text-[#252B42]">Prelievi</span>
-			</div>
-
-			<NuxtLink to="/account" class="inline-flex items-center gap-[6px] text-[0.8125rem] text-[#095866] hover:underline font-medium mb-[20px]">
-				<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[16px] h-[16px]" fill="currentColor"><path d="M20,11V13H8L13.5,18.5L12.08,19.92L4.16,12L12.08,4.08L13.5,5.5L8,11H20Z"/></svg>
-				Torna all'account
-			</NuxtLink>
-
-			<h1 class="text-[1.75rem] font-bold text-[#252B42] mb-[24px]">Prelievi</h1>
+			<AccountPageHeader
+				eyebrow="Area amministrazione"
+				title="Prelievi"
+				description="Richieste e storico commissioni."
+				:crumbs="[
+					{ label: 'Account', to: '/account' },
+					{ label: 'Amministrazione', to: '/account/amministrazione' },
+					{ label: 'Prelievi' },
+				]"
+			/>
 
 			<!-- Action message -->
 			<div
@@ -91,7 +89,24 @@ onMounted(() => { fetchWithdrawals(); });
 				{{ actionMessage.text }}
 			</div>
 
-			<div class="grid grid-cols-1 account-pages:grid-cols-3 gap-[16px] mb-[24px]">
+			<div class="mb-[20px] rounded-[18px] border border-[#E9EBEC] bg-[#F8FAFB] p-[14px] tablet:p-[18px]">
+				<div class="flex flex-col gap-[14px] desktop:flex-row desktop:items-center desktop:justify-between">
+					<div>
+						<p class="text-[0.75rem] font-semibold uppercase tracking-[0.6px] text-[#6B7280]">Toolbar prelievi</p>
+						<h2 class="mt-[4px] text-[1rem] font-semibold text-[#252B42]">Coda richieste e stato approvazioni</h2>
+					</div>
+					<div class="flex flex-wrap items-center gap-[8px]">
+						<span class="inline-flex min-h-[34px] items-center rounded-full border border-[#DCE7E8] bg-white px-[12px] text-[0.75rem] font-medium text-[#095866]">
+							{{ withdrawalsData.length }} richieste
+						</span>
+						<span class="inline-flex min-h-[34px] items-center rounded-full border border-[#E7ECEE] bg-white px-[12px] text-[0.75rem] font-medium text-[#5F6C75]">
+							{{ pendingWithdrawals.length }} in attesa
+						</span>
+					</div>
+				</div>
+			</div>
+
+			<div class="grid grid-cols-1 tablet:grid-cols-3 xl:grid-cols-4 gap-[16px] mb-[24px]">
 				<div class="bg-white rounded-[16px] p-[20px] border border-[#E9EBEC] shadow-sm">
 					<div class="flex items-center gap-[8px] mb-[8px]">
 						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[18px] h-[18px] text-amber-600" fill="currentColor"><path d="M12,20A8,8 0 0,0 20,12A8,8 0 0,0 12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22C6.47,22 2,17.5 2,12A10,10 0 0,1 12,2M12.5,7V12.25L17,14.92L16.25,16.15L11,13V7H12.5Z"/></svg>
@@ -113,6 +128,13 @@ onMounted(() => { fetchWithdrawals(); });
 					</div>
 					<p class="text-[1.75rem] font-bold text-[#252B42]">&euro;{{ formatCurrency(totalApproved) }}</p>
 				</div>
+				<div class="bg-white rounded-[16px] p-[20px] border border-[#E9EBEC] shadow-sm">
+					<div class="flex items-center gap-[8px] mb-[8px]">
+						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[18px] h-[18px] text-red-600" fill="currentColor"><path d="M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2M12,4A8,8 0 0,0 4,12C4,13.85 4.63,15.55 5.68,16.91L16.91,5.68C15.55,4.63 13.85,4 12,4M12,20A8,8 0 0,0 20,12C20,10.15 19.37,8.45 18.32,7.09L7.09,18.32C8.45,19.37 10.15,20 12,20Z"/></svg>
+						<p class="text-[0.75rem] text-[#737373] uppercase tracking-[0.5px] font-medium">Rifiutate</p>
+					</div>
+					<p class="text-[1.75rem] font-bold text-red-600">{{ totalRejected }}</p>
+				</div>
 			</div>
 
 			<div class="bg-white rounded-[20px] p-[24px] desktop:p-[32px] shadow-sm border border-[#E9EBEC]">
@@ -122,10 +144,10 @@ onMounted(() => { fetchWithdrawals(); });
 					<p>Nessuna richiesta di prelievo.</p>
 				</div>
 				<div v-else class="space-y-[12px]">
-					<div v-for="w in withdrawalsData" :key="w.id" class="p-[18px] rounded-[14px] border border-[#E9EBEC] hover:border-[#D0D0D0] transition-colors">
+					<div v-for="w in withdrawalsData" :key="w.id" class="rounded-[16px] border border-[#E9EBEC] bg-white p-[16px] tablet:p-[18px] hover:border-[#D0D0D0] transition-colors">
 						<div class="flex flex-col desktop:flex-row desktop:items-center justify-between gap-[12px]">
 							<div class="flex-1">
-								<div class="flex items-center gap-[10px] mb-[6px]">
+								<div class="flex flex-wrap items-center gap-[10px] mb-[6px]">
 									<span class="text-[1.125rem] font-bold text-[#252B42]">&euro;{{ formatCurrency(w.amount) }}</span>
 									<span :class="['inline-flex items-center gap-[4px] px-[10px] py-[3px] rounded-full text-[0.6875rem] font-medium', withdrawalStatusConfig[w.status]?.bg || 'bg-gray-50', withdrawalStatusConfig[w.status]?.text || 'text-gray-700']">
 										<svg v-if="w.status === 'pending'" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[12px] h-[12px]" fill="currentColor"><path d="M12,20A8,8 0 0,0 20,12A8,8 0 0,0 12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22C6.47,22 2,17.5 2,12A10,10 0 0,1 12,2M12.5,7V12.25L17,14.92L16.25,16.15L11,13V7H12.5Z"/></svg>
@@ -136,21 +158,21 @@ onMounted(() => { fetchWithdrawals(); });
 								</div>
 								<p class="text-[0.875rem] text-[#404040]">
 									<span class="font-medium">{{ w.user?.name }} {{ w.user?.surname }}</span>
-									<span class="text-[#737373] ml-[8px]">{{ w.user?.email }}</span>
+									<span class="text-[#737373] ml-[8px] break-all">{{ w.user?.email }}</span>
 								</p>
 								<p class="text-[0.75rem] text-[#737373] mt-[2px]">Richiesta: {{ formatDate(w.created_at) }}</p>
-								<p v-if="w.admin_notes" class="text-[0.75rem] text-[#737373] mt-[2px] italic">Note: {{ w.admin_notes }}</p>
+								<p v-if="w.admin_notes" class="mt-[8px] rounded-[12px] bg-[#F8FAFB] px-[12px] py-[10px] text-[0.75rem] text-[#737373] italic">Note: {{ w.admin_notes }}</p>
 							</div>
-							<div v-if="w.status === 'pending'" class="flex items-center gap-[8px]">
+							<div v-if="w.status === 'pending'" class="flex w-full flex-col gap-[8px] tablet:w-auto tablet:flex-row tablet:items-center tablet:justify-end">
 								<template v-if="rejectingId !== w.id">
-									<button @click="approveWithdrawal(w.id)" :disabled="actionLoading === w.id" class="px-[16px] py-[8px] bg-emerald-600 hover:bg-emerald-700 text-white rounded-[8px] text-[0.8125rem] font-medium transition-colors cursor-pointer disabled:opacity-50 flex items-center gap-[4px]">
+									<button @click="approveWithdrawal(w.id)" :disabled="actionLoading === w.id" class="w-full tablet:w-auto px-[16px] py-[8px] bg-emerald-600 hover:bg-emerald-700 text-white rounded-[8px] text-[0.8125rem] font-medium transition-colors cursor-pointer disabled:opacity-50 flex items-center justify-center gap-[4px]">
 										<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[16px] h-[16px]" fill="currentColor"><path d="M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z"/></svg> {{ actionLoading === w.id ? "..." : "Approva" }}
 									</button>
-									<button @click="startReject(w.id)" :disabled="actionLoading === w.id" class="px-[16px] py-[8px] bg-red-50 hover:bg-red-100 text-red-700 rounded-[8px] text-[0.8125rem] font-medium transition-colors cursor-pointer border border-red-200">Rifiuta</button>
+									<button @click="startReject(w.id)" :disabled="actionLoading === w.id" class="w-full tablet:w-auto px-[16px] py-[8px] bg-red-50 hover:bg-red-100 text-red-700 rounded-[8px] text-[0.8125rem] font-medium transition-colors cursor-pointer border border-red-200">Rifiuta</button>
 								</template>
 								<template v-else>
-									<div class="flex items-center gap-[8px]">
-										<input v-model="rejectNotes" type="text" placeholder="Motivo (opzionale)" class="px-[12px] py-[8px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[8px] text-[0.8125rem] w-[200px] focus:border-[#095866] focus:outline-none" />
+									<div class="grid grid-cols-1 tablet:grid-cols-[minmax(0,1fr)_auto_auto] gap-[8px]">
+										<input v-model="rejectNotes" type="text" placeholder="Motivo (opzionale)" class="w-full px-[12px] py-[8px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[8px] text-[0.8125rem] focus:border-[#095866] focus:outline-none" />
 										<button @click="confirmReject(w.id)" :disabled="actionLoading === w.id" class="px-[14px] py-[8px] bg-red-600 hover:bg-red-700 text-white rounded-[8px] text-[0.8125rem] font-medium cursor-pointer disabled:opacity-50">{{ actionLoading === w.id ? "..." : "Conferma" }}</button>
 										<button @click="cancelReject" class="px-[14px] py-[8px] bg-[#F0F0F0] hover:bg-[#E0E0E0] text-[#404040] rounded-[8px] text-[0.8125rem] font-medium cursor-pointer">Annulla</button>
 									</div>

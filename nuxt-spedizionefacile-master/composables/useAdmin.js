@@ -23,6 +23,8 @@
  * ERRORI TIPICI: confondere centesimi e euro — usare formatCents per valori dal DB
  * COLLEGAMENTI: laravel-spedizionefacile-main/app/Http/Controllers/BrtController.php (etichette)
  */
+import { formatEuro } from '~/utils/price.js'
+
 export const useAdmin = () => {
 	/* Stato delle azioni admin (approvazione, eliminazione, ecc.) */
 	const actionLoading = ref(null);
@@ -47,29 +49,28 @@ export const useAdmin = () => {
 	};
 
 	/* Formatta un valore come valuta con 2 decimali.
-	   Gestisce: oggetto MyMoney {amount (centesimi), formatted}, stringa formattata, numero in euro */
+	   Gestisce: oggetto MyMoney {amount (centesimi), formatted}, stringa formattata, numero in euro.
+	   Delega a formatEuro (~/utils/price.js) dove possibile. */
 	const formatCurrency = (val) => {
 		if (val == null) return '0,00';
 		// Se e' un oggetto MyMoney serializzato {amount: 1250, formatted: "12,50 EUR"}
 		if (typeof val === 'object' && val.amount !== undefined) {
-			return (Number(val.amount) / 100).toFixed(2).replace('.', ',');
+			return formatEuro(Number(val.amount) / 100);
 		}
 		// Se e' una stringa formattata (es. "12,50 EUR" o "12,50")
 		if (typeof val === 'string') {
 			const cleaned = val.replace(/[€\s\u00A0EUR]/gi, '').replace(/\./g, '').replace(',', '.');
 			const num = Number(cleaned);
-			return isNaN(num) ? '0,00' : num.toFixed(2).replace('.', ',');
+			return isNaN(num) ? '0,00' : formatEuro(num);
 		}
 		// Numero semplice: in euro (wallet, commissioni, prelievi, referral, COD)
 		const num = Number(val);
-		return isNaN(num) ? '0,00' : num.toFixed(2).replace('.', ',');
+		return isNaN(num) ? '0,00' : formatEuro(num);
 	};
 
-	/* Formatta centesimi (da Transaction::sum('total') che restituisce centesimi dal DB) */
-	const formatCents = (val) => {
-		const num = Number(val || 0);
-		return isNaN(num) ? '0,00' : (num / 100).toFixed(2).replace('.', ',');
-	};
+	/* Formatta centesimi (da Transaction::sum('total') che restituisce centesimi dal DB).
+	   Delega a formatEuro (~/utils/price.js) per la formattazione. */
+	const formatCents = (val) => formatEuro(Number(val || 0) / 100);
 
 	/* Formatta una data nel formato italiano con ora */
 	const formatDate = (dateStr) => {

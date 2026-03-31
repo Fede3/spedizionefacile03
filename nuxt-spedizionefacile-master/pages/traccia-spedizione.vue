@@ -183,7 +183,7 @@ onMounted(() => {
 						</div>
 
 						<!-- Step -->
-						<div v-for="(step, idx) in statusTimeline" :key="step.key" class="flex flex-col items-center relative z-10" style="flex: 1;">
+						<div v-for="(step, idx) in statusTimeline" :key="step.key" class="flex flex-col items-center relative z-10 flex-1">
 							<div
 								:class="idx <= currentStepIndex ? 'bg-[#095866] text-white' : 'bg-[#E9EBEC] text-[#A0A5AB]'"
 								class="w-[36px] h-[36px] rounded-full flex items-center justify-center transition-colors duration-300">

@@ -36,7 +36,9 @@ namespace App\Http\Controllers;
 
 use App\Models\PriceBand;
 use App\Models\Setting;
+use App\Services\EuropePriceEngineService;
 use App\Services\PriceEngineService;
+use App\Services\ShipmentServicePricingService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -45,7 +47,11 @@ use Illuminate\Validation\ValidationException;
 
 class PriceBandController extends Controller
 {
-    public function __construct(private readonly PriceEngineService $priceEngine)
+    public function __construct(
+        private readonly PriceEngineService $priceEngine,
+        private readonly EuropePriceEngineService $europePriceEngine,
+        private readonly ShipmentServicePricingService $shipmentServicePricing,
+    )
     {
     }
 
@@ -60,6 +66,10 @@ class PriceBandController extends Controller
                 'volume' => $config['volume'] ?? [],
                 'extra_rules' => $config['extra_rules'] ?? [],
                 'supplements' => $config['supplements'] ?? [],
+                'europe' => $this->europePriceEngine->getPricingConfig(),
+                'service_pricing' => $this->shipmentServicePricing->getPricingConfig()['service_pricing'] ?? [],
+                'automatic_supplements' => $this->shipmentServicePricing->getPricingConfig()['automatic_supplements'] ?? [],
+                'operational_fees' => $this->shipmentServicePricing->getPricingConfig()['operational_fees'] ?? [],
                 'version' => $config['version'] ?? null,
             ],
         ]);
@@ -164,10 +174,37 @@ class PriceBandController extends Controller
                     'supplements.*.amount_cents' => 'required|integer|min:0',
                     'supplements.*.apply_to' => 'required|in:origin,destination,both',
                     'supplements.*.enabled' => 'nullable|boolean',
+                    'europe' => 'nullable|array',
+                    'europe.enabled' => 'nullable|boolean',
+                    'europe.origin_country_code' => 'nullable|string|size:2',
+                    'europe.max_packages' => 'nullable|integer|min:1|max:1',
+                    'europe.max_quantity_per_package' => 'nullable|integer|min:1|max:1',
+                    'europe.bands' => 'nullable|array|min:1',
+                    'europe.bands.*.id' => 'required_with:europe.bands|string',
+                    'europe.bands.*.label' => 'required_with:europe.bands|string',
+                    'europe.bands.*.max_weight_kg' => 'required_with:europe.bands|numeric|min:0.001',
+                    'europe.bands.*.max_volume_m3' => 'required_with:europe.bands|numeric|min:0.000001',
+                    'europe.bands.*.volumetric_factor' => 'required_with:europe.bands|integer|min:1',
+                    'europe.bands.*.rates' => 'required_with:europe.bands|array|min:1',
+                    'europe.bands.*.rates.*.country_code' => 'required|string|size:2',
+                    'europe.bands.*.rates.*.country_name' => 'required|string',
+                    'europe.bands.*.rates.*.price_cents' => 'nullable|integer|min:0',
+                    'europe.bands.*.rates.*.quote_required' => 'nullable|boolean',
+                    'service_pricing' => 'nullable|array',
+                    'automatic_supplements' => 'nullable|array',
+                    'operational_fees' => 'nullable|array',
                 ]);
             }
 
             $config = $this->priceEngine->savePricingConfig($payload);
+            $europeConfig = $request->filled('europe')
+                ? $this->europePriceEngine->savePricingConfig($payload['europe'])
+                : $this->europePriceEngine->getPricingConfig();
+            $shipmentPricingConfig = $this->shipmentServicePricing->savePricingConfig([
+                'service_pricing' => $payload['service_pricing'] ?? [],
+                'automatic_supplements' => $payload['automatic_supplements'] ?? [],
+                'operational_fees' => $payload['operational_fees'] ?? [],
+            ]);
         } catch (ValidationException $e) {
             return response()->json([
                 'message' => 'Configurazione prezzi non valida.',
@@ -186,6 +223,10 @@ class PriceBandController extends Controller
                 'volume' => $config['volume'] ?? [],
                 'extra_rules' => $config['extra_rules'] ?? [],
                 'supplements' => $config['supplements'] ?? [],
+                'europe' => $europeConfig,
+                'service_pricing' => $shipmentPricingConfig['service_pricing'] ?? [],
+                'automatic_supplements' => $shipmentPricingConfig['automatic_supplements'] ?? [],
+                'operational_fees' => $shipmentPricingConfig['operational_fees'] ?? [],
                 'version' => $config['version'] ?? null,
             ],
         ]);

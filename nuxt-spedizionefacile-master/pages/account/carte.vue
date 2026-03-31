@@ -1,13 +1,14 @@
 <!--
   FILE: pages/account/carte.vue
-  SCOPO: Gestione carte Stripe — lista, aggiungi, predefinita, elimina. Config admin chiavi Stripe.
+  SCOPO: Gestione carte Stripe — lista, aggiungi, predefinita, elimina.
+         La configurazione globale Stripe vive nel pannello admin.
 
   API: GET /api/stripe/payment-methods (lista carte), POST /api/stripe/create-setup-intent (setup carta),
        POST /api/stripe/set-default-payment-method (salva nuova carta come predefinita),
        POST /api/stripe/change-default-payment-method (cambia predefinita),
-       DELETE /api/stripe/delete-card (elimina carta), GET/POST /api/settings/stripe (config chiavi).
+       DELETE /api/stripe/delete-card (elimina carta), GET /api/settings/stripe (stato configurazione).
   COMPONENTI: nessuno di esterno (usa Icon di Nuxt UI, Stripe Elements montati manualmente).
-  ROUTE: /account/carte (middleware sanctum:auth).
+  ROUTE: /account/carte (middleware app-auth).
 
   DATI IN INGRESSO: nessuno (carica carte dell'utente autenticato).
   DATI IN USCITA: carta salvata/eliminata/impostata come predefinita.
@@ -32,13 +33,14 @@ useHead({ link: [
 
 /* Richiede che l'utente sia autenticato */
 definePageMeta({
-	middleware: ["sanctum:auth"],
+	middleware: ["app-auth"],
 });
 
 /* refreshIdentity ricarica i dati utente dopo modifiche ai pagamenti */
-const { refreshIdentity } = useSanctumAuth();
+const { refreshIdentity, user } = useSanctumAuth();
 const runtimeConfig = useRuntimeConfig();
 const client = useSanctumClient();
+const isAdmin = computed(() => user.value?.role === "Admin");
 
 /* ===== CONFIGURAZIONE STRIPE ===== */
 /* Indica se Stripe e' configurato con le chiavi API */
@@ -47,20 +49,11 @@ const stripeConfigured = ref(false);
 const stripePublishableKey = ref("");
 /* Indica se stiamo ancora caricando la configurazione */
 const configLoading = ref(true);
-/* Mostra/nasconde il form per inserire le chiavi Stripe */
-const showConfigForm = ref(false);
-/* Campi del form configurazione Stripe */
-const configPublishableKey = ref("");
-const configSecretKey = ref("");
-/* Errore durante il salvataggio configurazione */
-const configError = ref(null);
-/* Indica se il salvataggio configurazione e' in corso */
-const configSaving = ref(false);
-
 const isValidStripePublishableKey = (value) => {
 	const key = String(value || "").trim();
 	return key.startsWith("pk_") && !key.includes("placeholder");
 };
+const cardsFeatureAvailable = computed(() => stripeConfigured.value);
 
 // Fetch Stripe config dal backend
 try {
@@ -76,6 +69,8 @@ try {
 }
 configLoading.value = false;
 
+const openAdminStripeSettings = () => navigateTo("/account/amministrazione/impostazioni");
+
 // Load Stripe.js con la chiave corretta (import dinamico per ridurre il bundle iniziale)
 let stripe = null;
 if (isValidStripePublishableKey(stripePublishableKey.value)) {
@@ -83,53 +78,8 @@ if (isValidStripePublishableKey(stripePublishableKey.value)) {
 		const { loadStripe } = await import('@stripe/stripe-js');
 		stripe = await loadStripe(stripePublishableKey.value);
 	} catch (e) {
-		console.error("Stripe.js non caricato:", e);
 	}
 }
-
-/* Salva le chiavi API Stripe nel server e ricarica Stripe con la nuova chiave */
-const saveStripeConfig = async () => {
-	configError.value = null;
-	configSaving.value = true;
-
-	try {
-		const res = await client("/api/settings/stripe", {
-			method: "POST",
-			body: {
-				publishable_key: configPublishableKey.value,
-				secret_key: configSecretKey.value,
-			},
-		});
-
-		if (res?.success) {
-			stripeConfigured.value = true;
-			stripePublishableKey.value = String(configPublishableKey.value || "").trim();
-			showConfigForm.value = false;
-
-			// Ricarica Stripe con la nuova chiave (import dinamico)
-			if (isValidStripePublishableKey(stripePublishableKey.value)) {
-				try {
-					const { loadStripe } = await import('@stripe/stripe-js');
-					stripe = await loadStripe(stripePublishableKey.value);
-				} catch (e) {
-					console.error("Stripe.js non caricato:", e);
-				}
-			} else {
-				stripe = null;
-				stripeConfigured.value = false;
-			}
-
-			textMessage.value = "Stripe configurato con successo!";
-			textMessageType.value = "success";
-			setTimeout(() => { textMessage.value = ""; }, 3000);
-		}
-	} catch (err) {
-		const msg = err?.data?.message || err?.data?.errors?.publishable_key?.[0] || err?.data?.errors?.secret_key?.[0] || "Errore durante il salvataggio.";
-		configError.value = msg;
-	} finally {
-		configSaving.value = false;
-	}
-};
 
 /* ===== GESTIONE CARTE DI CREDITO ===== */
 /* Riferimenti agli elementi Stripe (numero carta, scadenza, CVC) montati nel form */
@@ -350,7 +300,7 @@ const togglePaymentForm = async () => {
 			const style = {
 				base: {
 					color: "#252B42",
-					fontFamily: "Inter, system-ui, sans-serif",
+					fontFamily: '"Inter", sans-serif',
 					fontSize: "15px",
 					fontWeight: "400",
 					"::placeholder": { color: "#a0a0a0" },
@@ -388,145 +338,104 @@ const getBrandIcon = (brand) => {
 </script>
 
 <template>
-	<section class="min-h-[600px] py-[40px] desktop:py-[80px]">
+	<section class="min-h-[600px] py-[32px] desktop:py-[72px]">
 		<div class="my-container">
-			<!-- Breadcrumb -->
-			<div class="mb-[24px] text-[0.875rem] text-[#737373]">
-				<NuxtLink to="/account" class="hover:underline text-[#095866]">Il tuo account</NuxtLink>
-				<span class="mx-[6px]">/</span>
-				<span v-if="!showFormPayments && !showConfigForm" class="font-semibold text-[#252B42]">Carte e pagamenti</span>
-				<template v-else-if="showConfigForm">
-					<NuxtLink class="hover:underline text-[#095866] cursor-pointer" @click.prevent="showConfigForm = false">Carte e pagamenti</NuxtLink>
-					<span class="mx-[6px]">/</span>
-					<span class="font-semibold text-[#252B42]">Configurazione Stripe</span>
-				</template>
-				<template v-else>
-					<NuxtLink class="hover:underline text-[#095866] cursor-pointer" @click.prevent="togglePaymentForm">Carte e pagamenti</NuxtLink>
-					<span class="mx-[6px]">/</span>
-					<span class="font-semibold text-[#252B42]">Aggiungi carta</span>
-				</template>
-			</div>
+				<AccountPageHeader
+					:title="showFormPayments ? 'Aggiungi carta' : 'Carte e pagamenti'"
+					description="Carte e pagamenti salvati."
+				:crumbs="showFormPayments
+					? [
+						{ label: 'Account', to: '/account' },
+						{ label: 'Carte e pagamenti', to: '/account/carte' },
+						{ label: 'Aggiungi carta' },
+					]
+					: [
+						{ label: 'Account', to: '/account' },
+						{ label: 'Carte e pagamenti' },
+					]"
+				>
+					<template v-if="!showFormPayments" #actions>
+					<div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-[8px]">
+						<button
+							v-if="isAdmin"
+							type="button"
+							@click="openAdminStripeSettings"
+							class="btn-tertiary w-full sm:w-auto px-[14px] py-[9px] text-[0.75rem] font-medium cursor-pointer"
+							title="Gestisci la configurazione globale di Stripe">
+							<Icon name="mdi:cog-outline" class="text-[15px] align-middle mr-[4px]" />
+							Impostazioni Stripe
+						</button>
+						<button
+							v-if="cardsFeatureAvailable"
+							type="button"
+							@click="togglePaymentForm"
+							class="btn-cta sf-nav-button w-full sm:w-auto inline-flex items-center justify-center gap-[6px] px-[18px] py-[9px] text-[0.8125rem] font-semibold">
+							<Icon name="mdi:plus" class="text-[17px]" />
+							Aggiungi carta
+						</button>
+					</div>
+					</template>
+				</AccountPageHeader>
 
-			<!-- Global feedback message -->
-			<div
+				<div v-if="!showFormPayments" class="mb-[16px] rounded-[18px] border border-[#E9EBEC] bg-white px-[16px] py-[14px] shadow-sm desktop:px-[18px]">
+					<div class="flex flex-col gap-[10px] tablet:flex-row tablet:items-center tablet:justify-between">
+						<div>
+							<p class="text-[0.75rem] font-semibold uppercase tracking-[0.08em] text-[#095866]">Metodi salvati</p>
+							<p class="mt-[3px] text-[0.875rem] leading-[1.5] text-[#667281]">
+								{{ payments?.data?.length ? `${payments.data.length} carte salvate.` : 'Carte pronte per checkout e wallet.' }}
+							</p>
+						</div>
+						<NuxtLink to="/account/portafoglio" class="btn-secondary sf-nav-button inline-flex min-h-[42px] items-center justify-center px-[14px] py-[8px] text-[0.8125rem] font-semibold">
+							Apri portafoglio
+						</NuxtLink>
+					</div>
+				</div>
+
+				<!-- Global feedback message -->
+				<div
 				v-if="textMessage"
 				:class="[
-					'mb-[20px] px-[16px] py-[12px] rounded-[50px] text-[0.875rem] font-medium transition-all',
+				'mb-[16px] px-[14px] py-[10px] rounded-[14px] text-[0.8125rem] font-medium transition-all',
 					textMessageType === 'success' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : textMessageType === 'error' ? 'bg-red-50 text-red-700 border border-red-200' : 'bg-blue-50 text-blue-700 border border-blue-200',
 				]">
 				{{ textMessage }}
 			</div>
 
 			<!-- ===== STRIPE NOT CONFIGURED BANNER ===== -->
-			<div v-if="!stripeConfigured && !showConfigForm && !configLoading" class="mb-[24px] p-[20px] bg-amber-50 border border-amber-200 rounded-[12px]">
-				<div class="flex items-start gap-[14px]">
-					<div class="w-[44px] h-[44px] rounded-[50px] bg-amber-100 flex items-center justify-center shrink-0">
-						<Icon name="mdi:alert-outline" class="text-[24px] text-amber-600" />
+			<div v-if="!stripeConfigured && !configLoading && !showFormPayments" class="mb-[20px] p-[16px] bg-amber-50 border border-amber-200 rounded-[16px]">
+				<div class="flex items-start gap-[12px]">
+						<div class="w-[40px] h-[40px] rounded-[50px] bg-amber-100 flex items-center justify-center shrink-0">
+						<Icon name="mdi:alert-outline" class="text-[20px] text-amber-600" />
 					</div>
 					<div class="flex-1">
-						<h3 class="text-[0.9375rem] font-bold text-[#252B42] mb-[4px]">Stripe non configurato</h3>
-						<p class="text-[0.8125rem] text-[#737373] leading-[1.5] mb-[12px]">
-							Per aggiungere carte di pagamento devi prima configurare le chiavi API di Stripe.
-							Le trovi nella tua <a href="https://dashboard.stripe.com/apikeys" target="_blank" class="text-[#095866] underline">dashboard Stripe</a>.
+						<h3 class="text-[0.875rem] font-bold text-[#252B42] mb-[4px]">Stripe non configurato</h3>
+						<p class="text-[0.75rem] text-[#737373] leading-[1.5] mb-[10px]">
+							<span v-if="isAdmin">
+								Per abilitare carte, checkout e ricariche wallet configura Stripe dal pannello amministrazione.
+							</span>
+							<span v-else>
+								I pagamenti con carta non sono ancora attivi su questo sito. Quando Stripe sarà configurato dall'amministratore potrai aggiungere qui le tue carte, usarle al checkout e ricaricare il wallet.
+							</span>
 						</p>
 						<button
-							@click="showConfigForm = true"
-							class="inline-flex items-center gap-[6px] px-[18px] py-[10px] bg-[#095866] hover:bg-[#074a56] text-white rounded-[8px] text-[0.8125rem] font-semibold transition-colors cursor-pointer">
-							<Icon name="mdi:cog-outline" class="text-[16px]" />
-							Configura Stripe
+							v-if="isAdmin"
+							@click="openAdminStripeSettings"
+							class="inline-flex items-center gap-[6px] px-[16px] py-[9px] bg-[#095866] hover:bg-[#074a56] text-white rounded-[10px] text-[0.75rem] font-semibold transition-colors cursor-pointer">
+							<Icon name="mdi:cog-outline" class="text-[15px]" />
+							Vai alle impostazioni admin
 						</button>
 					</div>
 				</div>
 			</div>
 
-			<!-- ===== STRIPE CONFIG FORM ===== -->
-			<template v-if="showConfigForm">
-				<h1 class="text-[1.5rem] desktop:text-[1.75rem] font-bold text-[#252B42] mb-[24px]">Configurazione Stripe</h1>
-
-				<div class="bg-white rounded-[16px] p-[24px] desktop:p-[32px] shadow-sm border border-[#E9EBEC] max-w-[540px] mx-auto">
-					<p class="text-[0.875rem] text-[#737373] leading-[1.6] mb-[24px]">
-						Inserisci le chiavi API dal tuo account Stripe. Le trovi in
-						<a href="https://dashboard.stripe.com/apikeys" target="_blank" class="text-[#095866] underline font-medium">Dashboard &rarr; Developers &rarr; API keys</a>.
-					</p>
-
-					<div class="mb-[20px]">
-						<label class="block text-[0.8125rem] font-semibold text-[#404040] mb-[6px]">Publishable Key</label>
-						<input
-							type="text"
-							v-model="configPublishableKey"
-							class="w-full px-[14px] py-[12px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[8px] text-[0.875rem] text-[#252B42] placeholder:text-[#a0a0a0] focus:border-[#095866] focus:outline-none transition-colors font-mono"
-							placeholder="pk_test_..." />
-					</div>
-
-					<div class="mb-[24px]">
-						<label class="block text-[0.8125rem] font-semibold text-[#404040] mb-[6px]">Secret Key</label>
-						<input
-							type="password"
-							v-model="configSecretKey"
-							class="w-full px-[14px] py-[12px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[8px] text-[0.875rem] text-[#252B42] placeholder:text-[#a0a0a0] focus:border-[#095866] focus:outline-none transition-colors font-mono"
-							placeholder="sk_test_..." />
-					</div>
-
-					<p v-if="configError" class="text-red-500 text-[0.8125rem] mb-[16px] p-[10px] bg-red-50 rounded-[8px] border border-red-200">
-						{{ configError }}
-					</p>
-
-					<div class="flex gap-[12px]">
-						<button
-							@click="showConfigForm = false"
-							class="flex-1 inline-flex items-center justify-center gap-[6px] py-[14px] rounded-[50px] bg-[#F0F0F0] hover:bg-[#E0E0E0] text-[#404040] font-semibold text-[0.9375rem] transition-colors cursor-pointer">
-							<Icon name="mdi:close" class="text-[18px]" />
-							Annulla
-						</button>
-						<button
-							@click="saveStripeConfig"
-							:disabled="configSaving || !configPublishableKey || !configSecretKey"
-							class="flex-1 inline-flex items-center justify-center gap-[6px] py-[14px] rounded-[50px] bg-[#095866] hover:bg-[#074a56] text-white font-semibold text-[0.9375rem] transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">
-							<Icon name="mdi:content-save" class="text-[18px]" />
-							{{ configSaving ? 'Salvataggio...' : 'Salva configurazione' }}
-						</button>
-					</div>
-
-					<div class="mt-[16px] flex items-center justify-center gap-[6px] text-[0.75rem] text-[#a0a0a0]">
-						<Icon name="mdi:lock-outline" class="text-[14px]" />
-						<span>Le chiavi vengono salvate in modo sicuro nel server</span>
-					</div>
-				</div>
-			</template>
-
-			<!-- ===== CARD LIST VIEW ===== -->
-			<template v-if="!showFormPayments && !showConfigForm">
-				<div class="flex items-center justify-between mb-[24px]">
-					<h1 class="text-[1.5rem] desktop:text-[1.75rem] font-bold text-[#252B42]">Carte e pagamenti</h1>
-					<div class="flex items-center gap-[10px]">
-						<button
-							type="button"
-							@click="showConfigForm = true"
-							class="px-[16px] py-[10px] bg-[#F0F0F0] hover:bg-[#E0E0E0] text-[#404040] rounded-[50px] text-[0.8125rem] font-medium transition-colors cursor-pointer"
-							title="Configura chiavi API Stripe">
-							<Icon name="mdi:cog-outline" class="text-[16px] align-middle mr-[4px]" />
-							Stripe
-						</button>
-						<button
-							type="button"
-							@click="togglePaymentForm"
-							:disabled="!stripeConfigured"
-							class="inline-flex items-center gap-[6px] px-[20px] py-[10px] bg-[#095866] hover:bg-[#074a56] text-white rounded-[50px] text-[0.875rem] font-semibold transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">
-							<Icon name="mdi:plus" class="text-[18px]" />
-							Aggiungi carta
-						</button>
-					</div>
-				</div>
-				<p v-if="!stripeConfigured" class="text-red-500 text-[0.875rem] mt-[8px]">
-					Stripe non configurato. Contatta l'amministratore per abilitare i pagamenti.
-				</p>
-
-				<!-- Loading skeleton -->
-				<div v-if="status === 'pending'">
-					<div v-for="n in 2" :key="n" class="bg-white rounded-[12px] p-[20px] border border-[#E9EBEC] mb-[12px]">
-						<div class="flex animate-pulse items-center gap-[16px]">
-							<div class="w-[52px] h-[34px] rounded-[6px] bg-gray-200"></div>
-							<div class="flex-1 space-y-[8px]">
+				<!-- ===== CARD LIST VIEW ===== -->
+				<template v-if="!showFormPayments">
+					<!-- Loading skeleton -->
+					<div v-if="status === 'pending'">
+					<div v-for="n in 2" :key="n" class="bg-white rounded-[14px] p-[16px] border border-[#E9EBEC] mb-[10px]">
+						<div class="flex animate-pulse items-center gap-[12px]">
+							<div class="w-[48px] h-[32px] rounded-[6px] bg-gray-200"></div>
+							<div class="flex-1 space-y-[7px]">
 								<div class="h-[14px] rounded bg-gray-200 w-[40%]"></div>
 								<div class="h-[12px] rounded bg-gray-200 w-[25%]"></div>
 							</div>
@@ -537,16 +446,34 @@ const getBrandIcon = (brand) => {
 				<!-- Cards loaded -->
 				<template v-else-if="payments && payments.data">
 					<!-- Empty state -->
-					<div v-if="payments.data.length === 0" class="bg-white rounded-[16px] p-[48px] shadow-sm border border-[#E9EBEC] text-center">
+					<div v-if="payments.data.length === 0" class="bg-white rounded-[18px] p-[36px] shadow-sm border border-[#E9EBEC] text-center">
 						<!-- Icona carte vuote con MDI -->
-						<div class="w-[72px] h-[72px] mx-auto mb-[20px] bg-[#F8F9FB] rounded-full flex items-center justify-center">
-							<Icon name="mdi:credit-card-outline" class="text-[32px] text-[#C8CCD0]" />
+						<div class="w-[64px] h-[64px] mx-auto mb-[16px] bg-[#F8F9FB] rounded-full flex items-center justify-center">
+							<Icon name="mdi:credit-card-outline" class="text-[28px] text-[#C8CCD0]" />
 						</div>
-						<h2 class="text-[1.25rem] font-bold text-[#252B42] mb-[10px]">Nessuna carta salvata</h2>
-						<p class="text-[#737373] text-[0.9375rem] max-w-[400px] mx-auto mb-[24px] leading-[1.6]">Aggiungi una carta di pagamento per velocizzare le tue spedizioni e ricaricare il portafoglio.</p>
-						<button @click="stripeConfigured ? togglePaymentForm() : (showConfigForm = true)" class="px-[24px] py-[12px] bg-[#095866] hover:bg-[#074a56] text-white rounded-[50px] font-semibold text-[0.9375rem] transition-colors cursor-pointer">
-							{{ stripeConfigured ? 'Aggiungi la tua prima carta' : 'Configura Stripe' }}
+						<h2 class="text-[1.125rem] font-bold text-[#252B42] mb-[8px]">
+							{{ cardsFeatureAvailable ? 'Nessuna carta salvata' : 'Pagamenti con carta non ancora attivi' }}
+						</h2>
+						<p class="text-[#737373] text-[0.875rem] max-w-[460px] mx-auto mb-[20px] leading-[1.55]">
+							<span v-if="cardsFeatureAvailable">
+								Aggiungi una carta per pagare più in fretta.
+							</span>
+							<span v-else-if="isAdmin">
+								Configura Stripe per attivare carte e wallet.
+							</span>
+							<span v-else>
+								Le carte saranno disponibili appena Stripe sarà attivo.
+							</span>
+						</p>
+						<button v-if="cardsFeatureAvailable" @click="togglePaymentForm" class="btn-cta sf-nav-button px-[20px] py-[10px] font-semibold text-[0.875rem]">
+							Aggiungi la tua prima carta
 						</button>
+						<button v-else-if="isAdmin" @click="openAdminStripeSettings" class="btn-cta sf-nav-button px-[20px] py-[10px] font-semibold text-[0.875rem]">
+							Apri impostazioni Stripe
+						</button>
+						<p v-else class="text-[#737373] text-[0.875rem] font-medium">
+							Quando Stripe sarà attivo, qui comparirà il pulsante per aggiungere la tua prima carta.
+						</p>
 					</div>
 
 					<!-- Card items -->
@@ -555,31 +482,31 @@ const getBrandIcon = (brand) => {
 							v-for="(payment, index) in payments.data"
 							:key="index"
 							:class="[
-								'bg-white rounded-[12px] p-[20px] border transition-all',
+								'bg-white rounded-[14px] p-[14px] desktop:p-[18px] border transition-all',
 								payment.default ? 'border-[#095866] shadow-sm' : 'border-[#E9EBEC] hover:border-[#D0D0D0]',
 							]">
-							<div class="flex items-center gap-[16px]">
+								<div class="flex flex-col gap-[12px] tablet:flex-row tablet:items-center tablet:gap-[14px]">
 								<!-- Card brand icon -->
 								<div
 									:class="[
-										'w-[52px] h-[34px] rounded-[6px] flex items-center justify-center text-[0.6875rem] font-bold uppercase shrink-0',
+										'w-[48px] h-[32px] rounded-[6px] flex items-center justify-center text-[0.6875rem] font-bold uppercase shrink-0',
 										payment.default ? 'bg-[#095866] text-white' : 'bg-[#F0F0F0] text-[#404040]',
 									]">
 									{{ getBrandIcon(payment.brand)?.slice(0, 4) }}
 								</div>
 
 								<!-- Card info -->
-								<div class="flex-1 min-w-0">
-									<div class="flex items-center gap-[8px]">
-										<span class="text-[0.9375rem] font-semibold text-[#252B42]">
+									<div class="min-w-0 w-full flex-1">
+									<div class="flex flex-wrap items-center gap-[8px]">
+										<span class="text-[0.875rem] font-semibold text-[#252B42]">
 											{{ getBrandIcon(payment.brand) }} **** {{ payment.last4 }}
 										</span>
 										<span v-if="payment.default" class="inline-block px-[8px] py-[2px] rounded-full text-[0.6875rem] font-medium bg-[#095866]/10 text-[#095866]">
 											Predefinita
 										</span>
 									</div>
-									<div class="flex items-center gap-[12px] mt-[4px]">
-										<span class="text-[0.8125rem] text-[#737373]">
+										<div class="mt-[4px] flex flex-col gap-[4px] sm:flex-row sm:items-center sm:gap-[12px]">
+										<span class="text-[0.75rem] text-[#737373]">
 											{{ payment.holder_name }}
 										</span>
 										<span class="text-[0.75rem] text-[#a0a0a0]">
@@ -589,37 +516,37 @@ const getBrandIcon = (brand) => {
 								</div>
 
 								<!-- Actions -->
-								<div class="flex items-center gap-[8px] shrink-0">
-									<button
-										v-if="!payment.default"
-										@click="setDefault(payment.id)"
-										class="inline-flex items-center gap-[4px] text-[0.8125rem] text-[#095866] hover:underline cursor-pointer font-medium">
-										<Icon name="mdi:check-circle-outline" class="text-[14px]" />
-										Imposta predefinita
-									</button>
-
-									<template v-if="deleteConfirmId !== payment.id">
+										<div class="flex w-full flex-wrap items-center gap-[8px] tablet:w-auto tablet:justify-end">
 										<button
-											@click="deleteConfirmId = payment.id"
-											class="inline-flex items-center gap-[4px] text-[0.8125rem] text-red-400 hover:text-red-600 cursor-pointer ml-[4px]">
-											<Icon name="mdi:delete-outline" class="text-[14px]" />
-											Elimina
+											v-if="!payment.default"
+											@click="setDefault(payment.id)"
+											class="btn-secondary inline-flex min-h-[36px] items-center gap-[5px] px-[11px] py-[7px] text-[0.75rem] font-semibold cursor-pointer">
+											<Icon name="mdi:check-circle-outline" class="text-[13px]" />
+											Imposta predefinita
 										</button>
-									</template>
-									<template v-else>
-										<div class="flex items-center gap-[6px]">
+
+										<template v-if="deleteConfirmId !== payment.id">
 											<button
-												@click="deleteCard(payment.id)"
-												class="inline-flex items-center gap-[4px] px-[12px] py-[6px] bg-red-600 hover:bg-red-700 text-white rounded-[6px] text-[0.75rem] font-medium cursor-pointer">
-												<Icon name="mdi:check" class="text-[14px]" />
-												Conferma
+												@click="deleteConfirmId = payment.id"
+												class="btn-tertiary inline-flex min-h-[36px] items-center gap-[4px] px-[11px] py-[7px] text-[0.75rem] font-semibold text-red-600 cursor-pointer hover:border-red-200 hover:bg-red-50">
+												<Icon name="mdi:delete-outline" class="text-[14px]" />
+												Elimina
 											</button>
-											<button
-												@click="deleteConfirmId = null"
-												class="inline-flex items-center gap-[4px] px-[12px] py-[6px] bg-[#F0F0F0] hover:bg-[#E0E0E0] text-[#404040] rounded-[6px] text-[0.75rem] font-medium cursor-pointer">
-												<Icon name="mdi:close" class="text-[14px]" />
-												Annulla
-											</button>
+										</template>
+										<template v-else>
+											<div class="flex flex-wrap items-center gap-[6px]">
+												<button
+													@click="deleteCard(payment.id)"
+													class="btn-cta inline-flex min-h-[36px] items-center gap-[4px] px-[11px] py-[7px] text-[0.6875rem] font-semibold cursor-pointer">
+													<Icon name="mdi:check" class="text-[13px]" />
+													Conferma
+												</button>
+												<button
+													@click="deleteConfirmId = null"
+													class="btn-secondary inline-flex min-h-[36px] items-center gap-[4px] px-[11px] py-[7px] text-[0.6875rem] font-semibold cursor-pointer">
+													<Icon name="mdi:close" class="text-[13px]" />
+													Annulla
+												</button>
 										</div>
 									</template>
 								</div>
@@ -630,9 +557,9 @@ const getBrandIcon = (brand) => {
 
 				<!-- Security note -->
 				<!-- Nota sicurezza con icona MDI -->
-				<div class="mt-[24px] flex items-start gap-[10px] p-[14px] bg-[#F8F9FB] rounded-[50px]">
-					<Icon name="mdi:lock-outline" class="text-[18px] text-[#737373] shrink-0 mt-[1px]" />
-					<p class="text-[0.8125rem] text-[#737373] leading-[1.5]">
+				<div class="mt-[20px] flex items-start gap-[10px] p-[12px] bg-[#F8F9FB] rounded-[16px]">
+					<Icon name="mdi:lock-outline" class="text-[17px] text-[#737373] shrink-0 mt-[1px]" />
+					<p class="text-[0.75rem] text-[#737373] leading-[1.5]">
 						I dati delle carte sono gestiti in modo sicuro da Stripe. Non conserviamo mai i numeri completi delle tue carte.
 					</p>
 				</div>
@@ -640,56 +567,54 @@ const getBrandIcon = (brand) => {
 
 			<!-- ===== ADD CARD FORM ===== -->
 			<template v-if="showFormPayments">
-				<h1 class="text-[1.5rem] desktop:text-[1.75rem] font-bold text-[#252B42] mb-[24px]">Aggiungi carta</h1>
-
-				<div class="bg-white rounded-[16px] p-[24px] desktop:p-[32px] shadow-sm border border-[#E9EBEC] max-w-[480px] mx-auto">
-					<div class="mb-[20px]">
-						<label class="block text-[0.8125rem] font-semibold text-[#404040] mb-[6px]">Numero carta</label>
+				<div class="bg-white rounded-[18px] p-[18px] tablet:p-[22px] desktop:p-[28px] shadow-sm border border-[#E9EBEC] max-w-[760px] mx-auto">
+					<div class="mb-[16px]">
+						<label class="block text-[0.75rem] font-semibold text-[#404040] mb-[5px]">Numero carta</label>
 						<div class="stripe-field" id="card-number"></div>
 					</div>
 
-					<div class="mb-[20px]">
-						<label class="block text-[0.8125rem] font-semibold text-[#404040] mb-[6px]">Titolare carta</label>
+					<div class="mb-[16px]">
+						<label class="block text-[0.75rem] font-semibold text-[#404040] mb-[5px]">Titolare carta</label>
 						<input
 							type="text"
 							v-model="cardHolderName"
-							class="w-full px-[14px] py-[12px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[8px] text-[0.9375rem] text-[#252B42] placeholder:text-[#a0a0a0] focus:border-[#095866] focus:outline-none transition-colors"
+							class="w-full px-[14px] py-[11px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[8px] text-[0.875rem] text-[#252B42] placeholder:text-[#a0a0a0] focus:border-[#095866] focus:outline-none transition-colors"
 							placeholder="Mario Rossi"
 							required />
 					</div>
 
-					<div class="flex gap-[12px] mb-[24px]">
-						<div class="flex-1">
-							<label class="block text-[0.8125rem] font-semibold text-[#404040] mb-[6px]">Scadenza</label>
+					<div class="grid grid-cols-1 tablet:grid-cols-[minmax(0,1fr)_132px] gap-[12px] mb-[18px]">
+						<div class="min-w-0">
+							<label class="block text-[0.75rem] font-semibold text-[#404040] mb-[5px]">Scadenza</label>
 							<div class="stripe-field" id="card-expiry"></div>
 						</div>
-						<div class="w-[120px]">
-							<label class="block text-[0.8125rem] font-semibold text-[#404040] mb-[6px]">CVC</label>
+						<div class="min-w-0 tablet:w-[132px]">
+							<label class="block text-[0.75rem] font-semibold text-[#404040] mb-[5px]">CVC</label>
 							<div class="stripe-field" id="card-cvc"></div>
 						</div>
 					</div>
 
-					<p v-if="errorMessage" class="text-red-500 text-[0.8125rem] mb-[16px] p-[10px] bg-red-50 rounded-[8px] border border-red-200">
+					<p v-if="errorMessage" class="text-red-500 text-[0.75rem] mb-[14px] p-[10px] bg-red-50 rounded-[8px] border border-red-200">
 						{{ errorMessage }}
 					</p>
 
-					<div class="flex gap-[12px]">
+					<div class="flex flex-col sm:flex-row gap-[10px]">
 						<button
 							@click.prevent="togglePaymentForm"
-							class="flex-1 inline-flex items-center justify-center gap-[6px] py-[14px] rounded-[50px] bg-[#F0F0F0] hover:bg-[#E0E0E0] text-[#404040] font-semibold text-[0.9375rem] transition-colors cursor-pointer">
-							<Icon name="mdi:close" class="text-[18px]" />
+							class="btn-secondary sf-nav-button flex-1 inline-flex items-center justify-center gap-[6px] py-[12px] font-semibold text-[0.875rem] cursor-pointer">
+							<Icon name="mdi:close" class="text-[17px]" />
 							Annulla
 						</button>
 						<button
 							@click="handleAddCard"
-							class="flex-1 inline-flex items-center justify-center gap-[6px] py-[14px] rounded-[50px] bg-[#095866] hover:bg-[#074a56] text-white font-semibold text-[0.9375rem] transition-colors cursor-pointer">
-							<Icon name="mdi:content-save" class="text-[18px]" />
+							class="btn-cta sf-nav-button flex-1 inline-flex items-center justify-center gap-[6px] py-[12px] font-semibold text-[0.875rem] cursor-pointer">
+							<Icon name="mdi:content-save" class="text-[17px]" />
 							Salva carta
 						</button>
 					</div>
 
-					<div class="mt-[16px] flex items-center justify-center gap-[6px] text-[0.75rem] text-[#a0a0a0]">
-						<Icon name="mdi:lock-outline" class="text-[14px]" />
+					<div class="mt-[14px] flex items-center justify-center gap-[6px] text-[0.6875rem] text-[#a0a0a0]">
+						<Icon name="mdi:lock-outline" class="text-[13px]" />
 						<span>Connessione sicura SSL</span>
 					</div>
 				</div>

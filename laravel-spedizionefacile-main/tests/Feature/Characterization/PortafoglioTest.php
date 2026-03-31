@@ -38,7 +38,7 @@ class PortafoglioTest extends TestCase
             ->getJson('/api/wallet/balance');
 
         $response->assertOk();
-        $response->assertJsonPath('balance', 0);
+        $response->assertJsonPath('balance', 0.0);
         $response->assertJsonPath('currency', 'EUR');
     }
 

@@ -23,7 +23,7 @@
 <script setup>
 /* Richiede che l'utente sia autenticato */
 definePageMeta({
-	middleware: ["sanctum:auth"],
+	middleware: ["app-auth"],
 });
 
 /* Prende l'ID dell'ordine dall'URL (es. /account/spedizioni/123) */
@@ -70,6 +70,28 @@ const formatPrice = (cents) => {
 
 /* Estrae i dati dell'ordine dalla risposta API (puo' essere in .data o direttamente) */
 const orderData = computed(() => order.value?.data || order.value || null);
+const orderSubtotalLabel = computed(() => {
+	const subtotal = orderData.value?.subtotal;
+	if (typeof subtotal === 'string' && subtotal.trim()) {
+		return subtotal.replace(/\s*EUR$/i, '€');
+	}
+
+	return formatPrice(orderData.value?.subtotal_cents || 0);
+});
+const orderRouteLabel = computed(() => {
+	const firstPackage = orderData.value?.packages?.[0];
+	if (!firstPackage) return '—';
+	const originCity = firstPackage.origin_address?.city || '';
+	const originProv = firstPackage.origin_address?.province || '';
+	const destinationCity = firstPackage.destination_address?.city || '';
+	const destinationProv = firstPackage.destination_address?.province || '';
+	return `${originCity}${originProv ? ` (${originProv})` : ''} → ${destinationCity}${destinationProv ? ` (${destinationProv})` : ''}`;
+});
+const orderPackageCountLabel = computed(() => {
+	const count = Number(orderData.value?.packages?.length || 0);
+	if (!count) return 'Nessun collo';
+	return count === 1 ? '1 collo' : `${count} colli`;
+});
 
 const sanctum = useSanctumClient();
 
@@ -141,7 +163,6 @@ const downloadLabel = async () => {
 		window.URL.revokeObjectURL(url);
 		a.remove();
 	} catch (e) {
-		console.error('Errore download etichetta:', e);
 	}
 };
 
@@ -262,15 +283,6 @@ const paymentMethodLabel = (method) => {
 <template>
 	<section class="min-h-[600px] py-[40px] desktop:py-[80px]">
 		<div class="my-container">
-			<!-- Breadcrumb -->
-			<div class="mb-[24px] text-[0.875rem] text-[#737373]">
-				<NuxtLink to="/account" class="hover:underline text-[#095866]">Il tuo account</NuxtLink>
-				<span class="mx-[6px]">/</span>
-				<NuxtLink to="/account/spedizioni" class="hover:underline text-[#095866]">Spedizioni</NuxtLink>
-				<span class="mx-[6px]">/</span>
-				<span class="font-semibold text-[#252B42]">Ordine #{{ orderId }}</span>
-			</div>
-
 			<!-- Loading -->
 			<div v-if="orderStatus === 'pending'" class="space-y-[16px]">
 				<div class="bg-white rounded-[16px] p-[32px] border border-[#E9EBEC] animate-pulse">
@@ -281,7 +293,32 @@ const paymentMethodLabel = (method) => {
 			</div>
 
 			<template v-else-if="orderData">
-				<h1 class="text-[1.75rem] font-bold text-[#252B42] mb-[24px]">Ordine #{{ orderData.id }}</h1>
+				<AccountPageHeader
+					eyebrow="Dettaglio spedizione"
+					:title="`Ordine #${orderData.id}`"
+					:description="'Controlla stato, colli, tracking BRT ed eventuali azioni ancora disponibili per questa spedizione.'"
+					:crumbs="[
+						{ label: 'Account', to: '/account' },
+						{ label: 'Spedizioni', to: '/account/spedizioni' },
+						{ label: `Ordine #${orderData.id}` },
+					]"
+					back-to="/account/spedizioni"
+					back-label="Torna alle spedizioni"
+				>
+					<template #meta>
+						<div class="flex flex-wrap gap-[8px]">
+							<span :class="statusColor(orderData.status)" class="inline-flex items-center rounded-full px-[12px] py-[5px] text-[0.75rem] font-semibold">
+								{{ orderData.status }}
+							</span>
+							<span class="inline-flex items-center rounded-full bg-[#F0F6F7] px-[12px] py-[5px] text-[0.75rem] font-semibold text-[#095866]">
+								{{ orderPackageCountLabel }}
+							</span>
+							<span class="inline-flex items-center rounded-full bg-[#FFF5EB] px-[12px] py-[5px] text-[0.75rem] font-semibold text-[#E44203]">
+								{{ orderSubtotalLabel }}
+							</span>
+						</div>
+					</template>
+				</AccountPageHeader>
 
 				<!-- Cancellation success message -->
 				<div v-if="cancelSuccess" class="bg-emerald-50 border border-emerald-200 rounded-[12px] px-[16px] py-[14px] flex items-start gap-[12px] mb-[16px]">
@@ -324,27 +361,29 @@ const paymentMethodLabel = (method) => {
 					</div>
 				</div>
 
-				<!-- Status & Date -->
-				<div class="bg-white rounded-[16px] p-[24px] border border-[#E9EBEC] mb-[16px]">
-					<div class="flex items-center justify-between mb-[16px]">
-						<span :class="statusColor(orderData.status)" class="px-[16px] py-[6px] rounded-full text-[0.875rem] font-semibold">
-							{{ orderData.status }}
-						</span>
-						<span class="text-[0.875rem] text-[#737373]">{{ formatDate(orderData.created_at) }}</span>
-					</div>
-					<div class="grid grid-cols-2 gap-[16px]">
-						<div>
-							<p class="text-[0.75rem] text-[#737373] uppercase font-medium mb-[4px]">Numero Ordine</p>
-							<p class="text-[0.9375rem] font-semibold text-[#252B42]">#{{ orderData.id }}</p>
+				<!-- Status & Summary -->
+				<div class="mb-[16px] rounded-[18px] border border-[#E9EBEC] bg-white p-[18px] tablet:p-[22px]">
+					<div class="grid grid-cols-1 gap-[12px] tablet:grid-cols-2 desktop:grid-cols-4">
+						<div class="rounded-[14px] border border-[#E9EEF2] bg-[#FBFCFD] px-[14px] py-[12px]">
+							<p class="mb-[4px] text-[0.6875rem] font-bold uppercase tracking-[0.14em] text-[#7A8695]">Tratta</p>
+							<p class="text-[0.9375rem] font-semibold leading-[1.35] text-[#252B42]">{{ orderRouteLabel }}</p>
 						</div>
-						<div>
-							<p class="text-[0.75rem] text-[#737373] uppercase font-medium mb-[4px]">Totale</p>
-							<p class="text-[0.9375rem] font-semibold text-[#252B42]">{{ orderData.subtotal }}</p>
+						<div class="rounded-[14px] border border-[#E9EEF2] bg-white px-[14px] py-[12px]">
+							<p class="mb-[4px] text-[0.6875rem] font-bold uppercase tracking-[0.14em] text-[#7A8695]">Creato il</p>
+							<p class="text-[0.9375rem] font-semibold leading-[1.35] text-[#252B42]">{{ formatDate(orderData.created_at) }}</p>
+						</div>
+						<div class="rounded-[14px] border border-[#E9EEF2] bg-white px-[14px] py-[12px]">
+							<p class="mb-[4px] text-[0.6875rem] font-bold uppercase tracking-[0.14em] text-[#7A8695]">Totale</p>
+							<p class="text-[1rem] font-bold leading-[1.2] text-[#095866]">{{ orderSubtotalLabel }}</p>
+						</div>
+						<div class="rounded-[14px] border border-[#E9EEF2] bg-white px-[14px] py-[12px]">
+							<p class="mb-[4px] text-[0.6875rem] font-bold uppercase tracking-[0.14em] text-[#7A8695]">Pagamento</p>
+							<p class="text-[0.9375rem] font-semibold leading-[1.35] text-[#252B42]">{{ paymentMethodLabel(orderData.payment_method) }}</p>
 						</div>
 					</div>
 
 					<!-- Blocca pacco (visibile solo per ordini bloccabili, meno invasivo) -->
-					<div v-if="isCancellable && !isCancelledOrRefunded" class="mt-[16px] pt-[16px] border-t border-[#E9EBEC] flex items-center justify-between">
+					<div v-if="isCancellable && !isCancelledOrRefunded" class="mt-[16px] flex flex-col gap-[10px] border-t border-[#E9EBEC] pt-[16px] desktop:flex-row desktop:items-center desktop:justify-between">
 						<p class="text-[0.75rem] text-[#737373]">Per richiedere un rimborso, contatta l'<NuxtLink to="/account/assistenza" class="text-[#095866] font-semibold underline">assistenza</NuxtLink>.</p>
 						<button
 							type="button"

@@ -51,6 +51,54 @@ use Symfony\Component\HttpFoundation\Response;
 
 class LocationController extends Controller
 {
+    private const COUNTRY_NAMES = [
+        'IT' => 'Italia',
+        'AT' => 'Austria',
+        'BE' => 'Belgio',
+        'BG' => 'Bulgaria',
+        'HR' => 'Croazia',
+        'DK' => 'Danimarca',
+        'EE' => 'Estonia',
+        'FI' => 'Finlandia',
+        'FR' => 'Francia',
+        'DE' => 'Germania',
+        'GR' => 'Grecia',
+        'LU' => 'Lussemburgo',
+        'NL' => 'Olanda',
+        'PL' => 'Polonia',
+        'PT' => 'Portogallo',
+        'CZ' => 'Repubblica Ceca',
+        'RO' => 'Romania',
+        'SK' => 'Slovacchia',
+        'SI' => 'Slovenia',
+        'ES' => 'Spagna',
+        'SE' => 'Svezia',
+        'HU' => 'Ungheria',
+        'LV' => 'Lettonia',
+        'LT' => 'Lituania',
+    ];
+
+    private function normalizeCountryFilter(Request $request): ?string
+    {
+        $countryCode = strtoupper(trim((string) $request->input('country', '')));
+        return strlen($countryCode) === 2 ? $countryCode : null;
+    }
+
+    private function applyCountryFilter($query, ?string $countryCode)
+    {
+        if (! $countryCode) {
+            return $query;
+        }
+
+        if ($countryCode === 'IT') {
+            return $query->where(function ($countryQuery) {
+                $countryQuery->where('country_code', 'IT')->orWhereNull('country_code');
+            });
+        }
+
+        return $query->where('country_code', $countryCode);
+    }
+
     // Salva la citta' selezionata dall'utente nella sessione
     // La "sessione" e' una memoria temporanea che dura finche' l'utente naviga sul sito
     public function postLocation(Request $request) {
@@ -67,10 +115,10 @@ class LocationController extends Controller
         $city = Session::get('city');
 
         $result = Location::where('place_name', $city)
-            ->select('postal_code', 'place_name', 'province')
+            ->select('postal_code', 'place_name', 'province', 'country_code')
             ->first();
 
-        return response()->json($result);
+        return response()->json($result ? $this->withCountryMetadata($result) : null);
     }
 
     /**
@@ -84,6 +132,7 @@ class LocationController extends Controller
         $query = trim((string) $request->input('q', ''));
         $limit = (int) $request->input('limit', 120);
         $limit = max(20, min($limit, 500));
+        $countryCode = $this->normalizeCountryFilter($request);
 
         // Se l'utente ha scritto meno di 2 caratteri, non cerchiamo nulla
         if (mb_strlen($query) < 2) {
@@ -92,22 +141,25 @@ class LocationController extends Controller
 
         // Ricerca CAP: prefisso numerico (es. 001 -> 00100, 00118, ...)
         if (preg_match('/^\d+$/', $query)) {
-            $results = Location::where('postal_code', 'LIKE', $query . '%')
-                ->select('postal_code', 'place_name', 'province')
+            $results = $this->applyCountryFilter(
+                Location::where('postal_code', 'LIKE', $query . '%'),
+                $countryCode
+            )
+                ->select('postal_code', 'place_name', 'province', 'country_code')
                 ->orderBy('postal_code')
                 ->orderBy('place_name')
                 ->limit($limit)
                 ->get();
 
-            return response()->json($results);
+            return response()->json($this->withCountryMetadata($results));
         }
 
         $queryLower = mb_strtolower($query);
 
         // Ricerca citta': priorita' a match esatto, poi inizio parola, poi prefisso.
-        $results = Location::query()
-            ->select('postal_code', 'place_name', 'province')
-            ->where(function ($q) use ($query, $queryLower) {
+        $results = $this->applyCountryFilter(Location::query(), $countryCode)
+            ->select('postal_code', 'place_name', 'province', 'country_code')
+            ->where(function ($q) use ($queryLower) {
                 $q->whereRaw('LOWER(place_name) = ?', [$queryLower])
                     ->orWhereRaw('LOWER(place_name) LIKE ?', [$queryLower . ' %'])
                     ->orWhereRaw('LOWER(place_name) LIKE ?', ['% ' . $queryLower . ' %'])
@@ -127,7 +179,7 @@ class LocationController extends Controller
             ->limit($limit)
             ->get();
 
-        return response()->json($results);
+        return response()->json($this->withCountryMetadata($results));
     }
 
     /**
@@ -139,17 +191,21 @@ class LocationController extends Controller
     public function byCap(Request $request)
     {
         $cap = trim((string) $request->input('cap', ''));
+        $countryCode = $this->normalizeCountryFilter($request);
 
         if (empty($cap)) {
             return response()->json([]);
         }
 
         // Cerchiamo tutte le localita' con questo CAP esatto
-        $results = Location::where('postal_code', $cap)
-            ->select('postal_code', 'place_name', 'province')
+        $results = $this->applyCountryFilter(
+            Location::where('postal_code', $cap),
+            $countryCode
+        )
+            ->select('postal_code', 'place_name', 'province', 'country_code')
             ->get();
 
-        return response()->json($results);
+        return response()->json($this->withCountryMetadata($results));
     }
 
     /**
@@ -162,6 +218,7 @@ class LocationController extends Controller
         $city = trim((string) $request->input('city', ''));
         $limit = (int) $request->input('limit', 500);
         $limit = max(20, min($limit, 1000));
+        $countryCode = $this->normalizeCountryFilter($request);
 
         if (mb_strlen($city) < 2) {
             return response()->json([]);
@@ -169,19 +226,19 @@ class LocationController extends Controller
 
         $cityLower = mb_strtolower($city);
 
-        $exact = Location::query()
-            ->select('postal_code', 'place_name', 'province')
+        $exact = $this->applyCountryFilter(Location::query(), $countryCode)
+            ->select('postal_code', 'place_name', 'province', 'country_code')
             ->whereRaw('LOWER(place_name) = ?', [$cityLower])
             ->distinct()
             ->orderBy('postal_code')
             ->get();
 
         if ($exact->isNotEmpty()) {
-            return response()->json($exact);
+            return response()->json($this->withCountryMetadata($exact));
         }
 
-        $prefix = Location::query()
-            ->select('postal_code', 'place_name', 'province')
+        $prefix = $this->applyCountryFilter(Location::query(), $countryCode)
+            ->select('postal_code', 'place_name', 'province', 'country_code')
             ->whereRaw('LOWER(place_name) LIKE ?', [$cityLower . '%'])
             ->distinct()
             ->orderBy('place_name')
@@ -189,6 +246,23 @@ class LocationController extends Controller
             ->limit($limit)
             ->get();
 
-        return response()->json($prefix);
+        return response()->json($this->withCountryMetadata($prefix));
+    }
+
+    private function withCountryMetadata($results)
+    {
+        if ($results instanceof \Illuminate\Support\Collection) {
+            return $results->map(fn ($location) => $this->withCountryMetadata($location))->values();
+        }
+
+        if (!$results) {
+            return $results;
+        }
+
+        $countryCode = strtoupper(trim((string) ($results->country_code ?? 'IT')));
+        $results->country_code = $countryCode;
+        $results->country_name = self::COUNTRY_NAMES[$countryCode] ?? $countryCode;
+
+        return $results;
     }
 }

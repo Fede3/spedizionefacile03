@@ -16,10 +16,12 @@
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",
+        "larastan/larastan": "^3.9",
         "laravel/pint": "^1.13",
         "laravel/sail": "^1.26",
         "mockery/mockery": "^1.6",
         "nunomaduro/collision": "^8.0",
+        "phpstan/phpstan": "^2.1",
         "phpunit/phpunit": "^10.5",
         "spatie/laravel-ignition": "^2.4"
     },
@@ -36,6 +38,15 @@
         }
     },
     "scripts": {
+        "analyse": [
+            "@php vendor/bin/phpstan analyse --memory-limit=512M"
+        ],
+        "audit:deps": [
+            "@composer audit --no-interaction"
+        ],
+        "lint": [
+            "@php vendor/bin/pint --test"
+        ],
         "post-autoload-dump": [
             "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",
             "@php artisan package:discover --ansi"
@@ -50,6 +61,9 @@
             "@php artisan key:generate --ansi",
             "@php -r \"file_exists('database/database.sqlite') || touch('database/database.sqlite');\"",
             "@php artisan migrate --ansi"
+        ],
+        "test": [
+            "@php artisan test"
         ]
     },
     "extra": {

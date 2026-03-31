@@ -8,7 +8,7 @@
 -->
 <script setup>
 definePageMeta({
-	middleware: ['sanctum:auth', 'admin'],
+	middleware: ['app-auth', 'admin'],
 });
 
 const sanctum = useSanctumClient();
@@ -433,21 +433,17 @@ onBeforeUnmount(() => {
 <template>
 	<section class="min-h-[600px] py-[28px] desktop:py-[44px] desktop-xl:py-[58px]">
 		<div class="my-container">
-			<div class="mb-[24px] text-[0.875rem] text-[#737373]">
-				<NuxtLink to="/account" class="hover:underline text-[#095866] font-medium">Il tuo account</NuxtLink>
-				<span class="mx-[8px] text-[#C8CCD0]">/</span>
-				<span class="font-semibold text-[#252B42]">Immagine Homepage</span>
-			</div>
-
-			<NuxtLink to="/account" class="inline-flex items-center gap-[6px] text-[0.8125rem] text-[#095866] hover:underline font-medium mb-[16px]">
-				<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[16px] h-[16px]" fill="currentColor"><path d="M20,11V13H8L13.5,18.5L12.08,19.92L4.16,12L12.08,4.08L13.5,5.5L8,11H20Z"/></svg>
-				Torna all'account
-			</NuxtLink>
-
-			<h1 class="text-[1.75rem] font-bold text-[#252B42] mb-[18px]">Editor Hero Homepage</h1>
-			<p class="text-[0.9375rem] text-[#667085] mb-[18px]">
-				Desktop e mobile sono separati. Le modifiche restano in bozza finche non premi Salva immagine.
-			</p>
+			<AccountPageHeader
+				eyebrow="Admin"
+				title="Editor Hero Homepage"
+				description="Desktop e mobile restano separati ma dentro la stessa console. Le modifiche restano in bozza finche non premi Salva immagine."
+				:crumbs="[
+					{ label: 'Account', to: '/account' },
+					{ label: 'Amministrazione', to: '/account/amministrazione' },
+					{ label: 'Hero Homepage' },
+				]"
+				back-to="/account/amministrazione"
+				back-label="Torna all'amministrazione" />
 
 			<div
 				v-if="actionMessage"

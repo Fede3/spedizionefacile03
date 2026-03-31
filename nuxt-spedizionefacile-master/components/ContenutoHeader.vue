@@ -34,12 +34,13 @@ const heroConfig = ref({
 	mobile: createViewportDefaults(),
 	updated_at: null,
 });
+const homepageHeroEndpointAvailable = ref(true);
 const isPreviewHeroRoute = computed(() => route.path === '/preview/home-hero');
 const isHomepageHeroRoute = computed(() => route.path === '/' || isPreviewHeroRoute.value);
 const isDesktopViewport = ref(true);
 let homepageHeroPoll = null;
-let previewDraftPoll = null;
 let previewDraftLastTs = null;
+const heroPrefetched = ref(false);
 
 const clamp = (value, min, max) => {
 	const numeric = Number(value);
@@ -73,6 +74,21 @@ const normalizeHeroConfig = (payload) => {
 	};
 };
 
+const isUnavailableHeroError = (error) => {
+	const status = Number(error?.statusCode || error?.response?.status || 0);
+	if ([404, 500, 502, 503].includes(status)) return true;
+	const message = String(error?.message || '').toLowerCase();
+	return message.includes('homepage-image') || message.includes('bad gateway');
+};
+
+const stopHomepageHeroRefresh = () => {
+	homepageHeroEndpointAvailable.value = false;
+	if (homepageHeroPoll) {
+		clearInterval(homepageHeroPoll);
+		homepageHeroPoll = null;
+	}
+};
+
 // Preload hero solo nelle route che usano realmente l'immagine,
 // per evitare warning su pagine come autenticazione.
 useHead(() => (
@@ -93,21 +109,47 @@ useHead(() => (
 // Carica fasce prezzo sempre per garantire disponibilità su tutte le pagine
 const { loadPriceBands, getMinPrice, promoSettings } = usePriceBands();
 
-const applyHomepageImage = async () => {
+if (isHomepageHeroRoute.value) {
 	try {
-		const res = await $fetch('/api/public/homepage-image', { method: 'GET' });
-		heroConfig.value = normalizeHeroConfig(res);
-	} catch {
+		const { data: initialHeroResponse } = await useFetch('/api/public/homepage-image', {
+			key: `homepage-hero-config:${route.path}`,
+			server: true,
+			lazy: false,
+			default: () => null,
+		});
+		await loadPriceBands();
+
+		if (initialHeroResponse.value) {
+			heroConfig.value = normalizeHeroConfig(initialHeroResponse.value);
+			heroPrefetched.value = true;
+		}
+	} catch (error) {
 		heroConfig.value = normalizeHeroConfig({
 			image_url: DEFAULT_HOMEPAGE_HERO,
 			desktop: createViewportDefaults(),
 			mobile: createViewportDefaults(),
 		});
+		if (isUnavailableHeroError(error)) stopHomepageHeroRefresh();
+	}
+}
+
+const applyHomepageImage = async () => {
+	if (!homepageHeroEndpointAvailable.value) return;
+	try {
+		const res = await $fetch('/api/public/homepage-image', { method: 'GET' });
+		heroConfig.value = normalizeHeroConfig(res);
+	} catch (error) {
+		heroConfig.value = normalizeHeroConfig({
+			image_url: DEFAULT_HOMEPAGE_HERO,
+			desktop: createViewportDefaults(),
+			mobile: createViewportDefaults(),
+		});
+		if (isUnavailableHeroError(error)) stopHomepageHeroRefresh();
 	}
 };
 
 const refreshHomepageImage = () => {
-	if (!isHomepageHeroRoute.value) return;
+	if (!isHomepageHeroRoute.value || !homepageHeroEndpointAvailable.value) return;
 	void applyHomepageImage();
 };
 
@@ -191,9 +233,8 @@ const notifyHeroPreviewReady = () => {
 };
 
 onMounted(() => {
-	loadPriceBands();
 	updateViewportFlag();
-	if (!isPreviewHeroRoute.value) {
+	if (!isPreviewHeroRoute.value && !heroPrefetched.value) {
 		refreshHomepageImage();
 	}
 
@@ -201,18 +242,19 @@ onMounted(() => {
 
 	if (route.path === '/') {
 		// Near real-time: refresh periodico leggero per recepire update admin anche su tab aperta.
-		homepageHeroPoll = setInterval(refreshHomepageImage, 30000);
-		window.addEventListener('focus', refreshHomepageImage);
-		window.addEventListener('storage', onHomepageImageStorage);
-		window.addEventListener('homepage-image-updated', onHomepageImageEvent);
-		document.addEventListener('visibilitychange', onVisibilityChange);
+		if (homepageHeroEndpointAvailable.value) {
+			homepageHeroPoll = setInterval(refreshHomepageImage, 30000);
+			window.addEventListener('focus', refreshHomepageImage);
+			window.addEventListener('storage', onHomepageImageStorage);
+			window.addEventListener('homepage-image-updated', onHomepageImageEvent);
+			document.addEventListener('visibilitychange', onVisibilityChange);
+		}
 	}
 
 	if (isPreviewHeroRoute.value) {
 		window.__applyHeroPreviewPayload = applyHeroPreviewPayload;
 		window.addEventListener('message', onHeroPreviewMessage);
 		window.addEventListener('storage', onPreviewDraftStorageEvent);
-		previewDraftPoll = setInterval(applyPreviewDraftFromStorage, 120);
 		applyPreviewDraftFromStorage();
 		notifyHeroPreviewReady();
 	}
@@ -230,10 +272,6 @@ onBeforeUnmount(() => {
 	window.removeEventListener('resize', updateViewportFlag);
 	window.removeEventListener('message', onHeroPreviewMessage);
 	window.removeEventListener('storage', onPreviewDraftStorageEvent);
-	if (previewDraftPoll) {
-		clearInterval(previewDraftPoll);
-		previewDraftPoll = null;
-	}
 	if (typeof window !== 'undefined' && window.__applyHeroPreviewPayload) {
 		delete window.__applyHeroPreviewPayload;
 	}
@@ -264,7 +302,6 @@ const heroImageStyle = computed(() => {
 		transform: `translate(-50%, -50%) translate3d(${offsetX}px, ${offsetY}px, 0) scale(${zoom})`,
 		transformOrigin: 'center center',
 		willChange: 'transform',
-		transition: 'transform 90ms linear',
 	};
 });
 
@@ -296,27 +333,27 @@ const props = defineProps({
 	<!-- ============================================================
 	     HOMEPAGE HERO
 	     ============================================================ -->
-	<div class="relative z-[2] overflow-hidden pt-[20px] pb-[48px] tablet:pt-[32px] tablet:pb-[60px] desktop:pt-[64px] desktop:pb-[40px] desktop-xl:pt-[68px] desktop-xl:pb-[48px]" v-if="isHomepageHeroRoute">
+	<div class="relative z-[2] overflow-hidden pt-[18px] pb-[28px] tablet:pt-[32px] tablet:pb-[60px] desktop:pt-[64px] desktop:pb-[40px] desktop-xl:pt-[68px] desktop-xl:pb-[48px]" v-if="isHomepageHeroRoute">
 		<!-- Decorazione teal dietro la card -->
 		<div
 			class="pointer-events-none absolute right-[8px] top-[128px] h-[108px] w-[94px] rotate-[6deg] rounded-[12px] bg-gradient-to-br from-[#095866] to-[#0b6d7d] opacity-[0.05] tablet:right-[24px] tablet:top-[104px] tablet:h-[200px] tablet:w-[200px] tablet:opacity-[0.05] desktop:right-[2%] desktop:top-[48px] desktop:h-[140px] desktop:w-[620px] desktop:rotate-[5deg] desktop:opacity-[0.06] desktop-xl:right-[3%] desktop-xl:top-[48px] desktop-xl:h-[150px] desktop-xl:w-[700px]"></div>
 
-		<div class="relative grid grid-cols-[54%_46%] items-start gap-x-[10px] gap-y-[4px] tablet:grid-cols-[minmax(0,1fr)_minmax(0,0.9fr)] tablet:gap-x-[10px] tablet:gap-y-[6px] desktop:grid-cols-[minmax(0,420px)_minmax(0,1fr)] desktop:items-start desktop:gap-[24px] desktop-xl:grid-cols-[minmax(0,440px)_minmax(0,1fr)] desktop-xl:gap-[28px]">
-			<!-- Colonna sinistra: testo + card prezzo -->
-			<div class="relative z-[5] col-start-1 row-start-1 tablet:col-start-1 tablet:row-start-1 desktop:max-w-[560px] desktop:mt-[12px] desktop-xl:mt-[14px]">
-				<h1 class="max-w-[160px] text-[#1a1a1a] text-[2.25rem] leading-[0.95] tracking-[-1px] font-extrabold tablet:max-w-none tablet:text-[3.25rem] desktop:text-[4.75rem] desktop:tracking-[-2.5px] desktop-xl:text-[5.5rem] desktop-xl:tracking-[-3px]">
-					<span class="block">Spedisci</span>
-					<span class="block">in Italia</span>
-				</h1>
+			<div class="relative grid grid-cols-[48%_52%] items-start gap-x-[10px] gap-y-[4px] tablet:grid-cols-[minmax(0,1fr)_minmax(0,0.9fr)] tablet:gap-x-[12px] tablet:gap-y-[6px] desktop:grid-cols-[minmax(0,340px)_minmax(0,1fr)] desktop:items-center desktop:gap-[24px] desktop-xl:grid-cols-[minmax(0,360px)_minmax(0,1fr)] desktop-xl:gap-[28px]">
+				<!-- Colonna sinistra: testo + card prezzo -->
+				<div class="relative z-[5] col-start-1 row-start-1 tablet:col-start-1 tablet:row-start-1 desktop:flex desktop:min-h-[300px] desktop:max-w-[420px] desktop:flex-col desktop:justify-center desktop:self-center desktop-xl:min-h-[320px]">
+					<h1 class="max-w-[158px] text-[#1a1a1a] text-[1.95rem] leading-[0.92] tracking-[-0.9px] font-extrabold tablet:max-w-none tablet:text-[3rem] desktop:max-w-[280px] desktop:text-[4.1rem] desktop:tracking-[-2.2px] desktop-xl:max-w-[300px] desktop-xl:text-[4.5rem] desktop-xl:tracking-[-2.6px]">
+						<span class="block">Spedisci</span>
+						<span class="block text-[#095866]">facile</span>
+					</h1>
 
 				<!-- Card prezzo bianca in risalto -->
 				<div
-					class="relative z-[7] mt-[8px] flex w-[140px] overflow-hidden rounded-[14px] bg-gradient-to-br from-[#E44203] to-[#095866] shadow-[0_4px_12px_rgba(0,0,0,0.15)] tablet:mt-[16px] tablet:w-[320px] tablet:rounded-[16px] desktop:mt-[36px] desktop:w-[380px] desktop:shadow-[0_8px_24px_rgba(0,0,0,0.15)] desktop-xl:mt-[36px] desktop-xl:w-[400px]">
+						class="relative z-[7] mt-[8px] flex w-[132px] overflow-hidden rounded-[14px] bg-gradient-to-br from-[#E44203] to-[#095866] shadow-[0_4px_12px_rgba(0,0,0,0.15)] tablet:mt-[16px] tablet:w-[320px] tablet:rounded-[16px] desktop:mt-[24px] desktop:w-[350px] desktop:shadow-[0_8px_24px_rgba(0,0,0,0.15)] desktop-xl:mt-[26px] desktop-xl:w-[370px]">
 					<div class="flex flex-col px-[10px] py-[8px] tablet:px-[24px] tablet:py-[20px] desktop:px-[30px] desktop:py-[22px] desktop-xl:px-[36px] desktop-xl:py-[26px]">
 						<span class="text-[0.8125rem] font-medium uppercase tracking-[0.8px] text-white/75 tablet:text-[0.875rem] desktop:text-[1rem] desktop:tracking-[1px] desktop-xl:text-[1.0625rem]">a partire da</span>
 						<div class="mt-[2px] flex items-baseline gap-[8px]">
 							<span v-if="showMinPriceDiscount" class="text-[0.9375rem] font-medium text-white/50 line-through">{{ minBasePriceFormatted }}€</span>
-							<span class="text-[2.7rem] font-extrabold leading-[1] tracking-[-1.8px] text-white tablet:text-[4rem] tablet:tracking-[-2.5px] desktop:text-[4.25rem] desktop:tracking-[-2.5px] desktop-xl:text-[5rem] desktop-xl:tracking-[-3px]">{{ minPriceFormatted }}<span class="ml-[1px] align-super text-[1.1rem] font-bold tracking-[0] text-white tablet:text-[1.75rem] desktop:text-[2.25rem] desktop-xl:text-[2.75rem]">€</span></span>
+							<span class="text-[2.5rem] font-extrabold leading-[1] tracking-[-1.6px] text-white tablet:text-[4rem] tablet:tracking-[-2.5px] desktop:text-[4.25rem] desktop:tracking-[-2.5px] desktop-xl:text-[5rem] desktop-xl:tracking-[-3px]">{{ minPriceFormatted }}<span class="ml-[1px] align-super text-[1rem] font-bold tracking-[0] text-white tablet:text-[1.75rem] desktop:text-[2.25rem] desktop-xl:text-[2.75rem]">€</span></span>
 						</div>
 						<span class="mt-[4px] inline-flex items-center gap-[4px] text-[0.58rem] font-semibold text-white/90 tablet:text-[0.8125rem] desktop:mt-[8px] desktop:text-[0.9375rem] desktop-xl:mt-[10px] desktop-xl:text-[1rem]">
 							<svg width="14" height="14" viewBox="0 0 24 24" fill="none" class="shrink-0"><circle cx="12" cy="12" r="12" fill="rgba(255,255,255,0.3)"/><path d="M7 12.5l3 3 7-7" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -346,7 +383,7 @@ const props = defineProps({
 			</div>
 
 			<!-- Colonna destra: immagine -->
-			<div class="relative z-[2] col-start-2 row-start-1 row-span-2 mt-[10px] h-[194px] w-full max-w-none rounded-[12px] tablet:col-start-2 tablet:row-start-1 tablet:row-span-1 tablet:mt-[20px] tablet:h-[390px] tablet:max-w-[520px] tablet:mx-auto desktop:mt-0 desktop:h-[320px] desktop:w-full desktop:max-w-[760px] desktop:justify-self-end desktop-xl:h-[340px] desktop-xl:max-w-[820px]">
+				<div class="relative z-[2] col-start-2 row-start-1 row-span-2 mt-[8px] h-[164px] w-full max-w-none rounded-[12px] tablet:col-start-2 tablet:row-start-1 tablet:row-span-1 tablet:mt-[20px] tablet:h-[390px] tablet:max-w-[520px] tablet:mx-auto desktop:mt-0 desktop:h-[320px] desktop:w-full desktop:max-w-[760px] desktop:self-center desktop:justify-self-end desktop-xl:h-[340px] desktop-xl:max-w-[820px]">
 				<div class="relative h-full w-full overflow-hidden rounded-[16px] border border-[#DDE5EB] bg-[#EAF1F6] shadow-[0_8px_24px_rgba(0,0,0,0.15)]">
 					<img
 						:src="heroImageUrl"
@@ -354,6 +391,7 @@ const props = defineProps({
 						class="h-full w-full select-none pointer-events-none"
 						:style="heroImageStyle"
 						loading="eager"
+						fetchpriority="high"
 						decoding="async" />
 				</div>
 			</div>
@@ -361,26 +399,26 @@ const props = defineProps({
 	</div>
 
 	<!-- Servizi -->
-	<div v-if="route.path === '/servizi'" class="relative z-2 flex flex-col items-center justify-center desktop:h-[calc(100%-65px)] tablet:h-[calc(100%-50px)] h-[calc(100%-38px)]">
-		<h1 class="text-[#E44203] text-center font-medium tracking-[1.8px] desktop-xl:text-[1.25rem] text-[0.875rem] tracking desktop:text-[1.125rem]">I nostri servizi</h1>
+	<div v-if="route.path === '/servizi'" class="relative z-2 flex flex-col items-center justify-center desktop:h-[calc(100%-48px)] tablet:h-[calc(100%-42px)] h-[calc(100%-30px)]">
+		<h1 class="content-header-kicker text-center">I nostri servizi</h1>
 
-		<p class="text-[2rem] desktop-xl:text-[5.5rem] leading-[120%] tracking-[-2.2112px] font-medium text-[#222222] text-center desktop:mb-[32px] mb-[24px] mt-[12px] desktop:text-[4rem]">
-			Le nostre guide
+		<p class="text-[1.75rem] desktop-xl:text-[4.5rem] leading-[110%] tracking-[-1.76px] font-medium text-[#222222] text-center desktop:mb-[22px] mb-[18px] mt-[10px] desktop:text-[3.5rem]">
+			Soluzioni pratiche per spedire meglio
 		</p>
 
 		<a
 			href="#servizi"
-			class="desktop:w-[146px] w-[123px] desktop:h-[60px] h-[48px] rounded-[50px] bg-[#E44203] leading-[48px] desktop:leading-[60px] font-semibold text-center text-white tracking-[-0.384px] mx-auto text-[0.875rem] desktop:text-[1rem] block">
+			class="content-header-scroll-link mx-auto block">
 			<span class="after:bg-[url('/img/arrow-down.svg')] after:bg-no-repeat after:inline-block after:size-[16px] after:ml-[11px] after:rotate-90 after:align-[-1px]">Scendi</span>
 		</a>
 	</div>
 
 	<!-- Servizi - pagamento alla consegna -->
 	<div
-		class="relative z-2 flex flex-col items-center justify-between h-[calc(100%-38px)] desktop:h-[calc(100%-65px)] tablet:h-[calc(100%-50px)] after:content-[''] desktop-xl:after:w-[1280px] after:w-full after:h-[130px] mid-desktop:after:h-[220px] desktop:after:w-full desktop:after:h-[200px] desktop-xl:after:h-[320px] after:bg-green-500 desktop:after:rounded-t-[48px] after:rounded-t-[24px] tablet:after:h-[200px]"
+		class="relative z-2 flex flex-col items-start justify-center h-[calc(100%-30px)] desktop:h-[calc(100%-48px)] tablet:h-[calc(100%-42px)]"
 		v-if="route.path.includes('pagamento-alla-consegna')">
-		<div class="mt-[49px] mid-desktop:mt-[20px] desktop:mt-[50px] desktop-xl:mt-[73px] w-full">
-			<p class="text-[#E44203] text-left font-medium tracking-[1.8px] desktop-xl:text-[1.25rem] text-[0.875rem] tracking desktop:text-[1.125rem]">Dettagli servizio</p>
+		<div class="w-full">
+			<p class="content-header-kicker text-left">Dettagli servizio</p>
 
 			<h1
 				class="text-[1.5rem] desktop:text-[3rem] desktop-xl:text-[5.5rem] leading-[110%] tracking-[-0.576px] desktop:tracking-[-2.2112px] font-medium text-[#222222] text-left mt-[12px] tablet:max-w-[360px] desktop-xl:max-w-[1056px] max-w-[200px] desktop:max-w-full">
@@ -389,7 +427,7 @@ const props = defineProps({
 
 			<a
 				href="#pagamento-alla-consegna"
-				class="desktop:w-[146px] w-[123px] desktop:h-[60px] h-[48px] rounded-[50px] bg-[#E44203] leading-[48px] desktop:leading-[60px] font-semibold text-center text-white tracking-[-0.384px] text-[0.875rem] desktop:text-[1rem] block mt-[15px] desktop-xl:mt-[30px]">
+				class="content-header-scroll-link mt-[15px] desktop-xl:mt-[30px]">
 				<span class="after:bg-[url('/img/arrow-down.svg')] after:bg-no-repeat after:inline-block after:size-[16px] after:ml-[11px] after:rotate-90 after:align-[-1px]">Scendi</span>
 			</a>
 		</div>
@@ -397,33 +435,33 @@ const props = defineProps({
 
 	<!-- Contatti -->
 	<div
-		class="relative z-2 flex flex-col items-center justify-between h-[calc(100%-38px)] desktop:h-[calc(100%-65px)] tablet:h-[calc(100%-50px)] after:content-[''] desktop-xl:after:w-[1280px] after:w-full after:h-[175px] mid-desktop:after:h-[220px] desktop:after:w-full desktop:after:h-[300px] desktop-xl:after:h-[290px] after:bg-green-500 desktop:after:rounded-t-[33px] after:rounded-t-[20px]"
+		class="relative z-2 flex flex-col items-start justify-center h-[calc(100%-30px)] desktop:h-[calc(100%-48px)] tablet:h-[calc(100%-42px)]"
 		v-if="route.path === '/contatti'">
-		<div class="mt-[49px] mid-desktop:mt-[20px] desktop:mt-[86px]">
-			<h1 class="text-[#E44203] text-center font-medium tracking-[1.8px] desktop-xl:text-[1.25rem] text-[0.875rem] tracking desktop:text-[1.125rem]">Contattaci</h1>
-
-			<p
-				class="text-[2rem] desktop-xl:text-[5.5rem] leading-[110%] tracking-[-2.2112px] font-medium text-[#222222] text-center mt-[12px] desktop:text-[4rem] max-w-[276px] tablet:max-w-[360px] desktop-xl:max-w-[1056px] desktop:max-w-[726px]">
-				Siamo qui per aiutarti con le tue spedizioni.
+		<div class="w-full max-w-[640px]">
+			<h1 class="text-[#222222] font-semibold leading-[105%] tracking-[-0.8px] text-[1.75rem] tablet:text-[2.25rem] desktop:text-[2.75rem]">
+				Contatti
+			</h1>
+			<p class="mt-[10px] max-w-[560px] text-[0.9375rem] tablet:text-[1rem] desktop:text-[1.0625rem] leading-[1.55] text-[#5B6670]">
+				Ti aiutiamo con spedizioni, assistenza e richieste commerciali senza farti perdere tempo.
 			</p>
 		</div>
 	</div>
 
 	<!-- Chi siamo -->
 	<div
-		class="relative z-2 flex flex-col items-center justify-between h-[calc(100%-38px)] desktop:h-[calc(100%-65px)] tablet:h-[calc(100%-50px)] after:content-[''] desktop-xl:after:w-[1280px] after:w-full after:h-[165px] mid-desktop:after:h-[220px] desktop:after:w-full desktop:after:h-[300px] desktop-xl:after:h-[370px] after:bg-green-500 desktop:after:rounded-t-[33px] after:rounded-t-[20px] tablet:after:h-[200px]"
+		class="relative z-2 flex flex-col items-center justify-center h-[calc(100%-30px)] desktop:h-[calc(100%-48px)] tablet:h-[calc(100%-42px)]"
 		v-if="route.path === '/chi-siamo'">
-		<div class="mt-[49px] mid-desktop:mt-[20px] desktop:mt-[73px]">
-			<h1 class="text-[#E44203] text-center font-medium tracking-[1.8px] desktop-xl:text-[1.25rem] text-[0.875rem] tracking desktop:text-[1.125rem]">Chi siamo</h1>
+		<div class="w-full max-w-[760px]">
+			<h1 class="content-header-kicker text-center">Chi siamo</h1>
 
 			<p
-				class="text-[1.5rem] desktop:text-[3rem] desktop-xl:text-[5.5rem] leading-[110%] tracking-[-0.576px] desktop:tracking-[-2.2112px] font-medium text-[#222222] text-center mt-[12px] tablet:max-w-[360px] desktop-xl:max-w-[1056px] max-w-[336px] desktop:max-w-[620px]">
-				Spedire un pacco online non è mai stato così facile
+				class="text-[1.375rem] desktop:text-[2.75rem] desktop-xl:text-[4.75rem] leading-[108%] tracking-[-0.552px] desktop:tracking-[-1.98px] font-medium text-[#222222] text-center mt-[10px] tablet:max-w-[360px] desktop-xl:max-w-[1056px] max-w-[320px] desktop:max-w-[620px]">
+				Spedizioni chiare, veloci e senza stress
 			</p>
 
 			<a
 				href="#chi-siamo"
-				class="desktop:w-[146px] w-[123px] desktop:h-[60px] h-[48px] rounded-[50px] bg-[#E44203] leading-[48px] desktop:leading-[60px] font-semibold text-center text-white tracking-[-0.384px] mx-auto text-[0.875rem] desktop:text-[1rem] block mt-[24px]">
+				class="content-header-scroll-link mx-auto mt-[18px]">
 				<span class="after:bg-[url('/img/arrow-down.svg')] after:bg-no-repeat after:inline-block after:size-[16px] after:ml-[11px] after:rotate-90 after:align-[-1px]">Scendi</span>
 			</a>
 		</div>
@@ -431,19 +469,19 @@ const props = defineProps({
 
 	<!-- Guide -->
 	<div
-		class="relative z-2 flex flex-col items-center justify-between h-[calc(100%-38px)] desktop:h-[calc(100%-65px)] tablet:h-[calc(100%-50px)]"
+		class="relative z-2 flex flex-col items-center justify-between h-[calc(100%-30px)] desktop:h-[calc(100%-48px)] tablet:h-[calc(100%-42px)]"
 		v-if="route.path.startsWith('/guide')">
-		<div class="mt-[49px] mid-desktop:mt-[20px] desktop:mt-[73px]">
-			<h1 class="text-[#E44203] text-center font-medium tracking-[1.8px] desktop-xl:text-[1.25rem] text-[0.875rem] tracking desktop:text-[1.125rem]">Guide</h1>
+		<div class="mt-[34px] mid-desktop:mt-[18px] desktop:mt-[50px]">
+			<h1 class="content-header-kicker text-center">Guide</h1>
 
 			<p
-				class="text-[1.5rem] desktop:text-[3rem] desktop-xl:text-[5.5rem] leading-[110%] tracking-[-0.576px] desktop:tracking-[-2.2112px] font-medium text-[#222222] text-center mt-[12px] tablet:max-w-[360px] desktop-xl:max-w-[1056px] max-w-[336px] desktop:max-w-[620px]">
-				Le nostre guide per spedire al meglio
+				class="text-[1.375rem] desktop:text-[2.75rem] desktop-xl:text-[4.75rem] leading-[108%] tracking-[-0.552px] desktop:tracking-[-1.98px] font-medium text-[#222222] text-center mt-[10px] tablet:max-w-[360px] desktop-xl:max-w-[1056px] max-w-[320px] desktop:max-w-[620px]">
+				Guide pratiche per spedire meglio
 			</p>
 
 			<a
 				href="#guide"
-				class="desktop:w-[146px] w-[123px] desktop:h-[60px] h-[48px] rounded-[50px] bg-[#E44203] leading-[48px] desktop:leading-[60px] font-semibold text-center text-white tracking-[-0.384px] mx-auto text-[0.875rem] desktop:text-[1rem] block mt-[24px]">
+				class="content-header-scroll-link mx-auto mt-[24px]">
 				<span class="after:bg-[url('/img/arrow-down.svg')] after:bg-no-repeat after:inline-block after:size-[16px] after:ml-[11px] after:rotate-90 after:align-[-1px]">Scendi</span>
 			</a>
 		</div>
@@ -451,23 +489,16 @@ const props = defineProps({
 
 	<!-- FAQ -->
 	<div class="relative z-2 flex flex-col items-center justify-between h-[calc(100%-38px)] desktop:h-[calc(100%-65px)] tablet:h-[calc(100%-50px)]" v-if="route.path === '/faq'">
-		<div class="mt-[49px] mid-desktop:mt-[20px] desktop:mt-[73px]">
+		<div class="mt-[34px] mid-desktop:mt-[18px] desktop:mt-[50px]">
 			<h1 class="text-[#E44203] text-center font-medium tracking-[1.8px] desktop-xl:text-[1.25rem] text-[0.875rem] tracking desktop:text-[1.125rem]">FAQ</h1>
 
 			<p
-				class="text-[1.5rem] desktop:text-[3rem] desktop-xl:text-[5.5rem] leading-[110%] tracking-[-0.576px] desktop:tracking-[-2.2112px] font-medium text-[#222222] text-center mt-[12px] tablet:max-w-[360px] desktop-xl:max-w-[1056px] max-w-[336px] desktop:max-w-[620px]">
-				Trova le tue risposte
+				class="text-[1.375rem] desktop:text-[2.75rem] desktop-xl:text-[4.75rem] leading-[108%] tracking-[-0.552px] desktop:tracking-[-1.98px] font-medium text-[#222222] text-center mt-[10px] tablet:max-w-[360px] desktop-xl:max-w-[1056px] max-w-[320px] desktop:max-w-[620px]">
+				Risposte rapide alle domande comuni
 			</p>
 		</div>
 	</div>
 
-	<!-- Account -->
-	<div class="relative z-2 flex flex-col items-center justify-end h-[calc(100%-38px)] desktop:h-[calc(100%-65px)] tablet:h-[calc(100%-50px)]" v-if="route.path === '/account'">
-		<h1
-			class="text-[2rem] desktop:text-[3rem] desktop-xl:text-[4rem] leading-[110%] tracking-[-1.536px] desktop:tracking-[-2.2112px] font-medium text-[#222222] text-center mb-[36px] desktop:mb-[67px] desktop-xl:mb-[69px]">
-			Il tuo account
-		</h1>
-	</div>
 </template>
 
 <style scoped>
@@ -891,6 +922,51 @@ const props = defineProps({
 
 	.hero__image-bg {
 		border-radius: 16px;
+	}
+}
+
+.content-header-kicker {
+	color: #0e6572;
+	font-size: 0.875rem;
+	font-weight: 700;
+	letter-spacing: 0.14em;
+	text-transform: uppercase;
+}
+
+.content-header-scroll-link {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-width: 132px;
+	height: 48px;
+	padding: 0 18px;
+	border-radius: 999px;
+	border: 1px solid #d9e6ea;
+	background: #ffffff;
+	color: #0e6572;
+	font-size: 0.875rem;
+	font-weight: 700;
+	letter-spacing: -0.02em;
+	box-shadow: 0 10px 22px rgba(20, 37, 48, 0.05);
+	transition: transform 0.24s ease, background-color 0.24s ease, border-color 0.24s ease, box-shadow 0.24s ease;
+}
+
+.content-header-scroll-link:hover {
+	transform: translateY(-1px);
+	background: #f5fafb;
+	border-color: #c8dde1;
+	box-shadow: 0 14px 24px rgba(20, 37, 48, 0.08);
+}
+
+@media (min-width: 64rem) {
+	.content-header-kicker {
+		font-size: 1.0625rem;
+	}
+
+	.content-header-scroll-link {
+		min-width: 146px;
+		height: 56px;
+		font-size: 0.95rem;
 	}
 }
 </style>

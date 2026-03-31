@@ -29,13 +29,19 @@
 namespace App\Http\Controllers;
 
 use App\Models\Setting;
+use App\Services\EuropePriceEngineService;
 use App\Services\PriceEngineService;
+use App\Services\ShipmentServicePricingService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Cache;
 
 class PublicPriceBandController extends Controller
 {
-    public function __construct(private readonly PriceEngineService $priceEngine)
+    public function __construct(
+        private readonly PriceEngineService $priceEngine,
+        private readonly EuropePriceEngineService $europePriceEngine,
+        private readonly ShipmentServicePricingService $shipmentServicePricing,
+    )
     {
     }
 
@@ -52,6 +58,10 @@ class PublicPriceBandController extends Controller
                         'volume' => $config['volume'] ?? [],
                         'extra_rules' => $config['extra_rules'] ?? [],
                         'supplements' => $config['supplements'] ?? [],
+                        'europe' => $this->europePriceEngine->getPricingConfig(),
+                        'service_pricing' => $this->shipmentServicePricing->getPricingConfig()['service_pricing'] ?? [],
+                        'automatic_supplements' => $this->shipmentServicePricing->getPricingConfig()['automatic_supplements'] ?? [],
+                        'operational_fees' => $this->shipmentServicePricing->getPricingConfig()['operational_fees'] ?? [],
                         'version' => $config['version'] ?? null,
                     ],
                     'promo' => $this->getPromoSettings(),
@@ -67,13 +77,27 @@ class PublicPriceBandController extends Controller
                         'volume' => $config['volume'] ?? [],
                         'extra_rules' => $config['extra_rules'] ?? [],
                         'supplements' => $config['supplements'] ?? [],
+                        'europe' => $this->europePriceEngine->getPricingConfig(),
+                        'service_pricing' => $this->shipmentServicePricing->getPricingConfig()['service_pricing'] ?? [],
+                        'automatic_supplements' => $this->shipmentServicePricing->getPricingConfig()['automatic_supplements'] ?? [],
+                        'operational_fees' => $this->shipmentServicePricing->getPricingConfig()['operational_fees'] ?? [],
                         'version' => $config['version'] ?? null,
                     ],
                     'promo' => $this->getPromoSettings(),
                 ];
             } catch (\Exception $e2) {
                 $result = [
-                    'data' => ['weight' => [], 'volume' => [], 'extra_rules' => [], 'supplements' => [], 'version' => null],
+                    'data' => [
+                        'weight' => [],
+                        'volume' => [],
+                        'extra_rules' => [],
+                        'supplements' => [],
+                        'europe' => $this->europePriceEngine->getPricingConfig(),
+                        'service_pricing' => $this->shipmentServicePricing->getPricingConfig()['service_pricing'] ?? [],
+                        'automatic_supplements' => $this->shipmentServicePricing->getPricingConfig()['automatic_supplements'] ?? [],
+                        'operational_fees' => $this->shipmentServicePricing->getPricingConfig()['operational_fees'] ?? [],
+                        'version' => null,
+                    ],
                     'promo' => ['active' => false, 'label_text' => '', 'label_color' => '#E44203', 'label_image' => null, 'show_badges' => false, 'description' => ''],
                 ];
             }

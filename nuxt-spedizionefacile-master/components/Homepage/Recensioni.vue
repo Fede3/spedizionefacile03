@@ -113,7 +113,7 @@ const visibleReviews = reviews.slice(0, 3).map((review) => ({
 <style scoped>
 .hp-rev-section {
 	margin-top: 0;
-	padding: 64px 0 96px;
+	padding: 52px 0 76px;
 	background: #f3f8fb;
 }
 
@@ -170,7 +170,7 @@ const visibleReviews = reviews.slice(0, 3).map((review) => ({
 }
 
 .hp-rev-grid {
-	margin-top: 32px;
+	margin-top: 24px;
 	display: grid;
 	grid-template-columns: 1fr;
 	gap: 14px;
@@ -356,6 +356,32 @@ const visibleReviews = reviews.slice(0, 3).map((review) => ({
 	.hp-rev-grid {
 		grid-template-columns: repeat(3, minmax(0, 1fr));
 		gap: 16px;
+	}
+}
+
+@media (max-width: 47.99rem) {
+	.hp-rev-grid {
+		grid-auto-flow: column;
+		grid-auto-columns: minmax(286px, 84vw);
+		overflow-x: auto;
+		scroll-snap-type: x mandatory;
+		padding-bottom: 4px;
+		scrollbar-width: none;
+	}
+
+	.hp-rev-grid::-webkit-scrollbar {
+		display: none;
+	}
+
+	.hp-rev-card {
+		scroll-snap-align: start;
+		min-height: 214px;
+		padding: 16px;
+	}
+
+	.hp-rev-text {
+		font-size: 0.89rem;
+		line-height: 1.5;
 	}
 }
 

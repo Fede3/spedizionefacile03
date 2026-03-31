@@ -54,13 +54,13 @@ use App\Models\WithdrawalRequest;
 use Illuminate\Support\Str;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
+use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable
 {
-    use HasFactory, Notifiable;
-
-    /* HasApiTokens, */
+    use HasApiTokens, HasFactory, Notifiable;
 
     /**
      * Campi compilabili dall'esterno (mass assignment).
@@ -84,6 +84,8 @@ class User extends Authenticatable
         'verification_code_expires_at',  // Scadenza del codice di verifica
         'user_type',                     // Tipo account: "privato" o "commerciante"
         'google_id',                     // ID Google OAuth (per login con Google)
+        'facebook_id',                   // ID Facebook OAuth (per login con Facebook)
+        'apple_id',                      // ID Apple OAuth (per login con Apple)
         'avatar',                        // URL dell'avatar (da Google)
     ];
 
@@ -131,7 +133,7 @@ class User extends Authenticatable
 
     // Relazione: un utente ha MOLTI indirizzi salvati nella sua rubrica
     // Esempio: casa, ufficio, magazzino...
-    public function addresses() {
+    public function addresses(): HasMany {
         return $this->hasMany(UserAddress::class);
     }
 
@@ -147,13 +149,13 @@ class User extends Authenticatable
 
     // Relazione: un utente ha MOLTI pacchi configurati
     // Sono i pacchi che l'utente ha preparato per la spedizione
-    public function packages() {
+    public function packages(): HasMany {
         return $this->hasMany(Package::class);
     }
 
     // Relazione: un utente ha MOLTI ordini
     // Ogni volta che l'utente paga una spedizione, viene creato un ordine
-    public function orders() {
+    public function orders(): HasMany {
         return $this->hasMany(Order::class);
     }
 
@@ -165,23 +167,23 @@ class User extends Authenticatable
 
     // Relazione: un utente ha MOLTI movimenti nel portafoglio
     // I movimenti possono essere ricariche (credit) o pagamenti (debit)
-    public function walletMovements() {
+    public function walletMovements(): HasMany {
         return $this->hasMany(WalletMovement::class);
     }
 
     // Relazione: un utente Pro ha MOLTI utilizzi del suo codice referral
     // Ogni volta che qualcuno usa il suo codice, viene registrato qui
-    public function referralUsagesAsPro() {
+    public function referralUsagesAsPro(): HasMany {
         return $this->hasMany(ReferralUsage::class, 'pro_user_id');
     }
 
     // Relazione: un utente ha MOLTE richieste di prelievo delle commissioni guadagnate
-    public function withdrawalRequests() {
+    public function withdrawalRequests(): HasMany {
         return $this->hasMany(WithdrawalRequest::class);
     }
 
     // Relazione: un utente ha MOLTE richieste per diventare Partner Pro
-    public function proRequests() {
+    public function proRequests(): HasMany {
         return $this->hasMany(ProRequest::class);
     }
 

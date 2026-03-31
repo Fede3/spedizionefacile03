@@ -1,4 +1,5 @@
 <?php
+
 /**
  * FILE: Order.php
  * SCOPO: Modello ordine di spedizione con stati, dati BRT, relazioni utente/pacchi/transazioni.
@@ -47,15 +48,24 @@
 
 namespace App\Models;
 
-use App\Models\User;
 use App\Cart\MyMoney;
-use App\Models\Package;
-use App\Models\Transaction;
+use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\DB;
 
+/**
+ * @property-read User|null $user
+ * @property-read Collection<int, Package> $packages
+ * @property-read Collection<int, Transaction> $transactions
+ */
 class Order extends Model
 {
+    use HasFactory;
+
     /**
      * Campi compilabili dall'esterno.
      * Sono i dati che possono essere inseriti o modificati quando si crea/aggiorna un ordine.
@@ -90,29 +100,41 @@ class Order extends Model
         'cancellation_fee',              // Commissione di annullamento in centesimi (200 = 2 EUR)
         'payment_method',                // Metodo di pagamento originale (stripe, wallet, bonifico)
         'stripe_payment_intent_id',      // ID PaymentIntent Stripe per rimborsi
+        'billing_data',                  // Snapshot dati di fatturazione scelti al checkout
     ];
 
     // Converte automaticamente i campi nei tipi corretti
     protected $casts = [
         'is_cod' => 'boolean',
         'brt_raw_response' => 'array',  // Converte JSON in array PHP automaticamente
+        'billing_data' => 'array',
         'refunded_at' => 'datetime',
+        'pickup_requested_at' => 'datetime',
+        'documents_sent_customer_at' => 'datetime',
+        'documents_sent_admin_at' => 'datetime',
     ];
 
     // Questi sono gli stati possibili di un ordine:
     const PENDING = 'pending';                // In attesa - l'utente non ha ancora pagato
+
     const PROCESSING = 'processing';          // In lavorazione - il pagamento e' stato ricevuto
+
     const PAYMENT_FAILED = 'payment_failed';  // Pagamento fallito - qualcosa e' andato storto col pagamento
+
     const IN_TRANSIT = 'in_transit';          // In transito - etichetta BRT generata, spedizione in corso
+
     const COMPLETED = 'completed';            // Completato - la spedizione e' stata conclusa
+
     const CANCELLED = 'cancelled';            // Annullato - l'ordine e' stato annullato dall'utente
+
     const REFUNDED = 'refunded';              // Rimborsato - il rimborso e' stato completato
 
     /**
      * Traduce lo stato dell'ordine dall'inglese all'italiano.
      * Viene usato per mostrare lo stato in modo comprensibile all'utente.
      */
-    public function getStatus($status) {
+    public function getStatus(string $status): string
+    {
         $data = [
             'pending' => 'In attesa',
             'processing' => 'In lavorazione',
@@ -129,13 +151,13 @@ class Order extends Model
         return $data[$status] ?? $status;
     }
 
-
     /**
      * Azione automatica: quando viene creato un nuovo ordine,
      * il suo stato iniziale e' sempre "pending" (in attesa di pagamento).
      */
-    protected static function booted() {
-        static::creating(function($order) {
+    protected static function booted()
+    {
+        static::creating(function ($order) {
             if (empty($order->status)) {
                 $order->status = self::PENDING;
             }
@@ -147,27 +169,30 @@ class Order extends Model
      * convertito in un oggetto MyMoney che gestisce la formattazione
      * dei prezzi (es. da centesimi a euro con virgola).
      */
-    public function getSubtotalAttribute($subtotal) {
+    public function getSubtotalAttribute($subtotal)
+    {
         return new MyMoney($subtotal);
     }
 
-
     // Relazione: ogni ordine appartiene a UN utente
     // Cioe' ogni ordine e' stato fatto da una persona specifica
-    public function user() {
+    public function user(): BelongsTo
+    {
         return $this->belongsTo(User::class);
     }
 
     // Relazione: un ordine ha MOLTE transazioni di pagamento
     // Esempio: un tentativo fallito e poi uno riuscito
-    public function transactions() {
+    public function transactions(): HasMany
+    {
         return $this->hasMany(Transaction::class);
     }
 
     // Relazione: un ordine contiene MOLTI pacchi
     // La relazione passa per la tabella "package_order" (tabella ponte)
     // che collega ordini e pacchi (relazione molti-a-molti)
-    public function packages() {
+    public function packages(): BelongsToMany
+    {
         return $this->belongsToMany(Package::class, 'package_order');
     }
 

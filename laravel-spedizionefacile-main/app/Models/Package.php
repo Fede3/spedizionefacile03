@@ -1,4 +1,5 @@
 <?php
+
 /**
  * FILE: Package.php
  * SCOPO: Modello pacco con dimensioni, peso, prezzo, indirizzi partenza/destinazione e servizio.
@@ -44,17 +45,21 @@
 
 namespace App\Models;
 
-use App\Models\User;
-use App\Models\Service;
-use App\Models\PackageAddress;
 use App\Models\Traits\HasPrice;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use App\Models\Collections\PackageCollection;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * @property-read User|null $user
+ * @property-read PackageAddress|null $originAddress
+ * @property-read PackageAddress|null $destinationAddress
+ * @property-read Service|null $service
+ */
 class Package extends Model
 {
     // Usa il trait HasPrice per gestire automaticamente la formattazione del prezzo
-    use HasPrice;
+    use HasFactory, HasPrice;
 
     /**
      * Campi compilabili dall'esterno.
@@ -78,23 +83,26 @@ class Package extends Model
     ];
 
     // Relazione: ogni pacco appartiene a UN utente
-    public function user() {
+    public function user(): BelongsTo
+    {
         return $this->belongsTo(User::class);
     }
 
-    // Relazione: ogni pacco ha UN indirizzo di partenza (da dove parte)
-    public function originAddress() {
-        return $this->hasOne(PackageAddress::class, 'id', 'origin_address_id');
+    // Relazione: ogni pacco appartiene a UN indirizzo di partenza (foreign key origin_address_id)
+    public function originAddress(): BelongsTo
+    {
+        return $this->belongsTo(PackageAddress::class, 'origin_address_id');
     }
 
-    // Relazione: ogni pacco ha UN indirizzo di destinazione (dove arriva)
-    public function destinationAddress() {
-        return $this->hasOne(PackageAddress::class, 'id', 'destination_address_id');
+    // Relazione: ogni pacco appartiene a UN indirizzo di destinazione (foreign key destination_address_id)
+    public function destinationAddress(): BelongsTo
+    {
+        return $this->belongsTo(PackageAddress::class, 'destination_address_id');
     }
 
-    // Relazione: ogni pacco ha UN servizio di spedizione (tipo, data, orario)
-    public function service() {
-        return $this->hasOne(Service::class, 'id', 'service_id');
+    // Relazione: ogni pacco appartiene a UN servizio di spedizione (foreign key service_id)
+    public function service(): BelongsTo
+    {
+        return $this->belongsTo(Service::class, 'service_id');
     }
-
 }

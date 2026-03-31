@@ -1,10 +1,10 @@
-﻿<?php
+<?php
 
 namespace Database\Seeders;
 
+use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
-use App\Models\User;
 
 class EnsureTestUserSeeder extends Seeder
 {
@@ -14,10 +14,10 @@ class EnsureTestUserSeeder extends Seeder
         User::unguard();
 
         // SQLite: leggere schema tabella users
-         = DB::select('PRAGMA table_info(users)');
+        $columns = DB::select('PRAGMA table_info(users)');
 
         // Valori certi per i campi che hai già visto obbligatori
-         = [
+        $payload = [
             'name' => 'Test',
             'surname' => 'Test',
             'telephone_number' => '0000000000',
@@ -25,32 +25,31 @@ class EnsureTestUserSeeder extends Seeder
             'password' => bcrypt('Password123!'),
         ];
 
-         = ['id','email','created_at','updated_at','email_verified_at','remember_token'];
+        $ignoredColumns = ['id', 'email', 'created_at', 'updated_at', 'email_verified_at', 'remember_token'];
 
-        foreach ( as ) {
-             = ->name;
-             = ((int)->notnull === 1);
-             = (->dflt_value === null);
+        foreach ($columns as $column) {
+            $name = $column->name;
+            $isRequired = ((int) $column->notnull === 1);
+            $hasNoDefault = ($column->dflt_value === null);
 
-            if ( &&  && !array_key_exists(, ) && !in_array(, , true)) {
-                 = strtolower((string)->type);
+            if ($isRequired && $hasNoDefault && ! array_key_exists($name, $payload) && ! in_array($name, $ignoredColumns, true)) {
+                $type = strtolower((string) $column->type);
 
                 // euristiche semplici per non violare NOT NULL
-                if (str_ends_with(, '_id')) {
-                    [] = 1;
-                } elseif (str_starts_with(, 'is_') || str_starts_with(, 'has_')) {
-                    [] = 0;
-                } elseif (str_contains(, 'int')) {
-                    [] = 0;
-                } elseif (str_contains(, 'date') || str_contains(, 'time')) {
-                    [] = now();
+                if (str_ends_with($name, '_id')) {
+                    $payload[$name] = 1;
+                } elseif (str_starts_with($name, 'is_') || str_starts_with($name, 'has_')) {
+                    $payload[$name] = 0;
+                } elseif (str_contains($type, 'int')) {
+                    $payload[$name] = 0;
+                } elseif (str_contains($type, 'date') || str_contains($type, 'time')) {
+                    $payload[$name] = now();
                 } else {
-                    [] = 'test';
+                    $payload[$name] = 'test';
                 }
             }
         }
 
-        User::updateOrCreate(['email' => 'test@prova.it'], );
+        User::updateOrCreate(['email' => 'test@prova.it'], $payload);
     }
 }
-

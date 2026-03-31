@@ -32,9 +32,14 @@
 namespace App\Http\Controllers;
 
 use App\Models\Setting;
+use App\Services\StripeConfigService;
 use Illuminate\Http\Request;
 class SettingsController extends Controller
 {
+    public function __construct(
+        private readonly StripeConfigService $stripeConfig,
+    ) {}
+
     /**
      * Restituisce lo stato della configurazione Stripe.
      * Dice al frontend se Stripe e' configurato (cioe' se le chiavi sono state inserite)
@@ -42,20 +47,9 @@ class SettingsController extends Controller
      */
     public function getStripeConfig()
     {
-        // Cerchiamo le chiavi prima nel database (nuovo e legacy), poi nel file .env come riserva
-        $key = trim((string) (Setting::get('stripe_key')
-            ?: Setting::get('stripe_public_key')
-            ?: config('services.stripe.key')));
-
-        $secret = trim((string) (Setting::get('stripe_secret')
-            ?: Setting::get('stripe_secret_key')
-            ?: config('services.stripe.secret')));
-
-        $hasPlaceholder = str_contains($key, 'placeholder') || str_contains($secret, 'placeholder');
-
         return response()->json([
-            'configured' => !empty($secret) && !empty($key) && !$hasPlaceholder, // true se entrambe le chiavi sono presenti
-            'publishable_key' => $key ?: '',                  // Solo la chiave pubblica viene inviata al frontend
+            'configured' => $this->stripeConfig->isConfigured(),
+            'publishable_key' => $this->stripeConfig->getPublicKey() ?: '',
         ]);
     }
 

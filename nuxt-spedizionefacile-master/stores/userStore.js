@@ -20,6 +20,8 @@
  *   - deliveryMode: 'home' (domicilio) o 'pudo' (punto BRT)
  *   - selectedPudo: punto PUDO selezionato (oggetto con pudo_id, name, address, ecc.)
  *   - contentDescription: descrizione del contenuto del pacco
+ *   - smsEmailNotification: toggle notifiche stato spedizione
+ *   - serviceData: dati aggiuntivi dei servizi (contrassegno, assicurazione, ecc.)
  *
  * PERSISTENZA: lo stato viene salvato in sessionStorage ad ogni modifica (debounced 300ms)
  *              per non perderlo al refresh della pagina.
@@ -73,10 +75,19 @@ export const useUserStore = defineStore("user", () => {
 	const shipmentDetails = ref(saved?.shipmentDetails ?? {
 		origin_city: "",              // Citta' di partenza (es. "Milano")
 		origin_postal_code: "",       // CAP di partenza (es. "20100")
+		origin_country_code: "IT",    // Codice paese partenza (es. "IT")
+		origin_country: "Italia",     // Paese partenza in chiaro
 		destination_city: "",         // Citta' di destinazione
 		destination_postal_code: "",  // CAP di destinazione
+		destination_country_code: "IT", // Codice paese destinazione
+		destination_country: "Italia",  // Paese destinazione in chiaro
 		date: "",                     // Data di ritiro (formato YYYY-MM-DD)
 	});
+
+	if (!shipmentDetails.value.origin_country_code) shipmentDetails.value.origin_country_code = "IT";
+	if (!shipmentDetails.value.origin_country) shipmentDetails.value.origin_country = "Italia";
+	if (!shipmentDetails.value.destination_country_code) shipmentDetails.value.destination_country_code = "IT";
+	if (!shipmentDetails.value.destination_country) shipmentDetails.value.destination_country = "Italia";
 
 	const isQuoteStarted = ref(saved?.isQuoteStarted ?? false);  // true dopo il primo calcolo prezzo
 
@@ -112,6 +123,8 @@ export const useUserStore = defineStore("user", () => {
 	const deliveryMode = ref(saved?.deliveryMode ?? 'home');
 	// Punto di ritiro selezionato (oggetto con pudo_id, name, address, ecc.)
 	const selectedPudo = ref(saved?.selectedPudo ?? null);
+	const smsEmailNotification = ref(saved?.smsEmailNotification ?? false);
+	const serviceData = ref(saved?.serviceData ?? {});
 
 	// Salva in sessionStorage ogni volta che cambia qualcosa.
 	// Debounced: accumula le modifiche e scrive una sola volta ogni 300ms
@@ -134,6 +147,8 @@ export const useUserStore = defineStore("user", () => {
 				editingCartItemId: editingCartItemId.value,
 				deliveryMode: deliveryMode.value,
 				selectedPudo: selectedPudo.value,
+				smsEmailNotification: smsEmailNotification.value,
+				serviceData: serviceData.value,
 			});
 		}, DEBOUNCE_MS);
 	}
@@ -141,7 +156,8 @@ export const useUserStore = defineStore("user", () => {
 	// Osserva tutti i campi e persisti automaticamente
 	watch([stepNumber, shipmentDetails, isQuoteStarted, totalPrice, packages,
 		servicesArray, contentDescription, pendingShipment, originAddressData,
-		destinationAddressData, pickupDate, editingCartItemId, deliveryMode, selectedPudo], persist, { deep: true });
+		destinationAddressData, pickupDate, editingCartItemId, deliveryMode, selectedPudo,
+		smsEmailNotification, serviceData], persist, { deep: true });
 
 	return {
 		stepNumber,
@@ -158,5 +174,7 @@ export const useUserStore = defineStore("user", () => {
 		editingCartItemId,
 		deliveryMode,
 		selectedPudo,
+		smsEmailNotification,
+		serviceData,
 	};
 });

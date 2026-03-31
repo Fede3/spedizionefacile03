@@ -36,12 +36,24 @@
  *   * allowedHosts: domini autorizzati (per tunnel Cloudflare e localhost)
  *   * manualChunks: divide Stripe e Swiper in file separati per caricare piu' veloce
  */
+const staticPublicRouteRule = {}
+
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
   compatibilityDate: '2024-04-03',
-  // Devtools: attivo solo in sviluppo, disabilitato in produzione per ridurre il bundle
-  devtools: { enabled: process.env.NODE_ENV === 'development' },
-  modules: ['@nuxt/ui', '@nuxt/image', '@pinia/nuxt', 'nuxt-auth-sanctum', '@nuxt/fonts'],
+  // Devtools sempre spenti fuori dal vero ambiente di sviluppo:
+  // la preview condivisa deve restare pulita, senza hook runtime extra
+  // che introducono rumore in console o micro-flicker percepibili.
+  devtools: {
+    enabled: process.env.NODE_ENV === 'development' && process.env.NUXT_ENABLE_DEVTOOLS === 'true',
+  },
+  modules: ['@nuxt/ui', '@nuxt/image', '@pinia/nuxt', 'nuxt-auth-sanctum'],
+  ui: {
+    // Usiamo font locali via @fontsource in assets/css/main.css:
+    // questo evita fetch esterni in build e mantiene il sistema tipografico
+    // limitato a Inter + Montserrat.
+    fonts: false,
+  },
 
   // @nuxt/image: abilita formato WebP automatico, qualita' 80%,
   // e definisce le dimensioni responsive per i breakpoint del sito.
@@ -56,15 +68,6 @@ export default defineNuxtConfig({
     },
   },
 
-  // @nuxt/fonts: auto-downloads Inter & Montserrat, injects font-display: swap,
-  // and self-hosts them for faster loading (no render-blocking Google Fonts request).
-  fonts: {
-    defaults: {
-      weights: [400, 500, 600, 700],
-      styles: ['normal'],
-    },
-  },
-
   // Ottimizzazione icone: include solo le icone MDI nel bundle (nessuna richiesta API runtime).
   // clientBundle.scan scansiona i .vue per trovare quali icone servono e le include direttamente.
   icon: {
@@ -74,11 +77,13 @@ export default defineNuxtConfig({
     serverBundle: 'local',
   },
 
-  css: ['~/assets/css/main.css'],
+  css: ['~/assets/css/main.css', '~/assets/css/preventivo.css', '~/assets/css/shipment-step.css', '~/assets/css/checkout.css'],
 
   app: {
-    // pageTransition: { name: 'page', mode: 'out-in' },
-    // layoutTransition: { name: 'layout', mode: 'out-in' },
+    // Nessuna transizione globale di pagina/layout:
+    // l'utente deve percepire il cambio route come stabile, non come fade/flash.
+    pageTransition: false,
+    layoutTransition: false,
     head: {
       htmlAttrs: { lang: 'it' },
       charset: 'utf-8',
@@ -106,6 +111,11 @@ export default defineNuxtConfig({
         { rel: 'preconnect', href: 'https://spediamofacile.it', crossorigin: '' },
         // DNS-prefetch as fallback for browsers that don't support preconnect
         { rel: 'dns-prefetch', href: 'https://spediamofacile.it' },
+        // Preload font principali per ridurre il salto metrico al primo paint.
+        { rel: 'preload', as: 'font', type: 'font/woff2', href: '/fonts/inter-latin-400-normal.woff2', crossorigin: '' },
+        { rel: 'preload', as: 'font', type: 'font/woff2', href: '/fonts/inter-latin-600-normal.woff2', crossorigin: '' },
+        { rel: 'preload', as: 'font', type: 'font/woff2', href: '/fonts/inter-latin-700-normal.woff2', crossorigin: '' },
+        { rel: 'preload', as: 'font', type: 'font/woff2', href: '/fonts/montserrat-latin-600-normal.woff2', crossorigin: '' },
         // Stripe preconnect is NOT here on purpose: it is added only on pages
         // that actually use Stripe (checkout, carte, portafoglio) via useHead()
         // to avoid wasting a connection on every page load.
@@ -115,14 +125,16 @@ export default defineNuxtConfig({
 
   router: {
     options: {
-      scrollBehaviorType: 'smooth',
+      // Niente smooth globale sui cambi route: sui flussi operativi generava
+      // scroll intermedi percepiti come scatti o "pagine in mezzo".
+      scrollBehaviorType: 'auto',
     },
   },
 
   runtimeConfig: {
     public: {
-      apiBase: process.env.NUXT_PUBLIC_API_BASE || 'http://127.0.0.1:8787',
-      stripeKey: process.env.NUXT_PUBLIC_STRIPE_KEY || 'pk_test_placeholder',
+      apiBase: String(process.env.NUXT_PUBLIC_API_BASE || 'http://127.0.0.1:8787').trim(),
+      stripeKey: process.env.NUXT_PUBLIC_STRIPE_KEY || '',
     },
   },
 
@@ -130,7 +142,7 @@ export default defineNuxtConfig({
     // baseUrl: indirizzo base per TUTTE le chiamate API del modulo sanctum.
     // Tutte le richieste (login, logout, csrf, user) partono da questo indirizzo.
     // In locale: http://127.0.0.1:8787 (Caddy proxy che smista a Laravel e Nuxt)
-    baseUrl: process.env.NUXT_PUBLIC_API_BASE || 'http://127.0.0.1:8787',
+    baseUrl: String(process.env.NUXT_PUBLIC_API_BASE || 'http://127.0.0.1:8787').trim(),
 
     // IMPORTANTE: "origin" NON e' impostata di proposito.
     // Se la impostassimo a un valore fisso (es. 'http://127.0.0.1:8787'),
@@ -165,6 +177,9 @@ export default defineNuxtConfig({
     // La gestione dei retry la facciamo noi in autenticazione.vue (retry manuale su 419).
     client: {
       retry: false,
+      // Non fare fetch automatico dell'identita' su ogni bootstrap SSR/build:
+      // usiamo il plugin client dedicato per inizializzare auth solo dove serve.
+      initialRequest: false,
     },
 
     // redirect: dove mandare l'utente dopo le azioni di autenticazione.
@@ -194,17 +209,30 @@ export default defineNuxtConfig({
   // Le pagine puramente statiche vengono servite dalla cache,
   // riducendo il carico server e velocizzando la navigazione.
   routeRules: {
-    '/chi-siamo': { swr: 3600 },
-    '/faq': { swr: 3600 },
-    '/contatti': { swr: 3600 },
-    '/privacy-policy': { swr: 3600 },
-    '/cookie-policy': { swr: 3600 },
-    '/termini-condizioni': { swr: 3600 },
-    '/reclami': { swr: 3600 },
-    '/servizi': { swr: 3600 },
-    '/servizi/**': { swr: 3600 },
-    '/guide': { swr: 3600 },
-    '/guide/**': { swr: 3600 },
+    '/chi-siamo': staticPublicRouteRule,
+    '/faq': staticPublicRouteRule,
+    '/contatti': staticPublicRouteRule,
+    '/privacy-policy': staticPublicRouteRule,
+    '/cookie-policy': staticPublicRouteRule,
+    '/termini-condizioni': staticPublicRouteRule,
+    '/reclami': staticPublicRouteRule,
+    '/servizi': staticPublicRouteRule,
+    '/servizi/**': staticPublicRouteRule,
+    '/guide': staticPublicRouteRule,
+    '/guide/**': staticPublicRouteRule,
+    // Flussi autenticati o interattivi: mai pre-renderarli in build.
+    // Dipendono da sessione, carrello o API runtime e altrimenti generano
+    // fetch falliti verso il backend locale durante la compilazione.
+    '/account': { prerender: false },
+    '/account/**': { prerender: false },
+    '/autenticazione': { prerender: false },
+    '/login': { prerender: false },
+    '/registrazione': { prerender: false },
+    '/preventivo': { prerender: false },
+    '/carrello': { prerender: false },
+    '/checkout': { prerender: false },
+    '/riepilogo': { prerender: false },
+    '/la-tua-spedizione/**': { prerender: false },
     // Cache aggressiva per asset statici (immagini, font, JS/CSS con hash).
     // max-age=1 anno perche' Vite aggiunge hash al nome dei file:
     // quando il contenuto cambia, cambia anche il nome → cache automaticamente invalidata.
@@ -212,12 +240,22 @@ export default defineNuxtConfig({
   },
 
   experimental: {
-    // Extract page payloads to separate files for smaller initial JS
-    payloadExtraction: true,
-    // Tree-shake client-only composables from server bundle and vice versa
-    treeshakeClientOnly: true,
+    // Disabilitato: su Windows/dev ha generato errori ENOENT sui file
+    // .nuxt/cache/nuxt/payload/* e 500 su rotte statiche.
+    // Qui privilegiamo stabilita' e prevedibilita' del runtime.
+    payloadExtraction: false,
+    // Disattiva i timer/hooks di timing nel browser della preview condivisa:
+    // riduce rumore in console e i micro-flash percepiti in dev tunnel.
+    browserDevtoolsTiming: false,
     // Ottimizzazione: rendering asincrono dei componenti per ridurre il blocking
     asyncContext: true,
+  },
+
+  debug: {
+    // La preview condivisa non deve includere il plugin Nuxt `debug-hooks`:
+    // genera timer duplicati in console (`[nuxt-app] ... already exists`) e
+    // sporca il QA live senza dare valore nel tunnel pubblico.
+    hooks: false,
   },
 
   // Nitro (server engine) optimizations
@@ -228,8 +266,10 @@ export default defineNuxtConfig({
     minify: true,
     // Pre-rendering: genera HTML statico per pagine che non cambiano mai
     prerender: {
-      // Crawla i link interni per pre-renderizzare automaticamente
-      crawlLinks: true,
+      // Non crawlare l'intera app: molte pagine dipendono da sessione/API e
+      // in build porterebbero a redirect ricorsivi o fetch verso backend locale.
+      // Qui pre-renderizziamo solo le rotte statiche dichiarate sotto.
+      crawlLinks: false,
       // Pagine statiche da pre-renderizzare al build time (niente SSR a runtime)
       routes: [
         '/chi-siamo',
@@ -239,6 +279,21 @@ export default defineNuxtConfig({
         '/cookie-policy',
         '/termini-condizioni',
         '/reclami',
+      ],
+      // Difesa aggiuntiva: blocca il prerender dei flussi che richiedono
+      // sessione, autenticazione o stato carrello anche se vengono trovati
+      // nei link del layout o della homepage.
+      ignore: [
+        '/account',
+        '/account/**',
+        '/autenticazione',
+        '/login',
+        '/registrazione',
+        '/preventivo',
+        '/carrello',
+        '/checkout',
+        '/riepilogo',
+        '/la-tua-spedizione/**',
       ],
     },
   },
@@ -257,8 +312,9 @@ export default defineNuxtConfig({
       cssMinify: 'lightningcss',
       // Target modern browsers for smaller output (no legacy polyfills)
       target: 'es2022',
-      // Enable CSS code splitting so each route loads only its own styles
-      cssCodeSplit: true,
+      // Manteniamo il CSS in un bundle unico per evitare FOUC/flicker
+      // quando si passa da una route all'altra.
+      cssCodeSplit: false,
       rollupOptions: {
         output: {
           // Separate heavy vendor libraries into their own chunks.

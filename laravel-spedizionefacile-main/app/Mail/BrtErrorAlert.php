@@ -3,6 +3,7 @@
 namespace App\Mail;
 
 use App\Models\Order;
+use App\Models\User;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
@@ -35,6 +36,7 @@ class BrtErrorAlert extends Mailable
     private function buildHtml(): string
     {
         $orderId = $this->order->id;
+        /** @var User|null $user */
         $user = $this->order->user;
         $userName = $user ? "{$user->name} {$user->surname}" : 'N/D';
         $userEmail = $user->email ?? 'N/D';

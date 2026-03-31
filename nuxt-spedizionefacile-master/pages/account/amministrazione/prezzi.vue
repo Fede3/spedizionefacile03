@@ -42,7 +42,7 @@
 -->
 <script setup>
 definePageMeta({
-	middleware: ["sanctum:auth", "admin"],
+	middleware: ["app-auth", "admin"],
 });
 
 const sanctum = useSanctumClient();
@@ -78,6 +78,31 @@ const supplementRules = ref([
 const originalExtraRules = ref(null);
 const originalSupplementRules = ref([]);
 const pricingVersion = ref(null);
+const europePricing = ref({
+	enabled: true,
+	scope: 'europe_monocollo',
+	origin_country_code: 'IT',
+	max_packages: 1,
+	max_quantity_per_package: 1,
+	bands: [],
+	supported_country_codes: [],
+	version: null,
+});
+const originalEuropePricing = ref(null);
+const servicePricing = ref({});
+const automaticSupplements = ref({});
+const operationalFees = ref({});
+const originalServicePricing = ref({});
+const originalAutomaticSupplements = ref({});
+const originalOperationalFees = ref({});
+const adminView = ref('nazionale');
+const compactEuropeView = ref(false);
+const europeSearch = ref('');
+const europeStatusFilter = ref('all');
+const europeBandFilter = ref('all');
+const europeSort = ref('country_asc');
+const serviceSearch = ref('');
+const serviceFilter = ref('all');
 
 // --- PROMO ---
 const promoLoading = ref(false);
@@ -137,6 +162,10 @@ const buildPricingPayload = () => ({
 			enabled: rule.enabled !== false,
 		}))
 		.filter((rule) => rule.prefix.length > 0),
+	europe: buildEuropePricingPayload(),
+	service_pricing: buildPricingRulesPayload(servicePricing.value),
+	automatic_supplements: buildPricingRulesPayload(automaticSupplements.value),
+	operational_fees: buildPricingRulesPayload(operationalFees.value),
 });
 
 const toComparable = (obj) => JSON.stringify(obj);
@@ -148,6 +177,10 @@ const hasChanges = computed(() => {
 		volume: originalVolumeBands.value,
 		extra_rules: originalExtraRules.value || extraRules.value,
 		supplements: originalSupplementRules.value || supplementRules.value,
+		europe: originalEuropePricing.value || europePricing.value,
+		service_pricing: originalServicePricing.value || servicePricing.value,
+		automatic_supplements: originalAutomaticSupplements.value || automaticSupplements.value,
+		operational_fees: originalOperationalFees.value || operationalFees.value,
 	});
 	return !bandsFromDb.value || current !== original;
 });
@@ -189,6 +222,402 @@ const DEFAULT_EXTRA_RULES = {
 const DEFAULT_SUPPLEMENTS = [
 	{ id: 'supplement-1', prefix: '90', amount_cents: 250, apply_to: 'both', enabled: true },
 ];
+const DEFAULT_EUROPE_PRICING = {
+	enabled: true,
+	scope: 'europe_monocollo',
+	origin_country_code: 'IT',
+	max_packages: 1,
+	max_quantity_per_package: 1,
+	bands: [],
+	supported_country_codes: [],
+	version: null,
+};
+const DEFAULT_SERVICE_PRICING = {
+	senza_etichetta: {
+		label: 'Senza etichetta',
+		description: "Il corriere stampa e applica l'etichetta al ritiro.",
+		pricing_type: 'fixed',
+		price_cents: 99,
+		enabled: true,
+		application: 'per_spedizione',
+		note: '',
+	},
+	notifications: {
+		label: 'Notifiche spedizione',
+		description: 'SMS ed email al ritiro, in transito e alla consegna.',
+		pricing_type: 'fixed',
+		price_cents: 50,
+		enabled: true,
+		application: 'per_spedizione',
+		note: '',
+	},
+	sponda_idraulica: {
+		label: 'Sponda idraulica',
+		description: 'Supplemento per mezzo con pedana.',
+		pricing_type: 'fixed',
+		price_cents: 1500,
+		enabled: true,
+		application: 'per_spedizione',
+		note: '',
+	},
+	contrassegno: {
+		label: 'Contrassegno',
+		description: 'Incasso alla consegna comprensivo di bonifico.',
+		pricing_type: 'threshold_percentage',
+		threshold_amount_eur: 300,
+		min_fee_cents: 700,
+		percentage_rate: 2,
+		enabled: true,
+		application: 'per_spedizione',
+		note: '',
+	},
+	assicurazione: {
+		label: 'Assicurazione',
+		description: 'Protezione economica sulla merce dichiarata.',
+		pricing_type: 'threshold_percentage',
+		threshold_amount_eur: 300,
+		min_fee_cents: 700,
+		percentage_rate: 2,
+		enabled: true,
+		application: 'per_spedizione',
+		note: '',
+	},
+};
+const DEFAULT_AUTOMATIC_SUPPLEMENTS = {
+	calabria_sardegna_sicilia: {
+		label: 'Calabria / Sardegna / Sicilia',
+		description: 'Supplemento automatico destinazione per collo.',
+		enabled: true,
+		pricing_type: 'tiered_weight',
+		application: 'automatic_destination_per_package',
+		province_codes: ['AG', 'CL', 'CT', 'EN', 'ME', 'PA', 'RG', 'SR', 'TP', 'CA', 'CI', 'NU', 'OG', 'OR', 'OT', 'SS', 'SU', 'VS', 'CS', 'CZ', 'KR', 'RC', 'VV'],
+		tiers: [
+			{ up_to_kg: 10, price_cents: 600 },
+			{ up_to_kg: 25, price_cents: 700 },
+			{ up_to_kg: 50, price_cents: 800 },
+			{ up_to_kg: 100, price_cents: 1500 },
+			{ up_to_kg: null, price_cents: 2000 },
+		],
+		note: '',
+	},
+	brt_point_csi: {
+		label: 'BRT Point Calabria / Sardegna / Sicilia',
+		description: 'Supplemento ridotto per punto BRT fino a 20 kg/collo.',
+		enabled: true,
+		pricing_type: 'fixed_with_threshold',
+		application: 'automatic_destination_per_package',
+		province_codes: ['AG', 'CL', 'CT', 'EN', 'ME', 'PA', 'RG', 'SR', 'TP', 'CA', 'CI', 'NU', 'OG', 'OR', 'OT', 'SS', 'SU', 'VS', 'CS', 'CZ', 'KR', 'RC', 'VV'],
+		delivery_modes: ['pudo'],
+		max_weight_kg: 20,
+		price_cents: 200,
+		note: '',
+	},
+	isole_minori_italia: {
+		label: 'Isole minori Italia',
+		description: 'Supplemento automatico per località italiane insulari minori.',
+		enabled: true,
+		pricing_type: 'fixed',
+		application: 'automatic_destination',
+		country_codes: ['IT'],
+		keyword_list: ['la maddalena', 'carloforte', 'calasetta', 'pantelleria', 'lampedusa', 'linosa', 'favignana', 'levanzo', 'marettimo', 'lipari', 'vulcano', 'salina', 'panarea', 'stromboli', 'filicudi', 'alicudi', 'ustica', 'ponza', 'ventotene', 'procida', 'ischia', 'capri', 'elba', 'giglio', 'giannutri', 'tremiti', 'capraia'],
+		price_cents: 2000,
+		note: '',
+	},
+	isole_minori_europa: {
+		label: 'Isole minori Europa',
+		description: 'Supplemento automatico per località europee insulari minori.',
+		enabled: true,
+		pricing_type: 'fixed',
+		application: 'automatic_destination',
+		country_codes: ['ES', 'PT', 'FR', 'GR', 'HR', 'MT', 'CY'],
+		keyword_list: ['ibiza', 'formentera', 'menorca', 'minorca', 'mallorca', 'majorca', 'canarie', 'canary', 'tenerife', 'gran canaria', 'fuerteventura', 'lanzarote', 'madeira', 'azores', 'porto santo', 'corsica', 'corfu', 'santorini', 'mykonos', 'rodos', 'rhodes', 'crete'],
+		price_cents: 2500,
+		note: '',
+	},
+	fuori_sagoma: {
+		label: 'Fuori sagoma',
+		description: 'Supplemento automatico per colli fuori sagoma.',
+		enabled: true,
+		pricing_type: 'tiered_weight',
+		application: 'automatic_package_shape',
+		flag_keys: ['fuori_sagoma', 'out_of_gauge', 'oversized'],
+		longest_side_threshold_cm: 100,
+		girth_threshold_cm: 260,
+		tiers: [
+			{ up_to_kg: 10, price_cents: 300 },
+			{ up_to_kg: null, price_cents: 500 },
+		],
+		note: '',
+	},
+	lato_superiore_130cm: {
+		label: 'Lato superiore a 130 cm',
+		description: 'Supplemento automatico per colli con lato massimo oltre 130 cm.',
+		enabled: true,
+		pricing_type: 'fixed',
+		application: 'automatic_per_package',
+		threshold_cm: 130,
+		price_cents: 500,
+		note: '',
+	},
+	aste_tubi: {
+		label: 'Aste / Tubi',
+		description: 'Supplemento per colli molto lunghi e stretti.',
+		enabled: true,
+		pricing_type: 'fixed',
+		application: 'automatic_per_package',
+		flag_keys: ['aste_tubi', 'tubi', 'tubo', 'rod_tube'],
+		min_longest_side_cm: 100,
+		max_secondary_side_cm: 20,
+		price_cents: 500,
+		note: '',
+	},
+	eu_manual_extra: {
+		label: 'Extra Europa su preventivo manuale',
+		description: 'Fee extra per pratiche Europa con preventivo manuale.',
+		enabled: true,
+		pricing_type: 'fixed',
+		application: 'manual_quote_only',
+		price_cents: 1500,
+		note: '',
+	},
+};
+const DEFAULT_OPERATIONAL_FEES = {
+	giacenza: {
+		label: 'Giacenza',
+		description: 'Costo operativo per gestione giacenza.',
+		pricing_type: 'fixed',
+		price_cents: 1000,
+		enabled: true,
+		application: 'manual_admin',
+		note: '',
+	},
+};
+
+const normalizeEuropePricingForAdmin = (config = {}) => {
+	const bands = Array.isArray(config?.bands)
+		? config.bands.map((band, bandIndex) => ({
+			id: String(band?.id ?? `eu-band-${bandIndex + 1}`),
+			label: String(band?.label ?? '').trim(),
+			max_weight_kg: Number(band?.max_weight_kg ?? 0),
+			max_volume_m3: Number(band?.max_volume_m3 ?? 0),
+			volumetric_factor: Number(band?.volumetric_factor ?? 250),
+			rates: Array.isArray(band?.rates)
+				? band.rates.map((rate) => ({
+					country_code: String(rate?.country_code ?? '').trim().toUpperCase(),
+					country_name: String(rate?.country_name ?? '').trim(),
+					price_cents: rate?.price_cents === null || rate?.price_cents === '' || rate?.price_cents === undefined
+						? null
+						: Number(rate.price_cents),
+					quote_required: rate?.quote_required === true,
+				}))
+				: [],
+		}))
+		: [];
+
+	return {
+		...DEFAULT_EUROPE_PRICING,
+		enabled: config?.enabled !== false,
+		origin_country_code: String(config?.origin_country_code ?? 'IT').trim().toUpperCase() || 'IT',
+		max_packages: 1,
+		max_quantity_per_package: 1,
+		bands,
+		supported_country_codes: Array.isArray(config?.supported_country_codes)
+			? [...config.supported_country_codes]
+			: [...new Set(bands.flatMap((band) => band.rates.map((rate) => rate.country_code)))].sort(),
+		version: config?.version || null,
+	};
+};
+
+const normalizeStringListForAdmin = (values = [], { uppercase = false } = {}) => {
+	if (!Array.isArray(values)) return [];
+	return [...new Set(values
+		.map((value) => String(value || '').trim())
+		.filter(Boolean)
+		.map((value) => uppercase ? value.toUpperCase() : value.toLowerCase()))];
+};
+
+const normalizeTiersForAdmin = (tiers = []) => {
+	if (!Array.isArray(tiers)) return [];
+	return [...tiers]
+		.map((tier) => ({
+			up_to_kg: tier?.up_to_kg === null || tier?.up_to_kg === undefined || tier?.up_to_kg === ''
+				? null
+				: Number(tier.up_to_kg),
+			price_cents: Number(tier?.price_cents || 0),
+		}))
+		.sort((a, b) => {
+			const left = a.up_to_kg ?? Number.POSITIVE_INFINITY;
+			const right = b.up_to_kg ?? Number.POSITIVE_INFINITY;
+			return left - right;
+		});
+};
+
+const normalizePricingGroupForAdmin = (config = {}, defaults = {}) => Object.fromEntries(
+	Object.entries(defaults).map(([key, fallback]) => {
+		const source = config?.[key] && typeof config[key] === 'object' ? config[key] : {};
+		return [key, {
+			...fallback,
+			...source,
+			enabled: source?.enabled !== false && fallback?.enabled !== false,
+			price_cents: source?.price_cents === null || source?.price_cents === undefined
+				? fallback?.price_cents ?? null
+				: Number(source.price_cents || 0),
+			min_fee_cents: source?.min_fee_cents === null || source?.min_fee_cents === undefined
+				? fallback?.min_fee_cents ?? null
+				: Number(source.min_fee_cents || 0),
+			percentage_rate: source?.percentage_rate === null || source?.percentage_rate === undefined
+				? fallback?.percentage_rate ?? null
+				: Number(source.percentage_rate || 0),
+			threshold_amount_eur: source?.threshold_amount_eur === null || source?.threshold_amount_eur === undefined
+				? fallback?.threshold_amount_eur ?? null
+				: Number(source.threshold_amount_eur || 0),
+			max_weight_kg: source?.max_weight_kg === null || source?.max_weight_kg === undefined
+				? fallback?.max_weight_kg ?? null
+				: Number(source.max_weight_kg || 0),
+			threshold_cm: source?.threshold_cm === null || source?.threshold_cm === undefined
+				? fallback?.threshold_cm ?? null
+				: Number(source.threshold_cm || 0),
+			longest_side_threshold_cm: source?.longest_side_threshold_cm === null || source?.longest_side_threshold_cm === undefined
+				? fallback?.longest_side_threshold_cm ?? null
+				: Number(source.longest_side_threshold_cm || 0),
+			girth_threshold_cm: source?.girth_threshold_cm === null || source?.girth_threshold_cm === undefined
+				? fallback?.girth_threshold_cm ?? null
+				: Number(source.girth_threshold_cm || 0),
+			min_longest_side_cm: source?.min_longest_side_cm === null || source?.min_longest_side_cm === undefined
+				? fallback?.min_longest_side_cm ?? null
+				: Number(source.min_longest_side_cm || 0),
+			max_secondary_side_cm: source?.max_secondary_side_cm === null || source?.max_secondary_side_cm === undefined
+				? fallback?.max_secondary_side_cm ?? null
+				: Number(source.max_secondary_side_cm || 0),
+			province_codes: Array.isArray(source?.province_codes)
+				? normalizeStringListForAdmin(source.province_codes, { uppercase: true })
+				: [...(fallback?.province_codes || [])],
+			country_codes: Array.isArray(source?.country_codes)
+				? normalizeStringListForAdmin(source.country_codes, { uppercase: true })
+				: [...(fallback?.country_codes || [])],
+			keyword_list: Array.isArray(source?.keyword_list)
+				? normalizeStringListForAdmin(source.keyword_list)
+				: [...(fallback?.keyword_list || [])],
+			flag_keys: Array.isArray(source?.flag_keys)
+				? normalizeStringListForAdmin(source.flag_keys)
+				: [...(fallback?.flag_keys || [])],
+			delivery_modes: Array.isArray(source?.delivery_modes)
+				? normalizeStringListForAdmin(source.delivery_modes)
+				: [...(fallback?.delivery_modes || [])],
+			tiers: Array.isArray(source?.tiers)
+				? normalizeTiersForAdmin(source.tiers)
+				: normalizeTiersForAdmin(fallback?.tiers || []),
+		}];
+	}),
+);
+
+const buildPricingRulesPayload = (group = {}) => JSON.parse(JSON.stringify(group));
+
+const formatApplicationLabel = (value) => ({
+	per_spedizione: 'Per spedizione',
+	automatic_destination_per_package: 'Automatico su destinazione / collo',
+	automatic_destination: 'Automatico su destinazione',
+	automatic_package_shape: 'Automatico per forma collo',
+	automatic_per_package: 'Automatico per collo',
+	manual_quote_only: 'Solo preventivo manuale',
+	manual_admin: 'Fee operativa admin',
+}[value] || value || '—');
+
+const servicePricingEntries = computed(() =>
+	Object.entries(servicePricing.value || {}).map(([key, rule]) => ({ key, rule, section: 'service_pricing' })),
+);
+
+const automaticSupplementEntries = computed(() =>
+	Object.entries(automaticSupplements.value || {}).map(([key, rule]) => ({ key, rule, section: 'automatic_supplements' })),
+);
+
+const operationalFeeEntries = computed(() =>
+	Object.entries(operationalFees.value || {}).map(([key, rule]) => ({ key, rule, section: 'operational_fees' })),
+);
+
+const filteredServiceEntries = computed(() => {
+	const search = serviceSearch.value.trim().toLowerCase();
+	const activeFilter = serviceFilter.value;
+
+	return [
+		...(activeFilter === 'all' || activeFilter === 'service_pricing' ? servicePricingEntries.value : []),
+		...(activeFilter === 'all' || activeFilter === 'automatic_supplements' ? automaticSupplementEntries.value : []),
+		...(activeFilter === 'all' || activeFilter === 'operational_fees' ? operationalFeeEntries.value : []),
+	].filter(({ rule }) => {
+		if (!search) return true;
+		return `${rule.label} ${rule.description} ${rule.note || ''}`.toLowerCase().includes(search);
+	});
+});
+
+const europeBandFilters = computed(() => [
+	{ value: 'all', label: 'Tutte le fasce' },
+	...europePricing.value.bands.map((band) => ({ value: band.id, label: band.label })),
+]);
+
+const filteredEuropeBands = computed(() => {
+	const search = europeSearch.value.trim().toLowerCase();
+	const status = europeStatusFilter.value;
+	const sortMode = europeSort.value;
+	const selectedBand = europeBandFilter.value;
+
+	const sortRates = (rates) => [...rates].sort((left, right) => {
+		if (sortMode === 'price_asc') {
+			return (left.price_cents ?? Number.POSITIVE_INFINITY) - (right.price_cents ?? Number.POSITIVE_INFINITY);
+		}
+		if (sortMode === 'price_desc') {
+			return (right.price_cents ?? -1) - (left.price_cents ?? -1);
+		}
+		if (sortMode === 'status') {
+			return Number(left.quote_required) - Number(right.quote_required);
+		}
+		return String(left.country_name || left.country_code).localeCompare(String(right.country_name || right.country_code), 'it');
+	});
+
+	return europePricing.value.bands
+		.filter((band) => selectedBand === 'all' || band.id === selectedBand)
+		.map((band) => {
+			const rates = sortRates(band.rates.filter((rate) => {
+				const matchesSearch = !search || `${rate.country_name} ${rate.country_code}`.toLowerCase().includes(search);
+				const matchesStatus = status === 'all'
+					|| (status === 'quote_required' && rate.quote_required)
+					|| (status === 'active' && !rate.quote_required);
+				return matchesSearch && matchesStatus;
+			}));
+
+			return {
+				...band,
+				rates,
+				activeCount: rates.filter((rate) => !rate.quote_required).length,
+				quoteCount: rates.filter((rate) => rate.quote_required).length,
+			};
+		})
+		.filter((band) => band.rates.length > 0);
+});
+
+const buildEuropePricingPayload = () => {
+	const normalized = normalizeEuropePricingForAdmin(europePricing.value);
+	return {
+		enabled: normalized.enabled !== false,
+		origin_country_code: 'IT',
+		max_packages: 1,
+		max_quantity_per_package: 1,
+		bands: normalized.bands.map((band) => ({
+			id: band.id,
+			label: band.label,
+			max_weight_kg: Number(band.max_weight_kg || 0),
+			max_volume_m3: Number(band.max_volume_m3 || 0),
+			volumetric_factor: Number(band.volumetric_factor || 250),
+			rates: band.rates.map((rate) => ({
+				country_code: String(rate.country_code || '').trim().toUpperCase(),
+				country_name: String(rate.country_name || '').trim(),
+				price_cents: rate.quote_required || rate.price_cents === null || rate.price_cents === '' || rate.price_cents === undefined
+					? null
+					: Number(rate.price_cents || 0),
+				quote_required: rate.quote_required === true,
+			})),
+		})),
+	};
+};
 
 // Stato editing
 const editingCell = ref(null);
@@ -218,6 +647,14 @@ const fetchPriceBands = async () => {
 			supplementRules.value = supplementsFromApi.map((rule, idx) => ({ id: rule.id || `supplement-${idx + 1}`, ...rule }));
 			originalExtraRules.value = JSON.parse(JSON.stringify(extraRules.value));
 			originalSupplementRules.value = JSON.parse(JSON.stringify(supplementRules.value));
+			europePricing.value = normalizeEuropePricingForAdmin(data.europe || DEFAULT_EUROPE_PRICING);
+			originalEuropePricing.value = JSON.parse(JSON.stringify(europePricing.value));
+			servicePricing.value = normalizePricingGroupForAdmin(data.service_pricing || {}, DEFAULT_SERVICE_PRICING);
+			automaticSupplements.value = normalizePricingGroupForAdmin(data.automatic_supplements || {}, DEFAULT_AUTOMATIC_SUPPLEMENTS);
+			operationalFees.value = normalizePricingGroupForAdmin(data.operational_fees || {}, DEFAULT_OPERATIONAL_FEES);
+			originalServicePricing.value = JSON.parse(JSON.stringify(servicePricing.value));
+			originalAutomaticSupplements.value = JSON.parse(JSON.stringify(automaticSupplements.value));
+			originalOperationalFees.value = JSON.parse(JSON.stringify(operationalFees.value));
 			pricingVersion.value = data.version || null;
 			bandsFromDb.value = true;
 		} else {
@@ -230,6 +667,14 @@ const fetchPriceBands = async () => {
 			supplementRules.value = DEFAULT_SUPPLEMENTS.map(rule => ({ ...rule }));
 			originalExtraRules.value = JSON.parse(JSON.stringify(extraRules.value));
 			originalSupplementRules.value = JSON.parse(JSON.stringify(supplementRules.value));
+			europePricing.value = normalizeEuropePricingForAdmin(DEFAULT_EUROPE_PRICING);
+			originalEuropePricing.value = JSON.parse(JSON.stringify(europePricing.value));
+			servicePricing.value = normalizePricingGroupForAdmin({}, DEFAULT_SERVICE_PRICING);
+			automaticSupplements.value = normalizePricingGroupForAdmin({}, DEFAULT_AUTOMATIC_SUPPLEMENTS);
+			operationalFees.value = normalizePricingGroupForAdmin({}, DEFAULT_OPERATIONAL_FEES);
+			originalServicePricing.value = JSON.parse(JSON.stringify(servicePricing.value));
+			originalAutomaticSupplements.value = JSON.parse(JSON.stringify(automaticSupplements.value));
+			originalOperationalFees.value = JSON.parse(JSON.stringify(operationalFees.value));
 			pricingVersion.value = null;
 			bandsFromDb.value = false;
 		}
@@ -243,6 +688,14 @@ const fetchPriceBands = async () => {
 		supplementRules.value = DEFAULT_SUPPLEMENTS.map(rule => ({ ...rule }));
 		originalExtraRules.value = JSON.parse(JSON.stringify(extraRules.value));
 		originalSupplementRules.value = JSON.parse(JSON.stringify(supplementRules.value));
+		europePricing.value = normalizeEuropePricingForAdmin(DEFAULT_EUROPE_PRICING);
+		originalEuropePricing.value = JSON.parse(JSON.stringify(europePricing.value));
+		servicePricing.value = normalizePricingGroupForAdmin({}, DEFAULT_SERVICE_PRICING);
+		automaticSupplements.value = normalizePricingGroupForAdmin({}, DEFAULT_AUTOMATIC_SUPPLEMENTS);
+		operationalFees.value = normalizePricingGroupForAdmin({}, DEFAULT_OPERATIONAL_FEES);
+		originalServicePricing.value = JSON.parse(JSON.stringify(servicePricing.value));
+		originalAutomaticSupplements.value = JSON.parse(JSON.stringify(automaticSupplements.value));
+		originalOperationalFees.value = JSON.parse(JSON.stringify(operationalFees.value));
 		pricingVersion.value = null;
 		bandsFromDb.value = false;
 	} finally {
@@ -533,7 +986,6 @@ const confirmEdit = (type, idx, field) => {
 	}
 
 	bands[idx][field] = newCents;
-	console.log(`[AUDIT] Admin updated ${type} band #${idx + 1} ${field}: ${newCents ? (newCents / 100).toFixed(2) + '€' : 'null'}`);
 	editingCell.value = null;
 	editValue.value = '';
 };
@@ -611,19 +1063,80 @@ const updateSupplementAmountFromEuro = (rule, rawValue) => {
 	rule.amount_cents = Math.round(value * 100);
 };
 
+const keyedRuleAmountToEuro = (rule) => (Number(rule?.price_cents || 0) / 100).toFixed(2).replace('.', ',');
+
+const updateKeyedRuleAmountFromEuro = (rule, rawValue) => {
+	const cents = euroToCents(rawValue);
+	rule.price_cents = Math.max(0, cents ?? 0);
+};
+
+const keyedRuleMinFeeToEuro = (rule) => (Number(rule?.min_fee_cents || 0) / 100).toFixed(2).replace('.', ',');
+
+const updateKeyedRuleMinFeeFromEuro = (rule, rawValue) => {
+	const cents = euroToCents(rawValue);
+	rule.min_fee_cents = Math.max(0, cents ?? 0);
+};
+
+const normalizeArrayFieldInput = (rawValue, { uppercase = false } = {}) =>
+	String(rawValue || '')
+		.split(',')
+		.map((item) => String(item || '').trim())
+		.filter(Boolean)
+		.map((item) => uppercase ? item.toUpperCase() : item.toLowerCase());
+
+const updateArrayField = (rule, field, rawValue, { uppercase = false } = {}) => {
+	rule[field] = normalizeArrayFieldInput(rawValue, { uppercase });
+};
+
+const addTierRow = (rule) => {
+	const last = Array.isArray(rule.tiers) && rule.tiers.length ? rule.tiers[rule.tiers.length - 1] : null;
+	rule.tiers = Array.isArray(rule.tiers) ? rule.tiers : [];
+	rule.tiers.push({
+		up_to_kg: last?.up_to_kg != null ? Number(last.up_to_kg) + 5 : null,
+		price_cents: Number(last?.price_cents || 0),
+	});
+};
+
+const removeTierRow = (rule, idx) => {
+	if (!Array.isArray(rule.tiers) || rule.tiers.length <= 1) {
+		showError(null, 'Serve almeno uno scaglione per la regola selezionata.');
+		return;
+	}
+	rule.tiers.splice(idx, 1);
+};
+
+const updateEuropeRateAmountFromEuro = (rate, rawValue) => {
+	const cents = euroToCents(rawValue);
+	rate.price_cents = cents == null ? null : Math.max(0, cents);
+};
+
+const toggleEuropeRateQuote = (rate) => {
+	rate.quote_required = !rate.quote_required;
+	if (rate.quote_required) {
+		rate.price_cents = null;
+	}
+};
+
 const savePriceBands = async () => {
 	saving.value = true;
-	console.log(`[AUDIT] Admin saving price config (${weightBands.value.length} weight + ${volumeBands.value.length} volume + ${supplementRules.value.length} supplements)`);
 	try {
 		const payload = buildPricingPayload();
 		const response = await sanctum("/api/admin/price-bands", { method: "PUT", body: payload });
 		const data = response?.data || {};
-		showSuccess("Configurazione prezzi nazionale salvata con successo.");
+		showSuccess("Configurazione prezzi nazionale ed Europa salvata con successo.");
 		bandsFromDb.value = true;
 		originalWeightBands.value = (data.weight || payload.weight).map(b => ({ ...b }));
 		originalVolumeBands.value = (data.volume || payload.volume).map(b => ({ ...b }));
 		originalExtraRules.value = JSON.parse(JSON.stringify(data.extra_rules || payload.extra_rules));
 		originalSupplementRules.value = JSON.parse(JSON.stringify(data.supplements || payload.supplements));
+		europePricing.value = normalizeEuropePricingForAdmin(data.europe || payload.europe || DEFAULT_EUROPE_PRICING);
+		originalEuropePricing.value = JSON.parse(JSON.stringify(europePricing.value));
+		servicePricing.value = normalizePricingGroupForAdmin(data.service_pricing || payload.service_pricing || {}, DEFAULT_SERVICE_PRICING);
+		automaticSupplements.value = normalizePricingGroupForAdmin(data.automatic_supplements || payload.automatic_supplements || {}, DEFAULT_AUTOMATIC_SUPPLEMENTS);
+		operationalFees.value = normalizePricingGroupForAdmin(data.operational_fees || payload.operational_fees || {}, DEFAULT_OPERATIONAL_FEES);
+		originalServicePricing.value = JSON.parse(JSON.stringify(servicePricing.value));
+		originalAutomaticSupplements.value = JSON.parse(JSON.stringify(automaticSupplements.value));
+		originalOperationalFees.value = JSON.parse(JSON.stringify(operationalFees.value));
 		pricingVersion.value = data.version || pricingVersion.value;
 		await reloadPublicPriceBands();
 	} catch (e) {
@@ -635,7 +1148,6 @@ const savePriceBands = async () => {
 
 const savePromo = async () => {
 	promoSaving.value = true;
-	console.log(`[AUDIT] Admin saving promo settings: active=${promo.value.active}, label="${promo.value.label_text}"`);
 	try {
 		await sanctum("/api/admin/promo-settings", {
 			method: "POST",
@@ -677,7 +1189,6 @@ const uploadPromoImage = async (event) => {
 	}
 
 	promoImageUploading.value = true;
-	console.log(`[AUDIT] Admin uploading promo image: ${file.name} (${(file.size / 1024).toFixed(2)} KB)`);
 	try {
 		const formData = new FormData();
 		formData.append('image', file);
@@ -698,6 +1209,9 @@ const uploadPromoImage = async (event) => {
 onMounted(() => {
 	fetchPriceBands();
 	fetchPromoSettings();
+	if (window.innerWidth < 1280) {
+		compactEuropeView.value = true;
+	}
 });
 </script>
 
@@ -706,7 +1220,7 @@ onMounted(() => {
 		<div class="my-container">
 			<!-- Breadcrumb -->
 			<div class="mb-[24px] text-[0.875rem] text-[#737373]">
-				<NuxtLink to="/account" class="hover:underline text-[#095866] font-medium">Il tuo account</NuxtLink>
+				<NuxtLink to="/account" class="hover:underline text-[#095866] font-medium">Account</NuxtLink>
 				<span class="mx-[8px] text-[#C8CCD0]">/</span>
 				<span class="font-semibold text-[#252B42]">Prezzi e fasce</span>
 			</div>
@@ -714,8 +1228,69 @@ onMounted(() => {
 			<h1 class="text-[1.375rem] tablet:text-[1.75rem] font-bold text-[#252B42] mb-[8px]">Prezzi e fasce</h1>
 			<p class="text-[0.875rem] text-[#737373] mb-[16px]">Clicca su un prezzo per modificarlo. Premi Invio per confermare o Esc per annullare.</p>
 
+			<div class="bg-white rounded-[24px] border border-[#E9EBEC] shadow-sm p-[16px] tablet:p-[20px] desktop:p-[24px] mb-[24px] overflow-hidden">
+				<div class="grid gap-[12px]">
+					<div class="grid grid-cols-1 tablet:grid-cols-3 gap-[10px] tablet:gap-[12px] desktop:max-w-[800px] desktop:w-full">
+						<button
+							v-for="view in [
+								{ id: 'nazionale', label: 'Nazionale' },
+								{ id: 'europa', label: 'Europa monocollo' },
+								{ id: 'servizi', label: 'Servizi e supplementi' },
+							]"
+							:key="view.id"
+							type="button"
+							@click="adminView = view.id"
+							:class="adminView === view.id ? 'bg-[#095866] text-white border-[#095866]' : 'bg-[#F7FAFC] text-[#425466] border-[#D8E3E8]'"
+							class="inline-flex w-full min-h-[48px] items-center justify-center text-center whitespace-nowrap gap-[8px] px-[14px] tablet:px-[16px] py-[10px] rounded-full border text-[0.875rem] font-semibold transition-colors cursor-pointer">
+							{{ view.label }}
+						</button>
+					</div>
+
+					<div class="min-h-[112px] tablet:min-h-[92px] desktop:min-h-[92px] flex items-start">
+						<div v-if="adminView === 'europa'" class="grid w-full grid-cols-1 tablet:grid-cols-2 desktop:grid-cols-[minmax(0,1fr)_160px_160px_180px_auto] gap-[10px]">
+							<input v-model="europeSearch" type="text" placeholder="Cerca paese o codice..." class="h-[42px] w-full min-w-0 px-[14px] rounded-[12px] border border-[#D5DDE1] bg-white text-[0.875rem] text-[#252B42]">
+							<select v-model="europeStatusFilter" class="h-[42px] w-full min-w-0 px-[14px] rounded-[12px] border border-[#D5DDE1] bg-white text-[0.875rem] text-[#252B42]">
+								<option value="all">Tutti</option>
+								<option value="active">Prezzo attivo</option>
+								<option value="quote_required">Solo preventivo</option>
+							</select>
+							<select v-model="europeBandFilter" class="h-[42px] w-full min-w-0 px-[14px] rounded-[12px] border border-[#D5DDE1] bg-white text-[0.875rem] text-[#252B42]">
+								<option v-for="option in europeBandFilters" :key="option.value" :value="option.value">{{ option.label }}</option>
+							</select>
+							<select v-model="europeSort" class="h-[42px] w-full min-w-0 px-[14px] rounded-[12px] border border-[#D5DDE1] bg-white text-[0.875rem] text-[#252B42]">
+								<option value="country_asc">Ordina per paese</option>
+								<option value="price_asc">Prezzo crescente</option>
+								<option value="price_desc">Prezzo decrescente</option>
+								<option value="status">Per stato</option>
+							</select>
+							<label class="inline-flex min-h-[42px] items-center gap-[8px] whitespace-nowrap text-[0.8125rem] text-[#4F5D75] desktop:justify-self-end">
+								<input v-model="compactEuropeView" type="checkbox" class="rounded border-[#C8CCD0] text-[#095866] focus:ring-[#095866]">
+								Vista compatta
+							</label>
+						</div>
+
+						<div v-else-if="adminView === 'servizi'" class="grid w-full grid-cols-1 tablet:grid-cols-2 desktop:grid-cols-[minmax(0,1fr)_190px_auto] gap-[10px]">
+							<input v-model="serviceSearch" type="text" placeholder="Cerca regola o supplemento..." class="h-[42px] w-full min-w-0 px-[14px] rounded-[12px] border border-[#D5DDE1] bg-white text-[0.875rem] text-[#252B42]">
+							<select v-model="serviceFilter" class="h-[42px] w-full min-w-0 px-[14px] rounded-[12px] border border-[#D5DDE1] bg-white text-[0.875rem] text-[#252B42]">
+								<option value="all">Tutte le sezioni</option>
+								<option value="service_pricing">Servizi utente</option>
+								<option value="automatic_supplements">Supplementi automatici</option>
+								<option value="operational_fees">Fee operative</option>
+							</select>
+							<div class="inline-flex min-h-[42px] items-center gap-[8px] px-[12px] py-[10px] rounded-[12px] bg-[#F4FAFC] border border-[#D8E9F0] text-[0.8125rem] text-[#095866] desktop:justify-self-end">
+								{{ filteredServiceEntries.length }} regole visibili
+							</div>
+						</div>
+
+						<div v-else class="inline-flex min-h-[42px] items-center gap-[8px] rounded-[12px] bg-[#F8FBFC] border border-[#E2ECEF] px-[12px] py-[10px] text-[0.8125rem] text-[#5B6B7D]">
+							Gestisci fasce nazionali, volume e supplementi CAP da un layout stabile.
+						</div>
+					</div>
+				</div>
+			</div>
+
 			<!-- Info calcolatore -->
-			<div class="bg-purple-50 rounded-[16px] p-[14px] tablet:p-[20px] border border-purple-200 mb-[24px]">
+			<div class="bg-purple-50 rounded-[16px] p-[12px] tablet:p-[16px] border border-purple-200 mb-[24px]">
 				<h3 class="text-[0.9375rem] font-bold text-purple-800 mb-[8px] flex items-center gap-[6px]">
 					<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[18px] h-[18px]" fill="currentColor"><path d="M7,2H17A2,2 0 0,1 19,4V20A2,2 0 0,1 17,22H7A2,2 0 0,1 5,20V4A2,2 0 0,1 7,2M7,4V8H17V4H7M7,10V12H9V10H7M11,10V12H13V10H11M15,10V12H17V10H15M7,14V16H9V14H7M11,14V16H13V14H11M15,14V16H17V14H15M7,18V20H9V18H7M11,18V20H13V18H11M15,18V20H17V18H15Z"/></svg>
 					Come funziona il calcolatore
@@ -750,6 +1325,7 @@ onMounted(() => {
 
 			<template v-else>
 				<div class="space-y-[24px]">
+					<template v-if="adminView === 'nazionale'">
 					<!-- Banner: fasce non salvate nel DB -->
 					<div v-if="!bandsFromDb" class="bg-amber-50 rounded-[16px] p-[20px] border border-amber-200 mb-[24px]">
 						<div class="flex items-start gap-[12px]">
@@ -770,7 +1346,7 @@ onMounted(() => {
 					</div>
 
 					<!-- Fasce peso -->
-					<div class="bg-white rounded-[20px] p-[24px] desktop:p-[32px] shadow-sm border border-[#E9EBEC]">
+					<div class="bg-white rounded-[20px] p-[16px] tablet:p-[20px] desktop:p-[28px] shadow-sm border border-[#E9EBEC] overflow-hidden">
 						<h2 class="text-[1.125rem] font-bold text-[#252B42] mb-[6px] flex items-center gap-[8px]">
 							<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[20px] h-[20px] text-[#095866]" fill="currentColor"><path d="M12,3A4,4 0 0,1 16,7C16,7.73 15.81,8.41 15.46,9H18C18.95,9 19.75,9.67 19.95,10.56C21.96,18.57 22,18.78 22,19A2,2 0 0,1 20,21H4A2,2 0 0,1 2,19C2,18.78 2.04,18.57 4.05,10.56C4.25,9.67 5.05,9 6,9H8.54C8.19,8.41 8,7.73 8,7A4,4 0 0,1 12,3M12,5A2,2 0 0,0 10,7A2,2 0 0,0 12,9A2,2 0 0,0 14,7A2,2 0 0,0 12,5Z"/></svg> Fasce peso
 						</h2>
@@ -896,7 +1472,7 @@ onMounted(() => {
 					</div>
 
 					<!-- Fasce volume -->
-					<div class="bg-white rounded-[20px] p-[24px] desktop:p-[32px] shadow-sm border border-[#E9EBEC]">
+					<div class="bg-white rounded-[20px] p-[16px] tablet:p-[20px] desktop:p-[28px] shadow-sm border border-[#E9EBEC] overflow-hidden">
 						<h2 class="text-[1.125rem] font-bold text-[#252B42] mb-[6px] flex items-center gap-[8px]">
 							<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[20px] h-[20px] text-indigo-600" fill="currentColor"><path d="M21,16.5C21,16.88 20.79,17.21 20.47,17.38L12.57,21.82C12.41,21.94 12.21,22 12,22C11.79,22 11.59,21.94 11.43,21.82L3.53,17.38C3.21,17.21 3,16.88 3,16.5V7.5C3,7.12 3.21,6.79 3.53,6.62L11.43,2.18C11.59,2.06 11.79,2 12,2C12.21,2 12.41,2.06 12.57,2.18L20.47,6.62C20.79,6.79 21,7.12 21,7.5V16.5M12,4.15L6.04,7.5L12,10.85L17.96,7.5L12,4.15M5,15.91L11,19.29V12.58L5,9.21V15.91M19,15.91V9.21L13,12.58V19.29L19,15.91Z"/></svg> Fasce volume
 						</h2>
@@ -1022,7 +1598,7 @@ onMounted(() => {
 					</div>
 
 					<!-- Regole oltre 7ª fascia -->
-					<div class="bg-white rounded-[20px] p-[24px] desktop:p-[32px] shadow-sm border border-[#E9EBEC]">
+					<div class="bg-white rounded-[20px] p-[16px] tablet:p-[20px] desktop:p-[28px] shadow-sm border border-[#E9EBEC] overflow-hidden">
 						<div class="flex flex-wrap items-center justify-between gap-[12px] mb-[18px]">
 							<div>
 								<h2 class="text-[1.125rem] font-bold text-[#252B42] mb-[4px]">Regole oltre 7ª fascia</h2>
@@ -1130,7 +1706,7 @@ onMounted(() => {
 					</div>
 
 					<!-- Supplementi CAP -->
-					<div class="bg-white rounded-[20px] p-[24px] desktop:p-[32px] shadow-sm border border-[#E9EBEC]">
+					<div class="bg-white rounded-[20px] p-[20px] tablet:p-[24px] desktop:p-[32px] shadow-sm border border-[#E9EBEC]">
 						<div class="flex flex-wrap items-center justify-between gap-[12px] mb-[14px]">
 							<div>
 								<h2 class="text-[1.125rem] font-bold text-[#252B42] mb-[4px]">Supplementi CAP</h2>
@@ -1169,9 +1745,266 @@ onMounted(() => {
 							</div>
 						</div>
 					</div>
+					</template>
+
+					<!-- Listino Europa monocollo -->
+					<div v-if="adminView === 'europa'" class="bg-white rounded-[20px] p-[20px] tablet:p-[24px] desktop:p-[32px] shadow-sm border border-[#E9EBEC]">
+						<div class="flex flex-wrap items-start justify-between gap-[14px] mb-[18px]">
+							<div class="space-y-[4px]">
+								<h2 class="text-[1.125rem] font-bold text-[#252B42]">Europa monocollo</h2>
+								<p class="text-[0.75rem] text-[#737373]">Listino Italia → Europa. Un solo collo per spedizione, quantità sempre 1.</p>
+							</div>
+							<div class="flex flex-wrap gap-[8px] text-[0.75rem]">
+								<span class="inline-flex items-center gap-[6px] px-[10px] py-[6px] rounded-full bg-[#F4FAFC] text-[#095866] border border-[#D8E9F0]">Origine IT</span>
+								<span class="inline-flex items-center gap-[6px] px-[10px] py-[6px] rounded-full bg-[#F4FAFC] text-[#095866] border border-[#D8E9F0]">Max colli 1</span>
+								<span class="inline-flex items-center gap-[6px] px-[10px] py-[6px] rounded-full bg-[#F4FAFC] text-[#095866] border border-[#D8E9F0]">Q.tà per collo 1</span>
+							</div>
+						</div>
+
+						<div class="space-y-[16px]">
+							<div v-if="!filteredEuropeBands.length" class="p-[16px] rounded-[14px] border border-dashed border-[#C8CCD0] text-[#6A7486] text-[0.8125rem]">
+								Nessun paese trovato con i filtri attuali.
+							</div>
+							<div
+								v-for="band in filteredEuropeBands"
+								:key="band.id"
+								class="rounded-[16px] border border-[#E9EBEC] bg-[#FAFBFC] overflow-hidden">
+								<div class="flex flex-wrap items-center justify-between gap-[10px] px-[16px] py-[14px] border-b border-[#E9EBEC] bg-white">
+									<div>
+										<h3 class="text-[0.9375rem] font-bold text-[#252B42]">{{ band.label }}</h3>
+										<p class="text-[0.75rem] text-[#6A7486]">
+											Max {{ band.max_weight_kg }} kg · Max {{ Number(band.max_volume_m3).toFixed(3) }} m³ · Fattore volumetrico {{ band.volumetric_factor }}
+										</p>
+									</div>
+									<div class="flex flex-wrap gap-[8px]">
+										<span class="inline-flex items-center gap-[6px] px-[10px] py-[5px] rounded-full bg-[#F0F7FA] text-[#095866] text-[0.75rem] font-medium">
+											{{ band.rates.length }} paesi
+										</span>
+										<span class="inline-flex items-center gap-[6px] px-[10px] py-[5px] rounded-full bg-emerald-50 text-emerald-700 text-[0.75rem] font-medium border border-emerald-200">
+											{{ band.activeCount }} attivi
+										</span>
+										<span class="inline-flex items-center gap-[6px] px-[10px] py-[5px] rounded-full bg-amber-50 text-amber-700 text-[0.75rem] font-medium border border-amber-200">
+											{{ band.quoteCount }} preventivo
+										</span>
+									</div>
+								</div>
+
+								<div v-if="compactEuropeView" class="p-[16px] grid grid-cols-1 tablet:grid-cols-2 desktop:grid-cols-3 gap-[10px]">
+									<div
+										v-for="rate in band.rates"
+										:key="`${band.id}-${rate.country_code}-compact`"
+										class="rounded-[14px] border border-[#E6EDF1] bg-white px-[14px] py-[12px]">
+										<div class="flex items-start justify-between gap-[10px] mb-[8px]">
+											<div>
+												<p class="text-[0.875rem] font-semibold text-[#252B42]">{{ rate.country_name }}</p>
+												<p class="text-[0.75rem] text-[#7D8998]">{{ rate.country_code }}</p>
+											</div>
+											<span :class="rate.quote_required ? 'bg-amber-50 text-amber-700 border-amber-200' : 'bg-[#EDF6F8] text-[#095866] border-[#D8E9F0]'" class="inline-flex items-center px-[8px] py-[4px] rounded-full border text-[0.6875rem] font-semibold">
+												{{ rate.quote_required ? 'Manuale' : 'Attivo' }}
+											</span>
+										</div>
+										<input
+											:value="rate.price_cents == null ? '' : (Number(rate.price_cents || 0) / 100).toFixed(2).replace('.', ',')"
+											@input="updateEuropeRateAmountFromEuro(rate, $event.target.value)"
+											:disabled="rate.quote_required"
+											type="text"
+											placeholder="0,00"
+											class="w-full h-[38px] px-[10px] rounded-[10px] border border-[#C8CCD0] bg-white text-[#252B42] disabled:bg-[#F3F4F6] disabled:text-[#9AA3B2]">
+									</div>
+								</div>
+
+								<div v-else class="overflow-x-auto">
+									<table class="w-full min-w-[760px] text-[0.8125rem]">
+										<thead>
+											<tr class="text-left text-[#6A7486] border-b border-[#E9EBEC] bg-white">
+												<th class="px-[16px] py-[10px] font-semibold">Paese</th>
+												<th class="px-[16px] py-[10px] font-semibold">Prezzo</th>
+												<th class="px-[16px] py-[10px] font-semibold">Stato</th>
+											</tr>
+										</thead>
+										<tbody>
+											<tr
+												v-for="rate in band.rates"
+												:key="`${band.id}-${rate.country_code}`"
+												class="border-b border-[#EEF2F4] last:border-0">
+												<td class="px-[16px] py-[10px] font-semibold text-[#252B42]">
+													{{ rate.country_name }}
+													<span class="text-[#8A94A6] font-medium">({{ rate.country_code }})</span>
+												</td>
+												<td class="px-[16px] py-[10px]">
+													<input
+														:value="rate.price_cents == null ? '' : (Number(rate.price_cents || 0) / 100).toFixed(2).replace('.', ',')"
+														@input="updateEuropeRateAmountFromEuro(rate, $event.target.value)"
+														:disabled="rate.quote_required"
+														type="text"
+														placeholder="0,00"
+														class="w-[120px] h-[38px] px-[10px] rounded-[10px] border border-[#C8CCD0] bg-white text-[#252B42] disabled:bg-[#F3F4F6] disabled:text-[#9AA3B2]">
+												</td>
+												<td class="px-[16px] py-[10px]">
+													<button
+														type="button"
+														@click="toggleEuropeRateQuote(rate)"
+														:class="rate.quote_required ? 'bg-amber-50 text-amber-800 border-amber-200' : 'bg-[#EDF6F8] text-[#095866] border-[#D8E9F0]'"
+														class="inline-flex items-center gap-[6px] px-[12px] py-[8px] rounded-full border text-[0.75rem] font-medium cursor-pointer">
+														{{ rate.quote_required ? 'Preventivo manuale' : 'Prezzo attivo' }}
+													</button>
+												</td>
+											</tr>
+										</tbody>
+									</table>
+								</div>
+							</div>
+						</div>
+					</div>
+
+					<!-- Servizi e supplementi -->
+					<div v-if="adminView === 'servizi'" class="space-y-[18px]">
+						<div class="grid grid-cols-1 desktop:grid-cols-3 gap-[14px]">
+							<div class="rounded-[18px] border border-[#D8E9F0] bg-[#F4FAFC] p-[18px]">
+								<p class="text-[0.75rem] font-semibold uppercase tracking-[0.08em] text-[#6A7486] mb-[8px]">Servizi utente</p>
+								<p class="text-[1.5rem] font-bold text-[#095866]">{{ servicePricingEntries.length }}</p>
+								<p class="text-[0.8125rem] text-[#5B6B7F] mt-[6px]">Prezzi visibili nel flusso utente e nel riepilogo.</p>
+							</div>
+							<div class="rounded-[18px] border border-[#F4E2D6] bg-[#FFF8F2] p-[18px]">
+								<p class="text-[0.75rem] font-semibold uppercase tracking-[0.08em] text-[#A05D28] mb-[8px]">Supplementi automatici</p>
+								<p class="text-[1.5rem] font-bold text-[#E44203]">{{ automaticSupplementEntries.length }}</p>
+								<p class="text-[0.8125rem] text-[#7C5A46] mt-[6px]">Regole che scattano da destinazione, forma collo o punto BRT.</p>
+							</div>
+							<div class="rounded-[18px] border border-[#E4E7EC] bg-[#FBFCFD] p-[18px]">
+								<p class="text-[0.75rem] font-semibold uppercase tracking-[0.08em] text-[#6A7486] mb-[8px]">Fee operative</p>
+								<p class="text-[1.5rem] font-bold text-[#252B42]">{{ operationalFeeEntries.length }}</p>
+								<p class="text-[0.8125rem] text-[#5B6B7F] mt-[6px]">Costi gestionali come giacenza, separati dalle scelte utente.</p>
+							</div>
+						</div>
+
+						<div class="space-y-[16px]">
+							<div
+								v-for="entry in filteredServiceEntries"
+								:key="`${entry.section}-${entry.key}`"
+								class="rounded-[20px] border border-[#E9EBEC] bg-white p-[16px] tablet:p-[18px] desktop:p-[20px] shadow-sm overflow-hidden">
+								<div class="flex flex-col gap-[14px] desktop:flex-row desktop:items-start desktop:justify-between">
+									<div class="space-y-[8px] max-w-[760px]">
+										<div class="flex flex-wrap items-center gap-[8px]">
+											<span class="inline-flex items-center px-[10px] py-[5px] rounded-full bg-[#F4FAFC] text-[#095866] text-[0.75rem] font-semibold border border-[#D8E9F0]">
+												{{ entry.section === 'service_pricing' ? 'Servizio utente' : (entry.section === 'automatic_supplements' ? 'Supplemento automatico' : 'Fee operativa') }}
+											</span>
+											<span class="inline-flex items-center px-[10px] py-[5px] rounded-full bg-[#F8FAFC] text-[#5B6B7F] text-[0.75rem] font-medium border border-[#E5EAF0]">
+												{{ formatApplicationLabel(entry.rule.application) }}
+											</span>
+										</div>
+										<div>
+											<h3 class="text-[1rem] font-bold text-[#252B42]">{{ entry.rule.label }}</h3>
+											<p class="text-[0.875rem] text-[#6A7486]">{{ entry.rule.description }}</p>
+										</div>
+									</div>
+
+									<button
+										type="button"
+										@click="entry.rule.enabled = !entry.rule.enabled"
+										:class="entry.rule.enabled ? 'bg-[#095866]' : 'bg-[#C8CCD0]'"
+										class="relative inline-flex h-[32px] w-[56px] items-center rounded-full transition-colors cursor-pointer shrink-0">
+										<span
+											:class="entry.rule.enabled ? 'translate-x-[28px]' : 'translate-x-[2px]'"
+											class="inline-block h-[26px] w-[26px] transform rounded-full bg-white transition-transform shadow-sm" />
+									</button>
+								</div>
+
+								<div class="mt-[16px] grid grid-cols-1 desktop:grid-cols-2 gap-[14px]">
+									<label v-if="entry.rule.pricing_type === 'fixed' || entry.rule.price_cents != null" class="text-[0.75rem] text-[#6A7486]">
+										Prezzo / fee (&euro;)
+										<input :value="keyedRuleAmountToEuro(entry.rule)" @input="updateKeyedRuleAmountFromEuro(entry.rule, $event.target.value)" type="text" class="mt-[4px] w-full h-[42px] px-[12px] rounded-[12px] border border-[#D5DDE1] bg-white text-[0.875rem] text-[#252B42]">
+									</label>
+									<label v-if="entry.rule.pricing_type === 'threshold_percentage'" class="text-[0.75rem] text-[#6A7486]">
+										Soglia (&euro;)
+										<input v-model.number="entry.rule.threshold_amount_eur" type="number" min="0" step="0.01" class="mt-[4px] w-full h-[42px] px-[12px] rounded-[12px] border border-[#D5DDE1] bg-white text-[0.875rem] text-[#252B42]">
+									</label>
+									<label v-if="entry.rule.pricing_type === 'threshold_percentage'" class="text-[0.75rem] text-[#6A7486]">
+										Minimo fisso (&euro;)
+										<input :value="keyedRuleMinFeeToEuro(entry.rule)" @input="updateKeyedRuleMinFeeFromEuro(entry.rule, $event.target.value)" type="text" class="mt-[4px] w-full h-[42px] px-[12px] rounded-[12px] border border-[#D5DDE1] bg-white text-[0.875rem] text-[#252B42]">
+									</label>
+									<label v-if="entry.rule.pricing_type === 'threshold_percentage'" class="text-[0.75rem] text-[#6A7486]">
+										Percentuale (%)
+										<input v-model.number="entry.rule.percentage_rate" type="number" min="0" step="0.01" class="mt-[4px] w-full h-[42px] px-[12px] rounded-[12px] border border-[#D5DDE1] bg-white text-[0.875rem] text-[#252B42]">
+									</label>
+									<label v-if="entry.rule.max_weight_kg != null" class="text-[0.75rem] text-[#6A7486]">
+										Peso massimo (kg)
+										<input v-model.number="entry.rule.max_weight_kg" type="number" min="0" step="0.01" class="mt-[4px] w-full h-[42px] px-[12px] rounded-[12px] border border-[#D5DDE1] bg-white text-[0.875rem] text-[#252B42]">
+									</label>
+									<label v-if="entry.rule.threshold_cm != null" class="text-[0.75rem] text-[#6A7486]">
+										Soglia lato (cm)
+										<input v-model.number="entry.rule.threshold_cm" type="number" min="0" step="1" class="mt-[4px] w-full h-[42px] px-[12px] rounded-[12px] border border-[#D5DDE1] bg-white text-[0.875rem] text-[#252B42]">
+									</label>
+									<label v-if="entry.rule.longest_side_threshold_cm != null" class="text-[0.75rem] text-[#6A7486]">
+										Lato lungo oltre (cm)
+										<input v-model.number="entry.rule.longest_side_threshold_cm" type="number" min="0" step="1" class="mt-[4px] w-full h-[42px] px-[12px] rounded-[12px] border border-[#D5DDE1] bg-white text-[0.875rem] text-[#252B42]">
+									</label>
+									<label v-if="entry.rule.girth_threshold_cm != null" class="text-[0.75rem] text-[#6A7486]">
+										Soglia perimetro secondario (cm)
+										<input v-model.number="entry.rule.girth_threshold_cm" type="number" min="0" step="1" class="mt-[4px] w-full h-[42px] px-[12px] rounded-[12px] border border-[#D5DDE1] bg-white text-[0.875rem] text-[#252B42]">
+									</label>
+									<label v-if="entry.rule.min_longest_side_cm != null" class="text-[0.75rem] text-[#6A7486]">
+										Lunghezza minima (cm)
+										<input v-model.number="entry.rule.min_longest_side_cm" type="number" min="0" step="1" class="mt-[4px] w-full h-[42px] px-[12px] rounded-[12px] border border-[#D5DDE1] bg-white text-[0.875rem] text-[#252B42]">
+									</label>
+									<label v-if="entry.rule.max_secondary_side_cm != null" class="text-[0.75rem] text-[#6A7486]">
+										Lato secondario max (cm)
+										<input v-model.number="entry.rule.max_secondary_side_cm" type="number" min="0" step="1" class="mt-[4px] w-full h-[42px] px-[12px] rounded-[12px] border border-[#D5DDE1] bg-white text-[0.875rem] text-[#252B42]">
+									</label>
+								</div>
+
+								<div v-if="entry.rule.tiers?.length" class="mt-[16px] rounded-[16px] border border-[#E9EEF2] bg-[#FBFCFD] p-[14px]">
+									<div class="flex items-center justify-between gap-[10px] mb-[10px]">
+										<h4 class="text-[0.8125rem] font-semibold text-[#252B42]">Scaglioni peso</h4>
+										<button type="button" class="px-[12px] py-[7px] rounded-full bg-[#095866] text-white text-[0.75rem] font-medium cursor-pointer" @click="addTierRow(entry.rule)">Aggiungi soglia</button>
+									</div>
+									<div class="space-y-[8px]">
+										<div v-for="(tier, tierIndex) in entry.rule.tiers" :key="`${entry.key}-tier-${tierIndex}`" class="grid grid-cols-1 tablet:grid-cols-[1fr_1fr_auto] gap-[8px] items-end">
+											<label class="text-[0.75rem] text-[#6A7486]">
+												Fino a kg
+												<input v-model.number="tier.up_to_kg" type="number" min="0" step="0.01" placeholder="senza limite" class="mt-[4px] w-full h-[40px] px-[12px] rounded-[12px] border border-[#D5DDE1] bg-white text-[0.8125rem] text-[#252B42]">
+											</label>
+											<label class="text-[0.75rem] text-[#6A7486]">
+												Prezzo (&euro;)
+												<input :value="(Number(tier.price_cents || 0) / 100).toFixed(2).replace('.', ',')" @input="tier.price_cents = euroToCents($event.target.value) || 0" type="text" class="mt-[4px] w-full h-[40px] px-[12px] rounded-[12px] border border-[#D5DDE1] bg-white text-[0.8125rem] text-[#252B42]">
+											</label>
+											<button type="button" class="h-[40px] px-[12px] rounded-[12px] border border-red-200 text-red-600 text-[0.75rem] font-medium hover:bg-red-50 cursor-pointer" @click="removeTierRow(entry.rule, tierIndex)">Rimuovi</button>
+										</div>
+									</div>
+								</div>
+
+								<div class="mt-[16px] grid grid-cols-1 desktop:grid-cols-2 gap-[14px]" v-if="entry.section === 'automatic_supplements'">
+									<label v-if="entry.rule.province_codes?.length || entry.key === 'calabria_sardegna_sicilia' || entry.key === 'brt_point_csi'" class="text-[0.75rem] text-[#6A7486]">
+										Province
+										<input :value="(entry.rule.province_codes || []).join(', ')" @input="updateArrayField(entry.rule, 'province_codes', $event.target.value, { uppercase: true })" type="text" class="mt-[4px] w-full h-[42px] px-[12px] rounded-[12px] border border-[#D5DDE1] bg-white text-[0.8125rem] text-[#252B42]">
+									</label>
+									<label v-if="entry.rule.country_codes?.length" class="text-[0.75rem] text-[#6A7486]">
+										Paesi
+										<input :value="(entry.rule.country_codes || []).join(', ')" @input="updateArrayField(entry.rule, 'country_codes', $event.target.value, { uppercase: true })" type="text" class="mt-[4px] w-full h-[42px] px-[12px] rounded-[12px] border border-[#D5DDE1] bg-white text-[0.8125rem] text-[#252B42]">
+									</label>
+									<label v-if="entry.rule.keyword_list?.length" class="text-[0.75rem] text-[#6A7486] desktop:col-span-2">
+										Keyword località
+										<input :value="(entry.rule.keyword_list || []).join(', ')" @input="updateArrayField(entry.rule, 'keyword_list', $event.target.value)" type="text" class="mt-[4px] w-full h-[42px] px-[12px] rounded-[12px] border border-[#D5DDE1] bg-white text-[0.8125rem] text-[#252B42]">
+									</label>
+									<label v-if="entry.rule.flag_keys?.length" class="text-[0.75rem] text-[#6A7486]">
+										Flag chiave
+										<input :value="(entry.rule.flag_keys || []).join(', ')" @input="updateArrayField(entry.rule, 'flag_keys', $event.target.value)" type="text" class="mt-[4px] w-full h-[42px] px-[12px] rounded-[12px] border border-[#D5DDE1] bg-white text-[0.8125rem] text-[#252B42]">
+									</label>
+									<label v-if="entry.rule.delivery_modes?.length" class="text-[0.75rem] text-[#6A7486]">
+										Delivery mode
+										<input :value="(entry.rule.delivery_modes || []).join(', ')" @input="updateArrayField(entry.rule, 'delivery_modes', $event.target.value)" type="text" class="mt-[4px] w-full h-[42px] px-[12px] rounded-[12px] border border-[#D5DDE1] bg-white text-[0.8125rem] text-[#252B42]">
+									</label>
+								</div>
+
+								<label class="block mt-[16px] text-[0.75rem] text-[#6A7486]">
+									Nota operativa
+									<textarea v-model="entry.rule.note" rows="2" class="mt-[4px] w-full px-[12px] py-[10px] rounded-[12px] border border-[#D5DDE1] bg-white text-[0.8125rem] text-[#252B42] resize-y"></textarea>
+								</label>
+							</div>
+						</div>
+					</div>
 
 					<!-- Save configurazione prezzi -->
-					<div class="flex flex-col tablet:flex-row tablet:items-center tablet:justify-between gap-[10px]">
+					<div class="flex flex-col tablet:flex-row tablet:items-center tablet:justify-between gap-[10px] rounded-[18px] border border-[#E9EBEC] bg-white/80 p-[14px] tablet:p-[16px]">
 						<div class="flex items-center gap-[8px] text-[0.75rem]">
 							<span v-if="pricingVersion" class="inline-flex items-center gap-[4px] px-[8px] py-[3px] rounded-[999px] bg-[#E8F4FB] text-[#095866] border border-[#B0D4E8]">
 								Versione {{ pricingVersion }}
@@ -1184,12 +2017,12 @@ onMounted(() => {
 						<button @click="savePriceBands" :disabled="saving || !hasChanges" class="inline-flex items-center justify-center gap-[8px] px-[24px] py-[12px] bg-[#095866] hover:bg-[#074a56] text-white rounded-[50px] text-[0.875rem] font-medium transition-colors cursor-pointer disabled:opacity-50">
 							<svg v-if="saving" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[18px] h-[18px] animate-spin" fill="currentColor"><path d="M12,4V2A10,10 0 0,0 2,12H4A8,8 0 0,1 12,4Z"/></svg>
 							<svg v-else xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[18px] h-[18px]" fill="currentColor"><path d="M15,9H5V5H15M12,19A3,3 0 0,1 9,16A3,3 0 0,1 12,13A3,3 0 0,1 15,16A3,3 0 0,1 12,19M17,3H5C3.89,3 3,3.9 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V7L17,3Z"/></svg>
-							{{ saving ? "Salvataggio..." : "Salva configurazione nazionale" }}
+							{{ saving ? "Salvataggio..." : "Salva configurazione prezzi" }}
 						</button>
 					</div>
 
 					<!-- ======================== PROMOZIONE SITO ======================== -->
-					<div class="bg-white rounded-[20px] p-[24px] desktop:p-[32px] shadow-sm border border-[#E9EBEC]">
+					<div class="bg-white rounded-[20px] p-[16px] tablet:p-[20px] desktop:p-[28px] shadow-sm border border-[#E9EBEC] overflow-hidden">
 						<h2 class="text-[1.125rem] font-bold text-[#252B42] mb-[6px] flex items-center gap-[8px]">
 							<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[20px] h-[20px] text-[#E44203]" fill="currentColor"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82zM7 7a2 2 0 1 0 0-4 2 2 0 0 0 0 4z"/></svg>
 							Promozione Sito

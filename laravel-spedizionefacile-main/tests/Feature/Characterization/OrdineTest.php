@@ -133,19 +133,16 @@ class OrdineTest extends TestCase
      * TEST DI CARATTERIZZAZIONE — Il prezzo viene RICALCOLATO lato server in createDirectOrder
      *
      * Cosa verifica: il server non si fida del prezzo dal frontend e lo ricalcola
-     * Comportamento attuale: usa fasce hardcoded diverse dal SessionController (9/12/18/20 EUR)
-     * File sorgente: app/Http/Controllers/OrderController.php:137-165
-     *
-     * QUIRK DOCUMENTATO: le fasce di prezzo in OrderController sono DIVERSE da quelle
-     * in SessionController (fallback). OrderController usa: 9, 12, 18, 20 EUR
-     * mentre SessionController usa: 8.90, 11.90, 14.90, 19.90, 29.90, 39.90, 49.90 EUR
+     * Comportamento attuale: usa PriceEngineService, quindi segue lo stesso pricing
+     * centrale del preventivo/sessione.
+     * File sorgente: app/Http/Controllers/OrderController.php:133-170
      */
     public function test_prezzo_ricalcolato_lato_server_in_direct_order(): void
     {
         $user = User::factory()->create();
-        // Peso 3 kg -> in OrderController: fascia 2-5 kg = 12 EUR
-        // Volume 20x15x10 cm = 0.003 m3 -> in OrderController: fascia 0-0.008 = 9 EUR
-        // max(12, 9) = 12 EUR
+        // Peso 3 kg -> fascia 2-5 kg del motore centrale = 11.90 EUR
+        // Volume 20x15x10 cm = 0.003 m3 -> fascia 0-0.010 = 8.90 EUR
+        // max(11.90, 8.90) = 11.90 EUR
         $payload = $this->directOrderPayload([
             'weight' => 3,
             'first_size' => 20,
@@ -161,8 +158,8 @@ class OrdineTest extends TestCase
         $orderId = $response->json('order_id');
         $order = Order::find($orderId);
 
-        // Il subtotale deve essere 1200 centesimi (12 EUR), NON il prezzo del frontend
-        $this->assertEquals(1200, (int) $order->subtotal->amount());
+        // Il subtotale deve essere 1190 centesimi (11.90 EUR), NON il prezzo del frontend
+        $this->assertEquals(1190, (int) $order->subtotal->amount());
     }
 
     /**
@@ -366,7 +363,7 @@ class OrdineTest extends TestCase
      *
      * Cosa verifica: un utente admin vede tutti gli ordini del sistema
      * Comportamento attuale: se user->isAdmin(), non filtra per user_id
-     * File sorgente: app/Http/Controllers/OrderController.php:73-78
+     * File sorgente: app/Http/Controllers/OrderController.php:79-84
      */
     public function test_admin_vede_tutti_gli_ordini(): void
     {
@@ -397,7 +394,7 @@ class OrdineTest extends TestCase
     public function test_ordine_diretto_con_quantita_multipla(): void
     {
         $user = User::factory()->create();
-        // Peso 3 kg -> fascia 2-5 kg = 12 EUR in OrderController
+        // Peso 3 kg -> fascia 2-5 kg del motore centrale = 11.90 EUR
         $payload = $this->directOrderPayload([
             'weight' => 3,
             'quantity' => 3,
@@ -414,7 +411,7 @@ class OrdineTest extends TestCase
         $orderId = $response->json('order_id');
         $order = Order::find($orderId);
 
-        // 12 EUR * 3 = 36 EUR = 3600 centesimi
-        $this->assertEquals(3600, (int) $order->subtotal->amount());
+        // 11.90 EUR * 3 = 35.70 EUR = 3570 centesimi
+        $this->assertEquals(3570, (int) $order->subtotal->amount());
     }
 }

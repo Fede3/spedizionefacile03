@@ -1,4 +1,5 @@
 <?php
+
 /**
  * FILE: RefundController.php
  * SCOPO: Gestisce annullamento ordini e rimborsi (Stripe o portafoglio), cancellazione etichette BRT.
@@ -51,6 +52,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use Stripe\Exception\ApiErrorException;
 use Stripe\StripeClient;
 
 class RefundController extends Controller
@@ -64,7 +66,9 @@ class RefundController extends Controller
      */
     private function getStripeSecret(): ?string
     {
-        return Setting::get('stripe_secret', config('services.stripe.secret'));
+        return Setting::get('stripe_secret')
+            ?: Setting::get('stripe_secret_key')
+            ?: config('services.stripe.secret');
     }
 
     /**
@@ -80,7 +84,7 @@ class RefundController extends Controller
     public function checkRefundEligibility(Order $order): JsonResponse
     {
         // Solo il proprietario dell'ordine o un admin puo' controllare l'idoneita'
-        if ($order->user_id !== auth()->id() && !auth()->user()->isAdmin()) {
+        if ($order->user_id !== auth()->id() && ! auth()->user()->isAdmin()) {
             return response()->json(['error' => 'Non autorizzato.'], 403);
         }
 
@@ -113,7 +117,7 @@ class RefundController extends Controller
 
         $eligibility = $this->calculateEligibility($order);
 
-        if (!$eligibility['eligible']) {
+        if (! $eligibility['eligible']) {
             return response()->json([
                 'error' => $eligibility['reason'],
             ], 422);
@@ -125,11 +129,11 @@ class RefundController extends Controller
                 $brtCancelled = false;
                 if ($order->brt_numeric_sender_reference) {
                     try {
-                        $brtService = new BrtService();
+                        $brtService = new BrtService;
                         $brtResult = $brtService->deleteShipment((int) $order->brt_numeric_sender_reference);
                         $brtCancelled = $brtResult['success'] ?? false;
 
-                        if (!$brtCancelled) {
+                        if (! $brtCancelled) {
                             Log::warning('BRT deleteShipment failed during cancellation', [
                                 'order_id' => $order->id,
                                 'brt_reference' => $order->brt_numeric_sender_reference,
@@ -149,7 +153,7 @@ class RefundController extends Controller
                 // --- 2. Processo di rimborso (solo se l'ordine era stato pagato) ---
                 $refundAmountCents = $eligibility['refund_amount_cents'];
                 $commissionCents = $eligibility['commission_cents'];
-                $refundMethod = null;
+                $refundMethod = 'wallet';
 
                 if ($refundAmountCents > 0) {
                     $paymentMethod = $order->payment_method;
@@ -172,8 +176,8 @@ class RefundController extends Controller
                     // Registriamo la transazione di rimborso
                     Transaction::create([
                         'order_id' => $order->id,
-                        'ext_id' => 'refund_' . $order->id . '_' . now()->timestamp,
-                        'type' => 'refund_' . ($refundMethod ?? 'unknown'),
+                        'ext_id' => 'refund_'.$order->id.'_'.now()->timestamp,
+                        'type' => 'refund_'.$refundMethod,
                         'status' => 'succeeded',
                         'total' => -$refundAmountCents, // Negativo per indicare un rimborso
                     ]);
@@ -238,7 +242,7 @@ class RefundController extends Controller
      * Calcola l'idoneita' al rimborso per un ordine.
      *
      * @return array con: eligible, reason, refund_amount_cents, commission_cents,
-     *         refund_amount_eur, commission_eur, payment_method, type
+     *               refund_amount_eur, commission_eur, payment_method, type
      */
     private function calculateEligibility(Order $order): array
     {
@@ -298,7 +302,7 @@ class RefundController extends Controller
             return [
                 'eligible' => true,
                 'reason' => 'L\'ordine puo\' essere annullato. Verra\' applicata una commissione di annullamento di '
-                    . number_format($commissionCents / 100, 2, ',', '.') . ' EUR.',
+                    .number_format($commissionCents / 100, 2, ',', '.').' EUR.',
                 'refund_amount_cents' => $refundAmountCents,
                 'commission_cents' => $commissionCents,
                 'refund_amount_eur' => number_format($refundAmountCents / 100, 2, ',', '.'),
@@ -339,14 +343,15 @@ class RefundController extends Controller
      * Processa il rimborso via Stripe.
      * Usa l'API Refund di Stripe per fare un rimborso parziale (meno la commissione).
      *
-     * @param Order $order  L'ordine da rimborsare
-     * @param int $amountCents  L'importo da rimborsare in centesimi
+     * @param  Order  $order  L'ordine da rimborsare
+     * @param  int  $amountCents  L'importo da rimborsare in centesimi
+     *
      * @throws \Exception se il rimborso Stripe fallisce
      */
     private function processStripeRefund(Order $order, int $amountCents): void
     {
         $secret = $this->getStripeSecret();
-        if (!$secret) {
+        if (! $secret) {
             throw new \Exception('Stripe non configurato. Impossibile processare il rimborso.');
         }
 
@@ -358,8 +363,8 @@ class RefundController extends Controller
                 'amount' => $amountCents, // Rimborso parziale (importo meno commissione)
                 'reason' => 'requested_by_customer',
                 'metadata' => [
-                    'order_id' => $order->id,
-                    'cancellation_fee_cents' => self::CANCELLATION_FEE_CENTS,
+                    'order_id' => (string) $order->id,
+                    'cancellation_fee_cents' => (string) self::CANCELLATION_FEE_CENTS,
                 ],
             ]);
 
@@ -371,14 +376,14 @@ class RefundController extends Controller
             ]);
 
             if ($refund->status === 'failed') {
-                throw new \Exception('Rimborso Stripe fallito. Status: ' . $refund->status);
+                throw new \Exception('Rimborso Stripe fallito. Status: '.$refund->status);
             }
-        } catch (\Stripe\Exception\ApiErrorException $e) {
+        } catch (ApiErrorException $e) {
             Log::error('Stripe refund API error', [
                 'order_id' => $order->id,
                 'error' => $e->getMessage(),
             ]);
-            throw new \Exception('Errore Stripe durante il rimborso: ' . $e->getMessage());
+            throw new \Exception('Errore Stripe durante il rimborso: '.$e->getMessage());
         }
     }
 
@@ -386,8 +391,8 @@ class RefundController extends Controller
      * Processa il rimborso via Portafoglio.
      * Crea un movimento di credito nel portafoglio dell'utente.
      *
-     * @param Order $order  L'ordine da rimborsare
-     * @param int $amountCents  L'importo da rimborsare in centesimi
+     * @param  Order  $order  L'ordine da rimborsare
+     * @param  int  $amountCents  L'importo da rimborsare in centesimi
      */
     private function processWalletRefund(Order $order, int $amountCents): void
     {
@@ -399,9 +404,9 @@ class RefundController extends Controller
             'amount' => $amountEur,                 // In euro (non centesimi)
             'currency' => 'EUR',
             'status' => 'confirmed',
-            'idempotency_key' => 'refund_' . $order->id . '_' . Str::uuid(),
+            'idempotency_key' => 'refund_'.$order->id.'_'.Str::uuid(),
             'reference' => (string) $order->id,
-            'description' => 'Rimborso ordine #SF-' . str_pad($order->id, 6, '0', STR_PAD_LEFT),
+            'description' => 'Rimborso ordine #SF-'.str_pad((string) $order->id, 6, '0', STR_PAD_LEFT),
             'source' => 'refund',
         ]);
 

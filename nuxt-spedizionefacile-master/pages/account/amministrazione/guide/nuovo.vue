@@ -9,7 +9,7 @@
 -->
 <script setup>
 definePageMeta({
-	middleware: ["sanctum:auth", "admin"],
+	middleware: ["app-auth", "admin"],
 });
 
 const sanctum = useSanctumClient();
@@ -65,21 +65,18 @@ const saveGuide = async () => {
 <template>
 	<section class="min-h-[600px] py-[40px] desktop:py-[60px] desktop-xl:py-[80px]">
 		<div class="my-container">
-			<!-- Breadcrumb -->
-			<div class="mb-[24px] text-[0.875rem] text-[#737373]">
-				<NuxtLink to="/account" class="hover:underline text-[#095866] font-medium">Il tuo account</NuxtLink>
-				<span class="mx-[8px] text-[#C8CCD0]">/</span>
-				<NuxtLink to="/account/amministrazione/guide" class="hover:underline text-[#095866] font-medium">Guide</NuxtLink>
-				<span class="mx-[8px] text-[#C8CCD0]">/</span>
-				<span class="font-semibold text-[#252B42]">Nuova guida</span>
-			</div>
-
-			<NuxtLink to="/account/amministrazione/guide" class="inline-flex items-center gap-[6px] text-[0.8125rem] text-[#095866] hover:underline font-medium mb-[20px]">
-				<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[16px] h-[16px]" fill="currentColor"><path d="M20,11V13H8L13.5,18.5L12.08,19.92L4.16,12L12.08,4.08L13.5,5.5L8,11H20Z"/></svg>
-				Torna alle guide
-			</NuxtLink>
-
-			<h1 class="text-[1.75rem] font-bold text-[#252B42] mb-[24px]">Nuova guida</h1>
+			<AccountPageHeader
+				eyebrow="Admin"
+				title="Nuova guida"
+				description="Crea una nuova guida con titolo, testo, immagine e sezioni dinamiche, mantenendo il lavoro in bozza fino alla pubblicazione."
+				:crumbs="[
+					{ label: 'Account', to: '/account' },
+					{ label: 'Amministrazione', to: '/account/amministrazione' },
+					{ label: 'Guide', to: '/account/amministrazione/guide' },
+					{ label: 'Nuova guida' },
+				]"
+				back-to="/account/amministrazione/guide"
+				back-label="Torna alle guide" />
 
 			<!-- Action message -->
 			<div

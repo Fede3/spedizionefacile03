@@ -25,6 +25,30 @@
  */
 export default defineAppConfig({
 	ui: {
+		icons: {
+			arrowDown: 'i-mdi-arrow-down',
+			arrowLeft: 'i-mdi-arrow-left',
+			arrowRight: 'i-mdi-arrow-right',
+			arrowUp: 'i-mdi-arrow-up',
+			caution: 'i-mdi-alert-circle-outline',
+			check: 'i-mdi-check',
+			chevronDown: 'i-mdi-chevron-down',
+			chevronLeft: 'i-mdi-chevron-left',
+			chevronRight: 'i-mdi-chevron-right',
+			chevronUp: 'i-mdi-chevron-up',
+			close: 'i-mdi-close',
+			copy: 'i-mdi-content-copy',
+			error: 'i-mdi-close-circle-outline',
+			info: 'i-mdi-information-outline',
+			loading: 'i-mdi-loading',
+			menu: 'i-mdi-menu',
+			minus: 'i-mdi-minus',
+			plus: 'i-mdi-plus',
+			reload: 'i-mdi-refresh',
+			search: 'i-mdi-magnify',
+			success: 'i-mdi-check-circle-outline',
+			warning: 'i-mdi-alert-outline',
+		},
 		accordion: {
 			slots: {
 				root: "w-full mt-[46px] mb-[88px] desktop:mt-[88px] desktop:mb-[54px] desktop-xl:mt-[126px] desktop-xl:mb-[72px]",

@@ -23,7 +23,7 @@
 
   VINCOLI:
     - Solo utenti Admin (middleware admin).
-    - L'eliminazione richiede conferma con window.confirm().
+    - L'eliminazione richiede conferma esplicita prima della chiamata DELETE.
     - Il badge "Richieste Pro" mostra il conteggio di quelle in attesa.
 
   ERRORI TIPICI:
@@ -41,7 +41,7 @@
 -->
 <script setup>
 definePageMeta({
-	middleware: ["sanctum:auth", "admin"],
+	middleware: ["app-auth", "admin"],
 });
 
 const sanctum = useSanctumClient();
@@ -49,11 +49,14 @@ const { actionLoading, actionMessage, showSuccess, showError, formatDate, proReq
 
 /* Sub-tab: utenti o richieste pro */
 const activeSubTab = ref("users");
+const showDeleteConfirm = ref(false);
+const deleteTargetUser = ref(null);
 
 /* === UTENTI === */
 const usersData = ref([]);
 const usersSearch = ref("");
 const usersRoleFilter = ref("");
+const hasUserFilters = computed(() => Boolean(usersSearch.value || usersRoleFilter.value));
 
 const fetchUsers = async () => {
 	try {
@@ -82,9 +85,13 @@ const filteredUsers = computed(() => {
 	return list;
 });
 
+const resetUserFilters = () => {
+	usersSearch.value = "";
+	usersRoleFilter.value = "";
+};
+
 const approveAccount = async (id) => {
 	actionLoading.value = id;
-	console.log(`[AUDIT] Admin approving account #${id} (email verification)`);
 	try {
 		await sanctum(`/api/admin/users/${id}/approve`, { method: "PATCH" });
 		showSuccess("Account approvato e email verificata.");
@@ -93,13 +100,20 @@ const approveAccount = async (id) => {
 	finally { actionLoading.value = null; }
 };
 
-const deleteAccount = async (id) => {
-	if (!window.confirm("Confermi l'eliminazione definitiva di questo account?")) return;
+const askDeleteAccount = (user) => {
+	deleteTargetUser.value = user;
+	showDeleteConfirm.value = true;
+};
+
+const deleteAccount = async () => {
+	const id = deleteTargetUser.value?.id;
+	if (!id) return;
 	actionLoading.value = id;
-	console.log(`[AUDIT] Admin deleting account #${id}`);
 	try {
 		await sanctum(`/api/admin/users/${id}`, { method: "DELETE" });
 		showSuccess("Account eliminato correttamente.");
+		showDeleteConfirm.value = false;
+		deleteTargetUser.value = null;
 		await fetchUsers();
 	} catch (e) { showError(e, "Errore durante l'eliminazione account."); }
 	finally { actionLoading.value = null; }
@@ -123,7 +137,6 @@ const askRoleChange = (user, newRole) => {
 const changeUserRole = async () => {
 	const { userId, newRole, userName, currentRole } = roleChangeData.value;
 	actionLoading.value = `role-${userId}`;
-	console.log(`[AUDIT] Admin changing user #${userId} (${userName}) role: ${currentRole} → ${newRole}`);
 	try {
 		await sanctum(`/api/admin/users/${userId}/role`, { method: "PATCH", body: { role: newRole } });
 		showSuccess(`Ruolo aggiornato a '${newRole}'.`);
@@ -145,7 +158,6 @@ const fetchProRequests = async () => {
 
 const approveProRequest = async (id) => {
 	actionLoading.value = `pro-${id}`;
-	console.log(`[AUDIT] Admin approving Pro request #${id}`);
 	try {
 		await sanctum(`/api/admin/pro-requests/${id}/approve`, { method: "PATCH" });
 		showSuccess("Richiesta Pro approvata. L'utente e' ora Partner Pro.");
@@ -156,7 +168,6 @@ const approveProRequest = async (id) => {
 
 const rejectProRequest = async (id) => {
 	actionLoading.value = `pro-${id}`;
-	console.log(`[AUDIT] Admin rejecting Pro request #${id}`);
 	try {
 		await sanctum(`/api/admin/pro-requests/${id}/reject`, { method: "PATCH" });
 		showSuccess("Richiesta Pro rifiutata.");
@@ -174,21 +185,18 @@ onMounted(() => {
 </script>
 
 <template>
-	<section class="min-h-[600px] py-[40px] desktop:py-[60px] desktop-xl:py-[80px]">
+	<section class="min-h-[600px] py-[32px] tablet:py-[40px] desktop:py-[60px] desktop-xl:py-[80px]">
 		<div class="my-container">
-			<!-- Breadcrumb -->
-			<div class="mb-[24px] text-[0.875rem] text-[#737373]">
-				<NuxtLink to="/account" class="hover:underline text-[#095866] font-medium">Il tuo account</NuxtLink>
-				<span class="mx-[8px] text-[#C8CCD0]">/</span>
-				<span class="font-semibold text-[#252B42]">Utenti</span>
-			</div>
-
-			<NuxtLink to="/account" class="inline-flex items-center gap-[6px] text-[0.8125rem] text-[#095866] hover:underline font-medium mb-[20px]">
-				<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[16px] h-[16px]" fill="currentColor"><path d="M20,11V13H8L13.5,18.5L12.08,19.92L4.16,12L12.08,4.08L13.5,5.5L8,11H20Z"/></svg>
-				Torna all'account
-			</NuxtLink>
-
-			<h1 class="text-[1.75rem] font-bold text-[#252B42] mb-[24px]">Utenti</h1>
+			<AccountPageHeader
+				title="Utenti"
+				description=""
+				back-to="/account/amministrazione"
+				back-label="Torna al pannello admin"
+				:crumbs="[
+					{ label: 'Account', to: '/account' },
+					{ label: 'Utenti' },
+				]"
+			/>
 
 			<!-- Action message -->
 			<div
@@ -203,11 +211,11 @@ onMounted(() => {
 			</div>
 
 			<!-- Sub-tab toggle -->
-			<div class="flex gap-[4px] mb-[24px] bg-[#F0F0F0] rounded-[12px] p-[4px] w-fit">
+			<div class="grid grid-cols-1 tablet:grid-cols-2 gap-[4px] mb-[24px] bg-[#F0F0F0] rounded-[16px] p-[4px] w-full tablet:w-fit">
 				<button
 					@click="activeSubTab = 'users'"
 					:class="[
-						'flex items-center gap-[6px] px-[14px] py-[10px] rounded-[8px] text-[0.8125rem] font-medium transition-all cursor-pointer whitespace-nowrap',
+						'flex min-h-[44px] w-full items-center justify-center gap-[6px] px-[14px] py-[10px] rounded-[8px] text-[0.8125rem] font-medium transition-all cursor-pointer whitespace-nowrap',
 						activeSubTab === 'users' ? 'bg-white text-[#095866] shadow-sm' : 'text-[#737373] hover:text-[#404040]',
 					]">
 					<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[16px] h-[16px]" fill="currentColor"><path d="M12,4A4,4 0 0,1 16,8A4,4 0 0,1 12,12A4,4 0 0,1 8,8A4,4 0 0,1 12,4M12,14C16.42,14 20,15.79 20,18V20H4V18C4,15.79 7.58,14 12,14Z"/></svg>
@@ -216,7 +224,7 @@ onMounted(() => {
 				<button
 					@click="activeSubTab = 'pro_requests'"
 					:class="[
-						'flex items-center gap-[6px] px-[14px] py-[10px] rounded-[8px] text-[0.8125rem] font-medium transition-all cursor-pointer whitespace-nowrap',
+						'flex min-h-[44px] w-full items-center justify-center gap-[6px] px-[14px] py-[10px] rounded-[8px] text-[0.8125rem] font-medium transition-all cursor-pointer whitespace-nowrap',
 						activeSubTab === 'pro_requests' ? 'bg-white text-[#095866] shadow-sm' : 'text-[#737373] hover:text-[#404040]',
 					]">
 					<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[16px] h-[16px]" fill="currentColor"><path d="M12,17.27L18.18,21L16.54,13.97L22,9.24L14.81,8.62L12,2L9.19,8.62L2,9.24L7.45,13.97L5.82,21L12,17.27Z"/></svg>
@@ -229,35 +237,56 @@ onMounted(() => {
 
 			<!-- ===== USERS SUB-TAB ===== -->
 			<div v-if="activeSubTab === 'users'">
-				<div class="flex flex-wrap gap-[12px] mb-[20px]">
-					<div class="relative flex-1 min-w-[200px]">
-						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="absolute left-[12px] top-1/2 -translate-y-1/2 w-[18px] h-[18px] text-[#737373]" fill="currentColor"><path d="M9.5,3A6.5,6.5 0 0,1 16,9.5C16,11.11 15.41,12.59 14.44,13.73L14.71,14H15.5L20.5,19L19,20.5L14,15.5V14.71L13.73,14.44C12.59,15.41 11.11,16 9.5,16A6.5,6.5 0 0,1 3,9.5A6.5,6.5 0 0,1 9.5,3M9.5,5C7,5 5,7 5,9.5C5,12 7,14 9.5,14C12,14 14,12 14,9.5C14,7 12,5 9.5,5Z"/></svg>
-						<input v-model="usersSearch" type="text" placeholder="Cerca per nome, email..." class="w-full pl-[40px] pr-[14px] py-[10px] bg-white border border-[#E9EBEC] rounded-[50px] text-[0.875rem] focus:border-[#095866] focus:outline-none" />
+				<div class="mb-[20px] rounded-[18px] border border-[#E9EBEC] bg-[#F8FAFB] p-[14px] tablet:p-[18px] shadow-sm">
+					<div class="flex flex-col gap-[14px] desktop:flex-row desktop:items-center desktop:justify-between">
+						<div>
+							<p class="text-[0.75rem] font-semibold uppercase tracking-[0.6px] text-[#6B7280]">Toolbar utenti</p>
+							<h2 class="mt-[4px] text-[1rem] font-semibold text-[#252B42]">Ricerca, filtri e azioni rapide</h2>
+						</div>
+						<div class="flex flex-wrap items-center gap-[8px]">
+							<span class="inline-flex min-h-[34px] items-center rounded-full border border-[#DCE7E8] bg-white px-[12px] text-[0.75rem] font-medium text-[#095866]">
+								{{ filteredUsers.length }} risultati
+							</span>
+							<button
+								v-if="hasUserFilters"
+								type="button"
+								@click="resetUserFilters"
+								class="inline-flex min-h-[34px] items-center rounded-full border border-[#E9EBEC] bg-white px-[12px] text-[0.75rem] font-medium text-[#737373] transition hover:border-[#D0D7DA] hover:text-[#252B42] cursor-pointer">
+								Azzera filtri
+							</button>
+						</div>
 					</div>
-					<select v-model="usersRoleFilter" class="px-[14px] py-[10px] bg-white border border-[#E9EBEC] rounded-[50px] text-[0.875rem] focus:border-[#095866] focus:outline-none cursor-pointer">
-						<option value="">Tutti i ruoli</option>
-						<option value="User">Cliente</option>
-						<option value="Partner Pro">Partner Pro</option>
-						<option value="Admin">Admin</option>
-					</select>
+
+					<div class="mt-[14px] grid grid-cols-1 gap-[12px] tablet:grid-cols-[minmax(0,1fr)_220px] desktop:grid-cols-[minmax(0,1fr)_240px]">
+						<div class="relative min-w-0">
+							<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="absolute left-[12px] top-1/2 -translate-y-1/2 w-[18px] h-[18px] text-[#737373]" fill="currentColor"><path d="M9.5,3A6.5,6.5 0 0,1 16,9.5C16,11.11 15.41,12.59 14.44,13.73L14.71,14H15.5L20.5,19L19,20.5L14,15.5V14.71L13.73,14.44C12.59,15.41 11.11,16 9.5,16A6.5,6.5 0 0,1 3,9.5A6.5,6.5 0 0,1 9.5,3M9.5,5C7,5 5,7 5,9.5C5,12 7,14 9.5,14C12,14 14,12 14,9.5C14,7 12,5 9.5,5Z"/></svg>
+							<input v-model="usersSearch" type="text" placeholder="Cerca per nome, email..." class="w-full pl-[40px] pr-[14px] py-[11px] bg-white border border-[#E9EBEC] rounded-[14px] text-[0.875rem] focus:border-[#095866] focus:outline-none" />
+						</div>
+						<select v-model="usersRoleFilter" class="w-full px-[14px] py-[11px] bg-white border border-[#E9EBEC] rounded-[14px] text-[0.875rem] focus:border-[#095866] focus:outline-none cursor-pointer">
+							<option value="">Tutti i ruoli</option>
+							<option value="User">Cliente</option>
+							<option value="Partner Pro">Partner Pro</option>
+							<option value="Admin">Admin</option>
+						</select>
+					</div>
 				</div>
 
-				<div class="grid grid-cols-1 account-pages:grid-cols-3 gap-[16px] mb-[24px]">
-					<div class="bg-white rounded-[16px] p-[20px] border border-[#E9EBEC] shadow-sm">
+				<div class="grid grid-cols-1 tablet:grid-cols-3 gap-[12px] mb-[22px]">
+					<div class="bg-white rounded-[16px] p-[16px] tablet:p-[18px] border border-[#E9EBEC] shadow-sm">
 						<div class="flex items-center gap-[8px] mb-[8px]">
 							<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[18px] h-[18px] text-[#252B42]" fill="currentColor"><path d="M12,4A4,4 0 0,1 16,8A4,4 0 0,1 12,12A4,4 0 0,1 8,8A4,4 0 0,1 12,4M12,14C16.42,14 20,15.79 20,18V20H4V18C4,15.79 7.58,14 12,14Z"/></svg>
 							<p class="text-[0.75rem] text-[#737373] uppercase tracking-[0.5px] font-medium">Totale utenti</p>
 						</div>
 						<p class="text-[1.75rem] font-bold text-[#252B42]">{{ usersData.length }}</p>
 					</div>
-					<div class="bg-white rounded-[16px] p-[20px] border border-[#E9EBEC] shadow-sm">
+					<div class="bg-white rounded-[16px] p-[16px] tablet:p-[18px] border border-[#E9EBEC] shadow-sm">
 						<div class="flex items-center gap-[8px] mb-[8px]">
 							<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[18px] h-[18px] text-emerald-600" fill="currentColor"><path d="M12 2C6.5 2 2 6.5 2 12S6.5 22 12 22 22 17.5 22 12 17.5 2 12 2M10 17L5 12L6.41 10.59L10 14.17L17.59 6.58L19 8L10 17Z"/></svg>
 							<p class="text-[0.75rem] text-[#737373] uppercase tracking-[0.5px] font-medium">Verificati</p>
 						</div>
 						<p class="text-[1.75rem] font-bold text-emerald-600">{{ usersData.filter(u => u.email_verified_at).length }}</p>
 					</div>
-					<div class="bg-white rounded-[16px] p-[20px] border border-[#E9EBEC] shadow-sm">
+					<div class="bg-white rounded-[16px] p-[16px] tablet:p-[18px] border border-[#E9EBEC] shadow-sm">
 						<div class="flex items-center gap-[8px] mb-[8px]">
 							<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[18px] h-[18px] text-amber-600" fill="currentColor"><path d="M12,20A8,8 0 0,0 20,12A8,8 0 0,0 12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22C6.47,22 2,17.5 2,12A10,10 0 0,1 12,2M12.5,7V12.25L17,14.92L16.25,16.15L11,13V7H12.5Z"/></svg>
 							<p class="text-[0.75rem] text-[#737373] uppercase tracking-[0.5px] font-medium">Non verificati</p>
@@ -266,7 +295,7 @@ onMounted(() => {
 					</div>
 				</div>
 
-				<div class="bg-white rounded-[20px] p-[24px] desktop:p-[32px] shadow-sm border border-[#E9EBEC]">
+				<div class="bg-white rounded-[20px] p-[20px] tablet:p-[24px] desktop:p-[32px] shadow-sm border border-[#E9EBEC] overflow-hidden">
 					<h2 class="text-[1.125rem] font-bold text-[#252B42] mb-[20px]">Gestione account registrati</h2>
 
 					<div v-if="!filteredUsers?.length" class="text-center py-[48px] text-[#737373]">
@@ -274,10 +303,71 @@ onMounted(() => {
 						<p>Nessun account trovato.</p>
 					</div>
 
-					<div v-else class="overflow-x-auto">
-						<table class="w-full text-[0.875rem]">
-							<thead>
-								<tr class="border-b border-[#E9EBEC] text-left text-[#737373]">
+					<div v-else class="desktop:hidden grid grid-cols-1 tablet:grid-cols-2 gap-[12px]">
+							<div v-for="(u, idx) in filteredUsers" :key="u.id" class="rounded-[18px] border border-[#E9EBEC] bg-white p-[14px] tablet:p-[16px] shadow-sm">
+								<div class="flex items-start gap-[12px]">
+									<div class="flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-[14px] bg-[#EDF5F6] text-[#095866]">
+										<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="h-[20px] w-[20px]" fill="currentColor"><path d="M12,4A4,4 0 0,1 16,8A4,4 0 0,1 12,12A4,4 0 0,1 8,8A4,4 0 0,1 12,4M12,14C16.42,14 20,15.79 20,18V20H4V18C4,15.79 7.58,14 12,14Z"/></svg>
+									</div>
+									<div class="min-w-0 flex-1">
+										<div class="flex flex-wrap items-center gap-[8px]">
+											<p class="min-w-0 flex-1 text-[0.9375rem] font-semibold text-[#252B42] leading-[1.3]">{{ u.name }} {{ u.surname }}</p>
+											<span :class="u.email_verified_at ? 'text-emerald-700 bg-emerald-50' : 'text-amber-700 bg-amber-50'" class="inline-flex items-center gap-[4px] px-[8px] py-[3px] rounded-full text-[0.6875rem] font-medium">
+												{{ u.email_verified_at ? 'Verificato' : 'Non verificato' }}
+											</span>
+										</div>
+										<p class="mt-[4px] text-[0.8125rem] text-[#5F6C75] break-all">{{ u.email }}</p>
+									</div>
+								</div>
+
+								<div class="mt-[12px] grid grid-cols-1 gap-[10px] text-[0.8125rem] tablet:grid-cols-2">
+									<div class="rounded-[12px] bg-[#F8FAFB] px-[12px] py-[10px]">
+										<p class="text-[0.6875rem] font-semibold uppercase tracking-[0.45px] text-[#7B8791]">Telefono</p>
+										<p class="mt-[4px] text-[#252B42]">{{ u.telephone_number || '—' }}</p>
+									</div>
+									<div class="rounded-[12px] bg-[#F8FAFB] px-[12px] py-[10px]">
+										<p class="text-[0.6875rem] font-semibold uppercase tracking-[0.45px] text-[#7B8791]">Registrazione</p>
+										<p class="mt-[4px] text-[#252B42]">{{ formatDate(u.created_at) }}</p>
+									</div>
+									<div class="rounded-[12px] bg-[#F8FAFB] px-[12px] py-[10px]">
+										<p class="text-[0.6875rem] font-semibold uppercase tracking-[0.45px] text-[#7B8791]">Ruolo attuale</p>
+										<div class="mt-[4px] flex flex-wrap items-center gap-[6px]">
+											<span :class="['px-[8px] py-[2px] rounded-full text-[0.625rem] font-semibold uppercase tracking-[0.5px]', (u.role || 'User') === 'Partner Pro' ? 'bg-blue-100 text-blue-700' : (u.role || 'User') === 'Admin' ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-600']">
+												{{ (u.role || 'User') === 'Partner Pro' ? 'Partner Pro' : (u.role || 'User') === 'Admin' ? 'Admin' : 'Cliente' }}
+											</span>
+										</div>
+									</div>
+									<div class="rounded-[12px] bg-[#F8FAFB] px-[12px] py-[10px]">
+										<p class="text-[0.6875rem] font-semibold uppercase tracking-[0.45px] text-[#7B8791]">Referral</p>
+										<p class="mt-[4px] break-all font-mono text-[0.75rem] text-[#252B42]">{{ u.referral_code || '—' }}</p>
+									</div>
+								</div>
+
+								<div class="mt-[12px] grid grid-cols-1 gap-[8px]">
+									<select :value="u.role || 'User'" @change="askRoleChange(u, $event.target.value); $event.target.value = u.role || 'User'" :disabled="actionLoading === `role-${u.id}`" class="w-full px-[12px] py-[10px] rounded-[12px] bg-white border border-[#E0E6E8] text-[0.875rem] cursor-pointer focus:border-[#095866] focus:outline-none">
+										<option value="User">Cliente</option>
+										<option value="Partner Pro">Partner Pro</option>
+										<option value="Admin">Admin</option>
+									</select>
+									<div class="grid grid-cols-2 gap-[8px]">
+										<button v-if="!u.email_verified_at" @click="approveAccount(u.id)" :disabled="actionLoading === u.id" class="inline-flex min-h-[42px] items-center justify-center gap-[4px] px-[12px] py-[9px] rounded-[12px] bg-[#095866] text-white text-[0.8125rem] font-medium cursor-pointer disabled:opacity-60">
+											Approva
+										</button>
+										<div v-else class="inline-flex min-h-[42px] items-center justify-center px-[12px] py-[9px] rounded-[12px] bg-emerald-50 text-emerald-700 text-[0.8125rem] font-medium">
+											Verificato
+										</div>
+										<button @click="askDeleteAccount(u)" :disabled="actionLoading === u.id" class="inline-flex min-h-[42px] items-center justify-center gap-[4px] px-[12px] py-[9px] rounded-[12px] bg-red-600 text-white text-[0.8125rem] font-medium cursor-pointer disabled:opacity-60">
+											Elimina
+										</button>
+									</div>
+								</div>
+							</div>
+						</div>
+
+						<div class="hidden desktop:block overflow-x-auto">
+							<table class="w-full text-[0.875rem]">
+								<thead>
+									<tr class="border-b border-[#E9EBEC] text-left text-[#737373]">
 									<th class="pb-[12px] font-medium">Nome</th>
 									<th class="pb-[12px] font-medium">Email</th>
 									<th class="pb-[12px] font-medium">Telefono</th>
@@ -317,7 +407,7 @@ onMounted(() => {
 											<button v-if="!u.email_verified_at" @click="approveAccount(u.id)" :disabled="actionLoading === u.id" class="px-[10px] py-[6px] rounded-[8px] bg-[#095866] text-white text-[0.75rem] cursor-pointer disabled:opacity-60 flex items-center gap-[4px]">
 												<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[14px] h-[14px]" fill="currentColor"><path d="M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z"/></svg> Approva
 											</button>
-											<button @click="deleteAccount(u.id)" :disabled="actionLoading === u.id" class="px-[10px] py-[6px] rounded-[8px] bg-red-600 text-white text-[0.75rem] cursor-pointer disabled:opacity-60 flex items-center gap-[4px]">
+											<button @click="askDeleteAccount(u)" :disabled="actionLoading === u.id" class="px-[10px] py-[6px] rounded-[8px] bg-red-600 text-white text-[0.75rem] cursor-pointer disabled:opacity-60 flex items-center gap-[4px]">
 												<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[14px] h-[14px]" fill="currentColor"><path d="M19,4H15.5L14.5,3H9.5L8.5,4H5V6H19M6,19A2,2 0 0,0 8,21H16A2,2 0 0,0 18,19V7H6V19Z"/></svg> Elimina
 											</button>
 										</div>
@@ -331,7 +421,7 @@ onMounted(() => {
 
 			<!-- ===== PRO REQUESTS SUB-TAB ===== -->
 			<div v-if="activeSubTab === 'pro_requests'">
-				<div class="bg-white rounded-[20px] p-[24px] desktop:p-[32px] shadow-sm border border-[#E9EBEC]">
+					<div class="bg-white rounded-[20px] p-[20px] tablet:p-[24px] desktop:p-[32px] shadow-sm border border-[#E9EBEC] overflow-hidden">
 					<h2 class="text-[1.125rem] font-bold text-[#252B42] mb-[20px]">Richieste Partner Pro</h2>
 
 					<div v-if="!proRequests?.length" class="text-center py-[48px] text-[#737373]">
@@ -340,10 +430,10 @@ onMounted(() => {
 					</div>
 
 					<div v-else class="space-y-[12px]">
-						<div v-for="pr in proRequests" :key="pr.id" class="p-[18px] rounded-[14px] border border-[#E9EBEC] hover:border-[#D0D0D0] transition-colors">
-							<div class="flex flex-col desktop:flex-row desktop:items-start justify-between gap-[12px]">
+						<div v-for="pr in proRequests" :key="pr.id" class="rounded-[16px] border border-[#E9EBEC] bg-white p-[16px] tablet:p-[18px] transition-colors hover:border-[#D0D7DA]">
+							<div class="flex flex-col gap-[14px] desktop:flex-row desktop:items-start desktop:justify-between">
 								<div class="flex-1">
-									<div class="flex items-center gap-[10px] mb-[6px]">
+									<div class="flex flex-wrap items-center gap-[10px] mb-[6px]">
 										<span class="text-[0.9375rem] font-bold text-[#252B42]">{{ pr.user?.name }} {{ pr.user?.surname }}</span>
 										<span :class="['inline-flex items-center gap-[4px] px-[10px] py-[3px] rounded-full text-[0.6875rem] font-medium', proRequestStatusConfig[pr.status]?.bg || 'bg-gray-50', proRequestStatusConfig[pr.status]?.text || 'text-gray-700']">
 											<svg v-if="pr.status === 'pending'" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[12px] h-[12px]" fill="currentColor"><path d="M12,20A8,8 0 0,0 20,12A8,8 0 0,0 12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22C6.47,22 2,17.5 2,12A10,10 0 0,1 12,2M12.5,7V12.25L17,14.92L16.25,16.15L11,13V7H12.5Z"/></svg>
@@ -352,28 +442,28 @@ onMounted(() => {
 											{{ proRequestStatusConfig[pr.status]?.label || pr.status }}
 										</span>
 									</div>
-									<p class="text-[0.8125rem] text-[#737373]">{{ pr.user?.email }}</p>
-									<div class="mt-[10px] grid grid-cols-1 desktop:grid-cols-2 gap-[8px]">
-										<div v-if="pr.company_name" class="text-[0.8125rem]">
+									<p class="text-[0.8125rem] text-[#737373] break-all">{{ pr.user?.email }}</p>
+									<div class="mt-[10px] grid grid-cols-1 gap-[8px] tablet:grid-cols-2">
+										<div v-if="pr.company_name" class="rounded-[12px] bg-[#F8FAFB] px-[12px] py-[10px] text-[0.8125rem]">
 											<span class="text-[#737373]">Azienda:</span>
 											<span class="text-[#252B42] font-medium ml-[4px]">{{ pr.company_name }}</span>
 										</div>
-										<div v-if="pr.vat_number" class="text-[0.8125rem]">
+										<div v-if="pr.vat_number" class="rounded-[12px] bg-[#F8FAFB] px-[12px] py-[10px] text-[0.8125rem]">
 											<span class="text-[#737373]">P.IVA:</span>
 											<span class="font-mono text-[#252B42] ml-[4px]">{{ pr.vat_number }}</span>
 										</div>
 									</div>
-									<div v-if="pr.message" class="mt-[8px] bg-[#F8F9FB] rounded-[8px] p-[10px]">
+									<div v-if="pr.message" class="mt-[8px] bg-[#F8F9FB] rounded-[12px] p-[12px]">
 										<p class="text-[0.8125rem] text-[#404040]">{{ pr.message }}</p>
 									</div>
 									<p class="text-[0.75rem] text-[#737373] mt-[6px]">Richiesta: {{ formatDate(pr.created_at) }}</p>
 								</div>
 
-								<div v-if="pr.status === 'pending'" class="flex items-center gap-[8px] shrink-0">
-									<button @click="approveProRequest(pr.id)" :disabled="actionLoading === `pro-${pr.id}`" class="px-[16px] py-[8px] bg-emerald-600 hover:bg-emerald-700 text-white rounded-[8px] text-[0.8125rem] font-medium transition-colors cursor-pointer disabled:opacity-50 flex items-center gap-[4px]">
+								<div v-if="pr.status === 'pending'" class="flex flex-col gap-[8px] shrink-0 tablet:flex-row desktop:min-w-[220px] desktop:justify-end">
+									<button @click="approveProRequest(pr.id)" :disabled="actionLoading === `pro-${pr.id}`" class="inline-flex min-h-[42px] items-center justify-center gap-[4px] px-[16px] py-[8px] bg-emerald-600 hover:bg-emerald-700 text-white rounded-[10px] text-[0.8125rem] font-medium transition-colors cursor-pointer disabled:opacity-50">
 										<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[16px] h-[16px]" fill="currentColor"><path d="M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z"/></svg> {{ actionLoading === `pro-${pr.id}` ? "..." : "Approva" }}
 									</button>
-									<button @click="rejectProRequest(pr.id)" :disabled="actionLoading === `pro-${pr.id}`" class="px-[16px] py-[8px] bg-red-50 hover:bg-red-100 text-red-700 rounded-[8px] text-[0.8125rem] font-medium transition-colors cursor-pointer border border-red-200 disabled:opacity-50">
+									<button @click="rejectProRequest(pr.id)" :disabled="actionLoading === `pro-${pr.id}`" class="inline-flex min-h-[42px] items-center justify-center px-[16px] py-[8px] bg-red-50 hover:bg-red-100 text-red-700 rounded-[10px] text-[0.8125rem] font-medium transition-colors cursor-pointer border border-red-200 disabled:opacity-50">
 										Rifiuta
 									</button>
 								</div>
@@ -403,7 +493,7 @@ onMounted(() => {
 				</p>
 			</template>
 			<template #footer>
-				<div class="flex justify-end gap-[10px]">
+				<div class="flex flex-col-reverse gap-[10px] tablet:flex-row tablet:justify-end">
 					<button type="button" @click="showRoleConfirm = false" class="inline-flex items-center gap-[6px] px-[20px] py-[10px] rounded-[50px] border border-[#E9EBEC] text-[#737373] hover:bg-[#F8F9FB] transition text-[0.875rem] font-medium cursor-pointer">Annulla</button>
 					<button type="button" @click="changeUserRole" :disabled="actionLoading" class="inline-flex items-center gap-[6px] px-[20px] py-[10px] rounded-[50px] bg-[#095866] text-white hover:bg-[#074a56] transition text-[0.875rem] font-semibold disabled:opacity-60 cursor-pointer">
 						{{ actionLoading ? 'Aggiornamento...' : 'Conferma' }}
@@ -411,5 +501,14 @@ onMounted(() => {
 				</div>
 			</template>
 		</UModal>
+
+		<AccountConfirmDialog
+			v-model:open="showDeleteConfirm"
+			title="Elimina account"
+			:description="deleteTargetUser ? `Stai per eliminare definitivamente l'account di ${deleteTargetUser.name} ${deleteTargetUser.surname}. L'operazione rimuove l'accesso e non si puo' annullare.` : ''"
+			confirm-label="Elimina account"
+			:loading="actionLoading === deleteTargetUser?.id"
+			@confirm="deleteAccount"
+		/>
 	</section>
 </template>

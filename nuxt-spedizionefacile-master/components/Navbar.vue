@@ -13,216 +13,264 @@
 	VINCOLI: il menu mobile usa Teleport al body — serve ClientOnly per evitare errori SSR
 	PUNTI DI MODIFICA SICURI: navLinks (lista voci menu), icone SVG nel menu mobile
 	COLLEGAMENTI: components/Logo.vue, composables/useCart.js
-
-	STRUTTURA:
-	- Desktop: logo | link centrali | bottone login | carrello
-	- Mobile: logo | hamburger | icona account | carrello
-	  Il menu mobile si apre come dropdown con backdrop scuro (Teleportato al body)
 -->
 <script setup>
 const navLinks = [
-	{ page: "/servizi", text: "Servizi" },
-	{ page: '/preventivo', text: 'Preventivo Rapido' },
-	{ page: '/guide', text: 'Guide' },
-	{ page: "/contatti", text: "Contatti" },
+	{ page: "/preventivo", text: "Preventivo", icon: 'price' },
+	{ page: "/servizi", text: "Servizi", icon: 'truck' },
+	{ page: '/guide', text: 'Guide', icon: 'book' },
+	{ page: "/contatti", text: "Contatti", icon: 'message' },
 ];
 
-const { isAuthenticated, user } = useSanctumAuth();
-const { cart, status, refresh } = useCart();
+const {
+	accountLabel,
+	isAuthenticatedForUi,
+	liveAuthenticated,
+	mobileAccountLabel,
+} = useAuthUiState();
+const { openAuthModal } = useAuthModal();
+const { cart } = useCart();
 const route = useRoute();
-const authReady = ref(false);
+const authShellPaths = ['/autenticazione', '/login', '/registrazione', '/recupera-password', '/aggiorna-password'];
+const isAuthShellRoute = computed(() => authShellPaths.some((path) => route.path.startsWith(path)));
+const quoteFlowPaths = ['/preventivo', '/la-tua-spedizione', '/riepilogo', '/checkout', '/carrello'];
+const isQuoteFlowRoute = computed(() => quoteFlowPaths.some((path) => route.path.startsWith(path)));
+const showMobileQuoteCta = computed(() => !isAuthShellRoute.value && !isQuoteFlowRoute.value && !route.path.startsWith('/account'));
+const mobileQuoteHref = computed(() => route.path === '/' ? '/#preventivo' : '/preventivo');
 
-// Stato menu mobile
+const getRequestedPath = () => {
+	const redirectQuery = Array.isArray(route.query.redirect)
+		? route.query.redirect[0]
+		: route.query.redirect;
+
+	if (route.path === '/autenticazione' || route.path === '/login' || route.path === '/registrazione') {
+		if (typeof redirectQuery === 'string' && redirectQuery.startsWith('/')) {
+			return redirectQuery;
+		}
+		return '/';
+	}
+
+	return route.fullPath;
+};
+
+const authUiHydrated = ref(false);
+const showAuthenticatedUi = computed(() => authUiHydrated.value && isAuthenticatedForUi.value);
+const accountButtonLabel = computed(() => {
+	if (!authUiHydrated.value) return 'Accedi';
+	return accountLabel.value === 'Accedi' ? 'Accedi' : accountLabel.value;
+});
+const mobileAccountButtonLabel = computed(() => {
+	if (!authUiHydrated.value) return 'Accedi o Registrati';
+	return showAuthenticatedUi.value ? mobileAccountLabel.value : 'Accedi o Registrati';
+});
+const cartCount = computed(() => cart?.value?.data?.length || cart?.data?.length || 0);
+const scrolled = ref(false);
 const mobileMenuOpen = ref(false);
 const navbarBottomRef = ref(null);
 const menuTopPx = ref(0);
 
-// Calcola posizione del menu quando si apre
 const updateMenuPosition = () => {
 	if (navbarBottomRef.value) {
 		const rect = navbarBottomRef.value.getBoundingClientRect();
-		menuTopPx.value = rect.top;
+		menuTopPx.value = rect.bottom + 12;
 	}
 };
 
+const onScroll = () => {
+	if (typeof window === 'undefined') return;
+	scrolled.value = window.scrollY > 8;
+};
+
 watch(mobileMenuOpen, (val) => {
-	if (val) {
-		nextTick(() => updateMenuPosition());
-	}
+	if (val) nextTick(() => updateMenuPosition());
 });
 
-// Chiudi menu quando cambia pagina.
-// Aggiorna il carrello solo navigando da/verso pagine che modificano il carrello,
-// per evitare una chiamata API inutile su ogni singola navigazione.
-const cartRelatedPaths = ['/carrello', '/riepilogo', '/preventivo', '/la-tua-spedizione'];
-const stopRouteWatch = watch(() => route.fullPath, (newPath, oldPath) => {
+const stopRouteWatch = watch(() => route.fullPath, () => {
 	mobileMenuOpen.value = false;
-	const isCartRelated = cartRelatedPaths.some(p => newPath.startsWith(p)) ||
-		(oldPath && cartRelatedPaths.some(p => oldPath.startsWith(p)));
-	if (isCartRelated) {
-		refresh();
-	}
+	if (typeof window !== 'undefined') requestAnimationFrame(updateMenuPosition);
 });
 
-// Cleanup watch to prevent memory leaks
-onBeforeUnmount(() => {
-	stopRouteWatch();
-});
-
-// Link per il pulsante di login: passa la pagina corrente come parametro redirect
-// cosi' dopo il login l'utente torna dove si trovava
-const authLink = computed(() => {
-	if (authReady.value && isAuthenticated.value) {
-		return '/account';
+const isNavActive = (page) => {
+	if (page === '/preventivo') {
+		return (
+			route.path === '/' ||
+			route.path.startsWith('/preventivo') ||
+			route.path.startsWith('/la-tua-spedizione') ||
+			route.path.startsWith('/riepilogo') ||
+			route.path.startsWith('/checkout')
+		);
 	}
-	const currentPath = route.fullPath;
-	// Non passare redirect se siamo gia' sulla pagina di autenticazione o su pagine guest-only
-	if (currentPath === '/autenticazione' || currentPath === '/login' || currentPath === '/registrazione') {
-		return '/autenticazione';
-	}
-	return `/autenticazione?redirect=${encodeURIComponent(currentPath)}`;
-});
+	return route.path === page || route.path.startsWith(page + '/');
+};
 
-watch(isAuthenticated, () => {
-	refresh();
-});
+const openGuestAuthModal = (tab = 'login') => {
+	mobileMenuOpen.value = false;
+	openAuthModal({
+		redirect: getRequestedPath(),
+		tab,
+	});
+};
 
 onMounted(() => {
-	authReady.value = true;
+	authUiHydrated.value = true;
+	onScroll();
+	window.addEventListener('scroll', onScroll, { passive: true });
+	window.addEventListener('resize', updateMenuPosition);
 });
 
+onBeforeUnmount(() => {
+	stopRouteWatch();
+	window.removeEventListener('scroll', onScroll);
+	window.removeEventListener('resize', updateMenuPosition);
+});
 </script>
 
 <template>
 	<div class="relative w-full">
-		<div class="h-[4px] w-full bg-[#E44203] rounded-full mb-2"></div>
-		<div class="flex items-center justify-between desktop:h-[65px] tablet:h-[50px] h-[44px] relative z-50">
-			<!-- Logo -->
-			<NuxtLink to="/" class="flex items-center h-full outline-none shrink-0">
-				<Logo :is-navbar="true" />
-			</NuxtLink>
+		<div
+			v-if="!isAuthShellRoute"
+			class="h-[3px] w-full rounded-full"
+			style="background: linear-gradient(90deg, #E44203 0%, #ff6a33 50%, #E44203 100%);"
+		></div>
 
-			<!-- Nav desktop -->
-			<nav class="desktop-xl:text-[1.25rem] desktop:text-[1rem] hidden mid-desktop-navbar:flex justify-center flex-1">
-				<ul class="flex items-center justify-center desktop-xl:gap-x-[40px] mid-desktop-navbar:gap-x-[22px] text-[rgba(64,64,64,.67)] tracking-[-0.48px]">
-					<li v-for="(nav, navIndex) in navLinks" :key="navIndex">
-						<NuxtLink :to="nav.page" class="hover:text-[#E44203] transition-colors duration-200 py-[8px]">
+		<div
+			ref="navbarBottomRef"
+			class="navbar-shell relative z-50 flex items-center justify-between px-[2px]"
+			:class="isAuthShellRoute ? 'h-[52px] sm:h-[58px] border-b border-[#edf0f3]' : 'h-[56px] sm:h-[64px] lg:h-[70px]'"
+			:style="!isAuthShellRoute ? { borderBottom: scrolled ? '1px solid rgba(9,88,102,0.08)' : '1px solid transparent' } : undefined"
+		>
+			<div class="flex min-w-0 flex-1 items-center gap-[6px] sm:gap-[8px] lg:flex-initial">
+				<a
+					href="/"
+					class="flex items-center h-full outline-none shrink-0"
+					@click="mobileMenuOpen = false">
+					<Logo :is-navbar="true" />
+				</a>
+			</div>
+
+			<nav v-if="!isAuthShellRoute" class="hidden lg:flex justify-center flex-1">
+				<ul class="navbar-primary-nav">
+					<li v-for="nav in navLinks" :key="nav.page">
+						<NuxtLink
+							:to="nav.page"
+							active-class=""
+							exact-active-class=""
+							class="navbar-link-pill"
+							:class="isNavActive(nav.page) ? 'navbar-link-pill--active' : 'navbar-link-pill--inactive'"
+						>
 							{{ nav.text }}
 						</NuxtLink>
 					</li>
 				</ul>
 			</nav>
 
-			<!-- Azioni destra -->
-			<div class="flex items-center gap-[8px] tablet:gap-[12px] shrink-0">
-				<!-- Hamburger mobile -->
+			<div v-if="!isAuthShellRoute" class="flex shrink-0 items-center gap-[6px] sm:gap-[10px]">
+				<a
+					v-if="showMobileQuoteCta"
+					:href="mobileQuoteHref"
+					class="inline-flex lg:hidden navbar-mobile-quote"
+					@click="mobileMenuOpen = false"
+				>
+					Preventivo
+				</a>
+
 				<button
 					type="button"
-					class="mid-desktop-navbar:hidden min-w-[44px] min-h-[44px] flex items-center justify-center rounded-[50px] bg-[#095866] transition-colors duration-200"
-					aria-label="Apri menu di navigazione"
-					@click="mobileMenuOpen = !mobileMenuOpen"
+					class="hidden lg:inline-flex items-center gap-[6px] navbar-account-ghost"
+					@click="showAuthenticatedUi ? navigateTo('/account') : openGuestAuthModal('login')"
 				>
-					<div class="hamburger-icon" :class="{ open: mobileMenuOpen }">
-						<span></span>
-						<span></span>
-						<span></span>
-					</div>
-				</button>
-
-				<!-- Account icon (mobile) — icona omino, sempre visibile -->
-				<NuxtLink
-					:to="authLink"
-					class="mid-desktop-navbar:hidden min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full bg-[#095866] text-white transition-[transform] duration-200 active:scale-95"
-					aria-label="Account"
-				>
-					<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+					<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="shrink-0">
 						<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
 						<circle cx="12" cy="7" r="4"/>
 					</svg>
-				</NuxtLink>
+					{{ accountButtonLabel }}
+				</button>
 
-				<!-- Account/Login button (desktop) -->
-					<NuxtLink
-						:to="authLink"
-						class="hidden mid-desktop-navbar:inline-block bg-[#E44203] desktop-xl:w-[143px] mid-desktop-navbar:w-[91px] mid-desktop-navbar:h-[41px] desktop-xl:h-full mid-desktop-navbar:leading-[41px] desktop-xl:leading-[65px] text-center text-white rounded-[50px] font-semibold desktop-xl:text-[1.25rem] desktop:text-[0.875rem] tracking-[-0.48px] transition-[background-color,box-shadow] duration-200 hover:bg-[#c93800] hover:shadow-[0_4px_12px_rgba(228,66,3,0.3)]">
-						<span v-if="authReady && isAuthenticated">{{ user?.role === 'Admin' ? 'Area Admin' : `Ciao ${user?.name}` }}</span>
-						<span v-else>Accedi!</span>
-					</NuxtLink>
-
-				<!-- Carrello -->
-				<NuxtLink to="/carrello" class="inline-flex items-center justify-center gap-[6px] bg-[#E44203] min-w-[44px] tablet:min-w-[88px] px-[10px] tablet:px-[20px] h-[44px] tablet:h-[48px] text-center text-white rounded-[50px] font-semibold whitespace-nowrap text-[0.875rem] tablet:text-[1rem] transition-[background-color,box-shadow] duration-200 hover:bg-[#c93800] hover:shadow-[0_4px_12px_rgba(228,66,3,0.3)]">
-					<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="shrink-0">
+				<NuxtLink
+					to="/carrello"
+					active-class=""
+					exact-active-class=""
+					class="navbar-cart-cta"
+					:class="isNavActive('/carrello') ? 'navbar-cart-cta--active' : ''"
+				>
+					<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="shrink-0">
 						<circle cx="9" cy="21" r="1"/>
 						<circle cx="20" cy="21" r="1"/>
 						<path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
 					</svg>
-						<span v-if="authReady && cart?.data?.length > 0">{{ cart.data.length }}</span>
+					<span class="hidden sm:inline text-[14px] tracking-[-0.2px] font-semibold">Carrello</span>
+					<span v-if="cartCount > 0" class="navbar-cart-cta__badge">{{ cartCount }}</span>
 				</NuxtLink>
+
+				<button
+					type="button"
+					class="lg:hidden navbar-mobile-toggle"
+					aria-label="Apri menu di navigazione"
+					@click="mobileMenuOpen = !mobileMenuOpen"
+				>
+					<svg v-if="!mobileMenuOpen" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+					<svg v-else xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+				</button>
 			</div>
 		</div>
-		<div ref="navbarBottomRef" class="h-[4px] w-full bg-[#095866] rounded-full mt-2 relative z-[10000]"></div>
 
-		<!-- Menu mobile — Teleportato al body per stare SOPRA tutto -->
 		<ClientOnly>
 			<Teleport to="body">
-				<!-- Backdrop -->
 				<Transition name="backdrop-fade">
 					<div
-						v-if="mobileMenuOpen"
-						class="mid-desktop-navbar:hidden fixed inset-0 bg-black/30 z-[9998]"
+						v-if="mobileMenuOpen && !isAuthShellRoute"
+						class="lg:hidden fixed inset-0 bg-black/20 backdrop-blur-[2px] z-[9998]"
 						@click="mobileMenuOpen = false"
 					></div>
 				</Transition>
 
-				<!-- Menu dropdown -->
-				<Transition name="mobile-menu">
+				<Transition name="mobile-sheet">
 					<div
-						v-if="mobileMenuOpen"
-						class="mid-desktop-navbar:hidden fixed left-[20px] right-[20px] z-[9999] bg-[#095866] rounded-b-[16px] rounded-t-none shadow-[0_12px_40px_rgba(0,0,0,0.25)] overflow-hidden"
-						:style="{ top: menuTopPx + 'px' }"
+						v-if="mobileMenuOpen && !isAuthShellRoute"
+						class="lg:hidden fixed left-[12px] right-[12px] z-[9999] bg-white rounded-[18px] overflow-hidden"
+						:style="{ top: menuTopPx + 'px', boxShadow: '0 8px 40px rgba(0,0,0,0.12), 0 0 0 1px rgba(9,88,102,0.06)' }"
 					>
-						<nav class="py-[8px]">
+						<nav class="py-[6px]">
 							<ul class="flex flex-col">
-								<li v-for="(nav, navIndex) in navLinks" :key="navIndex">
+								<li v-for="nav in navLinks" :key="nav.page">
 									<NuxtLink
 										:to="nav.page"
-										class="flex items-center gap-[12px] px-[20px] py-[14px] text-[1.0625rem] font-medium text-white/90 hover:bg-white/10 hover:text-white transition-colors duration-150 active:bg-white/15"
-										:class="{ 'text-white font-semibold': route.path === nav.page || route.path.startsWith(nav.page + '/') }"
+										active-class=""
+										exact-active-class=""
+										class="mobile-nav-link"
+										:class="isNavActive(nav.page) ? 'mobile-nav-link--active' : ''"
 									>
-										<svg v-if="nav.text === 'Servizi'" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="shrink-0 text-white">
-											<rect x="1" y="3" width="15" height="13"/>
-											<polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/>
-											<circle cx="5.5" cy="18.5" r="2.5"/>
-											<circle cx="18.5" cy="18.5" r="2.5"/>
-										</svg>
-										<svg v-else-if="nav.text === 'Preventivo Rapido'" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="shrink-0 text-white">
-											<line x1="12" y1="1" x2="12" y2="23"/>
-											<path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
-										</svg>
-										<svg v-else-if="nav.text === 'Guide'" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="shrink-0 text-white">
-											<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
-											<path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
-										</svg>
-										<svg v-else-if="nav.text === 'Contatti'" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="shrink-0 text-white">
-											<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-										</svg>
-										{{ nav.text }}
+										<div class="mobile-nav-link__icon" :class="isNavActive(nav.page) ? 'mobile-nav-link__icon--active' : ''">
+											<svg v-if="nav.icon === 'truck'" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+											<svg v-else-if="nav.icon === 'price'" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+											<svg v-else-if="nav.icon === 'book'" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+											<svg v-else xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+										</div>
+										<span class="flex-1">{{ nav.text }}</span>
+										<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-[#cfcfcf]"><path d="m9 18 6-6-6-6"/></svg>
 									</NuxtLink>
 								</li>
 							</ul>
 						</nav>
-						<!-- Login/Account -->
-						<div class="border-t border-white/20 px-[20px] py-[12px]">
-							<NuxtLink
-								:to="authLink"
-								class="flex items-center justify-center gap-[8px] w-full h-[48px] bg-white text-[#095866] rounded-[50px] font-semibold text-[1rem] transition-[transform] duration-200 active:scale-[0.98]"
+						<div class="border-t border-[#f0f0f0] px-[16px] py-[12px]">
+							<button
+								v-if="!showAuthenticatedUi"
+								type="button"
+								class="mobile-auth-cta"
+								@click="openGuestAuthModal('login')"
 							>
-								<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-									<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-									<circle cx="12" cy="7" r="4"/>
-								</svg>
-									<span v-if="authReady && isAuthenticated">{{ user?.role === 'Admin' ? 'Area Admin' : 'Il mio account' }}</span>
-									<span v-else>Accedi o Registrati</span>
+								<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+								{{ mobileAccountButtonLabel }}
+							</button>
+							<NuxtLink
+								v-else
+								to="/account"
+								active-class=""
+								exact-active-class=""
+								class="mobile-auth-cta"
+							>
+								<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+								{{ mobileAccountButtonLabel }}
 							</NuxtLink>
 						</div>
 					</div>
@@ -233,80 +281,323 @@ onMounted(() => {
 </template>
 
 <style scoped>
-/* Hamburger animato */
-.hamburger-icon {
-	width: 22px;
-	height: 16px;
-	position: relative;
+.navbar-shell {
+	transition: border-color var(--sf-motion-base) var(--sf-ease-soft), box-shadow var(--sf-motion-base) var(--sf-ease-soft);
+}
+
+.navbar-primary-nav {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 2px;
+	padding: 4px;
+	border-radius: 999px;
+	background: rgba(9, 88, 102, 0.045);
+	box-shadow: inset 0 0 0 1px rgba(9, 88, 102, 0.05);
+}
+
+.navbar-link-pill {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	cursor: pointer;
+	height: 44px;
+	padding: 0 18px;
+	border-radius: 999px;
+	font-size: 15px;
+	line-height: 1;
+	letter-spacing: -0.22px;
+	font-weight: 600;
+	transition:
+		color var(--sf-motion-base) var(--sf-ease-soft),
+		background-color var(--sf-motion-base) var(--sf-ease-soft),
+		box-shadow var(--sf-motion-base) var(--sf-ease-soft),
+		transform var(--sf-motion-base) var(--sf-ease-soft);
+}
+
+.navbar-link-pill--active {
+	color: #E44203;
+	background: rgba(255, 255, 255, 0.96);
+	box-shadow: 0 10px 18px rgba(9, 88, 102, 0.08);
+	font-weight: 700;
+}
+
+.navbar-link-pill--inactive {
+	color: #31414b;
+}
+
+.navbar-link-pill--inactive:hover {
+	color: #16252f;
+	background: rgba(255, 255, 255, 0.72);
+	transform: translateY(-1px);
+}
+
+.navbar-quote-cta {
+	align-items: center;
+	justify-content: center;
+	height: 46px;
+	padding: 0 22px;
+	border-radius: 999px;
+	cursor: pointer;
+	background: linear-gradient(135deg, #E44203 0%, #d63b00 100%);
+	color: #fff;
+	font-size: 15px;
+	line-height: 1;
+	font-weight: 700;
+	letter-spacing: -0.18px;
+	box-shadow: 0 10px 22px rgba(228, 66, 3, 0.2);
+	transition:
+		transform var(--sf-motion-base) var(--sf-ease-soft),
+		box-shadow var(--sf-motion-base) var(--sf-ease-soft),
+		filter var(--sf-motion-base) var(--sf-ease-soft);
+}
+
+.navbar-quote-cta:hover {
+	transform: translateY(-1px);
+	box-shadow: 0 14px 28px rgba(228, 66, 3, 0.24);
+	filter: saturate(1.04);
+}
+
+.navbar-account-ghost {
+	height: 46px;
+	padding: 0 22px;
+	border-radius: 999px;
+	cursor: pointer;
+	background: rgba(9, 88, 102, 0.06);
+	color: #095866;
+	font-size: 15px;
+	letter-spacing: -0.16px;
+	font-weight: 600;
+	transition:
+		background-color var(--sf-motion-base) var(--sf-ease-soft),
+		box-shadow var(--sf-motion-base) var(--sf-ease-soft),
+		transform var(--sf-motion-base) var(--sf-ease-soft),
+		color var(--sf-motion-base) var(--sf-ease-soft);
+}
+
+.navbar-account-ghost:hover {
+	background: rgba(9, 88, 102, 0.12);
+	box-shadow: 0 2px 12px rgba(9, 88, 102, 0.08);
+	transform: translateY(-1px);
+}
+
+.navbar-cart-cta {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	cursor: pointer;
+	gap: 6px;
+	height: 46px;
+	min-width: 46px;
+	padding: 0 20px;
+	border-radius: 999px;
+	color: #fff;
+	background: linear-gradient(135deg, #E44203 0%, #d63b00 100%);
+	transition:
+		background var(--sf-motion-base) var(--sf-ease-soft),
+		box-shadow var(--sf-motion-base) var(--sf-ease-soft),
+		transform var(--sf-motion-base) var(--sf-ease-soft);
+}
+
+.navbar-cart-cta:hover {
+	box-shadow: 0 4px 16px rgba(228, 66, 3, 0.25);
+	transform: translateY(-1px);
+}
+
+.navbar-cart-cta--active {
+	box-shadow: 0 4px 16px rgba(228, 66, 3, 0.3), 0 0 0 2px rgba(228, 66, 3, 0.18);
+}
+
+.navbar-cart-cta__badge {
+	display: inline-flex;
+	min-width: 20px;
+	height: 20px;
+	align-items: center;
+	justify-content: center;
+	border-radius: 999px;
+	padding: 0 6px;
+	background: rgba(255, 255, 255, 0.2);
+	font-size: 12px;
+	line-height: 1;
+	font-weight: 700;
+}
+
+.navbar-mobile-toggle {
+	width: 42px;
+	height: 42px;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	cursor: pointer;
+	border-radius: 999px;
+	background: #095866;
+	color: white;
+	transition:
+		background-color var(--sf-motion-base) var(--sf-ease-soft),
+		box-shadow var(--sf-motion-base) var(--sf-ease-soft),
+		transform var(--sf-motion-base) var(--sf-ease-soft);
+}
+
+.navbar-mobile-toggle:hover {
+	background: #0a6b7d;
+	box-shadow: 0 4px 14px rgba(9, 88, 102, 0.2);
+	transform: translateY(-1px);
+}
+
+.navbar-mobile-quote {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	height: 34px;
+	padding: 0 12px;
+	border-radius: 999px;
+	background: linear-gradient(135deg, #E44203 0%, #d63b00 100%);
+	color: #fff;
+	font-size: 12.5px;
+	line-height: 1;
+	font-weight: 700;
+	letter-spacing: -0.15px;
+	box-shadow: 0 8px 18px rgba(228, 66, 3, 0.18);
+	white-space: nowrap;
+	transition:
+		transform var(--sf-motion-base) var(--sf-ease-soft),
+		box-shadow var(--sf-motion-base) var(--sf-ease-soft),
+		filter var(--sf-motion-base) var(--sf-ease-soft);
+}
+
+.navbar-mobile-quote:hover {
+	transform: translateY(-1px);
+	box-shadow: 0 12px 22px rgba(228, 66, 3, 0.22);
+	filter: saturate(1.05);
+}
+
+.mobile-nav-link {
 	display: flex;
-	flex-direction: column;
-	justify-content: space-between;
+	align-items: center;
+	gap: 14px;
+	cursor: pointer;
+	padding: 14px 20px;
+	font-size: 16px;
+	color: #444;
+	transition:
+		background-color var(--sf-motion-fast) var(--sf-ease-soft),
+		color var(--sf-motion-fast) var(--sf-ease-soft),
+		transform var(--sf-motion-fast) var(--sf-ease-soft);
+	font-weight: 500;
 }
 
-.hamburger-icon span {
-	display: block;
+.mobile-nav-link:hover {
+	background: #f7f7f7;
+	color: #1d2738;
+	transform: translateX(2px);
+}
+
+.mobile-nav-link--active {
+	color: #095866;
+	background: rgba(9, 88, 102, 0.04);
+	font-weight: 650;
+}
+
+.mobile-nav-link__icon {
+	width: 36px;
+	height: 36px;
+	border-radius: 10px;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	flex: 0 0 36px;
+	background: #f3f4f6;
+	color: #888;
+}
+
+.mobile-nav-link__icon--active {
+	background: rgba(9, 88, 102, 0.08);
+	color: #095866;
+}
+
+.mobile-auth-cta {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 8px;
+	cursor: pointer;
 	width: 100%;
-	height: 2.5px;
-	background-color: #fff;
-	border-radius: 12px;
-	/* Ottimizzato: transizione solo sulle proprietà animate (transform, opacity) */
-	transition: transform 0.3s cubic-bezier(0.645, 0.045, 0.355, 1), opacity 0.3s cubic-bezier(0.645, 0.045, 0.355, 1);
-	transform-origin: center;
+	height: 48px;
+	background: #095866;
+	color: #fff;
+	border-radius: 999px;
+	font-size: 15px;
+	font-weight: 600;
+	transition:
+		background-color var(--sf-motion-base) var(--sf-ease-soft),
+		transform var(--sf-motion-base) var(--sf-ease-soft),
+		box-shadow var(--sf-motion-base) var(--sf-ease-soft);
 }
 
-.hamburger-icon.open span:nth-child(1) {
-	transform: translateY(6.75px) rotate(45deg);
+.mobile-auth-cta:hover {
+	background: #0a6b7d;
+	box-shadow: 0 10px 22px rgba(9, 88, 102, 0.18);
+	transform: translateY(-1px);
 }
 
-.hamburger-icon.open span:nth-child(2) {
+.mobile-auth-cta:active {
+	transform: translateY(0) scale(0.985);
+}
+
+.mobile-sheet-enter-active,
+.mobile-sheet-leave-active {
+	transition: opacity 0.25s ease, transform 0.25s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+.mobile-sheet-enter-from,
+.mobile-sheet-leave-to {
 	opacity: 0;
-	transform: scaleX(0);
+	transform: translateY(-8px) scale(0.98);
 }
 
-.hamburger-icon.open span:nth-child(3) {
-	transform: translateY(-6.75px) rotate(-45deg);
-}
-
-/* Menu mobile transition — scende dall'alto con dissolvenza */
-.mobile-menu-enter-active {
-	animation: menuReveal 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-}
-
-.mobile-menu-leave-active {
-	animation: menuHide 0.25s cubic-bezier(0.55, 0, 1, 0.45) forwards;
-}
-
-@keyframes menuReveal {
-	0% {
-		opacity: 0;
-		clip-path: inset(0 0 100% 0);
-	}
-	100% {
-		opacity: 1;
-		clip-path: inset(0 0 0 0);
-	}
-}
-
-@keyframes menuHide {
-	0% {
-		opacity: 1;
-		clip-path: inset(0 0 0 0);
-	}
-	100% {
-		opacity: 0;
-		clip-path: inset(0 0 100% 0);
-	}
-}
-
-/* Backdrop fade */
-.backdrop-fade-enter-active {
-	transition: opacity 0.25s ease;
-}
+.backdrop-fade-enter-active,
 .backdrop-fade-leave-active {
 	transition: opacity 0.2s ease;
 }
+
 .backdrop-fade-enter-from,
 .backdrop-fade-leave-to {
 	opacity: 0;
+}
+
+@media (min-width: 1280px) {
+	.navbar-link-pill {
+		height: 46px;
+		padding-inline: 22px;
+		font-size: 16px;
+	}
+
+	.navbar-quote-cta,
+	.navbar-account-ghost,
+	.navbar-cart-cta {
+		height: 46px;
+		padding-inline: 24px;
+	}
+}
+
+@media (min-width: 1024px) {
+	.navbar-quote-cta {
+		display: inline-flex;
+	}
+
+	.navbar-mobile-quote {
+		display: none !important;
+	}
+
+	.navbar-mobile-toggle {
+		display: none !important;
+	}
+}
+
+@media (max-width: 22.5rem) {
+	.navbar-mobile-quote {
+		padding-inline: 10px;
+		font-size: 12px;
+	}
 }
 </style>

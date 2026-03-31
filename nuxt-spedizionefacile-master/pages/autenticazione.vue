@@ -20,8 +20,6 @@
   COLLEGAMENTI: composables/useSession.js, stores/userStore.js, pages/recupera-password.vue.
 -->
 <script setup>
-// Nota: rimosso import inutilizzato di FetchError da "ofetch" (dead code, riduce parse time)
-
 useSeoMeta({
 	title: 'Accedi o Registrati | SpediamoFacile',
 	ogTitle: 'Accedi o Registrati | SpediamoFacile',
@@ -29,480 +27,77 @@ useSeoMeta({
 	ogDescription: 'Accedi o registrati su SpediamoFacile per gestire le tue spedizioni.',
 });
 
-// Funzione di login da nuxt-auth-sanctum
-const { login, isAuthenticated } = useSanctumAuth();
+definePageMeta({ layout: 'auth', middleware: ['sanctum:guest'] });
 
-// Tab per alternare tra Login e Registrazione
-const items = ref([
-	{
-		label: "Accedi",
-		icon: "",
-		slot: "accedi",
-		value: "accedi",
-		disabled: false,
-	},
-	{
-		label: "Registrati",
-		icon: "",
-		slot: "registrati",
-		value: "registrati",
-		disabled: false,
-	},
-]);
+const {
+	items, selectedAuthTab, onTabClick,
+	credentials, messageError, messageSuccess, messageLoading,
+	isLoading, showResendVerification, resendMessage, resendLoading,
+	handleLogin, resendVerificationEmail,
+	verificationMode, verificationCode, verificationLoading, verificationError,
+	verificationSuccess, verificationCodeHint, resetVerificationFlow,
+	verifyCode, handleVerificationInput, handleVerificationKeydown,
+	handleVerificationPaste, resendCodeForVerification,
+	registerForm, registerUser, passwordChecks, passwordStrength,
+	showLoginPassword, showRegPassword, showRegPasswordConfirm,
+	authProviders, socialAuthError, socialAuthErrorMessage, startSocialAuth,
+	isAuthenticated,
+	initAuth,
+} = useAutenticazione();
 
-// --- STATO LOGIN ---
-const credentials = ref({
-	email: "",
-	password: "",
-	remember: false, // Checkbox "ricordami"
-});
-
-const messageError = ref(null);         // Errori di validazione (oggetto con chiavi campo)
-const limitMessageError = ref(null);    // Errore limite tentativi
-const messageSuccess = ref(null);       // Messaggio di successo (es. registrazione completata)
-const messageLoading = ref(null);       // Messaggio di caricamento (es. "Login in corso...")
-const isLoading = ref(false);           // Stato di caricamento globale
-const isGoogle = ref(false);            // Se l'utente sta facendo login con Google
-const showResendVerification = ref(false); // Mostra il bottone per re-inviare email di verifica
-const resendMessage = ref(null);        // Messaggio di feedback re-invio
-const resendLoading = ref(false);       // Stato caricamento re-invio
-
-// --- VERIFICA CODICE A 6 CIFRE ---
-// Quando l'account non e' verificato, il backend risponde con 403 e richiede il codice
-const verificationMode = ref(false);                     // Se siamo nella modalita' verifica codice
-const verificationCode = ref(["", "", "", "", "", ""]);  // Array con le 6 cifre del codice
-const verificationLoading = ref(false);
-const verificationError = ref(null);
-const verificationSuccess = ref(null);
-const verificationCodeHint = ref(null);  // Suggerimento codice (mostrato in ambiente dev)
-
-// GESTIONE CSRF — PERCHE' QUESTA FUNZIONE E' VUOTA?
-//
-// Il "CSRF token" e' una protezione contro attacchi dove un sito malevolo
-// prova a fare richieste al nostro backend fingendosi l'utente.
-//
-// COME FUNZIONA IL FLUSSO AUTOMATICO (gestito dal modulo nuxt-auth-sanctum):
-// 1. Prima di ogni richiesta POST/PUT/DELETE/PATCH, l'interceptor del modulo
-//    (file: node_modules/nuxt-auth-sanctum/dist/runtime/interceptors/request/stateful.js)
-//    controlla se il cookie "XSRF-TOKEN" esiste nel browser
-// 2. Se il cookie NON esiste, il modulo chiama GET /sanctum/csrf-cookie automaticamente
-//    per ottenere un nuovo token da Laravel
-// 3. Il modulo legge il valore del cookie e lo mette nell'header "X-XSRF-TOKEN"
-// 4. Laravel confronta cookie e header: se corrispondono, la richiesta e' valida
-//
-// PERCHE' ERA UN PROBLEMA PRIMA:
-// Prima questa funzione chiamava $fetch('/sanctum/csrf-cookie') manualmente,
-// bypassando il client del modulo sanctum. Questo causava:
-// - Doppia richiesta CSRF (una manuale + una automatica del modulo)
-// - Possibili conflitti di cookie se i timing non corrispondevano
-// - Errore "Unauthenticated" perche' il token poteva scadere tra le due chiamate
-//
-// Ora la funzione e' mantenuta come "no-op" (non fa nulla) per compatibilita':
-// handleLogin() e registerUser() la chiamano ancora nei retry su errore 419,
-// ma il vero refresh del CSRF avviene automaticamente dal modulo alla prossima richiesta.
-const refreshCsrf = async () => {
-	// No-op: il modulo nuxt-auth-sanctum gestisce il CSRF automaticamente.
-	// Vedi commento sopra per la spiegazione dettagliata.
-};
-
-// Gestisce il login con email e password
-// Se il backend risponde 403 con requires_verification, attiva la modalita' verifica codice
-// In caso di errore 419 (CSRF scaduto), rinfresca automaticamente il token e riprova
-const handleLogin = async (isRetry = false) => {
-	let loginCompleted = false;
-	messageError.value = null;
-	showResendVerification.value = false;
-	resendMessage.value = null;
-
-	if (!credentials.value.email || !credentials.value.password) {
-		messageError.value = { email: ["Inserisci email e password."] };
-		return;
-	}
-
-	if (!isGoogle.value) {
-		messageLoading.value = isRetry ? "Riconnessione in corso..." : "Login in corso...";
-	}
-
-	isLoading.value = true;
-
-	// Rinfresca sempre il CSRF token prima del login per evitare errori 419
-	if (!isRetry) {
-		await refreshCsrf();
-	}
-
-	try {
-		const response = await login(credentials.value);
-
-		items.value.forEach((item) => {
-			item.disabled = true;
-		});
-		loginCompleted = true;
-
-		// Login riuscito: non svuotiamo i campi perche' la pagina sta per cambiare
-		// (il modulo sanctum fa il redirect automatico dopo il login).
-		// Mantenere isLoading=true evita il flash dei campi vuoti prima del redirect.
-	} catch (error) {
-		const status = error?.response?.status || error?.statusCode;
-		const data = error?.response?._data || error?.data;
-
-		if (status === 403 && data?.requires_verification) {
-			// Account not verified - show verification code input
-			verificationMode.value = true;
-			verificationCode.value = ["", "", "", "", "", ""];
-			verificationError.value = null;
-			verificationSuccess.value = null;
-			messageError.value = null;
-			// Extract code from response message if available
-			const msg = data?.message || "";
-			const codeMatch = msg.match(/Codice:\s*(\d{6})/);
-			if (codeMatch) {
-				verificationCodeHint.value = codeMatch[1];
-			}
-		} else if (status === 419 && !isRetry) {
-			// CSRF token scaduto: rinfresca il token e riprova automaticamente (1 volta sola)
-			await refreshCsrf();
-			return handleLogin(true);
-		} else if (status === 422) {
-			messageError.value = data?.errors || { email: ["Credenziali non valide."] };
-		} else if (status === 401) {
-			const message = data?.message || "Credenziali non corrette.";
-			messageError.value = data?.errors || data || { email: [message] };
-			if (String(message).toLowerCase().includes("verificare l'email") || String(message).toLowerCase().includes("verifica")) {
-				showResendVerification.value = true;
-			}
-		} else if (status === 429) {
-			messageError.value = { email: ["Troppi tentativi. Riprova tra qualche minuto."] };
-		} else if (status === 419) {
-			// Retry gia' tentato e ancora 419 - errore persistente
-			messageError.value = { email: ["Errore di sessione. Svuota la cache del browser e riprova."] };
-		} else if (status >= 500) {
-			messageError.value = { email: ["Errore del server. Riprova tra poco."] };
-		} else {
-			messageError.value = { email: ["Errore di connessione. Verifica che il server sia attivo e riprova."] };
-		}
-	} finally {
-		if (!loginCompleted) {
-			messageLoading.value = null;
-			isLoading.value = false;
-		}
-	}
-};
-
-
-// Re-invia l'email di verifica all'indirizzo inserito nel campo login
-const resendVerificationEmail = async () => {
-	resendMessage.value = null;
-	showResendVerification.value = true;
-	if (!credentials.value.email) {
-		resendMessage.value = { type: "error", text: "Inserisci prima la tua email nel campo login." };
-		return;
-	}
-
-	resendLoading.value = true;
-	try {
-		const sanctum = useSanctumClient();
-		const response = await sanctum("/api/resend-verification-email", {
-			method: "POST",
-			body: { email: credentials.value.email },
-		});
-		resendMessage.value = { type: "success", text: response?.message || "Email inviata con successo." };
-	} catch (error) {
-		const data = error?.response?._data || error?.data;
-		resendMessage.value = { type: "error", text: data?.message || "Errore durante l'invio. Riprova." };
-	} finally {
-		resendLoading.value = false;
-	}
-};
-
-// Verifica il codice a 6 cifre inserito dall'utente e, se valido, esegue il login automatico
-const verifyCode = async () => {
-	const code = verificationCode.value.join("");
-	if (code.length !== 6) {
-		verificationError.value = "Inserisci il codice completo a 6 cifre.";
-		return;
-	}
-
-	verificationLoading.value = true;
-	verificationError.value = null;
-
-	try {
-		const sanctum = useSanctumClient();
-		const response = await sanctum("/api/verify-code", {
-			method: "POST",
-			body: {
-				email: credentials.value.email,
-				password: credentials.value.password,
-				code: code,
-			},
-		});
-
-		// Account verificato: eseguiamo il login automatico
-		verificationMode.value = false;
-		messageLoading.value = "Account verificato! Accesso in corso...";
-		isLoading.value = true;
-
-		try {
-			await login(credentials.value);
-		} catch (loginError) {
-			// Se il login automatico fallisce, mostriamo un messaggio di successo
-			// e chiediamo all'utente di riprovare manualmente
-			messageSuccess.value = response?.message || "Account verificato con successo! Ora puoi accedere.";
-			isLoading.value = false;
-			messageLoading.value = null;
-		}
-	} catch (error) {
-		const data = error?.response?._data || error?.data;
-		verificationError.value = data?.message || "Codice non valido. Riprova.";
-	} finally {
-		verificationLoading.value = false;
-	}
-};
-
-// Gestisce l'input nei campi del codice di verifica: avanza automaticamente al campo successivo
-const handleVerificationInput = (index, event) => {
-	const value = event.target.value;
-	if (value && index < 5) {
-		const nextInput = event.target.parentElement.querySelector(`input:nth-child(${index + 2})`);
-		if (nextInput) nextInput.focus();
-	}
-};
-
-// Gestisce il tasto Backspace nei campi verifica: torna al campo precedente se vuoto
-const handleVerificationKeydown = (index, event) => {
-	if (event.key === "Backspace" && !verificationCode.value[index] && index > 0) {
-		const prevInput = event.target.parentElement.querySelector(`input:nth-child(${index})`);
-		if (prevInput) prevInput.focus();
-	}
-};
-
-// Gestisce il "copia e incolla" del codice di verifica: distribuisce le cifre nei 6 campi
-const handleVerificationPaste = (event) => {
-	event.preventDefault();
-	const paste = (event.clipboardData || window.clipboardData).getData("text").replace(/\D/g, "").slice(0, 6);
-	for (let i = 0; i < 6; i++) {
-		verificationCode.value[i] = paste[i] || "";
-	}
-};
-
-const resendCodeForVerification = async () => {
-	verificationError.value = null;
-	verificationLoading.value = true;
-	try {
-		const sanctum = useSanctumClient();
-		const response = await sanctum("/api/resend-verification-email", {
-			method: "POST",
-			body: { email: credentials.value.email },
-		});
-		verificationError.value = null;
-		const resendMsg = response?.message || "Nuovo codice inviato!";
-		verificationSuccess.value = resendMsg;
-		// Extract code from resend response
-		const resendCodeMatch = resendMsg.match(/(\d{6})/);
-		if (resendCodeMatch) {
-			verificationCodeHint.value = resendCodeMatch[1];
-		}
-	} catch (error) {
-		const data = error?.response?._data || error?.data;
-		verificationError.value = data?.message || "Errore nell'invio del codice. Riprova.";
-	} finally {
-		verificationLoading.value = false;
-	}
-};
-
-// --- INDICATORE FORZA PASSWORD (registrazione) ---
-// Controlla i requisiti della password: lunghezza, maiuscola, minuscola, numero, simbolo
-const passwordChecks = computed(() => {
-	const pwd = registerForm.value.password || "";
-	return {
-		minLength: pwd.length >= 8,
-		hasLower: /[a-z]/.test(pwd),
-		hasUpper: /[A-Z]/.test(pwd),
-		hasNumber: /[0-9]/.test(pwd),
-		hasSymbol: /[^a-zA-Z0-9\s]/.test(pwd),
-	};
-});
-
-// Numero di requisiti soddisfatti (da 0 a 5) per la barra di forza
-const passwordStrength = computed(() => {
-	const checks = passwordChecks.value;
-	const passed = Object.values(checks).filter(Boolean).length;
-	return passed;
-});
-
-// Pagina pubblica: evitiamo middleware sanctum:guest per non forzare
-// chiamate /api/user rumorose in sessione guest.
-onMounted(() => {
-	if (isAuthenticated.value) {
-		navigateTo('/');
-	}
-});
-
-const apiBase = useRuntimeConfig().public.apiBase;
-
-// --- STATO REGISTRAZIONE ---
-const registerForm = ref({
-	name: "",
-	surname: "",
-	email: "",
-	email_confirmation: "",
-	prefix: "+39",
-	telephone_number: "",
-	password: "",
-	password_confirmation: "",
-	role: "Cliente",
-	referred_by: "",
-	user_type: "privato",
-});
-
-// Cattura il codice referral dall'URL (?ref=CODICE) e apre automaticamente il tab di registrazione
-const route = useRoute();
-const refCode = route.query.ref;
-const defaultTabValue = refCode ? 'registrati' : 'accedi';
-
-if (refCode) {
-	registerForm.value.referred_by = String(refCode).toUpperCase();
-}
-
-// Invia il form di registrazione al backend (/api/custom-register)
-// In caso di errore 419 (CSRF scaduto), rinfresca il token e riprova automaticamente
-const registerUser = async (isRetry = false) => {
-	messageError.value = null;
-	messageSuccess.value = null;
-	showResendVerification.value = false;
-	resendMessage.value = null;
-
-	messageLoading.value = isRetry ? "Riconnessione in corso..." : "Registrazione in corso...";
-
-	items.value.forEach((item) => {
-		item.disabled = true;
-	});
-
-	isLoading.value = true;
-
-	// Rinfresca il CSRF token prima della registrazione
-	if (!isRetry) {
-		await refreshCsrf();
-	}
-
-	try {
-		const sanctum = useSanctumClient();
-		const response = await sanctum("/api/custom-register", {
-			method: "POST",
-			body: registerForm.value,
-		});
-
-		messageSuccess.value = response?.message || "Registrazione completata con successo!";
-	} catch (error) {
-		const status = error?.response?.status || error?.statusCode;
-		const data = error?.response?._data || error?.data;
-
-		if (status === 419 && !isRetry) {
-			// CSRF scaduto: rinfresca e riprova
-			await refreshCsrf();
-			return registerUser(true);
-		} else if (status === 422 || data?.errors) {
-			messageError.value = data?.errors || error?.response?._data?.errors;
-		} else if (status === 419) {
-			messageError.value = { email: ["Errore di sessione. Svuota la cache del browser e riprova."] };
-		} else if (status >= 500) {
-			messageError.value = { email: ["Errore del server. Riprova tra poco."] };
-		} else {
-			messageError.value = { email: ["Errore di connessione. Verifica che il server sia attivo e riprova."] };
-		}
-	} finally {
-		messageLoading.value = null;
-		isLoading.value = false;
-		items.value.forEach((item) => {
-			item.disabled = false;
-		});
-	}
-};
-
-const showForm = ref(false);
-
-// Toggle visibilita' password nei campi di input
-const showLoginPassword = ref(false);
-const showRegPassword = ref(false);
-const showRegPasswordConfirm = ref(false);
-
-// Google auth error handling
-const googleError = ref(false);
 onMounted(async () => {
-	if (route.query.error === 'google_auth_failed') {
-		googleError.value = true;
-		navigateTo('/autenticazione', { replace: true });
-	}
+	if (isAuthenticated.value) { navigateTo('/'); return; }
+	await initAuth();
 });
-
-// Google Auth URL (computed per usarlo come href nel template)
-const googleAuthUrl = computed(() => {
-	const currentRedirect = route.query.redirect || '/account';
-	const frontendOrigin = typeof window !== 'undefined' ? window.location.origin : '';
-	return `${apiBase}/api/auth/google/redirect?frontend=${encodeURIComponent(frontendOrigin)}&redirect=${encodeURIComponent(currentRedirect)}`;
-});
-
-// Quando l'utente cambia tab (Login <-> Registrazione), resetta tutti i messaggi di errore/successo
-function onTabClick(newValue) {
-	if (messageError.value) {
-		messageError.value = null;
-	}
-	messageSuccess.value = null;
-	showResendVerification.value = false;
-	resendMessage.value = null;
-	verificationMode.value = false;
-	verificationError.value = null;
-	verificationSuccess.value = null;
-}
 </script>
 
 <template>
-	<section class="min-h-[500px] py-[24px] tablet:py-[40px] desktop:py-[60px]">
+	<section class="min-h-[0] py-[18px] tablet:py-[28px] desktop:py-[36px]">
 		<div class="my-container">
-			<div class="mx-auto w-full max-w-[440px]">
+			<div class="mx-auto w-full max-w-[760px]">
 				<!-- Success message -->
-				<div v-if="messageSuccess" class="bg-emerald-50 border border-emerald-200 p-[24px] rounded-[12px] text-[#252B42] text-center">
+				<div v-if="messageSuccess && !verificationMode" class="bg-emerald-50 border border-emerald-200 p-[24px] rounded-[12px] text-[#252B42] text-center">
 					<div class="w-[56px] h-[56px] mx-auto mb-[16px] bg-emerald-100 rounded-full flex items-center justify-center">
 						<span class="text-emerald-600 text-[1.5rem] font-bold">&#10003;</span>
 					</div>
 					<p class="text-[1rem] font-medium">{{ messageSuccess }}</p>
 					<p class="text-[0.875rem] text-[#737373] mt-[8px]">Accedi con le tue credenziali e inserisci il codice di verifica per attivare l'account.</p>
-					<button @click="messageSuccess = null" class="mt-[16px] px-[24px] py-[10px] bg-[#095866] text-white rounded-[8px] text-[0.875rem] font-semibold cursor-pointer hover:bg-[#074a56] transition-colors">
+					<button @click="messageSuccess = null; selectedAuthTab = 'accedi'" class="mt-[16px] px-[24px] py-[10px] bg-[#095866] text-white rounded-[8px] text-[0.875rem] font-semibold cursor-pointer hover:bg-[#074a56] transition-colors">
 						Torna al login
 					</button>
 				</div>
 
-				<UTabs :items="items" v-if="!messageSuccess" :default-value="defaultTabValue" @update:modelValue="onTabClick">
+				<div v-else-if="verificationMode" class="bg-white p-[16px] tablet:p-[28px] rounded-[12px] shadow-[0_2px_8px_rgba(0,0,0,0.06)] border border-[#E9EBEC] text-[#252B42] mt-[24px]">
+					<div class="text-center mb-[20px]">
+						<div class="w-[56px] h-[56px] mx-auto mb-[16px] bg-[#095866]/10 rounded-full flex items-center justify-center">
+							<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#095866" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+						</div>
+						<h3 class="text-[1.125rem] font-semibold text-[#252B42]">Verifica il tuo account</h3>
+						<p class="text-[0.875rem] text-[#737373] mt-[8px]">Inserisci il codice di verifica a 6 cifre per verificare l'account <strong>{{ credentials.email }}</strong></p>
+						<div v-if="verificationCodeHint" class="mt-[12px] bg-blue-50 border border-blue-200 rounded-[8px] p-[12px] text-center">
+							<p class="text-[0.8125rem] text-blue-700 mb-[4px]">Il tuo codice di verifica:</p>
+							<p class="text-[1.5rem] font-bold text-blue-800 tracking-[8px]">{{ verificationCodeHint }}</p>
+						</div>
+					</div>
+					<div class="flex justify-center gap-[6px] tablet:gap-[8px] mb-[20px]" @paste="handleVerificationPaste">
+						<input v-for="(digit, index) in verificationCode" :key="index" type="text" maxlength="1" inputmode="numeric" :value="verificationCode[index]" @input="(e) => { verificationCode[index] = e.target.value.replace(/\D/g, ''); handleVerificationInput(index, e); }" @keydown="(e) => handleVerificationKeydown(index, e)" class="w-[40px] h-[48px] tablet:w-[48px] tablet:h-[56px] text-center text-[1.125rem] tablet:text-[1.25rem] font-bold bg-[#F8F9FB] border border-[#E9EBEC] rounded-[8px] focus:border-[#095866] focus:outline-none transition-colors focus:shadow-[0_0_0_3px_rgba(9,88,102,0.1)]" />
+					</div>
+					<p v-if="verificationError" class="text-red-500 text-[0.8125rem] mb-[12px] bg-red-50 p-[10px] rounded-[6px] text-center">{{ verificationError }}</p>
+					<p v-if="verificationSuccess" class="text-emerald-600 text-[0.8125rem] mb-[12px] bg-emerald-50 p-[10px] rounded-[6px] text-center">{{ verificationSuccess }}</p>
+					<button type="button" @click="verifyCode" :disabled="verificationLoading" :class="['w-full py-[14px] rounded-[50px] text-white font-semibold text-[1rem] transition-[background-color,transform]', verificationLoading ? 'bg-gray-300 cursor-not-allowed' : 'bg-[#095866] hover:bg-[#074a56] cursor-pointer']">
+						<span v-if="verificationLoading">Verifica in corso...</span>
+						<span v-else>Verifica Account</span>
+					</button>
+					<div class="flex items-center justify-between mt-[16px]">
+						<button type="button" @click="resendCodeForVerification" :disabled="verificationLoading" class="text-[0.8125rem] text-[#095866] font-semibold hover:underline cursor-pointer disabled:opacity-60">Invia nuovo codice</button>
+						<button type="button" @click="resetVerificationFlow(); selectedAuthTab = 'accedi'" class="text-[0.8125rem] text-[#737373] hover:underline cursor-pointer">Torna al login</button>
+					</div>
+				</div>
+
+				<UTabs v-else class="auth-tabs" :items="items" :model-value="selectedAuthTab" @update:modelValue="onTabClick">
 					<!-- LOGIN TAB -->
 					<template #accedi>
-						<!-- Verification Code Input -->
-						<div v-if="verificationMode" class="bg-white p-[16px] tablet:p-[28px] rounded-[12px] shadow-[0_2px_8px_rgba(0,0,0,0.06)] border border-[#E9EBEC] text-[#252B42] mt-[24px]">
-							<div class="text-center mb-[20px]">
-								<div class="w-[56px] h-[56px] mx-auto mb-[16px] bg-[#095866]/10 rounded-full flex items-center justify-center">
-									<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#095866" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-								</div>
-								<h3 class="text-[1.125rem] font-semibold text-[#252B42]">Verifica il tuo account</h3>
-								<p class="text-[0.875rem] text-[#737373] mt-[8px]">Inserisci il codice di verifica a 6 cifre per verificare l'account <strong>{{ credentials.email }}</strong></p>
-								<div v-if="verificationCodeHint" class="mt-[12px] bg-blue-50 border border-blue-200 rounded-[8px] p-[12px] text-center">
-									<p class="text-[0.8125rem] text-blue-700 mb-[4px]">Il tuo codice di verifica:</p>
-									<p class="text-[1.5rem] font-bold text-blue-800 tracking-[8px]">{{ verificationCodeHint }}</p>
-								</div>
-							</div>
-							<div class="flex justify-center gap-[6px] tablet:gap-[8px] mb-[20px]" @paste="handleVerificationPaste">
-								<input v-for="(digit, index) in verificationCode" :key="index" type="text" maxlength="1" inputmode="numeric" :value="verificationCode[index]" @input="(e) => { verificationCode[index] = e.target.value.replace(/\D/g, ''); handleVerificationInput(index, e); }" @keydown="(e) => handleVerificationKeydown(index, e)" class="w-[40px] h-[48px] tablet:w-[48px] tablet:h-[56px] text-center text-[1.125rem] tablet:text-[1.25rem] font-bold bg-[#F8F9FB] border border-[#E9EBEC] rounded-[8px] focus:border-[#095866] focus:outline-none transition-colors focus:shadow-[0_0_0_3px_rgba(9,88,102,0.1)]" />
-							</div>
-							<p v-if="verificationError" class="text-red-500 text-[0.8125rem] mb-[12px] bg-red-50 p-[10px] rounded-[6px] text-center">{{ verificationError }}</p>
-							<p v-if="verificationSuccess" class="text-emerald-600 text-[0.8125rem] mb-[12px] bg-emerald-50 p-[10px] rounded-[6px] text-center">{{ verificationSuccess }}</p>
-							<button type="button" @click="verifyCode" :disabled="verificationLoading" :class="['w-full py-[14px] rounded-[50px] text-white font-semibold text-[1rem] transition-[background-color,transform]', verificationLoading ? 'bg-gray-300 cursor-not-allowed' : 'bg-[#095866] hover:bg-[#074a56] cursor-pointer']">
-								<span v-if="verificationLoading">Verifica in corso...</span>
-								<span v-else>Verifica Account</span>
-							</button>
-							<div class="flex items-center justify-between mt-[16px]">
-								<button type="button" @click="resendCodeForVerification" :disabled="verificationLoading" class="text-[0.8125rem] text-[#095866] font-semibold hover:underline cursor-pointer disabled:opacity-60">Invia nuovo codice</button>
-								<button type="button" @click="verificationMode = false; verificationError = null; verificationSuccess = null;" class="text-[0.8125rem] text-[#737373] hover:underline cursor-pointer">Torna al login</button>
-							</div>
-						</div>
-
-						<div v-if="showResendVerification && !verificationMode" class="bg-amber-50 border border-amber-200 p-[16px] rounded-[50px] text-[#252B42] mt-[24px] mb-[12px]">
+						<div v-if="showResendVerification" class="bg-amber-50 border border-amber-200 p-[16px] rounded-[50px] text-[#252B42] mt-[24px] mb-[12px]">
 							<p class="text-[0.9375rem] font-medium">Email non confermata. Ti reinviamo subito una nuova email di verifica.</p>
 							<button
 								type="button"
@@ -513,25 +108,52 @@ function onTabClick(newValue) {
 							</button>
 							<p v-if="resendMessage" class="text-[0.8125rem] mt-[10px]" :class="resendMessage.type === 'success' ? 'text-emerald-700' : 'text-red-600'">{{ resendMessage.text }}</p>
 						</div>
-						<div v-if="!verificationMode" class="mt-[24px]">
-						<!-- Google auth error -->
-						<div v-if="googleError" class="bg-red-50 border border-red-200 rounded-[12px] p-[12px] mb-[16px] text-red-600 text-[0.875rem]">
-							Errore durante l'accesso con Google. Riprova.
+						<div class="mt-[24px]">
+						<!-- Social auth error -->
+						<div v-if="socialAuthError" class="bg-red-50 border border-red-200 rounded-[12px] p-[12px] mb-[16px] text-red-600 text-[0.875rem]">
+							{{ socialAuthErrorMessage }}
 						</div>
 
-						<!-- Accedi con Google -->
-						<a
-							:href="googleAuthUrl"
-							class="flex items-center justify-center gap-[12px] w-full h-[52px] bg-white border-2 border-[#E0E0E0] rounded-[12px] text-[#333] font-semibold text-[1rem] transition-[border-color,box-shadow,transform] duration-200 hover:border-[#4285F4] hover:shadow-[0_2px_12px_rgba(66,133,244,0.15)] active:scale-[0.98]"
-						>
-							<svg width="20" height="20" viewBox="0 0 48 48">
-								<path fill="#FFC107" d="M43.611 20.083H42V20H24v8h11.303c-1.649 4.657-6.08 8-11.303 8-6.627 0-12-5.373-12-12s5.373-12 12-12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4 12.955 4 4 12.955 4 24s8.955 20 20 20 20-8.955 20-20c0-1.341-.138-2.65-.389-3.917z"/>
-								<path fill="#FF3D00" d="M6.306 14.691l6.571 4.819C14.655 15.108 18.961 12 24 12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4 16.318 4 9.656 8.337 6.306 14.691z"/>
-								<path fill="#4CAF50" d="M24 44c5.166 0 9.86-1.977 13.409-5.192l-6.19-5.238A11.91 11.91 0 0124 36c-5.202 0-9.619-3.317-11.283-7.946l-6.522 5.025C9.505 39.556 16.227 44 24 44z"/>
-								<path fill="#1976D2" d="M43.611 20.083H42V20H24v8h11.303a12.04 12.04 0 01-4.087 5.571l.003-.002 6.19 5.238C36.971 39.205 44 34 44 24c0-1.341-.138-2.65-.389-3.917z"/>
-							</svg>
-							Continua con Google
-						</a>
+						<div class="social-auth-grid">
+							<button
+								type="button"
+								@click="startSocialAuth('google')"
+								:class="['social-auth-button social-auth-button--google', !authProviders.google ? 'social-auth-button--unavailable' : '']"
+							>
+								<span class="social-auth-button__icon" aria-hidden="true">
+								<svg width="20" height="20" viewBox="0 0 48 48">
+									<path fill="#FFC107" d="M43.611 20.083H42V20H24v8h11.303c-1.649 4.657-6.08 8-11.303 8-6.627 0-12-5.373-12-12s5.373-12 12-12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4 12.955 4 4 12.955 4 24s8.955 20 20 20 20-8.955 20-20c0-1.341-.138-2.65-.389-3.917z"/>
+									<path fill="#FF3D00" d="M6.306 14.691l6.571 4.819C14.655 15.108 18.961 12 24 12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4 16.318 4 9.656 8.337 6.306 14.691z"/>
+									<path fill="#4CAF50" d="M24 44c5.166 0 9.86-1.977 13.409-5.192l-6.19-5.238A11.91 11.91 0 0124 36c-5.202 0-9.619-3.317-11.283-7.946l-6.522 5.025C9.505 39.556 16.227 44 24 44z"/>
+									<path fill="#1976D2" d="M43.611 20.083H42V20H24v8h11.303a12.04 12.04 0 01-4.087 5.571l.003-.002 6.19 5.238C36.971 39.205 44 34 44 24c0-1.341-.138-2.65-.389-3.917z"/>
+								</svg>
+								</span>
+								<span class="social-auth-button__text">Continua con Google</span>
+							</button>
+							<button
+								type="button"
+								@click="startSocialAuth('facebook')"
+								:class="['social-auth-button social-auth-button--facebook', !authProviders.facebook ? 'social-auth-button--unavailable' : '']"
+							>
+								<span class="social-auth-button__icon" aria-hidden="true">
+								<svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true">
+									<path fill="#1877F2" d="M24 12.073C24 5.405 18.627 0 12 0S0 5.405 0 12.073c0 6.026 4.388 11.022 10.125 11.927v-8.437H7.078v-3.49h3.047V9.41c0-3.017 1.792-4.684 4.533-4.684 1.313 0 2.686.235 2.686.235v2.963H15.83c-1.491 0-1.956.927-1.956 1.879v2.27h3.328l-.532 3.49h-2.796V24C19.612 23.095 24 18.099 24 12.073z"/>
+								</svg>
+								</span>
+								<span class="social-auth-button__text">Continua con Facebook</span>
+							</button>
+							<button
+								type="button"
+								:class="['social-auth-button social-auth-button--apple', !authProviders.apple ? 'social-auth-button--unavailable' : '']"
+								@click="startSocialAuth('apple')">
+								<span class="social-auth-button__icon" aria-hidden="true">
+									<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+										<path d="M16.37 12.36c.02 2.14 1.88 2.85 1.9 2.86-.02.05-.3 1.04-1 2.07-.61.89-1.24 1.77-2.24 1.79-.98.02-1.3-.58-2.42-.58-1.12 0-1.48.56-2.4.6-.96.04-1.69-.96-2.3-1.85-1.25-1.81-2.2-5.13-.92-7.36.63-1.11 1.76-1.81 2.99-1.83.93-.02 1.81.63 2.42.63.61 0 1.74-.78 2.93-.66.5.02 1.91.2 2.81 1.51-.07.04-1.68.98-1.67 2.82Zm-2.04-5.05c.51-.62.85-1.48.75-2.34-.73.03-1.62.48-2.14 1.09-.47.54-.88 1.41-.77 2.25.81.06 1.64-.42 2.16-1Z"/>
+									</svg>
+								</span>
+								<span class="social-auth-button__text">Continua con Apple</span>
+							</button>
+						</div>
 
 						<div class="flex items-center gap-[16px] my-[16px]">
 							<div class="flex-1 h-[1px] bg-[#E0E0E0]"></div>
@@ -540,7 +162,7 @@ function onTabClick(newValue) {
 						</div>
 					</div>
 
-					<form v-if="!verificationMode" @submit.prevent="handleLogin" class="bg-white p-[16px] tablet:p-[28px] rounded-[12px] shadow-[0_2px_8px_rgba(0,0,0,0.06)] border border-[#E9EBEC] text-[#252B42]">
+					<form @submit.prevent="handleLogin" class="bg-white p-[16px] tablet:p-[28px] rounded-[12px] shadow-[0_2px_8px_rgba(0,0,0,0.06)] border border-[#E9EBEC] text-[#252B42]">
 							<div class="mb-[20px]">
 								<label for="login_email" class="block text-[0.875rem] font-medium text-[#252B42] mb-[6px]">Email</label>
 								<input
@@ -611,24 +233,51 @@ function onTabClick(newValue) {
 					<!-- REGISTRATION TAB -->
 					<template #registrati>
 						<div class="mt-[24px]">
-							<!-- Google auth error -->
-							<div v-if="googleError" class="bg-red-50 border border-red-200 rounded-[12px] p-[12px] mb-[16px] text-red-600 text-[0.875rem]">
-								Errore durante l'accesso con Google. Riprova.
+							<!-- Social auth error -->
+							<div v-if="socialAuthError" class="bg-red-50 border border-red-200 rounded-[12px] p-[12px] mb-[16px] text-red-600 text-[0.875rem]">
+								{{ socialAuthErrorMessage }}
 							</div>
 
-							<!-- Registrati con Google -->
-							<a
-								:href="googleAuthUrl"
-								class="flex items-center justify-center gap-[12px] w-full h-[52px] bg-white border-2 border-[#E0E0E0] rounded-[12px] text-[#333] font-semibold text-[1rem] transition-[border-color,box-shadow,transform] duration-200 hover:border-[#4285F4] hover:shadow-[0_2px_12px_rgba(66,133,244,0.15)] active:scale-[0.98]"
-							>
-								<svg width="20" height="20" viewBox="0 0 48 48">
-									<path fill="#FFC107" d="M43.611 20.083H42V20H24v8h11.303c-1.649 4.657-6.08 8-11.303 8-6.627 0-12-5.373-12-12s5.373-12 12-12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4 12.955 4 4 12.955 4 24s8.955 20 20 20 20-8.955 20-20c0-1.341-.138-2.65-.389-3.917z"/>
-									<path fill="#FF3D00" d="M6.306 14.691l6.571 4.819C14.655 15.108 18.961 12 24 12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4 16.318 4 9.656 8.337 6.306 14.691z"/>
-									<path fill="#4CAF50" d="M24 44c5.166 0 9.86-1.977 13.409-5.192l-6.19-5.238A11.91 11.91 0 0124 36c-5.202 0-9.619-3.317-11.283-7.946l-6.522 5.025C9.505 39.556 16.227 44 24 44z"/>
-									<path fill="#1976D2" d="M43.611 20.083H42V20H24v8h11.303a12.04 12.04 0 01-4.087 5.571l.003-.002 6.19 5.238C36.971 39.205 44 34 44 24c0-1.341-.138-2.65-.389-3.917z"/>
-								</svg>
-								Continua con Google
-							</a>
+						<div class="social-auth-grid">
+								<button
+									type="button"
+									@click="startSocialAuth('google')"
+									:class="['social-auth-button social-auth-button--google', !authProviders.google ? 'social-auth-button--unavailable' : '']"
+								>
+									<span class="social-auth-button__icon" aria-hidden="true">
+									<svg width="20" height="20" viewBox="0 0 48 48">
+										<path fill="#FFC107" d="M43.611 20.083H42V20H24v8h11.303c-1.649 4.657-6.08 8-11.303 8-6.627 0-12-5.373-12-12s5.373-12 12-12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4 12.955 4 4 12.955 4 24s8.955 20 20 20 20-8.955 20-20c0-1.341-.138-2.65-.389-3.917z"/>
+										<path fill="#FF3D00" d="M6.306 14.691l6.571 4.819C14.655 15.108 18.961 12 24 12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4 16.318 4 9.656 8.337 6.306 14.691z"/>
+										<path fill="#4CAF50" d="M24 44c5.166 0 9.86-1.977 13.409-5.192l-6.19-5.238A11.91 11.91 0 0124 36c-5.202 0-9.619-3.317-11.283-7.946l-6.522 5.025C9.505 39.556 16.227 44 24 44z"/>
+										<path fill="#1976D2" d="M43.611 20.083H42V20H24v8h11.303a12.04 12.04 0 01-4.087 5.571l.003-.002 6.19 5.238C36.971 39.205 44 34 44 24c0-1.341-.138-2.65-.389-3.917z"/>
+									</svg>
+									</span>
+									<span class="social-auth-button__text">Continua con Google</span>
+								</button>
+								<button
+									type="button"
+									@click="startSocialAuth('facebook')"
+									:class="['social-auth-button social-auth-button--facebook', !authProviders.facebook ? 'social-auth-button--unavailable' : '']"
+								>
+									<span class="social-auth-button__icon" aria-hidden="true">
+									<svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true">
+										<path fill="#1877F2" d="M24 12.073C24 5.405 18.627 0 12 0S0 5.405 0 12.073c0 6.026 4.388 11.022 10.125 11.927v-8.437H7.078v-3.49h3.047V9.41c0-3.017 1.792-4.684 4.533-4.684 1.313 0 2.686.235 2.686.235v2.963H15.83c-1.491 0-1.956.927-1.956 1.879v2.27h3.328l-.532 3.49h-2.796V24C19.612 23.095 24 18.099 24 12.073z"/>
+									</svg>
+									</span>
+									<span class="social-auth-button__text">Continua con Facebook</span>
+								</button>
+								<button
+									type="button"
+									:class="['social-auth-button social-auth-button--apple', !authProviders.apple ? 'social-auth-button--unavailable' : '']"
+									@click="startSocialAuth('apple')">
+									<span class="social-auth-button__icon" aria-hidden="true">
+										<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+											<path d="M16.37 12.36c.02 2.14 1.88 2.85 1.9 2.86-.02.05-.3 1.04-1 2.07-.61.89-1.24 1.77-2.24 1.79-.98.02-1.3-.58-2.42-.58-1.12 0-1.48.56-2.4.6-.96.04-1.69-.96-2.3-1.85-1.25-1.81-2.2-5.13-.92-7.36.63-1.11 1.76-1.81 2.99-1.83.93-.02 1.81.63 2.42.63.61 0 1.74-.78 2.93-.66.5.02 1.91.2 2.81 1.51-.07.04-1.68.98-1.67 2.82Zm-2.04-5.05c.51-.62.85-1.48.75-2.34-.73.03-1.62.48-2.14 1.09-.47.54-.88 1.41-.77 2.25.81.06 1.64-.42 2.16-1Z"/>
+										</svg>
+									</span>
+									<span class="social-auth-button__text">Continua con Apple</span>
+								</button>
+							</div>
 
 							<div class="flex items-center gap-[16px] my-[16px]">
 								<div class="flex-1 h-[1px] bg-[#E0E0E0]"></div>
@@ -858,3 +507,116 @@ function onTabClick(newValue) {
 		</div>
 	</section>
 </template>
+
+<style scoped>
+.auth-tabs :deep([data-slot='list']) {
+	background: #eef5f7;
+	padding: 0.22rem;
+	border-radius: 0.95rem;
+}
+
+.auth-tabs :deep([data-slot='indicator']) {
+	display: none;
+}
+
+.auth-tabs :deep([data-slot='trigger']) {
+	min-height: 2.6rem;
+	font-size: 0.975rem;
+	font-weight: 600;
+	color: #58727b;
+	border-radius: 0.72rem;
+	transition: background-color 160ms ease, color 160ms ease;
+}
+
+.auth-tabs :deep([data-slot='trigger'][data-state='active']) {
+	background: #095866;
+	color: #ffffff;
+}
+
+.auth-tabs :deep([data-slot='trigger'][data-state='inactive']) {
+	color: #58727b;
+}
+
+.social-auth-grid {
+	display: grid;
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+	gap: 0.8rem;
+	align-items: stretch;
+}
+
+.social-auth-button {
+	display: inline-flex;
+	align-items: center;
+	justify-content: flex-start;
+	gap: 0.72rem;
+	width: 100%;
+	min-height: 3.28rem;
+	padding: 0.85rem 1.1rem;
+	border-radius: 0.95rem;
+	border: 1px solid #d9e3e7;
+	background: #ffffff;
+	color: #252b42;
+	font-size: 0.94rem;
+	font-weight: 700;
+	line-height: 1.2;
+	text-decoration: none;
+	cursor: pointer;
+	transition: border-color 160ms ease, box-shadow 160ms ease, background-color 160ms ease;
+}
+
+.social-auth-button:hover {
+	background: #fbfdfe;
+	box-shadow: 0 8px 18px rgba(37, 43, 66, 0.06);
+}
+
+.social-auth-button:focus-visible {
+	outline: none;
+	border-color: #095866;
+	box-shadow: 0 0 0 3px rgba(9, 88, 102, 0.12);
+}
+
+.social-auth-button__icon {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	flex: 0 0 auto;
+	width: 1.42rem;
+	height: 1.42rem;
+}
+
+.social-auth-button__text {
+	min-width: 0;
+	flex: 0 1 auto;
+	text-align: left;
+	white-space: nowrap;
+}
+
+.social-auth-button--google:hover {
+	border-color: rgba(66, 133, 244, 0.38);
+}
+
+.social-auth-button--facebook:hover {
+	border-color: rgba(24, 119, 242, 0.4);
+}
+
+.social-auth-button--apple {
+	color: #111827;
+}
+
+.social-auth-button--unavailable {
+	opacity: 0.62;
+	background: #fbfcfd;
+	border-color: #e5ecef;
+}
+
+.social-auth-button--unavailable:hover {
+	background: #fbfcfd;
+	box-shadow: none;
+}
+
+@media (max-width: 47.99rem) {
+	.social-auth-grid {
+		grid-template-columns: 1fr;
+	}
+}
+</style>

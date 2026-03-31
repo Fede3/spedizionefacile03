@@ -50,6 +50,12 @@ class MarkOrderProcessing
      */
     public function handle(OrderPaid $event): void
     {
+        $event->order->refresh();
+
+        if ($event->order->status === Order::IN_TRANSIT) {
+            return;
+        }
+
         $event->order->update([
             'status' => Order::PROCESSING
         ]);

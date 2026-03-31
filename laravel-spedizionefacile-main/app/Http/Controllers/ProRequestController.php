@@ -1,4 +1,5 @@
 <?php
+
 /**
  * FILE: ProRequestController.php
  * SCOPO: Gestisce le richieste per diventare Partner Pro (invio, stato, approvazione/rifiuto admin).
@@ -50,6 +51,7 @@ use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+
 class ProRequestController extends Controller
 {
     /**
@@ -107,7 +109,7 @@ class ProRequestController extends Controller
             ->orderByDesc('created_at')
             ->first();
 
-        if (!$proRequest) {
+        if (! $proRequest) {
             return response()->json([
                 'has_request' => false,
                 'data' => null,
@@ -155,6 +157,7 @@ class ProRequestController extends Controller
 
         // Aggiorniamo il ruolo dell'utente a "Partner Pro"
         // e generiamo un codice referral se non ne ha gia' uno
+        /** @var User $user */
         $user = $proRequest->user;
         $user->update([
             'role' => 'Partner Pro',

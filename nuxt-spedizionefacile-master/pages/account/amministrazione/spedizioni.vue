@@ -32,7 +32,7 @@
 -->
 <script setup>
 definePageMeta({
-	middleware: ["sanctum:auth", "admin"],
+	middleware: ["app-auth", "admin"],
 });
 
 const sanctum = useSanctumClient();
@@ -79,14 +79,17 @@ onMounted(() => { fetchShipments(); });
 <template>
 	<section class="min-h-[600px] py-[40px] desktop:py-[60px] desktop-xl:py-[80px]">
 		<div class="my-container">
-			<!-- Breadcrumb -->
-			<div class="mb-[24px] text-[0.875rem] text-[#737373]">
-				<NuxtLink to="/account" class="hover:underline text-[#095866] font-medium">Il tuo account</NuxtLink>
-				<span class="mx-[8px] text-[#C8CCD0]">/</span>
-				<span class="font-semibold text-[#252B42]">Spedizioni BRT</span>
-			</div>
-
-			<h1 class="text-[1.75rem] font-bold text-[#252B42] mb-[8px]">Spedizioni BRT</h1>
+			<AccountPageHeader
+				eyebrow="Admin"
+				title="Spedizioni"
+				description="Tracking, etichette e stati."
+				:crumbs="[
+					{ label: 'Account', to: '/account' },
+					{ label: 'Amministrazione', to: '/account/amministrazione' },
+					{ label: 'Spedizioni' },
+				]"
+				back-to="/account/amministrazione"
+				back-label="Torna all'amministrazione" />
 			<div class="bg-blue-50 rounded-[12px] px-[16px] py-[10px] border border-blue-200 mb-[24px] flex items-center gap-[8px]">
 				<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[18px] h-[18px] text-blue-600 shrink-0" fill="currentColor"><path d="M13,9H11V7H13M13,17H11V11H13M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z"/></svg>
 				<p class="text-[0.8125rem] text-blue-700">Questa sezione mostra <strong>tutte le spedizioni BRT di tutti gli utenti</strong> della piattaforma. Per le tue spedizioni personali, vai su "Le mie spedizioni".</p>
@@ -107,7 +110,7 @@ onMounted(() => { fetchShipments(); });
 			<div class="flex flex-wrap gap-[12px] mb-[20px]">
 				<div class="relative flex-1 min-w-[200px]">
 					<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="absolute left-[12px] top-1/2 -translate-y-1/2 w-[18px] h-[18px] text-[#737373]" fill="currentColor"><path d="M9.5,3A6.5,6.5 0 0,1 16,9.5C16,11.11 15.41,12.59 14.44,13.73L14.71,14H15.5L20.5,19L19,20.5L14,15.5V14.71L13.73,14.44C12.59,15.41 11.11,16 9.5,16A6.5,6.5 0 0,1 3,9.5A6.5,6.5 0 0,1 9.5,3M9.5,5C7,5 5,7 5,9.5C5,12 7,14 9.5,14C12,14 14,12 14,9.5C14,7 12,5 9.5,5Z"/></svg>
-					<input v-model="shipmentsSearch" @input="onShipmentsSearch" type="text" placeholder="Cerca per Parcel ID, riferimento, utente..." class="w-full pl-[40px] pr-[14px] py-[10px] bg-white border border-[#E9EBEC] rounded-[50px] text-[0.875rem] focus:border-[#095866] focus:outline-none" />
+					<input v-model="shipmentsSearch" @input="onShipmentsSearch" type="text" placeholder="Cerca Parcel ID o utente..." class="w-full pl-[40px] pr-[14px] py-[10px] bg-white border border-[#E9EBEC] rounded-[50px] text-[0.875rem] focus:border-[#095866] focus:outline-none" />
 				</div>
 				<select v-model="shipmentsStatusFilter" @change="shipmentsPage = 1; fetchShipments()" class="px-[14px] py-[10px] bg-white border border-[#E9EBEC] rounded-[50px] text-[0.875rem] focus:border-[#095866] focus:outline-none cursor-pointer">
 					<option value="">Tutti gli stati</option>
@@ -120,7 +123,7 @@ onMounted(() => { fetchShipments(); });
 			</div>
 
 			<div class="bg-white rounded-[20px] p-[24px] desktop:p-[32px] shadow-sm border border-[#E9EBEC]">
-				<h2 class="text-[1.125rem] font-bold text-[#252B42] mb-[20px]">Spedizioni BRT</h2>
+				<h2 class="text-[1.125rem] font-bold text-[#252B42] mb-[20px]">Spedizioni</h2>
 
 				<div v-if="tabLoading" class="py-[40px] flex justify-center">
 					<div class="w-[32px] h-[32px] border-3 border-[#E9EBEC] border-t-[#095866] rounded-full animate-spin"></div>
@@ -131,7 +134,54 @@ onMounted(() => { fetchShipments(); });
 					<p>Nessuna spedizione BRT trovata.</p>
 				</div>
 
-				<div v-else class="overflow-x-auto">
+				<div v-else class="space-y-[12px]">
+					<div class="tablet:hidden space-y-[12px]">
+						<div v-for="(s, idx) in shipmentsData.data" :key="s.id" class="rounded-[16px] border border-[#E9EBEC] bg-[#F8FAFB] p-[14px] shadow-sm">
+							<div class="flex items-start justify-between gap-[12px]">
+								<div class="min-w-0">
+									<div class="flex flex-wrap items-center gap-[8px] mb-[6px]">
+										<span class="text-[0.9375rem] font-bold text-[#252B42]">#{{ s.id }}</span>
+										<span :class="['inline-flex items-center gap-[4px] px-[10px] py-[3px] rounded-full text-[0.6875rem] font-medium', orderStatusConfig[s.status]?.bg || 'bg-gray-50', orderStatusConfig[s.status]?.text || 'text-gray-700']">
+											{{ orderStatusConfig[s.status]?.label || s.status }}
+										</span>
+									</div>
+									<p class="text-[0.875rem] font-medium text-[#252B42] truncate">{{ s.user?.name }} {{ s.user?.surname }}</p>
+									<p class="text-[0.75rem] text-[#737373] truncate">{{ s.user?.email }}</p>
+								</div>
+								<div class="text-right shrink-0">
+									<p class="text-[0.75rem] text-[#737373]">{{ formatDate(s.created_at) }}</p>
+									<p v-if="s.is_cod" class="text-[0.875rem] font-semibold text-amber-700">&euro;{{ formatCurrency(s.cod_amount) }}</p>
+									<p v-else class="text-[0.75rem] text-[#C8CCD0]">&mdash;</p>
+								</div>
+							</div>
+							<div class="flex flex-wrap items-center gap-[8px] mt-[12px] text-[0.75rem]">
+								<span v-if="s.brt_parcel_id" class="font-mono bg-indigo-50 text-indigo-700 px-[6px] py-[2px] rounded">{{ s.brt_parcel_id }}</span>
+								<span v-else class="text-[#C8CCD0]">&mdash;</span>
+								<span v-if="s.brt_pudo_id" class="text-[0.625rem] font-semibold bg-[#095866]/10 text-[#095866] px-[6px] py-[2px] rounded">PUDO</span>
+							</div>
+							<div class="mt-[12px] grid grid-cols-2 gap-[8px]">
+								<a v-if="s.brt_tracking_url" :href="s.brt_tracking_url" target="_blank" class="inline-flex items-center justify-center gap-[4px] px-[12px] py-[9px] rounded-[10px] bg-indigo-50 text-indigo-700 text-[0.75rem] font-medium hover:bg-indigo-100 transition-colors">
+									<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[12px] h-[12px]" fill="currentColor"><path d="M18,15A3,3 0 0,1 21,18A3,3 0 0,1 18,21C16.69,21 15.58,20.17 15.17,19H14V17H15.17C15.58,15.83 16.69,15 18,15M18,17A1,1 0 0,0 17,18A1,1 0 0,0 18,19A1,1 0 0,0 19,18A1,1 0 0,0 18,17M6,15A3,3 0 0,1 9,18A3,3 0 0,1 6,21A3,3 0 0,1 3,18A3,3 0 0,1 6,15M6,17A1,1 0 0,0 5,18A1,1 0 0,0 6,19A1,1 0 0,0 7,18A1,1 0 0,0 6,17M11,7L9.5,13H13.5L12,7M9,3H14L18,17H12.5L12,15H11L10.5,17H5L9,3Z"/></svg>
+									Tracking
+								</a>
+								<button v-if="s.brt_parcel_id" @click="downloadLabel(s)" class="inline-flex items-center justify-center gap-[4px] px-[12px] py-[9px] rounded-[10px] bg-emerald-50 text-emerald-700 text-[0.75rem] font-medium hover:bg-emerald-100 cursor-pointer transition-colors">
+									<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[12px] h-[12px]" fill="currentColor"><path d="M5,20H19V18H5M19,9H15V3H9V9H5L12,16L19,9Z"/></svg>
+									Etichetta
+								</button>
+								<button v-else disabled class="inline-flex items-center justify-center gap-[4px] px-[12px] py-[9px] rounded-[10px] bg-gray-50 text-[#C8CCD0] text-[0.75rem] font-medium cursor-not-allowed">
+									No label
+								</button>
+								<select @change="changeOrderStatus(s.id, $event.target.value); $event.target.value = ''" class="col-span-2 w-full px-[10px] py-[9px] rounded-[10px] bg-white text-[#252B42] text-[0.75rem] cursor-pointer border border-[#D7E1E4] font-medium focus:border-[#095866] focus:outline-none">
+									<option value="" selected disabled>Stato</option>
+									<option value="in_transit">In transito</option>
+									<option value="delivered">Consegnato</option>
+									<option value="in_giacenza">In giacenza</option>
+								</select>
+							</div>
+						</div>
+					</div>
+
+					<div class="hidden tablet:block overflow-x-auto">
 					<table class="w-full text-[0.875rem]">
 						<thead>
 							<tr class="border-b border-[#E9EBEC] text-left text-[#737373]">
@@ -190,13 +240,14 @@ onMounted(() => { fetchShipments(); });
 						</tbody>
 					</table>
 
-					<div v-if="shipmentsData.last_page > 1" class="flex items-center justify-center gap-[8px] mt-[20px]">
-						<button @click="shipmentsPage = Math.max(1, shipmentsPage - 1); fetchShipments()" :disabled="shipmentsPage <= 1" class="px-[12px] py-[8px] rounded-[8px] bg-[#F0F0F0] text-[0.8125rem] font-medium disabled:opacity-40 cursor-pointer hover:bg-[#E0E0E0]">Precedente</button>
-						<span class="text-[0.8125rem] text-[#737373]">Pagina {{ shipmentsPage }} di {{ shipmentsData.last_page }}</span>
-						<button @click="shipmentsPage = Math.min(shipmentsData.last_page, shipmentsPage + 1); fetchShipments()" :disabled="shipmentsPage >= shipmentsData.last_page" class="px-[12px] py-[8px] rounded-[8px] bg-[#F0F0F0] text-[0.8125rem] font-medium disabled:opacity-40 cursor-pointer hover:bg-[#E0E0E0]">Successiva</button>
+						<div v-if="shipmentsData.last_page > 1" class="flex items-center justify-center gap-[8px] mt-[20px]">
+							<button @click="shipmentsPage = Math.max(1, shipmentsPage - 1); fetchShipments()" :disabled="shipmentsPage <= 1" class="px-[12px] py-[8px] rounded-[8px] bg-[#F0F0F0] text-[0.8125rem] font-medium disabled:opacity-40 cursor-pointer hover:bg-[#E0E0E0]">Precedente</button>
+							<span class="text-[0.8125rem] text-[#737373]">Pagina {{ shipmentsPage }} di {{ shipmentsData.last_page }}</span>
+							<button @click="shipmentsPage = Math.min(shipmentsData.last_page, shipmentsPage + 1); fetchShipments()" :disabled="shipmentsPage >= shipmentsData.last_page" class="px-[12px] py-[8px] rounded-[8px] bg-[#F0F0F0] text-[0.8125rem] font-medium disabled:opacity-40 cursor-pointer hover:bg-[#E0E0E0]">Successiva</button>
+						</div>
 					</div>
 				</div>
 			</div>
 		</div>
-	</section>
+		</section>
 </template>

@@ -10,12 +10,17 @@ use Illuminate\Validation\ValidationException;
 class PriceEngineService
 {
     private const SETTINGS_KEY_WEIGHT_BANDS = 'pricing_national_bands_weight';
+
     private const SETTINGS_KEY_VOLUME_BANDS = 'pricing_national_bands_volume';
+
     private const SETTINGS_KEY_EXTRA_RULES = 'pricing_national_extra_rules';
+
     private const SETTINGS_KEY_SUPPLEMENTS = 'pricing_national_supplements';
+
     private const SETTINGS_KEY_VERSION = 'pricing_national_version';
 
     private const EPSILON = 0.0000001;
+
     private const ALLOWED_APPLY_TO = ['origin', 'destination', 'both'];
 
     private const DEFAULT_WEIGHT_BANDS = [
@@ -115,7 +120,7 @@ class PriceEngineService
         $supplements = $this->normalizeSupplements($this->decodeJsonSetting(self::SETTINGS_KEY_SUPPLEMENTS, self::DEFAULT_SUPPLEMENTS));
 
         $version = Setting::get(self::SETTINGS_KEY_VERSION);
-        if (!$version) {
+        if (! $version) {
             $version = (string) time();
         }
 
@@ -157,11 +162,12 @@ class PriceEngineService
         }
 
         // Fallback estremo: ultima fascia disponibile o ultima fascia di default
-        if (!empty($bands)) {
+        if (! empty($bands)) {
             return $this->effectivePriceCents(end($bands));
         }
 
         $fallbackBands = $type === 'weight' ? self::DEFAULT_WEIGHT_BANDS : self::DEFAULT_VOLUME_BANDS;
+
         return $this->effectivePriceCents(end($fallbackBands));
     }
 
@@ -176,7 +182,7 @@ class PriceEngineService
         $total = 0;
 
         foreach ($supplements as $rule) {
-            if (!($rule['enabled'] ?? true)) {
+            if (! ($rule['enabled'] ?? true)) {
                 continue;
             }
 
@@ -265,7 +271,7 @@ class PriceEngineService
 
     private function calculateExtraPriceCents(string $type, float $rawValue, array $bands, array $extraRules): ?int
     {
-        if (!($extraRules['enabled'] ?? true)) {
+        if (! ($extraRules['enabled'] ?? true)) {
             return null;
         }
 
@@ -336,6 +342,7 @@ class PriceEngineService
             if ($a['min_value'] === $b['min_value']) {
                 return $a['max_value'] <=> $b['max_value'];
             }
+
             return $a['min_value'] <=> $b['min_value'];
         });
 
@@ -390,7 +397,7 @@ class PriceEngineService
             }
         }
 
-        if (!empty($errors)) {
+        if (! empty($errors)) {
             throw ValidationException::withMessages($errors);
         }
 
@@ -436,7 +443,7 @@ class PriceEngineService
         $normalized = [];
         foreach (array_values($supplements) as $idx => $rule) {
             $applyTo = (string) ($rule['apply_to'] ?? 'both');
-            if (!in_array($applyTo, self::ALLOWED_APPLY_TO, true)) {
+            if (! in_array($applyTo, self::ALLOWED_APPLY_TO, true)) {
                 $applyTo = 'both';
             }
 
@@ -481,7 +488,7 @@ class PriceEngineService
         if ($increment < 0) {
             $errors['extra_rules.increment_cents'] = 'increment_cents non può essere negativo.';
         }
-        if ($baseMode === 'manual' && (!is_int($baseManual) || $baseManual < 0)) {
+        if ($baseMode === 'manual' && (! is_int($baseManual) || $baseManual < 0)) {
             $errors['extra_rules.base_price_cents_manual'] = 'base_price_cents_manual è obbligatorio e non negativo in modalità manual.';
         }
 
@@ -500,7 +507,7 @@ class PriceEngineService
             $errors['extra_rules.volume_start'] = sprintf('volume_start deve essere oltre l\'ultima fascia volume (%s).', $lastVolumeMax);
         }
 
-        if (!empty($errors)) {
+        if (! empty($errors)) {
             throw ValidationException::withMessages($errors);
         }
     }
@@ -537,104 +544,6 @@ class PriceEngineService
         return $rows;
     }
 
-    private function validateIncrementLadder(array $ladder, string $pathPrefix): array
-    {
-        $errors = [];
-
-        if (empty($ladder)) {
-            $errors[$pathPrefix] = 'Devi configurare almeno uno scaglione di incremento.';
-            return $errors;
-        }
-
-        $expectedFrom = 1;
-        foreach (array_values($ladder) as $idx => $row) {
-            $from = (int) ($row['from_step'] ?? 0);
-            $toRaw = $row['to_step'] ?? null;
-            $to = ($toRaw === null || $toRaw === '') ? null : (int) $toRaw;
-            $increment = (int) ($row['increment_cents'] ?? -1);
-
-            if ($from < 1) {
-                $errors[sprintf('%s.%d.from_step', $pathPrefix, $idx)] = 'from_step deve essere >= 1.';
-                continue;
-            }
-            if ($increment < 0) {
-                $errors[sprintf('%s.%d.increment_cents', $pathPrefix, $idx)] = 'increment_cents non può essere negativo.';
-            }
-            if ($from !== $expectedFrom) {
-                $errors[sprintf('%s.%d.from_step', $pathPrefix, $idx)] = sprintf('Lo scaglione deve partire da step %d.', $expectedFrom);
-            }
-
-            if ($to === null) {
-                if ($idx !== count($ladder) - 1) {
-                    $errors[sprintf('%s.%d.to_step', $pathPrefix, $idx)] = 'Solo l\'ultimo scaglione può essere aperto (∞).';
-                }
-                $expectedFrom = PHP_INT_MAX;
-                continue;
-            }
-
-            if ($to < $from) {
-                $errors[sprintf('%s.%d.to_step', $pathPrefix, $idx)] = 'to_step deve essere >= from_step.';
-                continue;
-            }
-
-            $expectedFrom = $to + 1;
-        }
-
-        $last = end($ladder);
-        if ($last !== false) {
-            $lastTo = $last['to_step'] ?? null;
-            if ($lastTo !== null && $lastTo !== '') {
-                $errors[sprintf('%s.%d.to_step', $pathPrefix, count($ladder) - 1)] = 'L\'ultimo scaglione deve essere aperto (∞).';
-            }
-        }
-
-        return $errors;
-    }
-
-    private function calculateCumulativeIncrementFromLadder(int $bandNumber, array $ladder, int $fallbackIncrement): int
-    {
-        if ($bandNumber <= 0) {
-            return 0;
-        }
-
-        $total = 0;
-        foreach ($ladder as $row) {
-            $from = max(1, (int) ($row['from_step'] ?? 1));
-            $toRaw = $row['to_step'] ?? null;
-            $to = ($toRaw === null || $toRaw === '') ? PHP_INT_MAX : max($from, (int) $toRaw);
-            $increment = max(0, (int) ($row['increment_cents'] ?? $fallbackIncrement));
-
-            if ($bandNumber < $from) {
-                break;
-            }
-
-            $coveredTo = min($bandNumber, $to);
-            if ($coveredTo >= $from) {
-                $count = ($coveredTo - $from) + 1;
-                $total += $count * $increment;
-            }
-
-            if ($coveredTo >= $bandNumber) {
-                return $total;
-            }
-        }
-
-        // Fallback di sicurezza nel caso in cui la ladder non copra fino a bandNumber.
-        $lastCovered = 0;
-        if (!empty($ladder)) {
-            $lastRow = end($ladder);
-            if ($lastRow !== false) {
-                $lastToRaw = $lastRow['to_step'] ?? null;
-                $lastCovered = ($lastToRaw === null || $lastToRaw === '') ? $bandNumber : (int) $lastToRaw;
-            }
-        }
-        if ($bandNumber > $lastCovered) {
-            $total += ($bandNumber - $lastCovered) * max(0, $fallbackIncrement);
-        }
-
-        return $total;
-    }
-
     private function decodeJsonSetting(string $key, ?array $default = []): array
     {
         $raw = Setting::get($key);
@@ -643,6 +552,7 @@ class PriceEngineService
         }
 
         $decoded = json_decode($raw, true);
+
         return is_array($decoded) ? $decoded : ($default ?? []);
     }
 
@@ -673,7 +583,7 @@ class PriceEngineService
 
     private function effectivePriceCents(array $band): int
     {
-        if (isset($band['discount_price']) && $band['discount_price'] !== null && (int) $band['discount_price'] >= 0) {
+        if (isset($band['discount_price']) && (int) $band['discount_price'] >= 0) {
             return (int) $band['discount_price'];
         }
 
@@ -688,12 +598,14 @@ class PriceEngineService
 
         $multiplier = 1 / $resolution;
         $rounded = ceil(($value * $multiplier) - self::EPSILON) / $multiplier;
+
         return $this->normalizeDecimal($rounded);
     }
 
     private function normalizeDecimal($value): float
     {
         $num = (float) $value;
+
         return (float) number_format($num, 4, '.', '');
     }
 }

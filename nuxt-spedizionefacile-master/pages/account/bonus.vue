@@ -30,7 +30,7 @@
 <script setup>
 /* Richiede che l'utente sia autenticato */
 definePageMeta({
-	middleware: ["sanctum:auth"],
+	middleware: ["app-auth"],
 });
 
 const { user } = useSanctumAuth();
@@ -86,20 +86,42 @@ const filteredBonuses = computed(() => {
 		return b.available;
 	});
 });
+
+const bonusHeader = computed(() => ({
+	eyebrow: 'Promozioni account',
+	title: 'Bonus e promozioni',
+	description: 'Scopri i vantaggi attivi e apri subito la sezione giusta per usarli al meglio.',
+}));
+
+const bonusHeaderStats = computed(() => [
+	{ label: 'Disponibili', value: `${filteredBonuses.value.length} voci` },
+	{ label: 'Partner Pro', value: isPro.value ? 'Attivo' : 'Opzionale' },
+]);
 </script>
 
 <template>
 	<section class="min-h-[600px] py-[40px] desktop:py-[60px] desktop-xl:py-[80px]">
 		<div class="my-container">
-			<!-- Breadcrumb -->
-			<div class="mb-[28px] text-[0.875rem] text-[#737373]">
-				<NuxtLink to="/account" class="hover:underline text-[#095866] font-medium">Il tuo account</NuxtLink>
-				<span class="mx-[8px] text-[#C8CCD0]">/</span>
-				<span class="font-semibold text-[#252B42]">Bonus</span>
-			</div>
-
-			<h1 class="text-[1.5rem] desktop:text-[1.75rem] font-bold text-[#252B42] mb-[8px]">Bonus e promozioni</h1>
-			<p class="text-[#737373] text-[0.9375rem] mb-[32px]">Scopri i bonus e le promozioni disponibili per risparmiare sulle tue spedizioni.</p>
+			<AccountPageHeader
+				:eyebrow="bonusHeader.eyebrow"
+				:title="bonusHeader.title"
+				:description="bonusHeader.description"
+				:crumbs="[
+					{ label: 'Account', to: '/account' },
+					{ label: 'Bonus' },
+				]"
+			>
+				<template #meta>
+					<div class="flex flex-wrap gap-[8px]">
+						<span
+							v-for="stat in bonusHeaderStats"
+							:key="stat.label"
+							class="inline-flex items-center gap-[6px] rounded-full bg-[#F0F6F7] px-[12px] py-[6px] text-[0.8125rem] font-semibold text-[#095866]">
+							{{ stat.label }}: {{ stat.value }}
+						</span>
+					</div>
+				</template>
+			</AccountPageHeader>
 
 			<!-- Bonus Cards -->
 			<div class="space-y-[16px]">
@@ -107,15 +129,15 @@ const filteredBonuses = computed(() => {
 					v-for="(bonus, index) in filteredBonuses"
 					:key="index"
 					:to="bonus.action"
-					class="flex items-start gap-[20px] bg-white rounded-[20px] p-[24px] desktop:p-[28px] border border-[#E9EBEC] shadow-sm hover:shadow-md hover:border-[#C8CCD0] transition-all group">
+					class="group flex flex-col gap-[16px] bg-white rounded-[20px] p-[20px] desktop:flex-row desktop:items-start desktop:p-[24px] border border-[#E9EBEC] shadow-sm hover:shadow-md hover:border-[#C8CCD0] transition-all">
 					<!-- Icon -->
-					<div class="w-[56px] h-[56px] rounded-[14px] bg-[#e8f4fb] flex items-center justify-center shrink-0">
-						<Icon :name="bonus.icon" class="text-[28px] text-[#1a7fba]" />
+					<div class="w-[52px] h-[52px] rounded-[14px] bg-[#e8f4fb] flex items-center justify-center shrink-0">
+						<Icon :name="bonus.icon" class="text-[26px] text-[#1a7fba]" />
 					</div>
 
 					<!-- Content -->
 					<div class="flex-1 min-w-0">
-						<div class="flex items-center gap-[10px] mb-[6px]">
+						<div class="flex flex-wrap items-center gap-[8px] mb-[6px]">
 							<h2 class="text-[1.0625rem] font-bold text-[#252B42] group-hover:text-[#095866] transition-colors">
 								{{ bonus.title }}
 							</h2>
@@ -123,7 +145,7 @@ const filteredBonuses = computed(() => {
 								{{ bonus.badge }}
 							</span>
 						</div>
-						<p class="text-[#737373] text-[0.875rem] leading-[1.6] mb-[12px]">
+						<p class="text-[#737373] text-[0.875rem] leading-[1.6] mb-[12px] max-w-[70ch]">
 							{{ bonus.description }}
 						</p>
 						<span class="inline-flex items-center gap-[4px] text-[0.8125rem] text-[#095866] font-semibold group-hover:underline">

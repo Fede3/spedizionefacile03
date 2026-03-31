@@ -44,4 +44,12 @@ class UserFactory extends Factory
             'email_verified_at' => null,
         ]);
     }
+
+    public function partnerPro(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'role' => 'Partner Pro',
+            'referral_code' => strtoupper(Str::random(8)),
+        ]);
+    }
 }

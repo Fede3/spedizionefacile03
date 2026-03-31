@@ -10,13 +10,14 @@
 -->
 <script setup>
 definePageMeta({
-	middleware: ["sanctum:auth", "admin"],
+	middleware: ["app-auth", "admin"],
 });
 
 const sanctum = useSanctumClient();
 const { formatCurrency, formatDate, referralStatusConfig } = useAdmin();
 
 const referralStats = ref(null);
+const referralUsages = computed(() => referralStats.value?.data || []);
 
 const fetchReferrals = async () => {
 	try {
@@ -31,21 +32,35 @@ onMounted(() => { fetchReferrals(); });
 <template>
 	<section class="min-h-[600px] py-[40px] desktop:py-[60px] desktop-xl:py-[80px]">
 		<div class="my-container">
-			<!-- Breadcrumb -->
-			<div class="mb-[24px] text-[0.875rem] text-[#737373]">
-				<NuxtLink to="/account" class="hover:underline text-[#095866] font-medium">Il tuo account</NuxtLink>
-				<span class="mx-[8px] text-[#C8CCD0]">/</span>
-				<span class="font-semibold text-[#252B42]">Referral</span>
+			<AccountPageHeader
+				eyebrow="Area amministrazione"
+				title="Referral"
+				description="Monitora utilizzi, volume, sconti e commissioni con una lettura piu' chiara su mobile, tablet e desktop."
+				:crumbs="[
+					{ label: 'Account', to: '/account' },
+					{ label: 'Amministrazione', to: '/account/amministrazione' },
+					{ label: 'Referral' },
+				]"
+			/>
+
+			<div v-if="referralStats" class="mb-[20px] rounded-[18px] border border-[#E9EBEC] bg-[#F8FAFB] p-[14px] tablet:p-[18px]">
+				<div class="flex flex-col gap-[14px] desktop:flex-row desktop:items-center desktop:justify-between">
+					<div>
+						<p class="text-[0.75rem] font-semibold uppercase tracking-[0.6px] text-[#6B7280]">Toolbar referral</p>
+						<h2 class="mt-[4px] text-[1rem] font-semibold text-[#252B42]">Panoramica utilizzi e resa economica</h2>
+					</div>
+					<div class="flex flex-wrap items-center gap-[8px]">
+						<span class="inline-flex min-h-[34px] items-center rounded-full border border-[#DCE7E8] bg-white px-[12px] text-[0.75rem] font-medium text-[#095866]">
+							{{ referralUsages.length }} utilizzi
+						</span>
+						<span class="inline-flex min-h-[34px] items-center rounded-full border border-[#E7ECEE] bg-white px-[12px] text-[0.75rem] font-medium text-[#5F6C75]">
+							€{{ formatCurrency(referralStats.summary?.total_commissions) }} commissioni
+						</span>
+					</div>
+				</div>
 			</div>
 
-			<NuxtLink to="/account" class="inline-flex items-center gap-[6px] text-[0.8125rem] text-[#095866] hover:underline font-medium mb-[20px]">
-				<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[16px] h-[16px]" fill="currentColor"><path d="M20,11V13H8L13.5,18.5L12.08,19.92L4.16,12L12.08,4.08L13.5,5.5L8,11H20Z"/></svg>
-				Torna all'account
-			</NuxtLink>
-
-			<h1 class="text-[1.75rem] font-bold text-[#252B42] mb-[24px]">Referral</h1>
-
-			<div v-if="referralStats" class="grid grid-cols-1 account-pages:grid-cols-3 gap-[16px] mb-[24px]">
+			<div v-if="referralStats" class="grid grid-cols-1 tablet:grid-cols-3 gap-[16px] mb-[24px]">
 				<div class="bg-white rounded-[16px] p-[20px] border border-[#E9EBEC] shadow-sm">
 					<div class="flex items-center gap-[8px] mb-[8px]">
 						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[18px] h-[18px] text-blue-600" fill="currentColor"><path d="M18,16.08C17.24,16.08 16.56,16.38 16.04,16.85L8.91,12.7C8.96,12.47 9,12.24 9,12C9,11.76 8.96,11.53 8.91,11.3L15.96,7.19C16.5,7.69 17.21,8 18,8A3,3 0 0,0 21,5A3,3 0 0,0 18,2A3,3 0 0,0 15,5C15,5.24 15.04,5.47 15.09,5.7L8.04,9.81C7.5,9.31 6.79,9 6,9A3,3 0 0,0 3,12A3,3 0 0,0 6,15C6.79,15 7.5,14.69 8.04,14.19L15.16,18.34C15.11,18.55 15.08,18.77 15.08,19C15.08,20.61 16.39,21.91 18,21.91C19.61,21.91 20.92,20.61 20.92,19A2.92,2.92 0 0,0 18,16.08Z"/></svg>
@@ -75,7 +90,42 @@ onMounted(() => { fetchReferrals(); });
 					<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[40px] h-[40px] text-[#C8CCD0] mx-auto mb-[12px]" fill="currentColor"><path d="M18,16.08C17.24,16.08 16.56,16.38 16.04,16.85L8.91,12.7C8.96,12.47 9,12.24 9,12C9,11.76 8.96,11.53 8.91,11.3L15.96,7.19C16.5,7.69 17.21,8 18,8A3,3 0 0,0 21,5A3,3 0 0,0 18,2A3,3 0 0,0 15,5C15,5.24 15.04,5.47 15.09,5.7L8.04,9.81C7.5,9.31 6.79,9 6,9A3,3 0 0,0 3,12A3,3 0 0,0 6,15C6.79,15 7.5,14.69 8.04,14.19L15.16,18.34C15.11,18.55 15.08,18.77 15.08,19C15.08,20.61 16.39,21.91 18,21.91C19.61,21.91 20.92,20.61 20.92,19A2.92,2.92 0 0,0 18,16.08Z"/></svg>
 					<p>Nessun utilizzo registrato.</p>
 				</div>
-				<div v-else class="overflow-x-auto">
+				<div v-else class="space-y-[12px]">
+					<div class="desktop:hidden grid grid-cols-1 tablet:grid-cols-2 gap-[12px]">
+						<div v-for="usage in referralUsages" :key="usage.id" class="rounded-[16px] border border-[#E9EBEC] bg-white p-[14px] shadow-sm">
+							<div class="flex items-start justify-between gap-[10px]">
+								<div>
+									<p class="text-[0.8125rem] text-[#737373]">{{ formatDate(usage.created_at) }}</p>
+									<p class="mt-[4px] font-mono text-[0.75rem] text-[#252B42]">{{ usage.referral_code }}</p>
+								</div>
+								<span :class="['inline-flex items-center rounded-full px-[8px] py-[3px] text-[0.6875rem] font-medium', referralStatusConfig[usage.status]?.bg || 'bg-gray-50', referralStatusConfig[usage.status]?.text || 'text-gray-700']">
+									{{ referralStatusConfig[usage.status]?.label || usage.status }}
+								</span>
+							</div>
+							<div class="mt-[12px] grid grid-cols-1 gap-[10px] text-[0.8125rem] tablet:grid-cols-2">
+								<div class="rounded-[12px] bg-[#F8FAFB] px-[12px] py-[10px]">
+									<p class="text-[0.6875rem] font-semibold uppercase tracking-[0.45px] text-[#7B8791]">Partner Pro</p>
+									<p class="mt-[4px] text-[#252B42]">{{ usage.pro_user?.name || '—' }}</p>
+								</div>
+								<div class="rounded-[12px] bg-[#F8FAFB] px-[12px] py-[10px]">
+									<p class="text-[0.6875rem] font-semibold uppercase tracking-[0.45px] text-[#7B8791]">Acquirente</p>
+									<p class="mt-[4px] text-[#252B42]">{{ usage.buyer?.name || '—' }}</p>
+								</div>
+								<div class="rounded-[12px] bg-[#F8FAFB] px-[12px] py-[10px]">
+									<p class="text-[0.6875rem] font-semibold uppercase tracking-[0.45px] text-[#7B8791]">Ordine</p>
+									<p class="mt-[4px] text-[#252B42]">&euro;{{ formatCurrency(usage.order_amount) }}</p>
+								</div>
+								<div class="rounded-[12px] bg-[#F8FAFB] px-[12px] py-[10px]">
+									<p class="text-[0.6875rem] font-semibold uppercase tracking-[0.45px] text-[#7B8791]">Commissione</p>
+									<p class="mt-[4px] font-semibold text-emerald-600">+&euro;{{ formatCurrency(usage.commission_amount) }}</p>
+								</div>
+							</div>
+							<div class="mt-[10px] flex flex-wrap items-center gap-[8px] text-[0.8125rem]">
+								<span class="text-blue-600">Sconto -&euro;{{ formatCurrency(usage.discount_amount) }}</span>
+							</div>
+						</div>
+					</div>
+					<div class="hidden desktop:block overflow-x-auto">
 					<table class="w-full text-[0.875rem]">
 						<thead>
 							<tr class="border-b border-[#E9EBEC] text-left text-[#737373]">
@@ -104,6 +154,7 @@ onMounted(() => { fetchReferrals(); });
 							</tr>
 						</tbody>
 					</table>
+					</div>
 				</div>
 			</div>
 		</div>

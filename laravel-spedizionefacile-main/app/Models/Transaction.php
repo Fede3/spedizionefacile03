@@ -40,10 +40,14 @@
 namespace App\Models;
 
 use App\Cart\MyMoney;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Transaction extends Model
 {
+    use HasFactory;
+
     /**
      * Campi compilabili dall'esterno.
      */
@@ -62,7 +66,7 @@ class Transaction extends Model
      * Traduce il tipo di metodo di pagamento in italiano.
      * Usato per mostrare all'utente "Carta" invece di "card".
      */
-    public function getPaymentMethod($type) {
+    public function getPaymentMethod(string $type): string {
         $methods = [
             'card' => 'Carta',
             'bank_transfer' => 'Bonifico',
@@ -77,7 +81,12 @@ class Transaction extends Model
      * convertito in un oggetto MyMoney per gestire la formattazione
      * dei prezzi (es. da centesimi a "12,50 EUR").
      */
-    public function getTotalAttribute($total) {
+    public function getTotalAttribute($total): MyMoney {
         return new MyMoney($total);
+    }
+
+    public function order(): BelongsTo
+    {
+        return $this->belongsTo(Order::class);
     }
 }

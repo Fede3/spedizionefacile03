@@ -47,19 +47,20 @@
 namespace App\Http\Controllers;
 
 use App\Models\Order;
-use App\Services\BrtService;
+use App\Services\Brt\ShipmentService;
+use App\Services\Brt\PudoService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 class BrtController extends Controller
 {
-    // Il servizio BRT che contiene la logica per comunicare con le API di Bartolini
-    private BrtService $brt;
+    // Servizi BRT specializzati (spedizioni + punti PUDO)
+    private ShipmentService $shipment;
+    private PudoService $pudo;
 
-    // Quando viene creato questo controller, riceve automaticamente il servizio BRT
-    // (questo si chiama "iniezione delle dipendenze": il sistema crea il servizio per noi)
-    public function __construct(BrtService $brt)
+    public function __construct(ShipmentService $shipment, PudoService $pudo)
     {
-        $this->brt = $brt;
+        $this->shipment = $shipment;
+        $this->pudo = $pudo;
     }
 
     /**
@@ -104,7 +105,7 @@ class BrtController extends Controller
         }
 
         // Chiamiamo il servizio BRT per creare la spedizione e generare l'etichetta
-        $result = $this->brt->createShipment($order, [
+        $result = $this->shipment->createShipment($order, [
             'is_cod' => $request->boolean('is_cod'),
             'cod_amount' => $request->cod_amount,
             'pudo_id' => $request->pudo_id,
@@ -170,7 +171,7 @@ class BrtController extends Controller
             return response()->json(['error' => 'Nessuna spedizione BRT trovata per questo ordine.'], 422);
         }
 
-        $result = $this->brt->confirmShipment((int) $order->brt_numeric_sender_reference);
+        $result = $this->shipment->confirmShipment((int) $order->brt_numeric_sender_reference);
 
         if (!$result['success']) {
             return response()->json(['error' => $result['error']], 502);
@@ -200,7 +201,7 @@ class BrtController extends Controller
             return response()->json(['error' => 'Nessuna spedizione BRT trovata per questo ordine.'], 422);
         }
 
-        $result = $this->brt->deleteShipment((int) $order->brt_numeric_sender_reference);
+        $result = $this->shipment->deleteShipment((int) $order->brt_numeric_sender_reference);
 
         if (!$result['success']) {
             return response()->json(['error' => $result['error']], 502);
@@ -386,7 +387,7 @@ class BrtController extends Controller
         }
 
         // L'API PUDO di BRT richiede il codice paese in formato ISO Alpha-3 (es. ITA, DEU, FRA)
-        $result = $this->brt->getPudoByAddress(
+        $result = $this->pudo->getPudoByAddress(
             $address,
             $zipCode,
             $city,
@@ -417,7 +418,7 @@ class BrtController extends Controller
             'max_results' => 'nullable|integer|min:1|max:50',
         ]);
 
-        $result = $this->brt->getPudoByCoordinates(
+        $result = $this->pudo->getPudoByCoordinates(
             (float) $request->latitude,
             (float) $request->longitude,
             (int) ($request->max_results ?? 50)
@@ -439,7 +440,7 @@ class BrtController extends Controller
      */
     public function pudoDetails(string $pudoId)
     {
-        $result = $this->brt->getPudoDetails($pudoId);
+        $result = $this->pudo->getPudoDetails($pudoId);
         return response()->json($result);
     }
 
@@ -465,7 +466,7 @@ class BrtController extends Controller
             'notes' => 'nullable|string|max:255',
         ]);
 
-        $result = $this->brt->testCreateShipment($request->all());
+        $result = $this->shipment->testCreateShipment($request->all());
 
         return response()->json($result);
     }

@@ -41,6 +41,7 @@ namespace App\Http\Controllers;
 
 use App\Models\ContactMessage;
 use Illuminate\Http\Request;
+
 class ContactController extends Controller
 {
     // Salva un nuovo messaggio di contatto nel database
@@ -52,6 +53,7 @@ class ContactController extends Controller
             'name' => 'required|string|max:255',
             'surname' => 'required|string|max:255',
             'email' => 'required|email|max:255',
+            'subject' => 'nullable|string|max:255',
             'telephone_number' => 'nullable|string|max:255',
             'address' => 'nullable|string|max:255',
             'message' => 'required|string|max:5000',
@@ -62,6 +64,32 @@ class ContactController extends Controller
 
         return response()->json([
             'message' => 'Messaggio inviato con successo.',
+            'data' => $contactMessage,
+        ], 201);
+    }
+
+    // Salva una richiesta di supporto aperta da un utente autenticato nell'area account
+    public function storeSupportTicket(Request $request)
+    {
+        $validated = $request->validate([
+            'subject' => 'required|string|max:255',
+            'message' => 'required|string|max:5000',
+        ]);
+
+        $user = $request->user();
+
+        $contactMessage = ContactMessage::create([
+            'name' => $user->name,
+            'surname' => $user->surname,
+            'email' => $user->email,
+            'subject' => $validated['subject'],
+            'telephone_number' => $user->telephone_number,
+            'address' => $user->address ?? null,
+            'message' => $validated['message'],
+        ]);
+
+        return response()->json([
+            'message' => 'Richiesta di assistenza inviata con successo.',
             'data' => $contactMessage,
         ], 201);
     }

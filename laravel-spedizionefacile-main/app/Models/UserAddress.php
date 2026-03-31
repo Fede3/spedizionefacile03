@@ -38,6 +38,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class UserAddress extends Model
 {
@@ -121,7 +122,7 @@ class UserAddress extends Model
     }
 
     // Relazione: ogni indirizzo appartiene a UN utente
-    public function user() {
+    public function user(): BelongsTo {
         return $this->belongsTo(User::class);
     }
 }

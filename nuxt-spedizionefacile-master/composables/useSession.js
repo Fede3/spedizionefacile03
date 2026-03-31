@@ -17,7 +17,23 @@
  * ERRORI TIPICI: accedere a session.value.data senza controllare che session.value esista
  * COLLEGAMENTI: laravel-spedizionefacile-main/app/Http/Controllers/SessionController.php
  */
-export const useSession = () => {
+export const useSession = (options = {}) => {
+	const enabled = options?.enabled ?? true;
+
+	if (import.meta.prerender) {
+		const session = ref(null);
+		const status = ref("idle");
+		const refresh = async () => session.value;
+		return { session, refresh, status };
+	}
+
+	if (!enabled) {
+		const session = ref(null);
+		const status = ref("idle");
+		const refresh = async () => session.value;
+		return { session, refresh, status };
+	}
+
 	const {
 		data: session,
 		status,
@@ -27,7 +43,10 @@ export const useSession = () => {
 		{
 			method: "GET",
 			key: "session",
-			lazy: true,
+			// La sessione del preventivo dipende dal browser corrente:
+			// durante SSR/prerender statico non esiste ancora una sessione utile.
+			server: false,
+			lazy: false,
 			dedupe: "defer",
 		},
 	);

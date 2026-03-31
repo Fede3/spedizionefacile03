@@ -39,6 +39,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class WithdrawalRequest extends Model
 {
@@ -62,13 +63,13 @@ class WithdrawalRequest extends Model
     ];
 
     // Relazione: la richiesta appartiene a UN utente (il Partner Pro)
-    public function user()
+    public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
 
     // Relazione: la richiesta e' stata revisionata da UN admin
-    public function reviewer()
+    public function reviewer(): BelongsTo
     {
         return $this->belongsTo(User::class, 'reviewed_by');
     }

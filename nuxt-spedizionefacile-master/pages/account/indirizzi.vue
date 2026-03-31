@@ -116,7 +116,7 @@ const deleteAddress = async (id) => {
 		await sanctum(`/api/user-addresses/${id}`, { method: "DELETE" });
 		await refreshAddresses();
 	} catch (e) {
-		console.error("Errore eliminazione:", e);
+		// TODO: replace with error reporting service
 	}
 };
 
@@ -224,10 +224,10 @@ const addressList = computed(() => addresses.value?.data || []);
 						</div>
 						<div class="flex gap-[8px] shrink-0">
 							<button @click="openEditForm(addr)" class="p-[8px] rounded-[8px] hover:bg-[#F0F0F0] transition cursor-pointer" title="Modifica">
-								<Icon name="mdi:pencil-outline" class="text-[16px] text-[#737373]" />
+								<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" class="text-[#737373]"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83l3.75 3.75M3 17.25V21h3.75L17.81 9.94l-3.75-3.75z" /></svg>
 							</button>
 							<button @click="deleteAddress(addr.id)" class="p-[8px] rounded-[8px] hover:bg-red-50 transition cursor-pointer" title="Elimina">
-								<Icon name="mdi:delete-outline" class="text-[16px] text-red-500" />
+								<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" class="text-red-500"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6zm2.46-7.12l1.41-1.41L12 12.59l2.12-2.12l1.41 1.41L13.41 14l2.12 2.12l-1.41 1.41L12 15.41l-2.12 2.12l-1.41-1.41L10.59 14zM15.5 4l-1-1h-5l-1 1H5v2h14V4z" /></svg>
 							</button>
 						</div>
 					</div>
@@ -237,7 +237,7 @@ const addressList = computed(() => addresses.value?.data || []);
 			<!-- Empty -->
 			<div v-else-if="!showForm" class="bg-white rounded-[16px] p-[48px] border border-[#E9EBEC] text-center">
 				<div class="w-[64px] h-[64px] mx-auto mb-[16px] bg-[#F8F9FB] rounded-full flex items-center justify-center">
-					<Icon name="mdi:map-marker-outline" class="text-[28px] text-[#C8CCD0]" />
+					<svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" class="text-[#C8CCD0]"><path d="M12 11.5A2.5 2.5 0 0 1 9.5 9A2.5 2.5 0 0 1 12 6.5A2.5 2.5 0 0 1 14.5 9a2.5 2.5 0 0 1-2.5 2.5M12 2a7 7 0 0 0-7 7c0 5.25 7 13 7 13s7-7.75 7-13a7 7 0 0 0-7-7" /></svg>
 				</div>
 				<h2 class="text-[1.125rem] font-bold text-[#252B42] mb-[8px]">Nessun indirizzo salvato</h2>
 				<p class="text-[0.875rem] text-[#737373] mb-[20px]">Aggiungi il tuo primo indirizzo per velocizzare le spedizioni.</p>

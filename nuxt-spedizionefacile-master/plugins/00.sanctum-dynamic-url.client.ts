@@ -28,14 +28,26 @@ export default defineNuxtPlugin({
   setup() {
     const config = useRuntimeConfig()
     const browserOrigin = window.location.origin
+    const { hostname, port } = window.location
+
+    // In sviluppo puro Nuxt (3000/3001) NON dobbiamo riscrivere baseUrl verso
+    // la stessa origine del frontend, altrimenti tutte le chiamate API finiscono
+    // su Nuxt invece che su Laravel/proxy e generano 404.
+    const isLocalNuxtDevOrigin =
+      ['127.0.0.1', 'localhost'].includes(hostname) &&
+      ['3000', '3001'].includes(port)
+
+    if (isLocalNuxtDevOrigin) {
+      return
+    }
 
     // Imposta il baseUrl di Sanctum all'origine corrente del browser
     // Questo fa si' che le chiamate di autenticazione (login, logout, csrf, user)
     // passino sempre dallo stesso dominio della pagina
     config.public.sanctum.baseUrl = browserOrigin
 
-    // Imposta anche apiBase, usato da altri componenti (VecchioPreventivo, autenticazione, ecc.)
-    // per chiamate $fetch dirette (non tramite il client Sanctum)
+    // Imposta anche apiBase, usato da componenti e pagine che fanno fetch dirette
+    // e non passano dal client Sanctum.
     config.public.apiBase = browserOrigin
   }
 })

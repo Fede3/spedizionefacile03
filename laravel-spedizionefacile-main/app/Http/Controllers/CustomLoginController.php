@@ -1,4 +1,5 @@
 <?php
+
 /**
  * FILE: CustomLoginController.php
  * SCOPO: Gestisce login con email/password, verifica codice 6 cifre e trasferimento carrello ospite.
@@ -49,24 +50,43 @@
 
 namespace App\Http\Controllers;
 
-use Carbon\Carbon;
-use App\Models\User;
-use App\Models\PackageAddress;
+use App\Jobs\SendVerificationEmailJob;
 use App\Models\Package;
+use App\Models\PackageAddress;
 use App\Models\Service;
-use Illuminate\Support\Str;
-use Illuminate\Http\Request;
+use App\Models\User;
+use App\Support\AuthUiCookie;
 use App\Utils\CustomResponse;
-use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cookie;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
-use App\Jobs\SendVerificationEmailJob;
-use Illuminate\Support\Facades\Cookie;
 use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpFoundation\Response;
+
 class CustomLoginController extends Controller
 {
+    private function resolveUserFromEmail(string $email): ?User
+    {
+        $normalized = trim(mb_strtolower($email));
+        $user = User::where('email', $normalized)->first();
+
+        if ($user) {
+            return $user;
+        }
+
+        $candidate = preg_replace('/@spedizionefacile\.it$/i', '@spediamofacile.it', $normalized);
+
+        if (! $candidate || $candidate === $normalized) {
+            return null;
+        }
+
+        return User::where('email', $candidate)->first();
+    }
+
     /**
      * login — Verifica credenziali, gestisce verifica email e trasferisce carrello ospite.
      *
@@ -87,10 +107,10 @@ class CustomLoginController extends Controller
         ]);
 
         // Cerchiamo l'utente nel database per email
-        $user = User::where('email', $request->email)->first();
+        $user = $this->resolveUserFromEmail((string) $request->email);
 
         // Verifichiamo che l'utente esista e che la password sia corretta
-        if (!$user || !Hash::check($request->password, $user->password)) {
+        if (! $user || ! Hash::check($request->password, $user->password)) {
             throw ValidationException::withMessages([
                 'email' => ['Le credenziali non sono corrette.'],
                 'password' => ['Le credenziali non sono corrette.'],
@@ -98,9 +118,13 @@ class CustomLoginController extends Controller
         }
 
         // Se l'account non ha ancora l'email verificata, richiediamo il codice di verifica
-        if (!$user->email_verified_at) {
+        if (! $user->email_verified_at) {
+            $verificationExpiresAt = $user->verification_code_expires_at
+                ? Carbon::parse($user->verification_code_expires_at)
+                : null;
+
             // Se il codice e' scaduto o non esiste, ne generiamo uno nuovo e lo inviamo via email
-            if (!$user->verification_code || ($user->verification_code_expires_at && $user->verification_code_expires_at->isPast())) {
+            if (! $user->verification_code || ($verificationExpiresAt && $verificationExpiresAt->isPast())) {
                 $code = str_pad((string) random_int(0, 999999), 6, '0', STR_PAD_LEFT);
                 $user->update([
                     'verification_code' => $code,
@@ -144,7 +168,7 @@ class CustomLoginController extends Controller
         try {
             if ($request->hasSession()) {
                 $packages = session()->get('cart', []);
-                if (!empty($packages)) {
+                if (! empty($packages)) {
                     // Creiamo i pacchi nel database
                     $dbPackages = $this->createPackage($packages);
                     // Li colleghiamo al carrello dell'utente
@@ -164,7 +188,7 @@ class CustomLoginController extends Controller
             // (il carrello non e' critico, l'importante e' che l'utente entri)
         }
 
-        return $user;
+        return response()->json($user)->cookie(AuthUiCookie::issueForUser($user, (bool) $request->boolean('remember')));
     }
 
     /**
@@ -177,12 +201,13 @@ class CustomLoginController extends Controller
             'email' => 'required|email',
             'code' => 'required|string|size:6',
             'password' => 'required',
+            'remember' => 'nullable|boolean',
         ]);
 
         // Verifichiamo nuovamente le credenziali (per sicurezza)
         $user = User::where('email', $request->email)->first();
 
-        if (!$user || !Hash::check($request->password, $user->password)) {
+        if (! $user || ! Hash::check($request->password, $user->password)) {
             return CustomResponse::setFailResponse('Credenziali non corrette.', Response::HTTP_UNAUTHORIZED);
         }
 
@@ -197,7 +222,11 @@ class CustomLoginController extends Controller
         }
 
         // Controlliamo che il codice non sia scaduto (dura 30 minuti)
-        if ($user->verification_code_expires_at && $user->verification_code_expires_at->isPast()) {
+        $verificationExpiresAt = $user->verification_code_expires_at
+            ? Carbon::parse($user->verification_code_expires_at)
+            : null;
+
+        if ($verificationExpiresAt && $verificationExpiresAt->isPast()) {
             // Se il codice e' scaduto, ne generiamo uno nuovo e lo inviamo via email
             $newCode = str_pad((string) random_int(0, 999999), 6, '0', STR_PAD_LEFT);
             $user->update([
@@ -222,7 +251,7 @@ class CustomLoginController extends Controller
         ]);
 
         // Facciamo il login automatico
-        Auth::login($user, true);
+        Auth::login($user, (bool) $request->boolean('remember'));
 
         // Rigeneriamo l'ID della sessione per prevenire attacchi di session fixation.
         // Controlliamo che la sessione sia disponibile (vedi commento nel metodo login()).
@@ -234,6 +263,34 @@ class CustomLoginController extends Controller
             'success' => true,
             'message' => 'Account verificato con successo!',
             'user' => $user,
+        ])->cookie(AuthUiCookie::issueForUser($user, (bool) $request->boolean('remember')));
+    }
+
+    public function confirmPassword(Request $request)
+    {
+        $request->validate([
+            'password' => 'required|string',
+        ]);
+
+        $user = $request->user();
+
+        if (! $user?->isAdmin()) {
+            abort(Response::HTTP_FORBIDDEN, 'Solo un amministratore può confermare l’accesso fuori flusso.');
+        }
+
+        if (! $user || ! Hash::check((string) $request->password, (string) $user->password)) {
+            throw ValidationException::withMessages([
+                'password' => ['La password inserita non è corretta.'],
+            ]);
+        }
+
+        if ($request->hasSession()) {
+            $request->session()->put('auth.password_confirmed_at', now()->timestamp);
+        }
+
+        return response()->json([
+            'success' => true,
+            'confirmed_at' => now()->toIso8601String(),
         ]);
     }
 
@@ -250,7 +307,7 @@ class CustomLoginController extends Controller
         $user = User::where('email', $request->email)->first();
 
         // Per sicurezza, non riveliamo se l'email esiste o meno nel database
-        if (!$user) {
+        if (! $user) {
             return CustomResponse::setSuccessResponse('Se l\'account esiste, abbiamo inviato un nuovo codice.', Response::HTTP_OK);
         }
 

@@ -1,0 +1,12 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "spedizionefacile",
+      "runtimeExecutable": "node",
+      "runtimeArgs": [".claude/preview-proxy.js"],
+      "port": 8790,
+      "autoPort": true
+    }
+  ]
+}

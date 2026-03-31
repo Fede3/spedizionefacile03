@@ -13,6 +13,7 @@ namespace App\Http\Resources;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
+/** @mixin \App\Models\Transaction */
 class TransactionResource extends JsonResource
 {
     /**
@@ -22,7 +23,7 @@ class TransactionResource extends JsonResource
     {
         return [
             'ext_id' => $this->ext_id,                          // ID del pagamento su Stripe
-            'type' => $this->getPaymentMethod($this->type),     // Metodo di pagamento in italiano
+            'type' => $this->resource->getPaymentMethod($this->type), // Metodo di pagamento in italiano
             'status' => $this->status,                          // Stato del pagamento
             'total' => $this->total->formatted(),               // Importo formattato (es. "12,50 EUR")
         ];

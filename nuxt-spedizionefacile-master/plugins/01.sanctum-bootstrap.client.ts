@@ -8,25 +8,41 @@
  */
 export default defineNuxtPlugin(async (nuxtApp) => {
   const { init } = useSanctumAuth()
+  const { authCookie } = useAuthUiSnapshotPersistence()
   const route = useRoute()
-
-  // Flag per indicare che il bootstrap è completato
-  const authReady = ref(false)
+  const bootstrapReady = useState('auth-bootstrap-ready', () => false)
+  const bootstrapStatus = useState<'idle' | 'pending' | 'resolved' | 'failed'>('auth-bootstrap-status', () => 'idle')
   const finish = () => {
-    authReady.value = true
-    nuxtApp.provide('authReady', authReady)
+    bootstrapReady.value = true
+    nuxtApp.provide('authReady', bootstrapReady)
   }
 
-  // Su pagine pubbliche non inizializziamo identity bootstrap:
-  // evita richieste /api/user non necessarie (401 rumoroso lato guest).
-  const requiresImmediateAuthBootstrap = route.path.startsWith('/account')
-  if (!requiresImmediateAuthBootstrap) {
+  bootstrapReady.value = false
+  bootstrapStatus.value = 'pending'
+
+  // Su pagine pubbliche evitiamo /api/user inutili lato guest,
+  // ma se abbiamo già uno snapshot auth valido bootstrappiamo subito
+  // per evitare il flash "Accedi" -> "Ciao Nome" su reload o nuova tab.
+  const requiresImmediateAuthBootstrap =
+    route.path.startsWith('/account')
+  const canSoftBootstrapAuth =
+    route.path.startsWith('/carrello')
+    || route.path.startsWith('/checkout')
+
+  const shouldBootstrapFromSnapshot = Boolean(authCookie.value?.authenticated)
+  const shouldRunInit = requiresImmediateAuthBootstrap || (canSoftBootstrapAuth && shouldBootstrapFromSnapshot)
+  if (!shouldRunInit) {
+    // Su pagine pubbliche senza sessione auth nota consideriamo il bootstrap
+    // già "risolto": così la UI non continua a fidarsi di snapshot locali
+    // stantii che possono far lampeggiare navbar/account al primo render.
+    bootstrapStatus.value = 'resolved'
     finish()
     return
   }
 
   try {
     await init()
+    bootstrapStatus.value = 'resolved'
     finish()
   } catch (error) {
     const err = error as { status?: number; response?: { status?: number } }
@@ -35,12 +51,14 @@ export default defineNuxtPlugin(async (nuxtApp) => {
     // 401: non autenticato (normale per utenti non loggati)
     // 419: CSRF token scaduto (riprova automaticamente alla prossima richiesta)
     if ([401, 419].includes(status)) {
+      bootstrapStatus.value = 'resolved'
       finish() // Anche se non autenticato, il bootstrap è "pronto"
       return
     }
 
     // Errori inaspettati: loga per debug
     console.error('[sanctum] bootstrap identity failed', error)
+    bootstrapStatus.value = 'failed'
     finish() // Marca come pronto anche in caso di errore
   }
 })

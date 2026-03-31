@@ -32,6 +32,8 @@
  */
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\AppleController;
+use App\Http\Controllers\FacebookController;
 use App\Http\Controllers\GoogleController;
 use App\Http\Controllers\StripeWebhookController;
 
@@ -62,3 +64,5 @@ Route::post('/stripe/webhook', [StripeWebhookController::class, 'handle']);
 // perche' il redirect di Google arriva direttamente nel browser dell'utente,
 // quindi deve usare il middleware web per gestire la sessione e i cookie.
 Route::get('/auth/google/callback', [GoogleController::class, 'handleGoogleCallback']);
+Route::get('/auth/facebook/callback', [FacebookController::class, 'handleFacebookCallback']);
+Route::match(['GET', 'POST'], '/auth/apple/callback', [AppleController::class, 'handleAppleCallback']);

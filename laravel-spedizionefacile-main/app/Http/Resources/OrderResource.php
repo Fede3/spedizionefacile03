@@ -22,6 +22,7 @@ use App\Http\Resources\PackageResource;
 use App\Http\Resources\TransactionResource;
 use Illuminate\Http\Resources\Json\JsonResource;
 
+/** @mixin \App\Models\Order */
 class OrderResource extends JsonResource
 {
     /**

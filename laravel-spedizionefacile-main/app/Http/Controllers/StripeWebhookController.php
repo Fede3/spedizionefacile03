@@ -1,4 +1,5 @@
 <?php
+
 /**
  * FILE: StripeWebhookController.php
  * SCOPO: Riceve e gestisce le notifiche automatiche (webhook) inviate da Stripe.
@@ -32,22 +33,34 @@
 
 namespace App\Http\Controllers;
 
-use Stripe\Webhook;
-
-use App\Models\User;
-use App\Models\Order;
-use App\Models\Transaction;
 use App\Events\OrderPaid;
+use App\Models\Order;
+use App\Models\Setting;
+use App\Models\Transaction;
+use App\Models\User;
 use Illuminate\Http\Request;
-use UnexpectedValueException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Stripe\Exception\SignatureVerificationException;
+use Stripe\Webhook;
 use Symfony\Component\HttpFoundation\Response;
+use UnexpectedValueException;
 
 class StripeWebhookController extends Controller
 {
+    protected function getWebhookSecret(): ?string
+    {
+        $secret = trim((string) (
+            Setting::get('stripe_webhook_secret')
+            ?: config('services.stripe.webhook_secret')
+        ));
+
+        return $secret !== '' ? $secret : null;
+    }
+
     // Funzione principale che riceve e gestisce tutte le notifiche da Stripe
-    public function handle(Request $request) {
+    public function handle(Request $request)
+    {
         // Prima di tutto, verifichiamo che la notifica venga davvero da Stripe
         // (per sicurezza, per evitare che qualcuno finga di essere Stripe)
         $event = $this->verifySignature($request);
@@ -70,10 +83,15 @@ class StripeWebhookController extends Controller
 
     // Verifica che la notifica venga davvero da Stripe controllando la "firma" digitale
     // Se la firma non e' valida, blocchiamo tutto con un errore
-    protected function verifySignature(Request $request) {
+    protected function verifySignature(Request $request)
+    {
         $payload = $request->getContent();           // Il contenuto della notifica
         $sigHeader = $request->header('Stripe-Signature'); // La firma inviata da Stripe
-        $secret = config('services.stripe.webhook_secret'); // La nostra chiave segreta per verificare
+        $secret = $this->getWebhookSecret(); // La nostra chiave segreta per verificare
+
+        if (! $secret) {
+            abort(Response::HTTP_SERVICE_UNAVAILABLE, 'Stripe webhook non configurato');
+        }
 
         try {
             // Stripe verifica che il contenuto corrisponda alla firma
@@ -85,16 +103,16 @@ class StripeWebhookController extends Controller
         } catch (UnexpectedValueException $e) {
             // Il contenuto della notifica non e' valido
             abort(Response::HTTP_BAD_REQUEST, 'Invalid payload');
-        } catch (\Stripe\Exception\SignatureVerificationException $e) {
+        } catch (SignatureVerificationException $e) {
             // La firma non corrisponde: qualcuno potrebbe star cercando di ingannarci
             abort(Response::HTTP_BAD_REQUEST, 'Invalid signature');
         }
     }
 
-
     // Gestisce l'evento "pagamento riuscito"
     // Quando un cliente paga con successo, aggiorniamo l'ordine e salviamo i dettagli della transazione
-    protected function paymentSucceeded($event) {
+    protected function paymentSucceeded($event)
+    {
         $intent = $event->data->object;
 
         // Recuperiamo l'identificativo dell'ordine dai dati aggiuntivi (metadata) del pagamento
@@ -104,7 +122,7 @@ class StripeWebhookController extends Controller
         $order = Order::where('id', $orderId)->first();
 
         // Se l'ordine non esiste, non facciamo nulla
-        if (!$order) {
+        if (! $order) {
             return;
         }
 
@@ -115,9 +133,9 @@ class StripeWebhookController extends Controller
             'ext_id' => $intent->id,
         ], [
             'order_id' => $order->id,
-            'status'   => 'succeeded',
-            'total'    => $intent->amount,
-            'type'     => $intent->payment_method_types[0] ?? 'unknown',
+            'status' => 'succeeded',
+            'total' => $intent->amount,
+            'type' => $intent->payment_method_types[0] ?? 'unknown',
             'provider_status' => $intent->status,
         ]);
 
@@ -133,14 +151,15 @@ class StripeWebhookController extends Controller
 
     // Gestisce l'evento "pagamento fallito"
     // Quando un pagamento non va a buon fine, salviamo il motivo dell'errore
-    protected function paymentFailed($event) {
+    protected function paymentFailed($event)
+    {
         $intent = $event->data->object;
 
         $orderId = $intent->metadata->order_id;
 
         $order = Order::where('id', $orderId)->first();
 
-        if (!$order) {
+        if (! $order) {
             return;
         }
 
@@ -150,11 +169,11 @@ class StripeWebhookController extends Controller
 
         // Cerchiamo di capire perche' il pagamento e' fallito
         // Proviamo a recuperare il messaggio di errore da diverse fonti
-        $failureMessage = $intent->last_payment_error?->message
+        $failureMessage = $intent->last_payment_error->message
                   ?? $intent->charges->data[0]->failure_message
                   ?? 'Payment failed';
 
-        $failureCode = $intent->last_payment_error?->code
+        $failureCode = $intent->last_payment_error->code
                   ?? $intent->charges->data[0]->failure_code
                   ?? null;
 
@@ -163,19 +182,20 @@ class StripeWebhookController extends Controller
             'ext_id' => $intent->id,
         ], [
             'order_id' => $order->id,
-            'status'   => 'failed',
-            'total'    => $intent->amount,
-            'type'     => $intent->payment_method_types[0] ?? 'unknown',
+            'status' => 'failed',
+            'total' => $intent->amount,
+            'type' => $intent->payment_method_types[0] ?? 'unknown',
             'provider_status' => $intent->status,
-            'failure_code'    => $failureCode,
-            'failure_message' => $failureMessage
+            'failure_code' => $failureCode,
+            'failure_message' => $failureMessage,
         ]);
     }
 
     // Gestisce l'evento "account Stripe aggiornato"
     // Quando un Partner Pro completa o modifica il suo profilo Stripe,
     // aggiorniamo le informazioni nel nostro database
-    protected function accountUpdated($event) {
+    protected function accountUpdated($event)
+    {
         $intent = $event->data->object;
 
         $stripeAccountId = $intent->id;
@@ -183,7 +203,7 @@ class StripeWebhookController extends Controller
         // Cerchiamo l'utente che ha questo account Stripe
         $user = User::where('stripe_account_id', $stripeAccountId)->first();
 
-        if (!$user) {
+        if (! $user) {
             return;
         }
 
@@ -205,13 +225,13 @@ class StripeWebhookController extends Controller
         $account = $event->data->object;
         $stripeAccountId = $account->id ?? null;
 
-        if (!$stripeAccountId) {
+        if (! $stripeAccountId) {
             return;
         }
 
         $user = User::where('stripe_account_id', $stripeAccountId)->first();
 
-        if (!$user) {
+        if (! $user) {
             return;
         }
 

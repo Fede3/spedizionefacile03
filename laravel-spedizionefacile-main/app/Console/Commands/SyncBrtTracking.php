@@ -24,7 +24,7 @@
 namespace App\Console\Commands;
 
 use App\Models\Order;
-use App\Services\BrtService;
+use App\Services\Brt\TrackingService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
 
@@ -36,7 +36,7 @@ class SyncBrtTracking extends Command
 
     protected $description = 'Sincronizza lo stato degli ordini con il tracking BRT';
 
-    public function handle(BrtService $brt): int
+    public function handle(TrackingService $brt): int
     {
         $dryRun = $this->option('dry-run');
         $specificOrderId = $this->option('order');

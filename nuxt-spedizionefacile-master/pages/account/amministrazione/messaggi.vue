@@ -11,13 +11,31 @@
 -->
 <script setup>
 definePageMeta({
-	middleware: ["sanctum:auth", "admin"],
+	middleware: ["app-auth", "admin"],
 });
 
 const sanctum = useSanctumClient();
 const { actionLoading, showError, formatDate } = useAdmin();
 
 const contactMessages = ref([]);
+const messageSearch = ref('');
+const messageStatusFilter = ref('all');
+
+const filteredMessages = computed(() => {
+	const search = messageSearch.value.trim().toLowerCase();
+	return (contactMessages.value || []).filter((msg) => {
+		const matchesStatus =
+			messageStatusFilter.value === 'all'
+			|| (messageStatusFilter.value === 'read' && !!msg.read_at)
+			|| (messageStatusFilter.value === 'unread' && !msg.read_at);
+		const matchesSearch = !search || [msg.name, msg.surname, msg.email, msg.subject, msg.message]
+			.filter(Boolean)
+			.some((value) => String(value).toLowerCase().includes(search));
+		return matchesStatus && matchesSearch;
+	});
+});
+
+const unreadMessagesCount = computed(() => (contactMessages.value || []).filter((msg) => !msg.read_at).length);
 
 const fetchContactMessages = async () => {
 	try {
@@ -48,46 +66,84 @@ onMounted(() => { fetchContactMessages(); });
 <template>
 	<section class="min-h-[600px] py-[40px] desktop:py-[60px] desktop-xl:py-[80px]">
 		<div class="my-container">
-			<!-- Breadcrumb -->
-			<div class="mb-[24px] text-[0.875rem] text-[#737373]">
-				<NuxtLink to="/account" class="hover:underline text-[#095866] font-medium">Il tuo account</NuxtLink>
-				<span class="mx-[8px] text-[#C8CCD0]">/</span>
-				<span class="font-semibold text-[#252B42]">Messaggi</span>
+			<AccountPageHeader
+				title="Messaggi"
+				description="Messaggi dal form contatti."
+				back-to="/account/amministrazione"
+				back-label="Torna al pannello admin"
+				:crumbs="[
+					{ label: 'Account', to: '/account' },
+					{ label: 'Messaggi' },
+				]"
+			/>
+
+			<div class="mb-[16px] grid grid-cols-1 tablet:grid-cols-[minmax(0,1fr)_220px] gap-[10px]">
+				<div class="relative">
+					<Icon name="mdi:magnify" class="absolute left-[14px] top-1/2 -translate-y-1/2 text-[18px] text-[#737373]" />
+					<input
+						v-model="messageSearch"
+						type="text"
+						placeholder="Cerca nome, email o oggetto..."
+						class="w-full h-[44px] pl-[42px] pr-[14px] rounded-[14px] border border-[#E9EBEC] bg-white text-[0.875rem] text-[#252B42] focus:border-[#095866] focus:outline-none" />
+				</div>
+				<select
+					v-model="messageStatusFilter"
+					class="w-full h-[44px] px-[14px] rounded-[14px] border border-[#E9EBEC] bg-white text-[0.875rem] text-[#252B42] focus:border-[#095866] focus:outline-none">
+					<option value="all">Tutti i messaggi</option>
+					<option value="unread">Non letti</option>
+					<option value="read">Letti</option>
+				</select>
 			</div>
 
-			<NuxtLink to="/account" class="inline-flex items-center gap-[6px] text-[0.8125rem] text-[#095866] hover:underline font-medium mb-[20px]">
-				<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[16px] h-[16px]" fill="currentColor"><path d="M20,11V13H8L13.5,18.5L12.08,19.92L4.16,12L12.08,4.08L13.5,5.5L8,11H20Z"/></svg>
-				Torna all'account
-			</NuxtLink>
+			<div class="mb-[16px] grid grid-cols-2 tablet:grid-cols-4 gap-[10px]">
+				<div class="bg-white rounded-[16px] p-[14px] border border-[#E9EBEC] shadow-sm">
+					<p class="text-[0.6875rem] uppercase tracking-[0.5px] text-[#737373] font-medium">Totale</p>
+					<p class="text-[1.25rem] font-bold text-[#252B42] mt-[4px]">{{ contactMessages.length }}</p>
+				</div>
+				<div class="bg-white rounded-[16px] p-[14px] border border-[#E9EBEC] shadow-sm">
+					<p class="text-[0.6875rem] uppercase tracking-[0.5px] text-[#737373] font-medium">Non letti</p>
+					<p class="text-[1.25rem] font-bold text-[#095866] mt-[4px]">{{ unreadMessagesCount }}</p>
+				</div>
+				<div class="bg-white rounded-[16px] p-[14px] border border-[#E9EBEC] shadow-sm">
+					<p class="text-[0.6875rem] uppercase tracking-[0.5px] text-[#737373] font-medium">Visibili</p>
+					<p class="text-[1.25rem] font-bold text-[#252B42] mt-[4px]">{{ filteredMessages.length }}</p>
+				</div>
+				<div class="bg-white rounded-[16px] p-[14px] border border-[#E9EBEC] shadow-sm">
+					<p class="text-[0.6875rem] uppercase tracking-[0.5px] text-[#737373] font-medium">Letti</p>
+					<p class="text-[1.25rem] font-bold text-emerald-600 mt-[4px]">{{ Math.max(0, contactMessages.length - unreadMessagesCount) }}</p>
+				</div>
+			</div>
 
-			<h1 class="text-[1.75rem] font-bold text-[#252B42] mb-[24px]">Messaggi</h1>
-
-			<div class="bg-white rounded-[20px] p-[24px] desktop:p-[32px] shadow-sm border border-[#E9EBEC]">
-				<h2 class="text-[1.125rem] font-bold text-[#252B42] mb-[20px]">Messaggi di contatto</h2>
-				<div v-if="!contactMessages?.length" class="text-center py-[48px] text-[#737373]">
+			<div class="bg-white rounded-[20px] p-[20px] tablet:p-[24px] desktop:p-[28px] shadow-sm border border-[#E9EBEC]">
+				<div class="flex flex-col tablet:flex-row tablet:items-center tablet:justify-between gap-[10px] mb-[18px]">
+					<h2 class="text-[1.125rem] font-bold text-[#252B42]">Messaggi</h2>
+					<p class="text-[0.8125rem] text-[#737373]">{{ filteredMessages.length }} visibili</p>
+				</div>
+				<div v-if="!filteredMessages?.length" class="text-center py-[40px] text-[#737373]">
 					<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[40px] h-[40px] text-[#C8CCD0] mx-auto mb-[12px]" fill="currentColor"><path d="M20,8L12,13L4,8V6L12,11L20,6M20,4H4C2.89,4 2,4.89 2,6V18A2,2 0 0,0 4,20H20A2,2 0 0,0 22,18V6C22,4.89 21.1,4 20,4Z"/></svg>
 					<p>Nessun messaggio ricevuto.</p>
 				</div>
-				<div v-else class="space-y-[8px]">
-					<div v-for="msg in contactMessages" :key="msg.id" @click="showMessageDetail(msg)" :class="['p-[16px] rounded-[14px] border cursor-pointer transition-colors', msg.read_at ? 'border-[#E9EBEC] hover:border-[#D0D0D0]' : 'border-blue-200 bg-blue-50/30 hover:border-blue-300']">
-						<div class="flex items-start justify-between gap-[12px]">
+				<div v-else class="grid grid-cols-1 tablet:grid-cols-2 desktop:grid-cols-1 gap-[10px]">
+					<div v-for="msg in filteredMessages" :key="msg.id" @click="showMessageDetail(msg)" :class="['p-[14px] rounded-[14px] border cursor-pointer transition-colors', msg.read_at ? 'border-[#E9EBEC] hover:border-[#D0D0D0]' : 'border-blue-200 bg-blue-50/30 hover:border-blue-300']">
+						<div class="flex items-start justify-between gap-[10px]">
 							<div class="flex-1 min-w-0">
-								<div class="flex items-center gap-[8px] mb-[4px]">
-									<span class="text-[0.875rem] font-semibold text-[#252B42]">{{ msg.name }} {{ msg.surname }}</span>
+								<div class="flex flex-wrap items-center gap-[8px] mb-[4px]">
+									<span class="text-[0.875rem] font-semibold text-[#252B42] truncate">{{ msg.name }} {{ msg.surname }}</span>
 									<span v-if="!msg.read_at" class="w-[8px] h-[8px] rounded-full bg-blue-500 shrink-0"></span>
 								</div>
+								<p v-if="msg.subject" class="text-[0.8125rem] font-medium text-[#404040]">{{ msg.subject }}</p>
 								<p class="text-[0.8125rem] text-[#737373]">{{ msg.email }}</p>
 								<p class="text-[0.8125rem] text-[#404040] mt-[4px] line-clamp-2">{{ msg.message }}</p>
 							</div>
-							<span class="text-[0.75rem] text-[#737373] whitespace-nowrap">{{ formatDate(msg.created_at) }}</span>
+							<span class="text-[0.75rem] text-[#737373] whitespace-nowrap shrink-0">{{ formatDate(msg.created_at) }}</span>
 						</div>
 					</div>
 				</div>
 			</div>
 
 			<!-- Message detail modal -->
-			<div v-if="selectedMessage" class="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-[20px]" @click.self="closeMessageDetail">
-				<div class="bg-white rounded-[20px] p-[28px] shadow-2xl max-w-[600px] w-full max-h-[80vh] overflow-y-auto">
+			<div v-if="selectedMessage" class="fixed inset-0 bg-black/40 z-50 flex items-end tablet:items-center justify-center p-0 tablet:p-[20px]" @click.self="closeMessageDetail">
+				<div class="bg-white rounded-t-[20px] tablet:rounded-[20px] p-[20px] tablet:p-[28px] shadow-2xl max-w-[600px] w-full max-h-[90dvh] overflow-y-auto">
 					<div class="flex items-center justify-between mb-[24px]">
 						<h3 class="text-[1.125rem] font-bold text-[#252B42]">Messaggio</h3>
 						<button @click="closeMessageDetail" class="w-[36px] h-[36px] flex items-center justify-center rounded-full bg-[#F0F0F0] hover:bg-[#E0E0E0] cursor-pointer">
@@ -97,6 +153,7 @@ onMounted(() => { fetchContactMessages(); });
 					<div class="space-y-[12px] mb-[20px]">
 						<div><p class="text-[0.75rem] text-[#737373]">Da</p><p class="text-[0.875rem] font-medium text-[#252B42]">{{ selectedMessage.name }} {{ selectedMessage.surname }}</p></div>
 						<div><p class="text-[0.75rem] text-[#737373]">Email</p><p class="text-[0.875rem] text-[#404040]">{{ selectedMessage.email }}</p></div>
+						<div v-if="selectedMessage.subject"><p class="text-[0.75rem] text-[#737373]">Oggetto</p><p class="text-[0.875rem] text-[#404040]">{{ selectedMessage.subject }}</p></div>
 						<div v-if="selectedMessage.telephone_number"><p class="text-[0.75rem] text-[#737373]">Telefono</p><p class="text-[0.875rem] text-[#404040]">{{ selectedMessage.telephone_number }}</p></div>
 						<div v-if="selectedMessage.address"><p class="text-[0.75rem] text-[#737373]">Indirizzo</p><p class="text-[0.875rem] text-[#404040]">{{ selectedMessage.address }}</p></div>
 						<div><p class="text-[0.75rem] text-[#737373]">Data</p><p class="text-[0.875rem] text-[#404040]">{{ formatDate(selectedMessage.created_at) }}</p></div>

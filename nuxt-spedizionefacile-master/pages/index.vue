@@ -65,9 +65,6 @@ useHead({
 	<!-- Form di preventivo rapido - componente principale della homepage -->
 	<Preventivo />
 
-	<!-- <HomepagePreventivoRapido /> -->
-
-	<!-- <HomepageLoghiPartner /> -->
 
 	<!-- Sezione "Come funziona" con i passaggi da seguire (caricata in modo lazy) -->
 	<LazyHomepageStep />
