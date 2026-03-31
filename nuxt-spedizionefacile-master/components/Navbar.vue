@@ -18,7 +18,7 @@ const { openAuthModal } = useAuthModal();
 const { cart } = useCart();
 const route = useRoute();
 
-const authShellPaths = ['/autenticazione', '/login', '/registrazione', '/recupera-password', '/aggiorna-password'];
+const authShellPaths = ['/recupera-password', '/aggiorna-password'];
 const isAuthShellRoute = computed(() => authShellPaths.some((path) => route.path.startsWith(path)));
 const quoteFlowPaths = ['/preventivo', '/la-tua-spedizione', '/riepilogo', '/checkout', '/carrello'];
 const isQuoteFlowRoute = computed(() => quoteFlowPaths.some((path) => route.path.startsWith(path)));
