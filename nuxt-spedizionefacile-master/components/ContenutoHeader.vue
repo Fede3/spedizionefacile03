@@ -6,304 +6,36 @@
 	PROPS: title, description, button, image, path (tutti opzionali, usati per pagine generiche)
 	EMITS: nessuno
 
-	DATI IN INGRESSO: useAdminImage() (immagine hero personalizzata dall'admin),
+	DATI IN INGRESSO: useContenutoHeader() (hero config, stili, preload),
 	                  usePriceBands() (prezzo minimo per il badge hero),
 	                  route.path (per decidere quale sezione mostrare)
 	DATI IN USCITA: nessuno (solo visualizzazione)
 
 	VINCOLI: il prezzo minimo nel hero DEVE corrispondere alla prima fascia peso
 	PUNTI DI MODIFICA SICURI: testi, stili CSS, struttura HTML delle singole sezioni
-	COLLEGAMENTI: composables/usePriceBands.js, composables/UseAdminImage.js
-
-	SEZIONI: Homepage (hero con prezzo), Servizi, Contatti, Chi siamo,
-	         Pagamento alla consegna, Guide, FAQ, Account
+	COLLEGAMENTI: composables/useContenutoHeader.js, composables/usePriceBands.js
 -->
 <script setup>
 const route = useRoute();
-const DEFAULT_HOMEPAGE_HERO = '/img/homepage/hero-truck-landscape.jpg';
-const PREVIEW_DRAFT_STORAGE_KEY = 'hero-preview-live-draft';
-const createViewportDefaults = () => ({
-	mode: 'fill',
-	zoom: 1,
-	x: 0,
-	y: 0,
+
+const props = defineProps({
+	title: String,
+	description: String,
+	button: String,
+	image: String,
+	path: String,
 });
-const heroConfig = ref({
-	image_url: DEFAULT_HOMEPAGE_HERO,
-	desktop: createViewportDefaults(),
-	mobile: createViewportDefaults(),
-	updated_at: null,
-});
-const homepageHeroEndpointAvailable = ref(true);
-const isPreviewHeroRoute = computed(() => route.path === '/preview/home-hero');
-const isHomepageHeroRoute = computed(() => route.path === '/' || isPreviewHeroRoute.value);
-const isDesktopViewport = ref(true);
-let homepageHeroPoll = null;
-let previewDraftLastTs = null;
-const heroPrefetched = ref(false);
 
-const clamp = (value, min, max) => {
-	const numeric = Number(value);
-	if (!Number.isFinite(numeric)) return min;
-	return Math.min(max, Math.max(min, numeric));
-};
+// Hero logic (immagine, viewport, preview, lifecycle)
+const { isHomepageHeroRoute, heroImageUrl, heroImageStyle, prefetchHero } = useContenutoHeader();
 
-const normalizeViewport = (viewport, fallback = createViewportDefaults()) => {
-	const allowedModes = ['fill', 'fit', 'crop'];
-	const mode = allowedModes.includes(viewport?.mode) ? viewport.mode : fallback.mode;
-	const minZoom = 0.5;
-	return {
-		mode,
-		zoom: clamp(viewport?.zoom ?? fallback.zoom ?? 1, minZoom, 4),
-		x: clamp(viewport?.x ?? fallback.x ?? 0, -1200, 1200),
-		y: clamp(viewport?.y ?? fallback.y ?? 0, -1200, 1200),
-	};
-};
-
-const normalizeHeroConfig = (payload) => {
-	const source = payload?.config && typeof payload.config === 'object' ? payload.config : payload;
-	const imageUrl = typeof source?.image_url === 'string' && source.image_url.trim().length > 0
-		? source.image_url
-		: DEFAULT_HOMEPAGE_HERO;
-
-	return {
-		image_url: imageUrl,
-		desktop: normalizeViewport(source?.desktop, createViewportDefaults()),
-		mobile: normalizeViewport(source?.mobile, createViewportDefaults()),
-		updated_at: source?.updated_at || null,
-	};
-};
-
-const isUnavailableHeroError = (error) => {
-	const status = Number(error?.statusCode || error?.response?.status || 0);
-	if ([404, 500, 502, 503].includes(status)) return true;
-	const message = String(error?.message || '').toLowerCase();
-	return message.includes('homepage-image') || message.includes('bad gateway');
-};
-
-const stopHomepageHeroRefresh = () => {
-	homepageHeroEndpointAvailable.value = false;
-	if (homepageHeroPoll) {
-		clearInterval(homepageHeroPoll);
-		homepageHeroPoll = null;
-	}
-};
-
-// Preload hero solo nelle route che usano realmente l'immagine,
-// per evitare warning su pagine come autenticazione.
-useHead(() => (
-	isHomepageHeroRoute.value
-		? {
-				link: [
-					{
-						rel: 'preload',
-						as: 'image',
-						href: '/img/homepage/hero-truck-landscape.jpg',
-						fetchpriority: 'high',
-					},
-				],
-			}
-		: {}
-));
-
-// Carica fasce prezzo sempre per garantire disponibilità su tutte le pagine
+// Fasce prezzo per badge hero
 const { loadPriceBands, getMinPrice, promoSettings } = usePriceBands();
 
 if (isHomepageHeroRoute.value) {
-	try {
-		const { data: initialHeroResponse } = await useFetch('/api/public/homepage-image', {
-			key: `homepage-hero-config:${route.path}`,
-			server: true,
-			lazy: false,
-			default: () => null,
-		});
-		await loadPriceBands();
-
-		if (initialHeroResponse.value) {
-			heroConfig.value = normalizeHeroConfig(initialHeroResponse.value);
-			heroPrefetched.value = true;
-		}
-	} catch (error) {
-		heroConfig.value = normalizeHeroConfig({
-			image_url: DEFAULT_HOMEPAGE_HERO,
-			desktop: createViewportDefaults(),
-			mobile: createViewportDefaults(),
-		});
-		if (isUnavailableHeroError(error)) stopHomepageHeroRefresh();
-	}
+	await prefetchHero();
+	await loadPriceBands();
 }
-
-const applyHomepageImage = async () => {
-	if (!homepageHeroEndpointAvailable.value) return;
-	try {
-		const res = await $fetch('/api/public/homepage-image', { method: 'GET' });
-		heroConfig.value = normalizeHeroConfig(res);
-	} catch (error) {
-		heroConfig.value = normalizeHeroConfig({
-			image_url: DEFAULT_HOMEPAGE_HERO,
-			desktop: createViewportDefaults(),
-			mobile: createViewportDefaults(),
-		});
-		if (isUnavailableHeroError(error)) stopHomepageHeroRefresh();
-	}
-};
-
-const refreshHomepageImage = () => {
-	if (!isHomepageHeroRoute.value || !homepageHeroEndpointAvailable.value) return;
-	void applyHomepageImage();
-};
-
-const onHomepageImageStorage = (event) => {
-	if (event.key === 'homepage-image-updated-at') {
-		refreshHomepageImage();
-	}
-};
-
-const onHomepageImageEvent = () => {
-	refreshHomepageImage();
-};
-
-const onVisibilityChange = () => {
-	if (document.visibilityState === 'visible') {
-		refreshHomepageImage();
-	}
-};
-
-const getForcedPreviewViewport = () => {
-	if (!isPreviewHeroRoute.value) return null;
-	const requested = typeof route.query.viewport === 'string' ? route.query.viewport.toLowerCase() : '';
-	if (requested === 'desktop') return true;
-	if (requested === 'mobile') return false;
-	return null;
-};
-
-const updateViewportFlag = () => {
-	if (typeof window === 'undefined') return;
-	const forcedViewport = getForcedPreviewViewport();
-	if (forcedViewport !== null) {
-		isDesktopViewport.value = forcedViewport;
-		return;
-	}
-	isDesktopViewport.value = window.innerWidth >= 1024;
-};
-
-const onHeroPreviewMessage = (event) => {
-	if (!isPreviewHeroRoute.value) return;
-	if (event.origin !== window.location.origin) return;
-	if (!event.data || event.data.type !== 'hero-preview:update') return;
-	heroConfig.value = normalizeHeroConfig(event.data.payload || {});
-};
-
-const applyHeroPreviewPayload = (payload) => {
-	if (!isPreviewHeroRoute.value) return;
-	heroConfig.value = normalizeHeroConfig(payload || {});
-};
-
-const applyPreviewDraftFromStorage = () => {
-	if (typeof window === 'undefined' || !isPreviewHeroRoute.value) return;
-	try {
-		const raw = window.localStorage.getItem(PREVIEW_DRAFT_STORAGE_KEY);
-		if (!raw) return;
-		const parsed = JSON.parse(raw);
-		if (!parsed || typeof parsed !== 'object') return;
-		if (!parsed.ts || parsed.ts === previewDraftLastTs) return;
-		previewDraftLastTs = parsed.ts;
-		applyHeroPreviewPayload(parsed.payload || {});
-	} catch {
-		// Ignore malformed localStorage data.
-	}
-};
-
-const onPreviewDraftStorageEvent = (event) => {
-	if (!isPreviewHeroRoute.value) return;
-	if (event.key !== PREVIEW_DRAFT_STORAGE_KEY) return;
-	applyPreviewDraftFromStorage();
-};
-
-const notifyHeroPreviewReady = () => {
-	if (typeof window === 'undefined' || !isPreviewHeroRoute.value) return;
-	const viewport = getForcedPreviewViewport() === false ? 'mobile' : 'desktop';
-	window.parent?.postMessage(
-		{
-			type: 'hero-preview:ready',
-			viewport,
-		},
-		window.location.origin
-	);
-};
-
-onMounted(() => {
-	updateViewportFlag();
-	if (!isPreviewHeroRoute.value && !heroPrefetched.value) {
-		refreshHomepageImage();
-	}
-
-	window.addEventListener('resize', updateViewportFlag);
-
-	if (route.path === '/') {
-		// Near real-time: refresh periodico leggero per recepire update admin anche su tab aperta.
-		if (homepageHeroEndpointAvailable.value) {
-			homepageHeroPoll = setInterval(refreshHomepageImage, 30000);
-			window.addEventListener('focus', refreshHomepageImage);
-			window.addEventListener('storage', onHomepageImageStorage);
-			window.addEventListener('homepage-image-updated', onHomepageImageEvent);
-			document.addEventListener('visibilitychange', onVisibilityChange);
-		}
-	}
-
-	if (isPreviewHeroRoute.value) {
-		window.__applyHeroPreviewPayload = applyHeroPreviewPayload;
-		window.addEventListener('message', onHeroPreviewMessage);
-		window.addEventListener('storage', onPreviewDraftStorageEvent);
-		applyPreviewDraftFromStorage();
-		notifyHeroPreviewReady();
-	}
-});
-
-onBeforeUnmount(() => {
-	if (homepageHeroPoll) {
-		clearInterval(homepageHeroPoll);
-		homepageHeroPoll = null;
-	}
-	window.removeEventListener('focus', refreshHomepageImage);
-	window.removeEventListener('storage', onHomepageImageStorage);
-	window.removeEventListener('homepage-image-updated', onHomepageImageEvent);
-	document.removeEventListener('visibilitychange', onVisibilityChange);
-	window.removeEventListener('resize', updateViewportFlag);
-	window.removeEventListener('message', onHeroPreviewMessage);
-	window.removeEventListener('storage', onPreviewDraftStorageEvent);
-	if (typeof window !== 'undefined' && window.__applyHeroPreviewPayload) {
-		delete window.__applyHeroPreviewPayload;
-	}
-});
-
-const heroImageUrl = computed(() => heroConfig.value.image_url || DEFAULT_HOMEPAGE_HERO);
-const activeViewportConfig = computed(() => (
-	isDesktopViewport.value ? heroConfig.value.desktop : heroConfig.value.mobile
-));
-const heroImageStyle = computed(() => {
-	const transform = activeViewportConfig.value || createViewportDefaults();
-	const objectFit = transform.mode === 'fit' ? 'contain' : 'cover';
-	const isMobileViewport = !isDesktopViewport.value;
-	const offsetLimit = isMobileViewport ? 260 : 1200;
-	const maxZoom = isMobileViewport ? 2.4 : 4;
-	const offsetX = Math.round(clamp(transform.x, -offsetLimit, offsetLimit));
-	const offsetY = Math.round(clamp(transform.y, -offsetLimit, offsetLimit));
-	const zoom = clamp(transform.zoom, 0.5, maxZoom);
-
-	return {
-		position: 'absolute',
-		top: '50%',
-		left: '50%',
-		width: '100%',
-		height: '100%',
-		objectFit,
-		objectPosition: '50% 50%',
-		transform: `translate(-50%, -50%) translate3d(${offsetX}px, ${offsetY}px, 0) scale(${zoom})`,
-		transformOrigin: 'center center',
-		willChange: 'transform',
-	};
-});
 
 const minPriceInfo = computed(() => getMinPrice());
 const minPriceFormatted = computed(() => {
@@ -318,14 +50,6 @@ const minBasePriceFormatted = computed(() => {
 });
 const showMinPriceDiscount = computed(() => {
 	return minPriceInfo.value?.hasDiscount && minPriceInfo.value?.showDiscount && promoSettings.value?.show_badges;
-});
-
-const props = defineProps({
-	title: String,
-	description: String,
-	button: String,
-	image: String,
-	path: String,
 });
 </script>
 
@@ -352,8 +76,8 @@ const props = defineProps({
 					<div class="flex flex-col px-[10px] py-[8px] tablet:px-[24px] tablet:py-[20px] desktop:px-[30px] desktop:py-[22px] desktop-xl:px-[36px] desktop-xl:py-[26px]">
 						<span class="text-[0.8125rem] font-medium uppercase tracking-[0.8px] text-white/75 tablet:text-[0.875rem] desktop:text-[1rem] desktop:tracking-[1px] desktop-xl:text-[1.0625rem]">a partire da</span>
 						<div class="mt-[2px] flex items-baseline gap-[8px]">
-							<span v-if="showMinPriceDiscount" class="text-[0.9375rem] font-medium text-white/50 line-through">{{ minBasePriceFormatted }}€</span>
-							<span class="text-[2.5rem] font-extrabold leading-[1] tracking-[-1.6px] text-white tablet:text-[4rem] tablet:tracking-[-2.5px] desktop:text-[4.25rem] desktop:tracking-[-2.5px] desktop-xl:text-[5rem] desktop-xl:tracking-[-3px]">{{ minPriceFormatted }}<span class="ml-[1px] align-super text-[1rem] font-bold tracking-[0] text-white tablet:text-[1.75rem] desktop:text-[2.25rem] desktop-xl:text-[2.75rem]">€</span></span>
+							<span v-if="showMinPriceDiscount" class="text-[0.9375rem] font-medium text-white/50 line-through">{{ minBasePriceFormatted }}&euro;</span>
+							<span class="text-[2.5rem] font-extrabold leading-[1] tracking-[-1.6px] text-white tablet:text-[4rem] tablet:tracking-[-2.5px] desktop:text-[4.25rem] desktop:tracking-[-2.5px] desktop-xl:text-[5rem] desktop-xl:tracking-[-3px]">{{ minPriceFormatted }}<span class="ml-[1px] align-super text-[1rem] font-bold tracking-[0] text-white tablet:text-[1.75rem] desktop:text-[2.25rem] desktop-xl:text-[2.75rem]">&euro;</span></span>
 						</div>
 						<span class="mt-[4px] inline-flex items-center gap-[4px] text-[0.58rem] font-semibold text-white/90 tablet:text-[0.8125rem] desktop:mt-[8px] desktop:text-[0.9375rem] desktop-xl:mt-[10px] desktop-xl:text-[1rem]">
 							<svg width="14" height="14" viewBox="0 0 24 24" fill="none" class="shrink-0"><circle cx="12" cy="12" r="12" fill="rgba(255,255,255,0.3)"/><path d="M7 12.5l3 3 7-7" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -372,7 +96,6 @@ const props = defineProps({
 					<span
 						:style="{ backgroundColor: promoSettings.label_color || '#E44203' }"
 						class="inline-flex items-center gap-[6px] px-[10px] py-[4px] rounded-[8px] text-white text-[0.75rem] font-bold tracking-wide shadow-sm">
-						<!-- Ottimizzazione: immagine promo above-the-fold, decoding async -->
 						<img v-if="promoSettings.label_image" :src="promoSettings.label_image" alt="" decoding="async" width="40" height="16" class="h-[16px] w-auto shrink-0" />
 						{{ promoSettings.label_text }}
 					</span>
@@ -401,14 +124,10 @@ const props = defineProps({
 	<!-- Servizi -->
 	<div v-if="route.path === '/servizi'" class="relative z-2 flex flex-col items-center justify-center desktop:h-[calc(100%-48px)] tablet:h-[calc(100%-42px)] h-[calc(100%-30px)]">
 		<h1 class="content-header-kicker text-center">I nostri servizi</h1>
-
 		<p class="text-[1.75rem] desktop-xl:text-[4.5rem] leading-[110%] tracking-[-1.76px] font-medium text-[#222222] text-center desktop:mb-[22px] mb-[18px] mt-[10px] desktop:text-[3.5rem]">
 			Soluzioni pratiche per spedire meglio
 		</p>
-
-		<a
-			href="#servizi"
-			class="content-header-scroll-link mx-auto block">
+		<a href="#servizi" class="content-header-scroll-link mx-auto block">
 			<span class="after:bg-[url('/img/arrow-down.svg')] after:bg-no-repeat after:inline-block after:size-[16px] after:ml-[11px] after:rotate-90 after:align-[-1px]">Scendi</span>
 		</a>
 	</div>
@@ -419,15 +138,10 @@ const props = defineProps({
 		v-if="route.path.includes('pagamento-alla-consegna')">
 		<div class="w-full">
 			<p class="content-header-kicker text-left">Dettagli servizio</p>
-
-			<h1
-				class="text-[1.5rem] desktop:text-[3rem] desktop-xl:text-[5.5rem] leading-[110%] tracking-[-0.576px] desktop:tracking-[-2.2112px] font-medium text-[#222222] text-left mt-[12px] tablet:max-w-[360px] desktop-xl:max-w-[1056px] max-w-[200px] desktop:max-w-full">
+			<h1 class="text-[1.5rem] desktop:text-[3rem] desktop-xl:text-[5.5rem] leading-[110%] tracking-[-0.576px] desktop:tracking-[-2.2112px] font-medium text-[#222222] text-left mt-[12px] tablet:max-w-[360px] desktop-xl:max-w-[1056px] max-w-[200px] desktop:max-w-full">
 				Pagamento alla consegna
 			</h1>
-
-			<a
-				href="#pagamento-alla-consegna"
-				class="content-header-scroll-link mt-[15px] desktop-xl:mt-[30px]">
+			<a href="#pagamento-alla-consegna" class="content-header-scroll-link mt-[15px] desktop-xl:mt-[30px]">
 				<span class="after:bg-[url('/img/arrow-down.svg')] after:bg-no-repeat after:inline-block after:size-[16px] after:ml-[11px] after:rotate-90 after:align-[-1px]">Scendi</span>
 			</a>
 		</div>
@@ -453,15 +167,10 @@ const props = defineProps({
 		v-if="route.path === '/chi-siamo'">
 		<div class="w-full max-w-[760px]">
 			<h1 class="content-header-kicker text-center">Chi siamo</h1>
-
-			<p
-				class="text-[1.375rem] desktop:text-[2.75rem] desktop-xl:text-[4.75rem] leading-[108%] tracking-[-0.552px] desktop:tracking-[-1.98px] font-medium text-[#222222] text-center mt-[10px] tablet:max-w-[360px] desktop-xl:max-w-[1056px] max-w-[320px] desktop:max-w-[620px]">
+			<p class="text-[1.375rem] desktop:text-[2.75rem] desktop-xl:text-[4.75rem] leading-[108%] tracking-[-0.552px] desktop:tracking-[-1.98px] font-medium text-[#222222] text-center mt-[10px] tablet:max-w-[360px] desktop-xl:max-w-[1056px] max-w-[320px] desktop:max-w-[620px]">
 				Spedizioni chiare, veloci e senza stress
 			</p>
-
-			<a
-				href="#chi-siamo"
-				class="content-header-scroll-link mx-auto mt-[18px]">
+			<a href="#chi-siamo" class="content-header-scroll-link mx-auto mt-[18px]">
 				<span class="after:bg-[url('/img/arrow-down.svg')] after:bg-no-repeat after:inline-block after:size-[16px] after:ml-[11px] after:rotate-90 after:align-[-1px]">Scendi</span>
 			</a>
 		</div>
@@ -473,15 +182,10 @@ const props = defineProps({
 		v-if="route.path.startsWith('/guide')">
 		<div class="mt-[34px] mid-desktop:mt-[18px] desktop:mt-[50px]">
 			<h1 class="content-header-kicker text-center">Guide</h1>
-
-			<p
-				class="text-[1.375rem] desktop:text-[2.75rem] desktop-xl:text-[4.75rem] leading-[108%] tracking-[-0.552px] desktop:tracking-[-1.98px] font-medium text-[#222222] text-center mt-[10px] tablet:max-w-[360px] desktop-xl:max-w-[1056px] max-w-[320px] desktop:max-w-[620px]">
+			<p class="text-[1.375rem] desktop:text-[2.75rem] desktop-xl:text-[4.75rem] leading-[108%] tracking-[-0.552px] desktop:tracking-[-1.98px] font-medium text-[#222222] text-center mt-[10px] tablet:max-w-[360px] desktop-xl:max-w-[1056px] max-w-[320px] desktop:max-w-[620px]">
 				Guide pratiche per spedire meglio
 			</p>
-
-			<a
-				href="#guide"
-				class="content-header-scroll-link mx-auto mt-[24px]">
+			<a href="#guide" class="content-header-scroll-link mx-auto mt-[24px]">
 				<span class="after:bg-[url('/img/arrow-down.svg')] after:bg-no-repeat after:inline-block after:size-[16px] after:ml-[11px] after:rotate-90 after:align-[-1px]">Scendi</span>
 			</a>
 		</div>
@@ -491,13 +195,10 @@ const props = defineProps({
 	<div class="relative z-2 flex flex-col items-center justify-between h-[calc(100%-38px)] desktop:h-[calc(100%-65px)] tablet:h-[calc(100%-50px)]" v-if="route.path === '/faq'">
 		<div class="mt-[34px] mid-desktop:mt-[18px] desktop:mt-[50px]">
 			<h1 class="text-[#E44203] text-center font-medium tracking-[1.8px] desktop-xl:text-[1.25rem] text-[0.875rem] tracking desktop:text-[1.125rem]">FAQ</h1>
-
-			<p
-				class="text-[1.375rem] desktop:text-[2.75rem] desktop-xl:text-[4.75rem] leading-[108%] tracking-[-0.552px] desktop:tracking-[-1.98px] font-medium text-[#222222] text-center mt-[10px] tablet:max-w-[360px] desktop-xl:max-w-[1056px] max-w-[320px] desktop:max-w-[620px]">
+			<p class="text-[1.375rem] desktop:text-[2.75rem] desktop-xl:text-[4.75rem] leading-[108%] tracking-[-0.552px] desktop:tracking-[-1.98px] font-medium text-[#222222] text-center mt-[10px] tablet:max-w-[360px] desktop-xl:max-w-[1056px] max-w-[320px] desktop:max-w-[620px]">
 				Risposte rapide alle domande comuni
 			</p>
 		</div>
 	</div>
 
 </template>
-
