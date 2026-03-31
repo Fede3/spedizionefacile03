@@ -186,6 +186,7 @@ class CustomLoginController extends Controller
         } catch (\Exception $e) {
             // Se il trasferimento del carrello fallisce, non blocchiamo il login
             // (il carrello non e' critico, l'importante e' che l'utente entri)
+            Log::warning('Guest cart merge failed', ['user_id' => $user->id, 'error' => $e->getMessage()]);
         }
 
         return response()->json($user)->cookie(AuthUiCookie::issueForUser($user, (bool) $request->boolean('remember')));

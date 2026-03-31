@@ -17,8 +17,8 @@ export default createConfigForNuxt({
 		},
 	},
 	rules: {
-		// Permetti console.log in development
-		'no-console': 'warn',
+		// Vieta console.log/error/debug; permetti solo console.warn
+		'no-console': ['warn', { allow: ['warn'] }],
 		// Vue specifiche
 		'vue/multi-word-component-names': 'off',
 		'vue/no-multiple-template-root': 'off',

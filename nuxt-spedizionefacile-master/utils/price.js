@@ -39,6 +39,29 @@ export const euroToCents = (euro) => {
 }
 
 /**
+ * Euro (numero) → centesimi (integer)
+ * @param {number} euros - es. 8.9
+ * @returns {number}
+ */
+export const toCents = (euros) => Math.round(Number(euros) * 100)
+
+/**
+ * Centesimi → euro (numero)
+ * @param {number} cents - es. 890
+ * @returns {number}
+ */
+export const toEuros = (cents) => Number(cents) / 100
+
+/**
+ * Centesimi → stringa formattata Intl (it-IT, EUR)
+ * @param {number} cents - es. 890
+ * @returns {string} - es. "8,90 €"
+ */
+export const formatPriceIntl = (cents) => {
+  return new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR' }).format(cents / 100)
+}
+
+/**
  * Parse input utente (formato italiano/misto) → centesimi
  * Supporta: "12,50", "12.50", "1.234,56", "12,50 EUR", "€12,50"
  * @param {string} raw

@@ -102,7 +102,7 @@ const visual = computed(() => getPackVisual(props.pack))
             {{ quantity }}
           </option>
         </select>
-        <p v-if="messageError?.[`packages.${packIndex}.quantity`]" class="text-red-500 text-[1rem] mt-[10px]">
+        <p v-if="messageError?.[`packages.${packIndex}.quantity`]" class="text-red-500 text-[1rem] mt-[10px]" role="alert">
           {{ messageError[`packages.${packIndex}.quantity`][0] }}
         </p>
       </div>
@@ -111,8 +111,8 @@ const visual = computed(() => getPackVisual(props.pack))
       <div class="w-full tablet:w-[30%] desktop:w-full desktop-xl:w-[200px]">
         <label :for="'weight_' + packIndex" class="label-preventivo-rapido" title="Inserisci il peso effettivo del collo in kilogrammi">Peso (Kg)</label>
         <input type="text" placeholder="...Kg" v-model="pack.weight" :id="'weight_' + packIndex" :class="sv.errorClass(`peso_${packIndex}`, 'input-preventivo-rapido')" @input="onWeightInput" @blur="onWeightBlur" required title="Peso effettivo del collo. Il prezzo viene calcolato in base al peso o al volume, a seconda di quale e maggiore." />
-        <p v-if="sv.getError(`peso_${packIndex}`)" class="text-red-500 text-[0.8125rem] mt-[4px]">{{ sv.getError(`peso_${packIndex}`) }}</p>
-        <p v-else-if="messageError?.[`packages.${packIndex}.weight`]" class="text-red-500 text-[1rem] mt-[10px]">
+        <p v-if="sv.getError(`peso_${packIndex}`)" class="text-red-500 text-[0.8125rem] mt-[4px]" role="alert">{{ sv.getError(`peso_${packIndex}`) }}</p>
+        <p v-else-if="messageError?.[`packages.${packIndex}.weight`]" class="text-red-500 text-[1rem] mt-[10px]" role="alert">
           {{ messageError[`packages.${packIndex}.weight`][0] }}
         </p>
       </div>
@@ -121,8 +121,8 @@ const visual = computed(() => getPackVisual(props.pack))
       <div class="w-full tablet:w-[30%] desktop:w-full desktop-xl:w-[200px]">
         <label :for="'first_size_' + packIndex" class="label-preventivo-rapido" title="Misura in centimetri del primo lato del collo (lunghezza)">Lato 1 (Cm)</label>
         <input type="text" placeholder="...Cm" v-model="pack.first_size" :id="'first_size_' + packIndex" :class="sv.errorClass(`first_size_${packIndex}`, 'input-preventivo-rapido')" @input="onDimInput('first_size', 'Lato 1')" @blur="onDimBlur('first_size', 'Lato 1')" required />
-        <p v-if="sv.getError(`first_size_${packIndex}`)" class="text-red-500 text-[0.8125rem] mt-[4px]">{{ sv.getError(`first_size_${packIndex}`) }}</p>
-        <p v-else-if="messageError?.[`packages.${packIndex}.first_size`]" class="text-red-500 text-[1rem] mt-[10px]">
+        <p v-if="sv.getError(`first_size_${packIndex}`)" class="text-red-500 text-[0.8125rem] mt-[4px]" role="alert">{{ sv.getError(`first_size_${packIndex}`) }}</p>
+        <p v-else-if="messageError?.[`packages.${packIndex}.first_size`]" class="text-red-500 text-[1rem] mt-[10px]" role="alert">
           {{ messageError[`packages.${packIndex}.first_size`][0] }}
         </p>
       </div>
@@ -131,8 +131,8 @@ const visual = computed(() => getPackVisual(props.pack))
       <div class="w-full tablet:w-[30%] desktop:w-full desktop-xl:w-[200px]">
         <label :for="'second_size_' + packIndex" class="label-preventivo-rapido" title="Misura in centimetri del secondo lato del collo (larghezza)">Lato 2 (Cm)</label>
         <input type="text" placeholder="...Cm" v-model="pack.second_size" :id="'second_size_' + packIndex" :class="sv.errorClass(`second_size_${packIndex}`, 'input-preventivo-rapido')" @input="onDimInput('second_size', 'Lato 2')" @blur="onDimBlur('second_size', 'Lato 2')" required />
-        <p v-if="sv.getError(`second_size_${packIndex}`)" class="text-red-500 text-[0.8125rem] mt-[4px]">{{ sv.getError(`second_size_${packIndex}`) }}</p>
-        <p v-else-if="messageError?.[`packages.${packIndex}.second_size`]" class="text-red-500 text-[1rem] mt-[10px]">
+        <p v-if="sv.getError(`second_size_${packIndex}`)" class="text-red-500 text-[0.8125rem] mt-[4px]" role="alert">{{ sv.getError(`second_size_${packIndex}`) }}</p>
+        <p v-else-if="messageError?.[`packages.${packIndex}.second_size`]" class="text-red-500 text-[1rem] mt-[10px]" role="alert">
           {{ messageError[`packages.${packIndex}.second_size`][0] }}
         </p>
       </div>
@@ -141,8 +141,8 @@ const visual = computed(() => getPackVisual(props.pack))
       <div class="w-full tablet:w-[30%] desktop:w-full desktop-xl:w-[200px]">
         <label :for="'third_size_' + packIndex" class="label-preventivo-rapido" title="Misura in centimetri del terzo lato del collo (altezza)">Lato 3 (Cm)</label>
         <input type="text" placeholder="...Cm" v-model="pack.third_size" :id="'third_size_' + packIndex" :class="sv.errorClass(`third_size_${packIndex}`, 'input-preventivo-rapido')" @input="onDimInput('third_size', 'Lato 3')" @blur="onDimBlur('third_size', 'Lato 3')" required />
-        <p v-if="sv.getError(`third_size_${packIndex}`)" class="text-red-500 text-[0.8125rem] mt-[4px]">{{ sv.getError(`third_size_${packIndex}`) }}</p>
-        <p v-else-if="messageError?.[`packages.${packIndex}.third_size`]" class="text-red-500 text-[1rem] mt-[10px]">
+        <p v-if="sv.getError(`third_size_${packIndex}`)" class="text-red-500 text-[0.8125rem] mt-[4px]" role="alert">{{ sv.getError(`third_size_${packIndex}`) }}</p>
+        <p v-else-if="messageError?.[`packages.${packIndex}.third_size`]" class="text-red-500 text-[1rem] mt-[10px]" role="alert">
           {{ messageError[`packages.${packIndex}.third_size`][0] }}
         </p>
       </div>

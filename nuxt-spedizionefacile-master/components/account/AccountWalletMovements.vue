@@ -87,7 +87,11 @@ const getMovementSvg = (mov) => {
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-[#C8CCD0]"><path d="M4 4h16v16H4z"/><path d="M4 10h16"/><path d="M10 4v16"/></svg>
       </div>
       <p class="text-[0.9375rem] font-medium text-[#252B42]">Nessun movimento</p>
-      <p class="text-[0.8125rem] text-[#737373] mt-[6px]">I movimenti appariranno qui dopo la prima ricarica.</p>
+      <p class="text-[0.8125rem] text-[#737373] mt-[6px] max-w-[360px] mx-auto leading-[1.55]">I movimenti appariranno qui dopo la prima ricarica o il primo pagamento con il portafoglio.</p>
+      <NuxtLink to="/preventivo" class="inline-flex items-center gap-[6px] mt-[16px] px-[20px] py-[10px] bg-[#095866] hover:bg-[#074a56] text-white rounded-[50px] font-semibold text-[0.875rem] transition-colors">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Crea la tua prima spedizione
+      </NuxtLink>
     </div>
 
     <ul v-else class="space-y-[8px]">

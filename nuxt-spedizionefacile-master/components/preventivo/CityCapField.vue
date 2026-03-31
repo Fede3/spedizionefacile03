@@ -54,6 +54,6 @@ const { locationKey } = useCityCapAutocomplete()
         <slot name="suggestion" :loc="loc" />
       </li>
     </ul>
-    <p v-if="error" class="text-red-500 text-[0.8125rem] mt-[4px]">{{ error }}</p>
+    <p v-if="error" class="text-red-500 text-[0.8125rem] mt-[4px]" role="alert">{{ error }}</p>
   </div>
 </template>

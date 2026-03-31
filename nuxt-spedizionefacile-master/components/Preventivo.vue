@@ -68,7 +68,7 @@ function onFieldBlur(pack, packIndex, field) {
 							<p class="preventivo-heading__subtitle">{{ preventivoSubtitle }}</p>
 						</div>
 					</div>
-					<button v-if="hasFormData" type="button" @click="resetForm" class="preventivo-heading__reset flex items-center gap-[4px] text-[0.75rem] text-[#999] hover:text-[#E44203] transition cursor-pointer group">
+					<button v-if="hasFormData" type="button" @click="resetForm" aria-label="Azzera il modulo" class="preventivo-heading__reset flex items-center gap-[4px] text-[0.75rem] text-[#999] hover:text-[#E44203] transition cursor-pointer group">
 						<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="group-hover:rotate-[-180deg] transition-transform duration-300"><path d="M2.5 2v6h6"/><path d="M2.66 15.57a10 10 0 1 0 .57-8.38L2.5 8"/></svg>
 						<span class="hidden tablet:inline">Azzera</span>
 					</button>
@@ -113,7 +113,7 @@ function onFieldBlur(pack, packIndex, field) {
 												</ul>
 											</div>
 											<div class="route-card__feedback">
-												<p v-if="originLocationError" class="route-card__error">{{ originLocationError }}</p>
+												<p v-if="originLocationError" class="route-card__error" role="alert">{{ originLocationError }}</p>
 											</div>
 										</div>
 									</div>
@@ -150,7 +150,7 @@ function onFieldBlur(pack, packIndex, field) {
 												</ul>
 											</div>
 											<div class="route-card__feedback">
-												<p v-if="destLocationError" class="route-card__error">{{ destLocationError }}</p>
+												<p v-if="destLocationError" class="route-card__error" role="alert">{{ destLocationError }}</p>
 											</div>
 										</div>
 									</div>
@@ -199,7 +199,7 @@ function onFieldBlur(pack, packIndex, field) {
 													</div>
 													<span :id="`quantity_help_${packIndex}`" class="sr-only">Numero di colli identici da spedire. Il prezzo viene moltiplicato per la quantità.</span>
 													<div class="package-field-card__feedback">
-														<p v-if="messageError?.[`packages.${packIndex}.quantity`]" class="package-field-card__error">{{ messageError[`packages.${packIndex}.quantity`][0] }}</p>
+														<p v-if="messageError?.[`packages.${packIndex}.quantity`]" class="package-field-card__error" role="alert">{{ messageError[`packages.${packIndex}.quantity`][0] }}</p>
 													</div>
 												</div>
 												<!-- Peso + 3 dimensioni (v-for) -->
@@ -210,8 +210,8 @@ function onFieldBlur(pack, packIndex, field) {
 														<span class="package-field-card__unit">{{ field.unit }}</span>
 													</div>
 													<div class="package-field-card__feedback">
-														<p v-if="sv.getError(`${field.svKey}_${packIndex}`)" class="package-field-card__error">{{ sv.getError(`${field.svKey}_${packIndex}`) }}</p>
-														<p v-else-if="messageError?.[`packages.${packIndex}.${field.key}`]" class="package-field-card__error">{{ messageError[`packages.${packIndex}.${field.key}`][0] }}</p>
+														<p v-if="sv.getError(`${field.svKey}_${packIndex}`)" class="package-field-card__error" role="alert">{{ sv.getError(`${field.svKey}_${packIndex}`) }}</p>
+														<p v-else-if="messageError?.[`packages.${packIndex}.${field.key}`]" class="package-field-card__error" role="alert">{{ messageError[`packages.${packIndex}.${field.key}`][0] }}</p>
 													</div>
 												</div>
 											</div>
@@ -223,7 +223,7 @@ function onFieldBlur(pack, packIndex, field) {
 											Aggiungi collo
 										</button>
 									</div>
-									<p v-if="messageError?.packages && userStore.packages.length > 0" class="preventivo-inline-error">{{ messageError.packages[0] }}</p>
+									<p v-if="messageError?.packages && userStore.packages.length > 0" class="preventivo-inline-error" role="alert">{{ messageError.packages[0] }}</p>
 								</div>
 							</Transition>
 						</section>
