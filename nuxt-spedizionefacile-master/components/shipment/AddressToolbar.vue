@@ -79,8 +79,8 @@ defineExpose({ configDropdownRef, addressSelectorRef });
 			<div v-if="showConfigGuestPrompt && !isAuthenticated" :id="`${type}-config-dropdown`" role="dialog" class="absolute z-50 top-full right-0 mt-[4px] bg-white border border-[#D0D0D0] rounded-[12px] shadow-xl p-[14px] w-[min(92vw,300px)]">
 				<p class="text-[0.8125rem] text-[#4B5563] leading-[1.45]">Per usare le spedizioni configurate devi accedere.</p>
 				<div class="mt-[10px] flex items-center gap-[8px]">
-					<button type="button" class="inline-flex items-center justify-center h-[34px] px-[12px] rounded-[8px] bg-[#095866] text-white text-[0.75rem] font-semibold hover:bg-[#074a56] transition cursor-pointer" @click="$emit('open-auth-modal', 'login')">Accedi</button>
-					<button type="button" class="inline-flex items-center justify-center h-[34px] px-[12px] rounded-[8px] border border-[#C8D2D6] text-[#095866] text-[0.75rem] font-semibold hover:bg-[#F3F7F8] transition cursor-pointer" @click="$emit('open-auth-modal', 'register')">Registrati</button>
+					<button type="button" class="inline-flex items-center justify-center h-[34px] px-[12px] rounded-[12px] bg-[#095866] text-white text-[0.75rem] font-semibold hover:bg-[#074a56] transition cursor-pointer" @click="$emit('open-auth-modal', 'login')">Accedi</button>
+					<button type="button" class="inline-flex items-center justify-center h-[34px] px-[12px] rounded-[12px] border border-[#C8D2D6] text-[#095866] text-[0.75rem] font-semibold hover:bg-[#F3F7F8] transition cursor-pointer" @click="$emit('open-auth-modal', 'register')">Registrati</button>
 				</div>
 			</div>
 		</div>
@@ -112,8 +112,8 @@ defineExpose({ configDropdownRef, addressSelectorRef });
 			<div v-if="showGuestPrompt && !isAuthenticated" :id="`${type}-addresses-dropdown`" role="dialog" class="absolute z-50 top-full right-0 mt-[4px] bg-white border border-[#D0D0D0] rounded-[12px] shadow-xl p-[14px] w-[min(92vw,280px)]">
 				<p class="text-[0.8125rem] text-[#4B5563] leading-[1.45]">Per usare la rubrica indirizzi devi accedere.</p>
 				<div class="mt-[10px] flex items-center gap-[8px]">
-					<button type="button" class="inline-flex items-center justify-center h-[34px] px-[12px] rounded-[8px] bg-[#095866] text-white text-[0.75rem] font-semibold hover:bg-[#074a56] transition cursor-pointer" @click="$emit('open-auth-modal', 'login')">Accedi</button>
-					<button type="button" class="inline-flex items-center justify-center h-[34px] px-[12px] rounded-[8px] border border-[#C8D2D6] text-[#095866] text-[0.75rem] font-semibold hover:bg-[#F3F7F8] transition cursor-pointer" @click="$emit('open-auth-modal', 'register')">Registrati</button>
+					<button type="button" class="inline-flex items-center justify-center h-[34px] px-[12px] rounded-[12px] bg-[#095866] text-white text-[0.75rem] font-semibold hover:bg-[#074a56] transition cursor-pointer" @click="$emit('open-auth-modal', 'login')">Accedi</button>
+					<button type="button" class="inline-flex items-center justify-center h-[34px] px-[12px] rounded-[12px] border border-[#C8D2D6] text-[#095866] text-[0.75rem] font-semibold hover:bg-[#F3F7F8] transition cursor-pointer" @click="$emit('open-auth-modal', 'register')">Registrati</button>
 				</div>
 			</div>
 		</div>

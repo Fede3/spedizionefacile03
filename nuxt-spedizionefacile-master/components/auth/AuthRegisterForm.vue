@@ -78,7 +78,7 @@ const emit = defineEmits([
 						id="reg_name"
 						v-model="registerForm.name"
 						placeholder="Il tuo nome"
-						class="bg-[#F8F9FB] p-[12px] border border-[#E9EBEC] rounded-[8px] placeholder:text-[#A0A5AB] w-full text-[0.9375rem] focus:border-[#095866] focus:outline-none transition-colors"
+						class="bg-[#F8F9FB] p-[12px] border border-[#E9EBEC] rounded-[12px] placeholder:text-[#A0A5AB] w-full text-[0.9375rem] focus:border-[#095866] focus:outline-none transition-colors"
 						required />
 				</div>
 				<div>
@@ -88,7 +88,7 @@ const emit = defineEmits([
 						id="reg_surname"
 						v-model="registerForm.surname"
 						placeholder="Il tuo cognome"
-						class="bg-[#F8F9FB] p-[12px] border border-[#E9EBEC] rounded-[8px] placeholder:text-[#A0A5AB] w-full text-[0.9375rem] focus:border-[#095866] focus:outline-none transition-colors"
+						class="bg-[#F8F9FB] p-[12px] border border-[#E9EBEC] rounded-[12px] placeholder:text-[#A0A5AB] w-full text-[0.9375rem] focus:border-[#095866] focus:outline-none transition-colors"
 						required />
 				</div>
 			</div>
@@ -99,7 +99,7 @@ const emit = defineEmits([
 			<div class="mb-[16px]">
 				<label for="reg_telephone" class="block text-[0.875rem] font-medium text-[#252B42] mb-[6px]">Telefono *</label>
 				<div class="flex gap-[8px]">
-					<select v-model="registerForm.prefix" id="reg_prefix" class="bg-[#F8F9FB] p-[12px] border border-[#E9EBEC] rounded-[8px] text-[0.9375rem] w-[120px] focus:border-[#095866] focus:outline-none">
+					<select v-model="registerForm.prefix" id="reg_prefix" class="bg-[#F8F9FB] p-[12px] border border-[#E9EBEC] rounded-[12px] text-[0.9375rem] w-[120px] focus:border-[#095866] focus:outline-none">
 						<option value="+39">+39 IT</option>
 						<option value="+49">+49 DE</option>
 					</select>
@@ -108,7 +108,7 @@ const emit = defineEmits([
 						id="reg_telephone"
 						placeholder="Numero di telefono"
 						v-model="registerForm.telephone_number"
-						class="bg-[#F8F9FB] p-[12px] border border-[#E9EBEC] rounded-[8px] placeholder:text-[#A0A5AB] flex-1 text-[0.9375rem] focus:border-[#095866] focus:outline-none transition-colors"
+						class="bg-[#F8F9FB] p-[12px] border border-[#E9EBEC] rounded-[12px] placeholder:text-[#A0A5AB] flex-1 text-[0.9375rem] focus:border-[#095866] focus:outline-none transition-colors"
 						required />
 				</div>
 			</div>
@@ -122,7 +122,7 @@ const emit = defineEmits([
 					id="reg_email"
 					placeholder="La tua email"
 					v-model="registerForm.email"
-					class="bg-[#F8F9FB] p-[12px] border border-[#E9EBEC] rounded-[8px] placeholder:text-[#A0A5AB] w-full text-[0.9375rem] focus:border-[#095866] focus:outline-none transition-colors"
+					class="bg-[#F8F9FB] p-[12px] border border-[#E9EBEC] rounded-[12px] placeholder:text-[#A0A5AB] w-full text-[0.9375rem] focus:border-[#095866] focus:outline-none transition-colors"
 					required />
 			</div>
 
@@ -133,7 +133,7 @@ const emit = defineEmits([
 					id="reg_email_confirmation"
 					placeholder="Conferma la tua email"
 					v-model="registerForm.email_confirmation"
-					class="bg-[#F8F9FB] p-[12px] border border-[#E9EBEC] rounded-[8px] placeholder:text-[#A0A5AB] w-full text-[0.9375rem] focus:border-[#095866] focus:outline-none transition-colors"
+					class="bg-[#F8F9FB] p-[12px] border border-[#E9EBEC] rounded-[12px] placeholder:text-[#A0A5AB] w-full text-[0.9375rem] focus:border-[#095866] focus:outline-none transition-colors"
 					required />
 			</div>
 
@@ -151,7 +151,7 @@ const emit = defineEmits([
 						v-model="registerForm.password"
 						@change="registerForm.password = $event.target.value"
 						autocomplete="new-password"
-						class="bg-[#F8F9FB] p-[12px] pr-[44px] border border-[#E9EBEC] rounded-[8px] placeholder:text-[#A0A5AB] w-full text-[0.9375rem] focus:border-[#095866] focus:outline-none transition-colors"
+						class="bg-[#F8F9FB] p-[12px] pr-[44px] border border-[#E9EBEC] rounded-[12px] placeholder:text-[#A0A5AB] w-full text-[0.9375rem] focus:border-[#095866] focus:outline-none transition-colors"
 						minlength="8"
 						required />
 					<button type="button" @click="emit('update:showRegPassword', !showRegPassword)" class="absolute right-[12px] top-1/2 -translate-y-1/2 text-[#A0A5AB] hover:text-[#252B42] cursor-pointer transition-colors" tabindex="-1">
@@ -194,7 +194,7 @@ const emit = defineEmits([
 						v-model="registerForm.password_confirmation"
 						@change="registerForm.password_confirmation = $event.target.value"
 						autocomplete="new-password"
-						class="bg-[#F8F9FB] p-[12px] pr-[44px] border border-[#E9EBEC] rounded-[8px] placeholder:text-[#A0A5AB] w-full text-[0.9375rem] focus:border-[#095866] focus:outline-none transition-colors"
+						class="bg-[#F8F9FB] p-[12px] pr-[44px] border border-[#E9EBEC] rounded-[12px] placeholder:text-[#A0A5AB] w-full text-[0.9375rem] focus:border-[#095866] focus:outline-none transition-colors"
 						minlength="8"
 						required />
 					<button type="button" @click="emit('update:showRegPasswordConfirm', !showRegPasswordConfirm)" class="absolute right-[12px] top-1/2 -translate-y-1/2 text-[#A0A5AB] hover:text-[#252B42] cursor-pointer transition-colors" tabindex="-1">
@@ -211,7 +211,7 @@ const emit = defineEmits([
 			</p>
 
 			<!-- Referral code -->
-			<div v-if="registerForm.referred_by" class="bg-emerald-50 border border-emerald-200 p-[12px] rounded-[8px] mt-[8px]">
+			<div v-if="registerForm.referred_by" class="bg-emerald-50 border border-emerald-200 p-[12px] rounded-[12px] mt-[8px]">
 				<p class="text-[0.8125rem] text-emerald-700 font-medium">Codice referral applicato: <strong>{{ registerForm.referred_by }}</strong></p>
 				<p class="text-[0.75rem] text-emerald-600 mt-[4px]">Riceverai uno sconto del 5% su tutte le spedizioni!</p>
 			</div>

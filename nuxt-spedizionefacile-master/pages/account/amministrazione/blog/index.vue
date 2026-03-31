@@ -133,10 +133,10 @@ onMounted(() => { fetchArticles(); });
 								<td class="py-[14px] text-[#737373] text-[0.8125rem]">{{ formatDate(article.created_at) }}</td>
 								<td class="py-[14px] text-right">
 									<div class="flex justify-end gap-[6px]">
-										<NuxtLink :to="`/account/amministrazione/blog/${article.id}`" class="px-[10px] py-[6px] rounded-[8px] bg-[#F0F0F0] hover:bg-[#E0E0E0] text-[#404040] text-[0.75rem] cursor-pointer font-medium inline-flex items-center gap-[4px]">
+										<NuxtLink :to="`/account/amministrazione/blog/${article.id}`" class="px-[10px] py-[6px] rounded-[12px] bg-[#F0F0F0] hover:bg-[#E0E0E0] text-[#404040] text-[0.75rem] cursor-pointer font-medium inline-flex items-center gap-[4px]">
 											<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[14px] h-[14px]" fill="currentColor"><path d="M20.71,7.04C21.1,6.65 21.1,6 20.71,5.63L18.37,3.29C18,2.9 17.35,2.9 16.96,3.29L15.12,5.12L18.87,8.87M3,17.25V21H6.75L17.81,9.93L14.06,6.18L3,17.25Z"/></svg> Modifica
 										</NuxtLink>
-										<button :disabled="actionLoading === `delete-${article.id}`" class="px-[10px] py-[6px] rounded-[8px] bg-red-50 hover:bg-red-100 text-red-600 text-[0.75rem] cursor-pointer font-medium inline-flex items-center gap-[4px]" @click="deleteArticle(article)">
+										<button :disabled="actionLoading === `delete-${article.id}`" class="px-[10px] py-[6px] rounded-[12px] bg-red-50 hover:bg-red-100 text-red-600 text-[0.75rem] cursor-pointer font-medium inline-flex items-center gap-[4px]" @click="deleteArticle(article)">
 											<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[14px] h-[14px]" fill="currentColor"><path d="M19,4H15.5L14.5,3H9.5L8.5,4H5V6H19M6,19A2,2 0 0,0 8,21H16A2,2 0 0,0 18,19V7H6V19Z"/></svg> Elimina
 										</button>
 									</div>

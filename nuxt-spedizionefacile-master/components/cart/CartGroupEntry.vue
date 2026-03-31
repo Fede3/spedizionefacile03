@@ -75,7 +75,7 @@ const firstItem = computed(() => props.entry.items[0])
           :key="item.id"
           class="flex flex-wrap tablet:flex-nowrap items-center gap-[8px] tablet:gap-[12px] py-[10px] px-[8px] tablet:px-[12px] rounded-[50px] mb-[6px]"
           :class="pIdx % 2 === 0 ? 'bg-[#F8F9FB]' : 'bg-white'">
-          <div class="w-[32px] h-[32px] tablet:w-[36px] tablet:h-[36px] rounded-[8px] bg-[#F0F0F0] flex items-center justify-center shrink-0">
+          <div class="w-[32px] h-[32px] tablet:w-[36px] tablet:h-[36px] rounded-[12px] bg-[#F0F0F0] flex items-center justify-center shrink-0">
             <NuxtImg :src="getPackageIcon(item)" alt="" width="22" height="22" loading="lazy" decoding="async" class="w-[18px] h-[18px] tablet:w-[22px] tablet:h-[22px]" />
           </div>
           <div class="flex-1 min-w-0">

@@ -177,7 +177,7 @@ const readonlyClass = props.readonly
 				<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18h6M10 22h4M12 2v1M4.2 4.2l.7.7M1 12h1M4.2 19.8l.7-.7M20.5 4.9l-.7.7M23 12h-1M19.8 19.8l-.7-.7"/><path d="M15 8a3 3 0 1 0-6 0c0 2 3 4 3 6s-3 4-3 6"/></svg>
 				{{ getFieldAssist(t, 'city')?.label }}
 			</button>
-			<ul v-if="!readonly && citySuggestions.length > 0" class="absolute z-50 top-full left-0 right-0 bg-white border border-[#D0D0D0] rounded-[8px] mt-[2px] shadow-lg max-h-[200px] overflow-y-auto">
+			<ul v-if="!readonly && citySuggestions.length > 0" class="absolute z-50 top-full left-0 right-0 bg-white border border-[#D0D0D0] rounded-[12px] mt-[2px] shadow-lg max-h-[200px] overflow-y-auto">
 				<li v-for="loc in citySuggestions" :key="`${loc.postal_code}-${loc.place_name}`" @mousedown.prevent="selectCity(t, loc)" class="px-[12px] py-[8px] cursor-pointer hover:bg-[#f0fafb] text-[0.875rem] text-[#252B42]">
 					<span class="font-semibold">{{ formatCitySuggestionLabel(loc) }}</span>
 				</li>
@@ -208,7 +208,7 @@ const readonlyClass = props.readonly
 				<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18h6M10 22h4M12 2v1M4.2 4.2l.7.7M1 12h1M4.2 19.8l.7-.7M20.5 4.9l-.7.7M23 12h-1M19.8 19.8l-.7-.7"/><path d="M15 8a3 3 0 1 0-6 0c0 2 3 4 3 6s-3 4-3 6"/></svg>
 				{{ getFieldAssist(t, 'province')?.label }}
 			</button>
-			<ul v-if="!readonly && provinceSuggestions.length > 0" class="absolute z-50 top-full left-0 right-0 bg-white border border-[#D0D0D0] rounded-[8px] mt-[2px] shadow-lg">
+			<ul v-if="!readonly && provinceSuggestions.length > 0" class="absolute z-50 top-full left-0 right-0 bg-white border border-[#D0D0D0] rounded-[12px] mt-[2px] shadow-lg">
 				<li v-for="prov in provinceSuggestions" :key="prov" @mousedown.prevent="selectProvincia(t, prov)" class="px-[12px] py-[8px] cursor-pointer hover:bg-[#f0fafb] text-[0.875rem] text-[#252B42]">{{ prov }}</li>
 			</ul>
 		</div>
@@ -237,7 +237,7 @@ const readonlyClass = props.readonly
 				<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18h6M10 22h4M12 2v1M4.2 4.2l.7.7M1 12h1M4.2 19.8l.7-.7M20.5 4.9l-.7.7M23 12h-1M19.8 19.8l-.7-.7"/><path d="M15 8a3 3 0 1 0-6 0c0 2 3 4 3 6s-3 4-3 6"/></svg>
 				{{ getFieldAssist(t, 'postal_code')?.label }}
 			</button>
-			<ul v-if="!readonly && capSuggestions.length > 0" class="absolute z-50 top-full left-0 right-0 bg-white border border-[#D0D0D0] rounded-[8px] mt-[2px] shadow-lg max-h-[220px] overflow-y-auto">
+			<ul v-if="!readonly && capSuggestions.length > 0" class="absolute z-50 top-full left-0 right-0 bg-white border border-[#D0D0D0] rounded-[12px] mt-[2px] shadow-lg max-h-[220px] overflow-y-auto">
 				<li v-for="loc in capSuggestions" :key="`${t}-cap-${loc.postal_code}-${loc.place_name}-${loc.province || ''}`" @mousedown.prevent="selectCap(t, loc)" class="px-[12px] py-[8px] cursor-pointer hover:bg-[#f0fafb] text-[0.875rem] text-[#252B42]">
 					<span class="font-semibold">{{ formatCapSuggestionLabel(loc) }}</span>
 				</li>

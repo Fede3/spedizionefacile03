@@ -165,16 +165,16 @@ onMounted(() => { fetchWithdrawals(); });
 							</div>
 							<div v-if="w.status === 'pending'" class="flex w-full flex-col gap-[8px] tablet:w-auto tablet:flex-row tablet:items-center tablet:justify-end">
 								<template v-if="rejectingId !== w.id">
-									<button @click="approveWithdrawal(w.id)" :disabled="actionLoading === w.id" class="w-full tablet:w-auto px-[16px] py-[8px] bg-emerald-600 hover:bg-emerald-700 text-white rounded-[8px] text-[0.8125rem] font-medium transition-colors cursor-pointer disabled:opacity-50 flex items-center justify-center gap-[4px]">
+									<button @click="approveWithdrawal(w.id)" :disabled="actionLoading === w.id" class="w-full tablet:w-auto px-[16px] py-[8px] bg-emerald-600 hover:bg-emerald-700 text-white rounded-[12px] text-[0.8125rem] font-medium transition-colors cursor-pointer disabled:opacity-50 flex items-center justify-center gap-[4px]">
 										<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[16px] h-[16px]" fill="currentColor"><path d="M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z"/></svg> {{ actionLoading === w.id ? "..." : "Approva" }}
 									</button>
-									<button @click="startReject(w.id)" :disabled="actionLoading === w.id" class="w-full tablet:w-auto px-[16px] py-[8px] bg-red-50 hover:bg-red-100 text-red-700 rounded-[8px] text-[0.8125rem] font-medium transition-colors cursor-pointer border border-red-200">Rifiuta</button>
+									<button @click="startReject(w.id)" :disabled="actionLoading === w.id" class="w-full tablet:w-auto px-[16px] py-[8px] bg-red-50 hover:bg-red-100 text-red-700 rounded-[12px] text-[0.8125rem] font-medium transition-colors cursor-pointer border border-red-200">Rifiuta</button>
 								</template>
 								<template v-else>
 									<div class="grid grid-cols-1 tablet:grid-cols-[minmax(0,1fr)_auto_auto] gap-[8px]">
-										<input v-model="rejectNotes" type="text" placeholder="Motivo (opzionale)" class="w-full px-[12px] py-[8px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[8px] text-[0.8125rem] focus:border-[#095866] focus:outline-none" />
-										<button @click="confirmReject(w.id)" :disabled="actionLoading === w.id" class="px-[14px] py-[8px] bg-red-600 hover:bg-red-700 text-white rounded-[8px] text-[0.8125rem] font-medium cursor-pointer disabled:opacity-50">{{ actionLoading === w.id ? "..." : "Conferma" }}</button>
-										<button @click="cancelReject" class="px-[14px] py-[8px] bg-[#F0F0F0] hover:bg-[#E0E0E0] text-[#404040] rounded-[8px] text-[0.8125rem] font-medium cursor-pointer">Annulla</button>
+										<input v-model="rejectNotes" type="text" placeholder="Motivo (opzionale)" class="w-full px-[12px] py-[8px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[12px] text-[0.8125rem] focus:border-[#095866] focus:outline-none" />
+										<button @click="confirmReject(w.id)" :disabled="actionLoading === w.id" class="px-[14px] py-[8px] bg-red-600 hover:bg-red-700 text-white rounded-[12px] text-[0.8125rem] font-medium cursor-pointer disabled:opacity-50">{{ actionLoading === w.id ? "..." : "Conferma" }}</button>
+										<button @click="cancelReject" class="px-[14px] py-[8px] bg-[#F0F0F0] hover:bg-[#E0E0E0] text-[#404040] rounded-[12px] text-[0.8125rem] font-medium cursor-pointer">Annulla</button>
 									</div>
 								</template>
 							</div>

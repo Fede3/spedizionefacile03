@@ -75,16 +75,16 @@ const submitIcon = computed(() =>
 		<form @submit.prevent="emit('submit')">
 			<div class="mb-[14px]">
 				<label class="block text-[0.8125rem] font-semibold text-[#404040] mb-[4px]">Nome / Riferimento *</label>
-				<input type="text" :value="modelValue.name" @input="updateField('name', $event.target.value)" placeholder="es. Casa, Ufficio, Mario Rossi" class="w-full px-[12px] py-[10px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[10px] text-[0.875rem] focus:border-[#095866] focus:outline-none" required />
+				<input type="text" :value="modelValue.name" @input="updateField('name', $event.target.value)" placeholder="es. Casa, Ufficio, Mario Rossi" class="w-full px-[12px] py-[10px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[12px] text-[0.875rem] focus:border-[#095866] focus:outline-none" required />
 			</div>
 			<div class="mb-[14px]">
 				<label class="block text-[0.8125rem] font-semibold text-[#404040] mb-[4px]">Indirizzo *</label>
-				<input type="text" :value="modelValue.address" @input="updateField('address', $event.target.value)" placeholder="Via Roma 10" class="w-full px-[12px] py-[10px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[10px] text-[0.875rem] focus:border-[#095866] focus:outline-none" required />
+				<input type="text" :value="modelValue.address" @input="updateField('address', $event.target.value)" placeholder="Via Roma 10" class="w-full px-[12px] py-[10px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[12px] text-[0.875rem] focus:border-[#095866] focus:outline-none" required />
 			</div>
 			<div class="grid grid-cols-1 tablet:grid-cols-2 gap-[12px] mb-[14px]">
 				<div>
 					<label class="block text-[0.8125rem] font-semibold text-[#404040] mb-[4px]">Città *</label>
-					<input type="text" :value="modelValue.city" @input="updateField('city', $event.target.value)" placeholder="Roma" class="w-full px-[12px] py-[10px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[10px] text-[0.875rem] focus:border-[#095866] focus:outline-none" required />
+					<input type="text" :value="modelValue.city" @input="updateField('city', $event.target.value)" placeholder="Roma" class="w-full px-[12px] py-[10px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[12px] text-[0.875rem] focus:border-[#095866] focus:outline-none" required />
 				</div>
 				<div>
 					<label class="block text-[0.8125rem] font-semibold text-[#404040] mb-[4px]">CAP *</label>
@@ -96,13 +96,13 @@ const submitIcon = computed(() =>
 						maxlength="5"
 						inputmode="numeric"
 						pattern="[0-9]{5}"
-						class="w-full px-[12px] py-[10px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[10px] text-[0.875rem] focus:border-[#095866] focus:outline-none"
+						class="w-full px-[12px] py-[10px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[12px] text-[0.875rem] focus:border-[#095866] focus:outline-none"
 						required />
 				</div>
 			</div>
 			<div class="mb-[14px]">
 				<label class="block text-[0.8125rem] font-semibold text-[#404040] mb-[4px]">Provincia *</label>
-				<select :value="modelValue.province_name" @change="updateField('province_name', $event.target.value)" class="w-full px-[12px] py-[10px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[10px] text-[0.875rem] focus:border-[#095866] focus:outline-none cursor-pointer" required>
+				<select :value="modelValue.province_name" @change="updateField('province_name', $event.target.value)" class="w-full px-[12px] py-[10px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[12px] text-[0.875rem] focus:border-[#095866] focus:outline-none cursor-pointer" required>
 					<option v-if="isEdit" disabled :value="modelValue.province_name">{{ modelValue.province_name }}</option>
 					<option v-else disabled value="">Scegli la provincia</option>
 					<option v-for="(province, idx) in (isEdit ? filteredProvinces : provinceList)" :key="idx" :value="province">{{ province }}</option>
@@ -118,7 +118,7 @@ const submitIcon = computed(() =>
 
 			<!-- Messaggi -->
 			<p v-if="loading" class="text-center text-[0.875rem] text-[#095866] font-medium mb-[16px]">{{ loading }}</p>
-			<p v-if="error" class="text-center text-[0.875rem] text-red-600 font-medium mb-[16px] bg-red-50 p-[10px] rounded-[8px] border border-red-200">{{ error }}</p>
+			<p v-if="error" class="text-center text-[0.875rem] text-red-600 font-medium mb-[16px] bg-red-50 p-[10px] rounded-[12px] border border-red-200">{{ error }}</p>
 
 			<!-- Bottoni -->
 			<div class="flex flex-col gap-[12px] tablet:flex-row">

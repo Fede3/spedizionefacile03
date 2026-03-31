@@ -27,12 +27,12 @@ const emit = defineEmits(['downloadLabel', 'regenerateLabel']);
 					<div class="flex flex-wrap items-center gap-[10px]">
 						<NuxtLink
 							:to="`/traccia-spedizione?code=${encodeURIComponent(orderData.brt_parcel_id)}`"
-							class="inline-flex items-center gap-[6px] px-[14px] py-[8px] bg-[#095866] text-white rounded-[8px] font-semibold text-[0.8125rem] hover:bg-[#074a56] transition">
+							class="inline-flex items-center gap-[6px] px-[14px] py-[8px] bg-[#095866] text-white rounded-[12px] font-semibold text-[0.8125rem] hover:bg-[#074a56] transition">
 							<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
 							Traccia spedizione
 						</NuxtLink>
 						<a v-if="orderData.brt_tracking_url" :href="orderData.brt_tracking_url" target="_blank" rel="noopener noreferrer"
-							class="inline-flex items-center gap-[6px] px-[14px] py-[8px] border border-[#095866] text-[#095866] rounded-[8px] font-semibold text-[0.8125rem] hover:bg-[#095866] hover:text-white transition">
+							class="inline-flex items-center gap-[6px] px-[14px] py-[8px] border border-[#095866] text-[#095866] rounded-[12px] font-semibold text-[0.8125rem] hover:bg-[#095866] hover:text-white transition">
 							<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
 							Vedi su BRT
 						</a>

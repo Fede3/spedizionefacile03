@@ -25,7 +25,7 @@ const emit = defineEmits([
 				type="button"
 				@click="emit('resend-verification')"
 				:disabled="resendLoading"
-				class="mt-[12px] px-[16px] py-[10px] rounded-[8px] bg-[#095866] text-white text-[0.875rem] font-semibold cursor-pointer hover:bg-[#074a56] disabled:opacity-60 disabled:cursor-not-allowed">
+				class="mt-[12px] px-[16px] py-[10px] rounded-[12px] bg-[#095866] text-white text-[0.875rem] font-semibold cursor-pointer hover:bg-[#074a56] disabled:opacity-60 disabled:cursor-not-allowed">
 				{{ resendLoading ? 'Invio in corso...' : 'Invia nuova email di conferma' }}
 			</button>
 			<p v-if="resendMessage" class="text-[0.8125rem] mt-[10px]" :class="resendMessage.type === 'success' ? 'text-emerald-700' : 'text-red-600'">{{ resendMessage.text }}</p>
@@ -41,7 +41,7 @@ const emit = defineEmits([
 					v-model="credentials.email"
 					placeholder="La tua email"
 					autocomplete="username"
-					class="bg-[#F8F9FB] p-[12px] border border-[#E9EBEC] rounded-[8px] placeholder:text-[#A0A5AB] w-full text-[0.9375rem] focus:border-[#095866] focus:outline-none transition-colors"
+					class="bg-[#F8F9FB] p-[12px] border border-[#E9EBEC] rounded-[12px] placeholder:text-[#A0A5AB] w-full text-[0.9375rem] focus:border-[#095866] focus:outline-none transition-colors"
 					required />
 			</div>
 
@@ -55,7 +55,7 @@ const emit = defineEmits([
 						v-model="credentials.password"
 						placeholder="La tua password"
 						autocomplete="current-password"
-						class="bg-[#F8F9FB] p-[12px] pr-[44px] border border-[#E9EBEC] rounded-[8px] placeholder:text-[#A0A5AB] w-full text-[0.9375rem] focus:border-[#095866] focus:outline-none transition-colors"
+						class="bg-[#F8F9FB] p-[12px] pr-[44px] border border-[#E9EBEC] rounded-[12px] placeholder:text-[#A0A5AB] w-full text-[0.9375rem] focus:border-[#095866] focus:outline-none transition-colors"
 						required />
 					<button type="button" @click="emit('update:showLoginPassword', !showLoginPassword)" class="absolute right-[12px] top-1/2 -translate-y-1/2 text-[#A0A5AB] hover:text-[#252B42] cursor-pointer transition-colors" tabindex="-1">
 						<svg v-if="!showLoginPassword" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>

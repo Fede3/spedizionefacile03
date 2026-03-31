@@ -134,7 +134,7 @@ const deleteAddress = async (id) => {
 				<template #actions v-if="!isAddressFormOpen">
 					<button
 						@click="showCreateForm = true; messageError = null; messageSuccess = null;"
-						class="inline-flex items-center justify-center gap-[6px] px-[18px] py-[10px] bg-[#095866] hover:bg-[#074a56] text-white rounded-[50px] text-[0.875rem] font-semibold transition-colors cursor-pointer">
+						class="btn-primary btn-compact inline-flex items-center justify-center gap-[6px] text-[0.875rem]">
 						<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z"/></svg>
 						Aggiungi indirizzo
 					</button>

@@ -76,7 +76,7 @@ const props = defineProps({
 					<input
 						type="color"
 						v-model="promo.label_color"
-						class="w-[44px] h-[44px] rounded-[8px] border border-[#D0D0D0] cursor-pointer" />
+						class="w-[44px] h-[44px] rounded-[12px] border border-[#D0D0D0] cursor-pointer" />
 					<input
 						type="text"
 						v-model="promo.label_color"
@@ -86,7 +86,7 @@ const props = defineProps({
 					<span
 						v-if="promo.label_text"
 						:style="{ backgroundColor: promo.label_color }"
-						class="inline-flex items-center px-[12px] py-[6px] rounded-[8px] text-white text-[0.8125rem] font-bold tracking-wide">
+						class="inline-flex items-center px-[12px] py-[6px] rounded-[12px] text-white text-[0.8125rem] font-bold tracking-wide">
 						{{ promo.label_text }}
 					</span>
 				</div>
@@ -135,12 +135,12 @@ const props = defineProps({
 						<span class="inline-flex items-center justify-center px-[14px] py-[6px] bg-[#E44203] text-white font-extrabold text-[1.25rem] rounded-[40px]">8,90 &euro;</span>
 					</div>
 					<div v-if="promo.show_badges" class="flex items-center gap-[8px] mt-[6px]">
-						<span class="inline-flex items-center gap-[4px] px-[8px] py-[3px] rounded-[8px] bg-emerald-500 text-white text-[0.75rem] font-bold">-20%</span>
+						<span class="inline-flex items-center gap-[4px] px-[8px] py-[3px] rounded-[12px] bg-emerald-500 text-white text-[0.75rem] font-bold">-20%</span>
 					</div>
 					<div v-if="promo.label_text" class="mt-[6px]">
 						<span
 							:style="{ backgroundColor: promo.label_color || '#E44203' }"
-							class="inline-flex items-center gap-[6px] px-[10px] py-[4px] rounded-[8px] text-white text-[0.75rem] font-bold tracking-wide">
+							class="inline-flex items-center gap-[6px] px-[10px] py-[4px] rounded-[12px] text-white text-[0.75rem] font-bold tracking-wide">
 							<img v-if="promo.label_image" :src="promo.label_image" alt="" loading="lazy" decoding="async" width="30" height="14" class="h-[14px] w-auto shrink-0" />
 							{{ promo.label_text }}
 						</span>

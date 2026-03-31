@@ -160,18 +160,18 @@ onMounted(() => { fetchShipments(); });
 								<span v-if="s.brt_pudo_id" class="text-[0.625rem] font-semibold bg-[#095866]/10 text-[#095866] px-[6px] py-[2px] rounded">PUDO</span>
 							</div>
 							<div class="mt-[12px] grid grid-cols-2 gap-[8px]">
-								<a v-if="s.brt_tracking_url" :href="s.brt_tracking_url" target="_blank" class="inline-flex items-center justify-center gap-[4px] px-[12px] py-[9px] rounded-[10px] bg-indigo-50 text-indigo-700 text-[0.75rem] font-medium hover:bg-indigo-100 transition-colors">
+								<a v-if="s.brt_tracking_url" :href="s.brt_tracking_url" target="_blank" class="inline-flex items-center justify-center gap-[4px] px-[12px] py-[9px] rounded-[12px] bg-indigo-50 text-indigo-700 text-[0.75rem] font-medium hover:bg-indigo-100 transition-colors">
 									<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[12px] h-[12px]" fill="currentColor"><path d="M18,15A3,3 0 0,1 21,18A3,3 0 0,1 18,21C16.69,21 15.58,20.17 15.17,19H14V17H15.17C15.58,15.83 16.69,15 18,15M18,17A1,1 0 0,0 17,18A1,1 0 0,0 18,19A1,1 0 0,0 19,18A1,1 0 0,0 18,17M6,15A3,3 0 0,1 9,18A3,3 0 0,1 6,21A3,3 0 0,1 3,18A3,3 0 0,1 6,15M6,17A1,1 0 0,0 5,18A1,1 0 0,0 6,19A1,1 0 0,0 7,18A1,1 0 0,0 6,17M11,7L9.5,13H13.5L12,7M9,3H14L18,17H12.5L12,15H11L10.5,17H5L9,3Z"/></svg>
 									Tracking
 								</a>
-								<button v-if="s.brt_parcel_id" @click="downloadLabel(s)" class="inline-flex items-center justify-center gap-[4px] px-[12px] py-[9px] rounded-[10px] bg-emerald-50 text-emerald-700 text-[0.75rem] font-medium hover:bg-emerald-100 cursor-pointer transition-colors">
+								<button v-if="s.brt_parcel_id" @click="downloadLabel(s)" class="inline-flex items-center justify-center gap-[4px] px-[12px] py-[9px] rounded-[12px] bg-emerald-50 text-emerald-700 text-[0.75rem] font-medium hover:bg-emerald-100 cursor-pointer transition-colors">
 									<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[12px] h-[12px]" fill="currentColor"><path d="M5,20H19V18H5M19,9H15V3H9V9H5L12,16L19,9Z"/></svg>
 									Etichetta
 								</button>
-								<button v-else disabled class="inline-flex items-center justify-center gap-[4px] px-[12px] py-[9px] rounded-[10px] bg-gray-50 text-[#C8CCD0] text-[0.75rem] font-medium cursor-not-allowed">
+								<button v-else disabled class="inline-flex items-center justify-center gap-[4px] px-[12px] py-[9px] rounded-[12px] bg-gray-50 text-[#C8CCD0] text-[0.75rem] font-medium cursor-not-allowed">
 									No label
 								</button>
-								<select @change="changeOrderStatus(s.id, $event.target.value); $event.target.value = ''" class="col-span-2 w-full px-[10px] py-[9px] rounded-[10px] bg-white text-[#252B42] text-[0.75rem] cursor-pointer border border-[#D7E1E4] font-medium focus:border-[#095866] focus:outline-none">
+								<select @change="changeOrderStatus(s.id, $event.target.value); $event.target.value = ''" class="col-span-2 w-full px-[10px] py-[9px] rounded-[12px] bg-white text-[#252B42] text-[0.75rem] cursor-pointer border border-[#D7E1E4] font-medium focus:border-[#095866] focus:outline-none">
 									<option value="" selected disabled>Stato</option>
 									<option value="in_transit">In transito</option>
 									<option value="delivered">Consegnato</option>
@@ -241,9 +241,9 @@ onMounted(() => { fetchShipments(); });
 					</table>
 
 						<div v-if="shipmentsData.last_page > 1" class="flex items-center justify-center gap-[8px] mt-[20px]">
-							<button @click="shipmentsPage = Math.max(1, shipmentsPage - 1); fetchShipments()" :disabled="shipmentsPage <= 1" class="px-[12px] py-[8px] rounded-[8px] bg-[#F0F0F0] text-[0.8125rem] font-medium disabled:opacity-40 cursor-pointer hover:bg-[#E0E0E0]">Precedente</button>
+							<button @click="shipmentsPage = Math.max(1, shipmentsPage - 1); fetchShipments()" :disabled="shipmentsPage <= 1" class="px-[12px] py-[8px] rounded-[12px] bg-[#F0F0F0] text-[0.8125rem] font-medium disabled:opacity-40 cursor-pointer hover:bg-[#E0E0E0]">Precedente</button>
 							<span class="text-[0.8125rem] text-[#737373]">Pagina {{ shipmentsPage }} di {{ shipmentsData.last_page }}</span>
-							<button @click="shipmentsPage = Math.min(shipmentsData.last_page, shipmentsPage + 1); fetchShipments()" :disabled="shipmentsPage >= shipmentsData.last_page" class="px-[12px] py-[8px] rounded-[8px] bg-[#F0F0F0] text-[0.8125rem] font-medium disabled:opacity-40 cursor-pointer hover:bg-[#E0E0E0]">Successiva</button>
+							<button @click="shipmentsPage = Math.min(shipmentsData.last_page, shipmentsPage + 1); fetchShipments()" :disabled="shipmentsPage >= shipmentsData.last_page" class="px-[12px] py-[8px] rounded-[12px] bg-[#F0F0F0] text-[0.8125rem] font-medium disabled:opacity-40 cursor-pointer hover:bg-[#E0E0E0]">Successiva</button>
 						</div>
 					</div>
 				</div>

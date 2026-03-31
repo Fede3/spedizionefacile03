@@ -194,7 +194,7 @@ onMounted(() => { fetchArticle(); });
 							<h2 class="text-[1.125rem] font-bold text-[#252B42] flex items-center gap-[8px]">
 								<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[20px] h-[20px] text-indigo-600" fill="currentColor"><path d="M7,5H21V7H7V5M7,13V11H21V13H7M4,4.5A1.5,1.5 0 0,1 5.5,6A1.5,1.5 0 0,1 4,7.5A1.5,1.5 0 0,1 2.5,6A1.5,1.5 0 0,1 4,4.5M4,10.5A1.5,1.5 0 0,1 5.5,12A1.5,1.5 0 0,1 4,13.5A1.5,1.5 0 0,1 2.5,12A1.5,1.5 0 0,1 4,10.5M7,19V17H21V19H7M4,16.5A1.5,1.5 0 0,1 5.5,18A1.5,1.5 0 0,1 4,19.5A1.5,1.5 0 0,1 2.5,18A1.5,1.5 0 0,1 4,16.5Z"/></svg> Sezioni
 							</h2>
-							<button @click="addSection" class="px-[12px] py-[6px] bg-[#F0F0F0] hover:bg-[#E0E0E0] text-[#404040] rounded-[8px] text-[0.8125rem] font-medium cursor-pointer inline-flex items-center gap-[4px]">
+							<button @click="addSection" class="px-[12px] py-[6px] bg-[#F0F0F0] hover:bg-[#E0E0E0] text-[#404040] rounded-[12px] text-[0.8125rem] font-medium cursor-pointer inline-flex items-center gap-[4px]">
 								<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[16px] h-[16px]" fill="currentColor"><path d="M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z"/></svg> Aggiungi sezione
 							</button>
 						</div>
@@ -207,8 +207,8 @@ onMounted(() => { fetchArticle(); });
 									</button>
 								</div>
 								<div class="space-y-[10px]">
-									<input v-model="section.heading" type="text" class="w-full px-[12px] py-[8px] bg-white border border-[#E9EBEC] rounded-[8px] text-[0.875rem] focus:border-[#095866] focus:outline-none" placeholder="Titolo sezione" />
-									<textarea v-model="section.text" rows="4" class="w-full px-[12px] py-[8px] bg-white border border-[#E9EBEC] rounded-[8px] text-[0.875rem] focus:border-[#095866] focus:outline-none resize-none" placeholder="Contenuto della sezione"></textarea>
+									<input v-model="section.heading" type="text" class="w-full px-[12px] py-[8px] bg-white border border-[#E9EBEC] rounded-[12px] text-[0.875rem] focus:border-[#095866] focus:outline-none" placeholder="Titolo sezione" />
+									<textarea v-model="section.text" rows="4" class="w-full px-[12px] py-[8px] bg-white border border-[#E9EBEC] rounded-[12px] text-[0.875rem] focus:border-[#095866] focus:outline-none resize-none" placeholder="Contenuto della sezione"></textarea>
 								</div>
 							</div>
 						</div>
@@ -220,7 +220,7 @@ onMounted(() => { fetchArticle(); });
 							<h2 class="text-[1.125rem] font-bold text-[#252B42] flex items-center gap-[8px]">
 								<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[20px] h-[20px] text-amber-600" fill="currentColor"><path d="M18,15H6L2,19V3A1,1 0 0,1 3,2H18A1,1 0 0,1 19,3V14A1,1 0 0,1 18,15M23,9V23L19,19H8A1,1 0 0,1 7,18V17H21V8H22A1,1 0 0,1 23,9Z"/></svg> FAQ
 							</h2>
-							<button @click="addFaq" class="px-[12px] py-[6px] bg-[#F0F0F0] hover:bg-[#E0E0E0] text-[#404040] rounded-[8px] text-[0.8125rem] font-medium cursor-pointer inline-flex items-center gap-[4px]">
+							<button @click="addFaq" class="px-[12px] py-[6px] bg-[#F0F0F0] hover:bg-[#E0E0E0] text-[#404040] rounded-[12px] text-[0.8125rem] font-medium cursor-pointer inline-flex items-center gap-[4px]">
 								<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[16px] h-[16px]" fill="currentColor"><path d="M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z"/></svg> Aggiungi FAQ
 							</button>
 						</div>
@@ -233,8 +233,8 @@ onMounted(() => { fetchArticle(); });
 									</button>
 								</div>
 								<div class="space-y-[10px]">
-									<input v-model="faq.title" type="text" class="w-full px-[12px] py-[8px] bg-white border border-[#E9EBEC] rounded-[8px] text-[0.875rem] focus:border-[#095866] focus:outline-none" placeholder="Domanda" />
-									<textarea v-model="faq.text" rows="3" class="w-full px-[12px] py-[8px] bg-white border border-[#E9EBEC] rounded-[8px] text-[0.875rem] focus:border-[#095866] focus:outline-none resize-none" placeholder="Risposta"></textarea>
+									<input v-model="faq.title" type="text" class="w-full px-[12px] py-[8px] bg-white border border-[#E9EBEC] rounded-[12px] text-[0.875rem] focus:border-[#095866] focus:outline-none" placeholder="Domanda" />
+									<textarea v-model="faq.text" rows="3" class="w-full px-[12px] py-[8px] bg-white border border-[#E9EBEC] rounded-[12px] text-[0.875rem] focus:border-[#095866] focus:outline-none resize-none" placeholder="Risposta"></textarea>
 								</div>
 							</div>
 						</div>

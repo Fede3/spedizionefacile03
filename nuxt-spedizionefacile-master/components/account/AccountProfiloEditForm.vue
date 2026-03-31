@@ -17,7 +17,7 @@ const updateField = (key, value) => {
 
 const billingSameAsShipping = ref(false);
 
-const inputClass = 'w-full px-[12px] py-[10px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[8px] text-[0.875rem] focus:border-[#095866] focus:outline-none';
+const inputClass = 'w-full px-[12px] py-[10px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[12px] text-[0.875rem] focus:border-[#095866] focus:outline-none';
 </script>
 
 <template>

@@ -31,7 +31,7 @@ defineEmits(['remove']);
 		<button type="button" @click="rule.enabled = !rule.enabled" :class="rule.enabled ? 'bg-[#095866]' : 'bg-[#C8CCD0]'" class="relative inline-flex h-[28px] w-[48px] items-center rounded-full transition-colors cursor-pointer mt-[16px]">
 			<span :class="rule.enabled ? 'translate-x-[24px]' : 'translate-x-[2px]'" class="inline-block h-[22px] w-[22px] transform rounded-full bg-white transition-transform shadow-sm" />
 		</button>
-		<button type="button" class="px-[10px] py-[7px] rounded-[8px] border border-red-200 text-red-600 text-[0.75rem] hover:bg-red-50 cursor-pointer mt-[16px]" @click="$emit('remove')">
+		<button type="button" class="px-[10px] py-[7px] rounded-[12px] border border-red-200 text-red-600 text-[0.75rem] hover:bg-red-50 cursor-pointer mt-[16px]" @click="$emit('remove')">
 			Elimina
 		</button>
 	</div>

@@ -343,8 +343,8 @@ export const useShipmentStepServices = ({
 	}
 
 	if (process.client) {
-		loadPriceBands().catch((error) => {
-			console.warn("[useShipmentStepServices] Impossibile caricare il listino servizi:", error?.message || error);
+		loadPriceBands().catch(() => {
+			// Warning already logged inside usePriceBands
 		});
 	}
 

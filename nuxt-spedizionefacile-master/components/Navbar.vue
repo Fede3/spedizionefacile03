@@ -96,8 +96,7 @@ onBeforeUnmount(() => {
 
 <template>
   <div class="relative w-full">
-    <div v-if="!isAuthShellRoute" class="h-[3px] w-full rounded-full"
-      style="background: linear-gradient(90deg, #E44203 0%, #ff6a33 50%, #E44203 100%);"></div>
+    <div v-if="!isAuthShellRoute" class="navbar-accent-bar h-[3px] w-full rounded-full"></div>
 
     <div ref="navbarBottomRef" class="navbar-shell relative z-50 flex items-center justify-between px-[2px]"
       :class="isAuthShellRoute ? 'h-[52px] sm:h-[58px] border-b border-[#edf0f3]' : 'h-[56px] sm:h-[64px] lg:h-[70px]'"

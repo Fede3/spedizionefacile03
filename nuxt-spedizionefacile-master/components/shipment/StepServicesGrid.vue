@@ -25,6 +25,7 @@ const props = defineProps({
 	/* Contrassegno / Assicurazione */
 	contrassegnoIncassoOptions: { type: Array, required: true },
 	contrassegnoRimborsoOptions: { type: Array, required: true },
+	contrassegnoCodPaymentOptions: { type: Array, default: () => [] },
 	requiresContrassegnoDettaglio: { type: Boolean, default: false },
 	insurancePackages: { type: Array, required: true },
 	normalizeCurrencyInput: { type: Function, required: true },
@@ -199,6 +200,13 @@ const emit = defineEmits([
 												<button v-for="option in contrassegnoRimborsoOptions" :key="option.value" type="button" class="service-inline-choice" :class="{ 'is-active': serviceData.contrassegno.modalita_rimborso === option.value }" @click="serviceData.contrassegno.modalita_rimborso = option.value; serviceCardErrors.contrassegnoRimborso = ''">{{ option.label }}</button>
 											</div>
 											<p v-if="serviceCardErrors.contrassegnoRimborso" class="service-inline-field__error">{{ serviceCardErrors.contrassegnoRimborso }}</p>
+										</div>
+										<div v-if="contrassegnoCodPaymentOptions.length" class="service-inline-choice-block">
+											<span class="service-inline-field__label">Tipo pagamento corriere</span>
+											<div class="service-inline-choice-wrap" role="group" aria-label="Tipo pagamento contrassegno BRT">
+												<button v-for="option in contrassegnoCodPaymentOptions" :key="option.value" type="button" class="service-inline-choice" :class="{ 'is-active': serviceData.contrassegno.cod_payment_method === option.value }" @click="serviceData.contrassegno.cod_payment_method = option.value; serviceCardErrors.contrassegnoCodPayment = ''">{{ option.label }}</button>
+											</div>
+											<p v-if="serviceCardErrors.contrassegnoCodPayment" class="service-inline-field__error">{{ serviceCardErrors.contrassegnoCodPayment }}</p>
 										</div>
 									</div>
 

@@ -206,21 +206,21 @@ const handleSubmit = async () => {
 						</div>
 
 						<div class="mb-[20px]">
-							<label class="block text-[0.8125rem] font-semibold text-[#404040] mb-[6px]">Oggetto *</label>
+							<label class="form-label">Oggetto *</label>
 							<input
 								v-model="subject"
 								type="text"
 								placeholder="Es. Problema con la spedizione #1234"
-								class="w-full px-[14px] py-[12px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[16px] text-[0.9375rem] text-[#252B42] placeholder:text-[#a0a0a0] focus:border-[#095866] focus:outline-none transition-colors" />
+								class="form-input" />
 						</div>
 
 						<div class="mb-[24px]">
-							<label class="block text-[0.8125rem] font-semibold text-[#404040] mb-[6px]">Messaggio *</label>
+							<label class="form-label">Messaggio *</label>
 							<textarea
 								v-model="message"
 								rows="6"
 								placeholder="Descrivi il tuo problema o la tua richiesta..."
-								class="w-full px-[14px] py-[12px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[16px] text-[0.9375rem] text-[#252B42] placeholder:text-[#a0a0a0] focus:border-[#095866] focus:outline-none transition-colors resize-none"></textarea>
+								class="form-input resize-none"></textarea>
 						</div>
 
 						<div v-if="feedback" :class="['mb-[20px] p-[14px] rounded-[16px] text-[0.875rem] font-medium flex items-center gap-[8px]', feedbackType === 'success' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-red-50 text-red-600 border border-red-200']">
@@ -232,12 +232,7 @@ const handleSubmit = async () => {
 						<button
 							@click="handleSubmit"
 							:disabled="submitDisabled"
-							:class="[
-								'w-full py-[14px] rounded-[50px] font-semibold text-[0.9375rem] transition-all flex items-center justify-center gap-[8px]',
-								submitDisabled
-									? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-									: 'bg-[#095866] hover:bg-[#074a56] text-white cursor-pointer',
-							]">
+							class="btn-primary w-full py-[14px] flex items-center justify-center gap-[8px] text-[0.9375rem]">
 							<svg v-if="!isSending" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[18px] h-[18px]" fill="currentColor"><path d="M2,21L23,12L2,3V10L17,12L2,14V21Z"/></svg>
 							{{ isSending ? "Invio in corso..." : "Invia richiesta" }}
 						</button>

@@ -20,6 +20,13 @@ export function useServiceModalLogic(props: {
     { value: 'assegno_circolare', label: 'Assegno circolare' },
   ]
 
+  // Tipo pagamento contrassegno BRT (codPaymentType nel payload API)
+  const contrassegnoCodPaymentOptions = [
+    { value: 'BM', label: 'Bonifico bancario (BM)' },
+    { value: 'CC', label: 'Assegno circolare (CC)' },
+    { value: 'AS', label: 'Assegno bancario (AS)' },
+  ]
+
   // --- Computed derivati ---
   const selectedServiceIndex = computed(() => Number(props.selectedService?.index ?? -1))
 
@@ -86,6 +93,7 @@ export function useServiceModalLogic(props: {
     contrassegnoIncasso: '',
     contrassegnoRimborso: '',
     contrassegnoDettaglio: '',
+    contrassegnoCodPayment: '',
     assicurazione: {} as Record<number, string>,
   })
 
@@ -94,6 +102,7 @@ export function useServiceModalLogic(props: {
     serviceErrors.contrassegnoIncasso = ''
     serviceErrors.contrassegnoRimborso = ''
     serviceErrors.contrassegnoDettaglio = ''
+    serviceErrors.contrassegnoCodPayment = ''
     serviceErrors.assicurazione = {}
   }
 
@@ -119,6 +128,7 @@ export function useServiceModalLogic(props: {
     parseCurrencyValue(props.serviceData.contrassegno.importo) > 0
     && !!props.serviceData.contrassegno.modalita_incasso
     && !!props.serviceData.contrassegno.modalita_rimborso
+    && !!props.serviceData.contrassegno.cod_payment_method
     && (!requiresContrassegnoDettaglio.value || !!String(props.serviceData.contrassegno.dettaglio_rimborso || '').trim())
   ))
 
@@ -150,6 +160,10 @@ export function useServiceModalLogic(props: {
       serviceErrors.contrassegnoRimborso = 'Seleziona come vuoi ricevere il rimborso.'
       isValid = false
     }
+    if (!props.serviceData.contrassegno.cod_payment_method) {
+      serviceErrors.contrassegnoCodPayment = 'Seleziona il tipo di pagamento contrassegno.'
+      isValid = false
+    }
     if (requiresContrassegnoDettaglio.value && !String(props.serviceData.contrassegno.dettaglio_rimborso || '').trim()) {
       serviceErrors.contrassegnoDettaglio = 'Inserisci IBAN o dettaglio rimborso.'
       isValid = false
@@ -174,6 +188,7 @@ export function useServiceModalLogic(props: {
   return {
     contrassegnoIncassoOptions,
     contrassegnoRimborsoOptions,
+    contrassegnoCodPaymentOptions,
     selectedServiceIndex,
     selectedServiceIcon,
     insurancePackages,

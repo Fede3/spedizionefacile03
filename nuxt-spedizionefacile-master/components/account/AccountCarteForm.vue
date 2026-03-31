@@ -25,7 +25,7 @@ const emit = defineEmits(['update:cardHolderName', 'save', 'cancel'])
         type="text"
         :value="cardHolderName"
         @input="emit('update:cardHolderName', $event.target.value)"
-        class="w-full px-[14px] py-[11px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[8px] text-[0.875rem] text-[#252B42] placeholder:text-[#a0a0a0] focus:border-[#095866] focus:outline-none transition-colors"
+        class="w-full px-[14px] py-[11px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[12px] text-[0.875rem] text-[#252B42] placeholder:text-[#a0a0a0] focus:border-[#095866] focus:outline-none transition-colors"
         placeholder="Mario Rossi"
         required />
     </div>
@@ -41,7 +41,7 @@ const emit = defineEmits(['update:cardHolderName', 'save', 'cancel'])
       </div>
     </div>
 
-    <p v-if="errorMessage" class="text-red-500 text-[0.75rem] mb-[14px] p-[10px] bg-red-50 rounded-[8px] border border-red-200">
+    <p v-if="errorMessage" class="text-red-500 text-[0.75rem] mb-[14px] p-[10px] bg-red-50 rounded-[12px] border border-red-200">
       {{ errorMessage }}
     </p>
 

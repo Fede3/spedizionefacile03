@@ -27,5 +27,14 @@ class EventServiceProvider extends ServiceProvider
             \App\Listeners\MarkOrderProcessing::class,
             \App\Listeners\GenerateBrtLabel::class,
         ],
+
+        \App\Events\OrderCreated::class => [
+            \App\Listeners\CartEmpty::class,
+            \App\Listeners\SendOrderConfirmation::class,
+        ],
+
+        \App\Events\ShipmentStatusChanged::class => [
+            \App\Listeners\SendShipmentStatusEmail::class,
+        ],
     ];
 }

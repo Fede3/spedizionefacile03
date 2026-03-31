@@ -58,7 +58,7 @@ const localCouponPanelOpen = computed({
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
         Modifica
       </NuxtLink>
-      <span v-else class="text-[0.8125rem] font-semibold text-[#737373] bg-white px-[14px] py-[6px] rounded-[8px]">
+      <span v-else class="text-[0.8125rem] font-semibold text-[#737373] bg-white px-[14px] py-[6px] rounded-[12px]">
         Ordine #{{ existingOrderId }}
       </span>
     </div>
@@ -85,7 +85,7 @@ const localCouponPanelOpen = computed({
         <!-- Package header row -->
         <div class="flex flex-wrap items-start gap-[8px] mb-[14px]">
           <div class="flex items-center gap-[8px] min-w-0 flex-1">
-            <span class="inline-flex items-center justify-center w-[28px] h-[28px] bg-[#095866]/10 text-[#095866] rounded-[8px] text-[0.75rem] font-bold">{{ pkgIdx + 1 }}</span>
+            <span class="inline-flex items-center justify-center w-[28px] h-[28px] bg-[#095866]/10 text-[#095866] rounded-[12px] text-[0.75rem] font-bold">{{ pkgIdx + 1 }}</span>
             <span class="text-[0.9375rem] font-semibold text-[#252B42]">{{ pkg.package_type || 'Pacco' }}</span>
             <span v-if="pkg.content_description" class="text-[0.75rem] text-[#737373] bg-[#F5F5F5] px-[8px] py-[2px] rounded-[4px] max-w-[150px] tablet:max-w-[240px] truncate">{{ pkg.content_description }}</span>
           </div>
@@ -118,7 +118,7 @@ const localCouponPanelOpen = computed({
         <div v-if="pkg.origin_address || pkg.destination_address" class="border-t border-[#F0F0F0] pt-[14px] mb-[14px]">
           <div class="grid grid-cols-1 desktop:grid-cols-2 gap-[12px]">
             <div v-if="pkg.origin_address" class="flex gap-[10px]">
-              <div class="w-[32px] h-[32px] bg-[#095866]/10 rounded-[8px] flex items-center justify-center shrink-0 mt-[2px]" title="Indirizzo del mittente">
+              <div class="w-[32px] h-[32px] bg-[#095866]/10 rounded-[12px] flex items-center justify-center shrink-0 mt-[2px]" title="Indirizzo del mittente">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#095866" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="10" r="3"/><path d="M12 21.7C17.3 17 20 13 20 10a8 8 0 1 0-16 0c0 3 2.7 7 8 11.7z"/></svg>
               </div>
               <div class="min-w-0">
@@ -129,7 +129,7 @@ const localCouponPanelOpen = computed({
               </div>
             </div>
             <div v-if="pkg.destination_address" class="flex gap-[10px]">
-              <div class="w-[32px] h-[32px] bg-[#E44203]/10 rounded-[8px] flex items-center justify-center shrink-0 mt-[2px]" title="Indirizzo del destinatario">
+              <div class="w-[32px] h-[32px] bg-[#E44203]/10 rounded-[12px] flex items-center justify-center shrink-0 mt-[2px]" title="Indirizzo del destinatario">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#E44203" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="10" r="3"/><path d="M12 21.7C17.3 17 20 13 20 10a8 8 0 1 0-16 0c0 3 2.7 7 8 11.7z"/></svg>
               </div>
               <div class="min-w-0">

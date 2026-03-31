@@ -117,7 +117,7 @@ const updatePassword = async () => {
 		<div class="my-container flex justify-center">
 			<form
 				@submit.prevent="updatePassword"
-				class="w-full max-w-[560px] bg-white p-[20px] tablet:p-[28px] rounded-[16px] shadow-[0_2px_12px_rgba(0,0,0,0.08)] border border-[#E9EBEC] text-[#252B42]"
+				class="w-full max-w-[560px] bg-white p-[20px] tablet:p-[28px] rounded-[20px] shadow-[0_14px_28px_rgba(20,37,48,0.06)] border border-[#E5EAEC] text-[#252B42]"
 			>
 				<div class="text-center mb-[20px]">
 					<div class="w-[56px] h-[56px] mx-auto mb-[16px] bg-[#095866]/10 rounded-full flex items-center justify-center">
@@ -132,12 +132,12 @@ const updatePassword = async () => {
 					</p>
 				</div>
 
-				<label for="email" class="block text-[0.875rem] font-medium text-[#252B42] mb-[6px]">Email</label>
+				<label for="email" class="form-label">Email</label>
 				<input
 					id="email"
 					v-model="data.email"
 					type="email"
-					class="block w-full mt-1 mb-2 bg-[#F8F9FB] p-[12px] border border-[#E9EBEC] rounded-[8px] focus:border-[#095866] focus:outline-none transition-colors"
+					class="block w-full mt-1 mb-2 bg-[#F8F9FB] p-[12px] border border-[#E9EBEC] rounded-[12px] focus:border-[#095866] focus:outline-none transition-colors"
 					required
 					autocomplete="email"
 				/>
@@ -145,13 +145,13 @@ const updatePassword = async () => {
 					<span v-for="(error, index) in fieldErrors.email" :key="index" class="block">{{ error }}</span>
 				</p>
 
-				<label for="password" class="block text-[0.875rem] font-medium text-[#252B42] mb-[6px]">Nuova password</label>
+				<label for="password" class="form-label">Nuova password</label>
 				<div class="relative mb-[12px]">
 					<input
 						id="password"
 						v-model="data.password"
 						:type="showPassword ? 'text' : 'password'"
-						class="block w-full mt-1 bg-[#F8F9FB] p-[12px] pr-[44px] border border-[#E9EBEC] rounded-[8px] focus:border-[#095866] focus:outline-none transition-colors"
+						class="block w-full mt-1 bg-[#F8F9FB] p-[12px] pr-[44px] border border-[#E9EBEC] rounded-[12px] focus:border-[#095866] focus:outline-none transition-colors"
 						required
 						autocomplete="new-password"
 					/>
@@ -205,13 +205,13 @@ const updatePassword = async () => {
 					<span v-for="(error, index) in fieldErrors.password" :key="index" class="block">{{ error }}</span>
 				</p>
 
-				<label for="password_confirmation" class="block text-[0.875rem] font-medium text-[#252B42] mb-[6px]">Conferma nuova password</label>
+				<label for="password_confirmation" class="form-label">Conferma nuova password</label>
 				<div class="relative mb-[12px]">
 					<input
 						id="password_confirmation"
 						v-model="data.password_confirmation"
 						:type="showPasswordConfirmation ? 'text' : 'password'"
-						class="block w-full mt-1 bg-[#F8F9FB] p-[12px] pr-[44px] border border-[#E9EBEC] rounded-[8px] focus:border-[#095866] focus:outline-none transition-colors"
+						class="block w-full mt-1 bg-[#F8F9FB] p-[12px] pr-[44px] border border-[#E9EBEC] rounded-[12px] focus:border-[#095866] focus:outline-none transition-colors"
 						required
 						autocomplete="new-password"
 					/>
@@ -243,7 +243,7 @@ const updatePassword = async () => {
 				<button
 					type="submit"
 					:disabled="isLoading"
-					:class="['w-full py-[14px] rounded-[50px] text-white font-semibold text-[1rem] mt-[20px] transition-[background-color,transform]', isLoading ? 'bg-gray-300 cursor-not-allowed' : 'bg-[#095866] hover:bg-[#074a56] cursor-pointer']"
+					class="btn-primary w-full py-[14px] mt-[20px] text-[1rem]"
 				>
 					{{ isLoading ? "Salvataggio..." : "Aggiorna password" }}
 				</button>

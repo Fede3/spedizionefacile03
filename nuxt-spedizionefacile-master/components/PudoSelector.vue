@@ -32,7 +32,7 @@ onBeforeUnmount(() => stopNowTimer());
 					v-model="searchAddress"
 					type="text"
 					placeholder="es. Via Roma 10"
-					class="w-full bg-white rounded-[8px] h-[44px] px-[10px] text-[1rem] border border-[#D0D0D0] transition-[border-color,box-shadow] duration-200 focus:border-[#095866] focus:shadow-[0_0_0_3px_rgba(9,88,102,0.1)]"
+					class="w-full bg-white rounded-[12px] h-[44px] px-[10px] text-[1rem] border border-[#D0D0D0] transition-[border-color,box-shadow] duration-200 focus:border-[#095866] focus:shadow-[0_0_0_3px_rgba(9,88,102,0.1)]"
 					@keydown.enter.prevent="searchPudo" />
 			</div>
 
@@ -43,7 +43,7 @@ onBeforeUnmount(() => stopNowTimer());
 					v-model="searchCity"
 					type="text"
 					placeholder="es. Iglesias"
-					class="w-full bg-white rounded-[8px] h-[44px] px-[10px] text-[1rem] border border-[#D0D0D0] transition-[border-color,box-shadow] duration-200 focus:border-[#095866] focus:shadow-[0_0_0_3px_rgba(9,88,102,0.1)]"
+					class="w-full bg-white rounded-[12px] h-[44px] px-[10px] text-[1rem] border border-[#D0D0D0] transition-[border-color,box-shadow] duration-200 focus:border-[#095866] focus:shadow-[0_0_0_3px_rgba(9,88,102,0.1)]"
 					@keydown.enter.prevent="searchPudo" />
 			</div>
 
@@ -55,7 +55,7 @@ onBeforeUnmount(() => stopNowTimer());
 					type="text"
 					maxlength="5"
 					placeholder="es. 09016"
-					class="w-full bg-white rounded-[8px] h-[44px] px-[10px] text-[1rem] border border-[#D0D0D0] transition-[border-color,box-shadow] duration-200 focus:border-[#095866] focus:shadow-[0_0_0_3px_rgba(9,88,102,0.1)]"
+					class="w-full bg-white rounded-[12px] h-[44px] px-[10px] text-[1rem] border border-[#D0D0D0] transition-[border-color,box-shadow] duration-200 focus:border-[#095866] focus:shadow-[0_0_0_3px_rgba(9,88,102,0.1)]"
 					@keydown.enter.prevent="searchPudo" />
 			</div>
 
@@ -64,7 +64,7 @@ onBeforeUnmount(() => stopNowTimer());
 					type="button"
 					@click="searchPudo"
 					:disabled="loading || !hasSearchInput"
-					class="inline-flex items-center justify-center gap-[6px] h-[44px] px-[16px] bg-[#095866] text-white rounded-[8px] text-[0.875rem] font-semibold hover:bg-[#074a56] transition cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed whitespace-nowrap min-w-0 tablet:min-w-[142px]">
+					class="inline-flex items-center justify-center gap-[6px] h-[44px] px-[16px] bg-[#095866] text-white rounded-[12px] text-[0.875rem] font-semibold hover:bg-[#074a56] transition cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed whitespace-nowrap min-w-0 tablet:min-w-[142px]">
 					<svg v-if="!loading" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
 					<span v-if="loading" class="inline-block w-[16px] h-[16px] border-2 border-white border-t-transparent rounded-full animate-spin"></span>
 					{{ loading ? 'Ricerca...' : 'Cerca punti' }}
@@ -73,7 +73,7 @@ onBeforeUnmount(() => stopNowTimer());
 					type="button"
 					@click="useCurrentLocation"
 					:disabled="geolocating || loading"
-					class="inline-flex items-center justify-center gap-[6px] h-[44px] px-[14px] bg-white text-[#095866] border border-[#C6D2D5] rounded-[8px] text-[0.8125rem] font-semibold hover:bg-[#F2F8F9] transition cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed whitespace-nowrap min-w-0 tablet:min-w-[150px]">
+					class="inline-flex items-center justify-center gap-[6px] h-[44px] px-[14px] bg-white text-[#095866] border border-[#C6D2D5] rounded-[12px] text-[0.8125rem] font-semibold hover:bg-[#F2F8F9] transition cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed whitespace-nowrap min-w-0 tablet:min-w-[150px]">
 					<span v-if="geolocating" class="inline-block w-[14px] h-[14px] border-2 border-[#095866] border-t-transparent rounded-full animate-spin"></span>
 					<span v-else class="inline-flex items-center gap-[6px]">
 						<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">

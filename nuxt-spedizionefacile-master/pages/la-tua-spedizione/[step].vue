@@ -29,7 +29,7 @@ const {
 
 const {
 	serviceCardErrors, normalizeCurrencyInput, contrassegnoIncassoOptions,
-	contrassegnoRimborsoOptions, requiresContrassegnoDettaglio, insurancePackages,
+	contrassegnoRimborsoOptions, contrassegnoCodPaymentOptions, requiresContrassegnoDettaglio, insurancePackages,
 	validateInlineServiceDetails, isServiceExpanded, isServiceSelected,
 	canConfigureService, shouldShowServiceToggle, shouldShowConfigureButton,
 	canActivateConfiguredService, getServiceStateLabel, getServiceConfigureLabel,
@@ -161,6 +161,7 @@ onMounted(initOnMounted);
 							:get-service-state-label="getServiceStateLabel" :get-service-configure-label="getServiceConfigureLabel"
 							:contrassegno-incasso-options="contrassegnoIncassoOptions"
 							:contrassegno-rimborso-options="contrassegnoRimborsoOptions"
+							:contrassegno-cod-payment-options="contrassegnoCodPaymentOptions"
 							:requires-contrassegno-dettaglio="requiresContrassegnoDettaglio"
 							:insurance-packages="insurancePackages" :normalize-currency-input="normalizeCurrencyInput"
 							:service-icon-filter-idle="SERVICE_ICON_FILTER_IDLE" :service-icon-filter-active="SERVICE_ICON_FILTER_IDLE"

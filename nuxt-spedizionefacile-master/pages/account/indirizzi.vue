@@ -150,44 +150,44 @@ const addressList = computed(() => addresses.value?.data || []);
 					<div class="grid grid-cols-2 gap-[12px]">
 						<div>
 							<label class="block text-[0.8125rem] font-semibold text-[#404040] mb-[4px]">Nome e Cognome *</label>
-							<input v-model="form.name" type="text" placeholder="Mario Rossi" required class="w-full px-[12px] py-[10px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[8px] text-[0.875rem] focus:border-[#095866] focus:outline-none" />
+							<input v-model="form.name" type="text" placeholder="Mario Rossi" required class="w-full px-[12px] py-[10px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[12px] text-[0.875rem] focus:border-[#095866] focus:outline-none" />
 						</div>
 						<div>
 							<label class="block text-[0.8125rem] font-semibold text-[#404040] mb-[4px]">Telefono</label>
-							<input v-model="form.telephone_number" type="tel" placeholder="333 1234567" class="w-full px-[12px] py-[10px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[8px] text-[0.875rem] focus:border-[#095866] focus:outline-none" />
+							<input v-model="form.telephone_number" type="tel" placeholder="333 1234567" class="w-full px-[12px] py-[10px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[12px] text-[0.875rem] focus:border-[#095866] focus:outline-none" />
 						</div>
 					</div>
 					<div class="grid grid-cols-3 gap-[12px]">
 						<div class="col-span-2">
 							<label class="block text-[0.8125rem] font-semibold text-[#404040] mb-[4px]">Indirizzo *</label>
-							<input v-model="form.address" type="text" placeholder="Via Roma" required class="w-full px-[12px] py-[10px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[8px] text-[0.875rem] focus:border-[#095866] focus:outline-none" />
+							<input v-model="form.address" type="text" placeholder="Via Roma" required class="w-full px-[12px] py-[10px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[12px] text-[0.875rem] focus:border-[#095866] focus:outline-none" />
 						</div>
 						<div>
 							<label class="block text-[0.8125rem] font-semibold text-[#404040] mb-[4px]">N. civico</label>
-							<input v-model="form.address_number" type="text" placeholder="10" class="w-full px-[12px] py-[10px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[8px] text-[0.875rem] focus:border-[#095866] focus:outline-none" />
+							<input v-model="form.address_number" type="text" placeholder="10" class="w-full px-[12px] py-[10px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[12px] text-[0.875rem] focus:border-[#095866] focus:outline-none" />
 						</div>
 					</div>
 					<div class="grid grid-cols-3 gap-[12px]">
 						<div>
 							<label class="block text-[0.8125rem] font-semibold text-[#404040] mb-[4px]">Città *</label>
-							<input v-model="form.city" type="text" placeholder="Roma" required class="w-full px-[12px] py-[10px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[8px] text-[0.875rem] focus:border-[#095866] focus:outline-none" />
+							<input v-model="form.city" type="text" placeholder="Roma" required class="w-full px-[12px] py-[10px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[12px] text-[0.875rem] focus:border-[#095866] focus:outline-none" />
 						</div>
 						<div>
 							<label class="block text-[0.8125rem] font-semibold text-[#404040] mb-[4px]">CAP *</label>
-							<input v-model="form.postal_code" type="text" placeholder="00100" required class="w-full px-[12px] py-[10px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[8px] text-[0.875rem] focus:border-[#095866] focus:outline-none" />
+							<input v-model="form.postal_code" type="text" placeholder="00100" required class="w-full px-[12px] py-[10px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[12px] text-[0.875rem] focus:border-[#095866] focus:outline-none" />
 						</div>
 						<div>
 							<label class="block text-[0.8125rem] font-semibold text-[#404040] mb-[4px]">Provincia</label>
-							<input v-model="form.province" type="text" placeholder="RM" class="w-full px-[12px] py-[10px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[8px] text-[0.875rem] focus:border-[#095866] focus:outline-none" />
+							<input v-model="form.province" type="text" placeholder="RM" class="w-full px-[12px] py-[10px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[12px] text-[0.875rem] focus:border-[#095866] focus:outline-none" />
 						</div>
 					</div>
 					<div>
 						<label class="block text-[0.8125rem] font-semibold text-[#404040] mb-[4px]">Email</label>
-						<input v-model="form.email" type="email" placeholder="email@esempio.it" class="w-full px-[12px] py-[10px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[8px] text-[0.875rem] focus:border-[#095866] focus:outline-none" />
+						<input v-model="form.email" type="email" placeholder="email@esempio.it" class="w-full px-[12px] py-[10px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[12px] text-[0.875rem] focus:border-[#095866] focus:outline-none" />
 					</div>
 					<div>
 						<label class="block text-[0.8125rem] font-semibold text-[#404040] mb-[4px]">Info aggiuntive</label>
-						<input v-model="form.additional_information" type="text" placeholder="Scala B, interno 5" class="w-full px-[12px] py-[10px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[8px] text-[0.875rem] focus:border-[#095866] focus:outline-none" />
+						<input v-model="form.additional_information" type="text" placeholder="Scala B, interno 5" class="w-full px-[12px] py-[10px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[12px] text-[0.875rem] focus:border-[#095866] focus:outline-none" />
 					</div>
 
 					<p v-if="formError" class="text-red-500 text-[0.8125rem] bg-red-50 p-[10px] rounded-[6px]">{{ formError }}</p>
@@ -223,10 +223,10 @@ const addressList = computed(() => addresses.value?.data || []);
 							<p v-if="addr.email" class="text-[0.8125rem] text-[#737373]">{{ addr.email }}</p>
 						</div>
 						<div class="flex gap-[8px] shrink-0">
-							<button @click="openEditForm(addr)" class="p-[8px] rounded-[8px] hover:bg-[#F0F0F0] transition cursor-pointer" title="Modifica">
+							<button @click="openEditForm(addr)" class="p-[8px] rounded-[12px] hover:bg-[#F0F0F0] transition cursor-pointer" title="Modifica">
 								<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" class="text-[#737373]"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83l3.75 3.75M3 17.25V21h3.75L17.81 9.94l-3.75-3.75z" /></svg>
 							</button>
-							<button @click="deleteAddress(addr.id)" class="p-[8px] rounded-[8px] hover:bg-red-50 transition cursor-pointer" title="Elimina">
+							<button @click="deleteAddress(addr.id)" class="p-[8px] rounded-[12px] hover:bg-red-50 transition cursor-pointer" title="Elimina">
 								<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" class="text-red-500"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6zm2.46-7.12l1.41-1.41L12 12.59l2.12-2.12l1.41 1.41L13.41 14l2.12 2.12l-1.41 1.41L12 15.41l-2.12 2.12l-1.41-1.41L10.59 14zM15.5 4l-1-1h-5l-1 1H5v2h14V4z" /></svg>
 							</button>
 						</div>

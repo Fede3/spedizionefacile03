@@ -75,7 +75,7 @@ const emit = defineEmits(['update:show', 'update:cancelReason', 'confirm']);
 							<label class="block text-[0.75rem] text-[#737373] uppercase font-medium mb-[4px]">Motivo (opzionale)</label>
 							<textarea :value="cancelReason" @input="emit('update:cancelReason', $event.target.value)"
 								placeholder="Perche' vuoi annullare questa spedizione?" maxlength="500" rows="2"
-								class="w-full bg-[#F8F9FB] border border-[#E9EBEC] rounded-[8px] p-[10px] text-[0.875rem] resize-none"></textarea>
+								class="w-full bg-[#F8F9FB] border border-[#E9EBEC] rounded-[12px] p-[10px] text-[0.875rem] resize-none"></textarea>
 						</div>
 
 						<!-- Errore -->

@@ -104,31 +104,52 @@ class BrtPayloadBuilder
         ];
         $normalizedTest = $normalizer->normalizeAddressForBrt($testAddress);
 
+        $senderZip = $data['sender_zip'] ?? '';
+        $departureDepot = FilialeLookup::resolveFilialeByCap($senderZip)
+            ?? $config->departureDepot;
+
+        $createData = [
+            'departureDepot' => $departureDepot,
+            'senderCustomerCode' => (int) $config->clientId,
+            'deliveryFreightTypeCode' => 'DAP',
+            // Mittente (opzionale nei test, ma utile per validazione completa)
+            'senderCompanyName' => $data['sender_name'] ?? '',
+            'senderAddress' => $data['sender_address'] ?? '',
+            'senderZIPCode' => $senderZip,
+            'senderCity' => $data['sender_city'] ?? '',
+            'senderProvinceAbbreviation' => $data['sender_province'] ?? '',
+            'senderCountryAbbreviationISOAlpha2' => $data['sender_country'] ?? 'IT',
+            // Destinatario
+            'consigneeCompanyName' => $data['consignee_name'],
+            'consigneeAddress' => $data['consignee_address'],
+            'consigneeZIPCode' => $normalizedTest['postal_code'],
+            'consigneeCity' => $normalizedTest['city'],
+            'consigneeProvinceAbbreviation' => $normalizedTest['province'],
+            'consigneeCountryAbbreviationISOAlpha2' => $data['consignee_country'],
+            'consigneeContactName' => $data['consignee_name'],
+            'consigneeTelephone' => $data['consignee_phone'] ?? '',
+            'consigneeEMail' => $data['consignee_email'] ?? '',
+            'consigneeMobilePhoneNumber' => $data['consignee_phone'] ?? '',
+            'numberOfParcels' => (int) ($data['parcels'] ?? 1),
+            'weightKG' => max(1, (int) ($data['weight_kg'] ?? 1)),
+            'numericSenderReference' => $numericSenderReference,
+            'alphanumericSenderReference' => 'TEST-' . $numericSenderReference,
+            'notes' => $data['notes'] ?? 'Test SpediamoFacile',
+            'isAlertRequired' => '1',
+            'isCODMandatory' => '0',
+        ];
+
+        // Rimuovi campi mittente vuoti per non interferire con i test
+        foreach (['senderCompanyName', 'senderAddress', 'senderZIPCode', 'senderCity', 'senderProvinceAbbreviation'] as $field) {
+            if (empty($createData[$field])) {
+                unset($createData[$field]);
+            }
+        }
+
         return [
             'payload' => [
                 'account' => $config->accountPayload(),
-                'createData' => [
-                    'departureDepot' => $config->departureDepot,
-                    'senderCustomerCode' => (int) $config->clientId,
-                    'deliveryFreightTypeCode' => 'DAP',
-                    'consigneeCompanyName' => $data['consignee_name'],
-                    'consigneeAddress' => $data['consignee_address'],
-                    'consigneeZIPCode' => $normalizedTest['postal_code'],
-                    'consigneeCity' => $normalizedTest['city'],
-                    'consigneeProvinceAbbreviation' => $normalizedTest['province'],
-                    'consigneeCountryAbbreviationISOAlpha2' => $data['consignee_country'],
-                    'consigneeContactName' => $data['consignee_name'],
-                    'consigneeTelephone' => $data['consignee_phone'] ?? '',
-                    'consigneeEMail' => $data['consignee_email'] ?? '',
-                    'consigneeMobilePhoneNumber' => $data['consignee_phone'] ?? '',
-                    'numberOfParcels' => (int) ($data['parcels'] ?? 1),
-                    'weightKG' => max(1, (int) ($data['weight_kg'] ?? 1)),
-                    'numericSenderReference' => $numericSenderReference,
-                    'alphanumericSenderReference' => 'TEST-' . $numericSenderReference,
-                    'notes' => $data['notes'] ?? 'Test SpediamoFacile',
-                    'isAlertRequired' => '1',
-                    'isCODMandatory' => '0',
-                ],
+                'createData' => $createData,
                 'isLabelRequired' => 1,
                 'labelParameters' => self::defaultLabelParameters(),
             ],

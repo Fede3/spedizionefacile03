@@ -38,15 +38,15 @@ const {
         </div>
 
         <!-- Title -->
-        <div class="mb-[24px] text-center">
-          <h1 class="text-[1.5rem] tablet:text-[2rem] font-bold text-[#252B42] mb-[6px] font-montserrat">Carrello</h1>
-          <p class="text-[0.9375rem] text-[#6B7280] max-w-[620px] mx-auto leading-[1.6]">
+        <div class="sf-page-intro sf-page-intro--center mb-[24px]">
+          <h1 class="sf-section-title">Carrello</h1>
+          <p class="sf-section-description mx-auto">
             Rivedi le spedizioni, applica eventuali sconti e completa l'ordine quando tutto è pronto.
           </p>
         </div>
 
         <!-- Main card -->
-        <div class="bg-white rounded-[24px] p-[18px] tablet:p-[28px_32px] border border-[#E5EAEC] shadow-[0_14px_40px_rgba(37,43,66,0.06)]">
+        <div class="bg-white rounded-[22px] p-[18px] tablet:p-[28px_32px] border border-[#E5EAEC] shadow-[0_14px_28px_rgba(20,37,48,0.06)]">
           <!-- Header + checkout CTA -->
           <div class="flex flex-col desktop:flex-row desktop:items-end desktop:justify-between gap-[16px] mb-[20px]">
             <div>
@@ -57,7 +57,7 @@ const {
               </p>
             </div>
             <button type="button" @click="openCheckoutWithAuthGate"
-              class="inline-flex items-center justify-center gap-[8px] px-[22px] min-h-[48px] rounded-[16px] bg-[#095866] text-white font-semibold text-[0.9375rem] hover:bg-[#074a56] transition-[background-color,box-shadow] duration-200 shadow-sm hover:shadow-[0_8px_18px_rgba(9,88,102,0.22)] cursor-pointer">
+              class="btn-primary inline-flex items-center justify-center gap-[8px] min-h-[48px] text-[0.9375rem]">
               Procedi al checkout
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
             </button>
@@ -66,14 +66,14 @@ const {
           <!-- Filters -->
           <div class="flex flex-col tablet:flex-row gap-[12px] tablet:gap-[16px] items-stretch tablet:items-center mb-[18px]">
             <div class="w-full tablet:flex-1 tablet:min-w-[200px] tablet:max-w-[400px]">
-              <select v-model="filterProvenienza" class="w-full bg-[#F8FAFB] border border-[#D7E1E4] rounded-[14px] h-[48px] tablet:h-[46px] px-[18px] text-[1rem] tablet:text-[0.875rem] text-[#404040] appearance-none cursor-pointer transition-[border-color,box-shadow] duration-200 focus:border-[#095866] focus:shadow-[0_0_0_3px_rgba(9,88,102,0.1)]">
+              <select v-model="filterProvenienza" class="w-full bg-[#F8F9FB] border border-[#E9EBEC] rounded-[12px] h-[48px] tablet:h-[46px] px-[18px] text-[1rem] tablet:text-[0.875rem] text-[#404040] appearance-none cursor-pointer transition-[border-color,box-shadow] duration-200 focus:border-[#095866] focus:shadow-[0_0_0_3px_rgba(9,88,102,0.1)]">
                 <option value="">Provenienza</option>
                 <option v-for="city in uniqueCities" :key="city" :value="city">{{ city }}</option>
               </select>
             </div>
             <div class="w-full tablet:flex-1 tablet:min-w-[200px] tablet:max-w-[400px] tablet:ml-auto">
               <input type="text" v-model="filterRiferimento" placeholder="Cerca per riferimento, mittente o destinatario"
-                class="w-full bg-[#F8FAFB] border border-[#D7E1E4] rounded-[14px] h-[48px] tablet:h-[46px] px-[18px] text-[1rem] tablet:text-[0.875rem] text-[#404040] placeholder:text-[#8A939C] transition-[border-color,box-shadow] duration-200 focus:border-[#095866] focus:shadow-[0_0_0_3px_rgba(9,88,102,0.1)]" />
+                class="w-full bg-[#F8F9FB] border border-[#E9EBEC] rounded-[12px] h-[48px] tablet:h-[46px] px-[18px] text-[1rem] tablet:text-[0.875rem] text-[#404040] placeholder:text-[#a0a0a0] transition-[border-color,box-shadow] duration-200 focus:border-[#095866] focus:shadow-[0_0_0_3px_rgba(9,88,102,0.1)]" />
             </div>
           </div>
 
@@ -144,7 +144,7 @@ const {
 
       <!-- Empty cart -->
       <div v-else-if="status !== 'pending'" class="max-w-[600px] mx-auto py-[80px] text-center">
-        <h1 class="text-[1.5rem] tablet:text-[2rem] font-bold text-[#252B42] text-center mb-[4px] font-montserrat">Carrello</h1>
+        <h1 class="sf-section-title text-center mb-[4px]">Carrello</h1>
         <div class="w-[40px] h-[3px] bg-[#E44203] mx-auto mb-[32px]"></div>
         <div class="w-[80px] h-[80px] mx-auto mb-[20px] bg-[#E44203] rounded-full flex items-center justify-center">
           <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
@@ -154,7 +154,7 @@ const {
           Non hai ancora aggiunto spedizioni al carrello. Configura la tua prima spedizione per iniziare.
         </p>
         <NuxtLink to="/preventivo"
-          class="inline-flex items-center gap-[6px] px-[24px] py-[14px] bg-[#095866] hover:bg-[#074a56] text-white rounded-[50px] font-semibold text-[0.9375rem] transition-[background-color,transform] duration-200 active:scale-[0.97] min-h-[48px]">
+          class="btn-primary inline-flex items-center gap-[6px] min-h-[48px] text-[0.9375rem]">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
           Crea nuova spedizione
         </NuxtLink>

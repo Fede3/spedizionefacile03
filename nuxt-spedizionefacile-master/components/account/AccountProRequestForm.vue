@@ -101,7 +101,7 @@ const hasRequest = computed(() => props.proRequestStatus?.has_request);
 				<p class="text-[0.8125rem] text-emerald-700 mt-[4px] leading-[1.5]">Ti aggiorneremo appena possibile.</p>
 			</div>
 			<div v-else class="space-y-[14px]">
-				<p v-if="proRequestError" class="text-red-600 text-[0.8125rem] bg-red-50 p-[10px] rounded-[10px] border border-red-100">{{ proRequestError }}</p>
+				<p v-if="proRequestError" class="text-red-600 text-[0.8125rem] bg-red-50 p-[10px] rounded-[12px] border border-red-100">{{ proRequestError }}</p>
 
 				<div class="space-y-[10px]">
 					<div>

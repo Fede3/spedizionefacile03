@@ -26,7 +26,7 @@ const emit = defineEmits([
 			</div>
 			<h3 class="text-[1.125rem] font-semibold text-[#252B42]">Verifica il tuo account</h3>
 			<p class="text-[0.875rem] text-[#737373] mt-[8px]">Inserisci il codice di verifica a 6 cifre per verificare l'account <strong>{{ email }}</strong></p>
-			<div v-if="verificationCodeHint" class="mt-[12px] bg-blue-50 border border-blue-200 rounded-[8px] p-[12px] text-center">
+			<div v-if="verificationCodeHint" class="mt-[12px] bg-blue-50 border border-blue-200 rounded-[12px] p-[12px] text-center">
 				<p class="text-[0.8125rem] text-blue-700 mb-[4px]">Il tuo codice di verifica:</p>
 				<p class="text-[1.5rem] font-bold text-blue-800 tracking-[8px]">{{ verificationCodeHint }}</p>
 			</div>
@@ -41,7 +41,7 @@ const emit = defineEmits([
 				:value="verificationCode[index]"
 				@input="emit('input', index, $event)"
 				@keydown="emit('keydown', index, $event)"
-				class="w-[40px] h-[48px] tablet:w-[48px] tablet:h-[56px] text-center text-[1.125rem] tablet:text-[1.25rem] font-bold bg-[#F8F9FB] border border-[#E9EBEC] rounded-[8px] focus:border-[#095866] focus:outline-none transition-colors focus:shadow-[0_0_0_3px_rgba(9,88,102,0.1)]"
+				class="w-[40px] h-[48px] tablet:w-[48px] tablet:h-[56px] text-center text-[1.125rem] tablet:text-[1.25rem] font-bold bg-[#F8F9FB] border border-[#E9EBEC] rounded-[12px] focus:border-[#095866] focus:outline-none transition-colors focus:shadow-[0_0_0_3px_rgba(9,88,102,0.1)]"
 			/>
 		</div>
 		<p v-if="verificationError" class="text-red-500 text-[0.8125rem] mb-[12px] bg-red-50 p-[10px] rounded-[6px] text-center">{{ verificationError }}</p>

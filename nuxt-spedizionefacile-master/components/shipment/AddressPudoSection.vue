@@ -37,7 +37,7 @@ defineEmits(['update:delivery-mode', 'pudo-selected', 'pudo-deselected']);
 		</h2>
 		<p class="text-[0.8125rem] text-[#737373] mb-[8px]">Cerca un tabaccaio, edicola o negozio convenzionato BRT vicino alla destinazione.</p>
 		<PudoSelector :initial-city="destinationAddress.city" :initial-zip="destinationAddress.postal_code" @select="$emit('pudo-selected', $event)" @deselect="$emit('pudo-deselected')" />
-		<div v-if="selectedPudo" class="mt-[16px] p-[12px] bg-white rounded-[10px] border-2 border-[#095866] text-[0.875rem]">
+		<div v-if="selectedPudo" class="mt-[16px] p-[12px] bg-white rounded-[12px] border-2 border-[#095866] text-[0.875rem]">
 			<div class="flex items-center gap-[6px] text-[#095866] font-bold mb-[4px]">
 				<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
 				Punto selezionato

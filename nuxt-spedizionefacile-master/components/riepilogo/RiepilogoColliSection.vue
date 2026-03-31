@@ -15,7 +15,7 @@ const emit = defineEmits(['start-edit', 'cancel-edit', 'save-edit']);
 </script>
 
 <template>
-	<div class="bg-[#E4E4E4] rounded-[8px] p-[16px] tablet:p-[28px_32px] mb-[16px]">
+	<div class="bg-[#E4E4E4] rounded-[12px] p-[16px] tablet:p-[28px_32px] mb-[16px]">
 		<div class="flex items-center justify-between mb-[16px]">
 			<h2 class="text-[1.125rem] font-bold text-[#252B42]">Colli</h2>
 			<button type="button" @click="emit('start-edit', 'colli')" class="sf-action-pill sf-action-pill--soft" title="Modifica colli">
@@ -55,23 +55,23 @@ const emit = defineEmits(['start-edit', 'cancel-edit', 'save-edit']);
 				<div class="grid grid-cols-2 tablet:grid-cols-4 gap-[10px]">
 					<div>
 						<label class="text-[0.75rem] text-[#737373]">Quantità</label>
-						<input type="number" v-model="pkg.quantity" min="1" class="w-full bg-[#F1F1F1] rounded-[8px] h-[44px] text-center text-[1rem] px-[8px] transition-[border-color,box-shadow,background-color] duration-200 focus:border-[#095866] focus:bg-white focus:shadow-[0_0_0_3px_rgba(9,88,102,0.1)] border border-transparent" />
+						<input type="number" v-model="pkg.quantity" min="1" class="w-full bg-[#F1F1F1] rounded-[12px] h-[44px] text-center text-[1rem] px-[8px] transition-[border-color,box-shadow,background-color] duration-200 focus:border-[#095866] focus:bg-white focus:shadow-[0_0_0_3px_rgba(9,88,102,0.1)] border border-transparent" />
 					</div>
 					<div>
 						<label class="text-[0.75rem] text-[#737373]">Peso (kg)</label>
-						<input type="number" v-model="pkg.weight" min="0.1" step="0.1" class="w-full bg-[#F1F1F1] rounded-[8px] h-[44px] text-center text-[1rem] px-[8px] transition-[border-color,box-shadow,background-color] duration-200 focus:border-[#095866] focus:bg-white focus:shadow-[0_0_0_3px_rgba(9,88,102,0.1)] border border-transparent" />
+						<input type="number" v-model="pkg.weight" min="0.1" step="0.1" class="w-full bg-[#F1F1F1] rounded-[12px] h-[44px] text-center text-[1rem] px-[8px] transition-[border-color,box-shadow,background-color] duration-200 focus:border-[#095866] focus:bg-white focus:shadow-[0_0_0_3px_rgba(9,88,102,0.1)] border border-transparent" />
 					</div>
 					<div>
 						<label class="text-[0.75rem] text-[#737373]">L (cm)</label>
-						<input type="number" v-model="pkg.first_size" min="1" class="w-full bg-[#F1F1F1] rounded-[8px] h-[44px] text-center text-[1rem] px-[8px] transition-[border-color,box-shadow,background-color] duration-200 focus:border-[#095866] focus:bg-white focus:shadow-[0_0_0_3px_rgba(9,88,102,0.1)] border border-transparent" />
+						<input type="number" v-model="pkg.first_size" min="1" class="w-full bg-[#F1F1F1] rounded-[12px] h-[44px] text-center text-[1rem] px-[8px] transition-[border-color,box-shadow,background-color] duration-200 focus:border-[#095866] focus:bg-white focus:shadow-[0_0_0_3px_rgba(9,88,102,0.1)] border border-transparent" />
 					</div>
 					<div>
 						<label class="text-[0.75rem] text-[#737373]">P (cm)</label>
-						<input type="number" v-model="pkg.second_size" min="1" class="w-full bg-[#F1F1F1] rounded-[8px] h-[44px] text-center text-[1rem] px-[8px] transition-[border-color,box-shadow,background-color] duration-200 focus:border-[#095866] focus:bg-white focus:shadow-[0_0_0_3px_rgba(9,88,102,0.1)] border border-transparent" />
+						<input type="number" v-model="pkg.second_size" min="1" class="w-full bg-[#F1F1F1] rounded-[12px] h-[44px] text-center text-[1rem] px-[8px] transition-[border-color,box-shadow,background-color] duration-200 focus:border-[#095866] focus:bg-white focus:shadow-[0_0_0_3px_rgba(9,88,102,0.1)] border border-transparent" />
 					</div>
 					<div>
 						<label class="text-[0.75rem] text-[#737373]">H (cm)</label>
-						<input type="number" v-model="pkg.third_size" min="1" class="w-full bg-[#F1F1F1] rounded-[8px] h-[44px] text-center text-[1rem] px-[8px] transition-[border-color,box-shadow,background-color] duration-200 focus:border-[#095866] focus:bg-white focus:shadow-[0_0_0_3px_rgba(9,88,102,0.1)] border border-transparent" />
+						<input type="number" v-model="pkg.third_size" min="1" class="w-full bg-[#F1F1F1] rounded-[12px] h-[44px] text-center text-[1rem] px-[8px] transition-[border-color,box-shadow,background-color] duration-200 focus:border-[#095866] focus:bg-white focus:shadow-[0_0_0_3px_rgba(9,88,102,0.1)] border border-transparent" />
 					</div>
 				</div>
 			</div>

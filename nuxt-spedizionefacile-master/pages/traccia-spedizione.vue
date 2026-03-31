@@ -111,25 +111,27 @@ onMounted(() => {
 <template>
 	<section class="min-h-[500px] py-[40px] desktop:py-[60px]">
 		<div class="my-container">
-			<h1 class="text-[2rem] font-bold text-[#252B42] mb-[8px] text-center">Traccia Spedizione</h1>
-			<p class="text-[#737373] text-[0.9375rem] text-center mb-[32px]">Inserisci il codice di tracking BRT, il numero d'ordine o il riferimento mittente per seguire la tua spedizione.</p>
+			<div class="sf-page-intro sf-page-intro--center mb-[28px] tablet:mb-[32px]">
+				<h1 class="sf-section-title">Traccia Spedizione</h1>
+				<p class="sf-section-description mx-auto">Inserisci il codice di tracking BRT, il numero d'ordine o il riferimento mittente per seguire la tua spedizione.</p>
+			</div>
 
 			<!-- Form di ricerca -->
-			<div class="bg-white rounded-[16px] p-[24px_20px] desktop:p-[32px] shadow-[0_4px_20px_rgba(0,0,0,0.08)]">
-				<label for="tracking_code" class="block text-[0.875rem] font-medium text-[#252B42] mb-[8px]">Codice di tracking</label>
+			<div class="bg-white rounded-[16px] p-[24px_20px] desktop:p-[32px] shadow-[0_14px_28px_rgba(20,37,48,0.06)] border border-[#E5EAEC]">
+				<label for="tracking_code" class="form-label mb-[6px]">Codice di tracking</label>
 				<div class="flex gap-[12px]">
 					<input
 						v-model="trackingCode"
 						type="text"
 						id="tracking_code"
 						placeholder="es. 058802401600012345, SF-000042, 42..."
-						class="flex-1 bg-[#F8F9FB] p-[12px_16px] border border-[#E9EBEC] rounded-[10px] text-[0.9375rem] placeholder:text-[#A0A5AB] focus:border-[#095866] focus:outline-none"
+						class="flex-1 bg-[#F8F9FB] p-[12px_16px] border border-[#E9EBEC] rounded-[12px] text-[0.9375rem] placeholder:text-[#a0a0a0] focus:border-[#095866] focus:shadow-[0_0_0_3px_rgba(9,88,102,0.1)] focus:outline-none"
 						@keyup.enter="trackShipment" />
 					<button
 						type="button"
 						@click="trackShipment"
 						:disabled="isLoading || !trackingCode.trim()"
-						class="px-[24px] py-[12px] bg-[#095866] text-white rounded-[10px] font-semibold text-[0.875rem] hover:bg-[#074a56] transition disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer flex items-center gap-[8px]">
+						class="btn-primary px-[24px] py-[12px] disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-[8px] text-[0.875rem]">
 						<!-- Search icon SVG -->
 						<svg v-if="!isLoading" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
 						<!-- Loading spinner SVG -->
@@ -141,7 +143,7 @@ onMounted(() => {
 			</div>
 
 			<!-- Risultato: spedizione trovata -->
-			<div v-if="trackingResult && trackingResult.found" class="mt-[24px] bg-white rounded-[16px] p-[24px_20px] desktop:p-[32px] shadow-[0_4px_20px_rgba(0,0,0,0.08)]">
+			<div v-if="trackingResult && trackingResult.found" class="mt-[24px] bg-white rounded-[16px] p-[24px_20px] desktop:p-[32px] shadow-[0_14px_28px_rgba(20,37,48,0.06)] border border-[#E5EAEC]">
 				<!-- Header risultato -->
 				<div class="flex items-center justify-between mb-[20px] flex-wrap gap-[10px]">
 					<h2 class="text-[1.25rem] font-bold text-[#252B42]">Spedizione trovata</h2>
@@ -152,19 +154,19 @@ onMounted(() => {
 
 				<!-- Informazioni ordine -->
 				<div class="grid grid-cols-1 desktop:grid-cols-2 gap-[16px] mb-[24px]">
-					<div class="bg-[#F8F9FB] rounded-[10px] p-[16px]">
+					<div class="bg-[#F8F9FB] rounded-[14px] p-[16px]">
 						<p class="text-[0.75rem] text-[#737373] uppercase font-medium mb-[4px]">Numero Ordine</p>
 						<p class="text-[0.9375rem] font-semibold text-[#252B42]">#{{ trackingResult.order_id }}</p>
 					</div>
-					<div class="bg-[#F8F9FB] rounded-[10px] p-[16px]">
+					<div class="bg-[#F8F9FB] rounded-[14px] p-[16px]">
 						<p class="text-[0.75rem] text-[#737373] uppercase font-medium mb-[4px]">Data Ordine</p>
 						<p class="text-[0.9375rem] font-semibold text-[#252B42]">{{ trackingResult.created_at || '—' }}</p>
 					</div>
-					<div v-if="trackingResult.brt_parcel_id" class="bg-[#F8F9FB] rounded-[10px] p-[16px]">
+					<div v-if="trackingResult.brt_parcel_id" class="bg-[#F8F9FB] rounded-[14px] p-[16px]">
 						<p class="text-[0.75rem] text-[#737373] uppercase font-medium mb-[4px]">Codice BRT</p>
 						<p class="text-[0.9375rem] font-semibold text-[#252B42] font-mono">{{ trackingResult.brt_parcel_id }}</p>
 					</div>
-					<div class="bg-[#F8F9FB] rounded-[10px] p-[16px]">
+					<div class="bg-[#F8F9FB] rounded-[14px] p-[16px]">
 						<p class="text-[0.75rem] text-[#737373] uppercase font-medium mb-[4px]">Stato Attuale</p>
 						<p class="text-[0.9375rem] font-semibold text-[#252B42]">{{ trackingResult.status_description }}</p>
 					</div>
@@ -209,7 +211,7 @@ onMounted(() => {
 						:href="trackingResult.brt_tracking_url"
 						target="_blank"
 						rel="noopener noreferrer"
-						class="inline-flex items-center gap-[8px] px-[20px] py-[12px] bg-[#095866] text-white rounded-[10px] font-semibold text-[0.875rem] hover:bg-[#074a56] transition">
+						class="btn-primary inline-flex items-center gap-[8px] px-[20px] py-[12px] text-[0.875rem]">
 						<!-- External link icon SVG -->
 						<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
 						Dettaglio tracking su BRT
@@ -219,7 +221,7 @@ onMounted(() => {
 			</div>
 
 			<!-- Risultato: non trovato nel database, link a BRT -->
-			<div v-else-if="trackingResult && !trackingResult.found" class="mt-[24px] bg-white rounded-[16px] p-[24px_20px] desktop:p-[32px] shadow-[0_4px_20px_rgba(0,0,0,0.08)]">
+			<div v-else-if="trackingResult && !trackingResult.found" class="mt-[24px] bg-white rounded-[16px] p-[24px_20px] desktop:p-[32px] shadow-[0_14px_28px_rgba(20,37,48,0.06)] border border-[#E5EAEC]">
 				<div class="flex items-start gap-[12px] mb-[16px]">
 					<!-- Info icon SVG -->
 					<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#E8A500" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="shrink-0 mt-[2px]"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
@@ -233,7 +235,7 @@ onMounted(() => {
 					:href="trackingResult.brt_tracking_url"
 					target="_blank"
 					rel="noopener noreferrer"
-					class="inline-flex items-center gap-[8px] px-[20px] py-[12px] bg-[#095866] text-white rounded-[10px] font-semibold text-[0.875rem] hover:bg-[#074a56] transition">
+					class="btn-primary inline-flex items-center gap-[8px] px-[20px] py-[12px] text-[0.875rem]">
 					<!-- External link icon SVG -->
 					<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
 					Cerca su BRT

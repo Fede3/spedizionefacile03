@@ -58,10 +58,10 @@ const emit = defineEmits(['close', 'download-label', 'toggle-pudo-selector', 'pu
 					<div v-if="order.brt_numeric_sender_reference"><span class="text-[#737373]">Rif. Mittente:</span> <span class="font-mono">{{ order.brt_numeric_sender_reference }}</span></div>
 				</div>
 				<div class="flex gap-[8px] mt-[10px]">
-					<a v-if="order.brt_tracking_url" :href="order.brt_tracking_url" target="_blank" class="inline-flex items-center gap-[4px] px-[12px] py-[6px] bg-indigo-600 text-white rounded-[8px] text-[0.75rem] font-medium hover:bg-indigo-700 transition-colors">
+					<a v-if="order.brt_tracking_url" :href="order.brt_tracking_url" target="_blank" class="inline-flex items-center gap-[4px] px-[12px] py-[6px] bg-indigo-600 text-white rounded-[12px] text-[0.75rem] font-medium hover:bg-indigo-700 transition-colors">
 						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[14px] h-[14px]" fill="currentColor"><path d="M18,15A3,3 0 0,1 21,18A3,3 0 0,1 18,21C16.69,21 15.58,20.17 15.17,19H14V17H15.17C15.58,15.83 16.69,15 18,15M18,17A1,1 0 0,0 17,18A1,1 0 0,0 18,19A1,1 0 0,0 19,18A1,1 0 0,0 18,17M6,15A3,3 0 0,1 9,18A3,3 0 0,1 6,21A3,3 0 0,1 3,18A3,3 0 0,1 6,15M6,17A1,1 0 0,0 5,18A1,1 0 0,0 6,19A1,1 0 0,0 7,18A1,1 0 0,0 6,17M11,7L9.5,13H13.5L12,7M9,3H14L18,17H12.5L12,15H11L10.5,17H5L9,3Z"/></svg> Tracking BRT
 					</a>
-					<button v-if="order.brt_parcel_id" @click="emit('download-label', order)" class="inline-flex items-center gap-[4px] px-[12px] py-[6px] bg-white border border-indigo-300 text-indigo-700 rounded-[8px] text-[0.75rem] font-medium hover:bg-indigo-50 cursor-pointer transition-colors">
+					<button v-if="order.brt_parcel_id" @click="emit('download-label', order)" class="inline-flex items-center gap-[4px] px-[12px] py-[6px] bg-white border border-indigo-300 text-indigo-700 rounded-[12px] text-[0.75rem] font-medium hover:bg-indigo-50 cursor-pointer transition-colors">
 						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[14px] h-[14px]" fill="currentColor"><path d="M5,20H19V18H5M19,9H15V3H9V9H5L12,16L19,9Z"/></svg> Scarica etichetta
 					</button>
 				</div>
@@ -75,11 +75,11 @@ const emit = defineEmits(['close', 'download-label', 'toggle-pudo-selector', 'pu
 						<span class="text-[0.875rem] font-bold text-[#095866]">Punto di ritiro BRT</span>
 					</div>
 					<div class="flex gap-[6px]">
-						<button @click="emit('toggle-pudo-selector')" class="px-[10px] py-[4px] rounded-[8px] bg-[#095866] text-white text-[0.75rem] font-medium cursor-pointer hover:bg-[#074a56] transition-colors inline-flex items-center gap-[4px]">
+						<button @click="emit('toggle-pudo-selector')" class="px-[10px] py-[4px] rounded-[12px] bg-[#095866] text-white text-[0.75rem] font-medium cursor-pointer hover:bg-[#074a56] transition-colors inline-flex items-center gap-[4px]">
 							<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
 							{{ order.brt_pudo_id ? 'Cambia' : 'Scegli' }}
 						</button>
-						<button v-if="order.brt_pudo_id" @click="emit('remove-pudo')" :disabled="pudoSaving" class="px-[10px] py-[4px] rounded-[8px] bg-red-500 text-white text-[0.75rem] font-medium cursor-pointer hover:bg-red-600 transition-colors disabled:opacity-50">
+						<button v-if="order.brt_pudo_id" @click="emit('remove-pudo')" :disabled="pudoSaving" class="px-[10px] py-[4px] rounded-[12px] bg-red-500 text-white text-[0.75rem] font-medium cursor-pointer hover:bg-red-600 transition-colors disabled:opacity-50">
 							Rimuovi
 						</button>
 					</div>

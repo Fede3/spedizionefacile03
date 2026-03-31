@@ -1,4 +1,8 @@
 /* Navbar component styles — extracted from Navbar.vue */
+.navbar-accent-bar {
+  background: linear-gradient(90deg, #E44203 0%, #ff6a33 50%, #E44203 100%);
+}
+
 .navbar-shell {
   transition: border-color var(--sf-motion-base) var(--sf-ease-soft), box-shadow var(--sf-motion-base) var(--sf-ease-soft);
 }

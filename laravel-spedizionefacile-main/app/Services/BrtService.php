@@ -29,6 +29,7 @@ use App\Models\Package;
 use App\Services\Brt\AddressNormalizer;
 use App\Services\Brt\BrtConfig;
 use App\Services\Brt\ErrorTranslator;
+use App\Services\Brt\PickupService;
 use App\Services\Brt\PudoService;
 use App\Services\Brt\ShipmentService;
 use App\Services\Brt\TrackingService;
@@ -101,7 +102,7 @@ class BrtService
         return $this->trackingService->getTrackingStatus($order);
     }
 
-    // ── Home pickup (stub, not yet integrated with BRT API) ──────
+    // ── Home pickup (delegated to Brt\PickupService) ──────────
 
     public function requestHomePickup(Order $order, array $pickupRequest): array
     {
@@ -117,11 +118,7 @@ class BrtService
             ];
         }
 
-        return [
-            'success' => false,
-            'status' => 'failed',
-            'error' => 'Integrazione ritiro BRT non disponibile in questa installazione.',
-        ];
+        return app(PickupService::class)->requestPickup($order, $pickupRequest);
     }
 
     // ── Bordero generation ───────────────────────────────────────

@@ -113,54 +113,54 @@ const downloadTestLabel = (base64) => {
 						<div class="grid grid-cols-2 gap-[12px]">
 							<div>
 								<label class="block text-[0.75rem] font-medium text-[#404040] mb-[4px]">Nome destinatario</label>
-								<input v-model="brtTestForm.consignee_name" type="text" class="w-full px-[12px] py-[8px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[8px] text-[0.8125rem] focus:border-[#095866] focus:outline-none" />
+								<input v-model="brtTestForm.consignee_name" type="text" class="w-full px-[12px] py-[8px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[12px] text-[0.8125rem] focus:border-[#095866] focus:outline-none" />
 							</div>
 							<div>
 								<label class="block text-[0.75rem] font-medium text-[#404040] mb-[4px]">Indirizzo</label>
-								<input v-model="brtTestForm.consignee_address" type="text" class="w-full px-[12px] py-[8px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[8px] text-[0.8125rem] focus:border-[#095866] focus:outline-none" />
+								<input v-model="brtTestForm.consignee_address" type="text" class="w-full px-[12px] py-[8px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[12px] text-[0.8125rem] focus:border-[#095866] focus:outline-none" />
 							</div>
 						</div>
 						<div class="grid grid-cols-3 gap-[12px]">
 							<div>
 								<label class="block text-[0.75rem] font-medium text-[#404040] mb-[4px]">Citta</label>
-								<input v-model="brtTestForm.consignee_city" type="text" class="w-full px-[12px] py-[8px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[8px] text-[0.8125rem] focus:border-[#095866] focus:outline-none" />
+								<input v-model="brtTestForm.consignee_city" type="text" class="w-full px-[12px] py-[8px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[12px] text-[0.8125rem] focus:border-[#095866] focus:outline-none" />
 							</div>
 							<div>
 								<label class="block text-[0.75rem] font-medium text-[#404040] mb-[4px]">CAP</label>
-								<input v-model="brtTestForm.consignee_zip" type="text" maxlength="5" class="w-full px-[12px] py-[8px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[8px] text-[0.8125rem] focus:border-[#095866] focus:outline-none" />
+								<input v-model="brtTestForm.consignee_zip" type="text" maxlength="5" class="w-full px-[12px] py-[8px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[12px] text-[0.8125rem] focus:border-[#095866] focus:outline-none" />
 							</div>
 							<div>
 								<label class="block text-[0.75rem] font-medium text-[#404040] mb-[4px]">Provincia</label>
-								<input v-model="brtTestForm.consignee_province" type="text" maxlength="2" class="w-full px-[12px] py-[8px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[8px] text-[0.8125rem] focus:border-[#095866] focus:outline-none" />
+								<input v-model="brtTestForm.consignee_province" type="text" maxlength="2" class="w-full px-[12px] py-[8px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[12px] text-[0.8125rem] focus:border-[#095866] focus:outline-none" />
 							</div>
 						</div>
 						<div class="grid grid-cols-3 gap-[12px]">
 							<div>
 								<label class="block text-[0.75rem] font-medium text-[#404040] mb-[4px]">Paese (ISO)</label>
-								<input v-model="brtTestForm.consignee_country" type="text" maxlength="2" class="w-full px-[12px] py-[8px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[8px] text-[0.8125rem] focus:border-[#095866] focus:outline-none" />
+								<input v-model="brtTestForm.consignee_country" type="text" maxlength="2" class="w-full px-[12px] py-[8px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[12px] text-[0.8125rem] focus:border-[#095866] focus:outline-none" />
 							</div>
 							<div>
 								<label class="block text-[0.75rem] font-medium text-[#404040] mb-[4px]">Peso (Kg)</label>
-								<input v-model="brtTestForm.weight_kg" type="number" min="1" class="w-full px-[12px] py-[8px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[8px] text-[0.8125rem] focus:border-[#095866] focus:outline-none" />
+								<input v-model="brtTestForm.weight_kg" type="number" min="1" class="w-full px-[12px] py-[8px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[12px] text-[0.8125rem] focus:border-[#095866] focus:outline-none" />
 							</div>
 							<div>
 								<label class="block text-[0.75rem] font-medium text-[#404040] mb-[4px]">N. Colli</label>
-								<input v-model="brtTestForm.parcels" type="number" min="1" class="w-full px-[12px] py-[8px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[8px] text-[0.8125rem] focus:border-[#095866] focus:outline-none" />
+								<input v-model="brtTestForm.parcels" type="number" min="1" class="w-full px-[12px] py-[8px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[12px] text-[0.8125rem] focus:border-[#095866] focus:outline-none" />
 							</div>
 						</div>
 						<div class="grid grid-cols-2 gap-[12px]">
 							<div>
 								<label class="block text-[0.75rem] font-medium text-[#404040] mb-[4px]">Email</label>
-								<input v-model="brtTestForm.consignee_email" type="email" class="w-full px-[12px] py-[8px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[8px] text-[0.8125rem] focus:border-[#095866] focus:outline-none" />
+								<input v-model="brtTestForm.consignee_email" type="email" class="w-full px-[12px] py-[8px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[12px] text-[0.8125rem] focus:border-[#095866] focus:outline-none" />
 							</div>
 							<div>
 								<label class="block text-[0.75rem] font-medium text-[#404040] mb-[4px]">Telefono</label>
-								<input v-model="brtTestForm.consignee_phone" type="text" class="w-full px-[12px] py-[8px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[8px] text-[0.8125rem] focus:border-[#095866] focus:outline-none" />
+								<input v-model="brtTestForm.consignee_phone" type="text" class="w-full px-[12px] py-[8px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[12px] text-[0.8125rem] focus:border-[#095866] focus:outline-none" />
 							</div>
 						</div>
 						<div>
 							<label class="block text-[0.75rem] font-medium text-[#404040] mb-[4px]">Note</label>
-							<input v-model="brtTestForm.notes" type="text" class="w-full px-[12px] py-[8px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[8px] text-[0.8125rem] focus:border-[#095866] focus:outline-none" />
+							<input v-model="brtTestForm.notes" type="text" class="w-full px-[12px] py-[8px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[12px] text-[0.8125rem] focus:border-[#095866] focus:outline-none" />
 						</div>
 					</div>
 
@@ -181,13 +181,13 @@ const downloadTestLabel = (base64) => {
 								</span>
 							</div>
 							<div v-if="brtTestResult.success && brtTestResult.data?.label_base64" class="mb-[10px]">
-								<button @click="downloadTestLabel(brtTestResult.data.label_base64)" class="px-[14px] py-[8px] bg-emerald-600 hover:bg-emerald-700 text-white rounded-[8px] text-[0.8125rem] font-medium cursor-pointer transition-colors inline-flex items-center gap-[6px]">
+								<button @click="downloadTestLabel(brtTestResult.data.label_base64)" class="px-[14px] py-[8px] bg-emerald-600 hover:bg-emerald-700 text-white rounded-[12px] text-[0.8125rem] font-medium cursor-pointer transition-colors inline-flex items-center gap-[6px]">
 									<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[16px] h-[16px]" fill="currentColor"><path d="M5,20H19V18H5M19,9H15V3H9V9H5L12,16L19,9Z"/></svg> Scarica Etichetta PDF
 								</button>
 							</div>
 							<details class="mt-[8px]">
 								<summary class="text-[0.75rem] font-medium cursor-pointer text-[#404040]">Risposta completa API</summary>
-								<pre class="mt-[8px] p-[12px] bg-[#1a1a2e] text-[#e0e0e0] rounded-[8px] text-[0.6875rem] overflow-x-auto max-h-[400px] overflow-y-auto font-mono">{{ JSON.stringify(brtTestResult.data, null, 2) }}</pre>
+								<pre class="mt-[8px] p-[12px] bg-[#1a1a2e] text-[#e0e0e0] rounded-[12px] text-[0.6875rem] overflow-x-auto max-h-[400px] overflow-y-auto font-mono">{{ JSON.stringify(brtTestResult.data, null, 2) }}</pre>
 							</details>
 						</div>
 					</div>
@@ -203,16 +203,16 @@ const downloadTestLabel = (base64) => {
 					<div class="space-y-[12px]">
 						<div>
 							<label class="block text-[0.75rem] font-medium text-[#404040] mb-[4px]">Citta</label>
-							<input v-model="brtTestPudoForm.city" type="text" class="w-full px-[12px] py-[8px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[8px] text-[0.8125rem] focus:border-[#095866] focus:outline-none" />
+							<input v-model="brtTestPudoForm.city" type="text" class="w-full px-[12px] py-[8px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[12px] text-[0.8125rem] focus:border-[#095866] focus:outline-none" />
 						</div>
 						<div class="grid grid-cols-2 gap-[12px]">
 							<div>
 								<label class="block text-[0.75rem] font-medium text-[#404040] mb-[4px]">CAP</label>
-								<input v-model="brtTestPudoForm.zip_code" type="text" maxlength="5" class="w-full px-[12px] py-[8px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[8px] text-[0.8125rem] focus:border-[#095866] focus:outline-none" />
+								<input v-model="brtTestPudoForm.zip_code" type="text" maxlength="5" class="w-full px-[12px] py-[8px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[12px] text-[0.8125rem] focus:border-[#095866] focus:outline-none" />
 							</div>
 							<div>
 								<label class="block text-[0.75rem] font-medium text-[#404040] mb-[4px]">Paese (ISO alpha-3)</label>
-								<input v-model="brtTestPudoForm.country" type="text" maxlength="3" class="w-full px-[12px] py-[8px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[8px] text-[0.8125rem] focus:border-[#095866] focus:outline-none" placeholder="ITA" />
+								<input v-model="brtTestPudoForm.country" type="text" maxlength="3" class="w-full px-[12px] py-[8px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[12px] text-[0.8125rem] focus:border-[#095866] focus:outline-none" placeholder="ITA" />
 							</div>
 						</div>
 					</div>
@@ -234,7 +234,7 @@ const downloadTestLabel = (base64) => {
 							</div>
 							<!-- Lista PUDO trovati -->
 							<div v-if="brtTestPudoResult.success && brtTestPudoResult.data?.pudo?.length" class="space-y-[8px] mb-[12px]">
-								<div v-for="(p, i) in brtTestPudoResult.data.pudo" :key="i" class="bg-white rounded-[8px] p-[10px] border border-[#E9EBEC] text-[0.8125rem]">
+								<div v-for="(p, i) in brtTestPudoResult.data.pudo" :key="i" class="bg-white rounded-[12px] p-[10px] border border-[#E9EBEC] text-[0.8125rem]">
 									<p class="font-semibold text-[#252B42]">{{ p.name || p.pudo_id }}</p>
 									<p class="text-[#737373] text-[0.75rem]">{{ p.address }} - {{ p.city }} {{ p.zip_code }}</p>
 									<p v-if="p.distance_meters" class="text-[0.6875rem] text-[#095866]">{{ Math.round(p.distance_meters) }}m di distanza</p>
@@ -242,7 +242,7 @@ const downloadTestLabel = (base64) => {
 							</div>
 							<details>
 								<summary class="text-[0.75rem] font-medium cursor-pointer text-[#404040]">Risposta completa API</summary>
-								<pre class="mt-[8px] p-[12px] bg-[#1a1a2e] text-[#e0e0e0] rounded-[8px] text-[0.6875rem] overflow-x-auto max-h-[400px] overflow-y-auto font-mono">{{ JSON.stringify(brtTestPudoResult.data, null, 2) }}</pre>
+								<pre class="mt-[8px] p-[12px] bg-[#1a1a2e] text-[#e0e0e0] rounded-[12px] text-[0.6875rem] overflow-x-auto max-h-[400px] overflow-y-auto font-mono">{{ JSON.stringify(brtTestPudoResult.data, null, 2) }}</pre>
 							</details>
 						</div>
 					</div>

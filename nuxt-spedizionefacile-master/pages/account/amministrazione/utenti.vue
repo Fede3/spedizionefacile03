@@ -60,11 +60,11 @@ onMounted(() => {
 
 			<!-- Sub-tab toggle -->
 			<div class="grid grid-cols-1 tablet:grid-cols-2 gap-[4px] mb-[24px] bg-[#F0F0F0] rounded-[16px] p-[4px] w-full tablet:w-fit">
-				<button @click="activeSubTab = 'users'" :class="['flex min-h-[44px] w-full items-center justify-center gap-[6px] px-[14px] py-[10px] rounded-[8px] text-[0.8125rem] font-medium transition-all cursor-pointer whitespace-nowrap', activeSubTab === 'users' ? 'bg-white text-[#095866] shadow-sm' : 'text-[#737373] hover:text-[#404040]']">
+				<button @click="activeSubTab = 'users'" :class="['flex min-h-[44px] w-full items-center justify-center gap-[6px] px-[14px] py-[10px] rounded-[12px] text-[0.8125rem] font-medium transition-all cursor-pointer whitespace-nowrap', activeSubTab === 'users' ? 'bg-white text-[#095866] shadow-sm' : 'text-[#737373] hover:text-[#404040]']">
 					<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[16px] h-[16px]" fill="currentColor"><path d="M12,4A4,4 0 0,1 16,8A4,4 0 0,1 12,12A4,4 0 0,1 8,8A4,4 0 0,1 12,4M12,14C16.42,14 20,15.79 20,18V20H4V18C4,15.79 7.58,14 12,14Z"/></svg>
 					Utenti
 				</button>
-				<button @click="activeSubTab = 'pro_requests'" :class="['flex min-h-[44px] w-full items-center justify-center gap-[6px] px-[14px] py-[10px] rounded-[8px] text-[0.8125rem] font-medium transition-all cursor-pointer whitespace-nowrap', activeSubTab === 'pro_requests' ? 'bg-white text-[#095866] shadow-sm' : 'text-[#737373] hover:text-[#404040]']">
+				<button @click="activeSubTab = 'pro_requests'" :class="['flex min-h-[44px] w-full items-center justify-center gap-[6px] px-[14px] py-[10px] rounded-[12px] text-[0.8125rem] font-medium transition-all cursor-pointer whitespace-nowrap', activeSubTab === 'pro_requests' ? 'bg-white text-[#095866] shadow-sm' : 'text-[#737373] hover:text-[#404040]']">
 					<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[16px] h-[16px]" fill="currentColor"><path d="M12,17.27L18.18,21L16.54,13.97L22,9.24L14.81,8.62L12,2L9.19,8.62L2,9.24L7.45,13.97L5.82,21L12,17.27Z"/></svg>
 					Richieste Pro
 					<span v-if="pendingProRequestsCount" class="ml-[2px] w-[20px] h-[20px] rounded-full bg-purple-500 text-white text-[0.625rem] flex items-center justify-center font-bold">
@@ -163,11 +163,11 @@ onMounted(() => {
 					Stai per cambiare il ruolo di <strong class="text-[#252B42]">{{ roleChangeData.userName }}</strong>:
 				</p>
 				<div class="flex items-center gap-[12px] justify-center py-[12px]">
-					<span class="px-[12px] py-[6px] bg-gray-100 text-gray-700 rounded-[8px] text-[0.875rem] font-semibold">{{ roleChangeData.currentRole }}</span>
+					<span class="px-[12px] py-[6px] bg-gray-100 text-gray-700 rounded-[12px] text-[0.875rem] font-semibold">{{ roleChangeData.currentRole }}</span>
 					<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[20px] h-[20px] text-[#095866]" fill="currentColor"><path d="M4,11V13H16L10.5,18.5L11.92,19.92L19.84,12L11.92,4.08L10.5,5.5L16,11H4Z"/></svg>
-					<span class="px-[12px] py-[6px] bg-[#095866] text-white rounded-[8px] text-[0.875rem] font-semibold">{{ roleChangeData.newRole }}</span>
+					<span class="px-[12px] py-[6px] bg-[#095866] text-white rounded-[12px] text-[0.875rem] font-semibold">{{ roleChangeData.newRole }}</span>
 				</div>
-				<p class="text-[0.8125rem] text-amber-700 bg-amber-50 border border-amber-200 rounded-[8px] p-[10px] mt-[12px]">
+				<p class="text-[0.8125rem] text-amber-700 bg-amber-50 border border-amber-200 rounded-[12px] p-[10px] mt-[12px]">
 					<strong>Attenzione:</strong> Questa azione modifichera' i permessi dell'utente.
 				</p>
 			</template>

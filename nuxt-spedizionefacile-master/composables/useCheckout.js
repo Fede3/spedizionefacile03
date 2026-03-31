@@ -579,8 +579,8 @@ export function useCheckout() {
 								order_amount: getNumberTotal.value,
 							},
 						});
-					} catch (e) {
-						console.warn('Referral apply warning:', e);
+					} catch (_) {
+						// Referral apply is best-effort after payment success
 					}
 				}
 
@@ -727,8 +727,8 @@ export function useCheckout() {
 									body: { payment_method: paymentIntent.payment_method },
 								});
 								await refreshNuxtData('/api/stripe/default-payment-method');
-							} catch (saveErr) {
-								console.warn('Save card warning:', saveErr);
+							} catch (_) {
+								// Save card is best-effort; payment already succeeded
 							}
 						}
 

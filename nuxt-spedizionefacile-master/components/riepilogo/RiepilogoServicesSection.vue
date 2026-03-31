@@ -25,7 +25,7 @@ const emit = defineEmits(['edit-services']);
 					<span
 						v-for="svc in services.service_type.split(', ').filter(Boolean)"
 						:key="svc"
-						class="inline-block px-[10px] py-[3px] bg-[#095866]/10 text-[#095866] rounded-[8px] text-[0.75rem] tablet:text-[0.8125rem] font-semibold">
+						class="inline-block px-[10px] py-[3px] bg-[#095866]/10 text-[#095866] rounded-[12px] text-[0.75rem] tablet:text-[0.8125rem] font-semibold">
 						{{ formatServiceDisplayName(svc) }}
 					</span>
 				</div>

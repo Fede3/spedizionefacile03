@@ -34,7 +34,7 @@ const emit = defineEmits(['update:showForm', 'submit']);
 			<div class="grid grid-cols-2 desktop:grid-cols-4 gap-[12px]">
 				<div>
 					<label class="block text-[0.75rem] text-[#737373] mb-[4px]">Tipo</label>
-					<select v-model="newPackage.package_type" class="w-full bg-[#F8F9FB] border border-[#E9EBEC] rounded-[8px] p-[8px] text-[0.875rem]">
+					<select v-model="newPackage.package_type" class="w-full bg-[#F8F9FB] border border-[#E9EBEC] rounded-[12px] p-[8px] text-[0.875rem]">
 						<option value="Pacco">Pacco</option>
 						<option value="Busta">Busta</option>
 						<option value="Pallet">Pallet</option>
@@ -43,27 +43,27 @@ const emit = defineEmits(['update:showForm', 'submit']);
 				</div>
 				<div>
 					<label class="block text-[0.75rem] text-[#737373] mb-[4px]">Quantita</label>
-					<input type="number" v-model="newPackage.quantity" min="1" max="999" class="w-full bg-[#F8F9FB] border border-[#E9EBEC] rounded-[8px] p-[8px] text-[0.875rem]" />
+					<input type="number" v-model="newPackage.quantity" min="1" max="999" class="w-full bg-[#F8F9FB] border border-[#E9EBEC] rounded-[12px] p-[8px] text-[0.875rem]" />
 				</div>
 				<div>
 					<label class="block text-[0.75rem] text-[#737373] mb-[4px]">Peso (kg)</label>
-					<input type="number" v-model="newPackage.weight" min="0.1" max="1000" step="0.1" class="w-full bg-[#F8F9FB] border border-[#E9EBEC] rounded-[8px] p-[8px] text-[0.875rem]" required />
+					<input type="number" v-model="newPackage.weight" min="0.1" max="1000" step="0.1" class="w-full bg-[#F8F9FB] border border-[#E9EBEC] rounded-[12px] p-[8px] text-[0.875rem]" required />
 				</div>
 				<div>
 					<label class="block text-[0.75rem] text-[#737373] mb-[4px]">Lunghezza (cm)</label>
-					<input type="number" v-model="newPackage.first_size" min="0.1" max="1000" step="0.1" class="w-full bg-[#F8F9FB] border border-[#E9EBEC] rounded-[8px] p-[8px] text-[0.875rem]" required />
+					<input type="number" v-model="newPackage.first_size" min="0.1" max="1000" step="0.1" class="w-full bg-[#F8F9FB] border border-[#E9EBEC] rounded-[12px] p-[8px] text-[0.875rem]" required />
 				</div>
 				<div>
 					<label class="block text-[0.75rem] text-[#737373] mb-[4px]">Larghezza (cm)</label>
-					<input type="number" v-model="newPackage.second_size" min="0.1" max="1000" step="0.1" class="w-full bg-[#F8F9FB] border border-[#E9EBEC] rounded-[8px] p-[8px] text-[0.875rem]" required />
+					<input type="number" v-model="newPackage.second_size" min="0.1" max="1000" step="0.1" class="w-full bg-[#F8F9FB] border border-[#E9EBEC] rounded-[12px] p-[8px] text-[0.875rem]" required />
 				</div>
 				<div>
 					<label class="block text-[0.75rem] text-[#737373] mb-[4px]">Altezza (cm)</label>
-					<input type="number" v-model="newPackage.third_size" min="0.1" max="1000" step="0.1" class="w-full bg-[#F8F9FB] border border-[#E9EBEC] rounded-[8px] p-[8px] text-[0.875rem]" required />
+					<input type="number" v-model="newPackage.third_size" min="0.1" max="1000" step="0.1" class="w-full bg-[#F8F9FB] border border-[#E9EBEC] rounded-[12px] p-[8px] text-[0.875rem]" required />
 				</div>
 				<div class="col-span-2">
 					<label class="block text-[0.75rem] text-[#737373] mb-[4px]">Contenuto</label>
-					<input type="text" v-model="newPackage.content_description" placeholder="es. Elettronica" maxlength="255" class="w-full bg-[#F8F9FB] border border-[#E9EBEC] rounded-[8px] p-[8px] text-[0.875rem]" />
+					<input type="text" v-model="newPackage.content_description" placeholder="es. Elettronica" maxlength="255" class="w-full bg-[#F8F9FB] border border-[#E9EBEC] rounded-[12px] p-[8px] text-[0.875rem]" />
 				</div>
 			</div>
 			<div v-if="addPackageError" class="mt-[10px] text-red-500 text-[0.8125rem]">{{ addPackageError }}</div>

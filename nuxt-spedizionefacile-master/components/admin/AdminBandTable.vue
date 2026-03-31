@@ -65,10 +65,10 @@ const onEditInput = (event) => {
 					<tr v-for="(band, idx) in bands" :key="band.id || idx" :class="['border-b border-[#F0F0F0] last:border-0', idx % 2 === 1 ? 'bg-[#FAFBFC]' : '']">
 						<td class="py-[14px] font-bold text-[#252B42]">{{ idx + 1 }}</td>
 						<td class="py-[14px] text-[#404040]">
-							<input v-model.number="band.min_value" type="number" min="0" :step="minMaxStep" class="w-[86px] h-[34px] px-[8px] rounded-[8px] border border-[#C8CCD0] bg-white text-[0.8125rem]">
+							<input v-model.number="band.min_value" type="number" min="0" :step="minMaxStep" class="w-[86px] h-[34px] px-[8px] rounded-[12px] border border-[#C8CCD0] bg-white text-[0.8125rem]">
 						</td>
 						<td class="py-[14px] text-[#404040]">
-							<input v-model.number="band.max_value" type="number" min="0" :step="minMaxStep" class="w-[86px] h-[34px] px-[8px] rounded-[8px] border border-[#C8CCD0] bg-white text-[0.8125rem]">
+							<input v-model.number="band.max_value" type="number" min="0" :step="minMaxStep" class="w-[86px] h-[34px] px-[8px] rounded-[12px] border border-[#C8CCD0] bg-white text-[0.8125rem]">
 						</td>
 						<!-- Prezzo base -->
 						<td class="py-[14px]">
@@ -82,10 +82,10 @@ const onEditInput = (event) => {
 									@keydown.esc="cancelEdit()"
 									@blur="confirmEdit(bandType, idx, 'base_price')"
 									type="number" min="0" step="0.01"
-									class="w-[100px] px-[10px] py-[8px] tablet:py-[6px] bg-white border-2 border-[#095866] rounded-[8px] text-[1rem] tablet:text-[0.8125rem] focus:outline-none"
+									class="w-[100px] px-[10px] py-[8px] tablet:py-[6px] bg-white border-2 border-[#095866] rounded-[12px] text-[1rem] tablet:text-[0.8125rem] focus:outline-none"
 									placeholder="0,00" />
 							</div>
-							<button v-else type="button" @click="startEdit(bandType, idx, 'base_price')" class="px-[12px] py-[6px] rounded-[8px] text-[0.875rem] font-semibold text-[#252B42] hover:bg-[#E8F4FB] transition-colors cursor-pointer border border-transparent hover:border-[#B0D4E8]">
+							<button v-else type="button" @click="startEdit(bandType, idx, 'base_price')" class="px-[12px] py-[6px] rounded-[12px] text-[0.875rem] font-semibold text-[#252B42] hover:bg-[#E8F4FB] transition-colors cursor-pointer border border-transparent hover:border-[#B0D4E8]">
 								{{ centsToEuro(band.base_price) }}
 							</button>
 						</td>
@@ -101,10 +101,10 @@ const onEditInput = (event) => {
 									@keydown.esc="cancelEdit()"
 									@blur="confirmEdit(bandType, idx, 'discount_price')"
 									type="number" min="0" step="0.01"
-									class="w-[100px] px-[10px] py-[8px] tablet:py-[6px] bg-white border-2 border-[#095866] rounded-[8px] text-[1rem] tablet:text-[0.8125rem] focus:outline-none"
+									class="w-[100px] px-[10px] py-[8px] tablet:py-[6px] bg-white border-2 border-[#095866] rounded-[12px] text-[1rem] tablet:text-[0.8125rem] focus:outline-none"
 									placeholder="vuoto = usa base" />
 							</div>
-							<button v-else type="button" @click="startEdit(bandType, idx, 'discount_price')" class="px-[12px] py-[6px] rounded-[8px] text-[0.875rem] text-[#737373] hover:bg-[#E8F4FB] transition-colors cursor-pointer border border-transparent hover:border-[#B0D4E8]">
+							<button v-else type="button" @click="startEdit(bandType, idx, 'discount_price')" class="px-[12px] py-[6px] rounded-[12px] text-[0.875rem] text-[#737373] hover:bg-[#E8F4FB] transition-colors cursor-pointer border border-transparent hover:border-[#B0D4E8]">
 								{{ band.discount_price != null ? centsToEuro(band.discount_price) : '-' }}
 							</button>
 						</td>
@@ -135,9 +135,9 @@ const onEditInput = (event) => {
 						<!-- Azioni -->
 						<td class="py-[14px]">
 							<div class="flex items-center justify-end gap-[6px]">
-								<button type="button" class="px-[8px] py-[4px] rounded-[8px] border border-[#D5DDE1] text-[0.75rem] hover:bg-[#F4F8FA] cursor-pointer" @click="moveBand(bandType, idx, -1)">&#8593;</button>
-								<button type="button" class="px-[8px] py-[4px] rounded-[8px] border border-[#D5DDE1] text-[0.75rem] hover:bg-[#F4F8FA] cursor-pointer" @click="moveBand(bandType, idx, 1)">&#8595;</button>
-								<button type="button" class="px-[8px] py-[4px] rounded-[8px] border border-red-200 text-red-600 text-[0.75rem] hover:bg-red-50 cursor-pointer" @click="removeBand(bandType, idx)">Elimina</button>
+								<button type="button" class="px-[8px] py-[4px] rounded-[12px] border border-[#D5DDE1] text-[0.75rem] hover:bg-[#F4F8FA] cursor-pointer" @click="moveBand(bandType, idx, -1)">&#8593;</button>
+								<button type="button" class="px-[8px] py-[4px] rounded-[12px] border border-[#D5DDE1] text-[0.75rem] hover:bg-[#F4F8FA] cursor-pointer" @click="moveBand(bandType, idx, 1)">&#8595;</button>
+								<button type="button" class="px-[8px] py-[4px] rounded-[12px] border border-red-200 text-red-600 text-[0.75rem] hover:bg-red-50 cursor-pointer" @click="removeBand(bandType, idx)">Elimina</button>
 							</div>
 						</td>
 					</tr>

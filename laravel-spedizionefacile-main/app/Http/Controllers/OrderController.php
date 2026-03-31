@@ -1,44 +1,9 @@
 <?php
 
 /**
- * FILE: OrderController.php
- * SCOPO: Gestisce il ciclo di vita degli ordini di spedizione (CRUD, creazione diretta, annullamento).
- *
- * DOVE SI USA: Pagina spedizioni utente, pagina riepilogo, checkout, pannello admin
- *
- * DATI IN INGRESSO:
- *   - index(): nessuno (filtra per utente autenticato o mostra tutti se admin)
- *   - show(): Order via route model binding
- *   - createDirectOrder(): PackageStoreRequest {packages: [...], origin_address, destination_address, services}
- *   - cancel(): Order + {reason?}
- *   - addPackage(): Order + {package_type, quantity, weight, first_size, second_size, third_size}
- *
- * DATI IN USCITA:
- *   - index(): OrderResource[] con packages, indirizzi, servizi, transazioni
- *   - show(): OrderResource singolo
- *   - createDirectOrder(): {order_id: 42, order_number: "SF-000042"}
- *   - cancel(): delega a RefundController.requestCancellation()
- *   - addPackage(): {success, message, order: OrderResource}
- *
- * VINCOLI:
- *   - I prezzi nel DB sono in CENTESIMI. createDirectOrder() converte: round(euro * 100)
- *   - createDirectOrder() RICALCOLA i prezzi lato server (non si fida del frontend)
- *   - La tabella pivot package_order collega ordini a pacchi (relazione many-to-many)
- *
- * ERRORI TIPICI:
- *   - 403: utente non autorizzato (non proprietario dell'ordine)
- *   - 422: ordine non annullabile (stato non pending/payment_failed)
- *
- * PUNTI DI MODIFICA SICURI:
- *   - Per cambiare le fasce prezzo di createDirectOrder(): intervenire su PriceEngineService
- *   - Per aggiungere uno stato ordine: aggiungere la costante in Order.php e gestire qui
- *   - Per cambiare la logica di annullamento: modificare RefundController (cancel() delega a quello)
- *
- * COLLEGAMENTI:
- *   - StripeController.php — creazione ordini dal carrello e gestione pagamenti
- *   - RefundController.php — logica completa di annullamento e rimborso
- *   - BrtController.php — generazione etichette BRT per ordini pagati
- *   - pages/account/spedizioni/ — interfaccia frontend lista ordini
+ * OrderController — CRUD ordini di spedizione, creazione diretta, annullamento.
+ * Prezzi in centesimi. createDirectOrder() ricalcola server-side via PriceEngineService.
+ * Annullamento delegato a RefundController.
  */
 
 namespace App\Http\Controllers;
@@ -49,6 +14,7 @@ use App\Models\Order;
 use App\Models\Package;
 use App\Models\PackageAddress;
 use App\Models\Service;
+use App\Services\InvoicePdfService;
 use App\Services\PriceEngineService;
 use App\Services\ShipmentServicePricingService;
 use Illuminate\Http\Request;
@@ -375,6 +341,30 @@ class OrderController extends Controller
             'success' => true,
             'message' => 'Collo aggiunto con successo.',
             'order' => new OrderResource($order),
+        ]);
+    }
+
+    /**
+     * invoice — Genera e scarica la ricevuta PDF di un ordine.
+     *
+     * PERCHE': L'utente puo' scaricare una ricevuta PDF per ogni ordine pagato.
+     * COME LEGGERLO: 1) Verifica proprietario  2) Genera PDF via InvoicePdfService  3) Restituisce download
+     * COSA EVITARE: Non permettere download di ricevute per ordini in stato "pending" (non ancora pagati).
+     */
+    public function invoice(Order $order, InvoicePdfService $invoicePdf)
+    {
+        // Verifica che l'utente possa accedere a questo ordine
+        Gate::authorize('view', $order);
+
+        // Genera il PDF
+        $pdfContent = $invoicePdf->generate($order);
+
+        $orderNumber = 'SF-' . str_pad((string) $order->id, 6, '0', STR_PAD_LEFT);
+
+        return response($pdfContent, 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'attachment; filename="ricevuta-' . $orderNumber . '.pdf"',
+            'Content-Length' => strlen($pdfContent),
         ]);
     }
 }

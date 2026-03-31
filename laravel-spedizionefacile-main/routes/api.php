@@ -86,6 +86,7 @@ use App\Http\Controllers\PriceBandController;
 use App\Http\Controllers\ProRequestController;
 use App\Http\Controllers\PublicArticleController;
 use App\Http\Controllers\PublicPriceBandController;
+use App\Http\Controllers\ShipmentExecutionController;
 use App\Support\AuthUiCookie;
 
 /* ===================================================================== */
@@ -354,6 +355,8 @@ Route::group(['middleware' => ['auth:sanctum']], function() {
     Route::apiResource('orders', OrderController::class);
     // POST /api/orders/{order}/cancel — Annulla un ordine (con eventuale rimborso)
     Route::post('orders/{order}/cancel', [OrderController::class, 'cancel']);
+    // GET /api/orders/{order}/invoice — Scarica la ricevuta PDF dell'ordine
+    Route::get('orders/{order}/invoice', [OrderController::class, 'invoice']);
     // GET /api/orders/{order}/refund-eligibility — Controlla se un ordine puo' essere rimborsato
     // Le regole: "processing" e "completed" si', "in_transit" no (gia' partito)
     Route::get('orders/{order}/refund-eligibility', [RefundController::class, 'checkRefundEligibility']);
@@ -393,6 +396,18 @@ Route::group(['middleware' => ['auth:sanctum']], function() {
     Route::get('brt/label/{order}', [BrtController::class, 'downloadLabel']);
     // GET /api/brt/tracking/{order} — Controlla lo stato della spedizione (tracking)
     Route::get('brt/tracking/{order}', [BrtController::class, 'tracking']);
+
+    /* ===== ESECUZIONE SPEDIZIONE (pickup, bordero, documenti) ===== */
+    // Gestisce il flusso post-etichetta: ritiro a domicilio, bordero e invio documenti.
+
+    // GET /api/orders/{order}/execution — Stato esecuzione spedizione (pickup, bordero, documenti)
+    Route::get('orders/{order}/execution', [ShipmentExecutionController::class, 'show']);
+    // POST /api/orders/{order}/pickup — Richiede il ritiro a domicilio BRT
+    Route::post('orders/{order}/pickup', [ShipmentExecutionController::class, 'requestPickup']);
+    // POST /api/orders/{order}/bordero — Genera il bordero di spedizione (PDF)
+    Route::post('orders/{order}/bordero', [ShipmentExecutionController::class, 'createBordero']);
+    // POST /api/orders/{order}/send-documents — Invia documenti (etichetta + bordero) via email
+    Route::post('orders/{order}/send-documents', [ShipmentExecutionController::class, 'sendDocuments']);
 });
 
 /* ===================================================================== */

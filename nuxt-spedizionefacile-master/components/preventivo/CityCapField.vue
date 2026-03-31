@@ -43,7 +43,7 @@ const { locationKey } = useCityCapAutocomplete()
     <ul
       v-if="showSuggestions && suggestions.length"
       role="listbox"
-      class="absolute z-50 top-full left-0 right-0 bg-white border border-[#D0D0D0] rounded-[8px] mt-[2px] max-h-[200px] overflow-y-auto shadow-lg">
+      class="absolute z-50 top-full left-0 right-0 bg-white border border-[#D0D0D0] rounded-[12px] mt-[2px] max-h-[200px] overflow-y-auto shadow-lg">
       <li
         v-for="loc in suggestions"
         :key="locationKey(loc)"

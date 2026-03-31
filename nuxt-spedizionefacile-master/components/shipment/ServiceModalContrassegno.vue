@@ -9,6 +9,7 @@ defineProps({
 	serviceErrors: { type: Object, required: true },
 	contrassegnoIncassoOptions: { type: Array, required: true },
 	contrassegnoRimborsoOptions: { type: Array, required: true },
+	contrassegnoCodPaymentOptions: { type: Array, default: () => [] },
 	requiresContrassegnoDettaglio: { type: Boolean, default: false },
 });
 
@@ -77,6 +78,24 @@ const emit = defineEmits(['importo-input']);
 				</button>
 			</div>
 			<p v-if="serviceErrors.contrassegnoRimborso" class="service-field__error">{{ serviceErrors.contrassegnoRimborso }}</p>
+		</div>
+
+		<div v-if="contrassegnoCodPaymentOptions.length" class="service-field service-field--full">
+			<label class="service-field__label">Tipo pagamento corriere</label>
+			<div class="service-choice-wrap" role="group" aria-label="Tipo pagamento contrassegno BRT">
+				<button
+					v-for="option in contrassegnoCodPaymentOptions"
+					:key="option.value"
+					type="button"
+					:class="[
+						'service-choice',
+						serviceData.contrassegno.cod_payment_method === option.value ? 'service-choice--active' : '',
+					]"
+					@click="serviceData.contrassegno.cod_payment_method = option.value">
+					{{ option.label }}
+				</button>
+			</div>
+			<p v-if="serviceErrors.contrassegnoCodPayment" class="service-field__error">{{ serviceErrors.contrassegnoCodPayment }}</p>
 		</div>
 	</div>
 </template>

@@ -263,7 +263,7 @@ const adminAlerts = computed(() => {
 								<div class="flex items-center gap-[12px]">
 									<span class="text-[0.875rem] font-semibold text-[#252B42]">&euro;{{ formatCents(order.subtotal?.amount ?? order.subtotal) }}</span>
 									<span :class="['inline-flex items-center gap-[4px] px-[10px] py-[3px] rounded-full text-[0.6875rem] font-medium', orderStatusConfig[order.status]?.bg || 'bg-gray-50', orderStatusConfig[order.status]?.text || 'text-gray-700']">
-										<span class="w-[8px] h-[8px] rounded-full" :class="orderStatusConfig[order.status]?.text || 'text-gray-700'" style="background-color: currentColor"></span>
+										<span class="w-[8px] h-[8px] rounded-full bg-current" :class="orderStatusConfig[order.status]?.text || 'text-gray-700'"></span>
 										{{ orderStatusConfig[order.status]?.label || order.status }}
 									</span>
 									<span class="text-[0.75rem] text-[#737373] hidden desktop:inline">{{ formatDate(order.created_at) }}</span>

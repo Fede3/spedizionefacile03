@@ -67,7 +67,7 @@ onMounted(async () => {
 					</div>
 					<p class="text-[1rem] font-medium">{{ messageSuccess }}</p>
 					<p class="text-[0.875rem] text-[#737373] mt-[8px]">Accedi con le tue credenziali e inserisci il codice di verifica per attivare l'account.</p>
-					<button @click="messageSuccess = null; selectedAuthTab = 'accedi'" class="mt-[16px] px-[24px] py-[10px] bg-[#095866] text-white rounded-[8px] text-[0.875rem] font-semibold cursor-pointer hover:bg-[#074a56] transition-colors">
+					<button @click="messageSuccess = null; selectedAuthTab = 'accedi'" class="btn-primary mt-[16px] text-[0.875rem]">
 						Torna al login
 					</button>
 				</div>

@@ -50,7 +50,7 @@ pageReady.value = await initRiepilogoPage();
 			<div v-if="!pageReady" class="space-y-[16px] animate-pulse">
 				<div class="h-[64px] rounded-[16px] border border-[#E5EAEC] bg-white/90"></div>
 				<div class="rounded-[18px] border border-[#E5EAEC] bg-white p-[18px] tablet:p-[24px] space-y-[14px]">
-					<div class="h-[24px] w-[44%] rounded-[10px] bg-[#EEF3F5]"></div>
+					<div class="h-[24px] w-[44%] rounded-[12px] bg-[#EEF3F5]"></div>
 					<div class="grid grid-cols-1 tablet:grid-cols-2 gap-[12px]">
 						<div class="h-[124px] rounded-[16px] bg-[#EEF3F5]"></div>
 						<div class="h-[124px] rounded-[16px] bg-[#EEF3F5]"></div>

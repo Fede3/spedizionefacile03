@@ -25,6 +25,7 @@ export function useShipmentStepServiceCards({
 		contrassegnoIncasso: "",
 		contrassegnoRimborso: "",
 		contrassegnoDettaglio: "",
+		contrassegnoCodPayment: "",
 		assicurazione: {},
 	});
 
@@ -33,6 +34,7 @@ export function useShipmentStepServiceCards({
 		serviceCardErrors.contrassegnoIncasso = "";
 		serviceCardErrors.contrassegnoRimborso = "";
 		serviceCardErrors.contrassegnoDettaglio = "";
+		serviceCardErrors.contrassegnoCodPayment = "";
 		serviceCardErrors.assicurazione = {};
 	};
 
@@ -76,6 +78,13 @@ export function useShipmentStepServiceCards({
 		{ value: "bonifico", label: "Bonifico" },
 		{ value: "assegno", label: "Assegno" },
 		{ value: "assegno_circolare", label: "Assegno circolare" },
+	];
+
+	// Tipo pagamento contrassegno BRT (codPaymentType nel payload API)
+	const contrassegnoCodPaymentOptions = [
+		{ value: "BM", label: "Bonifico (BM)" },
+		{ value: "CC", label: "Assegno circolare (CC)" },
+		{ value: "AS", label: "Assegno bancario (AS)" },
 	];
 
 	const requiresContrassegnoDettaglio = computed(() => (
@@ -149,6 +158,7 @@ export function useShipmentStepServiceCards({
 		parseCurrencyValue(serviceData.value.contrassegno.importo) > 0
 		&& Boolean(serviceData.value.contrassegno.modalita_incasso)
 		&& Boolean(serviceData.value.contrassegno.modalita_rimborso)
+		&& Boolean(serviceData.value.contrassegno.cod_payment_method)
 		&& (!requiresContrassegnoDettaglio.value || Boolean(String(serviceData.value.contrassegno.dettaglio_rimborso || "").trim()))
 	);
 
@@ -279,6 +289,7 @@ export function useShipmentStepServiceCards({
 		// options
 		contrassegnoIncassoOptions,
 		contrassegnoRimborsoOptions,
+		contrassegnoCodPaymentOptions,
 		requiresContrassegnoDettaglio,
 		insurancePackages,
 		// validation

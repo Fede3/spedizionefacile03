@@ -109,6 +109,7 @@ class GenerateBrtLabel
         if ($order->is_cod && $order->cod_amount) {
             $options['is_cod'] = true;
             $options['cod_amount'] = $order->cod_amount;
+            $options['cod_payment_type'] = $order->cod_payment_type ?? 'BM';
         }
         // Se l'utente ha scelto un punto di ritiro/consegna (PUDO)
         if ($order->brt_pudo_id) {
@@ -152,11 +153,15 @@ class GenerateBrtLabel
 
             // Salva tutti i dati BRT nell'ordine e aggiorna lo stato
             // Include i dati di tracking, routing e la risposta completa
+            // Salva le etichette multi-collo (se presenti)
+            $allLabels = $result['all_labels'] ?? [];
+
             $order->update([
                 'brt_parcel_id' => $result['parcel_id'],
                 'brt_numeric_sender_reference' => $result['numeric_sender_reference'],
                 'brt_tracking_url' => $result['tracking_url'],
                 'brt_label_base64' => $result['label_base64'],
+                'brt_all_labels' => ! empty($allLabels) && count($allLabels) > 1 ? $allLabels : null,
                 'brt_tracking_number' => $result['tracking_number'] ?? null,
                 'brt_parcel_number_to' => $result['parcel_number_to'] ?? null,
                 'brt_departure_depot' => $result['departure_depot'] ?? null,

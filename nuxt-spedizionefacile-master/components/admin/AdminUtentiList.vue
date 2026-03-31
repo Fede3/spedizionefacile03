@@ -121,10 +121,10 @@ const emit = defineEmits(['approve', 'delete', 'role-change']);
 						<td class="py-[14px] text-[#737373] text-[0.8125rem]">{{ formatDate(u.created_at) }}</td>
 						<td class="py-[14px] text-right">
 							<div class="flex justify-end gap-[6px]">
-								<button v-if="!u.email_verified_at" @click="emit('approve', u.id)" :disabled="actionLoading === u.id" class="px-[10px] py-[6px] rounded-[8px] bg-[#095866] text-white text-[0.75rem] cursor-pointer disabled:opacity-60 flex items-center gap-[4px]">
+								<button v-if="!u.email_verified_at" @click="emit('approve', u.id)" :disabled="actionLoading === u.id" class="px-[10px] py-[6px] rounded-[12px] bg-[#095866] text-white text-[0.75rem] cursor-pointer disabled:opacity-60 flex items-center gap-[4px]">
 									<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[14px] h-[14px]" fill="currentColor"><path d="M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z"/></svg> Approva
 								</button>
-								<button @click="emit('delete', u)" :disabled="actionLoading === u.id" class="px-[10px] py-[6px] rounded-[8px] bg-red-600 text-white text-[0.75rem] cursor-pointer disabled:opacity-60 flex items-center gap-[4px]">
+								<button @click="emit('delete', u)" :disabled="actionLoading === u.id" class="px-[10px] py-[6px] rounded-[12px] bg-red-600 text-white text-[0.75rem] cursor-pointer disabled:opacity-60 flex items-center gap-[4px]">
 									<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[14px] h-[14px]" fill="currentColor"><path d="M19,4H15.5L14.5,3H9.5L8.5,4H5V6H19M6,19A2,2 0 0,0 8,21H16A2,2 0 0,0 18,19V7H6V19Z"/></svg> Elimina
 								</button>
 							</div>

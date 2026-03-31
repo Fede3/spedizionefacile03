@@ -40,11 +40,11 @@ const emit = defineEmits(['show-detail', 'change-status']);
 					<span v-if="order.brt_pudo_id" class="text-[0.625rem] font-semibold bg-[#095866]/10 text-[#095866] px-[6px] py-[2px] rounded">PUDO</span>
 				</div>
 				<div class="mt-[12px] grid grid-cols-2 gap-[8px]">
-					<button @click="emit('show-detail', order)" class="inline-flex items-center justify-center gap-[5px] px-[12px] py-[9px] rounded-[10px] bg-white border border-[#D7E1E4] hover:border-[#095866] hover:text-[#095866] text-[#404040] text-[0.75rem] cursor-pointer font-medium transition-colors">
+					<button @click="emit('show-detail', order)" class="inline-flex items-center justify-center gap-[5px] px-[12px] py-[9px] rounded-[12px] bg-white border border-[#D7E1E4] hover:border-[#095866] hover:text-[#095866] text-[#404040] text-[0.75rem] cursor-pointer font-medium transition-colors">
 						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[14px] h-[14px]" fill="currentColor"><path d="M12,9A3,3 0 0,0 9,12A3,3 0 0,0 12,15A3,3 0 0,0 15,12A3,3 0 0,0 12,9M12,17C7,17 2.73,13.89 1,12C2.73,10.11 7,7 12,7C17,7 21.27,10.11 23,12C21.27,13.89 17,17 12,17Z"/></svg>
 						Dettagli
 					</button>
-					<select @change="emit('change-status', order.id, $event.target.value, order.status); $event.target.value = ''" class="w-full px-[10px] py-[9px] rounded-[10px] bg-white text-[#252B42] text-[0.75rem] cursor-pointer border border-[#D7E1E4] font-medium focus:border-[#095866] focus:outline-none">
+					<select @change="emit('change-status', order.id, $event.target.value, order.status); $event.target.value = ''" class="w-full px-[10px] py-[9px] rounded-[12px] bg-white text-[#252B42] text-[0.75rem] cursor-pointer border border-[#D7E1E4] font-medium focus:border-[#095866] focus:outline-none">
 						<option value="" selected disabled>Stato</option>
 						<option v-for="s in getAvailableStatuses(order.status)" :key="s.value" :value="s.value">{{ s.label }}</option>
 					</select>
@@ -89,11 +89,11 @@ const emit = defineEmits(['show-detail', 'change-status']);
 						<td class="py-[14px] text-[#737373] text-[0.8125rem]">{{ formatDate(order.created_at) }}</td>
 						<td class="py-[14px] text-right">
 							<div class="flex justify-end gap-[6px]">
-								<button @click="emit('show-detail', order)" class="inline-flex items-center gap-[5px] px-[12px] py-[7px] rounded-[10px] bg-white border border-[#D7E1E4] hover:border-[#095866] hover:text-[#095866] text-[#404040] text-[0.75rem] cursor-pointer font-medium transition-colors">
+								<button @click="emit('show-detail', order)" class="inline-flex items-center gap-[5px] px-[12px] py-[7px] rounded-[12px] bg-white border border-[#D7E1E4] hover:border-[#095866] hover:text-[#095866] text-[#404040] text-[0.75rem] cursor-pointer font-medium transition-colors">
 									<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[14px] h-[14px]" fill="currentColor"><path d="M12,9A3,3 0 0,0 9,12A3,3 0 0,0 12,15A3,3 0 0,0 15,12A3,3 0 0,0 12,9M12,17C7,17 2.73,13.89 1,12C2.73,10.11 7,7 12,7C17,7 21.27,10.11 23,12C21.27,13.89 17,17 12,17Z"/></svg>
 									Dettagli
 								</button>
-								<select @change="emit('change-status', order.id, $event.target.value, order.status); $event.target.value = ''" class="px-[10px] py-[7px] rounded-[10px] bg-[#F8FAFB] text-[#252B42] text-[0.75rem] cursor-pointer border border-[#D7E1E4] font-medium focus:border-[#095866] focus:outline-none">
+								<select @change="emit('change-status', order.id, $event.target.value, order.status); $event.target.value = ''" class="px-[10px] py-[7px] rounded-[12px] bg-[#F8FAFB] text-[#252B42] text-[0.75rem] cursor-pointer border border-[#D7E1E4] font-medium focus:border-[#095866] focus:outline-none">
 									<option value="" selected disabled>Stato</option>
 									<option v-for="s in getAvailableStatuses(order.status)" :key="s.value" :value="s.value">{{ s.label }}</option>
 								</select>

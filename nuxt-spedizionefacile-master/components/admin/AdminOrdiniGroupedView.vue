@@ -47,7 +47,7 @@ const emit = defineEmits(['toggle-user', 'show-detail', 'change-status', 'change
 			<div v-if="expandedUsers.has(group.user?.id)">
 				<div class="px-[14px] py-[10px] tablet:px-[20px] bg-[#FAFBFC] border-b border-[#F0F0F0] flex flex-col gap-[8px] tablet:flex-row tablet:items-center tablet:gap-[12px]">
 					<span class="text-[0.75rem] text-[#737373]">Tipo account:</span>
-					<select :value="group.user?.user_type || 'privato'" @change="emit('change-user-type', group.user?.id, $event.target.value)" class="w-full tablet:w-auto px-[10px] py-[6px] rounded-[8px] bg-white border border-[#E9EBEC] text-[0.75rem] cursor-pointer focus:border-[#095866] focus:outline-none">
+					<select :value="group.user?.user_type || 'privato'" @change="emit('change-user-type', group.user?.id, $event.target.value)" class="w-full tablet:w-auto px-[10px] py-[6px] rounded-[12px] bg-white border border-[#E9EBEC] text-[0.75rem] cursor-pointer focus:border-[#095866] focus:outline-none">
 						<option value="privato">Privato</option>
 						<option value="commerciante">Commerciante</option>
 					</select>
@@ -66,11 +66,11 @@ const emit = defineEmits(['toggle-user', 'show-detail', 'change-status', 'change
 								{{ orderStatusConfig[order.status]?.label || order.status }}
 							</span>
 							<span class="hidden text-[0.75rem] text-[#737373] desktop:inline">{{ formatDate(order.created_at) }}</span>
-							<button @click="emit('show-detail', order)" class="inline-flex items-center gap-[5px] px-[12px] py-[7px] rounded-[10px] bg-white border border-[#D7E1E4] hover:border-[#095866] hover:text-[#095866] text-[#404040] text-[0.75rem] cursor-pointer font-medium transition-colors">
+							<button @click="emit('show-detail', order)" class="inline-flex items-center gap-[5px] px-[12px] py-[7px] rounded-[12px] bg-white border border-[#D7E1E4] hover:border-[#095866] hover:text-[#095866] text-[#404040] text-[0.75rem] cursor-pointer font-medium transition-colors">
 								<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[14px] h-[14px]" fill="currentColor"><path d="M12,9A3,3 0 0,0 9,12A3,3 0 0,0 12,15A3,3 0 0,0 15,12A3,3 0 0,0 12,9M12,17C7,17 2.73,13.89 1,12C2.73,10.11 7,7 12,7C17,7 21.27,10.11 23,12C21.27,13.89 17,17 12,17Z"/></svg>
 								Dettagli
 							</button>
-							<select @change="emit('change-status', order.id, $event.target.value, order.status); $event.target.value = ''" class="px-[10px] py-[7px] rounded-[10px] bg-[#F8FAFB] text-[#252B42] text-[0.75rem] cursor-pointer border border-[#D7E1E4] font-medium focus:border-[#095866] focus:outline-none">
+							<select @change="emit('change-status', order.id, $event.target.value, order.status); $event.target.value = ''" class="px-[10px] py-[7px] rounded-[12px] bg-[#F8FAFB] text-[#252B42] text-[0.75rem] cursor-pointer border border-[#D7E1E4] font-medium focus:border-[#095866] focus:outline-none">
 								<option value="" selected disabled>Stato</option>
 								<option v-for="s in getAvailableStatuses(order.status)" :key="s.value" :value="s.value">{{ s.label }}</option>
 							</select>

@@ -37,55 +37,78 @@ class TrackingService
      * Interroga BRT per ottenere lo stato tracking di un ordine.
      * Usato dal comando SyncBrtTracking per aggiornamenti automatici.
      *
+     * Endpoint BRT: POST /rest/v1/shipments/tracking
+     * Accetta account + spedition_id (numericSenderReference) oppure parcelId.
+     *
      * @param Order $order L'ordine con brt_numeric_sender_reference o brt_parcel_id
      * @return array {status: ?string, brt_event: ?string, description: ?string, error: ?string}
      */
     public function getTrackingStatus(Order $order): array
     {
         $reference = $order->brt_tracking_number ?: $order->brt_parcel_id;
+        $numericRef = $order->brt_numeric_sender_reference;
 
-        if (empty($reference)) {
+        if (empty($reference) && empty($numericRef)) {
             return ['status' => null, 'brt_event' => null, 'description' => null, 'error' => 'Nessun riferimento BRT'];
         }
 
         try {
-            $response = $this->config->shipmentClient()
-                ->get($this->config->apiUrl . '/tracking', [
-                    'account' => $this->config->accountPayload(),
-                    'parcelNumber' => $reference,
-                ]);
+            $payload = [
+                'account' => $this->config->accountPayload(),
+                'trackingData' => [
+                    'senderCustomerCode' => (int) $this->config->clientId,
+                ],
+            ];
 
-            if (!$response->successful()) {
-                return ['status' => null, 'brt_event' => null, 'description' => null, 'error' => 'HTTP ' . $response->status()];
+            // Preferiamo numericSenderReference (piu' affidabile), altrimenti parcelId
+            if (! empty($numericRef)) {
+                $payload['trackingData']['numericSenderReference'] = (int) $numericRef;
+            } else {
+                $payload['trackingData']['parcelId'] = $reference;
+            }
+
+            $response = $this->config->shipmentClient()
+                ->post($this->config->apiUrl . '/tracking', $payload);
+
+            if (! $response->successful()) {
+                return [
+                    'status' => null,
+                    'brt_event' => null,
+                    'description' => null,
+                    'error' => 'HTTP ' . $response->status(),
+                ];
             }
 
             $body = $response->json();
-            $events = $body['events'] ?? [];
+
+            // BRT puo' restituire executionMessage con errore
+            $execCode = $body['executionMessage']['code'] ?? 0;
+            if ($execCode < 0) {
+                return [
+                    'status' => null,
+                    'brt_event' => null,
+                    'description' => null,
+                    'error' => $body['executionMessage']['message'] ?? 'Errore tracking BRT',
+                ];
+            }
+
+            $events = $body['events'] ?? $body['trackingEvents'] ?? [];
 
             if (empty($events)) {
-                return ['status' => null, 'brt_event' => null, 'description' => 'Nessun evento tracking', 'error' => null];
+                return [
+                    'status' => null,
+                    'brt_event' => null,
+                    'description' => 'Nessun evento tracking',
+                    'error' => null,
+                ];
             }
 
+            // L'ultimo evento e' il piu' recente (primo dell'array)
             $lastEvent = $events[0];
-            $eventCode = $lastEvent['eventCode'] ?? '';
-            $eventDesc = $lastEvent['eventDescription'] ?? '';
+            $eventCode = $lastEvent['eventCode'] ?? $lastEvent['id'] ?? '';
+            $eventDesc = $lastEvent['eventDescription'] ?? $lastEvent['description'] ?? '';
 
-            $statusMap = [
-                'DELIVERED' => Order::DELIVERED,
-                'CONSEGNATO' => Order::DELIVERED,
-                'IN_TRANSIT' => Order::IN_TRANSIT,
-                'IN TRANSITO' => Order::IN_TRANSIT,
-                'GIACENZA' => 'in_giacenza',
-                'STORAGE' => 'in_giacenza',
-            ];
-
-            $newStatus = null;
-            foreach ($statusMap as $keyword => $status) {
-                if (stripos($eventCode, $keyword) !== false || stripos($eventDesc, $keyword) !== false) {
-                    $newStatus = $status;
-                    break;
-                }
-            }
+            $newStatus = $this->mapEventToStatus($eventCode, $eventDesc);
 
             return [
                 'status' => $newStatus,
@@ -100,5 +123,49 @@ class TrackingService
             ]);
             return ['status' => null, 'brt_event' => null, 'description' => null, 'error' => $e->getMessage()];
         }
+    }
+
+    /**
+     * Mappa un evento BRT a uno stato dell'ordine.
+     * I codici evento BRT sono stringhe come "DELIVERED", "IN_TRANSIT", ecc.
+     * Alcuni eventi arrivano in italiano dal sistema BRT.
+     */
+    private function mapEventToStatus(string $eventCode, string $eventDesc): ?string
+    {
+        $combined = strtoupper($eventCode . ' ' . $eventDesc);
+
+        // Consegnato (stato finale)
+        $deliveredKeywords = ['DELIVERED', 'CONSEGNAT', 'CONSEGNA EFFETTUATA', 'RECAPITATO'];
+        foreach ($deliveredKeywords as $kw) {
+            if (str_contains($combined, $kw)) {
+                return 'delivered';
+            }
+        }
+
+        // In giacenza (problemi consegna)
+        $giacenzaKeywords = ['GIACENZA', 'STORAGE', 'MANCATA CONSEGNA', 'DESTINATARIO ASSENTE', 'FERMA DEPOSITO'];
+        foreach ($giacenzaKeywords as $kw) {
+            if (str_contains($combined, $kw)) {
+                return 'in_giacenza';
+            }
+        }
+
+        // In transito
+        $transitKeywords = ['IN_TRANSIT', 'IN TRANSITO', 'PARTITA', 'PRESA IN CARICO', 'RITIRAT', 'HUB'];
+        foreach ($transitKeywords as $kw) {
+            if (str_contains($combined, $kw)) {
+                return Order::IN_TRANSIT;
+            }
+        }
+
+        // In consegna (ultimo miglio)
+        $consegnaKeywords = ['IN CONSEGNA', 'OUT FOR DELIVERY', 'IN DISTRIBUZIONE'];
+        foreach ($consegnaKeywords as $kw) {
+            if (str_contains($combined, $kw)) {
+                return Order::IN_TRANSIT;
+            }
+        }
+
+        return null;
     }
 }

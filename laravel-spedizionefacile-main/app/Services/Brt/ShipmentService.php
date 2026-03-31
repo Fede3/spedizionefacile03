@@ -38,13 +38,27 @@ class ShipmentService
         }
 
         $normalizedDest = $this->addressNormalizer->normalizeAddressForBrt($destination);
+        $normalizedOrigin = $this->addressNormalizer->normalizeAddressForBrt($origin);
+        $departureDepot = FilialeLookup::resolveFilialeByCap($origin->postal_code ?? '')
+            ?? $this->config->departureDepot;
 
         $payload = [
             'account' => $this->config->accountPayload(),
             'createData' => [
-                'departureDepot' => $this->config->departureDepot,
+                'departureDepot' => $departureDepot,
                 'senderCustomerCode' => (int) $this->config->clientId,
                 'deliveryFreightTypeCode' => $options['delivery_freight_type'] ?? 'DAP',
+                // Mittente
+                'senderCompanyName' => $origin->name ?? '',
+                'senderAddress' => trim(($origin->address ?? '') . ' ' . ($origin->address_number ?? '')),
+                'senderZIPCode' => $normalizedOrigin['postal_code'],
+                'senderCity' => $normalizedOrigin['city'],
+                'senderProvinceAbbreviation' => $normalizedOrigin['province'],
+                'senderCountryAbbreviationISOAlpha2' => $this->addressNormalizer->countryToIso2($origin->country ?? 'Italia'),
+                'senderContactName' => $origin->name ?? '',
+                'senderTelephone' => $origin->telephone_number ?? '',
+                'senderEMail' => $origin->email ?? ($order->user->email ?? ''),
+                // Destinatario
                 'consigneeCompanyName' => $destination->name ?? '',
                 'consigneeAddress' => trim(($destination->address ?? '') . ' ' . ($destination->address_number ?? '')),
                 'consigneeZIPCode' => $normalizedDest['postal_code'],
@@ -185,23 +199,44 @@ class ShipmentService
     {
         $parcelId = '';
         $labelBase64 = '';
+        $allLabels = [];
         $labels = $responseData['labels']['label'] ?? $responseData['labels'] ?? [];
-        if (!empty($labels) && is_array($labels) && ($firstLabel = $labels[0] ?? null)) {
-            $parcelId = $firstLabel['parcelID'] ?? $firstLabel['parcelId'] ?? '';
-            $labelBase64 = $firstLabel['stream'] ?? '';
+
+        if (!empty($labels) && is_array($labels)) {
+            // Primo collo: usato come etichetta principale
+            $firstLabel = $labels[0] ?? null;
+            if ($firstLabel) {
+                $parcelId = $firstLabel['parcelID'] ?? $firstLabel['parcelId'] ?? '';
+                $labelBase64 = $firstLabel['stream'] ?? '';
+            }
+
+            // Multi-collo: salva tutte le etichette individualmente
+            foreach ($labels as $index => $label) {
+                $allLabels[] = [
+                    'collo_index' => $index,
+                    'parcel_id' => $label['parcelID'] ?? $label['parcelId'] ?? '',
+                    'stream' => $label['stream'] ?? '',
+                ];
+            }
         }
 
         $parcelNumberFrom = (string) ($responseData['parcelNumberFrom'] ?? '');
         $trackingNumber = $parcelNumberFrom ?: $parcelId;
         $trackingUrl = $trackingNumber ? 'https://vas.brt.it/vas/sped_det_show.hsm?refnr=' . urlencode($trackingNumber) . '&tiession=' : '';
 
-        Log::info('BRT createShipment tracking data extracted', ['order_id' => $orderId, 'parcel_id' => $parcelId, 'tracking_number' => $trackingNumber]);
+        Log::info('BRT createShipment tracking data extracted', [
+            'order_id' => $orderId,
+            'parcel_id' => $parcelId,
+            'tracking_number' => $trackingNumber,
+            'total_labels' => count($allLabels),
+        ]);
 
         return [
             'success' => true,
             'parcel_id' => $parcelId,
             'numeric_sender_reference' => $orderId,
             'label_base64' => $labelBase64,
+            'all_labels' => $allLabels,
             'tracking_url' => $trackingUrl,
             'tracking_number' => $trackingNumber,
             'parcel_number_from' => $parcelNumberFrom,

@@ -143,8 +143,8 @@ onMounted(() => { fetchOrders(); });
 				<div v-if="ordersData.last_page > 1" class="mt-[22px] flex flex-col gap-[10px] rounded-[18px] border border-[#EEF1F3] bg-[#FAFBFC] px-[14px] py-[12px] tablet:flex-row tablet:items-center tablet:justify-between">
 					<p class="text-[0.8125rem] text-[#6A7486]">{{ paginationLabel }}</p>
 					<div class="flex items-center justify-between gap-[8px] tablet:justify-end">
-						<button @click="ordersPage = Math.max(1, ordersPage - 1); fetchOrders()" :disabled="ordersPage <= 1" class="inline-flex items-center justify-center rounded-[10px] bg-white px-[12px] py-[8px] text-[0.8125rem] font-medium text-[#404040] shadow-sm disabled:opacity-40 cursor-pointer hover:bg-[#F0F0F0]">Precedente</button>
-						<button @click="ordersPage = Math.min(ordersData.last_page, ordersPage + 1); fetchOrders()" :disabled="ordersPage >= ordersData.last_page" class="inline-flex items-center justify-center rounded-[10px] bg-white px-[12px] py-[8px] text-[0.8125rem] font-medium text-[#404040] shadow-sm disabled:opacity-40 cursor-pointer hover:bg-[#F0F0F0]">Successiva</button>
+						<button @click="ordersPage = Math.max(1, ordersPage - 1); fetchOrders()" :disabled="ordersPage <= 1" class="btn-tertiary px-[12px] py-[8px] text-[0.8125rem] disabled:opacity-40">Precedente</button>
+						<button @click="ordersPage = Math.min(ordersData.last_page, ordersPage + 1); fetchOrders()" :disabled="ordersPage >= ordersData.last_page" class="btn-tertiary px-[12px] py-[8px] text-[0.8125rem] disabled:opacity-40">Successivo</button>
 					</div>
 				</div>
 			</div>

@@ -79,7 +79,7 @@ const props = defineProps({
 							:disabled="rate.quote_required"
 							type="text"
 							placeholder="0,00"
-							class="w-full h-[38px] px-[10px] rounded-[10px] border border-[#C8CCD0] bg-white text-[#252B42] disabled:bg-[#F3F4F6] disabled:text-[#9AA3B2]">
+							class="w-full h-[38px] px-[10px] rounded-[12px] border border-[#C8CCD0] bg-white text-[#252B42] disabled:bg-[#F3F4F6] disabled:text-[#9AA3B2]">
 					</div>
 				</div>
 
@@ -109,7 +109,7 @@ const props = defineProps({
 										:disabled="rate.quote_required"
 										type="text"
 										placeholder="0,00"
-										class="w-[120px] h-[38px] px-[10px] rounded-[10px] border border-[#C8CCD0] bg-white text-[#252B42] disabled:bg-[#F3F4F6] disabled:text-[#9AA3B2]">
+										class="w-[120px] h-[38px] px-[10px] rounded-[12px] border border-[#C8CCD0] bg-white text-[#252B42] disabled:bg-[#F3F4F6] disabled:text-[#9AA3B2]">
 								</td>
 								<td class="px-[16px] py-[10px]">
 									<button

@@ -85,14 +85,14 @@ const {
 					</div>
 
 					<div class="mt-[12px] grid grid-cols-1 tablet:grid-cols-2 desktop:grid-cols-[1.1fr_1fr_1fr] gap-[10px]">
-						<select v-model="filterProvenienza" class="w-full bg-[#F8F9FB] border border-[#D0D0D0] rounded-[14px] h-[44px] px-[14px] text-[0.8125rem] text-[#404040] appearance-none cursor-pointer">
+						<select v-model="filterProvenienza" class="w-full bg-[#F8F9FB] border border-[#E9EBEC] rounded-[12px] h-[44px] px-[14px] text-[0.8125rem] text-[#404040] appearance-none cursor-pointer">
 							<option value="">Provenienza</option>
 							<option v-for="city in uniqueCities" :key="city" :value="city">{{ city }}</option>
 						</select>
-						<input type="text" v-model="filterRiferimento" placeholder="Riferimento" class="w-full bg-[#F8F9FB] border border-[#D0D0D0] rounded-[14px] h-[44px] px-[14px] text-[0.8125rem] text-[#404040] placeholder:text-[#999]" />
+						<input type="text" v-model="filterRiferimento" placeholder="Riferimento" class="w-full bg-[#F8F9FB] border border-[#E9EBEC] rounded-[12px] h-[44px] px-[14px] text-[0.8125rem] text-[#404040] placeholder:text-[#999]" />
 						<div class="grid grid-cols-2 gap-[10px] tablet:col-span-2 desktop:col-span-1">
-							<input type="date" v-model="filterDateFrom" class="w-full bg-[#F8F9FB] border border-[#D0D0D0] rounded-[14px] h-[44px] px-[12px] text-[0.8125rem] text-[#404040]" />
-							<input type="date" v-model="filterDateTo" class="w-full bg-[#F8F9FB] border border-[#D0D0D0] rounded-[14px] h-[44px] px-[12px] text-[0.8125rem] text-[#404040]" />
+							<input type="date" v-model="filterDateFrom" class="w-full bg-[#F8F9FB] border border-[#E9EBEC] rounded-[12px] h-[44px] px-[12px] text-[0.8125rem] text-[#404040]" />
+							<input type="date" v-model="filterDateTo" class="w-full bg-[#F8F9FB] border border-[#E9EBEC] rounded-[12px] h-[44px] px-[12px] text-[0.8125rem] text-[#404040]" />
 						</div>
 					</div>
 
@@ -140,7 +140,7 @@ const {
 						</div>
 						<h2 class="text-[1.125rem] font-bold text-[#252B42] mb-[8px]">Nessuna spedizione configurata</h2>
 						<p class="text-[#737373] text-[0.875rem] max-w-[400px] mx-auto mb-[20px] leading-[1.55]">Le spedizioni salvate appariranno qui. Puoi salvarle dalla pagina delle spedizioni o crearne una nuova.</p>
-						<NuxtLink to="/preventivo" class="inline-flex items-center gap-[6px] px-[20px] py-[10px] bg-[#095866] hover:bg-[#074a56] text-white rounded-[50px] font-semibold text-[0.875rem] transition-colors">
+						<NuxtLink to="/preventivo" class="btn-primary btn-compact inline-flex items-center gap-[6px] text-[0.875rem]">
 							<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
 							Crea nuova spedizione
 						</NuxtLink>
@@ -164,12 +164,12 @@ const {
 				<!-- Bottom actions -->
 				<div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-[10px] sm:gap-[16px] mt-[16px]">
 					<button @click="askBulkDelete" :disabled="selectedItems.length === 0 || bulkDeleteLoading" type="button"
-						class="inline-flex items-center justify-center gap-[6px] bg-red-500 text-white font-semibold text-[0.875rem] px-[20px] desktop:px-[28px] h-[46px] rounded-[24px] hover:bg-red-600 transition cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">
+						class="btn-danger inline-flex items-center justify-center gap-[6px] text-[0.875rem] px-[20px] desktop:px-[28px] h-[46px]">
 						<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
 						{{ bulkDeleteLoading ? 'Eliminazione...' : `Elimina${selectedItems.length ? ` (${selectedItems.length})` : ''}` }}
 					</button>
 					<button @click="bulkAddToCart" :disabled="selectedItems.length === 0 || addToCartLoading" type="button"
-						class="inline-flex items-center justify-center gap-[6px] bg-[#252B42] text-white font-semibold text-[0.875rem] px-[20px] desktop:px-[28px] h-[46px] rounded-[24px] hover:opacity-90 transition cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">
+						class="btn-primary inline-flex items-center justify-center gap-[6px] text-[0.875rem] px-[20px] desktop:px-[28px] h-[46px]">
 						<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/><line x1="16" y1="9" x2="16" y2="15"/><line x1="13" y1="12" x2="19" y2="12"/></svg>
 						{{ addToCartLoading ? 'Aggiungendo...' : 'Aggiungi al carrello' }}
 					</button>

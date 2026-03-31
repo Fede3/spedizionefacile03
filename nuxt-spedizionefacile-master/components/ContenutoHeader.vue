@@ -88,14 +88,14 @@ const showMinPriceDiscount = computed(() => {
 
 				<!-- Promo badges -->
 				<div v-if="showMinPriceDiscount" class="mt-[10px]">
-					<span class="inline-flex items-center gap-[4px] px-[10px] py-[4px] rounded-[8px] bg-emerald-500 text-white text-[0.8125rem] font-bold">
+					<span class="inline-flex items-center gap-[4px] px-[10px] py-[4px] rounded-[12px] bg-emerald-500 text-white text-[0.8125rem] font-bold">
 						-{{ minPriceInfo.discountPercent }}%
 					</span>
 				</div>
 				<div v-if="promoSettings?.active && promoSettings?.label_text" class="mt-[8px]">
 					<span
 						:style="{ backgroundColor: promoSettings.label_color || '#E44203' }"
-						class="inline-flex items-center gap-[6px] px-[10px] py-[4px] rounded-[8px] text-white text-[0.75rem] font-bold tracking-wide shadow-sm">
+						class="inline-flex items-center gap-[6px] px-[10px] py-[4px] rounded-[12px] text-white text-[0.75rem] font-bold tracking-wide shadow-sm">
 						<img v-if="promoSettings.label_image" :src="promoSettings.label_image" alt="" decoding="async" width="40" height="16" class="h-[16px] w-auto shrink-0" />
 						{{ promoSettings.label_text }}
 					</span>

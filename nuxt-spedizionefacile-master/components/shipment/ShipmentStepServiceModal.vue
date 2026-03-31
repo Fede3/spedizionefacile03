@@ -13,6 +13,7 @@ const emit = defineEmits(["close", "update:open"]);
 const {
 	contrassegnoIncassoOptions,
 	contrassegnoRimborsoOptions,
+	contrassegnoCodPaymentOptions,
 	selectedServiceIndex,
 	selectedServiceIcon,
 	insurancePackages,
@@ -100,6 +101,7 @@ watch(
 						:service-errors="serviceErrors"
 						:contrassegno-incasso-options="contrassegnoIncassoOptions"
 						:contrassegno-rimborso-options="contrassegnoRimborsoOptions"
+						:contrassegno-cod-payment-options="contrassegnoCodPaymentOptions"
 						:requires-contrassegno-dettaglio="requiresContrassegnoDettaglio"
 						@importo-input="handleContrassegnoImportoInput" />
 

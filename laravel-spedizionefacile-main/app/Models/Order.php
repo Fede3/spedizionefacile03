@@ -55,6 +55,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -64,7 +65,7 @@ use Illuminate\Support\Facades\DB;
  */
 class Order extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
 
     /**
      * Campi compilabili dall'esterno.
@@ -81,6 +82,7 @@ class Order extends Model
         'brt_pudo_id',                   // ID del punto di ritiro/consegna BRT (se scelto)
         'is_cod',                        // Se true, il pagamento e' in contrassegno (paga il destinatario)
         'cod_amount',                    // Importo da incassare in contrassegno
+        'cod_payment_type',              // Tipo pagamento contrassegno BRT: BM, CC, AS
         'brt_error',                     // Eventuale errore nella generazione etichetta BRT
         'brt_tracking_number',           // Numero di tracking BRT (parcelNumberFrom)
         'brt_parcel_number_to',          // Ultimo numero collo (parcelNumberTo) per multi-collo
@@ -90,6 +92,7 @@ class Order extends Model
         'brt_delivery_zone',             // Zona di consegna BRT
         'brt_series_number',             // Numero di serie BRT
         'brt_service_type',              // Tipo di servizio BRT (codice API)
+        'brt_all_labels',                // JSON etichette individuali per multi-collo
         'brt_raw_response',              // Risposta JSON completa da BRT (per debug)
         // Campi rimborso
         'refund_status',                 // Stato del rimborso (pending, completed, failed, none)
@@ -106,6 +109,7 @@ class Order extends Model
     // Converte automaticamente i campi nei tipi corretti
     protected $casts = [
         'is_cod' => 'boolean',
+        'brt_all_labels' => 'array',     // Etichette individuali multi-collo (JSON)
         'brt_raw_response' => 'array',  // Converte JSON in array PHP automaticamente
         'billing_data' => 'array',
         'refunded_at' => 'datetime',

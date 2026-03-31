@@ -35,7 +35,7 @@ const formatDate = (dateStr) => {
 				<span class="text-[1rem] desktop:text-[1.125rem] font-mono font-bold text-[#252B42] tracking-[1px] desktop:tracking-[2px] break-all">
 					SF-PRO-{{ user?.id?.toString().padStart(6, '0') }}
 				</span>
-				<button @click="emit('copy-account-code')" class="p-[8px] rounded-[8px] hover:bg-[#F8F9FB] transition-colors cursor-pointer" title="Copia codice account">
+				<button @click="emit('copy-account-code')" class="p-[8px] rounded-[12px] hover:bg-[#F8F9FB] transition-colors cursor-pointer" title="Copia codice account">
 					<svg v-if="copiedAccountCode" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
 					<svg v-else xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#737373" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
 				</button>

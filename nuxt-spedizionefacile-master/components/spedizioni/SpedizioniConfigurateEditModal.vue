@@ -42,38 +42,38 @@ const emit = defineEmits(['update:open', 'save']);
 					<div class="bg-[#F8F9FB] rounded-[12px] p-[16px]">
 						<h4 class="text-[0.75rem] font-bold text-[#737373] uppercase tracking-wider mb-[10px]">Partenza</h4>
 						<div class="grid grid-cols-1 sm:grid-cols-2 gap-[8px]">
-							<input v-model="editForm.origin_name" placeholder="Nome e Cognome" class="sm:col-span-2 bg-white border border-[#D0D0D0] rounded-[8px] h-[38px] px-[12px] text-[0.8125rem]" />
-							<input v-model="editForm.origin_address" placeholder="Indirizzo" class="bg-white border border-[#D0D0D0] rounded-[8px] h-[38px] px-[12px] text-[0.8125rem]" />
-							<input v-model="editForm.origin_address_number" placeholder="N. civico" class="bg-white border border-[#D0D0D0] rounded-[8px] h-[38px] px-[12px] text-[0.8125rem]" />
-							<input v-model="editForm.origin_city" placeholder="Citta" class="bg-white border border-[#D0D0D0] rounded-[8px] h-[38px] px-[12px] text-[0.8125rem]" />
-							<input v-model="editForm.origin_postal_code" placeholder="CAP" class="bg-white border border-[#D0D0D0] rounded-[8px] h-[38px] px-[12px] text-[0.8125rem]" />
-							<input v-model="editForm.origin_province" placeholder="Provincia" class="bg-white border border-[#D0D0D0] rounded-[8px] h-[38px] px-[12px] text-[0.8125rem]" />
-							<input v-model="editForm.origin_telephone" placeholder="Telefono" class="bg-white border border-[#D0D0D0] rounded-[8px] h-[38px] px-[12px] text-[0.8125rem]" />
+							<input v-model="editForm.origin_name" placeholder="Nome e Cognome" class="sm:col-span-2 bg-white border border-[#D0D0D0] rounded-[12px] h-[38px] px-[12px] text-[0.8125rem]" />
+							<input v-model="editForm.origin_address" placeholder="Indirizzo" class="bg-white border border-[#D0D0D0] rounded-[12px] h-[38px] px-[12px] text-[0.8125rem]" />
+							<input v-model="editForm.origin_address_number" placeholder="N. civico" class="bg-white border border-[#D0D0D0] rounded-[12px] h-[38px] px-[12px] text-[0.8125rem]" />
+							<input v-model="editForm.origin_city" placeholder="Citta" class="bg-white border border-[#D0D0D0] rounded-[12px] h-[38px] px-[12px] text-[0.8125rem]" />
+							<input v-model="editForm.origin_postal_code" placeholder="CAP" class="bg-white border border-[#D0D0D0] rounded-[12px] h-[38px] px-[12px] text-[0.8125rem]" />
+							<input v-model="editForm.origin_province" placeholder="Provincia" class="bg-white border border-[#D0D0D0] rounded-[12px] h-[38px] px-[12px] text-[0.8125rem]" />
+							<input v-model="editForm.origin_telephone" placeholder="Telefono" class="bg-white border border-[#D0D0D0] rounded-[12px] h-[38px] px-[12px] text-[0.8125rem]" />
 						</div>
 					</div>
 					<!-- Destinazione -->
 					<div class="bg-[#F8F9FB] rounded-[12px] p-[16px]">
 						<h4 class="text-[0.75rem] font-bold text-[#737373] uppercase tracking-wider mb-[10px]">Destinazione</h4>
 						<div class="grid grid-cols-1 sm:grid-cols-2 gap-[8px]">
-							<input v-model="editForm.dest_name" placeholder="Nome e Cognome" class="sm:col-span-2 bg-white border border-[#D0D0D0] rounded-[8px] h-[38px] px-[12px] text-[0.8125rem]" />
-							<input v-model="editForm.dest_address" placeholder="Indirizzo" class="bg-white border border-[#D0D0D0] rounded-[8px] h-[38px] px-[12px] text-[0.8125rem]" />
-							<input v-model="editForm.dest_address_number" placeholder="N. civico" class="bg-white border border-[#D0D0D0] rounded-[8px] h-[38px] px-[12px] text-[0.8125rem]" />
-							<input v-model="editForm.dest_city" placeholder="Citta" class="bg-white border border-[#D0D0D0] rounded-[8px] h-[38px] px-[12px] text-[0.8125rem]" />
-							<input v-model="editForm.dest_postal_code" placeholder="CAP" class="bg-white border border-[#D0D0D0] rounded-[8px] h-[38px] px-[12px] text-[0.8125rem]" />
-							<input v-model="editForm.dest_province" placeholder="Provincia" class="bg-white border border-[#D0D0D0] rounded-[8px] h-[38px] px-[12px] text-[0.8125rem]" />
-							<input v-model="editForm.dest_telephone" placeholder="Telefono" class="bg-white border border-[#D0D0D0] rounded-[8px] h-[38px] px-[12px] text-[0.8125rem]" />
+							<input v-model="editForm.dest_name" placeholder="Nome e Cognome" class="sm:col-span-2 bg-white border border-[#D0D0D0] rounded-[12px] h-[38px] px-[12px] text-[0.8125rem]" />
+							<input v-model="editForm.dest_address" placeholder="Indirizzo" class="bg-white border border-[#D0D0D0] rounded-[12px] h-[38px] px-[12px] text-[0.8125rem]" />
+							<input v-model="editForm.dest_address_number" placeholder="N. civico" class="bg-white border border-[#D0D0D0] rounded-[12px] h-[38px] px-[12px] text-[0.8125rem]" />
+							<input v-model="editForm.dest_city" placeholder="Citta" class="bg-white border border-[#D0D0D0] rounded-[12px] h-[38px] px-[12px] text-[0.8125rem]" />
+							<input v-model="editForm.dest_postal_code" placeholder="CAP" class="bg-white border border-[#D0D0D0] rounded-[12px] h-[38px] px-[12px] text-[0.8125rem]" />
+							<input v-model="editForm.dest_province" placeholder="Provincia" class="bg-white border border-[#D0D0D0] rounded-[12px] h-[38px] px-[12px] text-[0.8125rem]" />
+							<input v-model="editForm.dest_telephone" placeholder="Telefono" class="bg-white border border-[#D0D0D0] rounded-[12px] h-[38px] px-[12px] text-[0.8125rem]" />
 						</div>
 					</div>
 					<!-- Collo -->
 					<div class="bg-[#F8F9FB] rounded-[12px] p-[16px]">
 						<h4 class="text-[0.75rem] font-bold text-[#737373] uppercase tracking-wider mb-[10px]">Collo</h4>
 						<div class="grid grid-cols-1 sm:grid-cols-2 desktop:grid-cols-3 gap-[8px]">
-							<div><label class="text-[0.6875rem] text-[#737373]">Tipo</label><input v-model="editForm.package_type" class="w-full bg-white border border-[#D0D0D0] rounded-[8px] h-[38px] px-[12px] text-[0.8125rem]" /></div>
-							<div><label class="text-[0.6875rem] text-[#737373]">Quantita</label><input type="number" v-model="editForm.quantity" min="1" class="w-full bg-white border border-[#D0D0D0] rounded-[8px] h-[38px] px-[12px] text-[0.8125rem]" /></div>
-							<div><label class="text-[0.6875rem] text-[#737373]">Peso (kg)</label><input v-model="editForm.weight" class="w-full bg-white border border-[#D0D0D0] rounded-[8px] h-[38px] px-[12px] text-[0.8125rem]" /></div>
-							<div><label class="text-[0.6875rem] text-[#737373]">Lato 1 (cm)</label><input v-model="editForm.first_size" class="w-full bg-white border border-[#D0D0D0] rounded-[8px] h-[38px] px-[12px] text-[0.8125rem]" /></div>
-							<div><label class="text-[0.6875rem] text-[#737373]">Lato 2 (cm)</label><input v-model="editForm.second_size" class="w-full bg-white border border-[#D0D0D0] rounded-[8px] h-[38px] px-[12px] text-[0.8125rem]" /></div>
-							<div><label class="text-[0.6875rem] text-[#737373]">Lato 3 (cm)</label><input v-model="editForm.third_size" class="w-full bg-white border border-[#D0D0D0] rounded-[8px] h-[38px] px-[12px] text-[0.8125rem]" /></div>
+							<div><label class="text-[0.6875rem] text-[#737373]">Tipo</label><input v-model="editForm.package_type" class="w-full bg-white border border-[#D0D0D0] rounded-[12px] h-[38px] px-[12px] text-[0.8125rem]" /></div>
+							<div><label class="text-[0.6875rem] text-[#737373]">Quantita</label><input type="number" v-model="editForm.quantity" min="1" class="w-full bg-white border border-[#D0D0D0] rounded-[12px] h-[38px] px-[12px] text-[0.8125rem]" /></div>
+							<div><label class="text-[0.6875rem] text-[#737373]">Peso (kg)</label><input v-model="editForm.weight" class="w-full bg-white border border-[#D0D0D0] rounded-[12px] h-[38px] px-[12px] text-[0.8125rem]" /></div>
+							<div><label class="text-[0.6875rem] text-[#737373]">Lato 1 (cm)</label><input v-model="editForm.first_size" class="w-full bg-white border border-[#D0D0D0] rounded-[12px] h-[38px] px-[12px] text-[0.8125rem]" /></div>
+							<div><label class="text-[0.6875rem] text-[#737373]">Lato 2 (cm)</label><input v-model="editForm.second_size" class="w-full bg-white border border-[#D0D0D0] rounded-[12px] h-[38px] px-[12px] text-[0.8125rem]" /></div>
+							<div><label class="text-[0.6875rem] text-[#737373]">Lato 3 (cm)</label><input v-model="editForm.third_size" class="w-full bg-white border border-[#D0D0D0] rounded-[12px] h-[38px] px-[12px] text-[0.8125rem]" /></div>
 						</div>
 					</div>
 				</div>

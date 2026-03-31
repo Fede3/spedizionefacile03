@@ -128,8 +128,8 @@ onMounted(() => {
 				<div class="flex flex-col gap-[14px] desktop:flex-row desktop:items-center desktop:justify-between">
 					<div class="min-w-0 flex-1">
 						<div class="mb-[8px] h-[24px] w-[140px] rounded-full bg-[#EEF3F7] animate-pulse"></div>
-						<div class="h-[30px] w-[240px] rounded-[10px] bg-[#EEF3F7] animate-pulse tablet:h-[36px] tablet:w-[320px]"></div>
-						<div class="mt-[8px] h-[16px] w-full max-w-[520px] rounded-[8px] bg-[#F2F5F8] animate-pulse"></div>
+						<div class="h-[30px] w-[240px] rounded-[12px] bg-[#EEF3F7] animate-pulse tablet:h-[36px] tablet:w-[320px]"></div>
+						<div class="mt-[8px] h-[16px] w-full max-w-[520px] rounded-[12px] bg-[#F2F5F8] animate-pulse"></div>
 					</div>
 					<div class="h-[42px] w-[96px] rounded-[14px] bg-[#EEF3F7] animate-pulse"></div>
 				</div>

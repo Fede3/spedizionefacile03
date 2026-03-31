@@ -119,7 +119,7 @@ const {
 					</div>
 					<div v-if="isCancellable && !isCancelledOrRefunded" class="mt-[16px] flex flex-col gap-[10px] border-t border-[#E9EBEC] pt-[16px] desktop:flex-row desktop:items-center desktop:justify-between">
 						<p class="text-[0.75rem] text-[#737373]">Per richiedere un rimborso, contatta l'<NuxtLink to="/account/assistenza" class="text-[#095866] font-semibold underline">assistenza</NuxtLink>.</p>
-						<button type="button" @click="openCancelModal" class="inline-flex items-center gap-[4px] px-[12px] py-[6px] text-[#737373] text-[0.75rem] hover:text-red-600 hover:bg-red-50 rounded-[8px] transition cursor-pointer">
+						<button type="button" @click="openCancelModal" class="inline-flex items-center gap-[4px] px-[12px] py-[6px] text-[#737373] text-[0.75rem] hover:text-red-600 hover:bg-red-50 rounded-[12px] transition cursor-pointer">
 							<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[14px] h-[14px]" fill="currentColor"><path d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,4A8,8 0 0,1 20,12A8,8 0 0,1 12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4M7,10L12,15L17,10H7Z"/></svg>
 							Blocca il pacco
 						</button>

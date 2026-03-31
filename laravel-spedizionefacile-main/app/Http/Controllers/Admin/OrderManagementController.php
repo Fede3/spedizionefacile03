@@ -148,6 +148,7 @@ class OrderManagementController extends Controller
         if ($order->is_cod && $order->cod_amount) {
             $options['is_cod'] = true;
             $options['cod_amount'] = $order->cod_amount;
+            $options['cod_payment_type'] = $order->cod_payment_type ?? 'BM';
         }
         if ($order->brt_pudo_id) {
             $options['pudo_id'] = $order->brt_pudo_id;
