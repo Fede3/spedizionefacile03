@@ -27,7 +27,7 @@ useSeoMeta({
 	ogDescription: 'Accedi o registrati su SpediamoFacile per gestire le tue spedizioni.',
 });
 
-definePageMeta({ layout: 'auth', middleware: ['sanctum:guest'] });
+definePageMeta({ layout: 'default', middleware: ['sanctum:guest'] });
 
 const {
 	items, selectedAuthTab, onTabClick,
