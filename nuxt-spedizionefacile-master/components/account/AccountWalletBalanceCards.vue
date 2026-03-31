@@ -27,7 +27,7 @@ defineProps({
           <p class="text-[0.75rem] uppercase tracking-[1.2px] font-medium text-[#095866]">Saldo disponibile</p>
         </div>
         <p class="text-[1.875rem] desktop:text-[2.25rem] font-bold tracking-tight leading-none text-[#252B42]">
-          &euro;{{ balance ? Number(balance.balance).toFixed(2) : "0.00" }}
+          &euro;{{ balance ? formatEuro(balance.balance) : "0,00" }}
         </p>
         <p class="text-[0.75rem] text-[#667281] mt-[6px]">Saldo principale del wallet.</p>
       </div>
@@ -45,7 +45,7 @@ defineProps({
           <p class="text-[0.75rem] uppercase tracking-[1.2px] font-medium text-[#095866]">Commissioni</p>
         </div>
         <p class="text-[1.875rem] desktop:text-[2.25rem] font-bold tracking-tight leading-none text-[#252B42]">
-          &euro;{{ balance ? Number(balance.commission_balance || 0).toFixed(2) : "0.00" }}
+          &euro;{{ balance ? formatEuro(balance.commission_balance || 0) : "0,00" }}
         </p>
         <NuxtLink to="/account/prelievi" class="mt-[10px] inline-flex items-center gap-[6px] rounded-[999px] border border-[#D7E6E9] bg-white px-[12px] py-[8px] text-[0.75rem] font-semibold text-[#095866] transition-colors hover:border-[#BFD8DE] hover:bg-[#f7fbfc]">
           Richiedi prelievo

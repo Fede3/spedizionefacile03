@@ -108,7 +108,7 @@ const {
       <div class="rounded-[14px] border border-[#E9EBEC] bg-[#FAFCFD] px-[14px] py-[12px]">
         <p class="text-[0.75rem] font-semibold uppercase tracking-[0.04em] text-[#6B7280]">Ricarica pronta</p>
         <p class="mt-[4px] text-[0.9375rem] font-semibold text-[#252B42]">
-          {{ topUpAmount ? `Importo selezionato: \u20AC${Number(topUpAmount || 0).toFixed(2)}` : 'Scegli un importo o inseriscilo manualmente' }}
+          {{ topUpAmount ? `Importo selezionato: \u20AC${formatEuro(topUpAmount || 0)}` : 'Scegli un importo o inseriscilo manualmente' }}
         </p>
         <p class="mt-[4px] text-[0.75rem] text-[#737373] leading-[1.45]">
           {{ defaultPaymentMethod?.card || showNewCardForm ? 'Il pagamento userà la carta mostrata sopra.' : 'Per procedere serve una carta salvata o una nuova carta.' }}

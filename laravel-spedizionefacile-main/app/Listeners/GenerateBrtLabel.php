@@ -197,6 +197,18 @@ class GenerateBrtLabel
                 'arrival_depot' => $result['arrival_depot'] ?? null,
                 'service_type' => $result['service_type'] ?? null,
             ]);
+
+            // Invia email con etichetta al cliente
+            try {
+                if ($order->user && $order->user->email) {
+                    $freshOrder = $order->fresh();
+                    if ($freshOrder && $freshOrder->brt_label_base64) {
+                        \Mail::to($order->user->email)->send(new \App\Mail\ShipmentLabelMail($freshOrder));
+                    }
+                }
+            } catch (\Exception $e) {
+                Log::warning('Email etichetta non inviata', ['order_id' => $order->id, 'error' => $e->getMessage()]);
+            }
         } else {
             // Se la generazione dell'etichetta fallisce dopo tutti i tentativi,
             // salviamo l'errore nell'ordine cosi' il frontend puo' mostrarlo all'utente

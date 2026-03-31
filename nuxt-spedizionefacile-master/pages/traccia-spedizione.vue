@@ -21,6 +21,7 @@ useSeoMeta({
 	title: 'Traccia Spedizione | SpediamoFacile',
 	ogTitle: 'Traccia Spedizione | SpediamoFacile',
 	description: 'Traccia la tua spedizione in tempo reale con SpediamoFacile.',
+	ogDescription: 'Traccia la tua spedizione in tempo reale con SpediamoFacile.',
 });
 
 const config = useRuntimeConfig();

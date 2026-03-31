@@ -41,12 +41,12 @@ const minPriceInfo = computed(() => getMinPrice());
 const minPriceFormatted = computed(() => {
 	const p = minPriceInfo.value?.effectivePrice;
 	if (!p) return '8,90';
-	return p.toFixed(2).replace('.', ',');
+	return formatEuro(p);
 });
 const minBasePriceFormatted = computed(() => {
 	const p = minPriceInfo.value?.basePrice;
 	if (!p) return null;
-	return p.toFixed(2).replace('.', ',');
+	return formatEuro(p);
 });
 const showMinPriceDiscount = computed(() => {
 	return minPriceInfo.value?.hasDiscount && minPriceInfo.value?.showDiscount && promoSettings.value?.show_badges;

@@ -80,7 +80,7 @@ const formatDate = (dateStr) => {
 				<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="#059669"><path d="M15,18.5A6.5,6.5 0 0,1 8.5,12A6.5,6.5 0 0,1 15,5.5A6.5,6.5 0 0,1 21.5,12A6.5,6.5 0 0,1 15,18.5M15,20A8,8 0 0,0 23,12A8,8 0 0,0 15,4A8,8 0 0,0 7,12A8,8 0 0,0 15,20M2,8V6H8V8H2M0,12V10H8V12H0M3,16V14H8V16H3Z"/></svg>
 				<p class="text-[0.75rem] text-[#737373] uppercase tracking-[0.5px] font-medium">Commissioni</p>
 			</div>
-			<p class="text-[1.5rem] font-bold text-[#252B42]">&euro;{{ referralData ? Number(referralData.total_earnings || 0).toFixed(2) : '0.00' }}</p>
+			<p class="text-[1.5rem] font-bold text-[#252B42]">&euro;{{ referralData ? formatEuro(referralData.total_earnings || 0) : '0,00' }}</p>
 		</div>
 		<div class="bg-white rounded-[18px] p-[16px] desktop:p-[20px] border border-[#E9EBEC] shadow-sm">
 			<div class="flex items-center gap-[8px] mb-[10px]">
@@ -94,7 +94,7 @@ const formatDate = (dateStr) => {
 				<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="#0D9488"><path d="M3,6H21V18H3V6M12,9A3,3 0 0,1 15,12A3,3 0 0,1 12,15A3,3 0 0,1 9,12A3,3 0 0,1 12,9M7,8A2,2 0 0,1 5,10V14A2,2 0 0,1 7,16H17A2,2 0 0,1 19,14V10A2,2 0 0,1 17,8H7Z"/></svg>
 				<p class="text-[0.75rem] text-[#737373] uppercase tracking-[0.5px] font-medium">Saldo</p>
 			</div>
-			<p class="text-[1.5rem] font-bold text-emerald-600">&euro;{{ earnings ? Number(earnings.commission_balance || 0).toFixed(2) : '0.00' }}</p>
+			<p class="text-[1.5rem] font-bold text-emerald-600">&euro;{{ earnings ? formatEuro(earnings.commission_balance || 0) : '0,00' }}</p>
 			<NuxtLink to="/account/prelievi" class="inline-flex items-center gap-[4px] text-[0.8125rem] text-[#095866] font-medium hover:underline mt-[6px]">
 				Prelievi
 				<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
@@ -134,11 +134,11 @@ const formatDate = (dateStr) => {
 					</div>
 					<div class="flex items-center justify-between gap-[10px] mt-[10px] text-[0.8125rem]">
 						<span class="text-[#737373]">Ordine</span>
-						<span class="text-[#404040]">&euro;{{ Number(usage.order_amount).toFixed(2) }}</span>
+						<span class="text-[#404040]">&euro;{{ formatEuro(usage.order_amount) }}</span>
 					</div>
 					<div class="flex items-center justify-between gap-[10px] mt-[6px] text-[0.8125rem]">
 						<span class="text-[#737373]">Commissione</span>
-						<span class="font-semibold text-emerald-600">+&euro;{{ Number(usage.commission_amount).toFixed(2) }}</span>
+						<span class="font-semibold text-emerald-600">+&euro;{{ formatEuro(usage.commission_amount) }}</span>
 					</div>
 				</div>
 			</div>
@@ -158,8 +158,8 @@ const formatDate = (dateStr) => {
 						<tr v-for="usage in earnings.data" :key="usage.id" class="border-b border-[#F0F0F0] last:border-0">
 							<td class="py-[12px] text-[#404040]">{{ formatDate(usage.created_at) }}</td>
 							<td class="py-[12px] text-[#404040]">{{ usage.buyer?.name || '\u2014' }}</td>
-							<td class="py-[12px] text-right text-[#404040]">&euro;{{ Number(usage.order_amount).toFixed(2) }}</td>
-							<td class="py-[12px] text-right font-semibold text-emerald-600">+&euro;{{ Number(usage.commission_amount).toFixed(2) }}</td>
+							<td class="py-[12px] text-right text-[#404040]">{{ formatPrice(Number(usage.order_amount) * 100) }}</td>
+							<td class="py-[12px] text-right font-semibold text-emerald-600">+{{ formatPrice(Number(usage.commission_amount) * 100) }}</td>
 							<td class="py-[12px] text-center">
 								<span :class="['inline-block px-[10px] py-[3px] rounded-full text-[0.6875rem] font-medium', usage.status === 'confirmed' ? 'bg-emerald-50 text-emerald-700' : usage.status === 'paid' ? 'bg-blue-50 text-blue-700' : 'bg-amber-50 text-amber-700']">
 									{{ usage.status === 'confirmed' ? 'Confermata' : usage.status === 'paid' ? 'Pagata' : 'In attesa' }}

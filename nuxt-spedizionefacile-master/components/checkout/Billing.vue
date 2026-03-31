@@ -16,7 +16,7 @@ const emit = defineEmits([
 </script>
 
 <template>
-  <div class="checkout-stage-card checkout-stage-card--billing checkout-motion-card" style="--checkout-delay: 140ms;">
+  <div class="checkout-stage-card checkout-stage-card--billing checkout-motion-card [--checkout-delay:140ms]">
     <div class="checkout-panel-head">
       <span class="checkout-panel-head__icon">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 7h8"/><path d="M8 11h8"/><path d="M8 15h5"/></svg>

@@ -135,7 +135,7 @@ const props = defineProps({
 							</label>
 							<label class="text-[0.75rem] text-[#6A7486]">
 								Prezzo (&euro;)
-								<input :value="(Number(tier.price_cents || 0) / 100).toFixed(2).replace('.', ',')" @input="tier.price_cents = euroToCents($event.target.value) || 0" type="text" class="mt-[4px] w-full h-[40px] px-[12px] rounded-[12px] border border-[#D5DDE1] bg-white text-[0.8125rem] text-[#252B42]">
+								<input :value="formatEuro(toEuros(tier.price_cents || 0))" @input="tier.price_cents = euroToCents($event.target.value) || 0" type="text" class="mt-[4px] w-full h-[40px] px-[12px] rounded-[12px] border border-[#D5DDE1] bg-white text-[0.8125rem] text-[#252B42]">
 							</label>
 							<button type="button" class="h-[40px] px-[12px] rounded-[12px] border border-red-200 text-red-600 text-[0.75rem] font-medium hover:bg-red-50 cursor-pointer" @click="removeTierRow(entry.rule, tierIndex)">Rimuovi</button>
 						</div>

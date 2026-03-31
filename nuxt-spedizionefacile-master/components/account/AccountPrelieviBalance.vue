@@ -34,7 +34,7 @@ const steps = [
 						</div>
 						<p class="text-[0.75rem] uppercase tracking-[1.2px] font-medium text-[#095866]">Saldo</p>
 					</div>
-					<p class="text-[2rem] desktop:text-[2.5rem] font-bold tracking-tight leading-none text-[#252B42]">&euro;{{ availableBalance.toFixed(2) }}</p>
+					<p class="text-[2rem] desktop:text-[2.5rem] font-bold tracking-tight leading-none text-[#252B42]">&euro;{{ formatEuro(availableBalance) }}</p>
 					<p class="text-[0.75rem] text-[#667281] mt-[6px]">Commissioni accumulate</p>
 				</div>
 				<div class="flex flex-col items-start desktop:items-end gap-[8px]">

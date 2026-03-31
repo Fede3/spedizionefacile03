@@ -166,5 +166,7 @@ onUnmounted(() => {
 				</div>
 			</div>
 		</div>
+
+		<CookieBanner />
 	</div>
 </template>

@@ -40,9 +40,8 @@ const goToMiniStep = (step) => emit('go-mini-step', step);
 
 <template>
 	<div
-		class="z-30 mb-[20px] font-montserrat summary-sticky-shell sticky"
-		:class="{ 'is-compact-mobile': compactMobile }"
-		style="top: calc(env(safe-area-inset-top, 0px) + 8px);">
+		class="z-30 mb-[20px] font-montserrat summary-sticky-shell sticky top-[calc(env(safe-area-inset-top,0px)+8px)]"
+		:class="{ 'is-compact-mobile': compactMobile }">
 		<div class="summary-sticky-card bg-white rounded-[16px] shadow-lg overflow-hidden border border-[#E9EBEC]">
 			<div class="summary-header-main">
 				<div class="summary-top-row">

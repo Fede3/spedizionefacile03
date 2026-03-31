@@ -59,7 +59,7 @@ const formatDate = (dateStr) => {
 				<div class="flex flex-col gap-[10px] tablet:flex-row tablet:items-start tablet:justify-between">
 					<div class="min-w-0">
 						<div class="flex items-center gap-[8px] flex-wrap">
-							<span class="text-[1rem] font-bold text-[#252B42]">&euro;{{ Number(withdrawal.amount).toFixed(2) }}</span>
+							<span class="text-[1rem] font-bold text-[#252B42]">&euro;{{ formatEuro(withdrawal.amount) }}</span>
 							<span :class="['inline-flex items-center gap-[4px] px-[9px] py-[3px] rounded-full text-[0.6875rem] font-medium', statusConfig[withdrawal.status]?.text || 'text-gray-700']">
 								<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path :d="statusIcons[withdrawal.status] || 'M11,9H13V7H11M12,20A8,8 0 0,0 20,12A8,8 0 0,0 12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22C6.47,22 2,17.5 2,12A10,10 0 0,1 12,2M11,17H13V11H11V17Z'" /></svg>
 								{{ statusConfig[withdrawal.status]?.label || withdrawal.status }}

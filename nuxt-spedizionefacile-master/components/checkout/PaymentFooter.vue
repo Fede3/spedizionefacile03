@@ -18,7 +18,7 @@ const emit = defineEmits(['confirm-payment', 'update:termsAccepted'])
 </script>
 
 <template>
-  <div class="checkout-payment-footer checkout-motion-card" style="--checkout-delay: 200ms;">
+  <div class="checkout-payment-footer checkout-motion-card [--checkout-delay:200ms]">
     <div class="checkout-payment-footer__summary">
       <div class="checkout-payment-footer__summary-copy">
         <p class="checkout-payment-footer__summary-label">Totale da pagare</p>

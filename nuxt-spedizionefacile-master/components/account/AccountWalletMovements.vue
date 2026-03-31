@@ -109,7 +109,7 @@ const getMovementSvg = (mov) => {
           </div>
         </div>
         <span :class="['text-[0.9375rem] font-bold tabular-nums whitespace-nowrap self-start sm:self-auto', getMovementColor(mov)]">
-          {{ getMovementSign(mov) }}&euro;{{ Number(mov.amount).toFixed(2) }}
+          {{ getMovementSign(mov) }}&euro;{{ formatEuro(mov.amount) }}
         </span>
       </li>
     </ul>

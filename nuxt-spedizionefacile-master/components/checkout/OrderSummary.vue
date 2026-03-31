@@ -176,7 +176,7 @@ const localCouponPanelOpen = computed({
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
           Sconto {{ couponApplied.discount_percent }}% ({{ couponApplied.code }})
         </span>
-        <span class="text-[0.9375rem] font-semibold text-emerald-700">-{{ couponApplied.discount_amount.toFixed(2).replace('.', ',') }}&euro;</span>
+        <span class="text-[0.9375rem] font-semibold text-emerald-700">-{{ formatEuro(couponApplied.discount_amount) }}&euro;</span>
       </div>
 
       <!-- Divider -->
@@ -194,7 +194,7 @@ const localCouponPanelOpen = computed({
           </span>
         </div>
         <span class="text-[1.25rem] font-bold text-[#095866]"
-          :title="couponApplied ? `Totale originale: ${getTotal} - Sconto: ${couponApplied.discount_amount.toFixed(2).replace('.', ',')}€ = ${finalTotalFormatted}` : 'Totale ordine IVA inclusa'">
+          :title="couponApplied ? `Totale originale: ${getTotal} - Sconto: ${formatEuro(couponApplied.discount_amount)}€ = ${finalTotalFormatted}` : 'Totale ordine IVA inclusa'">
           {{ finalTotalFormatted }}
         </span>
       </div>

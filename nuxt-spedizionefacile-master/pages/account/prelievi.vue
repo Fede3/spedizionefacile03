@@ -58,7 +58,7 @@ const requestWithdrawal = async () => {
 	try {
 		const result = await sanctum('/api/withdrawals', { method: 'POST' });
 		if (result?.success) {
-			message.value = `Richiesta di prelievo di \u20AC${availableBalance.value.toFixed(2)} inviata con successo.`;
+			message.value = `Richiesta di prelievo di \u20AC${formatEuro(availableBalance.value)} inviata con successo.`;
 			messageType.value = 'success';
 			await fetchData();
 		} else {
@@ -95,7 +95,7 @@ const lastWithdrawalLabel = computed(() => {
 });
 
 const withdrawalOverview = computed(() => [
-	{ label: 'Disponibile', value: `\u20AC${availableBalance.value.toFixed(2)}`, tone: 'bg-[#F0F6F7] text-[#095866]' },
+	{ label: 'Disponibile', value: `\u20AC${formatEuro(availableBalance.value)}`, tone: 'bg-[#F0F6F7] text-[#095866]' },
 	{ label: 'In attesa', value: pendingWithdrawals.value ? `${pendingWithdrawals.value} richiesta` : 'Nessuna', tone: 'bg-[#FFF7E8] text-[#B45309]' },
 	{ label: 'Ultimo stato', value: lastWithdrawalLabel.value, tone: 'bg-[#F8F9FB] text-[#404040]' },
 ]);

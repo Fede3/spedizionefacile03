@@ -1453,20 +1453,27 @@
 /* Input unificato SpedizioneFacile */
 .sf-input {
 	width: 100%;
-	background: #F8F9FB;
-	padding: 12px;
 	border: 1px solid #E9EBEC;
-	border-radius: 8px;
+	border-radius: 12px;
+	padding: 12px 16px;
 	font-size: 0.9375rem;
+	line-height: 1.5;
 	color: #252B42;
-	transition: border-color 200ms ease, box-shadow 200ms ease;
+	background: white;
+	transition: border-color 200ms, box-shadow 200ms;
+	outline: none;
 }
-.sf-input::placeholder { color: #A0A5AB; }
 .sf-input:focus {
 	border-color: #095866;
-	outline: none;
-	box-shadow: 0 0 0 3px rgba(9, 88, 102, 0.1);
+	box-shadow: 0 0 0 3px rgba(9, 88, 102, 0.08);
 }
-.sf-input--error { border-color: #ef4444; }
-.sf-input--sm { padding: 8px 10px; font-size: 0.875rem; }
-.sf-input--lg { padding: 14px 16px; font-size: 1rem; }
+.sf-input::placeholder {
+	color: #9CA3AF;
+}
+.sf-input--sm {
+	padding: 8px 12px;
+	font-size: 0.875rem;
+}
+.sf-input--error {
+	border-color: #E44203;
+}
