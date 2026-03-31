@@ -1,0 +1,192 @@
+<?php
+
+/**
+ * Regole di pricing per i servizi spedizione.
+ *
+ * Usato come fallback da ShipmentServicePricingService quando
+ * non ci sono regole salvate nel DB (tabella settings).
+ *
+ * Sezioni:
+ *   - service_pricing: servizi selezionabili dall'utente (senza etichetta, notifiche, etc.)
+ *   - automatic_supplements: supplementi applicati automaticamente (isole, fuori sagoma, etc.)
+ *   - operational_fees: costi operativi gestiti dall'admin (giacenza)
+ */
+
+return [
+    'service_pricing' => [
+        'senza_etichetta' => [
+            'label' => 'Senza etichetta',
+            'description' => 'Il corriere stampa e applica l\'etichetta al ritiro.',
+            'pricing_type' => 'fixed',
+            'price_cents' => 99,
+            'enabled' => true,
+            'application' => 'per_spedizione',
+            'note' => 'Applicato quando il servizio è selezionato nel checkout.',
+        ],
+        'notifications' => [
+            'label' => 'Notifiche spedizione',
+            'description' => 'SMS ed email al ritiro, in transito e alla consegna.',
+            'pricing_type' => 'fixed',
+            'price_cents' => 50,
+            'enabled' => true,
+            'application' => 'per_spedizione',
+            'note' => 'Attivato dal toggle notifiche spedizione.',
+        ],
+        'sponda_idraulica' => [
+            'label' => 'Sponda idraulica',
+            'description' => 'Supplemento per mezzo con pedana di carico/scarico.',
+            'pricing_type' => 'fixed',
+            'price_cents' => 1500,
+            'enabled' => true,
+            'application' => 'per_spedizione',
+            'note' => 'Applicato quando il servizio è selezionato.',
+        ],
+        'contrassegno' => [
+            'label' => 'Contrassegno',
+            'description' => 'Incasso alla consegna comprensivo di bonifico.',
+            'pricing_type' => 'threshold_percentage',
+            'threshold_amount_eur' => 300,
+            'min_fee_cents' => 700,
+            'percentage_rate' => 2,
+            'enabled' => true,
+            'application' => 'per_spedizione',
+            'note' => 'Fino a 300€ applica fee minima, oltre applica percentuale.',
+        ],
+        'assicurazione' => [
+            'label' => 'Assicurazione',
+            'description' => 'Protezione economica sulla merce dichiarata.',
+            'pricing_type' => 'threshold_percentage',
+            'threshold_amount_eur' => 300,
+            'min_fee_cents' => 700,
+            'percentage_rate' => 2,
+            'enabled' => true,
+            'application' => 'per_spedizione',
+            'note' => 'Fino a 300€ applica fee minima, oltre applica percentuale.',
+        ],
+    ],
+    'automatic_supplements' => [
+        'calabria_sardegna_sicilia' => [
+            'label' => 'Calabria / Sardegna / Sicilia',
+            'description' => 'Supplemento automatico destinazione per collo.',
+            'enabled' => true,
+            'pricing_type' => 'tiered_weight',
+            'application' => 'automatic_destination_per_package',
+            'province_codes' => [
+                'AG','CL','CT','EN','ME','PA','RG','SR','TP',
+                'CA','CI','NU','OG','OR','OT','SS','SU','VS',
+                'CS','CZ','KR','RC','VV',
+            ],
+            'tiers' => [
+                ['up_to_kg' => 10, 'price_cents' => 600],
+                ['up_to_kg' => 25, 'price_cents' => 700],
+                ['up_to_kg' => 50, 'price_cents' => 800],
+                ['up_to_kg' => 100, 'price_cents' => 1500],
+                ['up_to_kg' => null, 'price_cents' => 2000],
+            ],
+            'note' => 'Si applica per ciascun collo destinato a province Calabria/Sardegna/Sicilia.',
+        ],
+        'brt_point_csi' => [
+            'label' => 'BRT Point Calabria / Sardegna / Sicilia',
+            'description' => 'Supplemento ridotto per consegna presso punto BRT fino a 20 kg/collo.',
+            'enabled' => true,
+            'pricing_type' => 'fixed_with_threshold',
+            'application' => 'automatic_destination_per_package',
+            'province_codes' => [
+                'AG','CL','CT','EN','ME','PA','RG','SR','TP',
+                'CA','CI','NU','OG','OR','OT','SS','SU','VS',
+                'CS','CZ','KR','RC','VV',
+            ],
+            'delivery_modes' => ['pudo'],
+            'max_weight_kg' => 20,
+            'price_cents' => 200,
+            'note' => 'Si applica solo alle spedizioni con consegna in punto BRT.',
+        ],
+        'isole_minori_italia' => [
+            'label' => 'Isole minori Italia',
+            'description' => 'Supplemento automatico per località italiane insulari minori.',
+            'enabled' => true,
+            'pricing_type' => 'fixed',
+            'application' => 'automatic_destination',
+            'country_codes' => ['IT'],
+            'keyword_list' => [
+                'la maddalena','carloforte','calasetta','pantelleria','lampedusa','linosa','favignana','levanzo','marettimo',
+                'lipari','vulcano','salina','panarea','stromboli','filicudi','alicudi','ustica','ponza','ventotene',
+                'procida','ischia','capri','elba','giglio','giannutri','tremiti','capraia',
+            ],
+            'price_cents' => 2000,
+            'note' => 'Riconoscimento basato su città/indirizzo di destinazione.',
+        ],
+        'isole_minori_europa' => [
+            'label' => 'Isole minori Europa',
+            'description' => 'Supplemento automatico per località europee insulari minori.',
+            'enabled' => true,
+            'pricing_type' => 'fixed',
+            'application' => 'automatic_destination',
+            'country_codes' => ['ES','PT','FR','GR','HR','MT','CY'],
+            'keyword_list' => [
+                'ibiza','formentera','menorca','minorca','mallorca','majorca','canarie','canary','tenerife',
+                'gran canaria','fuerteventura','lanzarote','madeira','azores','porto santo','corsica','corfu',
+                'santorini','mykonos','rodos','rhodes','crete','crete',
+            ],
+            'price_cents' => 2500,
+            'note' => 'Riconoscimento basato su città/indirizzo di destinazione.',
+        ],
+        'fuori_sagoma' => [
+            'label' => 'Fuori sagoma',
+            'description' => 'Supplemento automatico per colli fuori sagoma.',
+            'enabled' => true,
+            'pricing_type' => 'tiered_weight',
+            'application' => 'automatic_package_shape',
+            'flag_keys' => ['fuori_sagoma', 'out_of_gauge', 'oversized'],
+            'longest_side_threshold_cm' => 100,
+            'girth_threshold_cm' => 260,
+            'tiers' => [
+                ['up_to_kg' => 10, 'price_cents' => 300],
+                ['up_to_kg' => null, 'price_cents' => 500],
+            ],
+            'note' => 'Usa flag espliciti oppure soglie dimensionali per attivarsi.',
+        ],
+        'lato_superiore_130cm' => [
+            'label' => 'Lato superiore a 130 cm',
+            'description' => 'Supplemento automatico per colli con lato massimo oltre 130 cm.',
+            'enabled' => true,
+            'pricing_type' => 'fixed',
+            'application' => 'automatic_per_package',
+            'threshold_cm' => 130,
+            'price_cents' => 500,
+            'note' => 'Si applica a ogni collo che supera la soglia.',
+        ],
+        'aste_tubi' => [
+            'label' => 'Aste / Tubi',
+            'description' => 'Supplemento per colli molto lunghi e stretti.',
+            'enabled' => true,
+            'pricing_type' => 'fixed',
+            'application' => 'automatic_per_package',
+            'flag_keys' => ['aste_tubi', 'tubi', 'tubo', 'rod_tube'],
+            'min_longest_side_cm' => 100,
+            'max_secondary_side_cm' => 20,
+            'price_cents' => 500,
+            'note' => 'Usa flag espliciti oppure riconoscimento per collo lungo e stretto.',
+        ],
+        'eu_manual_extra' => [
+            'label' => 'Extra Europa su preventivo manuale',
+            'description' => 'Fee extra per pratiche Europa con preventivo manuale.',
+            'enabled' => true,
+            'pricing_type' => 'fixed',
+            'application' => 'manual_quote_only',
+            'price_cents' => 1500,
+            'note' => 'Si applica solo se il flusso manuale Europa è esplicitamente attivo.',
+        ],
+    ],
+    'operational_fees' => [
+        'giacenza' => [
+            'label' => 'Giacenza',
+            'description' => 'Costo operativo per gestione giacenza.',
+            'pricing_type' => 'fixed',
+            'price_cents' => 1000,
+            'enabled' => true,
+            'application' => 'manual_admin',
+            'note' => 'Configurabile in admin ma non mostrato come toggle nel checkout.',
+        ],
+    ],
+];

@@ -1,0 +1,49 @@
+/* ============================================================
+   ContenutoHeader — shared utility classes
+   Used by: components/ContenutoHeader.vue (Servizi, Chi siamo, Guide, FAQ, etc.)
+   ============================================================ */
+
+.content-header-kicker {
+	color: #0e6572;
+	font-size: 0.875rem;
+	font-weight: 700;
+	letter-spacing: 0.14em;
+	text-transform: uppercase;
+}
+
+.content-header-scroll-link {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-width: 132px;
+	height: 48px;
+	padding: 0 18px;
+	border-radius: 999px;
+	border: 1px solid #d9e6ea;
+	background: #ffffff;
+	color: #0e6572;
+	font-size: 0.875rem;
+	font-weight: 700;
+	letter-spacing: -0.02em;
+	box-shadow: 0 10px 22px rgba(20, 37, 48, 0.05);
+	transition: transform 0.24s ease, background-color 0.24s ease, border-color 0.24s ease, box-shadow 0.24s ease;
+}
+
+.content-header-scroll-link:hover {
+	transform: translateY(-1px);
+	background: #f5fafb;
+	border-color: #c8dde1;
+	box-shadow: 0 14px 24px rgba(20, 37, 48, 0.08);
+}
+
+@media (min-width: 64rem) {
+	.content-header-kicker {
+		font-size: 1.0625rem;
+	}
+
+	.content-header-scroll-link {
+		min-width: 146px;
+		height: 56px;
+		font-size: 0.95rem;
+	}
+}

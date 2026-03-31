@@ -77,7 +77,7 @@ export default defineNuxtConfig({
     serverBundle: 'local',
   },
 
-  css: ['~/assets/css/main.css', '~/assets/css/preventivo.css', '~/assets/css/shipment-step.css', '~/assets/css/checkout.css'],
+  css: ['~/assets/css/main.css', '~/assets/css/preventivo.css', '~/assets/css/shipment-step.css', '~/assets/css/checkout.css', '~/assets/css/auth-overlay.css', '~/assets/css/contenuto-header.css'],
 
   app: {
     // Nessuna transizione globale di pagina/layout:
