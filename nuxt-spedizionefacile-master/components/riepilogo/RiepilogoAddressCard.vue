@@ -36,7 +36,7 @@ const onCapInput = (event) => {
 </script>
 
 <template>
-	<div class="bg-[#E4E4E4] rounded-[16px] p-[16px] tablet:p-[28px_32px]">
+	<div class="bg-[#E4E4E4] rounded-[12px] p-[16px] tablet:p-[28px_32px]">
 		<div class="flex items-center justify-between mb-[16px]">
 			<h2 class="text-[1.125rem] font-bold text-[#252B42] flex items-center gap-[8px]">
 				<!-- Origin icon -->

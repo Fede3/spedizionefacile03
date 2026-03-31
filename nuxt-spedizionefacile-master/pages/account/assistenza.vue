@@ -123,7 +123,7 @@ const handleSubmit = async () => {
 					]"
 				/>
 
-				<div class="mb-[24px] rounded-[18px] border border-[#E9EBEC] bg-[#F8FCFD] px-[16px] py-[14px] shadow-sm desktop:mb-[28px] desktop:px-[20px] desktop:py-[16px]">
+				<div class="mb-[24px] rounded-[12px] border border-[#E9EBEC] bg-[#F8FCFD] px-[16px] py-[14px] shadow-sm desktop:mb-[28px] desktop:px-[20px] desktop:py-[16px]">
 					<div class="flex flex-col gap-[12px] desktop:flex-row desktop:items-center desktop:justify-between">
 						<div>
 							<p class="text-[0.75rem] font-semibold uppercase tracking-[1px] text-[#095866]">Canale ticket</p>
@@ -151,7 +151,7 @@ const handleSubmit = async () => {
 							<div
 								v-for="card in supportCards"
 								:key="card.title"
-								class="rounded-[18px] border border-[#E9EBEC] bg-white p-[18px] shadow-sm">
+								class="rounded-[12px] border border-[#E9EBEC] bg-white p-[18px] shadow-sm">
 								<div class="flex items-center gap-[12px]">
 									<div :class="['flex h-[42px] w-[42px] items-center justify-center rounded-full', card.iconWrap]">
 										<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" :class="['w-[22px] h-[22px]', card.iconColor]" v-html="card.iconSvg"></svg>
@@ -164,7 +164,7 @@ const handleSubmit = async () => {
 							</div>
 						</div>
 
-						<div class="rounded-[18px] border border-[#E9EBEC] bg-white p-[18px] shadow-sm">
+						<div class="rounded-[12px] border border-[#E9EBEC] bg-white p-[18px] shadow-sm">
 							<div class="flex items-center gap-[10px]">
 								<div class="flex h-[40px] w-[40px] items-center justify-center rounded-full bg-[#FFF3EC]">
 									<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[20px] h-[20px] text-[#E44203]" fill="currentColor"><path d="M8,12H16V14H8V12M10,20H6V4H13V9H18V12.1L20,10.1V8L14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H10V20M8,18H12.1L13,17.1V16H8V18M20.2,13C20.3,13 20.5,13.1 20.6,13.2L21.9,14.5C22.1,14.7 22.1,15.1 21.9,15.3L20.9,16.3L18.8,14.2L19.8,13.2C19.9,13.1 20,13 20.2,13M20.2,16.9L14.1,23H12V20.9L18.1,14.8L20.2,16.9Z"/></svg>
@@ -188,7 +188,7 @@ const handleSubmit = async () => {
 						</div>
 					</div>
 
-					<div class="bg-white rounded-[20px] p-[20px] desktop:p-[28px] shadow-sm border border-[#E9EBEC]">
+					<div class="bg-white rounded-[12px] p-[20px] desktop:p-[28px] shadow-sm border border-[#E9EBEC]">
 						<div class="flex items-start justify-between gap-[12px] mb-[20px] desktop:mb-[24px]">
 							<div class="flex items-center gap-[12px]">
 								<div class="w-[42px] h-[42px] rounded-full bg-[#F0F6F7] flex items-center justify-center">
@@ -223,7 +223,7 @@ const handleSubmit = async () => {
 								class="form-input resize-none"></textarea>
 						</div>
 
-						<div v-if="feedback" :class="['mb-[20px] p-[14px] rounded-[16px] text-[0.875rem] font-medium flex items-center gap-[8px]', feedbackType === 'success' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-red-50 text-red-600 border border-red-200']">
+						<div v-if="feedback" :class="['mb-[20px] p-[14px] rounded-[12px] text-[0.875rem] font-medium flex items-center gap-[8px]', feedbackType === 'success' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-red-50 text-red-600 border border-red-200']">
 							<svg v-if="feedbackType === 'success'" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[18px] h-[18px] shrink-0" fill="currentColor"><path d="M12 2C6.5 2 2 6.5 2 12S6.5 22 12 22 22 17.5 22 12 17.5 2 12 2M10 17L5 12L6.41 10.59L10 14.17L17.59 6.58L19 8L10 17Z"/></svg>
 							<svg v-else xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[18px] h-[18px] shrink-0" fill="currentColor"><path d="M13,13H11V7H13M13,17H11V15H13M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z"/></svg>
 							{{ feedback }}

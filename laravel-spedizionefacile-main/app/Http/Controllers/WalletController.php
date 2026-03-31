@@ -36,8 +36,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Setting;
 use App\Models\WalletMovement;
+use App\Services\StripeConfigService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -48,13 +48,9 @@ use Stripe\StripeClient;
 
 class WalletController extends Controller
 {
-    // Recupera la chiave segreta di Stripe dal database o dal file .env
-    private function getStripeSecret(): ?string
-    {
-        return Setting::get('stripe_secret')
-            ?: Setting::get('stripe_secret_key')
-            ?: config('services.stripe.secret');
-    }
+    public function __construct(
+        private readonly StripeConfigService $stripeConfig,
+    ) {}
 
     // Mostra il saldo attuale del portafoglio dell'utente
     // Per i Partner Pro mostra anche il saldo delle commissioni
@@ -106,7 +102,7 @@ class WalletController extends Controller
         $idempotencyKey = 'topup_'.$user->id.'_'.Str::uuid();
 
         // Verifichiamo che Stripe sia configurato
-        $secret = $this->getStripeSecret();
+        $secret = $this->stripeConfig->getSecret();
         if (! $secret) {
             return response()->json([
                 'success' => false,

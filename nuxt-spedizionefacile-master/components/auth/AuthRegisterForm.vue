@@ -93,8 +93,8 @@ const emit = defineEmits([
 				</div>
 			</div>
 
-			<p v-if="messageError?.name" class="text-red-500 text-[0.8125rem] mb-[8px]">{{ messageError.name[0] }}</p>
-			<p v-if="messageError?.surname" class="text-red-500 text-[0.8125rem] mb-[8px]">{{ messageError.surname[0] }}</p>
+			<p v-if="messageError?.name" role="alert" class="text-red-500 text-[0.8125rem] mb-[8px]">{{ messageError.name[0] }}</p>
+			<p v-if="messageError?.surname" role="alert" class="text-red-500 text-[0.8125rem] mb-[8px]">{{ messageError.surname[0] }}</p>
 
 			<div class="mb-[16px]">
 				<label for="reg_telephone" class="block text-[0.875rem] font-medium text-[#252B42] mb-[6px]">Telefono *</label>
@@ -113,7 +113,7 @@ const emit = defineEmits([
 				</div>
 			</div>
 
-			<p v-if="messageError?.telephone_number" class="text-red-500 text-[0.8125rem] mb-[8px]">{{ messageError.telephone_number[0] }}</p>
+			<p v-if="messageError?.telephone_number" role="alert" class="text-red-500 text-[0.8125rem] mb-[8px]">{{ messageError.telephone_number[0] }}</p>
 
 			<div class="mb-[16px]">
 				<label for="reg_email" class="block text-[0.875rem] font-medium text-[#252B42] mb-[6px]">Email *</label>
@@ -137,7 +137,7 @@ const emit = defineEmits([
 					required />
 			</div>
 
-			<p v-if="messageError?.email" class="text-red-500 text-[0.8125rem] mb-[8px] bg-red-50 p-[8px] rounded-[6px]">
+			<p v-if="messageError?.email" role="alert" class="text-red-500 text-[0.8125rem] mb-[8px] bg-red-50 p-[8px] rounded-[6px]">
 				{{ Array.isArray(messageError.email) ? messageError.email[0] : messageError.email }}
 			</p>
 
@@ -204,7 +204,7 @@ const emit = defineEmits([
 				</div>
 			</div>
 
-			<p v-if="messageError?.password" class="text-red-500 text-[0.8125rem] mb-[8px] bg-red-50 p-[8px] rounded-[6px]">
+			<p v-if="messageError?.password" role="alert" class="text-red-500 text-[0.8125rem] mb-[8px] bg-red-50 p-[8px] rounded-[6px]">
 				<span v-for="(error, index) in messageError.password" :key="index" class="block">
 					{{ error }}
 				</span>
@@ -215,7 +215,7 @@ const emit = defineEmits([
 				<p class="text-[0.8125rem] text-emerald-700 font-medium">Codice referral applicato: <strong>{{ registerForm.referred_by }}</strong></p>
 				<p class="text-[0.75rem] text-emerald-600 mt-[4px]">Riceverai uno sconto del 5% su tutte le spedizioni!</p>
 			</div>
-			<p v-if="messageError?.referred_by" class="text-red-500 text-[0.8125rem] mb-[8px]">{{ messageError.referred_by[0] }}</p>
+			<p v-if="messageError?.referred_by" role="alert" class="text-red-500 text-[0.8125rem] mb-[8px]">{{ messageError.referred_by[0] }}</p>
 		</div>
 
 		<button

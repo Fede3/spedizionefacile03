@@ -17,7 +17,7 @@ const props = defineProps({
 </script>
 
 <template>
-	<div class="bg-white rounded-[20px] p-[20px] tablet:p-[24px] desktop:p-[32px] shadow-sm border border-[#E9EBEC]">
+	<div class="bg-white rounded-[12px] p-[20px] tablet:p-[24px] desktop:p-[32px] shadow-sm border border-[#E9EBEC]">
 		<div class="flex flex-wrap items-start justify-between gap-[14px] mb-[18px]">
 			<div class="space-y-[4px]">
 				<h2 class="text-[1.125rem] font-bold text-[#252B42]">Europa monocollo</h2>
@@ -31,13 +31,13 @@ const props = defineProps({
 		</div>
 
 		<div class="space-y-[16px]">
-			<div v-if="!filteredEuropeBands.length" class="p-[16px] rounded-[14px] border border-dashed border-[#E9EBEC] text-[#6A7486] text-[0.8125rem]">
+			<div v-if="!filteredEuropeBands.length" class="p-[16px] rounded-[12px] border border-dashed border-[#E9EBEC] text-[#6A7486] text-[0.8125rem]">
 				Nessun paese trovato con i filtri attuali.
 			</div>
 			<div
 				v-for="band in filteredEuropeBands"
 				:key="band.id"
-				class="rounded-[16px] border border-[#E9EBEC] bg-[#FAFBFC] overflow-hidden">
+				class="rounded-[12px] border border-[#E9EBEC] bg-[#FAFBFC] overflow-hidden">
 				<div class="flex flex-wrap items-center justify-between gap-[10px] px-[16px] py-[14px] border-b border-[#E9EBEC] bg-white">
 					<div>
 						<h3 class="text-[0.9375rem] font-bold text-[#252B42]">{{ band.label }}</h3>
@@ -63,7 +63,7 @@ const props = defineProps({
 					<div
 						v-for="rate in band.rates"
 						:key="`${band.id}-${rate.country_code}-compact`"
-						class="rounded-[14px] border border-[#E6EDF1] bg-white px-[14px] py-[12px]">
+						class="rounded-[12px] border border-[#E6EDF1] bg-white px-[14px] py-[12px]">
 						<div class="flex items-start justify-between gap-[10px] mb-[8px]">
 							<div>
 								<p class="text-[0.875rem] font-semibold text-[#252B42]">{{ rate.country_name }}</p>

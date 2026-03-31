@@ -47,7 +47,7 @@ const readonlyClass = props.readonly
 
 <template>
 	<!-- Contatto: Nome + Info aggiuntive -->
-	<div class="grid grid-cols-1 tablet:grid-cols-2 gap-[16px] tablet:gap-x-[30px]">
+	<div class="grid grid-cols-1 tablet:grid-cols-2 gap-[16px] tablet:gap-x-[32px]">
 		<div>
 			<label :for="`${idPrefix}name`" class="block text-[0.875rem] sr-only">Nome e Cognome*</label>
 			<input
@@ -84,7 +84,7 @@ const readonlyClass = props.readonly
 	</div>
 
 	<!-- Indirizzo: Via + Numero + Citofono -->
-	<div class="mt-[16px] tablet:mt-[39px] grid grid-cols-1 tablet:grid-cols-2 desktop:grid-cols-3 gap-[16px] tablet:gap-x-[25px]">
+	<div class="mt-[16px] tablet:mt-[40px] grid grid-cols-1 tablet:grid-cols-2 desktop:grid-cols-3 gap-[16px] tablet:gap-x-[24px]">
 		<div>
 			<label :for="`${idPrefix}address`" class="block text-[0.875rem] sr-only">Indirizzo*</label>
 			<input
@@ -141,7 +141,7 @@ const readonlyClass = props.readonly
 	</div>
 
 	<!-- Localita: Paese + Citta + Provincia + CAP -->
-	<div class="mt-[16px] tablet:mt-[39px] grid grid-cols-2 desktop:grid-cols-4 gap-[16px] tablet:gap-x-[25px]">
+	<div class="mt-[16px] tablet:mt-[40px] grid grid-cols-2 desktop:grid-cols-4 gap-[16px] tablet:gap-x-[24px]">
 		<div>
 			<label :for="`${idPrefix}country`" class="block text-[0.875rem] sr-only">Paese*</label>
 			<input
@@ -246,7 +246,7 @@ const readonlyClass = props.readonly
 	</div>
 
 	<!-- Telefono + Email -->
-	<div class="mt-[16px] tablet:mt-[39px] grid grid-cols-1 tablet:grid-cols-2 gap-[16px] tablet:gap-x-[30px]">
+	<div class="mt-[16px] tablet:mt-[40px] grid grid-cols-1 tablet:grid-cols-2 gap-[16px] tablet:gap-x-[32px]">
 		<div>
 			<label :for="`${idPrefix}telephone`" class="block text-[0.875rem] sr-only">Telefono*</label>
 			<input

@@ -94,6 +94,10 @@ class ShipmentService
 
         $this->payloadBuilder->addServicesToPayload($payload, $order, $options);
 
+        if (empty($origin->telephone_number)) {
+            Log::warning('BRT sender telephone missing, proceeding without it', ['order_id' => $order->id, 'origin_id' => $origin->id ?? null]);
+        }
+
         try {
             $payloadForLog = $payload;
             $payloadForLog['account']['password'] = '***';

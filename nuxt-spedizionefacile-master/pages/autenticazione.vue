@@ -59,7 +59,7 @@ onMounted(async () => {
 <template>
 	<section class="min-h-[0] py-[18px] tablet:py-[28px] desktop:py-[36px]">
 		<div class="my-container">
-			<div class="mx-auto w-full max-w-[760px]">
+			<div class="mx-auto w-full max-w-[520px] bg-white rounded-[12px] border border-[#E9EBEC] shadow-md p-[24px] sm:p-[32px] auth-box">
 				<!-- Success message -->
 				<div v-if="messageSuccess && !verificationMode" class="bg-emerald-50 border border-emerald-200 p-[24px] rounded-[12px] text-[#252B42] text-center">
 					<div class="w-[56px] h-[56px] mx-auto mb-[16px] bg-emerald-100 rounded-full flex items-center justify-center">

@@ -15,7 +15,7 @@ defineEmits(["update:cardHolderName", "close"]);
 </script>
 
 <template>
-  <div class="mb-[14px] p-[14px] bg-[#F8F9FB] rounded-[16px] border border-[#E9EBEC]">
+  <div class="mb-[14px] p-[14px] bg-[#F8F9FB] rounded-[12px] border border-[#E9EBEC]">
     <div class="flex items-start justify-between gap-[10px] mb-[12px]">
       <div>
         <p class="text-[0.875rem] font-semibold text-[#252B42]">Nuova carta per la ricarica</p>

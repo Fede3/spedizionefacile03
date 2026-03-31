@@ -31,6 +31,7 @@ const { isHomepageHeroRoute, heroImageUrl, heroImageStyle, prefetchHero } = useC
 
 // Fasce prezzo per badge hero
 const { loadPriceBands, getMinPrice, promoSettings } = usePriceBands();
+const { formatEuro } = await import('~/utils/price.js');
 
 if (isHomepageHeroRoute.value) {
 	await prefetchHero();
@@ -72,7 +73,7 @@ const showMinPriceDiscount = computed(() => {
 
 				<!-- Card prezzo bianca in risalto -->
 				<div
-						class="relative z-[7] mt-[8px] flex w-[132px] overflow-hidden rounded-[14px] bg-gradient-to-br from-[#E44203] to-[#095866] shadow-[0_4px_12px_rgba(0,0,0,0.15)] tablet:mt-[16px] tablet:w-[320px] tablet:rounded-[16px] desktop:mt-[24px] desktop:w-[350px] desktop:shadow-[0_8px_24px_rgba(0,0,0,0.15)] desktop-xl:mt-[26px] desktop-xl:w-[370px]">
+						class="relative z-[7] mt-[8px] flex w-[132px] overflow-hidden rounded-[12px] bg-gradient-to-br from-[#E44203] to-[#095866] shadow-[0_4px_12px_rgba(0,0,0,0.15)] tablet:mt-[16px] tablet:w-[320px] tablet:rounded-[12px] desktop:mt-[24px] desktop:w-[350px] desktop:shadow-[0_8px_24px_rgba(0,0,0,0.15)] desktop-xl:mt-[26px] desktop-xl:w-[370px]">
 					<div class="flex flex-col px-[10px] py-[8px] tablet:px-[24px] tablet:py-[20px] desktop:px-[30px] desktop:py-[22px] desktop-xl:px-[36px] desktop-xl:py-[26px]">
 						<span class="text-[0.8125rem] font-medium uppercase tracking-[0.8px] text-white/75 tablet:text-[0.875rem] desktop:text-[1rem] desktop:tracking-[1px] desktop-xl:text-[1.0625rem]">a partire da</span>
 						<div class="mt-[2px] flex items-baseline gap-[8px]">
@@ -107,7 +108,7 @@ const showMinPriceDiscount = computed(() => {
 
 			<!-- Colonna destra: immagine -->
 				<div class="relative z-[2] col-start-2 row-start-1 row-span-2 mt-[8px] h-[164px] w-full max-w-none rounded-[12px] tablet:col-start-2 tablet:row-start-1 tablet:row-span-1 tablet:mt-[20px] tablet:h-[390px] tablet:max-w-[520px] tablet:mx-auto desktop:mt-0 desktop:h-[320px] desktop:w-full desktop:max-w-[760px] desktop:self-center desktop:justify-self-end desktop-xl:h-[340px] desktop-xl:max-w-[820px]">
-				<div class="relative h-full w-full overflow-hidden rounded-[16px] border border-[#DDE5EB] bg-[#EAF1F6] shadow-[0_8px_24px_rgba(0,0,0,0.15)]">
+				<div class="relative h-full w-full overflow-hidden rounded-[12px] border border-[#DDE5EB] bg-[#EAF1F6] shadow-[0_8px_24px_rgba(0,0,0,0.15)]">
 					<img
 						:src="heroImageUrl"
 						alt="Hero SpediamoFacile"
@@ -141,7 +142,7 @@ const showMinPriceDiscount = computed(() => {
 			<h1 class="text-[1.5rem] desktop:text-[3rem] desktop-xl:text-[5.5rem] leading-[110%] tracking-[-0.576px] desktop:tracking-[-2.2112px] font-medium text-[#222222] text-left mt-[12px] tablet:max-w-[360px] desktop-xl:max-w-[1056px] max-w-[200px] desktop:max-w-full">
 				Pagamento alla consegna
 			</h1>
-			<a href="#pagamento-alla-consegna" class="content-header-scroll-link mt-[15px] desktop-xl:mt-[30px]">
+			<a href="#pagamento-alla-consegna" class="content-header-scroll-link mt-[16px] desktop-xl:mt-[30px]">
 				<span class="after:bg-[url('/img/arrow-down.svg')] after:bg-no-repeat after:inline-block after:size-[16px] after:ml-[11px] after:rotate-90 after:align-[-1px]">Scendi</span>
 			</a>
 		</div>

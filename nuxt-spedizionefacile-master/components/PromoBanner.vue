@@ -15,7 +15,7 @@ const textColor = computed(() => props.banner.banner_text_color || '#ffffff');
 
 <template>
 	<div
-		class="promo-banner rounded-[16px] desktop:rounded-[20px] overflow-hidden"
+		class="promo-banner rounded-[12px] desktop:rounded-[12px] overflow-hidden"
 		:style="{ backgroundColor: bgColor }">
 		<div class="flex flex-col desktop:flex-row items-center gap-[20px] desktop:gap-[40px] p-[24px] desktop:p-[40px]">
 			<!-- Immagine (se presente) -->

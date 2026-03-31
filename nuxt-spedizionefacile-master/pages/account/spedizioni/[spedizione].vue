@@ -24,7 +24,7 @@
 <script setup>
 /* Richiede che l'utente sia autenticato */
 definePageMeta({
-	middleware: ["sanctum:auth"],
+	middleware: ["app-auth"],
 });
 
 const route = useRoute();
@@ -57,7 +57,7 @@ await checkError();
 
 			<h2 class="mt-[40px]">Cliente</h2>
 
-			<table class="table-fixed w-full bg-white text-left text-[#005961] border-separate border-spacing-2 border border-gray-300">
+			<table class="table-fixed w-full bg-white text-left text-[#005961] border-separate border-spacing-2 border border-[#E9EBEC]">
 				<thead>
 					<tr>
 						<th>Nome e cognome</th>
@@ -92,7 +92,7 @@ await checkError();
 
 			<h2 class="mt-[40px]">Collo</h2>
 
-			<table class="table-fixed w-full bg-white text-left text-[#005961] border-separate border-spacing-2 border border-gray-300">
+			<table class="table-fixed w-full bg-white text-left text-[#005961] border-separate border-spacing-2 border border-[#E9EBEC]">
 				<thead>
 					<tr>
 						<th>Tipologia</th>
@@ -127,7 +127,7 @@ await checkError();
 
 			<h2 class="mt-[40px]">Indirizzo di partenza</h2>
 
-			<table class="table-fixed w-full bg-white text-left text-[#005961] border-separate border-spacing-2 border border-gray-300">
+			<table class="table-fixed w-full bg-white text-left text-[#005961] border-separate border-spacing-2 border border-[#E9EBEC]">
 				<thead>
 					<tr>
 						<th>Nome</th>
@@ -167,7 +167,7 @@ await checkError();
 
 			<h2 class="mt-[40px]">Indirizzo di destinazione</h2>
 
-			<table class="table-fixed w-full bg-white text-left text-[#005961] border-separate border-spacing-2 border border-gray-300">
+			<table class="table-fixed w-full bg-white text-left text-[#005961] border-separate border-spacing-2 border border-[#E9EBEC]">
 				<thead>
 					<tr>
 						<th>Nome</th>
@@ -209,7 +209,7 @@ await checkError();
 
 			<h2 class="mt-[40px]">Transazione</h2>
 
-			<table class="w-[50%] table-fixed bg-white text-left text-[#005961] border-separate border-spacing-2 border border-gray-300">
+			<table class="w-[50%] table-fixed bg-white text-left text-[#005961] border-separate border-spacing-2 border border-[#E9EBEC]">
 				<thead>
 					<tr>
 						<th>Totale</th>

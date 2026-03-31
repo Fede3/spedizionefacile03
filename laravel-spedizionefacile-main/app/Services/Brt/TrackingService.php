@@ -138,7 +138,7 @@ class TrackingService
         $deliveredKeywords = ['DELIVERED', 'CONSEGNAT', 'CONSEGNA EFFETTUATA', 'RECAPITATO'];
         foreach ($deliveredKeywords as $kw) {
             if (str_contains($combined, $kw)) {
-                return 'delivered';
+                return Order::DELIVERED;
             }
         }
 
@@ -146,7 +146,7 @@ class TrackingService
         $giacenzaKeywords = ['GIACENZA', 'STORAGE', 'MANCATA CONSEGNA', 'DESTINATARIO ASSENTE', 'FERMA DEPOSITO'];
         foreach ($giacenzaKeywords as $kw) {
             if (str_contains($combined, $kw)) {
-                return 'in_giacenza';
+                return Order::IN_GIACENZA;
             }
         }
 

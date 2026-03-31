@@ -106,7 +106,7 @@ const handleClick = (index) => {
 			<li
 				v-for="(step, index) in steps"
 				:key="index"
-				class="steps-pill-item transition-[background-color,color,opacity,border-color,box-shadow,transform] duration-150 select-none rounded-[16px] border"
+				class="steps-pill-item transition-[background-color,color,opacity,border-color,box-shadow,transform] duration-150 select-none rounded-[12px] border"
 				:aria-current="index === activeStep ? 'step' : undefined"
 				:aria-label="getStepAriaLabel(step, index)"
 				:title="getStepAriaLabel(step, index)"

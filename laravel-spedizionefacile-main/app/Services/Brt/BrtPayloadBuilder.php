@@ -136,8 +136,14 @@ class BrtPayloadBuilder
             'alphanumericSenderReference' => 'TEST-' . $numericSenderReference,
             'notes' => $data['notes'] ?? 'Test SpediamoFacile',
             'isAlertRequired' => '1',
-            'isCODMandatory' => '0',
+            'isCODMandatory' => !empty($data['is_cod']) ? '1' : '0',
         ];
+
+        if (!empty($data['is_cod']) && !empty($data['cod_amount'])) {
+            $createData['cashOnDelivery'] = (float) ($data['cod_amount'] / 100);
+            $createData['codPaymentType'] = $data['cod_payment_type'] ?? 'BM';
+            $createData['codCurrency'] = 'EUR';
+        }
 
         // Rimuovi campi mittente vuoti per non interferire con i test
         foreach (['senderCompanyName', 'senderAddress', 'senderZIPCode', 'senderCity', 'senderProvinceAbbreviation'] as $field) {

@@ -17,7 +17,7 @@ const props = defineProps({
 </script>
 
 <template>
-	<div class="bg-white rounded-[20px] p-[16px] tablet:p-[20px] desktop:p-[28px] shadow-sm border border-[#E9EBEC] overflow-hidden">
+	<div class="bg-white rounded-[12px] p-[16px] tablet:p-[20px] desktop:p-[28px] shadow-sm border border-[#E9EBEC] overflow-hidden">
 		<h2 class="text-[1.125rem] font-bold text-[#252B42] mb-[6px] flex items-center gap-[8px]">
 			<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[20px] h-[20px] text-[#E44203]" fill="currentColor"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82zM7 7a2 2 0 1 0 0-4 2 2 0 0 0 0 4z"/></svg>
 			Promozione Sito
@@ -126,7 +126,7 @@ const props = defineProps({
 			</div>
 
 			<!-- Anteprima live -->
-			<div v-if="promo.active && (promo.label_text || promo.description)" class="p-[20px] bg-[#F0F4F5] rounded-[16px] border border-[#D0D8DA]">
+			<div v-if="promo.active && (promo.label_text || promo.description)" class="p-[20px] bg-[#F0F4F5] rounded-[12px] border border-[#D0D8DA]">
 				<p class="text-[0.75rem] font-semibold text-[#737373] mb-[12px] uppercase tracking-wider">Anteprima header homepage</p>
 				<div class="bg-white rounded-[12px] p-[16px] shadow-sm">
 					<p class="text-[1.25rem] font-bold text-[#222]">Spedisci in Italia</p>

@@ -80,12 +80,19 @@ class ProRequestController extends Controller
             ], 422);
         }
 
+        // Validiamo i dati dell'azienda
+        $data = $request->validate([
+            'company_name' => 'nullable|string|max:255',
+            'vat_number' => 'nullable|string|max:20',
+            'message' => 'nullable|string|max:1000',
+        ]);
+
         // Creiamo la richiesta con i dati dell'azienda
         $proRequest = ProRequest::create([
             'user_id' => $user->id,
-            'company_name' => $request->input('company_name') ?? '',
-            'vat_number' => $request->input('vat_number') ?? '',
-            'message' => $request->input('message') ?? '',
+            'company_name' => $data['company_name'] ?? '',
+            'vat_number' => $data['vat_number'] ?? '',
+            'message' => $data['message'] ?? '',
             'status' => 'pending', // In attesa di revisione da parte dell'admin
         ]);
 

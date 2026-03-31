@@ -13,7 +13,7 @@ const emit = defineEmits(['approve', 'reject']);
 </script>
 
 <template>
-	<div class="bg-white rounded-[20px] p-[20px] tablet:p-[24px] desktop:p-[32px] shadow-sm border border-[#E9EBEC] overflow-hidden">
+	<div class="bg-white rounded-[12px] p-[20px] tablet:p-[24px] desktop:p-[32px] shadow-sm border border-[#E9EBEC] overflow-hidden">
 		<h2 class="text-[1.125rem] font-bold text-[#252B42] mb-[20px]">Richieste Partner Pro</h2>
 
 		<div v-if="!requests?.length" class="text-center py-[48px] text-[#737373]">
@@ -22,7 +22,7 @@ const emit = defineEmits(['approve', 'reject']);
 		</div>
 
 		<div v-else class="space-y-[12px]">
-			<div v-for="pr in requests" :key="pr.id" class="rounded-[16px] border border-[#E9EBEC] bg-white p-[16px] tablet:p-[18px] transition-colors hover:border-[#D0D7DA]">
+			<div v-for="pr in requests" :key="pr.id" class="rounded-[12px] border border-[#E9EBEC] bg-white p-[16px] tablet:p-[18px] transition-colors hover:border-[#D0D7DA]">
 				<div class="flex flex-col gap-[14px] desktop:flex-row desktop:items-start desktop:justify-between">
 					<div class="flex-1">
 						<div class="flex flex-wrap items-center gap-[10px] mb-[6px]">

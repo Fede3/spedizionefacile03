@@ -75,6 +75,7 @@ use App\Http\Controllers\ContactController;
 use App\Http\Controllers\BrtController;
 use App\Http\Controllers\RefundController;
 use App\Http\Controllers\Admin\ContentController as AdminContentController;
+use App\Http\Controllers\Admin\HomepageImageController;
 use App\Http\Controllers\Admin\CouponController as AdminCouponController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\OrderManagementController;
@@ -541,8 +542,8 @@ Route::middleware(['auth:sanctum', CheckAdmin::class])->prefix('admin')->group(f
     Route::post('/promo-settings/upload-image', [PriceBandController::class, 'uploadPromoImage']);
 
     // --- Homepage ---
-    Route::post('/homepage-image', [AdminContentController::class, 'uploadHomepageImage']);
-    Route::get('/homepage-image', [AdminContentController::class, 'getHomepageImage']);
+    Route::post('/homepage-image', [HomepageImageController::class, 'uploadHomepageImage']);
+    Route::get('/homepage-image', [HomepageImageController::class, 'getHomepageImage']);
 
     // --- Coupon ---
     Route::get('/coupons', [AdminCouponController::class, 'coupons']);
@@ -568,5 +569,5 @@ Route::prefix('public')->group(function () {
     // GET /api/public/price-bands — Fasce di prezzo pubbliche (mostrate nel preventivo)
     Route::get('/price-bands', [PublicPriceBandController::class, 'index']);
     // GET /api/public/homepage-image — Immagine principale della homepage
-    Route::get('/homepage-image', [AdminContentController::class, 'getHomepageImage']);
+    Route::get('/homepage-image', [HomepageImageController::class, 'getHomepageImage']);
 });

@@ -6,6 +6,8 @@
   ROUTE: /account/prelievi (middleware sanctum:auth).
 -->
 <script setup>
+import { formatEuro } from '~/utils/price.js';
+
 definePageMeta({ middleware: ["app-auth"] });
 
 const { user } = useSanctumAuth();
@@ -126,13 +128,13 @@ const withdrawalOverview = computed(() => [
 			</AccountPageHeader>
 
 			<!-- Panoramica (solo Pro) -->
-			<div v-if="isPro" class="mb-[18px] rounded-[18px] border border-[#E9EBEC] bg-white px-[16px] py-[14px] shadow-sm desktop:px-[20px] desktop:py-[16px]">
+			<div v-if="isPro" class="mb-[18px] rounded-[12px] border border-[#E9EBEC] bg-white px-[16px] py-[14px] shadow-sm desktop:px-[20px] desktop:py-[16px]">
 				<div class="grid gap-[12px] desktop:grid-cols-[minmax(0,1.05fr)_repeat(3,minmax(0,0.55fr))] desktop:items-center">
 					<div>
 						<p class="text-[0.75rem] font-semibold uppercase tracking-[1px] text-[#095866]">Panoramica prelievi</p>
 						<h2 class="mt-[4px] text-[1rem] font-bold text-[#252B42]">Saldo e stato richieste</h2>
 					</div>
-					<div v-for="item in withdrawalOverview" :key="item.label" class="rounded-[16px] border border-[#E9EBEC] px-[14px] py-[12px]">
+					<div v-for="item in withdrawalOverview" :key="item.label" class="rounded-[12px] border border-[#E9EBEC] px-[14px] py-[12px]">
 						<p class="text-[0.75rem] font-semibold uppercase tracking-[0.8px] text-[#737373]">{{ item.label }}</p>
 						<span :class="['mt-[8px] inline-flex rounded-full px-[10px] py-[5px] text-[0.75rem] font-semibold', item.tone]">{{ item.value }}</span>
 					</div>
@@ -140,7 +142,7 @@ const withdrawalOverview = computed(() => [
 			</div>
 
 			<!-- Not Pro -->
-			<div v-if="!isPro" class="bg-white rounded-[18px] p-[18px] desktop:p-[28px] shadow-sm border border-[#E9EBEC] text-center">
+			<div v-if="!isPro" class="bg-white rounded-[12px] p-[18px] desktop:p-[28px] shadow-sm border border-[#E9EBEC] text-center">
 				<div class="w-[64px] h-[64px] mx-auto mb-[16px] bg-[#edf7f8] rounded-full flex items-center justify-center">
 					<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="#095866"><path d="M5,6H23V18H5V6M14,9A3,3 0 0,1 17,12A3,3 0 0,1 14,15A3,3 0 0,1 11,12A3,3 0 0,1 14,9M9,8A2,2 0 0,1 7,10V14A2,2 0 0,1 9,16H19A2,2 0 0,1 21,14V10A2,2 0 0,1 19,8H9M1,10H3V20H19V22H1V10Z"/></svg>
 				</div>

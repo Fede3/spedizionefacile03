@@ -100,7 +100,7 @@ onUnmounted(() => {
 
 <template>
 	<div class="w-full min-h-screen flex flex-col overflow-x-clip">
-		<a href="#main-content" class="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50 focus:bg-white focus:px-4 focus:py-2 focus:rounded focus:shadow-lg focus:text-[#095866] focus:font-semibold">Vai al contenuto principale</a>
+		<a href="#main-content" class="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-[100] focus:bg-white focus:px-4 focus:py-2 focus:rounded-[12px] focus:shadow-lg focus:text-[#095866] focus:font-semibold">Vai al contenuto</a>
 		<Header />
 
 		<main id="main-content" class="flex-1 w-full max-w-full mx-auto overflow-x-clip">

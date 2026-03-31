@@ -64,7 +64,7 @@ const visual = computed(() => getPackVisual(props.pack))
 </script>
 
 <template>
-  <li class="relative border-[1px] border-[rgba(0,0,0,.2)] rounded-[16px] p-[12px_14px] tablet:p-[15px_20px] mt-[10px] w-full scroll-mt-[80px]">
+  <li class="relative border-[1px] border-[rgba(0,0,0,.2)] rounded-[12px] p-[12px_14px] tablet:p-[15px_20px] mt-[10px] w-full scroll-mt-[80px]">
     <!-- Header mobile: icona + cestino -->
     <div class="flex items-center justify-between desktop-xl:hidden mb-[12px]">
       <div class="flex items-center gap-[10px]">

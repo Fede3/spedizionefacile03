@@ -3,6 +3,8 @@
   All data comes from the parent via useCheckout() composable bindings.
 -->
 <script setup>
+import { formatEuro } from '~/utils/price.js';
+
 const props = defineProps({
   displayPackages:   { type: Array,   required: true },
   addressGroups:     { type: Array,   required: true },
@@ -42,7 +44,7 @@ const localCouponPanelOpen = computed({
 </script>
 
 <template>
-  <div class="bg-[#E6E6E6] rounded-[20px] p-[16px_12px] tablet:p-[24px_20px] desktop:p-[30px_36px]">
+  <div class="bg-[#E6E6E6] rounded-[12px] p-[16px_12px] tablet:p-[24px_20px] desktop:p-[30px_36px]">
     <!-- Header -->
     <div class="flex items-center justify-between mb-[20px]">
       <div class="flex items-center gap-[10px]">
@@ -80,7 +82,7 @@ const localCouponPanelOpen = computed({
     <!-- Package cards -->
     <div class="space-y-[14px] mb-[20px]">
       <div v-for="(pkg, pkgIdx) in displayPackages" :key="pkg.id || pkgIdx"
-        class="bg-white rounded-[14px] p-[18px_20px] border border-[#E9EBEC] shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
+        class="bg-white rounded-[12px] p-[18px_20px] border border-[#E9EBEC] shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
 
         <!-- Package header row -->
         <div class="flex flex-wrap items-start gap-[8px] mb-[14px]">
@@ -162,7 +164,7 @@ const localCouponPanelOpen = computed({
     </div>
 
     <!-- Totals summary -->
-    <div class="bg-white rounded-[14px] p-[18px_20px] border border-[#E9EBEC]">
+    <div class="bg-white rounded-[12px] p-[18px_20px] border border-[#E9EBEC]">
       <!-- Subtotal -->
       <div class="flex items-center justify-between py-[8px]">
         <span class="text-[0.9375rem] text-[#737373]">Subtotale ({{ totalPackages }} {{ totalPackages === 1 ? 'spedizione' : 'spedizioni' }})</span>
@@ -222,7 +224,7 @@ const localCouponPanelOpen = computed({
 
         <Transition name="payment-panel">
           <div v-if="localCouponPanelOpen" class="mt-[12px]">
-            <div v-if="couponApplied" class="flex flex-col tablet:flex-row tablet:items-center gap-[10px] rounded-[16px] border border-emerald-200 bg-emerald-50 px-[14px] py-[12px]">
+            <div v-if="couponApplied" class="flex flex-col tablet:flex-row tablet:items-center gap-[10px] rounded-[12px] border border-emerald-200 bg-emerald-50 px-[14px] py-[12px]">
               <div class="flex items-start gap-[10px] min-w-0 flex-1">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mt-[2px] shrink-0"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
                 <div class="min-w-0">
@@ -241,13 +243,13 @@ const localCouponPanelOpen = computed({
                 type="text"
                 placeholder="Inserisci codice promozionale"
                 maxlength="20"
-                class="flex-1 bg-white p-[12px_14px] border border-[#E9EBEC] rounded-[14px] text-[0.9375rem] placeholder:text-[#A0A5AB] uppercase tracking-[0.04em] focus:border-[#095866] focus:outline-none"
+                class="flex-1 bg-white p-[12px_14px] border border-[#E9EBEC] rounded-[12px] text-[0.9375rem] placeholder:text-[#A0A5AB] uppercase tracking-[0.04em] focus:border-[#095866] focus:outline-none"
                 @keyup.enter="emit('validate-coupon')" />
               <button
                 type="button"
                 @click="emit('validate-coupon')"
                 :disabled="couponLoading || !localCouponCode.trim()"
-                class="inline-flex items-center justify-center gap-[6px] px-[20px] min-h-[48px] bg-[#095866] text-white rounded-[14px] font-semibold text-[0.875rem] hover:bg-[#074a56] transition disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer">
+                class="inline-flex items-center justify-center gap-[6px] px-[20px] min-h-[48px] bg-[#095866] text-white rounded-[12px] font-semibold text-[0.875rem] hover:bg-[#074a56] transition disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
                 {{ couponLoading ? 'Verifica...' : 'Applica' }}
               </button>

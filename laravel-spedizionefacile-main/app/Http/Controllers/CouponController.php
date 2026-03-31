@@ -47,8 +47,13 @@ class CouponController extends Controller
 {
     // Calcola lo sconto da applicare in base al codice inserito dall'utente
     public function calculateCoupon(Request $request) {
-        $couponCode = $request->input('coupon');   // Il codice inserito dall'utente
-        $total = $request->input('total');          // Il totale del carrello in euro
+        $data = $request->validate([
+            'coupon' => 'required|string|max:50',
+            'total' => 'required|numeric|min:0',
+        ]);
+
+        $couponCode = $data['coupon'];   // Il codice inserito dall'utente
+        $total = $data['total'];          // Il totale del carrello in euro
 
         // PRIMA controlliamo se e' un coupon classico (creato dall'admin)
         // Cerchiamo nel database un coupon con questo codice che sia ancora attivo

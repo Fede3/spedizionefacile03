@@ -142,11 +142,11 @@ const deleteAddress = async (id) => {
 			</AccountPageHeader>
 
 			<!-- Messaggi globali -->
-			<div v-if="messageSuccess" class="mb-[20px] px-[16px] py-[12px] rounded-[16px] text-[0.875rem] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-[8px]">
+			<div v-if="messageSuccess" class="mb-[20px] px-[16px] py-[12px] rounded-[12px] text-[0.875rem] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-[8px]">
 				<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" class="shrink-0 text-emerald-600"><path d="M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2M12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20A8,8 0 0,0 20,12A8,8 0 0,0 12,4M11,16.5L6.5,12L7.91,10.59L11,13.67L16.59,8.09L18,9.5L11,16.5Z"/></svg>
 				{{ messageSuccess }}
 			</div>
-			<div v-if="messageError && !showEditForm && !showCreateForm" class="mb-[20px] px-[16px] py-[12px] rounded-[16px] text-[0.875rem] font-medium bg-red-50 text-red-700 border border-red-200 flex items-center gap-[8px]">
+			<div v-if="messageError && !showEditForm && !showCreateForm" class="mb-[20px] px-[16px] py-[12px] rounded-[12px] text-[0.875rem] font-medium bg-red-50 text-red-700 border border-red-200 flex items-center gap-[8px]">
 				<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" class="shrink-0 text-red-500"><path d="M11,15H13V17H11V15M11,7H13V13H11V7M12,2C6.47,2 2,6.5 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4A8,8 0 0,1 20,12A8,8 0 0,1 12,20Z"/></svg>
 				{{ messageError }}
 			</div>

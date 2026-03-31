@@ -36,7 +36,7 @@ defineExpose({
 </script>
 
 <template>
-	<div class="rounded-[14px] border border-[#E9EBEC] bg-[#F8FBFD] p-[12px] desktop:p-[14px]">
+	<div class="rounded-[12px] border border-[#E9EBEC] bg-[#F8FBFD] p-[12px] desktop:p-[14px]">
 		<div class="flex items-center justify-between mb-[10px]">
 			<h2 class="text-[1rem] font-bold text-[#252B42]">Anteprima reale homepage</h2>
 			<span class="text-[0.75rem] text-[#6B7280]">drag + wheel zoom</span>

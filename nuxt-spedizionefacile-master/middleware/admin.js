@@ -13,8 +13,16 @@
  * VINCOLI: richiede che l'utente sia gia' autenticato (usare insieme a app-auth)
  * COLLEGAMENTI: laravel-spedizionefacile-main/app/Models/User.php (campo role)
  */
-export default defineNuxtRouteMiddleware(async () => {
+export default defineNuxtRouteMiddleware(async (to) => {
+	// SSR: controlla cookie di sessione — se manca, redirect immediato
 	if (import.meta.server) {
+		const cookie = useRequestHeaders(['cookie'])?.cookie || '';
+		if (!cookie.includes('laravel_session') && !cookie.includes('XSRF-TOKEN')) {
+			return navigateTo({
+				path: '/autenticazione',
+				query: { redirect: to.fullPath },
+			}, { replace: true });
+		}
 		return;
 	}
 
@@ -35,16 +43,19 @@ export default defineNuxtRouteMiddleware(async () => {
 		} else {
 			bootstrapStatus.value = 'failed';
 		}
-		// app-auth gestisce gia' il redirect degli utenti non autenticati
 	} finally {
 		bootstrapReady.value = true;
 	}
 
-	if (bootstrapStatus.value === 'failed') {
-		return;
+	// Se bootstrap fallisce o utente non autenticato → redirect al login
+	if (bootstrapStatus.value === 'failed' || !user.value) {
+		return navigateTo({
+			path: '/autenticazione',
+			query: { redirect: to.fullPath },
+		}, { replace: true });
 	}
 
-	if (user.value?.role !== "Admin") {
+	if (user.value.role !== "Admin") {
 		return navigateTo("/account");
 	}
 });

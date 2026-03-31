@@ -13,7 +13,7 @@ const props = defineProps({
 </script>
 
 <template>
-	<div class="bg-white rounded-[16px] p-[24px] border border-[#E9EBEC]">
+	<div class="bg-white rounded-[12px] p-[24px] border border-[#E9EBEC]">
 		<h3 class="text-[1rem] font-bold text-[#252B42] mb-[16px]">Collo #{{ index + 1 }}</h3>
 
 		<div class="grid grid-cols-2 desktop:grid-cols-4 gap-[14px] mb-[16px]">

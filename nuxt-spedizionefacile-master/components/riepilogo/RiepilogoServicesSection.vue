@@ -10,7 +10,7 @@ const emit = defineEmits(['edit-services']);
 </script>
 
 <template>
-	<div class="bg-[#E4E4E4] rounded-[16px] p-[12px] tablet:p-[24px_28px] mb-[12px] tablet:mb-[16px]">
+	<div class="bg-[#E4E4E4] rounded-[12px] p-[12px] tablet:p-[24px_28px] mb-[12px] tablet:mb-[16px]">
 		<div class="flex items-center justify-between mb-[10px] tablet:mb-[12px]">
 			<h2 class="text-[1rem] tablet:text-[1.125rem] font-bold text-[#252B42]">Servizi e data ritiro</h2>
 			<button type="button" @click="emit('edit-services')" class="sf-action-pill sf-action-pill--soft" title="Modifica servizi">

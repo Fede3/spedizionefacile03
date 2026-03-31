@@ -129,6 +129,10 @@ class Order extends Model
 
     const COMPLETED = 'completed';            // Completato - la spedizione e' stata conclusa
 
+    const DELIVERED = 'delivered';            // Consegnato - il pacco e' stato consegnato
+
+    const IN_GIACENZA = 'in_giacenza';        // In giacenza - il pacco e' in giacenza presso il corriere
+
     const CANCELLED = 'cancelled';            // Annullato - l'ordine e' stato annullato dall'utente
 
     const REFUNDED = 'refunded';              // Rimborsato - il rimborso e' stato completato

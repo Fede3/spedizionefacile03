@@ -124,11 +124,11 @@ const sharedFieldProps = {
 			</div>
 
 			<!-- PARTENZA -->
-			<div class="bg-[#E4E4E4] rounded-[16px] text-[#252B42] mt-[20px] px-[16px] tablet:px-[40px] pt-[24px] tablet:pt-[35px] pb-[24px] tablet:pb-[43px]">
-				<div class="flex items-center justify-between mb-[20px] tablet:mb-[39px] flex-wrap gap-[10px]">
+			<div class="bg-[#E4E4E4] rounded-[12px] text-[#252B42] mt-[20px] px-[16px] tablet:px-[40px] pt-[24px] tablet:pt-[36px] pb-[24px] tablet:pb-[44px]">
+				<div class="flex items-center justify-between mb-[20px] tablet:mb-[40px] flex-wrap gap-[10px]">
 					<div class="flex items-center gap-[10px]">
 						<h2 class="font-bold text-[1.125rem] tracking-[0.1px]">Partenza</h2>
-						<button v-if="canSaveOriginAddress" type="button" @click="$emit('save-address', 'origin')" :disabled="savingOriginAddress" class="inline-flex items-center justify-center w-[30px] h-[30px] rounded-[6px] bg-[#095866] text-white hover:bg-[#074a56] transition cursor-pointer disabled:opacity-60" title="Salva indirizzo">
+						<button v-if="canSaveOriginAddress" type="button" @click="$emit('save-address', 'origin')" :disabled="savingOriginAddress" class="inline-flex items-center justify-center w-[30px] h-[30px] rounded-[6px] bg-[#095866] text-white hover:bg-[#074a56] transition cursor-pointer disabled:opacity-60" title="Salva indirizzo" aria-label="Salva indirizzo partenza">
 							<svg v-if="!savingOriginAddress" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
 							<svg v-else class="animate-spin" width="14" height="14" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" opacity=".25"/><path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg>
 						</button>
@@ -150,11 +150,11 @@ const sharedFieldProps = {
 			<ShipmentAddressPudoSection :delivery-mode="deliveryMode" :destination-address="destinationAddress" :selected-pudo="selectedPudo" @update:delivery-mode="$emit('update:delivery-mode', $event)" @pudo-selected="$emit('pudo-selected', $event)" @pudo-deselected="$emit('pudo-deselected')" />
 
 			<!-- DESTINAZIONE -->
-			<div class="bg-[#E4E4E4] rounded-[16px] text-[#252B42] mt-[20px] px-[16px] tablet:px-[40px] pt-[24px] tablet:pt-[35px] pb-[24px] tablet:pb-[43px]">
-				<div class="flex items-center justify-between mb-[20px] tablet:mb-[39px]">
+			<div class="bg-[#E4E4E4] rounded-[12px] text-[#252B42] mt-[20px] px-[16px] tablet:px-[40px] pt-[24px] tablet:pt-[36px] pb-[24px] tablet:pb-[44px]">
+				<div class="flex items-center justify-between mb-[20px] tablet:mb-[40px]">
 					<div class="flex items-center gap-[10px]">
 						<h2 class="font-bold text-[1.125rem] tracking-[0.1px]">{{ deliveryMode === 'pudo' ? 'Destinazione (Punto BRT)' : 'Destinazione' }}</h2>
-						<button v-if="canSaveDestAddress && deliveryMode !== 'pudo'" type="button" @click="$emit('save-address', 'dest')" :disabled="savingDestAddress" class="inline-flex items-center justify-center w-[30px] h-[30px] rounded-[6px] bg-[#095866] text-white hover:bg-[#074a56] transition cursor-pointer disabled:opacity-60" title="Salva indirizzo">
+						<button v-if="canSaveDestAddress && deliveryMode !== 'pudo'" type="button" @click="$emit('save-address', 'dest')" :disabled="savingDestAddress" class="inline-flex items-center justify-center w-[30px] h-[30px] rounded-[6px] bg-[#095866] text-white hover:bg-[#074a56] transition cursor-pointer disabled:opacity-60" title="Salva indirizzo" aria-label="Salva indirizzo destinazione">
 							<svg v-if="!savingDestAddress" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
 							<svg v-else class="animate-spin" width="14" height="14" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" opacity=".25"/><path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg>
 						</button>

@@ -80,7 +80,7 @@ const parsedSections = computed(() => {
 			</div>
 
 			<!-- Header banner -->
-			<div class="guide-detail__banner rounded-[20px] overflow-hidden mb-[40px] desktop:mb-[56px]">
+			<div class="guide-detail__banner rounded-[12px] overflow-hidden mb-[40px] desktop:mb-[56px]">
 				<div class="h-[3px] bg-[#E44203]"></div>
 				<div class="px-[28px] py-[36px] desktop:px-[48px] desktop:py-[48px]">
 					<p class="text-[0.8125rem] desktop:text-[0.875rem] font-medium text-white/70 tracking-[1.8px] uppercase mb-[16px]">Guida</p>
@@ -113,7 +113,7 @@ const parsedSections = computed(() => {
 					<NuxtLink
 						v-if="prevGuide"
 						:to="`/guide/${prevGuide.slug}`"
-						class="group flex items-center gap-[12px] p-[16px] desktop:p-[20px] rounded-[16px] border border-[#E9EBEC] hover:border-[#095866] hover:shadow-sm transition-all flex-1 max-w-[400px]">
+						class="group flex items-center gap-[12px] p-[16px] desktop:p-[20px] rounded-[12px] border border-[#E9EBEC] hover:border-[#095866] hover:shadow-sm transition-all flex-1 max-w-[400px]">
 						<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="#095866" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="shrink-0"><path d="M14 10H6"/><path d="M10 6l-4 4 4 4"/></svg>
 						<div>
 							<p class="text-[0.75rem] text-[#737373] font-medium mb-[4px]">Guida precedente</p>
@@ -123,7 +123,7 @@ const parsedSections = computed(() => {
 					<NuxtLink
 						v-if="nextGuide"
 						:to="`/guide/${nextGuide.slug}`"
-						class="group flex items-center gap-[12px] p-[16px] desktop:p-[20px] rounded-[16px] border border-[#E9EBEC] hover:border-[#095866] hover:shadow-sm transition-all flex-1 max-w-[400px] tablet:text-right tablet:ml-auto">
+						class="group flex items-center gap-[12px] p-[16px] desktop:p-[20px] rounded-[12px] border border-[#E9EBEC] hover:border-[#095866] hover:shadow-sm transition-all flex-1 max-w-[400px] tablet:text-right tablet:ml-auto">
 						<div class="flex-1">
 							<p class="text-[0.75rem] text-[#737373] font-medium mb-[4px]">Guida successiva</p>
 							<p class="text-[0.875rem] desktop:text-[0.9375rem] text-[#222222] font-medium leading-[130%] group-hover:text-[#095866] transition-colors">{{ nextGuide.title }}</p>

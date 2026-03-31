@@ -58,9 +58,9 @@ const submitIcon = computed(() =>
 </script>
 
 <template>
-	<div class="bg-white rounded-[18px] p-[18px] desktop:p-[24px] shadow-sm border border-[#E9EBEC] max-w-[680px] mx-auto">
+	<div class="bg-white rounded-[12px] p-[18px] desktop:p-[24px] shadow-sm border border-[#E9EBEC] max-w-[680px] mx-auto">
 		<!-- Header -->
-		<div class="mb-[18px] flex items-start gap-[12px] rounded-[16px] border border-[#E9EBEC] bg-[#F8FCFD] px-[14px] py-[12px]">
+		<div class="mb-[18px] flex items-start gap-[12px] rounded-[12px] border border-[#E9EBEC] bg-[#F8FCFD] px-[14px] py-[12px]">
 			<div class="flex h-[40px] w-[40px] shrink-0 items-center justify-center rounded-full bg-[#095866]/10">
 				<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="#095866"><path :d="headerIcon" /></svg>
 			</div>

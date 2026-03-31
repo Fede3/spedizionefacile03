@@ -89,7 +89,7 @@ onMounted(() => { fetchWithdrawals(); });
 				{{ actionMessage.text }}
 			</div>
 
-			<div class="mb-[20px] rounded-[18px] border border-[#E9EBEC] bg-[#F8FAFB] p-[14px] tablet:p-[18px]">
+			<div class="mb-[20px] rounded-[12px] border border-[#E9EBEC] bg-[#F8FAFB] p-[14px] tablet:p-[18px]">
 				<div class="flex flex-col gap-[14px] desktop:flex-row desktop:items-center desktop:justify-between">
 					<div>
 						<p class="text-[0.75rem] font-semibold uppercase tracking-[0.6px] text-[#6B7280]">Toolbar prelievi</p>
@@ -107,28 +107,28 @@ onMounted(() => { fetchWithdrawals(); });
 			</div>
 
 			<div class="grid grid-cols-1 tablet:grid-cols-3 xl:grid-cols-4 gap-[16px] mb-[24px]">
-				<div class="bg-white rounded-[16px] p-[20px] border border-[#E9EBEC] shadow-sm">
+				<div class="bg-white rounded-[12px] p-[20px] border border-[#E9EBEC] shadow-sm">
 					<div class="flex items-center gap-[8px] mb-[8px]">
 						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[18px] h-[18px] text-amber-600" fill="currentColor"><path d="M12,20A8,8 0 0,0 20,12A8,8 0 0,0 12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22C6.47,22 2,17.5 2,12A10,10 0 0,1 12,2M12.5,7V12.25L17,14.92L16.25,16.15L11,13V7H12.5Z"/></svg>
 						<p class="text-[0.75rem] text-[#737373] uppercase tracking-[0.5px] font-medium">In attesa</p>
 					</div>
 					<p class="text-[1.75rem] font-bold text-amber-600">{{ pendingWithdrawals.length }}</p>
 				</div>
-				<div class="bg-white rounded-[16px] p-[20px] border border-[#E9EBEC] shadow-sm">
+				<div class="bg-white rounded-[12px] p-[20px] border border-[#E9EBEC] shadow-sm">
 					<div class="flex items-center gap-[8px] mb-[8px]">
 						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[18px] h-[18px] text-emerald-600" fill="currentColor"><path d="M12 2C6.5 2 2 6.5 2 12S6.5 22 12 22 22 17.5 22 12 17.5 2 12 2M10 17L5 12L6.41 10.59L10 14.17L17.59 6.58L19 8L10 17Z"/></svg>
 						<p class="text-[0.75rem] text-[#737373] uppercase tracking-[0.5px] font-medium">Approvate</p>
 					</div>
 					<p class="text-[1.75rem] font-bold text-emerald-600">{{ approvedWithdrawals.length }}</p>
 				</div>
-				<div class="bg-white rounded-[16px] p-[20px] border border-[#E9EBEC] shadow-sm">
+				<div class="bg-white rounded-[12px] p-[20px] border border-[#E9EBEC] shadow-sm">
 					<div class="flex items-center gap-[8px] mb-[8px]">
 						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[18px] h-[18px] text-[#252B42]" fill="currentColor"><path d="M15,18.5C12.49,18.5 10.32,17.08 9.24,15H15L16,13H8.58C8.53,12.67 8.5,12.34 8.5,12C8.5,11.66 8.53,11.33 8.58,11H15L16,9H9.24C10.32,6.92 12.5,5.5 15,5.5C16.61,5.5 18.09,6.09 19.23,7.07L21,5.29C19.41,3.86 17.31,3 15,3C11.08,3 7.76,5.51 6.52,9H3L2,11H6.06C6.02,11.33 6,11.66 6,12C6,12.34 6.02,12.67 6.06,13H3L2,15H6.52C7.76,18.49 11.08,21 15,21C17.31,21 19.41,20.14 21,18.71L19.22,16.93C18.09,17.91 16.62,18.5 15,18.5Z"/></svg>
 						<p class="text-[0.75rem] text-[#737373] uppercase tracking-[0.5px] font-medium">Totale approvato</p>
 					</div>
 					<p class="text-[1.75rem] font-bold text-[#252B42]">&euro;{{ formatCurrency(totalApproved) }}</p>
 				</div>
-				<div class="bg-white rounded-[16px] p-[20px] border border-[#E9EBEC] shadow-sm">
+				<div class="bg-white rounded-[12px] p-[20px] border border-[#E9EBEC] shadow-sm">
 					<div class="flex items-center gap-[8px] mb-[8px]">
 						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[18px] h-[18px] text-red-600" fill="currentColor"><path d="M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2M12,4A8,8 0 0,0 4,12C4,13.85 4.63,15.55 5.68,16.91L16.91,5.68C15.55,4.63 13.85,4 12,4M12,20A8,8 0 0,0 20,12C20,10.15 19.37,8.45 18.32,7.09L7.09,18.32C8.45,19.37 10.15,20 12,20Z"/></svg>
 						<p class="text-[0.75rem] text-[#737373] uppercase tracking-[0.5px] font-medium">Rifiutate</p>
@@ -137,14 +137,14 @@ onMounted(() => { fetchWithdrawals(); });
 				</div>
 			</div>
 
-			<div class="bg-white rounded-[20px] p-[24px] desktop:p-[32px] shadow-sm border border-[#E9EBEC]">
+			<div class="bg-white rounded-[12px] p-[24px] desktop:p-[32px] shadow-sm border border-[#E9EBEC]">
 				<h2 class="text-[1.125rem] font-bold text-[#252B42] mb-[20px]">Richieste di prelievo</h2>
 				<div v-if="!withdrawalsData?.length" class="text-center py-[48px] text-[#737373]">
 					<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[40px] h-[40px] text-[#C8CCD0] mx-auto mb-[12px]" fill="currentColor"><path d="M2,5H22V7H2V5M15,10H22V12H15V10M15,16H22V18H15V16M2,10H13L8,15H2V10M2,16H8L13,21H2V16Z"/></svg>
 					<p>Nessuna richiesta di prelievo.</p>
 				</div>
 				<div v-else class="space-y-[12px]">
-					<div v-for="w in withdrawalsData" :key="w.id" class="rounded-[16px] border border-[#E9EBEC] bg-white p-[16px] tablet:p-[18px] hover:border-[#D7E1E4] transition-colors">
+					<div v-for="w in withdrawalsData" :key="w.id" class="rounded-[12px] border border-[#E9EBEC] bg-white p-[16px] tablet:p-[18px] hover:border-[#D7E1E4] transition-colors">
 						<div class="flex flex-col desktop:flex-row desktop:items-center justify-between gap-[12px]">
 							<div class="flex-1">
 								<div class="flex flex-wrap items-center gap-[10px] mb-[6px]">

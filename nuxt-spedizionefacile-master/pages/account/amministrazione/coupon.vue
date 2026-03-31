@@ -171,7 +171,7 @@ onMounted(() => { fetchCoupons(); });
 			</div>
 
 			<!-- Form crea/modifica -->
-			<div v-if="showForm" class="bg-white rounded-[20px] p-[24px] desktop:p-[32px] shadow-sm border border-[#E9EBEC] mb-[24px]">
+			<div v-if="showForm" class="bg-white rounded-[12px] p-[24px] desktop:p-[32px] shadow-sm border border-[#E9EBEC] mb-[24px]">
 				<h2 class="text-[1.125rem] font-bold text-[#252B42] mb-[20px]">
 					{{ editingId ? 'Modifica coupon' : 'Crea nuovo coupon' }}
 				</h2>
@@ -209,7 +209,7 @@ onMounted(() => { fetchCoupons(); });
 
 			<!-- Lista coupon -->
 			<template v-else>
-				<div v-if="!coupons.length" class="bg-white rounded-[20px] p-[48px] shadow-sm border border-[#E9EBEC] text-center">
+				<div v-if="!coupons.length" class="bg-white rounded-[12px] p-[48px] shadow-sm border border-[#E9EBEC] text-center">
 					<div class="w-[64px] h-[64px] mx-auto mb-[16px] bg-[#F8F9FB] rounded-full flex items-center justify-center">
 						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[28px] h-[28px]" fill="#C8CCD0"><path d="M5.5,9A1.5,1.5 0 0,0 7,7.5A1.5,1.5 0 0,0 5.5,6A1.5,1.5 0 0,0 4,7.5A1.5,1.5 0 0,0 5.5,9M17.41,11.58C17.77,11.94 18,12.44 18,13C18,13.55 17.78,14.05 17.41,14.41L12.41,19.41C12.05,19.77 11.55,20 11,20C10.45,20 9.95,19.78 9.58,19.41L2.59,12.42C2.22,12.05 2,11.55 2,11V6C2,4.89 2.89,4 4,4H9C9.55,4 10.05,4.22 10.41,4.58L17.41,11.58M13.54,5.71L14.54,4.71L21.41,11.58C21.78,11.94 22,12.45 22,13C22,13.55 21.78,14.05 21.42,14.41L16.04,19.79L15.04,18.79L20.75,13L13.54,5.71Z"/></svg>
 					</div>
@@ -217,7 +217,7 @@ onMounted(() => { fetchCoupons(); });
 					<p class="text-[#737373] text-[0.875rem]">Clicca "Nuovo coupon" per iniziare.</p>
 				</div>
 
-				<div v-else class="bg-white rounded-[20px] shadow-sm border border-[#E9EBEC] overflow-hidden">
+				<div v-else class="bg-white rounded-[12px] shadow-sm border border-[#E9EBEC] overflow-hidden">
 					<div class="overflow-x-auto">
 						<table class="w-full text-[0.875rem]">
 							<thead>
@@ -252,10 +252,10 @@ onMounted(() => { fetchCoupons(); });
 									</td>
 									<td class="px-[20px] py-[14px] text-right">
 										<div class="flex items-center justify-end gap-[8px]">
-											<button @click="openEdit(coupon)" class="text-[#095866] hover:text-[#074a56] cursor-pointer" title="Modifica">
+											<button @click="openEdit(coupon)" class="text-[#095866] hover:text-[#074a56] cursor-pointer" title="Modifica" aria-label="Modifica coupon">
 												<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[18px] h-[18px]" fill="currentColor"><path d="M20.71,7.04C21.1,6.65 21.1,6 20.71,5.63L18.37,3.29C18,2.9 17.35,2.9 16.96,3.29L15.12,5.12L18.87,8.87M3,17.25V21H6.75L17.81,9.93L14.06,6.18L3,17.25Z"/></svg>
 											</button>
-											<button @click="askDelete(coupon.id)" class="text-red-500 hover:text-red-700 cursor-pointer" title="Elimina">
+											<button @click="askDelete(coupon.id)" class="text-red-500 hover:text-red-700 cursor-pointer" title="Elimina" aria-label="Elimina coupon">
 												<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[18px] h-[18px]" fill="currentColor"><path d="M19,4H15.5L14.5,3H9.5L8.5,4H5V6H19M6,19A2,2 0 0,0 8,21H16A2,2 0 0,0 18,19V7H6V19Z"/></svg>
 											</button>
 										</div>

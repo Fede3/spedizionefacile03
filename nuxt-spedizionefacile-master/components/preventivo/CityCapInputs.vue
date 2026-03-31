@@ -46,7 +46,7 @@ onBeforeUnmount(() => { origin.cleanup(); dest.cleanup() })
 </script>
 
 <template>
-  <div class="flex items-start flex-wrap tablet:justify-center desktop-xl:justify-between tablet:gap-x-[20px] gap-y-[16px] tablet:gap-y-[20px] desktop:gap-y-[36px] desktop-xl:gap-y-0 border-[1px] border-[rgba(0,0,0,.2)] rounded-[16px] p-[12px] tablet:p-[15px] mt-[10px]">
+  <div class="flex items-start flex-wrap tablet:justify-center desktop-xl:justify-between tablet:gap-x-[20px] gap-y-[16px] tablet:gap-y-[20px] desktop:gap-y-[36px] desktop-xl:gap-y-0 border-[1px] border-[rgba(0,0,0,.2)] rounded-[12px] p-[12px] tablet:p-[16px] mt-[10px]">
     <PreventivoCityCapField
       field-id="origin_city"
       label="Citta di Ritiro"

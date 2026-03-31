@@ -60,7 +60,7 @@ const isPreventivoShellRoute = computed(() => route.path === '/preventivo' || ro
 					? 'desktop-xl:pt-[18px] desktop:pt-[16px] tablet:pt-[14px] mobile:pt-[12px]'
 					: isAccountShellRoute
 						? 'desktop-xl:pt-[10px] desktop:pt-[8px] mobile:pt-[8px] pb-0'
-						: 'desktop-xl:pt-[40px] desktop:pt-[25px] mobile:pt-[20px]'
+						: 'desktop-xl:pt-[40px] desktop:pt-[24px] mobile:pt-[20px]'
 			">
 			<!--  desktop:px-[35px] desktop-xl:px-0 -->
 			<Navbar />

@@ -30,7 +30,7 @@ defineEmits(['update:delivery-mode', 'pudo-selected', 'pudo-deselected']);
 	</div>
 
 	<!-- SELETTORE PUDO -->
-	<div v-if="deliveryMode === 'pudo'" class="bg-[#E4E4E4] rounded-[16px] text-[#252B42] mt-[16px] px-[16px] tablet:px-[40px] pt-[24px] tablet:pt-[35px] pb-[24px] tablet:pb-[43px]">
+	<div v-if="deliveryMode === 'pudo'" class="bg-[#E4E4E4] rounded-[12px] text-[#252B42] mt-[16px] px-[16px] tablet:px-[40px] pt-[24px] tablet:pt-[36px] pb-[24px] tablet:pb-[44px]">
 		<h2 class="font-bold text-[1.125rem] tracking-[0.1px] flex items-center gap-[8px] mb-[4px]">
 			<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#095866" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
 			Cerca un Punto BRT

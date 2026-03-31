@@ -4,6 +4,8 @@
   Events: request-withdrawal.
 -->
 <script setup>
+import { formatEuro } from '~/utils/price.js';
+
 defineProps({
 	availableBalance: { type: Number, default: 0 },
 	isLoading: { type: Boolean, default: false },
@@ -25,7 +27,7 @@ const steps = [
 <template>
 	<div class="mb-[18px] grid gap-[18px] desktop:grid-cols-[minmax(0,1.12fr)_minmax(320px,0.88fr)] desktop:items-stretch">
 		<!-- Saldo -->
-		<div class="rounded-[20px] border border-[#E5EDF2] bg-white p-[18px] desktop:p-[24px] shadow-sm">
+		<div class="rounded-[12px] border border-[#E5EDF2] bg-white p-[18px] desktop:p-[24px] shadow-sm">
 			<div class="flex flex-col gap-[14px] desktop:flex-row desktop:items-center desktop:justify-between">
 				<div>
 					<div class="flex items-center gap-[8px] mb-[10px]">
@@ -52,7 +54,7 @@ const steps = [
 				</div>
 			</div>
 
-			<div v-if="message" :class="['relative z-1 mt-[16px] text-[0.8125rem] font-medium rounded-[16px] px-[14px] py-[10px] flex items-center gap-[8px]', messageType === 'success' ? 'bg-emerald-500/20' : 'bg-red-500/20']">
+			<div v-if="message" :class="['relative z-1 mt-[16px] text-[0.8125rem] font-medium rounded-[12px] px-[14px] py-[10px] flex items-center gap-[8px]', messageType === 'success' ? 'bg-emerald-500/20' : 'bg-red-500/20']">
 				<svg v-if="messageType === 'success'" xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
 				<svg v-else xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
 				{{ message }}
@@ -60,7 +62,7 @@ const steps = [
 		</div>
 
 		<!-- Come funziona -->
-		<div class="bg-white rounded-[18px] p-[16px] desktop:p-[20px] border border-[#E9EBEC] shadow-sm">
+		<div class="bg-white rounded-[12px] p-[16px] desktop:p-[20px] border border-[#E9EBEC] shadow-sm">
 			<h3 class="text-[0.875rem] font-bold text-[#252B42] mb-[12px] flex items-center gap-[8px]">
 				<svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#095866" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
 				Come funziona

@@ -14,7 +14,7 @@ const emit = defineEmits(['downloadLabel', 'regenerateLabel']);
 </script>
 
 <template>
-	<div class="bg-white rounded-[16px] p-[24px] border border-[#E9EBEC] mt-[16px]">
+	<div class="bg-white rounded-[12px] p-[24px] border border-[#E9EBEC] mt-[16px]">
 		<h3 class="text-[1rem] font-bold text-[#252B42] mb-[16px]">Spedizione BRT</h3>
 
 		<!-- Tracking number e link prominente -->

@@ -21,7 +21,7 @@ useSeoMeta({
 <template>
   <section class="min-h-[500px] py-[40px] desktop:py-[60px]">
     <div class="my-container">
-      <div class="bg-white rounded-[20px] border border-[#E9EBEC] shadow-sm p-[32px_20px] desktop:p-[48px] max-w-[560px] mx-auto text-center">
+      <div class="bg-white rounded-[12px] border border-[#E9EBEC] shadow-sm p-[32px_20px] desktop:p-[48px] max-w-[560px] mx-auto text-center">
         <!-- SVG illustrazione pacco smarrito -->
         <svg
           class="mx-auto mb-[24px] w-[100px] h-[100px]"

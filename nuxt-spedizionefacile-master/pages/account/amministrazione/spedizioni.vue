@@ -122,7 +122,7 @@ onMounted(() => { fetchShipments(); });
 				</select>
 			</div>
 
-			<div class="bg-white rounded-[20px] p-[24px] desktop:p-[32px] shadow-sm border border-[#E9EBEC]">
+			<div class="bg-white rounded-[12px] p-[24px] desktop:p-[32px] shadow-sm border border-[#E9EBEC]">
 				<h2 class="text-[1.125rem] font-bold text-[#252B42] mb-[20px]">Spedizioni</h2>
 
 				<div v-if="tabLoading" class="py-[40px] flex justify-center">
@@ -139,7 +139,7 @@ onMounted(() => { fetchShipments(); });
 
 				<div v-else class="space-y-[12px]">
 					<div class="tablet:hidden space-y-[12px]">
-						<div v-for="(s, idx) in shipmentsData.data" :key="s.id" class="rounded-[16px] border border-[#E9EBEC] bg-[#F8FAFB] p-[14px] shadow-sm">
+						<div v-for="(s, idx) in shipmentsData.data" :key="s.id" class="rounded-[12px] border border-[#E9EBEC] bg-[#F8FAFB] p-[14px] shadow-sm">
 							<div class="flex items-start justify-between gap-[12px]">
 								<div class="min-w-0">
 									<div class="flex flex-wrap items-center gap-[8px] mb-[6px]">

@@ -18,7 +18,7 @@ const emit = defineEmits([
 </script>
 
 <template>
-	<div class="rounded-[14px] border border-[#E9EBEC] bg-[#FBFCFD] p-[14px] desktop:p-[16px]">
+	<div class="rounded-[12px] border border-[#E9EBEC] bg-[#FBFCFD] p-[14px] desktop:p-[16px]">
 		<h2 class="text-[1rem] font-bold text-[#252B42] mb-[12px]">Controlli immagine</h2>
 
 		<!-- Upload -->

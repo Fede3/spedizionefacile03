@@ -17,7 +17,7 @@ const emit = defineEmits(['show-detail', 'change-status']);
 	<div class="space-y-[12px]">
 		<!-- Mobile cards -->
 		<div class="grid grid-cols-1 gap-[12px] desktop:hidden tablet:grid-cols-2">
-			<div v-for="order in orders" :key="order.id" class="rounded-[16px] border border-[#E9EBEC] bg-[#F8FAFB] p-[14px] shadow-sm">
+			<div v-for="order in orders" :key="order.id" class="rounded-[12px] border border-[#E9EBEC] bg-[#F8FAFB] p-[14px] shadow-sm">
 				<div class="flex items-start justify-between gap-[12px]">
 					<div class="min-w-0">
 						<div class="flex flex-wrap items-center gap-[8px] mb-[6px]">

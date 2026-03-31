@@ -29,7 +29,7 @@ const emit = defineEmits(['close', 'open-auth'])
       <Transition name="mobile-sheet">
         <div
           v-if="open"
-          class="lg:hidden fixed left-[12px] right-[12px] z-[9999] bg-white rounded-[18px] overflow-hidden"
+          class="lg:hidden fixed left-[12px] right-[12px] z-[9999] bg-white rounded-[12px] overflow-hidden"
           :style="{ top: menuTopPx + 'px', boxShadow: '0 8px 40px rgba(0,0,0,0.12), 0 0 0 1px rgba(9,88,102,0.06)' }"
         >
           <nav class="py-[6px]">

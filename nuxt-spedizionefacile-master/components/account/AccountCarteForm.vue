@@ -13,7 +13,7 @@ const emit = defineEmits(['update:cardHolderName', 'save', 'cancel'])
 </script>
 
 <template>
-  <div class="bg-white rounded-[18px] p-[18px] tablet:p-[22px] desktop:p-[28px] shadow-sm border border-[#E9EBEC] max-w-[760px] mx-auto">
+  <div class="bg-white rounded-[12px] p-[18px] tablet:p-[22px] desktop:p-[28px] shadow-sm border border-[#E9EBEC] max-w-[760px] mx-auto">
     <div class="mb-[16px]">
       <label class="block text-[0.75rem] font-semibold text-[#404040] mb-[5px]">Numero carta</label>
       <div class="account-carte-stripe-field" id="card-number"></div>

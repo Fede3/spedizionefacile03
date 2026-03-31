@@ -48,18 +48,18 @@ pageReady.value = await initRiepilogoPage();
 		<div class="my-container mt-[20px] tablet:mt-[32px] mb-[48px] tablet:mb-[84px] px-[12px] tablet:px-0">
 			<!-- Skeleton loading -->
 			<div v-if="!pageReady" class="space-y-[16px] animate-pulse">
-				<div class="h-[64px] rounded-[16px] border border-[#E5EAEC] bg-white/90"></div>
-				<div class="rounded-[18px] border border-[#E5EAEC] bg-white p-[18px] tablet:p-[24px] space-y-[14px]">
+				<div class="h-[64px] rounded-[12px] border border-[#E5EAEC] bg-white/90"></div>
+				<div class="rounded-[12px] border border-[#E5EAEC] bg-white p-[18px] tablet:p-[24px] space-y-[14px]">
 					<div class="h-[24px] w-[44%] rounded-[12px] bg-[#EEF3F5]"></div>
 					<div class="grid grid-cols-1 tablet:grid-cols-2 gap-[12px]">
-						<div class="h-[124px] rounded-[16px] bg-[#EEF3F5]"></div>
-						<div class="h-[124px] rounded-[16px] bg-[#EEF3F5]"></div>
+						<div class="h-[124px] rounded-[12px] bg-[#EEF3F5]"></div>
+						<div class="h-[124px] rounded-[12px] bg-[#EEF3F5]"></div>
 					</div>
-					<div class="h-[82px] rounded-[16px] bg-[#EEF3F5]"></div>
+					<div class="h-[82px] rounded-[12px] bg-[#EEF3F5]"></div>
 					<div class="grid grid-flow-col auto-cols-[minmax(220px,1fr)] gap-[12px] overflow-hidden tablet:grid-flow-row tablet:grid-cols-3">
-						<div class="h-[78px] rounded-[16px] bg-[#F4F7F9]"></div>
-						<div class="h-[78px] rounded-[16px] bg-[#F4F7F9]"></div>
-						<div class="h-[78px] rounded-[16px] bg-[#F4F7F9]"></div>
+						<div class="h-[78px] rounded-[12px] bg-[#F4F7F9]"></div>
+						<div class="h-[78px] rounded-[12px] bg-[#F4F7F9]"></div>
+						<div class="h-[78px] rounded-[12px] bg-[#F4F7F9]"></div>
 					</div>
 				</div>
 			</div>

@@ -110,8 +110,20 @@ class ShipmentExecutionService
         $order->loadMissing(['packages.service']);
         $serviceData = $order->packages->first()?->service->service_data ?? [];
 
-        return is_array($serviceData['pickup_request'] ?? null)
+        $pickup = is_array($serviceData['pickup_request'] ?? null)
             ? $serviceData['pickup_request']
             : [];
+
+        // Se il pickup non ha 'enabled' esplicito, abilitalo se l'ordine ha il servizio "ritiro a domicilio"
+        if (! isset($pickup['enabled'])) {
+            $hasPickupService = $order->packages->contains(fn ($pkg) =>
+                $pkg->service && str_contains(mb_strtolower($pkg->service->service_type ?? '', 'UTF-8'), 'ritiro')
+            );
+            if ($hasPickupService) {
+                $pickup['enabled'] = true;
+            }
+        }
+
+        return $pickup;
     }
 }

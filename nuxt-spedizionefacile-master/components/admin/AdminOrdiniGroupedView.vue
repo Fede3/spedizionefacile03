@@ -17,7 +17,7 @@ const emit = defineEmits(['toggle-user', 'show-detail', 'change-status', 'change
 
 <template>
 	<div class="space-y-[12px]">
-		<div v-for="group in groupedOrders" :key="group.user?.id || 'unknown'" class="border border-[#E9EBEC] rounded-[14px] overflow-hidden">
+		<div v-for="group in groupedOrders" :key="group.user?.id || 'unknown'" class="border border-[#E9EBEC] rounded-[12px] overflow-hidden">
 			<!-- Header utente -->
 			<button type="button" @click="emit('toggle-user', group.user?.id)" class="w-full bg-[#F8F9FA] px-[14px] py-[14px] tablet:px-[20px] flex flex-col gap-[12px] cursor-pointer hover:bg-[#F0F4F5] transition-colors tablet:flex-row tablet:items-center tablet:justify-between" :class="expandedUsers.has(group.user?.id) ? 'border-b border-[#E9EBEC]' : ''">
 				<div class="flex min-w-0 items-center gap-[12px]">

@@ -192,7 +192,7 @@ const togglePaymentForm = async () => {
       </AccountPageHeader>
 
       <!-- Wallet link bar -->
-      <div v-if="!showFormPayments" class="mb-[16px] rounded-[18px] border border-[#E9EBEC] bg-white px-[16px] py-[14px] shadow-sm desktop:px-[18px]">
+      <div v-if="!showFormPayments" class="mb-[16px] rounded-[12px] border border-[#E9EBEC] bg-white px-[16px] py-[14px] shadow-sm desktop:px-[18px]">
         <div class="flex flex-col gap-[10px] tablet:flex-row tablet:items-center tablet:justify-between">
           <div>
             <p class="text-[0.75rem] font-semibold uppercase tracking-[0.08em] text-[#095866]">Metodi salvati</p>
@@ -206,7 +206,7 @@ const togglePaymentForm = async () => {
 
       <!-- Feedback -->
       <div v-if="textMessage"
-        :class="['mb-[16px] px-[14px] py-[10px] rounded-[14px] text-[0.8125rem] font-medium transition-all',
+        :class="['mb-[16px] px-[14px] py-[10px] rounded-[12px] text-[0.8125rem] font-medium transition-all',
           textMessageType === 'success' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' :
           textMessageType === 'error' ? 'bg-red-50 text-red-700 border border-red-200' :
           'bg-blue-50 text-blue-700 border border-blue-200']">
@@ -214,7 +214,7 @@ const togglePaymentForm = async () => {
       </div>
 
       <!-- Stripe not configured banner -->
-      <div v-if="!stripeConfigured && !configLoading && !showFormPayments" class="mb-[20px] p-[16px] bg-amber-50 border border-amber-200 rounded-[16px]">
+      <div v-if="!stripeConfigured && !configLoading && !showFormPayments" class="mb-[20px] p-[16px] bg-amber-50 border border-amber-200 rounded-[12px]">
         <div class="flex items-start gap-[12px]">
           <div class="w-[40px] h-[40px] rounded-[50px] bg-amber-100 flex items-center justify-center shrink-0">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>

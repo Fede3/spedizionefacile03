@@ -97,7 +97,7 @@ onMounted(() => { fetchArticles(); });
 				<div class="w-[40px] h-[40px] border-3 border-[#E9EBEC] border-t-[#095866] rounded-full animate-spin"></div>
 			</div>
 
-			<div v-else class="bg-white rounded-[20px] p-[24px] desktop:p-[32px] shadow-sm border border-[#E9EBEC]">
+			<div v-else class="bg-white rounded-[12px] p-[24px] desktop:p-[32px] shadow-sm border border-[#E9EBEC]">
 				<h2 class="text-[1.125rem] font-bold text-[#252B42] mb-[20px]">Tutti i servizi</h2>
 
 				<div v-if="!articles.length" class="text-center py-[48px]">

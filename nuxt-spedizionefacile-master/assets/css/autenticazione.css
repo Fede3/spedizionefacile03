@@ -111,6 +111,10 @@
 	box-shadow: none;
 }
 
+.auth-box .social-auth-grid {
+	grid-template-columns: 1fr;
+}
+
 @media (max-width: 47.99rem) {
 	.social-auth-grid {
 		grid-template-columns: 1fr;

@@ -27,17 +27,17 @@ const props = defineProps({
 	<div class="space-y-[18px]">
 		<!-- Stats cards -->
 		<div class="grid grid-cols-1 desktop:grid-cols-3 gap-[14px]">
-			<div class="rounded-[18px] border border-[#D8E9F0] bg-[#F4FAFC] p-[18px]">
+			<div class="rounded-[12px] border border-[#D8E9F0] bg-[#F4FAFC] p-[18px]">
 				<p class="text-[0.75rem] font-semibold uppercase tracking-[0.08em] text-[#6A7486] mb-[8px]">Servizi utente</p>
 				<p class="text-[1.5rem] font-bold text-[#095866]">{{ servicePricingEntries.length }}</p>
 				<p class="text-[0.8125rem] text-[#5B6B7F] mt-[6px]">Prezzi visibili nel flusso utente e nel riepilogo.</p>
 			</div>
-			<div class="rounded-[18px] border border-[#F4E2D6] bg-[#FFF8F2] p-[18px]">
+			<div class="rounded-[12px] border border-[#F4E2D6] bg-[#FFF8F2] p-[18px]">
 				<p class="text-[0.75rem] font-semibold uppercase tracking-[0.08em] text-[#A05D28] mb-[8px]">Supplementi automatici</p>
 				<p class="text-[1.5rem] font-bold text-[#E44203]">{{ automaticSupplementEntries.length }}</p>
 				<p class="text-[0.8125rem] text-[#7C5A46] mt-[6px]">Regole che scattano da destinazione, forma collo o punto BRT.</p>
 			</div>
-			<div class="rounded-[18px] border border-[#E4E7EC] bg-[#FBFCFD] p-[18px]">
+			<div class="rounded-[12px] border border-[#E4E7EC] bg-[#FBFCFD] p-[18px]">
 				<p class="text-[0.75rem] font-semibold uppercase tracking-[0.08em] text-[#6A7486] mb-[8px]">Fee operative</p>
 				<p class="text-[1.5rem] font-bold text-[#252B42]">{{ operationalFeeEntries.length }}</p>
 				<p class="text-[0.8125rem] text-[#5B6B7F] mt-[6px]">Costi gestionali come giacenza, separati dalle scelte utente.</p>
@@ -49,7 +49,7 @@ const props = defineProps({
 			<div
 				v-for="entry in filteredServiceEntries"
 				:key="`${entry.section}-${entry.key}`"
-				class="rounded-[20px] border border-[#E9EBEC] bg-white p-[16px] tablet:p-[18px] desktop:p-[20px] shadow-sm overflow-hidden">
+				class="rounded-[12px] border border-[#E9EBEC] bg-white p-[16px] tablet:p-[18px] desktop:p-[20px] shadow-sm overflow-hidden">
 				<div class="flex flex-col gap-[14px] desktop:flex-row desktop:items-start desktop:justify-between">
 					<div class="space-y-[8px] max-w-[760px]">
 						<div class="flex flex-wrap items-center gap-[8px]">
@@ -122,7 +122,7 @@ const props = defineProps({
 				</div>
 
 				<!-- Tiers -->
-				<div v-if="entry.rule.tiers?.length" class="mt-[16px] rounded-[16px] border border-[#E9EEF2] bg-[#FBFCFD] p-[14px]">
+				<div v-if="entry.rule.tiers?.length" class="mt-[16px] rounded-[12px] border border-[#E9EEF2] bg-[#FBFCFD] p-[14px]">
 					<div class="flex items-center justify-between gap-[10px] mb-[10px]">
 						<h4 class="text-[0.8125rem] font-semibold text-[#252B42]">Scaglioni peso</h4>
 						<button type="button" class="px-[12px] py-[7px] rounded-full bg-[#095866] text-white text-[0.75rem] font-medium cursor-pointer" @click="addTierRow(entry.rule)">Aggiungi soglia</button>

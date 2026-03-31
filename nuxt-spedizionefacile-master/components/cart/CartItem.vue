@@ -35,7 +35,7 @@ const getPackageIcon = (item) => {
   <!-- ========== GROUPED ENTRY (multi-collo) ========== -->
   <div
     v-if="entry.type === 'group'"
-    class="bg-white rounded-[16px] border-l-[4px] overflow-hidden"
+    class="bg-white rounded-[12px] border-l-[4px] overflow-hidden"
     :style="{ borderLeftColor: entry.color }">
 
     <!-- Group header (clickable to expand/collapse) -->
@@ -142,10 +142,10 @@ const getPackageIcon = (item) => {
 
             <!-- Actions -->
             <div class="flex items-center gap-1.5 shrink-0">
-              <NuxtLink :to="`/riepilogo?edit=${item.id}`" class="min-w-[36px] min-h-[36px] tablet:min-w-0 tablet:min-h-0 flex items-center justify-center text-[#095866] hover:text-[#074a56] cursor-pointer" title="Modifica collo">
+              <NuxtLink :to="`/riepilogo?edit=${item.id}`" class="min-w-[36px] min-h-[36px] tablet:min-w-0 tablet:min-h-0 flex items-center justify-center text-[#095866] hover:text-[#074a56] cursor-pointer" title="Modifica collo" aria-label="Modifica collo">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
               </NuxtLink>
-              <button type="button" @click="emit('remove', item.id)" class="min-w-[36px] min-h-[36px] tablet:min-w-0 tablet:min-h-0 flex items-center justify-center text-red-500 hover:text-red-700 cursor-pointer" title="Elimina collo">
+              <button type="button" @click="emit('remove', item.id)" class="min-w-[36px] min-h-[36px] tablet:min-w-0 tablet:min-h-0 flex items-center justify-center text-red-500 hover:text-red-700 cursor-pointer" title="Elimina collo" aria-label="Elimina collo">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
               </button>
             </div>
@@ -163,7 +163,7 @@ const getPackageIcon = (item) => {
   </div>
 
   <!-- ========== SINGLE ENTRY (collo singolo) ========== -->
-  <div v-else class="bg-white rounded-[16px] overflow-hidden">
+  <div v-else class="bg-white rounded-[12px] overflow-hidden">
 
     <!-- Desktop layout -->
     <div class="hidden desktop:flex items-center gap-[16px] p-[16px_20px]">
@@ -224,10 +224,10 @@ const getPackageIcon = (item) => {
 
       <!-- Actions -->
       <div class="flex items-center gap-2 shrink-0">
-        <NuxtLink :to="`/riepilogo?edit=${entry.item.id}`" class="text-[#095866] hover:text-[#074a56] cursor-pointer" title="Modifica">
+        <NuxtLink :to="`/riepilogo?edit=${entry.item.id}`" class="text-[#095866] hover:text-[#074a56] cursor-pointer" title="Modifica" aria-label="Modifica spedizione">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
         </NuxtLink>
-        <button type="button" @click="emit('remove', entry.item.id)" class="text-red-500 hover:text-red-700 cursor-pointer" title="Elimina">
+        <button type="button" @click="emit('remove', entry.item.id)" class="text-red-500 hover:text-red-700 cursor-pointer" title="Elimina" aria-label="Elimina spedizione">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
         </button>
       </div>

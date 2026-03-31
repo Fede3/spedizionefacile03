@@ -117,7 +117,7 @@ const updatePassword = async () => {
 		<div class="my-container flex justify-center">
 			<form
 				@submit.prevent="updatePassword"
-				class="w-full max-w-[560px] bg-white p-[20px] tablet:p-[28px] rounded-[20px] shadow-[0_14px_28px_rgba(20,37,48,0.06)] border border-[#E5EAEC] text-[#252B42]"
+				class="w-full max-w-[560px] bg-white p-[20px] tablet:p-[28px] rounded-[12px] shadow-[0_14px_28px_rgba(20,37,48,0.06)] border border-[#E5EAEC] text-[#252B42]"
 			>
 				<div class="text-center mb-[20px]">
 					<div class="w-[56px] h-[56px] mx-auto mb-[16px] bg-[#095866]/10 rounded-full flex items-center justify-center">

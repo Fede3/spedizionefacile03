@@ -37,15 +37,15 @@ const {
 
 			<!-- Stats -->
 			<div class="mb-[16px] grid grid-cols-1 tablet:grid-cols-3 gap-[10px]">
-				<div class="rounded-[16px] border border-[#E9EBEC] bg-white px-[14px] py-[12px] shadow-sm">
+				<div class="rounded-[12px] border border-[#E9EBEC] bg-white px-[14px] py-[12px] shadow-sm">
 					<p class="text-[0.75rem] font-semibold uppercase tracking-[0.08em] text-[#737373]">Spedizioni salvate</p>
 					<p class="mt-[2px] text-[1.125rem] font-bold text-[#252B42]">{{ totalShipmentsCount }}</p>
 				</div>
-				<div class="rounded-[16px] border border-[#E9EBEC] bg-white px-[14px] py-[12px] shadow-sm">
+				<div class="rounded-[12px] border border-[#E9EBEC] bg-white px-[14px] py-[12px] shadow-sm">
 					<p class="text-[0.75rem] font-semibold uppercase tracking-[0.08em] text-[#737373]">Filtri attivi</p>
 					<p class="mt-[2px] text-[1.125rem] font-bold text-[#252B42]">{{ activeFiltersCount }}</p>
 				</div>
-				<div class="rounded-[16px] border border-[#E9EBEC] bg-white px-[14px] py-[12px] shadow-sm">
+				<div class="rounded-[12px] border border-[#E9EBEC] bg-white px-[14px] py-[12px] shadow-sm">
 					<p class="text-[0.75rem] font-semibold uppercase tracking-[0.08em] text-[#737373]">Selezionate</p>
 					<p class="mt-[2px] text-[1.125rem] font-bold text-[#252B42]">{{ selectedShipmentsCount }}</p>
 				</div>
@@ -53,7 +53,7 @@ const {
 
 			<!-- Feedback -->
 			<Transition name="fade">
-				<div v-if="feedbackMessage" :class="['mb-[16px] px-[14px] py-[10px] rounded-[14px] text-[0.8125rem] font-medium', feedbackType === 'success' ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-700 border border-red-200']">{{ feedbackMessage }}</div>
+				<div v-if="feedbackMessage" :class="['mb-[16px] px-[14px] py-[10px] rounded-[12px] text-[0.8125rem] font-medium', feedbackType === 'success' ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-700 border border-red-200']">{{ feedbackMessage }}</div>
 			</Transition>
 
 			<!-- Loading -->
@@ -66,18 +66,18 @@ const {
 
 			<div v-else>
 				<!-- Toolbar filtri -->
-				<div class="bg-white border border-[#E9EBEC] rounded-[18px] p-[14px] tablet:p-[18px_20px] mb-[12px] shadow-sm">
+				<div class="bg-white border border-[#E9EBEC] rounded-[12px] p-[14px] tablet:p-[18px_20px] mb-[12px] shadow-sm">
 					<div class="flex flex-col gap-[10px] tablet:flex-row tablet:items-start tablet:justify-between">
 						<div class="min-w-0">
 							<p class="text-[0.75rem] font-semibold uppercase tracking-[0.08em] text-[#737373]">Filtri rapidi</p>
 							<p class="mt-[2px] text-[0.9375rem] font-semibold text-[#252B42]">Trova, ordina e riusa le configurazioni salvate senza perdere il contesto.</p>
 						</div>
 						<div class="flex flex-wrap items-center gap-[8px]">
-							<button @click="resetFilters" type="button" class="inline-flex items-center justify-center gap-[6px] bg-[#E9EBEC] text-[#252B42] font-semibold text-[0.875rem] px-[16px] h-[42px] rounded-[14px] hover:opacity-90 transition cursor-pointer">
+							<button @click="resetFilters" type="button" class="inline-flex items-center justify-center gap-[6px] bg-[#E9EBEC] text-[#252B42] font-semibold text-[0.875rem] px-[16px] h-[42px] rounded-[12px] hover:opacity-90 transition cursor-pointer">
 								<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
 								Annulla
 							</button>
-							<button @click="applyFilters" type="button" class="inline-flex items-center justify-center gap-[6px] bg-[#252B42] text-white font-semibold text-[0.875rem] px-[16px] h-[42px] rounded-[14px] hover:opacity-90 transition cursor-pointer">
+							<button @click="applyFilters" type="button" class="inline-flex items-center justify-center gap-[6px] bg-[#252B42] text-white font-semibold text-[0.875rem] px-[16px] h-[42px] rounded-[12px] hover:opacity-90 transition cursor-pointer">
 								<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
 								Applica filtro
 							</button>
@@ -106,7 +106,7 @@ const {
 				</div>
 
 				<!-- Table -->
-				<div class="bg-white border border-[#E9EBEC] rounded-[18px] overflow-hidden mb-[12px] shadow-sm">
+				<div class="bg-white border border-[#E9EBEC] rounded-[12px] overflow-hidden mb-[12px] shadow-sm">
 					<!-- Header -->
 					<div class="hidden desktop:grid grid-cols-[3%_10%_10%_9%_8%_10%_22%_7%_9%_12%] gap-[4px] px-[14px] py-[12px] text-[0.75rem] font-bold text-[#252B42] border-b border-[#E9EBEC] bg-[#FBFCFD]">
 						<span class="flex items-center"><input type="checkbox" v-model="selectAll" @change="toggleSelectAll" class="w-[16px] h-[16px] accent-[#095866] cursor-pointer" /></span>

@@ -140,7 +140,7 @@ onMounted(() => { fetchArticle(); });
 			<template v-else>
 				<div class="space-y-[20px]">
 					<!-- Info base -->
-					<div class="bg-white rounded-[20px] p-[24px] desktop:p-[32px] shadow-sm border border-[#E9EBEC]">
+					<div class="bg-white rounded-[12px] p-[24px] desktop:p-[32px] shadow-sm border border-[#E9EBEC]">
 						<h2 class="text-[1.125rem] font-bold text-[#252B42] mb-[20px] flex items-center gap-[8px]">
 							<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[20px] h-[20px] text-[#095866]" fill="currentColor"><path d="M14,17H7V15H14M17,13H7V11H17M17,9H7V7H17M19,3H5C3.89,3 3,3.89 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V5C21,3.89 20.1,3 19,3Z"/></svg> Informazioni base
 						</h2>
@@ -173,7 +173,7 @@ onMounted(() => { fetchArticle(); });
 					</div>
 
 					<!-- Immagine -->
-					<div class="bg-white rounded-[20px] p-[24px] desktop:p-[32px] shadow-sm border border-[#E9EBEC]">
+					<div class="bg-white rounded-[12px] p-[24px] desktop:p-[32px] shadow-sm border border-[#E9EBEC]">
 						<h2 class="text-[1.125rem] font-bold text-[#252B42] mb-[20px] flex items-center gap-[8px]">
 							<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[20px] h-[20px] text-purple-600" fill="currentColor"><path d="M8.5,13.5L11,16.5L14.5,12L19,18H5M21,19V5C21,3.89 20.1,3 19,3H5A2,2 0 0,0 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19Z"/></svg> Immagine
 						</h2>
@@ -192,7 +192,7 @@ onMounted(() => { fetchArticle(); });
 					</div>
 
 					<!-- Sezioni -->
-					<div class="bg-white rounded-[20px] p-[24px] desktop:p-[32px] shadow-sm border border-[#E9EBEC]">
+					<div class="bg-white rounded-[12px] p-[24px] desktop:p-[32px] shadow-sm border border-[#E9EBEC]">
 						<div class="flex items-center justify-between mb-[20px]">
 							<h2 class="text-[1.125rem] font-bold text-[#252B42] flex items-center gap-[8px]">
 								<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[20px] h-[20px] text-indigo-600" fill="currentColor"><path d="M7,5H21V7H7V5M7,13V11H21V13H7M4,4.5A1.5,1.5 0 0,1 5.5,6A1.5,1.5 0 0,1 4,7.5A1.5,1.5 0 0,1 2.5,6A1.5,1.5 0 0,1 4,4.5M4,10.5A1.5,1.5 0 0,1 5.5,12A1.5,1.5 0 0,1 4,13.5A1.5,1.5 0 0,1 2.5,12A1.5,1.5 0 0,1 4,10.5M7,19V17H21V19H7M4,16.5A1.5,1.5 0 0,1 5.5,18A1.5,1.5 0 0,1 4,19.5A1.5,1.5 0 0,1 2.5,18A1.5,1.5 0 0,1 4,16.5Z"/></svg> Sezioni
@@ -203,7 +203,7 @@ onMounted(() => { fetchArticle(); });
 						</div>
 
 						<div class="space-y-[16px]">
-							<div v-for="(section, idx) in form.sections" :key="idx" class="p-[16px] rounded-[14px] border border-[#E9EBEC] bg-[#FAFBFC]">
+							<div v-for="(section, idx) in form.sections" :key="idx" class="p-[16px] rounded-[12px] border border-[#E9EBEC] bg-[#FAFBFC]">
 								<div class="flex items-center justify-between mb-[12px]">
 									<span class="text-[0.8125rem] font-semibold text-[#252B42]">Sezione {{ idx + 1 }}</span>
 									<button v-if="form.sections.length > 1" @click="removeSection(idx)" class="w-[28px] h-[28px] flex items-center justify-center rounded-full hover:bg-red-50 text-red-400 hover:text-red-600 cursor-pointer transition-colors">

@@ -22,7 +22,7 @@ defineEmits(["choose-date"]);
 		<div
 			v-if="dateError"
 			data-pickup-date-alert
-			class="mb-[14px] rounded-[14px] border border-[#F0D28E] bg-[#FFF7E2] px-[16px] py-[14px] text-[#8A5E2E] shadow-[0_8px_18px_rgba(184,134,51,0.08)]"
+			class="mb-[14px] rounded-[12px] border border-[#F0D28E] bg-[#FFF7E2] px-[16px] py-[14px] text-[#8A5E2E] shadow-[0_8px_18px_rgba(184,134,51,0.08)]"
 			role="alert"
 			aria-live="polite">
 			<div class="flex items-start gap-[10px]">

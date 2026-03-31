@@ -118,7 +118,7 @@ onMounted(() => {
 			</div>
 
 			<!-- Form di ricerca -->
-			<div class="bg-white rounded-[16px] p-[24px_20px] desktop:p-[32px] shadow-[0_14px_28px_rgba(20,37,48,0.06)] border border-[#E5EAEC]">
+			<div class="bg-white rounded-[12px] p-[24px_20px] desktop:p-[32px] shadow-[0_14px_28px_rgba(20,37,48,0.06)] border border-[#E5EAEC]">
 				<label for="tracking_code" class="form-label mb-[6px]">Codice di tracking</label>
 				<div class="flex gap-[12px]">
 					<input
@@ -144,7 +144,7 @@ onMounted(() => {
 			</div>
 
 			<!-- Risultato: spedizione trovata -->
-			<div v-if="trackingResult && trackingResult.found" class="mt-[24px] bg-white rounded-[16px] p-[24px_20px] desktop:p-[32px] shadow-[0_14px_28px_rgba(20,37,48,0.06)] border border-[#E5EAEC]">
+			<div v-if="trackingResult && trackingResult.found" class="mt-[24px] bg-white rounded-[12px] p-[24px_20px] desktop:p-[32px] shadow-[0_14px_28px_rgba(20,37,48,0.06)] border border-[#E5EAEC]">
 				<!-- Header risultato -->
 				<div class="flex items-center justify-between mb-[20px] flex-wrap gap-[10px]">
 					<h2 class="text-[1.25rem] font-bold text-[#252B42]">Spedizione trovata</h2>
@@ -155,19 +155,19 @@ onMounted(() => {
 
 				<!-- Informazioni ordine -->
 				<div class="grid grid-cols-1 desktop:grid-cols-2 gap-[16px] mb-[24px]">
-					<div class="bg-[#F8F9FB] rounded-[14px] p-[16px]">
+					<div class="bg-[#F8F9FB] rounded-[12px] p-[16px]">
 						<p class="text-[0.75rem] text-[#737373] uppercase font-medium mb-[4px]">Numero Ordine</p>
 						<p class="text-[0.9375rem] font-semibold text-[#252B42]">#{{ trackingResult.order_id }}</p>
 					</div>
-					<div class="bg-[#F8F9FB] rounded-[14px] p-[16px]">
+					<div class="bg-[#F8F9FB] rounded-[12px] p-[16px]">
 						<p class="text-[0.75rem] text-[#737373] uppercase font-medium mb-[4px]">Data Ordine</p>
 						<p class="text-[0.9375rem] font-semibold text-[#252B42]">{{ trackingResult.created_at || '—' }}</p>
 					</div>
-					<div v-if="trackingResult.brt_parcel_id" class="bg-[#F8F9FB] rounded-[14px] p-[16px]">
+					<div v-if="trackingResult.brt_parcel_id" class="bg-[#F8F9FB] rounded-[12px] p-[16px]">
 						<p class="text-[0.75rem] text-[#737373] uppercase font-medium mb-[4px]">Codice BRT</p>
 						<p class="text-[0.9375rem] font-semibold text-[#252B42] font-mono">{{ trackingResult.brt_parcel_id }}</p>
 					</div>
-					<div class="bg-[#F8F9FB] rounded-[14px] p-[16px]">
+					<div class="bg-[#F8F9FB] rounded-[12px] p-[16px]">
 						<p class="text-[0.75rem] text-[#737373] uppercase font-medium mb-[4px]">Stato Attuale</p>
 						<p class="text-[0.9375rem] font-semibold text-[#252B42]">{{ trackingResult.status_description }}</p>
 					</div>
@@ -222,7 +222,7 @@ onMounted(() => {
 			</div>
 
 			<!-- Risultato: non trovato nel database, link a BRT -->
-			<div v-else-if="trackingResult && !trackingResult.found" class="mt-[24px] bg-white rounded-[16px] p-[24px_20px] desktop:p-[32px] shadow-[0_14px_28px_rgba(20,37,48,0.06)] border border-[#E5EAEC]">
+			<div v-else-if="trackingResult && !trackingResult.found" class="mt-[24px] bg-white rounded-[12px] p-[24px_20px] desktop:p-[32px] shadow-[0_14px_28px_rgba(20,37,48,0.06)] border border-[#E5EAEC]">
 				<div class="flex items-start gap-[12px] mb-[16px]">
 					<!-- Info icon SVG -->
 					<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#E8A500" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="shrink-0 mt-[2px]"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>

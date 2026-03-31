@@ -95,7 +95,7 @@ const formatDate = (dateStr) => {
 					v-for="article in articles"
 					:key="article.slug"
 					:to="`/blog/${article.slug}`"
-					class="blog-card block rounded-[20px] overflow-hidden border border-[#E9EBEC] shadow-sm hover:shadow-lg hover:border-[#095866] transition-all group bg-white">
+					class="blog-card block rounded-[12px] overflow-hidden border border-[#E9EBEC] shadow-sm hover:shadow-lg hover:border-[#095866] transition-all group bg-white">
 
 					<!-- Immagine di copertina -->
 					<div class="blog-card__image relative h-[200px] overflow-hidden bg-gradient-to-br from-[#095866] to-[#0b6d7d]">

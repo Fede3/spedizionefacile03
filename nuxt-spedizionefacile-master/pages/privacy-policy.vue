@@ -1,29 +1,88 @@
 <!--
   PAGINA: Privacy Policy (privacy-policy.vue)
-
-  Pagina statica che mostra l'informativa sulla privacy del sito.
-  Descrive come SpediamoFacile raccoglie, utilizza e protegge i dati personali
-  degli utenti, in conformita' con il GDPR (Regolamento Europeo sulla Privacy).
-
-  Al momento il contenuto e' in fase di redazione (placeholder).
+  Informativa sulla privacy ai sensi del GDPR (Reg. UE 2016/679).
+  Descrive raccolta, trattamento e protezione dei dati personali.
 -->
 <script setup>
-// Meta tag SEO per la pagina privacy policy
 useSeoMeta({
 	title: 'Privacy Policy | SpediamoFacile',
 	ogTitle: 'Privacy Policy | SpediamoFacile',
-	description: 'Informativa sulla privacy di SpediamoFacile. Scopri come trattiamo i tuoi dati personali.',
+	description: 'Informativa sulla privacy di SpediamoFacile ai sensi del GDPR. Scopri come trattiamo i tuoi dati personali.',
 });
+
+const lastUpdate = '31 marzo 2026';
+
+const sections = [
+	{
+		title: '1. Titolare del trattamento',
+		text: 'Il titolare del trattamento dei dati personali è SpediamoFacile S.r.l., con sede legale in Italia. Per qualsiasi richiesta relativa al trattamento dei dati personali è possibile scrivere a privacy@spediamofacile.it.',
+	},
+	{
+		title: '2. Tipi di dati raccolti',
+		text: 'Il sito raccoglie le seguenti categorie di dati: dati identificativi (nome, cognome, codice fiscale o P.IVA), dati di contatto (indirizzo e-mail, numero di telefono, indirizzo postale), dati di navigazione (indirizzo IP, tipo di browser, pagine visitate, orario di accesso), dati di pagamento (gestiti interamente da Stripe, non conservati sui nostri server) e dati relativi alle spedizioni (indirizzi di ritiro e consegna, dimensioni e peso dei colli).',
+	},
+	{
+		title: '3. Finalità del trattamento',
+		text: 'I dati personali vengono trattati per: erogazione del servizio di intermediazione spedizioni e gestione degli ordini; creazione e gestione dell\'account utente; elaborazione dei pagamenti e fatturazione; comunicazioni di servizio relative allo stato delle spedizioni; adempimento di obblighi di legge, fiscali e contabili; miglioramento del servizio attraverso analisi statistiche aggregate; invio di comunicazioni promozionali, solo previo consenso esplicito dell\'utente.',
+	},
+	{
+		title: '4. Base giuridica del trattamento',
+		text: 'Il trattamento dei dati si fonda su: esecuzione di un contratto di cui l\'interessato è parte (art. 6, par. 1, lett. b GDPR); adempimento di obblighi legali (art. 6, par. 1, lett. c GDPR); consenso dell\'interessato per finalità di marketing (art. 6, par. 1, lett. a GDPR); legittimo interesse del titolare per analisi statistiche e miglioramento del servizio (art. 6, par. 1, lett. f GDPR).',
+	},
+	{
+		title: '5. Modalità di trattamento e conservazione',
+		text: 'I dati sono trattati con strumenti informatici e misure di sicurezza adeguate a garantirne riservatezza e integrità. I dati personali vengono conservati per il tempo strettamente necessario alle finalità per cui sono stati raccolti e comunque non oltre i termini previsti dalla normativa vigente. I dati relativi alla fatturazione sono conservati per 10 anni ai sensi della normativa fiscale.',
+	},
+	{
+		title: '6. Comunicazione e trasferimento dei dati',
+		text: 'I dati possono essere comunicati a: corrieri partner per l\'esecuzione delle spedizioni; Stripe per l\'elaborazione dei pagamenti; fornitori di servizi tecnici (hosting, e-mail transazionali) che operano come responsabili del trattamento. I dati non vengono venduti né ceduti a terzi per finalità di marketing. Eventuali trasferimenti verso paesi extra-UE avvengono nel rispetto delle garanzie previste dal GDPR (decisioni di adeguatezza o clausole contrattuali standard).',
+	},
+	{
+		title: '7. Cookie',
+		text: 'Il sito utilizza cookie tecnici necessari al funzionamento e, previo consenso, cookie analitici per migliorare l\'esperienza di navigazione. Per informazioni dettagliate sui cookie utilizzati, consulta la nostra Cookie Policy.',
+		link: { text: 'Vai alla Cookie Policy', url: '/cookie-policy' },
+	},
+	{
+		title: '8. Diritti dell\'utente',
+		text: 'Ai sensi degli articoli 15-22 del GDPR, l\'utente ha diritto di: accedere ai propri dati personali e ottenerne copia; rettificare dati inesatti o incompleti; cancellare i propri dati (diritto all\'oblio) quando non più necessari alle finalità del trattamento; limitare il trattamento in determinati casi; ricevere i dati in formato strutturato e leggibile (portabilità); opporsi al trattamento per motivi legittimi; revocare il consenso in qualsiasi momento, senza pregiudicare la liceità del trattamento precedente; proporre reclamo al Garante per la Protezione dei Dati Personali.',
+	},
+	{
+		title: '9. Modifiche alla presente informativa',
+		text: 'Il titolare si riserva di aggiornare la presente informativa per adeguarla alla normativa vigente o a nuove esigenze operative. Eventuali modifiche sostanziali verranno comunicate tramite il sito o via e-mail agli utenti registrati.',
+	},
+];
 </script>
 
 <template>
 	<section class="min-h-[500px] py-[40px] desktop:py-[60px]">
-		<div class="my-container">
-			<h1 class="text-[2rem] font-bold text-[#252B42] mb-[24px]">Privacy Policy</h1>
-			<div class="prose text-[#737373] text-[0.9375rem] leading-[1.8] space-y-[16px]">
-				<p>Informativa sulla privacy ai sensi del Regolamento UE 2016/679 (GDPR).</p>
-				<p>Questa pagina descrive le modalità di gestione del sito in riferimento al trattamento dei dati personali degli utenti che lo consultano.</p>
-				<p class="text-[#A0A5AB] italic">Contenuto in fase di redazione. Per informazioni, contattaci tramite la pagina <NuxtLink to="/contatti" class="text-[#095866] hover:underline">Contatti</NuxtLink>.</p>
+		<div class="my-container max-w-[800px]">
+			<h1 class="text-[2rem] font-bold text-[#252B42] mb-[8px]">Privacy Policy</h1>
+			<p class="text-[#737373] text-[0.875rem] mb-[32px]">Ultimo aggiornamento: {{ lastUpdate }}</p>
+
+			<div class="space-y-[24px]">
+				<div
+					v-for="(section, i) in sections"
+					:key="i"
+					class="bg-white rounded-[12px] border border-[#E9EBEC] p-[24px]"
+				>
+					<h2 class="text-[1.125rem] font-semibold text-[#252B42] mb-[12px]">{{ section.title }}</h2>
+					<p class="text-[#737373] text-[0.9375rem] leading-[1.8]">{{ section.text }}</p>
+					<NuxtLink
+						v-if="section.link"
+						:to="section.link.url"
+						class="inline-block mt-[12px] text-[#095866] text-[0.875rem] font-medium hover:underline"
+					>
+						{{ section.link.text }}
+					</NuxtLink>
+				</div>
+			</div>
+
+			<div class="mt-[32px] bg-[#F9FAFB] rounded-[12px] border border-[#E9EBEC] p-[24px]">
+				<h2 class="text-[1rem] font-semibold text-[#252B42] mb-[8px]">Contatti per la privacy</h2>
+				<p class="text-[#737373] text-[0.9375rem] leading-[1.8]">
+					Per esercitare i tuoi diritti o per qualsiasi domanda sul trattamento dei dati, scrivi a
+					<a href="mailto:privacy@spediamofacile.it" class="text-[#095866] hover:underline">privacy@spediamofacile.it</a>.
+				</p>
 			</div>
 		</div>
 	</section>

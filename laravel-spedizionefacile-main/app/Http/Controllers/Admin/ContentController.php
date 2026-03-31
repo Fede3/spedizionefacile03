@@ -51,15 +51,21 @@ class ContentController extends Controller
     // Accetta solo le chiavi autorizzate (per sicurezza)
     public function updateSettings(Request $request): JsonResponse
     {
-        $allowed = [
-            'stripe_public_key', 'stripe_secret_key', 'stripe_webhook_secret',
-            'brt_customer_id', 'brt_username', 'brt_password',
-            'site_name', 'support_email', 'cod_surcharge',
-        ];
+        $data = $request->validate([
+            'stripe_public_key' => 'nullable|string|max:255',
+            'stripe_secret_key' => 'nullable|string|max:255',
+            'stripe_webhook_secret' => 'nullable|string|max:255',
+            'brt_customer_id' => 'nullable|string|max:100',
+            'brt_username' => 'nullable|string|max:100',
+            'brt_password' => 'nullable|string|max:255',
+            'site_name' => 'nullable|string|max:100',
+            'support_email' => 'nullable|string|email|max:255',
+            'cod_surcharge' => 'nullable|numeric|min:0|max:9999',
+        ]);
 
-        foreach ($allowed as $key) {
-            if ($request->has($key)) {
-                Setting::set($key, $request->input($key));
+        foreach ($data as $key => $value) {
+            if (!is_null($value)) {
+                Setting::set($key, $value);
             }
         }
 

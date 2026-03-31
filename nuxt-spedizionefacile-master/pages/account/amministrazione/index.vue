@@ -161,7 +161,7 @@ const adminAlerts = computed(() => {
 					v-for="link in adminQuickLinks"
 					:key="link.to"
 					:to="link.to"
-					class="group flex items-center gap-[10px] min-h-[52px] px-[14px] py-[10px] rounded-[16px] bg-white border border-[#E9EBEC] shadow-sm hover:border-[#B7D7DF] hover:bg-[#F8FBFC] transition-colors">
+					class="group flex items-center gap-[10px] min-h-[52px] px-[14px] py-[10px] rounded-[12px] bg-white border border-[#E9EBEC] shadow-sm hover:border-[#B7D7DF] hover:bg-[#F8FBFC] transition-colors">
 					<div class="w-[32px] h-[32px] rounded-[12px] bg-[#F4FAFC] flex items-center justify-center text-[#095866] shrink-0">
 						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[18px] h-[18px]" fill="currentColor"><path :d="link.svgPath"/></svg>
 					</div>
@@ -178,7 +178,7 @@ const adminAlerts = computed(() => {
 				<div v-if="dashboardData">
 					<!-- KPI cards row 1 -->
 					<div class="grid grid-cols-1 tablet:grid-cols-2 desktop:grid-cols-4 gap-[12px] desktop:gap-[14px] mb-[14px]">
-						<div v-for="card in kpiCards" :key="card.key" class="bg-white rounded-[16px] p-[14px] tablet:p-[16px] border border-[#E9EBEC] shadow-sm">
+						<div v-for="card in kpiCards" :key="card.key" class="bg-white rounded-[12px] p-[14px] tablet:p-[16px] border border-[#E9EBEC] shadow-sm">
 							<div class="flex items-center gap-[8px] mb-[6px]">
 								<div class="w-[32px] h-[32px] rounded-[50px] flex items-center justify-center" :class="card.bg">
 									<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[18px] h-[18px]" :class="card.color" fill="currentColor"><path :d="card.svgPath"/></svg>
@@ -194,7 +194,7 @@ const adminAlerts = computed(() => {
 
 					<!-- KPI cards row 2: period -->
 					<div class="grid grid-cols-1 tablet:grid-cols-3 gap-[12px] desktop:gap-[14px] mb-[20px]">
-						<div v-for="pk in periodKpis" :key="pk.key" class="bg-white rounded-[16px] p-[13px] tablet:p-[14px] border border-[#E9EBEC] shadow-sm">
+						<div v-for="pk in periodKpis" :key="pk.key" class="bg-white rounded-[12px] p-[12px] tablet:p-[14px] border border-[#E9EBEC] shadow-sm">
 							<p class="text-[0.6875rem] text-[#737373] uppercase tracking-[0.5px] font-medium mb-[4px]">{{ pk.label }}</p>
 							<p class="text-[1.5rem] font-bold text-[#252B42]">{{ pk.value }}</p>
 						</div>
@@ -206,7 +206,7 @@ const adminAlerts = computed(() => {
 							v-for="alert in adminAlerts"
 							:key="alert.key"
 							:to="alert.to"
-							class="sf-action-card sf-action-card--locked min-h-[58px] rounded-[16px] border-l-[3px]"
+							class="sf-action-card sf-action-card--locked min-h-[58px] rounded-[12px] border-l-[3px]"
 							:class="alert.tone === 'critical' ? 'border-l-[#E44203]' : 'border-l-[#0E6572]'">
 							<div
 								class="sf-action-card__icon-shell"
@@ -221,7 +221,7 @@ const adminAlerts = computed(() => {
 					</div>
 
 					<!-- Orders chart (CSS bars, last 30 days) -->
-					<div v-if="dashboardData.daily_orders?.length" class="bg-white rounded-[20px] p-[20px] desktop:p-[28px] shadow-sm border border-[#E9EBEC] mb-[20px]">
+					<div v-if="dashboardData.daily_orders?.length" class="bg-white rounded-[12px] p-[20px] desktop:p-[28px] shadow-sm border border-[#E9EBEC] mb-[20px]">
 						<h2 class="text-[1.0625rem] font-bold text-[#252B42] mb-[14px]">Ordini ultimi 30 giorni</h2>
 						<div class="flex items-end gap-[4px] h-[108px]">
 							<div
@@ -241,7 +241,7 @@ const adminAlerts = computed(() => {
 					</div>
 
 					<!-- Recent orders -->
-					<div class="bg-white rounded-[20px] p-[20px] desktop:p-[28px] shadow-sm border border-[#E9EBEC]">
+					<div class="bg-white rounded-[12px] p-[20px] desktop:p-[28px] shadow-sm border border-[#E9EBEC]">
 						<div class="flex items-center justify-between mb-[16px]">
 							<h2 class="text-[1.0625rem] font-bold text-[#252B42]">Ultimi ordini</h2>
 							<NuxtLink to="/account/amministrazione/ordini" class="inline-flex items-center gap-[4px] text-[0.75rem] text-[#737373] hover:text-[#095866] hover:underline font-medium">

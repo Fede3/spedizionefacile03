@@ -23,7 +23,7 @@ const inputClass = 'w-full px-[12px] py-[10px] bg-[#F8F9FB] border border-[#E9EB
 <template>
 	<h1 class="text-[1.5rem] desktop:text-[1.75rem] font-bold text-[#252B42] mb-[24px]">Modifica dati</h1>
 
-	<div class="bg-white rounded-[18px] p-[20px] tablet:p-[24px] desktop:p-[32px] shadow-sm border border-[#E9EBEC] max-w-[880px] mx-auto">
+	<div class="bg-white rounded-[12px] p-[20px] tablet:p-[24px] desktop:p-[32px] shadow-sm border border-[#E9EBEC] max-w-[880px] mx-auto">
 		<form @submit.prevent="emit('submit')">
 			<!-- Tipo account -->
 			<h3 class="text-[1rem] font-bold text-[#252B42] mb-[12px]">Tipo account</h3>

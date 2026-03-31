@@ -15,7 +15,7 @@
 					<div class="h-[16px] w-full rounded-[12px] bg-[#F2F5F8] animate-pulse"></div>
 					<div class="h-[16px] w-[82%] rounded-[12px] bg-[#F2F5F8] animate-pulse"></div>
 					<div class="grid grid-cols-1 sm:grid-cols-3 gap-[10px] pt-[8px]">
-						<div v-for="index in 3" :key="`skel-${index}`" class="h-[88px] rounded-[16px] bg-[#F7FAFC] border border-[#E9EBEC] animate-pulse"></div>
+						<div v-for="index in 3" :key="`skel-${index}`" class="h-[88px] rounded-[12px] bg-[#F7FAFC] border border-[#E9EBEC] animate-pulse"></div>
 					</div>
 				</div>
 			</div>
@@ -23,9 +23,9 @@
 				<div class="space-y-[12px]">
 					<div class="h-[22px] w-[160px] rounded-[12px] bg-[#EEF3F7] animate-pulse"></div>
 					<div class="h-[16px] w-[90%] rounded-[12px] bg-[#F2F5F8] animate-pulse"></div>
-					<div class="h-[52px] rounded-[14px] bg-[#F7FAFC] border border-[#E9EBEC] animate-pulse"></div>
-					<div class="h-[52px] rounded-[14px] bg-[#F7FAFC] border border-[#E9EBEC] animate-pulse"></div>
-					<div class="h-[52px] rounded-[14px] bg-[#F7FAFC] border border-[#E9EBEC] animate-pulse"></div>
+					<div class="h-[52px] rounded-[12px] bg-[#F7FAFC] border border-[#E9EBEC] animate-pulse"></div>
+					<div class="h-[52px] rounded-[12px] bg-[#F7FAFC] border border-[#E9EBEC] animate-pulse"></div>
+					<div class="h-[52px] rounded-[12px] bg-[#F7FAFC] border border-[#E9EBEC] animate-pulse"></div>
 				</div>
 			</div>
 		</div>

@@ -130,7 +130,7 @@ onMounted(initOnMounted);
 <template>
 	<section>
 		<div class="my-container shipment-step-shell mt-[48px] tablet:mt-[72px] mb-[96px] tablet:mb-[120px]">
-			<div v-if="showInitialStepLoading" class="min-h-[560px] bg-[#E4E4E4] rounded-[16px] animate-pulse" />
+			<div v-if="showInitialStepLoading" class="min-h-[560px] bg-[#E4E4E4] rounded-[12px] animate-pulse" />
 			<form v-else ref="formRef" @submit.prevent="continueToCart">
 				<div ref="stepsRef" class="mb-[16px] tablet:mb-[18px]">
 					<Steps :current-step="currentShipmentStep - 1" />

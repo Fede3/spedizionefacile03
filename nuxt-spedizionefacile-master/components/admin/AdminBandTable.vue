@@ -35,7 +35,7 @@ const onEditInput = (event) => {
 </script>
 
 <template>
-	<div class="bg-white rounded-[20px] p-[16px] tablet:p-[20px] desktop:p-[28px] shadow-sm border border-[#E9EBEC] overflow-hidden">
+	<div class="bg-white rounded-[12px] p-[16px] tablet:p-[20px] desktop:p-[28px] shadow-sm border border-[#E9EBEC] overflow-hidden">
 		<h2 class="text-[1.125rem] font-bold text-[#252B42] mb-[6px] flex items-center gap-[8px]">
 			<slot name="icon" />
 			{{ title }}

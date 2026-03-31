@@ -26,7 +26,7 @@ const emit = defineEmits(['saveToConfigured']);
 </script>
 
 <template>
-	<div class="overflow-hidden rounded-[18px] border border-[#E9EBEC] bg-white shadow-[0_10px_32px_rgba(15,23,42,0.05)]">
+	<div class="overflow-hidden rounded-[12px] border border-[#E9EBEC] bg-white shadow-[0_10px_32px_rgba(15,23,42,0.05)]">
 		<!-- Header -->
 		<div class="border-b border-[#E9EBEC] bg-[linear-gradient(180deg,#FBFCFD_0%,#F5F8FA_100%)] px-[16px] py-[14px] tablet:px-[20px]">
 			<div class="flex flex-col gap-[10px] desktop:flex-row desktop:items-center desktop:justify-between">
@@ -47,20 +47,20 @@ const emit = defineEmits(['saveToConfigured']);
 		<!-- Body -->
 		<div class="px-[16px] py-[16px] tablet:px-[20px]">
 			<div class="space-y-[12px]">
-				<div class="rounded-[16px] border border-[#E8EEF2] bg-[#FBFCFD] px-[14px] py-[12px]">
+				<div class="rounded-[12px] border border-[#E8EEF2] bg-[#FBFCFD] px-[14px] py-[12px]">
 					<p class="mb-[4px] text-[0.6875rem] font-bold uppercase tracking-[0.14em] text-[#7A8695]">Tratta</p>
 					<p class="text-[1rem] font-bold leading-[1.2] text-[#252B42]">{{ getRouteLabel(order) }}</p>
 				</div>
 				<div class="grid grid-cols-1 gap-[10px] tablet:grid-cols-2 desktop:grid-cols-3">
-					<div class="rounded-[14px] border border-[#E9EEF2] bg-white px-[12px] py-[11px]">
+					<div class="rounded-[12px] border border-[#E9EEF2] bg-white px-[12px] py-[11px]">
 						<p class="mb-[4px] text-[0.6875rem] font-bold uppercase tracking-[0.14em] text-[#7A8695]">Mittente</p>
 						<p class="text-[0.875rem] font-semibold leading-[1.35] text-[#252B42]">{{ getSenderName(order) }}</p>
 					</div>
-					<div class="rounded-[14px] border border-[#E9EEF2] bg-white px-[12px] py-[11px]">
+					<div class="rounded-[12px] border border-[#E9EEF2] bg-white px-[12px] py-[11px]">
 						<p class="mb-[4px] text-[0.6875rem] font-bold uppercase tracking-[0.14em] text-[#7A8695]">Destinatario</p>
 						<p class="text-[0.875rem] font-semibold leading-[1.35] text-[#252B42]">{{ getRecipientName(order) }}</p>
 					</div>
-					<div class="rounded-[14px] border border-[#E9EEF2] bg-white px-[12px] py-[11px]">
+					<div class="rounded-[12px] border border-[#E9EEF2] bg-white px-[12px] py-[11px]">
 						<p class="mb-[4px] text-[0.6875rem] font-bold uppercase tracking-[0.14em] text-[#7A8695]">Ordine</p>
 						<p class="text-[0.875rem] font-semibold leading-[1.35] text-[#252B42]">#{{ order.id }}</p>
 						<p class="mt-[3px] text-[0.75rem] text-[#6F7B88]">{{ getOrderDateLabel(order) }}</p>
@@ -74,19 +74,19 @@ const emit = defineEmits(['saveToConfigured']);
 		</div>
 
 		<!-- Pending alert -->
-		<div v-if="isPendingPayment(order)" class="mx-[20px] my-[12px] flex items-center gap-[12px] rounded-[16px] border border-amber-200 bg-amber-50 px-[16px] py-[12px]">
+		<div v-if="isPendingPayment(order)" class="mx-[20px] my-[12px] flex items-center gap-[12px] rounded-[12px] border border-amber-200 bg-amber-50 px-[16px] py-[12px]">
 			<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="#F59E0B" class="shrink-0"><path d="M12,2L1,21H23M12,6L19.53,19H4.47M11,10V14H13V10M11,16V18H13V16"/></svg>
 			<p class="text-[0.8125rem] text-amber-800 flex-1">{{ getPendingReason(order) }}</p>
 		</div>
 
 		<!-- Save error -->
-		<div v-if="saveError[order.id]" class="mx-[20px] my-[8px] flex items-center gap-[10px] rounded-[16px] border border-red-200 bg-red-50 px-[16px] py-[10px]">
+		<div v-if="saveError[order.id]" class="mx-[20px] my-[8px] flex items-center gap-[10px] rounded-[12px] border border-red-200 bg-red-50 px-[16px] py-[10px]">
 			<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="#EF4444" class="shrink-0"><path d="M13,13H11V7H13M13,17H11V15H13M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z"/></svg>
 			<p class="text-red-600 text-[0.8125rem] font-medium">{{ saveError[order.id] }}</p>
 		</div>
 
 		<!-- Refund info -->
-		<div v-if="statusRaw(order.status) === 'refunded' && order.refund_amount" class="mx-[20px] my-[8px] flex items-center gap-[10px] rounded-[16px] border border-orange-200 bg-orange-50 px-[16px] py-[10px]">
+		<div v-if="statusRaw(order.status) === 'refunded' && order.refund_amount" class="mx-[20px] my-[8px] flex items-center gap-[10px] rounded-[12px] border border-orange-200 bg-orange-50 px-[16px] py-[10px]">
 			<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#EA580C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="shrink-0"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
 			<p class="text-orange-700 text-[0.8125rem]">Rimborso di <span class="font-semibold">{{ order.refund_amount }}</span> effettuato<span v-if="order.refunded_at"> il {{ order.refunded_at }}</span></p>
 		</div>

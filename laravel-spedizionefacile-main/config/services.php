@@ -92,7 +92,7 @@ return [
         'api_url' => env('BRT_API_URL', 'https://api.brt.it/rest/v1/shipments'), // URL delle API spedizioni
         'pudo_api_url' => env('BRT_PUDO_API_URL', 'https://api.brt.it'),         // URL API punti ritiro
         'pudo_token' => env('BRT_PUDO_TOKEN'),              // Token per le API dei punti ritiro
-        'departure_depot' => env('BRT_DEPARTURE_DEPOT', 0), // Filiale BRT di partenza (default: 0)
+        'departure_depot' => env('BRT_DEPARTURE_DEPOT', 89), // Filiale BRT di partenza (default: 89 = Milano Bovisa)
         'verify_ssl' => env('BRT_VERIFY_SSL', true),          // Verifica SSL (disabilitare solo in sviluppo)
     ],
 

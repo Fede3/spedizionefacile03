@@ -23,7 +23,7 @@ const getProvinceCode = (provinceName) => {
 <template>
 	<!-- Summary cards -->
 	<div class="mb-[18px] grid gap-[12px] desktop:grid-cols-[minmax(0,1.35fr)_minmax(280px,0.65fr)]">
-		<div class="rounded-[18px] border border-[#E9EBEC] bg-white px-[16px] py-[14px] shadow-sm">
+		<div class="rounded-[12px] border border-[#E9EBEC] bg-white px-[16px] py-[14px] shadow-sm">
 			<p class="text-[0.75rem] font-semibold uppercase tracking-[1px] text-[#095866]">Vista rubrica</p>
 			<h2 class="mt-[6px] text-[1rem] font-bold text-[#252B42]">Indirizzi ordinati e pronti all&apos;uso</h2>
 			<p class="mt-[6px] text-[0.875rem] leading-[1.55] text-[#737373]">
@@ -40,7 +40,7 @@ const getProvinceCode = (provinceName) => {
 				</span>
 			</div>
 		</div>
-		<div class="rounded-[18px] border border-[#DDECEE] bg-[#F8FCFD] px-[16px] py-[14px] shadow-sm">
+		<div class="rounded-[12px] border border-[#DDECEE] bg-[#F8FCFD] px-[16px] py-[14px] shadow-sm">
 			<p class="text-[0.75rem] font-semibold uppercase tracking-[1px] text-[#095866]">Predefinito attivo</p>
 			<p class="mt-[8px] text-[1rem] font-bold text-[#252B42]">{{ defaultAddressName }}</p>
 			<p class="mt-[6px] text-[0.8125rem] leading-[1.55] text-[#737373]">
@@ -51,7 +51,7 @@ const getProvinceCode = (provinceName) => {
 
 	<!-- Loading skeleton -->
 	<div v-if="!addresses" class="space-y-[12px]">
-		<div v-for="n in 2" :key="n" class="bg-white rounded-[16px] p-[24px] border border-[#E9EBEC] animate-pulse">
+		<div v-for="n in 2" :key="n" class="bg-white rounded-[12px] p-[24px] border border-[#E9EBEC] animate-pulse">
 			<div class="flex items-center gap-[16px]">
 				<div class="w-[44px] h-[44px] rounded-[50px] bg-gray-200"></div>
 				<div class="flex-1 space-y-[8px]">
@@ -63,7 +63,7 @@ const getProvinceCode = (provinceName) => {
 	</div>
 
 	<!-- Empty state -->
-	<div v-else-if="addresses?.data?.length === 0" class="bg-white rounded-[16px] p-[48px] border border-[#E9EBEC] text-center">
+	<div v-else-if="addresses?.data?.length === 0" class="bg-white rounded-[12px] p-[48px] border border-[#E9EBEC] text-center">
 		<div class="w-[72px] h-[72px] mx-auto mb-[20px] bg-[#F8F9FB] rounded-full flex items-center justify-center">
 			<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="#C8CCD0"><path d="M12,11.5A2.5,2.5 0 0,1 9.5,9A2.5,2.5 0 0,1 12,6.5A2.5,2.5 0 0,1 14.5,9A2.5,2.5 0 0,1 12,11.5M12,2A7,7 0 0,0 5,9C5,14.25 12,22 12,22C12,22 19,14.25 19,9A7,7 0 0,0 12,2Z"/></svg>
 		</div>
@@ -84,7 +84,7 @@ const getProvinceCode = (provinceName) => {
 		<div
 			v-for="address in addresses.data"
 			:key="address.id"
-			:class="['bg-white rounded-[16px] p-[16px] desktop:p-[20px] border transition-all', address.default ? 'border-[#095866] shadow-sm' : 'border-[#E9EBEC] hover:border-[#D7E1E4]']">
+			:class="['bg-white rounded-[12px] p-[16px] desktop:p-[20px] border transition-all', address.default ? 'border-[#095866] shadow-sm' : 'border-[#E9EBEC] hover:border-[#D7E1E4]']">
 			<div class="flex flex-col gap-[12px] desktop:flex-row desktop:items-start desktop:gap-[16px]">
 				<!-- Icona -->
 				<div :class="['w-[40px] h-[40px] rounded-[50px] flex items-center justify-center shrink-0', address.default ? 'bg-[#095866]/10' : 'bg-[#F8F9FB]']">

@@ -1,5 +1,18 @@
 export default defineNuxtRouteMiddleware(async (to) => {
+	// SSR: controlla cookie di sessione — se manca, redirect immediato
 	if (import.meta.server) {
+		const cookie = useRequestHeaders(['cookie'])?.cookie || '';
+		if (!cookie.includes('laravel_session') && !cookie.includes('XSRF-TOKEN')) {
+			const requestedPath = to.fullPath !== "/" && to.fullPath.endsWith("/")
+				? to.fullPath.slice(0, -1)
+				: to.fullPath;
+			return navigateTo(
+				requestedPath === "/"
+					? "/autenticazione"
+					: { path: "/autenticazione", query: { redirect: requestedPath } },
+				{ replace: true },
+			);
+		}
 		return;
 	}
 
@@ -22,17 +35,18 @@ export default defineNuxtRouteMiddleware(async (to) => {
 				bootstrapStatus.value = "resolved";
 			} else {
 				bootstrapStatus.value = "failed";
-				console.error("[auth] bootstrap failed on protected route", error);
 			}
 		} finally {
 			bootstrapReady.value = true;
 		}
 	}
 
-	if (bootstrapStatus.value === "failed" || isAuthenticated.value) {
+	// Se autenticato → procedi normalmente
+	if (isAuthenticated.value) {
 		return;
 	}
 
+	// Se bootstrap fallisce o utente non autenticato → redirect al login
 	const requestedPath = to.fullPath !== "/" && to.fullPath.endsWith("/")
 		? to.fullPath.slice(0, -1)
 		: to.fullPath;
@@ -40,10 +54,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
 	return navigateTo(
 		requestedPath === "/"
 			? "/autenticazione"
-			: {
-					path: "/autenticazione",
-					query: { redirect: requestedPath },
-				},
+			: { path: "/autenticazione", query: { redirect: requestedPath } },
 		{ replace: true },
 	);
 });

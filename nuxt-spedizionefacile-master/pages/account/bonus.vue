@@ -129,9 +129,9 @@ const bonusHeaderStats = computed(() => [
 					v-for="(bonus, index) in filteredBonuses"
 					:key="index"
 					:to="bonus.action"
-					class="group flex flex-col gap-[16px] bg-white rounded-[20px] p-[20px] desktop:flex-row desktop:items-start desktop:p-[24px] border border-[#E9EBEC] shadow-sm hover:shadow-md hover:border-[#E9EBEC] transition-all">
+					class="group flex flex-col gap-[16px] bg-white rounded-[12px] p-[20px] desktop:flex-row desktop:items-start desktop:p-[24px] border border-[#E9EBEC] shadow-sm hover:shadow-md hover:border-[#E9EBEC] transition-all">
 					<!-- Icon -->
-					<div class="w-[52px] h-[52px] rounded-[14px] bg-[#e8f4fb] flex items-center justify-center shrink-0">
+					<div class="w-[52px] h-[52px] rounded-[12px] bg-[#e8f4fb] flex items-center justify-center shrink-0">
 						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[26px] h-[26px] text-[#1a7fba]" v-html="bonus.iconSvg"></svg>
 					</div>
 
@@ -157,7 +157,7 @@ const bonusHeaderStats = computed(() => [
 			</div>
 
 			<!-- Empty state if no bonuses -->
-			<div v-if="filteredBonuses.length === 0" class="bg-white rounded-[20px] p-[48px] shadow-sm border border-[#E9EBEC] text-center">
+			<div v-if="filteredBonuses.length === 0" class="bg-white rounded-[12px] p-[48px] shadow-sm border border-[#E9EBEC] text-center">
 				<div class="w-[72px] h-[72px] mx-auto mb-[20px] bg-[#F8F9FB] rounded-full flex items-center justify-center">
 					<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[32px] h-[32px] text-[#C8CCD0]" fill="currentColor"><path d="M22,12V20A2,2 0 0,1 20,22H4A2,2 0 0,1 2,20V12A1,1 0 0,1 1,11V8A2,2 0 0,1 3,6H6.17C6.06,5.69 6,5.35 6,5A3,3 0 0,1 9,2C10,2 10.88,2.49 11.43,3.24L12,4L12.57,3.24C13.12,2.49 14,2 15,2A3,3 0 0,1 18,5C18,5.35 17.94,5.69 17.83,6H21A2,2 0 0,1 23,8V11A1,1 0 0,1 22,12M4,20H11V12H4V20M20,20V12H13V20H20M9,4A1,1 0 0,0 8,5A1,1 0 0,0 9,6H11V5C11,4.45 10.55,4 10,4H9M15,4A1,1 0 0,0 14,4L13,4V6H15A1,1 0 0,0 16,5A1,1 0 0,0 15,4M3,8V10H11V8H3M13,8V10H21V8H13Z"/></svg>
 				</div>

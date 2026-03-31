@@ -3,7 +3,6 @@
 namespace App\Services;
 
 use App\Models\Order;
-use App\Models\Setting;
 use App\Models\WalletMovement;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -13,6 +12,13 @@ use Stripe\StripeClient;
 class RefundService
 {
     public const CANCELLATION_FEE_CENTS = 200;
+
+    private StripeConfigService $stripeConfig;
+
+    public function __construct(?StripeConfigService $stripeConfig = null)
+    {
+        $this->stripeConfig = $stripeConfig ?? app(StripeConfigService::class);
+    }
 
     public function calculateEligibility(Order $order): array
     {
@@ -49,7 +55,7 @@ class RefundService
 
     public function processStripeRefund(Order $order, int $amountCents): void
     {
-        $secret = $this->getStripeSecret();
+        $secret = $this->stripeConfig->getSecret();
         if (!$secret) throw new \Exception('Stripe non configurato. Impossibile processare il rimborso.');
 
         $stripe = new StripeClient($secret);
@@ -80,11 +86,6 @@ class RefundService
             'source' => 'refund',
         ]);
         Log::info('Wallet refund processed', ['order_id' => $order->id, 'user_id' => $order->user_id, 'amount_eur' => round($amountCents / 100, 2)]);
-    }
-
-    private function getStripeSecret(): ?string
-    {
-        return Setting::get('stripe_secret') ?: Setting::get('stripe_secret_key') ?: config('services.stripe.secret');
     }
 
     private function eligible(string $reason, Order $order, string $type, int $refund, int $commission): array

@@ -84,11 +84,11 @@ onMounted(() => { fetchContactMessages(); });
 						v-model="messageSearch"
 						type="text"
 						placeholder="Cerca nome, email o oggetto..."
-						class="w-full h-[44px] pl-[42px] pr-[14px] rounded-[14px] border border-[#E9EBEC] bg-white text-[0.875rem] text-[#252B42] focus:border-[#095866] focus:outline-none" />
+						class="w-full h-[44px] pl-[42px] pr-[14px] rounded-[12px] border border-[#E9EBEC] bg-white text-[0.875rem] text-[#252B42] focus:border-[#095866] focus:outline-none" />
 				</div>
 				<select
 					v-model="messageStatusFilter"
-					class="w-full h-[44px] px-[14px] rounded-[14px] border border-[#E9EBEC] bg-white text-[0.875rem] text-[#252B42] focus:border-[#095866] focus:outline-none">
+					class="w-full h-[44px] px-[14px] rounded-[12px] border border-[#E9EBEC] bg-white text-[0.875rem] text-[#252B42] focus:border-[#095866] focus:outline-none">
 					<option value="all">Tutti i messaggi</option>
 					<option value="unread">Non letti</option>
 					<option value="read">Letti</option>
@@ -96,25 +96,25 @@ onMounted(() => { fetchContactMessages(); });
 			</div>
 
 			<div class="mb-[16px] grid grid-cols-2 tablet:grid-cols-4 gap-[10px]">
-				<div class="bg-white rounded-[16px] p-[14px] border border-[#E9EBEC] shadow-sm">
+				<div class="bg-white rounded-[12px] p-[14px] border border-[#E9EBEC] shadow-sm">
 					<p class="text-[0.6875rem] uppercase tracking-[0.5px] text-[#737373] font-medium">Totale</p>
 					<p class="text-[1.25rem] font-bold text-[#252B42] mt-[4px]">{{ contactMessages.length }}</p>
 				</div>
-				<div class="bg-white rounded-[16px] p-[14px] border border-[#E9EBEC] shadow-sm">
+				<div class="bg-white rounded-[12px] p-[14px] border border-[#E9EBEC] shadow-sm">
 					<p class="text-[0.6875rem] uppercase tracking-[0.5px] text-[#737373] font-medium">Non letti</p>
 					<p class="text-[1.25rem] font-bold text-[#095866] mt-[4px]">{{ unreadMessagesCount }}</p>
 				</div>
-				<div class="bg-white rounded-[16px] p-[14px] border border-[#E9EBEC] shadow-sm">
+				<div class="bg-white rounded-[12px] p-[14px] border border-[#E9EBEC] shadow-sm">
 					<p class="text-[0.6875rem] uppercase tracking-[0.5px] text-[#737373] font-medium">Visibili</p>
 					<p class="text-[1.25rem] font-bold text-[#252B42] mt-[4px]">{{ filteredMessages.length }}</p>
 				</div>
-				<div class="bg-white rounded-[16px] p-[14px] border border-[#E9EBEC] shadow-sm">
+				<div class="bg-white rounded-[12px] p-[14px] border border-[#E9EBEC] shadow-sm">
 					<p class="text-[0.6875rem] uppercase tracking-[0.5px] text-[#737373] font-medium">Letti</p>
 					<p class="text-[1.25rem] font-bold text-emerald-600 mt-[4px]">{{ Math.max(0, contactMessages.length - unreadMessagesCount) }}</p>
 				</div>
 			</div>
 
-			<div class="bg-white rounded-[20px] p-[20px] tablet:p-[24px] desktop:p-[28px] shadow-sm border border-[#E9EBEC]">
+			<div class="bg-white rounded-[12px] p-[20px] tablet:p-[24px] desktop:p-[28px] shadow-sm border border-[#E9EBEC]">
 				<div class="flex flex-col tablet:flex-row tablet:items-center tablet:justify-between gap-[10px] mb-[18px]">
 					<h2 class="text-[1.125rem] font-bold text-[#252B42]">Messaggi</h2>
 					<p class="text-[0.8125rem] text-[#737373]">{{ filteredMessages.length }} visibili</p>
@@ -127,7 +127,7 @@ onMounted(() => { fetchContactMessages(); });
 					<p class="text-[#737373] text-[0.875rem]">I messaggi dal form contatti appariranno qui.</p>
 				</div>
 				<div v-else class="grid grid-cols-1 tablet:grid-cols-2 desktop:grid-cols-1 gap-[10px]">
-					<div v-for="msg in filteredMessages" :key="msg.id" @click="showMessageDetail(msg)" :class="['p-[14px] rounded-[14px] border cursor-pointer transition-colors', msg.read_at ? 'border-[#E9EBEC] hover:border-[#D7E1E4]' : 'border-blue-200 bg-blue-50/30 hover:border-blue-300']">
+					<div v-for="msg in filteredMessages" :key="msg.id" @click="showMessageDetail(msg)" :class="['p-[14px] rounded-[12px] border cursor-pointer transition-colors', msg.read_at ? 'border-[#E9EBEC] hover:border-[#D7E1E4]' : 'border-blue-200 bg-blue-50/30 hover:border-blue-300']">
 						<div class="flex items-start justify-between gap-[10px]">
 							<div class="flex-1 min-w-0">
 								<div class="flex flex-wrap items-center gap-[8px] mb-[4px]">
@@ -146,10 +146,10 @@ onMounted(() => { fetchContactMessages(); });
 
 			<!-- Message detail modal -->
 			<div v-if="selectedMessage" class="fixed inset-0 bg-black/40 z-50 flex items-end tablet:items-center justify-center p-0 tablet:p-[20px]" @click.self="closeMessageDetail">
-				<div class="bg-white rounded-t-[20px] tablet:rounded-[20px] p-[20px] tablet:p-[28px] shadow-2xl max-w-[600px] w-full max-h-[90dvh] overflow-y-auto">
+				<div class="bg-white rounded-t-[20px] tablet:rounded-[12px] p-[20px] tablet:p-[28px] shadow-2xl max-w-[600px] w-full max-h-[90dvh] overflow-y-auto">
 					<div class="flex items-center justify-between mb-[24px]">
 						<h3 class="text-[1.125rem] font-bold text-[#252B42]">Messaggio</h3>
-						<button @click="closeMessageDetail" class="w-[36px] h-[36px] flex items-center justify-center rounded-full bg-[#F0F0F0] hover:bg-[#E0E0E0] cursor-pointer">
+						<button @click="closeMessageDetail" class="w-[36px] h-[36px] flex items-center justify-center rounded-full bg-[#F0F0F0] hover:bg-[#E0E0E0] cursor-pointer" aria-label="Chiudi messaggio">
 							<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[18px] h-[18px] text-[#404040]" fill="currentColor"><path d="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z"/></svg>
 						</button>
 					</div>

@@ -72,7 +72,7 @@ const faqs = [
 	<section id="pagamento-alla-consegna">
 		<div class="my-container">
 			<p
-				class="desktop-xl:text-[4rem] font-medium tracking-[-1.536px] text-center text-[#222222] mt-[61px] mb-[40px] desktop-xl:mb-[88px] text-[2.5rem] leading-[110%] desktop:mt-[72px] desktop-xl:mt-[141px]">
+				class="desktop-xl:text-[4rem] font-medium tracking-[-1.536px] text-center text-[#222222] mt-[64px] mb-[40px] desktop-xl:mb-[80px] text-[2.5rem] leading-[110%] desktop:mt-[72px] desktop-xl:mt-[141px]">
 				Pagamento alla consegna
 			</p>
 
@@ -213,7 +213,7 @@ const faqs = [
 				Domande frequenti
 			</h2>
 
-			<div class="desktop:flex desktop:items-start desktop:justify-between desktop:flex-wrap desktop:gap-x-[24px] desktop:gap-y-[40px] gap-y-[20px] desktop:mb-[62px] mb-[30px]">
+			<div class="desktop:flex desktop:items-start desktop:justify-between desktop:flex-wrap desktop:gap-x-[24px] desktop:gap-y-[40px] gap-y-[20px] desktop:mb-[64px] mb-[30px]">
 				<div v-for="(faq, faqIndex) in faqs" :key="faqIndex" class="desktop:w-[calc(50%-20px)]">
 					<h3 class="desktop:text-[1.875rem] text-[1.5rem] font-medium tracking-[-0.72px] leading-[110%] text-[#222222] mb-[16px] mt-[30px] desktop:mt-0">
 						{{ faq.title }}

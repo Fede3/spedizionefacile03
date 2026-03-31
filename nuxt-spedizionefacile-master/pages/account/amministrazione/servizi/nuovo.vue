@@ -88,7 +88,7 @@ const saveService = async () => {
 
 			<div class="space-y-[20px]">
 				<!-- Info base -->
-				<div class="bg-white rounded-[20px] p-[24px] desktop:p-[32px] shadow-sm border border-[#E9EBEC]">
+				<div class="bg-white rounded-[12px] p-[24px] desktop:p-[32px] shadow-sm border border-[#E9EBEC]">
 					<h2 class="text-[1.125rem] font-bold text-[#252B42] mb-[20px] flex items-center gap-[8px]">
 						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[20px] h-[20px] text-[#095866]" fill="currentColor"><path d="M14,17H7V15H14M17,13H7V11H17M17,9H7V7H17M19,3H5C3.89,3 3,3.89 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V5C21,3.89 20.1,3 19,3Z"/></svg> Informazioni base
 					</h2>
@@ -121,7 +121,7 @@ const saveService = async () => {
 				</div>
 
 				<!-- Sezioni -->
-				<div class="bg-white rounded-[20px] p-[24px] desktop:p-[32px] shadow-sm border border-[#E9EBEC]">
+				<div class="bg-white rounded-[12px] p-[24px] desktop:p-[32px] shadow-sm border border-[#E9EBEC]">
 					<div class="flex items-center justify-between mb-[20px]">
 						<h2 class="text-[1.125rem] font-bold text-[#252B42] flex items-center gap-[8px]">
 							<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[20px] h-[20px] text-indigo-600" fill="currentColor"><path d="M7,5H21V7H7V5M7,13V11H21V13H7M4,4.5A1.5,1.5 0 0,1 5.5,6A1.5,1.5 0 0,1 4,7.5A1.5,1.5 0 0,1 2.5,6A1.5,1.5 0 0,1 4,4.5M4,10.5A1.5,1.5 0 0,1 5.5,12A1.5,1.5 0 0,1 4,13.5A1.5,1.5 0 0,1 2.5,12A1.5,1.5 0 0,1 4,10.5M7,19V17H21V19H7M4,16.5A1.5,1.5 0 0,1 5.5,18A1.5,1.5 0 0,1 4,19.5A1.5,1.5 0 0,1 2.5,18A1.5,1.5 0 0,1 4,16.5Z"/></svg> Sezioni
@@ -131,7 +131,7 @@ const saveService = async () => {
 						</button>
 					</div>
 					<div class="space-y-[16px]">
-						<div v-for="(section, idx) in form.sections" :key="idx" class="p-[16px] rounded-[14px] border border-[#E9EBEC] bg-[#FAFBFC]">
+						<div v-for="(section, idx) in form.sections" :key="idx" class="p-[16px] rounded-[12px] border border-[#E9EBEC] bg-[#FAFBFC]">
 							<div class="flex items-center justify-between mb-[12px]">
 								<span class="text-[0.8125rem] font-semibold text-[#252B42]">Sezione {{ idx + 1 }}</span>
 								<button v-if="form.sections.length > 1" @click="removeSection(idx)" class="w-[28px] h-[28px] flex items-center justify-center rounded-full hover:bg-red-50 text-red-400 hover:text-red-600 cursor-pointer transition-colors">
@@ -147,7 +147,7 @@ const saveService = async () => {
 				</div>
 
 				<!-- FAQ -->
-				<div class="bg-white rounded-[20px] p-[24px] desktop:p-[32px] shadow-sm border border-[#E9EBEC]">
+				<div class="bg-white rounded-[12px] p-[24px] desktop:p-[32px] shadow-sm border border-[#E9EBEC]">
 					<div class="flex items-center justify-between mb-[20px]">
 						<h2 class="text-[1.125rem] font-bold text-[#252B42] flex items-center gap-[8px]">
 							<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[20px] h-[20px] text-amber-600" fill="currentColor"><path d="M18,15H6L2,19V3A1,1 0 0,1 3,2H18A1,1 0 0,1 19,3V14A1,1 0 0,1 18,15M23,9V23L19,19H8A1,1 0 0,1 7,18V17H21V8H22A1,1 0 0,1 23,9Z"/></svg> FAQ
@@ -157,7 +157,7 @@ const saveService = async () => {
 						</button>
 					</div>
 					<div class="space-y-[16px]">
-						<div v-for="(faq, idx) in form.faqs" :key="idx" class="p-[16px] rounded-[14px] border border-[#E9EBEC] bg-[#FAFBFC]">
+						<div v-for="(faq, idx) in form.faqs" :key="idx" class="p-[16px] rounded-[12px] border border-[#E9EBEC] bg-[#FAFBFC]">
 							<div class="flex items-center justify-between mb-[12px]">
 								<span class="text-[0.8125rem] font-semibold text-[#252B42]">FAQ {{ idx + 1 }}</span>
 								<button v-if="form.faqs.length > 1" @click="removeFaq(idx)" class="w-[28px] h-[28px] flex items-center justify-center rounded-full hover:bg-red-50 text-red-400 hover:text-red-600 cursor-pointer transition-colors">

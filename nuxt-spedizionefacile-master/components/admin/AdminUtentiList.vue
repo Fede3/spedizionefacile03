@@ -23,9 +23,9 @@ const emit = defineEmits(['approve', 'delete', 'role-change']);
 	<template v-else>
 		<!-- Mobile cards -->
 		<div class="desktop:hidden grid grid-cols-1 tablet:grid-cols-2 gap-[12px]">
-			<div v-for="u in users" :key="u.id" class="rounded-[18px] border border-[#E9EBEC] bg-white p-[14px] tablet:p-[16px] shadow-sm">
+			<div v-for="u in users" :key="u.id" class="rounded-[12px] border border-[#E9EBEC] bg-white p-[14px] tablet:p-[16px] shadow-sm">
 				<div class="flex items-start gap-[12px]">
-					<div class="flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-[14px] bg-[#EDF5F6] text-[#095866]">
+					<div class="flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-[12px] bg-[#EDF5F6] text-[#095866]">
 						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="h-[20px] w-[20px]" fill="currentColor"><path d="M12,4A4,4 0 0,1 16,8A4,4 0 0,1 12,12A4,4 0 0,1 8,8A4,4 0 0,1 12,4M12,14C16.42,14 20,15.79 20,18V20H4V18C4,15.79 7.58,14 12,14Z"/></svg>
 					</div>
 					<div class="min-w-0 flex-1">

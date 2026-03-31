@@ -15,7 +15,7 @@ defineProps({
 
 <template>
   <div class="mb-[14px] tablet:mb-[18px] desktop:mb-[20px]">
-    <div class="rounded-[18px] border border-[#E5EDF2] bg-white px-[14px] py-[14px] shadow-[0_6px_24px_rgba(9,88,102,0.05)] tablet:px-[18px] tablet:py-[16px] desktop:px-[22px] desktop:py-[18px]">
+    <div class="rounded-[12px] border border-[#E5EDF2] bg-white px-[14px] py-[14px] shadow-[0_6px_24px_rgba(9,88,102,0.05)] tablet:px-[18px] tablet:py-[16px] desktop:px-[22px] desktop:py-[18px]">
       <div v-if="crumbs.length" class="mb-[8px] flex flex-wrap items-center gap-x-[8px] gap-y-[4px] text-[0.75rem] tablet:text-[0.8125rem] text-[#7A8695]">
         <template v-for="(crumb, index) in crumbs" :key="`${crumb.label}-${index}`">
           <NuxtLink

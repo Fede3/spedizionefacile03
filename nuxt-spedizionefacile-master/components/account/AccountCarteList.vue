@@ -25,7 +25,7 @@ const getBrandIcon = (brand) => {
 <template>
   <!-- Loading skeleton -->
   <div v-if="status === 'pending'">
-    <div v-for="n in 2" :key="n" class="bg-white rounded-[14px] p-[16px] border border-[#E9EBEC] mb-[10px]">
+    <div v-for="n in 2" :key="n" class="bg-white rounded-[12px] p-[16px] border border-[#E9EBEC] mb-[10px]">
       <div class="flex animate-pulse items-center gap-[12px]">
         <div class="w-[48px] h-[32px] rounded-[6px] bg-gray-200"></div>
         <div class="flex-1 space-y-[7px]">
@@ -39,7 +39,7 @@ const getBrandIcon = (brand) => {
   <!-- Cards loaded -->
   <template v-else-if="payments && payments.data">
     <!-- Empty state -->
-    <div v-if="payments.data.length === 0" class="bg-white rounded-[18px] p-[36px] shadow-sm border border-[#E9EBEC] text-center">
+    <div v-if="payments.data.length === 0" class="bg-white rounded-[12px] p-[36px] shadow-sm border border-[#E9EBEC] text-center">
       <div class="w-[64px] h-[64px] mx-auto mb-[16px] bg-[#F8F9FB] rounded-full flex items-center justify-center">
         <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#C8CCD0" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
       </div>
@@ -59,7 +59,7 @@ const getBrandIcon = (brand) => {
     <!-- Card items -->
     <div v-else class="space-y-[12px]">
       <div v-for="(payment, index) in payments.data" :key="index"
-        :class="['bg-white rounded-[14px] p-[14px] desktop:p-[18px] border transition-all', payment.default ? 'border-[#095866] shadow-sm' : 'border-[#E9EBEC] hover:border-[#D7E1E4]']">
+        :class="['bg-white rounded-[12px] p-[14px] desktop:p-[18px] border transition-all', payment.default ? 'border-[#095866] shadow-sm' : 'border-[#E9EBEC] hover:border-[#D7E1E4]']">
         <div class="flex flex-col gap-[12px] tablet:flex-row tablet:items-center tablet:gap-[14px]">
           <!-- Brand icon -->
           <div :class="['w-[48px] h-[32px] rounded-[6px] flex items-center justify-center text-[0.6875rem] font-bold uppercase shrink-0', payment.default ? 'bg-[#095866] text-white' : 'bg-[#F0F0F0] text-[#404040]']">
@@ -111,7 +111,7 @@ const getBrandIcon = (brand) => {
   </template>
 
   <!-- Security note -->
-  <div class="mt-[20px] flex items-start gap-[10px] p-[12px] bg-[#F8F9FB] rounded-[16px]">
+  <div class="mt-[20px] flex items-start gap-[10px] p-[12px] bg-[#F8F9FB] rounded-[12px]">
     <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#737373" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="shrink-0 mt-[1px]"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
     <p class="text-[0.75rem] text-[#737373] leading-[1.5]">
       I dati delle carte sono gestiti in modo sicuro da Stripe. Non conserviamo mai i numeri completi delle tue carte.

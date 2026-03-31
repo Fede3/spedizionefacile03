@@ -57,7 +57,7 @@ const bandTableShared = computed(() => ({
 
 <template>
 	<!-- Banner: fasce non salvate nel DB -->
-	<div v-if="!bandsFromDb" class="bg-amber-50 rounded-[16px] p-[20px] border border-amber-200 mb-[24px]">
+	<div v-if="!bandsFromDb" class="bg-amber-50 rounded-[12px] p-[20px] border border-amber-200 mb-[24px]">
 		<div class="flex items-start gap-[12px]">
 			<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[24px] h-[24px] text-amber-600 shrink-0 mt-[2px]" fill="currentColor"><path d="M13,13H11V7H13M13,17H11V15H13M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z"/></svg>
 			<div>
@@ -108,7 +108,7 @@ const bandTableShared = computed(() => ({
 	</AdminBandTable>
 
 	<!-- Regole oltre 7a fascia -->
-	<div class="bg-white rounded-[20px] p-[16px] tablet:p-[20px] desktop:p-[28px] shadow-sm border border-[#E9EBEC] overflow-hidden">
+	<div class="bg-white rounded-[12px] p-[16px] tablet:p-[20px] desktop:p-[28px] shadow-sm border border-[#E9EBEC] overflow-hidden">
 		<div class="flex flex-wrap items-center justify-between gap-[12px] mb-[18px]">
 			<div>
 				<h2 class="text-[1.125rem] font-bold text-[#252B42] mb-[4px]">Regole oltre 7ª fascia</h2>
@@ -122,7 +122,7 @@ const bandTableShared = computed(() => ({
 		</div>
 
 		<div class="grid grid-cols-1 desktop:grid-cols-2 gap-[16px]">
-			<div class="space-y-[12px] p-[14px] rounded-[14px] border border-[#E9EBEC] bg-[#FAFBFC]">
+			<div class="space-y-[12px] p-[14px] rounded-[12px] border border-[#E9EBEC] bg-[#FAFBFC]">
 				<h3 class="text-[0.875rem] font-semibold text-[#252B42]">Scaglioni Peso</h3>
 				<div class="grid grid-cols-3 gap-[10px]">
 					<label class="text-[0.75rem] text-[#737373]">Start
@@ -138,7 +138,7 @@ const bandTableShared = computed(() => ({
 				<p class="text-[0.75rem] text-[#4F5D75]">Preview: {{ extraRuleExamples.firstWeightFrom }}-{{ extraRuleExamples.firstWeightTo }} / {{ extraRuleExamples.secondWeightFrom }}-{{ extraRuleExamples.secondWeightTo }}</p>
 			</div>
 
-			<div class="space-y-[12px] p-[14px] rounded-[14px] border border-[#E9EBEC] bg-[#FAFBFC]">
+			<div class="space-y-[12px] p-[14px] rounded-[12px] border border-[#E9EBEC] bg-[#FAFBFC]">
 				<h3 class="text-[0.875rem] font-semibold text-[#252B42]">Scaglioni Volume (m&sup3;)</h3>
 				<div class="grid grid-cols-3 gap-[10px]">
 					<label class="text-[0.75rem] text-[#737373]">Start
@@ -154,7 +154,7 @@ const bandTableShared = computed(() => ({
 				<p class="text-[0.75rem] text-[#4F5D75]">Preview: {{ extraRuleExamples.firstVolumeFrom.toFixed(3) }}-{{ extraRuleExamples.firstVolumeTo.toFixed(3) }} / {{ extraRuleExamples.secondVolumeFrom.toFixed(3) }}-{{ extraRuleExamples.secondVolumeTo.toFixed(3) }}</p>
 			</div>
 
-			<div class="space-y-[12px] p-[14px] rounded-[14px] border border-[#E9EBEC] bg-[#FAFBFC]">
+			<div class="space-y-[12px] p-[14px] rounded-[12px] border border-[#E9EBEC] bg-[#FAFBFC]">
 				<h3 class="text-[0.875rem] font-semibold text-[#252B42]">Incrementi oltre 7ª fascia</h3>
 				<div class="grid grid-cols-1 tablet:grid-cols-2 gap-[10px]">
 					<label class="text-[0.75rem] text-[#737373]">Base prezzo extra
@@ -180,7 +180,7 @@ const bandTableShared = computed(() => ({
 				</label>
 			</div>
 
-			<div class="p-[14px] rounded-[14px] border border-[#D8E9F0] bg-[#F4FAFC]">
+			<div class="p-[14px] rounded-[12px] border border-[#D8E9F0] bg-[#F4FAFC]">
 				<h3 class="text-[0.875rem] font-semibold text-[#095866] mb-[10px]">Casi rapidi</h3>
 				<div class="overflow-x-auto">
 					<table class="w-full min-w-[450px] text-[0.75rem]">
@@ -211,7 +211,7 @@ const bandTableShared = computed(() => ({
 	</div>
 
 	<!-- Supplementi CAP -->
-	<div class="bg-white rounded-[20px] p-[20px] tablet:p-[24px] desktop:p-[32px] shadow-sm border border-[#E9EBEC]">
+	<div class="bg-white rounded-[12px] p-[20px] tablet:p-[24px] desktop:p-[32px] shadow-sm border border-[#E9EBEC]">
 		<div class="flex flex-wrap items-center justify-between gap-[12px] mb-[14px]">
 			<div>
 				<h2 class="text-[1.125rem] font-bold text-[#252B42] mb-[4px]">Supplementi CAP</h2>

@@ -68,10 +68,10 @@ onMounted(() => { fetchWallet(); });
 
 			<!-- User movements modal -->
 			<div v-if="selectedUserId" class="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-[20px]" @click.self="closeUserMovements">
-				<div class="bg-white rounded-[20px] p-[28px] shadow-2xl max-w-[700px] w-full max-h-[80vh] overflow-y-auto">
+				<div class="bg-white rounded-[12px] p-[28px] shadow-2xl max-w-[700px] w-full max-h-[80vh] overflow-y-auto">
 					<div class="flex items-center justify-between mb-[24px]">
 						<h3 class="text-[1.125rem] font-bold text-[#252B42]">Movimenti di {{ selectedUserName }}</h3>
-						<button @click="closeUserMovements" class="w-[36px] h-[36px] flex items-center justify-center rounded-full bg-[#F0F0F0] hover:bg-[#E0E0E0] cursor-pointer">
+						<button @click="closeUserMovements" class="w-[36px] h-[36px] flex items-center justify-center rounded-full bg-[#F0F0F0] hover:bg-[#E0E0E0] cursor-pointer" aria-label="Chiudi movimenti">
 							<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[18px] h-[18px] text-[#404040]" fill="currentColor"><path d="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z"/></svg>
 						</button>
 					</div>
@@ -93,7 +93,7 @@ onMounted(() => { fetchWallet(); });
 				</div>
 			</div>
 
-			<div class="mb-[20px] rounded-[18px] border border-[#E9EBEC] bg-[#F8FAFB] p-[14px] tablet:p-[18px]">
+			<div class="mb-[20px] rounded-[12px] border border-[#E9EBEC] bg-[#F8FAFB] p-[14px] tablet:p-[18px]">
 				<div class="flex flex-col gap-[14px] desktop:flex-row desktop:items-center desktop:justify-between">
 					<div>
 						<p class="text-[0.75rem] font-semibold uppercase tracking-[0.6px] text-[#6B7280]">Toolbar finanze</p>
@@ -111,21 +111,21 @@ onMounted(() => { fetchWallet(); });
 			</div>
 
 			<div class="grid grid-cols-1 sm:grid-cols-3 gap-[12px] mb-[22px]">
-				<div class="bg-white rounded-[16px] p-[16px] tablet:p-[18px] border border-[#E9EBEC] shadow-sm">
+				<div class="bg-white rounded-[12px] p-[16px] tablet:p-[18px] border border-[#E9EBEC] shadow-sm">
 					<div class="flex items-center gap-[8px] mb-[8px]">
 						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[18px] h-[18px] text-[#252B42]" fill="currentColor"><path d="M12,4A4,4 0 0,1 16,8A4,4 0 0,1 12,12A4,4 0 0,1 8,8A4,4 0 0,1 12,4M12,14C16.42,14 20,15.79 20,18V20H4V18C4,15.79 7.58,14 12,14Z"/></svg>
 						<p class="text-[0.75rem] text-[#737373] uppercase tracking-[0.5px] font-medium">Utenti attivi</p>
 					</div>
 					<p class="text-[1.75rem] font-bold text-[#252B42]">{{ walletUsersCount }}</p>
 				</div>
-				<div class="bg-white rounded-[16px] p-[16px] tablet:p-[18px] border border-[#E9EBEC] shadow-sm">
+				<div class="bg-white rounded-[12px] p-[16px] tablet:p-[18px] border border-[#E9EBEC] shadow-sm">
 					<div class="flex items-center gap-[8px] mb-[8px]">
 						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[18px] h-[18px] text-[#095866]" fill="currentColor"><path d="M5,6H23V18H5V6M14,9A3,3 0 0,1 17,12A3,3 0 0,1 14,15A3,3 0 0,1 11,12A3,3 0 0,1 14,9M9,8A2,2 0 0,1 7,10V14A2,2 0 0,1 9,16H19A2,2 0 0,1 21,14V10A2,2 0 0,1 19,8H9M1,10H3V20H19V22H1V10Z"/></svg>
 						<p class="text-[0.75rem] text-[#737373] uppercase tracking-[0.5px] font-medium">Saldo totale</p>
 					</div>
 					<p class="text-[1.75rem] font-bold text-[#252B42]">&euro;{{ formatCurrency(totalWalletBalance) }}</p>
 				</div>
-				<div class="bg-white rounded-[16px] p-[16px] tablet:p-[18px] border border-[#E9EBEC] shadow-sm">
+				<div class="bg-white rounded-[12px] p-[16px] tablet:p-[18px] border border-[#E9EBEC] shadow-sm">
 					<div class="flex items-center gap-[8px] mb-[8px]">
 						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[18px] h-[18px] text-emerald-600" fill="currentColor"><path d="M3,6H21V18H3V6M12,9A3,3 0 0,1 15,12A3,3 0 0,1 12,15A3,3 0 0,1 9,12A3,3 0 0,1 12,9M7,8A2,2 0 0,1 5,10V14A2,2 0 0,1 7,16H17A2,2 0 0,1 19,14V10A2,2 0 0,1 17,8H7Z"/></svg>
 						<p class="text-[0.75rem] text-[#737373] uppercase tracking-[0.5px] font-medium">Commissioni residue</p>
@@ -134,7 +134,7 @@ onMounted(() => { fetchWallet(); });
 				</div>
 			</div>
 
-			<div class="bg-white rounded-[20px] p-[24px] desktop:p-[32px] shadow-sm border border-[#E9EBEC]">
+			<div class="bg-white rounded-[12px] p-[24px] desktop:p-[32px] shadow-sm border border-[#E9EBEC]">
 				<h2 class="text-[1.125rem] font-bold text-[#252B42] mb-[20px]">Utenti con movimenti</h2>
 				<div v-if="!walletOverview?.length" class="text-center py-[48px] text-[#737373]">
 					<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[40px] h-[40px] text-[#C8CCD0] mx-auto mb-[12px]" fill="currentColor"><path d="M5,6H23V18H5V6M14,9A3,3 0 0,1 17,12A3,3 0 0,1 14,15A3,3 0 0,1 11,12A3,3 0 0,1 14,9M9,8A2,2 0 0,1 7,10V14A2,2 0 0,1 9,16H19A2,2 0 0,1 21,14V10A2,2 0 0,1 19,8H9M1,10H3V20H19V22H1V10Z"/></svg>
@@ -142,7 +142,7 @@ onMounted(() => { fetchWallet(); });
 				</div>
 				<div v-else class="space-y-[12px]">
 					<div class="desktop:hidden grid grid-cols-1 tablet:grid-cols-2 gap-[12px]">
-						<div v-for="u in walletOverview" :key="u.id" class="rounded-[16px] border border-[#E9EBEC] bg-white p-[14px] shadow-sm">
+						<div v-for="u in walletOverview" :key="u.id" class="rounded-[12px] border border-[#E9EBEC] bg-white p-[14px] shadow-sm">
 							<div class="flex items-start justify-between gap-[12px]">
 								<div class="min-w-0">
 									<p class="text-[0.9375rem] font-semibold text-[#252B42] truncate">{{ u.name }}</p>

@@ -19,32 +19,32 @@ const emit = defineEmits(['close', 'download-label', 'toggle-pudo-selector', 'pu
 
 <template>
 	<div v-if="order" class="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-[12px] tablet:p-[20px]" @click.self="emit('close')">
-		<div class="bg-white rounded-[20px] p-[18px] tablet:p-[28px] shadow-2xl max-w-[750px] w-full max-h-[85vh] overflow-y-auto">
+		<div class="bg-white rounded-[12px] p-[18px] tablet:p-[28px] shadow-2xl max-w-[750px] w-full max-h-[85vh] overflow-y-auto">
 			<div class="mb-[20px] flex items-center justify-between gap-[12px] border-b border-[#EEF1F3] pb-[16px]">
 				<h3 class="text-[1.125rem] font-bold text-[#252B42]">Ordine #{{ order.id }}</h3>
-				<button @click="emit('close')" class="w-[36px] h-[36px] flex items-center justify-center rounded-full bg-[#F0F0F0] hover:bg-[#E0E0E0] cursor-pointer">
+				<button @click="emit('close')" class="w-[36px] h-[36px] flex items-center justify-center rounded-full bg-[#F0F0F0] hover:bg-[#E0E0E0] cursor-pointer" aria-label="Chiudi dettaglio ordine">
 					<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[18px] h-[18px] text-[#404040]" fill="currentColor"><path d="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z"/></svg>
 				</button>
 			</div>
 
 			<!-- Info cards -->
 			<div class="grid grid-cols-1 tablet:grid-cols-2 gap-[16px] mb-[20px]">
-				<div class="rounded-[16px] bg-[#F8FAFB] border border-[#E9EEF0] p-[16px]">
+				<div class="rounded-[12px] bg-[#F8FAFB] border border-[#E9EEF0] p-[16px]">
 					<p class="text-[0.75rem] text-[#737373] mb-[4px]">Utente</p>
 					<p class="text-[0.875rem] font-medium text-[#252B42]">{{ order.user?.name }} {{ order.user?.surname }}</p>
 					<p class="text-[0.8125rem] text-[#737373]">{{ order.user?.email }}</p>
 				</div>
-				<div class="rounded-[16px] bg-[#F8FAFB] border border-[#E9EEF0] p-[16px]">
+				<div class="rounded-[12px] bg-[#F8FAFB] border border-[#E9EEF0] p-[16px]">
 					<p class="text-[0.75rem] text-[#737373] mb-[4px]">Stato</p>
 					<span :class="['inline-flex items-center gap-[4px] px-[10px] py-[4px] rounded-full text-[0.75rem] font-medium', orderStatusConfig[order.status]?.bg, orderStatusConfig[order.status]?.text]">
 						{{ orderStatusConfig[order.status]?.label || order.status }}
 					</span>
 				</div>
-				<div class="rounded-[16px] bg-[#F8FAFB] border border-[#E9EEF0] p-[16px]">
+				<div class="rounded-[12px] bg-[#F8FAFB] border border-[#E9EEF0] p-[16px]">
 					<p class="text-[0.75rem] text-[#737373] mb-[4px]">Importo</p>
 					<p class="text-[1rem] font-bold text-[#252B42]">&euro;{{ formatCents(order.subtotal?.amount ?? order.subtotal) }}</p>
 				</div>
-				<div class="rounded-[16px] bg-[#F8FAFB] border border-[#E9EEF0] p-[16px]">
+				<div class="rounded-[12px] bg-[#F8FAFB] border border-[#E9EEF0] p-[16px]">
 					<p class="text-[0.75rem] text-[#737373] mb-[4px]">Data</p>
 					<p class="text-[0.875rem] text-[#404040]">{{ formatDate(order.created_at) }}</p>
 				</div>
@@ -106,7 +106,7 @@ const emit = defineEmits(['close', 'download-label', 'toggle-pudo-selector', 'pu
 			<div v-if="order.packages?.length" class="mb-[16px]">
 				<p class="text-[0.75rem] font-medium text-[#737373] mb-[8px] uppercase tracking-[0.5px]">Colli ({{ order.packages.length }})</p>
 				<div class="space-y-[6px]">
-					<div v-for="pkg in order.packages" :key="pkg.id" class="p-[12px] rounded-[14px] border border-[#E9EBEC] bg-[#FAFBFC] text-[0.8125rem]">
+					<div v-for="pkg in order.packages" :key="pkg.id" class="p-[12px] rounded-[12px] border border-[#E9EBEC] bg-[#FAFBFC] text-[0.8125rem]">
 						<span class="font-medium text-[#252B42]">{{ pkg.weight }}kg</span>
 						<span class="text-[#737373] ml-[8px]">{{ pkg.first_size }}x{{ pkg.second_size }}x{{ pkg.third_size }} cm</span>
 						<span v-if="pkg.service" class="text-[0.75rem] ml-[8px] px-[6px] py-[1px] bg-[#F0F0F0] rounded text-[#737373]">{{ pkg.service.service_type }}</span>
@@ -118,7 +118,7 @@ const emit = defineEmits(['close', 'download-label', 'toggle-pudo-selector', 'pu
 			<div v-if="order.transactions?.length">
 				<p class="text-[0.75rem] font-medium text-[#737373] mb-[8px] uppercase tracking-[0.5px]">Transazioni</p>
 				<div class="space-y-[6px]">
-					<div v-for="tx in order.transactions" :key="tx.id" class="flex items-center justify-between p-[12px] rounded-[14px] border border-[#E9EBEC] bg-[#FAFBFC] text-[0.8125rem]">
+					<div v-for="tx in order.transactions" :key="tx.id" class="flex items-center justify-between p-[12px] rounded-[12px] border border-[#E9EBEC] bg-[#FAFBFC] text-[0.8125rem]">
 						<div>
 							<span class="font-medium text-[#252B42]">{{ tx.type }}</span>
 							<span :class="['ml-[8px] px-[6px] py-[2px] rounded-full text-[0.6875rem]', tx.status === 'succeeded' ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700']">{{ tx.status }}</span>

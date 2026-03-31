@@ -46,7 +46,7 @@ definePageMeta({
 	<section class="min-h-[420px]">
 		<div class="my-container flex justify-center items-center h-full py-[40px] desktop:py-[60px]">
 			<!-- Stato di successo: messaggio chiaro con icona e prossimi passi -->
-			<div v-if="messageSuccess" class="w-full max-w-[460px] bg-white p-[32px] rounded-[20px] shadow-[0_14px_28px_rgba(20,37,48,0.06)] border border-[#E5EAEC] text-center">
+			<div v-if="messageSuccess" class="w-full max-w-[460px] bg-white p-[32px] rounded-[12px] shadow-[0_14px_28px_rgba(20,37,48,0.06)] border border-[#E5EAEC] text-center">
 				<div class="w-[56px] h-[56px] mx-auto mb-[16px] bg-emerald-100 rounded-full flex items-center justify-center">
 					<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
 				</div>
@@ -57,7 +57,7 @@ definePageMeta({
 				</NuxtLink>
 			</div>
 
-			<form v-else @submit.prevent="sendEmailResetPassword" class="w-full max-w-[460px] bg-white p-[32px] rounded-[20px] shadow-[0_14px_28px_rgba(20,37,48,0.06)] border border-[#E5EAEC] text-[#252B42]">
+			<form v-else @submit.prevent="sendEmailResetPassword" class="w-full max-w-[460px] bg-white p-[32px] rounded-[12px] shadow-[0_14px_28px_rgba(20,37,48,0.06)] border border-[#E5EAEC] text-[#252B42]">
 				<div class="w-[48px] h-[48px] mx-auto mb-[16px] bg-[#095866]/10 rounded-full flex items-center justify-center">
 					<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#095866" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
 				</div>

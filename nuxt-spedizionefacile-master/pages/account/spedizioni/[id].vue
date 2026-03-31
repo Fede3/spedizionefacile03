@@ -41,7 +41,7 @@ const {
 		<div class="my-container">
 			<!-- Loading -->
 			<div v-if="orderStatus === 'pending'" class="space-y-[16px]">
-				<div class="bg-white rounded-[16px] p-[32px] border border-[#E9EBEC] animate-pulse">
+				<div class="bg-white rounded-[12px] p-[32px] border border-[#E9EBEC] animate-pulse">
 					<div class="h-[24px] bg-gray-200 rounded w-[40%] mb-[16px]"></div>
 					<div class="h-[16px] bg-gray-200 rounded w-[60%] mb-[8px]"></div>
 					<div class="h-[16px] bg-gray-200 rounded w-[50%]"></div>
@@ -98,21 +98,21 @@ const {
 				</div>
 
 				<!-- Status & Summary -->
-				<div class="mb-[16px] rounded-[18px] border border-[#E9EBEC] bg-white p-[18px] tablet:p-[22px]">
+				<div class="mb-[16px] rounded-[12px] border border-[#E9EBEC] bg-white p-[18px] tablet:p-[22px]">
 					<div class="grid grid-cols-1 gap-[12px] tablet:grid-cols-2 desktop:grid-cols-4">
-						<div class="rounded-[14px] border border-[#E9EEF2] bg-[#FBFCFD] px-[14px] py-[12px]">
+						<div class="rounded-[12px] border border-[#E9EEF2] bg-[#FBFCFD] px-[14px] py-[12px]">
 							<p class="mb-[4px] text-[0.6875rem] font-bold uppercase tracking-[0.14em] text-[#7A8695]">Tratta</p>
 							<p class="text-[0.9375rem] font-semibold leading-[1.35] text-[#252B42]">{{ orderRouteLabel }}</p>
 						</div>
-						<div class="rounded-[14px] border border-[#E9EEF2] bg-white px-[14px] py-[12px]">
+						<div class="rounded-[12px] border border-[#E9EEF2] bg-white px-[14px] py-[12px]">
 							<p class="mb-[4px] text-[0.6875rem] font-bold uppercase tracking-[0.14em] text-[#7A8695]">Creato il</p>
 							<p class="text-[0.9375rem] font-semibold leading-[1.35] text-[#252B42]">{{ formatDate(orderData.created_at) }}</p>
 						</div>
-						<div class="rounded-[14px] border border-[#E9EEF2] bg-white px-[14px] py-[12px]">
+						<div class="rounded-[12px] border border-[#E9EEF2] bg-white px-[14px] py-[12px]">
 							<p class="mb-[4px] text-[0.6875rem] font-bold uppercase tracking-[0.14em] text-[#7A8695]">Totale</p>
 							<p class="text-[1rem] font-bold leading-[1.2] text-[#095866]">{{ orderSubtotalLabel }}</p>
 						</div>
-						<div class="rounded-[14px] border border-[#E9EEF2] bg-white px-[14px] py-[12px]">
+						<div class="rounded-[12px] border border-[#E9EEF2] bg-white px-[14px] py-[12px]">
 							<p class="mb-[4px] text-[0.6875rem] font-bold uppercase tracking-[0.14em] text-[#7A8695]">Pagamento</p>
 							<p class="text-[0.9375rem] font-semibold leading-[1.35] text-[#252B42]">{{ paymentMethodLabel(orderData.payment_method) }}</p>
 						</div>
@@ -171,7 +171,7 @@ const {
 			</template>
 
 			<!-- Not found -->
-			<div v-else class="bg-white rounded-[16px] p-[48px] border border-[#E9EBEC] text-center">
+			<div v-else class="bg-white rounded-[12px] p-[48px] border border-[#E9EBEC] text-center">
 				<p class="text-[1rem] text-[#737373]">Ordine non trovato.</p>
 				<NuxtLink to="/account/spedizioni" class="inline-flex items-center gap-[6px] mt-[16px] px-[20px] py-[10px] bg-[#095866] text-white rounded-[50px] font-semibold text-[0.875rem] hover:bg-[#074a56] transition">
 					<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>

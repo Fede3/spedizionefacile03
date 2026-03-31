@@ -64,11 +64,11 @@ const emit = defineEmits([
 				</div>
 			</div>
 
-			<p v-if="messageError?.email" class="text-red-500 text-[0.8125rem] mb-[12px] bg-red-50 p-[10px] rounded-[6px]">
+			<p v-if="messageError?.email" role="alert" class="text-red-500 text-[0.8125rem] mb-[12px] bg-red-50 p-[10px] rounded-[6px]">
 				{{ Array.isArray(messageError.email) ? messageError.email[0] : messageError.email }}
 			</p>
 
-			<p v-if="messageError?.message" class="text-red-500 text-[0.8125rem] mb-[12px] bg-red-50 p-[10px] rounded-[6px]">
+			<p v-if="messageError?.message" role="alert" class="text-red-500 text-[0.8125rem] mb-[12px] bg-red-50 p-[10px] rounded-[6px]">
 				{{ messageError.message }}
 			</p>
 

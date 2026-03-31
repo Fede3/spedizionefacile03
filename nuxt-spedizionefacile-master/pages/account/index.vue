@@ -131,13 +131,13 @@ onMounted(() => {
 						<div class="h-[30px] w-[240px] rounded-[12px] bg-[#EEF3F7] animate-pulse tablet:h-[36px] tablet:w-[320px]"></div>
 						<div class="mt-[8px] h-[16px] w-full max-w-[520px] rounded-[12px] bg-[#F2F5F8] animate-pulse"></div>
 					</div>
-					<div class="h-[42px] w-[96px] rounded-[14px] bg-[#EEF3F7] animate-pulse"></div>
+					<div class="h-[42px] w-[96px] rounded-[12px] bg-[#EEF3F7] animate-pulse"></div>
 				</div>
 				<div class="mt-[16px] grid grid-cols-1 gap-[8px] tablet:grid-cols-2 desktop:grid-cols-3">
 					<div
 						v-for="index in 3"
 						:key="`account-top-skeleton-${index}`"
-						class="h-[50px] rounded-[16px] bg-[#F2F5F8] animate-pulse"></div>
+						class="h-[50px] rounded-[12px] bg-[#F2F5F8] animate-pulse"></div>
 				</div>
 			</div>
 		</div>
@@ -149,7 +149,7 @@ onMounted(() => {
 				v-for="(section, sectionIndex) in visibleSections"
 				:key="sectionIndex"
 				:class="[
-					'mb-[26px] last:mb-0',
+					'mb-[24px] last:mb-0',
 					sectionIndex > 0 ? 'pt-[16px] desktop:pt-[18px]' : '',
 				]">
 				<div v-if="sectionIndex > 0" class="h-[2px] rounded-full mb-[14px] desktop:mb-[18px] bg-[#d7e6e9]"></div>
@@ -169,9 +169,9 @@ onMounted(() => {
 						<NuxtLink
 							:to="resolveAccountPageUrl(page.url)"
 							@click.prevent="openAccountSection(page.url)"
-							class="account-card flex h-full min-h-[104px] flex-col items-start text-left rounded-[18px] p-[16px] desktop:min-h-[112px] desktop:p-[18px] transition-[box-shadow,background-color,border-color] duration-200 group border cursor-pointer bg-white border-[#E9EBEC] shadow-[0_1px_3px_rgba(0,0,0,0.08)] hover:border-[#D7E1E4] hover:shadow-[0_10px_24px_rgba(37,43,66,0.1)]">
+							class="account-card flex h-full min-h-[104px] flex-col items-start text-left rounded-[12px] p-[16px] desktop:min-h-[112px] desktop:p-[18px] transition-[box-shadow,background-color,border-color] duration-200 group border cursor-pointer bg-white border-[#E9EBEC] shadow-[0_1px_3px_rgba(0,0,0,0.08)] hover:border-[#D7E1E4] hover:shadow-[0_10px_24px_rgba(37,43,66,0.1)]">
 								<div class="mb-[12px] flex items-start gap-[12px]">
-									<div :class="['flex h-[44px] w-[44px] shrink-0 items-center justify-center rounded-[14px]', page.iconBg]">
+									<div :class="['flex h-[44px] w-[44px] shrink-0 items-center justify-center rounded-[12px]', page.iconBg]">
 										<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="h-[22px] w-[22px]" :fill="page.iconColor" v-html="cardIcons[page.iconKey]"></svg>
 									</div>
 									<h3 class="pt-[2px] text-[0.9rem] desktop:text-[0.98rem] font-bold leading-[1.2] tracking-[0.1px] transition-colors text-[#252B42] group-hover:text-[#095866]">

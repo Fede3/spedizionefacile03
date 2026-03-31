@@ -40,10 +40,22 @@ class BrtController extends Controller
             return response()->json(['error' => 'Spedizione BRT già creata per questo ordine.', 'parcel_id' => $order->brt_parcel_id, 'tracking_url' => $order->brt_tracking_url], 409);
         }
 
-        $result = $this->shipment->createShipment($order, [
+        $options = [
             'is_cod' => $request->boolean('is_cod'), 'cod_amount' => $request->cod_amount,
             'pudo_id' => $request->pudo_id, 'notes' => $request->notes,
-        ]);
+        ];
+
+        $result = null;
+        for ($attempt = 1; $attempt <= 3; $attempt++) {
+            try {
+                $result = $this->shipment->createShipment($order, $options);
+                if ($result['success']) break;
+            } catch (\Exception $e) {
+                Log::warning("BRT manual createShipment attempt {$attempt}/3 failed", ['order_id' => $order->id, 'error' => $e->getMessage()]);
+                $result = ['success' => false, 'error' => $e->getMessage()];
+            }
+            if ($attempt < 3) sleep(1);
+        }
 
         if (!$result['success']) {
             return response()->json(['error' => $result['error']], 502);
