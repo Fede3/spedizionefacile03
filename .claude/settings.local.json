@@ -130,7 +130,10 @@
       "Bash(grep -oP '\\(?<=class=\"\"\"\"\\)[^\"\"\"\"]+' pages/la-tua-spedizione/[step].vue)",
       "Bash(grep -v '^$')",
       "Bash(grep -oE 'class=\"\"\"\"[^\"\"\"\"]*\"\"\"\"' pages/la-tua-spedizione/[step].vue)",
-      "Bash(find laravel-spedizionefacile-main/app -name *.php -exec wc -l {} +)"
+      "Bash(find laravel-spedizionefacile-main/app -name *.php -exec wc -l {} +)",
+      "Bash(wc -l nuxt-spedizionefacile-master/components/shipment/Step*.vue)",
+      "Bash(node /tmp/rewrite-step.js)",
+      "Read(//c/Users/Feder/Desktop/spedizionefacile/.claude/worktrees/sweet-wu/nuxt-spedizionefacile-master/**)"
     ]
   }
 }

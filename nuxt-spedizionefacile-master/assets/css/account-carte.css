@@ -1,0 +1,13 @@
+/* Styles for account/carte.vue Stripe fields */
+.account-carte-stripe-field {
+  background-color: #f8f9fb;
+  padding: 12px 16px;
+  border: 1px solid #e9ebec;
+  border-radius: 12px;
+  width: 100%;
+  transition: border-color 0.2s;
+}
+
+.account-carte-stripe-field:focus-within {
+  border-color: #095866;
+}

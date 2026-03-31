@@ -91,6 +91,9 @@ export default defineNuxtConfig({
     '~/assets/css/recensioni.css',
     '~/assets/css/faq.css',
     '~/assets/css/servizi.css',
+    '~/assets/css/navbar.css',
+    '~/assets/css/account-carte.css',
+    '~/assets/css/contatti.css',
   ],
 
   app: {
