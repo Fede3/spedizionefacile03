@@ -1,6 +1,8 @@
 <!--
   FILE: components/shipment/StepServicesGrid.vue
-  SCOPO: Griglia servizi (featured + regolari) + contenuto pacco + notifiche — estratta da [step].vue.
+  SCOPO: Griglia servizi (featured + regolari) + contenuto pacco + notifiche.
+  Featured card delegata a ShipmentServiceFeaturedCard.vue.
+  Contenuto/notifiche delegati a ShipmentServiceContentNotifications.vue.
 -->
 <script setup>
 const props = defineProps({
@@ -64,69 +66,12 @@ const emit = defineEmits([
 			<div class="w-full mx-auto">
 				<div class="w-full">
 					<!-- Servizio "Senza etichetta" -->
-					<div v-if="featuredService">
-						<article
-							class="senza-etichetta-card service-card-tile service-card-tile--featured sf-card no-radius"
-							:class="{
-								'sf-card--selected': featuredService.isSelected,
-								'is-selected': featuredService.isSelected,
-								'is-idle': !featuredService.isSelected,
-							}">
-							<div class="service-card-tile__body-hit no-radius">
-								<div class="service-card-tile__top">
-									<div
-										class="service-card-tile__icon-shell sf-icon-shell"
-										:class="{ 'service-card-tile__icon-shell--selected': featuredService.isSelected }">
-										<div
-											class="service-card-tile__icon"
-											:style="{
-												'--service-icon-bg': 'url(/img/quote/second-step/no-label.png)',
-												'--service-icon-width': '28px',
-												'--service-icon-height': '24px',
-												'--service-icon-filter': featuredService.isSelected ? serviceIconFilterActive : serviceIconFilterIdle,
-											}"></div>
-									</div>
-									<span
-										class="service-card-tile__price"
-										:class="{ 'service-card-tile__price--selected': featuredService.isSelected }">
-										{{ featuredService.currentPriceLabel }}
-									</span>
-								</div>
-								<div class="service-card-tile__title-row">
-									<h3 class="service-card-tile__title">Senza Etichetta</h3>
-									<span class="service-card-tile__badge">
-										<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-											<path d="m12 3 1.8 4.2L18 9l-4.2 1.8L12 15l-1.8-4.2L6 9l4.2-1.8z" />
-										</svg>
-										Consigliato
-									</span>
-								</div>
-								<p class="service-card-tile__description">Etichetta applicata al ritiro.</p>
-							</div>
-							<div class="service-card-tile__footer-row">
-								<div class="service-card-tile__state-pill service-card-tile__state-pill--accent">
-									<span class="service-card-tile__state-dot"></span>
-									<span>Pronto subito</span>
-								</div>
-								<div class="service-card-tile__controls">
-									<button
-										type="button"
-										class="service-card-tile__footer no-radius"
-										:aria-label="featuredService.isSelected ? 'Disattiva Senza Etichetta' : 'Attiva Senza Etichetta'"
-										@click.stop.prevent="$emit('toggle-featured-service')">
-										<span class="service-card-tile__switch sf-toggle" :class="{ 'is-active': featuredService.isSelected }">
-											<span class="service-card-tile__switch-thumb sf-toggle__thumb"></span>
-										</span>
-										<span
-											class="service-card-tile__switch-label"
-											:class="{ 'service-card-tile__switch-label--selected': featuredService.isSelected }">
-											{{ featuredService.isSelected ? 'Attivo' : 'Non attivo' }}
-										</span>
-									</button>
-								</div>
-							</div>
-						</article>
-					</div>
+					<ShipmentServiceFeaturedCard
+						v-if="featuredService"
+						:featured-service="featuredService"
+						:service-icon-filter-idle="serviceIconFilterIdle"
+						:service-icon-filter-active="serviceIconFilterActive"
+						@toggle="$emit('toggle-featured-service')" />
 
 					<!-- Servizi regolari -->
 					<div class="grid grid-cols-1 tablet:grid-cols-2 desktop:grid-cols-3 gap-[16px]">
@@ -230,58 +175,28 @@ const emit = defineEmits([
 											<div class="service-inline-field">
 												<label class="service-inline-field__label" :for="`contrassegno-importo-${serviceIndex}`">Importo</label>
 												<div class="service-inline-field__input-shell">
-													<input
-														:id="`contrassegno-importo-${serviceIndex}`"
-														v-model="serviceData.contrassegno.importo"
-														type="text"
-														inputmode="decimal"
-														autocomplete="off"
-														class="service-inline-field__input"
-														placeholder="0,00"
-														@input="serviceData.contrassegno.importo = normalizeCurrencyInput($event.target.value); serviceCardErrors.contrassegnoImporto = ''" />
-													<span class="service-inline-field__suffix">€</span>
+													<input :id="`contrassegno-importo-${serviceIndex}`" v-model="serviceData.contrassegno.importo" type="text" inputmode="decimal" autocomplete="off" class="service-inline-field__input" placeholder="0,00" @input="serviceData.contrassegno.importo = normalizeCurrencyInput($event.target.value); serviceCardErrors.contrassegnoImporto = ''" />
+													<span class="service-inline-field__suffix">&euro;</span>
 												</div>
 												<p v-if="serviceCardErrors.contrassegnoImporto" class="service-inline-field__error">{{ serviceCardErrors.contrassegnoImporto }}</p>
 											</div>
 											<div v-if="requiresContrassegnoDettaglio" class="service-inline-field">
 												<label class="service-inline-field__label" :for="`contrassegno-iban-${serviceIndex}`">IBAN</label>
-												<input
-													:id="`contrassegno-iban-${serviceIndex}`"
-													v-model="serviceData.contrassegno.dettaglio_rimborso"
-													type="text"
-													class="service-inline-field__input"
-													placeholder="IT60X054281110..."
-													@input="serviceCardErrors.contrassegnoDettaglio = ''" />
+												<input :id="`contrassegno-iban-${serviceIndex}`" v-model="serviceData.contrassegno.dettaglio_rimborso" type="text" class="service-inline-field__input" placeholder="IT60X054281110..." @input="serviceCardErrors.contrassegnoDettaglio = ''" />
 												<p v-if="serviceCardErrors.contrassegnoDettaglio" class="service-inline-field__error">{{ serviceCardErrors.contrassegnoDettaglio }}</p>
 											</div>
 										</div>
 										<div class="service-inline-choice-block">
 											<span class="service-inline-field__label">Incasso</span>
-											<div class="service-inline-choice-wrap" role="group" aria-label="Modalità incasso contrassegno">
-												<button
-													v-for="option in contrassegnoIncassoOptions"
-													:key="option.value"
-													type="button"
-													class="service-inline-choice"
-													:class="{ 'is-active': serviceData.contrassegno.modalita_incasso === option.value }"
-													@click="serviceData.contrassegno.modalita_incasso = option.value; serviceCardErrors.contrassegnoIncasso = ''">
-													{{ option.label }}
-												</button>
+											<div class="service-inline-choice-wrap" role="group" aria-label="Modalita incasso contrassegno">
+												<button v-for="option in contrassegnoIncassoOptions" :key="option.value" type="button" class="service-inline-choice" :class="{ 'is-active': serviceData.contrassegno.modalita_incasso === option.value }" @click="serviceData.contrassegno.modalita_incasso = option.value; serviceCardErrors.contrassegnoIncasso = ''">{{ option.label }}</button>
 											</div>
 											<p v-if="serviceCardErrors.contrassegnoIncasso" class="service-inline-field__error">{{ serviceCardErrors.contrassegnoIncasso }}</p>
 										</div>
 										<div class="service-inline-choice-block">
 											<span class="service-inline-field__label">Rimborso</span>
-											<div class="service-inline-choice-wrap" role="group" aria-label="Modalità rimborso contrassegno">
-												<button
-													v-for="option in contrassegnoRimborsoOptions"
-													:key="option.value"
-													type="button"
-													class="service-inline-choice"
-													:class="{ 'is-active': serviceData.contrassegno.modalita_rimborso === option.value }"
-													@click="serviceData.contrassegno.modalita_rimborso = option.value; serviceCardErrors.contrassegnoRimborso = ''">
-													{{ option.label }}
-												</button>
+											<div class="service-inline-choice-wrap" role="group" aria-label="Modalita rimborso contrassegno">
+												<button v-for="option in contrassegnoRimborsoOptions" :key="option.value" type="button" class="service-inline-choice" :class="{ 'is-active': serviceData.contrassegno.modalita_rimborso === option.value }" @click="serviceData.contrassegno.modalita_rimborso = option.value; serviceCardErrors.contrassegnoRimborso = ''">{{ option.label }}</button>
 											</div>
 											<p v-if="serviceCardErrors.contrassegnoRimborso" class="service-inline-field__error">{{ serviceCardErrors.contrassegnoRimborso }}</p>
 										</div>
@@ -290,51 +205,22 @@ const emit = defineEmits([
 									<!-- Assicurazione -->
 									<div v-else-if="service.name === 'Assicurazione'" class="service-inline-panel">
 										<div class="service-inline-insurance-list">
-											<div
-												v-for="(pack, indexPopup) in insurancePackages"
-												:key="`${service.name}-${indexPopup}`"
-												class="service-inline-insurance-card">
+											<div v-for="(pack, indexPopup) in insurancePackages" :key="`${service.name}-${indexPopup}`" class="service-inline-insurance-card">
 												<div class="service-inline-insurance-card__head">
 													<span class="service-inline-insurance-card__title">Collo {{ indexPopup + 1 }}</span>
-													<span class="service-inline-insurance-card__meta">
-														{{ pack.weight || '0' }} kg · {{ pack.first_size || '0' }}×{{ pack.second_size || '0' }}×{{ pack.third_size || '0' }} cm
-													</span>
+													<span class="service-inline-insurance-card__meta">{{ pack.weight || '0' }} kg · {{ pack.first_size || '0' }}x{{ pack.second_size || '0' }}x{{ pack.third_size || '0' }} cm</span>
 												</div>
 												<div class="service-inline-field__input-shell">
-													<input
-														:id="`assicurazione-${indexPopup}`"
-														v-model="serviceData.assicurazione[indexPopup]"
-														type="text"
-														inputmode="decimal"
-														autocomplete="off"
-														class="service-inline-field__input"
-														placeholder="Valore assicurato"
-														@input="serviceData.assicurazione[indexPopup] = normalizeCurrencyInput($event.target.value); serviceCardErrors.assicurazione[indexPopup] = ''" />
-													<span class="service-inline-field__suffix">€</span>
+													<input :id="`assicurazione-${indexPopup}`" v-model="serviceData.assicurazione[indexPopup]" type="text" inputmode="decimal" autocomplete="off" class="service-inline-field__input" placeholder="Valore assicurato" @input="serviceData.assicurazione[indexPopup] = normalizeCurrencyInput($event.target.value); serviceCardErrors.assicurazione[indexPopup] = ''" />
+													<span class="service-inline-field__suffix">&euro;</span>
 												</div>
 												<p v-if="serviceCardErrors.assicurazione[indexPopup]" class="service-inline-field__error">{{ serviceCardErrors.assicurazione[indexPopup] }}</p>
 											</div>
 										</div>
 									</div>
-									<div
-										v-if="canConfigureService(service)"
-										class="service-inline-panel__actions"
-										:class="{ 'service-inline-panel__actions--split': service.isSelected }">
-										<button
-											v-if="service.isSelected"
-											type="button"
-											class="btn-secondary btn-compact service-inline-panel__dismiss"
-											@click.stop.prevent="$emit('toggle-regular-service', service)">
-											Disattiva
-										</button>
-										<button
-											v-if="!service.isSelected"
-											type="button"
-											class="btn-primary btn-compact service-inline-panel__submit"
-											:disabled="!canActivateConfiguredService(service)"
-											@click.stop.prevent="$emit('activate-configured-service', service)">
-											Attiva
-										</button>
+									<div v-if="canConfigureService(service)" class="service-inline-panel__actions" :class="{ 'service-inline-panel__actions--split': service.isSelected }">
+										<button v-if="service.isSelected" type="button" class="btn-secondary btn-compact service-inline-panel__dismiss" @click.stop.prevent="$emit('toggle-regular-service', service)">Disattiva</button>
+										<button v-if="!service.isSelected" type="button" class="btn-primary btn-compact service-inline-panel__submit" :disabled="!canActivateConfiguredService(service)" @click.stop.prevent="$emit('activate-configured-service', service)">Attiva</button>
 									</div>
 								</div>
 							</transition>
@@ -342,86 +228,15 @@ const emit = defineEmits([
 					</div>
 
 					<!-- Contenuto pacco + notifiche -->
-					<div class="service-support-grid">
-						<div class="service-support-field">
-							<div class="service-support-field__label-row">
-								<label for="content_description" class="service-support-field__label">
-									Contenuto del pacco<span class="text-red-500 ml-[2px]">*</span>
-								</label>
-								<div class="relative group">
-									<button type="button" class="service-support-field__help" aria-label="Esempi di contenuto del pacco">
-										?
-									</button>
-									<div class="service-support-field__tooltip">
-										<p class="font-semibold mb-[6px]">Esempi di contenuto:</p>
-										<ul class="list-disc list-inside space-y-[2px] text-[0.75rem]">
-											<li>Elettronica</li>
-											<li>Abbigliamento</li>
-											<li>Documenti</li>
-											<li>Articoli per la casa</li>
-											<li>Prodotti confezionati</li>
-										</ul>
-										<div class="service-support-field__tooltip-arrow"></div>
-									</div>
-								</div>
-							</div>
-							<p v-if="contentError" class="field-gentle-error mb-[8px]">
-								{{ contentFieldHint }}
-							</p>
-							<input
-								type="text"
-								id="content_description"
-								:value="contentDescription"
-								@input="$emit('update:content-description', $event.target.value); $emit('update:content-error', null)"
-								placeholder="Es. Elettronica, Abbigliamento, Documenti..."
-								maxlength="255"
-								required
-								:class="[
-									'service-support-field__input',
-									contentError ? 'input-preventivo-step-2--warning border-2' : ''
-								]" />
-						</div>
-
-						<div class="service-support-field">
-							<label class="service-support-field__label" for="notification-toggle">Notifiche spedizione</label>
-							<div
-								class="service-support-field__notification-card"
-								:class="{ 'is-active': smsEmailNotification }">
-								<div class="service-support-field__notification-main">
-									<div class="service-support-field__notification-icon sf-icon-shell">
-										<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-											<path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
-											<path d="M13.73 21a2 2 0 0 1-3.46 0"/>
-										</svg>
-									</div>
-									<div class="service-support-field__notification-copy-wrap">
-										<div class="service-support-field__notification-headline">
-											<p class="service-support-field__notification-copy">SMS ed Email dal corriere</p>
-											<span class="service-support-field__notification-price">{{ notificationPriceLabel }}</span>
-										</div>
-									</div>
-								</div>
-
-								<div class="service-support-field__notification-side">
-									<span class="service-support-field__switch-state" :class="{ 'is-active': smsEmailNotification }">
-										{{ smsEmailNotification ? 'Attivo' : 'Non attivo' }}
-									</span>
-									<label class="service-support-field__switch" @click.stop>
-										<input
-											id="notification-toggle"
-											type="checkbox"
-											:checked="smsEmailNotification"
-											@change="$emit('update:sms-email-notification', $event.target.checked)"
-											class="opacity-0 w-0 h-0 peer"
-											@click.stop
-											aria-label="Attiva notifiche SMS/Email" />
-										<span class="service-support-field__switch-track sf-toggle"></span>
-										<span class="service-support-field__switch-thumb sf-toggle__thumb"></span>
-									</label>
-								</div>
-							</div>
-						</div>
-					</div>
+					<ShipmentServiceContentNotifications
+						:content-description="contentDescription"
+						:content-error="contentError"
+						:content-field-hint="contentFieldHint"
+						:sms-email-notification="smsEmailNotification"
+						:notification-price-label="notificationPriceLabel"
+						@update:content-description="$emit('update:content-description', $event)"
+						@update:content-error="$emit('update:content-error', $event)"
+						@update:sms-email-notification="$emit('update:sms-email-notification', $event)" />
 				</div>
 			</div>
 		</div>

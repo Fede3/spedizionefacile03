@@ -99,6 +99,7 @@ export default defineNuxtConfig({
     '~/assets/css/chi-siamo.css',
     '~/assets/css/homepage-step.css',
     '~/assets/css/map-pudo.css',
+    '~/assets/css/admin-prezzi.css',
   ],
 
   app: {
