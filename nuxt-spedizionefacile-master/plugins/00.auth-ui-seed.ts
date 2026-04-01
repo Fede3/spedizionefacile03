@@ -6,8 +6,7 @@ import {
 } from '~/utils/authUiState'
 
 export default defineNuxtPlugin(() => {
-	const authCookie = useCookie<AuthUiSnapshot>(AUTH_UI_COOKIE, {
-		default: createEmptySnapshot,
+	const authCookie = useCookie<AuthUiSnapshot | undefined>(AUTH_UI_COOKIE, {
 		sameSite: 'lax',
 		path: '/',
 	})

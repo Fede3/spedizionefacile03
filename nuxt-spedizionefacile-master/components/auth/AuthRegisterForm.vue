@@ -45,13 +45,13 @@ const emit = defineEmits([
 
 		<div class="bg-white p-[16px] tablet:p-[28px] rounded-[12px] shadow-[0_2px_8px_rgba(0,0,0,0.06)] border border-[#E9EBEC]">
 			<!-- Tipo account: Privato o Azienda -->
-			<div class="flex items-center gap-[12px] mb-[20px]">
+			<div class="auth-register-segmented mb-[20px]">
 				<label
 					:class="[
-						'flex-1 flex items-center justify-center gap-[6px] px-[16px] py-[12px] rounded-[50px] cursor-pointer border transition-[background-color,color,border-color] text-[0.9375rem] font-medium text-center',
+						'auth-register-segmented__option',
 						registerForm.user_type === 'privato'
-							? 'bg-[#095866] text-white border-[#095866] shadow-sm'
-							: 'bg-white text-[#252B42] border-[#E9EBEC] hover:border-[#095866]',
+							? 'auth-register-segmented__option--active'
+							: '',
 					]">
 					<input type="radio" value="privato" v-model="registerForm.user_type" class="sr-only" />
 					<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[18px] h-[18px]" fill="currentColor"><path d="M12,4A4,4 0 0,1 16,8A4,4 0 0,1 12,12A4,4 0 0,1 8,8A4,4 0 0,1 12,4M12,14C16.42,14 20,15.79 20,18V20H4V18C4,15.79 7.58,14 12,14Z"/></svg>
@@ -59,10 +59,10 @@ const emit = defineEmits([
 				</label>
 				<label
 					:class="[
-						'flex-1 flex items-center justify-center gap-[6px] px-[16px] py-[12px] rounded-[50px] cursor-pointer border transition-[background-color,color,border-color] text-[0.9375rem] font-medium text-center',
+						'auth-register-segmented__option',
 						registerForm.user_type === 'commerciante'
-							? 'bg-[#095866] text-white border-[#095866] shadow-sm'
-							: 'bg-white text-[#252B42] border-[#E9EBEC] hover:border-[#095866]',
+							? 'auth-register-segmented__option--active'
+							: '',
 					]">
 					<input type="radio" value="commerciante" v-model="registerForm.user_type" class="sr-only" />
 					<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[18px] h-[18px]" fill="currentColor"><path d="M18,15H16V17H18M18,11H16V13H18M20,19H12V17H14V15H12V13H14V11H12V9H20M10,7H8V5H10M10,11H8V9H10M10,15H8V13H10M10,19H8V17H10M6,7H4V5H6M6,11H4V9H6M6,15H4V13H6M6,19H4V17H6M12,7V3H2V21H22V7H12Z"/></svg>

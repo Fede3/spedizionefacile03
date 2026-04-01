@@ -544,6 +544,28 @@ const getExtraBandInfo = (cents) => ({
 export const usePriceBands = () => {
 	const sanctum = useSanctumClient();
 
+	// In SSR il modulo resta vivo tra richieste in dev.
+	// Ripartiamo sempre dal fallback per evitare che il server riusi
+	// listini/promozioni caricati in una richiesta precedente e sporchi l'hydration.
+	if (import.meta.server) {
+		priceBands.value = {
+			weight: [...FALLBACK_WEIGHT_BANDS],
+			volume: [...FALLBACK_VOLUME_BANDS],
+			extra_rules: { ...DEFAULT_EXTRA_RULES },
+			supplements: [...DEFAULT_SUPPLEMENTS],
+			europe: { ...DEFAULT_EUROPE_PRICING },
+			service_pricing: normalizeKeyedPricingGroup({}, DEFAULT_SERVICE_PRICING),
+			automatic_supplements: normalizeKeyedPricingGroup({}, DEFAULT_AUTOMATIC_SUPPLEMENTS),
+			operational_fees: normalizeKeyedPricingGroup({}, DEFAULT_OPERATIONAL_FEES),
+			version: null,
+		};
+		promoSettings.value = { ...DEFAULT_PROMO };
+		loading.value = false;
+		loaded.value = false;
+		lastFetchTime = 0;
+		pendingFetchPromise = null;
+	}
+
 	const fetchFromApi = async () => {
 		loading.value = true;
 		try {

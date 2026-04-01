@@ -81,21 +81,21 @@ defineEmits([
 				</div>
 
 				<div class="service-support-field__notification-side">
-					<span class="service-support-field__switch-state" :class="{ 'is-active': smsEmailNotification }">
-						{{ smsEmailNotification ? 'Attivo' : 'Non attivo' }}
-					</span>
-					<label class="service-support-field__switch" @click.stop>
-						<input
-							id="notification-toggle"
-							type="checkbox"
-							:checked="smsEmailNotification"
-							@change="$emit('update:sms-email-notification', $event.target.checked)"
-							class="opacity-0 w-0 h-0 peer"
-							@click.stop
-							aria-label="Attiva notifiche SMS/Email" />
-						<span class="service-support-field__switch-track sf-toggle"></span>
-						<span class="service-support-field__switch-thumb sf-toggle__thumb"></span>
-					</label>
+					<div
+						v-if="smsEmailNotification"
+						class="service-card-tile__state-pill service-card-tile__state-pill--selected service-support-field__notification-state">
+						<span class="service-card-tile__state-dot"></span>
+						<span>Attivo</span>
+					</div>
+					<button
+						id="notification-toggle"
+						type="button"
+						class="service-card-tile__action"
+						:class="smsEmailNotification ? 'service-card-tile__action--neutral' : 'service-card-tile__action--primary btn-secondary'"
+						:aria-label="smsEmailNotification ? 'Rimuovi notifiche SMS ed email' : 'Attiva notifiche SMS ed email'"
+						@click="$emit('update:sms-email-notification', !smsEmailNotification)">
+						{{ smsEmailNotification ? 'Rimuovi' : 'Attiva' }}
+					</button>
 				</div>
 			</div>
 		</div>

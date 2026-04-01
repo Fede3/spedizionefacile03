@@ -161,7 +161,7 @@ class GenerateBrtLabel
                 'brt_numeric_sender_reference' => $result['numeric_sender_reference'],
                 'brt_tracking_url' => $result['tracking_url'],
                 'brt_label_base64' => $result['label_base64'],
-                'brt_all_labels' => ! empty($allLabels) && count($allLabels) > 1 ? $allLabels : null,
+                'brt_all_labels' => ! empty($allLabels) ? $allLabels : null,
                 'brt_tracking_number' => $result['tracking_number'] ?? null,
                 'brt_parcel_number_to' => $result['parcel_number_to'] ?? null,
                 'brt_departure_depot' => $result['departure_depot'] ?? null,

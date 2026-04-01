@@ -8,17 +8,35 @@
  *
  * DOVE SI USA: components/Preventivo.vue
  */
-export const usePreventivo = async () => {
+export const usePreventivo = () => {
 	// --- DIPENDENZE E STATO INIZIALE ---
 	const userStore = useUserStore();
 	const route = useRoute();
 	const isHomepageLikeRoute = computed(() => route.path === '/' || route.path === '/preview/home-hero');
+	let autoQuoteTimer = null;
+	let pendingQuotePromise = null;
+	let pendingQuoteSignature = "";
+	let pendingQuoteSilent = false;
+	let pendingQuoteRequestId = 0;
+	let latestQuoteRequestId = 0;
 
 	const formRef = ref(null);
 
-	// Carica fasce prezzo dinamiche dall'API (con fallback hardcoded)
+	onBeforeUnmount(() => {
+		if (autoQuoteTimer) {
+			clearTimeout(autoQuoteTimer);
+		}
+	});
+
+	// Carica le fasce prezzo solo dopo il mount client:
+	// in questo modo SSR e primo render client partono dalla stessa base
+	// ed evitiamo mismatch di hydration su opzioni/label promozionali dinamiche.
 	const { loadPriceBands, getWeightPrice, getVolumePrice, getCapSupplement, getEuropeQuote, priceBands, promoSettings } = usePriceBands();
-	await loadPriceBands();
+	onMounted(() => {
+		loadPriceBands().catch(() => {
+			// Warning already handled inside usePriceBands
+		});
+	});
 
 	const sanctum = useSanctumClient();
 	const locationSearch = useLocationSearch(sanctum);
@@ -130,12 +148,6 @@ export const usePreventivo = async () => {
 	const isSyncingQuote = ref(false);
 	const isAdvancingToServices = ref(false);
 	const lastQuotedSignature = ref("");
-	let autoQuoteTimer = null;
-	let pendingQuotePromise = null;
-	let pendingQuoteSignature = "";
-	let pendingQuoteSilent = false;
-	let pendingQuoteRequestId = 0;
-	let latestQuoteRequestId = 0;
 
 	const {
 		buildQuotePayloadSnapshot,
@@ -790,12 +802,6 @@ export const usePreventivo = async () => {
 		lastQuotedSignature.value = "";
 		ensurePrimaryPackage();
 	};
-
-	onBeforeUnmount(() => {
-		if (autoQuoteTimer) {
-			clearTimeout(autoQuoteTimer);
-		}
-	});
 
 	return {
 		// Refs

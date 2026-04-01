@@ -25,8 +25,6 @@ use Illuminate\Http\Request;
 
 class CartController extends Controller
 {
-    use Traits\NormalizesServiceData;
-
     // ── Helpers ──────────────────────────────────────────────────
 
     private function loadCartPackages(int $userId)

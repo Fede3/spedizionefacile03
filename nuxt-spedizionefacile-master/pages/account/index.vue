@@ -28,13 +28,11 @@ definePageMeta({
 const { user, logout } = useSanctumAuth();
 const { clearSnapshot } = useAuthUiSnapshotPersistence();
 const { uiSnapshot } = useAuthUiState();
-const accountUiReady = ref(false);
 
 // Per la shell account usiamo lo snapshot auth come sorgente UI primaria:
 // e' gia' allineato tra SSR e client e riduce i mismatch in hydration.
 const effectiveRole = computed(() => uiSnapshot.value.role || user.value?.role || "Cliente");
-const displayName = computed(() => uiSnapshot.value.name || user.value?.name || "Cliente");
-const displaySurname = computed(() => uiSnapshot.value.surname || user.value?.surname || "");
+const displayName = computed(() => uiSnapshot.value.name || "Cliente");
 const isAdmin = computed(() => effectiveRole.value === "Admin");
 const isPro = computed(() => effectiveRole.value === "Partner Pro");
 const cardIcons = accountCardIcons;
@@ -77,17 +75,13 @@ const handleLogout = async () => {
 		isLoggingOut.value = false;
 	}
 };
-
-onMounted(() => {
-	accountUiReady.value = true;
-});
 </script>
 
 <template>
-	<section v-if="accountUiReady" class="bg-[#f6f9fb] py-[8px] tablet:py-[10px] desktop:py-[12px]">
+	<section class="bg-[#f6f9fb] py-[8px] tablet:py-[10px] desktop:py-[12px]">
 		<div class="my-container">
 			<AccountPageHeader
-				:title="`${displayName} ${displaySurname}`.trim()"
+				:title="displayName"
 				description="">
 				<template #actions>
 					<button
@@ -122,28 +116,7 @@ onMounted(() => {
 		</div>
 	</section>
 
-	<section v-else class="bg-[#f6f9fb] py-[8px] tablet:py-[10px] desktop:py-[12px]">
-		<div class="my-container">
-			<div class="rounded-[22px] border border-[#E3EBF0] bg-white px-[14px] py-[16px] shadow-[0_12px_30px_rgba(9,88,102,0.06)] tablet:px-[20px] tablet:py-[20px] desktop:px-[24px] desktop:py-[22px]">
-				<div class="flex flex-col gap-[14px] desktop:flex-row desktop:items-center desktop:justify-between">
-					<div class="min-w-0 flex-1">
-						<div class="mb-[8px] h-[24px] w-[140px] rounded-full bg-[#EEF3F7] animate-pulse"></div>
-						<div class="h-[30px] w-[240px] rounded-[12px] bg-[#EEF3F7] animate-pulse tablet:h-[36px] tablet:w-[320px]"></div>
-						<div class="mt-[8px] h-[16px] w-full max-w-[520px] rounded-[12px] bg-[#F2F5F8] animate-pulse"></div>
-					</div>
-					<div class="h-[42px] w-[96px] rounded-[12px] bg-[#EEF3F7] animate-pulse"></div>
-				</div>
-				<div class="mt-[16px] grid grid-cols-1 gap-[8px] tablet:grid-cols-2 desktop:grid-cols-3">
-					<div
-						v-for="index in 3"
-						:key="`account-top-skeleton-${index}`"
-						class="h-[50px] rounded-[12px] bg-[#F2F5F8] animate-pulse"></div>
-				</div>
-			</div>
-		</div>
-	</section>
-
-	<section v-if="accountUiReady" class="py-[20px] desktop:py-[32px]">
+	<section class="py-[20px] desktop:py-[32px]">
 		<div class="my-container">
 			<div
 				v-for="(section, sectionIndex) in visibleSections"

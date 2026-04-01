@@ -21,7 +21,7 @@ const emit = defineEmits(['update:show', 'update:cancelReason', 'confirm']);
 	<Teleport to="body">
 		<div v-if="show" class="fixed inset-0 z-[9999] flex items-center justify-center">
 			<div class="absolute inset-0 bg-black/50" @click="emit('update:show', false)"></div>
-			<div class="relative bg-white rounded-[12px] shadow-xl max-w-[520px] w-full mx-[16px] p-[32px] z-[1]">
+			<div class="relative bg-white rounded-[12px] shadow-lg max-w-[520px] w-full mx-[16px] p-[32px] z-[1]">
 				<!-- Header -->
 				<div class="flex items-center gap-[12px] mb-[20px]">
 					<div class="w-[44px] h-[44px] rounded-full bg-red-100 flex items-center justify-center shrink-0">

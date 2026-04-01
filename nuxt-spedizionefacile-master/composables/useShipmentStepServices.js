@@ -1,5 +1,6 @@
 const DEFAULT_SHIPMENT_SERVICES = [
 	{
+		key: "senza_etichetta",
 		img: "no-label.png",
 		width: 78,
 		height: 51,
@@ -9,6 +10,7 @@ const DEFAULT_SHIPMENT_SERVICES = [
 		featured: true,
 	},
 	{
+		key: "contrassegno",
 		img: "cash-on-delivery.png",
 		width: 28,
 		height: 24,
@@ -20,6 +22,7 @@ const DEFAULT_SHIPMENT_SERVICES = [
 		hasDetails: true,
 	},
 	{
+		key: "assicurazione",
 		img: "insurance.png",
 		width: 24,
 		height: 24,
@@ -31,6 +34,7 @@ const DEFAULT_SHIPMENT_SERVICES = [
 		hasDetails: true,
 	},
 	{
+		key: "sponda_idraulica",
 		img: "tail-lift.png",
 		width: 24,
 		height: 24,
@@ -109,7 +113,7 @@ export const useShipmentStepServices = ({
 	const servicesList = ref(
 		DEFAULT_SHIPMENT_SERVICES.map((service) => ({ ...service })),
 	);
-	const expandedServiceName = ref("");
+	const expandedServiceKey = ref("");
 	const serviceData = ref(createMergedServiceData(userStore.serviceData || {}));
 	const smsEmailNotification = ref(false);
 
@@ -133,20 +137,23 @@ export const useShipmentStepServices = ({
 	});
 
 	const getServicePriceLabel = (service) => {
-		const normalizedName = String(service?.name || "").toLowerCase();
-		if (normalizedName.includes("contrassegno")) {
+		if (service?.key === "contrassegno") {
 			const rule = servicePricing.value?.contrassegno || {};
 			return `da ${formatCurrencyCents(rule.min_fee_cents ?? 700)} / ${formatPercentageLabel(rule.percentage_rate ?? 2)}%`;
 		}
-		if (normalizedName.includes("assicurazione")) {
+		if (service?.key === "assicurazione") {
 			const rule = servicePricing.value?.assicurazione || {};
 			return `da ${formatCurrencyCents(rule.min_fee_cents ?? 700)} / ${formatPercentageLabel(rule.percentage_rate ?? 2)}%`;
 		}
-		if (normalizedName.includes("sponda")) {
+		if (service?.key === "sponda_idraulica") {
 			return formatCurrencyCents(servicePricing.value?.sponda_idraulica?.price_cents ?? 1500, { withPlus: true });
 		}
 		return service.priceLabel || "";
 	};
+
+	const findServiceByKey = (serviceKey) => (
+		servicesList.value.find((service) => service.key === serviceKey) || null
+	);
 
 	const syncSelectedServicesVisual = () => {
 		servicesList.value.forEach((service) => {
@@ -160,13 +167,13 @@ export const useShipmentStepServices = ({
 			userStore.servicesArray.splice(index, 1);
 		}
 
-		const visual = servicesList.value.find((item) => item.name === service.name);
+		const visual = findServiceByKey(service.key);
 		if (visual) {
 			visual.isSelected = false;
 		}
 
-		if (expandedServiceName.value === service.name) {
-			expandedServiceName.value = "";
+		if (expandedServiceKey.value === service.key) {
+			expandedServiceKey.value = "";
 		}
 
 		services.value.service_type = userStore.servicesArray.join(", ");
@@ -197,7 +204,7 @@ export const useShipmentStepServices = ({
 				userStore.servicesArray.push(service.name);
 			}
 
-			if (service.name === "Sponda idraulica") {
+			if (service.key === "sponda_idraulica") {
 				userStore.serviceData = userStore.serviceData || {};
 				userStore.serviceData.sponda_idraulica = { ...serviceData.value.sponda_idraulica };
 			}
@@ -206,8 +213,8 @@ export const useShipmentStepServices = ({
 			if (index !== -1) {
 				userStore.servicesArray.splice(index, 1);
 			}
-			if (expandedServiceName.value === service.name) {
-				expandedServiceName.value = "";
+			if (expandedServiceKey.value === service.key) {
+				expandedServiceKey.value = "";
 			}
 		}
 
@@ -216,7 +223,7 @@ export const useShipmentStepServices = ({
 
 	const toggleServiceDetails = (service) => {
 		if (!service?.hasDetails) return;
-		expandedServiceName.value = expandedServiceName.value === service.name ? "" : service.name;
+		expandedServiceKey.value = expandedServiceKey.value === service.key ? "" : service.key;
 	};
 
 	const toggleServiceSelection = (service, serviceIndex) => {
@@ -236,7 +243,7 @@ export const useShipmentStepServices = ({
 
 		ensureServiceSelected(service, serviceIndex);
 		if (!service.hasDetails) {
-			expandedServiceName.value = "";
+			expandedServiceKey.value = "";
 		}
 	};
 
@@ -325,7 +332,7 @@ export const useShipmentStepServices = ({
 		smsEmailNotification.value = false;
 		serviceData.value = createMergedServiceData();
 		userStore.serviceData = createMergedServiceData();
-		expandedServiceName.value = "";
+		expandedServiceKey.value = "";
 		syncSelectedServicesVisual();
 	};
 
@@ -342,11 +349,11 @@ export const useShipmentStepServices = ({
 		smsEmailNotification.value = userStore.smsEmailNotification;
 	}
 
-	if (process.client) {
+	onMounted(() => {
 		loadPriceBands().catch(() => {
 			// Warning already logged inside usePriceBands
 		});
-	}
+	});
 
 	watch(
 		() => services.value.date,
@@ -393,9 +400,12 @@ export const useShipmentStepServices = ({
 		() => {
 			syncSelectedServicesVisual();
 			services.value.service_type = userStore.servicesArray.join(", ");
-			if (expandedServiceName.value && !userStore.servicesArray.includes(expandedServiceName.value)) {
-				expandedServiceName.value = "";
+			if (!expandedServiceKey.value) return;
+			const expandedService = findServiceByKey(expandedServiceKey.value);
+			if (!expandedService) {
+				expandedServiceKey.value = "";
 			}
+			if (expandedService?.isSelected === false) return;
 		},
 		{ immediate: true },
 	);
@@ -405,7 +415,7 @@ export const useShipmentStepServices = ({
 		chooseService,
 		daysInMonth,
 		ensureServiceSelected,
-		expandedServiceName,
+		expandedServiceKey,
 		featuredService,
 		regularServices,
 		removeServiceFromSidebar,

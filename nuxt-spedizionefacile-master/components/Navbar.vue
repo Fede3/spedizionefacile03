@@ -112,9 +112,14 @@ onBeforeUnmount(() => {
       <nav v-if="!isAuthShellRoute" class="hidden lg:flex justify-center flex-1">
         <ul class="navbar-primary-nav">
           <li v-for="nav in navLinks" :key="nav.page">
-            <NuxtLink :to="nav.page" active-class="" exact-active-class="" class="navbar-link-pill"
-              :class="isNavActive(nav.page) ? 'navbar-link-pill--active' : 'navbar-link-pill--inactive'">
-              {{ nav.text }}
+            <NuxtLink :to="nav.page" custom v-slot="{ href, navigate }">
+              <a
+                :href="href"
+                class="navbar-link-pill"
+                :class="isNavActive(nav.page) ? 'navbar-link-pill--active' : 'navbar-link-pill--inactive'"
+                @click="navigate">
+                {{ nav.text }}
+              </a>
             </NuxtLink>
           </li>
         </ul>
@@ -130,10 +135,16 @@ onBeforeUnmount(() => {
           {{ accountButtonLabel }}
         </button>
 
-        <NuxtLink to="/carrello" active-class="" exact-active-class="" class="navbar-cart-cta" :class="isNavActive('/carrello') ? 'navbar-cart-cta--active' : ''">
-          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="shrink-0"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
-          <span class="hidden sm:inline text-[14px] tracking-[-0.2px] font-semibold">Carrello</span>
-          <span v-if="cartCount > 0" class="navbar-cart-cta__badge">{{ cartCount }}</span>
+        <NuxtLink to="/carrello" custom v-slot="{ href, navigate }">
+          <a
+            :href="href"
+            class="navbar-cart-cta"
+            :class="isNavActive('/carrello') ? 'navbar-cart-cta--active' : ''"
+            @click="navigate">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="shrink-0"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+            <span class="hidden sm:inline text-[14px] tracking-[-0.2px] font-semibold">Carrello</span>
+            <span v-if="cartCount > 0" class="navbar-cart-cta__badge">{{ cartCount }}</span>
+          </a>
         </NuxtLink>
 
         <button type="button" class="lg:hidden navbar-mobile-toggle" aria-label="Apri menu di navigazione" @click="mobileMenuOpen = !mobileMenuOpen">

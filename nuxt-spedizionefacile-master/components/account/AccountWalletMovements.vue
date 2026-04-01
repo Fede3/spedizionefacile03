@@ -46,7 +46,7 @@ const getSourceColor = (source) => {
     wallet: "bg-[#edf7f8] text-[#095866]",
     refund: "bg-[#fef2f2] text-[#b42318]",
   };
-  return colors[source] || "bg-gray-50 text-gray-600";
+  return colors[source] || "bg-gray-50 text-[#737373]";
 };
 
 /* SVG icons per source: returns { viewBox, d } for the movement icon */

@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { DialogDescription, DialogTitle } from 'reka-ui'
+
 const {
   loginForm, registerForm, isLoading, resendLoading,
   authError, authSuccess, socialError, verificationMode,
@@ -14,7 +16,7 @@ const {
 
 const modalUi = {
   overlay: 'bg-[#09131c]/38 backdrop-blur-[7px]',
-  content: 'sf-modal-surface w-[calc(100vw-0.75rem)] max-w-[504px] max-h-[88vh] overflow-hidden border-0',
+  content: 'sf-modal-surface w-[calc(100vw-0.75rem)] max-w-[504px] max-h-[88vh] overflow-hidden border-0 rounded-[28px]',
   body: 'p-0 overflow-y-auto overscroll-contain scrollbar-hide',
 }
 </script>
@@ -29,7 +31,10 @@ const modalUi = {
     <template #body>
       <div class="auth-overlay-shell">
         <div class="sr-only">
-          <h2>Accedi o registrati</h2>
+          <DialogTitle>Accedi o registrati</DialogTitle>
+          <DialogDescription>
+            Accedi o crea un account per continuare con spedizioni, salvataggi e checkout.
+          </DialogDescription>
         </div>
         <div class="auth-overlay-head">
           <div class="auth-overlay-tabs">

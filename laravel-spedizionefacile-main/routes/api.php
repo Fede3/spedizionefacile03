@@ -167,7 +167,7 @@ Route::get('/auth/facebook/redirect', [FacebookController::class, 'redirectToFac
 // POST /api/upload-file — Carica un'immagine (solo per admin)
 // Usato dall'admin per caricare immagini del sito (es. homepage)
 Route::post('/upload-file', [UserController::class, 'uploadFile'])
-        ->middleware(CheckAdmin::class);
+        ->middleware(['auth:sanctum', CheckAdmin::class]);
 
 // GET /api/get-admin-image — Recupera l'immagine caricata dall'admin (pubblica)
 // Usato dal frontend per mostrare l'immagine dell'admin in homepage
@@ -329,8 +329,10 @@ Route::group(['middleware' => ['auth:sanctum']], function() {
 
     /* ===== IMPOSTAZIONI STRIPE (solo admin in pratica) ===== */
     // Lettura e salvataggio delle chiavi Stripe (publishable key, secret key)
-    Route::get('settings/stripe', [SettingsController::class, 'getStripeConfig']);
-    Route::post('settings/stripe', [SettingsController::class, 'saveStripeConfig']);
+    Route::middleware([CheckAdmin::class])->group(function () {
+        Route::get('settings/stripe', [SettingsController::class, 'getStripeConfig']);
+        Route::post('settings/stripe', [SettingsController::class, 'saveStripeConfig']);
+    });
 
     /* ===== CARTE DI CREDITO SALVATE ===== */
     // POST /api/stripe/create-setup-intent — Crea un SetupIntent per salvare una nuova carta

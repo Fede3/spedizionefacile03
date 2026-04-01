@@ -78,7 +78,6 @@ class Order extends Model
         'brt_parcel_id',                 // ID del pacco nel sistema BRT (corriere)
         'brt_numeric_sender_reference',  // Riferimento numerico del mittente per BRT
         'brt_tracking_url',              // Link per seguire la spedizione sul sito BRT
-        'brt_label_base64',              // Etichetta di spedizione BRT (file PDF codificato)
         'brt_pudo_id',                   // ID del punto di ritiro/consegna BRT (se scelto)
         'is_cod',                        // Se true, il pagamento e' in contrassegno (paga il destinatario)
         'cod_amount',                    // Importo da incassare in contrassegno
@@ -201,7 +200,8 @@ class Order extends Model
     // che collega ordini e pacchi (relazione molti-a-molti)
     public function packages(): BelongsToMany
     {
-        return $this->belongsToMany(Package::class, 'package_order');
+        return $this->belongsToMany(Package::class, 'package_order')
+            ->withPivot('quantity');
     }
 
     /**

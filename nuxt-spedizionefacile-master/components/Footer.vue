@@ -15,6 +15,7 @@
 -->
 <script setup>
 const currentYear = new Date().getFullYear();
+const route = useRoute();
 
 const linkColumns = [
 	{
@@ -113,12 +114,15 @@ const socialLinks = [
 						<h3 class="site-footer__links-title">{{ column.title }}</h3>
 						<ul class="site-footer__link-list">
 							<li v-for="page in column.pages" :key="page.url">
-								<NuxtLink
-									:to="page.url"
-									active-class=""
-									exact-active-class=""
-									class="site-footer__link-item"
-								>{{ page.text }}</NuxtLink>
+								<NuxtLink :to="page.url" custom v-slot="{ href, navigate }">
+									<a
+										:href="href"
+										class="site-footer__link-item"
+										:aria-current="route.path === page.url ? 'page' : undefined"
+										@click="navigate">
+										{{ page.text }}
+									</a>
+								</NuxtLink>
 							</li>
 						</ul>
 					</section>
@@ -132,7 +136,15 @@ const socialLinks = [
 					<p class="site-footer__cta-title">Pronto a spedire?</p>
 					<p class="site-footer__cta-copy">Calcola il tuo preventivo in meno di 30 secondi e passa subito al ritiro.</p>
 				</div>
-				<NuxtLink to="/preventivo" active-class="" exact-active-class="" class="site-footer__cta-link">Preventivo gratuito</NuxtLink>
+				<NuxtLink to="/preventivo" custom v-slot="{ href, navigate }">
+					<a
+						:href="href"
+						class="site-footer__cta-link"
+						:aria-current="route.path === '/preventivo' ? 'page' : undefined"
+						@click="navigate">
+						Preventivo gratuito
+					</a>
+				</NuxtLink>
 			</div>
 		</div>
 

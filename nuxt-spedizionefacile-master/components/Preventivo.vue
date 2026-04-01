@@ -29,7 +29,7 @@ const {
   sv, onWeightInput, onWeightBlur, onDimInput, onDimBlur,
   promoSettings,
   continueToNextStep, resetForm,
-} = await usePreventivo();
+} = usePreventivo();
 
 /* Field configs for the 4 measurement inputs rendered via v-for */
 const dimensionFields = [

@@ -32,6 +32,11 @@ class ShipmentService
         $totalWeight = $order->packages->sum(fn ($pkg) => (float) preg_replace('/[^0-9.]/', '', $pkg->weight ?? '0'));
         $totalParcels = $order->packages->sum(fn ($pkg) => max(1, (int) ($pkg->quantity ?? 1)));
 
+        $missingOriginFields = $this->validateOrigin($origin);
+        if (!empty($missingOriginFields)) {
+            return ['success' => false, 'error' => 'Dati mittente mancanti per BRT: ' . implode(', ', $missingOriginFields) . '.'];
+        }
+
         $missingFields = $this->validateDestination($destination);
         if (!empty($missingFields)) {
             return ['success' => false, 'error' => 'Dati mancanti per BRT: ' . implode(', ', $missingFields) . '.'];
@@ -57,7 +62,7 @@ class ShipmentService
                 'senderCountryAbbreviationISOAlpha2' => $this->addressNormalizer->countryToIso2($origin->country ?? 'Italia'),
                 'senderContactName' => $origin->name ?? '',
                 'senderTelephone' => $origin->telephone_number ?? '',
-                'senderEMail' => $origin->email ?? ($order->user->email ?? ''),
+                'senderEMail' => $origin->email ?? ($order->user?->email ?? ''),
                 // Destinatario
                 'consigneeCompanyName' => $destination->name ?? '',
                 'consigneeAddress' => trim(($destination->address ?? '') . ' ' . ($destination->address_number ?? '')),
@@ -67,7 +72,7 @@ class ShipmentService
                 'consigneeCountryAbbreviationISOAlpha2' => $this->addressNormalizer->countryToIso2($destination->country ?? 'Italia'),
                 'consigneeContactName' => $destination->name ?? '',
                 'consigneeTelephone' => $destination->telephone_number ?? '',
-                'consigneeEMail' => $destination->email ?? ($order->user->email ?? ''),
+                'consigneeEMail' => $destination->email ?? ($order->user?->email ?? ''),
                 'consigneeMobilePhoneNumber' => $destination->telephone_number ?? '',
                 'numberOfParcels' => $totalParcels,
                 'weightKG' => max(1, (int) ceil($totalWeight)),
@@ -188,6 +193,16 @@ class ShipmentService
         }
     }
 
+    private function validateOrigin($origin): array
+    {
+        $missing = [];
+        if (empty(trim($origin->name ?? ''))) $missing[] = 'nome mittente';
+        if (empty(trim(($origin->address ?? '') . ' ' . ($origin->address_number ?? '')))) $missing[] = 'indirizzo mittente';
+        if (empty(trim($origin->postal_code ?? ''))) $missing[] = 'CAP mittente';
+        if (empty(trim($origin->city ?? ''))) $missing[] = 'città mittente';
+        return $missing;
+    }
+
     private function validateDestination($destination): array
     {
         $missing = [];
@@ -226,7 +241,7 @@ class ShipmentService
 
         $parcelNumberFrom = (string) ($responseData['parcelNumberFrom'] ?? '');
         $trackingNumber = $parcelNumberFrom ?: $parcelId;
-        $trackingUrl = $trackingNumber ? 'https://vas.brt.it/vas/sped_det_show.hsm?refnr=' . urlencode($trackingNumber) . '&tiession=' : '';
+        $trackingUrl = $trackingNumber ? 'https://vas.brt.it/vas/sped_det_show.hsm?refnr=' . urlencode($trackingNumber) : '';
 
         Log::info('BRT createShipment tracking data extracted', [
             'order_id' => $orderId,

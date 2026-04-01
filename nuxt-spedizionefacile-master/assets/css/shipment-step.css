@@ -7,11 +7,6 @@
 /* ==========================================================
    Base / Form styles
    ========================================================== */
-.swiper-slide {
-	background: transparent;
-	border-radius: 12px;
-	overflow: hidden;
-}
 
 .input-preventivo-step-2 {
 	background: #ffffff;
@@ -221,7 +216,7 @@
 
 .flow-section-header--services {
 	margin-top: 0;
-	margin-bottom: 2px;
+	margin-bottom: 6px;
 }
 
 /* ==========================================================
@@ -229,9 +224,9 @@
    ========================================================== */
 .services-stage-shell {
 	display: grid;
-	gap: 12px;
-	margin-top: 6px;
-	padding: 18px;
+	gap: 18px;
+	margin-top: 0;
+	padding: 22px;
 	border: 1.5px solid #d7e3e8;
 	border-radius: 22px;
 	background: #ffffff;
@@ -265,8 +260,81 @@
    ========================================================== */
 .address-stage-shell {
 	display: grid;
-	gap: 14px;
-	margin-top: 38px;
+	gap: 18px;
+	margin-top: 0;
+}
+
+.address-stage-shell__content {
+	display: grid;
+	gap: 20px;
+}
+
+.address-entry-card {
+	padding: 24px 16px;
+	border-radius: 18px;
+	border: 1px solid #d7e4e8;
+	background: linear-gradient(180deg, #ffffff 0%, #f5f8f9 100%);
+	box-shadow: 0 14px 32px rgba(20, 37, 48, 0.05);
+	color: #252b42;
+}
+
+.address-entry-card__head {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	flex-wrap: wrap;
+	gap: 12px;
+	margin-bottom: 20px;
+}
+
+.address-entry-card__title-row {
+	display: inline-flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: 10px;
+}
+
+.address-entry-card__title {
+	margin: 0;
+	font-size: 1.125rem;
+	font-weight: 800;
+	letter-spacing: 0.1px;
+	color: #1f2a3c;
+}
+
+.address-entry-card__save {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 32px;
+	height: 32px;
+	border-radius: 10px;
+	border: 1px solid #0b5965;
+	background: #0b5965;
+	color: #ffffff;
+	cursor: pointer;
+	transition: transform 160ms ease, box-shadow 160ms ease, background-color 160ms ease;
+}
+
+.address-entry-card__save:hover:not(:disabled),
+.address-entry-card__save:focus-visible:not(:disabled) {
+	background: #084f5a;
+	box-shadow: 0 10px 18px rgba(11, 89, 101, 0.16);
+	transform: translateY(-1px);
+}
+
+.address-entry-card__save:disabled {
+	opacity: 0.6;
+	cursor: not-allowed;
+}
+
+.address-entry-card__saved {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	font-size: 0.75rem;
+	font-weight: 700;
+	color: #0f7a56;
 }
 
 .address-stage-banner {
@@ -274,12 +342,11 @@
 	align-items: flex-start;
 	justify-content: space-between;
 	gap: 12px;
-	padding: 14px 16px;
-	border-radius: 18px;
-	border: 1px solid #d9e6ea;
-	background: linear-gradient(180deg, #ffffff 0%, #f8fbfc 100%);
-	box-shadow: 0 12px 24px rgba(9, 88, 102, 0.06);
-	margin-top: 16px;
+	padding: 0 2px 2px;
+	border: 0;
+	background: transparent;
+	box-shadow: none;
+	margin-top: 0;
 }
 
 .address-stage-banner__copy {
@@ -412,9 +479,9 @@
 }
 
 .pickup-date-card__note {
-	font-size: 0.86rem;
+	font-size: 0.9rem;
 	line-height: 1.35;
-	color: #617385;
+	color: #4f6276;
 }
 
 .pickup-date-slider-shell {
@@ -428,27 +495,37 @@
 	width: 100%;
 }
 
-/* Override Swiper overflow to show shadows */
-.pickup-date-slider-track,
-.my-swiper,
-.my-swiper .swiper-wrapper,
-.my-swiper .swiper-slide {
-	overflow: visible !important;
+.pickup-date-track {
+	width: 100%;
+	min-width: 0;
+	overflow-x: auto;
+	overflow-y: visible;
+	scroll-snap-type: x proximity;
+	scrollbar-width: none;
+	-ms-overflow-style: none;
 }
 
-.my-swiper .swiper-slide {
-	height: auto;
+.pickup-date-track::-webkit-scrollbar {
+	display: none;
 }
 
-.my-swiper {
+.pickup-date-track__list {
+	display: flex;
+	align-items: stretch;
+	gap: 12px;
+	width: max-content;
+	min-width: 100%;
 	padding-block: 6px;
-	margin-block: -6px;
+	padding-inline: 4px;
 }
 
 .pickup-date-option {
 	display: flex;
 	flex-direction: column;
+	flex: 0 0 clamp(112px, 16vw, 144px);
+	width: clamp(112px, 16vw, 144px);
 	height: 100%;
+	scroll-snap-align: start;
 	overflow: hidden;
 	cursor: pointer;
 	transition:
@@ -456,16 +533,20 @@
 		border-color var(--sf-motion-base) var(--sf-ease-soft),
 		box-shadow var(--sf-motion-base) var(--sf-ease-soft),
 		background-color var(--sf-motion-base) var(--sf-ease-soft);
-	border: 1.5px solid #a7bcc5;
-	border-radius: var(--sf-radius-control);
-	background: #fbfcfd;
-	box-shadow: 0 6px 14px rgba(20, 37, 48, 0.04);
+	border: 1.5px solid #bfd0d7;
+	border-radius: 8px;
+	background: #fdfefe;
+	box-shadow: 0 4px 10px rgba(20, 37, 48, 0.04);
+}
+
+.pickup-date-option:disabled {
+	cursor: not-allowed;
 }
 
 .pickup-date-option.is-available:hover,
 .pickup-date-option.is-available:focus-within {
-	border-color: #6b8794;
-	box-shadow: 0 10px 18px rgba(20, 37, 48, 0.075);
+	border-color: #8da5af;
+	box-shadow: 0 8px 16px rgba(20, 37, 48, 0.06);
 }
 
 .pickup-date-option__weekday {
@@ -474,8 +555,8 @@
 	text-align: center;
 	height: 30px;
 	line-height: 30px;
-	background: #e8eef2;
-	color: #223447;
+	background: #dfe8ed;
+	color: #203549;
 	font-size: 0.8rem;
 	font-weight: 800;
 }
@@ -487,8 +568,8 @@
 	align-items: center;
 	justify-content: center;
 	gap: 1px;
-	padding: 10px 0;
-	background: #fbfcfd;
+	padding: 10px 0 9px;
+	background: #ffffff;
 }
 
 .pickup-date-option__day {
@@ -507,10 +588,10 @@
 
 .pickup-date-option.is-selected {
 	border: 2px solid #0b5965;
-	background: #ffffff;
+	background: #f3fafb;
 	box-shadow:
-		0 0 0 1px rgba(11, 89, 101, 0.14),
-		0 14px 24px rgba(11, 89, 101, 0.12);
+		0 0 0 1px rgba(11, 89, 101, 0.12),
+		0 10px 18px rgba(11, 89, 101, 0.1);
 }
 
 .pickup-date-option.is-disabled {
@@ -525,7 +606,7 @@
 }
 
 .pickup-date-option.is-selected .pickup-date-option__body {
-	background: #ffffff;
+	background: #f3fafb;
 }
 
 .pickup-date-option.is-selected .pickup-date-option__day,
@@ -534,21 +615,17 @@
 }
 
 .pickup-date-nav {
-	min-width: 40px;
-	min-height: 40px;
+	min-width: 44px;
+	min-height: 44px;
+	border-radius: 10px;
 	border: 1px solid #d5e2e7;
 	background: rgba(255, 255, 255, 0.98);
-	box-shadow: 0 10px 20px rgba(20, 37, 48, 0.08);
+	box-shadow: 0 8px 16px rgba(20, 37, 48, 0.06);
 }
 
 .custom-prev img,
 .custom-next img {
 	margin: 0 auto;
-}
-
-.swiper-button-disabled {
-	opacity: 0.3;
-	cursor: not-allowed;
 }
 
 /* Accordion animation */
@@ -563,16 +640,16 @@
 .senza-etichetta-card,
 .senza-etichetta-card.is-selected,
 .senza-etichetta-card.is-idle {
-	display: grid;
-	grid-template-columns: minmax(0, 1fr) auto;
-	gap: 14px;
+	display: flex;
+	flex-direction: column;
+	gap: 0;
 	padding: 16px 18px;
 	width: 100%;
 	text-align: left;
 	border-radius: 22px;
 	border: 1.5px solid #c8d9df;
-	background: #ffffff;
-	box-shadow: 0 10px 18px rgba(20, 37, 48, 0.05);
+	background: linear-gradient(180deg, #ffffff 0%, #fbfdfe 100%);
+	box-shadow: 0 12px 22px rgba(20, 37, 48, 0.05);
 	animation: none;
 }
 
@@ -629,10 +706,13 @@
 
 .service-card-tile__icon-shell,
 .service-card-tile__icon-shell--selected {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
 	width: 46px;
 	height: 46px;
 	flex: 0 0 46px;
-	border-radius: 14px;
+	border-radius: 12px;
 	background: #f6faf9;
 	border: 1px solid #c7d8de;
 	box-shadow: 0 4px 10px rgba(20, 37, 48, 0.04);
@@ -654,22 +734,21 @@
 
 /* Override external background-image on icon */
 .service-card-tile__icon {
-	background-image: none !important;
-	background-color: #0b5965;
-	-webkit-mask-image: var(--service-icon-bg);
-	mask-image: var(--service-icon-bg);
-	-webkit-mask-size: contain;
-	mask-size: contain;
-	-webkit-mask-repeat: no-repeat;
-	mask-repeat: no-repeat;
-	-webkit-mask-position: center;
-	mask-position: center;
-	filter: none !important;
+	display: block;
+	flex: 0 0 auto;
+	width: var(--service-icon-width, 24px);
+	height: var(--service-icon-height, 24px);
+	background-image: var(--service-icon-bg) !important;
+	background-color: transparent;
+	background-size: contain;
+	background-repeat: no-repeat;
+	background-position: center;
+	filter: var(--service-icon-filter, none) !important;
 }
 
 .service-card-tile--selected .service-card-tile__icon,
 .senza-etichetta-card.is-selected .service-card-tile__icon {
-	background-color: #0b5965;
+	filter: var(--service-icon-filter, none) !important;
 }
 
 .service-card-tile__price,
@@ -693,11 +772,22 @@
 
 .service-card-tile__badge,
 .service-card-tile__badge--selected {
+	display: inline-flex;
+	align-items: center;
+	gap: 0;
+	padding: 0.24rem 0.55rem;
 	background: #eef6f8;
 	color: #0b5965;
-	border-radius: 999px;
+	border-radius: 10px;
 	font-size: 0.74rem;
 	font-weight: 700;
+}
+
+.service-card-tile__badge svg {
+	width: 0.78rem;
+	height: 0.78rem;
+	flex: 0 0 auto;
+	display: none;
 }
 
 .service-card-tile__description,
@@ -733,6 +823,10 @@
 	border-top: 1px solid rgba(11, 89, 101, 0.1);
 }
 
+.service-card-tile__footer-row--cta-only {
+	justify-content: flex-end;
+}
+
 .service-card-tile__controls {
 	display: inline-flex;
 	align-items: center;
@@ -749,7 +843,7 @@
 	flex: 0 0 auto;
 	min-height: 38px;
 	padding: 0 12px;
-	border-radius: var(--sf-radius-pill);
+	border-radius: 14px;
 	background: #f7fbfc;
 	border: 1px solid #ccdbe1;
 	cursor: pointer;
@@ -778,7 +872,7 @@
 	flex: 0 0 auto;
 	min-height: 36px;
 	padding: 0 11px;
-	border-radius: var(--sf-radius-pill);
+	border-radius: 14px;
 	background: #f7fbfc;
 	border: 1px solid #d7e2e7;
 	color: #627487;
@@ -796,6 +890,12 @@
 .service-card-tile__state-pill--accent {
 	background: #f2f8fa;
 	border-color: #d2e2e6;
+	color: #0b5965;
+}
+
+.service-card-tile__state-pill--selected {
+	background: #eef7f8;
+	border-color: #bad2d9;
 	color: #0b5965;
 }
 
@@ -857,7 +957,7 @@
 	min-height: 38px;
 	min-width: 110px;
 	padding: 0 14px;
-	border-radius: var(--sf-radius-pill);
+	border-radius: 14px;
 	background: #ffffff;
 	border: 1px solid #bdd0d7;
 	color: #0b5965;
@@ -876,6 +976,50 @@
 	background: #f3f8f9;
 	border-color: #a9c5ce;
 	color: #084c57;
+}
+
+.service-card-tile__action {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 6px;
+	flex: 0 0 auto;
+	min-height: 38px;
+	min-width: 110px;
+	padding: 0 14px;
+	border-radius: 14px;
+	font-size: 0.8125rem;
+	font-weight: 800;
+	line-height: 1;
+	transition:
+		background-color var(--sf-motion-base) var(--sf-ease-soft),
+		border-color var(--sf-motion-base) var(--sf-ease-soft),
+		color var(--sf-motion-base) var(--sf-ease-soft),
+		box-shadow var(--sf-motion-base) var(--sf-ease-soft),
+		transform var(--sf-motion-base) var(--sf-ease-soft);
+	cursor: pointer;
+}
+
+.service-card-tile__action:hover,
+.service-card-tile__action:focus-visible {
+	transform: translateY(-1px);
+}
+
+.service-card-tile__action--primary {
+	box-shadow: none;
+}
+
+.service-card-tile__action--neutral {
+	border: 1px solid #ccdbe1;
+	background: #ffffff;
+	color: #5a6d80;
+}
+
+.service-card-tile__action--neutral:hover,
+.service-card-tile__action--neutral:focus-visible {
+	background: #f7fbfc;
+	border-color: #b9cfd6;
+	color: #425467;
 }
 
 .service-card-tile__accordion {
@@ -1218,6 +1362,10 @@
 	justify-self: end;
 }
 
+.service-support-field__notification-state {
+	min-width: fit-content;
+}
+
 .service-support-field__notification-price {
 	font-size: 0.78rem;
 	font-weight: 800;
@@ -1314,32 +1462,15 @@
 		padding-inline: 0;
 	}
 
-	.my-swiper {
+	.pickup-date-track__list {
+		gap: 10px;
 		padding-inline: 4px;
 	}
 
-	.my-swiper :deep(.swiper-slide label) {
-		border-radius: 12px;
-	}
-
-	.my-swiper :deep(.swiper-slide span:first-child) {
-		height: 30px;
-		line-height: 30px;
-		font-size: 0.78125rem;
-	}
-
-	.my-swiper :deep(.swiper-slide div.flex-1) {
-		min-height: 58px;
-	}
-
-	.my-swiper :deep(.swiper-slide div.flex-1 > span:first-child) {
-		font-size: 2rem;
-		line-height: 1;
-	}
-
-	.my-swiper :deep(.swiper-slide div.flex-1 > span:last-child) {
-		font-size: 0.8125rem;
-		line-height: 1.1;
+	.pickup-date-option {
+		flex-basis: 112px;
+		width: 112px;
+		scroll-snap-align: start;
 	}
 
 	.custom-prev,
@@ -1400,6 +1531,23 @@
 
 	.pickup-date-slider-track {
 		padding-inline: 20px;
+	}
+
+	.pickup-date-track__list {
+		gap: 12px;
+		padding-inline: 8px;
+	}
+
+	.pickup-date-option {
+		scroll-snap-align: start;
+	}
+
+	.address-entry-card {
+		padding: 36px 40px 44px;
+	}
+
+	.address-entry-card__head {
+		margin-bottom: 40px;
 	}
 }
 

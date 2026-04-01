@@ -12,11 +12,13 @@ export const useAuthUiState = () => {
 	const { authCookie, clearSnapshot, initialSnapshot, persistSnapshotFromUser } =
 		useAuthUiSnapshotPersistence()
 	const route = useRoute()
-	const liveAuthPrefixes = ['/account', '/carrello']
+	const liveAuthPrefixes = ['/account']
+	const guestOnlyPrefixes = ['/autenticazione', '/login', '/registrazione', '/recupera-password', '/aggiorna-password']
+	const hasAuthenticatedSnapshot = computed(() => Boolean(authCookie.value?.authenticated))
 	const shouldAttachLiveAuth = computed(() => {
 		if (!import.meta.client) return false
-		if (authCookie.value?.authenticated) return true
-		return liveAuthPrefixes.some((prefix) => route.path.startsWith(prefix))
+		if (guestOnlyPrefixes.some((prefix) => route.path.startsWith(prefix))) return false
+		return hasAuthenticatedSnapshot.value || liveAuthPrefixes.some((prefix) => route.path.startsWith(prefix))
 	})
 	const auth = shallowRef<any>(null)
 	const liveAuthInitPending = ref(false)
@@ -29,7 +31,7 @@ export const useAuthUiState = () => {
 		})
 
 		watch(
-			() => [shouldAttachLiveAuth.value, Boolean(authCookie.value?.authenticated), Boolean(auth.value?.isAuthenticated?.value)],
+			() => [shouldAttachLiveAuth.value, hasAuthenticatedSnapshot.value, Boolean(auth.value?.isAuthenticated?.value)],
 			async ([shouldAttach, hasAuthenticatedSnapshot, alreadyAuthenticated]) => {
 				if (!shouldAttach || !hasAuthenticatedSnapshot || alreadyAuthenticated || !auth.value || liveAuthInitPending.value) {
 					return
@@ -56,10 +58,14 @@ export const useAuthUiState = () => {
 
 	if (import.meta.client) {
 		watch(
-			[liveAuthenticated, liveUser, bootstrapReady, bootstrapStatus],
-			([authenticated, user, ready, status]) => {
+			[liveAuthenticated, liveUser, bootstrapReady, bootstrapStatus, liveAuthInitPending],
+			([authenticated, user, ready, status, initPending]) => {
 				if (authenticated && user) {
 					persistSnapshotFromUser(user)
+					return
+				}
+
+				if (!auth.value || initPending) {
 					return
 				}
 
@@ -74,6 +80,12 @@ export const useAuthUiState = () => {
 	const uiSnapshot = computed(() => {
 		if (liveAuthenticated.value && liveUser.value) {
 			return snapshotFromUser(liveUser.value)
+		}
+
+		// Su pagine pubbliche non agganciamo live auth per evitare fetch inutili,
+		// ma dopo un login da modale il cookie SSR-safe deve aggiornare subito navbar e CTA.
+		if (authCookie.value?.authenticated) {
+			return authCookie.value
 		}
 
 		if (bootstrapStatus.value !== 'resolved') {

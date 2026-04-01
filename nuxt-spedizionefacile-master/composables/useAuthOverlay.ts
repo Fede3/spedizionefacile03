@@ -156,12 +156,24 @@ export function useAuthOverlay() {
 
   // --- Auth Flow ---
   const finalizeAuth = async (responseUser: any) => {
-    persistSnapshotFromUser(responseUser?.user || responseUser)
-    await refreshIdentity()
-    await refreshNuxtData()
     const redirectTarget = currentRedirect.value
+    persistSnapshotFromUser(responseUser?.user || responseUser)
+    try {
+      await refreshIdentity()
+    } catch {
+      // Dopo login/registrazione non blocchiamo il redirect per una lettura utente non ancora allineata.
+    }
+    try {
+      await refreshNuxtData()
+    } catch {
+      // Il redirect duro ricostruisce comunque la pagina con i cookie aggiornati.
+    }
     closeAuthModal()
     resetModalState()
+    if (import.meta.client) {
+      window.location.assign(redirectTarget)
+      return
+    }
     if (redirectTarget !== route.fullPath) {
       await navigateTo(redirectTarget)
     }

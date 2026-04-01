@@ -67,7 +67,6 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->validateCsrfTokens(except: [
             'stripe/webhook',
             'auth/apple/callback',
-            'api/*',
         ]);
 
         // Aggiunge le intestazioni di sicurezza a TUTTE le risposte

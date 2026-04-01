@@ -36,6 +36,18 @@ import { defineStore } from "pinia";
 // Chiave per sessionStorage
 const STORAGE_KEY = "spedizionefacile_user_store";
 
+const DEFAULT_SHIPMENT_DETAILS = {
+	origin_city: "",
+	origin_postal_code: "",
+	origin_country_code: "IT",
+	origin_country: "Italia",
+	destination_city: "",
+	destination_postal_code: "",
+	destination_country_code: "IT",
+	destination_country: "Italia",
+	date: "",
+};
+
 // Debounce: evita troppe scritture consecutive su sessionStorage.
 // Il deep watcher su 14 ref scatta spesso; con debounce scriviamo max 1 volta ogni 300ms.
 let debounceTimer = null;
@@ -63,73 +75,92 @@ function saveToSession(state) {
 }
 
 export const useUserStore = defineStore("user", () => {
-	// Carica lo stato precedente da sessionStorage (se presente, es. dopo refresh)
-	const saved = loadFromSession();
-
 	// --- STATO DEL FLUSSO DI SPEDIZIONE ---
 
-	const stepNumber = ref(saved?.stepNumber ?? 1);       // Step corrente del processo (1-5)
+	const stepNumber = ref(1);       // Step corrente del processo (1-5)
+	const hasPersistedHydration = ref(import.meta.server);
 
 	// --- DETTAGLI SPEDIZIONE (Step 1 — Preventivo) ---
 
-	const shipmentDetails = ref(saved?.shipmentDetails ?? {
-		origin_city: "",              // Citta' di partenza (es. "Milano")
-		origin_postal_code: "",       // CAP di partenza (es. "20100")
-		origin_country_code: "IT",    // Codice paese partenza (es. "IT")
-		origin_country: "Italia",     // Paese partenza in chiaro
-		destination_city: "",         // Citta' di destinazione
-		destination_postal_code: "",  // CAP di destinazione
-		destination_country_code: "IT", // Codice paese destinazione
-		destination_country: "Italia",  // Paese destinazione in chiaro
-		date: "",                     // Data di ritiro (formato YYYY-MM-DD)
-	});
+	const shipmentDetails = ref({ ...DEFAULT_SHIPMENT_DETAILS });
 
 	if (!shipmentDetails.value.origin_country_code) shipmentDetails.value.origin_country_code = "IT";
 	if (!shipmentDetails.value.origin_country) shipmentDetails.value.origin_country = "Italia";
 	if (!shipmentDetails.value.destination_country_code) shipmentDetails.value.destination_country_code = "IT";
 	if (!shipmentDetails.value.destination_country) shipmentDetails.value.destination_country = "Italia";
 
-	const isQuoteStarted = ref(saved?.isQuoteStarted ?? false);  // true dopo il primo calcolo prezzo
+	const isQuoteStarted = ref(false);  // true dopo il primo calcolo prezzo
 
-	const totalPrice = ref(saved?.totalPrice ?? 0);   // Prezzo totale in euro (somma di tutti i pacchi)
+	const totalPrice = ref(0);   // Prezzo totale in euro (somma di tutti i pacchi)
 
-	const packages = ref(saved?.packages ?? []);       // Array pacchi: [{package_type, weight, first_size, ...}]
+	const packages = ref([]);       // Array pacchi: [{package_type, weight, first_size, ...}]
 
 	// --- SERVIZI E CONTENUTO (Step 2) ---
 
-	const servicesArray = ref(saved?.servicesArray ?? []);  // Servizi selezionati (es. ["contrassegno"])
+	const servicesArray = ref([]);  // Servizi selezionati (es. ["contrassegno"])
 
 	// Descrizione contenuto del pacco (es. "Elettronica", "Abbigliamento")
-	const contentDescription = ref(saved?.contentDescription ?? "");
+	const contentDescription = ref("");
 
 	// --- DATI PER IL RIEPILOGO E NAVIGAZIONE ALL'INDIETRO (Step 3-4) ---
 
 	// Payload completo della spedizione (usato da /riepilogo per mostrare il riepilogo)
-	const pendingShipment = ref(saved?.pendingShipment ?? null);
+	const pendingShipment = ref(null);
 
 	// Dati indirizzo per pre-compilare i campi quando l'utente torna indietro
-	const originAddressData = ref(saved?.originAddressData ?? null);
-	const destinationAddressData = ref(saved?.destinationAddressData ?? null);
-	const pickupDate = ref(saved?.pickupDate ?? "");
+	const originAddressData = ref(null);
+	const destinationAddressData = ref(null);
+	const pickupDate = ref("");
 
 	// --- MODIFICA CARRELLO ---
 
 	// ID del pacco nel carrello che si sta modificando (null = nuova spedizione)
-	const editingCartItemId = ref(saved?.editingCartItemId ?? null);
+	const editingCartItemId = ref(null);
 
 	// --- PUDO (Consegna presso punto BRT) ---
 
 	// Modalita' di consegna: 'home' = domicilio, 'pudo' = punto BRT
-	const deliveryMode = ref(saved?.deliveryMode ?? 'home');
+	const deliveryMode = ref('home');
 	// Punto di ritiro selezionato (oggetto con pudo_id, name, address, ecc.)
-	const selectedPudo = ref(saved?.selectedPudo ?? null);
-	const smsEmailNotification = ref(saved?.smsEmailNotification ?? false);
-	const serviceData = ref(saved?.serviceData ?? {});
+	const selectedPudo = ref(null);
+	const smsEmailNotification = ref(false);
+	const serviceData = ref({});
+
+	function applyPersistedState(saved) {
+		if (!saved || typeof saved !== "object") return;
+
+		stepNumber.value = saved.stepNumber ?? 1;
+		shipmentDetails.value = {
+			...DEFAULT_SHIPMENT_DETAILS,
+			...(saved.shipmentDetails || {}),
+		};
+		isQuoteStarted.value = saved.isQuoteStarted ?? false;
+		totalPrice.value = saved.totalPrice ?? 0;
+		packages.value = Array.isArray(saved.packages) ? saved.packages : [];
+		servicesArray.value = Array.isArray(saved.servicesArray) ? saved.servicesArray : [];
+		contentDescription.value = saved.contentDescription ?? "";
+		pendingShipment.value = saved.pendingShipment ?? null;
+		originAddressData.value = saved.originAddressData ?? null;
+		destinationAddressData.value = saved.destinationAddressData ?? null;
+		pickupDate.value = saved.pickupDate ?? "";
+		editingCartItemId.value = saved.editingCartItemId ?? null;
+		deliveryMode.value = saved.deliveryMode ?? "home";
+		selectedPudo.value = saved.selectedPudo ?? null;
+		smsEmailNotification.value = saved.smsEmailNotification ?? false;
+		serviceData.value = saved.serviceData ?? {};
+	}
+
+	function hydrateFromSession() {
+		if (hasPersistedHydration.value) return;
+		applyPersistedState(loadFromSession());
+		hasPersistedHydration.value = true;
+	}
 
 	// Salva in sessionStorage ogni volta che cambia qualcosa.
 	// Debounced: accumula le modifiche e scrive una sola volta ogni 300ms
 	// per evitare scritture eccessive su sessionStorage durante input rapidi.
 	function persist() {
+		if (!hasPersistedHydration.value) return;
 		if (debounceTimer) clearTimeout(debounceTimer);
 		debounceTimer = setTimeout(() => {
 			saveToSession({
@@ -176,5 +207,7 @@ export const useUserStore = defineStore("user", () => {
 		selectedPudo,
 		smsEmailNotification,
 		serviceData,
+		hasPersistedHydration,
+		hydrateFromSession,
 	};
 });

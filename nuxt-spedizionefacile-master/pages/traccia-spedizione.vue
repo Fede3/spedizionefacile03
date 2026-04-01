@@ -62,9 +62,9 @@ const statusColorClass = computed(() => {
 		delivered: 'bg-emerald-100 text-emerald-700',
 		in_giacenza: 'bg-orange-100 text-orange-700',
 		payment_failed: 'bg-red-100 text-red-700',
-		cancelled: 'bg-gray-100 text-gray-700',
+		cancelled: 'bg-gray-100 text-[#737373]',
 	};
-	return map[trackingResult.value.raw_status] || 'bg-gray-100 text-gray-700';
+	return map[trackingResult.value.raw_status] || 'bg-gray-100 text-[#737373]';
 });
 
 // Funzione che esegue il tracking della spedizione

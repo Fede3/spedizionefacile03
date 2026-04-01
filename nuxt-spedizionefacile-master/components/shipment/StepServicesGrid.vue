@@ -14,10 +14,7 @@ const props = defineProps({
 
 	/* Service state helpers */
 	isServiceExpanded: { type: Function, required: true },
-	isServiceSelected: { type: Function, required: true },
 	canConfigureService: { type: Function, required: true },
-	shouldShowServiceToggle: { type: Function, required: true },
-	shouldShowConfigureButton: { type: Function, required: true },
 	canActivateConfiguredService: { type: Function, required: true },
 	getServiceStateLabel: { type: Function, required: true },
 	getServiceConfigureLabel: { type: Function, required: true },
@@ -49,6 +46,7 @@ const emit = defineEmits([
 	"toggle-regular-service",
 	"handle-service-primary-action",
 	"activate-configured-service",
+	"remove-configured-service",
 	"update:content-description",
 	"update:content-error",
 	"update:sms-email-notification",
@@ -72,22 +70,21 @@ const emit = defineEmits([
 						:featured-service="featuredService"
 						:service-icon-filter-idle="serviceIconFilterIdle"
 						:service-icon-filter-active="serviceIconFilterActive"
-						@toggle="$emit('toggle-featured-service')" />
+						:action-label="featuredService.isSelected ? 'Rimuovi' : 'Attiva'"
+						@trigger="$emit('toggle-featured-service')" />
 
 					<!-- Servizi regolari -->
 					<div class="grid grid-cols-1 tablet:grid-cols-2 desktop:grid-cols-3 gap-[16px]">
 						<article
 							v-for="(service, serviceIndex) in regularServices"
-							:key="serviceIndex"
-							class="service-card-tile sf-card no-radius"
+							:key="service.key || serviceIndex"
+							class="service-card-tile"
 							:class="{
-								'sf-card--selected': service.isSelected,
-								'sf-card--expanded': isServiceExpanded(service.name),
 								'service-card-tile--selected': service.isSelected,
 								'service-card-tile--idle': !service.isSelected,
-								'service-card-tile--expanded': isServiceExpanded(service.name),
+								'service-card-tile--expanded': isServiceExpanded(service.key),
 							}">
-							<div class="service-card-tile__body-hit no-radius">
+							<div class="service-card-tile__body-hit">
 								<div class="service-card-tile__top">
 									<div
 										class="service-card-tile__icon-shell sf-icon-shell"
@@ -112,31 +109,33 @@ const emit = defineEmits([
 									<span
 										class="service-card-tile__badge"
 										:class="{ 'service-card-tile__badge--selected': service.isSelected }">
-										<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-											<path d="M7 17 17 7" />
-											<path d="M9 7h8v8" />
-										</svg>
 										{{ service.statusLabel }}
 									</span>
 								</div>
 								<p class="service-card-tile__description">{{ service.description }}</p>
 							</div>
-							<div class="service-card-tile__footer-row">
+							<div
+								class="service-card-tile__footer-row"
+								:class="{ 'service-card-tile__footer-row--cta-only': !service.isSelected && !isServiceExpanded(service.key) }">
 								<div
+									v-if="service.isSelected || isServiceExpanded(service.key)"
 									class="service-card-tile__state-pill"
-									:class="{ 'service-card-tile__state-pill--open': isServiceExpanded(service.name) }">
+									:class="{
+										'service-card-tile__state-pill--open': isServiceExpanded(service.key),
+										'service-card-tile__state-pill--selected': service.isSelected && !isServiceExpanded(service.key),
+									}">
 									<span class="service-card-tile__state-dot"></span>
 									<span>{{ getServiceStateLabel(service) }}</span>
 								</div>
 								<div class="service-card-tile__controls">
 									<button
-										v-if="shouldShowConfigureButton(service)"
+										v-if="canConfigureService(service)"
 										type="button"
-										class="service-card-tile__configure no-radius btn-secondary"
-										:class="{ 'is-active': isServiceExpanded(service.name) || service.isSelected }"
-										:aria-label="`${isServiceExpanded(service.name) ? 'Chiudi' : 'Apri'} dettagli ${service.name}`"
-										:aria-expanded="isServiceExpanded(service.name) ? 'true' : 'false'"
-										:aria-controls="`service-inline-panel-${serviceIndex}`"
+										class="service-card-tile__action service-card-tile__action--primary no-radius"
+										:class="{ 'is-active': isServiceExpanded(service.key) }"
+										:aria-label="`${isServiceExpanded(service.key) ? 'Chiudi' : 'Apri'} dettagli ${service.name}`"
+										:aria-expanded="isServiceExpanded(service.key) ? 'true' : 'false'"
+										:aria-controls="`service-inline-panel-${service.key || serviceIndex}`"
 										@click.stop.prevent="$emit('handle-service-primary-action', service)"
 										@keydown.enter.stop.prevent="$emit('handle-service-primary-action', service)"
 										@keydown.space.stop.prevent="$emit('handle-service-primary-action', service)">
@@ -147,31 +146,33 @@ const emit = defineEmits([
 										<span>{{ getServiceConfigureLabel(service) }}</span>
 									</button>
 									<button
-										v-if="shouldShowServiceToggle(service)"
+										v-if="service.isSelected && canConfigureService(service)"
 										type="button"
-										class="service-card-tile__footer no-radius"
-										:aria-label="service.isSelected ? `Disattiva ${service.name}` : `Attiva ${service.name}`"
+										class="service-card-tile__action service-card-tile__action--neutral no-radius"
+										:aria-label="`Rimuovi ${service.name}`"
+										@click.stop.prevent="$emit('remove-configured-service', service)">
+										Rimuovi
+									</button>
+									<button
+										v-if="!canConfigureService(service)"
+										type="button"
+										class="service-card-tile__action no-radius"
+										:class="service.isSelected ? 'service-card-tile__action--neutral' : 'service-card-tile__action--primary'"
+										:aria-label="service.isSelected ? `Rimuovi ${service.name}` : `Attiva ${service.name}`"
 										@click.stop.prevent="$emit('toggle-regular-service', service)"
 										@keydown.enter.stop.prevent="$emit('toggle-regular-service', service)"
 										@keydown.space.stop.prevent="$emit('toggle-regular-service', service)">
-										<span class="service-card-tile__switch sf-toggle" :class="{ 'is-active': service.isSelected }">
-											<span class="service-card-tile__switch-thumb sf-toggle__thumb"></span>
-										</span>
-										<span
-											class="service-card-tile__switch-label"
-											:class="{ 'service-card-tile__switch-label--selected': service.isSelected }">
-											{{ service.isSelected ? 'Attivo' : 'Non attivo' }}
-										</span>
+										{{ service.isSelected ? 'Rimuovi' : 'Attiva' }}
 									</button>
 								</div>
 							</div>
 							<transition name="service-inline-expand">
 								<div
-									v-if="canConfigureService(service) && isServiceExpanded(service.name)"
-									:id="`service-inline-panel-${serviceIndex}`"
+									v-if="canConfigureService(service) && isServiceExpanded(service.key)"
+									:id="`service-inline-panel-${service.key || serviceIndex}`"
 									class="service-card-tile__accordion">
 									<!-- Contrassegno -->
-									<div v-if="service.name === 'Contrassegno'" class="service-inline-panel">
+									<div v-if="service.key === 'contrassegno'" class="service-inline-panel">
 										<div class="service-inline-panel__grid service-inline-panel__grid--double">
 											<div class="service-inline-field">
 												<label class="service-inline-field__label" :for="`contrassegno-importo-${serviceIndex}`">Importo</label>
@@ -211,7 +212,7 @@ const emit = defineEmits([
 									</div>
 
 									<!-- Assicurazione -->
-									<div v-else-if="service.name === 'Assicurazione'" class="service-inline-panel">
+									<div v-else-if="service.key === 'assicurazione'" class="service-inline-panel">
 										<div class="service-inline-insurance-list">
 											<div v-for="(pack, indexPopup) in insurancePackages" :key="`${service.name}-${indexPopup}`" class="service-inline-insurance-card">
 												<div class="service-inline-insurance-card__head">
@@ -227,8 +228,20 @@ const emit = defineEmits([
 										</div>
 									</div>
 									<div v-if="canConfigureService(service)" class="service-inline-panel__actions" :class="{ 'service-inline-panel__actions--split': service.isSelected }">
-										<button v-if="service.isSelected" type="button" class="btn-secondary btn-compact service-inline-panel__dismiss" @click.stop.prevent="$emit('toggle-regular-service', service)">Disattiva</button>
-										<button v-if="!service.isSelected" type="button" class="btn-primary btn-compact service-inline-panel__submit" :disabled="!canActivateConfiguredService(service)" @click.stop.prevent="$emit('activate-configured-service', service)">Attiva</button>
+										<button
+											v-if="service.isSelected"
+											type="button"
+											class="service-card-tile__action service-card-tile__action--neutral service-inline-panel__dismiss no-radius"
+											@click.stop.prevent="$emit('remove-configured-service', service)">
+											Rimuovi
+										</button>
+										<button
+											type="button"
+											class="service-card-tile__action service-card-tile__action--primary service-inline-panel__submit no-radius"
+											:disabled="!service.isSelected && !canActivateConfiguredService(service)"
+											@click.stop.prevent="$emit('activate-configured-service', service)">
+											{{ service.isSelected ? 'Salva modifiche' : 'Salva e attiva' }}
+										</button>
 									</div>
 								</div>
 							</transition>

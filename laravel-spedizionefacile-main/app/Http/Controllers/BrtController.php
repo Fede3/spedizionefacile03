@@ -25,6 +25,11 @@ class BrtController extends Controller
             'notes' => 'nullable|string|max:255',
         ]);
 
+        // Se contrassegno attivo, l'importo deve essere positivo
+        if ($request->boolean('is_cod') && (int) $request->cod_amount <= 0) {
+            return response()->json(['error' => 'L\'importo del contrassegno deve essere maggiore di zero.'], 422);
+        }
+
         $order = Order::findOrFail($request->order_id);
 
         if ($order->user_id !== auth()->id() && !auth()->user()->isAdmin()) {

@@ -17,7 +17,7 @@ const deliveryMode = computed({ get: () => userStore.deliveryMode, set: (v) => {
 const SERVICE_ICON_FILTER_IDLE = "brightness(0) saturate(100%) invert(23%) sepia(23%) saturate(1100%) hue-rotate(151deg) brightness(92%) contrast(88%)";
 
 const {
-	chooseDate, chooseService, daysInMonth, ensureServiceSelected, expandedServiceName,
+	chooseDate, chooseService, daysInMonth, ensureServiceSelected, expandedServiceKey,
 	featuredService, regularServices, resetServicesState, serviceData, services,
 	servicesList, smsEmailNotification, notificationPriceLabel,
 	syncSelectedServicesVisual, toggleServiceDetails, toggleServiceSelection,
@@ -30,12 +30,12 @@ const {
 const {
 	serviceCardErrors, normalizeCurrencyInput, contrassegnoIncassoOptions,
 	contrassegnoRimborsoOptions, contrassegnoCodPaymentOptions, requiresContrassegnoDettaglio, insurancePackages,
-	validateInlineServiceDetails, isServiceExpanded, isServiceSelected,
-	canConfigureService, shouldShowServiceToggle, shouldShowConfigureButton,
+	validateInlineServiceDetails, isServiceExpanded,
+	canConfigureService,
 	canActivateConfiguredService, getServiceStateLabel, getServiceConfigureLabel,
-	handleServicePrimaryAction, toggleRegularService, toggleFeaturedService, activateConfiguredService,
+	handleServicePrimaryAction, removeConfiguredService, toggleRegularService, toggleFeaturedService, activateConfiguredService,
 } = useShipmentStepServiceCards({
-	editablePackages, ensureServiceSelected, expandedServiceName, featuredService,
+	editablePackages, ensureServiceSelected, expandedServiceKey, featuredService,
 	chooseService, resetServicesState, serviceData, servicesList,
 	smsEmailNotification, submitError, toggleServiceDetails, toggleServiceSelection, userStore,
 });
@@ -154,9 +154,8 @@ onMounted(initOnMounted);
 							:days-in-month="daysInMonth" :services="services" @choose-date="chooseDate" />
 						<ShipmentStepServicesGrid :featured-service="featuredService" :regular-services="regularServices"
 							:service-data="serviceData" :service-card-errors="serviceCardErrors"
-							:is-service-expanded="isServiceExpanded" :is-service-selected="isServiceSelected"
-							:can-configure-service="canConfigureService" :should-show-service-toggle="shouldShowServiceToggle"
-							:should-show-configure-button="shouldShowConfigureButton"
+							:is-service-expanded="isServiceExpanded"
+							:can-configure-service="canConfigureService"
 							:can-activate-configured-service="canActivateConfiguredService"
 							:get-service-state-label="getServiceStateLabel" :get-service-configure-label="getServiceConfigureLabel"
 							:contrassegno-incasso-options="contrassegnoIncassoOptions"
@@ -171,6 +170,7 @@ onMounted(initOnMounted);
 							@toggle-featured-service="toggleFeaturedService" @toggle-regular-service="toggleRegularService"
 							@handle-service-primary-action="handleServicePrimaryAction"
 							@activate-configured-service="activateConfiguredService"
+							@remove-configured-service="removeConfiguredService"
 							@update:content-description="userStore.contentDescription = $event"
 							@update:content-error="contentError = $event"
 							@update:sms-email-notification="smsEmailNotification = $event" />

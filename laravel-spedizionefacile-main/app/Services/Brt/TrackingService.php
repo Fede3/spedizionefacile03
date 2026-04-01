@@ -30,7 +30,7 @@ class TrackingService
         if (empty($parcelNumber)) {
             return '';
         }
-        return 'https://vas.brt.it/vas/sped_det_show.hsm?refnr=' . urlencode($parcelNumber) . '&tiession=';
+        return 'https://vas.brt.it/vas/sped_det_show.hsm?refnr=' . urlencode($parcelNumber);
     }
 
     /**

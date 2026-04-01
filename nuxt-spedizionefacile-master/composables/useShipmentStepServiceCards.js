@@ -7,7 +7,7 @@
 export function useShipmentStepServiceCards({
 	editablePackages,
 	ensureServiceSelected,
-	expandedServiceName,
+	expandedServiceKey,
 	featuredService,
 	chooseService,
 	resetServicesState,
@@ -19,6 +19,8 @@ export function useShipmentStepServiceCards({
 	toggleServiceSelection,
 	userStore,
 }) {
+	const CONFIGURABLE_SERVICE_KEYS = new Set(["contrassegno", "assicurazione"]);
+
 	// --- ERRORS ---
 	const serviceCardErrors = reactive({
 		contrassegnoImporto: "",
@@ -91,12 +93,17 @@ export function useShipmentStepServiceCards({
 		serviceData.value.contrassegno.modalita_rimborso === "bonifico"
 	));
 
+	const clearInlineState = () => {
+		clearServiceCardErrors();
+		submitError.value = null;
+	};
+
 	// --- VALIDATION ---
 	const validateContrassegnoInline = () => {
 		clearServiceCardErrors();
 		let isValid = true;
 
-		if (!isServiceSelected("Contrassegno")) return true;
+		if (!isServiceSelected("contrassegno")) return true;
 
 		if (parseCurrencyValue(serviceData.value.contrassegno.importo) <= 0) {
 			serviceCardErrors.contrassegnoImporto = "Inserisci un importo valido.";
@@ -120,7 +127,7 @@ export function useShipmentStepServiceCards({
 
 	const validateAssicurazioneInline = () => {
 		let isValid = true;
-		if (!isServiceSelected("Assicurazione")) return true;
+		if (!isServiceSelected("assicurazione")) return true;
 
 		const nextErrors = {};
 		insurancePackages.value.forEach((_, index) => {
@@ -137,14 +144,14 @@ export function useShipmentStepServiceCards({
 	const validateInlineServiceDetails = () => {
 		const contrassegnoValid = validateContrassegnoInline();
 		if (!contrassegnoValid) {
-			expandedServiceName.value = "Contrassegno";
+			expandedServiceKey.value = "contrassegno";
 			submitError.value = "Completa i dettagli del contrassegno.";
 			return false;
 		}
 
 		const assicurazioneValid = validateAssicurazioneInline();
 		if (!assicurazioneValid) {
-			expandedServiceName.value = "Assicurazione";
+			expandedServiceKey.value = "assicurazione";
 			submitError.value = "Completa i dettagli dell'assicurazione.";
 			return false;
 		}
@@ -166,70 +173,65 @@ export function useShipmentStepServiceCards({
 		insurancePackages.value.every((_, index) => parseCurrencyValue(serviceData.value.assicurazione[index]) > 0)
 	);
 
-	const isConfigurableServiceReady = (serviceName) => {
-		if (serviceName === "Contrassegno") return isContrassegnoReady();
-		if (serviceName === "Assicurazione") return isAssicurazioneReady();
+	const isConfigurableServiceReady = (serviceKey) => {
+		if (serviceKey === "contrassegno") return isContrassegnoReady();
+		if (serviceKey === "assicurazione") return isAssicurazioneReady();
 		return true;
 	};
 
 	// --- SERVICE STATE HELPERS ---
-	const isServiceExpanded = (serviceName) => expandedServiceName.value === serviceName;
-	const getServiceIndex = (service) => servicesList.value.findIndex((item) => item.name === service.name);
-	const isServiceSelected = (serviceName) => userStore.servicesArray.includes(serviceName);
+	const isServiceExpanded = (serviceKey) => expandedServiceKey.value === serviceKey;
+	const getServiceIndex = (service) => servicesList.value.findIndex((item) => item.key === service.key);
+	const isServiceSelected = (serviceKey) => {
+		const service = servicesList.value.find((item) => item.key === serviceKey);
+		return service ? userStore.servicesArray.includes(service.name) : false;
+	};
 	const featuredServiceIndex = computed(() => servicesList.value.findIndex((item) => item.featured));
-	const canConfigureService = (service) => Boolean(service?.hasDetails);
-
-	const shouldShowServiceToggle = (service) => !canConfigureService(service);
-	const shouldShowConfigureButton = (service) => canConfigureService(service);
+	const canConfigureService = (service) => CONFIGURABLE_SERVICE_KEYS.has(service?.key);
 
 	const canActivateConfiguredService = (service) => (
-		canConfigureService(service) && isConfigurableServiceReady(service.name) && !service.isSelected
+		canConfigureService(service) && isConfigurableServiceReady(service.key) && !service.isSelected
 	);
 
 	const getServiceStateLabel = (service) => {
+		if (isServiceExpanded(service.key)) return "Configurazione aperta";
 		if (service.isSelected) return "Attivo";
-		if (canConfigureService(service) && !isConfigurableServiceReady(service.name)) {
-			return isServiceExpanded(service.name) ? "Compila dati" : "Da configurare";
-		}
-		if (canConfigureService(service)) return "Pronto";
+		if (canConfigureService(service)) return "Da configurare";
 		return "Disponibile";
 	};
 
 	const getServiceConfigureLabel = (service) => {
-		if (isServiceExpanded(service.name)) return "Chiudi";
-		if (!isConfigurableServiceReady(service.name)) return "Configura";
+		if (isServiceExpanded(service.key)) return "Chiudi";
 		if (service.isSelected) return "Modifica";
-		if (canConfigureService(service)) return "Attiva";
 		return "Configura";
 	};
 
 	// --- INTERACTIONS ---
 	const activateConfiguredService = (service) => {
-		if (!canConfigureService(service) || service.isSelected) return;
-
-		clearServiceCardErrors();
-		submitError.value = null;
+		if (!canConfigureService(service)) return;
+		clearInlineState();
 
 		let isValid = true;
-		if (service.name === "Contrassegno") {
+		if (service.key === "contrassegno") {
 			isValid = validateContrassegnoInline();
 			if (!isValid) submitError.value = "Completa i dettagli del contrassegno.";
 		}
-		if (service.name === "Assicurazione") {
+		if (service.key === "assicurazione") {
 			isValid = validateAssicurazioneInline();
 			if (!isValid) submitError.value = "Completa i dettagli dell'assicurazione.";
 		}
 
 		if (!isValid) {
-			expandedServiceName.value = service.name;
+			expandedServiceKey.value = service.key;
 			return;
 		}
 
-		const serviceIndex = getServiceIndex(service);
-		if (serviceIndex === -1) return;
-
-		ensureServiceSelected(service, serviceIndex);
-		expandedServiceName.value = "";
+		if (!service.isSelected) {
+			const serviceIndex = getServiceIndex(service);
+			if (serviceIndex === -1) return;
+			ensureServiceSelected(service, serviceIndex);
+		}
+		expandedServiceKey.value = "";
 	};
 
 	const handleServicePrimaryAction = (service) => {
@@ -237,45 +239,32 @@ export function useShipmentStepServiceCards({
 			toggleRegularService(service);
 			return;
 		}
-
-		if (isServiceExpanded(service.name)) {
-			expandedServiceName.value = "";
-			return;
-		}
-
-		if (!isConfigurableServiceReady(service.name)) {
-			toggleServiceAccordion(service);
-			return;
-		}
-
-		if (!service.isSelected) {
-			activateConfiguredService(service);
-			return;
-		}
-
 		toggleServiceAccordion(service);
+	};
+
+	const removeConfiguredService = (service) => {
+		if (!canConfigureService(service) || !service.isSelected) return;
+		clearInlineState();
+		removeService(service);
 	};
 
 	const toggleRegularService = (service) => {
 		const serviceIndex = getServiceIndex(service);
 		if (serviceIndex === -1) return;
-		clearServiceCardErrors();
-		submitError.value = null;
+		clearInlineState();
 		toggleServiceSelection(service, serviceIndex);
 	};
 
 	const toggleServiceAccordion = (service) => {
 		const serviceIndex = getServiceIndex(service);
 		if (serviceIndex === -1) return;
-		clearServiceCardErrors();
-		submitError.value = null;
+		clearInlineState();
 		toggleServiceDetails(service, serviceIndex);
 	};
 
 	const toggleFeaturedService = () => {
 		if (!featuredService.value || featuredServiceIndex.value === -1) return;
-		clearServiceCardErrors();
-		submitError.value = null;
+		clearInlineState();
 		chooseService(featuredService.value, featuredServiceIndex.value);
 	};
 
@@ -300,17 +289,15 @@ export function useShipmentStepServiceCards({
 		isConfigurableServiceReady,
 		// state helpers
 		isServiceExpanded,
-		isServiceSelected,
 		featuredServiceIndex,
 		canConfigureService,
-		shouldShowServiceToggle,
-		shouldShowConfigureButton,
 		canActivateConfiguredService,
 		getServiceStateLabel,
 		getServiceConfigureLabel,
 		// interactions
 		activateConfiguredService,
 		handleServicePrimaryAction,
+		removeConfiguredService,
 		toggleRegularService,
 		toggleServiceAccordion,
 		toggleFeaturedService,

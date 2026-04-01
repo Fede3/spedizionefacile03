@@ -1,0 +1,115 @@
+# =============================================================================
+# CADDYFILE PRODUZIONE - SpediamoFacile
+# =============================================================================
+#
+# Reverse proxy HTTPS con certificato automatico Let's Encrypt.
+#
+# COME FUNZIONA:
+#   Internet → Caddy (:443 HTTPS) → Laravel (:8000) per le API
+#                                  → Nuxt    (:3000) per le pagine
+#
+# INSTALLAZIONE:
+#   1. Copia questo file come /etc/caddy/Caddyfile
+#   2. Imposta la variabile DOMAIN oppure modifica il dominio sotto
+#   3. sudo systemctl reload caddy
+#
+# VARIABILE D'AMBIENTE:
+#   DOMAIN — dominio del sito (default: spediamofacile.it)
+#   Esempio: DOMAIN=staging.spediamofacile.it caddy run
+# =============================================================================
+
+{$DOMAIN:spediamofacile.it} {
+
+	# ------------------------------------------------------------------
+	# Compressione — riduce la dimensione delle risposte (HTML, CSS, JS)
+	# ------------------------------------------------------------------
+	encode gzip
+
+	# ------------------------------------------------------------------
+	# Header di sicurezza — proteggono da attacchi comuni
+	# ------------------------------------------------------------------
+	header {
+		# Impedisce al browser di interpretare file con MIME type sbagliato
+		X-Content-Type-Options nosniff
+
+		# Impedisce al sito di essere incluso in un iframe esterno (clickjacking)
+		X-Frame-Options DENY
+
+		# Attiva il filtro XSS integrato nei browser
+		X-XSS-Protection "1; mode=block"
+
+		# Forza HTTPS per 1 anno (il browser non fara' mai richieste HTTP)
+		Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+
+		# Controlla quali informazioni il browser invia come Referer
+		Referrer-Policy strict-origin-when-cross-origin
+
+		# Impedisce a terzi di usare microfono, camera, geolocalizzazione ecc.
+		Permissions-Policy "camera=(), microphone=(), geolocation=()"
+
+		# Rimuove l'header che rivela la tecnologia server
+		-Server
+	}
+
+	# ------------------------------------------------------------------
+	# CORS per Sanctum — necessario per i cookie di autenticazione
+	# ------------------------------------------------------------------
+	# Nota: Sanctum gestisce CORS lato Laravel (config/cors.php).
+	# Caddy aggiunge solo header per preflight OPTIONS su percorsi API.
+	# ------------------------------------------------------------------
+	@options method OPTIONS
+	handle @options {
+		header Access-Control-Allow-Origin "https://{$DOMAIN:spediamofacile.it}"
+		header Access-Control-Allow-Methods "GET, POST, PUT, PATCH, DELETE, OPTIONS"
+		header Access-Control-Allow-Headers "Content-Type, Authorization, X-Requested-With, X-XSRF-TOKEN, Accept"
+		header Access-Control-Allow-Credentials "true"
+		header Access-Control-Max-Age "7200"
+		respond 204
+	}
+
+	# ------------------------------------------------------------------
+	# Routing API → Laravel (porta 8000)
+	# Tutti i percorsi /api/*, /sanctum/*, /storage/* vanno al backend
+	# ------------------------------------------------------------------
+	@backend path /api/* /sanctum/* /storage/*
+
+	reverse_proxy @backend 127.0.0.1:8000 {
+		# Passa al backend l'host e il protocollo originali della richiesta
+		header_up X-Forwarded-Host {host}
+		header_up X-Forwarded-Proto {scheme}
+		header_up X-Real-IP {remote_host}
+
+		# Timeout generosi per upload spedizioni e operazioni lunghe
+		transport http {
+			read_timeout 60s
+			write_timeout 60s
+		}
+	}
+
+	# ------------------------------------------------------------------
+	# Tutto il resto → Nuxt frontend (porta 3000)
+	# In produzione Nuxt gira con `node .output/server/index.mjs`
+	# ------------------------------------------------------------------
+	reverse_proxy 127.0.0.1:3000 {
+		header_up X-Forwarded-Host {host}
+		header_up X-Forwarded-Proto {scheme}
+		header_up X-Real-IP {remote_host}
+	}
+
+	# ------------------------------------------------------------------
+	# Log — utile per debug; in produzione si puo' disattivare
+	# ------------------------------------------------------------------
+	log {
+		output file /var/log/caddy/spediamofacile.log {
+			roll_size 10mb
+			roll_keep 5
+		}
+	}
+}
+
+# =============================================================================
+# Redirect www → dominio principale (senza www)
+# =============================================================================
+www.{$DOMAIN:spediamofacile.it} {
+	redir https://{$DOMAIN:spediamofacile.it}{uri} permanent
+}

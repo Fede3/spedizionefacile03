@@ -14,11 +14,35 @@
 import { useAuthUiSnapshotPersistence } from '~/composables/useAuthUiSnapshotPersistence';
 
 export function useAutenticazione() {
-	const { login, isAuthenticated } = useSanctumAuth();
+	const sanctum = useSanctumClient();
+	const { isAuthenticated, refreshIdentity } = useSanctumAuth();
 	const { persistSnapshotFromUser } = useAuthUiSnapshotPersistence();
 	const { authProviders, refreshAuthProviders } = useAuthProviders();
 	const route = useRoute();
 	const requestUrl = useRequestURL();
+	const sanitizeRedirect = (redirect) => {
+		if (!redirect || typeof redirect !== 'string') return '/account';
+		return redirect.startsWith('/') ? redirect : '/account';
+	};
+	const finalizeAuth = async (responseUser) => {
+		const redirectTarget = sanitizeRedirect(String(route.query.redirect || '/account'));
+		persistSnapshotFromUser(responseUser?.user || responseUser);
+		try {
+			await refreshIdentity();
+		} catch {
+			// Dopo login riuscito non blocchiamo il redirect per un refresh identità in ritardo.
+		}
+		try {
+			await refreshNuxtData();
+		} catch {
+			// Il redirect duro ricostruisce comunque la pagina con i cookie aggiornati.
+		}
+		if (import.meta.client) {
+			window.location.assign(redirectTarget);
+			return;
+		}
+		return navigateTo(redirectTarget);
+	};
 
 	// ── Tab state ──
 	const items = ref([
@@ -99,9 +123,16 @@ export function useAutenticazione() {
 		if (!isRetry) await refreshCsrf();
 
 		try {
-			const response = await login(credentials.value);
-			persistSnapshotFromUser(response?.user || response);
+			const response = await sanctum('/api/custom-login', {
+				method: 'POST',
+				body: {
+					email: credentials.value.email,
+					password: credentials.value.password,
+					remember: credentials.value.remember,
+				},
+			});
 			items.value.forEach((item) => { item.disabled = true; });
+			await finalizeAuth(response);
 			loginCompleted = true;
 		} catch (error) {
 			const status = error?.response?.status || error?.statusCode;
@@ -187,8 +218,7 @@ export function useAutenticazione() {
 			isLoading.value = true;
 
 			try {
-				const loginResponse = await login(credentials.value);
-				persistSnapshotFromUser(loginResponse?.user || loginResponse);
+				await finalizeAuth(response);
 			} catch {
 				messageSuccess.value = response?.message || 'Account verificato con successo! Ora puoi accedere.';
 				isLoading.value = false;

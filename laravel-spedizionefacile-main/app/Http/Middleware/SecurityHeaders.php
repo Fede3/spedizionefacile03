@@ -45,6 +45,10 @@ class SecurityHeaders
     {
         // Prima lascia che la richiesta venga processata normalmente
         $response = $next($request);
+        $isDevelopment = app()->environment(['local', 'development', 'testing']) || (bool) config('app.debug');
+        $scriptSrc = $isDevelopment
+            ? "'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com"
+            : "'self' 'unsafe-inline' https://js.stripe.com";
 
         // --- INTESTAZIONI DI SICUREZZA ---
 
@@ -113,7 +117,7 @@ class SecurityHeaders
         //                                → iframe: solo Stripe (per il form di pagamento 3D Secure)
         //   object-src 'none'            → blocca tutti i plugin (Flash, Java, ecc.)
         //   base-uri 'self'              → impedisce di cambiare il base URL della pagina
-        $response->headers->set('Content-Security-Policy', "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https://api.stripe.com; frame-src https://js.stripe.com https://hooks.stripe.com; object-src 'none'; base-uri 'self'");
+        $response->headers->set('Content-Security-Policy', "default-src 'self'; script-src {$scriptSrc}; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https://api.stripe.com; frame-src https://js.stripe.com https://hooks.stripe.com; object-src 'none'; base-uri 'self'");
 
         return $response;
     }

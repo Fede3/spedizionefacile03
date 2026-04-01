@@ -404,9 +404,10 @@
 
 .route-composer__connector {
 	display: none;
-	align-items: flex-end;
+	align-items: center;
 	justify-content: center;
-	padding-bottom: 0.8rem;
+	align-self: flex-start;
+	margin-top: 0;
 	color: #7a8190;
 }
 
@@ -929,7 +930,7 @@
 
 	.route-composer__grid {
 		grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
-		align-items: end;
+		align-items: start;
 		gap: 0.75rem;
 	}
 
@@ -939,6 +940,7 @@
 
 	.route-composer__connector {
 		display: flex;
+		margin-top: 2.36rem;
 	}
 
 	.route-card__field .input-preventivo-rapido--location,

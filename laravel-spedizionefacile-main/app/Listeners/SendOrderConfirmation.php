@@ -2,14 +2,14 @@
 
 /**
  * FILE: SendOrderConfirmation.php
- * SCOPO: Listener che invia l'email di conferma ordine all'utente dopo la creazione.
+ * SCOPO: Listener che invia l'email di conferma ordine all'utente dopo il pagamento.
  *
  * DOVE SI USA:
- *   - EventServiceProvider — registrato come listener di OrderCreated
- *   - Scatenato quando un nuovo ordine viene creato e il pagamento e' ricevuto
+ *   - EventServiceProvider — registrato come listener di OrderPaid
+ *   - Scatenato quando un ordine viene pagato con successo
  *
  * DATI IN INGRESSO:
- *   - OrderCreated event con order (l'ordine appena creato)
+ *   - OrderPaid event con order (l'ordine appena pagato)
  *
  * DATI IN USCITA:
  *   - Nessun ritorno (void), invia email all'utente
@@ -22,14 +22,14 @@
  *   - Email fallita: non blocca, l'errore viene solo loggato
  *
  * COLLEGAMENTI:
- *   - app/Events/OrderCreated.php — evento che scatena questo listener
+ *   - app/Events/OrderPaid.php — evento che scatena questo listener
  *   - app/Mail/OrderConfirmationMail.php — Mailable inviata
  *   - resources/views/emails/order-confirmation.blade.php — template HTML
  */
 
 namespace App\Listeners;
 
-use App\Events\OrderCreated;
+use App\Events\OrderPaid;
 use App\Mail\OrderConfirmationMail;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
@@ -47,7 +47,7 @@ class SendOrderConfirmation
      * Carica la relazione utente se non gia' presente e invia
      * l'email OrderConfirmationMail con i dettagli dell'ordine.
      */
-    public function handle(OrderCreated $event): void
+    public function handle(OrderPaid $event): void
     {
         try {
             $event->order->loadMissing('user');

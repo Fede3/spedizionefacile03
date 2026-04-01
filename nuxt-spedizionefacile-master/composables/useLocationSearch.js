@@ -19,34 +19,8 @@ export const useLocationSearch = (client) => {
 		return normalized ? `&country=${encodeURIComponent(normalized)}` : "";
 	};
 
-	const normalizeLocationText = (value = "") =>
-		String(value)
-			.toLowerCase()
-			.normalize("NFD")
-			.replace(/[\u0300-\u036f]/g, "")
-			.replace(/\s+/g, " ")
-			.trim();
-
-	const getProvinceLabel = (location) =>
-		String(location?.province ?? location?.province_name ?? "")
-			.toUpperCase()
-			.trim();
-
-	const locationKey = (location) => [
-		String(location?.postal_code || "").trim(),
-		normalizeLocationText(location?.place_name),
-		getProvinceLabel(location),
-	].join("|");
-
-	const dedupeLocations = (locations = []) => {
-		const map = new Map();
-		for (const location of locations) {
-			if (!location?.place_name || !location?.postal_code) continue;
-			const key = locationKey(location);
-			if (!map.has(key)) map.set(key, location);
-		}
-		return Array.from(map.values());
-	};
+	// normalizeLocationText, getProvinceLabel, locationKey, dedupeLocations
+	// are auto-imported from ~/utils/location.js (Nuxt 3 auto-import)
 
 	const cityMatchesQuery = (cityValue, rawQuery) => {
 		const city = normalizeLocationText(cityValue);

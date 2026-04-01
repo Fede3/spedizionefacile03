@@ -102,14 +102,14 @@ const sharedFieldProps = {
 </script>
 
 <template>
-	<div class="address-stage-shell sf-stack-block">
+	<div class="address-stage-shell sf-section-block">
 		<div class="address-stage-banner flow-section-header flow-section-header--addresses sf-section-block__header">
 			<div class="address-stage-banner__copy flow-section-header__copy">
 				<h3 class="address-stage-banner__title flow-section-header__title sf-section-title">Indirizzi</h3>
 			</div>
 		</div>
 
-		<div>
+		<div class="address-stage-shell__content sf-section-block__body">
 			<!-- Error summary -->
 			<div v-if="showGlobalFormSummary" class="ux-alert ux-alert--soft mt-[18px]">
 				<svg xmlns="http://www.w3.org/2000/svg" class="ux-alert__icon" viewBox="0 0 24 24"><path fill="currentColor" d="M11 15h2v2h-2zm0-8h2v6h-2z"/><path fill="currentColor" d="M1 21h22L12 2zm12-3h-2v-2h2zm0-4h-2V8h2z"/></svg>
@@ -124,15 +124,15 @@ const sharedFieldProps = {
 			</div>
 
 			<!-- PARTENZA -->
-			<div class="bg-[#E4E4E4] rounded-[12px] text-[#252B42] mt-[20px] px-[16px] tablet:px-[40px] pt-[24px] tablet:pt-[36px] pb-[24px] tablet:pb-[44px]">
-				<div class="flex items-center justify-between mb-[20px] tablet:mb-[40px] flex-wrap gap-[10px]">
-					<div class="flex items-center gap-[10px]">
-						<h2 class="font-bold text-[1.125rem] tracking-[0.1px]">Partenza</h2>
-						<button v-if="canSaveOriginAddress" type="button" @click="$emit('save-address', 'origin')" :disabled="savingOriginAddress" class="inline-flex items-center justify-center w-[30px] h-[30px] rounded-[6px] bg-[#095866] text-white hover:bg-[#074a56] transition cursor-pointer disabled:opacity-60" title="Salva indirizzo" aria-label="Salva indirizzo partenza">
+			<div class="address-entry-card address-entry-card--origin">
+				<div class="address-entry-card__head">
+					<div class="address-entry-card__title-row">
+						<h2 class="address-entry-card__title">Partenza</h2>
+						<button v-if="canSaveOriginAddress" type="button" @click="$emit('save-address', 'origin')" :disabled="savingOriginAddress" class="address-entry-card__save" title="Salva indirizzo" aria-label="Salva indirizzo partenza">
 							<svg v-if="!savingOriginAddress" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
 							<svg v-else class="animate-spin" width="14" height="14" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" opacity=".25"/><path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg>
 						</button>
-						<span v-if="originSaveSuccess" class="inline-flex items-center gap-[4px] text-[0.75rem] text-green-600 font-semibold">
+						<span v-if="originSaveSuccess" class="address-entry-card__saved">
 							<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
 							Salvato
 						</span>
@@ -150,15 +150,15 @@ const sharedFieldProps = {
 			<ShipmentAddressPudoSection :delivery-mode="deliveryMode" :destination-address="destinationAddress" :selected-pudo="selectedPudo" @update:delivery-mode="$emit('update:delivery-mode', $event)" @pudo-selected="$emit('pudo-selected', $event)" @pudo-deselected="$emit('pudo-deselected')" />
 
 			<!-- DESTINAZIONE -->
-			<div class="bg-[#E4E4E4] rounded-[12px] text-[#252B42] mt-[20px] px-[16px] tablet:px-[40px] pt-[24px] tablet:pt-[36px] pb-[24px] tablet:pb-[44px]">
-				<div class="flex items-center justify-between mb-[20px] tablet:mb-[40px]">
-					<div class="flex items-center gap-[10px]">
-						<h2 class="font-bold text-[1.125rem] tracking-[0.1px]">{{ deliveryMode === 'pudo' ? 'Destinazione (Punto BRT)' : 'Destinazione' }}</h2>
-						<button v-if="canSaveDestAddress && deliveryMode !== 'pudo'" type="button" @click="$emit('save-address', 'dest')" :disabled="savingDestAddress" class="inline-flex items-center justify-center w-[30px] h-[30px] rounded-[6px] bg-[#095866] text-white hover:bg-[#074a56] transition cursor-pointer disabled:opacity-60" title="Salva indirizzo" aria-label="Salva indirizzo destinazione">
+			<div class="address-entry-card address-entry-card--destination">
+				<div class="address-entry-card__head">
+					<div class="address-entry-card__title-row">
+						<h2 class="address-entry-card__title">{{ deliveryMode === 'pudo' ? 'Destinazione (Punto BRT)' : 'Destinazione' }}</h2>
+						<button v-if="canSaveDestAddress && deliveryMode !== 'pudo'" type="button" @click="$emit('save-address', 'dest')" :disabled="savingDestAddress" class="address-entry-card__save" title="Salva indirizzo" aria-label="Salva indirizzo destinazione">
 							<svg v-if="!savingDestAddress" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
 							<svg v-else class="animate-spin" width="14" height="14" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" opacity=".25"/><path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg>
 						</button>
-						<span v-if="destSaveSuccess" class="inline-flex items-center gap-[4px] text-[0.75rem] text-green-600 font-semibold">
+						<span v-if="destSaveSuccess" class="address-entry-card__saved">
 							<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
 							Salvato
 						</span>

@@ -29,22 +29,26 @@ export default defineNuxtRouteMiddleware(async (to) => {
 	const { init, user } = useSanctumAuth();
 	const bootstrapReady = useState('auth-bootstrap-ready', () => false);
 	const bootstrapStatus = useState('auth-bootstrap-status', () => 'idle');
-	bootstrapReady.value = false;
-	bootstrapStatus.value = 'pending';
 
-	try {
-		await init();
-		bootstrapStatus.value = 'resolved';
-	} catch (error) {
-		const err = /** @type {{ status?: number; response?: { status?: number } }} */ (error);
-		const status = Number(err?.status ?? err?.response?.status ?? 0);
-		if ([401, 419].includes(status)) {
+	// Solo se app-auth non ha gia' risolto lo stato auth (evita doppia init)
+	if (!(bootstrapReady.value && bootstrapStatus.value === 'resolved')) {
+		bootstrapReady.value = false;
+		bootstrapStatus.value = 'pending';
+
+		try {
+			await init();
 			bootstrapStatus.value = 'resolved';
-		} else {
-			bootstrapStatus.value = 'failed';
+		} catch (error) {
+			const err = /** @type {{ status?: number; response?: { status?: number } }} */ (error);
+			const status = Number(err?.status ?? err?.response?.status ?? 0);
+			if ([401, 419].includes(status)) {
+				bootstrapStatus.value = 'resolved';
+			} else {
+				bootstrapStatus.value = 'failed';
+			}
+		} finally {
+			bootstrapReady.value = true;
 		}
-	} finally {
-		bootstrapReady.value = true;
 	}
 
 	// Se bootstrap fallisce o utente non autenticato → redirect al login

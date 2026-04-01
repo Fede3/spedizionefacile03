@@ -6,6 +6,9 @@
     <title>Aggiornamento spedizione - SpediamoFacile</title>
 </head>
 <body style="margin: 0; padding: 0; background-color: #f4f4f7; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+    @php
+        $totalPackages = $order->packages->sum(fn ($package) => max(1, (int) ($package->pivot->quantity ?? 1)));
+    @endphp
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: #f4f4f7;">
         <tr>
             <td align="center" style="padding: 24px 16px;">
@@ -107,7 +110,7 @@
                                             </tr>
                                             <tr>
                                                 <td style="color: #777; font-size: 13px; padding-bottom: 6px;">Pacchi</td>
-                                                <td align="right" style="color: #222; font-size: 15px; padding-bottom: 6px;">{{ $order->packages->count() }}</td>
+                                                <td align="right" style="color: #222; font-size: 15px; padding-bottom: 6px;">{{ $totalPackages }}</td>
                                             </tr>
                                             <tr>
                                                 <td style="color: #777; font-size: 13px;">Importo</td>

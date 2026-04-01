@@ -36,5 +36,9 @@ class EventServiceProvider extends ServiceProvider
         \App\Events\ShipmentStatusChanged::class => [
             \App\Listeners\SendShipmentStatusEmail::class,
         ],
+
+        \App\Events\OrderPaymentFailed::class => [
+            \App\Listeners\MarkOrderPaymentFailed::class,
+        ],
     ];
 }

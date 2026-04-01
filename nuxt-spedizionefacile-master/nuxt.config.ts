@@ -71,6 +71,7 @@ export default defineNuxtConfig({
   // Ottimizzazione icone: include solo le icone MDI nel bundle (nessuna richiesta API runtime).
   // clientBundle.scan scansiona i .vue per trovare quali icone servono e le include direttamente.
   icon: {
+    localApiEndpoint: '/_nuxt_icon',
     clientBundle: {
       scan: true,
     },

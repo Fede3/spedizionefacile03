@@ -8,8 +8,7 @@ import {
 } from '~/utils/authUiState'
 
 export const useAuthUiSnapshotPersistence = () => {
-	const authCookie = useCookie<AuthUiSnapshot>(AUTH_UI_COOKIE, {
-		default: createEmptySnapshot,
+	const authCookie = useCookie<AuthUiSnapshot | undefined>(AUTH_UI_COOKIE, {
 		sameSite: 'lax',
 		path: '/',
 	})
@@ -35,7 +34,7 @@ export const useAuthUiSnapshotPersistence = () => {
 
 	const clearSnapshot = () => {
 		const snapshot = createEmptySnapshot()
-		authCookie.value = snapshot
+		authCookie.value = undefined
 		initialSnapshot.value = snapshot
 		storedSnapshot.value = snapshot
 		if (import.meta.client) {

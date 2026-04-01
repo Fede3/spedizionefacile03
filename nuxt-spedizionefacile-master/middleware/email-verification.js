@@ -15,7 +15,7 @@
  * COLLEGAMENTI: pages/verifica-email.vue
  */
 export default defineNuxtRouteMiddleware((to, from) => {
-	if (!to.query || String(to.query).trim() === "") {
+	if (!to.query || Object.keys(to.query).length === 0) {
 		return navigateTo("/");
 	}
 });

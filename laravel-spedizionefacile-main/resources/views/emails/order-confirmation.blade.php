@@ -6,6 +6,10 @@
     <title>Conferma ordine - SpediamoFacile</title>
 </head>
 <body style="margin: 0; padding: 0; background-color: #f4f4f7; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+    @php
+        $packageRows = $order->packages;
+        $totalPackages = $packageRows->sum(fn ($package) => max(1, (int) ($package->pivot->quantity ?? 1)));
+    @endphp
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: #f4f4f7;">
         <tr>
             <td align="center" style="padding: 24px 16px;">
@@ -59,15 +63,15 @@
                     </tr>
 
                     {{-- LISTA PACCHI --}}
-                    @if($order->packages->count() > 0)
+                    @if($packageRows->count() > 0)
                     <tr>
                         <td style="padding: 16px 32px 8px;">
                             <h3 style="margin: 0 0 12px; color: #333; font-size: 16px; font-weight: 600;">
-                                Pacchi ({{ $order->packages->count() }})
+                                Pacchi ({{ $totalPackages }})
                             </h3>
                         </td>
                     </tr>
-                    @foreach($order->packages as $index => $package)
+                    @foreach($packageRows as $index => $package)
                     <tr>
                         <td style="padding: 0 32px 12px;">
                             <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: #fafafa; border-radius: 6px; border: 1px solid #eee;">
@@ -75,6 +79,9 @@
                                     <td style="padding: 14px 16px;">
                                         <p style="margin: 0 0 4px; color: #333; font-size: 14px; font-weight: 600;">
                                             {{ $package->package_type ?? 'Pacco' }} #{{ $index + 1 }}
+                                            @if(($package->pivot->quantity ?? 1) > 1)
+                                                <span style="color: #666; font-weight: 500;">&times; {{ (int) $package->pivot->quantity }}</span>
+                                            @endif
                                         </p>
                                         <p style="margin: 0; color: #666; font-size: 13px; line-height: 1.5;">
                                             Peso: {{ $package->weight }} kg

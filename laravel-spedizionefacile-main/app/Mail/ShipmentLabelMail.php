@@ -49,12 +49,12 @@ class ShipmentLabelMail extends Mailable
     }
 
     /**
-     * Definisce il contenuto dell'email usando il template "shipment-label".
+     * Definisce il contenuto dell'email usando il template Markdown "shipment-label".
      */
     public function content(): Content
     {
         return new Content(
-            view: 'emails.shipment-label',
+            markdown: 'emails.shipment-label',
         );
     }
 

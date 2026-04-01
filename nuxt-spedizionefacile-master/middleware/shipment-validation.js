@@ -8,6 +8,12 @@ import {
 } from '~/utils/shipmentFlowState';
 
 const BLOCK_TOAST_KEY = 'shipment-flow-guard-toast';
+const scheduleClientToast = (callback) => {
+	if (typeof window === 'undefined') return;
+	window.requestAnimationFrame(() => {
+		window.setTimeout(callback, 0);
+	});
+};
 
 const isShipmentProtectedPath = (routeLike) => {
 	const path = String(routeLike?.path || routeLike?.fullPath || '');
@@ -102,7 +108,9 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
 	const toastLock = useState(BLOCK_TOAST_KEY, () => false);
 	if (!toastLock.value) {
 		toastLock.value = true;
-		uiFeedback.info('Ultimo step valido', 'Ti abbiamo riportato all’ultimo step valido del tuo flusso.', { timeout: 3200 });
+		scheduleClientToast(() => {
+			uiFeedback.info('Ultimo step valido', 'Ti abbiamo riportato all’ultimo step valido del tuo flusso.', { timeout: 3200 });
+		});
 		setTimeout(() => {
 			toastLock.value = false;
 		}, 3500);
