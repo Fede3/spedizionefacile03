@@ -7,7 +7,7 @@
 <script setup>
 // Solo utenti non autenticati
 definePageMeta({
-	middleware: ["sanctum:guest"],
+	middleware: ["guest-auth"],
 });
 
 // Redirect alla pagina unificata di autenticazione

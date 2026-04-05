@@ -106,7 +106,7 @@ const getRoleBadge = (role) => {
 	<!-- Logout button -->
 	<button
 		@click.prevent="emit('logout')"
-		class="w-full py-[14px] border border-[#E9EBEC] rounded-[50px] text-[0.9375rem] text-[#737373] hover:text-red-600 hover:border-red-200 hover:bg-red-50 transition-all cursor-pointer font-medium inline-flex items-center justify-center gap-[8px]">
+		class="btn-secondary btn-compact w-full inline-flex items-center justify-center gap-[8px]">
 		<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
 		Esci dall'account
 	</button>

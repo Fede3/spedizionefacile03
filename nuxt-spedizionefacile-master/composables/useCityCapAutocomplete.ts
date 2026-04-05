@@ -3,6 +3,14 @@
  * Logica di ricerca, suggerimenti e selezione per input citta/CAP con autocomplete.
  * Estratto da CityCapInputs.vue per ridurre la dimensione del componente.
  */
+
+interface LocationResult {
+  postal_code: string
+  place_name: string
+  province?: string
+  province_name?: string
+}
+
 export function useCityCapAutocomplete() {
   const sanctum = useSanctumClient()
 
@@ -12,14 +20,14 @@ export function useCityCapAutocomplete() {
   const normalizeLocationText = (value = '') =>
     String(value).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, ' ').trim()
 
-  const getProvinceLabel = (loc: any) => {
+  const getProvinceLabel = (loc: LocationResult) => {
     const value = loc?.province ?? loc?.province_name ?? ''
     return String(value).trim()
   }
 
-  const locationKey = (loc: any) => `${loc?.postal_code || ''}-${loc?.place_name || ''}-${getProvinceLabel(loc)}`
+  const locationKey = (loc: LocationResult) => `${loc?.postal_code || ''}-${loc?.place_name || ''}-${getProvinceLabel(loc)}`
 
-  const dedupeLocations = (list: any[] = []) => {
+  const dedupeLocations = (list: LocationResult[] = []) => {
     const map = new Map()
     list.forEach((loc) => {
       if (!loc?.place_name || !loc?.postal_code) return
@@ -71,7 +79,7 @@ export function useCityCapAutocomplete() {
     if (!query || query.length < 2) return []
     try {
       const q = encodeURIComponent(query.trim())
-      const results = await sanctum(`/api/locations/search?q=${q}&limit=${limit}`)
+      const results = await sanctum(`/api/locations/search?q=${q}&limit=${limit}`) as LocationResult[]
       return dedupeLocations(results || [])
     } catch { return [] }
   }
@@ -80,7 +88,7 @@ export function useCityCapAutocomplete() {
     if (!cap) return []
     try {
       const q = encodeURIComponent(String(cap).trim())
-      const results = await sanctum(`/api/locations/by-cap?cap=${q}`)
+      const results = await sanctum(`/api/locations/by-cap?cap=${q}`) as LocationResult[]
       return dedupeLocations(results || [])
     } catch { return [] }
   }
@@ -89,7 +97,7 @@ export function useCityCapAutocomplete() {
     if (!city || city.length < 2) return []
     try {
       const q = encodeURIComponent(city.trim())
-      const results = await sanctum(`/api/locations/by-city?city=${q}`)
+      const results = await sanctum(`/api/locations/by-city?city=${q}`) as LocationResult[]
       return dedupeLocations(results || [])
     } catch { return [] }
   }

@@ -61,7 +61,11 @@ class SettingsController extends Controller
     public function saveStripeConfig(Request $request)
     {
         // Controllo di sicurezza: solo l'admin puo' cambiare le chiavi Stripe
-        if (!$request->user()?->isAdmin()) {
+        if (! $request->user()) {
+            return response()->json(['message' => 'Unauthenticated.'], 401);
+        }
+
+        if (! $request->user()->isAdmin()) {
             return response()->json(['error' => 'Non autorizzato.'], 403);
         }
 

@@ -27,14 +27,31 @@ class CartController extends Controller
 {
     // ── Helpers ──────────────────────────────────────────────────
 
+    private function packageIsInCart(int $userId, int|string $packageId): bool
+    {
+        return DB::table('cart_user')
+            ->where('user_id', $userId)
+            ->where('package_id', $packageId)
+            ->exists();
+    }
+
     private function loadCartPackages(int $userId)
     {
         $packageIds = DB::table('cart_user')
             ->where('user_id', $userId)
             ->pluck('package_id');
 
+        // PERF-05: select() limita le colonne caricate; le relazioni hanno i propri select.
         return Package::with(['originAddress', 'destinationAddress', 'service'])
             ->whereIn('id', $packageIds)
+            ->select([
+                'id', 'package_type', 'quantity', 'weight',
+                'first_size', 'second_size', 'third_size',
+                'weight_price', 'volume_price', 'single_price',
+                'origin_address_id', 'destination_address_id', 'service_id',
+                'user_id', 'content_description',
+                'created_at', 'updated_at',
+            ])
             ->get();
     }
 
@@ -54,15 +71,22 @@ class CartController extends Controller
     public function index(Request $request)
     {
         $userId = auth()->id();
+
+        // PERF-01: primo caricamento.
         $packages = $this->loadCartPackages($userId);
 
-        // Auto-merge pacchi identici
-        CartService::mergeIdenticalPackages($packages, $userId);
+        // Auto-merge pacchi identici: può cancellare record nel DB,
+        // quindi ricarichiamo per avere solo i pacchi ancora esistenti.
+        $merged = CartService::mergeIdenticalPackages($packages, $userId);
+        if ($merged > 0) {
+            $packages = $this->loadCartPackages($userId);
+        }
 
-        // Ricarichiamo dopo il merge
-        $packages = $this->loadCartPackages($userId);
+        // Normalizza eventuali prezzi legacy in memoria (nessun reload necessario:
+        // normalizePackagePricing aggiorna i modelli già caricati via ->save()).
+        CartService::normalizePackagePricing($packages);
 
-        // Pulizia pacchi non validi
+        // Pulizia pacchi non validi: filtra dalla collezione già in memoria.
         $invalidPackages = $packages->filter(fn ($pkg) =>
             empty($pkg->package_type) || (empty($pkg->weight) && empty($pkg->first_size))
         );
@@ -75,7 +99,9 @@ class CartController extends Controller
                     ->delete();
                 $pkg->delete();
             }
-            $packages = $this->loadCartPackages($userId);
+            // Rimuoviamo i pacchi invalidi dalla collezione già caricata
+            // invece di fare un altro round-trip al DB.
+            $packages = $packages->diff($invalidPackages)->values();
         }
 
         return PackageResource::collection($packages)
@@ -88,12 +114,7 @@ class CartController extends Controller
     {
         $userId = auth()->id();
 
-        $inCart = DB::table('cart_user')
-            ->where('user_id', $userId)
-            ->where('package_id', $id)
-            ->exists();
-
-        if (! $inCart) {
+        if (! $this->packageIsInCart($userId, $id)) {
             return response()->json(['message' => 'Pacco non trovato nel carrello'], 404);
         }
 
@@ -110,12 +131,7 @@ class CartController extends Controller
     {
         $userId = auth()->id();
 
-        $inCart = DB::table('cart_user')
-            ->where('user_id', $userId)
-            ->where('package_id', $id)
-            ->exists();
-
-        if (! $inCart) {
+        if (! $this->packageIsInCart($userId, $id)) {
             return response()->json(['message' => 'Pacco non trovato nel carrello'], 404);
         }
 
@@ -163,9 +179,6 @@ class CartController extends Controller
             'packages.*.first_size' => 'nullable|numeric|min:1|max:9999',
             'packages.*.second_size' => 'nullable|numeric|min:1|max:9999',
             'packages.*.third_size' => 'nullable|numeric|min:1|max:9999',
-            'packages.*.weight_price' => 'nullable|numeric|min:0',
-            'packages.*.volume_price' => 'nullable|numeric|min:0',
-            'packages.*.single_price' => 'nullable|numeric|min:0',
             'content_description' => 'nullable|string|max:255',
             'delivery_mode' => 'nullable|string|in:home,pudo',
             'pudo' => 'nullable|array',
@@ -185,6 +198,8 @@ class CartController extends Controller
                 $package->destinationAddress->update($data['destination_address']);
             }
 
+            $package->load(['originAddress', 'destinationAddress']);
+
             if (isset($data['services']) && $package->service) {
                 $servicesData = CartService::normalizeServiceData($data['services']);
                 $servicesData = CartService::applyPudoData($servicesData, $data);
@@ -193,18 +208,30 @@ class CartController extends Controller
 
             if (isset($data['packages']) && count($data['packages']) > 0) {
                 $packageData = $data['packages'][0];
-                $singlePriceCents = CartService::euroToCents($packageData['single_price'] ?? 0);
+                $pricedPackage = CartService::pricePackageData(
+                    $packageData,
+                    $package->originAddress?->toArray() ?? [],
+                    $package->destinationAddress?->toArray() ?? [],
+                    $package->only([
+                        'package_type',
+                        'quantity',
+                        'weight',
+                        'first_size',
+                        'second_size',
+                        'third_size',
+                    ]),
+                );
 
                 $package->update([
-                    'package_type' => $packageData['package_type'] ?? $package->package_type,
-                    'quantity' => (int) ($packageData['quantity'] ?? 1),
-                    'weight' => $packageData['weight'] ?? $package->weight,
-                    'first_size' => $packageData['first_size'] ?? $package->first_size,
-                    'second_size' => $packageData['second_size'] ?? $package->second_size,
-                    'third_size' => $packageData['third_size'] ?? $package->third_size,
-                    'weight_price' => $packageData['weight_price'] ?? $package->weight_price,
-                    'volume_price' => $packageData['volume_price'] ?? $package->volume_price,
-                    'single_price' => $singlePriceCents,
+                    'package_type' => $pricedPackage['package_type'] ?? $package->package_type,
+                    'quantity' => (int) ($pricedPackage['quantity'] ?? 1),
+                    'weight' => $pricedPackage['weight'] ?? $package->weight,
+                    'first_size' => $pricedPackage['first_size'] ?? $package->first_size,
+                    'second_size' => $pricedPackage['second_size'] ?? $package->second_size,
+                    'third_size' => $pricedPackage['third_size'] ?? $package->third_size,
+                    'weight_price' => $pricedPackage['weight_price'] ?? $package->weight_price,
+                    'volume_price' => $pricedPackage['volume_price'] ?? $package->volume_price,
+                    'single_price' => $pricedPackage['single_price'] ?? $package->single_price,
                     'content_description' => $data['content_description'] ?? $package->content_description,
                 ]);
             }
@@ -221,9 +248,16 @@ class CartController extends Controller
         $data = $request->validated();
         $authId = auth()->id();
 
-        $existingPackages = $this->loadCartPackages($authId);
+        $outPackages = DB::transaction(function () use ($data, $authId) {
+            $existingPackageIds = DB::table('cart_user')
+                ->where('user_id', $authId)
+                ->lockForUpdate()
+                ->pluck('package_id');
 
-        $outPackages = DB::transaction(function () use ($data, $authId, $existingPackages) {
+            $existingPackages = Package::with(['originAddress', 'destinationAddress', 'service'])
+                ->whereIn('id', $existingPackageIds)
+                ->get();
+
             $servicesData = CartService::normalizeServiceData($data['services']);
             $servicesData = CartService::applyPudoData($servicesData, $data);
 
@@ -233,20 +267,25 @@ class CartController extends Controller
             $services = null;
 
             foreach ($data['packages'] as $packageData) {
-                $singlePriceCents = CartService::euroToCents($packageData['single_price'] ?? 0);
-                $newQty = (int) ($packageData['quantity'] ?? 1);
+                $pricedPackage = CartService::pricePackageData(
+                    $packageData,
+                    $data['origin_address'] ?? [],
+                    $data['destination_address'] ?? [],
+                );
+                $newQty = (int) ($pricedPackage['quantity'] ?? 1);
+                $newUnitPriceCents = (int) ($pricedPackage['unit_price_cents'] ?? 0);
 
                 $newServiceSig = CartService::buildServiceSignatureFromArray(
                     $servicesData['service_type'] ?? 'Nessuno',
                     $servicesData['service_data'] ?? [],
                 );
 
-                $duplicate = $existingPackages->first(function ($existing) use ($packageData, $data, $newServiceSig) {
+                $duplicate = $existingPackages->first(function ($existing) use ($pricedPackage, $data, $newServiceSig) {
                     if (! $existing->originAddress || ! $existing->destinationAddress || ! $existing->service) {
                         return false;
                     }
                     return CartService::isDuplicate(
-                        $packageData,
+                        $pricedPackage,
                         $data['origin_address'] ?? [],
                         $data['destination_address'] ?? [],
                         $newServiceSig,
@@ -262,8 +301,15 @@ class CartController extends Controller
                         (int) $duplicate->single_price,
                         (int) $duplicate->quantity,
                         $newQty,
+                        $newUnitPriceCents,
                     );
-                    $duplicate->update($merged);
+
+                    $duplicate->update([
+                        'quantity' => $merged['quantity'],
+                        'weight_price' => $pricedPackage['weight_price'] ?? $duplicate->weight_price,
+                        'volume_price' => $pricedPackage['volume_price'] ?? $duplicate->volume_price,
+                        'single_price' => $merged['single_price'],
+                    ]);
                     $packages[] = $duplicate;
                 } else {
                     if (! $origin) {
@@ -272,41 +318,42 @@ class CartController extends Controller
                         $services = Service::create($servicesData);
                     }
 
-                    $packages[] = Package::create([
-                        'package_type' => $packageData['package_type'],
+                    $createdPackage = Package::create([
+                        'package_type' => $pricedPackage['package_type'],
                         'quantity' => $newQty,
-                        'weight' => $packageData['weight'],
-                        'first_size' => $packageData['first_size'],
-                        'second_size' => $packageData['second_size'],
-                        'third_size' => $packageData['third_size'],
-                        'weight_price' => $packageData['weight_price'] ?? null,
-                        'volume_price' => $packageData['volume_price'] ?? null,
-                        'single_price' => $singlePriceCents,
+                        'weight' => $pricedPackage['weight'],
+                        'first_size' => $pricedPackage['first_size'],
+                        'second_size' => $pricedPackage['second_size'],
+                        'third_size' => $pricedPackage['third_size'],
+                        'weight_price' => $pricedPackage['weight_price'] ?? null,
+                        'volume_price' => $pricedPackage['volume_price'] ?? null,
+                        'single_price' => $pricedPackage['single_price'],
                         'origin_address_id' => $origin->id,
                         'destination_address_id' => $destination->id,
                         'service_id' => $services->id,
                         'user_id' => $authId,
+                    ]);
+                    $packages[] = $createdPackage;
+                    $existingPackages->push($createdPackage);
+                }
+            }
+
+            foreach ($packages as $package) {
+                $exists = DB::table('cart_user')
+                    ->where('user_id', $authId)
+                    ->where('package_id', $package->id)
+                    ->exists();
+
+                if (! $exists) {
+                    DB::table('cart_user')->insert([
+                        'user_id' => $authId,
+                        'package_id' => $package->id,
                     ]);
                 }
             }
 
             return $packages;
         });
-
-        // Link new packages to cart
-        foreach ($outPackages as $package) {
-            $exists = DB::table('cart_user')
-                ->where('user_id', $authId)
-                ->where('package_id', $package->id)
-                ->exists();
-
-            if (! $exists) {
-                DB::table('cart_user')->insert([
-                    'user_id' => $authId,
-                    'package_id' => $package->id,
-                ]);
-            }
-        }
 
         return PackageResource::collection($outPackages);
     }
@@ -318,21 +365,38 @@ class CartController extends Controller
         $request->validate(['quantity' => 'required|integer|min:1|max:99']);
 
         $userId = auth()->id();
-        $package = Package::where('id', $id)->where('user_id', $userId)->firstOrFail();
 
-        $oldQty = max(1, (int) $package->quantity);
+        if (! $this->packageIsInCart($userId, $id)) {
+            return response()->json(['message' => 'Pacco non trovato nel carrello'], 404);
+        }
+
+        $inOrder = DB::table('package_order')
+            ->where('package_id', $id)
+            ->exists();
+
+        if ($inOrder) {
+            return response()->json(['message' => 'Pacco già associato a un ordine'], 409);
+        }
+
+        $package = Package::with(['originAddress', 'destinationAddress'])
+            ->where('id', $id)
+            ->where('user_id', $userId)
+            ->firstOrFail();
+
         $newQty = (int) $request->quantity;
-        $unitPriceCents = CartService::unitPrice((int) $package->single_price, $oldQty);
+        $pricedPackage = CartService::pricePackageModel($package, $newQty);
 
         $package->update([
             'quantity' => $newQty,
-            'single_price' => $unitPriceCents * $newQty,
+            'weight_price' => $pricedPackage['weight_price'] ?? $package->weight_price,
+            'volume_price' => $pricedPackage['volume_price'] ?? $package->volume_price,
+            'single_price' => $pricedPackage['single_price'] ?? $package->single_price,
         ]);
 
         return response()->json([
             'message' => 'Quantita aggiornata',
             'quantity' => $newQty,
-            'single_price' => $unitPriceCents * $newQty,
+            'single_price' => $pricedPackage['single_price'] ?? $package->single_price,
         ]);
     }
 
@@ -341,6 +405,18 @@ class CartController extends Controller
     public function destroy($id)
     {
         $userId = auth()->id();
+
+        if (! $this->packageIsInCart($userId, $id)) {
+            return response()->json(['message' => 'Pacco non trovato nel carrello'], 404);
+        }
+
+        $inOrder = DB::table('package_order')
+            ->where('package_id', $id)
+            ->exists();
+
+        if ($inOrder) {
+            return response()->json(['message' => 'Pacco già associato a un ordine'], 409);
+        }
 
         DB::table('cart_user')
             ->where('user_id', $userId)

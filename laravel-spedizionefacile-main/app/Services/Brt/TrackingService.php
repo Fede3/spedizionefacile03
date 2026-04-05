@@ -142,6 +142,22 @@ class TrackingService
             }
         }
 
+        // Reso (pacco restituito al mittente) — PRIMA di in_transit per evitare conflitti
+        $resoKeywords = ['RESO', 'RESTITUITO', 'RETURNED', 'RETURN TO SENDER', 'RITORNO AL MITTENTE'];
+        foreach ($resoKeywords as $kw) {
+            if (str_contains($combined, $kw)) {
+                return Order::RETURNED;
+            }
+        }
+
+        // Rifiutato (destinatario ha rifiutato la consegna)
+        $rifiutatoKeywords = ['RIFIUTATO', 'RIFIUTO', 'REFUSED', 'RESPINTO', 'REJECTED'];
+        foreach ($rifiutatoKeywords as $kw) {
+            if (str_contains($combined, $kw)) {
+                return Order::REFUSED;
+            }
+        }
+
         // In giacenza (problemi consegna)
         $giacenzaKeywords = ['GIACENZA', 'STORAGE', 'MANCATA CONSEGNA', 'DESTINATARIO ASSENTE', 'FERMA DEPOSITO'];
         foreach ($giacenzaKeywords as $kw) {
@@ -150,17 +166,17 @@ class TrackingService
             }
         }
 
-        // In transito
-        $transitKeywords = ['IN_TRANSIT', 'IN TRANSITO', 'PARTITA', 'PRESA IN CARICO', 'RITIRAT', 'HUB'];
-        foreach ($transitKeywords as $kw) {
+        // In consegna (ultimo miglio) — PRIMA di in_transit per catturare lo stato piu' specifico
+        $consegnaKeywords = ['IN CONSEGNA', 'OUT FOR DELIVERY', 'IN DISTRIBUZIONE'];
+        foreach ($consegnaKeywords as $kw) {
             if (str_contains($combined, $kw)) {
-                return Order::IN_TRANSIT;
+                return Order::OUT_FOR_DELIVERY;
             }
         }
 
-        // In consegna (ultimo miglio)
-        $consegnaKeywords = ['IN CONSEGNA', 'OUT FOR DELIVERY', 'IN DISTRIBUZIONE'];
-        foreach ($consegnaKeywords as $kw) {
+        // In transito
+        $transitKeywords = ['IN_TRANSIT', 'IN TRANSITO', 'PARTITA', 'PRESA IN CARICO', 'RITIRAT', 'HUB'];
+        foreach ($transitKeywords as $kw) {
             if (str_contains($combined, $kw)) {
                 return Order::IN_TRANSIT;
             }

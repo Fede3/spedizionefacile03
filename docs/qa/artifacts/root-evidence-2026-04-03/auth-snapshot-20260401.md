@@ -1,0 +1,38 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e3]:
+    - link "Vai al contenuto" [ref=e4] [cursor=pointer]:
+      - /url: "#main-content"
+    - banner [ref=e5]:
+      - generic [ref=e9]:
+        - link "SF SpediamoFacile" [ref=e11] [cursor=pointer]:
+          - /url: /
+          - generic [ref=e13]: SF
+          - generic [ref=e14]: SpediamoFacile
+        - generic [ref=e15]:
+          - link "Preventivo" [ref=e16] [cursor=pointer]:
+            - /url: /preventivo
+          - link "Carrello" [ref=e17] [cursor=pointer]:
+            - /url: /carrello
+            - img [ref=e18]
+            - generic [ref=e22]: Carrello
+          - button "Apri menu di navigazione" [ref=e23] [cursor=pointer]:
+            - img [ref=e24]
+    - main [ref=e25]:
+      - generic [ref=e29]:
+        - tablist [ref=e30]:
+          - tab "Accedi" [selected] [ref=e31]:
+            - generic [ref=e32]: Accedi
+          - tab "Registrati" [ref=e33]:
+            - generic [ref=e34]: Registrati
+        - tabpanel "Accedi" [ref=e35]:
+          - generic [ref=e36]:
+            - generic [ref=e37]
+            - generic [ref=e58]: oppure
+          - generic [ref=e61]:
+            - generic [ref=e62]
+            - generic [ref=e65]
+            - generic [ref=e73]
+            - button "Accedi" [ref=e76] [cursor=pointer]
+            - paragraph [ref=e77]
+  - region "Notifications (F8)":
+    - list

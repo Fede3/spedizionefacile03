@@ -99,26 +99,24 @@ const saveArticle = async () => {
 					<div class="space-y-[16px] max-w-[700px]">
 						<div>
 							<label class="block text-[0.8125rem] font-medium text-[#404040] mb-[6px]">Titolo</label>
-							<input v-model="form.title" type="text" class="w-full px-[14px] py-[10px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[50px] text-[0.875rem] focus:border-[#095866] focus:outline-none" placeholder="Titolo dell'articolo" @input="generateSlug" >
+							<input v-model="form.title" type="text" class="form-input" placeholder="Titolo dell'articolo" @input="generateSlug">
 						</div>
 						<div>
 							<label class="block text-[0.8125rem] font-medium text-[#404040] mb-[6px]">Slug (URL)</label>
-							<input v-model="form.slug" type="text" class="w-full px-[14px] py-[10px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[50px] text-[0.875rem] font-mono focus:border-[#095866] focus:outline-none" placeholder="titolo-dell-articolo" >
+							<input v-model="form.slug" type="text" class="form-input font-mono" placeholder="titolo-dell-articolo">
 						</div>
 						<div>
 							<label class="block text-[0.8125rem] font-medium text-[#404040] mb-[6px]">Meta description (SEO)</label>
-							<textarea v-model="form.meta_description" rows="2" class="w-full px-[14px] py-[10px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[50px] text-[0.875rem] focus:border-[#095866] focus:outline-none resize-none" placeholder="Descrizione per i motori di ricerca"/>
+							<textarea v-model="form.meta_description" rows="2" class="form-input min-h-[88px] resize-none" placeholder="Descrizione per i motori di ricerca"/>
 						</div>
 						<div>
 							<label class="block text-[0.8125rem] font-medium text-[#404040] mb-[6px]">Introduzione / Anteprima</label>
-							<textarea v-model="form.intro" rows="3" class="w-full px-[14px] py-[10px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[50px] text-[0.875rem] focus:border-[#095866] focus:outline-none resize-none" placeholder="Testo introduttivo mostrato nella lista del blog e in cima all'articolo"/>
+							<textarea v-model="form.intro" rows="3" class="form-input min-h-[120px] resize-none" placeholder="Testo introduttivo mostrato nella lista del blog e in cima all'articolo"/>
 						</div>
 
 						<div class="flex items-center gap-[12px]">
-							<button
-								:class="['w-[44px] h-[24px] rounded-full relative transition-colors cursor-pointer', form.is_published ? 'bg-emerald-500' : 'bg-[#C8CCD0]']"
-								@click="form.is_published = !form.is_published">
-								<span :class="['absolute top-[2px] w-[20px] h-[20px] bg-white rounded-full shadow transition-transform', form.is_published ? 'left-[22px]' : 'left-[2px]']"/>
+							<button type="button" :class="['sf-toggle', form.is_published && 'is-active']" @click="form.is_published = !form.is_published">
+								<span class="sf-toggle__thumb"/>
 							</button>
 							<span class="text-[0.875rem] text-[#404040]">{{ form.is_published ? 'Pubblicato' : 'Bozza (non visibile)' }}</span>
 						</div>
@@ -131,7 +129,7 @@ const saveArticle = async () => {
 						<h2 class="text-[1.125rem] font-bold text-[#252B42] flex items-center gap-[8px]">
 							<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[20px] h-[20px] text-indigo-600" fill="currentColor"><path d="M7,5H21V7H7V5M7,13V11H21V13H7M4,4.5A1.5,1.5 0 0,1 5.5,6A1.5,1.5 0 0,1 4,7.5A1.5,1.5 0 0,1 2.5,6A1.5,1.5 0 0,1 4,4.5M4,10.5A1.5,1.5 0 0,1 5.5,12A1.5,1.5 0 0,1 4,13.5A1.5,1.5 0 0,1 2.5,12A1.5,1.5 0 0,1 4,10.5M7,19V17H21V19H7M4,16.5A1.5,1.5 0 0,1 5.5,18A1.5,1.5 0 0,1 4,19.5A1.5,1.5 0 0,1 2.5,18A1.5,1.5 0 0,1 4,16.5Z"/></svg> Sezioni contenuto
 						</h2>
-						<button class="px-[12px] py-[6px] bg-[#F0F0F0] hover:bg-[#E0E0E0] text-[#404040] rounded-[12px] text-[0.8125rem] font-medium cursor-pointer inline-flex items-center gap-[4px]" @click="addSection">
+						<button type="button" class="btn-secondary btn-compact inline-flex items-center gap-[4px]" @click="addSection">
 							<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[16px] h-[16px]" fill="currentColor"><path d="M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z"/></svg> Aggiungi sezione
 						</button>
 					</div>
@@ -140,12 +138,12 @@ const saveArticle = async () => {
 						<div v-for="(section, idx) in form.sections" :key="idx" class="p-[16px] rounded-[12px] border border-[#E9EBEC] bg-[#FAFBFC]">
 							<div class="flex items-center justify-between mb-[12px]">
 								<span class="text-[0.8125rem] font-semibold text-[#252B42]">Sezione {{ idx + 1 }}</span>
-								<button v-if="form.sections.length > 1" class="w-[28px] h-[28px] flex items-center justify-center rounded-full hover:bg-red-50 text-red-400 hover:text-red-600 cursor-pointer transition-colors" @click="removeSection(idx)">
+								<button v-if="form.sections.length > 1" type="button" class="btn-danger btn-compact inline-flex items-center justify-center !px-0 !py-0 !w-[32px] !h-[32px]" @click="removeSection(idx)">
 									<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[16px] h-[16px]" fill="currentColor"><path d="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z"/></svg>
 								</button>
 							</div>
 							<div class="space-y-[10px]">
-								<input v-model="section.heading" type="text" class="w-full px-[12px] py-[8px] bg-white border border-[#E9EBEC] rounded-[12px] text-[0.875rem] focus:border-[#095866] focus:outline-none" placeholder="Titolo sezione" >
+								<input v-model="section.heading" type="text" class="form-input" placeholder="Titolo sezione">
 								<AdminRichTextEditor v-model="section.text" placeholder="Contenuto della sezione" />
 							</div>
 						</div>
@@ -154,7 +152,7 @@ const saveArticle = async () => {
 
 				<!-- Save -->
 				<div class="flex justify-end">
-					<button :disabled="saving" class="px-[24px] py-[12px] bg-[#095866] hover:bg-[#074a56] text-white rounded-[50px] text-[0.875rem] font-medium transition-colors cursor-pointer disabled:opacity-50 flex items-center gap-[8px]" @click="saveArticle">
+					<button :disabled="saving" type="button" class="btn-cta btn-compact inline-flex items-center gap-[8px] disabled:opacity-50" @click="saveArticle">
 						<svg v-if="saving" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[18px] h-[18px] animate-spin" fill="currentColor"><path d="M12,4V2A10,10 0 0,0 2,12H4A8,8 0 0,1 12,4Z"/></svg>
 						<svg v-else xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[18px] h-[18px]" fill="currentColor"><path d="M15,9H5V5H15M12,19A3,3 0 0,1 9,16A3,3 0 0,1 12,13A3,3 0 0,1 15,16A3,3 0 0,1 12,19M17,3H5C3.89,3 3,3.9 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V7L17,3Z"/></svg>
 						{{ saving ? "Salvataggio..." : "Crea articolo" }}

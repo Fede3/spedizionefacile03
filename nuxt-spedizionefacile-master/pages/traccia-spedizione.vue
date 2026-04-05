@@ -132,7 +132,7 @@ onMounted(() => {
 						type="button"
 						@click="trackShipment"
 						:disabled="isLoading || !trackingCode.trim()"
-						class="btn-primary px-[24px] py-[12px] disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-[8px] text-[0.875rem]">
+						class="btn-cta px-[24px] py-[12px] disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-[8px] text-[0.875rem]">
 						<!-- Search icon SVG -->
 						<svg v-if="!isLoading" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
 						<!-- Loading spinner SVG -->
@@ -212,7 +212,7 @@ onMounted(() => {
 						:href="trackingResult.brt_tracking_url"
 						target="_blank"
 						rel="noopener noreferrer"
-						class="btn-primary inline-flex items-center gap-[8px] px-[20px] py-[12px] text-[0.875rem]">
+						class="btn-secondary inline-flex items-center gap-[8px] px-[20px] py-[12px] text-[0.875rem]">
 						<!-- External link icon SVG -->
 						<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
 						Dettaglio tracking su BRT
@@ -236,7 +236,7 @@ onMounted(() => {
 					:href="trackingResult.brt_tracking_url"
 					target="_blank"
 					rel="noopener noreferrer"
-					class="btn-primary inline-flex items-center gap-[8px] px-[20px] py-[12px] text-[0.875rem]">
+					class="btn-secondary inline-flex items-center gap-[8px] px-[20px] py-[12px] text-[0.875rem]">
 					<!-- External link icon SVG -->
 					<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
 					Cerca su BRT

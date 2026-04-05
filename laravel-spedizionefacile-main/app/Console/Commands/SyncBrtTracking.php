@@ -9,7 +9,7 @@
  * Interroga le API BRT per aggiornare automaticamente lo stato degli ordini
  * che sono in transito (in_transit) o in lavorazione (processing).
  *
- * Viene schedulato ogni 30 minuti in routes/console.php.
+ * Viene schedulato ogni ora in routes/console.php.
  *
  * Opzioni:
  * --order=ID : Sincronizza solo un ordine specifico
@@ -23,6 +23,7 @@
 
 namespace App\Console\Commands;
 
+use App\Events\ShipmentStatusChanged;
 use App\Models\Order;
 use App\Services\Brt\TrackingService;
 use Illuminate\Console\Command;
@@ -44,7 +45,7 @@ class SyncBrtTracking extends Command
         // Recupera gli ordini da sincronizzare:
         // - in_transit o processing (stati "attivi")
         // - con un riferimento BRT (altrimenti non possiamo interrogare)
-        $query = Order::whereIn('status', [Order::IN_TRANSIT, Order::PROCESSING])
+        $query = Order::whereIn('status', [Order::IN_TRANSIT, Order::PROCESSING, Order::LABEL_GENERATED, Order::OUT_FOR_DELIVERY])
             ->where(function ($q) {
                 $q->whereNotNull('brt_numeric_sender_reference')
                     ->orWhereNotNull('brt_parcel_id');
@@ -98,6 +99,9 @@ class SyncBrtTracking extends Command
                 $order->status = $newStatus;
                 $order->brt_last_tracking_check = now();
                 $order->save();
+
+                // Notifica l'utente del cambio stato via email
+                ShipmentStatusChanged::dispatch($order, $oldStatus, $newStatus);
 
                 Log::info('SyncBrtTracking: ordine aggiornato', [
                     'order_id' => $order->id,

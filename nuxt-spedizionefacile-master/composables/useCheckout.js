@@ -5,7 +5,82 @@
  * Handles: Stripe init, payment methods, billing/invoice, coupon/referral,
  * wallet, card element lifecycle, payment processing, and order flow.
  */
-import { deriveShipmentFlowStateFromUserStore, pickMostAdvancedShipmentFlowState, resolveShipmentFlowState } from '~/utils/shipmentFlowState';
+import {
+	deriveShipmentFlowStateFromUserStore,
+	pickMostAdvancedShipmentFlowState,
+	resolveShipmentFlowState,
+} from '~/utils/shipmentFlowState';
+import { createClientSubmissionId, ensureClientSubmissionId, readClientSubmissionId } from '~/utils/clientSubmissionId';
+
+const normalizeCheckoutValue = (value) => {
+	if (Array.isArray(value)) {
+		return value.map((item) => normalizeCheckoutValue(item));
+	}
+
+	if (value && typeof value === 'object') {
+		return Object.keys(value)
+			.sort()
+			.reduce((acc, key) => {
+				const normalized = normalizeCheckoutValue(value[key]);
+				if (normalized !== undefined) {
+					acc[key] = normalized;
+				}
+				return acc;
+			}, {});
+	}
+
+	if (value === undefined) return null;
+	return value;
+};
+
+const normalizeCheckoutPackageSnapshot = (pkg = {}) => ({
+	id: pkg.id ?? pkg.package_id ?? null,
+	package_type: String(pkg.package_type ?? '').trim() || null,
+	quantity: Number(pkg.quantity) || 1,
+	weight: Number(pkg.weight) || 0,
+	first_size: Number(pkg.first_size) || 0,
+	second_size: Number(pkg.second_size) || 0,
+	third_size: Number(pkg.third_size) || 0,
+	single_price: Number(pkg.single_price) || 0,
+	content_description: String(pkg.content_description ?? '').trim() || null,
+	origin_address: normalizeCheckoutValue(pkg.origin_address || {}),
+	destination_address: normalizeCheckoutValue(pkg.destination_address || {}),
+	services: normalizeCheckoutValue(pkg.services || {}),
+	delivery_mode: pkg.delivery_mode ?? pkg.services?.serviceData?.delivery_mode ?? null,
+	selected_pudo: normalizeCheckoutValue(pkg.selected_pudo ?? pkg.pudo ?? pkg.services?.serviceData?.pudo ?? null),
+	sms_email_notification: Boolean(
+		pkg.sms_email_notification || pkg.services?.sms_email_notification || pkg.services?.serviceData?.sms_email_notification,
+	),
+});
+
+export const buildCheckoutSubmissionSignature = ({ existingOrderId = null, cartPackages = [], billingPayload = null } = {}) => {
+	const normalizedPackages = Array.isArray(cartPackages) ? cartPackages.map((pkg) => normalizeCheckoutPackageSnapshot(pkg)) : [];
+
+	normalizedPackages.sort((left, right) => JSON.stringify(left).localeCompare(JSON.stringify(right)));
+
+	return JSON.stringify(
+		normalizeCheckoutValue({
+			existingOrderId: existingOrderId ?? null,
+			cartPackages: normalizedPackages,
+			billingPayload: billingPayload ?? null,
+		}),
+	);
+};
+
+export const recoverCheckoutCartState = async ({
+	clearCartData = null,
+	refreshCartState = null,
+	refreshCartCache = null,
+	cartKey = 'cart',
+} = {}) => {
+	const clearFn = clearCartData || globalThis.clearNuxtData;
+	clearFn?.(cartKey);
+
+	await Promise.allSettled([
+		typeof refreshCartState === 'function' ? Promise.resolve(refreshCartState()) : Promise.resolve(),
+		typeof refreshCartCache === 'function' ? Promise.resolve(refreshCartCache(cartKey)) : Promise.resolve(),
+	]);
+};
 
 export function useCheckout() {
 	const { user } = useSanctumAuth();
@@ -30,7 +105,7 @@ export function useCheckout() {
 	const cardPaymentsNotice = computed(() => {
 		return isAdmin.value
 			? 'I pagamenti con carta non sono ancora attivi in questo ambiente. Completa la configurazione di Stripe dal pannello amministrazione per riabilitarli.'
-			: 'I pagamenti con carta non sono ancora attivi su questo sito. Per ora puoi completare l\'ordine con bonifico o wallet.';
+			: "I pagamenti con carta non sono ancora attivi su questo sito. Per ora puoi completare l'ordine con bonifico o wallet.";
 	});
 
 	const fallbackFlowRoute = computed(() => {
@@ -40,7 +115,7 @@ export function useCheckout() {
 	});
 
 	// --- PROMO ---
-	const { loadPriceBands, promoSettings } = usePriceBands();
+	const { loadPriceBands, priceBands, promoSettings } = usePriceBands();
 
 	// --- EXISTING ORDER ---
 	const existingOrderId = computed(() => route.query.order_id || null);
@@ -59,7 +134,7 @@ export function useCheckout() {
 			}
 		}
 
-		clearNuxtData("cart");
+		clearNuxtData('cart');
 		await refreshCart();
 
 		if (!cart.value || cart.value.data?.length === 0) {
@@ -83,7 +158,7 @@ export function useCheckout() {
 	});
 
 	const addressGroups = computed(() => cart.value?.meta?.address_groups || []);
-	const hasMultipleGroups = computed(() => addressGroups.value.filter(g => g.count >= 1).length > 1);
+	const hasMultipleGroups = computed(() => addressGroups.value.filter((g) => g.count >= 1).length > 1);
 	const mergeGroupsCount = computed(() => addressGroups.value.length);
 
 	const getTotal = computed(() => {
@@ -93,9 +168,9 @@ export function useCheckout() {
 
 	const getNumberTotal = computed(() => {
 		const cleaned = String(getTotal.value)
-			.replace(/[€\s\u00A0EUR]/gi, "")
-			.replace(/\./g, "")
-			.replace(",", ".");
+			.replace(/[€\s\u00A0EUR]/gi, '')
+			.replace(/\./g, '')
+			.replace(',', '.');
 		return Number(cleaned) || 0;
 	});
 
@@ -105,7 +180,7 @@ export function useCheckout() {
 
 	const contentDescription = computed(() => {
 		if (!displayPackages.value.length) return '';
-		const types = displayPackages.value.map(item => item.package_type || 'Pacco').filter(Boolean);
+		const types = displayPackages.value.map((item) => item.package_type || 'Pacco').filter(Boolean);
 		return [...new Set(types)].join(', ');
 	});
 
@@ -143,7 +218,9 @@ export function useCheckout() {
 			[address.address, address.address_number].filter(Boolean).join(' ').trim(),
 			[address.postal_code, address.city].filter(Boolean).join(' '),
 			address.province ? `(${address.province})` : '',
-		].filter(Boolean).join(', ');
+		]
+			.filter(Boolean)
+			.join(', ');
 	});
 
 	const applyShippingDataToBilling = () => {
@@ -162,9 +239,13 @@ export function useCheckout() {
 		fatturaData.value.postal_code = fatturaData.value.postal_code || address.postal_code || '';
 	};
 
-	watch([invoiceSubjectType, billingShippingSource], () => {
-		applyShippingDataToBilling();
-	}, { immediate: true });
+	watch(
+		[invoiceSubjectType, billingShippingSource],
+		() => {
+			applyShippingDataToBilling();
+		},
+		{ immediate: true },
+	);
 
 	watch(invoiceSubjectType, (subjectType) => {
 		if (subjectType === 'privato') {
@@ -197,15 +278,17 @@ export function useCheckout() {
 			city: fatturaData.value.city?.trim() || null,
 			province: fatturaData.value.province?.trim() || null,
 			postal_code: fatturaData.value.postal_code?.trim() || null,
-			pec: invoiceSubjectType.value === 'azienda' ? (fatturaData.value.pec?.trim() || null) : null,
-			codice_sdi: invoiceSubjectType.value === 'azienda' ? (fatturaData.value.codice_sdi?.trim() || null) : null,
-			shipping_reference: billingShippingSource.value ? {
-				name: billingShippingSource.value.name || null,
-				address: billingShippingAddressLine.value || null,
-				city: billingShippingSource.value.city || null,
-				province: billingShippingSource.value.province || null,
-				postal_code: billingShippingSource.value.postal_code || null,
-			} : null,
+			pec: invoiceSubjectType.value === 'azienda' ? fatturaData.value.pec?.trim() || null : null,
+			codice_sdi: invoiceSubjectType.value === 'azienda' ? fatturaData.value.codice_sdi?.trim() || null : null,
+			shipping_reference: billingShippingSource.value
+				? {
+						name: billingShippingSource.value.name || null,
+						address: billingShippingAddressLine.value || null,
+						city: billingShippingSource.value.city || null,
+						province: billingShippingSource.value.province || null,
+						postal_code: billingShippingSource.value.postal_code || null,
+					}
+				: null,
 		};
 	});
 
@@ -216,7 +299,7 @@ export function useCheckout() {
 	const loadWalletBalance = async () => {
 		if (walletLoaded.value) return;
 		try {
-			const result = await sanctum("/api/wallet/balance");
+			const result = await sanctum('/api/wallet/balance');
 			walletBalance.value = Number(result?.balance ?? 0);
 			walletLoaded.value = true;
 		} catch (e) {
@@ -241,8 +324,8 @@ export function useCheckout() {
 		couponError.value = null;
 		couponApplied.value = null;
 		try {
-			const result = await sanctum("/api/calculate-coupon", {
-				method: "POST",
+			const result = await sanctum('/api/calculate-coupon', {
+				method: 'POST',
 				body: { coupon: couponCode.value.trim().toUpperCase(), total: getNumberTotal.value },
 			});
 			if (result?.success) {
@@ -257,7 +340,7 @@ export function useCheckout() {
 			}
 		} catch (e) {
 			const data = e?.response?._data || e?.data;
-			couponError.value = data?.error || data?.message || "Codice non valido.";
+			couponError.value = data?.error || data?.message || 'Codice non valido.';
 			couponPanelOpen.value = true;
 		} finally {
 			couponLoading.value = false;
@@ -267,7 +350,7 @@ export function useCheckout() {
 	const autoApplyReferral = async () => {
 		if (couponApplied.value) return;
 		try {
-			const result = await sanctum("/api/referral/my-discount");
+			const result = await sanctum('/api/referral/my-discount');
 			if (result?.has_discount && result?.referral_code) {
 				couponCode.value = result.referral_code;
 				const discountAmount = Math.round(getNumberTotal.value * (result.discount_percent / 100) * 100) / 100;
@@ -303,8 +386,42 @@ export function useCheckout() {
 		return finalTotal.value.toFixed(2).replace('.', ',') + '€';
 	});
 
+	const checkoutSubmissionContext = ref(null);
+	const checkoutSubmissionSignature = computed(() => {
+		const sourcePackages = existingOrder.value ? existingOrder.value.packages || [] : cart.value?.data || [];
+
+		return buildCheckoutSubmissionSignature({
+			existingOrderId: existingOrderId.value,
+			cartPackages: sourcePackages,
+			billingPayload: billingPayload.value,
+		});
+	});
+
+	const buildCheckoutSubmissionContext = () => {
+		const signature = checkoutSubmissionSignature.value;
+		const cachedContext = checkoutSubmissionContext.value;
+
+		if (cachedContext?.signature === signature && cachedContext?.client_submission_id) {
+			return { client_submission_id: cachedContext.client_submission_id };
+		}
+
+		const pendingShipment = userStore.pendingShipment || {};
+		const clientSubmissionId = cachedContext?.signature
+			? createClientSubmissionId()
+			: readClientSubmissionId(existingOrder.value, pendingShipment) ||
+				ensureClientSubmissionId(pendingShipment) ||
+				createClientSubmissionId();
+
+		checkoutSubmissionContext.value = {
+			signature,
+			client_submission_id: clientSubmissionId,
+		};
+
+		return { client_submission_id: clientSubmissionId };
+	};
+
 	// --- SAVED CARD ---
-	const { data: defaultPayment } = useSanctumFetch("/api/stripe/default-payment-method", { lazy: true });
+	const { data: defaultPayment } = useSanctumFetch('/api/stripe/default-payment-method', { lazy: true });
 	const hasSavedCard = computed(() => Boolean(defaultPayment.value?.card));
 
 	// --- PAYMENT METHOD ---
@@ -320,11 +437,15 @@ export function useCheckout() {
 		paymentMethod.value = method;
 	};
 
-	watch(cardPaymentsUnavailable, (unavailable) => {
-		if (unavailable && paymentMethod.value === 'carta') {
-			paymentMethod.value = 'bonifico';
-		}
-	}, { immediate: true });
+	watch(
+		cardPaymentsUnavailable,
+		(unavailable) => {
+			if (unavailable && paymentMethod.value === 'carta') {
+				paymentMethod.value = 'bonifico';
+			}
+		},
+		{ immediate: true },
+	);
 
 	watch(paymentMethod, async (val) => {
 		if (val === 'wallet') {
@@ -415,25 +536,35 @@ export function useCheckout() {
 	};
 
 	const shouldShowCardForm = computed(() => {
-		return paymentMethod.value === 'carta'
-			&& stripeReady.value
-			&& !stripeLoading.value
-			&& !cardPaymentsUnavailable.value
-			&& (!hasSavedCard.value || useNewCard.value);
+		return (
+			paymentMethod.value === 'carta' &&
+			stripeReady.value &&
+			!stripeLoading.value &&
+			!cardPaymentsUnavailable.value &&
+			(!hasSavedCard.value || useNewCard.value)
+		);
 	});
 
-	watch(shouldShowCardForm, async (shouldShow) => {
-		if (shouldShow) {
-			await mountCardElement();
-			return;
-		}
-		unmountCardElement();
-	}, { flush: 'post', immediate: true });
+	watch(
+		shouldShowCardForm,
+		async (shouldShow) => {
+			if (shouldShow) {
+				await mountCardElement();
+				return;
+			}
+			unmountCardElement();
+		},
+		{ flush: 'post', immediate: true },
+	);
 
-	watch(cardElementContainer, async (container) => {
-		if (!container || !shouldShowCardForm.value) return;
-		await mountCardElement();
-	}, { flush: 'post' });
+	watch(
+		cardElementContainer,
+		async (container) => {
+			if (!container || !shouldShowCardForm.value) return;
+			await mountCardElement();
+		},
+		{ flush: 'post' },
+	);
 
 	// --- TERMS ---
 	const termsAccepted = ref(false);
@@ -490,7 +621,7 @@ export function useCheckout() {
 		paymentError.value = null;
 		paymentStep.value = 'Validazione dati...';
 
-		if (paymentMethod.value === 'carta' && finalTotal.value < 0.50) {
+		if (paymentMethod.value === 'carta' && finalTotal.value < 0.5) {
 			paymentError.value = 'Importo minimo per pagamento con carta: 0,50€';
 			isProcessing.value = false;
 			paymentStep.value = '';
@@ -549,17 +680,19 @@ export function useCheckout() {
 		try {
 			let orderIds = [];
 			const isExisting = !!existingOrderId.value;
+			const submissionContext = buildCheckoutSubmissionContext();
 
 			paymentStep.value = 'Creazione ordine...';
 
 			if (isExisting) {
 				orderIds = [existingOrderId.value];
 			} else {
-				const orderResponse = await sanctum("/api/stripe/create-order", {
-					method: "POST",
+				const orderResponse = await sanctum('/api/stripe/create-order', {
+					method: 'POST',
 					body: {
 						subtotal: Math.round(getNumberTotal.value * 100),
 						billing_data: billingPayload.value,
+						...submissionContext,
 					},
 				});
 				orderIds = orderResponse.order_ids || [orderResponse.order_id];
@@ -571,8 +704,8 @@ export function useCheckout() {
 				paymentStep.value = 'Finalizzazione...';
 				if (couponApplied.value && couponApplied.value.type === 'referral') {
 					try {
-						await sanctum("/api/referral/apply", {
-							method: "POST",
+						await sanctum('/api/referral/apply', {
+							method: 'POST',
 							body: {
 								code: couponApplied.value.code,
 								order_id: primaryOrderId,
@@ -585,12 +718,10 @@ export function useCheckout() {
 				}
 
 				paymentSuccess.value = true;
-				successOrderId.value = orderIds.length > 1
-					? orderIds.join(', ')
-					: primaryOrderId;
+				successOrderId.value = orderIds.length > 1 ? orderIds.join(', ') : primaryOrderId;
 				if (!existingOrderId.value) {
-					clearNuxtData("cart");
-					await refreshNuxtData("cart");
+					clearNuxtData('cart');
+					await refreshNuxtData('cart');
 				}
 				paymentStep.value = '';
 			};
@@ -603,27 +734,30 @@ export function useCheckout() {
 				}
 
 				if (paymentMethod.value === 'bonifico') {
-					await sanctum("/api/stripe/mark-order-completed", {
-						method: "POST",
+					await sanctum('/api/stripe/mark-order-completed', {
+						method: 'POST',
 						body: {
 							order_id: orderId,
 							payment_type: 'bonifico',
 							is_existing_order: !!existingOrderId.value,
+							...submissionContext,
 						},
 					});
 					return true;
 				}
 
 				if (paymentMethod.value === 'wallet') {
-					const orderData = orderIds.length > 1
-						? await sanctum(`/api/orders/${orderId}`)
-						: null;
+					const orderData = orderIds.length > 1 ? await sanctum(`/api/orders/${orderId}`) : null;
 					const orderAmount = orderData
-						? Number(String(orderData?.data?.subtotal || '0').replace(/[^0-9.,]/g, '').replace(',', '.'))
+						? Number(
+								String(orderData?.data?.subtotal || '0')
+									.replace(/[^0-9.,]/g, '')
+									.replace(',', '.'),
+							)
 						: finalTotal.value;
 
-					const walletResult = await sanctum("/api/wallet/pay", {
-						method: "POST",
+					const walletResult = await sanctum('/api/wallet/pay', {
+						method: 'POST',
 						body: {
 							amount: orderAmount,
 							reference: `order-${orderId}`,
@@ -632,18 +766,24 @@ export function useCheckout() {
 					});
 
 					if (walletResult?.success) {
-						await sanctum("/api/stripe/mark-order-completed", {
-							method: "POST",
+						if (!walletResult?.data?.id) {
+							paymentError.value = 'Pagamento wallet non verificabile. Riprova.';
+							return false;
+						}
+
+						await sanctum('/api/stripe/mark-order-completed', {
+							method: 'POST',
 							body: {
 								order_id: orderId,
 								payment_type: 'wallet',
-								ext_id: `wallet-${walletResult?.data?.id || Date.now()}`,
+								ext_id: `wallet-${walletResult.data.id}`,
 								is_existing_order: !!existingOrderId.value,
+								...submissionContext,
 							},
 						});
 						return true;
 					} else {
-						paymentError.value = walletResult?.message || "Pagamento con wallet non riuscito.";
+						paymentError.value = walletResult?.message || 'Pagamento con wallet non riuscito.';
 						return false;
 					}
 				}
@@ -651,31 +791,53 @@ export function useCheckout() {
 				if (paymentMethod.value === 'carta' && defaultPayment.value?.card && !useNewCard.value) {
 					const payEndpoint = isExisting ? '/api/stripe/existing-order-payment' : '/api/stripe/create-payment';
 					const payResult = await sanctum(payEndpoint, {
-						method: "POST",
+						method: 'POST',
 						body: {
 							order_id: orderId,
-							currency: "eur",
-							customer_id: user.value.customer_id,
+							currency: 'eur',
 							payment_method_id: defaultPayment.value.card.id,
+							...submissionContext,
 						},
 					});
 
-					if (payResult.status === "succeeded") {
+					if (payResult.status === 'succeeded') {
 						const paidEndpoint = isExisting ? '/api/stripe/existing-order-paid' : '/api/stripe/order-paid';
 						await sanctum(paidEndpoint, {
-							method: "POST",
+							method: 'POST',
 							body: {
 								order_id: orderId,
 								ext_id: payResult.payment_intent_id,
 								is_existing_order: isExisting,
+								...submissionContext,
 							},
 						});
 						return true;
-					} else if (payResult.status === "requires_action") {
-						paymentError.value = "La tua banca richiede autenticazione 3D Secure. Usa una nuova carta per completare l'autenticazione.";
+					} else if (payResult.status === 'requires_action' && payResult.client_secret) {
+						const { error: actionError, paymentIntent } = await stripe.handleCardAction(payResult.client_secret);
+						if (actionError) {
+							paymentError.value = actionError.message || 'Autenticazione 3D Secure fallita.';
+							return false;
+						}
+						if (paymentIntent?.status === 'succeeded') {
+							const paidEndpoint = isExisting ? '/api/stripe/existing-order-paid' : '/api/stripe/order-paid';
+							await sanctum(paidEndpoint, {
+								method: 'POST',
+								body: {
+									order_id: orderId,
+									ext_id: paymentIntent.id,
+									is_existing_order: isExisting,
+									...submissionContext,
+								},
+							});
+							return true;
+						}
+						paymentError.value = 'Autenticazione 3D Secure fallita. Riprova o usa una carta diversa.';
+						return false;
+					} else if (payResult.status === 'requires_action') {
+						paymentError.value = 'Autenticazione 3D Secure richiesta ma non disponibile. Riprova o usa una carta diversa.';
 						return false;
 					} else {
-						paymentError.value = "Pagamento non riuscito. Stato: " + payResult.status;
+						paymentError.value = 'Pagamento non riuscito. Stato: ' + payResult.status;
 						return false;
 					}
 				}
@@ -683,8 +845,11 @@ export function useCheckout() {
 				if (paymentMethod.value === 'carta' && (useNewCard.value || !defaultPayment.value?.card)) {
 					const piEndpoint = isExisting ? '/api/stripe/existing-order-payment-intent' : '/api/stripe/create-payment-intent';
 					const piResponse = await sanctum(piEndpoint, {
-						method: "POST",
-						body: { order_id: orderId },
+						method: 'POST',
+						body: {
+							order_id: orderId,
+							...submissionContext,
+						},
 					});
 
 					if (piResponse.error) {
@@ -697,29 +862,26 @@ export function useCheckout() {
 						...(saveCardForFuture.value ? { setup_future_usage: 'off_session' } : {}),
 					};
 
-					const { error, paymentIntent } = await stripe.confirmCardPayment(
-						piResponse.client_secret,
-						confirmationData
-					);
+					const { error, paymentIntent } = await stripe.confirmCardPayment(piResponse.client_secret, confirmationData);
 
 					if (error) {
 						const errorMessages = {
-							'card_declined': 'Carta rifiutata. Verifica i dati o usa un\'altra carta.',
-							'insufficient_funds': 'Fondi insufficienti sulla carta.',
-							'expired_card': 'Carta scaduta.',
-							'incorrect_cvc': 'Codice CVC non corretto.',
-							'incorrect_number': 'Numero carta non valido.',
-							'invalid_expiry_year': 'Anno di scadenza non valido.',
-							'invalid_expiry_month': 'Mese di scadenza non valido.',
-							'processing_error': 'Errore temporaneo. Riprova tra qualche minuto.',
-							'authentication_required': 'Autenticazione 3D Secure fallita.',
-							'payment_intent_authentication_failure': 'Autenticazione 3D Secure non riuscita.',
+							card_declined: "Carta rifiutata. Verifica i dati o usa un'altra carta.",
+							insufficient_funds: 'Fondi insufficienti sulla carta.',
+							expired_card: 'Carta scaduta.',
+							incorrect_cvc: 'Codice CVC non corretto.',
+							incorrect_number: 'Numero carta non valido.',
+							invalid_expiry_year: 'Anno di scadenza non valido.',
+							invalid_expiry_month: 'Mese di scadenza non valido.',
+							processing_error: 'Errore temporaneo. Riprova tra qualche minuto.',
+							authentication_required: 'Autenticazione 3D Secure fallita.',
+							payment_intent_authentication_failure: 'Autenticazione 3D Secure non riuscita.',
 						};
 						paymentError.value = errorMessages[error.code] || error.message;
 						return false;
 					}
 
-					if (paymentIntent.status === "succeeded") {
+					if (paymentIntent.status === 'succeeded') {
 						if (saveCardForFuture.value && paymentIntent.payment_method) {
 							try {
 								await sanctum('/api/stripe/set-default-payment-method', {
@@ -734,25 +896,26 @@ export function useCheckout() {
 
 						const paidEndpoint = isExisting ? '/api/stripe/existing-order-paid' : '/api/stripe/order-paid';
 						await sanctum(paidEndpoint, {
-							method: "POST",
+							method: 'POST',
 							body: {
 								order_id: orderId,
 								ext_id: paymentIntent.id,
 								is_existing_order: isExisting,
+								...submissionContext,
 							},
 						});
 						return true;
-					} else if (paymentIntent.status === "requires_action") {
-						paymentError.value = "Autenticazione 3D Secure richiesta ma non completata.";
+					} else if (paymentIntent.status === 'requires_action') {
+						paymentError.value = 'Autenticazione 3D Secure richiesta ma non completata.';
 						return false;
-					} else if (paymentIntent.status === "processing") {
-						paymentError.value = "Pagamento in elaborazione. Controlla lo stato tra qualche minuto.";
+					} else if (paymentIntent.status === 'processing') {
+						paymentError.value = 'Pagamento in elaborazione. Controlla lo stato tra qualche minuto.';
 						return false;
-					} else if (paymentIntent.status === "requires_payment_method") {
+					} else if (paymentIntent.status === 'requires_payment_method') {
 						paymentError.value = "Metodo di pagamento non valido. Riprova con un'altra carta.";
 						return false;
 					} else {
-						paymentError.value = "Stato pagamento: " + paymentIntent.status;
+						paymentError.value = 'Stato pagamento: ' + paymentIntent.status;
 						return false;
 					}
 				}
@@ -771,6 +934,10 @@ export function useCheckout() {
 					allSuccess = false;
 					if (paidOrderIds.length > 0) {
 						paymentError.value = `Attenzione: ${paidOrderIds.length} ordine/i pagato/i con successo (${paidOrderIds.join(', ')}), ma il pagamento dell'ordine ${orderIds[i]} è fallito. Contatta l'assistenza per completare l'ordine rimanente.`;
+						await recoverCheckoutCartState({
+							refreshCartState: refreshCart,
+							refreshCartCache: refreshNuxtData,
+						});
 					}
 					return;
 				}
@@ -779,9 +946,13 @@ export function useCheckout() {
 			if (allSuccess) {
 				await onPaymentSuccess();
 			}
-
 		} catch (err) {
-			paymentError.value = err?.response?._data?.error || err?.response?._data?.message || err?.data?.error || err?.message || "Errore durante il pagamento. Riprova.";
+			paymentError.value =
+				err?.response?._data?.error ||
+				err?.response?._data?.message ||
+				err?.data?.error ||
+				err?.message ||
+				'Errore durante il pagamento. Riprova.';
 		} finally {
 			isProcessing.value = false;
 			paymentStep.value = '';

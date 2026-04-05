@@ -5,135 +5,175 @@
 -->
 <script setup>
 defineProps({
-  open: { type: Boolean, default: false },
-  tab: { type: String, default: 'login' },
-  loading: { type: Boolean, default: false },
-  error: { type: String, default: '' },
-  success: { type: String, default: '' },
-  redirectPath: { type: String, default: '/checkout' },
-  loginForm: { type: Object, required: true },
-  registerForm: { type: Object, required: true },
-})
+	open: { type: Boolean, default: false },
+	tab: { type: String, default: 'login' },
+	loading: { type: Boolean, default: false },
+	error: { type: String, default: '' },
+	success: { type: String, default: '' },
+	redirectPath: { type: String, default: '/checkout' },
+	loginForm: { type: Object, required: true },
+	registerForm: { type: Object, required: true },
+});
 
-const emit = defineEmits([
-  'update:open', 'update:tab',
-  'login', 'register',
-  'clear-messages',
-])
+const emit = defineEmits(['update:open', 'update:tab', 'login', 'register', 'clear-messages']);
 
 const switchTab = (newTab) => {
-  emit('update:tab', newTab)
-  emit('clear-messages')
-}
+	emit('update:tab', newTab);
+	emit('clear-messages');
+};
 </script>
 
 <template>
-  <UModal :open="open" @update:open="emit('update:open', $event)" :dismissible="!loading" :close="false">
-    <template #title>
-      <h3 class="text-[1.125rem] font-bold text-[#252B42]">Continua senza perdere il carrello</h3>
-    </template>
-    <template #body>
-      <div class="space-y-[14px]">
-        <p class="text-[0.875rem] text-[#737373] leading-[1.5]">
-          Accedi o registrati qui. Dopo il successo continui direttamente al pagamento.
-        </p>
+	<UModal
+		:open="open"
+		:dismissible="!loading"
+		:close="false"
+		:ui="{
+			overlay: 'bg-[#09131c]/36 backdrop-blur-[6px]',
+			content: '!divide-y-0 !ring-0 !p-0 sf-modal-surface w-[min(calc(100vw-1rem),40rem)]',
+			header: '!p-0',
+			body: '!p-0',
+			footer: '!p-0',
+		}"
+		@update:open="emit('update:open', $event)">
+		<template #body>
+			<section class="sf-modal-content">
+				<div class="sf-modal-header">
+					<div class="sf-modal-header__main">
+						<div class="sf-modal-icon" aria-hidden="true">
+							<svg
+								xmlns="http://www.w3.org/2000/svg"
+								viewBox="0 0 24 24"
+								class="w-[18px] h-[18px]"
+								fill="none"
+								stroke="currentColor"
+								stroke-width="1.9"
+								stroke-linecap="round"
+								stroke-linejoin="round">
+								<path d="M3 6h19l-2 8H8L6 4H3" />
+								<circle cx="10" cy="19" r="1.6" />
+								<circle cx="18" cy="19" r="1.6" />
+							</svg>
+						</div>
+						<div>
+							<span class="sf-section-kicker">Checkout</span>
+							<h3 class="sf-modal-title">Continua senza perdere il carrello</h3>
+							<p class="sf-modal-description">Accedi o registrati qui e prosegui direttamente al pagamento appena l’account è pronto.</p>
+						</div>
+					</div>
+				</div>
 
-        <div class="inline-flex rounded-[12px] bg-[#F2F4F5] p-[4px]">
-          <button type="button" @click="switchTab('login')"
-            :class="tab === 'login' ? 'bg-white text-[#252B42] shadow-sm' : 'text-[#737373]'"
-            class="px-[14px] py-[8px] rounded-[12px] text-[0.8125rem] font-semibold transition cursor-pointer">Accedi</button>
-          <button type="button" @click="switchTab('register')"
-            :class="tab === 'register' ? 'bg-white text-[#252B42] shadow-sm' : 'text-[#737373]'"
-            class="px-[14px] py-[8px] rounded-[12px] text-[0.8125rem] font-semibold transition cursor-pointer">Registrati</button>
-        </div>
+				<div class="sf-modal-divider" />
 
-        <!-- Login fields -->
-        <div v-if="tab === 'login'" class="space-y-[10px]">
-          <div>
-            <label class="block text-[0.8125rem] text-[#737373] mb-[4px]">Email</label>
-            <input v-model="loginForm.email" type="email" autocomplete="email"
-              class="w-full bg-white rounded-[12px] h-[44px] px-[12px] text-[0.9375rem] border border-[#E9EBEC] focus:border-[#095866] focus:shadow-[0_0_0_3px_rgba(9,88,102,0.1)] transition" />
-          </div>
-          <div>
-            <label class="block text-[0.8125rem] text-[#737373] mb-[4px]">Password</label>
-            <input v-model="loginForm.password" type="password" autocomplete="current-password"
-              class="w-full bg-white rounded-[12px] h-[44px] px-[12px] text-[0.9375rem] border border-[#E9EBEC] focus:border-[#095866] focus:shadow-[0_0_0_3px_rgba(9,88,102,0.1)] transition" />
-          </div>
-        </div>
+				<div class="sf-modal-body">
+					<div class="inline-flex rounded-[12px] bg-[#F2F4F5] p-[4px]">
+						<button
+							type="button"
+							class="px-[14px] py-[8px] rounded-[10px] text-[0.8125rem] font-semibold transition cursor-pointer"
+							:class="tab === 'login' ? 'bg-white text-[#252B42] shadow-sm' : 'text-[#737373]'"
+							@click="switchTab('login')">
+							Accedi
+						</button>
+						<button
+							type="button"
+							class="px-[14px] py-[8px] rounded-[10px] text-[0.8125rem] font-semibold transition cursor-pointer"
+							:class="tab === 'register' ? 'bg-white text-[#252B42] shadow-sm' : 'text-[#737373]'"
+							@click="switchTab('register')">
+							Registrati
+						</button>
+					</div>
 
-        <!-- Register fields -->
-        <div v-else class="space-y-[10px]">
-          <div class="grid grid-cols-1 tablet:grid-cols-2 gap-[10px]">
-            <div>
-              <label class="block text-[0.8125rem] text-[#737373] mb-[4px]">Nome</label>
-              <input v-model="registerForm.name" type="text" autocomplete="given-name"
-                class="w-full bg-white rounded-[12px] h-[44px] px-[12px] text-[0.9375rem] border border-[#E9EBEC] focus:border-[#095866] focus:shadow-[0_0_0_3px_rgba(9,88,102,0.1)] transition" />
-            </div>
-            <div>
-              <label class="block text-[0.8125rem] text-[#737373] mb-[4px]">Cognome</label>
-              <input v-model="registerForm.surname" type="text" autocomplete="family-name"
-                class="w-full bg-white rounded-[12px] h-[44px] px-[12px] text-[0.9375rem] border border-[#E9EBEC] focus:border-[#095866] focus:shadow-[0_0_0_3px_rgba(9,88,102,0.1)] transition" />
-            </div>
-          </div>
-          <div class="grid grid-cols-1 tablet:grid-cols-2 gap-[10px]">
-            <div>
-              <label class="block text-[0.8125rem] text-[#737373] mb-[4px]">Email</label>
-              <input v-model="registerForm.email" type="email" autocomplete="email"
-                class="w-full bg-white rounded-[12px] h-[44px] px-[12px] text-[0.9375rem] border border-[#E9EBEC] focus:border-[#095866] focus:shadow-[0_0_0_3px_rgba(9,88,102,0.1)] transition" />
-            </div>
-            <div>
-              <label class="block text-[0.8125rem] text-[#737373] mb-[4px]">Conferma email</label>
-              <input v-model="registerForm.email_confirmation" type="email" autocomplete="email"
-                class="w-full bg-white rounded-[12px] h-[44px] px-[12px] text-[0.9375rem] border border-[#E9EBEC] focus:border-[#095866] focus:shadow-[0_0_0_3px_rgba(9,88,102,0.1)] transition" />
-            </div>
-          </div>
-          <div class="grid grid-cols-1 tablet:grid-cols-[120px_1fr] gap-[10px]">
-            <div>
-              <label class="block text-[0.8125rem] text-[#737373] mb-[4px]">Prefisso</label>
-              <input v-model="registerForm.prefix" type="text"
-                class="w-full bg-white rounded-[12px] h-[44px] px-[12px] text-[0.9375rem] border border-[#E9EBEC] focus:border-[#095866] focus:shadow-[0_0_0_3px_rgba(9,88,102,0.1)] transition" />
-            </div>
-            <div>
-              <label class="block text-[0.8125rem] text-[#737373] mb-[4px]">Telefono</label>
-              <input v-model="registerForm.telephone_number" type="tel" autocomplete="tel"
-                class="w-full bg-white rounded-[12px] h-[44px] px-[12px] text-[0.9375rem] border border-[#E9EBEC] focus:border-[#095866] focus:shadow-[0_0_0_3px_rgba(9,88,102,0.1)] transition" />
-            </div>
-          </div>
-          <div class="grid grid-cols-1 tablet:grid-cols-2 gap-[10px]">
-            <div>
-              <label class="block text-[0.8125rem] text-[#737373] mb-[4px]">Password</label>
-              <input v-model="registerForm.password" type="password" autocomplete="new-password"
-                class="w-full bg-white rounded-[12px] h-[44px] px-[12px] text-[0.9375rem] border border-[#E9EBEC] focus:border-[#095866] focus:shadow-[0_0_0_3px_rgba(9,88,102,0.1)] transition" />
-            </div>
-            <div>
-              <label class="block text-[0.8125rem] text-[#737373] mb-[4px]">Conferma password</label>
-              <input v-model="registerForm.password_confirmation" type="password" autocomplete="new-password"
-                class="w-full bg-white rounded-[12px] h-[44px] px-[12px] text-[0.9375rem] border border-[#E9EBEC] focus:border-[#095866] focus:shadow-[0_0_0_3px_rgba(9,88,102,0.1)] transition" />
-            </div>
-          </div>
-        </div>
+					<div v-if="tab === 'login'" class="grid gap-[12px]">
+						<div>
+							<label class="form-label">Email</label>
+							<input v-model="loginForm.email" type="email" autocomplete="email" class="form-input" />
+						</div>
+						<div>
+							<label class="form-label">Password</label>
+							<input v-model="loginForm.password" type="password" autocomplete="current-password" class="form-input" />
+						</div>
+					</div>
 
-        <p v-if="error" class="text-[0.8125rem] text-red-600 bg-red-50 border border-red-200 rounded-[12px] px-[10px] py-[8px]">{{ error }}</p>
-        <p v-if="success" class="text-[0.8125rem] text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-[12px] px-[10px] py-[8px]">{{ success }}</p>
+					<div v-else class="grid gap-[12px]">
+						<div class="grid grid-cols-1 tablet:grid-cols-2 gap-[10px]">
+							<div>
+								<label class="form-label">Nome</label>
+								<input v-model="registerForm.name" type="text" autocomplete="given-name" class="form-input" />
+							</div>
+							<div>
+								<label class="form-label">Cognome</label>
+								<input v-model="registerForm.surname" type="text" autocomplete="family-name" class="form-input" />
+							</div>
+						</div>
 
-        <div v-if="error && error.toLowerCase().includes('verific')" class="text-[0.8125rem]">
-          <NuxtLink :to="`/autenticazione?redirect=${encodeURIComponent(redirectPath)}`" class="text-[#095866] font-semibold hover:underline cursor-pointer">Apri verifica account</NuxtLink>
-        </div>
-      </div>
-    </template>
-    <template #footer>
-      <div class="flex flex-col-reverse tablet:flex-row justify-end gap-[10px]">
-        <button type="button" @click="emit('update:open', false)" :disabled="loading"
-          class="inline-flex items-center justify-center gap-[6px] px-[16px] min-h-[42px] rounded-[12px] border border-[#E9EBEC] text-[#737373] hover:bg-[#F7F9FA] transition cursor-pointer disabled:opacity-60">Annulla</button>
-        <button v-if="tab === 'login'" type="button" @click="emit('login')" :disabled="loading"
-          class="inline-flex items-center justify-center gap-[6px] px-[16px] min-h-[42px] rounded-[12px] bg-[#E44203] text-white font-semibold hover:bg-[#c93800] transition cursor-pointer disabled:opacity-60">
-          {{ loading ? 'Accesso...' : 'Accedi e continua' }}
-        </button>
-        <button v-else type="button" @click="emit('register')" :disabled="loading"
-          class="inline-flex items-center justify-center gap-[6px] px-[16px] min-h-[42px] rounded-[12px] bg-[#E44203] text-white font-semibold hover:bg-[#c93800] transition cursor-pointer disabled:opacity-60">
-          {{ loading ? 'Registrazione...' : 'Registrati e continua' }}
-        </button>
-      </div>
-    </template>
-  </UModal>
+						<div class="grid grid-cols-1 tablet:grid-cols-2 gap-[10px]">
+							<div>
+								<label class="form-label">Email</label>
+								<input v-model="registerForm.email" type="email" autocomplete="email" class="form-input" />
+							</div>
+							<div>
+								<label class="form-label">Conferma email</label>
+								<input v-model="registerForm.email_confirmation" type="email" autocomplete="email" class="form-input" />
+							</div>
+						</div>
+
+						<div class="grid grid-cols-1 tablet:grid-cols-[120px_1fr] gap-[10px]">
+							<div>
+								<label class="form-label">Prefisso</label>
+								<input v-model="registerForm.prefix" type="text" class="form-input" />
+							</div>
+							<div>
+								<label class="form-label">Telefono</label>
+								<input v-model="registerForm.telephone_number" type="tel" autocomplete="tel" class="form-input" />
+							</div>
+						</div>
+
+						<div class="grid grid-cols-1 tablet:grid-cols-2 gap-[10px]">
+							<div>
+								<label class="form-label">Password</label>
+								<input v-model="registerForm.password" type="password" autocomplete="new-password" class="form-input" />
+							</div>
+							<div>
+								<label class="form-label">Conferma password</label>
+								<input v-model="registerForm.password_confirmation" type="password" autocomplete="new-password" class="form-input" />
+							</div>
+						</div>
+					</div>
+
+					<div v-if="error" class="ux-alert ux-alert--critical">
+						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="ux-alert__icon" fill="currentColor" aria-hidden="true">
+							<path d="M13,13H11V7H13M13,17H11V15H13M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z" />
+						</svg>
+						<div>{{ error }}</div>
+					</div>
+
+					<div v-if="success" class="ux-alert ux-alert--success">
+						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="ux-alert__icon" fill="currentColor" aria-hidden="true">
+							<path
+								d="M12 2C6.5 2 2 6.5 2 12S6.5 22 12 22 22 17.5 22 12 17.5 2 12 2M10 17L5 12L6.41 10.59L10 14.17L17.59 6.58L19 8L10 17Z" />
+						</svg>
+						<div>{{ success }}</div>
+					</div>
+
+					<div v-if="error && error.toLowerCase().includes('verific')" class="text-[0.8125rem]">
+						<NuxtLink
+							:to="`/autenticazione?redirect=${encodeURIComponent(redirectPath)}`"
+							class="text-[#095866] font-semibold hover:underline cursor-pointer">
+							Apri verifica account
+						</NuxtLink>
+					</div>
+				</div>
+				<div class="sf-modal-divider" />
+				<div class="sf-modal-actions">
+					<button type="button" class="btn-secondary btn-compact" :disabled="loading" @click="emit('update:open', false)">Annulla</button>
+					<button v-if="tab === 'login'" type="button" class="btn-cta btn-compact" :disabled="loading" @click="emit('login')">
+						{{ loading ? 'Accesso...' : 'Accedi e continua' }}
+					</button>
+					<button v-else type="button" class="btn-cta btn-compact" :disabled="loading" @click="emit('register')">
+						{{ loading ? 'Registrazione...' : 'Registrati e continua' }}
+					</button>
+				</div>
+			</section>
+		</template>
+	</UModal>
 </template>

@@ -48,3 +48,26 @@ emails/
 *.bak_*
 backup/
 nul
+NUL
+
+# Local browser/debug artifacts
+.playwright-cli/
+.playwright-mcp/
+output/
+test-results/
+playwright-report/
+nuxt-spedizionefacile-master/test-results/
+nuxt-spedizionefacile-master/playwright-report/
+UsersFederDesktopspedizionefacileoutputruntimeauth-cookies.txt
+
+# Temporary diagnostics / debug artifacts
+tmp-diagnostica/
+*.testdox.txt
+*-testdox.txt
+
+# Debug screenshots (root level)
+local-*.png
+preview-*.png
+step3-*.png
+prototype-*.png
+recupera-*.png

@@ -16,7 +16,7 @@ const {
 
 const modalUi = {
   overlay: 'bg-[#09131c]/38 backdrop-blur-[7px]',
-  content: 'sf-modal-surface w-[calc(100vw-0.75rem)] max-w-[504px] max-h-[88vh] overflow-hidden border-0 rounded-[28px]',
+  content: 'sf-modal-surface w-[calc(100vw-0.75rem)] max-w-[504px] max-h-[88vh] overflow-hidden border-0 rounded-[18px]',
   body: 'p-0 overflow-y-auto overscroll-contain scrollbar-hide',
 }
 </script>
@@ -136,7 +136,7 @@ const modalUi = {
             <div v-if="verificationError" class="auth-feedback auth-feedback--error">{{ verificationError }}</div>
             <div v-if="verificationSuccess" class="auth-feedback auth-feedback--success">{{ verificationSuccess }}</div>
             <div class="flex flex-col gap-[10px]">
-              <button type="button" class="auth-primary-submit" :disabled="verificationLoading" @click="verifyCode">
+              <button type="button" class="btn-cta w-full inline-flex items-center justify-center gap-[8px]" :disabled="verificationLoading" @click="verifyCode">
                 {{ verificationLoading ? 'Verifica in corso...' : 'Verifica e continua' }}
               </button>
               <div class="flex items-center justify-between gap-[12px] text-[0.8125rem]">
@@ -150,15 +150,15 @@ const modalUi = {
             </div>
           </div>
 
-          <form v-else-if="selectedTab === 'login'" class="auth-overlay-form" @submit.prevent="handleLogin">
+          <form v-else-if="selectedTab === 'login'" class="auth-overlay-form" action="javascript:void(0)" method="post" @submit.capture.prevent.stop="handleLogin">
             <div class="auth-field-group">
               <label class="auth-field-label" for="auth-modal-email">Email</label>
-              <input id="auth-modal-email" v-model="loginForm.email" class="auth-field-input" type="email" autocomplete="username" placeholder="La tua email" />
+              <input id="auth-modal-email" v-model="loginForm.email" class="form-input" type="email" autocomplete="username" placeholder="La tua email" />
             </div>
             <div class="auth-field-group">
               <label class="auth-field-label" for="auth-modal-password">Password</label>
               <div class="auth-password-wrap">
-                <input id="auth-modal-password" v-model="loginForm.password" class="auth-field-input auth-field-input--password" :type="showLoginPassword ? 'text' : 'password'" autocomplete="current-password" placeholder="La tua password" />
+                <input id="auth-modal-password" v-model="loginForm.password" class="form-input auth-field-input--password" :type="showLoginPassword ? 'text' : 'password'" autocomplete="current-password" placeholder="La tua password" />
                 <button type="button" class="auth-password-toggle" tabindex="-1" @click="showLoginPassword = !showLoginPassword">
                   <svg v-if="showLoginPassword" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[1rem] h-[1rem]" fill="currentColor"><path d="M2,5.27L3.28,4L20,20.72L18.73,22L15.65,18.92C14.5,19.3 13.28,19.5 12,19.5C7,19.5 2.73,16.39 1,12C1.69,10.24 2.79,8.69 4.19,7.46L2,5.27M12,9A3,3 0 0,1 15,12C15,12.35 14.94,12.69 14.83,13L11,9.17C11.31,9.06 11.65,9 12,9M12,4.5C17,4.5 21.27,7.61 23,12C22.18,14.08 20.79,15.88 19,17.19L17.58,15.76C18.94,14.82 20.06,13.54 20.82,12C19.17,8.64 15.76,6.5 12,6.5C10.91,6.5 9.84,6.68 8.84,7.03L7.31,5.5C8.77,4.85 10.36,4.5 12,4.5M3.18,12C4.83,15.36 8.24,17.5 12,17.5C12.69,17.5 13.37,17.43 14,17.29L11.72,15C10.29,14.85 9.15,13.71 9,12.28L5.6,8.87C4.61,9.72 3.78,10.78 3.18,12Z"/></svg>
                   <svg v-else xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[1rem] h-[1rem]" fill="currentColor"><path d="M12,9A3,3 0 0,1 15,12A3,3 0 0,1 12,15A3,3 0 0,1 9,12A3,3 0 0,1 12,9M12,4.5C17,4.5 21.27,7.61 23,12C21.27,16.39 17,19.5 12,19.5C7,19.5 2.73,16.39 1,12C2.73,7.61 7,4.5 12,4.5M3.18,12C4.83,15.36 8.24,17.5 12,17.5C15.76,17.5 19.17,15.36 20.82,12C19.17,8.64 15.76,6.5 12,6.5C8.24,6.5 4.83,8.64 3.18,12Z"/></svg>
@@ -169,12 +169,12 @@ const modalUi = {
               <input id="auth-modal-remember" v-model="loginForm.remember" type="checkbox" class="auth-checkbox" />
               <span>Ricordami</span>
             </label>
-            <button type="submit" class="auth-primary-submit" :disabled="isLoading">
-              {{ isLoading ? 'Accesso in corso...' : 'Accedi e continua' }}
-            </button>
+              <button type="button" class="btn-cta w-full inline-flex items-center justify-center gap-[8px]" :disabled="isLoading" @click="handleLogin">
+                {{ isLoading ? 'Accesso in corso...' : 'Accedi e continua' }}
+              </button>
           </form>
 
-          <form v-else class="auth-overlay-form" @submit.prevent="handleRegister">
+          <form v-else class="auth-overlay-form" action="javascript:void(0)" method="post" @submit.capture.prevent.stop="handleRegister">
             <div class="auth-segmented-row">
               <button type="button" :class="registerForm.user_type === 'privato' ? 'auth-segment auth-segment--active' : 'auth-segment'" @click="registerForm.user_type = 'privato'">Privato</button>
               <button type="button" :class="registerForm.user_type === 'commerciante' ? 'auth-segment auth-segment--active' : 'auth-segment'" @click="registerForm.user_type = 'commerciante'">Azienda</button>
@@ -182,41 +182,41 @@ const modalUi = {
             <div class="auth-grid-two">
               <div class="auth-field-group">
                 <label class="auth-field-label">Nome</label>
-                <input v-model="registerForm.name" class="auth-field-input" type="text" autocomplete="given-name" placeholder="Nome" />
+                <input v-model="registerForm.name" class="form-input" type="text" autocomplete="given-name" placeholder="Nome" />
               </div>
               <div class="auth-field-group">
                 <label class="auth-field-label">Cognome</label>
-                <input v-model="registerForm.surname" class="auth-field-input" type="text" autocomplete="family-name" placeholder="Cognome" />
+                <input v-model="registerForm.surname" class="form-input" type="text" autocomplete="family-name" placeholder="Cognome" />
               </div>
             </div>
             <div class="auth-grid-two">
               <div class="auth-field-group">
                 <label class="auth-field-label">Email</label>
-                <input v-model="registerForm.email" class="auth-field-input" type="email" autocomplete="email" placeholder="La tua email" />
+                <input v-model="registerForm.email" class="form-input" type="email" autocomplete="email" placeholder="La tua email" />
               </div>
               <div class="auth-field-group">
                 <label class="auth-field-label">Conferma email</label>
-                <input v-model="registerForm.email_confirmation" class="auth-field-input" type="email" autocomplete="email" placeholder="Conferma email" />
+                <input v-model="registerForm.email_confirmation" class="form-input" type="email" autocomplete="email" placeholder="Conferma email" />
               </div>
             </div>
             <div class="auth-grid-phone">
               <div class="auth-field-group">
                 <label class="auth-field-label">Prefisso</label>
-                <select v-model="registerForm.prefix" class="auth-field-input auth-field-select">
+                <select v-model="registerForm.prefix" class="form-input auth-field-select">
                   <option value="+39">+39 IT</option>
                   <option value="+49">+49 DE</option>
                 </select>
               </div>
               <div class="auth-field-group">
                 <label class="auth-field-label">Telefono</label>
-                <input v-model="registerForm.telephone_number" class="auth-field-input" type="tel" autocomplete="tel" placeholder="Numero di telefono" />
+                <input v-model="registerForm.telephone_number" class="form-input" type="tel" autocomplete="tel" placeholder="Numero di telefono" />
               </div>
             </div>
             <div class="auth-grid-two">
               <div class="auth-field-group">
                 <label class="auth-field-label">Password</label>
                 <div class="auth-password-wrap">
-                  <input v-model="registerForm.password" class="auth-field-input auth-field-input--password" :type="showRegisterPassword ? 'text' : 'password'" autocomplete="new-password" placeholder="Minimo 8 caratteri" />
+                  <input v-model="registerForm.password" class="form-input auth-field-input--password" :type="showRegisterPassword ? 'text' : 'password'" autocomplete="new-password" placeholder="Minimo 8 caratteri" />
                   <button type="button" class="auth-password-toggle" tabindex="-1" @click="showRegisterPassword = !showRegisterPassword">
                     <svg v-if="showRegisterPassword" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[1rem] h-[1rem]" fill="currentColor"><path d="M2,5.27L3.28,4L20,20.72L18.73,22L15.65,18.92C14.5,19.3 13.28,19.5 12,19.5C7,19.5 2.73,16.39 1,12C1.69,10.24 2.79,8.69 4.19,7.46L2,5.27M12,9A3,3 0 0,1 15,12C15,12.35 14.94,12.69 14.83,13L11,9.17C11.31,9.06 11.65,9 12,9M12,4.5C17,4.5 21.27,7.61 23,12C22.18,14.08 20.79,15.88 19,17.19L17.58,15.76C18.94,14.82 20.06,13.54 20.82,12C19.17,8.64 15.76,6.5 12,6.5C10.91,6.5 9.84,6.68 8.84,7.03L7.31,5.5C8.77,4.85 10.36,4.5 12,4.5M3.18,12C4.83,15.36 8.24,17.5 12,17.5C12.69,17.5 13.37,17.43 14,17.29L11.72,15C10.29,14.85 9.15,13.71 9,12.28L5.6,8.87C4.61,9.72 3.78,10.78 3.18,12Z"/></svg>
                     <svg v-else xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[1rem] h-[1rem]" fill="currentColor"><path d="M12,9A3,3 0 0,1 15,12A3,3 0 0,1 12,15A3,3 0 0,1 9,12A3,3 0 0,1 12,9M12,4.5C17,4.5 21.27,7.61 23,12C21.27,16.39 17,19.5 12,19.5C7,19.5 2.73,16.39 1,12C2.73,7.61 7,4.5 12,4.5M3.18,12C4.83,15.36 8.24,17.5 12,17.5C15.76,17.5 19.17,15.36 20.82,12C19.17,8.64 15.76,6.5 12,6.5C8.24,6.5 4.83,8.64 3.18,12Z"/></svg>
@@ -226,7 +226,7 @@ const modalUi = {
               <div class="auth-field-group">
                 <label class="auth-field-label">Conferma password</label>
                 <div class="auth-password-wrap">
-                  <input v-model="registerForm.password_confirmation" class="auth-field-input auth-field-input--password" :type="showRegisterPasswordConfirm ? 'text' : 'password'" autocomplete="new-password" placeholder="Ripeti la password" />
+                  <input v-model="registerForm.password_confirmation" class="form-input auth-field-input--password" :type="showRegisterPasswordConfirm ? 'text' : 'password'" autocomplete="new-password" placeholder="Ripeti la password" />
                   <button type="button" class="auth-password-toggle" tabindex="-1" @click="showRegisterPasswordConfirm = !showRegisterPasswordConfirm">
                     <svg v-if="showRegisterPasswordConfirm" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[1rem] h-[1rem]" fill="currentColor"><path d="M2,5.27L3.28,4L20,20.72L18.73,22L15.65,18.92C14.5,19.3 13.28,19.5 12,19.5C7,19.5 2.73,16.39 1,12C1.69,10.24 2.79,8.69 4.19,7.46L2,5.27M12,9A3,3 0 0,1 15,12C15,12.35 14.94,12.69 14.83,13L11,9.17C11.31,9.06 11.65,9 12,9M12,4.5C17,4.5 21.27,7.61 23,12C22.18,14.08 20.79,15.88 19,17.19L17.58,15.76C18.94,14.82 20.06,13.54 20.82,12C19.17,8.64 15.76,6.5 12,6.5C10.91,6.5 9.84,6.68 8.84,7.03L7.31,5.5C8.77,4.85 10.36,4.5 12,4.5M3.18,12C4.83,15.36 8.24,17.5 12,17.5C12.69,17.5 13.37,17.43 14,17.29L11.72,15C10.29,14.85 9.15,13.71 9,12.28L5.6,8.87C4.61,9.72 3.78,10.78 3.18,12Z"/></svg>
                     <svg v-else xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[1rem] h-[1rem]" fill="currentColor"><path d="M12,9A3,3 0 0,1 15,12A3,3 0 0,1 12,15A3,3 0 0,1 9,12A3,3 0 0,1 12,9M12,4.5C17,4.5 21.27,7.61 23,12C21.27,16.39 17,19.5 12,19.5C7,19.5 2.73,16.39 1,12C2.73,7.61 7,4.5 12,4.5M3.18,12C4.83,15.36 8.24,17.5 12,17.5C15.76,17.5 19.17,15.36 20.82,12C19.17,8.64 15.76,6.5 12,6.5C8.24,6.5 4.83,8.64 3.18,12Z"/></svg>
@@ -234,7 +234,7 @@ const modalUi = {
                 </div>
               </div>
             </div>
-            <button type="submit" class="auth-primary-submit" :disabled="isLoading">
+            <button type="button" class="btn-cta w-full inline-flex items-center justify-center gap-[8px]" :disabled="isLoading" @click="handleRegister">
               {{ isLoading ? 'Creazione account...' : 'Registrati e continua' }}
             </button>
           </form>

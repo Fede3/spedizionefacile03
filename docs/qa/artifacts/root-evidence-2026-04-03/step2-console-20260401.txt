@@ -1,0 +1,232 @@
+Total messages: 3 (Errors: 0, Warnings: 0)
+Returning 36 messages for level "info"
+
+[INFO] <Suspense> is an experimental feature and its API will likely change. @ https://spy-milan-insight-gate.trycloudflare.com/_nuxt/node_modules/@vue/runtime-core/dist/runtime-core.esm-bundler.js?v=bc91659d:7208
+[INFO] <Suspense> is an experimental feature and its API will likely change. @ https://spy-milan-insight-gate.trycloudflare.com/_nuxt/node_modules/@vue/runtime-core/dist/runtime-core.esm-bundler.js?v=bc91659d:7208
+[INFO] <Suspense> is an experimental feature and its API will likely change. @ https://spy-milan-insight-gate.trycloudflare.com/_nuxt/node_modules/@vue/runtime-core/dist/runtime-core.esm-bundler.js?v=bc91659d:7208
+[WARNING] [Vue warn]: Hydration node mismatch:
+- rendered on server: JSHandle@node  
+- expected on client: Symbol(v-fgt) 
+  at <ToastRootImpl ref=fn<ref> open=true type="foreground"  ... > 
+  at <Presence present=true data-orientation="vertical" data-slot="base"  ... > 
+  at <ToastRoot ref="rootRef" open=true onEscapeKeyDown=fn  ... > 
+  at <UToast key="1775001411122-5wttom6" ref_for=true ref="refs"  ... > 
+  at <ToastProvider swipe-direction="right" duration=5000 > 
+  at <Toaster key=0 > 
+  at <TooltipProvider> 
+  at <ConfigProvider use-id=fn<use-id> dir=undefined locale=undefined > 
+  at <App> 
+  at <App key=4 > 
+  at <NuxtRoot> @ https://spy-milan-insight-gate.trycloudflare.com/_nuxt/node_modules/@vue/runtime-core/dist/runtime-core.esm-bundler.js?v=bc91659d:49
+[ERROR] Hydration completed but contains mismatches. @ https://spy-milan-insight-gate.trycloudflare.com/_nuxt/node_modules/@vue/runtime-core/dist/runtime-core.esm-bundler.js?v=bc91659d:1872
+[WARNING] [Vue warn]: Hydration class mismatch on JSHandle@node 
+  - rendered on server: class="relative z-40 bg-[#E3E3E3] h-auto pb-[12px]"
+  - expected on client: class="relative z-40"
+  Note: this mismatch is check-only. The DOM will not be rectified in production due to performance overhead.
+  You should fix the source of the mismatch. 
+  at <Header> 
+  at <Default ref=Ref< undefined > > 
+  at <AsyncComponentWrapper ref=Ref< undefined > > 
+  at <LayoutLoader key="default" layoutProps= {ref: RefImpl} name="default" > 
+  at <NuxtLayoutProvider layoutProps= {ref: RefImpl} key="default" name="default"  ... > 
+  at <NuxtLayout> 
+  at <ToastProvider swipe-direction="right" duration=5000 > 
+  at <Toaster key=0 > 
+  at <TooltipProvider> 
+  at <ConfigProvider use-id=fn<use-id> dir=undefined locale=undefined > 
+  at <App> 
+  at <App key=4 > 
+  at <NuxtRoot> @ https://spy-milan-insight-gate.trycloudflare.com/_nuxt/node_modules/@vue/runtime-core/dist/runtime-core.esm-bundler.js?v=bc91659d:49
+[WARNING] [Vue warn]: Hydration node mismatch:
+- rendered on server: JSHandle@node  
+- expected on client: Symbol(v-fgt) 
+  at <Preventivo onVnodeUnmounted=fn<onVnodeUnmounted> ref=Ref< undefined > > 
+  at <RouteProvider key="/preventivo" vnode= {__v_isVNode: true, __v_skip: true, type: Object, props: Object, key: null} route= {fullPath: /preventivo, hash: , query: Object, name: preventivo, path: /preventivo}  ... > 
+  at <RouterView name=undefined route=undefined > 
+  at <NuxtPage> 
+  at <Default ref=Ref< undefined > > 
+  at <AsyncComponentWrapper ref=Ref< undefined > > 
+  at <LayoutLoader key="default" layoutProps= {ref: RefImpl} name="default" > 
+  at <NuxtLayoutProvider layoutProps= {ref: RefImpl} key="default" name="default"  ... > 
+  at <NuxtLayout> 
+  at <ToastProvider swipe-direction="right" duration=5000 > 
+  at <Toaster key=0 > 
+  at <TooltipProvider> 
+  at <ConfigProvider use-id=fn<use-id> dir=undefined locale=undefined > 
+  at <App> 
+  at <App key=4 > 
+  at <NuxtRoot> @ https://spy-milan-insight-gate.trycloudflare.com/_nuxt/node_modules/@vue/runtime-core/dist/runtime-core.esm-bundler.js?v=bc91659d:49
+[LOG] [vite] server connection lost. Polling for restart... @ https://spy-milan-insight-gate.trycloudflare.com/_nuxt/@vite/client:864
+[INFO] <Suspense> is an experimental feature and its API will likely change. @ https://spy-milan-insight-gate.trycloudflare.com/_nuxt/node_modules/@vue/runtime-core/dist/runtime-core.esm-bundler.js?v=bc91659d:7208
+[LOG] %cssr:success%c Vite server hmr 22 files 
+      background: #2ecc71;
+      border-radius: 0.5em;
+      color: white;
+      font-weight: bold;
+      padding: 2px 0.5em;
+      in 0.773ms 
+  at vite_node_entry_default (/node_modules/@nuxt/vite-builder/dist/vite-node-entry.mjs)
+  at process.processTicksAndRejections (node:internal/process/task_queues)
+  at async Object.renderToString (/node_modules/vue-bundle-renderer/dist/runtime.mjs)
+ @ https://spy-milan-insight-gate.trycloudflare.com/_nuxt/node_modules/consola/dist/browser.mjs?v=bc91659d:47
+[INFO] <Suspense> is an experimental feature and its API will likely change. @ https://spy-milan-insight-gate.trycloudflare.com/_nuxt/node_modules/@vue/runtime-core/dist/runtime-core.esm-bundler.js?v=bc91659d:7208
+[LOG] %cssr:success%c Vite server hmr 34 files 
+      background: #2ecc71;
+      border-radius: 0.5em;
+      color: white;
+      font-weight: bold;
+      padding: 2px 0.5em;
+      in 0.631ms 
+  at vite_node_entry_default (/node_modules/@nuxt/vite-builder/dist/vite-node-entry.mjs)
+  at process.processTicksAndRejections (node:internal/process/task_queues)
+  at async Object.renderToString (/node_modules/vue-bundle-renderer/dist/runtime.mjs)
+ @ https://spy-milan-insight-gate.trycloudflare.com/_nuxt/node_modules/consola/dist/browser.mjs?v=bc91659d:47
+[INFO] <Suspense> is an experimental feature and its API will likely change. @ https://spy-milan-insight-gate.trycloudflare.com/_nuxt/node_modules/@vue/runtime-core/dist/runtime-core.esm-bundler.js?v=bc91659d:7208
+[VERBOSE] [DOM] Input elements should have autocomplete attributes (suggested: "username"): (More info: https://goo.gl/9p2vKq) %o @ https://spy-milan-insight-gate.trycloudflare.com/autenticazione:0
+[INFO] <Suspense> is an experimental feature and its API will likely change. @ https://spy-milan-insight-gate.trycloudflare.com/_nuxt/node_modules/@vue/runtime-core/dist/runtime-core.esm-bundler.js?v=bc91659d:7208
+[LOG] %cssr:success%c Vite server hmr 8 files 
+      background: #2ecc71;
+      border-radius: 0.5em;
+      color: white;
+      font-weight: bold;
+      padding: 2px 0.5em;
+      in 0.538ms 
+  at vite_node_entry_default (/node_modules/@nuxt/vite-builder/dist/vite-node-entry.mjs)
+  at process.processTicksAndRejections (node:internal/process/task_queues)
+  at async Object.renderToString (/node_modules/vue-bundle-renderer/dist/runtime.mjs)
+ @ https://spy-milan-insight-gate.trycloudflare.com/_nuxt/node_modules/consola/dist/browser.mjs?v=bc91659d:47
+[INFO] <Suspense> is an experimental feature and its API will likely change. @ https://spy-milan-insight-gate.trycloudflare.com/_nuxt/node_modules/@vue/runtime-core/dist/runtime-core.esm-bundler.js?v=bc91659d:7208
+[INFO] <Suspense> is an experimental feature and its API will likely change. @ https://spy-milan-insight-gate.trycloudflare.com/_nuxt/node_modules/@vue/runtime-core/dist/runtime-core.esm-bundler.js?v=bc91659d:7208
+[WARNING] [Vue warn]: Hydration text content mismatch on JSHandle@node 
+  - rendered on server: Luca
+  - expected on client: Luca Bianchi 
+  at <AccountPageHeader title="Luca Bianchi" description="" > 
+  at <Index onVnodeUnmounted=fn<onVnodeUnmounted> ref=Ref< undefined > > 
+  at <RouteProvider key="/account" vnode= {__v_isVNode: true, __v_skip: true, type: Object, props: Object, key: null} route= {fullPath: /account, hash: , query: Object, name: account, path: /account}  ... > 
+  at <RouterView name=undefined route=undefined > 
+  at <NuxtPage> 
+  at <Default ref=Ref< undefined > > 
+  at <AsyncComponentWrapper ref=Ref< undefined > > 
+  at <LayoutLoader key="default" layoutProps= {ref: RefImpl} name="default" > 
+  at <NuxtLayoutProvider layoutProps= {ref: RefImpl} key="default" name="default"  ... > 
+  at <NuxtLayout> 
+  at <ToastProvider swipe-direction="right" duration=5000 > 
+  at <Toaster key=0 > 
+  at <TooltipProvider> 
+  at <ConfigProvider use-id=fn<use-id> dir=undefined locale=undefined > 
+  at <App> 
+  at <App key=4 > 
+  at <NuxtRoot> @ https://spy-milan-insight-gate.trycloudflare.com/_nuxt/node_modules/@vue/runtime-core/dist/runtime-core.esm-bundler.js?v=bc91659d:49
+[ERROR] Hydration completed but contains mismatches. @ https://spy-milan-insight-gate.trycloudflare.com/_nuxt/node_modules/@vue/runtime-core/dist/runtime-core.esm-bundler.js?v=bc91659d:1872
+[INFO] <Suspense> is an experimental feature and its API will likely change. @ https://spy-milan-insight-gate.trycloudflare.com/_nuxt/node_modules/@vue/runtime-core/dist/runtime-core.esm-bundler.js?v=bc91659d:7208
+[WARNING] [Vue warn]: Hydration text content mismatch on JSHandle@node 
+  - rendered on server: Luca
+  - expected on client: Luca Bianchi 
+  at <AccountPageHeader title="Luca Bianchi" description="" > 
+  at <Index onVnodeUnmounted=fn<onVnodeUnmounted> ref=Ref< undefined > > 
+  at <RouteProvider key="/account" vnode= {__v_isVNode: true, __v_skip: true, type: Object, props: Object, key: null} route= {fullPath: /account, hash: , query: Object, name: account, path: /account}  ... > 
+  at <RouterView name=undefined route=undefined > 
+  at <NuxtPage> 
+  at <Default ref=Ref< undefined > > 
+  at <AsyncComponentWrapper ref=Ref< undefined > > 
+  at <LayoutLoader key="default" layoutProps= {ref: RefImpl} name="default" > 
+  at <NuxtLayoutProvider layoutProps= {ref: RefImpl} key="default" name="default"  ... > 
+  at <NuxtLayout> 
+  at <ToastProvider swipe-direction="right" duration=5000 > 
+  at <Toaster key=0 > 
+  at <TooltipProvider> 
+  at <ConfigProvider use-id=fn<use-id> dir=undefined locale=undefined > 
+  at <App> 
+  at <App key=4 > 
+  at <NuxtRoot> @ https://spy-milan-insight-gate.trycloudflare.com/_nuxt/node_modules/@vue/runtime-core/dist/runtime-core.esm-bundler.js?v=bc91659d:49
+[ERROR] Hydration completed but contains mismatches. @ https://spy-milan-insight-gate.trycloudflare.com/_nuxt/node_modules/@vue/runtime-core/dist/runtime-core.esm-bundler.js?v=bc91659d:1872
+[LOG] %cssr:success%c Vite server hmr 13 files 
+      background: #2ecc71;
+      border-radius: 0.5em;
+      color: white;
+      font-weight: bold;
+      padding: 2px 0.5em;
+      in 0.697ms 
+  at vite_node_entry_default (/node_modules/@nuxt/vite-builder/dist/vite-node-entry.mjs)
+  at process.processTicksAndRejections (node:internal/process/task_queues)
+  at async Object.renderToString (/node_modules/vue-bundle-renderer/dist/runtime.mjs)
+ @ https://spy-milan-insight-gate.trycloudflare.com/_nuxt/node_modules/consola/dist/browser.mjs?v=bc91659d:47
+[INFO] <Suspense> is an experimental feature and its API will likely change. @ https://spy-milan-insight-gate.trycloudflare.com/_nuxt/node_modules/@vue/runtime-core/dist/runtime-core.esm-bundler.js?v=bc91659d:7208
+[INFO] <Suspense> is an experimental feature and its API will likely change. @ https://spy-milan-insight-gate.trycloudflare.com/_nuxt/node_modules/@vue/runtime-core/dist/runtime-core.esm-bundler.js?v=bc91659d:7208
+[WARNING] [Vue warn]: Hydration text content mismatch on JSHandle@node 
+  - rendered on server: Luca
+  - expected on client: Luca Bianchi 
+  at <AccountPageHeader title="Luca Bianchi" description="" > 
+  at <Index onVnodeUnmounted=fn<onVnodeUnmounted> ref=Ref< undefined > > 
+  at <RouteProvider key="/account" vnode= {__v_isVNode: true, __v_skip: true, type: Object, props: Object, key: null} route= {fullPath: /account, hash: , query: Object, name: account, path: /account}  ... > 
+  at <RouterView name=undefined route=undefined > 
+  at <NuxtPage> 
+  at <Default ref=Ref< undefined > > 
+  at <AsyncComponentWrapper ref=Ref< undefined > > 
+  at <LayoutLoader key="default" layoutProps= {ref: RefImpl} name="default" > 
+  at <NuxtLayoutProvider layoutProps= {ref: RefImpl} key="default" name="default"  ... > 
+  at <NuxtLayout> 
+  at <ToastProvider swipe-direction="right" duration=5000 > 
+  at <Toaster key=0 > 
+  at <TooltipProvider> 
+  at <ConfigProvider use-id=fn<use-id> dir=undefined locale=undefined > 
+  at <App> 
+  at <App key=4 > 
+  at <NuxtRoot> @ https://spy-milan-insight-gate.trycloudflare.com/_nuxt/node_modules/@vue/runtime-core/dist/runtime-core.esm-bundler.js?v=bc91659d:49
+[ERROR] Hydration completed but contains mismatches. @ https://spy-milan-insight-gate.trycloudflare.com/_nuxt/node_modules/@vue/runtime-core/dist/runtime-core.esm-bundler.js?v=bc91659d:1872
+[INFO] <Suspense> is an experimental feature and its API will likely change. @ https://spy-milan-insight-gate.trycloudflare.com/_nuxt/node_modules/@vue/runtime-core/dist/runtime-core.esm-bundler.js?v=bc91659d:7208
+[VERBOSE] [DOM] Input elements should have autocomplete attributes (suggested: "username"): (More info: https://goo.gl/9p2vKq) %o @ https://spy-milan-insight-gate.trycloudflare.com/autenticazione:0
+[INFO] <Suspense> is an experimental feature and its API will likely change. @ https://spy-milan-insight-gate.trycloudflare.com/_nuxt/node_modules/@vue/runtime-core/dist/runtime-core.esm-bundler.js?v=bc91659d:7208
+[WARNING] [Vue warn]: Hydration node mismatch:
+- rendered on server: JSHandle@node  
+- expected on client: Symbol(v-fgt) 
+  at <ToastRootImpl ref=fn<ref> open=true type="foreground"  ... > 
+  at <Presence present=true data-orientation="vertical" data-slot="base"  ... > 
+  at <ToastRoot ref="rootRef" open=true onEscapeKeyDown=fn  ... > 
+  at <UToast key="1775003602108-ocwdvr8" ref_for=true ref="refs"  ... > 
+  at <ToastProvider swipe-direction="right" duration=5000 > 
+  at <Toaster key=0 > 
+  at <TooltipProvider> 
+  at <ConfigProvider use-id=fn<use-id> dir=undefined locale=undefined > 
+  at <App> 
+  at <App key=4 > 
+  at <NuxtRoot> @ https://spy-milan-insight-gate.trycloudflare.com/_nuxt/node_modules/@vue/runtime-core/dist/runtime-core.esm-bundler.js?v=bc91659d:49
+[ERROR] Hydration completed but contains mismatches. @ https://spy-milan-insight-gate.trycloudflare.com/_nuxt/node_modules/@vue/runtime-core/dist/runtime-core.esm-bundler.js?v=bc91659d:1872
+[WARNING] [Vue warn]: Hydration class mismatch on JSHandle@node 
+  - rendered on server: class="relative z-40 bg-[#E3E3E3] h-auto pb-[12px]"
+  - expected on client: class="relative z-40"
+  Note: this mismatch is check-only. The DOM will not be rectified in production due to performance overhead.
+  You should fix the source of the mismatch. 
+  at <Header> 
+  at <Default ref=Ref< undefined > > 
+  at <AsyncComponentWrapper ref=Ref< undefined > > 
+  at <LayoutLoader key="default" layoutProps= {ref: RefImpl} name="default" > 
+  at <NuxtLayoutProvider layoutProps= {ref: RefImpl} key="default" name="default"  ... > 
+  at <NuxtLayout> 
+  at <ToastProvider swipe-direction="right" duration=5000 > 
+  at <Toaster key=0 > 
+  at <TooltipProvider> 
+  at <ConfigProvider use-id=fn<use-id> dir=undefined locale=undefined > 
+  at <App> 
+  at <App key=4 > 
+  at <NuxtRoot> @ https://spy-milan-insight-gate.trycloudflare.com/_nuxt/node_modules/@vue/runtime-core/dist/runtime-core.esm-bundler.js?v=bc91659d:49
+[WARNING] [Vue warn]: Hydration node mismatch:
+- rendered on server: JSHandle@node  
+- expected on client: Symbol(v-fgt) 
+  at <Preventivo onVnodeUnmounted=fn<onVnodeUnmounted> ref=Ref< undefined > > 
+  at <RouteProvider key="/preventivo" vnode= {__v_isVNode: true, __v_skip: true, type: Object, props: Object, key: null} route= {fullPath: /preventivo, hash: , query: Object, name: preventivo, path: /preventivo}  ... > 
+  at <RouterView name=undefined route=undefined > 
+  at <NuxtPage> 
+  at <Default ref=Ref< undefined > > 
+  at <AsyncComponentWrapper ref=Ref< undefined > > 
+  at <LayoutLoader key="default" layoutProps= {ref: RefImpl} name="default" > 
+  at <NuxtLayoutProvider layoutProps= {ref: RefImpl} key="default" name="default"  ... > 
+  at <NuxtLayout> 
+  at <ToastProvider swipe-direction="right" duration=5000 > 
+  at <Toaster key=0 > 
+  at <TooltipProvider> 
+  at <ConfigProvider use-id=fn<use-id> dir=undefined locale=undefined > 
+  at <App> 
+  at <App key=4 > 
+  at <NuxtRoot> @ https://spy-milan-insight-gate.trycloudflare.com/_nuxt/node_modules/@vue/runtime-core/dist/runtime-core.esm-bundler.js?v=bc91659d:49
+[INFO] <Suspense> is an experimental feature and its API will likely change. @ https://spy-milan-insight-gate.trycloudflare.com/_nuxt/node_modules/@vue/runtime-core/dist/runtime-core.esm-bundler.js?v=bc91659d:7208

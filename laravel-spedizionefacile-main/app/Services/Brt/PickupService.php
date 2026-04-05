@@ -26,6 +26,7 @@ class PickupService
 {
     public function __construct(
         private readonly BrtConfig $config,
+        private readonly AddressNormalizer $addressNormalizer,
     ) {}
 
     /**
@@ -55,6 +56,11 @@ class PickupService
         $totalParcels = $order->packages->sum(fn ($pkg) => max(1, (int) ($pkg->quantity ?? 1)));
         $totalWeight = $order->packages->sum(fn ($pkg) => (float) preg_replace('/[^0-9.]/', '', $pkg->weight ?? '0'));
 
+        // Normalize origin address using the same normalizer used by ShipmentService,
+        // so BRT receives consistent, validated city/postal_code/province values.
+        $normalizedOrigin = $this->addressNormalizer->normalizeAddressForBrt($origin);
+        $pickupCountry = $this->addressNormalizer->countryToIso2($origin->country ?? 'Italia');
+
         $payload = [
             'account' => $this->config->accountPayload(),
             'pickupData' => [
@@ -63,12 +69,12 @@ class PickupService
                 'pickupContactName' => $origin->name ?? '',
                 'pickupCompanyName' => $origin->name ?? '',
                 'pickupAddress' => trim(($origin->address ?? '') . ' ' . ($origin->address_number ?? '')),
-                'pickupZIPCode' => $origin->postal_code ?? '',
-                'pickupCity' => $origin->city ?? '',
-                'pickupProvinceAbbreviation' => strtoupper(substr($origin->province ?? '', 0, 2)),
-                'pickupCountryAbbreviationISOAlpha2' => 'IT',
+                'pickupZIPCode' => $normalizedOrigin['postal_code'],
+                'pickupCity' => $normalizedOrigin['city'],
+                'pickupProvinceAbbreviation' => $normalizedOrigin['province'],
+                'pickupCountryAbbreviationISOAlpha2' => $pickupCountry,
                 'pickupContactPhone' => $origin->telephone_number ?? '',
-                'pickupContactEMail' => $origin->email ?? ($order->user->email ?? ''),
+                'pickupContactEMail' => $origin->email ?? ($order->user?->email ?? ''),
                 'pickupDate' => $pickupDate,
                 'pickupTimeSlotFrom' => $this->extractTimeSlotPart($timeSlot, 'from'),
                 'pickupTimeSlotTo' => $this->extractTimeSlotPart($timeSlot, 'to'),

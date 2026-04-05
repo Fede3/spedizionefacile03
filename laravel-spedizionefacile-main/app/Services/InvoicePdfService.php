@@ -123,8 +123,6 @@ class InvoicePdfService
             $ops .= $this->drawText($this->marginLeft, $y, 11, 'Indirizzi spedizione', 'F2');
             $y += 18;
 
-            $colWidth = ($this->pageWidth - $this->marginLeft - $this->marginRight - 20) / 2;
-
             if ($origin) {
                 $ops .= $this->drawText($this->marginLeft, $y, 9, 'MITTENTE', 'F2');
                 $y += 14;

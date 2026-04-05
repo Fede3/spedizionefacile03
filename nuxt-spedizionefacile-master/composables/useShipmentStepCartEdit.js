@@ -3,7 +3,7 @@
  *
  * Gestisce il caricamento e la pre-compilazione dei dati
  * quando l'utente modifica un elemento gia' presente nel carrello
- * (parametro ?edit=<id> nella URL).
+ * (parametro canonico ?edit=<id> nella URL; supporta anche il legacy ?edit_id=<id>).
  */
 export const useShipmentStepCartEdit = ({
 	sanctumClient,
@@ -12,7 +12,11 @@ export const useShipmentStepCartEdit = ({
 	userStore,
 }) => {
 	const route = useRoute();
-	const editCartId = route.query.edit ? Number(route.query.edit) : null;
+	const rawEditParam = Array.isArray(route.query.edit)
+		? route.query.edit[0]
+		: (route.query.edit ?? route.query.edit_id);
+	const parsedEditCartId = Number(rawEditParam);
+	const editCartId = Number.isInteger(parsedEditCartId) && parsedEditCartId > 0 ? parsedEditCartId : null;
 	const loadingEditData = ref(!!editCartId);
 
 	const editablePackages = computed(() => {
@@ -36,6 +40,14 @@ export const useShipmentStepCartEdit = ({
 		target.value.email = source.email || "";
 		target.value.additional_information = source.additional_information || "";
 		target.value.intercom_code = source.intercom_code || "";
+	};
+
+	const clearInvalidEditState = async () => {
+		userStore.editingCartItemId = null;
+		const nextQuery = { ...route.query };
+		delete nextQuery.edit;
+		delete nextQuery.edit_id;
+		await navigateTo({ path: route.path, query: nextQuery }, { replace: true });
 	};
 
 	/**
@@ -98,7 +110,11 @@ export const useShipmentStepCartEdit = ({
 
 			showAddressFields.value = true;
 		} catch (e) {
-			// Errore silenzioso: l'utente vedra' il form vuoto
+			userStore.editingCartItemId = null;
+			const statusCode = Number(e?.response?.status || e?.statusCode || 0);
+			if (statusCode === 404) {
+				await clearInvalidEditState();
+			}
 		} finally {
 			loadingEditData.value = false;
 		}

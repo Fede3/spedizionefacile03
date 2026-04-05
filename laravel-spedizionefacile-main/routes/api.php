@@ -70,6 +70,7 @@ use App\Http\Controllers\PasswordResetRequestController;
 use App\Http\Controllers\SavedShipmentController;
 use App\Http\Controllers\WalletController;
 use App\Http\Controllers\ReferralController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\WithdrawalController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\BrtController;
@@ -87,6 +88,7 @@ use App\Http\Controllers\PriceBandController;
 use App\Http\Controllers\ProRequestController;
 use App\Http\Controllers\PublicArticleController;
 use App\Http\Controllers\PublicPriceBandController;
+use App\Http\Controllers\GdprController;
 use App\Http\Controllers\ShipmentExecutionController;
 use App\Support\AuthUiCookie;
 
@@ -185,7 +187,8 @@ Route::middleware(['throttle:5,1'])->post('/resend-verification-email', [CustomL
 
 // POST /api/verify-code — Verifica il codice a 6 cifre inviato via email
 // Dopo la verifica, l'account viene attivato e l'utente viene loggato automaticamente
-Route::middleware(['throttle:10,1'])->post('/verify-code', [CustomLoginController::class, 'verifyCode']);
+// Throttle stretto (5/min) per mitigare brute-force sul codice a 6 cifre
+Route::middleware(['throttle:5,1'])->post('/verify-code', [CustomLoginController::class, 'verifyCode']);
 
 /* ===== CONFERMA EMAIL ===== */
 // GET /api/verify-email/{id} — Link di verifica email cliccato dall'utente nell'email
@@ -305,18 +308,20 @@ Route::group(['middleware' => ['auth:sanctum']], function() {
     // e il carrello potrebbe essere vuoto (l'utente paga un ordine gia' creato)
 
     // POST /api/stripe/mark-order-completed — Completa un ordine con pagamento
-    // non-Stripe (portafoglio virtuale o bonifico bancario)
-    Route::post('stripe/mark-order-completed', [StripeController::class, 'markOrderCompleted']);
+    // non-Stripe (portafoglio virtuale o bonifico bancario). Max 10/min per prevenire abusi.
+    Route::middleware(['throttle:10,1'])->post('stripe/mark-order-completed', [StripeController::class, 'markOrderCompleted']);
 
-    // Pagamento di un ordine gia' esistente tramite Stripe
-    Route::post('stripe/existing-order-payment', [StripeController::class, 'createPayment']);
-    Route::post('stripe/existing-order-payment-intent', [StripeController::class, 'createPaymentIntent']);
-    Route::post('stripe/existing-order-paid', [StripeController::class, 'orderPaid']);
+    // Pagamento di un ordine gia' esistente tramite Stripe (max 10/min)
+    Route::middleware(['throttle:10,1'])->group(function () {
+        Route::post('stripe/existing-order-payment', [StripeController::class, 'createPayment']);
+        Route::post('stripe/existing-order-payment-intent', [StripeController::class, 'createPaymentIntent']);
+        Route::post('stripe/existing-order-paid', [StripeController::class, 'orderPaid']);
+    });
 
     /* ===== PAGAMENTO DA CARRELLO (richiede carrello non vuoto) ===== */
     // Il middleware CheckCart verifica che il carrello non sia vuoto prima di procedere
-    // Se il carrello e' vuoto, restituisce un errore
-    Route::group(['middleware' => [CheckCart::class]], function() {
+    // Se il carrello e' vuoto, restituisce un errore. Max 10/min per endpoint di pagamento.
+    Route::group(['middleware' => [CheckCart::class, 'throttle:10,1']], function() {
         // POST /api/stripe/create-payment — Crea un pagamento Stripe dal carrello
         Route::post('stripe/create-payment', [StripeController::class, 'createPayment']);
         // POST /api/stripe/create-order — Crea un ordine nel database dal carrello
@@ -327,27 +332,27 @@ Route::group(['middleware' => ['auth:sanctum']], function() {
         Route::post('stripe/order-paid', [StripeController::class, 'orderPaid']);
     });
 
-    /* ===== IMPOSTAZIONI STRIPE (solo admin in pratica) ===== */
-    // Lettura e salvataggio delle chiavi Stripe (publishable key, secret key)
+    /* ===== IMPOSTAZIONI STRIPE ===== */
+    // La publishable key serve anche agli utenti autenticati per inizializzare Stripe.js.
+    Route::get('settings/stripe', [SettingsController::class, 'getStripeConfig']);
     Route::middleware([CheckAdmin::class])->group(function () {
-        Route::get('settings/stripe', [SettingsController::class, 'getStripeConfig']);
         Route::post('settings/stripe', [SettingsController::class, 'saveStripeConfig']);
     });
 
     /* ===== CARTE DI CREDITO SALVATE ===== */
     // POST /api/stripe/create-setup-intent — Crea un SetupIntent per salvare una nuova carta
-    // Il SetupIntent raccoglie i dati della carta senza addebitare nulla
-    Route::post('stripe/create-setup-intent', [StripeController::class, 'createSetupIntent']);
+    // Il SetupIntent raccoglie i dati della carta senza addebitare nulla (max 10/min)
+    Route::middleware(['throttle:10,1'])->post('stripe/create-setup-intent', [StripeController::class, 'createSetupIntent']);
     // GET /api/stripe/payment-methods — Lista tutte le carte salvate dell'utente
     Route::get('stripe/payment-methods', [StripeController::class, 'listPaymentMethods']);
-    // POST /api/stripe/set-default-payment-method — Imposta la carta predefinita
-    Route::post('stripe/set-default-payment-method', [StripeController::class, 'setDefaultPaymentMethod']);
-    // POST /api/stripe/change-default-payment-method — Cambia la carta predefinita
-    Route::post('stripe/change-default-payment-method', [StripeController::class, 'changeDefaultPaymentMethod']);
+    // POST /api/stripe/set-default-payment-method — Imposta la carta predefinita (max 10/min)
+    Route::middleware(['throttle:10,1'])->post('stripe/set-default-payment-method', [StripeController::class, 'setDefaultPaymentMethod']);
+    // POST /api/stripe/change-default-payment-method — Cambia la carta predefinita (max 10/min)
+    Route::middleware(['throttle:10,1'])->post('stripe/change-default-payment-method', [StripeController::class, 'changeDefaultPaymentMethod']);
     // GET /api/stripe/default-payment-method — Legge quale carta e' la predefinita
     Route::get('stripe/default-payment-method', [StripeController::class, 'getDefaultPaymentMethod']);
-    // DELETE /api/stripe/delete-card — Elimina una carta salvata
-    Route::delete('stripe/delete-card', [StripeController::class, 'deleteCard']);
+    // DELETE /api/stripe/delete-card — Elimina una carta salvata (max 10/min)
+    Route::middleware(['throttle:10,1'])->delete('stripe/delete-card', [StripeController::class, 'deleteCard']);
 
     /* ===== INDIRIZZI DI SPEDIZIONE (partenza e destinazione) ===== */
     // CRUD completo per gli indirizzi di spedizione associati ai pacchi
@@ -356,17 +361,17 @@ Route::group(['middleware' => ['auth:sanctum']], function() {
     /* ===== ORDINI ===== */
     // CRUD completo per gli ordini: lista, dettaglio, creazione
     Route::apiResource('orders', OrderController::class);
-    // POST /api/orders/{order}/cancel — Annulla un ordine (con eventuale rimborso)
-    Route::post('orders/{order}/cancel', [OrderController::class, 'cancel']);
+    // POST /api/orders/{order}/cancel — Annulla un ordine (con eventuale rimborso). Max 3/min per prevenire double-refund.
+    Route::middleware(['throttle:3,1'])->post('orders/{order}/cancel', [OrderController::class, 'cancel']);
     // GET /api/orders/{order}/invoice — Scarica la ricevuta PDF dell'ordine
     Route::get('orders/{order}/invoice', [OrderController::class, 'invoice']);
     // GET /api/orders/{order}/refund-eligibility — Controlla se un ordine puo' essere rimborsato
     // Le regole: "processing" e "completed" si', "in_transit" no (gia' partito)
-    Route::get('orders/{order}/refund-eligibility', [RefundController::class, 'checkRefundEligibility']);
+    Route::middleware(['throttle:5,1'])->get('orders/{order}/refund-eligibility', [RefundController::class, 'checkRefundEligibility']);
     // POST /api/orders/{order}/add-package — Aggiungi un collo a un ordine in attesa di pagamento
-    Route::post('orders/{order}/add-package', [OrderController::class, 'addPackage']);
+    Route::middleware(['throttle:10,1'])->post('orders/{order}/add-package', [OrderController::class, 'addPackage']);
     // POST /api/create-direct-order — Crea un ordine diretto (senza passare dal carrello)
-    Route::post('create-direct-order', [OrderController::class, 'createDirectOrder']);
+    Route::middleware(['throttle:5,1'])->post('create-direct-order', [OrderController::class, 'createDirectOrder']);
 
     // POST /api/calculate-coupon — Calcola lo sconto di un codice coupon
     Route::post('calculate-coupon', [CouponController::class, 'calculateCoupon']);
@@ -394,7 +399,7 @@ Route::group(['middleware' => ['auth:sanctum']], function() {
     // POST /api/brt/confirm-shipment — Conferma una spedizione BRT (la rende definitiva)
     Route::post('brt/confirm-shipment', [BrtController::class, 'confirmShipment']);
     // POST /api/brt/delete-shipment — Cancella una spedizione BRT non ancora confermata
-    Route::post('brt/delete-shipment', [BrtController::class, 'deleteShipment']);
+    Route::post('brt/delete-shipment', [BrtController::class, 'deleteShipment'])->middleware(CheckAdmin::class);
     // GET /api/brt/label/{order} — Scarica l'etichetta di spedizione in PDF
     Route::get('brt/label/{order}', [BrtController::class, 'downloadLabel']);
     // GET /api/brt/tracking/{order} — Controlla lo stato della spedizione (tracking)
@@ -409,6 +414,8 @@ Route::group(['middleware' => ['auth:sanctum']], function() {
     Route::post('orders/{order}/pickup', [ShipmentExecutionController::class, 'requestPickup']);
     // POST /api/orders/{order}/bordero — Genera il bordero di spedizione (PDF)
     Route::post('orders/{order}/bordero', [ShipmentExecutionController::class, 'createBordero']);
+    // GET /api/orders/{order}/bordero/download — Scarica il bordero generato
+    Route::get('orders/{order}/bordero/download', [ShipmentExecutionController::class, 'downloadBordero']);
     // POST /api/orders/{order}/send-documents — Invia documenti (etichetta + bordero) via email
     Route::post('orders/{order}/send-documents', [ShipmentExecutionController::class, 'sendDocuments']);
 });
@@ -423,10 +430,10 @@ Route::middleware('auth:sanctum')->prefix('wallet')->group(function () {
     Route::get('/balance', [WalletController::class, 'balance']);
     // GET /api/wallet/movements — Lista tutti i movimenti (ricariche, pagamenti, rimborsi)
     Route::get('/movements', [WalletController::class, 'movements']);
-    // POST /api/wallet/top-up — Ricarica il portafoglio tramite Stripe
-    Route::post('/top-up', [WalletController::class, 'topUp']);
-    // POST /api/wallet/pay — Paga un ordine usando il saldo del portafoglio
-    Route::post('/pay', [WalletController::class, 'payWithWallet']);
+    // POST /api/wallet/top-up — Ricarica il portafoglio tramite Stripe (max 5/min per prevenire abusi)
+    Route::middleware(['throttle:5,1'])->post('/top-up', [WalletController::class, 'topUp']);
+    // POST /api/wallet/pay — Paga un ordine usando il saldo del portafoglio (max 10/min)
+    Route::middleware(['throttle:10,1'])->post('/pay', [WalletController::class, 'payWithWallet']);
 });
 
 /* ===================================================================== */
@@ -439,14 +446,33 @@ Route::middleware('auth:sanctum')->prefix('referral')->group(function () {
     Route::get('/my-code', [ReferralController::class, 'myCode']);
     // POST /api/referral/validate — Verifica se un codice referral e' valido
     Route::post('/validate', [ReferralController::class, 'validate']);
-    // POST /api/referral/apply — Applica un codice referral a un ordine
-    Route::post('/apply', [ReferralController::class, 'apply']);
-    // POST /api/referral/store — Salva l'utilizzo del referral nel database
-    Route::post('/store', [ReferralController::class, 'storeReferral']);
+    // POST /api/referral/apply — Applica un codice referral a un ordine (max 5/min per prevenire abusi)
+    Route::middleware(['throttle:5,1'])->post('/apply', [ReferralController::class, 'apply']);
+    // POST /api/referral/store — Salva l'utilizzo del referral nel database (max 5/min)
+    Route::middleware(['throttle:5,1'])->post('/store', [ReferralController::class, 'storeReferral']);
     // GET /api/referral/my-discount — Mostra lo sconto disponibile grazie al referral
     Route::get('/my-discount', [ReferralController::class, 'myDiscount']);
     // GET /api/referral/earnings — Mostra i guadagni totali dalle commissioni referral
     Route::get('/earnings', [ReferralController::class, 'earnings']);
+});
+
+/* ===================================================================== */
+/* NOTIFICHE E PREFERENZE                                                */
+/* Notifiche in-app e consenso referral per l'utente autenticato.       */
+/* ===================================================================== */
+Route::middleware('auth:sanctum')->prefix('notifications')->group(function () {
+    // GET /api/notifications — Lista le notifiche dell'utente autenticato
+    Route::get('/', [NotificationController::class, 'index']);
+    // GET /api/notifications/unread-count — Conteggio notifiche non lette
+    Route::get('/unread-count', [NotificationController::class, 'unreadCount']);
+    // PATCH /api/notifications/{notification}/read — Segna una notifica come letta
+    Route::patch('/{notification}/read', [NotificationController::class, 'markRead']);
+    // PATCH /api/notifications/read-all — Segna tutte le notifiche come lette
+    Route::patch('/read-all', [NotificationController::class, 'markAllRead']);
+    // GET /api/notifications/preferences — Preferenze notifiche referral
+    Route::get('/preferences', [NotificationController::class, 'preferences']);
+    // PUT /api/notifications/preferences — Aggiorna le preferenze notifiche referral
+    Route::put('/preferences', [NotificationController::class, 'updatePreferences']);
 });
 
 /* ===================================================================== */
@@ -457,8 +483,8 @@ Route::middleware('auth:sanctum')->prefix('referral')->group(function () {
 Route::middleware('auth:sanctum')->prefix('withdrawals')->group(function () {
     // GET /api/withdrawals — Lista le richieste di prelievo dell'utente
     Route::get('/', [WithdrawalController::class, 'index']);
-    // POST /api/withdrawals — Crea una nuova richiesta di prelievo
-    Route::post('/', [WithdrawalController::class, 'store']);
+    // POST /api/withdrawals — Crea una nuova richiesta di prelievo (max 3/min per prevenire abusi)
+    Route::middleware(['throttle:3,1'])->post('/', [WithdrawalController::class, 'store']);
 });
 
 /* ===================================================================== */
@@ -560,6 +586,10 @@ Route::middleware(['auth:sanctum', CheckAdmin::class])->prefix('admin')->group(f
 /* servizi e fasce di prezzo pubbliche.                                 */
 /* ===================================================================== */
 Route::prefix('public')->group(function () {
+    // GET /api/public/blog — Lista tutti gli articoli blog pubblicati
+    Route::get('/blog', [PublicArticleController::class, 'blog']);
+    // GET /api/public/blog/{slug} — Dettaglio di un articolo blog specifico
+    Route::get('/blog/{slug}', [PublicArticleController::class, 'blogArticle']);
     // GET /api/public/guides — Lista tutte le guide pubblicate
     Route::get('/guides', [PublicArticleController::class, 'guides']);
     // GET /api/public/guides/{slug} — Dettaglio di una guida specifica (per URL amichevole)
@@ -573,3 +603,20 @@ Route::prefix('public')->group(function () {
     // GET /api/public/homepage-image — Immagine principale della homepage
     Route::get('/homepage-image', [HomepageImageController::class, 'getHomepageImage']);
 });
+
+/* ===================================================================== */
+/* GDPR — Diritto all'oblio (Art. 17) e Portabilita' dati (Art. 20)     */
+/* Endpoint per la conformita' GDPR: cancellazione account e            */
+/* esportazione dati personali. Richiedono autenticazione.              */
+/* ===================================================================== */
+Route::middleware('auth:sanctum')->prefix('user')->group(function () {
+    // DELETE /api/user/account — Cancella l'account e anonimizza i dati personali (Art. 17)
+    Route::delete('/account', [GdprController::class, 'deleteAccount']);
+    // GET /api/user/data-export — Esporta tutti i dati personali in JSON (Art. 20)
+    Route::get('/data-export', [GdprController::class, 'dataExport']);
+});
+
+/* ===== CONSENSO COOKIE (GDPR) ===== */
+// POST /api/cookie-consent — Registra il consenso cookie dell'utente
+// Accessibile anche da utenti non loggati (il consenso avviene prima del login)
+Route::middleware(['throttle:10,1'])->post('/cookie-consent', [GdprController::class, 'cookieConsent']);

@@ -8,15 +8,16 @@ use Illuminate\Support\Facades\DB;
 
 class OrderCreationService
 {
-    public function createOrdersFromPackages($packages, int $userId, ?array $billingData = null): array
+    public function createOrdersFromPackages($packages, int $userId, ?array $billingData = null, array $submissionContext = []): array
     {
         $groups = $this->groupPackagesByAddress($packages);
+        $baseSubmissionId = trim((string) ($submissionContext['client_submission_id'] ?? ''));
 
-        return DB::transaction(function () use ($groups, $userId, $billingData) {
+        return DB::transaction(function () use ($groups, $userId, $billingData, $submissionContext, $baseSubmissionId) {
             $servicePricing = app(ShipmentServicePricingService::class);
             $orders = [];
 
-            foreach ($groups as $group) {
+            foreach ($groups as $index => $group) {
                 $groupPackages = $group['packages'];
                 $groupService = $groupPackages->first()?->service;
                 $serviceType = $groupService->service_type ?? '';
@@ -48,9 +49,17 @@ class OrderCreationService
                 }
 
                 $order = Order::create([
-                    'user_id' => $userId, 'subtotal' => $subtotal, 'status' => Order::PENDING,
-                    'is_cod' => $isCod, 'cod_amount' => $codAmount > 0 ? $codAmount : null,
-                    'brt_pudo_id' => $pudoId, 'billing_data' => $billingData,
+                    'user_id' => $userId,
+                    'subtotal' => $subtotal,
+                    'status' => Order::PENDING,
+                    'is_cod' => $isCod,
+                    'cod_amount' => $codAmount > 0 ? $codAmount : null,
+                    'brt_pudo_id' => $pudoId,
+                    'billing_data' => $billingData,
+                    'client_submission_id' => $this->resolveGroupSubmissionId($baseSubmissionId, $group['key'], $index),
+                    'pricing_signature' => $submissionContext['pricing_signature'] ?? null,
+                    'pricing_snapshot_version' => $submissionContext['pricing_snapshot_version'] ?? null,
+                    'pricing_snapshot' => $submissionContext['pricing_snapshot'] ?? null,
                 ]);
 
                 foreach ($groupPackages as $package) {
@@ -62,6 +71,19 @@ class OrderCreationService
 
             return $orders;
         });
+    }
+
+    private function resolveGroupSubmissionId(string $baseSubmissionId, string $groupKey, int $index): ?string
+    {
+        if ($baseSubmissionId === '') {
+            return null;
+        }
+
+        if ($index === 0) {
+            return $baseSubmissionId;
+        }
+
+        return $baseSubmissionId.'|'.$groupKey;
     }
 
     private function groupPackagesByAddress($packages): array
@@ -88,6 +110,8 @@ class OrderCreationService
             }
             $groups[$key]['packages']->push($package);
         }
+
+        ksort($groups);
 
         return array_values($groups);
     }

@@ -61,11 +61,16 @@ class RefundService
         $stripe = new StripeClient($secret);
 
         try {
+            // La idempotency key e' deterministica sull'ordine: anche se questa funzione venisse
+            // chiamata due volte per lo stesso ordine (es. retry di rete), Stripe restituira' il
+            // rimborso gia' creato invece di crearne uno secondo.
+            $idempotencyKey = 'refund_order_' . $order->id . '_' . $amountCents;
+
             $refund = $stripe->refunds->create([
                 'payment_intent' => $order->stripe_payment_intent_id,
                 'amount' => $amountCents, 'reason' => 'requested_by_customer',
                 'metadata' => ['order_id' => (string) $order->id, 'cancellation_fee_cents' => (string) self::CANCELLATION_FEE_CENTS],
-            ]);
+            ], ['idempotency_key' => $idempotencyKey]);
 
             Log::info('Stripe refund processed', ['order_id' => $order->id, 'refund_id' => $refund->id, 'amount' => $amountCents, 'status' => $refund->status]);
             if ($refund->status === 'failed') throw new \Exception('Rimborso Stripe fallito. Status: ' . $refund->status);

@@ -9,6 +9,7 @@
 namespace App\Services\Brt;
 
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Http\Client\PendingRequest;
 
 class BrtConfig
@@ -30,6 +31,10 @@ class BrtConfig
         $this->pudoToken = config('services.brt.pudo_token', '');
         $this->departureDepot = (int) config('services.brt.departure_depot', 0);
         $this->verifySsl = (bool) config('services.brt.verify_ssl', true);
+
+        if ($this->departureDepot === 0) {
+            Log::warning('BRT departure depot not configured, using fallback 0');
+        }
     }
 
     /**
@@ -43,7 +48,11 @@ class BrtConfig
     }
 
     /**
-     * Client HTTP per le API PUDO BRT (senza verifica SSL, timeout 15s).
+     * Client HTTP per le API PUDO BRT (SSL configurabile tramite BRT_VERIFY_SSL, timeout 15s).
+     *
+     * La verifica SSL usa lo stesso flag `verifySsl` del client spedizioni, configurabile in .env:
+     *   BRT_VERIFY_SSL=false  — disabilita SSL solo in locale/testing
+     *   BRT_VERIFY_SSL=true   — (default) verifica SSL in produzione
      */
     public function pudoClient(): PendingRequest
     {
@@ -52,8 +61,8 @@ class BrtConfig
             $headers['X-API-Auth'] = $this->pudoToken;
         }
 
-        return Http::timeout(15)
-            ->withoutVerifying()
+        return Http::withOptions(['verify' => $this->verifySsl])
+            ->timeout(15)
             ->withHeaders($headers);
     }
 

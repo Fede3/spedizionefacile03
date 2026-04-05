@@ -2,6 +2,7 @@
 
 namespace App\Services\Brt;
 
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -201,15 +202,23 @@ class PudoService
             $parts = array_values(array_filter([trim($address), preg_replace('/\D/', '', (string) $zipCode), trim($city), 'Italia'], fn($v) => (string) $v !== ''));
             if (empty($parts)) return null;
 
-            $response = Http::timeout(8)->acceptJson()
-                ->withHeaders(['User-Agent' => 'SpediamoFacile/1.0 (PUDO geocode)'])
-                ->get('https://nominatim.openstreetmap.org/search', ['format' => 'jsonv2', 'limit' => 1, 'q' => implode(', ', $parts)]);
+            $query = implode(', ', $parts);
+            $cacheKey = 'nominatim_' . md5($query);
 
-            if (!$response->successful()) return null;
-            $first = is_array($response->json()) ? ($response->json()[0] ?? null) : null;
-            if (!$first || !isset($first['lat'], $first['lon']) || !is_numeric($first['lat']) || !is_numeric($first['lon'])) return null;
+            return Cache::remember($cacheKey, now()->addHours(24), function () use ($query) {
+                // Nominatim ToS: max 1 request per second
+                sleep(1);
 
-            return ['latitude' => (float) $first['lat'], 'longitude' => (float) $first['lon']];
+                $response = Http::timeout(8)->acceptJson()
+                    ->withHeaders(['User-Agent' => 'SpedizioneFacile/1.0 (info@spediamofacile.it)'])
+                    ->get('https://nominatim.openstreetmap.org/search', ['format' => 'jsonv2', 'limit' => 1, 'q' => $query]);
+
+                if (!$response->successful()) return null;
+                $first = is_array($response->json()) ? ($response->json()[0] ?? null) : null;
+                if (!$first || !isset($first['lat'], $first['lon']) || !is_numeric($first['lat']) || !is_numeric($first['lon'])) return null;
+
+                return ['latitude' => (float) $first['lat'], 'longitude' => (float) $first['lon']];
+            });
         } catch (\Exception $e) {
             Log::debug('PUDO geocode input failed', ['error' => $e->getMessage()]);
             return null;

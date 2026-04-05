@@ -13,7 +13,7 @@
 -->
 <script setup>
 definePageMeta({
-	middleware: ["app-auth", "admin"],
+	middleware: ['app-auth', 'admin'],
 });
 
 const {
@@ -43,10 +43,8 @@ onMounted(() => { fetchOrders(); });
 					{ label: 'Account', to: '/account' },
 					{ label: 'Amministrazione', to: '/account/amministrazione' },
 					{ label: 'Ordini' },
-				]"
-			/>
+				]" />
 
-			<!-- Action message -->
 			<div
 				v-if="actionMessage"
 				:class="[
@@ -58,7 +56,6 @@ onMounted(() => { fetchOrders(); });
 				{{ actionMessage.text }}
 			</div>
 
-			<!-- Toolbar: search, filters, view toggle -->
 			<AdminOrdiniToolbar
 				:orders-search="ordersSearch"
 				:orders-status-filter="ordersStatusFilter"
@@ -76,10 +73,8 @@ onMounted(() => { fetchOrders(); });
 				@toggle-group="groupByUser = !groupByUser"
 				@reset="resetFilters"
 				@search="onOrdersSearch"
-				@filter-change="ordersPage = 1; fetchOrders()"
-			/>
+				@filter-change="ordersPage = 1; fetchOrders()" />
 
-			<!-- Orders content -->
 			<div class="bg-white rounded-[24px] p-[18px] tablet:p-[24px] desktop:p-[32px] shadow-sm border border-[#E9EBEC]">
 				<div class="mb-[20px] flex flex-col gap-[10px] border-b border-[#EEF1F3] pb-[18px] tablet:flex-row tablet:items-end tablet:justify-between">
 					<div>
@@ -94,19 +89,16 @@ onMounted(() => { fetchOrders(); });
 					</div>
 				</div>
 
-				<!-- Loading -->
 				<div v-if="tabLoading" class="py-[40px] flex justify-center">
 					<div class="w-[32px] h-[32px] border-3 border-[#E9EBEC] border-t-[#095866] rounded-full animate-spin"></div>
 				</div>
 
-				<!-- Error -->
 				<div v-else-if="fetchError" class="text-center py-[48px]">
 					<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[40px] h-[40px] text-red-300 mx-auto mb-[12px]" fill="currentColor"><path d="M13,13H11V7H13M13,17H11V15H13M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z"/></svg>
 					<p class="text-[#737373] mb-[12px]">Errore nel caricamento degli ordini.</p>
 					<button @click="fetchOrders" class="px-[20px] py-[10px] bg-[#095866] text-white rounded-[50px] text-[0.875rem] font-medium cursor-pointer hover:bg-[#074a56] transition-colors">Riprova</button>
 				</div>
 
-				<!-- Empty -->
 				<div v-else-if="!ordersData.data?.length" class="text-center py-[48px]">
 					<div class="w-[64px] h-[64px] mx-auto mb-[16px] bg-[#F8F9FB] rounded-full flex items-center justify-center">
 						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[28px] h-[28px]" fill="#C8CCD0"><path d="M21,16.5C21,16.88 20.79,17.21 20.47,17.38L12.57,21.82C12.41,21.94 12.21,22 12,22C11.79,22 11.59,21.94 11.43,21.82L3.53,17.38C3.21,17.21 3,16.88 3,16.5V7.5C3,7.12 3.21,6.79 3.53,6.62L11.43,2.18C11.59,2.06 11.79,2 12,2C12.21,2 12.41,2.06 12.57,2.18L20.47,6.62C20.79,6.79 21,7.12 21,7.5V16.5Z"/></svg>
@@ -115,7 +107,6 @@ onMounted(() => { fetchOrders(); });
 					<p class="text-[#737373] text-[0.875rem]">Nessun ordine corrisponde ai filtri selezionati.</p>
 				</div>
 
-				<!-- Grouped view -->
 				<AdminOrdiniGroupedView
 					v-else-if="groupByUser"
 					:grouped-orders="groupedOrders"
@@ -127,10 +118,8 @@ onMounted(() => { fetchOrders(); });
 					@toggle-user="toggleUser"
 					@show-detail="showOrderDetail"
 					@change-status="changeOrderStatus"
-					@change-user-type="changeUserType"
-				/>
+					@change-user-type="changeUserType" />
 
-				<!-- Flat view -->
 				<AdminOrdiniFlatView
 					v-else
 					:orders="ordersData.data"
@@ -139,10 +128,8 @@ onMounted(() => { fetchOrders(); });
 					:format-date="formatDate"
 					:get-available-statuses="getAvailableStatuses"
 					@show-detail="showOrderDetail"
-					@change-status="changeOrderStatus"
-				/>
+					@change-status="changeOrderStatus" />
 
-				<!-- Pagination -->
 				<div v-if="ordersData.last_page > 1" class="mt-[22px] flex flex-col gap-[10px] rounded-[12px] border border-[#EEF1F3] bg-[#FAFBFC] px-[14px] py-[12px] tablet:flex-row tablet:items-center tablet:justify-between">
 					<p class="text-[0.8125rem] text-[#6A7486]">{{ paginationLabel }}</p>
 					<div class="flex items-center justify-between gap-[8px] tablet:justify-end">
@@ -152,7 +139,6 @@ onMounted(() => { fetchOrders(); });
 				</div>
 			</div>
 
-			<!-- Order detail modal -->
 			<AdminOrderDetailModal
 				:order="selectedOrder"
 				:order-status-config="orderStatusConfig"
@@ -166,8 +152,7 @@ onMounted(() => { fetchOrders(); });
 				@download-label="downloadLabel"
 				@toggle-pudo-selector="showPudoSelector = !showPudoSelector"
 				@pudo-selected="onAdminPudoSelected"
-				@remove-pudo="removeAdminPudo"
-			/>
+				@remove-pudo="removeAdminPudo" />
 		</div>
 	</section>
 </template>

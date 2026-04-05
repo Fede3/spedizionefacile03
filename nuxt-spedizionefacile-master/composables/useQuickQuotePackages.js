@@ -20,10 +20,34 @@ const QUICK_QUOTE_PACKAGE_TYPES = [
 ];
 
 let quickQuotePackageCounter = 0;
+const QUICK_QUOTE_PACKAGE_ID_PREFIX = "qqp_";
+
+const parseQuickQuotePackageId = (value) => {
+	const normalized = String(value || "").trim();
+
+	if (!normalized.startsWith(QUICK_QUOTE_PACKAGE_ID_PREFIX)) {
+		return 0;
+	}
+
+	const rawIndex = normalized.slice(QUICK_QUOTE_PACKAGE_ID_PREFIX.length);
+	const parsedIndex = Number.parseInt(rawIndex, 36);
+
+	return Number.isFinite(parsedIndex) && parsedIndex > 0 ? parsedIndex : 0;
+};
+
+const syncQuickQuotePackageCounter = (packages = []) => {
+	const highestKnownId = packages.reduce((maxValue, pack) => (
+		Math.max(maxValue, parseQuickQuotePackageId(pack?._qid))
+	), 0);
+
+	if (highestKnownId > quickQuotePackageCounter) {
+		quickQuotePackageCounter = highestKnownId;
+	}
+};
 
 const createQuickQuotePackageId = () => {
 	quickQuotePackageCounter += 1;
-	return `qqp_${Date.now().toString(36)}_${quickQuotePackageCounter.toString(36)}`;
+	return `${QUICK_QUOTE_PACKAGE_ID_PREFIX}${quickQuotePackageCounter.toString(36)}`;
 };
 
 const normalizePackageType = (value) =>
@@ -88,6 +112,7 @@ export const useQuickQuotePackages = ({
 	priceBands,
 }) => {
 	const ensurePackagesIdentity = () => {
+		syncQuickQuotePackageCounter(userStore.packages);
 		userStore.packages.forEach((pack) => ensurePackageDraftIdentity(pack));
 	};
 	const isEuropeMonocollo = computed(() => {

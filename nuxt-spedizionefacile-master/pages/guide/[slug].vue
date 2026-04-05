@@ -1,152 +1,272 @@
 <!--
   PAGINA: Guida Singola (guide/[slug].vue)
-  Pagina dinamica che mostra il contenuto di una singola guida.
-  Carica il contenuto dall'API pubblica /api/public/guides/{slug}.
-  Include dati strutturati JSON-LD per il SEO (Article).
+  Template dinamico guide con fetch SSR, SEO server-side e shell editoriale coerente.
 -->
 <script setup>
+import { formatDateIt } from '~/utils/date.js';
+
 const route = useRoute();
-const slug = route.params.slug;
-const sanctum = useSanctumClient();
+const slug = computed(() => String(route.params.slug || ''));
 
-const guide = ref(null);
-const loading = ref(true);
-const prevGuide = ref(null);
-const nextGuide = ref(null);
+const [{ data: guideResponse, pending }, { data: guideListResponse }] = await Promise.all([
+	useFetch(() => `/api/public/guides/${slug.value}`, {
+		key: () => `public-guide:${slug.value}`,
+		server: true,
+		lazy: false,
+		default: () => null,
+	}),
+	useFetch('/api/public/guides', {
+		key: 'public-guides-list',
+		server: true,
+		lazy: false,
+		default: () => ({ data: [] }),
+	}),
+]);
 
-onMounted(async () => {
+const guide = computed(() => {
+	const data = guideResponse.value?.data || guideResponse.value;
+	return data?.id ? data : null;
+});
+
+if (!guide.value) {
+	await navigateTo('/guide');
+}
+
+const parseArrayPayload = (value) => {
+	if (!value) return [];
+	if (Array.isArray(value)) return value;
+	if (typeof value !== 'string') return [];
+
 	try {
-		// Carica la guida singola
-		const res = await sanctum(`/api/public/guides/${slug}`);
-		const data = res?.data || res;
-		if (data?.id) {
-			guide.value = data;
-		}
-
-		// Carica la lista completa per navigazione prev/next
-		const listRes = await sanctum('/api/public/guides');
-		const list = listRes?.data || listRes;
-		if (Array.isArray(list)) {
-			const idx = list.findIndex(g => g.slug === slug);
-			if (idx > 0) prevGuide.value = list[idx - 1];
-			if (idx < list.length - 1) nextGuide.value = list[idx + 1];
-		}
-	} catch (e) {
-		// Guide non trovata, redirect alla lista
+		const parsed = JSON.parse(value);
+		return Array.isArray(parsed) ? parsed : [];
+	} catch {
+		return [];
 	}
-	loading.value = false;
+};
 
-	if (!loading.value && !guide.value) {
-		navigateTo('/guide');
-	}
+const guideSections = computed(() =>
+	parseArrayPayload(guide.value?.sections)
+		.map((section) => ({
+			heading: String(section?.heading || '').trim(),
+			text: String(section?.text || '').trim(),
+		}))
+		.filter((section) => section.heading && section.text),
+);
+
+const guides = computed(() => {
+	const source = guideListResponse.value?.data || guideListResponse.value;
+	return Array.isArray(source) ? source : [];
 });
 
-// SEO dinamico (dopo il caricamento)
-watchEffect(() => {
-	if (guide.value) {
-		useSeoMeta({
-			title: `${guide.value.title} | SpediamoFacile`,
-			ogTitle: `${guide.value.title} | SpediamoFacile`,
-			description: guide.value.meta_description,
-			ogDescription: guide.value.meta_description,
-		});
-	}
+const guideIndex = computed(() => guides.value.findIndex((item) => item.slug === slug.value));
+const prevGuide = computed(() => (guideIndex.value > 0 ? guides.value[guideIndex.value - 1] : null));
+const nextGuide = computed(() =>
+	guideIndex.value >= 0 && guideIndex.value < guides.value.length - 1 ? guides.value[guideIndex.value + 1] : null,
+);
+
+const guideMetaDescription = computed(() =>
+	String(guide.value?.meta_description || guide.value?.intro || 'Guida pratica SpediamoFacile.').trim(),
+);
+
+const readingPills = computed(() => {
+	const pills = ['Guida pratica', 'Lettura rapida'];
+	if (guideSections.value.length) pills.unshift(`${guideSections.value.length} blocchi utili`);
+	if (guide.value?.created_at) pills.push(formatDateIt(guide.value.created_at, '').replace(/\.$/, ''));
+	return pills.filter(Boolean);
 });
 
-// Parse sections (possono arrivare come JSON string o array)
-const parsedSections = computed(() => {
-	if (!guide.value?.sections) return [];
-	if (typeof guide.value.sections === 'string') {
-		try { return JSON.parse(guide.value.sections); } catch { return []; }
-	}
-	return guide.value.sections;
+const firstSections = computed(() => guideSections.value.slice(0, 2));
+const remainingSections = computed(() => guideSections.value.slice(2));
+
+useSeoMeta({
+	title: () => (guide.value?.title ? `${guide.value.title} | SpediamoFacile` : 'Guida | SpediamoFacile'),
+	ogTitle: () => (guide.value?.title ? `${guide.value.title} | SpediamoFacile` : 'Guida | SpediamoFacile'),
+	description: () => guideMetaDescription.value,
+	ogDescription: () => guideMetaDescription.value,
+});
+
+useHead(() => {
+	if (!guide.value) return {};
+
+	return {
+		script: [
+			{
+				key: 'guide-article-schema',
+				type: 'application/ld+json',
+				innerHTML: JSON.stringify({
+					'@context': 'https://schema.org',
+					'@type': 'Article',
+					headline: guide.value.title,
+					description: guideMetaDescription.value,
+					mainEntityOfPage: `https://spediamofacile.it/guide/${slug.value}`,
+					author: {
+						'@type': 'Organization',
+						name: 'SpediamoFacile',
+					},
+					publisher: {
+						'@type': 'Organization',
+						name: 'SpediamoFacile',
+						url: 'https://spediamofacile.it',
+					},
+					datePublished: guide.value.created_at || undefined,
+				}),
+			},
+		],
+	};
 });
 </script>
 
 <template>
-	<!-- Loading -->
-	<section v-if="loading" class="min-h-[400px] flex items-center justify-center">
-		<div class="w-[40px] h-[40px] border-3 border-[#E9EBEC] border-t-[#095866] rounded-full animate-spin"></div>
+	<section v-if="pending" class="flex min-h-[420px] items-center justify-center">
+		<div class="h-[40px] w-[40px] rounded-full border-3 border-[#E9EBEC] border-t-[#095866] animate-spin"></div>
 	</section>
 
-	<section v-else-if="guide">
-		<div class="my-container">
-			<!-- Back link -->
-			<div class="mt-[32px] mb-[24px]">
-				<NuxtLink to="/guide" class="inline-flex items-center gap-[8px] text-[0.9375rem] text-[#095866] font-medium hover:underline transition-colors">
-					<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 9H5"/><path d="M9 5l-4 4 4 4"/></svg>
+	<section v-else-if="guide" class="guide-detail-shell py-[28px] desktop:py-[56px]">
+		<div class="my-container space-y-[20px] desktop:space-y-[28px]">
+			<div class="mt-[8px]">
+				<NuxtLink
+					to="/guide"
+					class="inline-flex items-center gap-[8px] text-[0.875rem] font-medium text-[#095866] transition-colors hover:text-[#0B6D7D]">
+					<svg
+						xmlns="http://www.w3.org/2000/svg"
+						width="18"
+						height="18"
+						viewBox="0 0 18 18"
+						fill="none"
+						stroke="currentColor"
+						stroke-width="2"
+						stroke-linecap="round"
+						stroke-linejoin="round">
+						<path d="M13 9H5" />
+						<path d="M9 5l-4 4 4 4" />
+					</svg>
 					Torna alle guide
 				</NuxtLink>
 			</div>
 
-			<!-- Header banner -->
-			<div class="guide-detail__banner rounded-[12px] overflow-hidden mb-[40px] desktop:mb-[56px]">
-				<div class="h-[3px] bg-[#E44203]"></div>
-				<div class="px-[28px] py-[36px] desktop:px-[48px] desktop:py-[48px]">
-					<p class="text-[0.8125rem] desktop:text-[0.875rem] font-medium text-white/70 tracking-[1.8px] uppercase mb-[16px]">Guida</p>
-					<h1 class="text-[1.75rem] desktop:text-[2.5rem] desktop-xl:text-[3rem] font-medium tracking-[-1px] desktop:tracking-[-1.536px] text-white leading-[120%]">
+			<section class="guide-hero-card rounded-[28px] border border-[#E4EAEE] px-[20px] py-[22px] desktop:px-[32px] desktop:py-[34px]">
+				<div class="space-y-[12px]">
+					<p class="text-[0.75rem] font-semibold uppercase tracking-[0.14em] text-[#095866]">Guida</p>
+					<h1 class="max-w-[16ch] text-[2rem] font-bold tracking-[-0.04em] text-[#1F2937] desktop:text-[3rem]">
 						{{ guide.title }}
 					</h1>
+					<p class="max-w-[68ch] text-[0.95rem] leading-[1.68] text-[#5B6670] desktop:text-[1.0625rem]">
+						{{ guide.intro || guideMetaDescription }}
+					</p>
+					<div class="flex flex-wrap gap-[8px]">
+						<span
+							v-for="pill in readingPills"
+							:key="pill"
+							class="inline-flex items-center rounded-full bg-[#F0F6F7] px-[12px] py-[6px] text-[0.75rem] font-semibold text-[#095866]">
+							{{ pill }}
+						</span>
+					</div>
 				</div>
-			</div>
+			</section>
 
-			<!-- Intro -->
-			<p v-if="guide.intro" class="text-[1.0625rem] desktop:text-[1.1875rem] leading-[175%] tracking-[-0.252px] text-[#404040] font-medium mb-[40px] desktop:mb-[56px] max-w-[820px]">
-				{{ guide.intro }}
-			</p>
-
-			<!-- Content sections -->
-			<div class="mb-[60px] desktop:mb-[80px] max-w-[820px]">
-				<div v-for="(section, index) in parsedSections" :key="index" class="mb-[48px] desktop:mb-[56px]">
-					<h2 class="text-[1.375rem] desktop:text-[1.75rem] font-medium tracking-[-0.576px] text-[#222222] mb-[16px] desktop:mb-[20px] leading-[125%]">
-						{{ section.heading }}
-					</h2>
-					<p class="text-[0.9375rem] desktop:text-[1.0625rem] leading-[175%] tracking-[-0.252px] text-[#555555]">
+			<section v-if="firstSections.length" class="grid gap-[16px] desktop:grid-cols-2">
+				<article
+					v-for="section in firstSections"
+					:key="section.heading"
+					class="rounded-[24px] border border-[#E9EEF2] bg-white px-[18px] py-[18px] shadow-[0_12px_26px_rgba(15,23,42,0.04)] desktop:px-[22px] desktop:py-[22px]">
+					<h2 class="text-[1.125rem] font-semibold tracking-[-0.02em] text-[#1F2937]">{{ section.heading }}</h2>
+					<p class="mt-[10px] text-[0.875rem] leading-[1.7] text-[#5B6670] desktop:text-[0.9375rem]">
 						{{ section.text }}
 					</p>
-				</div>
-			</div>
+				</article>
+			</section>
 
-			<!-- Previous / Next navigation -->
-			<div v-if="prevGuide || nextGuide" class="border-t border-[#E9EBEC] pt-[32px] pb-[16px] mb-[32px]">
-				<div class="flex flex-col tablet:flex-row gap-[16px]" :class="prevGuide ? 'justify-between' : 'justify-end'">
+			<section
+				v-if="remainingSections.length"
+				class="rounded-[28px] border border-[#E9EEF2] bg-white px-[18px] py-[18px] shadow-[0_14px_30px_rgba(15,23,42,0.05)] desktop:px-[24px] desktop:py-[24px]">
+				<div class="sf-page-intro">
+					<p class="sf-section-kicker">Approfondimento</p>
+					<h2 class="text-[1.4rem] font-semibold tracking-[-0.03em] text-[#1F2937] desktop:text-[2rem]">
+						I dettagli utili per applicarla davvero
+					</h2>
+				</div>
+
+				<div class="mt-[18px] grid gap-[14px] desktop:grid-cols-2">
+					<article
+						v-for="section in remainingSections"
+						:key="section.heading"
+						class="rounded-[22px] border border-[#EDF2F5] bg-[#F8FBFC] px-[16px] py-[16px]">
+						<h3 class="text-[1rem] font-semibold text-[#1F2937]">{{ section.heading }}</h3>
+						<p class="mt-[10px] text-[0.875rem] leading-[1.65] text-[#5B6670]">
+							{{ section.text }}
+						</p>
+					</article>
+				</div>
+			</section>
+
+			<section
+				v-if="prevGuide || nextGuide"
+				class="rounded-[28px] border border-[#E9EEF2] bg-white px-[18px] py-[18px] shadow-[0_14px_30px_rgba(15,23,42,0.05)] desktop:px-[24px] desktop:py-[24px]">
+				<div class="sf-page-intro">
+					<p class="sf-section-kicker">Continua a leggere</p>
+					<h2 class="text-[1.35rem] font-semibold tracking-[-0.03em] text-[#1F2937] desktop:text-[1.8rem]">
+						Altre guide della stessa libreria
+					</h2>
+				</div>
+
+				<div class="mt-[18px] grid gap-[14px] desktop:grid-cols-2">
 					<NuxtLink
 						v-if="prevGuide"
 						:to="`/guide/${prevGuide.slug}`"
-						class="group flex items-center gap-[12px] p-[16px] desktop:p-[20px] rounded-[12px] border border-[#E9EBEC] hover:border-[#095866] hover:shadow-sm transition-all flex-1 max-w-[400px]">
-						<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="#095866" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="shrink-0"><path d="M14 10H6"/><path d="M10 6l-4 4 4 4"/></svg>
-						<div>
-							<p class="text-[0.75rem] text-[#737373] font-medium mb-[4px]">Guida precedente</p>
-							<p class="text-[0.875rem] desktop:text-[0.9375rem] text-[#222222] font-medium leading-[130%] group-hover:text-[#095866] transition-colors">{{ prevGuide.title }}</p>
-						</div>
+						class="group rounded-[22px] border border-[#EDF2F5] bg-[#F8FBFC] px-[16px] py-[16px] transition-colors hover:border-[#CFE0E6] hover:bg-white">
+						<p class="text-[0.75rem] font-semibold uppercase tracking-[0.08em] text-[#095866]">Guida precedente</p>
+						<h3 class="mt-[8px] text-[1rem] font-semibold text-[#1F2937] transition-colors group-hover:text-[#095866]">
+							{{ prevGuide.title }}
+						</h3>
 					</NuxtLink>
 					<NuxtLink
 						v-if="nextGuide"
 						:to="`/guide/${nextGuide.slug}`"
-						class="group flex items-center gap-[12px] p-[16px] desktop:p-[20px] rounded-[12px] border border-[#E9EBEC] hover:border-[#095866] hover:shadow-sm transition-all flex-1 max-w-[400px] tablet:text-right tablet:ml-auto">
-						<div class="flex-1">
-							<p class="text-[0.75rem] text-[#737373] font-medium mb-[4px]">Guida successiva</p>
-							<p class="text-[0.875rem] desktop:text-[0.9375rem] text-[#222222] font-medium leading-[130%] group-hover:text-[#095866] transition-colors">{{ nextGuide.title }}</p>
-						</div>
-						<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="#095866" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="shrink-0"><path d="M6 10h8"/><path d="M10 6l4 4-4 4"/></svg>
+						class="group rounded-[22px] border border-[#EDF2F5] bg-[#F8FBFC] px-[16px] py-[16px] transition-colors hover:border-[#CFE0E6] hover:bg-white">
+						<p class="text-[0.75rem] font-semibold uppercase tracking-[0.08em] text-[#095866]">Guida successiva</p>
+						<h3 class="mt-[8px] text-[1rem] font-semibold text-[#1F2937] transition-colors group-hover:text-[#095866]">
+							{{ nextGuide.title }}
+						</h3>
 					</NuxtLink>
 				</div>
-			</div>
+			</section>
 
-			<!-- CTA -->
-			<div class="border-t border-[#E9EBEC] pt-[40px] mb-[80px] desktop:mb-[120px]">
-				<p class="text-[1.25rem] font-medium text-[#222222] mb-[20px]">Hai bisogno di spedire?</p>
-				<NuxtLink to="/preventivo" class="inline-flex items-center gap-[8px] h-[52px] px-[32px] rounded-[35px] bg-[#E44203] text-white font-semibold tracking-[-0.384px] text-[1rem] hover:opacity-90 transition-opacity">
-					Calcola il preventivo
-					<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9h10"/><path d="M10 5l4 4-4 4"/></svg>
-				</NuxtLink>
-			</div>
+			<section
+				class="rounded-[26px] border border-[#DCE8EC] bg-[linear-gradient(135deg,#0f5f6d_0%,#0c4853_100%)] px-[20px] py-[20px] text-white shadow-[0_18px_40px_rgba(9,88,102,0.18)] desktop:px-[28px] desktop:py-[28px]">
+				<div class="flex flex-col gap-[16px] desktop:flex-row desktop:items-center desktop:justify-between">
+					<div class="max-w-[60ch]">
+						<p class="text-[0.75rem] font-semibold uppercase tracking-[0.14em] text-white/70">Passo successivo</p>
+						<h2 class="mt-[8px] text-[1.35rem] font-semibold tracking-[-0.03em] desktop:text-[1.8rem]">
+							Vuoi passare dalla teoria al preventivo?
+						</h2>
+						<p class="mt-[10px] text-[0.9rem] leading-[1.65] text-white/80">
+							Usa la guida come checklist pratica e poi apri il preventivo per trasformare i consigli in una spedizione reale.
+						</p>
+					</div>
+
+					<div class="flex flex-wrap gap-[10px]">
+						<NuxtLink
+							to="/preventivo"
+							class="inline-flex min-h-[44px] items-center justify-center rounded-full bg-white px-[18px] text-[0.875rem] font-semibold text-[#0B5360] transition-transform duration-200 hover:-translate-y-[1px]">
+							Calcola il preventivo
+						</NuxtLink>
+						<NuxtLink
+							to="/guide"
+							class="inline-flex min-h-[44px] items-center justify-center rounded-full border border-white/30 px-[18px] text-[0.875rem] font-semibold text-white transition-colors duration-200 hover:bg-white/10">
+							Tutte le guide
+						</NuxtLink>
+					</div>
+				</div>
+			</section>
 		</div>
 	</section>
 </template>
 
 <style scoped>
-.guide-detail__banner {
-	background: linear-gradient(135deg, #095866 0%, #0b6d7d 100%);
+.guide-hero-card {
+	background:
+		radial-gradient(circle at top right, rgba(228, 66, 3, 0.16), transparent 30%),
+		linear-gradient(180deg, rgba(9, 88, 102, 0.07) 0%, rgba(9, 88, 102, 0.02) 100%);
 }
 </style>

@@ -12,6 +12,7 @@
  * Dipendenze: useSanctumAuth, useSanctumClient, useAuthUiSnapshotPersistence, useAuthProviders.
  */
 import { useAuthUiSnapshotPersistence } from '~/composables/useAuthUiSnapshotPersistence';
+import { waitForPostAuthSync } from '~/utils/postAuthSync';
 
 export function useAutenticazione() {
 	const sanctum = useSanctumClient();
@@ -27,21 +28,13 @@ export function useAutenticazione() {
 	const finalizeAuth = async (responseUser) => {
 		const redirectTarget = sanitizeRedirect(String(route.query.redirect || '/account'));
 		persistSnapshotFromUser(responseUser?.user || responseUser);
-		try {
-			await refreshIdentity();
-		} catch {
-			// Dopo login riuscito non blocchiamo il redirect per un refresh identità in ritardo.
-		}
+		await waitForPostAuthSync(refreshIdentity);
 		try {
 			await refreshNuxtData();
 		} catch {
-			// Il redirect duro ricostruisce comunque la pagina con i cookie aggiornati.
+			// Se refreshNuxtData fallisce, la navigazione al route protetto riallinea comunque la UI.
 		}
-		if (import.meta.client) {
-			window.location.assign(redirectTarget);
-			return;
-		}
-		return navigateTo(redirectTarget);
+		return navigateTo(redirectTarget, { replace: true });
 	};
 
 	// ── Tab state ──

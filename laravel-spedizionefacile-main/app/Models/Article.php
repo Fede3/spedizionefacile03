@@ -77,6 +77,9 @@ class Article extends Model
     // Scope: filtra solo i servizi (type = "service")
     public function scopeServices($query) { return $query->where('type', 'service'); }
 
+    // Scope: filtra solo gli articoli blog (type = "blog")
+    public function scopeBlogs($query) { return $query->where('type', 'blog'); }
+
     // Scope: filtra solo gli articoli pubblicati
     public function scopePublished($query) { return $query->where('is_published', true); }
 }

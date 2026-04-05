@@ -1,0 +1,169 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e3]:
+    - link "Vai al contenuto" [ref=e4] [cursor=pointer]:
+      - /url: "#main-content"
+    - banner [ref=e5]:
+      - generic [ref=e9]:
+        - link "SF SpediamoFacile" [ref=e11] [cursor=pointer]:
+          - /url: /
+          - generic [ref=e13]: SF
+          - generic [ref=e14]: SpediamoFacile
+        - generic [ref=e15]:
+          - link "Carrello" [ref=e16] [cursor=pointer]:
+            - /url: /carrello
+            - img [ref=e17]
+            - generic [ref=e21]: Carrello
+          - button "Apri menu di navigazione" [ref=e22] [cursor=pointer]:
+            - img [ref=e23]
+    - main [ref=e24]:
+      - generic [ref=e28]:
+        - generic [ref=e30]:
+          - generic [ref=e31]:
+            - img [ref=e33]
+            - generic [ref=e38]:
+              - heading "Preventivo Rapido" [level=2] [ref=e39]
+              - paragraph [ref=e40]: Prezzo immediato · IVA e ritiro inclusi
+          - button "Azzera il modulo" [ref=e41] [cursor=pointer]:
+            - img [ref=e42]
+            - generic [ref=e45]: Azzera
+        - generic [ref=e46]:
+          - navigation "Progresso spedizione" [ref=e48]:
+            - generic [ref=e51]:
+              - generic [ref=e52]: Passo 1 di 5
+              - generic [ref=e53]:
+                - strong [ref=e54]: Misure
+                - generic [ref=e55]: 20%
+            - list [ref=e58]:
+              - listitem "Passo 1 di 5, Misure, attivo" [ref=e59]:
+                - generic [ref=e60]
+              - listitem "Passo 2 di 5, Servizi, futuro" [ref=e64]:
+                - generic [ref=e65]
+              - listitem "Passo 3 di 5, Indirizzi, futuro" [ref=e69]:
+                - generic [ref=e70]
+              - listitem "Passo 4 di 5, Conferma, futuro" [ref=e74]:
+                - generic [ref=e75]
+              - listitem "Passo 5 di 5, Pagamento, futuro" [ref=e79]:
+                - generic [ref=e80]
+          - generic [ref=e84]:
+            - region "Inserisci la tratta" [ref=e85]:
+              - heading "Inserisci la tratta" [level=3] [ref=e86]
+              - paragraph [ref=e87]: Inserisci comune o CAP di ritiro e consegna. Per l'Italia puoi usare uno dei due.
+              - generic [ref=e89]:
+                - generic [ref=e90]
+                - img [ref=e107]
+                - generic [ref=e109]
+            - region "Inserisci misure e peso" [ref=e125]:
+              - heading "Inserisci misure e peso" [level=3] [ref=e126]
+              - generic [ref=e127]:
+                - list [ref=e128]
+                - button "Aggiungi collo" [ref=e174] [cursor=pointer]
+          - button "Calcola il prezzo" [ref=e177] [cursor=pointer]:
+            - generic [ref=e178]: Calcola il prezzo
+            - img [ref=e181]
+          - generic [ref=e183]:
+            - generic [ref=e184]:
+              - img [ref=e185]
+              - text: Pagamento sicuro
+            - generic [ref=e188]:
+              - img [ref=e189]
+              - text: Corriere BRT
+            - generic [ref=e194]:
+              - img [ref=e195]
+              - text: Ritiro 24h
+    - contentinfo [ref=e198]:
+      - generic [ref=e200]:
+        - generic [ref=e201]:
+          - generic [ref=e202]:
+            - generic [ref=e204]: SF
+            - generic [ref=e205]: SpediamoFacile
+          - paragraph [ref=e206]: Confronta e prenota spedizioni nazionali e internazionali ai migliori prezzi. Ritiro a domicilio, tracking in tempo reale e supporto chiaro in ogni fase.
+          - generic [ref=e207]:
+            - generic [ref=e208]: Preventivo rapido
+            - generic [ref=e209]: Ritiro incluso
+            - generic [ref=e210]: Supporto dedicato
+          - generic [ref=e211]:
+            - link "Twitter" [ref=e212] [cursor=pointer]:
+              - /url: "#"
+              - img [ref=e213]
+            - link "Facebook" [ref=e215] [cursor=pointer]:
+              - /url: "#"
+              - img [ref=e216]
+            - link "Instagram" [ref=e218] [cursor=pointer]:
+              - /url: "#"
+              - img [ref=e219]
+            - link "LinkedIn" [ref=e221] [cursor=pointer]:
+              - /url: "#"
+              - img [ref=e222]
+          - link "info@spediamofacile.it" [ref=e224] [cursor=pointer]:
+            - /url: mailto:info@spediamofacile.it
+            - img [ref=e225]
+            - generic [ref=e228]: info@spediamofacile.it
+        - generic [ref=e229]:
+          - generic [ref=e230]:
+            - heading "Spedizioni" [level=3] [ref=e231]
+            - list [ref=e232]:
+              - listitem [ref=e233]:
+                - link "Preventivo Rapido" [ref=e234] [cursor=pointer]:
+                  - /url: /preventivo
+              - listitem [ref=e235]:
+                - link "I Nostri Servizi" [ref=e236] [cursor=pointer]:
+                  - /url: /servizi
+              - listitem [ref=e237]:
+                - link "Contrassegno" [ref=e238] [cursor=pointer]:
+                  - /url: /servizi/pagamento-alla-consegna
+              - listitem [ref=e239]:
+                - link "Traccia Spedizione" [ref=e240] [cursor=pointer]:
+                  - /url: /traccia-spedizione
+              - listitem [ref=e241]:
+                - link "Guide" [ref=e242] [cursor=pointer]:
+                  - /url: /guide
+          - generic [ref=e243]:
+            - heading "Azienda" [level=3] [ref=e244]
+            - list [ref=e245]:
+              - listitem [ref=e246]:
+                - link "Chi Siamo" [ref=e247] [cursor=pointer]:
+                  - /url: /chi-siamo
+              - listitem [ref=e248]:
+                - link "Contatti" [ref=e249] [cursor=pointer]:
+                  - /url: /contatti
+              - listitem [ref=e250]:
+                - link "Account Pro" [ref=e251] [cursor=pointer]:
+                  - /url: /account/account-pro
+              - listitem [ref=e252]:
+                - link "FAQ" [ref=e253] [cursor=pointer]:
+                  - /url: /faq
+          - generic [ref=e254]:
+            - heading "Supporto" [level=3] [ref=e255]
+            - list [ref=e256]:
+              - listitem [ref=e257]:
+                - link "Assistenza" [ref=e258] [cursor=pointer]:
+                  - /url: /account/assistenza
+              - listitem [ref=e259]:
+                - link "Reclami" [ref=e260] [cursor=pointer]:
+                  - /url: /reclami
+          - generic [ref=e261]:
+            - heading "Legale" [level=3] [ref=e262]
+            - list [ref=e263]:
+              - listitem [ref=e264]:
+                - link "Privacy Policy" [ref=e265] [cursor=pointer]:
+                  - /url: /privacy-policy
+              - listitem [ref=e266]:
+                - link "Cookie Policy" [ref=e267] [cursor=pointer]:
+                  - /url: /cookie-policy
+              - listitem [ref=e268]:
+                - link "Termini e Condizioni" [ref=e269] [cursor=pointer]:
+                  - /url: /termini-condizioni
+      - generic [ref=e271]:
+        - generic [ref=e272]:
+          - paragraph [ref=e273]: Pronto a spedire?
+          - paragraph [ref=e274]: Calcola il tuo preventivo in meno di 30 secondi e passa subito al ritiro.
+        - link "Preventivo gratuito" [ref=e275] [cursor=pointer]:
+          - /url: /preventivo
+      - generic [ref=e277]:
+        - paragraph [ref=e278]: © 2026 SpediamoFacile. Tutti i diritti riservati. P.IVA 00000000000
+        - generic [ref=e279]:
+          - generic [ref=e280]: Visa
+          - generic [ref=e281]: Mastercard
+          - generic [ref=e282]: Stripe
+  - region "Notifications (F8)":
+    - list

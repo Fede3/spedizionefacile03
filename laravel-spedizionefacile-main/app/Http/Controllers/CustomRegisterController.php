@@ -101,7 +101,7 @@ class CustomRegisterController extends Controller
                 SendVerificationEmailJob::dispatchSync($user);
             } catch (\Throwable $mailException) {
                 Log::warning('Email di verifica non inviata.', [
-                    'email' => $user->email,
+                    'user_id' => $user->id,
                     'error' => $mailException->getMessage(),
                 ]);
             }
@@ -118,7 +118,6 @@ class CustomRegisterController extends Controller
             DB::rollBack();
 
             Log::error('Errore registrazione.', [
-                'email' => $request->email,
                 'error' => $exception->getMessage(),
             ]);
 

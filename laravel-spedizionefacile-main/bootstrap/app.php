@@ -60,10 +60,8 @@ return Application::configure(basePath: dirname(__DIR__))
         // il server non e' esposto direttamente a Internet, ma solo attraverso Caddy).
         $middleware->trustProxies(at: '*');
 
-        // Esclude dal controllo CSRF:
-        // - stripe/webhook: Stripe non puo' inviare il token CSRF
-        // - api/*: le API usano Sanctum (cookie-based) ma il CSRF e' gestito
-        //   automaticamente dal frontend tramite il cookie XSRF-TOKEN
+        // Esclude dal controllo CSRF solo gli endpoint che non possono inviare
+        // il token XSRF-TOKEN del browser.
         $middleware->validateCsrfTokens(except: [
             'stripe/webhook',
             'auth/apple/callback',

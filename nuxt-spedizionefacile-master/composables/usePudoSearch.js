@@ -10,6 +10,8 @@
  *
  * Dipendenze: nessuna esterna (solo Vue reactivity + runtime config).
  */
+import { computed, ref, watch } from "vue";
+
 export function usePudoSearch(props, emit) {
 	const config = useRuntimeConfig();
 	const apiBase = config.public?.apiBase || '';

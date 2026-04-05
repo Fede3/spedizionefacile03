@@ -19,6 +19,10 @@
  */
 export const useSession = (options = {}) => {
 	const enabled = options?.enabled ?? true;
+	const server = options?.server ?? false;
+	const key = options?.key ?? "session";
+	const lazy = options?.lazy ?? false;
+	const dedupe = options?.dedupe ?? "defer";
 
 	if (import.meta.prerender) {
 		const session = ref(null);
@@ -42,12 +46,13 @@ export const useSession = (options = {}) => {
 		"/api/session",
 		{
 			method: "GET",
-			key: "session",
-			// La sessione del preventivo dipende dal browser corrente:
-			// durante SSR/prerender statico non esiste ancora una sessione utile.
-			server: false,
-			lazy: false,
-			dedupe: "defer",
+			key,
+			// Default client-only: nel funnel pubblico evitiamo fetch SSR inutili.
+			// Il middleware puo richiedere esplicitamente server:true quando deve
+			// risolvere un redirect prima dell'hydration.
+			server,
+			lazy,
+			dedupe,
 		},
 	);
 

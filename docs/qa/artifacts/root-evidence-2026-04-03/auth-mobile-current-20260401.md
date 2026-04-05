@@ -1,0 +1,28 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e3]:
+    - link "Vai al contenuto" [ref=e4] [cursor=pointer]:
+      - /url: "#main-content"
+    - banner [ref=e5]:
+      - generic [ref=e9]:
+        - link "SF Spediamo" [ref=e86] [cursor=pointer]:
+          - /url: /
+          - generic [ref=e13]: SF
+          - generic [ref=e14]: Spediamo
+        - generic [ref=e15]:
+          - link "Preventivo" [ref=e16] [cursor=pointer]:
+            - /url: /preventivo
+          - link [ref=e87] [cursor=pointer]:
+            - /url: /carrello
+          - button "Apri menu di navigazione" [ref=e23] [cursor=pointer]
+    - main [ref=e25]:
+      - generic [ref=e28]:
+        - generic [ref=e29]:
+          - img [ref=e31]
+          - paragraph [ref=e33]: Accesso rapido
+          - heading "Bentornato" [level=1] [ref=e34]
+          - paragraph [ref=e35]: Accedi per gestire le tue spedizioni.
+        - generic [ref=e36]:
+          - tablist [ref=e37]
+          - tabpanel "Accedi" [ref=e42]
+  - region "Notifications (F8)":
+    - list

@@ -8,7 +8,7 @@
 <body style="margin: 0; padding: 0; background-color: #f4f4f7; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
     @php
         $packageRows = $order->packages;
-        $totalPackages = $packageRows->sum(fn ($package) => max(1, (int) ($package->pivot->quantity ?? 1)));
+        $totalPackages = $packageRows->sum(fn ($package) => max(1, (int) ($package->pivot->quantity ?? $package->quantity ?? 1)));
     @endphp
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: #f4f4f7;">
         <tr>
@@ -79,8 +79,11 @@
                                     <td style="padding: 14px 16px;">
                                         <p style="margin: 0 0 4px; color: #333; font-size: 14px; font-weight: 600;">
                                             {{ $package->package_type ?? 'Pacco' }} #{{ $index + 1 }}
-                                            @if(($package->pivot->quantity ?? 1) > 1)
-                                                <span style="color: #666; font-weight: 500;">&times; {{ (int) $package->pivot->quantity }}</span>
+                                            @php
+                                                $packageQuantity = max(1, (int) ($package->pivot->quantity ?? $package->quantity ?? 1));
+                                            @endphp
+                                            @if($packageQuantity > 1)
+                                                <span style="color: #666; font-weight: 500;">&times; {{ $packageQuantity }}</span>
                                             @endif
                                         </p>
                                         <p style="margin: 0; color: #666; font-size: 13px; line-height: 1.5;">
@@ -178,8 +181,11 @@
                             <p style="margin: 0 0 4px; color: #999; font-size: 12px; text-align: center;">
                                 SpediamoFacile &mdash; Spedizioni semplici, veloci e convenienti.
                             </p>
-                            <p style="margin: 0; color: #bbb; font-size: 11px; text-align: center;">
+                            <p style="margin: 0 0 4px; color: #bbb; font-size: 11px; text-align: center;">
                                 Per assistenza: <a href="mailto:assistenza@spediamofacile.it" style="color: #095866; text-decoration: none;">assistenza@spediamofacile.it</a>
+                            </p>
+                            <p style="margin: 0; color: #bbb; font-size: 11px; text-align: center;">
+                                <a href="{{ config('app.frontend_url') }}/account/notifiche?unsubscribe=1" style="color: #999; text-decoration: underline;">Gestisci preferenze email</a>
                             </p>
                         </td>
                     </tr>

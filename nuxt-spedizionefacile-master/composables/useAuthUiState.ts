@@ -12,13 +12,13 @@ export const useAuthUiState = () => {
 	const { authCookie, clearSnapshot, initialSnapshot, persistSnapshotFromUser } =
 		useAuthUiSnapshotPersistence()
 	const route = useRoute()
-	const liveAuthPrefixes = ['/account']
+	const liveAuthPrefixes = ['/account', '/la-tua-spedizione', '/riepilogo', '/checkout', '/carrello']
 	const guestOnlyPrefixes = ['/autenticazione', '/login', '/registrazione', '/recupera-password', '/aggiorna-password']
 	const hasAuthenticatedSnapshot = computed(() => Boolean(authCookie.value?.authenticated))
 	const shouldAttachLiveAuth = computed(() => {
 		if (!import.meta.client) return false
 		if (guestOnlyPrefixes.some((prefix) => route.path.startsWith(prefix))) return false
-		return hasAuthenticatedSnapshot.value || liveAuthPrefixes.some((prefix) => route.path.startsWith(prefix))
+		return liveAuthPrefixes.some((prefix) => route.path.startsWith(prefix))
 	})
 	const auth = shallowRef<any>(null)
 	const liveAuthInitPending = ref(false)

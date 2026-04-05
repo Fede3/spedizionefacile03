@@ -123,9 +123,22 @@ class PriceEngineService
         return $this->calculateBandPriceCents($type, $value) / 100;
     }
 
+    /** Maximum accepted weight in kg. Anything above is rejected. */
+    private const MAX_WEIGHT_KG = 1000.0;
+
+    /** Maximum accepted volume in m3. Anything above is rejected. */
+    private const MAX_VOLUME_M3 = 100.0;
+
     public function calculateBandPriceCents(string $type, float $value): int
     {
         $type = $type === 'volume' ? 'volume' : 'weight';
+
+        // Validate value range
+        $maxAllowed = $type === 'weight' ? self::MAX_WEIGHT_KG : self::MAX_VOLUME_M3;
+        if ($value <= 0 || $value > $maxAllowed) {
+            return 0;
+        }
+
         $config = $this->getPricingConfig();
         $bands = $config[$type] ?? [];
 
@@ -283,7 +296,10 @@ class PriceEngineService
 
     public static function effectivePriceCents(array $band): int
     {
-        if (isset($band['discount_price']) && (int) $band['discount_price'] >= 0) {
+        // discount_price must be strictly > 0 to be treated as a real discount.
+        // A value of 0 means "no discount configured" — fall back to base_price.
+        // This prevents a misconfigured discount_price=0 from making shipments free.
+        if (isset($band['discount_price']) && $band['discount_price'] !== null && (int) $band['discount_price'] > 0) {
             return (int) $band['discount_price'];
         }
         return (int) ($band['base_price'] ?? 0);

@@ -57,7 +57,7 @@ const {
               </p>
             </div>
             <button type="button" @click="openCheckoutWithAuthGate"
-              class="btn-primary inline-flex items-center justify-center gap-[8px] min-h-[48px] text-[0.9375rem]">
+              class="btn-cta inline-flex items-center justify-center gap-[8px] min-h-[48px] text-[0.9375rem]">
               Procedi al checkout
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
             </button>
@@ -154,7 +154,7 @@ const {
           Non hai ancora aggiunto spedizioni al carrello. Configura la tua prima spedizione per iniziare.
         </p>
         <NuxtLink to="/preventivo"
-          class="btn-primary inline-flex items-center gap-[6px] min-h-[48px] text-[0.9375rem]">
+          class="btn-cta inline-flex items-center gap-[6px] min-h-[48px] text-[0.9375rem]">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
           Crea nuova spedizione
         </NuxtLink>

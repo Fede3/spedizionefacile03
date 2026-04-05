@@ -34,14 +34,27 @@ class RefundController extends Controller
         }
 
         $request->validate(['reason' => 'nullable|string|max:500']);
-        $eligibility = $this->refundService->calculateEligibility($order);
 
-        if (!$eligibility['eligible']) {
-            return response()->json(['error' => $eligibility['reason']], 422);
+        // Pre-check fuori dalla transazione (solo per risposta rapida, NON usato per la decisione finale)
+        $preCheck = $this->refundService->calculateEligibility($order);
+        if (!$preCheck['eligible']) {
+            return response()->json(['error' => $preCheck['reason']], 422);
         }
 
         try {
-            $result = DB::transaction(function () use ($order, $request, $eligibility) {
+            $result = DB::transaction(function () use ($order, $request) {
+                // Ri-carica l'ordine con lockForUpdate per serializzare richieste concorrenti.
+                // Senza questo lock, due richieste simultanee possono entrambe passare il pre-check
+                // e generare un doppio rimborso.
+                $order = Order::query()->lockForUpdate()->findOrFail($order->id);
+
+                // Ri-calcola l'eligibilita' con i dati freschi (dentro la transazione, dopo il lock).
+                $eligibility = $this->refundService->calculateEligibility($order);
+
+                if (!$eligibility['eligible']) {
+                    throw new \RuntimeException($eligibility['reason']);
+                }
+
                 $brtCancelled = $this->cancelBrtShipment($order);
 
                 $refundAmountCents = $eligibility['refund_amount_cents'];
@@ -92,6 +105,9 @@ class RefundController extends Controller
                 'refund_amount' => $refundEur, 'commission' => $commissionEur,
                 'refund_method' => $result['refund_method'], 'brt_cancelled' => $result['brt_cancelled'],
             ]);
+        } catch (\RuntimeException $e) {
+            // Errore di business (es. ordine non piu' cancellabile dopo il lock — race condition gestita)
+            return response()->json(['error' => $e->getMessage()], 422);
         } catch (\Exception $e) {
             Log::error('Order cancellation failed', ['order_id' => $order->id, 'error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
             return response()->json(['error' => 'Errore durante l\'annullamento dell\'ordine. Riprova o contatta l\'assistenza.'], 500);

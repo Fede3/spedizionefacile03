@@ -61,7 +61,7 @@ class ShipmentDocumentsFlowTest extends TestCase
 
         $order->refresh();
 
-        $this->assertSame(Order::IN_TRANSIT, $order->status);
+        $this->assertSame(Order::LABEL_GENERATED, $order->status);
         $this->assertSame('completed', $order->bordero_status);
         $this->assertSame('sent', $order->documents_status);
         $this->assertNotEmpty($order->brt_label_base64);
@@ -95,7 +95,7 @@ class ShipmentDocumentsFlowTest extends TestCase
 
         $order->refresh();
 
-        $this->assertSame(Order::IN_TRANSIT, $order->status);
+        $this->assertSame(Order::LABEL_GENERATED, $order->status);
         $this->assertSame('skipped', $order->documents_status);
         $this->assertStringContainsString('borderò non disponibile', (string) $order->execution_error);
 

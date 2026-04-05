@@ -9,10 +9,10 @@
 	gap: 7px;
 	margin: 2px 0 10px;
 	padding: 9px 12px 11px;
-	border-radius: 16px;
-	border: 1px solid #e5edf2;
+	border-radius: 20px;
+	border: 1px solid rgba(9, 88, 102, 0.08);
 	background: linear-gradient(180deg, #ffffff 0%, #f8fbfc 100%);
-	box-shadow: 0 10px 24px rgba(9, 88, 102, 0.05);
+	box-shadow: 0 12px 26px rgba(20, 37, 48, 0.06);
 }
 
 .steps-mobile-meta {
@@ -60,9 +60,9 @@
 	min-width: 52px;
 	height: 28px;
 	padding: 0 9px;
-	border-radius: 999px;
-	background: #edf6f8;
-	border: 1px solid #c7dde2;
+	border-radius: 14px;
+	background: rgba(9, 88, 102, 0.08);
+	border: 1px solid rgba(9, 88, 102, 0.14);
 	font-size: 0.75rem;
 	font-weight: 800;
 	line-height: 1;
@@ -72,7 +72,7 @@
 
 .steps-mobile-track {
 	width: 100%;
-	height: 6px;
+	height: 5px;
 	border-radius: 999px;
 	background: #e8eef3;
 	overflow: hidden;
@@ -82,8 +82,8 @@
 	display: block;
 	height: 100%;
 	border-radius: inherit;
-	background: linear-gradient(90deg, #e45a1c 0%, #ef8250 100%);
-	box-shadow: 0 4px 10px rgba(228, 90, 28, 0.14);
+	background: linear-gradient(90deg, #e44203 0%, #ff6a33 100%);
+	box-shadow: 0 4px 10px rgba(228, 66, 3, 0.14);
 	transition: width var(--sf-motion-base) var(--sf-ease-soft);
 }
 
@@ -94,7 +94,7 @@
 .steps-grid {
 	display: grid;
 	grid-template-columns: repeat(5, minmax(0, 1fr));
-	gap: 4px;
+	gap: 6px;
 	margin: 8px 0 10px;
 	padding: 0;
 	min-width: 0;
@@ -105,10 +105,10 @@
 	align-items: center;
 	justify-content: center;
 	min-width: 0;
-	min-height: 42px;
-	padding: 0 3px;
+	min-height: 44px;
+	padding: 0 4px;
 	text-align: center;
-	border-radius: 12px;
+	border-radius: 14px;
 }
 
 .steps-pill-content {
@@ -128,7 +128,7 @@
 	width: 20px;
 	height: 20px;
 	border-radius: 999px;
-	background: #e3f0f3;
+	background: rgba(9, 88, 102, 0.08);
 	color: #0c5662;
 	font-size: 10px;
 	font-weight: 800;
@@ -142,7 +142,7 @@
 }
 
 .steps-pill-status.is-completed {
-	background: #d4e8ed;
+	background: rgba(9, 88, 102, 0.12);
 	color: #0c5662;
 }
 
@@ -167,14 +167,14 @@
 }
 
 .steps-pill-completed {
-	background: #edf6f8;
-	border-color: #bdd5dc;
+	background: #eef7f9;
+	border-color: rgba(9, 88, 102, 0.16);
 	font-weight: 700;
 }
 
 .steps-pill-completed:hover {
 	background: #e5f1f4;
-	border-color: #98bdc7;
+	border-color: rgba(9, 88, 102, 0.24);
 }
 
 .steps-pill-upcoming {
@@ -184,8 +184,8 @@
 }
 
 .steps-pill-active {
-	background: #e45a1c;
-	box-shadow: 0 10px 18px rgba(228, 90, 28, 0.22);
+	background: #E44203;
+	box-shadow: 0 10px 18px rgba(228, 66, 3, 0.22);
 }
 
 @media (min-width: 64rem) {
@@ -200,7 +200,7 @@
 	.steps-grid {
 		display: grid;
 		grid-template-columns: repeat(5, minmax(0, 1fr));
-		gap: 10px;
+		gap: 8px;
 		margin: 20px 0;
 		min-width: 0;
 	}
@@ -209,7 +209,7 @@
 		flex: 0 1 auto;
 		min-height: 42px;
 		padding-inline: 12px;
-		border-radius: 999px;
+		border-radius: 16px;
 	}
 
 	.steps-pill-label {

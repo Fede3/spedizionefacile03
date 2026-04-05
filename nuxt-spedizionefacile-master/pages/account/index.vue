@@ -19,9 +19,16 @@
 import { useAuthUiSnapshotPersistence } from '~/composables/useAuthUiSnapshotPersistence';
 import { accountCardIcons, createAccountSections } from '~/utils/accountNavigation';
 
+useSeoMeta({
+	title: 'Il tuo account | SpediamoFacile',
+	ogTitle: 'Il tuo account | SpediamoFacile',
+	description: 'Gestisci spedizioni, indirizzi, pagamenti e profilo dalla tua area personale SpediamoFacile.',
+	ogDescription: 'Area personale SpediamoFacile per monitorare spedizioni, pagamenti e profilo.',
+});
+
 /* Richiede che l'utente sia autenticato per accedere a questa pagina */
 definePageMeta({
-	middleware: ["app-auth"],
+	middleware: ['app-auth'],
 });
 
 /* Recupera i dati dell'utente loggato e la funzione per fare logout */
@@ -31,37 +38,106 @@ const { uiSnapshot } = useAuthUiState();
 
 // Per la shell account usiamo lo snapshot auth come sorgente UI primaria:
 // e' gia' allineato tra SSR e client e riduce i mismatch in hydration.
-const effectiveRole = computed(() => uiSnapshot.value.role || user.value?.role || "Cliente");
-const displayName = computed(() => uiSnapshot.value.name || "Cliente");
-const isAdmin = computed(() => effectiveRole.value === "Admin");
-const isPro = computed(() => effectiveRole.value === "Partner Pro");
-const cardIcons = accountCardIcons;
-const sections = computed(() => createAccountSections({
-	isAdmin: isAdmin.value,
-	isPro: isPro.value,
-}));
+const effectiveRole = computed(() => uiSnapshot.value.role || user.value?.role || 'Cliente');
+const displayName = computed(() => {
+	const snapshotFullName = [uiSnapshot.value.name, uiSnapshot.value.surname].filter(Boolean).join(' ').trim();
+	if (snapshotFullName) return snapshotFullName;
 
-const resolveAccountPageUrl = (url = "") => {
-	if (!url) return "/account";
-	if (url.startsWith("/account")) return url;
-	return `/account${url.startsWith("/") ? url : `/${url}`}`;
+	const profile = user.value || {};
+	const fullName = [profile.name, profile.surname].filter(Boolean).join(' ').trim();
+	if (fullName) return fullName;
+	if (profile.name) return profile.name;
+	if (profile.email) return String(profile.email).split('@')[0];
+	return 'Cliente';
+});
+const accountGreeting = computed(() => `Ciao, ${displayName.value}`);
+const isAdmin = computed(() => effectiveRole.value === 'Admin');
+const isPro = computed(() => effectiveRole.value === 'Partner Pro');
+const cardIcons = accountCardIcons;
+const sectionDescriptions = {
+	Spedizioni: 'Monitora ordini, tracking e modelli gia pronti.',
+	Pagamenti: 'Carte salvate, saldo disponibile e movimenti.',
+	'Partner Pro': 'Referral, bonus e strumenti partner in un solo punto.',
+	Profilo: 'Dati account, indirizzi e preferenze di contatto.',
+	Amministrazione: 'Ingresso unico alla console operativa.',
 };
 
-const openAccountSection = async (url) => {
-	await navigateTo(resolveAccountPageUrl(url));
+const formatMemberSince = (value) => {
+	if (!value) return '';
+	const parsed = new Date(value);
+	if (Number.isNaN(parsed.getTime())) return '';
+	return new Intl.DateTimeFormat('it-IT', {
+		day: '2-digit',
+		month: 'short',
+		year: 'numeric',
+	}).format(parsed);
+};
+
+const memberSince = computed(() => formatMemberSince(uiSnapshot.value.createdAt || user.value?.created_at));
+const userEmail = computed(() => uiSnapshot.value.email || user.value?.email || 'Email account non disponibile');
+const userTypeLabel = computed(() => ((uiSnapshot.value.userType || user.value?.user_type) === 'commerciante' ? 'Azienda' : 'Privato'));
+const accountHeaderDescription = computed(() => {
+	if (memberSince.value) {
+		return `Membro dal ${memberSince.value}`;
+	}
+	return userEmail.value;
+});
+const accountInitials = computed(() => {
+	const source =
+		[uiSnapshot.value.name || displayName.value, uiSnapshot.value.surname || user.value?.surname].filter(Boolean).join(' ').trim() ||
+		displayName.value;
+	return source
+		.split(' ')
+		.filter(Boolean)
+		.map((part) => part[0])
+		.join('')
+		.slice(0, 2)
+		.toUpperCase();
+});
+
+const sections = computed(() =>
+	createAccountSections({
+		isAdmin: isAdmin.value,
+		isPro: isPro.value,
+	}),
+);
+
+const resolveAccountPageUrl = (url = '') => {
+	if (!url) return '/account';
+	if (url.startsWith('/account')) return url;
+	return `/account${url.startsWith('/') ? url : `/${url}`}`;
 };
 
 /* Filtra le sezioni: mostra solo quelle che hanno almeno una pagina visibile.
    Le sezioni admin appaiono dopo le sezioni utente. */
 const visibleSections = computed(() => {
 	return sections.value
-		.map(section => ({
+		.map((section) => ({
 			...section,
-			pages: section.pages.filter(page => page.visible),
+			pages: section.pages.filter((page) => page.visible),
 		}))
-		.filter(section => section.pages.length > 0);
-});
+		.map((section) => {
+			if (section.title !== 'Amministrazione' || !section.pages.length) {
+				return section;
+			}
 
+			const adminEntry = section.pages.find((page) => page.url === '/amministrazione') || section.pages[0];
+
+			return {
+				...section,
+				pages: adminEntry
+					? [
+							{
+								...adminEntry,
+								title: 'Console admin',
+								description: 'Ordini, tracking, utenti, code.',
+							},
+						]
+					: [],
+			};
+		})
+		.filter((section) => section.pages.length > 0);
+});
 /* Indica se il logout e' in corso (per mostrare "Uscita..." sul bottone) */
 const isLoggingOut = ref(false);
 
@@ -78,82 +154,71 @@ const handleLogout = async () => {
 </script>
 
 <template>
-	<section class="bg-[#f6f9fb] py-[8px] tablet:py-[10px] desktop:py-[12px]">
+	<section class="sf-account-shell py-[10px] tablet:py-[12px] desktop:py-[16px]">
 		<div class="my-container">
-			<AccountPageHeader
-				:title="displayName"
-				description="">
-				<template #actions>
-					<button
-						@click="handleLogout"
-						:disabled="isLoggingOut"
-						class="sf-action-pill sf-action-pill--neutral">
-						{{ isLoggingOut ? "Uscita..." : "Esci" }}
-					</button>
+			<AccountShellHero
+				:crumbs="[]"
+				:title="accountGreeting"
+				:description="accountHeaderDescription"
+				compact
+				action-band-title="Nuova spedizione"
+				action-band-description="Riparti dal preventivo con i dati del tuo account gia disponibili."
+				action-label="Nuova spedizione"
+				action-to="/preventivo"
+				:logout-loading="isLoggingOut"
+				@logout="handleLogout">
+				<template #identity>
+					<div class="sf-account-identity-avatar">{{ accountInitials }}</div>
 				</template>
-			</AccountPageHeader>
-
-			<div class="mt-[6px] flex flex-wrap gap-[6px]">
-				<NuxtLink
-					to="/preventivo"
-					class="sf-action-pill sf-action-pill--soft inline-flex min-h-[38px] w-auto flex-none items-center gap-[7px] px-[14px] text-[0.8125rem]">
-					<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[16px] h-[16px]" fill="currentColor"><path d="M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z"/></svg>
-					<span>Nuova spedizione</span>
-				</NuxtLink>
-				<NuxtLink
-					to="/carrello"
-					class="sf-action-pill sf-action-pill--neutral inline-flex min-h-[38px] w-auto flex-none items-center gap-[7px] px-[14px] text-[0.8125rem]">
-					<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[16px] h-[16px]" fill="currentColor"><path d="M17,18A2,2 0 0,1 19,20A2,2 0 0,1 17,22C15.89,22 15,21.1 15,20C15,18.89 15.89,18 17,18M1,2H4.27L5.21,4H20A1,1 0 0,1 21,5C21,5.17 20.95,5.34 20.88,5.5L17.3,11.97C16.96,12.58 16.3,13 15.55,13H8.1L7.2,14.63L7.17,14.75A0.25,0.25 0 0,0 7.42,15H19V17H7C5.89,17 5,16.1 5,15C5,14.65 5.09,14.32 5.24,14.04L6.6,11.59L3,4H1V2M7,18A2,2 0 0,1 9,20A2,2 0 0,1 7,22C5.89,22 5,21.1 5,20C5,18.89 5.89,18 7,18M16,11L18.78,6H6.14L8.5,11H16Z"/></svg>
-					<span>Vai al carrello</span>
-				</NuxtLink>
-				<NuxtLink
-					to="/traccia-spedizione"
-					class="sf-action-pill sf-action-pill--neutral inline-flex min-h-[38px] w-auto flex-none items-center gap-[7px] px-[14px] text-[0.8125rem]">
-					<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[16px] h-[16px]" fill="currentColor"><path d="M18,15A3,3 0 0,1 21,18A3,3 0 0,1 18,21C16.69,21 15.58,20.17 15.17,19H14V17H15.17C15.58,15.83 16.69,15 18,15M18,17A1,1 0 0,0 17,18A1,1 0 0,0 18,19A1,1 0 0,0 19,18A1,1 0 0,0 18,17M6,15A3,3 0 0,1 9,18A3,3 0 0,1 6,21A3,3 0 0,1 3,18C3,16.69 3.83,15.58 5,15.17V7.83C3.83,7.42 3,6.31 3,5A3,3 0 0,1 6,2A3,3 0 0,1 9,5C9,6.31 8.17,7.42 7,7.83V15.17C8.17,15.58 9,16.69 9,18M6,17A1,1 0 0,0 5,18A1,1 0 0,0 6,19A1,1 0 0,0 7,18A1,1 0 0,0 6,17M6,4A1,1 0 0,0 5,5A1,1 0 0,0 6,6A1,1 0 0,0 7,5A1,1 0 0,0 6,4M12,11V13H9.09C9.27,12.37 9.55,11.78 9.91,11.22L12,11M18,9A3,3 0 0,1 21,12H19C19,11.45 18.55,11 18,11A1,1 0 0,0 17,12V13H15V12A3,3 0 0,1 18,9Z"/></svg>
-					<span>Traccia spedizione</span>
-				</NuxtLink>
-			</div>
+				<template #meta>
+					<span class="sf-account-meta-pill sf-account-meta-pill--muted">{{ userTypeLabel }}</span>
+					<span v-if="effectiveRole !== 'Cliente'" class="sf-account-meta-pill">{{ effectiveRole }}</span>
+				</template>
+			</AccountShellHero>
 		</div>
 	</section>
 
-	<section class="py-[20px] desktop:py-[32px]">
+	<section class="sf-account-shell py-[4px] desktop:py-[8px]">
 		<div class="my-container">
 			<div
 				v-for="(section, sectionIndex) in visibleSections"
 				:key="sectionIndex"
-				:class="[
-					'mb-[24px] last:mb-0',
-					sectionIndex > 0 ? 'pt-[16px] desktop:pt-[18px]' : '',
-				]">
-				<div v-if="sectionIndex > 0" class="h-[2px] rounded-full mb-[14px] desktop:mb-[18px] bg-[#d7e6e9]"></div>
-				<div class="mb-[10px] desktop:mb-[12px] text-left">
-					<div class="flex flex-wrap items-center gap-[8px]">
-						<h2 class="text-[1rem] desktop:text-[1.05rem] font-bold tracking-tight text-[#252B42]">
-							{{ section.title }}
-						</h2>
+				class="sf-account-section"
+				:style="{ '--sf-section-accent': section.pages[0]?.iconColor || '#095866' }">
+				<div class="sf-account-section__header">
+					<div class="sf-account-section__title-wrap">
+						<h2 class="sf-account-section__title">{{ section.title }}</h2>
+						<p v-if="sectionDescriptions[section.title]" class="sf-account-section__description">
+							{{ sectionDescriptions[section.title] }}
+						</p>
 					</div>
+					<span v-if="section.pages.length > 1" class="sf-account-section__badge">{{ section.pages.length }}</span>
 				</div>
 
-				<ul class="grid grid-cols-1 account-pages:grid-cols-2 desktop:grid-cols-3 gap-[12px] desktop:gap-[16px]">
-					<li
-						v-for="(page, pageIndex) in section.pages"
-						:key="pageIndex"
-						class="w-full">
-						<NuxtLink
-							:to="resolveAccountPageUrl(page.url)"
-							@click.prevent="openAccountSection(page.url)"
-							class="account-card flex h-full min-h-[104px] flex-col items-start text-left rounded-[12px] p-[16px] desktop:min-h-[112px] desktop:p-[18px] transition-[box-shadow,background-color,border-color] duration-200 group border cursor-pointer bg-white border-[#E9EBEC] shadow-[0_1px_3px_rgba(0,0,0,0.08)] hover:border-[#D7E1E4] hover:shadow-[0_10px_24px_rgba(37,43,66,0.1)]">
-								<div class="mb-[12px] flex items-start gap-[12px]">
-									<div :class="['flex h-[44px] w-[44px] shrink-0 items-center justify-center rounded-[12px]', page.iconBg]">
-										<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="h-[22px] w-[22px]" :fill="page.iconColor" v-html="cardIcons[page.iconKey]"></svg>
-									</div>
-									<h3 class="pt-[2px] text-[0.9rem] desktop:text-[0.98rem] font-bold leading-[1.2] tracking-[0.1px] transition-colors text-[#252B42] group-hover:text-[#095866]">
-										{{ page.title }}
-									</h3>
-								</div>
-							<span class="mt-auto inline-flex items-center text-[0.75rem] font-semibold text-[#095866]">
-								Apri
-							</span>
+				<ul class="sf-account-nav-grid">
+					<li v-for="(page, pageIndex) in section.pages" :key="pageIndex" class="w-full">
+						<NuxtLink :to="resolveAccountPageUrl(page.url)" class="sf-account-nav-tile group">
+							<div
+								class="sf-account-nav-tile__icon"
+								:style="{
+									'--sf-icon-bg': page.iconBg || '#edf6f8',
+									'--sf-icon-color': page.iconColor || '#095866',
+									'--sf-icon-border': page.iconBorder || 'rgba(9, 88, 102, 0.14)',
+								}">
+								<svg
+									xmlns="http://www.w3.org/2000/svg"
+									viewBox="0 0 24 24"
+									class="h-[22px] w-[22px]"
+									:fill="page.iconColor"
+									v-html="cardIcons[page.iconKey]"></svg>
+							</div>
+							<div class="sf-account-nav-tile__body">
+								<h3 class="sf-account-nav-tile__title group-hover:text-[#095866]">
+									{{ page.title }}
+								</h3>
+								<p v-if="page.description" class="sf-account-nav-tile__meta">{{ page.description }}</p>
+							</div>
+							<span class="sf-account-nav-tile__link" aria-hidden="true">→</span>
 						</NuxtLink>
 					</li>
 				</ul>

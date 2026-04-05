@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Cart\MyMoney;
 use App\Models\Service;
 use App\Models\Package;
+use App\Services\PriceEngineService;
 
 class CartService
 {
@@ -25,6 +26,88 @@ class CartService
         $unitPrice = $newUnitPriceCents ?? self::unitPrice($existingPriceCents, $existingQty);
         $totalQty = $existingQty + $addedQty;
         return ['quantity' => $totalQty, 'single_price' => $unitPrice * $totalQty];
+    }
+
+    public static function pricePackageData(
+        array $packageData,
+        array $originAddress = [],
+        array $destinationAddress = [],
+        array $fallback = [],
+    ): array {
+        $payload = $fallback;
+        foreach ($packageData as $key => $value) {
+            if ($value !== null) {
+                $payload[$key] = $value;
+            }
+        }
+        $quantity = min(999, max(1, (int) ($payload['quantity'] ?? 1)));
+
+        $weight = (float) preg_replace('/[^0-9.]/', '', (string) ($payload['weight'] ?? '0'));
+        $firstSize = (float) preg_replace('/[^0-9.]/', '', (string) ($payload['first_size'] ?? '0'));
+        $secondSize = (float) preg_replace('/[^0-9.]/', '', (string) ($payload['second_size'] ?? '0'));
+        $thirdSize = (float) preg_replace('/[^0-9.]/', '', (string) ($payload['third_size'] ?? '0'));
+
+        $priceEngine = app(PriceEngineService::class);
+        $weightPrice = $priceEngine->calculateBandPrice('weight', $weight);
+        $volumePrice = $priceEngine->calculateBandPrice('volume', ($firstSize / 100) * ($secondSize / 100) * ($thirdSize / 100));
+
+        $capSupplementCents = $priceEngine->calculateCapSupplementCents(
+            $originAddress['postal_code'] ?? null,
+            $destinationAddress['postal_code'] ?? null,
+        );
+
+        $weightPriceCents = (int) round($weightPrice * 100);
+        $volumePriceCents = (int) round($volumePrice * 100);
+        $unitPriceCents = max($weightPriceCents, $volumePriceCents) + $capSupplementCents;
+
+        return array_merge($payload, [
+            'quantity' => $quantity,
+            'weight_price' => $weightPrice,
+            'volume_price' => $volumePrice,
+            'single_price' => $unitPriceCents * $quantity,
+            'unit_price_cents' => $unitPriceCents,
+        ]);
+    }
+
+    public static function pricePackageModel(Package $package, ?int $quantity = null): array
+    {
+        $origin = $package->originAddress?->toArray() ?? [];
+        $destination = $package->destinationAddress?->toArray() ?? [];
+
+        return self::pricePackageData([
+            'package_type' => $package->package_type,
+            'quantity' => $quantity ?? (int) $package->quantity,
+            'weight' => $package->weight,
+            'first_size' => $package->first_size,
+            'second_size' => $package->second_size,
+            'third_size' => $package->third_size,
+        ], $origin, $destination);
+    }
+
+    public static function normalizePackagePricing($packages): int
+    {
+        $updated = 0;
+
+        foreach ($packages as $package) {
+            $priced = self::pricePackageModel($package);
+
+            if (
+                (int) $package->quantity !== (int) $priced['quantity']
+                || (float) $package->weight_price !== (float) $priced['weight_price']
+                || (float) $package->volume_price !== (float) $priced['volume_price']
+                || (int) $package->single_price !== (int) $priced['single_price']
+            ) {
+                $package->update([
+                    'quantity' => $priced['quantity'],
+                    'weight_price' => $priced['weight_price'],
+                    'volume_price' => $priced['volume_price'],
+                    'single_price' => $priced['single_price'],
+                ]);
+                $updated++;
+            }
+        }
+
+        return $updated;
     }
 
     // --- Duplicate detection ---
@@ -194,7 +277,45 @@ class CartService
         if (array_key_exists('sms_email_notification', $servicesData)) {
             $servicesData['service_data']['sms_email_notification'] = (bool) $servicesData['sms_email_notification'];
         }
+
+        $pickupRequest = $servicesData['service_data']['pickup_request'] ?? [];
+        if (! is_array($pickupRequest)) {
+            $pickupRequest = [];
+        }
+
+        $pickupDate = trim((string) ($servicesData['date'] ?: ($pickupRequest['date'] ?? '')));
+        $pickupTime = trim((string) ($servicesData['time'] ?: ($pickupRequest['time_slot'] ?? '09:00-18:00')));
+
+        if ($pickupDate !== '' || ! empty($pickupRequest)) {
+            $servicesData['service_data']['pickup_request'] = [
+                'enabled' => (bool) ($pickupRequest['enabled'] ?? ($pickupDate !== '')),
+                'date' => self::normalizePickupRequestDate($pickupDate),
+                'time_slot' => $pickupTime !== '' ? $pickupTime : '09:00-18:00',
+                'notes' => trim((string) ($pickupRequest['notes'] ?? '')),
+            ];
+            $servicesData['date'] = $pickupDate;
+            $servicesData['time'] = $servicesData['service_data']['pickup_request']['time_slot'];
+        }
+
         return $servicesData;
+    }
+
+    private static function normalizePickupRequestDate(string $pickupDate): string
+    {
+        $pickupDate = trim($pickupDate);
+        if ($pickupDate === '') {
+            return '';
+        }
+
+        if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $pickupDate)) {
+            return $pickupDate;
+        }
+
+        if (preg_match('/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/', $pickupDate, $matches)) {
+            return sprintf('%s-%02d-%02d', $matches[3], (int) $matches[2], (int) $matches[1]);
+        }
+
+        return $pickupDate;
     }
 
     // --- PUDO helpers ---
@@ -218,7 +339,32 @@ class CartService
 
     public static function mergeIdenticalPackages($packages, int $userId): int
     {
+        $cartPackageIds = \Illuminate\Support\Facades\DB::table('cart_user')
+            ->where('user_id', $userId)
+            ->whereIn('package_id', collect($packages)->pluck('id')->all())
+            ->pluck('package_id')
+            ->map(fn ($id) => (int) $id)
+            ->unique()
+            ->values();
+
+        $packages = collect($packages)
+            ->filter(fn ($pkg) => $cartPackageIds->contains((int) $pkg->id))
+            ->values();
+
         if ($packages->count() < 2) return 0;
+
+        $protectedPackageIds = \Illuminate\Support\Facades\DB::table('saved_shipments')
+            ->whereIn('package_id', $cartPackageIds->all())
+            ->pluck('package_id')
+            ->merge(
+                \Illuminate\Support\Facades\DB::table('package_order')
+                    ->whereIn('package_id', $cartPackageIds->all())
+                    ->pluck('package_id')
+            )
+            ->map(fn ($id) => (int) $id)
+            ->unique()
+            ->all();
+        $protectedLookup = array_fill_keys($protectedPackageIds, true);
 
         $groups = [];
         foreach ($packages as $pkg) {
@@ -229,19 +375,47 @@ class CartService
         foreach ($groups as $groupPackages) {
             if (count($groupPackages) < 2) continue;
 
+            usort($groupPackages, function (Package $left, Package $right) use ($protectedLookup) {
+                $leftProtected = isset($protectedLookup[(int) $left->id]) ? 1 : 0;
+                $rightProtected = isset($protectedLookup[(int) $right->id]) ? 1 : 0;
+
+                if ($leftProtected !== $rightProtected) {
+                    return $rightProtected <=> $leftProtected;
+                }
+
+                return $left->id <=> $right->id;
+            });
+
             $master = $groupPackages[0];
             $masterQty = (int) $master->quantity;
-            $masterUnitPrice = self::unitPrice((int) $master->single_price, $masterQty);
+            $groupMerged = 0;
 
             for ($i = 1; $i < count($groupPackages); $i++) {
                 $dup = $groupPackages[$i];
+
+                if (isset($protectedLookup[(int) $dup->id])) {
+                    continue;
+                }
+
                 $masterQty += (int) $dup->quantity;
                 \Illuminate\Support\Facades\DB::table('cart_user')->where('user_id', $userId)->where('package_id', $dup->id)->delete();
                 $dup->delete();
                 $merged++;
+                $groupMerged++;
             }
 
-            $master->update(['quantity' => $masterQty, 'single_price' => $masterUnitPrice * $masterQty]);
+            if ($groupMerged === 0) {
+                continue;
+            }
+
+            $pricedMaster = self::pricePackageModel($master, $masterQty);
+
+            $master->update([
+                'quantity' => $pricedMaster['quantity'],
+                'weight_price' => $pricedMaster['weight_price'],
+                'volume_price' => $pricedMaster['volume_price'],
+                'single_price' => $pricedMaster['single_price'],
+            ]);
         }
 
         return $merged;

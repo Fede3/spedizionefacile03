@@ -14,6 +14,7 @@ use App\Models\Order;
 use App\Models\Package;
 use App\Models\PackageAddress;
 use App\Models\Service;
+use App\Services\CheckoutSubmissionContextService;
 use App\Services\InvoicePdfService;
 use App\Services\PriceEngineService;
 use App\Services\ShipmentServicePricingService;
@@ -24,6 +25,80 @@ use Illuminate\Support\Facades\Gate;
 class OrderController extends Controller
 {
     use Traits\NormalizesServiceData;
+
+    public function __construct(
+        private readonly CheckoutSubmissionContextService $submissionContext,
+    ) {}
+
+    private function hydrateMissingOrderSubmissionContext(Order $order, array $incomingContext = []): void
+    {
+        $needsHydration = blank($order->client_submission_id)
+            || blank($order->pricing_signature)
+            || blank($order->pricing_snapshot)
+            || blank($order->pricing_snapshot_version);
+
+        if (! $needsHydration) {
+            return;
+        }
+
+        $packages = $order->packages()->with(['originAddress', 'destinationAddress', 'service'])->get();
+        if ($packages->isEmpty()) {
+            return;
+        }
+
+        $contextSeed = [];
+        $preferredSubmissionId = trim((string) ($order->client_submission_id ?: ($incomingContext['client_submission_id'] ?? '')));
+        if ($preferredSubmissionId !== '') {
+            $contextSeed['client_submission_id'] = $preferredSubmissionId;
+        }
+
+        $context = $this->submissionContext->enrich(
+            $contextSeed,
+            $this->submissionContext->snapshotFromPackages($packages),
+            [
+                'user_id' => (int) $order->user_id,
+                'order_id' => (int) $order->id,
+                'flow' => 'existing-order',
+            ],
+        );
+
+        $updates = [];
+        foreach (['client_submission_id', 'pricing_signature', 'pricing_snapshot_version', 'pricing_snapshot'] as $field) {
+            if (blank($order->getAttribute($field))) {
+                $updates[$field] = $context[$field];
+            }
+        }
+
+        if ($updates !== []) {
+            $order->forceFill($updates)->save();
+        }
+    }
+
+    private function rotatePendingOrderSubmissionContext(Order $order): void
+    {
+        $packages = $order->packages()->with(['originAddress', 'destinationAddress', 'service'])->get();
+        if ($packages->isEmpty()) {
+            return;
+        }
+
+        $context = $this->submissionContext->enrich(
+            [],
+            $this->submissionContext->snapshotFromPackages($packages),
+            [
+                'user_id' => (int) $order->user_id,
+                'order_id' => (int) $order->id,
+                'flow' => 'pending-order-refresh',
+                'previous_submission_id' => (string) ($order->client_submission_id ?? ''),
+            ],
+        );
+
+        $order->forceFill([
+            'client_submission_id' => $context['client_submission_id'],
+            'pricing_signature' => $context['pricing_signature'],
+            'pricing_snapshot_version' => $context['pricing_snapshot_version'],
+            'pricing_snapshot' => $context['pricing_snapshot'],
+        ])->save();
+    }
 
     // Mostra la lista degli ordini
     // Se l'utente e' un amministratore, vede gli ordini di TUTTI gli utenti
@@ -96,56 +171,140 @@ class OrderController extends Controller
     {
         $data = $request->validated();
         $userId = auth()->id();
+        $priceEngine = app(PriceEngineService::class);
+        $servicePricing = app(ShipmentServicePricingService::class);
+        $servicesData = $this->normalizeServiceData($data['services'] ?? []);
+        $serviceData = $servicesData['service_data'] ?? [];
+        $capSupplementCents = $priceEngine->calculateCapSupplementCents(
+            $data['origin_address']['postal_code'] ?? null,
+            $data['destination_address']['postal_code'] ?? null,
+        );
 
-        $result = DB::transaction(function () use ($data, $userId) {
+        $pricedPackages = [];
+        $subtotalCents = 0;
+
+        foreach ($data['packages'] as $packageData) {
+            $weight = (float) preg_replace('/[^0-9.]/', '', $packageData['weight']);
+            $s1 = (float) preg_replace('/[^0-9.]/', '', $packageData['first_size']);
+            $s2 = (float) preg_replace('/[^0-9.]/', '', $packageData['second_size']);
+            $s3 = (float) preg_replace('/[^0-9.]/', '', $packageData['third_size']);
+            $weightPrice = $priceEngine->calculateBandPrice('weight', $weight);
+            $volumePrice = $priceEngine->calculateBandPrice('volume', ($s1 / 100) * ($s2 / 100) * ($s3 / 100));
+            $basePriceCents = max((int) round($weightPrice * 100), (int) round($volumePrice * 100)) + $capSupplementCents;
+            $quantity = (int) ($packageData['quantity'] ?? 1);
+            $singlePriceCents = $basePriceCents * $quantity;
+            $subtotalCents += $singlePriceCents;
+
+            $pricedPackages[] = [
+                'package_type' => $packageData['package_type'],
+                'quantity' => $quantity,
+                'weight' => $packageData['weight'],
+                'first_size' => $packageData['first_size'],
+                'second_size' => $packageData['second_size'],
+                'third_size' => $packageData['third_size'],
+                'weight_price' => $weightPrice,
+                'volume_price' => $volumePrice,
+                'single_price' => $singlePriceCents,
+                'single_price_cents' => $singlePriceCents,
+            ];
+        }
+
+        $serviceType = $servicesData['service_type'] ?? '';
+        $isCod = in_array('contrassegno', $servicePricing->normalizeSelectedServices($serviceType), true);
+        $codAmount = $isCod ? $servicePricing->extractContrassegnoAmount($serviceData) : null;
+        $serviceSurchargeCents = $servicePricing->calculateSurchargeCents(
+            $serviceType,
+            $serviceData,
+            (bool) ($serviceData['sms_email_notification'] ?? false),
+            [
+                'packages' => $pricedPackages,
+                'origin_address' => $data['origin_address'] ?? [],
+                'destination_address' => (($data['delivery_mode'] ?? ($serviceData['delivery_mode'] ?? 'home')) === 'pudo' && ! empty($data['pudo']))
+                    ? $data['pudo']
+                    : ($data['destination_address'] ?? []),
+                'delivery_mode' => $data['delivery_mode'] ?? ($serviceData['delivery_mode'] ?? 'home'),
+                'selected_pudo' => $data['selected_pudo'] ?? $data['pudo'] ?? ($serviceData['pudo'] ?? null),
+                'requires_manual_quote' => (bool) ($data['requires_manual_quote'] ?? $serviceData['requires_manual_quote'] ?? false),
+            ],
+        );
+
+        $orderSubtotalCents = $subtotalCents + $serviceSurchargeCents;
+
+        $pudoId = null;
+        if (! empty($data['pudo']['pudo_id']) && ($data['delivery_mode'] ?? 'home') === 'pudo') {
+            $pudoId = $data['pudo']['pudo_id'];
+        }
+
+        return DB::transaction(function () use (
+            $data,
+            $userId,
+            $pricedPackages,
+            $servicesData,
+            $isCod,
+            $codAmount,
+            $pudoId,
+            $orderSubtotalCents,
+            $request,
+        ) {
+            DB::table('users')->where('id', $userId)->lockForUpdate()->first();
+
+            $submissionContext = $this->submissionContext->enrich(
+                $this->submissionContext->fromRequestArray($request->validated()),
+                $this->submissionContext->snapshotFromDirectOrderPayload([
+                    ...$data,
+                    'packages' => $pricedPackages,
+                    'services' => $servicesData,
+                ], $orderSubtotalCents),
+                [
+                    'user_id' => $userId,
+                    'flow' => 'direct-order',
+                    'billing_data' => $data['billing_data'] ?? null,
+                ],
+            );
+
+            $existingOrder = Order::query()
+                ->where('user_id', $userId)
+                ->where('client_submission_id', $submissionContext['client_submission_id'])
+                ->first();
+
+            if ($existingOrder) {
+                $this->hydrateMissingOrderSubmissionContext($existingOrder, [
+                    'client_submission_id' => $submissionContext['client_submission_id'],
+                ]);
+                $existingOrder->refresh();
+
+                if (
+                    filled($existingOrder->pricing_signature)
+                    && $existingOrder->pricing_signature !== $submissionContext['pricing_signature']
+                ) {
+                    return response()->json(['error' => 'Contesto preventivo non coerente con l\'ordine.'], 422);
+                }
+
+                return response()->json([
+                    'order_id' => $existingOrder->id,
+                    'order_number' => 'SF-'.str_pad((string) $existingOrder->id, 6, '0', STR_PAD_LEFT),
+                ]);
+            }
+
             // Creiamo gli indirizzi di partenza e destinazione
             $origin = PackageAddress::create($data['origin_address']);
             $destination = PackageAddress::create($data['destination_address']);
-            $priceEngine = app(PriceEngineService::class);
-            $servicePricing = app(ShipmentServicePricingService::class);
-            $capSupplementCents = $priceEngine->calculateCapSupplementCents($origin->postal_code ?? null, $destination->postal_code ?? null);
 
             // Creiamo i servizi aggiuntivi
-            $servicesData = $this->normalizeServiceData($data['services']);
             $service = Service::create($servicesData);
-            $serviceData = $servicesData['service_data'] ?? [];
-
-            $subtotalCents = 0;
             $packages = [];
 
-            foreach ($data['packages'] as $packageData) {
-                // RICALCOLO PREZZI LATO SERVER
-                // Non ci fidiamo dei prezzi inviati dal frontend (potrebbero essere manipolati)
-                // Ricalcoliamo tutto in base a peso e volume
-
-                // Estraiamo il peso numerico dalla stringa (es. "5 kg" -> 5)
-                $weight = (float) preg_replace('/[^0-9.]/', '', $packageData['weight']);
-                $s1 = (float) preg_replace('/[^0-9.]/', '', $packageData['first_size']);
-                $s2 = (float) preg_replace('/[^0-9.]/', '', $packageData['second_size']);
-                $s3 = (float) preg_replace('/[^0-9.]/', '', $packageData['third_size']);
-
-                // Prezzi calcolati dal motore centrale (stessa logica del preventivo/sessione)
-                $weightPrice = $priceEngine->calculateBandPrice('weight', $weight);
-                $vol = ($s1 / 100) * ($s2 / 100) * ($s3 / 100);
-                $volumePrice = $priceEngine->calculateBandPrice('volume', $vol);
-
-                // Il prezzo e' il MAGGIORE tra prezzo per peso e prezzo per volume
-                $basePriceCents = max((int) round($weightPrice * 100), (int) round($volumePrice * 100)) + $capSupplementCents;
-                $quantity = (int) ($packageData['quantity'] ?? 1);
-                $singlePriceEur = round(($basePriceCents / 100) * $quantity, 2);
-                $singlePriceCents = (int) round($singlePriceEur * 100);
-                $subtotalCents += $singlePriceCents;
-
+            foreach ($pricedPackages as $packageData) {
                 $packages[] = Package::create([
                     'package_type' => $packageData['package_type'],
-                    'quantity' => $quantity,
+                    'quantity' => $packageData['quantity'],
                     'weight' => $packageData['weight'],
                     'first_size' => $packageData['first_size'],
                     'second_size' => $packageData['second_size'],
                     'third_size' => $packageData['third_size'],
-                    'weight_price' => $weightPrice,
-                    'volume_price' => $volumePrice,
-                    'single_price' => $singlePriceCents,
+                    'weight_price' => $packageData['weight_price'],
+                    'volume_price' => $packageData['volume_price'],
+                    'single_price' => $packageData['single_price'],
                     'content_description' => $data['content_description'] ?? null,
                     'origin_address_id' => $origin->id,
                     'destination_address_id' => $destination->id,
@@ -154,41 +313,18 @@ class OrderController extends Controller
                 ]);
             }
 
-            // Controlliamo se e' stato selezionato il servizio Contrassegno
-            $serviceType = $servicesData['service_type'] ?? '';
-            $isCod = in_array('contrassegno', $servicePricing->normalizeSelectedServices($serviceType), true);
-            $codAmount = $isCod ? $servicePricing->extractContrassegnoAmount($serviceData) : null;
-            $serviceSurchargeCents = $servicePricing->calculateSurchargeCents(
-                $serviceType,
-                $serviceData,
-                (bool) ($serviceData['sms_email_notification'] ?? false),
-                [
-                    'packages' => $data['packages'] ?? [],
-                    'origin_address' => $data['origin_address'] ?? [],
-                    'destination_address' => (($data['delivery_mode'] ?? ($serviceData['delivery_mode'] ?? 'home')) === 'pudo' && ! empty($data['pudo']))
-                        ? $data['pudo']
-                        : ($data['destination_address'] ?? []),
-                    'delivery_mode' => $data['delivery_mode'] ?? ($serviceData['delivery_mode'] ?? 'home'),
-                    'selected_pudo' => $data['selected_pudo'] ?? $data['pudo'] ?? ($serviceData['pudo'] ?? null),
-                    'requires_manual_quote' => (bool) ($data['requires_manual_quote'] ?? $serviceData['requires_manual_quote'] ?? false),
-                ],
-            );
-
-            // PUDO: se l'utente ha scelto ritiro in un punto BRT, salviamo l'ID del punto
-            // nell'ordine (campo brt_pudo_id) per passarlo a BRT quando creeremo la spedizione
-            $pudoId = null;
-            if (! empty($data['pudo']['pudo_id']) && ($data['delivery_mode'] ?? 'home') === 'pudo') {
-                $pudoId = $data['pudo']['pudo_id'];
-            }
-
             // Creiamo l'ordine con il subtotale calcolato
             $order = Order::create([
                 'user_id' => $userId,
-                'subtotal' => $subtotalCents + $serviceSurchargeCents,
+                'subtotal' => $orderSubtotalCents,
                 'status' => Order::PENDING, // In attesa di pagamento
                 'is_cod' => $isCod,
                 'cod_amount' => $codAmount > 0 ? $codAmount : null,
                 'brt_pudo_id' => $pudoId,
+                'client_submission_id' => $submissionContext['client_submission_id'],
+                'pricing_signature' => $submissionContext['pricing_signature'],
+                'pricing_snapshot_version' => $submissionContext['pricing_snapshot_version'],
+                'pricing_snapshot' => $submissionContext['pricing_snapshot'],
             ]);
 
             // Colleghiamo i pacchi all'ordine tramite la tabella di relazione
@@ -196,13 +332,11 @@ class OrderController extends Controller
                 Order::attachPackage($order->id, $package->id, $package->quantity ?? 1);
             }
 
-            return $order;
+            return response()->json([
+                'order_id' => $order->id,
+                'order_number' => 'SF-'.str_pad((string) $order->id, 6, '0', STR_PAD_LEFT),
+            ]);
         });
-
-        return response()->json([
-            'order_id' => $result->id,
-            'order_number' => 'SF-'.str_pad((string) $result->id, 6, '0', STR_PAD_LEFT), // Es. "SF-000042"
-        ]);
     }
 
     /**
@@ -214,7 +348,7 @@ class OrderController extends Controller
      */
     public function cancel(Request $request, Order $order)
     {
-        $refundController = new RefundController;
+        $refundController = app(RefundController::class);
 
         return $refundController->requestCancellation($request, $order);
     }
@@ -249,7 +383,8 @@ class OrderController extends Controller
             'content_description' => 'nullable|string|max:255',
         ]);
 
-        $result = DB::transaction(function () use ($request, $order) {
+        DB::transaction(function () use ($request, $order) {
+            $lockedOrder = Order::query()->lockForUpdate()->findOrFail($order->id);
             $priceEngine = app(PriceEngineService::class);
             $servicePricing = app(ShipmentServicePricingService::class);
             $weight = (float) $request->weight;
@@ -264,9 +399,9 @@ class OrderController extends Controller
 
             $originCap = null;
             $destinationCap = null;
-            $order->loadMissing(['packages.originAddress', 'packages.destinationAddress']);
+            $lockedOrder->loadMissing(['packages.originAddress', 'packages.destinationAddress']);
             /** @var Package|null $existingPackage */
-            $existingPackage = $order->packages->first();
+            $existingPackage = $lockedOrder->packages->first();
             if ($existingPackage?->originAddress) {
                 $originCap = $existingPackage->originAddress->postal_code ?? null;
             }
@@ -277,8 +412,8 @@ class OrderController extends Controller
 
             $basePriceCents = max((int) round($weightPrice * 100), (int) round($volumePrice * 100)) + $capSupplementCents;
             $quantity = (int) $request->quantity;
-            $singlePriceEur = round(($basePriceCents / 100) * $quantity, 2);
-            $singlePriceCents = (int) round($singlePriceEur * 100);
+            // Stay in integer cents throughout to avoid float drift.
+            $singlePriceCents = $basePriceCents * $quantity;
 
             // Reuse origin/destination from existing packages
             $originId = $existingPackage?->origin_address_id;
@@ -302,12 +437,12 @@ class OrderController extends Controller
                 'user_id' => auth()->id(),
             ]);
 
-            Order::attachPackage($order->id, $package->id, $quantity);
+            Order::attachPackage($lockedOrder->id, $package->id, $quantity);
 
             // Recalculate subtotal
             $newSubtotal = DB::table('package_order')
                 ->join('packages', 'package_order.package_id', '=', 'packages.id')
-                ->where('package_order.order_id', $order->id)
+                ->where('package_order.order_id', $lockedOrder->id)
                 ->sum('packages.single_price');
 
             $serviceModel = $existingPackage?->service;
@@ -317,7 +452,7 @@ class OrderController extends Controller
                     $serviceModel->service_data ?? [],
                     (bool) (($serviceModel->service_data ?? [])['sms_email_notification'] ?? false),
                     [
-                        'packages' => $order->packages()->get()->all(),
+                        'packages' => $lockedOrder->packages()->get()->all(),
                         'origin_address' => $existingPackage?->originAddress?->toArray() ?? [],
                         'destination_address' => (($serviceModel->service_data['delivery_mode'] ?? 'home') === 'pudo' && ! empty($serviceModel->service_data['pudo']))
                             ? $serviceModel->service_data['pudo']
@@ -329,12 +464,14 @@ class OrderController extends Controller
                 )
                 : 0;
 
-            $order->subtotal = (int) $newSubtotal + $serviceSurchargeCents;
-            $order->save();
+            $lockedOrder->subtotal = (int) $newSubtotal + $serviceSurchargeCents;
+            $lockedOrder->save();
+            $this->rotatePendingOrderSubmissionContext($lockedOrder);
 
             return $package;
         });
 
+        $order = $order->fresh();
         $order->load(['packages.originAddress', 'packages.destinationAddress', 'packages.service']);
 
         return response()->json([

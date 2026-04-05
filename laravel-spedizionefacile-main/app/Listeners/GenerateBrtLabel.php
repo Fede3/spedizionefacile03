@@ -14,7 +14,7 @@
  *
  * DATI IN USCITA:
  *   - Nessun ritorno (void), ma aggiorna l'ordine nel database con dati BRT
- *   Esempio: order.brt_parcel_id, order.brt_tracking_url, order.brt_label_base64, order.status=in_transit
+ *   Esempio: order.brt_parcel_id, order.brt_tracking_url, order.brt_label_base64, order.status=label_generated
  *
  * VINCOLI:
  *   - Richiede BRT configurato (config services.brt.client_id non vuoto)
@@ -46,12 +46,32 @@ use App\Events\OrderPaid;
 use App\Models\Order;
 use App\Services\BrtService;
 use App\Services\ShipmentExecutionService;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Support\Facades\Log;
 
-class GenerateBrtLabel
+/**
+ * Implementa ShouldQueue: il listener gira in background quando il queue driver
+ * non e' "sync". Con queue=sync (sviluppo/default) rimane sincrono ma il retry
+ * viene gestito da Laravel tramite $backoff invece di sleep() bloccante.
+ *
+ * IN PRODUZIONE: impostare QUEUE_CONNECTION=database (o redis) nel .env
+ * per far ritornare immediatamente la risposta HTTP all'utente dopo il pagamento.
+ */
+class GenerateBrtLabel implements ShouldQueue
 {
-    // Numero massimo di tentativi per la generazione dell'etichetta
-    private const MAX_RETRIES = 3;
+    /**
+     * Numero massimo di tentativi che Laravel eseguira' in caso di eccezione.
+     * PERF-02: sostituisce il retry loop interno con sleep().
+     */
+    public int $tries = 3;
+
+    /**
+     * Secondi di attesa tra un tentativo e l'altro (backoff esponenziale).
+     * Equivalente ai vecchi sleep(1) e sleep(2) ma non blocca il worker.
+     *
+     * @var array<int>
+     */
+    public array $backoff = [1, 2];
 
     public function __construct()
     {
@@ -59,24 +79,20 @@ class GenerateBrtLabel
     }
 
     /**
-     * handle — Genera etichetta BRT con retry e aggiorna l'ordine.
+     * handle — Genera etichetta BRT e aggiorna l'ordine.
      *
-     * PERCHE': Dopo il pagamento, l'etichetta BRT deve essere generata automaticamente
-     *   per permettere la spedizione. Il retry gestisce errori temporanei della rete.
+     * PERF-02: il retry non avviene piu' con un loop interno e sleep() bloccante.
+     * In caso di eccezione Laravel ri-accoda il job con i delay definiti in $backoff.
+     * Con QUEUE_CONNECTION=database/redis la risposta HTTP al cliente e' immediata.
      *
      * COME LEGGERLO:
      *   1. Controlli iniziali: BRT configurato? Etichetta gia' presente?
      *   2. Preparazione opzioni (contrassegno, PUDO)
-     *   3. Ciclo retry: chiama BrtService.createShipment fino a MAX_RETRIES
-     *   4. Successo: salva dati BRT nell'ordine, invia email con etichetta
-     *   5. Fallimento: salva errore in brt_error per il frontend
-     *
-     * COME MODIFICARLO:
-     *   - Per aggiungere opzioni: modificare il blocco $options
-     *   - Per cambiare cosa succede dopo il successo: modificare il blocco if result.success
+     *   3. Chiamata singola a BrtService.createShipment — eccezioni triggerano retry
+     *   4. Successo: salva dati BRT nell'ordine, avvia post-label flow
+     *   5. Fallimento definitivo: salva errore in brt_error (hook failed())
      *
      * COSA EVITARE:
-     *   - Non lanciare eccezioni: il listener non deve bloccare il flusso di pagamento
      *   - Non rimuovere il refresh() prima dell'update: evita conflitti con MarkOrderProcessing
      */
     public function handle(OrderPaid $event): void
@@ -100,9 +116,6 @@ class GenerateBrtLabel
             return;
         }
 
-        // Crea un'istanza del servizio BRT
-        $brt = app(BrtService::class);
-
         // Prepara le opzioni aggiuntive per la spedizione
         $options = [];
         // Se l'ordine e' in contrassegno (il destinatario paga alla consegna)
@@ -116,109 +129,84 @@ class GenerateBrtLabel
             $options['pudo_id'] = $order->brt_pudo_id;
         }
 
-        // Tentiamo la generazione dell'etichetta con retry
-        $result = null;
-        $lastError = null;
+        // Chiamata singola a BRT: in caso di eccezione Laravel ri-accoda il job
+        // con il delay definito in $backoff, senza bloccare il worker con sleep().
+        $result = app(BrtService::class)->createShipment($order, $options);
 
-        for ($attempt = 1; $attempt <= self::MAX_RETRIES; $attempt++) {
-            try {
-                $result = $brt->createShipment($order, $options);
-
-                if ($result['success']) {
-                    break; // Successo, usciamo dal ciclo
-                }
-
-                $lastError = $result['error'] ?? 'Errore sconosciuto';
-                Log::warning("BRT label generation attempt {$attempt}/".self::MAX_RETRIES." failed for order #{$order->id}", [
-                    'error' => $lastError,
-                ]);
-            } catch (\Exception $e) {
-                $lastError = $e->getMessage();
-                Log::warning("BRT label generation attempt {$attempt}/".self::MAX_RETRIES." exception for order #{$order->id}", [
-                    'error' => $lastError,
-                ]);
-                $result = ['success' => false, 'error' => $lastError];
-            }
-
-            // Aspetta prima di riprovare (1s, 2s)
-            if ($attempt < self::MAX_RETRIES) {
-                sleep($attempt);
-            }
+        if (! ($result['success'] ?? false)) {
+            // Genera un'eccezione per far scattare il retry di Laravel
+            throw new \RuntimeException(
+                'BRT label generation failed for order #'.$order->id.': '.($result['error'] ?? 'Errore sconosciuto')
+            );
         }
 
-        if (($result['success'] ?? false) === true) {
-            // Ricarica l'ordine dal database per avere lo stato piu' aggiornato
-            // (MarkOrderProcessing potrebbe averlo gia' modificato)
+        // Ricarica l'ordine dal database per avere lo stato piu' aggiornato
+        // (MarkOrderProcessing potrebbe averlo gia' modificato)
+        $order->refresh();
+
+        // Salva tutti i dati BRT nell'ordine e aggiorna lo stato
+        $allLabels = $result['all_labels'] ?? [];
+
+        $order->fill([
+            'brt_parcel_id' => $result['parcel_id'],
+            'brt_numeric_sender_reference' => $result['numeric_sender_reference'],
+            'brt_tracking_url' => $result['tracking_url'],
+            'brt_all_labels' => ! empty($allLabels) ? $allLabels : null,
+            'brt_tracking_number' => $result['tracking_number'] ?? null,
+            'brt_parcel_number_to' => $result['parcel_number_to'] ?? null,
+            'brt_departure_depot' => $result['departure_depot'] ?? null,
+            'brt_arrival_terminal' => $result['arrival_terminal'] ?? null,
+            'brt_arrival_depot' => $result['arrival_depot'] ?? null,
+            'brt_delivery_zone' => $result['delivery_zone'] ?? null,
+            'brt_series_number' => $result['series_number'] ?? null,
+            'brt_service_type' => $result['service_type'] ?? null,
+            'brt_raw_response' => $result['raw_response'] ?? null,
+            'status' => Order::LABEL_GENERATED,
+            'brt_error' => null, // Pulisci eventuali errori precedenti
+        ]);
+
+        $order->brt_label_base64 = $result['label_base64'] ?? null;
+        $order->save();
+
+        try {
+            app(ShipmentExecutionService::class)->runAutomaticPostLabelFlow($order->fresh());
+        } catch (\Exception $e) {
             $order->refresh();
-
-            // Salva tutti i dati BRT nell'ordine e aggiorna lo stato
-            // Include i dati di tracking, routing e la risposta completa
-            // Salva le etichette multi-collo (se presenti)
-            $allLabels = $result['all_labels'] ?? [];
-
-            $order->update([
-                'brt_parcel_id' => $result['parcel_id'],
-                'brt_numeric_sender_reference' => $result['numeric_sender_reference'],
-                'brt_tracking_url' => $result['tracking_url'],
-                'brt_label_base64' => $result['label_base64'],
-                'brt_all_labels' => ! empty($allLabels) ? $allLabels : null,
-                'brt_tracking_number' => $result['tracking_number'] ?? null,
-                'brt_parcel_number_to' => $result['parcel_number_to'] ?? null,
-                'brt_departure_depot' => $result['departure_depot'] ?? null,
-                'brt_arrival_terminal' => $result['arrival_terminal'] ?? null,
-                'brt_arrival_depot' => $result['arrival_depot'] ?? null,
-                'brt_delivery_zone' => $result['delivery_zone'] ?? null,
-                'brt_series_number' => $result['series_number'] ?? null,
-                'brt_service_type' => $result['service_type'] ?? null,
-                'brt_raw_response' => $result['raw_response'] ?? null,
-                'status' => Order::IN_TRANSIT,
-                'brt_error' => null, // Pulisci eventuali errori precedenti
-            ]);
-
-            try {
-                app(ShipmentExecutionService::class)->runAutomaticPostLabelFlow($order->fresh());
-            } catch (\Exception $e) {
-                $order->refresh();
-                $order->documents_status = 'failed';
-                $order->execution_error = trim(($order->execution_error ? $order->execution_error.' | ' : '').'Post-elaborazione documenti fallita: '.$e->getMessage());
-                $order->save();
-
-                Log::error('Failed to complete shipment documents flow after label generation', [
-                    'order_id' => $order->id,
-                    'error' => $e->getMessage(),
-                ]);
-            }
-
-            Log::info('BRT label generated automatically for order #'.$order->id, [
-                'parcel_id' => $result['parcel_id'],
-                'tracking_number' => $result['tracking_number'] ?? null,
-                'tracking_url' => $result['tracking_url'] ?? null,
-                'departure_depot' => $result['departure_depot'] ?? null,
-                'arrival_depot' => $result['arrival_depot'] ?? null,
-                'service_type' => $result['service_type'] ?? null,
-            ]);
-
-            // Invia email con etichetta al cliente
-            try {
-                if ($order->user && $order->user->email) {
-                    $freshOrder = $order->fresh();
-                    if ($freshOrder && $freshOrder->brt_label_base64) {
-                        \Mail::to($order->user->email)->send(new \App\Mail\ShipmentLabelMail($freshOrder));
-                    }
-                }
-            } catch (\Exception $e) {
-                Log::warning('Email etichetta non inviata', ['order_id' => $order->id, 'error' => $e->getMessage()]);
-            }
-        } else {
-            // Se la generazione dell'etichetta fallisce dopo tutti i tentativi,
-            // salviamo l'errore nell'ordine cosi' il frontend puo' mostrarlo all'utente
-            // invece di rimanere bloccato su "Etichetta in generazione..."
-            $order->brt_error = $lastError;
+            $order->documents_status = 'failed';
+            $order->execution_error = trim(($order->execution_error ? $order->execution_error.' | ' : '').'Post-elaborazione documenti fallita: '.$e->getMessage());
             $order->save();
 
-            Log::error('BRT auto label generation failed after '.self::MAX_RETRIES.' attempts for order #'.$order->id, [
-                'error' => $lastError,
+            Log::error('Failed to complete shipment documents flow after label generation', [
+                'order_id' => $order->id,
+                'error' => $e->getMessage(),
             ]);
         }
+
+        Log::info('BRT label generated automatically for order #'.$order->id, [
+            'parcel_id' => $result['parcel_id'],
+            'tracking_number' => $result['tracking_number'] ?? null,
+            'tracking_url' => $result['tracking_url'] ?? null,
+            'departure_depot' => $result['departure_depot'] ?? null,
+            'arrival_depot' => $result['arrival_depot'] ?? null,
+            'service_type' => $result['service_type'] ?? null,
+        ]);
+
+        // L'invio email al cliente viene gestito da runAutomaticPostLabelFlow()
+        // che invia ShipmentDocumentsMail (email unica con etichetta + bordero).
+    }
+
+    /**
+     * Gestisce il fallimento definitivo dopo tutti i tentativi.
+     * Salva l'errore nell'ordine cosi' il frontend puo' mostrarlo all'utente.
+     */
+    public function failed(OrderPaid $event, \Throwable $exception): void
+    {
+        $order = $event->order;
+        $order->brt_error = $exception->getMessage();
+        $order->save();
+
+        Log::error('BRT auto label generation failed after '.$this->tries.' attempts for order #'.$order->id, [
+            'error' => $exception->getMessage(),
+        ]);
     }
 }

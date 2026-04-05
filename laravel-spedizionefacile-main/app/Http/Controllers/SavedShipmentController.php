@@ -8,10 +8,19 @@ use App\Models\Service;
 use Illuminate\Support\Facades\DB;
 use App\Http\Resources\PackageResource;
 use App\Http\Requests\PackageStoreRequest;
+use App\Services\CartService;
 use Illuminate\Http\Request;
 
 class SavedShipmentController extends Controller
 {
+    private function packageIsSaved(int $userId, int|string $packageId): bool
+    {
+        return DB::table('saved_shipments')
+            ->where('user_id', $userId)
+            ->where('package_id', $packageId)
+            ->exists();
+    }
+
     public function index(Request $request)
     {
         $user = auth()->user();
@@ -59,12 +68,18 @@ class SavedShipmentController extends Controller
 
             $packages = [];
             foreach ($data['packages'] as $packageData) {
+                $pricedPackage = CartService::pricePackageData(
+                    $packageData,
+                    $data['origin_address'] ?? [],
+                    $data['destination_address'] ?? [],
+                );
+
                 $packages[] = Package::create([
-                    'package_type' => $packageData['package_type'], 'quantity' => $packageData['quantity'],
-                    'weight' => $packageData['weight'], 'first_size' => $packageData['first_size'],
-                    'second_size' => $packageData['second_size'], 'third_size' => $packageData['third_size'],
-                    'weight_price' => $packageData['weight_price'] ?? null, 'volume_price' => $packageData['volume_price'] ?? null,
-                    'single_price' => (int) round(($packageData['single_price'] ?? 0) * 100),
+                    'package_type' => $pricedPackage['package_type'], 'quantity' => $pricedPackage['quantity'],
+                    'weight' => $pricedPackage['weight'], 'first_size' => $pricedPackage['first_size'],
+                    'second_size' => $pricedPackage['second_size'], 'third_size' => $pricedPackage['third_size'],
+                    'weight_price' => $pricedPackage['weight_price'] ?? null, 'volume_price' => $pricedPackage['volume_price'] ?? null,
+                    'single_price' => $pricedPackage['single_price'],
                     'origin_address_id' => $origin->id, 'destination_address_id' => $destination->id,
                     'service_id' => $services->id, 'user_id' => $userId,
                 ]);
@@ -82,6 +97,19 @@ class SavedShipmentController extends Controller
     public function update(Request $request, $id)
     {
         $userId = auth()->id();
+
+        if (! $this->packageIsSaved($userId, $id)) {
+            return response()->json(['message' => 'Pacco non trovato nelle spedizioni salvate'], 404);
+        }
+
+        $inOrder = DB::table('package_order')
+            ->where('package_id', $id)
+            ->exists();
+
+        if ($inOrder) {
+            return response()->json(['message' => 'Spedizione già associata a un ordine'], 409);
+        }
+
         $package = Package::where('id', $id)->where('user_id', $userId)->firstOrFail();
 
         $data = $request->validate([
@@ -102,7 +130,6 @@ class SavedShipmentController extends Controller
             'package_type' => 'nullable|string', 'quantity' => 'nullable|integer',
             'weight' => 'nullable|string', 'first_size' => 'nullable|string',
             'second_size' => 'nullable|string', 'third_size' => 'nullable|string',
-            'single_price' => 'nullable|numeric', 'weight_price' => 'nullable|numeric', 'volume_price' => 'nullable|numeric',
             'services' => 'sometimes|array',
             'services.service_type' => 'nullable|string', 'services.date' => 'nullable|string', 'services.time' => 'nullable|string',
         ]);
@@ -118,9 +145,24 @@ class SavedShipmentController extends Controller
             }
 
             $packageFields = array_intersect_key($data, array_flip(['package_type', 'quantity', 'weight', 'first_size', 'second_size', 'third_size']));
-            if (isset($data['single_price'])) $packageFields['single_price'] = (int) round($data['single_price'] * 100);
-            if (isset($data['weight_price'])) $packageFields['weight_price'] = $data['weight_price'];
-            if (isset($data['volume_price'])) $packageFields['volume_price'] = $data['volume_price'];
+            $shouldReprice = !empty($packageFields) || isset($data['origin_address']) || isset($data['destination_address']);
+
+            if ($shouldReprice) {
+                $pricedPackage = CartService::pricePackageData(
+                    $packageFields,
+                    $package->originAddress?->toArray() ?? [],
+                    $package->destinationAddress?->toArray() ?? [],
+                    $package->only(['package_type', 'quantity', 'weight', 'first_size', 'second_size', 'third_size']),
+                );
+
+                $packageFields = array_merge($packageFields, [
+                    'quantity' => $pricedPackage['quantity'],
+                    'weight_price' => $pricedPackage['weight_price'] ?? $package->weight_price,
+                    'volume_price' => $pricedPackage['volume_price'] ?? $package->volume_price,
+                    'single_price' => $pricedPackage['single_price'] ?? $package->single_price,
+                ]);
+            }
+
             if (!empty($packageFields)) $package->update($packageFields);
         });
 
@@ -131,6 +173,19 @@ class SavedShipmentController extends Controller
     public function destroy($id)
     {
         $userId = auth()->id();
+
+        if (! $this->packageIsSaved($userId, $id)) {
+            return response()->json(['message' => 'Pacco non trovato nelle spedizioni salvate'], 404);
+        }
+
+        $inOrder = DB::table('package_order')
+            ->where('package_id', $id)
+            ->exists();
+
+        if ($inOrder) {
+            return response()->json(['message' => 'Spedizione già associata a un ordine'], 409);
+        }
+
         DB::table('saved_shipments')->where('user_id', $userId)->where('package_id', $id)->delete();
         DB::table('cart_user')->where('user_id', $userId)->where('package_id', $id)->delete();
         Package::where('id', $id)->where('user_id', $userId)->delete();
@@ -154,12 +209,21 @@ class SavedShipmentController extends Controller
             $newDest = $original->destinationAddress ? PackageAddress::create($original->destinationAddress->replicate()->toArray()) : null;
             $newService = $original->service ? Service::create($original->service->replicate()->toArray()) : null;
 
+            $pricedPackage = CartService::pricePackageData([
+                'package_type' => $original->package_type,
+                'quantity' => $original->quantity,
+                'weight' => $original->weight,
+                'first_size' => $original->first_size,
+                'second_size' => $original->second_size,
+                'third_size' => $original->third_size,
+            ], $newOrigin?->toArray() ?? [], $newDest?->toArray() ?? []);
+
             $newPackage = Package::create([
-                'package_type' => $original->package_type, 'quantity' => $original->quantity,
-                'weight' => $original->weight, 'first_size' => $original->first_size,
-                'second_size' => $original->second_size, 'third_size' => $original->third_size,
-                'weight_price' => $original->weight_price, 'volume_price' => $original->volume_price,
-                'single_price' => $original->single_price,
+                'package_type' => $pricedPackage['package_type'], 'quantity' => $pricedPackage['quantity'],
+                'weight' => $pricedPackage['weight'], 'first_size' => $pricedPackage['first_size'],
+                'second_size' => $pricedPackage['second_size'], 'third_size' => $pricedPackage['third_size'],
+                'weight_price' => $pricedPackage['weight_price'] ?? null, 'volume_price' => $pricedPackage['volume_price'] ?? null,
+                'single_price' => $pricedPackage['single_price'],
                 'origin_address_id' => $newOrigin?->id, 'destination_address_id' => $newDest?->id,
                 'service_id' => $newService?->id, 'user_id' => $userId,
             ]);

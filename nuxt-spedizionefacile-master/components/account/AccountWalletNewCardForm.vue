@@ -15,70 +15,69 @@ defineEmits(["update:cardHolderName", "close"]);
 </script>
 
 <template>
-  <div class="mb-[14px] p-[14px] bg-[#F8F9FB] rounded-[12px] border border-[#E9EBEC]">
-    <div class="flex items-start justify-between gap-[10px] mb-[12px]">
-      <div>
-        <p class="text-[0.875rem] font-semibold text-[#252B42]">Nuova carta per la ricarica</p>
-        <p class="text-[0.8125rem] text-[#737373] leading-[1.5] mt-[4px]">
-          La useremo per questa ricarica e la salveremo come carta predefinita per checkout e wallet.
-        </p>
-      </div>
-      <button type="button" @click="$emit('close')" class="text-[0.8125rem] text-[#095866] font-medium hover:underline cursor-pointer whitespace-nowrap">
-        {{ hasSavedCard ? 'Usa carta salvata' : 'Chiudi' }}
-      </button>
-    </div>
+	<div class="space-y-[12px] rounded-[12px] border border-[#E9EBEC] bg-white p-[14px]">
+		<div class="flex items-start justify-between gap-[10px]">
+			<div>
+				<p class="text-[0.875rem] font-semibold text-[#252B42]">Nuova carta per la ricarica</p>
+				<p class="mt-[4px] text-[0.8125rem] leading-[1.5] text-[#737373]">
+					La useremo per questa operazione e la salveremo come carta predefinita per checkout e wallet.
+				</p>
+			</div>
+			<button type="button" @click="$emit('close')" class="whitespace-nowrap text-[0.8125rem] font-medium text-[#095866] hover:underline">
+				{{ hasSavedCard ? 'Usa carta salvata' : 'Chiudi' }}
+			</button>
+		</div>
 
-    <!-- Spinner while preparing -->
-    <div v-if="isPreparingNewCardForm" class="flex items-center gap-[10px] rounded-[12px] bg-white px-[14px] py-[12px] border border-[#E9EBEC] text-[0.8125rem] text-[#737373]">
-      <div class="w-[20px] h-[20px] border-2 border-[#E9EBEC] border-t-[#095866] rounded-full animate-spin"></div>
-      Preparazione modulo carta in corso...
-    </div>
+		<div v-if="isPreparingNewCardForm" class="flex items-center gap-[10px] rounded-[12px] border border-[#E9EBEC] bg-[#FAFCFD] px-[14px] py-[12px] text-[0.8125rem] text-[#737373]">
+			<div class="h-[20px] w-[20px] animate-spin rounded-full border-2 border-[#E9EBEC] border-t-[#095866]"></div>
+			Preparazione modulo carta in corso...
+		</div>
 
-    <!-- Card fields -->
-    <div v-else class="space-y-[14px]">
-      <div>
-        <label class="block text-[0.8125rem] font-semibold text-[#404040] mb-[6px]">Titolare carta</label>
-        <input
-          :value="cardHolderName"
-          @input="$emit('update:cardHolderName', $event.target.value)"
-          type="text"
-          placeholder="Mario Rossi"
-          class="w-full px-[14px] py-[12px] bg-white border border-[#E9EBEC] rounded-[12px] text-[0.9375rem] text-[#252B42] placeholder:text-[#a0a0a0] focus:border-[#095866] focus:outline-none transition-colors" />
-      </div>
+		<div v-else class="space-y-[12px]">
+			<div>
+				<label class="mb-[6px] block text-[0.8125rem] font-semibold text-[#404040]">Titolare carta</label>
+				<input
+					:value="cardHolderName"
+					@input="$emit('update:cardHolderName', $event.target.value)"
+					type="text"
+					placeholder="Mario Rossi"
+					class="w-full rounded-[12px] border border-[#E9EBEC] bg-white px-[14px] py-[12px] text-[0.9375rem] text-[#252B42] placeholder:text-[#a0a0a0] transition-colors focus:border-[#095866] focus:outline-none" />
+			</div>
 
-      <div>
-        <label class="block text-[0.8125rem] font-semibold text-[#404040] mb-[6px]">Numero carta</label>
-        <div id="wallet-card-number" class="stripe-field"></div>
-      </div>
+			<div>
+				<label class="mb-[6px] block text-[0.8125rem] font-semibold text-[#404040]">Numero carta</label>
+				<div id="wallet-card-number" class="stripe-field"></div>
+			</div>
 
-      <div class="grid grid-cols-1 tablet:grid-cols-[minmax(0,1fr)_132px] gap-[12px]">
-        <div>
-          <label class="block text-[0.8125rem] font-semibold text-[#404040] mb-[6px]">Scadenza</label>
-          <div id="wallet-card-expiry" class="stripe-field"></div>
-        </div>
-        <div class="min-w-0 tablet:w-[132px]">
-          <label class="block text-[0.8125rem] font-semibold text-[#404040] mb-[6px]">CVC</label>
-          <div id="wallet-card-cvc" class="stripe-field"></div>
-        </div>
-      </div>
+			<div class="grid grid-cols-1 gap-[12px] tablet:grid-cols-[minmax(0,1fr)_132px]">
+				<div>
+					<label class="mb-[6px] block text-[0.8125rem] font-semibold text-[#404040]">Scadenza</label>
+					<div id="wallet-card-expiry" class="stripe-field"></div>
+				</div>
+				<div class="min-w-0 tablet:w-[132px]">
+					<label class="mb-[6px] block text-[0.8125rem] font-semibold text-[#404040]">CVC</label>
+					<div id="wallet-card-cvc" class="stripe-field"></div>
+				</div>
+			</div>
 
-      <p v-if="cardError" class="text-red-500 text-[0.8125rem] p-[10px] bg-red-50 rounded-[12px] border border-red-200">
-        {{ cardError }}
-      </p>
-    </div>
-  </div>
+			<p v-if="cardError" class="rounded-[12px] border border-red-200 bg-red-50 p-[10px] text-[0.8125rem] text-red-500">
+				{{ cardError }}
+			</p>
+		</div>
+	</div>
 </template>
 
 <style scoped>
 .stripe-field {
-  background-color: #ffffff;
-  padding: 12px 16px;
+  width: 100%;
   border: 1px solid #e9ebec;
   border-radius: 12px;
-  width: 100%;
-  transition: border-color 0.2s;
+  background-color: #ffffff;
+  padding: 12px 16px;
+  transition: border-color 0.2s, box-shadow 0.2s;
 }
 .stripe-field:focus-within {
   border-color: #095866;
+  box-shadow: 0 0 0 3px rgba(9, 88, 102, 0.1);
 }
 </style>

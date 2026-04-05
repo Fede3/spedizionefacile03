@@ -50,6 +50,8 @@ class BrtController extends Controller
             'pudo_id' => $request->pudo_id, 'notes' => $request->notes,
         ];
 
+        // PERF-02: rimosso sleep(1) che bloccava il worker PHP tra i retry.
+        // Il retry manuale avviene immediatamente (3 tentativi, nessuna pausa).
         $result = null;
         for ($attempt = 1; $attempt <= 3; $attempt++) {
             try {
@@ -59,7 +61,6 @@ class BrtController extends Controller
                 Log::warning("BRT manual createShipment attempt {$attempt}/3 failed", ['order_id' => $order->id, 'error' => $e->getMessage()]);
                 $result = ['success' => false, 'error' => $e->getMessage()];
             }
-            if ($attempt < 3) sleep(1);
         }
 
         if (!$result['success']) {
@@ -164,7 +165,7 @@ class BrtController extends Controller
         if (!$order) {
             return response()->json([
                 'found' => false, 'message' => 'Nessuna spedizione trovata con il codice inserito.',
-                'brt_tracking_url' => 'https://vas.brt.it/vas/sped_det_show.hsm?refnr=' . urlencode($code) . '&tiession=',
+                'brt_tracking_url' => 'https://vas.brt.it/vas/sped_det_show.hsm?refnr=' . urlencode($code),
             ]);
         }
 
@@ -182,7 +183,7 @@ class BrtController extends Controller
         $rawStatus = $order->getAttributes()['status'] ?? 'pending';
         $statusInfo = $statusMap[$rawStatus] ?? ['label' => $rawStatus, 'description' => ''];
         $trackingRef = $order->brt_tracking_number ?: $order->brt_parcel_id;
-        $fallbackUrl = $trackingRef ? 'https://vas.brt.it/vas/sped_det_show.hsm?refnr=' . urlencode($trackingRef) . '&tiession=' : null;
+        $fallbackUrl = $trackingRef ? 'https://vas.brt.it/vas/sped_det_show.hsm?refnr=' . urlencode($trackingRef) : null;
 
         return response()->json([
             'found' => true, 'order_id' => $order->id,
@@ -236,7 +237,7 @@ class BrtController extends Controller
             'notes' => 'nullable|string|max:255',
         ]);
 
-        return response()->json($this->shipment->testCreateShipment($request->all()));
+        return response()->json($this->shipment->testCreateShipment($request->validated()));
     }
 
     private function saveBrtDataToOrder(Order $order, array $result, Request $request): void

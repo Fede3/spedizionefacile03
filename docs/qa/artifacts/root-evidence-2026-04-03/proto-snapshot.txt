@@ -1,0 +1,5 @@
+### Page
+- Page URL: https://sort-zaffre-77538165.figma.site/
+- Page Title: Untitled (1) (1) (2)
+### Snapshot
+- [Snapshot](.playwright-cli/page-2026-03-31T23-04-12-499Z.yml)

@@ -16,6 +16,7 @@ import {
 	pickMostAdvancedShipmentFlowState,
 	resolveShipmentFlowState,
 } from '~/utils/shipmentFlowState';
+import { ensureClientSubmissionId } from '~/utils/clientSubmissionId';
 import { calculateShipmentServiceSurcharge } from "~/utils/shipmentServicePricing";
 
 export function useRiepilogo() {
@@ -168,6 +169,7 @@ export function useRiepilogo() {
 				single_price: Number(pkg.single_price) / 100,
 			}));
 		}
+
 		return payload;
 	};
 
@@ -233,7 +235,7 @@ export function useRiepilogo() {
 	// --- INLINE EDIT ACTIONS ---
 	const goToServicesEdit = async () => {
 		if (editingId.value) {
-			await navigateTo(`/la-tua-spedizione/2?edit_id=${editingId.value}&step=ritiro`);
+			await navigateTo(`/la-tua-spedizione/2?edit=${editingId.value}&step=ritiro`);
 			return;
 		}
 		await navigateTo('/la-tua-spedizione/2?step=ritiro');
@@ -299,7 +301,14 @@ export function useRiepilogo() {
 				navigateTo('/checkout');
 				return;
 			}
-			const result = await sanctumClient("/api/create-direct-order", { method: "POST", body: payload });
+			const clientSubmissionId = ensureClientSubmissionId(shipment.value);
+			const result = await sanctumClient("/api/create-direct-order", {
+				method: "POST",
+				body: {
+					...payload,
+					client_submission_id: clientSubmissionId,
+				},
+			});
 			uiFeedback.success('Ordine creato con successo!');
 			navigateTo(`/checkout?order_id=${result.order_id}`);
 		} catch (error) {

@@ -13,15 +13,22 @@ class ShipmentExecutionService
 
     public function getExecutionPayload(Order $order): array
     {
+        $pickupRequest = $this->resolvePickupRequestFromOrder($order);
+        $pickupTimeSlot = trim((string) ($order->pickup_time_slot ?: ($pickupRequest['time_slot'] ?? '')));
+        $pickupNotes = trim((string) ($order->pickup_notes ?: ($pickupRequest['notes'] ?? '')));
+
         return [
             'shipment_status' => ! empty($order->brt_parcel_id) ? 'completed' : 'pending',
             'pickup_status' => $order->pickup_status,
+            'pickup_enabled' => (bool) ($pickupRequest['enabled'] ?? false),
+            'pickup_date' => $pickupRequest['date'] ?? null,
             'pickup_requested_at' => $order->pickup_requested_at?->toIso8601String(),
             'carrier_pickup_ref' => $order->pickup_reference,
-            'pickup_time_slot' => $order->pickup_time_slot,
-            'pickup_notes' => $order->pickup_notes,
+            'pickup_time_slot' => $pickupTimeSlot !== '' ? $pickupTimeSlot : null,
+            'pickup_notes' => $pickupNotes !== '' ? $pickupNotes : null,
             'bordero_status' => $order->bordero_status,
             'carrier_bordero_ref' => $order->bordero_reference,
+            'bordero_download_available' => ! empty($order->bordero_document_base64),
             'documents_status' => $order->documents_status,
             'documents_sent_customer_at' => $order->documents_sent_customer_at?->toIso8601String(),
             'documents_sent_admin_at' => $order->documents_sent_admin_at?->toIso8601String(),
@@ -31,13 +38,16 @@ class ShipmentExecutionService
 
     public function requestPickup(Order $order, ?array $override = null): array
     {
-        $pickupRequest = $override ?? $this->resolvePickupRequestFromOrder($order);
+        $pickupRequest = $this->normalizePickupRequest($override ?? $this->resolvePickupRequestFromOrder($order));
+        $this->persistPickupRequestOnServices($order, $pickupRequest);
 
         $enabled = (bool) ($pickupRequest['enabled'] ?? false);
         if (! $enabled) {
             $order->pickup_status = 'not_requested';
             $order->pickup_reference = null;
             $order->pickup_requested_at = null;
+            $order->pickup_time_slot = null;
+            $order->pickup_notes = null;
             $order->save();
 
             return ['success' => true, 'status' => 'not_requested'];
@@ -108,14 +118,27 @@ class ShipmentExecutionService
     private function resolvePickupRequestFromOrder(Order $order): array
     {
         $order->loadMissing(['packages.service']);
-        $serviceData = $order->packages->first()?->service->service_data ?? [];
+        $service = $order->packages->first()?->service;
+        $serviceData = $service?->service_data ?? [];
 
         $pickup = is_array($serviceData['pickup_request'] ?? null)
             ? $serviceData['pickup_request']
             : [];
 
+        if (! isset($pickup['date']) && filled($service?->date)) {
+            $pickup['date'] = $this->normalizePickupRequestDate($service->date);
+        }
+
+        if (! isset($pickup['time_slot']) && filled($service?->time)) {
+            $pickup['time_slot'] = trim((string) $service->time);
+        }
+
         // Se il pickup non ha 'enabled' esplicito, abilitalo se l'ordine ha il servizio "ritiro a domicilio"
         if (! isset($pickup['enabled'])) {
+            if (! empty($pickup['date'])) {
+                $pickup['enabled'] = true;
+            }
+
             $hasPickupService = $order->packages->contains(fn ($pkg) =>
                 $pkg->service && str_contains(mb_strtolower($pkg->service->service_type ?? '', 'UTF-8'), 'ritiro')
             );
@@ -125,5 +148,60 @@ class ShipmentExecutionService
         }
 
         return $pickup;
+    }
+
+    private function persistPickupRequestOnServices(Order $order, array $pickupRequest): void
+    {
+        $order->loadMissing(['packages.service']);
+        $shouldClearPickup = ! ((bool) ($pickupRequest['enabled'] ?? false));
+
+        $services = $order->packages
+            ->pluck('service')
+            ->filter()
+            ->unique('id');
+
+        foreach ($services as $service) {
+            $serviceData = is_array($service->service_data) ? $service->service_data : [];
+            $serviceData['pickup_request'] = $pickupRequest;
+
+            $service->update([
+                'date' => $shouldClearPickup ? '' : ($pickupRequest['date'] ?: ($service->date ?? '')),
+                'time' => $shouldClearPickup ? '' : ($pickupRequest['time_slot'] ?: ($service->time ?? '09:00-18:00')),
+                'service_data' => $serviceData,
+            ]);
+        }
+    }
+
+    private function normalizePickupRequest(array $pickupRequest): array
+    {
+        $resolvedDate = $this->normalizePickupRequestDate((string) ($pickupRequest['date'] ?? ''));
+        $resolvedTimeSlot = trim((string) ($pickupRequest['time_slot'] ?? ''));
+        $resolvedNotes = trim((string) ($pickupRequest['notes'] ?? ''));
+        $enabled = (bool) ($pickupRequest['enabled'] ?? ($resolvedDate !== ''));
+
+        return [
+            'enabled' => $enabled,
+            'date' => $enabled ? $resolvedDate : '',
+            'time_slot' => $enabled ? ($resolvedTimeSlot !== '' ? $resolvedTimeSlot : '09:00-18:00') : '',
+            'notes' => $enabled ? $resolvedNotes : '',
+        ];
+    }
+
+    private function normalizePickupRequestDate(string $pickupDate): string
+    {
+        $pickupDate = trim($pickupDate);
+        if ($pickupDate === '') {
+            return '';
+        }
+
+        if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $pickupDate)) {
+            return $pickupDate;
+        }
+
+        if (preg_match('/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/', $pickupDate, $matches)) {
+            return sprintf('%s-%02d-%02d', $matches[3], (int) $matches[2], (int) $matches[1]);
+        }
+
+        return $pickupDate;
     }
 }

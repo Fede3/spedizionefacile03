@@ -62,11 +62,12 @@ class AddressNormalizer
     public function countryToIso2(string $country): string
     {
         $map = [
+            // Europa
             'italia' => 'IT', 'italy' => 'IT',
             'francia' => 'FR', 'france' => 'FR',
             'germania' => 'DE', 'germany' => 'DE', 'deutschland' => 'DE',
-            'spagna' => 'ES', 'spain' => 'ES',
-            'regno unito' => 'GB', 'united kingdom' => 'GB',
+            'spagna' => 'ES', 'spain' => 'ES', 'españa' => 'ES',
+            'regno unito' => 'GB', 'united kingdom' => 'GB', 'great britain' => 'GB',
             'svizzera' => 'CH', 'switzerland' => 'CH',
             'austria' => 'AT',
             'belgio' => 'BE', 'belgium' => 'BE',
@@ -82,20 +83,114 @@ class AddressNormalizer
             'lussemburgo' => 'LU', 'luxembourg' => 'LU',
             'romania' => 'RO',
             'ungheria' => 'HU', 'hungary' => 'HU',
-            'repubblica ceca' => 'CZ', 'czech republic' => 'CZ',
+            'repubblica ceca' => 'CZ', 'czech republic' => 'CZ', 'czechia' => 'CZ',
             'slovacchia' => 'SK', 'slovakia' => 'SK',
             'slovenia' => 'SI',
             'croazia' => 'HR', 'croatia' => 'HR',
             'bulgaria' => 'BG',
+            'estonia' => 'EE',
+            'lettonia' => 'LV', 'latvia' => 'LV',
+            'lituania' => 'LT', 'lithuania' => 'LT',
+            'malta' => 'MT',
+            'cipro' => 'CY', 'cyprus' => 'CY',
+            'islanda' => 'IS', 'iceland' => 'IS',
+            'liechtenstein' => 'LI',
+            'monaco' => 'MC',
+            'san marino' => 'SM',
+            'città del vaticano' => 'VA', 'vatican' => 'VA',
+            'andorra' => 'AD',
+            'serbia' => 'RS',
+            'montenegro' => 'ME',
+            'bosnia erzegovina' => 'BA', 'bosnia and herzegovina' => 'BA', 'bosnia' => 'BA',
+            'macedonia del nord' => 'MK', 'north macedonia' => 'MK',
+            'albania' => 'AL',
+            'moldavia' => 'MD', 'moldova' => 'MD',
+            'ucraina' => 'UA', 'ukraine' => 'UA',
+            'bielorussia' => 'BY', 'belarus' => 'BY',
+            'russia' => 'RU',
+            'turchia' => 'TR', 'turkey' => 'TR', 'türkiye' => 'TR',
+            // Americhe
+            'stati uniti' => 'US', 'united states' => 'US', 'usa' => 'US',
+            'canada' => 'CA',
+            'messico' => 'MX', 'mexico' => 'MX',
+            'brasile' => 'BR', 'brazil' => 'BR', 'brasil' => 'BR',
+            'argentina' => 'AR',
+            'cile' => 'CL', 'chile' => 'CL',
+            'colombia' => 'CO',
+            'perù' => 'PE', 'peru' => 'PE',
+            'venezuela' => 'VE',
+            'ecuador' => 'EC',
+            'uruguay' => 'UY',
+            'paraguay' => 'PY',
+            'bolivia' => 'BO',
+            'costa rica' => 'CR',
+            'panama' => 'PA',
+            'cuba' => 'CU',
+            'repubblica dominicana' => 'DO', 'dominican republic' => 'DO',
+            'porto rico' => 'PR', 'puerto rico' => 'PR',
+            // Asia
+            'giappone' => 'JP', 'japan' => 'JP',
+            'cina' => 'CN', 'china' => 'CN',
+            'india' => 'IN',
+            'corea del sud' => 'KR', 'south korea' => 'KR',
+            'corea del nord' => 'KP', 'north korea' => 'KP',
+            'thailandia' => 'TH', 'thailand' => 'TH',
+            'vietnam' => 'VN',
+            'indonesia' => 'ID',
+            'malesia' => 'MY', 'malaysia' => 'MY',
+            'filippine' => 'PH', 'philippines' => 'PH',
+            'singapore' => 'SG',
+            'taiwan' => 'TW',
+            'hong kong' => 'HK',
+            'israele' => 'IL', 'israel' => 'IL',
+            'emirati arabi uniti' => 'AE', 'united arab emirates' => 'AE', 'uae' => 'AE',
+            'arabia saudita' => 'SA', 'saudi arabia' => 'SA',
+            'qatar' => 'QA',
+            'kuwait' => 'KW',
+            'pakistan' => 'PK',
+            'bangladesh' => 'BD',
+            'sri lanka' => 'LK',
+            // Oceania
+            'australia' => 'AU',
+            'nuova zelanda' => 'NZ', 'new zealand' => 'NZ',
+            // Africa
+            'sudafrica' => 'ZA', 'south africa' => 'ZA',
+            'marocco' => 'MA', 'morocco' => 'MA',
+            'tunisia' => 'TN',
+            'egitto' => 'EG', 'egypt' => 'EG',
+            'nigeria' => 'NG',
+            'kenya' => 'KE',
+            'algeria' => 'DZ',
+            'libia' => 'LY', 'libya' => 'LY',
+            'ghana' => 'GH',
+            'senegal' => 'SN',
+            'etiopia' => 'ET', 'ethiopia' => 'ET',
         ];
 
         $lower = strtolower(trim($country));
 
+        // Se il valore e' gia' un codice ISO a 2 lettere, restituiscilo direttamente
         if (strlen($country) === 2) {
             return strtoupper($country);
         }
 
-        return $map[$lower] ?? 'IT';
+        if (isset($map[$lower])) {
+            return $map[$lower];
+        }
+
+        // Per valori vuoti o null, fallback a IT (paese di default)
+        if (empty(trim($country))) {
+            return 'IT';
+        }
+
+        // Paese non riconosciuto: log warning e restituisci il valore in maiuscolo
+        // (potrebbe essere gia' un codice ISO valido in formato diverso)
+        Log::warning('BRT countryToIso2: paese non mappato, uso valore raw', [
+            'country_input' => $country,
+            'returned' => strtoupper(trim($country)),
+        ]);
+
+        return strtoupper(trim($country));
     }
 
     /**

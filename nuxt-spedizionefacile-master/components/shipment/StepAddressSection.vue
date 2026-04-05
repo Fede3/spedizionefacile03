@@ -1,18 +1,9 @@
-<!--
-  FILE: components/shipment/StepAddressSection.vue
-  SCOPO: Sezione indirizzi (partenza + destinazione) con PUDO, rubrica, spedizioni configurate.
-  Toolbar delegato a ShipmentAddressToolbar.vue, PUDO a ShipmentAddressPudoSection.vue.
--->
 <script setup>
 const props = defineProps({
+	isOpen: { type: Boolean, default: false },
 	originAddress: { type: Object, required: true },
 	destinationAddress: { type: Object, required: true },
 	deliveryMode: { type: String, required: true },
-	showGlobalFormSummary: { type: Boolean, default: false },
-	formErrorSummary: { type: Array, default: () => [] },
-	originSectionHint: { type: String, default: "" },
-	destinationSectionHint: { type: String, default: "" },
-	routeWarningMessage: { type: String, default: "" },
 	fieldClass: { type: Function, required: true },
 	getFieldError: { type: Function, required: true },
 	fieldErrorText: { type: Function, required: true },
@@ -39,150 +30,304 @@ const props = defineProps({
 	destCitySuggestions: { type: Array, default: () => [] },
 	destProvinceSuggestions: { type: Array, default: () => [] },
 	destCapSuggestions: { type: Array, default: () => [] },
-	canSaveOriginAddress: { type: Boolean, default: false },
-	canSaveDestAddress: { type: Boolean, default: false },
-	savingOriginAddress: { type: Boolean, default: false },
-	savingDestAddress: { type: Boolean, default: false },
-	originSaveSuccess: { type: Boolean, default: false },
-	destSaveSuccess: { type: Boolean, default: false },
 	savedAddresses: { type: Array, default: () => [] },
 	loadingSavedAddresses: { type: Boolean, default: false },
 	showOriginAddressSelector: { type: Boolean, default: false },
 	showDestAddressSelector: { type: Boolean, default: false },
-	showOriginGuestPrompt: { type: Boolean, default: false },
-	showDestGuestPrompt: { type: Boolean, default: false },
-	savedConfigs: { type: Array, default: () => [] },
-	loadingConfigs: { type: Boolean, default: false },
-	showDefaultDropdown: { type: Boolean, default: false },
-	showDefaultDropdownTarget: { type: String, default: "" },
-	showOriginConfigGuestPrompt: { type: Boolean, default: false },
-	showDestConfigGuestPrompt: { type: Boolean, default: false },
 	isAuthenticated: { type: Boolean, default: false },
 	selectedPudo: { type: Object, default: null },
+	canSaveOriginAddress: { type: Boolean, default: false },
+	canSaveDestAddress: { type: Boolean, default: false },
+	savingOriginAddress: { type: Boolean, default: false },
+	savingDestAddress: { type: Boolean, default: false },
 });
 
 const emit = defineEmits([
-	"update:delivery-mode", "save-address", "load-saved-configs", "apply-config",
-	"toggle-address-selector", "apply-saved-address", "focus-form-error",
-	"open-auth-modal", "pudo-selected", "pudo-deselected",
+	'update:delivery-mode',
+	'save-address',
+	'toggle-address-selector',
+	'apply-saved-address',
+	'open-auth-modal',
+	'pudo-selected',
+	'pudo-deselected',
 ]);
 
-const defaultDropdownRef = defineModel("defaultDropdownRef", { type: Object });
-const destDefaultDropdownRef = defineModel("destDefaultDropdownRef", { type: Object });
-const originSelectorRef = defineModel("originSelectorRef", { type: Object });
-const destSelectorRef = defineModel("destSelectorRef", { type: Object });
+const originSelectorRef = defineModel('originSelectorRef', { type: Object });
+const destSelectorRef = defineModel('destSelectorRef', { type: Object });
 
-const originToolbarComp = ref(null);
-const destToolbarComp = ref(null);
+const originSelectorShellRef = ref(null);
+const destSelectorShellRef = ref(null);
 
-watch(originToolbarComp, (comp) => {
-	if (!comp) return;
-	defaultDropdownRef.value = comp.configDropdownRef;
-	originSelectorRef.value = comp.addressSelectorRef;
-});
-watch(destToolbarComp, (comp) => {
-	if (!comp) return;
-	destDefaultDropdownRef.value = comp.configDropdownRef;
-	destSelectorRef.value = comp.addressSelectorRef;
-});
+watch(
+	originSelectorShellRef,
+	(el) => {
+		originSelectorRef.value = el ?? null;
+	},
+	{ immediate: true },
+);
 
-/* Shared address form fields props (avoids duplication in template) */
+watch(
+	destSelectorShellRef,
+	(el) => {
+		destSelectorRef.value = el ?? null;
+	},
+	{ immediate: true },
+);
+
 const sharedFieldProps = {
-	fieldClass: props.fieldClass, getFieldError: props.getFieldError,
-	fieldErrorText: props.fieldErrorText, getFieldAssist: props.getFieldAssist,
-	applyFieldAssist: props.applyFieldAssist, smartBlur: props.smartBlur,
-	onNameInput: props.onNameInput, onCityInput: props.onCityInput,
-	onCityFocus: props.onCityFocus, onProvinciaInput: props.onProvinciaInput,
-	onProvinceFocus: props.onProvinceFocus, onCapInput: props.onCapInput,
-	onCapFocus: props.onCapFocus, onTelefonoInput: props.onTelefonoInput,
-	selectCity: props.selectCity, selectProvincia: props.selectProvincia,
-	selectCap: props.selectCap, formatCitySuggestionLabel: props.formatCitySuggestionLabel,
-	formatCapSuggestionLabel: props.formatCapSuggestionLabel, sv: props.sv,
+	fieldClass: props.fieldClass,
+	getFieldError: props.getFieldError,
+	fieldErrorText: props.fieldErrorText,
+	getFieldAssist: props.getFieldAssist,
+	applyFieldAssist: props.applyFieldAssist,
+	smartBlur: props.smartBlur,
+	onNameInput: props.onNameInput,
+	onCityInput: props.onCityInput,
+	onCityFocus: props.onCityFocus,
+	onProvinciaInput: props.onProvinciaInput,
+	onProvinceFocus: props.onProvinceFocus,
+	onCapInput: props.onCapInput,
+	onCapFocus: props.onCapFocus,
+	onTelefonoInput: props.onTelefonoInput,
+	selectCity: props.selectCity,
+	selectProvincia: props.selectProvincia,
+	selectCap: props.selectCap,
+	formatCitySuggestionLabel: props.formatCitySuggestionLabel,
+	formatCapSuggestionLabel: props.formatCapSuggestionLabel,
+	sv: props.sv,
 };
+
+const openAddressBook = (target) => {
+	if (!props.isAuthenticated) {
+		emit('open-auth-modal', 'login');
+		return;
+	}
+
+	emit('toggle-address-selector', target);
+};
+
+const applyAddressBookEntry = (address, target) => {
+	emit('apply-saved-address', address, target);
+};
+
+const activeCard = ref('origin');
+const selectedPudoName = computed(() => String(props.selectedPudo?.name || '').trim());
+const selectedPudoAddress = computed(() =>
+	[
+		String(props.selectedPudo?.address || '').trim(),
+		[props.selectedPudo?.zip_code, props.selectedPudo?.city].filter(Boolean).join(' ').trim(),
+	]
+		.filter(Boolean)
+		.join(' · '),
+);
+
+watch(
+	() => props.isOpen,
+	(isOpen) => {
+		if (isOpen && activeCard.value !== 'origin' && activeCard.value !== 'dest') {
+			activeCard.value = 'origin';
+		}
+	},
+	{ immediate: true },
+);
+
+watch(
+	() => props.deliveryMode,
+	(mode) => {
+		if (mode === 'pudo') {
+			activeCard.value = 'dest';
+		}
+	},
+);
+
+const setActiveCard = (card) => {
+	activeCard.value = card;
+};
+
+const isOriginActive = computed(() => activeCard.value === 'origin');
+const isDestActive = computed(() => activeCard.value === 'dest');
+
+const compactAddressLine = (address, fallback) => {
+	const line = [String(address?.address || '').trim(), String(address?.address_number || '').trim()].filter(Boolean).join(' ');
+	const location = [String(address?.postal_code || '').trim(), String(address?.city || '').trim()].filter(Boolean).join(' ');
+	if (!line || !location) {
+		return location || line || fallback;
+	}
+
+	return [location, line].filter(Boolean).join(' · ') || fallback;
+};
+
+const originSummaryLine = computed(() => compactAddressLine(props.originAddress, ''));
+
+const destSummaryLine = computed(() => {
+	if (props.deliveryMode === 'pudo') {
+		return selectedPudoName.value || selectedPudoAddress.value || 'Punto BRT';
+	}
+
+	return compactAddressLine(props.destinationAddress, '');
+});
 </script>
 
 <template>
-	<div class="address-stage-shell sf-section-block">
-		<div class="address-stage-banner flow-section-header flow-section-header--addresses sf-section-block__header">
-			<div class="address-stage-banner__copy flow-section-header__copy">
-				<h3 class="address-stage-banner__title flow-section-header__title sf-section-title">Indirizzi</h3>
+	<div v-if="isOpen" class="address-stage-shell sf-section-block">
+		<div class="address-stage-shell__header sf-section-block__header">
+			<div class="address-stage-shell__header-copy">
+				<h2 class="sf-section-title">Partenza e destinazione</h2>
+				<p class="flow-section-header__text">Compila i riferimenti essenziali e scegli come consegnare prima del riepilogo.</p>
 			</div>
+			<span class="sf-section-chip">{{ deliveryMode === 'pudo' ? 'PUDO' : 'Domicilio' }}</span>
 		</div>
-
 		<div class="address-stage-shell__content sf-section-block__body">
-			<!-- Error summary -->
-			<div v-if="showGlobalFormSummary" class="ux-alert ux-alert--soft mt-[18px]">
-				<svg xmlns="http://www.w3.org/2000/svg" class="ux-alert__icon" viewBox="0 0 24 24"><path fill="currentColor" d="M11 15h2v2h-2zm0-8h2v6h-2z"/><path fill="currentColor" d="M1 21h22L12 2zm12-3h-2v-2h2zm0-4h-2V8h2z"/></svg>
-				<div class="min-w-0">
-					<span class="ux-alert__title">Controlliamo insieme questi campi</span>
-					<ul class="mt-[6px] space-y-[4px]">
-						<li v-for="errorItem in formErrorSummary" :key="errorItem.key">
-							<button type="button" class="text-left text-[0.8125rem] text-[#7A5A2C] underline decoration-[#D7B078] hover:decoration-[#B8823B] cursor-pointer" @click="$emit('focus-form-error', errorItem)">{{ errorItem.label }}: {{ errorItem.message }}</button>
-						</li>
-					</ul>
-				</div>
-			</div>
+			<div class="address-stage-grid">
+				<div
+					class="address-entry-card"
+					:class="{ 'address-entry-card--active': isOriginActive, 'address-entry-card--compact': !isOriginActive }"
+					:role="!isOriginActive ? 'button' : null"
+					:tabindex="!isOriginActive ? 0 : null"
+					:aria-expanded="isOriginActive ? 'true' : 'false'"
+					@click="!isOriginActive && setActiveCard('origin')"
+					@keydown.enter.prevent="!isOriginActive && setActiveCard('origin')"
+					@keydown.space.prevent="!isOriginActive && setActiveCard('origin')">
+					<div class="address-entry-card__head">
+						<div class="address-entry-card__title-stack">
+							<h2 class="address-entry-card__title">Partenza</h2>
+						</div>
+						<div
+							v-if="isOriginActive && (canSaveOriginAddress || (isAuthenticated && savedAddresses.length > 0))"
+							ref="originSelectorShellRef"
+							class="address-entry-card__actions">
+							<button
+								v-if="!canSaveOriginAddress && isAuthenticated && savedAddresses.length > 0"
+								type="button"
+								class="address-entry-card__link-action btn-secondary btn-compact"
+								@click.stop="openAddressBook('origin')">
+								Rubrica
+							</button>
+							<button
+								v-if="canSaveOriginAddress"
+								type="button"
+								class="address-entry-card__link-action btn-cta btn-compact"
+								:disabled="savingOriginAddress"
+								@click.stop="$emit('save-address', 'origin')">
+								{{ savingOriginAddress ? 'Salvataggio...' : 'Salva' }}
+							</button>
 
-			<!-- PARTENZA -->
-			<div class="address-entry-card address-entry-card--origin">
-				<div class="address-entry-card__head">
-					<div class="address-entry-card__title-row">
-						<h2 class="address-entry-card__title">Partenza</h2>
-						<button v-if="canSaveOriginAddress" type="button" @click="$emit('save-address', 'origin')" :disabled="savingOriginAddress" class="address-entry-card__save" title="Salva indirizzo" aria-label="Salva indirizzo partenza">
-							<svg v-if="!savingOriginAddress" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
-							<svg v-else class="animate-spin" width="14" height="14" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" opacity=".25"/><path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg>
-						</button>
-						<span v-if="originSaveSuccess" class="address-entry-card__saved">
-							<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-							Salvato
-						</span>
+							<div v-if="showOriginAddressSelector && isAuthenticated" class="address-stage-menu address-stage-menu--card">
+								<div v-if="loadingSavedAddresses" class="address-stage-menu__empty-text">Caricamento in corso...</div>
+								<div v-else-if="savedAddresses.length > 0" class="address-stage-menu__list">
+									<button
+										v-for="address in savedAddresses"
+										:key="`origin-address-${address.id}`"
+										type="button"
+										class="address-stage-menu__item"
+										@click="applyAddressBookEntry(address, 'origin')">
+										<span class="address-stage-menu__route">{{ address.name }}</span>
+										<span class="address-stage-menu__meta">{{ address.city }}</span>
+									</button>
+								</div>
+								<div v-else class="address-stage-menu__empty">
+									<p class="address-stage-menu__empty-text">Rubrica vuota.</p>
+									<NuxtLink to="/account/indirizzi" class="address-stage-menu__link btn-secondary btn-compact">Rubrica</NuxtLink>
+								</div>
+							</div>
+						</div>
 					</div>
-					<ShipmentAddressToolbar ref="originToolbarComp" type="origin" :is-authenticated="isAuthenticated" :saved-configs="savedConfigs" :loading-configs="loadingConfigs" :show-config-dropdown="showDefaultDropdown && showDefaultDropdownTarget === 'origin'" :show-config-guest-prompt="showOriginConfigGuestPrompt" :saved-addresses="savedAddresses" :loading-saved-addresses="loadingSavedAddresses" :show-address-selector="showOriginAddressSelector" :show-guest-prompt="showOriginGuestPrompt" @load-saved-configs="$emit('load-saved-configs', $event)" @apply-config="$emit('apply-config', $event, 'both')" @toggle-address-selector="$emit('toggle-address-selector', $event)" @apply-saved-address="(addr, t) => $emit('apply-saved-address', addr, t)" @open-auth-modal="$emit('open-auth-modal', $event)" />
-				</div>
-				<div v-if="originSectionHint" class="ux-alert ux-alert--soft mb-[12px]">
-					<svg xmlns="http://www.w3.org/2000/svg" class="ux-alert__icon" viewBox="0 0 24 24"><path fill="currentColor" d="M11 15h2v2h-2zm0-8h2v6h-2z"/><path fill="currentColor" d="M1 21h22L12 2z"/></svg>
-					<span>{{ originSectionHint }}</span>
-				</div>
-				<ShipmentAddressFormFields type="origin" :address="originAddress" v-bind="sharedFieldProps" :city-suggestions="originCitySuggestions" :province-suggestions="originProvinceSuggestions" :cap-suggestions="originCapSuggestions" />
-			</div>
 
-			<!-- PUDO toggle + selector -->
-			<ShipmentAddressPudoSection :delivery-mode="deliveryMode" :destination-address="destinationAddress" :selected-pudo="selectedPudo" @update:delivery-mode="$emit('update:delivery-mode', $event)" @pudo-selected="$emit('pudo-selected', $event)" @pudo-deselected="$emit('pudo-deselected')" />
-
-			<!-- DESTINAZIONE -->
-			<div class="address-entry-card address-entry-card--destination">
-				<div class="address-entry-card__head">
-					<div class="address-entry-card__title-row">
-						<h2 class="address-entry-card__title">{{ deliveryMode === 'pudo' ? 'Destinazione (Punto BRT)' : 'Destinazione' }}</h2>
-						<button v-if="canSaveDestAddress && deliveryMode !== 'pudo'" type="button" @click="$emit('save-address', 'dest')" :disabled="savingDestAddress" class="address-entry-card__save" title="Salva indirizzo" aria-label="Salva indirizzo destinazione">
-							<svg v-if="!savingDestAddress" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
-							<svg v-else class="animate-spin" width="14" height="14" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" opacity=".25"/><path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg>
-						</button>
-						<span v-if="destSaveSuccess" class="address-entry-card__saved">
-							<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-							Salvato
-						</span>
+					<div v-if="!isOriginActive" class="address-entry-card__summary">
+						<p class="address-entry-card__summary-line" :class="{ 'address-entry-card__summary-line--placeholder': !originSummaryLine }">
+							{{ originSummaryLine || 'Apri e completa' }}
+						</p>
 					</div>
-					<ShipmentAddressToolbar ref="destToolbarComp" type="dest" :is-authenticated="isAuthenticated" :saved-configs="savedConfigs" :loading-configs="loadingConfigs" :show-config-dropdown="showDefaultDropdown && showDefaultDropdownTarget === 'dest'" :show-config-guest-prompt="showDestConfigGuestPrompt" :saved-addresses="savedAddresses" :loading-saved-addresses="loadingSavedAddresses" :show-address-selector="showDestAddressSelector" :show-guest-prompt="showDestGuestPrompt" @load-saved-configs="$emit('load-saved-configs', $event)" @apply-config="$emit('apply-config', $event, 'both')" @toggle-address-selector="$emit('toggle-address-selector', $event)" @apply-saved-address="(addr, t) => $emit('apply-saved-address', addr, t)" @open-auth-modal="$emit('open-auth-modal', $event)" />
+
+					<ShipmentAddressFormFields
+						v-else
+						type="origin"
+						:address="originAddress"
+						v-bind="sharedFieldProps"
+						:city-suggestions="originCitySuggestions"
+						:province-suggestions="originProvinceSuggestions"
+						:cap-suggestions="originCapSuggestions" />
 				</div>
-				<div v-if="destinationSectionHint" class="ux-alert ux-alert--soft mb-[12px]">
-					<svg xmlns="http://www.w3.org/2000/svg" class="ux-alert__icon" viewBox="0 0 24 24"><path fill="currentColor" d="M11 15h2v2h-2zm0-8h2v6h-2z"/><path fill="currentColor" d="M1 21h22L12 2z"/></svg>
-					<span>{{ destinationSectionHint }}</span>
+
+				<div
+					class="address-entry-card"
+					:class="{ 'address-entry-card--active': isDestActive, 'address-entry-card--compact': !isDestActive }"
+					:role="!isDestActive ? 'button' : null"
+					:tabindex="!isDestActive ? 0 : null"
+					:aria-expanded="isDestActive ? 'true' : 'false'"
+					@click="!isDestActive && setActiveCard('dest')"
+					@keydown.enter.prevent="!isDestActive && setActiveCard('dest')"
+					@keydown.space.prevent="!isDestActive && setActiveCard('dest')">
+					<div class="address-entry-card__head">
+						<div class="address-entry-card__title-stack">
+							<h2 class="address-entry-card__title">Destinazione</h2>
+						</div>
+						<div
+							v-if="isDestActive && deliveryMode !== 'pudo' && (canSaveDestAddress || (isAuthenticated && savedAddresses.length > 0))"
+							ref="destSelectorShellRef"
+							class="address-entry-card__actions">
+							<button
+								v-if="!canSaveDestAddress && isAuthenticated && savedAddresses.length > 0"
+								type="button"
+								class="address-entry-card__link-action btn-secondary btn-compact"
+								@click.stop="openAddressBook('dest')">
+								Rubrica
+							</button>
+							<button
+								v-if="canSaveDestAddress"
+								type="button"
+								class="address-entry-card__link-action btn-cta btn-compact"
+								:disabled="savingDestAddress"
+								@click.stop="$emit('save-address', 'dest')">
+								{{ savingDestAddress ? 'Salvataggio...' : 'Salva' }}
+							</button>
+
+							<div v-if="showDestAddressSelector && isAuthenticated" class="address-stage-menu address-stage-menu--card">
+								<div v-if="loadingSavedAddresses" class="address-stage-menu__empty-text">Caricamento in corso...</div>
+								<div v-else-if="savedAddresses.length > 0" class="address-stage-menu__list">
+									<button
+										v-for="address in savedAddresses"
+										:key="`dest-address-${address.id}`"
+										type="button"
+										class="address-stage-menu__item"
+										@click="applyAddressBookEntry(address, 'dest')">
+										<span class="address-stage-menu__route">{{ address.name }}</span>
+										<span class="address-stage-menu__meta">{{ address.city }}</span>
+									</button>
+								</div>
+								<div v-else class="address-stage-menu__empty">
+									<p class="address-stage-menu__empty-text">Rubrica vuota.</p>
+									<NuxtLink to="/account/indirizzi" class="address-stage-menu__link btn-secondary btn-compact">Rubrica</NuxtLink>
+								</div>
+							</div>
+						</div>
+					</div>
+
+					<div v-if="!isDestActive" class="address-entry-card__summary">
+						<p class="address-entry-card__summary-line" :class="{ 'address-entry-card__summary-line--placeholder': !destSummaryLine }">
+							{{ destSummaryLine || 'Apri e completa' }}
+						</p>
+					</div>
+
+					<div v-if="isDestActive" class="address-entry-card__mode">
+						<ShipmentAddressPudoSection
+							:delivery-mode="deliveryMode"
+							:destination-address="destinationAddress"
+							:selected-pudo="selectedPudo"
+							@update:delivery-mode="$emit('update:delivery-mode', $event)"
+							@pudo-selected="$emit('pudo-selected', $event)"
+							@pudo-deselected="$emit('pudo-deselected')" />
+					</div>
+
+					<ShipmentAddressFormFields
+						v-if="isDestActive && deliveryMode !== 'pudo'"
+						type="dest"
+						:address="destinationAddress"
+						v-bind="sharedFieldProps"
+						:city-suggestions="destCitySuggestions"
+						:province-suggestions="destProvinceSuggestions"
+						:cap-suggestions="destCapSuggestions" />
 				</div>
-				<div v-if="deliveryMode === 'pudo' && selectedPudo" class="ux-alert ux-alert--info mb-[16px]">
-					<svg width="16" height="16" viewBox="0 0 24 24" class="ux-alert__icon" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
-					<span>Indirizzo compilato automaticamente dal Punto BRT selezionato.</span>
-				</div>
-				<div v-if="deliveryMode === 'pudo' && !selectedPudo" class="ux-alert ux-alert--soft mb-[16px]">
-					<svg width="16" height="16" viewBox="0 0 24 24" class="ux-alert__icon" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
-					<span>Seleziona un Punto BRT qui sopra per procedere.</span>
-				</div>
-				<div v-if="routeWarningMessage" class="ux-alert ux-alert--soft mb-[16px]">
-					<svg width="16" height="16" viewBox="0 0 24 24" class="ux-alert__icon" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v5"/><path d="M12 16h.01"/></svg>
-					<span>{{ routeWarningMessage }}</span>
-				</div>
-				<p v-if="deliveryMode === 'pudo'" class="text-[0.8125rem] text-[#4B5563] font-semibold mb-[10px]">Indirizzo di consegna bloccato dal Punto BRT selezionato</p>
-				<ShipmentAddressFormFields type="dest" :address="destinationAddress" v-bind="sharedFieldProps" :city-suggestions="destCitySuggestions" :province-suggestions="destProvinceSuggestions" :cap-suggestions="destCapSuggestions" :readonly="deliveryMode === 'pudo'" :pudo-note="deliveryMode === 'pudo' ? 'Inserisci il nome della persona che ritira il pacco, non il nome del Punto BRT.' : ''" />
 			</div>
 		</div>
 	</div>

@@ -85,7 +85,12 @@ class PriceBand extends Model
      */
     public function getEffectivePriceAttribute(): int
     {
-        return $this->discount_price ?? $this->base_price;
+        // discount_price must be > 0 to be a real discount.
+        // 0 means "not configured" — use base_price to avoid accidental free shipments.
+        if ($this->discount_price !== null && $this->discount_price > 0) {
+            return (int) $this->discount_price;
+        }
+        return (int) $this->base_price;
     }
 
     /**

@@ -1,117 +1,254 @@
 <!--
   FILE: components/account/AccountWalletMovements.vue
   SCOPO: Storico movimenti del portafoglio — lista cronologica con icona, fonte, importo.
-  PROPS: movements (Array), isLoadingMovements (Boolean).
+  PROPS: movements (Array), isLoadingMovements (Boolean), movementsError (String).
 -->
 <script setup>
-defineProps({
-  movements: { type: Array, default: () => [] },
-  isLoadingMovements: { type: Boolean, default: true },
+import { formatDateTimeIt } from '~/utils/date.js';
+
+const props = defineProps({
+	movements: { type: Array, default: () => [] },
+	isLoadingMovements: { type: Boolean, default: true },
+	movementsError: { type: String, default: '' },
 });
 
-const formatDate = (dateStr) => {
-  return new Date(dateStr).toLocaleDateString("it-IT", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-};
+const emit = defineEmits(['retry-movements']);
+
+const formatDate = (dateStr) => formatDateTimeIt(dateStr);
+
+const hasMovements = computed(() => props.movements?.length > 0);
+const hasBlockingError = computed(() => Boolean(props.movementsError) && !hasMovements.value);
+const countLabel = computed(() => {
+	if (props.isLoadingMovements && !hasMovements.value) return 'Caricamento';
+	if (hasBlockingError.value) return 'Da aggiornare';
+	if (!hasMovements.value) return 'Ancora nessuno';
+	return `${props.movements.length} ${props.movements.length === 1 ? 'movimento' : 'movimenti'}`;
+});
 
 const getMovementColor = (mov) => {
-  return mov.type === "credit" ? "text-[#095866]" : "text-[#b42318]";
+	return mov.type === 'credit' ? 'text-[#095866]' : 'text-[#B42318]';
 };
 
 const getMovementSign = (mov) => {
-  return mov.type === "credit" ? "+" : "-";
+	return mov.type === 'credit' ? '+' : '-';
 };
 
 const getSourceLabel = (source) => {
-  const labels = {
-    stripe: "Carta",
-    commission: "Commissione",
-    withdrawal: "Prelievo",
-    wallet: "Portafoglio",
-    refund: "Rimborso",
-  };
-  return labels[source] || source || "\u2014";
+	const labels = {
+		stripe: 'Carta',
+		commission: 'Commissione',
+		withdrawal: 'Prelievo',
+		wallet: 'Portafoglio',
+		refund: 'Rimborso',
+	};
+	return labels[source] || source || 'Operazione';
 };
 
 const getSourceColor = (source) => {
-  const colors = {
-    stripe: "bg-[#edf7f8] text-[#095866]",
-    commission: "bg-[#fff4e8] text-[#b45309]",
-    withdrawal: "bg-[#f5f7f8] text-[#4b5563]",
-    wallet: "bg-[#edf7f8] text-[#095866]",
-    refund: "bg-[#fef2f2] text-[#b42318]",
-  };
-  return colors[source] || "bg-gray-50 text-[#737373]";
+	const colors = {
+		stripe: 'bg-[#EDF7F8] text-[#095866]',
+		commission: 'bg-[#FFF4E8] text-[#B45309]',
+		withdrawal: 'bg-[#F5F7F8] text-[#4B5563]',
+		wallet: 'bg-[#EDF7F8] text-[#095866]',
+		refund: 'bg-[#FEF2F2] text-[#B42318]',
+	};
+	return colors[source] || 'bg-[#F5F7F8] text-[#737373]';
 };
 
-/* SVG icons per source: returns { viewBox, d } for the movement icon */
+const getMovementTitle = (mov) => {
+	if (mov.description) return mov.description;
+	if (mov.type === 'credit') return 'Entrata sul portafoglio';
+	return 'Uscita dal portafoglio';
+};
+
+/* SVG icons per source: returns path d for the movement icon */
 const getMovementSvg = (mov) => {
-  if (mov.source === "commission") return "M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zM6 20v-2a4 4 0 0 1 4-4h.5M16 16h2m0 0h2m-2 0v-2m0 2v2";
-  if (mov.source === "withdrawal") return "M3 6h18M3 12h18M3 18h18M17 6l3 3-3 3";
-  if (mov.source === "wallet") return "M21 18v1a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v1";
-  if (mov.source === "refund") return "M3 10h4l3 8 4-16 3 8h4";
-  if (mov.source === "stripe") {
-    return mov.type === "credit"
-      ? "M1 4h22v16H1zM1 10h22M12 14h4"
-      : "M1 4h22v16H1zM1 10h22M10 14h4";
-  }
-  return "M7 16V4m0 0L3 8m4-4 4 4M17 8v12m0 0 4-4m-4 4-4-4";
+	if (mov.source === 'commission')
+		return 'M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zM6 20v-2a4 4 0 0 1 4-4h.5M16 16h2m0 0h2m-2 0v-2m0 2v2';
+	if (mov.source === 'withdrawal') return 'M3 6h18M3 12h18M3 18h18M17 6l3 3-3 3';
+	if (mov.source === 'wallet') return 'M21 18v1a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v1';
+	if (mov.source === 'refund') return 'M3 10h4l3 8 4-16 3 8h4';
+	if (mov.source === 'stripe') {
+		return mov.type === 'credit' ? 'M1 4h22v16H1zM1 10h22M12 14h4' : 'M1 4h22v16H1zM1 10h22M10 14h4';
+	}
+	return 'M7 16V4m0 0L3 8m4-4 4 4M17 8v12m0 0 4-4m-4 4-4-4';
 };
 </script>
 
 <template>
-  <div class="mt-[20px] rounded-[20px] border border-[#E9EBEC] bg-white p-[16px] shadow-sm desktop:mt-[24px] desktop:p-[24px]">
-    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-[10px] sm:gap-[14px] mb-[14px] desktop:mb-[18px]">
-      <div class="flex items-center gap-[12px]">
-        <div class="w-[36px] h-[36px] rounded-[50px] bg-[#edf7f8] flex items-center justify-center">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-[#095866]"><path d="M12 8v4l3 3"/><circle cx="12" cy="12" r="10"/></svg>
-        </div>
-        <h2 class="text-[1rem] font-bold text-[#252B42]">Movimenti</h2>
-      </div>
-      <span v-if="movements?.length" class="text-[0.8125rem] text-[#737373] bg-[#F0F0F0] px-[10px] py-[4px] rounded-full">
-        {{ movements.length }} {{ movements.length === 1 ? 'movimento' : 'movimenti' }}
-      </span>
-    </div>
+	<div class="mt-[20px] rounded-[20px] border border-[#E9EBEC] bg-white p-[16px] shadow-sm desktop:mt-[24px] desktop:p-[24px]">
+		<div class="mb-[14px] flex flex-col gap-[10px] sm:flex-row sm:items-start sm:justify-between desktop:mb-[18px]">
+			<div class="flex items-start gap-[12px]">
+				<div class="flex h-[36px] w-[36px] items-center justify-center rounded-[50px] bg-[#EDF7F8]">
+					<svg
+						width="20"
+						height="20"
+						viewBox="0 0 24 24"
+						fill="none"
+						stroke="currentColor"
+						stroke-width="2"
+						stroke-linecap="round"
+						stroke-linejoin="round"
+						class="text-[#095866]">
+						<path d="M12 8v4l3 3" />
+						<circle cx="12" cy="12" r="10" />
+					</svg>
+				</div>
 
-    <div v-if="isLoadingMovements" class="py-[24px] flex justify-center">
-      <div class="w-[30px] h-[30px] border-3 border-[#E9EBEC] border-t-[#095866] rounded-full animate-spin"></div>
-    </div>
+				<div>
+					<h2 class="text-[1rem] font-bold text-[#252B42]">Movimenti</h2>
+					<p class="mt-[4px] text-[0.8125rem] leading-[1.5] text-[#667281]">
+						Ricariche, pagamenti, rimborsi e commissioni in ordine cronologico.
+					</p>
+				</div>
+			</div>
 
-    <div v-else-if="!movements?.length" class="text-center py-[32px]">
-      <div class="w-[56px] h-[56px] mx-auto mb-[14px] rounded-full bg-[#F8F9FB] flex items-center justify-center">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-[#C8CCD0]"><path d="M4 4h16v16H4z"/><path d="M4 10h16"/><path d="M10 4v16"/></svg>
-      </div>
-      <p class="text-[0.9375rem] font-medium text-[#252B42]">Nessun movimento</p>
-      <p class="text-[0.8125rem] text-[#737373] mt-[6px] max-w-[360px] mx-auto leading-[1.55]">I movimenti appariranno qui dopo la prima ricarica o il primo pagamento con il portafoglio.</p>
-      <NuxtLink to="/preventivo" class="inline-flex items-center gap-[6px] mt-[16px] px-[20px] py-[10px] bg-[#095866] hover:bg-[#074a56] text-white rounded-[50px] font-semibold text-[0.875rem] transition-colors">
-        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-        Crea la tua prima spedizione
-      </NuxtLink>
-    </div>
+			<span class="inline-flex w-fit items-center rounded-full bg-[#F8F9FB] px-[10px] py-[5px] text-[0.75rem] font-semibold text-[#4B5563]">
+				{{ countLabel }}
+			</span>
+		</div>
 
-    <ul v-else class="space-y-[8px]">
-      <li v-for="mov in movements" :key="mov.id" class="flex flex-col sm:flex-row sm:items-center gap-[10px] sm:gap-[12px] p-[12px] rounded-[14px] border border-[#EEF1F3] hover:bg-[#F8F9FB] transition-colors">
-        <div :class="['w-[38px] h-[38px] rounded-[50px] flex items-center justify-center shrink-0', mov.type === 'credit' ? 'bg-[#edf7f8]' : 'bg-[#fef2f2]']">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" :class="mov.type === 'credit' ? 'text-[#095866]' : 'text-[#b42318]'">
-            <path :d="getMovementSvg(mov)" />
-          </svg>
-        </div>
-        <div class="flex-1 min-w-0">
-          <p class="text-[0.875rem] font-medium text-[#252B42] truncate">{{ mov.description }}</p>
-          <div class="flex items-center gap-[8px] mt-[4px]">
-            <span class="text-[0.75rem] text-[#737373]">{{ formatDate(mov.created_at) }}</span>
-            <span :class="['text-[0.6875rem] px-[8px] py-[2px] rounded-full font-medium', getSourceColor(mov.source)]">{{ getSourceLabel(mov.source) }}</span>
-          </div>
-        </div>
-        <span :class="['text-[0.9375rem] font-bold tabular-nums whitespace-nowrap self-start sm:self-auto', getMovementColor(mov)]">
-          {{ getMovementSign(mov) }}&euro;{{ formatEuro(mov.amount) }}
-        </span>
-      </li>
-    </ul>
-  </div>
+		<div
+			v-if="movementsError && hasMovements"
+			class="mb-[14px] flex flex-col gap-[10px] rounded-[14px] border border-[#F3D1A7] bg-[#FFF7E8] px-[12px] py-[11px] text-[0.8125rem] text-[#B45309] tablet:flex-row tablet:items-center tablet:justify-between">
+			<p class="leading-[1.5]">Non sono riuscito ad aggiornare tutto lo storico in tempo reale. Ti mostro l ultimo elenco disponibile.</p>
+			<button
+				type="button"
+				@click="emit('retry-movements')"
+				class="btn-secondary btn-compact inline-flex items-center justify-center whitespace-nowrap">
+				Riprova storico
+			</button>
+		</div>
+
+		<div v-if="isLoadingMovements && !hasMovements" class="space-y-[10px] py-[4px]">
+			<div v-for="index in 4" :key="index" class="animate-pulse rounded-[14px] border border-[#EEF1F3] p-[12px]">
+				<div class="flex items-start gap-[12px]">
+					<div class="h-[38px] w-[38px] rounded-full bg-[#F5F7F8]"></div>
+					<div class="min-w-0 flex-1 space-y-[8px]">
+						<div class="h-[14px] w-[220px] max-w-full rounded-full bg-[#E9EBEC]"></div>
+						<div class="h-[12px] w-[160px] rounded-full bg-[#F0F0F0]"></div>
+					</div>
+					<div class="h-[14px] w-[74px] rounded-full bg-[#E9EBEC]"></div>
+				</div>
+			</div>
+		</div>
+
+		<div v-else-if="hasBlockingError" class="py-[32px] text-center">
+			<div class="mx-auto mb-[14px] flex h-[56px] w-[56px] items-center justify-center rounded-full bg-[#FEF2F2]">
+				<svg
+					width="24"
+					height="24"
+					viewBox="0 0 24 24"
+					fill="none"
+					stroke="currentColor"
+					stroke-width="2"
+					stroke-linecap="round"
+					stroke-linejoin="round"
+					class="text-[#B42318]">
+					<circle cx="12" cy="12" r="10" />
+					<line x1="12" y1="8" x2="12" y2="12" />
+					<line x1="12" y1="16" x2="12.01" y2="16" />
+				</svg>
+			</div>
+			<p class="text-[0.9375rem] font-medium text-[#252B42]">Storico non disponibile</p>
+			<p class="mx-auto mt-[6px] max-w-[420px] text-[0.8125rem] leading-[1.55] text-[#667281]">
+				{{ movementsError }}
+			</p>
+			<button type="button" @click="emit('retry-movements')" class="btn-secondary btn-compact mt-[16px] inline-flex items-center gap-[6px]">
+				<svg
+					width="16"
+					height="16"
+					viewBox="0 0 24 24"
+					fill="none"
+					stroke="currentColor"
+					stroke-width="2"
+					stroke-linecap="round"
+					stroke-linejoin="round">
+					<path d="M21 2v6h-6" />
+					<path d="M3 12a9 9 0 0 1 15-6.7L21 8" />
+					<path d="M3 22v-6h6" />
+					<path d="M21 12a9 9 0 0 1-15 6.7L3 16" />
+				</svg>
+				Riprova storico
+			</button>
+		</div>
+
+		<div v-else-if="!hasMovements" class="py-[32px] text-center">
+			<div class="mx-auto mb-[14px] flex h-[56px] w-[56px] items-center justify-center rounded-full bg-[#F8F9FB]">
+				<svg
+					width="24"
+					height="24"
+					viewBox="0 0 24 24"
+					fill="none"
+					stroke="currentColor"
+					stroke-width="2"
+					stroke-linecap="round"
+					stroke-linejoin="round"
+					class="text-[#C8CCD0]">
+					<path d="M4 4h16v16H4z" />
+					<path d="M4 10h16" />
+					<path d="M10 4v16" />
+				</svg>
+			</div>
+			<p class="text-[0.9375rem] font-medium text-[#252B42]">Nessun movimento</p>
+			<p class="mx-auto mt-[6px] max-w-[360px] text-[0.8125rem] leading-[1.55] text-[#667281]">
+				I movimenti appariranno qui dopo la prima ricarica o il primo pagamento con il portafoglio.
+			</p>
+			<NuxtLink to="/preventivo" class="btn-cta btn-compact mt-[16px] inline-flex items-center gap-[6px]">
+				<svg
+					width="17"
+					height="17"
+					viewBox="0 0 24 24"
+					fill="none"
+					stroke="currentColor"
+					stroke-width="2"
+					stroke-linecap="round"
+					stroke-linejoin="round">
+					<line x1="12" y1="5" x2="12" y2="19" />
+					<line x1="5" y1="12" x2="19" y2="12" />
+				</svg>
+				Crea la tua prima spedizione
+			</NuxtLink>
+		</div>
+
+		<ul v-else class="space-y-[8px]">
+			<li
+				v-for="(mov, index) in movements"
+				:key="mov.id || `${mov.created_at || 'mov'}-${index}`"
+				class="flex flex-col gap-[10px] rounded-[14px] border border-[#EEF1F3] p-[12px] transition-colors hover:bg-[#F8F9FB] sm:flex-row sm:items-center sm:gap-[12px]">
+				<div
+					:class="[
+						'flex h-[38px] w-[38px] items-center justify-center rounded-[50px] shrink-0',
+						mov.type === 'credit' ? 'bg-[#EDF7F8]' : 'bg-[#FEF2F2]',
+					]">
+					<svg
+						width="18"
+						height="18"
+						viewBox="0 0 24 24"
+						fill="none"
+						stroke="currentColor"
+						stroke-width="2"
+						stroke-linecap="round"
+						stroke-linejoin="round"
+						:class="mov.type === 'credit' ? 'text-[#095866]' : 'text-[#B42318]'">
+						<path :d="getMovementSvg(mov)" />
+					</svg>
+				</div>
+
+				<div class="min-w-0 flex-1">
+					<p class="truncate text-[0.875rem] font-medium text-[#252B42]">{{ getMovementTitle(mov) }}</p>
+					<div class="mt-[4px] flex flex-wrap items-center gap-[8px]">
+						<span class="text-[0.75rem] text-[#737373]">{{ formatDate(mov.created_at) }}</span>
+						<span :class="['rounded-full px-[8px] py-[2px] text-[0.6875rem] font-medium', getSourceColor(mov.source)]">
+							{{ getSourceLabel(mov.source) }}
+						</span>
+					</div>
+				</div>
+
+				<span :class="['self-start whitespace-nowrap text-[0.9375rem] font-bold tabular-nums sm:self-auto', getMovementColor(mov)]">
+					{{ getMovementSign(mov) }}&euro;{{ formatEuro(mov.amount) }}
+				</span>
+			</li>
+		</ul>
+	</div>
 </template>

@@ -1,63 +1,71 @@
+import { DEFAULT_PICKUP_TIME_SLOT, normalizePickupRequestDate } from '~/composables/useShipmentStepSessionPersistence';
+
 const DEFAULT_SHIPMENT_SERVICES = [
 	{
-		key: "senza_etichetta",
-		img: "no-label.png",
+		key: 'senza_etichetta',
+		img: 'no-label.png',
 		width: 78,
 		height: 51,
-		name: "Spedizione Senza etichetta",
-		description: "Etichetta applicata al ritiro.",
+		name: 'Senza etichetta',
+		description: 'Niente stampante? Il corriere pensa a tutto lui.',
 		isSelected: false,
 		featured: true,
 	},
 	{
-		key: "contrassegno",
-		img: "cash-on-delivery.png",
+		key: 'contrassegno',
+		img: 'cash-on-delivery.png',
 		width: 28,
 		height: 24,
-		name: "Contrassegno",
-		description: "Incasso automatico alla consegna.",
-		priceLabel: "",
-		statusLabel: "Incasso",
+		name: 'Contrassegno',
+		description: 'Incasso alla consegna.',
+		priceLabel: '',
+		statusLabel: 'Da configurare',
 		isSelected: false,
 		hasDetails: true,
 	},
 	{
-		key: "assicurazione",
-		img: "insurance.png",
+		key: 'assicurazione',
+		img: 'insurance.png',
 		width: 24,
 		height: 24,
-		name: "Assicurazione",
-		description: "Copertura sul valore del collo.",
-		priceLabel: "",
-		statusLabel: "Copertura",
+		name: 'Assicurazione',
+		description: 'Copertura completa.',
+		priceLabel: '',
+		statusLabel: 'Copertura completa',
 		isSelected: false,
 		hasDetails: true,
 	},
 	{
-		key: "sponda_idraulica",
-		img: "tail-lift.png",
+		key: 'sponda_idraulica',
+		img: 'tail-lift.png',
 		width: 24,
 		height: 24,
-		name: "Sponda idraulica",
-		description: "Pedana per colli pesanti.",
-		priceLabel: "",
-		statusLabel: "Colli pesanti",
+		name: 'Sponda idraulica',
+		description: 'Per colli pesanti.',
+		priceLabel: '',
+		statusLabel: 'Per colli pesanti',
 		isSelected: false,
 	},
 ];
 
 const createDefaultServiceData = () => ({
 	contrassegno: {
-		importo: "",
-		modalita_incasso: "",
-		modalita_rimborso: "",
-		dettaglio_rimborso: "",
+		importo: '',
+		modalita_incasso: '',
+		modalita_rimborso: '',
+		dettaglio_rimborso: '',
 	},
 	assicurazione: {},
 	sponda_idraulica: {
-		note: "",
+		note: '',
 	},
-	telefono_notifica: "",
+	pickup_request: {
+		enabled: false,
+		date: '',
+		time_slot: DEFAULT_PICKUP_TIME_SLOT,
+		notes: '',
+	},
+	telefono_notifica: '',
 });
 
 const createMergedServiceData = (storedData = {}) => {
@@ -76,13 +84,17 @@ const createMergedServiceData = (storedData = {}) => {
 			...base.sponda_idraulica,
 			...(storedData.sponda_idraulica || {}),
 		},
-		telefono_notifica: storedData.telefono_notifica || "",
+		pickup_request: {
+			...base.pickup_request,
+			...(storedData.pickup_request || {}),
+		},
+		telefono_notifica: storedData.telefono_notifica || '',
 	};
 };
 
-const EURO_FORMATTER = new Intl.NumberFormat("it-IT", {
-	style: "currency",
-	currency: "EUR",
+const EURO_FORMATTER = new Intl.NumberFormat('it-IT', {
+	style: 'currency',
+	currency: 'EUR',
 	minimumFractionDigits: 2,
 	maximumFractionDigits: 2,
 });
@@ -95,25 +107,20 @@ const formatCurrencyCents = (cents, { withPlus = false } = {}) => {
 
 const formatPercentageLabel = (value) => {
 	const number = Number(value || 0);
-	return Number.isInteger(number) ? String(number) : number.toLocaleString("it-IT");
+	return Number.isInteger(number) ? String(number) : number.toLocaleString('it-IT');
 };
 
-export const useShipmentStepServices = ({
-	userStore,
-	dateError,
-}) => {
+export const useShipmentStepServices = ({ userStore, dateError }) => {
 	const pickupCalendarAnchor = useState('shipment-pickup-calendar-anchor', () => new Date().toISOString().slice(0, 10));
 	const { priceBands, loadPriceBands } = usePriceBands();
 	const services = ref({
-		service_type: "",
-		date: "",
-		time: "",
+		service_type: '',
+		date: '',
+		time: '',
 	});
 
-	const servicesList = ref(
-		DEFAULT_SHIPMENT_SERVICES.map((service) => ({ ...service })),
-	);
-	const expandedServiceKey = ref("");
+	const servicesList = ref(DEFAULT_SHIPMENT_SERVICES.map((service) => ({ ...service })));
+	const expandedServiceKey = ref('');
 	const serviceData = ref(createMergedServiceData(userStore.serviceData || {}));
 	const smsEmailNotification = ref(false);
 
@@ -123,37 +130,28 @@ export const useShipmentStepServices = ({
 		return Math.max(0, Math.round(Number(servicePricing.value?.senza_etichetta?.price_cents ?? 99)));
 	});
 
-	const featuredOldPriceCents = computed(() => Math.max(250, featuredCurrentPriceCents.value));
-
-	const featuredCurrentPriceLabel = computed(() => formatCurrencyCents(featuredCurrentPriceCents.value, { withPlus: true }));
-	const featuredOldPriceLabel = computed(() => formatCurrencyCents(featuredOldPriceCents.value));
-	const featuredSavingsLabel = computed(() => {
-		const savings = Math.max(0, featuredOldPriceCents.value - featuredCurrentPriceCents.value);
-		return savings > 0 ? `Risparmi ${formatCurrencyCents(savings)}` : "";
-	});
+	const featuredCurrentPriceLabel = computed(() => formatCurrencyCents(featuredCurrentPriceCents.value));
 
 	const notificationPriceLabel = computed(() => {
 		return formatCurrencyCents(servicePricing.value?.notifications?.price_cents ?? 50, { withPlus: true });
 	});
 
 	const getServicePriceLabel = (service) => {
-		if (service?.key === "contrassegno") {
+		if (service?.key === 'contrassegno') {
 			const rule = servicePricing.value?.contrassegno || {};
-			return `da ${formatCurrencyCents(rule.min_fee_cents ?? 700)} / ${formatPercentageLabel(rule.percentage_rate ?? 2)}%`;
+			return `da ${formatCurrencyCents(rule.min_fee_cents ?? 700)} + ${formatPercentageLabel(rule.percentage_rate ?? 2)}%`;
 		}
-		if (service?.key === "assicurazione") {
+		if (service?.key === 'assicurazione') {
 			const rule = servicePricing.value?.assicurazione || {};
-			return `da ${formatCurrencyCents(rule.min_fee_cents ?? 700)} / ${formatPercentageLabel(rule.percentage_rate ?? 2)}%`;
+			return `da ${formatCurrencyCents(rule.min_fee_cents ?? 700)} + ${formatPercentageLabel(rule.percentage_rate ?? 2)}%`;
 		}
-		if (service?.key === "sponda_idraulica") {
+		if (service?.key === 'sponda_idraulica') {
 			return formatCurrencyCents(servicePricing.value?.sponda_idraulica?.price_cents ?? 1500, { withPlus: true });
 		}
-		return service.priceLabel || "";
+		return service.priceLabel || '';
 	};
 
-	const findServiceByKey = (serviceKey) => (
-		servicesList.value.find((service) => service.key === serviceKey) || null
-	);
+	const findServiceByKey = (serviceKey) => servicesList.value.find((service) => service.key === serviceKey) || null;
 
 	const syncSelectedServicesVisual = () => {
 		servicesList.value.forEach((service) => {
@@ -173,10 +171,10 @@ export const useShipmentStepServices = ({
 		}
 
 		if (expandedServiceKey.value === service.key) {
-			expandedServiceKey.value = "";
+			expandedServiceKey.value = '';
 		}
 
-		services.value.service_type = userStore.servicesArray.join(", ");
+		services.value.service_type = userStore.servicesArray.join(', ');
 	};
 
 	const ensureServiceSelected = (service, serviceIndex) => {
@@ -189,7 +187,7 @@ export const useShipmentStepServices = ({
 			userStore.servicesArray.push(service.name);
 		}
 
-		services.value.service_type = userStore.servicesArray.join(", ");
+		services.value.service_type = userStore.servicesArray.join(', ');
 	};
 
 	const chooseService = (service, serviceIndex) => {
@@ -204,7 +202,7 @@ export const useShipmentStepServices = ({
 				userStore.servicesArray.push(service.name);
 			}
 
-			if (service.key === "sponda_idraulica") {
+			if (service.key === 'sponda_idraulica') {
 				userStore.serviceData = userStore.serviceData || {};
 				userStore.serviceData.sponda_idraulica = { ...serviceData.value.sponda_idraulica };
 			}
@@ -214,16 +212,16 @@ export const useShipmentStepServices = ({
 				userStore.servicesArray.splice(index, 1);
 			}
 			if (expandedServiceKey.value === service.key) {
-				expandedServiceKey.value = "";
+				expandedServiceKey.value = '';
 			}
 		}
 
-		services.value.service_type = userStore.servicesArray.join(", ");
+		services.value.service_type = userStore.servicesArray.join(', ');
 	};
 
 	const toggleServiceDetails = (service) => {
 		if (!service?.hasDetails) return;
-		expandedServiceKey.value = expandedServiceKey.value === service.key ? "" : service.key;
+		expandedServiceKey.value = expandedServiceKey.value === service.key ? '' : service.key;
 	};
 
 	const toggleServiceSelection = (service, serviceIndex) => {
@@ -243,30 +241,14 @@ export const useShipmentStepServices = ({
 
 		ensureServiceSelected(service, serviceIndex);
 		if (!service.hasDetails) {
-			expandedServiceKey.value = "";
-		}
-	};
-
-	const removeServiceFromSidebar = (idx) => {
-		const removed = userStore.servicesArray[idx];
-		userStore.servicesArray.splice(idx, 1);
-		services.value.service_type = userStore.servicesArray.join(", ");
-
-		const service = servicesList.value.find((item) => item.name === removed);
-		if (service) {
-			service.isSelected = false;
+			expandedServiceKey.value = '';
 		}
 	};
 
 	const chooseDate = (day) => {
-		const nextDate = day.formattedDate || day.date.toLocaleDateString("it-IT");
-		if (!services.value.date || services.value.date !== nextDate) {
-			services.value.date = nextDate;
-			dateError.value = null;
-			return;
-		}
-
-		services.value.date = "";
+		const nextDate = day.formattedDate || day.date.toLocaleDateString('it-IT');
+		services.value.date = nextDate;
+		dateError.value = null;
 	};
 
 	const daysInMonth = computed(() => {
@@ -281,11 +263,11 @@ export const useShipmentStepServices = ({
 				const date = new Date(targetYear, targetMonth, index);
 				const weekdayIndex = date.getDay();
 				const isWeekend = weekdayIndex === 0 || weekdayIndex === 6;
-				const weekday = date.toLocaleString("it-IT", { weekday: "short" });
+				const weekday = date.toLocaleString('it-IT', { weekday: 'short' });
 				const formattedWeekday = weekday.charAt(0).toUpperCase() + weekday.slice(1);
-				const monthAbbr = date.toLocaleString("it-IT", { month: "short" });
+				const monthAbbr = date.toLocaleString('it-IT', { month: 'short' });
 				const formattedMonthAbbr = monthAbbr.charAt(0).toUpperCase() + monthAbbr.slice(1);
-				const formattedDate = date.toLocaleDateString("it-IT");
+				const formattedDate = date.toLocaleDateString('it-IT');
 
 				if (isWeekend) continue;
 
@@ -314,25 +296,25 @@ export const useShipmentStepServices = ({
 		return {
 			...service,
 			currentPriceLabel: featuredCurrentPriceLabel.value,
-			oldPriceLabel: featuredOldPriceLabel.value,
-			savingsLabel: featuredSavingsLabel.value,
 		};
 	});
 
-	const regularServices = computed(() => servicesList.value
-		.filter((service) => !service.featured)
-		.map((service) => ({
-			...service,
-			priceLabel: getServicePriceLabel(service),
-		})));
+	const regularServices = computed(() =>
+		servicesList.value
+			.filter((service) => !service.featured)
+			.map((service) => ({
+				...service,
+				priceLabel: getServicePriceLabel(service),
+			})),
+	);
 
 	const resetServicesState = () => {
 		userStore.servicesArray = [];
-		services.value.service_type = "";
+		services.value.service_type = '';
 		smsEmailNotification.value = false;
 		serviceData.value = createMergedServiceData();
 		userStore.serviceData = createMergedServiceData();
-		expandedServiceKey.value = "";
+		expandedServiceKey.value = '';
 		syncSelectedServicesVisual();
 	};
 
@@ -340,8 +322,12 @@ export const useShipmentStepServices = ({
 		services.value.date = userStore.pickupDate;
 	}
 
+	if (!services.value.time && userStore.serviceData?.pickup_request?.time_slot) {
+		services.value.time = userStore.serviceData.pickup_request.time_slot;
+	}
+
 	if (userStore.servicesArray.length > 0) {
-		services.value.service_type = userStore.servicesArray.join(", ");
+		services.value.service_type = userStore.servicesArray.join(', ');
 		syncSelectedServicesVisual();
 	}
 
@@ -349,27 +335,69 @@ export const useShipmentStepServices = ({
 		smsEmailNotification.value = userStore.smsEmailNotification;
 	}
 
+	watch(
+		daysInMonth,
+		(availableDays) => {
+			if (!Array.isArray(availableDays) || availableDays.length === 0) return;
+
+			const hasSelectedDay = availableDays.some((day) => day.formattedDate === services.value.date);
+			if (hasSelectedDay) return;
+
+			chooseDate(availableDays[0]);
+		},
+		{ immediate: true },
+	);
+
 	onMounted(() => {
 		loadPriceBands().catch(() => {
 			// Warning already logged inside usePriceBands
 		});
 	});
 
+	const syncPickupRequestState = () => {
+		const pickupRequestDate = normalizePickupRequestDate(services.value.date || userStore.pickupDate || '');
+		const pickupTimeSlot =
+			String(services.value.time || serviceData.value?.pickup_request?.time_slot || DEFAULT_PICKUP_TIME_SLOT).trim() ||
+			DEFAULT_PICKUP_TIME_SLOT;
+		const currentPickupRequest = serviceData.value?.pickup_request || {};
+		const nextPickupRequest = {
+			enabled: Boolean(pickupRequestDate),
+			date: pickupRequestDate,
+			time_slot: pickupTimeSlot,
+			notes: String(currentPickupRequest.notes || '').trim(),
+		};
+
+		if (
+			currentPickupRequest.enabled !== nextPickupRequest.enabled ||
+			currentPickupRequest.date !== nextPickupRequest.date ||
+			currentPickupRequest.time_slot !== nextPickupRequest.time_slot ||
+			String(currentPickupRequest.notes || '') !== nextPickupRequest.notes
+		) {
+			serviceData.value.pickup_request = nextPickupRequest;
+		}
+
+		if (services.value.time !== pickupTimeSlot) {
+			services.value.time = pickupTimeSlot;
+		}
+	};
+
 	watch(
-		() => services.value.date,
-		(newDate) => {
-			const normalizedDate = newDate || "";
-			if (userStore.pickupDate !== normalizedDate) {
-				userStore.pickupDate = normalizedDate;
+		() => [services.value.date, services.value.time],
+		([newDate]) => {
+			const selectedDate = newDate || '';
+			if (userStore.pickupDate !== selectedDate) {
+				userStore.pickupDate = selectedDate;
 			}
 
 			const currentDetails = userStore.shipmentDetails || {};
-			if ((currentDetails.date || "") !== normalizedDate) {
+			if ((currentDetails.date || '') !== selectedDate) {
 				userStore.shipmentDetails = {
 					...currentDetails,
-					date: normalizedDate,
+					date: selectedDate,
 				};
 			}
+
+			syncPickupRequestState();
 		},
 		{ immediate: true },
 	);
@@ -389,7 +417,8 @@ export const useShipmentStepServices = ({
 				contrassegno: { ...(nextValue?.contrassegno || {}) },
 				assicurazione: { ...(nextValue?.assicurazione || {}) },
 				sponda_idraulica: { ...(nextValue?.sponda_idraulica || {}) },
-				telefono_notifica: nextValue?.telefono_notifica || "",
+				pickup_request: { ...(nextValue?.pickup_request || {}) },
+				telefono_notifica: nextValue?.telefono_notifica || '',
 			};
 		},
 		{ immediate: true, deep: true },
@@ -399,11 +428,11 @@ export const useShipmentStepServices = ({
 		() => [...userStore.servicesArray],
 		() => {
 			syncSelectedServicesVisual();
-			services.value.service_type = userStore.servicesArray.join(", ");
+			services.value.service_type = userStore.servicesArray.join(', ');
 			if (!expandedServiceKey.value) return;
 			const expandedService = findServiceByKey(expandedServiceKey.value);
 			if (!expandedService) {
-				expandedServiceKey.value = "";
+				expandedServiceKey.value = '';
 			}
 			if (expandedService?.isSelected === false) return;
 		},
@@ -418,7 +447,7 @@ export const useShipmentStepServices = ({
 		expandedServiceKey,
 		featuredService,
 		regularServices,
-		removeServiceFromSidebar,
+		removeService,
 		resetServicesState,
 		serviceData,
 		services,

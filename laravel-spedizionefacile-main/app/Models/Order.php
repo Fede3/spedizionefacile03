@@ -25,7 +25,8 @@
  *   - subtotal e' in centesimi (890 = 8,90 EUR), non in euro
  *   - brt_label_base64 e' un campo molto grande (PDF codificato), escluderlo dalle query per performance
  *   - Lo stato iniziale e' sempre "pending" (impostato nel boot)
- *   - Flusso stati: pending → processing → in_transit → delivered / completed
+ *   - Flusso stati: pending → processing → label_generated → in_transit → out_for_delivery → delivered
+ *   - Stati collaterali: returned, refused, in_giacenza, cancelled, refunded
  *   - in_transit: NON rimborsabile (spedizione gia' partita)
  *
  * ERRORI TIPICI:
@@ -75,6 +76,10 @@ class Order extends Model
         'status',                        // Stato dell'ordine (vedi costanti sotto)
         'user_id',                       // ID dell'utente che ha fatto l'ordine
         'subtotal',                      // Totale dell'ordine in centesimi
+        'client_submission_id',          // ID submission del client per retry/idempotenza
+        'pricing_signature',             // Firma del preventivo accettato
+        'pricing_snapshot_version',      // Versione dello snapshot prezzi
+        'pricing_snapshot',              // Snapshot prezzi/servizi accettato
         'brt_parcel_id',                 // ID del pacco nel sistema BRT (corriere)
         'brt_numeric_sender_reference',  // Riferimento numerico del mittente per BRT
         'brt_tracking_url',              // Link per seguire la spedizione sul sito BRT
@@ -103,18 +108,32 @@ class Order extends Model
         'payment_method',                // Metodo di pagamento originale (stripe, wallet, bonifico)
         'stripe_payment_intent_id',      // ID PaymentIntent Stripe per rimborsi
         'billing_data',                  // Snapshot dati di fatturazione scelti al checkout
+        'brt_last_tracking_check',       // Ultima volta che il tracking è stato sincronizzato
     ];
 
     // Converte automaticamente i campi nei tipi corretti
     protected $casts = [
+        'subtotal' => 'integer',             // Centesimi: 890 = 8,90 EUR
         'is_cod' => 'boolean',
-        'brt_all_labels' => 'array',     // Etichette individuali multi-collo (JSON)
-        'brt_raw_response' => 'array',  // Converte JSON in array PHP automaticamente
+        'cod_amount' => 'integer',           // Centesimi contrassegno
+        'refund_amount' => 'integer',        // Centesimi rimborsati
+        'cancellation_fee' => 'integer',     // Commissione annullamento in centesimi
+        'pricing_snapshot' => 'array',
+        'pricing_snapshot_version' => 'integer',
+        'brt_all_labels' => 'array',         // Etichette individuali multi-collo (JSON)
+        'brt_raw_response' => 'array',       // Converte JSON in array PHP automaticamente
         'billing_data' => 'array',
         'refunded_at' => 'datetime',
         'pickup_requested_at' => 'datetime',
         'documents_sent_customer_at' => 'datetime',
         'documents_sent_admin_at' => 'datetime',
+        'brt_last_tracking_check' => 'datetime',
+    ];
+
+    protected $hidden = [
+        'brt_label_base64',
+        'brt_raw_response',
+        'bordero_document_base64',
     ];
 
     // Questi sono gli stati possibili di un ordine:
@@ -124,13 +143,21 @@ class Order extends Model
 
     const PAYMENT_FAILED = 'payment_failed';  // Pagamento fallito - qualcosa e' andato storto col pagamento
 
-    const IN_TRANSIT = 'in_transit';          // In transito - etichetta BRT generata, spedizione in corso
+    const IN_TRANSIT = 'in_transit';          // In transito - pacco ritirato dal corriere, spedizione in corso
 
     const COMPLETED = 'completed';            // Completato - la spedizione e' stata conclusa
 
     const DELIVERED = 'delivered';            // Consegnato - il pacco e' stato consegnato
 
     const IN_GIACENZA = 'in_giacenza';        // In giacenza - il pacco e' in giacenza presso il corriere
+
+    const LABEL_GENERATED = 'label_generated'; // Etichetta generata - etichetta BRT creata ma pacco non ancora ritirato
+
+    const OUT_FOR_DELIVERY = 'out_for_delivery'; // In consegna - pacco in consegna ultimo miglio
+
+    const RETURNED = 'returned';              // Reso - pacco restituito al mittente
+
+    const REFUSED = 'refused';                // Rifiutato - pacco rifiutato dal destinatario
 
     const CANCELLED = 'cancelled';            // Annullato - l'ordine e' stato annullato dall'utente
 
@@ -150,12 +177,57 @@ class Order extends Model
             'payed' => 'Pagato',
             'cancelled' => 'Annullato',
             'refunded' => 'Rimborsato',
+            'label_generated' => 'Etichetta generata',
             'in_transit' => 'In transito',
+            'out_for_delivery' => 'In consegna',
             'delivered' => 'Consegnato',
             'in_giacenza' => 'In giacenza',
+            'returned' => 'Reso',
+            'refused' => 'Rifiutato',
         ];
 
         return $data[$status] ?? $status;
+    }
+
+    public function rawStatus(): string
+    {
+        return (string) $this->getRawOriginal('status');
+    }
+
+    public function isAwaitingPayment(): bool
+    {
+        return in_array($this->rawStatus(), [
+            self::PENDING,
+            self::PAYMENT_FAILED,
+        ], true);
+    }
+
+    public function isPostPaymentState(): bool
+    {
+        return in_array($this->rawStatus(), [
+            self::PROCESSING,
+            self::COMPLETED,
+            self::LABEL_GENERATED,
+            self::IN_TRANSIT,
+            self::OUT_FOR_DELIVERY,
+            self::DELIVERED,
+            self::IN_GIACENZA,
+            self::RETURNED,
+            self::REFUSED,
+            self::REFUNDED,
+        ], true);
+    }
+
+    public function hasSuccessfulTransactionForExternalId(?string $externalId): bool
+    {
+        if (! filled($externalId)) {
+            return false;
+        }
+
+        return $this->transactions()
+            ->where('ext_id', $externalId)
+            ->where('status', 'succeeded')
+            ->exists();
     }
 
     /**
@@ -169,6 +241,51 @@ class Order extends Model
                 $order->status = self::PENDING;
             }
         });
+    }
+
+    /* ===== SCOPES — Query predefinite per stati comuni ===== */
+
+    public function scopePending($query)
+    {
+        return $query->where('status', self::PENDING);
+    }
+
+    public function scopeProcessing($query)
+    {
+        return $query->where('status', self::PROCESSING);
+    }
+
+    public function scopeInTransit($query)
+    {
+        return $query->where('status', self::IN_TRANSIT);
+    }
+
+    public function scopeDelivered($query)
+    {
+        return $query->where('status', self::DELIVERED);
+    }
+
+    public function scopeCancelled($query)
+    {
+        return $query->where('status', self::CANCELLED);
+    }
+
+    public function scopeRefunded($query)
+    {
+        return $query->where('status', self::REFUNDED);
+    }
+
+    public function scopeAwaitingPayment($query)
+    {
+        return $query->whereIn('status', [self::PENDING, self::PAYMENT_FAILED]);
+    }
+
+    public function scopeActive($query)
+    {
+        return $query->whereIn('status', [
+            self::PROCESSING, self::LABEL_GENERATED, self::IN_TRANSIT,
+            self::OUT_FOR_DELIVERY, self::IN_GIACENZA,
+        ]);
     }
 
     /**
@@ -209,12 +326,16 @@ class Order extends Model
      */
     public static function attachPackage(int $orderId, int $packageId, int $quantity = 1): void
     {
-        DB::table('package_order')->insert([
-            'order_id' => $orderId,
-            'package_id' => $packageId,
-            'quantity' => $quantity,
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
+        DB::table('package_order')->updateOrInsert(
+            [
+                'order_id' => $orderId,
+                'package_id' => $packageId,
+            ],
+            [
+                'quantity' => $quantity,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+        );
     }
 }

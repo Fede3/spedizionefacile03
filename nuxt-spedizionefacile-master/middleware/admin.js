@@ -1,3 +1,10 @@
+import { hasAuthSessionCookie, readAuthUiSnapshotFromCookieHeader } from '~/utils/authUiState';
+
+const buildAdminLoginRedirect = (fullPath) => ({
+	path: '/autenticazione',
+	query: { redirect: fullPath },
+});
+
 /**
  * MIDDLEWARE: admin (middleware/admin.js)
  * SCOPO: Protegge le pagine admin — solo utenti con ruolo "Admin" possono accedervi.
@@ -17,12 +24,16 @@ export default defineNuxtRouteMiddleware(async (to) => {
 	// SSR: controlla cookie di sessione — se manca, redirect immediato
 	if (import.meta.server) {
 		const cookie = useRequestHeaders(['cookie'])?.cookie || '';
-		if (!cookie.includes('laravel_session') && !cookie.includes('XSRF-TOKEN')) {
-			return navigateTo({
-				path: '/autenticazione',
-				query: { redirect: to.fullPath },
-			}, { replace: true });
+		const authSnapshot = readAuthUiSnapshotFromCookieHeader(cookie);
+
+		if (!hasAuthSessionCookie(cookie) && !authSnapshot.authenticated) {
+			return navigateTo(buildAdminLoginRedirect(to.fullPath), { replace: true });
 		}
+
+		if (authSnapshot.authenticated && authSnapshot.role && authSnapshot.role !== 'Admin') {
+			return navigateTo('/account', { replace: true });
+		}
+
 		return;
 	}
 
@@ -53,13 +64,10 @@ export default defineNuxtRouteMiddleware(async (to) => {
 
 	// Se bootstrap fallisce o utente non autenticato → redirect al login
 	if (bootstrapStatus.value === 'failed' || !user.value) {
-		return navigateTo({
-			path: '/autenticazione',
-			query: { redirect: to.fullPath },
-		}, { replace: true });
+		return navigateTo(buildAdminLoginRedirect(to.fullPath), { replace: true });
 	}
 
-	if (user.value.role !== "Admin") {
-		return navigateTo("/account");
+	if (user.value.role !== 'Admin') {
+		return navigateTo('/account');
 	}
 });

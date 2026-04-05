@@ -35,6 +35,10 @@ class AuthUiCookie
         return [
             'authenticated' => true,
             'name' => (string) ($user->name ?? ''),
+            'surname' => (string) ($user->surname ?? ''),
+            'email' => (string) ($user->email ?? ''),
+            'createdAt' => $user->created_at?->toIso8601String() ?? '',
+            'userType' => (string) ($user->user_type ?? ''),
             'role' => $user->role ?: null,
         ];
     }

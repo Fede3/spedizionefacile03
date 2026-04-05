@@ -12,17 +12,45 @@ definePageMeta({
 	middleware: ['app-auth', 'admin'],
 });
 
+useSeoMeta({
+	title: 'Homepage hero admin | SpediamoFacile',
+	ogTitle: 'Homepage hero admin | SpediamoFacile',
+	description: 'Aggiorna immagine e contenuti hero della homepage dal pannello admin SpediamoFacile.',
+	ogDescription: 'Gestione hero homepage nel pannello admin SpediamoFacile.',
+});
+
 const {
-	DESKTOP_CANVAS, MOBILE_CANVAS,
-	isLoading, uploading, selectedFile, previewUrl,
-	draftConfig, activeViewport,
-	desktopFrameRef, mobileFrameRef, desktopViewportRef, mobileViewportRef,
-	frameReady, previewScale, dragState,
-	activeTransform, hasPendingChanges,
-	frameSrc, setActiveViewport, onFileSelected, removePreview,
-	setViewportMode, updateViewportTransform, resetViewport, resetAllViewports,
-	handleWheelZoom, beginDrag, onFrameLoad, saveImage,
-	initEditor, destroyEditor,
+	DESKTOP_CANVAS,
+	MOBILE_CANVAS,
+	isLoading,
+	uploading,
+	selectedFile,
+	previewUrl,
+	draftConfig,
+	activeViewport,
+	desktopFrameRef,
+	mobileFrameRef,
+	desktopViewportRef,
+	mobileViewportRef,
+	frameReady,
+	previewScale,
+	dragState,
+	activeTransform,
+	hasPendingChanges,
+	frameSrc,
+	setActiveViewport,
+	onFileSelected,
+	removePreview,
+	setViewportMode,
+	updateViewportTransform,
+	resetViewport,
+	resetAllViewports,
+	handleWheelZoom,
+	beginDrag,
+	onFrameLoad,
+	saveImage,
+	initEditor,
+	destroyEditor,
 	actionMessage,
 } = useAdminHeroEditor();
 
@@ -41,7 +69,9 @@ onMounted(() => {
 	});
 });
 
-onBeforeUnmount(() => { destroyEditor(); });
+onBeforeUnmount(() => {
+	destroyEditor();
+});
 </script>
 
 <template>
@@ -64,10 +94,20 @@ onBeforeUnmount(() => { destroyEditor(); });
 				v-if="actionMessage"
 				:class="[
 					'mb-[20px] px-[16px] py-[12px] rounded-[12px] text-[0.875rem] font-medium flex items-center gap-[8px]',
-					actionMessage.type === 'success' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-amber-50 text-amber-700 border border-amber-200',
+					actionMessage.type === 'success'
+						? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+						: 'bg-amber-50 text-amber-700 border border-amber-200',
 				]">
-				<template v-if="actionMessage.type === 'success'"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[18px] h-[18px] shrink-0" fill="currentColor"><path d="M12 2C6.5 2 2 6.5 2 12S6.5 22 12 22 22 17.5 22 12 17.5 2 12 2M10 17L5 12L6.41 10.59L10 14.17L17.59 6.58L19 8L10 17Z"/></svg></template>
-				<template v-else><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[18px] h-[18px] shrink-0" fill="currentColor"><path d="M13,13H11V7H13M13,17H11V15H13M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z"/></svg></template>
+				<template v-if="actionMessage.type === 'success'">
+					<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[18px] h-[18px] shrink-0" fill="currentColor">
+						<path d="M12 2C6.5 2 2 6.5 2 12S6.5 22 12 22 22 17.5 22 12 17.5 2 12 2M10 17L5 12L6.41 10.59L10 14.17L17.59 6.58L19 8L10 17Z" />
+					</svg>
+				</template>
+				<template v-else>
+					<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[18px] h-[18px] shrink-0" fill="currentColor">
+						<path d="M13,13H11V7H13M13,17H11V15H13M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z" />
+					</svg>
+				</template>
 				{{ actionMessage.text }}
 			</div>
 
@@ -95,8 +135,7 @@ onBeforeUnmount(() => { destroyEditor(); });
 							@set-viewport="setActiveViewport"
 							@begin-drag="beginDrag"
 							@wheel-zoom="handleWheelZoom"
-							@frame-load="onFrameLoad"
-						/>
+							@frame-load="onFrameLoad" />
 
 						<AdminHeroControls
 							:active-viewport="activeViewport"
@@ -111,8 +150,7 @@ onBeforeUnmount(() => { destroyEditor(); });
 							@update-transform="updateViewportTransform"
 							@reset-viewport="resetViewport()"
 							@reset-all="resetAllViewports"
-							@save="saveImage"
-						/>
+							@save="saveImage" />
 					</div>
 				</div>
 			</template>

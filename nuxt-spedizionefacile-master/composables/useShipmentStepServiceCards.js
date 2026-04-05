@@ -10,6 +10,7 @@ export function useShipmentStepServiceCards({
 	expandedServiceKey,
 	featuredService,
 	chooseService,
+	removeService,
 	resetServicesState,
 	serviceData,
 	servicesList,
@@ -27,7 +28,6 @@ export function useShipmentStepServiceCards({
 		contrassegnoIncasso: "",
 		contrassegnoRimborso: "",
 		contrassegnoDettaglio: "",
-		contrassegnoCodPayment: "",
 		assicurazione: {},
 	});
 
@@ -36,7 +36,6 @@ export function useShipmentStepServiceCards({
 		serviceCardErrors.contrassegnoIncasso = "";
 		serviceCardErrors.contrassegnoRimborso = "";
 		serviceCardErrors.contrassegnoDettaglio = "";
-		serviceCardErrors.contrassegnoCodPayment = "";
 		serviceCardErrors.assicurazione = {};
 	};
 
@@ -82,13 +81,6 @@ export function useShipmentStepServiceCards({
 		{ value: "assegno_circolare", label: "Assegno circolare" },
 	];
 
-	// Tipo pagamento contrassegno BRT (codPaymentType nel payload API)
-	const contrassegnoCodPaymentOptions = [
-		{ value: "BM", label: "Bonifico (BM)" },
-		{ value: "CC", label: "Assegno circolare (CC)" },
-		{ value: "AS", label: "Assegno bancario (AS)" },
-	];
-
 	const requiresContrassegnoDettaglio = computed(() => (
 		serviceData.value.contrassegno.modalita_rimborso === "bonifico"
 	));
@@ -99,11 +91,11 @@ export function useShipmentStepServiceCards({
 	};
 
 	// --- VALIDATION ---
-	const validateContrassegnoInline = () => {
+	const validateContrassegnoInline = (force = false) => {
 		clearServiceCardErrors();
 		let isValid = true;
 
-		if (!isServiceSelected("contrassegno")) return true;
+		if (!force && !isServiceSelected("contrassegno")) return true;
 
 		if (parseCurrencyValue(serviceData.value.contrassegno.importo) <= 0) {
 			serviceCardErrors.contrassegnoImporto = "Inserisci un importo valido.";
@@ -125,9 +117,9 @@ export function useShipmentStepServiceCards({
 		return isValid;
 	};
 
-	const validateAssicurazioneInline = () => {
+	const validateAssicurazioneInline = (force = false) => {
 		let isValid = true;
-		if (!isServiceSelected("assicurazione")) return true;
+		if (!force && !isServiceSelected("assicurazione")) return true;
 
 		const nextErrors = {};
 		insurancePackages.value.forEach((_, index) => {
@@ -160,25 +152,6 @@ export function useShipmentStepServiceCards({
 		return true;
 	};
 
-	// --- READINESS CHECKS ---
-	const isContrassegnoReady = () => (
-		parseCurrencyValue(serviceData.value.contrassegno.importo) > 0
-		&& Boolean(serviceData.value.contrassegno.modalita_incasso)
-		&& Boolean(serviceData.value.contrassegno.modalita_rimborso)
-		&& Boolean(serviceData.value.contrassegno.cod_payment_method)
-		&& (!requiresContrassegnoDettaglio.value || Boolean(String(serviceData.value.contrassegno.dettaglio_rimborso || "").trim()))
-	);
-
-	const isAssicurazioneReady = () => (
-		insurancePackages.value.every((_, index) => parseCurrencyValue(serviceData.value.assicurazione[index]) > 0)
-	);
-
-	const isConfigurableServiceReady = (serviceKey) => {
-		if (serviceKey === "contrassegno") return isContrassegnoReady();
-		if (serviceKey === "assicurazione") return isAssicurazioneReady();
-		return true;
-	};
-
 	// --- SERVICE STATE HELPERS ---
 	const isServiceExpanded = (serviceKey) => expandedServiceKey.value === serviceKey;
 	const getServiceIndex = (service) => servicesList.value.findIndex((item) => item.key === service.key);
@@ -189,21 +162,34 @@ export function useShipmentStepServiceCards({
 	const featuredServiceIndex = computed(() => servicesList.value.findIndex((item) => item.featured));
 	const canConfigureService = (service) => CONFIGURABLE_SERVICE_KEYS.has(service?.key);
 
-	const canActivateConfiguredService = (service) => (
-		canConfigureService(service) && isConfigurableServiceReady(service.key) && !service.isSelected
+	const getServiceConfigureLabel = (service) => (
+		service.isSelected ? "Modifica" : "Configura"
 	);
 
-	const getServiceStateLabel = (service) => {
-		if (isServiceExpanded(service.key)) return "Configurazione aperta";
-		if (service.isSelected) return "Attivo";
-		if (canConfigureService(service)) return "Da configurare";
-		return "Disponibile";
-	};
+	const focusInvalidServiceField = (serviceKey) => {
+		nextTick(() => {
+			const panel = document.getElementById(`service-inline-panel-${serviceKey}`);
+			if (!panel) return;
 
-	const getServiceConfigureLabel = (service) => {
-		if (isServiceExpanded(service.key)) return "Chiudi";
-		if (service.isSelected) return "Modifica";
-		return "Configura";
+			let focusTarget = null;
+			if (serviceKey === "contrassegno") {
+				if (serviceCardErrors.contrassegnoImporto) {
+					focusTarget = panel.querySelector(".service-inline-field__input");
+				} else if (serviceCardErrors.contrassegnoDettaglio) {
+					focusTarget = panel.querySelectorAll(".service-inline-field__input")[1] || panel.querySelector(".service-inline-field__input");
+				} else if (serviceCardErrors.contrassegnoIncasso) {
+					focusTarget = panel.querySelector('[aria-label="Modalita incasso contrassegno"] .service-inline-choice');
+				} else if (serviceCardErrors.contrassegnoRimborso) {
+					focusTarget = panel.querySelector('[aria-label="Modalita rimborso contrassegno"] .service-inline-choice');
+				}
+			}
+
+			if (serviceKey === "assicurazione") {
+				focusTarget = panel.querySelector(".service-inline-field__input");
+			}
+
+			(focusTarget || panel.querySelector(".service-inline-panel__submit"))?.focus?.({ preventScroll: true });
+		});
 	};
 
 	// --- INTERACTIONS ---
@@ -213,16 +199,17 @@ export function useShipmentStepServiceCards({
 
 		let isValid = true;
 		if (service.key === "contrassegno") {
-			isValid = validateContrassegnoInline();
+			isValid = validateContrassegnoInline(true);
 			if (!isValid) submitError.value = "Completa i dettagli del contrassegno.";
 		}
 		if (service.key === "assicurazione") {
-			isValid = validateAssicurazioneInline();
+			isValid = validateAssicurazioneInline(true);
 			if (!isValid) submitError.value = "Completa i dettagli dell'assicurazione.";
 		}
 
 		if (!isValid) {
 			expandedServiceKey.value = service.key;
+			focusInvalidServiceField(service.key);
 			return;
 		}
 
@@ -278,21 +265,16 @@ export function useShipmentStepServiceCards({
 		// options
 		contrassegnoIncassoOptions,
 		contrassegnoRimborsoOptions,
-		contrassegnoCodPaymentOptions,
 		requiresContrassegnoDettaglio,
 		insurancePackages,
 		// validation
 		validateContrassegnoInline,
 		validateAssicurazioneInline,
 		validateInlineServiceDetails,
-		// readiness
-		isConfigurableServiceReady,
 		// state helpers
 		isServiceExpanded,
 		featuredServiceIndex,
 		canConfigureService,
-		canActivateConfiguredService,
-		getServiceStateLabel,
 		getServiceConfigureLabel,
 		// interactions
 		activateConfiguredService,

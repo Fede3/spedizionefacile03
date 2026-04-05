@@ -48,12 +48,43 @@ class ShipmentStatusUpdateMail extends Mailable implements ShouldQueue
 
     /**
      * Configura l'oggetto dell'email.
-     * Include il numero ordine per facile identificazione.
+     * Usa un soggetto specifico per ogni stato rilevante, con fallback generico.
      */
     public function envelope(): Envelope
     {
+        $statusSubjects = [
+            'label_generated'  => 'Il tuo pacco e\' stato preparato',
+            'in_transit'       => 'Il tuo pacco e\' in viaggio',
+            'out_for_delivery' => 'Il tuo pacco e\' in consegna',
+            'delivered'        => 'Il tuo pacco e\' stato consegnato',
+            'in_giacenza'      => 'Il tuo pacco e\' in giacenza',
+            'returned'         => 'Il tuo pacco e\' stato restituito',
+            'refused'          => 'Il tuo pacco e\' stato rifiutato',
+            'cancelled'        => 'Ordine annullato',
+            'refunded'         => 'Rimborso elaborato',
+        ];
+
+        $subject = isset($statusSubjects[$this->newStatus])
+            ? $statusSubjects[$this->newStatus] . ' - SpediamoFacile'
+            : 'Aggiornamento spedizione #' . $this->order->id . ' - SpediamoFacile';
+
         return new Envelope(
-            subject: 'Aggiornamento spedizione #' . $this->order->id . ' - SpediamoFacile',
+            subject: $subject,
+        );
+    }
+
+    /**
+     * Aggiunge header List-Unsubscribe per conformita' GDPR.
+     */
+    public function headers(): \Illuminate\Mail\Mailables\Headers
+    {
+        $unsubscribeUrl = config('app.frontend_url') . '/account/notifiche?unsubscribe=1';
+
+        return new \Illuminate\Mail\Mailables\Headers(
+            text: [
+                'List-Unsubscribe' => '<' . $unsubscribeUrl . '>',
+                'List-Unsubscribe-Post' => 'List-Unsubscribe=One-Click',
+            ],
         );
     }
 
@@ -72,14 +103,18 @@ class ShipmentStatusUpdateMail extends Mailable implements ShouldQueue
         $statusLabels = [
             'pending' => 'In attesa',
             'processing' => 'In lavorazione',
+            'label_generated' => 'Etichetta generata',
             'completed' => 'Completato',
             'payment_failed' => 'Pagamento fallito',
             'payed' => 'Pagato',
             'cancelled' => 'Annullato',
             'refunded' => 'Rimborsato',
             'in_transit' => 'In transito',
+            'out_for_delivery' => 'In consegna',
             'delivered' => 'Consegnato',
             'in_giacenza' => 'In giacenza',
+            'returned' => 'Reso al mittente',
+            'refused' => 'Rifiutato',
         ];
 
         return new Content(

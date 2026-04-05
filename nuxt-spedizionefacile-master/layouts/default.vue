@@ -18,22 +18,18 @@
 const { isAuthenticatedForUi } = useAuthUiState();
 const { openAuthModal } = useAuthModal();
 const route = useRoute();
-const authShellPaths = ['/autenticazione', '/login', '/registrazione', '/recupera-password', '/aggiorna-password'];
-const isAuthShellRoute = computed(() => authShellPaths.some((path) => route.path.startsWith(path)));
-const quoteFlowPaths = ['/preventivo', '/la-tua-spedizione', '/riepilogo', '/checkout', '/carrello'];
-const isQuoteFlowRoute = computed(() => quoteFlowPaths.some((path) => route.path.startsWith(path)));
-const showFloatingUtilities = computed(() => !isAuthShellRoute.value && !isQuoteFlowRoute.value);
+const { isAccountRoute, isAuthPageRoute, isQuoteFlowRoute } = useShellRouteState();
+const authUiHydrated = ref(false);
+const showMarketingFooter = computed(() => !isAuthPageRoute.value && !isAccountRoute.value);
+const showFloatingUtilities = computed(
+	() => authUiHydrated.value && !isAuthPageRoute.value && !isQuoteFlowRoute.value && !isAccountRoute.value,
+);
 
 const getRequestedPath = () => {
-	const redirectQuery = Array.isArray(route.query.redirect)
-		? route.query.redirect[0]
-		: route.query.redirect;
+	const redirectQuery = Array.isArray(route.query.redirect) ? route.query.redirect[0] : route.query.redirect;
 
-	if (route.path === '/autenticazione' || route.path === '/login' || route.path === '/registrazione') {
-		if (typeof redirectQuery === 'string' && redirectQuery.startsWith('/')) {
-			return redirectQuery;
-		}
-		return '/';
+	if (typeof redirectQuery === 'string' && redirectQuery.startsWith('/')) {
+		return redirectQuery;
 	}
 
 	return route.fullPath;
@@ -84,6 +80,8 @@ const onDocumentPointerDown = (event) => {
 };
 
 onMounted(() => {
+	authUiHydrated.value = true;
+	onScroll();
 	window.addEventListener('scroll', onScroll, { passive: true });
 	window.addEventListener('keydown', onWindowKeydown);
 	document.addEventListener('mousedown', onDocumentPointerDown);
@@ -100,15 +98,21 @@ onUnmounted(() => {
 
 <template>
 	<div class="w-full min-h-screen flex flex-col overflow-x-clip">
-		<a href="#main-content" class="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-[100] focus:bg-white focus:px-4 focus:py-2 focus:rounded-[12px] focus:shadow-lg focus:text-[#095866] focus:font-semibold">Vai al contenuto</a>
+		<a
+			href="#main-content"
+			class="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-[100] focus:bg-white focus:px-4 focus:py-2 focus:rounded-[12px] focus:shadow-lg focus:text-[#095866] focus:font-semibold">
+			Vai al contenuto
+		</a>
 		<Header />
 
 		<main id="main-content" class="flex-1 w-full max-w-full mx-auto overflow-x-clip">
 			<slot />
 		</main>
 
-		<Footer v-if="!isAuthShellRoute" />
-		<AuthOverlayModal v-if="!isAuthShellRoute" />
+		<Footer v-if="showMarketingFooter" />
+		<ClientOnly>
+			<AuthOverlayModal v-if="!isAuthPageRoute" />
+		</ClientOnly>
 
 		<!-- Bottone torna su fisso in basso a sinistra -->
 		<button
@@ -117,18 +121,26 @@ onUnmounted(() => {
 			class="hidden tablet:flex fixed bottom-[max(18px,env(safe-area-inset-bottom))] left-[14px] tablet:bottom-[20px] tablet:left-[20px] z-[999] w-[46px] h-[46px] tablet:w-[44px] tablet:h-[44px] rounded-full bg-[#095866] text-white items-center justify-center shadow-lg opacity-40 hover:opacity-100 transition-[opacity,transform] duration-300 hover:scale-110 cursor-pointer"
 			title="Torna su"
 			aria-label="Torna su">
-			<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[22px] h-[22px]" fill="currentColor"><path d="M7.41,15.41L12,10.83L16.59,15.41L18,14L12,8L6,14L7.41,15.41Z"/></svg>
+			<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[22px] h-[22px]" fill="currentColor">
+				<path d="M7.41,15.41L12,10.83L16.59,15.41L18,14L12,8L6,14L7.41,15.41Z" />
+			</svg>
 		</button>
 
 		<!-- Bottone aiuto fisso in basso a destra -->
-		<div v-if="showFloatingUtilities" ref="guestHelpPopoverRef" class="hidden tablet:block fixed bottom-[max(18px,env(safe-area-inset-bottom))] right-[14px] tablet:bottom-[20px] tablet:right-[20px] z-[999]">
+		<div
+			v-if="showFloatingUtilities"
+			ref="guestHelpPopoverRef"
+			class="hidden tablet:block fixed bottom-[max(18px,env(safe-area-inset-bottom))] right-[14px] tablet:bottom-[20px] tablet:right-[20px] z-[999]">
 			<NuxtLink
 				v-show="isAuthenticatedForUi"
 				to="/account/assistenza"
 				class="w-[48px] h-[48px] tablet:w-[44px] tablet:h-[44px] rounded-full bg-[#095866] text-white flex items-center justify-center shadow-lg opacity-40 hover:opacity-100 transition-[opacity,transform] duration-300 hover:scale-110"
 				title="Assistenza"
 				aria-label="Assistenza">
-				<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[22px] h-[22px]" fill="currentColor"><path d="M11,18H13V16H11V18M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,20C7.59,20 4,16.41 4,12C4,7.59 7.59,4 12,4C16.41,4 20,7.59 20,12C20,16.41 16.41,20 12,20M12,6A4,4 0 0,0 8,10H10A2,2 0 0,1 12,8A2,2 0 0,1 14,10C14,12 11,11.75 11,15H13C13,12.75 16,12.5 16,10A4,4 0 0,0 12,6Z"/></svg>
+				<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[22px] h-[22px]" fill="currentColor">
+					<path
+						d="M11,18H13V16H11V18M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,20C7.59,20 4,16.41 4,12C4,7.59 7.59,4 12,4C16.41,4 20,7.59 20,12C20,16.41 16.41,20 12,20M12,6A4,4 0 0,0 8,10H10A2,2 0 0,1 12,8A2,2 0 0,1 14,10C14,12 11,11.75 11,15H13C13,12.75 16,12.5 16,10A4,4 0 0,0 12,6Z" />
+				</svg>
 			</NuxtLink>
 
 			<button
@@ -140,7 +152,10 @@ onUnmounted(() => {
 				:aria-expanded="showGuestHelp ? 'true' : 'false'"
 				aria-controls="guest-help-popover"
 				title="Aiuto">
-				<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[22px] h-[22px]" fill="currentColor"><path d="M11,18H13V16H11V18M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,20C7.59,20 4,16.41 4,12C4,7.59 7.59,4 12,4C16.41,4 20,7.59 20,12C20,16.41 16.41,20 12,20M12,6A4,4 0 0,0 8,10H10A2,2 0 0,1 12,8A2,2 0 0,1 14,10C14,12 11,11.75 11,15H13C13,12.75 16,12.5 16,10A4,4 0 0,0 12,6Z"/></svg>
+				<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[22px] h-[22px]" fill="currentColor">
+					<path
+						d="M11,18H13V16H11V18M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,20C7.59,20 4,16.41 4,12C4,7.59 7.59,4 12,4C16.41,4 20,7.59 20,12C20,16.41 16.41,20 12,20M12,6A4,4 0 0,0 8,10H10A2,2 0 0,1 12,8A2,2 0 0,1 14,10C14,12 11,11.75 11,15H13C13,12.75 16,12.5 16,10A4,4 0 0,0 12,6Z" />
+				</svg>
 			</button>
 
 			<div

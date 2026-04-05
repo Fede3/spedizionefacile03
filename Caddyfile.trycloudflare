@@ -33,21 +33,45 @@
   # Comprime le risposte con gzip per velocizzare il caricamento
   encode gzip
 
-  # Definisce quali percorsi vanno al backend Laravel
-  @api path /api/* /sanctum/* /storage/* /auth/*
-
-  # Richieste API → Laravel (porta 8000)
-  # X-Forwarded-Proto forzato a "https" perche' Cloudflare usa sempre HTTPS
-  reverse_proxy @api 127.0.0.1:8000 {
-    header_up X-Forwarded-Host "{http.request.host}"
-    header_up X-Forwarded-Proto "https"
+  # Intestazioni di sicurezza per TUTTE le risposte (frontend + backend).
+  header {
+    X-Content-Type-Options "nosniff"
+    X-Frame-Options "SAMEORIGIN"
+    X-XSS-Protection "1; mode=block"
+    Referrer-Policy "strict-origin-when-cross-origin"
+    Permissions-Policy "camera=(), microphone=(), geolocation=(self)"
   }
 
-  # Tutto il resto → Nuxt frontend (porta 3001)
-  # X-Forwarded-Proto forzato a "https" per lo stesso motivo
-  reverse_proxy 127.0.0.1:3001 {
-    header_up Host "localhost:3001"
-    header_up X-Forwarded-Host "{http.request.host}"
-    header_up X-Forwarded-Proto "https"
+  # Definisce quali percorsi vanno al backend Laravel
+  @api path /api/* /sanctum/* /storage/* /auth/*
+  @preview host *.trycloudflare.com
+
+  handle @preview {
+    # Richieste preview Cloudflare → forza https per cookie e URL generati
+    reverse_proxy @api {$SF_BACKEND_PROXY_TARGET:127.0.0.1:8000} {
+      header_up X-Forwarded-Host "{http.request.host}"
+      header_up X-Forwarded-Proto "https"
+    }
+
+    reverse_proxy {$SF_FRONTEND_PROXY_TARGET:127.0.0.1:3001} {
+      header_up Host "localhost:3001"
+      header_up X-Forwarded-Host "{http.request.host}"
+      header_up X-Forwarded-Proto "https"
+    }
+  }
+
+  handle {
+    # Richieste locali su http://127.0.0.1:8787 o IP LAN:
+    # non forzare https, altrimenti i cookie Secure non vengono salvati.
+    reverse_proxy @api {$SF_BACKEND_PROXY_TARGET:127.0.0.1:8000} {
+      header_up X-Forwarded-Host "{http.request.host}"
+      header_up X-Forwarded-Proto "{http.request.scheme}"
+    }
+
+    reverse_proxy {$SF_FRONTEND_PROXY_TARGET:127.0.0.1:3001} {
+      header_up Host "localhost:3001"
+      header_up X-Forwarded-Host "{http.request.host}"
+      header_up X-Forwarded-Proto "{http.request.scheme}"
+    }
   }
 }

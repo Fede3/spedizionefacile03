@@ -674,7 +674,11 @@ const focusFormError = (errorItem) => {
 	if (!targetId) return;
 	const field = document.getElementById(targetId);
 	if (!field) return;
-	field.scrollIntoView({ behavior: 'smooth', block: 'center' });
+	const rect = field.getBoundingClientRect?.();
+	const isVisible = rect && rect.top >= 96 && rect.bottom <= window.innerHeight - 24;
+	if (!isVisible) {
+		field.scrollIntoView({ behavior: 'auto', block: 'nearest' });
+	}
 	window.setTimeout(() => {
 		field.focus?.();
 	}, 120);
@@ -683,7 +687,11 @@ const focusFormError = (errorItem) => {
 const focusContentDescriptionField = () => {
 	const field = document.getElementById('content_description');
 	if (!field) return;
-	field.scrollIntoView({ behavior: 'smooth', block: 'center' });
+	const rect = field.getBoundingClientRect?.();
+	const isVisible = rect && rect.top >= 96 && rect.bottom <= window.innerHeight - 24;
+	if (!isVisible) {
+		field.scrollIntoView({ behavior: 'auto', block: 'nearest' });
+	}
 	window.setTimeout(() => {
 		field.focus?.();
 	}, 120);

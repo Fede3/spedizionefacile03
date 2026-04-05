@@ -42,6 +42,12 @@
 	padding: 0 12px 16px;
 }
 
+@media (min-width: 64rem) {
+	.route-composer__connector {
+		margin-top: 3.35rem;
+	}
+}
+
 .preventivo-heading {
 	position: relative;
 	display: flex;
@@ -98,7 +104,7 @@
 	position: relative;
 	height: 2.125rem;
 	padding: 0 0.875rem;
-	border-radius: 999px;
+	border-radius: var(--sf-radius-button-compact);
 	background: #f0f1f4;
 	color: #999;
 	font-size: 0.8125rem;
@@ -940,7 +946,9 @@
 
 	.route-composer__connector {
 		display: flex;
-		margin-top: 2.36rem;
+		align-self: start;
+		justify-self: center;
+		margin-top: 3.375rem;
 	}
 
 	.route-card__field .input-preventivo-rapido--location,

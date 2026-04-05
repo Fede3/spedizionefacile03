@@ -39,11 +39,15 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\ReferralApplied;
+use App\Models\Order;
 use App\Models\User;
 use App\Models\ReferralUsage;
 use App\Models\WalletMovement;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 class ReferralController extends Controller
 {
@@ -119,8 +123,10 @@ class ReferralController extends Controller
         $data = $request->validate([
             'code' => ['required', 'string', 'size:8'],
             'order_id' => ['required', 'integer'],
-            'order_amount' => ['required', 'numeric', 'min:0.01'],
+            'order_amount' => ['nullable', 'numeric', 'min:0.01'],
         ]);
+
+        $buyer = auth()->user();
 
         // Cerchiamo il Partner Pro proprietario del codice
         $proUser = User::where('referral_code', strtoupper($data['code']))
@@ -131,48 +137,118 @@ class ReferralController extends Controller
             return response()->json(['message' => 'Codice referral non valido.'], 404);
         }
 
-        $buyer = auth()->user();
-
         if ($proUser->id === $buyer->id) {
             return response()->json(['message' => 'Non puoi usare il tuo stesso codice.'], 422);
         }
 
-        // Calcoliamo lo sconto per il compratore (5% dell'importo dell'ordine)
-        $discountAmount = round($data['order_amount'] * 0.05, 2);
-        // E la commissione per il Partner Pro (anche il 5%)
-        $commissionAmount = round($data['order_amount'] * 0.05, 2);
+        $order = Order::query()
+            ->whereKey((int) $data['order_id'])
+            ->where('user_id', $buyer->id)
+            ->first();
 
-        // Registriamo l'utilizzo del codice referral nel database
-        $usage = ReferralUsage::create([
-            'buyer_id' => $buyer->id,
-            'pro_user_id' => $proUser->id,
-            'referral_code' => strtoupper($data['code']),
-            'order_id' => $data['order_id'],
-            'order_amount' => $data['order_amount'],
-            'discount_amount' => $discountAmount,
-            'commission_amount' => $commissionAmount,
-            'status' => 'confirmed',
-        ]);
+        if (!$order) {
+            return response()->json(['message' => 'Ordine non trovato.'], 404);
+        }
 
-        // Accreditiamo la commissione nel portafoglio del Partner Pro
-        // Questo movimento di denaro viene registrato nel sistema portafoglio
-        WalletMovement::create([
-            'user_id' => $proUser->id,
-            'type' => 'credit',                    // "credit" = soldi in entrata
-            'amount' => $commissionAmount,
-            'currency' => 'EUR',
-            'status' => 'confirmed',
-            'idempotency_key' => 'commission_' . $usage->id,  // Chiave unica per evitare accrediti doppi
-            'description' => 'Commissione referral da ' . $buyer->name . ' (ordine #' . $data['order_id'] . ')',
-            'source' => 'commission',
-            'reference' => 'referral_' . $usage->id,
-        ]);
+        if (!$this->isReferralEligibleOrder($order)) {
+            return response()->json(['message' => 'Ordine non ancora pagato.'], 422);
+        }
 
-        return response()->json([
-            'success' => true,
-            'discount_amount' => $discountAmount,
-            'usage' => $usage,
-        ]);
+        try {
+            $result = DB::transaction(function () use ($buyer, $proUser, $order) {
+                $lockedOrder = Order::query()
+                    ->whereKey($order->id)
+                    ->where('user_id', $buyer->id)
+                    ->lockForUpdate()
+                    ->first();
+
+                if (!$lockedOrder) {
+                    return response()->json(['message' => 'Ordine non trovato.'], 404);
+                }
+
+                if (!$this->isReferralEligibleOrder($lockedOrder)) {
+                    return response()->json(['message' => 'Ordine non ancora pagato.'], 422);
+                }
+
+                $existingUsage = ReferralUsage::query()
+                    ->where('order_id', $lockedOrder->id)
+                    ->first();
+
+                if ($existingUsage) {
+                    return response()->json(['message' => 'Questo ordine ha già un referral applicato.'], 409);
+                }
+
+                $orderAmount = round(((int) $lockedOrder->subtotal->amount()) / 100, 2);
+                $discountAmount = round($orderAmount * 0.05, 2);
+                $commissionAmount = round($orderAmount * 0.05, 2);
+                $code = strtoupper($proUser->referral_code);
+
+                $usage = ReferralUsage::create([
+                    'buyer_id' => $buyer->id,
+                    'pro_user_id' => $proUser->id,
+                    'referral_code' => $code,
+                    'order_id' => $lockedOrder->id,
+                    'order_amount' => $orderAmount,
+                    'discount_amount' => $discountAmount,
+                    'commission_amount' => $commissionAmount,
+                    'status' => 'confirmed',
+                ]);
+
+                WalletMovement::create([
+                    'user_id' => $proUser->id,
+                    'type' => 'credit',                    // "credit" = soldi in entrata
+                    'amount' => $commissionAmount,
+                    'currency' => 'EUR',
+                    'status' => 'confirmed',
+                    'idempotency_key' => 'commission_referral_order_' . $lockedOrder->id,
+                    'description' => 'Commissione referral da ' . $buyer->name . ' (ordine #' . $lockedOrder->id . ')',
+                    'source' => 'commission',
+                    'reference' => 'referral_order_' . $lockedOrder->id,
+                ]);
+
+                return [
+                    'success' => true,
+                    'discount_amount' => $discountAmount,
+                    'usage' => $usage,
+                ];
+            });
+
+            if ($result instanceof JsonResponse) {
+                return $result;
+            }
+
+            event(new ReferralApplied($result['usage']->id));
+
+            return response()->json($result);
+        } catch (QueryException $e) {
+            if ($this->isReferralUniqueConstraintViolation($e)) {
+                return response()->json(['message' => 'Questo ordine ha già un referral applicato.'], 409);
+            }
+
+            throw $e;
+        }
+    }
+
+    private function isReferralEligibleOrder(Order $order): bool
+    {
+        return in_array($order->rawStatus(), [
+            Order::COMPLETED,
+            Order::PROCESSING,
+            Order::IN_TRANSIT,
+            Order::DELIVERED,
+            Order::IN_GIACENZA,
+            'payed',
+        ], true);
+    }
+
+    private function isReferralUniqueConstraintViolation(QueryException $e): bool
+    {
+        $message = $e->getMessage();
+
+        return str_contains($message, 'referral_usages_order_id_unique')
+            || str_contains($message, 'wallet_movements_idempotency_key_unique')
+            || str_contains($message, 'Duplicate entry')
+            || str_contains($message, 'UNIQUE constraint failed');
     }
 
     /**

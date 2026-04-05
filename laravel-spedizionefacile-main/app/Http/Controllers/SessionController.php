@@ -218,13 +218,19 @@ class SessionController extends Controller
         $destinationAddress = $this->normalizeAddressPayload($validated['destination_address'] ?? null);
         $deliveryMode = (string) ($validated['delivery_mode'] ?? 'home');
         $selectedPudo = Arr::wrap($validated['selected_pudo'] ?? null);
+        $pickupRequest = $this->normalizePickupRequest(
+            Arr::wrap($serviceData['pickup_request'] ?? []),
+            $pickupDate,
+            trim((string) ($validated['services']['time'] ?? ''))
+        );
 
         $services = [
             'service_type' => trim((string) ($validated['services']['service_type'] ?? '')),
             'date' => trim((string) ($validated['services']['date'] ?? $pickupDate)),
-            'time' => trim((string) ($validated['services']['time'] ?? '')),
+            'time' => $pickupRequest['time_slot'],
             'serviceData' => [
                 ...$serviceData,
+                'pickup_request' => $pickupRequest,
                 'sms_email_notification' => $smsEmailNotification,
             ],
             'sms_email_notification' => $smsEmailNotification,
@@ -348,6 +354,37 @@ class SessionController extends Controller
             'telephone_number' => trim((string) ($address['telephone_number'] ?? '')),
             'email' => trim((string) ($address['email'] ?? '')),
         ];
+    }
+
+    private function normalizePickupRequest(array $pickupRequest, string $pickupDate, string $pickupTime): array
+    {
+        $resolvedDate = trim((string) ($pickupRequest['date'] ?? $pickupDate));
+        $resolvedTime = trim((string) ($pickupRequest['time_slot'] ?? $pickupTime));
+
+        return [
+            'enabled' => (bool) ($pickupRequest['enabled'] ?? ($resolvedDate !== '')),
+            'date' => $this->normalizePickupRequestDate($resolvedDate),
+            'time_slot' => $resolvedTime !== '' ? $resolvedTime : '09:00-18:00',
+            'notes' => trim((string) ($pickupRequest['notes'] ?? '')),
+        ];
+    }
+
+    private function normalizePickupRequestDate(string $pickupDate): string
+    {
+        $pickupDate = trim($pickupDate);
+        if ($pickupDate === '') {
+            return '';
+        }
+
+        if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $pickupDate)) {
+            return $pickupDate;
+        }
+
+        if (preg_match('/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/', $pickupDate, $matches)) {
+            return sprintf('%s-%02d-%02d', $matches[3], (int) $matches[2], (int) $matches[1]);
+        }
+
+        return $pickupDate;
     }
 
     private function forgetDownstreamFlowState(): void

@@ -139,10 +139,10 @@ const socialLinks = [
 				<NuxtLink to="/preventivo" custom v-slot="{ href, navigate }">
 					<a
 						:href="href"
-						class="site-footer__cta-link"
+						class="site-footer__cta-link btn-cta btn-compact"
 						:aria-current="route.path === '/preventivo' ? 'page' : undefined"
 						@click="navigate">
-						Preventivo gratuito
+						Preventivo Gratuito
 					</a>
 				</NuxtLink>
 			</div>

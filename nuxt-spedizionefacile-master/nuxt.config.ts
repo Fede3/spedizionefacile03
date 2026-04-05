@@ -87,7 +87,6 @@ export default defineNuxtConfig({
     '~/assets/css/autenticazione.css',
     '~/assets/css/contenuto-header.css',
     '~/assets/css/summary-card.css',
-    '~/assets/css/service-modal.css',
     '~/assets/css/footer.css',
     '~/assets/css/recensioni.css',
     '~/assets/css/faq.css',
@@ -254,6 +253,10 @@ export default defineNuxtConfig({
     '/registrazione': { prerender: false },
     '/preventivo': { prerender: false },
     '/carrello': { prerender: false },
+    // I passi del funnel restano dinamici e non vanno prerenderati,
+    // ma il render server-side ora e' di nuovo affidabile:
+    // il middleware legge la sessione prima del mount e puo' correggere
+    // subito i deep-link invalidi senza mostrare shell vuote sulla preview.
     '/checkout': { prerender: false },
     '/riepilogo': { prerender: false },
     '/la-tua-spedizione/**': { prerender: false },

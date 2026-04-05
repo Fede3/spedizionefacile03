@@ -73,17 +73,63 @@ if [[ -f "${LARAVEL_DIR}/.env" ]]; then
       echo "${key}=${value}" >> "${LARAVEL_DIR}/.env"
     fi
   }
+  strip_env_value() {
+    local key="$1"
+    sed -i "/^${key}=/d" "${LARAVEL_DIR}/.env"
+  }
   set_env_value "DB_CONNECTION" "sqlite"
-  set_env_value "DB_DATABASE" "${DB_PATH}"
+  # Let Laravel resolve database_path('database.sqlite') so the same .env
+  # works under both WSL/Linux PHP and Windows php.exe.
+  strip_env_value "DB_DATABASE"
   set_env_value "SESSION_DRIVER" "file"
   set_env_value "QUEUE_CONNECTION" "sync"
   if ! grep -q "^APP_KEY=base64:" "${LARAVEL_DIR}/.env"; then
     (cd "${LARAVEL_DIR}" && php artisan key:generate --force)
   fi
 
-  # Ensure Sanctum/CORS include direct API port
-  STATEFUL_DOMAINS="127.0.0.1:8787,localhost:8787,127.0.0.1:${NUXT_PORT},localhost:${NUXT_PORT},127.0.0.1:${LARAVEL_PORT},localhost:${LARAVEL_PORT}"
-  CORS_ORIGINS="http://127.0.0.1:8787,http://localhost:8787,http://127.0.0.1:${NUXT_PORT},http://localhost:${NUXT_PORT},http://127.0.0.1:${LARAVEL_PORT},http://localhost:${LARAVEL_PORT}"
+  # Keep one canonical list for SPA auth:
+  # - localhost / 127.0.0.1
+  # - WSL -> Windows gateway host (useful for browser QA from WSL)
+  # - *.trycloudflare.com for remote preview
+  HOST_GATEWAY_IP="$(ip route | awk '/default/ {print $3; exit}' 2>/dev/null || true)"
+
+  STATEFUL_ITEMS=(
+    "localhost"
+    "127.0.0.1"
+    "localhost:8787"
+    "127.0.0.1:8787"
+    "localhost:${NUXT_PORT}"
+    "127.0.0.1:${NUXT_PORT}"
+    "localhost:${LARAVEL_PORT}"
+    "127.0.0.1:${LARAVEL_PORT}"
+    "*.trycloudflare.com"
+  )
+
+  CORS_ITEMS=(
+    "http://127.0.0.1:8787"
+    "http://localhost:8787"
+    "http://127.0.0.1:${NUXT_PORT}"
+    "http://localhost:${NUXT_PORT}"
+    "http://127.0.0.1:${LARAVEL_PORT}"
+    "http://localhost:${LARAVEL_PORT}"
+  )
+
+  if [[ -n "${HOST_GATEWAY_IP}" && "${HOST_GATEWAY_IP}" != "127.0.0.1" ]]; then
+    STATEFUL_ITEMS+=(
+      "${HOST_GATEWAY_IP}"
+      "${HOST_GATEWAY_IP}:8787"
+      "${HOST_GATEWAY_IP}:${NUXT_PORT}"
+      "${HOST_GATEWAY_IP}:${LARAVEL_PORT}"
+    )
+    CORS_ITEMS+=(
+      "http://${HOST_GATEWAY_IP}:8787"
+      "http://${HOST_GATEWAY_IP}:${NUXT_PORT}"
+      "http://${HOST_GATEWAY_IP}:${LARAVEL_PORT}"
+    )
+  fi
+
+  STATEFUL_DOMAINS="$(printf '%s\n' "${STATEFUL_ITEMS[@]}" | awk 'NF && !seen[$0]++' | paste -sd, -)"
+  CORS_ORIGINS="$(printf '%s\n' "${CORS_ITEMS[@]}" | awk 'NF && !seen[$0]++' | paste -sd, -)"
 
   if grep -q "^SANCTUM_STATEFUL_DOMAINS=" "${LARAVEL_DIR}/.env"; then
     sed -i "s|^SANCTUM_STATEFUL_DOMAINS=.*|SANCTUM_STATEFUL_DOMAINS=${STATEFUL_DOMAINS}|" "${LARAVEL_DIR}/.env"
@@ -125,10 +171,10 @@ fi
 
 if [[ "${SKIP_NUXT_START:-0}" != "1" ]]; then
   if ! pgrep -f "nuxt.*--port ${NUXT_PORT}" >/dev/null 2>&1; then
-    (cd "${NUXT_DIR}" && npm run dev -- --host 0.0.0.0 --port "${NUXT_PORT}" > /tmp/nuxt.log 2>&1 &)
+    (cd "${NUXT_DIR}" && npx -y node@22 ./node_modules/@nuxt/cli/bin/nuxi.mjs dev --host 0.0.0.0 --port "${NUXT_PORT}" > /tmp/nuxt.log 2>&1 &)
     sleep 4
     if ! pgrep -f "nuxt.*--port ${NUXT_PORT}" >/dev/null 2>&1; then
-      (cd "${NUXT_DIR}" && npx nuxi dev --host 0.0.0.0 --port "${NUXT_PORT}" >> /tmp/nuxt.log 2>&1 &)
+      (cd "${NUXT_DIR}" && npx -y node@22 ./node_modules/@nuxt/cli/bin/nuxi.mjs dev --host 0.0.0.0 --port "${NUXT_PORT}" >> /tmp/nuxt.log 2>&1 &)
     fi
   fi
 fi

@@ -24,11 +24,15 @@ class MyMoney implements \JsonSerializable
 
     public function formatted(): string
     {
-        $currencies = new ISOCurrencies;
-        $numberFormatter = new NumberFormatter('it_IT', NumberFormatter::CURRENCY);
-        $moneyFormatter = new IntlMoneyFormatter($numberFormatter, $currencies);
+        if (class_exists(NumberFormatter::class)) {
+            $currencies = new ISOCurrencies;
+            $numberFormatter = new NumberFormatter('it_IT', NumberFormatter::CURRENCY);
+            $moneyFormatter = new IntlMoneyFormatter($numberFormatter, $currencies);
 
-        return $moneyFormatter->format($this->money);
+            return $moneyFormatter->format($this->money);
+        }
+
+        return number_format(((int) $this->money->getAmount()) / 100, 2, ',', '.') . ' EUR';
     }
 
     public function instance(): Money

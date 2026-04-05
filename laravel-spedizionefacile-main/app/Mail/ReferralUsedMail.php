@@ -27,6 +27,21 @@ class ReferralUsedMail extends Mailable
         );
     }
 
+    /**
+     * Aggiunge header List-Unsubscribe per conformita' GDPR.
+     */
+    public function headers(): \Illuminate\Mail\Mailables\Headers
+    {
+        $unsubscribeUrl = config('app.frontend_url') . '/account/notifiche?unsubscribe=1';
+
+        return new \Illuminate\Mail\Mailables\Headers(
+            text: [
+                'List-Unsubscribe' => '<' . $unsubscribeUrl . '>',
+                'List-Unsubscribe-Post' => 'List-Unsubscribe=One-Click',
+            ],
+        );
+    }
+
     public function content(): Content
     {
         return new Content(

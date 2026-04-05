@@ -39,7 +39,10 @@ return [
     'allowed_origins' => explode(',', env('CORS_ALLOWED_ORIGINS', 'http://127.0.0.1:8787,http://localhost:8787,http://127.0.0.1:3001,http://localhost:3001')),
 
     // Pattern regex per origini dinamiche (es. tunnel Cloudflare che cambiano URL ogni volta)
-    'allowed_origins_patterns' => ['/https?:\/\/.*\.trycloudflare\.com/'],
+    'allowed_origins_patterns' => [
+        '/https?:\/\/.*\.trycloudflare\.com/',
+        '/https?:\/\/(?:10\.\d{1,3}\.\d{1,3}\.\d{1,3}|192\.168\.\d{1,3}\.\d{1,3}|172\.(?:1[6-9]|2\d|3[0-1])\.\d{1,3}\.\d{1,3})(?::\d+)?$/',
+    ],
 
     // Intestazioni HTTP permesse nelle richieste (* = tutte)
     'allowed_headers' => ['*'],

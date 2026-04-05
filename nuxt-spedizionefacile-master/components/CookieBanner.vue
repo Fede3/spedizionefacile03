@@ -17,23 +17,23 @@ const accept = (type) => {
   <Transition name="cookie-banner">
     <div
       v-if="visible"
-      class="fixed bottom-0 left-0 right-0 z-[9999] bg-white border-t border-[#E9EBEC] shadow-[0_-4px_24px_rgba(0,0,0,0.08)] rounded-t-[12px] px-[16px] py-[16px] tablet:px-[24px] tablet:py-[20px]">
-      <div class="max-w-[960px] mx-auto flex flex-col tablet:flex-row items-start tablet:items-center gap-[12px] tablet:gap-[20px]">
-        <p class="text-[0.8125rem] text-[#252B42] leading-[1.5] flex-1">
+      class="fixed right-[12px] bottom-[max(12px,env(safe-area-inset-bottom))] z-[9999] w-[min(calc(100vw-24px),340px)] rounded-[18px] border border-[#dce7ea] bg-white/96 px-[14px] py-[14px] shadow-[0_18px_45px_rgba(15,23,42,0.16)] backdrop-blur-[14px] tablet:right-[20px] tablet:bottom-[20px] tablet:w-[min(calc(100vw-40px),340px)] tablet:px-[16px] tablet:py-[16px]">
+      <div class="grid gap-[12px]">
+        <p class="text-[0.78125rem] leading-[1.5] text-[#252B42]">
           Utilizziamo i cookie per migliorare la tua esperienza.
           <NuxtLink to="/cookie-policy" class="text-[#095866] hover:underline font-medium">Scopri di più</NuxtLink>
         </p>
-        <div class="flex items-center gap-[10px] shrink-0">
+        <div class="grid grid-cols-2 gap-[8px]">
           <button
             type="button"
             @click="accept('essential')"
-            class="px-[16px] py-[10px] rounded-[12px] border border-[#E9EBEC] text-[#252B42] text-[0.8125rem] font-semibold hover:bg-[#F7FAFC] transition-colors cursor-pointer">
+            class="btn-tertiary btn-compact min-h-[40px] px-[12px] text-[0.75rem]">
             Solo necessari
           </button>
           <button
             type="button"
             @click="accept('all')"
-            class="px-[16px] py-[10px] rounded-[12px] bg-[#095866] text-white text-[0.8125rem] font-semibold hover:bg-[#074a56] transition-colors cursor-pointer">
+            class="btn-cta btn-compact min-h-[40px] px-[12px] text-[0.75rem]">
             Accetta tutti
           </button>
         </div>

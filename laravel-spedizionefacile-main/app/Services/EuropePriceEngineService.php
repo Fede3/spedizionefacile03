@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Setting;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 class EuropePriceEngineService
@@ -211,8 +212,10 @@ class EuropePriceEngineService
         $normalized = $this->normalizeConfig($config);
         $version = (string) time();
 
-        Setting::set(self::SETTINGS_KEY_CONFIG, json_encode($normalized, JSON_UNESCAPED_UNICODE));
-        Setting::set(self::SETTINGS_KEY_VERSION, $version);
+        DB::transaction(function () use ($normalized, $version): void {
+            Setting::set(self::SETTINGS_KEY_CONFIG, json_encode($normalized, JSON_UNESCAPED_UNICODE));
+            Setting::set(self::SETTINGS_KEY_VERSION, $version);
+        });
 
         $this->cachedConfig = null;
 
@@ -337,45 +340,24 @@ class EuropePriceEngineService
         ];
     }
 
+    /**
+     * Find the matching band for a given weight and volume.
+     *
+     * Bands are sorted by max_weight_kg ascending (see normalizeConfig). The
+     * weight is matched to the first band whose max_weight_kg covers it, then
+     * volume is checked against that band's max_volume_m3. This derives
+     * thresholds directly from the loaded configuration instead of hardcoding
+     * specific band IDs or weight values.
+     */
     private function findMatchingBand(array $bands, float $weightKg, float $volumeM3): ?array
     {
-        $selectBand = function (callable $matcher) use ($bands, $volumeM3): ?array {
-            foreach ($bands as $band) {
-                if (! $matcher($band)) {
-                    continue;
-                }
-
-                if ($volumeM3 <= (float) $band['max_volume_m3']) {
-                    return $band;
-                }
+        // Bands are already sorted ascending by max_weight_kg (see normalizeConfig).
+        // Walk through them in order and pick the first band that covers the weight.
+        foreach ($bands as $band) {
+            $maxWeight = (float) $band['max_weight_kg'];
+            if ($weightKg <= $maxWeight && $volumeM3 <= (float) $band['max_volume_m3']) {
+                return $band;
             }
-
-            return null;
-        };
-
-        if ($weightKg <= 10.0) {
-            return $selectBand(fn (array $band) => ($band['id'] ?? null) === 'eu-10' || (float) $band['max_weight_kg'] <= 10.0)
-                ?? null;
-        }
-
-        if ($weightKg < 25.0) {
-            return $selectBand(fn (array $band) => ($band['id'] ?? null) === 'eu-30' || ((float) $band['max_weight_kg'] > 10.0 && (float) $band['max_weight_kg'] <= 30.0))
-                ?? null;
-        }
-
-        if ($weightKg <= 50.0) {
-            return $selectBand(fn (array $band) => ($band['id'] ?? null) === 'eu-50' || ((float) $band['max_weight_kg'] > 25.0 && (float) $band['max_weight_kg'] <= 50.0))
-                ?? null;
-        }
-
-        if ($weightKg <= 75.0) {
-            return $selectBand(fn (array $band) => ($band['id'] ?? null) === 'eu-75' || ((float) $band['max_weight_kg'] > 50.0 && (float) $band['max_weight_kg'] <= 75.0))
-                ?? null;
-        }
-
-        if ($weightKg <= 100.0) {
-            return $selectBand(fn (array $band) => ($band['id'] ?? null) === 'eu-100' || ((float) $band['max_weight_kg'] > 75.0 && (float) $band['max_weight_kg'] <= 100.0))
-                ?? null;
         }
 
         return null;

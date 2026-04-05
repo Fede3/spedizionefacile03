@@ -82,6 +82,18 @@ class Package extends Model
         'content_description',    // Descrizione del contenuto (es. "Elettronica")
     ];
 
+    // Converte automaticamente i campi nei tipi corretti
+    protected $casts = [
+        'weight'       => 'float',
+        'first_size'   => 'float',
+        'second_size'  => 'float',
+        'third_size'   => 'float',
+        'weight_price' => 'float',
+        'volume_price' => 'float',
+        'single_price' => 'integer',  // centesimi: 1190 = 11,90 EUR
+        'quantity'     => 'integer',
+    ];
+
     // Relazione: ogni pacco appartiene a UN utente
     public function user(): BelongsTo
     {

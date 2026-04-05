@@ -33,9 +33,9 @@ const displayPrice = computed(() => props.sessionTotalPrice || formatEuro(props.
 
   <!-- Bottone CTA -->
   <div
-    class="continue-button-wrapper bg-[#E44203] w-full text-white font-semibold text-center rounded-[50px] tracking-[-0.48px] transition-[background-color,box-shadow,transform] duration-200 hover:bg-[#c93800] hover:shadow-[0_6px_20px_rgba(228,66,3,0.35)] active:scale-[0.98] overflow-hidden"
+    class="continue-button-wrapper w-full text-center"
     :class="[
-      { 'text-[1.25rem] tablet:text-[1.875rem] h-[64px] tablet:h-[80px]': !isRateCalculated, 'min-h-[90px] tablet:h-[113px] py-[8px] tablet:py-0': isRateCalculated },
+      { 'h-[64px] tablet:h-[80px]': !isRateCalculated, 'min-h-[90px] tablet:h-[113px] py-[8px] tablet:py-0': isRateCalculated },
       promoSettings?.active && promoSettings?.label_text ? 'mt-[12px]' : 'mt-[24px] desktop-xl:mt-[40px] desktop:mt-[20px]'
     ]">
     <button
@@ -43,7 +43,7 @@ const displayPrice = computed(() => props.sessionTotalPrice || formatEuro(props.
       type="button"
       @click="emit('continue')"
       :disabled="isCalculating"
-      class="w-full h-full rounded-[50px] cursor-pointer flex items-center justify-center gap-[10px] text-[1.25rem] tablet:text-[1.875rem] disabled:opacity-70 disabled:cursor-not-allowed">
+      class="btn-cta w-full h-full flex items-center justify-center gap-[10px] text-[1.25rem] tablet:text-[1.875rem] tracking-[-0.02em] disabled:opacity-70 disabled:cursor-not-allowed">
       <span v-if="!isRateCalculated">Continua</span>
       <span v-else>
         <span class="text-[1.5rem] tablet:text-[2.25rem] border-b-[1px] border-white pb-[4px]">Spedisci da {{ displayPrice }}&euro;</span>

@@ -7,8 +7,8 @@
  *   - Request con email per sendEmail
  *
  * COSA ESCE:
- *   - JSON con success e message ("email inviata") per sendEmail (HTTP 200)
- *   - JSON con success=false e message ("email non trovata") se email non esiste (HTTP 404)
+ *   - JSON con success e message generico per sendEmail (HTTP 200)
+ *   - La risposta resta uguale anche se email non esiste (anti-enumerazione)
  *
  * CHIAMATO DA:
  *   - routes/api.php — POST /api/reset-password
@@ -26,7 +26,6 @@
  *     Nota: attualmente restituisce 404 se non trovata — valutare se cambiare per sicurezza
  *
  * ERRORI TIPICI:
- *   - 404: email non registrata nel database
  *   - L'invio email puo' fallire se il server SMTP non e' configurato
  *
  * PUNTI DI MODIFICA SICURI:
@@ -59,13 +58,11 @@ class PasswordResetRequestController extends Controller
             'email' => ['required', 'email'],
         ]);
 
-        // Controlliamo se l'email esiste nel database (cioe' se c'e' un utente registrato con questa email)
-        if (!$this->validateEmail($request->email)) {
-            return $this->failedResponse();
+        // Anti-enumerazione: rispondiamo sempre allo stesso modo, ma inviamo
+        // l'email solo se l'account esiste davvero.
+        if ($this->validateEmail($request->email)) {
+            $this->send($request->email);
         }
-
-        // Se l'email esiste, generiamo un token e inviamo l'email di recupero
-        $this->send($request->email);
 
         return $this->successResponse();
     }
@@ -130,18 +127,9 @@ class PasswordResetRequestController extends Controller
         return User::where('email', $email)->exists();
     }
 
-    // Risposta di errore quando l'email non viene trovata nel database
-    public function failedResponse() {
-        return response()->json([
-            'success' => false,
-            'message' => 'L\'indirizzo email inserito non è stato trovato.'
-        ], Response::HTTP_NOT_FOUND);
-    }
-
     // Risposta di successo quando l'email di recupero e' stata inviata correttamente
-    // NOTA: non restituiamo i dati del token per sicurezza (il token va usato solo via email)
+    // NOTA: la risposta e' volutamente generica per non rivelare se l'email esiste.
     public function successResponse() {
-
         return response()->json([
             'success' => true,
             'message' => 'Ti è stata inviata un\'email per il recupero della password. Controlla la tua casella di posta.',

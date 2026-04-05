@@ -41,6 +41,10 @@ class OrderResource extends JsonResource
             'raw_status' => $rawStatus,                                  // Stato originale in inglese (per logica frontend)
             'subtotal' => $this->subtotal->formatted(),                  // Prezzo formattato
             'subtotal_cents' => (int) $this->subtotal->amount(),         // Prezzo in centesimi (per calcoli frontend)
+            'client_submission_id' => $this->client_submission_id,
+            'pricing_signature' => $this->pricing_signature,
+            'pricing_snapshot_version' => $this->pricing_snapshot_version,
+            'pricing_snapshot' => $this->pricing_snapshot,
             'user' => $this->user,                                       // Dati dell'utente
             'created_at' => $this->created_at->setTimezone('Europe/Rome')->format('d/m/Y H:i'), // Data italiana
             'packages' => PackageResource::collection($this->packages),  // Lista pacchi formattati
@@ -65,6 +69,10 @@ class OrderResource extends JsonResource
             'refunded_at' => $this->refunded_at ? $this->refunded_at->setTimezone('Europe/Rome')->format('d/m/Y H:i') : null,
             'cancellation_fee' => $this->cancellation_fee ? number_format($this->cancellation_fee / 100, 2, ',', '.') . ' EUR' : null,
             'payment_method' => $this->payment_method,                   // Metodo di pagamento originale
+            'client_submission_id' => $this->client_submission_id,
+            'pricing_signature' => $this->pricing_signature,
+            'pricing_snapshot_version' => $this->pricing_snapshot_version,
+            'pricing_snapshot' => $this->pricing_snapshot,
         ];
     }
 }

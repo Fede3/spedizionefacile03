@@ -114,7 +114,6 @@ class OrderControllerTest extends TestCase
                     'first_size'   => 30,
                     'second_size'  => 20,
                     'third_size'   => 15,
-                    'single_price' => 11.90,
                 ],
             ],
         ], $overrides);
@@ -138,6 +137,10 @@ class OrderControllerTest extends TestCase
             'user_id' => $user->id,
             'status'  => 'pending',
         ]);
+
+        $order = Order::query()->findOrFail($response->json('order_id'));
+        $this->assertGreaterThan(0, (int) $order->subtotal->amount());
+        $this->assertSame((int) $order->subtotal->amount(), data_get($order->pricing_snapshot, 'total_cents'));
     }
 
     /* ================================================================== */
@@ -201,6 +204,231 @@ class OrderControllerTest extends TestCase
             'user_id' => $user->id,
             'status'  => 'pending',
         ]);
+    }
+
+    public function test_create_direct_order_is_idempotent_for_the_same_submission_context(): void
+    {
+        $user = User::factory()->create();
+        $payload = array_merge($this->directOrderPayload(), [
+            'client_submission_id' => 'direct-submission-001',
+            'pricing_signature' => 'client-direct-signature-001',
+            'pricing_snapshot_version' => 3,
+            'pricing_snapshot' => [
+                'total_cents' => 1,
+                'services' => ['selected' => ['client']],
+            ],
+        ]);
+
+        $first = $this->actingAs($user)
+            ->postJson('/api/create-direct-order', $payload)
+            ->assertSuccessful();
+
+        $second = $this->actingAs($user)
+            ->postJson('/api/create-direct-order', $payload)
+            ->assertSuccessful();
+
+        $firstOrderId = $first->json('order_id');
+        $secondOrderId = $second->json('order_id');
+
+        $this->assertSame($firstOrderId, $secondOrderId);
+        $this->assertSame(1, Order::query()->where('user_id', $user->id)->where('client_submission_id', 'direct-submission-001')->count());
+
+        $order = Order::query()->findOrFail($firstOrderId);
+        $this->assertNotSame('client-direct-signature-001', $order->pricing_signature);
+        $this->assertSame(1, $order->pricing_snapshot_version);
+        $this->assertSame(1190, data_get($order->pricing_snapshot, 'total_cents'));
+        $this->assertNotSame([
+            'services' => ['selected' => ['client']],
+            'total_cents' => 1,
+        ], $order->pricing_snapshot);
+    }
+
+    public function test_create_direct_order_rejects_replay_when_service_payload_changes(): void
+    {
+        $user = User::factory()->create();
+        $payload = $this->directOrderPayload();
+        $payload['client_submission_id'] = 'direct-submission-service-payload-001';
+        $payload['services']['service_type'] = 'contrassegno';
+        $payload['services']['service_data'] = [
+            'delivery_mode' => 'home',
+            'sms_email_notification' => true,
+            'contrassegno' => [
+                'importo' => '25,00',
+                'modalita_incasso' => 'contanti',
+                'modalita_rimborso' => 'bonifico',
+                'dettaglio_rimborso' => 'IT60X0542811101000000123456',
+            ],
+        ];
+
+        $first = $this->actingAs($user)
+            ->postJson('/api/create-direct-order', $payload)
+            ->assertSuccessful();
+
+        $payload['services']['service_data']['contrassegno']['importo'] = '30,00';
+
+        $this->actingAs($user)
+            ->postJson('/api/create-direct-order', $payload)
+            ->assertStatus(422)
+            ->assertJsonFragment(['error' => 'Contesto preventivo non coerente con l\'ordine.']);
+
+        $this->assertSame(1, Order::query()->where('user_id', $user->id)->where('client_submission_id', 'direct-submission-service-payload-001')->count());
+
+        $order = Order::query()->findOrFail($first->json('order_id'));
+        $this->assertIsArray(data_get($order->pricing_snapshot, 'services.service_payload'));
+        $this->assertSame('home', data_get($order->pricing_snapshot, 'services.service_payload.delivery_mode'));
+    }
+
+    public function test_create_direct_order_rejects_replay_against_legacy_order_without_pricing_signature(): void
+    {
+        $user = User::factory()->create();
+        $payload = $this->directOrderPayload([
+            'client_submission_id' => 'legacy-direct-submission-001',
+        ]);
+
+        $first = $this->actingAs($user)
+            ->postJson('/api/create-direct-order', $payload)
+            ->assertSuccessful();
+
+        $order = Order::query()->findOrFail($first->json('order_id'));
+        $order->forceFill([
+            'pricing_signature' => null,
+            'pricing_snapshot' => null,
+            'pricing_snapshot_version' => null,
+        ])->save();
+
+        $payload['packages'][0]['quantity'] = 2;
+
+        $this->actingAs($user)
+            ->postJson('/api/create-direct-order', $payload)
+            ->assertStatus(422)
+            ->assertJsonFragment(['error' => 'Contesto preventivo non coerente con l\'ordine.']);
+    }
+
+    public function test_create_direct_order_requires_pudo_when_delivery_mode_is_pudo(): void
+    {
+        $user = User::factory()->create();
+        $payload = $this->directOrderPayload([
+            'delivery_mode' => 'pudo',
+            'pudo' => [
+                'name' => 'BRT Point',
+            ],
+        ]);
+
+        $this->actingAs($user)
+            ->postJson('/api/create-direct-order', $payload)
+            ->assertStatus(422)
+            ->assertJsonValidationErrors(['pudo.pudo_id']);
+    }
+
+    public function test_add_package_rotates_pricing_context_on_pending_order(): void
+    {
+        $user = User::factory()->create();
+        $origin = PackageAddress::factory()->create();
+        $destination = PackageAddress::factory()->create();
+        $service = Service::create([
+            'service_type' => 'Nessuno',
+            'date' => '',
+            'time' => '',
+            'service_data' => [],
+        ]);
+
+        $package = Package::create([
+            'package_type' => 'Pacco',
+            'quantity' => 1,
+            'weight' => 5,
+            'first_size' => 30,
+            'second_size' => 20,
+            'third_size' => 15,
+            'single_price' => 1190,
+            'origin_address_id' => $origin->id,
+            'destination_address_id' => $destination->id,
+            'service_id' => $service->id,
+            'user_id' => $user->id,
+        ]);
+
+        $order = Order::create([
+            'user_id' => $user->id,
+            'subtotal' => 1190,
+            'status' => Order::PENDING,
+            'client_submission_id' => 'submission-before-add-package',
+            'pricing_signature' => 'signature-before-add-package',
+            'pricing_snapshot_version' => 1,
+            'pricing_snapshot' => ['total_cents' => 1190],
+        ]);
+        Order::attachPackage($order->id, $package->id, 1);
+
+        $this->actingAs($user)
+            ->postJson("/api/orders/{$order->id}/add-package", [
+                'package_type' => 'Pacco',
+                'quantity' => 1,
+                'weight' => 4,
+                'first_size' => 20,
+                'second_size' => 20,
+                'third_size' => 20,
+            ])
+            ->assertSuccessful();
+
+        $order->refresh();
+        $this->assertNotSame('submission-before-add-package', $order->client_submission_id);
+        $this->assertNotSame('signature-before-add-package', $order->pricing_signature);
+        $this->assertSame((int) $order->subtotal->amount(), data_get($order->pricing_snapshot, 'total_cents'));
+        $this->assertSame(2, data_get($order->pricing_snapshot, 'package_count'));
+    }
+
+    public function test_add_package_response_returns_fresh_order_state(): void
+    {
+        $user = User::factory()->create();
+        $origin = PackageAddress::factory()->create();
+        $destination = PackageAddress::factory()->create();
+        $service = Service::create([
+            'service_type' => 'Nessuno',
+            'date' => '',
+            'time' => '',
+            'service_data' => [],
+        ]);
+
+        $package = Package::create([
+            'package_type' => 'Pacco',
+            'quantity' => 1,
+            'weight' => 5,
+            'first_size' => 30,
+            'second_size' => 20,
+            'third_size' => 15,
+            'single_price' => 1190,
+            'origin_address_id' => $origin->id,
+            'destination_address_id' => $destination->id,
+            'service_id' => $service->id,
+            'user_id' => $user->id,
+        ]);
+
+        $order = Order::create([
+            'user_id' => $user->id,
+            'subtotal' => 1190,
+            'status' => Order::PENDING,
+            'client_submission_id' => 'submission-before-fresh-response',
+            'pricing_signature' => 'signature-before-fresh-response',
+            'pricing_snapshot_version' => 1,
+            'pricing_snapshot' => ['total_cents' => 1190],
+        ]);
+        Order::attachPackage($order->id, $package->id, 1);
+
+        $response = $this->actingAs($user)
+            ->postJson("/api/orders/{$order->id}/add-package", [
+                'package_type' => 'Pacco',
+                'quantity' => 1,
+                'weight' => 4,
+                'first_size' => 20,
+                'second_size' => 20,
+                'third_size' => 20,
+            ])
+            ->assertSuccessful();
+
+        $order->refresh();
+
+        $this->assertSame((int) $order->subtotal->amount(), data_get($response->json(), 'order.subtotal_cents'));
+        $this->assertSame($order->client_submission_id, data_get($response->json(), 'order.client_submission_id'));
+        $this->assertSame($order->pricing_signature, data_get($response->json(), 'order.pricing_signature'));
+        $this->assertSame((int) $order->subtotal->amount(), data_get($response->json(), 'order.pricing_snapshot.total_cents'));
     }
 
     /* ================================================================== */

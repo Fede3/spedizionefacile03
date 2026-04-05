@@ -31,9 +31,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\User;
 use App\Models\WithdrawalRequest;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 class WithdrawalController extends Controller
 {
     // Mostra la lista di tutte le richieste di prelievo dell'utente che ha fatto la richiesta
@@ -59,40 +61,50 @@ class WithdrawalController extends Controller
             return response()->json(['message' => 'Solo gli account Pro possono richiedere prelievi.'], 403);
         }
 
-        // Controlliamo quanto ha guadagnato in commissioni
-        // Deve avere almeno 1 euro disponibile per poter prelevare
-        $available = $user->commissionBalance();
+        $result = DB::transaction(function () use ($user) {
+            $lockedUser = User::query()
+                ->whereKey($user->id)
+                ->lockForUpdate()
+                ->firstOrFail();
 
-        if ($available < 1) {
-            return response()->json([
-                'message' => 'Saldo commissioni insufficiente. Disponibile: ' . number_format($available, 2) . ' EUR',
-            ], 422);
+            // Trattiamo i pending come saldo riservato: una sola richiesta aperta per volta.
+            $pendingExists = WithdrawalRequest::query()
+                ->where('user_id', $lockedUser->id)
+                ->where('status', 'pending')
+                ->lockForUpdate()
+                ->exists();
+
+            if ($pendingExists) {
+                return [
+                    'error' => 'Hai gia una richiesta di prelievo in attesa di approvazione.',
+                ];
+            }
+
+            // Controlliamo quanto ha guadagnato in commissioni e blocchiamo se il saldo riservabile e' insufficiente.
+            $available = $lockedUser->commissionBalance();
+            if ($available < 1) {
+                return [
+                    'error' => 'Saldo commissioni insufficiente. Disponibile: ' . number_format($available, 2) . ' EUR',
+                ];
+            }
+
+            $withdrawal = WithdrawalRequest::create([
+                'user_id' => $lockedUser->id,
+                'amount' => $available,
+                'currency' => 'EUR',
+                'status' => 'pending',
+            ]);
+
+            return ['withdrawal' => $withdrawal];
+        });
+
+        if (isset($result['error'])) {
+            return response()->json(['message' => $result['error']], 422);
         }
-
-        // Controlliamo che non ci sia gia' una richiesta di prelievo in attesa
-        // (non si possono avere due richieste aperte contemporaneamente)
-        $pendingExists = WithdrawalRequest::where('user_id', $user->id)
-            ->where('status', 'pending')
-            ->exists();
-
-        if ($pendingExists) {
-            return response()->json([
-                'message' => 'Hai gia una richiesta di prelievo in attesa di approvazione.',
-            ], 422);
-        }
-
-        // Creiamo la richiesta di prelievo nel database
-        // Lo stato iniziale e' "pending" (in attesa), l'admin dovra' approvarla
-        $withdrawal = WithdrawalRequest::create([
-            'user_id' => $user->id,
-            'amount' => $available,
-            'currency' => 'EUR',
-            'status' => 'pending',
-        ]);
 
         return response()->json([
             'success' => true,
-            'data' => $withdrawal,
+            'data' => $result['withdrawal'],
         ], 201);
     }
 }

@@ -56,6 +56,21 @@ class OrderConfirmationMail extends Mailable implements ShouldQueue
     }
 
     /**
+     * Aggiunge header List-Unsubscribe per conformita' GDPR.
+     */
+    public function headers(): \Illuminate\Mail\Mailables\Headers
+    {
+        $unsubscribeUrl = config('app.frontend_url') . '/account/notifiche?unsubscribe=1';
+
+        return new \Illuminate\Mail\Mailables\Headers(
+            text: [
+                'List-Unsubscribe' => '<' . $unsubscribeUrl . '>',
+                'List-Unsubscribe-Post' => 'List-Unsubscribe=One-Click',
+            ],
+        );
+    }
+
+    /**
      * Definisce il contenuto dell'email usando il template "order-confirmation".
      */
     public function content(): Content

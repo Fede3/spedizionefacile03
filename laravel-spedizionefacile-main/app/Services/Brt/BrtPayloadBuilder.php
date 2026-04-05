@@ -25,15 +25,35 @@ class BrtPayloadBuilder
     {
         $appliedServices = [];
 
+        // Accumulate delivery/pickup management codes separately.
+        // BRT accepts multiple codes joined with a space (e.g. "CP SU").
+        // Previously only the first code was kept; now ALL active codes are sent.
+        $deliveryCodes = [];
+        $pickupCodes = [];
+
         foreach ($order->packages as $package) {
             if ($package->service && !empty($package->service->service_type)) {
                 $serviceType = mb_strtolower(trim($package->service->service_type), 'UTF-8');
 
                 if (isset(self::SERVICE_MAPPING[$serviceType])) {
                     $mapping = self::SERVICE_MAPPING[$serviceType];
-                    if (!isset($payload['createData'][$mapping['field']])) {
-                        $payload['createData'][$mapping['field']] = $mapping['value'];
-                        $appliedServices[] = ['app_service' => $package->service->service_type, 'brt_field' => $mapping['field'], 'brt_value' => $mapping['value']];
+
+                    if ($mapping['field'] === 'particularitiesDeliveryManagement') {
+                        if (!in_array($mapping['value'], $deliveryCodes, true)) {
+                            $deliveryCodes[] = $mapping['value'];
+                            $appliedServices[] = ['app_service' => $package->service->service_type, 'brt_field' => $mapping['field'], 'brt_value' => $mapping['value']];
+                        }
+                    } elseif ($mapping['field'] === 'particularitiesPickupManagement') {
+                        if (!in_array($mapping['value'], $pickupCodes, true)) {
+                            $pickupCodes[] = $mapping['value'];
+                            $appliedServices[] = ['app_service' => $package->service->service_type, 'brt_field' => $mapping['field'], 'brt_value' => $mapping['value']];
+                        }
+                    } else {
+                        // Other scalar fields (e.g. serviceType): first-write wins
+                        if (!isset($payload['createData'][$mapping['field']])) {
+                            $payload['createData'][$mapping['field']] = $mapping['value'];
+                            $appliedServices[] = ['app_service' => $package->service->service_type, 'brt_field' => $mapping['field'], 'brt_value' => $mapping['value']];
+                        }
                     }
                 } else {
                     Log::info('BRT service not mapped', ['order_id' => $order->id, 'service_type' => $package->service->service_type]);
@@ -43,13 +63,24 @@ class BrtPayloadBuilder
 
         if (!empty($options['insurance_amount'])) {
             $payload['createData']['insuranceAmount'] = (float) ($options['insurance_amount'] / 100);
+            $payload['createData']['insuranceCurrency'] = 'EUR';
             $appliedServices[] = ['app_service' => 'assicurazione', 'brt_field' => 'insuranceAmount', 'brt_value' => $payload['createData']['insuranceAmount']];
         }
 
         if (!empty($options['delivery_appointment'])) {
-            $payload['createData']['isAlertRequired'] = '1';
-            $payload['createData']['particularitiesDeliveryManagement'] = $payload['createData']['particularitiesDeliveryManagement'] ?? 'AP';
+            $payload['createData']['isAlertRequired'] = 1;
+            if (!in_array('AP', $deliveryCodes, true)) {
+                $deliveryCodes[] = 'AP';
+            }
             $appliedServices[] = ['app_service' => 'appuntamento_consegna', 'brt_field' => 'particularitiesDeliveryManagement', 'brt_value' => 'AP'];
+        }
+
+        // Assign accumulated management codes to payload (all codes joined with a space)
+        if (!empty($deliveryCodes)) {
+            $payload['createData']['particularitiesDeliveryManagement'] = implode(' ', $deliveryCodes);
+        }
+        if (!empty($pickupCodes)) {
+            $payload['createData']['particularitiesPickupManagement'] = implode(' ', $pickupCodes);
         }
 
         if (!empty($options['no_label'])) {
@@ -91,7 +122,7 @@ class BrtPayloadBuilder
         $descriptions = $order->packages->pluck('content_description')->filter()->unique()->implode(', ');
         if ($descriptions) $notes .= ' - Contenuto: ' . $descriptions;
 
-        return mb_substr($notes, 0, 50);
+        return mb_substr($notes, 0, 120);
     }
 
     public function buildTestPayload(BrtConfig $config, AddressNormalizer $normalizer, array $data): array
@@ -135,8 +166,8 @@ class BrtPayloadBuilder
             'numericSenderReference' => $numericSenderReference,
             'alphanumericSenderReference' => 'TEST-' . $numericSenderReference,
             'notes' => $data['notes'] ?? 'Test SpediamoFacile',
-            'isAlertRequired' => '1',
-            'isCODMandatory' => !empty($data['is_cod']) ? '1' : '0',
+            'isAlertRequired' => 1,
+            'isCODMandatory' => !empty($data['is_cod']) ? 1 : 0,
         ];
 
         if (!empty($data['is_cod']) && !empty($data['cod_amount'])) {

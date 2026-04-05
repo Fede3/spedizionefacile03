@@ -1,18 +1,115 @@
 <!--
   PAGINA: Pagamento alla Consegna (servizi/pagamento-alla-consegna.vue)
-  Pagina informativa dedicata al servizio di contrassegno (pagamento alla consegna).
-  Spiega: cos'e', quando usarlo, come funziona con SpediamoFacile,
-  requisiti, limiti, costi, dati richiesti e domande frequenti.
-  Include dati strutturati JSON-LD per il SEO (FAQPage).
+  Pagina informativa dedicata al contrassegno.
+  Struttura aggiornata alla grammatica pubblica nuova: hero chiaro, sezioni modulari,
+  checklist operative e FAQ leggibili anche da mobile.
 -->
 <script setup>
-// Meta tag SEO per la pagina contrassegno
 useSeoMeta({
 	title: 'Pagamento alla Consegna (Contrassegno) | SpediamoFacile',
 	ogTitle: 'Pagamento alla Consegna | SpediamoFacile',
-	description: 'Spedisci con pagamento alla consegna: il corriere incassa per tuo conto al momento della consegna. Scopri come funziona il contrassegno con SpediamoFacile.',
+	description:
+		'Spedisci con pagamento alla consegna: il corriere incassa per tuo conto al momento della consegna. Scopri come funziona il contrassegno con SpediamoFacile.',
 	ogDescription: 'Spedisci con contrassegno: il corriere incassa per tuo conto alla consegna. Scopri come funziona.',
 });
+
+const summaryPills = ['Incasso gestito dal corriere', 'Sovrapprezzo visibile nel preventivo', 'Riversamento tracciabile'];
+
+const overviewCards = [
+	{
+		title: "Cos'e'",
+		description:
+			"Il pagamento alla consegna e' un servizio accessorio in cui il corriere incassa dal destinatario l'importo indicato dal mittente e poi lo riversa con la modalita' prevista dal vettore.",
+	},
+	{
+		title: 'Quando conviene',
+		bullets: [
+			'Quando vuoi vendere senza chiedere un pagamento anticipato.',
+			'Quando gestisci ordini fuori da un classico checkout ecommerce.',
+			'Quando vuoi tenere consegna e incasso dentro lo stesso flusso operativo.',
+		],
+	},
+];
+
+const flowSteps = [
+	{
+		step: '01',
+		title: 'Imposta il contrassegno nel checkout',
+		description:
+			"Durante la spedizione inserisci l'importo da incassare, una descrizione sintetica per i documenti e la modalita' di riversamento disponibile.",
+	},
+	{
+		step: '02',
+		title: 'Il corriere ritira e consegna',
+		description:
+			"Alla consegna il destinatario paga l'importo indicato. Se non paga o rifiuta, il collo non viene consegnato e segue la procedura prevista dal vettore.",
+	},
+	{
+		step: '03',
+		title: "L'incasso viene riversato",
+		description:
+			"Il riversamento avviene secondo la modalita' selezionata. Nel tuo flusso operativo puoi distinguere tra incasso in corso, incasso eseguito e riversato.",
+	},
+	{
+		step: '04',
+		title: 'Tracci e riconcili il tutto',
+		description:
+			'Quietanze, distinta di riversamento e stato ordine restano leggibili dal prodotto, riducendo i passaggi fuori piattaforma.',
+	},
+];
+
+const guardrails = [
+	'Importo chiaramente indicato su documenti ed etichetta dove richiesto dal vettore.',
+	'Verifica sempre eventuali limiti e soglie del corriere prima di confermare la spedizione.',
+	'Dati completi del destinatario e numero di telefono riducono i tentativi di consegna a vuoto.',
+	'Se vendi merce di valore, valuta copertura assicurativa e foto di pre-imballo.',
+	"Se il destinatario non paga, la spedizione puo' andare in giacenza o rientrare al mittente con costi collegati.",
+];
+
+const checkoutChecklist = [
+	'Importo contrassegno',
+	'Descrizione breve per ricevuta o documenti',
+	'Scelta del riversamento disponibile',
+	'Conferma esplicita del servizio accessorio',
+	'Messaggio chiaro al destinatario nella pre-consegna, se previsto',
+];
+
+const scenarioCards = [
+	{
+		title: "Il destinatario non paga o non e' presente",
+		description:
+			"La consegna non si chiude. Il collo puo' andare in giacenza oppure tornare al mittente secondo le condizioni del corriere.",
+	},
+	{
+		title: "L'accredito non e' immediato",
+		description:
+			"I tempi di riversamento dipendono dal vettore e dalla modalita' selezionata. Il flusso va letto come processo separato dalla sola consegna.",
+	},
+	{
+		title: 'Vuoi fatturare al destinatario',
+		description:
+			'La fattura resta del mittente: il corriere incassa per tuo conto. Serve quindi mantenere importo, quietanza e riconciliazione coerenti.',
+	},
+];
+
+const faqs = [
+	{
+		title: "Il pagamento alla consegna e' solo in contanti?",
+		text: "Per i servizi nazionali e' normalmente in contanti; alcune reti offrono varianti o servizi correlati. Verifica sempre le condizioni del vettore scelto.",
+	},
+	{
+		title: 'Come scelgo come ricevere i soldi incassati?',
+		text: "Al momento dell'ordine selezioni la modalita' di riversamento resa disponibile dal vettore, per esempio accredito su conto corrente.",
+	},
+	{
+		title: 'Posso far pagare solo le spese di spedizione?',
+		text: 'Sono possibili servizi correlati in cui il destinatario paga solo il trasporto, ma non coincidono sempre con il contrassegno classico della merce.',
+	},
+	{
+		title: 'Cosa devo scrivere sui documenti?',
+		text: "L'importo da incassare deve essere indicato in modo chiaro secondo i requisiti del vettore. Le condizioni ufficiali aggiornate restano la fonte da seguire.",
+	},
+];
 
 useHead({
 	script: [
@@ -21,208 +118,224 @@ useHead({
 			innerHTML: JSON.stringify({
 				'@context': 'https://schema.org',
 				'@type': 'FAQPage',
-				mainEntity: [
-					{
-						'@type': 'Question',
-						name: 'Il pagamento alla consegna è solo in contanti?',
-						acceptedAnswer: {
-							'@type': 'Answer',
-							text: 'Per i servizi nazionali è normalmente in contanti; alcune reti offrono varianti o servizi correlati. Verifica sempre le condizioni del vettore scelto.',
-						},
+				mainEntity: faqs.map((faq) => ({
+					'@type': 'Question',
+					name: faq.title,
+					acceptedAnswer: {
+						'@type': 'Answer',
+						text: faq.text,
 					},
-					{
-						'@type': 'Question',
-						name: 'Come scelgo come ricevere i soldi incassati?',
-						acceptedAnswer: {
-							'@type': 'Answer',
-							text: 'Al momento dell\'ordine selezioni la modalità di riversamento resa disponibile dal vettore; per esempio accredito su conto corrente.',
-						},
-					},
-				],
+				})),
 			}),
 		},
 	],
 });
-
-// Dati strutturati JSON-LD per i rich snippets Google (domande frequenti sul contrassegno)
-
-// Lista delle domande frequenti sul pagamento alla consegna
-const faqs = [
-	{
-		title: "Il pagamento alla consegna è solo in contanti?",
-		text: "Per i servizi nazionali è normalmente in contanti; alcune reti offrono varianti o servizi correlati. Verifica sempre le condizioni del vettore scelto.",
-	},
-	{
-		title: "Come scelgo come ricevere i soldi incassati?",
-		text: "Al momento dell'ordine selezioni la modalità di riversamento resa disponibile dal vettore; per esempio accredito su conto corrente.",
-	},
-	{
-		title: "Posso far pagare solo le spese di spedizione e non la merce?",
-		text: "Sì: alcuni corrieri hanno servizi in cui il destinatario paga solo il trasporto; GLS lo chiama “Destination Pay”. È diverso dal contrassegno merce.",
-	},
-	{
-		title: "Cosa devo scrivere sui documenti?",
-		text: "Possono esserci limiti legati al vettore e alla normativa sui contanti, soglie soggette ad aggiornamenti. Controlla sempre le condizioni ufficiali prima della spedizione. ",
-	},
-];
 </script>
 
 <template>
-	<!-- Pagina informativa sul servizio di pagamento alla consegna (contrassegno) -->
-	<section id="pagamento-alla-consegna">
-		<div class="my-container">
-			<p
-				class="desktop-xl:text-[4rem] font-medium tracking-[-1.536px] text-center text-[#222222] mt-[64px] mb-[40px] desktop-xl:mb-[80px] text-[2.5rem] leading-[110%] desktop:mt-[72px] desktop-xl:mt-[141px]">
-				Pagamento alla consegna
-			</p>
-
-			<div
-				class="desktop:flex desktop:items-start desktop-xl:items-center desktop:justify-between before:content-[''] before:block desktop-xl:before:w-[519px] desktop-xl:before:h-[550px] desktop:before:rounded-[40px] before:bg-green-500 desktop:before:h-[681px] desktop:before:w-[446px] before:w-[335px] before:h-[320px] before:rounded-[24px] before:mx-auto desktop:before:mx-0">
-				<div class="desktop-xl:max-w-[669px] desktop:max-w-[430px]">
-					<h3 class="text-[1.5rem] font-medium tracking-[-0.576px] text-[#222222] mb-[16px] mt-[40px] desktop:mt-0">Cosa è?</h3>
-					<p class="desktop-xl:text-[1.125rem] leading-[160%] tracking-[-0.252px] text-[#737373] text-[0.875rem] desktop:text-[1rem]">
-						Il pagamento alla consegna è un servizio accessorio con cui il corriere ritira dal destinatario l'importo indicato dal mittente al momento della consegna e lo riversa al mittente con la
-						modalità scelta. Per i vettori nazionali il pagamento avviene di norma in contanti e l'importo da incassare deve essere indicato chiaramente sulla spedizione; il riversamento può avvenire
-						con accredito su conto o altre modalità rese disponibili dal vettore.
-					</p>
-
-					<h3 class="text-[1.5rem] font-medium tracking-[-0.576px] text-[#222222] mt-[40px] desktop:mt-[65px] mb-[16px]">Quando usarlo</h3>
-					<div class="desktop-xl:text-[1.125rem] leading-[160%] tracking-[-0.252px] text-[#737373] text-[0.875rem] desktop:text-[1rem]">
-						<ul class="list-disc list-inside [&>li]:mb-[20px] [&>li]:ml-[15px]">
-							<li>Quando vuoi spedire merce senza esporre il cliente a pagamenti anticipati.</li>
-							<li>Quando vendi fuori canale e-commerce tradizionale o in aree dove i pagamenti elettronici sono poco usati.</li>
-
-							<li>Quando vuoi combinare consegna e incasso in un'unica operazione, con evidenza dell'importo in etichetta e nei documenti di trasporto.</li>
-						</ul>
-
-						<p>Molti corrieri italiani offrono servizi di incasso alla consegna in contanti; ad esempio il servizio “Contanti GLS” prevede la riscossione in contanti a domicilio.</p>
-					</div>
-				</div>
-			</div>
-
-			<div class="desktop:text-[1.25rem] leading-[160%] tracking-[-0.252px] text-[#737373] text-[0.875rem]">
-				<div class="mt-[70px]">
-					<div class="desktop:flex desktop:items-start desktop:justify-between">
-						<div class="desktop-xl:max-w-[655px] desktop:max-w-[505px] mr-auto">
-							<h3 class="desktop:text-[2.5rem] font-medium leading-[110%] tracking-[-0.96px] desktop:mb-[30px] text-[#222222] text-[1.875rem] mb-[20px]">Come funziona con SpediamoFacile</h3>
-
-							<h4>1. Impostazione in checkout</h4>
-
-							<p>Nel modulo di spedizione attivi “Pagamento alla consegna” e inserisci:</p>
-
-							<ul class="list-disc list-inside [&>li]:mb-[5px] [&>li]:ml-[5px]">
-								<li>importo da incassare</li>
-								<li>descrizione breve per ricevuta del destinatario</li>
-
-								<li>
-									modalità di riversamento preferita (accredito su conto, rimessa su portafoglio interno, altra opzione disponibile). Il sistema stampa l'indicazione del contrassegno sull'etichetta e
-									nei documenti che accompagnano il collo. Nei servizi postali come Poste Delivery Standard l'importo deve essere riportato in modo chiaro; il pagamento è in contanti.
-								</li>
-							</ul>
+	<section class="service-detail-shell py-[28px] desktop:py-[56px]">
+		<div class="my-container space-y-[20px] desktop:space-y-[28px]">
+			<section class="service-hero-card rounded-[28px] border border-[#E4EAEE] px-[20px] py-[22px] desktop:px-[32px] desktop:py-[34px]">
+				<div
+					class="flex flex-col gap-[18px] desktop:grid desktop:grid-cols-[minmax(0,1.2fr)_minmax(320px,0.8fr)] desktop:items-center desktop:gap-[28px]">
+					<div class="space-y-[12px]">
+						<p class="text-[0.75rem] font-semibold uppercase tracking-[0.14em] text-[#095866]">Servizio accessorio</p>
+						<h1 class="text-[2rem] font-bold tracking-[-0.04em] text-[#1F2937] desktop:text-[3.2rem]">Pagamento alla consegna</h1>
+						<p class="max-w-[62ch] text-[0.9375rem] leading-[1.65] text-[#5B6670] desktop:text-[1.0625rem]">
+							Il corriere incassa per tuo conto al momento della consegna. Questa pagina ti aiuta a capire quando usarlo, quali dati servono
+							davvero e quali controlli fare prima di confermare una spedizione.
+						</p>
+						<div class="flex flex-wrap gap-[8px]">
+							<span
+								v-for="pill in summaryPills"
+								:key="pill"
+								class="inline-flex items-center rounded-full bg-[#F0F6F7] px-[12px] py-[6px] text-[0.75rem] font-semibold text-[#095866]">
+								{{ pill }}
+							</span>
 						</div>
-
-						<div
-							class="desktop-xl:w-[519px] desktop-xl:h-[397px] rounded-[32px] bg-green-500 w-[335px] h-[320px] mx-auto desktop:mx-0 mt-[30px] desktop:mt-0 desktop:h-[553px] desktop:w-[380px]"></div>
 					</div>
 
-					<h4 class="mt-[30px]">2. Ritiro e consegna</h4>
+					<div class="rounded-[24px] border border-white/70 bg-white/75 p-[18px] shadow-[0_18px_40px_rgba(9,88,102,0.08)] backdrop-blur">
+						<p class="text-[0.75rem] font-semibold uppercase tracking-[0.12em] text-[#E44203]">Da tenere a mente</p>
+						<div class="mt-[12px] space-y-[12px]">
+							<div class="rounded-[18px] border border-[#E9EEF2] bg-[#F8FBFC] px-[14px] py-[12px]">
+								<p class="text-[0.8125rem] font-semibold text-[#1F2937]">Costo extra sempre visibile</p>
+								<p class="mt-[4px] text-[0.8125rem] leading-[1.55] text-[#5B6670]">
+									Il contrassegno non va trattato come nota generica: deve rientrare nel pricing mostrato prima del pagamento.
+								</p>
+							</div>
+							<div class="rounded-[18px] border border-[#E9EEF2] bg-[#F8FBFC] px-[14px] py-[12px]">
+								<p class="text-[0.8125rem] font-semibold text-[#1F2937]">Consegna e incasso non sono la stessa cosa</p>
+								<p class="mt-[4px] text-[0.8125rem] leading-[1.55] text-[#5B6670]">
+									La spedizione puo\' risultare consegnata prima che il riversamento sia effettivamente riconciliato.
+								</p>
+							</div>
+						</div>
+						<div class="mt-[16px] flex flex-wrap gap-[10px]">
+							<NuxtLink to="/preventivo" class="btn-cta btn-compact inline-flex items-center justify-center">
+								Calcola il preventivo
+							</NuxtLink>
+							<NuxtLink to="/contatti" class="btn-secondary btn-compact inline-flex items-center justify-center">Parla con noi</NuxtLink>
+						</div>
+					</div>
+				</div>
+			</section>
 
-					<p>
-						Il corriere ritira il collo e lo porta in consegna. Alla porta incassa l'importo indicato. Se il destinatario non paga o rifiuta, la spedizione non viene consegnata e rientra al mittente
-						secondo la prassi del vettore. La natura “incasso alla consegna” è un servizio accessorio previsto nelle condizioni generali dei principali corrieri nazionali.					</p>
-
-					<h4 class="mt-[30px]">3. Riversamento dell'incasso</h4>
-
-					<p>
-						Dopo l'incasso, l'importo viene riversato al mittente con la modalità selezionata al momento dell'ordine. Nelle soluzioni postali è possibile farsi accreditare su conto o tramite altre
-						forme di rimessa indicate dal vettore; la preferenza si imposta in fase di spedizione.
+			<section class="grid gap-[16px] desktop:grid-cols-2">
+				<article
+					v-for="card in overviewCards"
+					:key="card.title"
+					class="rounded-[24px] border border-[#E9EEF2] bg-white px-[18px] py-[18px] shadow-[0_12px_26px_rgba(15,23,42,0.04)] desktop:px-[22px] desktop:py-[22px]">
+					<h2 class="text-[1.125rem] font-semibold tracking-[-0.02em] text-[#1F2937]">{{ card.title }}</h2>
+					<p v-if="card.description" class="mt-[10px] text-[0.875rem] leading-[1.65] text-[#5B6670] desktop:text-[0.9375rem]">
+						{{ card.description }}
 					</p>
+					<ul v-else class="mt-[12px] space-y-[8px]">
+						<li v-for="item in card.bullets" :key="item" class="flex items-start gap-[10px] text-[0.875rem] leading-[1.6] text-[#5B6670]">
+							<span class="mt-[7px] h-[7px] w-[7px] shrink-0 rounded-full bg-[#E44203]"></span>
+							<span>{{ item }}</span>
+						</li>
+					</ul>
+				</article>
+			</section>
 
-					<h4 class="mt-[30px]">4. Tracciamento e quietanze</h4>
-
-					<p>
-						Nel tuo profilo vedi lo stato "incasso in corso", "incasso eseguito", "riversato". Puoi scaricare la quietanza di incasso e la distinta di riversamento.
+			<section
+				class="rounded-[28px] border border-[#E9EEF2] bg-white px-[18px] py-[18px] shadow-[0_14px_30px_rgba(15,23,42,0.05)] desktop:px-[24px] desktop:py-[24px]">
+				<div class="sf-page-intro">
+					<p class="sf-section-kicker">Come funziona</p>
+					<h2 class="text-[1.4rem] font-semibold tracking-[-0.03em] text-[#1F2937] desktop:text-[2rem]">
+						Dal checkout al riversamento, senza punti ciechi
+					</h2>
+					<p class="sf-section-description max-w-[64ch]">
+						Il valore del contrassegno non e' soltanto operativo: va trattato come parte del flusso economico e documentale della
+						spedizione.
 					</p>
 				</div>
 
-				<h3 class="desktop:text-[2.5rem] font-medium leading-[110%] tracking-[-0.96px] desktop:mb-[30px] text-[#222222] desktop:mt-[70px] text-[1.875rem] mb-[20px] mt-[40px]">
-					Requisiti, limiti e buone pratiche
-				</h3>
-
-				<ul class="list-disc list-inside [&>li]:mb-[5px] [&>li]:ml-[5px]">
-					<li>
-						Importo in cifre ben visibile in etichetta e documenti; dove richiesto, riportalo anche in lettere. Nelle specifiche dei servizi postali l'importo del contrassegno è parte integrante
-						dell'ordine e il pagamento avviene in contanti.
-					</li>
-					<li>Pagamento tipicamente in contanti alla consegna. Alcuni vettori offrono varianti o servizi correlati; GLS indica esplicitamente il servizio “Contanti GLS”.</li>
-					<li>
-						Importi elevati: verifica sempre eventuali limiti o soglie del vettore e la normativa corrente sui pagamenti in contanti; i limiti possono variare nel tempo. Le pagine ufficiali dei
-						vettori e le condizioni aggiornate prevalgono.					</li>
-					<li>Dati del destinatario completi e reperibilità telefonica: riduce i tentativi di consegna a vuoto.</li>
-					<li>Imballo robusto e prova di valore: se vendi merce costosa, valuta assicurazione e foto di pre-imballo.</li>
-					<li>In caso di mancato pagamento il collo non viene consegnato e può tornare al mittente; pianifica la gestione resi e i costi collegati.</li>
-
-					</ul>
-
-				<h3 class="desktop:text-[2.5rem] font-medium leading-[110%] tracking-[-0.96px] desktop:mb-[30px] text-[#222222] desktop:mt-[70px] text-[1.875rem] mb-[20px] mt-[40px]">Costi</h3>
-				<ul class="list-disc list-inside [&>li]:mb-[5px] [&>li]:ml-[5px]">
-					<li>
-						Il pagamento alla consegna comporta un sovrapprezzo rispetto alla spedizione standard, in quanto il corriere svolge un servizio di incasso e riversamento. L'importo del sovrapprezzo
-						dipende dal vettore e dalle condizioni applicate. La pagina informativa Paccofacile chiarisce che il contrassegno è un servizio accessorio con costi dedicati; la tariffa esatta viene
-						mostrata nel preventivo prima dell'acquisto.
-					</li>
-					</ul>
-
-				<h3 class="desktop:text-[2.5rem] font-medium leading-[110%] tracking-[-0.96px] desktop:mb-[30px] text-[#222222] desktop:mt-[70px] text-[1.875rem] mb-[20px] mt-[40px]">
-					Dati richiesti e controlli nel checkout
-				</h3>
-				<ul class="list-disc list-inside [&>li]:mb-[5px] [&>li]:ml-[5px]">
-					<li>campo importo contrassegno</li>
-					<li>campo descrizione per ricevuta</li>
-					<li>scelta riversamento: accredito su conto o portafoglio</li>
-					<li>consenso esplicito del mittente ai termini del servizio accessorio contrassegno</li>
-					<li>avviso chiaro al destinatario nell'email/SMS di pre-consegna: "consegna con incasso X € in contanti"</li>
-				</ul>
-
-				<h3 class="desktop:text-[2.5rem] font-medium leading-[110%] tracking-[-0.96px] desktop:mb-[30px] text-[#222222] desktop:mt-[70px] text-[1.875rem] mb-[20px] mt-[40px]">Cosa succede se…</h3>
-				<ul class="list-disc list-inside [&>li]:mb-[5px] [&>li]:ml-[5px] mb-[30px]">
-					<li>
-						Il destinatario non paga o non è presente
-						<span class="block ml-[10px]">
-							La consegna non avviene; la spedizione può essere messa in giacenza con nuove istruzioni o rientrare al mittente. Il servizio resta dovuto secondo condizioni del vettore.
-							irp-cdn.multiscreensite.com
-						</span>
-					</li>
-					<li>
-						L'incasso è avvenuto ma non vedi subito l'accredito
-						<span class="block ml-[10px]">
-							I tempi di riversamento dipendono dal vettore e dalla modalità selezionata; nelle soluzioni postali è prevista la rimessa secondo l'opzione scelta al momento della spedizione
-						</span>
-					</li>
-					<li>
-						Vuoi fatturare al destinatario
-						<span class="block ml-[10px]">
-							La fattura resta di competenza del mittente; il corriere incassa per tuo conto. Indica l'importo esatto e conserva la quietanza di incasso per la riconciliazione.
-						</span>
-					</li>
-					</ul>
-			</div>
-
-			<h2
-				class="desktop-xl:text-[4rem] font-medium tracking-[-1.536px] text-left text-[#222222]text-[2.5rem] leading-[110%] after:content-[''] after:bg-red-500 after:w-[335px] after:mx-auto desktop:after:w-full after:h-[320px] desktop:after:h-[484px] after:rounded-[32px] after:block desktop:after:my-[48px] after:my-[20px] desktop:mt-[70px] mt-[30px] text-[1.875rem]">
-				Domande frequenti
-			</h2>
-
-			<div class="desktop:flex desktop:items-start desktop:justify-between desktop:flex-wrap desktop:gap-x-[24px] desktop:gap-y-[40px] gap-y-[20px] desktop:mb-[64px] mb-[30px]">
-				<div v-for="(faq, faqIndex) in faqs" :key="faqIndex" class="desktop:w-[calc(50%-20px)]">
-					<h3 class="desktop:text-[1.875rem] text-[1.5rem] font-medium tracking-[-0.72px] leading-[110%] text-[#222222] mb-[16px] mt-[30px] desktop:mt-0">
-						{{ faq.title }}
-					</h3>
-					<p class="desktop:text-[1.125rem] tracking-[-0.252px] leading-[160%] text-[rgba(82,82,82,.6)]">
-						{{ faq.text }}
-					</p>
+				<div class="mt-[18px] grid gap-[14px] desktop:grid-cols-2">
+					<article
+						v-for="step in flowSteps"
+						:key="step.step"
+						class="rounded-[22px] border border-[#EDF2F5] bg-[#F8FBFC] px-[16px] py-[16px]">
+						<div class="flex items-center gap-[10px]">
+							<span
+								class="inline-flex h-[34px] w-[34px] items-center justify-center rounded-full bg-[#095866] text-[0.8125rem] font-bold text-white">
+								{{ step.step }}
+							</span>
+							<h3 class="text-[1rem] font-semibold text-[#1F2937]">{{ step.title }}</h3>
+						</div>
+						<p class="mt-[10px] text-[0.875rem] leading-[1.65] text-[#5B6670]">
+							{{ step.description }}
+						</p>
+					</article>
 				</div>
-			</div>
+			</section>
+
+			<section class="grid gap-[16px] desktop:grid-cols-[minmax(0,1.15fr)_minmax(320px,0.85fr)]">
+				<article
+					class="rounded-[24px] border border-[#E9EEF2] bg-white px-[18px] py-[18px] shadow-[0_12px_26px_rgba(15,23,42,0.04)] desktop:px-[22px] desktop:py-[22px]">
+					<p class="sf-section-kicker">Requisiti e limiti</p>
+					<h2 class="mt-[8px] text-[1.25rem] font-semibold tracking-[-0.02em] text-[#1F2937]">Controlli da fare prima della conferma</h2>
+					<ul class="mt-[14px] space-y-[10px]">
+						<li v-for="item in guardrails" :key="item" class="flex items-start gap-[10px] text-[0.875rem] leading-[1.6] text-[#5B6670]">
+							<span class="mt-[7px] h-[7px] w-[7px] shrink-0 rounded-full bg-[#095866]"></span>
+							<span>{{ item }}</span>
+						</li>
+					</ul>
+				</article>
+
+				<article
+					class="rounded-[24px] border border-[#E9EEF2] bg-white px-[18px] py-[18px] shadow-[0_12px_26px_rgba(15,23,42,0.04)] desktop:px-[22px] desktop:py-[22px]">
+					<p class="sf-section-kicker">Dati da raccogliere</p>
+					<h2 class="mt-[8px] text-[1.25rem] font-semibold tracking-[-0.02em] text-[#1F2937]">Checklist checkout</h2>
+					<ul class="mt-[14px] space-y-[8px]">
+						<li
+							v-for="item in checkoutChecklist"
+							:key="item"
+							class="rounded-[16px] border border-[#EDF2F5] bg-[#F8FBFC] px-[12px] py-[10px] text-[0.875rem] leading-[1.55] text-[#5B6670]">
+							{{ item }}
+						</li>
+					</ul>
+				</article>
+			</section>
+
+			<section
+				class="rounded-[28px] border border-[#E9EEF2] bg-white px-[18px] py-[18px] shadow-[0_14px_30px_rgba(15,23,42,0.05)] desktop:px-[24px] desktop:py-[24px]">
+				<div class="sf-page-intro">
+					<p class="sf-section-kicker">Casi tipici</p>
+					<h2 class="text-[1.4rem] font-semibold tracking-[-0.03em] text-[#1F2937] desktop:text-[2rem]">
+						Cosa succede se qualcosa va fuori binario
+					</h2>
+				</div>
+
+				<div class="mt-[18px] grid gap-[14px] desktop:grid-cols-3">
+					<article
+						v-for="scenario in scenarioCards"
+						:key="scenario.title"
+						class="rounded-[22px] border border-[#EDF2F5] bg-[#F8FBFC] px-[16px] py-[16px]">
+						<h3 class="text-[1rem] font-semibold text-[#1F2937]">{{ scenario.title }}</h3>
+						<p class="mt-[10px] text-[0.875rem] leading-[1.65] text-[#5B6670]">
+							{{ scenario.description }}
+						</p>
+					</article>
+				</div>
+			</section>
+
+			<section
+				class="rounded-[28px] border border-[#E9EEF2] bg-white px-[18px] py-[18px] shadow-[0_14px_30px_rgba(15,23,42,0.05)] desktop:px-[24px] desktop:py-[24px]">
+				<div class="sf-page-intro">
+					<p class="sf-section-kicker">FAQ</p>
+					<h2 class="text-[1.4rem] font-semibold tracking-[-0.03em] text-[#1F2937] desktop:text-[2rem]">
+						Domande frequenti sul contrassegno
+					</h2>
+				</div>
+
+				<div class="mt-[18px] grid gap-[14px] desktop:grid-cols-2">
+					<article v-for="faq in faqs" :key="faq.title" class="rounded-[22px] border border-[#EDF2F5] bg-[#F8FBFC] px-[16px] py-[16px]">
+						<h3 class="text-[1rem] font-semibold text-[#1F2937]">{{ faq.title }}</h3>
+						<p class="mt-[10px] text-[0.875rem] leading-[1.65] text-[#5B6670]">
+							{{ faq.text }}
+						</p>
+					</article>
+				</div>
+			</section>
+
+			<section
+				class="rounded-[26px] border border-[#DCE8EC] bg-[linear-gradient(135deg,#0f5f6d_0%,#0c4853_100%)] px-[20px] py-[20px] text-white shadow-[0_18px_40px_rgba(9,88,102,0.18)] desktop:px-[28px] desktop:py-[28px]">
+				<div class="flex flex-col gap-[16px] desktop:flex-row desktop:items-center desktop:justify-between">
+					<div class="max-w-[60ch]">
+						<p class="text-[0.75rem] font-semibold uppercase tracking-[0.14em] text-white/70">Prossimo passo</p>
+						<h2 class="mt-[8px] text-[1.35rem] font-semibold tracking-[-0.03em] desktop:text-[1.8rem]">
+							Se vuoi usare il contrassegno, conviene validare subito pricing e dati richiesti.
+						</h2>
+						<p class="mt-[10px] text-[0.9rem] leading-[1.65] text-white/80">
+							Parti dal preventivo per vedere il costo reale del servizio, oppure scrivici se devi gestire un flusso ricorrente o un caso
+							operativo fuori standard.
+						</p>
+					</div>
+
+					<div class="flex flex-wrap gap-[10px]">
+						<NuxtLink
+							to="/preventivo"
+							class="inline-flex min-h-[44px] items-center justify-center rounded-full bg-white px-[18px] text-[0.875rem] font-semibold text-[#0B5360] transition-transform duration-200 hover:-translate-y-[1px]">
+							Calcola il preventivo
+						</NuxtLink>
+						<NuxtLink
+							to="/contatti"
+							class="inline-flex min-h-[44px] items-center justify-center rounded-full border border-white/30 px-[18px] text-[0.875rem] font-semibold text-white transition-colors duration-200 hover:bg-white/10">
+							Contattaci
+						</NuxtLink>
+					</div>
+				</div>
+			</section>
 		</div>
 	</section>
 </template>
+
+<style scoped>
+.service-hero-card {
+	background:
+		radial-gradient(circle at top right, rgba(228, 66, 3, 0.16), transparent 30%),
+		linear-gradient(180deg, rgba(9, 88, 102, 0.07) 0%, rgba(9, 88, 102, 0.02) 100%);
+}
+</style>

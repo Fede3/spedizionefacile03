@@ -1,40 +1,74 @@
 <?php
 
-/**
- * REQUEST: VALIDAZIONE CREAZIONE PACCHI
- *
- * Una "Form Request" in Laravel serve per validare i dati inviati dall'utente
- * PRIMA che arrivino al controller. Se i dati non sono validi, la richiesta
- * viene automaticamente rifiutata con un messaggio di errore.
- *
- * Questa Request valida tutti i dati necessari per creare dei pacchi:
- * - Indirizzo di partenza (tutti i campi obbligatori)
- * - Indirizzo di destinazione (tutti i campi obbligatori)
- * - Servizi opzionali (tipo, data, orario)
- * - I pacchi stessi (tipo, quantita', peso, dimensioni, prezzo)
- *
- * Ogni regola specifica: se il campo e' obbligatorio, il tipo di dato,
- * la lunghezza massima e i valori minimi/massimi accettati.
- */
-
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Arr;
 
 class PackageStoreRequest extends FormRequest
 {
-    /**
-     * Autorizzazione: tutti possono fare questa richiesta (true).
-     */
     public function authorize(): bool
     {
         return true;
     }
 
-    /**
-     * Regole di validazione per ogni campo.
-     * Se un campo non rispetta le regole, la richiesta viene rifiutata.
-     */
+    protected function prepareForValidation(): void
+    {
+        $services = $this->input('services', []);
+        if (is_array($services) && isset($services['serviceData']) && is_array($services['serviceData'])) {
+            $services['service_data'] = $services['service_data'] ?? $services['serviceData'];
+            unset($services['serviceData']);
+        }
+
+        if (is_array($services)) {
+            $services['service_data'] = is_array($services['service_data'] ?? null) ? $services['service_data'] : [];
+            $pickupRequest = $services['service_data']['pickup_request'] ?? [];
+            if (! is_array($pickupRequest)) {
+                $pickupRequest = [];
+            }
+
+            $pickupDate = trim((string) ($services['date'] ?? $pickupRequest['date'] ?? $this->input('pickup_date', '')));
+            $pickupTime = trim((string) ($services['time'] ?? $pickupRequest['time_slot'] ?? '09:00-18:00'));
+
+            if ($pickupDate !== '' || ! empty($pickupRequest)) {
+                $services['service_data']['pickup_request'] = [
+                    'enabled' => (bool) ($pickupRequest['enabled'] ?? ($pickupDate !== '')),
+                    'date' => $this->normalizePickupRequestDate($pickupDate),
+                    'time_slot' => $pickupTime !== '' ? $pickupTime : '09:00-18:00',
+                    'notes' => trim((string) ($pickupRequest['notes'] ?? '')),
+                ];
+                $services['date'] = $pickupDate;
+                $services['time'] = $services['service_data']['pickup_request']['time_slot'];
+            }
+        }
+
+        $packages = collect($this->input('packages', []))
+            ->map(function ($package) {
+                if (! is_array($package)) {
+                    return $package;
+                }
+
+                return Arr::except($package, [
+                    'weight_price',
+                    'volume_price',
+                    'single_price',
+                    'single_price_cents',
+                    'pricing_signature',
+                    'pricing_snapshot',
+                    'pricing_snapshot_version',
+                ]);
+            })
+            ->all();
+
+        $this->merge([
+            'services' => $services,
+            'packages' => $packages,
+            'pricing_signature' => null,
+            'pricing_snapshot' => null,
+            'pricing_snapshot_version' => null,
+        ]);
+    }
+
     public function rules(): array
     {
         return [
@@ -72,7 +106,6 @@ class PackageStoreRequest extends FormRequest
             'services.service_type' => 'nullable|string|max:500',
             'services.date' => 'nullable|string|max:20',
             'services.time' => 'nullable|string|max:20',
-            'services.serviceData' => 'nullable|array',
             'services.service_data' => 'nullable|array',
             'services.sms_email_notification' => 'nullable|boolean',
             'sms_email_notification' => 'nullable|boolean',
@@ -85,12 +118,10 @@ class PackageStoreRequest extends FormRequest
             'packages.*.first_size' => 'required|numeric|min:1|max:9999',   // Lunghezza minimo 1 cm
             'packages.*.second_size' => 'required|numeric|min:1|max:9999',  // Larghezza minimo 1 cm
             'packages.*.third_size' => 'required|numeric|min:1|max:9999',   // Altezza minimo 1 cm
-            'packages.*.weight_price' => 'nullable|numeric|min:0',          // Prezzo per peso (opzionale)
-            'packages.*.volume_price' => 'nullable|numeric|min:0',          // Prezzo per volume (opzionale)
-            'packages.*.single_price' => 'required|numeric|min:0',          // Prezzo finale (obbligatorio)
-
             /* Descrizione del contenuto del pacco (opzionale) */
             'content_description' => 'nullable|string|max:255',
+            'billing_data' => 'nullable|array',
+            'client_submission_id' => 'nullable|string|max:255',
 
             /* PUDO - Punto di ritiro BRT (opzionale) */
             /* delivery_mode: 'home' = domicilio, 'pudo' = ritiro in punto BRT convenzionato */
@@ -102,6 +133,44 @@ class PackageStoreRequest extends FormRequest
             'pudo.address' => 'nullable|string|max:300',
             'pudo.city' => 'nullable|string|max:200',
             'pudo.zip_code' => 'nullable|string|max:10',
+
         ];
+    }
+
+    public function withValidator($validator): void
+    {
+        $validator->after(function ($validator) {
+            $deliveryMode = (string) $this->input(
+                'delivery_mode',
+                data_get($this->input('services', []), 'service_data.delivery_mode', 'home')
+            );
+
+            if ($deliveryMode !== 'pudo') {
+                return;
+            }
+
+            $pudoId = trim((string) data_get($this->input('pudo', []), 'pudo_id', ''));
+            if ($pudoId === '') {
+                $validator->errors()->add('pudo.pudo_id', 'Seleziona un punto BRT valido.');
+            }
+        });
+    }
+
+    private function normalizePickupRequestDate(string $pickupDate): string
+    {
+        $pickupDate = trim($pickupDate);
+        if ($pickupDate === '') {
+            return '';
+        }
+
+        if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $pickupDate)) {
+            return $pickupDate;
+        }
+
+        if (preg_match('/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/', $pickupDate, $matches)) {
+            return sprintf('%s-%02d-%02d', $matches[3], (int) $matches[2], (int) $matches[1]);
+        }
+
+        return $pickupDate;
     }
 }

@@ -7,8 +7,12 @@ use App\Models\Order;
 use App\Models\Package;
 use App\Models\ReferralUsage;
 use App\Models\User;
+use App\Models\UserNotification;
+use App\Models\UserNotificationPreference;
 use App\Models\WalletMovement;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\ReferralUsedMail;
 use Tests\TestCase;
 
 class ReferralApplyTest extends TestCase
@@ -50,6 +54,17 @@ class ReferralApplyTest extends TestCase
         return $order;
     }
 
+    private function createPaidOrder(User $user, int $subtotalCents = 1190): Order
+    {
+        $order = $this->createOrder($user, $subtotalCents);
+        $order->forceFill([
+            'status' => Order::COMPLETED,
+            'payment_method' => 'stripe',
+        ])->save();
+
+        return $order->fresh();
+    }
+
     /* ================================================================== */
     /*  T11.5.1: Validate referral code (POST /api/referral/validate)      */
     /* ================================================================== */
@@ -82,17 +97,17 @@ class ReferralApplyTest extends TestCase
     /* ================================================================== */
     /*  T11.5.2: Apply referral creates ReferralUsage + WalletMovement     */
     /* ================================================================== */
-    public function test_apply_referral_creates_usage_and_wallet_movement(): void
+    public function test_apply_referral_uses_server_order_subtotal_and_ignores_client_amount(): void
     {
         $proUser = $this->createProUser('PROAPPLY');
         $buyer   = User::factory()->create();
-        $order   = $this->createOrder($buyer, 2000); // 20.00 EUR
+        $order   = $this->createPaidOrder($buyer, 2000); // 20.00 EUR
 
         $response = $this->actingAs($buyer)
             ->postJson('/api/referral/apply', [
                 'code'         => 'PROAPPLY',
                 'order_id'     => $order->id,
-                'order_amount' => 20.00,
+                'order_amount' => 1.23,
             ]);
 
         $response->assertSuccessful();
@@ -107,6 +122,9 @@ class ReferralApplyTest extends TestCase
             'pro_user_id'    => $proUser->id,
             'referral_code'  => 'PROAPPLY',
             'order_id'       => $order->id,
+            'order_amount'   => '20.00',
+            'discount_amount'=> '1.00',
+            'commission_amount' => '1.00',
             'status'         => 'confirmed',
         ]);
 
@@ -118,6 +136,112 @@ class ReferralApplyTest extends TestCase
             'status'      => 'confirmed',
             'source'      => 'commission',
         ]);
+    }
+
+    public function test_apply_referral_rejects_unpaid_orders(): void
+    {
+        $this->createProUser('PROUNPAI');
+        $buyer = User::factory()->create();
+        $order = $this->createOrder($buyer, 2000);
+
+        $this->actingAs($buyer)
+            ->postJson('/api/referral/apply', [
+                'code'         => 'PROUNPAI',
+                'order_id'     => $order->id,
+                'order_amount' => 20.00,
+            ])
+            ->assertStatus(422)
+            ->assertJsonPath('message', 'Ordine non ancora pagato.');
+
+        $this->assertDatabaseCount('referral_usages', 0);
+        $this->assertDatabaseCount('wallet_movements', 0);
+    }
+
+    public function test_apply_referral_rejects_orders_not_owned_by_buyer(): void
+    {
+        $this->createProUser('PROOWNED');
+        $buyer = User::factory()->create();
+        $otherUser = User::factory()->create();
+        $order = $this->createPaidOrder($otherUser, 2000);
+
+        $this->actingAs($buyer)
+            ->postJson('/api/referral/apply', [
+                'code'         => 'PROOWNED',
+                'order_id'     => $order->id,
+                'order_amount' => 20.00,
+            ])
+            ->assertStatus(404)
+            ->assertJsonPath('message', 'Ordine non trovato.');
+
+        $this->assertDatabaseCount('referral_usages', 0);
+        $this->assertDatabaseCount('wallet_movements', 0);
+    }
+
+    public function test_apply_referral_creates_in_app_notification_with_default_preferences(): void
+    {
+        Mail::fake();
+
+        $proUser = $this->createProUser('PROMSG01');
+        $buyer = User::factory()->create(['name' => 'Mario']);
+        $order = $this->createPaidOrder($buyer, 2000);
+
+        $this->actingAs($buyer)
+            ->postJson('/api/referral/apply', [
+                'code' => 'PROMSG01',
+                'order_id' => $order->id,
+            ])
+            ->assertSuccessful();
+
+        $this->assertDatabaseHas('user_notification_preferences', [
+            'user_id' => $proUser->id,
+            'referral_site_enabled' => true,
+            'referral_email_enabled' => false,
+            'referral_sms_enabled' => false,
+        ]);
+
+        $this->assertDatabaseHas('user_notifications', [
+            'user_id' => $proUser->id,
+            'type' => 'referral',
+            'title' => 'Nuovo utilizzo del tuo referral',
+        ]);
+
+        Mail::assertNotQueued(ReferralUsedMail::class);
+    }
+
+    public function test_apply_referral_queues_email_when_preference_is_enabled(): void
+    {
+        Mail::fake();
+
+        $proUser = $this->createProUser('PROEMAIL');
+        UserNotificationPreference::create([
+            'user_id' => $proUser->id,
+            'referral_site_enabled' => true,
+            'referral_email_enabled' => true,
+            'referral_sms_enabled' => false,
+        ]);
+
+        $buyer = User::factory()->create();
+        $order = $this->createPaidOrder($buyer, 2500);
+
+        $this->actingAs($buyer)
+            ->postJson('/api/referral/apply', [
+                'code' => 'PROEMAIL',
+                'order_id' => $order->id,
+            ])
+            ->assertSuccessful();
+
+        Mail::assertQueued(ReferralUsedMail::class, function (ReferralUsedMail $mail) use ($proUser, $order) {
+            return $mail->hasTo($proUser->email)
+                && $mail->usage->order_id === $order->id;
+        });
+
+        $this->assertSame(
+            1,
+            UserNotification::query()
+                ->where('user_id', $proUser->id)
+                ->where('type', 'referral')
+                ->count()
+        );
     }
 
     /* ================================================================== */
@@ -150,7 +274,7 @@ class ReferralApplyTest extends TestCase
     {
         $proUser = $this->createProUser('ATOMICCD');
         $buyer   = User::factory()->create();
-        $order   = $this->createOrder($buyer, 5000); // 50.00 EUR
+        $order   = $this->createPaidOrder($buyer, 5000); // 50.00 EUR
 
         $this->actingAs($buyer)
             ->postJson('/api/referral/apply', [
@@ -168,6 +292,33 @@ class ReferralApplyTest extends TestCase
 
         $this->assertEquals(1, $usageCount);
         $this->assertEquals(1, $walletCount);
+    }
+
+    public function test_apply_referral_rejects_already_referralized_orders(): void
+    {
+        $proUser = $this->createProUser('DUPLORD1');
+        $buyer = User::factory()->create();
+        $order = $this->createPaidOrder($buyer, 5000);
+
+        $this->actingAs($buyer)
+            ->postJson('/api/referral/apply', [
+                'code'         => 'DUPLORD1',
+                'order_id'     => $order->id,
+                'order_amount' => 50.00,
+            ])
+            ->assertSuccessful();
+
+        $this->actingAs($buyer)
+            ->postJson('/api/referral/apply', [
+                'code'         => 'DUPLORD1',
+                'order_id'     => $order->id,
+                'order_amount' => 50.00,
+            ])
+            ->assertStatus(409)
+            ->assertJsonPath('message', 'Questo ordine ha già un referral applicato.');
+
+        $this->assertSame(1, ReferralUsage::where('order_id', $order->id)->count());
+        $this->assertSame(1, WalletMovement::where('user_id', $proUser->id)->where('source', 'commission')->count());
     }
 
     /* ================================================================== */

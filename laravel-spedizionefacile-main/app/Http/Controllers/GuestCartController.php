@@ -105,9 +105,13 @@ class GuestCartController extends Controller
 
         // Per ogni pacco inviato dal frontend
         foreach ($request->packages as $pack) {
-            // Convertiamo il prezzo da euro a centesimi (es. 9.00 -> 900)
-            $singlePriceCents = CartService::euroToCents($pack['single_price'] ?? 0);
-            $newQty = (int) ($pack['quantity'] ?? 1);
+            $pricedPack = CartService::pricePackageData(
+                $pack,
+                $request->origin_address ?? [],
+                $request->destination_address ?? [],
+            );
+            $newQty = (int) ($pricedPack['quantity'] ?? 1);
+            $newUnitPriceCents = (int) ($pricedPack['unit_price_cents'] ?? 0);
 
             // Controlliamo se un pacco identico esiste gia' nel carrello
             // (stesse dimensioni, stesso peso, stessi indirizzi di partenza e destinazione)
@@ -115,7 +119,7 @@ class GuestCartController extends Controller
             $newServiceSig = CartService::buildServiceSignatureFromGuest($request->services ?? []);
             foreach ($cart as $idx => $existing) {
                 $existsAsDuplicate = CartService::isDuplicate(
-                    $pack,
+                    $pricedPack,
                     $request->origin_address ?? [],
                     $request->destination_address ?? [],
                     $newServiceSig,
@@ -136,21 +140,24 @@ class GuestCartController extends Controller
                     (int) ($cart[$duplicateIndex]['single_price'] ?? 0),
                     (int) ($cart[$duplicateIndex]['quantity'] ?? 1),
                     $newQty,
+                    $newUnitPriceCents,
                 );
                 $cart[$duplicateIndex]['quantity'] = $merged['quantity'];
                 $cart[$duplicateIndex]['single_price'] = $merged['single_price'];
+                $cart[$duplicateIndex]['weight_price'] = $pricedPack['weight_price'];
+                $cart[$duplicateIndex]['volume_price'] = $pricedPack['volume_price'];
             } else {
                 // Se il pacco e' nuovo, lo aggiungiamo al carrello
                 $cart[] = [
-                    'package_type' => $pack['package_type'],
+                    'package_type' => $pricedPack['package_type'],
                     'quantity' => $newQty,
-                    'weight' => $pack['weight'],
-                    'first_size' => $pack['first_size'],
-                    'second_size' => $pack['second_size'],
-                    'third_size' => $pack['third_size'],
-                    'weight_price' => $pack['weight_price'],
-                    'volume_price' => $pack['volume_price'],
-                    'single_price' => $singlePriceCents,
+                    'weight' => $pricedPack['weight'],
+                    'first_size' => $pricedPack['first_size'],
+                    'second_size' => $pricedPack['second_size'],
+                    'third_size' => $pricedPack['third_size'],
+                    'weight_price' => $pricedPack['weight_price'],
+                    'volume_price' => $pricedPack['volume_price'],
+                    'single_price' => $pricedPack['single_price'],
                     'origin_address' => $request->origin_address,
                     'destination_address' => $request->destination_address,
                     'services' => $request->services,

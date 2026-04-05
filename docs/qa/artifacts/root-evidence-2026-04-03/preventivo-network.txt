@@ -1,0 +1,7 @@
+[GET] https://spy-milan-insight-gate.trycloudflare.com/api/user => [200] 
+[GET] https://spy-milan-insight-gate.trycloudflare.com/api/cart => [200] 
+[GET] https://spy-milan-insight-gate.trycloudflare.com/api/public/price-bands => [200] 
+[GET] https://spy-milan-insight-gate.trycloudflare.com/api/locations/by-city?city=Iglesias&limit=200&country=IT => [200] 
+[GET] https://spy-milan-insight-gate.trycloudflare.com/api/locations/by-city?city=Iglesias&limit=200&country=IT => [200] 
+[GET] https://spy-milan-insight-gate.trycloudflare.com/api/locations/by-city?city=Roma&limit=200&country=IT => [200] 
+[GET] https://spy-milan-insight-gate.trycloudflare.com/api/locations/by-city?city=Roma&limit=200&country=IT => [200] 

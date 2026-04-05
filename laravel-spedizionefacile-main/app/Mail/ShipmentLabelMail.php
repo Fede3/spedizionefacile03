@@ -69,7 +69,7 @@ class ShipmentLabelMail extends Mailable
 
         if ($this->order->brt_label_base64) {
             $attachments[] = Attachment::fromData(
-                fn () => base64_decode($this->order->brt_label_base64),
+                fn () => base64_decode($this->order->brt_label_base64, true) ?: '',
                 'etichetta-brt-' . $this->order->id . '.pdf'
             )->withMime('application/pdf');
         }

@@ -9,13 +9,15 @@
  * DOVE SI USA: components/Preventivo.vue
  */
 export const usePreventivo = () => {
-	// --- DIPENDENZE E STATO INIZIALE ---
-	const userStore = useUserStore();
-	const route = useRoute();
-	const isHomepageLikeRoute = computed(() => route.path === '/' || route.path === '/preview/home-hero');
-	let autoQuoteTimer = null;
-	let pendingQuotePromise = null;
-	let pendingQuoteSignature = "";
+		// --- DIPENDENZE E STATO INIZIALE ---
+		const userStore = useUserStore();
+		const route = useRoute();
+		const runtimeConfig = useRuntimeConfig();
+		const apiBase = String(runtimeConfig.public?.apiBase || "http://127.0.0.1:8787").replace(/\/$/, "");
+		const isHomepageLikeRoute = computed(() => route.path === '/' || route.path === '/preview/home-hero');
+		let autoQuoteTimer = null;
+		let pendingQuotePromise = null;
+		let pendingQuoteSignature = "";
 	let pendingQuoteSilent = false;
 	let pendingQuoteRequestId = 0;
 	let latestQuoteRequestId = 0;
@@ -32,14 +34,46 @@ export const usePreventivo = () => {
 	// in questo modo SSR e primo render client partono dalla stessa base
 	// ed evitiamo mismatch di hydration su opzioni/label promozionali dinamiche.
 	const { loadPriceBands, getWeightPrice, getVolumePrice, getCapSupplement, getEuropeQuote, priceBands, promoSettings } = usePriceBands();
-	onMounted(() => {
-		loadPriceBands().catch(() => {
-			// Warning already handled inside usePriceBands
+		onMounted(() => {
+			loadPriceBands().catch(() => {
+				// Warning already handled inside usePriceBands
+			});
 		});
-	});
 
-	const sanctum = useSanctumClient();
-	const locationSearch = useLocationSearch(sanctum);
+		const publicApiFetch = async (path, options = {}) => {
+			const url = path.startsWith("http") ? path : `${apiBase}${path}`;
+			return await $fetch(url, {
+				credentials: "include",
+				...options,
+			});
+		};
+
+		const readXsrfToken = () => {
+			if (import.meta.server) return "";
+			const match = document.cookie.match(/(?:^|; )XSRF-TOKEN=([^;]+)/);
+			return match?.[1] ? decodeURIComponent(match[1]) : "";
+		};
+
+		const requestClient = async (path, options = {}) => {
+			const method = String(options?.method || "GET").trim().toUpperCase();
+			const token = readXsrfToken();
+			const headers = {
+				Accept: "application/json",
+				...(options?.headers || {}),
+			};
+
+			if (token && !["GET", "HEAD", "OPTIONS"].includes(method)) {
+				headers["X-XSRF-TOKEN"] = token;
+			}
+
+			return await publicApiFetch(path, {
+				...options,
+				method,
+				headers,
+			});
+		};
+
+		const locationSearch = useLocationSearch(publicApiFetch);
 
 	// --- SESSIONE SERVER ---
 	const { session, refresh } = useSession();
@@ -595,18 +629,18 @@ export const usePreventivo = () => {
 			}
 		}
 
-		const runRequest = async () => {
-			if (silent) {
-				isSyncingQuote.value = true;
-			} else {
-				isCalculating.value = true;
-			}
-			try {
-				await sanctum("/sanctum/csrf-cookie");
-				const response = await sanctum("/api/session/first-step", {
-					method: "POST",
-					body: quotePayload,
-				});
+			const runRequest = async () => {
+				if (silent) {
+					isSyncingQuote.value = true;
+				} else {
+					isCalculating.value = true;
+				}
+				try {
+					await requestClient("/sanctum/csrf-cookie");
+					const response = await requestClient("/api/session/first-step", {
+						method: "POST",
+						body: quotePayload,
+					});
 				if (requestId !== latestQuoteRequestId) {
 					return false;
 				}

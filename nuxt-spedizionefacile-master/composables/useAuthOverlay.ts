@@ -1,3 +1,5 @@
+import { waitForPostAuthSync } from '~/utils/postAuthSync'
+
 /**
  * Composable: useAuthOverlay
  * Logica completa per il modale di autenticazione (login, registrazione, verifica, social).
@@ -64,7 +66,7 @@ export function useAuthOverlay() {
 
   const sanitizeRedirect = (redirect?: string) => {
     if (!redirect || typeof redirect !== 'string') return '/'
-    return redirect.startsWith('/') ? redirect : '/'
+    return redirect.startsWith('/') && !redirect.startsWith('//') ? redirect : '/'
   }
 
   const currentRedirect = computed(() => sanitizeRedirect(redirectPath.value || route.fullPath))
@@ -158,15 +160,11 @@ export function useAuthOverlay() {
   const finalizeAuth = async (responseUser: any) => {
     const redirectTarget = currentRedirect.value
     persistSnapshotFromUser(responseUser?.user || responseUser)
-    try {
-      await refreshIdentity()
-    } catch {
-      // Dopo login/registrazione non blocchiamo il redirect per una lettura utente non ancora allineata.
-    }
+    await waitForPostAuthSync(refreshIdentity)
     try {
       await refreshNuxtData()
     } catch {
-      // Il redirect duro ricostruisce comunque la pagina con i cookie aggiornati.
+      // Se refreshNuxtData fallisce, la navigazione verso la route protetta riallinea comunque la UI.
     }
     closeAuthModal()
     resetModalState()
@@ -175,7 +173,7 @@ export function useAuthOverlay() {
       return
     }
     if (redirectTarget !== route.fullPath) {
-      await navigateTo(redirectTarget)
+      await navigateTo(redirectTarget, { replace: true })
     }
   }
 

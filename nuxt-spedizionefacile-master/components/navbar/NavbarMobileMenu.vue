@@ -30,7 +30,8 @@ const emit = defineEmits(['close', 'open-auth'])
         <div
           v-if="open"
           class="lg:hidden fixed left-[12px] right-[12px] z-[9999] bg-white rounded-[12px] overflow-hidden"
-          :style="{ top: menuTopPx + 'px', boxShadow: '0 8px 40px rgba(0,0,0,0.12), 0 0 0 1px rgba(9,88,102,0.06)' }"
+          :style="{ top: menuTopPx + 'px' }"
+          style="box-shadow: 0 8px 40px rgba(0,0,0,0.12), 0 0 0 1px rgba(9,88,102,0.06)"
         >
           <nav class="py-[6px]">
             <ul class="flex flex-col">
@@ -54,11 +55,11 @@ const emit = defineEmits(['close', 'open-auth'])
             </ul>
           </nav>
           <div class="border-t border-[#f0f0f0] px-[16px] py-[12px]">
-            <button v-if="!showAuthenticatedUi" type="button" class="navbar-mobile-auth-cta" @click="emit('open-auth')">
+            <button v-if="!showAuthenticatedUi" type="button" class="navbar-mobile-auth-cta btn-secondary btn-compact" @click="emit('open-auth')">
               <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
               {{ mobileAccountButtonLabel }}
             </button>
-            <NuxtLink v-else to="/account" active-class="" exact-active-class="" class="navbar-mobile-auth-cta">
+            <NuxtLink v-else to="/account" active-class="" exact-active-class="" class="navbar-mobile-auth-cta btn-secondary btn-compact">
               <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
               {{ mobileAccountButtonLabel }}
             </NuxtLink>

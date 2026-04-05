@@ -1,0 +1,15 @@
+Total messages: 4 (Errors: 0, Warnings: 0)
+Returning 2 messages for level "info"
+
+[LOG] %cssr:success%c Vite server hmr 13 files 
+      background: #2ecc71;
+      border-radius: 0.5em;
+      color: white;
+      font-weight: bold;
+      padding: 2px 0.5em;
+      in 0.473ms 
+  at vite_node_entry_default (/node_modules/@nuxt/vite-builder/dist/vite-node-entry.mjs)
+  at process.processTicksAndRejections (node:internal/process/task_queues)
+  at async Object.renderToString (/node_modules/vue-bundle-renderer/dist/runtime.mjs)
+ @ https://spy-milan-insight-gate.trycloudflare.com/_nuxt/node_modules/consola/dist/browser.mjs?v=bc91659d:47
+[INFO] <Suspense> is an experimental feature and its API will likely change. @ https://spy-milan-insight-gate.trycloudflare.com/_nuxt/node_modules/@vue/runtime-core/dist/runtime-core.esm-bundler.js?v=bc91659d:7208

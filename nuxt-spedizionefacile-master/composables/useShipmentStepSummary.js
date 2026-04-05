@@ -226,12 +226,27 @@ export const useShipmentStepSummary = ({
 	const routeWarningMessage = computed(() => (
 		routeConsistencyState.value.warning ? routeConsistencyState.value.message : ''
 	));
+	const selectedServicesFromState = computed(() => {
+		const local = Array.isArray(userStore.servicesArray) ? userStore.servicesArray.filter(Boolean) : [];
+		if (local.length) return local;
+
+		const persisted = String(
+			userStore.pendingShipment?.services?.service_type
+			|| session.value?.data?.services?.service_type
+			|| "",
+		)
+			.split(",")
+			.map((service) => service.trim())
+			.filter(Boolean);
+
+		return persisted;
+	});
 	const summaryServicesLabel = computed(() => {
-		const selected = Array.isArray(userStore.servicesArray) ? userStore.servicesArray.filter(Boolean) : [];
+		const selected = selectedServicesFromState.value;
 		return selected.length ? selected.join(', ') : 'Nessun servizio';
 	});
 	const summaryServicesItems = computed(() => {
-		const selected = Array.isArray(userStore.servicesArray) ? userStore.servicesArray.filter(Boolean) : [];
+		const selected = selectedServicesFromState.value;
 		return selected.length ? selected : ['Nessun servizio selezionato'];
 	});
 

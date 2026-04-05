@@ -14,6 +14,13 @@ class CartSurchargeCalculator
     {
         if ($packages->isEmpty()) return 0;
 
+        // PERF-03: garantisce eager loading anche se il chiamante non lo ha fatto,
+        // evitando query N+1 quando la collezione arriva senza relazioni caricate.
+        // loadMissing esiste solo su Eloquent\Collection, non su Support\Collection.
+        if (method_exists($packages, 'loadMissing')) {
+            $packages->loadMissing(['originAddress', 'destinationAddress', 'service']);
+        }
+
         $pricing = app(ShipmentServicePricingService::class);
         $groups = [];
 

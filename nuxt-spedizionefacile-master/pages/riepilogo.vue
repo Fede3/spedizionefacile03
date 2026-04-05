@@ -74,7 +74,7 @@ pageReady.value = await initRiepilogoPage();
 
 			<div v-else-if="!shipment" class="text-center py-[60px]">
 				<p class="text-[1rem] text-[#737373]">Nessuna spedizione pronta. Torna alla configurazione.</p>
-				<NuxtLink to="/la-tua-spedizione/2" class="btn-primary inline-flex mt-[20px] min-h-[48px] items-center justify-center">
+				<NuxtLink to="/la-tua-spedizione/2" class="btn-secondary inline-flex mt-[20px] min-h-[48px] items-center justify-center">
 					Torna alla configurazione
 				</NuxtLink>
 			</div>

@@ -47,12 +47,12 @@ const emit = defineEmits(['update:cardHolderName', 'save', 'cancel'])
 
     <div class="flex flex-col sm:flex-row gap-[10px]">
       <button @click.prevent="emit('cancel')"
-        class="btn-secondary sf-nav-button flex-1 inline-flex items-center justify-center gap-[6px] py-[12px] font-semibold text-[0.875rem] cursor-pointer">
+        class="btn-secondary btn-compact flex-1 inline-flex items-center justify-center gap-[6px] py-[12px] font-semibold text-[0.875rem] cursor-pointer">
         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
         Annulla
       </button>
       <button @click="emit('save')"
-        class="btn-cta sf-nav-button flex-1 inline-flex items-center justify-center gap-[6px] py-[12px] font-semibold text-[0.875rem] cursor-pointer">
+        class="btn-cta btn-compact flex-1 inline-flex items-center justify-center gap-[6px] py-[12px] font-semibold text-[0.875rem] cursor-pointer">
         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
         Salva carta
       </button>

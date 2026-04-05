@@ -131,6 +131,28 @@ class User extends Authenticatable
         return $this->role === 'Admin';
     }
 
+    /* ===== SCOPES — Query predefinite per ruoli e stati comuni ===== */
+
+    public function scopeAdmins($query)
+    {
+        return $query->where('role', 'Admin');
+    }
+
+    public function scopePartnerPro($query)
+    {
+        return $query->where('role', 'Partner Pro');
+    }
+
+    public function scopeVerified($query)
+    {
+        return $query->whereNotNull('email_verified_at');
+    }
+
+    public function scopeUnverified($query)
+    {
+        return $query->whereNull('email_verified_at');
+    }
+
     // Relazione: un utente ha MOLTI indirizzi salvati nella sua rubrica
     // Esempio: casa, ufficio, magazzino...
     public function addresses(): HasMany {
@@ -207,16 +229,20 @@ class User extends Authenticatable
     /**
      * Calcola il saldo delle commissioni guadagnate dall'utente Pro.
      * Prende le commissioni confermate e sottrae i prelievi gia' approvati o completati.
+     * Se esiste una richiesta pending, la considera come saldo gia' riservato.
      * Il risultato e' quanto puo' ancora prelevare.
      */
     public function commissionBalance(): float {
         $earned = $this->referralUsagesAsPro()
             ->where('status', 'confirmed')
             ->sum('commission_amount');
+        $reserved = $this->withdrawalRequests()
+            ->where('status', 'pending')
+            ->sum('amount');
         $withdrawn = $this->withdrawalRequests()
             ->whereIn('status', ['approved', 'completed'])
             ->sum('amount');
-        return round($earned - $withdrawn, 2);
+        return round($earned - $reserved - $withdrawn, 2);
     }
 
     /**

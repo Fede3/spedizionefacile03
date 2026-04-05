@@ -24,9 +24,46 @@ const isShipmentProtectedPath = (routeLike) => {
 
 export default defineNuxtRouteMiddleware(async (to, from) => {
 	if (import.meta.server) {
+		if (!isShipmentProtectedPath(to) || isShipmentFlowResumeException(to)) {
+			return;
+		}
+
+		const redirectFallback = '/preventivo';
+		const cookie = useRequestHeaders(['cookie'])?.cookie || '';
+		const hasSessionCookie = cookie.includes('laravel_session') || cookie.includes('XSRF-TOKEN');
+
+		if (!hasSessionCookie) {
+			if (to.fullPath !== redirectFallback) {
+				return navigateTo(redirectFallback, { replace: true });
+			}
+			return;
+		}
+
+		try {
+			const { session, refresh } = useSession({
+				server: true,
+				key: `session-flow:${to.fullPath}`,
+			});
+			await refresh().catch(() => session.value);
+
+			const serverFlowState = resolveShipmentFlowState(session.value?.data || {});
+			if (canAccessShipmentFlowRoute(to, serverFlowState)) {
+				return;
+			}
+
+			const redirectTarget = serverFlowState.last_valid_route || redirectFallback;
+			if (to.fullPath !== redirectTarget) {
+				return navigateTo(redirectTarget, { replace: true });
+			}
+		} catch {
+			// Degradiamo al controllo client esistente: meglio un fallback graduale
+			// che bloccare deep-link validi quando il fetch SSR non e disponibile.
+		}
+
 		return;
 	}
 
+	const nuxtApp = useNuxtApp();
 	const { init, user } = useSanctumAuth();
 	const { authCookie } = useAuthUiSnapshotPersistence();
 	const { session, refresh } = useSession();
@@ -106,7 +143,10 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
 
 	const redirectTarget = flowState.last_valid_route || '/preventivo';
 	const toastLock = useState(BLOCK_TOAST_KEY, () => false);
-	if (!toastLock.value) {
+	const shouldShowRedirectToast = !nuxtApp.isHydrating
+		&& Boolean(from?.path)
+		&& to.fullPath !== redirectTarget;
+	if (shouldShowRedirectToast && !toastLock.value) {
 		toastLock.value = true;
 		scheduleClientToast(() => {
 			uiFeedback.info('Ultimo step valido', 'Ti abbiamo riportato all’ultimo step valido del tuo flusso.', { timeout: 3200 });

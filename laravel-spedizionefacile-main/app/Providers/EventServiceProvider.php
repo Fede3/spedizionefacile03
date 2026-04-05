@@ -40,5 +40,14 @@ class EventServiceProvider extends ServiceProvider
         \App\Events\OrderPaymentFailed::class => [
             \App\Listeners\MarkOrderPaymentFailed::class,
         ],
+
+        \App\Events\ReferralApplied::class => [
+            \App\Listeners\DispatchReferralNotifications::class,
+        ],
     ];
+
+    public function shouldDiscoverEvents(): bool
+    {
+        return false;
+    }
 }

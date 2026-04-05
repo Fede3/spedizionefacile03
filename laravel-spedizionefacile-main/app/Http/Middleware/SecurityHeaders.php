@@ -45,7 +45,7 @@ class SecurityHeaders
     {
         // Prima lascia che la richiesta venga processata normalmente
         $response = $next($request);
-        $isDevelopment = app()->environment(['local', 'development', 'testing']) || (bool) config('app.debug');
+        $isDevelopment = app()->environment(['local', 'development']);
         $scriptSrc = $isDevelopment
             ? "'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com"
             : "'self' 'unsafe-inline' https://js.stripe.com";
@@ -77,11 +77,11 @@ class SecurityHeaders
         $response->headers->set('Referrer-Policy', 'strict-origin-when-cross-origin');
 
         // Permissions-Policy: blocca l'accesso a funzionalita' sensibili del dispositivo.
-        // camera=()     → nessuno puo' usare la fotocamera
-        // microphone=() → nessuno puo' usare il microfono
-        // geolocation=()→ nessuno puo' accedere alla posizione GPS
-        // (Il nostro sito non ha bisogno di nessuna di queste funzionalita')
-        $response->headers->set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+        // camera=()         → nessuno puo' usare la fotocamera
+        // microphone=()     → nessuno puo' usare il microfono
+        // geolocation=(self)→ solo il nostro sito puo' accedere alla posizione GPS
+        //                     (usato da ricerca punti PUDO BRT)
+        $response->headers->set('Permissions-Policy', 'camera=(), microphone=(), geolocation=(self)');
 
         // HSTS (HTTP Strict Transport Security) - SOLO su connessioni HTTPS
         // Dice al browser: "per il prossimo anno, usa SEMPRE HTTPS per questo sito,
@@ -111,13 +111,13 @@ class SecurityHeaders
         //                                → stili: nostri + inline (necessario per Vue/Nuxt)
         //   img-src 'self' data: https:  → immagini: nostre + data-URI + qualsiasi HTTPS
         //   font-src 'self' data:        → font: nostri + data-URI (font embedddati in CSS)
-        //   connect-src 'self' https://api.stripe.com
-        //                                → AJAX/fetch: nostro server + API Stripe
+        //   connect-src 'self' https://api.stripe.com https://nominatim.openstreetmap.org
+        //                                → AJAX/fetch: nostro server + API Stripe + geocoding per punti PUDO
         //   frame-src https://js.stripe.com https://hooks.stripe.com
         //                                → iframe: solo Stripe (per il form di pagamento 3D Secure)
         //   object-src 'none'            → blocca tutti i plugin (Flash, Java, ecc.)
         //   base-uri 'self'              → impedisce di cambiare il base URL della pagina
-        $response->headers->set('Content-Security-Policy', "default-src 'self'; script-src {$scriptSrc}; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https://api.stripe.com; frame-src https://js.stripe.com https://hooks.stripe.com; object-src 'none'; base-uri 'self'");
+        $response->headers->set('Content-Security-Policy', "default-src 'self'; script-src {$scriptSrc}; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https://api.stripe.com https://nominatim.openstreetmap.org; frame-src https://js.stripe.com https://hooks.stripe.com; object-src 'none'; base-uri 'self'");
 
         return $response;
     }

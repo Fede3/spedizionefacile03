@@ -42,6 +42,11 @@ class ShipmentService
             return ['success' => false, 'error' => 'Dati mancanti per BRT: ' . implode(', ', $missingFields) . '.'];
         }
 
+        $payloadErrors = $this->validatePayloadRequirements($totalParcels, $totalWeight);
+        if (!empty($payloadErrors)) {
+            return ['success' => false, 'error' => 'Dati spedizione non validi per BRT: ' . implode(', ', $payloadErrors) . '.'];
+        }
+
         $normalizedDest = $this->addressNormalizer->normalizeAddressForBrt($destination);
         $normalizedOrigin = $this->addressNormalizer->normalizeAddressForBrt($origin);
         $departureDepot = FilialeLookup::resolveFilialeByCap($origin->postal_code ?? '')
@@ -79,17 +84,17 @@ class ShipmentService
                 'numericSenderReference' => $order->id,
                 'alphanumericSenderReference' => 'SF-' . str_pad($order->id, 6, '0', STR_PAD_LEFT),
                 'notes' => $this->payloadBuilder->buildNotes($order, $options),
-                'isAlertRequired' => '1',
-                'isCODMandatory' => '0',
+                'isAlertRequired' => 1,
+                'isCODMandatory' => 0,
             ],
             'isLabelRequired' => 1,
             'labelParameters' => BrtPayloadBuilder::defaultLabelParameters(),
         ];
 
         if (!empty($options['is_cod']) && !empty($options['cod_amount'])) {
-            $payload['createData']['isCODMandatory'] = '1';
+            $payload['createData']['isCODMandatory'] = 1;
             $payload['createData']['cashOnDelivery'] = (float) ($options['cod_amount'] / 100);
-            $payload['createData']['codPaymentType'] = $options['cod_payment_type'] ?? 'BM';
+            $payload['createData']['codPaymentType'] = $options['cod_payment_type'] ?? $order->cod_payment_type ?? 'BM';
             $payload['createData']['codCurrency'] = 'EUR';
         }
 
@@ -191,6 +196,18 @@ class ShipmentService
         } catch (\Exception $e) {
             return ['success' => false, 'error' => $e->getMessage()];
         }
+    }
+
+    private function validatePayloadRequirements(int $totalParcels, float $totalWeight): array
+    {
+        $errors = [];
+        if ($totalParcels < 1) {
+            $errors[] = 'numero colli deve essere almeno 1';
+        }
+        if ($totalWeight <= 0) {
+            $errors[] = 'peso totale deve essere maggiore di 0';
+        }
+        return $errors;
     }
 
     private function validateOrigin($origin): array

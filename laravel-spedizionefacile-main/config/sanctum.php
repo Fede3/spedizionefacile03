@@ -30,6 +30,32 @@
 
 use Laravel\Sanctum\Sanctum;
 
+$defaultStateful = sprintf(
+    '%s%s',
+    'localhost,localhost:3000,localhost:3001,localhost:8787,127.0.0.1,127.0.0.1:3001,127.0.0.1:8000,127.0.0.1:8787,::1,*.trycloudflare.com,',
+    Sanctum::currentApplicationUrlWithPort()
+);
+
+$stateful = collect(explode(',', env('SANCTUM_STATEFUL_DOMAINS', $defaultStateful)))
+    ->map(fn ($domain) => trim((string) $domain))
+    ->filter()
+    ->values();
+
+$currentHost = trim((string) ($_SERVER['HTTP_HOST'] ?? ''));
+$currentHostname = strtolower((string) explode(':', $currentHost)[0]);
+$isPrivateIpv4Host = (bool) preg_match('/^(10\.|192\.168\.|172\.(1[6-9]|2\d|3[0-1])\.)/', $currentHostname);
+
+if (
+    $currentHost !== ''
+    && (
+        $isPrivateIpv4Host
+        || in_array($currentHostname, ['localhost', '127.0.0.1', '::1'], true)
+        || str_ends_with($currentHostname, '.trycloudflare.com')
+    )
+) {
+    $stateful->push($currentHost);
+}
+
 return [
 
     /*
@@ -47,11 +73,7 @@ return [
     |
     */
 
-    'stateful' => explode(',', env('SANCTUM_STATEFUL_DOMAINS', sprintf(
-        '%s%s',
-        'localhost,localhost:3000,localhost:3001,localhost:8787,127.0.0.1,127.0.0.1:3001,127.0.0.1:8000,127.0.0.1:8787,::1,*.trycloudflare.com',
-        Sanctum::currentApplicationUrlWithPort(),
-    ))),
+    'stateful' => $stateful->unique()->values()->all(),
 
     /*
     |--------------------------------------------------------------------------

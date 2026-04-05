@@ -63,7 +63,6 @@ class SendVerificationEmailJob
         if (!$code) {
             Log::warning('Tentativo di invio email di verifica senza codice.', [
                 'user_id' => $this->user->id,
-                'email' => $this->user->email,
             ]);
             return;
         }

@@ -48,6 +48,108 @@ use UnexpectedValueException;
 
 class StripeWebhookController extends Controller
 {
+    private function decodeSnapshotMetadata(mixed $value): ?array
+    {
+        if (is_array($value)) {
+            return $value;
+        }
+
+        if (! is_string($value) || trim($value) === '') {
+            return null;
+        }
+
+        $decoded = json_decode($value, true);
+
+        return is_array($decoded) ? $decoded : null;
+    }
+
+    private function clearCartForOrder(Order $order): void
+    {
+        $packageIds = $order->packages()->pluck('packages.id')->filter()->values();
+
+        if ($packageIds->isEmpty()) {
+            return;
+        }
+
+        DB::table('cart_user')
+            ->where('user_id', $order->user_id)
+            ->whereIn('package_id', $packageIds->all())
+            ->delete();
+    }
+
+    private function syncSubmissionContextFromIntent(Order $order, object $intent): bool
+    {
+        $metadata = is_object($intent->metadata ?? null)
+            ? (array) $intent->metadata
+            : (array) ($intent->metadata ?? []);
+
+        $updates = [];
+
+        foreach (['client_submission_id', 'pricing_signature'] as $field) {
+            $incoming = $metadata[$field] ?? null;
+            $current = $order->getAttribute($field);
+
+            if (! filled($incoming)) {
+                continue;
+            }
+
+            if (filled($current) && (string) $current !== (string) $incoming) {
+                Log::warning('Ignoring Stripe webhook with mismatched submission metadata', [
+                    'order_id' => $order->id,
+                    'field' => $field,
+                    'order_value' => $current,
+                    'intent_value' => $incoming,
+                ]);
+
+                return false;
+            }
+
+            if (! filled($current)) {
+                $updates[$field] = (string) $incoming;
+            }
+        }
+
+        $incomingVersion = $metadata['pricing_snapshot_version'] ?? null;
+        $currentVersion = $order->getAttribute('pricing_snapshot_version');
+        if (filled($incomingVersion)) {
+            if (filled($currentVersion) && (int) $currentVersion !== (int) $incomingVersion) {
+                Log::warning('Ignoring Stripe webhook with mismatched snapshot version', [
+                    'order_id' => $order->id,
+                    'order_value' => $currentVersion,
+                    'intent_value' => $incomingVersion,
+                ]);
+
+                return false;
+            }
+
+            if (! filled($currentVersion)) {
+                $updates['pricing_snapshot_version'] = (int) $incomingVersion;
+            }
+        }
+
+        $incomingSnapshot = $this->decodeSnapshotMetadata($metadata['quote_snapshot'] ?? null);
+        $currentSnapshot = $order->getAttribute('pricing_snapshot');
+        if (is_array($incomingSnapshot) && ! empty($incomingSnapshot)) {
+            if (filled($currentSnapshot) && $currentSnapshot !== $incomingSnapshot) {
+                Log::warning('Ignoring Stripe webhook with mismatched pricing snapshot', [
+                    'order_id' => $order->id,
+                ]);
+
+                return false;
+            }
+
+            if (empty($currentSnapshot)) {
+                $updates['pricing_snapshot'] = $incomingSnapshot;
+            }
+        }
+
+        if (! empty($updates)) {
+            $order->forceFill($updates)->save();
+        }
+
+        return true;
+    }
+
     protected function getWebhookSecret(): ?string
     {
         $secret = trim((string) (
@@ -116,7 +218,11 @@ class StripeWebhookController extends Controller
         $intent = $event->data->object;
 
         // Recuperiamo l'identificativo dell'ordine dai dati aggiuntivi (metadata) del pagamento
-        $orderId = $intent->metadata->order_id;
+        $orderId = (int) ($intent->metadata->order_id ?? 0);
+
+        if ($orderId <= 0) {
+            return;
+        }
 
         // Cerchiamo l'ordine nel database
         $order = Order::where('id', $orderId)->first();
@@ -126,27 +232,110 @@ class StripeWebhookController extends Controller
             return;
         }
 
-        // Salviamo o aggiorniamo i dettagli della transazione nel database
-        // "updateOrCreate" cerca una transazione con lo stesso identificativo esterno (ext_id)
-        // Se la trova, la aggiorna; se non la trova, ne crea una nuova
-        $transaction = Transaction::updateOrCreate([
-            'ext_id' => $intent->id,
-        ], [
-            'order_id' => $order->id,
-            'status' => 'succeeded',
-            'total' => $intent->amount,
-            'type' => $intent->payment_method_types[0] ?? 'unknown',
-            'provider_status' => $intent->status,
-        ]);
+        $transaction = null;
+        $dispatchOrderPaid = false;
+        $shouldClearCart = false;
 
-        // Svuotiamo il carrello dell'utente perche' ha completato l'acquisto
-        DB::table('cart_user')
-            ->where('user_id', $order->user_id)
-            ->delete();
+        DB::transaction(function () use ($order, $intent, &$transaction, &$dispatchOrderPaid, &$shouldClearCart) {
+            $lockedOrder = Order::query()->lockForUpdate()->find($order->id);
 
-        // Lanciamo l'evento OrderPaid per attivare i listener automatici
-        // (es. generazione etichetta BRT, notifiche, ecc.)
-        event(new OrderPaid($order, $transaction));
+            if (! $lockedOrder) {
+                return;
+            }
+
+            if (! $this->syncSubmissionContextFromIntent($lockedOrder, $intent)) {
+                return;
+            }
+
+            if ((int) $intent->amount !== (int) $lockedOrder->subtotal->amount()) {
+                $intentAmount = (int) $intent->amount;
+                $orderAmount = (int) $lockedOrder->subtotal->amount();
+                $mismatchPercent = $orderAmount > 0
+                    ? abs($intentAmount - $orderAmount) / $orderAmount * 100
+                    : 100;
+
+                Log::critical('Stripe webhook amount mismatch detected', [
+                    'order_id' => $lockedOrder->id,
+                    'payment_intent_id' => $intent->id,
+                    'intent_amount' => $intentAmount,
+                    'order_amount' => $orderAmount,
+                    'mismatch_percent' => round($mismatchPercent, 2),
+                ]);
+
+                // Se la differenza supera l'1%, segna l'ordine come anomalia di pagamento
+                if ($mismatchPercent > 1) {
+                    $lockedOrder->status = 'payment_anomaly';
+                    $lockedOrder->save();
+                }
+
+                return;
+            }
+
+            if ($lockedOrder->hasSuccessfulTransactionForExternalId($intent->id)) {
+                if ($lockedOrder->isAwaitingPayment()) {
+                    $lockedOrder->status = Order::COMPLETED;
+                }
+
+                $lockedOrder->payment_method = 'stripe';
+                $lockedOrder->stripe_payment_intent_id = $intent->id;
+                $lockedOrder->save();
+
+                $transaction = $lockedOrder->transactions()
+                    ->where('ext_id', $intent->id)
+                    ->where('status', 'succeeded')
+                    ->latest('id')
+                    ->first();
+                $shouldClearCart = true;
+
+                return;
+            }
+
+            if (! $lockedOrder->isAwaitingPayment()
+                && $lockedOrder->stripe_payment_intent_id !== $intent->id) {
+                Log::warning('Ignoring unexpected Stripe success for non-payable order', [
+                    'order_id' => $lockedOrder->id,
+                    'payment_intent_id' => $intent->id,
+                    'current_payment_intent_id' => $lockedOrder->stripe_payment_intent_id,
+                    'status' => $lockedOrder->rawStatus(),
+                ]);
+
+                return;
+            }
+
+            if ($lockedOrder->isAwaitingPayment()) {
+                $lockedOrder->status = Order::COMPLETED;
+            }
+
+            $lockedOrder->payment_method = 'stripe';
+            $lockedOrder->stripe_payment_intent_id = $intent->id;
+            $lockedOrder->save();
+
+            $existingTransaction = $lockedOrder->transactions()
+                ->where('ext_id', $intent->id)
+                ->first();
+            $wasAlreadySucceeded = $existingTransaction?->status === 'succeeded';
+
+            $transaction = Transaction::updateOrCreate([
+                'ext_id' => $intent->id,
+            ], [
+                'order_id' => $lockedOrder->id,
+                'status' => 'succeeded',
+                'total' => $intent->amount,
+                'type' => $intent->payment_method_types[0] ?? 'unknown',
+                'provider_status' => $intent->status,
+            ]);
+
+            $dispatchOrderPaid = ! $wasAlreadySucceeded;
+            $shouldClearCart = true;
+        });
+
+        if ($shouldClearCart) {
+            $this->clearCartForOrder($order);
+        }
+
+        if ($dispatchOrderPaid && $transaction) {
+            event(new OrderPaid($order->fresh(), $transaction));
+        }
     }
 
     // Gestisce l'evento "pagamento fallito"
@@ -155,17 +344,17 @@ class StripeWebhookController extends Controller
     {
         $intent = $event->data->object;
 
-        $orderId = $intent->metadata->order_id;
+        $orderId = (int) ($intent->metadata->order_id ?? 0);
+
+        if ($orderId <= 0) {
+            return;
+        }
 
         $order = Order::where('id', $orderId)->first();
 
         if (! $order) {
             return;
         }
-
-        // Segniamo l'ordine come "pagamento fallito"
-        $order->status = Order::PAYMENT_FAILED;
-        $order->save();
 
         // Cerchiamo di capire perche' il pagamento e' fallito
         // Proviamo a recuperare il messaggio di errore da diverse fonti
@@ -177,18 +366,40 @@ class StripeWebhookController extends Controller
                   ?? $intent->charges->data[0]->failure_code
                   ?? null;
 
-        // Salviamo i dettagli della transazione fallita, incluso il motivo dell'errore
-        Transaction::updateOrCreate([
-            'ext_id' => $intent->id,
-        ], [
-            'order_id' => $order->id,
-            'status' => 'failed',
-            'total' => $intent->amount,
-            'type' => $intent->payment_method_types[0] ?? 'unknown',
-            'provider_status' => $intent->status,
-            'failure_code' => $failureCode,
-            'failure_message' => $failureMessage,
-        ]);
+        DB::transaction(function () use ($order, $intent, $failureCode, $failureMessage) {
+            $lockedOrder = Order::query()->lockForUpdate()->find($order->id);
+
+            if (! $lockedOrder) {
+                return;
+            }
+
+            if ($lockedOrder->isAwaitingPayment() || $lockedOrder->stripe_payment_intent_id === $intent->id) {
+                $lockedOrder->status = Order::PAYMENT_FAILED;
+                $lockedOrder->payment_method = 'stripe';
+                $lockedOrder->stripe_payment_intent_id = $intent->id;
+                $lockedOrder->save();
+            } else {
+                Log::warning('Ignoring Stripe failed intent for non-payable order', [
+                    'order_id' => $lockedOrder->id,
+                    'payment_intent_id' => $intent->id,
+                    'current_payment_intent_id' => $lockedOrder->stripe_payment_intent_id,
+                    'status' => $lockedOrder->rawStatus(),
+                ]);
+            }
+
+            // Salviamo i dettagli della transazione fallita, incluso il motivo dell'errore
+            Transaction::updateOrCreate([
+                'ext_id' => $intent->id,
+            ], [
+                'order_id' => $lockedOrder->id,
+                'status' => 'failed',
+                'total' => $intent->amount,
+                'type' => $intent->payment_method_types[0] ?? 'unknown',
+                'provider_status' => $intent->status,
+                'failure_code' => $failureCode,
+                'failure_message' => $failureMessage,
+            ]);
+        });
     }
 
     // Gestisce l'evento "account Stripe aggiornato"

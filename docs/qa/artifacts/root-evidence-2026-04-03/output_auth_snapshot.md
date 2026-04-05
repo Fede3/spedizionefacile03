@@ -1,0 +1,68 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e3]:
+    - link "Vai al contenuto" [ref=e4] [cursor=pointer]:
+      - /url: "#main-content"
+    - banner [ref=e5]:
+      - generic [ref=e9]:
+        - link "SF SpediamoFacile" [ref=e11] [cursor=pointer]:
+          - /url: /
+          - generic [ref=e13]: SF
+          - generic [ref=e14]: SpediamoFacile
+        - generic [ref=e15]:
+          - link "Preventivo" [ref=e16] [cursor=pointer]:
+            - /url: /preventivo
+          - link "Carrello" [ref=e17] [cursor=pointer]:
+            - /url: /carrello
+            - img [ref=e18]
+            - generic [ref=e22]: Carrello
+          - button "Apri menu di navigazione" [ref=e23] [cursor=pointer]:
+            - img [ref=e24]
+    - main [ref=e25]:
+      - generic [ref=e32]:
+        - tablist [ref=e33]:
+          - tab "Accedi" [selected] [ref=e34]:
+            - generic [ref=e35]: Accedi
+          - tab "Registrati" [ref=e36]:
+            - generic [ref=e37]: Registrati
+        - tabpanel "Accedi" [ref=e38]:
+          - generic [ref=e39]:
+            - generic [ref=e40]:
+              - button "Continua con Google" [ref=e41] [cursor=pointer]:
+                - img [ref=e43]
+                - generic [ref=e48]: Continua con Google
+              - button "Continua con Facebook" [ref=e49] [cursor=pointer]:
+                - img [ref=e51]
+                - generic [ref=e53]: Continua con Facebook
+              - button "Continua con Apple" [ref=e54] [cursor=pointer]:
+                - img [ref=e56]
+                - generic [ref=e58]: Continua con Apple
+            - generic [ref=e61]: oppure
+          - generic [ref=e64]:
+            - generic [ref=e65]:
+              - generic [ref=e66]: Email
+              - textbox "Email" [ref=e67]:
+                - /placeholder: La tua email
+            - generic [ref=e68]:
+              - generic [ref=e69]: Password
+              - generic [ref=e70]:
+                - textbox "Password" [ref=e71]:
+                  - /placeholder: La tua password
+                - button [ref=e72] [cursor=pointer]
+            - generic [ref=e76]:
+              - checkbox "Ricordami" [ref=e77] [cursor=pointer]
+              - generic [ref=e78] [cursor=pointer]: Ricordami
+            - button "Accedi" [ref=e79] [cursor=pointer]
+            - paragraph [ref=e80]:
+              - text: Hai dimenticato la password?
+              - link "Recupera Password" [ref=e81] [cursor=pointer]:
+                - /url: /recupera-password
+    - generic [ref=e83]:
+      - paragraph [ref=e84]:
+        - text: Utilizziamo i cookie per migliorare la tua esperienza.
+        - link "Scopri di più" [ref=e85] [cursor=pointer]:
+          - /url: /cookie-policy
+      - generic [ref=e86]:
+        - button "Solo necessari" [ref=e87] [cursor=pointer]
+        - button "Accetta tutti" [ref=e88] [cursor=pointer]
+  - region "Notifications (F8)":
+    - list

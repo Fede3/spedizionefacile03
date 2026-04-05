@@ -71,9 +71,6 @@ class CarrelloTest extends TestCase
                     'first_size' => 30,
                     'second_size' => 20,
                     'third_size' => 15,
-                    'weight_price' => 11.90,
-                    'volume_price' => 8.90,
-                    'single_price' => 11.90,
                 ], $packageOverrides),
             ],
         ];
@@ -160,23 +157,26 @@ class CarrelloTest extends TestCase
     }
 
     /**
-     * TEST DI CARATTERIZZAZIONE — Il prezzo viene salvato in centesimi nel DB
+     * TEST DI CARATTERIZZAZIONE — I prezzi client vengono ignorati e ricalcolati lato server
      *
-     * Cosa verifica: il single_price dal frontend (euro) viene convertito in centesimi nel DB
-     * Comportamento attuale: singlePriceCents = (int) round(($packageData['single_price'] ?? 0) * 100)
-     * File sorgente: app/Http/Controllers/CartController.php:394
+     * Cosa verifica: weight_price, volume_price e single_price nel payload non sono autorevoli
+     * e il DB salva il prezzo ricalcolato dal server.
+     * File sorgente: app/Http/Controllers/CartController.php
      */
-    public function test_prezzo_salvato_in_centesimi(): void
+    public function test_prezzi_client_ignorati_e_ricalcolati_lato_server(): void
     {
         $user = User::factory()->create();
-        $payload = $this->cartPayload(['single_price' => 11.90]);
+        $payload = $this->cartPayload([
+            'weight_price' => 999.99,
+            'volume_price' => 888.88,
+            'single_price' => 777.77,
+        ]);
 
         $response = $this->actingAs($user)
             ->postJson('/api/cart', $payload);
 
         $response->assertOk();
 
-        // Il frontend manda 11.90 EUR, nel DB diventa 1190 centesimi
         $this->assertDatabaseHas('packages', [
             'user_id' => $user->id,
             'single_price' => 1190,

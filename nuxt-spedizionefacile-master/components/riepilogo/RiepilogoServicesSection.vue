@@ -13,7 +13,7 @@ const emit = defineEmits(['edit-services']);
 	<div class="bg-[#E4E4E4] rounded-[12px] p-[12px] tablet:p-[24px_28px] mb-[12px] tablet:mb-[16px]">
 		<div class="flex items-center justify-between mb-[10px] tablet:mb-[12px]">
 			<h2 class="text-[1rem] tablet:text-[1.125rem] font-bold text-[#252B42]">Servizi e data ritiro</h2>
-			<button type="button" @click="emit('edit-services')" class="sf-action-pill sf-action-pill--soft" title="Modifica servizi">
+			<button type="button" @click="emit('edit-services')" class="btn-secondary btn-compact inline-flex items-center gap-[6px]" title="Modifica servizi">
 				<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
 				<span>Modifica</span>
 			</button>

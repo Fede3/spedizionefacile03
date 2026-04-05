@@ -1,80 +1,96 @@
-<!--
-  FILE: components/shipment/StepPickupDate.vue
-  SCOPO: Sezione data di ritiro con carosello orizzontale — estratta da [step].vue.
--->
 <script setup>
-const pickupTrackRef = ref(null);
-
-defineProps({
+const props = defineProps({
 	dateError: { type: String, default: null },
 	daysInMonth: { type: Array, required: true },
 	services: { type: Object, required: true },
 });
 
-const emit = defineEmits(["choose-date"]);
+const emit = defineEmits(['choose-date']);
 
-const scrollPickupDates = (direction) => {
-	const track = pickupTrackRef.value;
-	if (!track) return;
+const isSelectedDay = (day) => props.services.date === day.formattedDate;
+const trackRef = ref(null);
+const showTrackNav = computed(() => props.daysInMonth.length > 6);
 
-	const delta = Math.max(240, Math.round(track.clientWidth * 0.78));
-	track.scrollBy({
-		left: direction === "next" ? delta : -delta,
-		behavior: "smooth",
+const scrollTrack = (direction) => {
+	trackRef.value?.scrollBy?.({
+		left: direction * 288,
+		behavior: 'smooth',
 	});
 };
 </script>
 
 <template>
-	<div class="scroll-mt-[120px] w-full">
-		<div
-			v-if="dateError"
-			data-pickup-date-alert
-			class="mb-[14px] rounded-[12px] border border-[#F0D28E] bg-[#FFF7E2] px-[16px] py-[14px] text-[#8A5E2E] shadow-[0_8px_18px_rgba(184,134,51,0.08)]"
-			role="alert"
-			aria-live="polite">
+	<div class="scroll-mt-[88px] w-full">
+		<div v-if="dateError" data-pickup-date-alert class="mb-[12px] ux-alert ux-alert--soft" role="alert" aria-live="polite">
 			<div class="flex items-start gap-[10px]">
-				<svg xmlns="http://www.w3.org/2000/svg" class="mt-[1px] h-[18px] w-[18px] shrink-0 text-[#C28122]" viewBox="0 0 24 24">
-					<path fill="currentColor" d="M11 15h2v2h-2zm0-8h2v6h-2z"/><path fill="currentColor" d="M1 21h22L12 2z"/>
+				<svg xmlns="http://www.w3.org/2000/svg" class="ux-alert__icon mt-[1px]" viewBox="0 0 24 24">
+					<path fill="currentColor" d="M11 15h2v2h-2zm0-8h2v6h-2z" />
+					<path fill="currentColor" d="M1 21h22L12 2z" />
 				</svg>
 				<div class="min-w-0">
-					<p class="text-[0.9375rem] font-bold leading-[1.2]">Imposta il giorno di ritiro</p>
-					<p class="mt-[4px] text-[0.875rem] leading-[1.45]">{{ dateError }}</p>
+					<p class="text-[0.9375rem] font-bold leading-[1.2] text-[#252B42]">Scegli il ritiro</p>
+					<p class="mt-[4px] text-[0.875rem] leading-[1.45] text-[#52606D]">{{ dateError }}</p>
 				</div>
 			</div>
 		</div>
+
 		<div class="pickup-date-card flow-section-shell sf-section-block">
 			<div class="pickup-date-card__header sf-section-block__header">
-				<h2 class="pickup-date-card__heading sf-section-title text-[#252B42] font-bold font-montserrat tracking-[0.1px]">
-					<span>Imposta giorno di ritiro</span>
-				</h2>
-				<p class="pickup-date-card__note sf-section-description">Scegli il primo giorno utile per il ritiro.</p>
+				<div class="pickup-date-card__title-stack">
+					<h2 class="pickup-date-card__heading sf-section-title">Ritiro</h2>
+					<p class="pickup-date-card__text flow-section-header__text">
+						Seleziona il primo giorno utile per il passaggio del corriere, nello stesso flusso di servizi e indirizzi.
+					</p>
+				</div>
+				<div class="pickup-date-card__header-tools">
+					<span class="sf-section-chip">Calendario</span>
+					<div v-if="showTrackNav" class="pickup-date-card__nav" aria-label="Scorri i giorni disponibili">
+						<button type="button" class="pickup-date-card__nav-button" @click="scrollTrack(-1)">
+							<svg
+								width="16"
+								height="16"
+								viewBox="0 0 24 24"
+								fill="none"
+								stroke="currentColor"
+								stroke-width="2.2"
+								stroke-linecap="round"
+								stroke-linejoin="round">
+								<path d="m15 18-6-6 6-6" />
+							</svg>
+						</button>
+						<button type="button" class="pickup-date-card__nav-button" @click="scrollTrack(1)">
+							<svg
+								width="16"
+								height="16"
+								viewBox="0 0 24 24"
+								fill="none"
+								stroke="currentColor"
+								stroke-width="2.2"
+								stroke-linecap="round"
+								stroke-linejoin="round">
+								<path d="m9 18 6-6-6-6" />
+							</svg>
+						</button>
+					</div>
+				</div>
 			</div>
 
-			<div class="pickup-date-slider-shell sf-section-block__body py-[12px]">
-				<div class="pickup-date-slider-track relative px-[8px] tablet:px-[35px]">
-					<button
-						type="button"
-						class="pickup-date-nav custom-prev no-radius absolute top-1/2 left-[8px] -translate-y-1/2 cursor-pointer bg-white rounded-[12px] w-[44px] h-[44px] px-0 py-0 flex items-center justify-center shadow-sm hover:shadow-md transition-shadow duration-300 z-10 border border-[#E9EBEC] hover:border-[#6da8b4]"
-						aria-label="Mostra giorni precedenti"
-						@click="scrollPickupDates('prev')">
-						<NuxtImg src="/img/quote/second-step/arrow-left.png" alt="" width="11" height="19" loading="lazy" decoding="async" />
-					</button>
-
-					<div ref="pickupTrackRef" class="pickup-date-track" aria-label="Giorni disponibili per il ritiro">
+			<div class="pickup-date-slider-shell sf-section-block__body rounded-[14px] border border-[#E4ECEF] bg-[#F4F7F9] p-[8px]">
+				<div class="pickup-date-slider-track px-[2px]">
+					<div ref="trackRef" class="pickup-date-track" aria-label="Giorni disponibili per il ritiro">
 						<div class="pickup-date-track__list">
 							<button
-								v-for="day in daysInMonth"
+								v-for="(day, dayIndex) in props.daysInMonth"
 								:key="day.date.toISOString()"
 								type="button"
-								class="pickup-date-option no-radius"
+								:id="`date-${day.formattedDate}`"
+								:data-pickup-day="day.formattedDate"
+								class="pickup-date-option"
 								:class="{
-									'is-selected': services.date == day.formattedDate,
-									'is-available': services.date != day.formattedDate && day.weekday !== 'Sab' && day.weekday !== 'Dom',
-									'is-disabled': day.weekday === 'Sab' || day.weekday === 'Dom'
+									'is-selected': isSelectedDay(day),
+									'is-available': !isSelectedDay(day),
 								}"
-								:aria-pressed="services.date == day.formattedDate ? 'true' : 'false'"
-								:disabled="day.weekday === 'Sab' || day.weekday === 'Dom'"
+								:aria-pressed="isSelectedDay(day) ? 'true' : 'false'"
 								:aria-label="`Seleziona ${day.weekday} ${day.dayNumber} ${day.monthAbbr}`"
 								@click="emit('choose-date', day)">
 								<span class="pickup-date-option__weekday">
@@ -87,14 +103,6 @@ const scrollPickupDates = (direction) => {
 							</button>
 						</div>
 					</div>
-
-					<button
-						type="button"
-						class="pickup-date-nav custom-next no-radius absolute top-1/2 right-[8px] -translate-y-1/2 cursor-pointer bg-white rounded-[12px] w-[44px] h-[44px] px-0 py-0 flex items-center justify-center shadow-sm hover:shadow-md transition-shadow duration-300 z-10 border border-[#E9EBEC] hover:border-[#6da8b4]"
-						aria-label="Mostra giorni successivi"
-						@click="scrollPickupDates('next')">
-						<NuxtImg src="/img/quote/second-step/arrow-right.png" alt="" width="11" height="19" loading="lazy" decoding="async" />
-					</button>
 				</div>
 			</div>
 		</div>

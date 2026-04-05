@@ -23,6 +23,6 @@ Artisan::command('inspire', function () {
 // (ordini senza pacchi validi che non servono piu')
 Schedule::command('orders:cleanup')->dailyAt('03:00');
 
-// Task pianificato: ogni 2 ore, sincronizza lo stato tracking degli ordini BRT
+// Task pianificato: ogni ora, sincronizza lo stato tracking degli ordini BRT
 // (aggiorna ordini in_transit e processing interrogando le API BRT)
-Schedule::command('orders:sync-tracking')->everyTwoHours();
+Schedule::command('orders:sync-tracking')->hourly();

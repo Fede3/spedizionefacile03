@@ -73,7 +73,7 @@ onMounted(() => { fetchArticles(); });
 				back-to="/account/amministrazione"
 				back-label="Torna all'amministrazione">
 				<template #actions>
-					<NuxtLink to="/account/amministrazione/guide/nuovo" class="inline-flex items-center gap-[6px] px-[18px] py-[10px] bg-[#095866] hover:bg-[#074a56] text-white rounded-[999px] text-[0.875rem] font-semibold transition-colors">
+					<NuxtLink to="/account/amministrazione/guide/nuovo" class="btn-cta btn-compact inline-flex items-center gap-[6px] text-[0.875rem]">
 						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[18px] h-[18px]" fill="currentColor"><path d="M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z"/></svg>
 						Nuova guida
 					</NuxtLink>
@@ -106,7 +106,7 @@ onMounted(() => { fetchArticles(); });
 					</div>
 					<h2 class="text-[1.125rem] font-bold text-[#252B42] mb-[8px]">Nessuna guida presente</h2>
 					<p class="text-[#737373] text-[0.875rem] mb-[16px]">Crea la prima guida per iniziare.</p>
-					<NuxtLink to="/account/amministrazione/guide/nuovo" class="btn-primary btn-compact inline-flex items-center gap-[6px] text-[0.875rem]">
+					<NuxtLink to="/account/amministrazione/guide/nuovo" class="btn-cta btn-compact inline-flex items-center gap-[6px] text-[0.875rem]">
 						<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
 						Crea guida
 					</NuxtLink>

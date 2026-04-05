@@ -29,8 +29,14 @@ class CheckAdmin
      */
     public function handle(Request $request, Closure $next): Response
     {
-        if (!auth()->check() || !auth()->user()?->isAdmin()) {
-             return response()->json([
+        if (! $request->user()) {
+            return response()->json([
+                'message' => 'Unauthenticated.',
+            ], 401);
+        }
+
+        if (! $request->user()->isAdmin()) {
+            return response()->json([
                 'message' => 'Accesso vietato. Non sei amministratore.',
             ], 403);
         }

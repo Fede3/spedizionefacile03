@@ -7,7 +7,7 @@
 </head>
 <body style="margin: 0; padding: 0; background-color: #f4f4f7; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
     @php
-        $totalPackages = $order->packages->sum(fn ($package) => max(1, (int) ($package->pivot->quantity ?? 1)));
+        $totalPackages = $order->packages->sum(fn ($package) => max(1, (int) ($package->pivot->quantity ?? $package->quantity ?? 1)));
     @endphp
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: #f4f4f7;">
         <tr>
@@ -55,10 +55,11 @@
                                                     @php
                                                         $statusColor = match($newStatus) {
                                                             'delivered', 'completed' => '#16a34a',
-                                                            'in_transit' => '#095866',
+                                                            'label_generated' => '#2563eb',
+                                                            'in_transit', 'out_for_delivery' => '#095866',
                                                             'in_giacenza' => '#d97706',
-                                                            'cancelled', 'payment_failed' => '#dc2626',
-                                                            'refunded' => '#7c3aed',
+                                                            'cancelled', 'payment_failed', 'refused' => '#dc2626',
+                                                            'refunded', 'returned' => '#7c3aed',
                                                             default => '#095866',
                                                         };
                                                     @endphp
@@ -77,10 +78,14 @@
                         <td style="padding: 16px 32px;">
                             @php
                                 $statusMessage = match($newStatus) {
+                                    'label_generated' => 'Il tuo pacco è stato preparato e l\'etichetta di spedizione è stata generata. Il corriere BRT provvederà al ritiro.',
                                     'in_transit' => 'Il tuo pacco è stato affidato al corriere BRT ed è in viaggio verso la destinazione.',
+                                    'out_for_delivery' => 'Il tuo pacco è in consegna! Il corriere BRT lo sta portando all\'indirizzo indicato.',
                                     'delivered' => 'Il tuo pacco è stato consegnato con successo. Grazie per aver scelto SpediamoFacile!',
                                     'completed' => 'Il tuo ordine è stato completato. Grazie per aver scelto SpediamoFacile!',
                                     'in_giacenza' => 'Il tuo pacco è attualmente in giacenza presso il deposito BRT. Il corriere effettuerà un nuovo tentativo di consegna.',
+                                    'returned' => 'Il tuo pacco è stato restituito al mittente. Contatta il nostro supporto per ulteriori informazioni.',
+                                    'refused' => 'La consegna del pacco è stata rifiutata dal destinatario. Contatta il nostro supporto per ulteriori informazioni.',
                                     'cancelled' => 'Il tuo ordine è stato annullato. Se non hai richiesto tu l\'annullamento, contatta il nostro supporto.',
                                     'refunded' => 'Il rimborso per il tuo ordine è stato elaborato. L\'importo verrà accreditato entro qualche giorno lavorativo.',
                                     'processing' => 'Il tuo ordine è in fase di lavorazione. Riceverai aggiornamenti sullo stato della spedizione.',
@@ -182,8 +187,11 @@
                             <p style="margin: 0 0 4px; color: #999; font-size: 12px; text-align: center;">
                                 SpediamoFacile &mdash; Spedizioni semplici, veloci e convenienti.
                             </p>
-                            <p style="margin: 0; color: #bbb; font-size: 11px; text-align: center;">
+                            <p style="margin: 0 0 4px; color: #bbb; font-size: 11px; text-align: center;">
                                 Per assistenza: <a href="mailto:assistenza@spediamofacile.it" style="color: #095866; text-decoration: none;">assistenza@spediamofacile.it</a>
+                            </p>
+                            <p style="margin: 0; color: #bbb; font-size: 11px; text-align: center;">
+                                <a href="{{ config('app.frontend_url') }}/account/notifiche?unsubscribe=1" style="color: #999; text-decoration: underline;">Gestisci preferenze email</a>
                             </p>
                         </td>
                     </tr>

@@ -1,18 +1,29 @@
 <!--
   FILE: pages/account/account-pro.vue
-  SCOPO: Pagina Partner Pro — orchestratore.
+  SCOPO: Pagina Partner Pro — area funzione dedicata, non switch di ruolo.
   API: POST /api/pro-requests, GET /api/referral-stats, GET /api/commissions.
   COMPONENTI: AccountProRequestForm, AccountProDashboard, AccountProSkeleton, AccountPageHeader.
   ROUTE: /account/account-pro (middleware sanctum:auth).
 -->
 <script setup>
-definePageMeta({ middleware: ["app-auth"] });
+definePageMeta({ middleware: ['app-auth'] });
 
-const { user } = useSanctumAuth();
+useSeoMeta({
+	title: 'Referral e commissioni | SpediamoFacile',
+	ogTitle: 'Referral e commissioni | SpediamoFacile',
+	description: 'Gestisci richiesta Partner Pro, referral e commissioni dalla tua area account SpediamoFacile.',
+	ogDescription: 'Area Partner Pro con referral, commissioni e stato richiesta su SpediamoFacile.',
+});
+
+const { user, logout } = useSanctumAuth();
 const sanctum = useSanctumClient();
+const { clearSnapshot, authCookie } = useAuthUiSnapshotPersistence();
 const accountProUiReady = ref(false);
+const isLoggingOut = ref(false);
+const pageError = ref(null);
 
-const isPro = computed(() => user.value?.role === 'Partner Pro');
+const effectiveRole = computed(() => user.value?.role || authCookie.value?.role || null);
+const isPro = computed(() => effectiveRole.value === 'Partner Pro');
 
 /* === Richiesta Pro (non Pro) === */
 const proRequestStatus = ref(null);
@@ -20,22 +31,52 @@ const proRequestLoading = ref(false);
 const proRequestForm = ref({ company_name: '', vat_number: '', message: '' });
 const proRequestError = ref(null);
 const proRequestSuccess = ref(false);
+const proRequestStatusLoading = ref(false);
+const hasLoadedPartnerArea = ref(false);
+
+const normalizedProRequestStatus = computed(() => {
+	const raw = proRequestStatus.value;
+	if (!raw) return null;
+
+	return {
+		...raw,
+		status: raw.status || raw.data?.status || null,
+		has_request: Boolean(raw.has_request ?? raw.data?.has_request ?? raw.status ?? raw.data?.status),
+	};
+});
+
+const canSubmitProRequest = computed(() => {
+	const currentStatus = normalizedProRequestStatus.value?.status;
+	return !['pending', 'approved'].includes(String(currentStatus || ''));
+});
 
 const fetchProRequestStatus = async () => {
-	try { proRequestStatus.value = await sanctum('/api/pro-request/status'); } catch { /* ignore */ }
+	proRequestStatusLoading.value = true;
+	try {
+		proRequestStatus.value = await sanctum('/api/pro-request/status');
+		pageError.value = null;
+	} catch {
+		pageError.value = 'Non riesco a caricare lo stato Partner Pro. Riprova.';
+	} finally {
+		proRequestStatusLoading.value = false;
+	}
 };
 
 const submitProRequest = async () => {
 	proRequestError.value = null;
+	if (!canSubmitProRequest.value) return;
 	proRequestLoading.value = true;
 	try {
 		await sanctum('/api/pro-request', { method: 'POST', body: proRequestForm.value });
 		proRequestSuccess.value = true;
+		pageError.value = null;
 		await fetchProRequestStatus();
 	} catch (e) {
 		const data = e?.response?._data || e?.data;
 		proRequestError.value = data?.message || "Errore nell'invio della richiesta. Riprova.";
-	} finally { proRequestLoading.value = false; }
+	} finally {
+		proRequestLoading.value = false;
+	}
 };
 
 /* === Dati Partner Pro === */
@@ -44,19 +85,59 @@ const earnings = ref(null);
 const isLoading = ref(true);
 
 const fetchData = async () => {
-	if (!isPro.value) { isLoading.value = false; return; }
+	if (!isPro.value) {
+		isLoading.value = false;
+		return;
+	}
+
+	isLoading.value = true;
 	try {
-		const [refData, earningsData] = await Promise.all([
-			sanctum('/api/referral/my-code'),
-			sanctum('/api/referral/earnings'),
-		]);
+		const [refData, earningsData] = await Promise.all([sanctum('/api/referral/my-code'), sanctum('/api/referral/earnings')]);
 		referralData.value = refData;
 		earnings.value = earningsData;
-	} catch { /* silent */ }
-	finally { isLoading.value = false; }
+		pageError.value = null;
+	} catch {
+		pageError.value = 'Non riesco a caricare referral e commissioni. Riprova.';
+	} finally {
+		isLoading.value = false;
+		hasLoadedPartnerArea.value = true;
+	}
 };
 
-onMounted(() => { accountProUiReady.value = true; fetchData(); if (!isPro.value) fetchProRequestStatus(); });
+const hydratePartnerArea = async () => {
+	proRequestSuccess.value = false;
+	proRequestError.value = null;
+
+	if (isPro.value) {
+		proRequestStatus.value = null;
+		await fetchData();
+		return;
+	}
+
+	referralData.value = null;
+	earnings.value = null;
+	hasLoadedPartnerArea.value = false;
+	await fetchProRequestStatus();
+};
+
+const retryPartnerArea = async () => {
+	pageError.value = null;
+	await hydratePartnerArea();
+};
+
+onMounted(async () => {
+	accountProUiReady.value = true;
+	await hydratePartnerArea();
+});
+
+watch(
+	() => effectiveRole.value,
+	async (nextRole, previousRole) => {
+		if (!accountProUiReady.value) return;
+		if (nextRole === previousRole && (nextRole || hasLoadedPartnerArea.value)) return;
+		await hydratePartnerArea();
+	},
+);
 
 /* === Clipboard helpers === */
 const copied = ref(false);
@@ -73,40 +154,101 @@ const fallbackCopy = (text) => {
 };
 
 const clipboardWrite = async (text, flag) => {
-	try { await navigator.clipboard.writeText(text); } catch { fallbackCopy(text); }
+	try {
+		await navigator.clipboard.writeText(text);
+	} catch {
+		fallbackCopy(text);
+	}
 	flag.value = true;
-	setTimeout(() => { flag.value = false; }, 2000);
+	setTimeout(() => {
+		flag.value = false;
+	}, 2000);
 };
 
-const copyCode = () => { if (referralData.value?.referral_code) clipboardWrite(referralData.value.referral_code, copied); };
-const copyReferralLink = () => { if (referralData.value?.referral_link) clipboardWrite(referralData.value.referral_link, copiedLink); };
-const copyAccountCode = () => { clipboardWrite(`SF-PRO-${user.value?.id?.toString().padStart(6, '0')}`, copiedAccountCode); };
-const shareWhatsApp = () => { if (referralData.value?.whatsapp_link) window.open(referralData.value.whatsapp_link, '_blank'); };
+const copyCode = () => {
+	if (referralData.value?.referral_code) clipboardWrite(referralData.value.referral_code, copied);
+};
+const copyReferralLink = () => {
+	if (referralData.value?.referral_link) clipboardWrite(referralData.value.referral_link, copiedLink);
+};
+const copyAccountCode = () => {
+	clipboardWrite(`SF-PRO-${user.value?.id?.toString().padStart(6, '0')}`, copiedAccountCode);
+};
+const shareWhatsApp = () => {
+	if (referralData.value?.whatsapp_link) window.open(referralData.value.whatsapp_link, '_blank');
+};
+const handleLogout = async () => {
+	isLoggingOut.value = true;
+	try {
+		clearSnapshot();
+		await logout();
+	} finally {
+		isLoggingOut.value = false;
+	}
+};
 </script>
 
 <template>
-	<section v-if="accountProUiReady" class="min-h-[600px] py-[24px] tablet:py-[32px] desktop:py-[40px]">
-		<div class="my-container space-y-[18px] tablet:space-y-[22px]">
+	<section v-if="accountProUiReady" class="sf-account-shell min-h-[600px] py-[18px] tablet:py-[24px] desktop:py-[28px]">
+		<div class="my-container space-y-[16px] tablet:space-y-[18px]">
 			<AccountPageHeader
 				eyebrow="Partner Pro"
-				title="Partner Pro"
+				title="Referral e commissioni"
 				description=""
-				:crumbs="[{ label: 'Account', to: '/account' }, { label: 'Account Pro' }]"
-			/>
+				:crumbs="[{ label: 'Account', to: '/account' }, { label: 'Area Partner Pro' }]">
+				<template #meta>
+					<span class="sf-account-meta-pill">{{ isPro ? 'Partner Pro attivo' : 'Richiesta accesso' }}</span>
+					<span v-if="!isPro && normalizedProRequestStatus" class="sf-account-meta-pill sf-account-meta-pill--muted">
+						{{ normalizedProRequestStatus.status || 'In verifica' }}
+					</span>
+				</template>
+				<template #actions>
+					<div class="flex flex-wrap gap-[8px]">
+						<NuxtLink to="/preventivo" class="btn-cta btn-compact inline-flex items-center justify-center">Nuova spedizione</NuxtLink>
+						<button
+							type="button"
+							:disabled="isLoggingOut"
+							class="btn-secondary btn-compact inline-flex items-center justify-center"
+							@click="handleLogout">
+							{{ isLoggingOut ? 'Uscita...' : 'Esci' }}
+						</button>
+					</div>
+				</template>
+			</AccountPageHeader>
 
-			<!-- Non Pro: info + form richiesta -->
+			<div v-if="pageError" class="ux-alert ux-alert--warning">
+				<svg
+					xmlns="http://www.w3.org/2000/svg"
+					viewBox="0 0 24 24"
+					class="ux-alert__icon"
+					fill="none"
+					stroke="currentColor"
+					stroke-width="1.9"
+					stroke-linecap="round"
+					stroke-linejoin="round"
+					aria-hidden="true">
+					<path d="M12 9v4" />
+					<path d="M12 17h.01" />
+					<path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z" />
+				</svg>
+				<div class="flex min-w-0 flex-1 flex-col gap-[4px]">
+					<p class="ux-alert__title">{{ pageError }}</p>
+				</div>
+				<button type="button" class="btn-secondary btn-compact" @click="retryPartnerArea">Riprova</button>
+			</div>
+
 			<AccountProRequestForm
 				v-if="!isPro"
-				:pro-request-status="proRequestStatus"
+				:pro-request-status="normalizedProRequestStatus"
 				:pro-request-form="proRequestForm"
 				:pro-request-error="proRequestError"
 				:pro-request-success="proRequestSuccess"
 				:pro-request-loading="proRequestLoading"
+				:pro-request-status-loading="proRequestStatusLoading"
+				:can-submit="canSubmitProRequest"
 				@update:pro-request-form="proRequestForm = $event"
-				@submit="submitProRequest"
-			/>
+				@submit="submitProRequest" />
 
-			<!-- Pro: dashboard completa -->
 			<AccountProDashboard
 				v-else
 				:user="user"
@@ -118,13 +260,11 @@ const shareWhatsApp = () => { if (referralData.value?.whatsapp_link) window.open
 				@copy-code="copyCode"
 				@copy-link="copyReferralLink"
 				@copy-account-code="copyAccountCode"
-				@share-whatsapp="shareWhatsApp"
-			/>
+				@share-whatsapp="shareWhatsApp" />
 		</div>
 	</section>
 
-	<!-- Skeleton -->
-	<section v-else class="min-h-[600px] py-[24px] tablet:py-[32px] desktop:py-[40px]">
+	<section v-else class="sf-account-shell min-h-[600px] py-[18px] tablet:py-[24px] desktop:py-[28px]">
 		<AccountProSkeleton />
 	</section>
 </template>

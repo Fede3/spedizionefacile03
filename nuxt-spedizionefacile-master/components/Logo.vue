@@ -3,12 +3,9 @@ const props = defineProps({
 	isNavbar: Boolean,
 });
 
-const route = useRoute();
 const isNavbarLogo = computed(() => Boolean(props.isNavbar));
-const isAuthShellRoute = computed(() => (
-	['/autenticazione', '/login', '/registrazione', '/recupera-password', '/aggiorna-password'].includes(route.path)
-));
-const showNavbarDivider = computed(() => isNavbarLogo.value && !isAuthShellRoute.value);
+const { isAuthMinimalShellRoute } = useShellRouteState();
+const showNavbarDivider = computed(() => isNavbarLogo.value && !isAuthMinimalShellRoute.value);
 </script>
 
 <template>

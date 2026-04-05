@@ -58,7 +58,7 @@ class SendOrderConfirmation
 
                 Log::info('Order confirmation email sent', [
                     'order_id' => $event->order->id,
-                    'user_email' => $event->order->user->email,
+                    'user_id' => $event->order->user->id,
                 ]);
             }
         } catch (\Exception $e) {

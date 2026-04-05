@@ -52,7 +52,7 @@ class MarkOrderProcessing
     {
         $event->order->refresh();
 
-        if ($event->order->status === Order::IN_TRANSIT) {
+        if (in_array($event->order->status, [Order::IN_TRANSIT, Order::LABEL_GENERATED], true)) {
             return;
         }
 

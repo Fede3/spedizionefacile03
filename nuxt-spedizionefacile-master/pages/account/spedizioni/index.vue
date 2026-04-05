@@ -99,7 +99,7 @@ const {
 				</div>
 				<h2 class="text-[1.25rem] font-bold text-[#252B42] mb-[10px]">Nessuna spedizione</h2>
 				<p class="text-[#737373] text-[0.9375rem] max-w-[400px] mx-auto mb-[24px] leading-[1.6]">Non hai ancora effettuato nessun ordine. Configura la tua prima spedizione per iniziare.</p>
-				<NuxtLink to="/preventivo" class="btn-primary inline-flex items-center gap-[6px] text-[0.9375rem]">
+				<NuxtLink to="/preventivo" class="btn-cta btn-compact inline-flex items-center gap-[6px] text-[0.9375rem]">
 					<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
 					Crea nuova spedizione
 				</NuxtLink>

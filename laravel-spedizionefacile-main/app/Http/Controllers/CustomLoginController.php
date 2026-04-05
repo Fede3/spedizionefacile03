@@ -55,11 +55,13 @@ use App\Models\Package;
 use App\Models\PackageAddress;
 use App\Models\Service;
 use App\Models\User;
+use App\Services\CartService;
 use App\Support\AuthUiCookie;
 use App\Utils\CustomResponse;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -108,6 +110,7 @@ class CustomLoginController extends Controller
 
         // Cerchiamo l'utente nel database per email
         $user = $this->resolveUserFromEmail((string) $request->email);
+        $guestCart = $request->hasSession() ? $request->session()->get('cart', []) : [];
 
         // Verifichiamo che l'utente esista e che la password sia corretta
         if (! $user || ! Hash::check($request->password, $user->password)) {
@@ -136,7 +139,7 @@ class CustomLoginController extends Controller
                     SendVerificationEmailJob::dispatchSync($user);
                 } catch (\Throwable $e) {
                     Log::warning('Invio email codice verifica fallito durante login.', [
-                        'email' => $user->email,
+                        'user_id' => $user->id,
                         'error' => $e->getMessage(),
                     ]);
                 }
@@ -166,23 +169,7 @@ class CustomLoginController extends Controller
         // Trasferiamo i pacchi dal carrello ospite (sessione) al carrello utente (database)
         // Questo permette all'utente di non perdere i pacchi aggiunti prima di fare il login
         try {
-            if ($request->hasSession()) {
-                $packages = session()->get('cart', []);
-                if (! empty($packages)) {
-                    // Creiamo i pacchi nel database
-                    $dbPackages = $this->createPackage($packages);
-                    // Li colleghiamo al carrello dell'utente
-                    foreach ($dbPackages as $package) {
-                        DB::table('cart_user')->insert([
-                            'user_id' => $user->id,
-                            'package_id' => $package->id,
-                            'created_at' => now(),
-                        ]);
-                    }
-                    // Svuotiamo il carrello della sessione perche' ora i dati sono nel database
-                    session()->forget('cart');
-                }
-            }
+            $this->mergeGuestCartIntoUserCart($request, $user, $guestCart);
         } catch (\Exception $e) {
             // Se il trasferimento del carrello fallisce, non blocchiamo il login
             // (il carrello non e' critico, l'importante e' che l'utente entri)
@@ -207,6 +194,7 @@ class CustomLoginController extends Controller
 
         // Verifichiamo nuovamente le credenziali (per sicurezza)
         $user = User::where('email', $request->email)->first();
+        $guestCart = $request->hasSession() ? $request->session()->get('cart', []) : [];
 
         if (! $user || ! Hash::check($request->password, $user->password)) {
             return CustomResponse::setFailResponse('Credenziali non corrette.', Response::HTTP_UNAUTHORIZED);
@@ -217,10 +205,37 @@ class CustomLoginController extends Controller
             return CustomResponse::setSuccessResponse('Account già verificato. Puoi accedere.', Response::HTTP_OK);
         }
 
+        // Controlla se il codice e' stato invalidato per troppi tentativi errati
+        $attemptKey = 'verify_attempts_' . $user->id;
+        $attempts = (int) Cache::get($attemptKey, 0);
+
+        if ($attempts >= 5) {
+            // Invalida il codice corrente dopo 5 tentativi errati
+            $user->update([
+                'verification_code' => null,
+                'verification_code_expires_at' => null,
+            ]);
+            Cache::forget($attemptKey);
+
+            return CustomResponse::setFailResponse(
+                'Troppi tentativi errati. Il codice è stato invalidato. Richiedi un nuovo codice.',
+                Response::HTTP_UNPROCESSABLE_ENTITY
+            );
+        }
+
         // Controlliamo che il codice inserito sia quello giusto
         if ($user->verification_code !== $request->code) {
-            return CustomResponse::setFailResponse('Codice di verifica non valido.', Response::HTTP_UNPROCESSABLE_ENTITY);
+            Cache::put($attemptKey, $attempts + 1, now()->addMinutes(30));
+
+            $remaining = 4 - $attempts;
+            return CustomResponse::setFailResponse(
+                'Codice di verifica non valido. Tentativi rimasti: ' . max(0, $remaining) . '.',
+                Response::HTTP_UNPROCESSABLE_ENTITY
+            );
         }
+
+        // Codice corretto: resetta il contatore dei tentativi
+        Cache::forget($attemptKey);
 
         // Controlliamo che il codice non sia scaduto (dura 30 minuti)
         $verificationExpiresAt = $user->verification_code_expires_at
@@ -238,7 +253,7 @@ class CustomLoginController extends Controller
             try {
                 SendVerificationEmailJob::dispatchSync($user);
             } catch (\Throwable $e) {
-                Log::warning('Invio email nuovo codice fallito.', ['email' => $user->email, 'error' => $e->getMessage()]);
+                Log::warning('Invio email nuovo codice fallito.', ['user_id' => $user->id, 'error' => $e->getMessage()]);
             }
 
             return CustomResponse::setFailResponse('Codice scaduto. Un nuovo codice di verifica è stato inviato alla tua email.', Response::HTTP_UNPROCESSABLE_ENTITY);
@@ -258,6 +273,12 @@ class CustomLoginController extends Controller
         // Controlliamo che la sessione sia disponibile (vedi commento nel metodo login()).
         if ($request->hasSession()) {
             $request->session()->regenerate();
+        }
+
+        try {
+            $this->mergeGuestCartIntoUserCart($request, $user, $guestCart);
+        } catch (\Exception $e) {
+            Log::warning('Guest cart merge failed after verification', ['user_id' => $user->id, 'error' => $e->getMessage()]);
         }
 
         return response()->json([
@@ -327,7 +348,7 @@ class CustomLoginController extends Controller
         try {
             SendVerificationEmailJob::dispatchSync($user);
         } catch (\Throwable $e) {
-            Log::warning('Invio email fallito.', ['email' => $user->email, 'error' => $e->getMessage()]);
+            Log::warning('Invio email fallito.', ['user_id' => $user->id, 'error' => $e->getMessage()]);
         }
 
         return CustomResponse::setSuccessResponse('Nuovo codice di verifica inviato alla tua email.', Response::HTTP_OK);
@@ -335,34 +356,86 @@ class CustomLoginController extends Controller
 
     // Funzione di supporto: crea i pacchi nel database a partire dai dati del carrello sessione
     // Usata durante il login per trasferire i pacchi dal carrello ospite al database
-    public function createPackage($packages)
+    private function mergeGuestCartIntoUserCart(Request $request, User $user, ?array $packages = null): void
+    {
+        if ($packages === null) {
+            if (! $request->hasSession()) {
+                return;
+            }
+
+            $packages = $request->session()->get('cart', []);
+        }
+
+        if (empty($packages)) {
+            return;
+        }
+
+        DB::transaction(function () use ($packages, $user) {
+            $dbPackages = $this->createPackage($packages, $user);
+
+            foreach ($dbPackages as $package) {
+                DB::table('cart_user')->insert([
+                    'user_id' => $user->id,
+                    'package_id' => $package->id,
+                    'created_at' => now(),
+                ]);
+            }
+
+            $cartPackageIds = DB::table('cart_user')
+                ->where('user_id', $user->id)
+                ->pluck('package_id');
+
+            $mergedPackages = Package::with(['originAddress', 'destinationAddress', 'service'])
+                ->whereIn('id', $cartPackageIds)
+                ->get();
+
+            CartService::mergeIdenticalPackages($mergedPackages, $user->id);
+            $cartPackageIds = DB::table('cart_user')
+                ->where('user_id', $user->id)
+                ->pluck('package_id');
+            $mergedPackages = Package::with(['originAddress', 'destinationAddress', 'service'])
+                ->whereIn('id', $cartPackageIds)
+                ->get();
+            CartService::normalizePackagePricing($mergedPackages);
+        });
+
+        $request->session()->forget('cart');
+    }
+
+    public function createPackage($packages, User $user)
     {
         $createdPackages = [];
 
         // Per ogni pacco nel carrello sessione, creiamo i record necessari nel database
         foreach ($packages as $package) {
+            $pricedPackage = CartService::pricePackageData(
+                $package,
+                $package['origin_address'] ?? [],
+                $package['destination_address'] ?? [],
+            );
+
             // Creiamo l'indirizzo di partenza
-            $origin = PackageAddress::create($package['origin_address']);
+            $origin = PackageAddress::create($pricedPackage['origin_address'] ?? $package['origin_address']);
             // Creiamo l'indirizzo di destinazione
-            $destination = PackageAddress::create($package['destination_address']);
+            $destination = PackageAddress::create($pricedPackage['destination_address'] ?? $package['destination_address']);
             // Creiamo i servizi aggiuntivi
-            $services = Service::create($package['services']);
+            $services = Service::create($pricedPackage['services'] ?? $package['services']);
 
             // Creiamo il pacco vero e proprio collegandolo a indirizzi, servizi e utente
             $createdPackages[] = Package::create([
-                'package_type' => $package['package_type'],
-                'quantity' => $package['quantity'],
-                'weight' => $package['weight'],
-                'first_size' => $package['first_size'],
-                'second_size' => $package['second_size'],
-                'third_size' => $package['third_size'],
-                'weight_price' => $package['weight_price'] ?? null,
-                'volume_price' => $package['volume_price'] ?? null,
-                'single_price' => $package['single_price'] ?? null,
+                'package_type' => $pricedPackage['package_type'],
+                'quantity' => $pricedPackage['quantity'],
+                'weight' => $pricedPackage['weight'],
+                'first_size' => $pricedPackage['first_size'],
+                'second_size' => $pricedPackage['second_size'],
+                'third_size' => $pricedPackage['third_size'],
+                'weight_price' => $pricedPackage['weight_price'] ?? null,
+                'volume_price' => $pricedPackage['volume_price'] ?? null,
+                'single_price' => $pricedPackage['single_price'] ?? null,
                 'origin_address_id' => $origin->id,
                 'destination_address_id' => $destination->id,
                 'service_id' => $services->id,
-                'user_id' => auth()->id(),
+                'user_id' => $user->id,
             ]);
         }
 

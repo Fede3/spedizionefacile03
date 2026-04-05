@@ -45,6 +45,8 @@ use Illuminate\Support\Str;
 
 class ArticleController extends Controller
 {
+    private const ALLOWED_TYPES = 'guide,service,blog';
+
     // Lista articoli, filtrabile per tipo (guide o service)
     public function index(Request $request): JsonResponse
     {
@@ -63,7 +65,7 @@ class ArticleController extends Controller
         $data = $request->validate([
             'title' => 'required|string|max:255',
             'slug' => 'nullable|string|max:255|unique:articles,slug',
-            'type' => 'required|in:guide,service',
+            'type' => 'required|in:' . self::ALLOWED_TYPES,
             'meta_description' => 'nullable|string',
             'intro' => 'nullable|string',
             'sections' => 'nullable|array',
@@ -102,7 +104,7 @@ class ArticleController extends Controller
         $data = $request->validate([
             'title' => 'sometimes|required|string|max:255',
             'slug' => 'sometimes|required|string|max:255|unique:articles,slug,' . $article->id,
-            'type' => 'sometimes|required|in:guide,service',
+            'type' => 'sometimes|required|in:' . self::ALLOWED_TYPES,
             'meta_description' => 'nullable|string',
             'intro' => 'nullable|string',
             'sections' => 'nullable|array',

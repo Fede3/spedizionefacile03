@@ -73,7 +73,7 @@ onMounted(() => { fetchArticles(); });
 				back-to="/account/amministrazione"
 				back-label="Torna all'amministrazione">
 				<template #actions>
-					<NuxtLink to="/account/amministrazione/servizi/nuovo" class="inline-flex items-center justify-center gap-[6px] px-[18px] py-[10px] bg-[#095866] hover:bg-[#074a56] text-white rounded-[999px] text-[0.875rem] font-semibold transition-colors">
+					<NuxtLink to="/account/amministrazione/servizi/nuovo" class="btn-cta btn-compact inline-flex items-center justify-center gap-[6px]">
 						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[18px] h-[18px]" fill="currentColor"><path d="M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z"/></svg>
 						Nuovo servizio
 					</NuxtLink>
@@ -106,7 +106,7 @@ onMounted(() => { fetchArticles(); });
 					</div>
 					<h2 class="text-[1.125rem] font-bold text-[#252B42] mb-[8px]">Nessun servizio presente</h2>
 					<p class="text-[#737373] text-[0.875rem] mb-[16px]">Crea il primo servizio per iniziare.</p>
-					<NuxtLink to="/account/amministrazione/servizi/nuovo" class="btn-primary btn-compact inline-flex items-center gap-[6px] text-[0.875rem]">
+					<NuxtLink to="/account/amministrazione/servizi/nuovo" class="btn-cta btn-compact inline-flex items-center gap-[6px]">
 						<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
 						Crea servizio
 					</NuxtLink>
@@ -129,21 +129,30 @@ onMounted(() => { fetchArticles(); });
 								<td class="py-[14px] font-medium text-[#252B42]">{{ article.title }}</td>
 								<td class="py-[14px]"><span class="font-mono text-[0.8125rem] bg-[#F0F0F0] px-[8px] py-[2px] rounded text-[#737373]">{{ article.slug }}</span></td>
 								<td class="py-[14px] text-center">
-									<button
-										@click="togglePublished(article)"
-										:disabled="actionLoading === `toggle-${article.id}`"
-										:class="['w-[44px] h-[24px] rounded-full relative transition-colors cursor-pointer', article.is_published ? 'bg-emerald-500' : 'bg-[#C8CCD0]']">
-										<span :class="['absolute top-[2px] w-[20px] h-[20px] bg-white rounded-full shadow transition-transform', article.is_published ? 'left-[22px]' : 'left-[2px]']"></span>
-									</button>
-								</td>
+								<button
+									type="button"
+									@click="togglePublished(article)"
+									:disabled="actionLoading === `toggle-${article.id}`"
+									:aria-pressed="article.is_published ? 'true' : 'false'"
+									:aria-label="article.is_published ? `Nascondi servizio ${article.title}` : `Pubblica servizio ${article.title}`"
+									:class="[
+										'w-[44px] h-[24px] rounded-[9px] relative transition-colors cursor-pointer border',
+										article.is_published ? 'border-emerald-600 bg-emerald-500' : 'border-[#C8CCD0] bg-[#D6DADF]',
+									]">
+										<span :class="[
+											'absolute top-[2px] w-[18px] h-[18px] bg-white rounded-[7px] shadow transition-transform',
+											article.is_published ? 'left-[23px]' : 'left-[2px]',
+										]"></span>
+								</button>
+							</td>
 								<td class="py-[14px] text-center text-[#404040]">{{ article.sort_order ?? '-' }}</td>
 								<td class="py-[14px] text-[#737373] text-[0.8125rem]">{{ formatDate(article.created_at) }}</td>
 								<td class="py-[14px] text-right">
 									<div class="flex justify-end gap-[6px]">
-										<NuxtLink :to="`/account/amministrazione/servizi/${article.id}`" class="px-[10px] py-[6px] rounded-[12px] bg-[#F0F0F0] hover:bg-[#E0E0E0] text-[#404040] text-[0.75rem] cursor-pointer font-medium inline-flex items-center gap-[4px]">
+										<NuxtLink :to="`/account/amministrazione/servizi/${article.id}`" class="btn-secondary btn-compact inline-flex items-center gap-[6px]">
 											<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[14px] h-[14px]" fill="currentColor"><path d="M20.71,7.04C21.1,6.65 21.1,6 20.71,5.63L18.37,3.29C18,2.9 17.35,2.9 16.96,3.29L15.12,5.12L18.87,8.87M3,17.25V21H6.75L17.81,9.93L14.06,6.18L3,17.25Z"/></svg> Modifica
 										</NuxtLink>
-										<button @click="deleteArticle(article)" :disabled="actionLoading === `delete-${article.id}`" class="px-[10px] py-[6px] rounded-[12px] bg-red-50 hover:bg-red-100 text-red-600 text-[0.75rem] cursor-pointer font-medium inline-flex items-center gap-[4px]">
+										<button type="button" @click="deleteArticle(article)" :disabled="actionLoading === `delete-${article.id}`" class="btn-danger btn-compact inline-flex items-center gap-[6px]">
 											<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[14px] h-[14px]" fill="currentColor"><path d="M19,4H15.5L14.5,3H9.5L8.5,4H5V6H19M6,19A2,2 0 0,0 8,21H16A2,2 0 0,0 18,19V7H6V19Z"/></svg> Elimina
 										</button>
 									</div>

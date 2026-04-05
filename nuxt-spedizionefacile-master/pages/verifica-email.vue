@@ -8,34 +8,105 @@
   Se nessuno status e' presente, reindirizza alla homepage.
 -->
 <script setup>
-// Solo utenti non autenticati, con middleware di verifica email
+useSeoMeta({
+	title: 'Verifica Email | SpediamoFacile',
+	ogTitle: 'Verifica Email | SpediamoFacile',
+	description: 'Conferma la tua email e completa l’attivazione dell’account SpediamoFacile.',
+	ogDescription: 'Verifica la tua email su SpediamoFacile.',
+});
+
 definePageMeta({
-	middleware: ["sanctum:guest", "email-verification"],
+	layout: 'auth',
+	middleware: ['guest-auth', 'email-verification'],
 });
 
 const route = useRoute();
 const router = useRouter();
-const statusMessage = ref(null);
 
-// Legge lo stato della verifica dalla query string
 const status = route.query.status;
 
-if (status === "verified") {
-	statusMessage.value = "Email verificata con successo!";
-} else if (status === "invalid_signature") {
-	statusMessage.value = "Link non valido.";
-} else if (status === "already_verified") {
-	statusMessage.value = "Email già verificata.";
-} else {
-	// Nessuno stato valido: torna alla homepage
-	router.push("/");
+const statusState = computed(() => {
+	if (status === 'verified') {
+		return {
+			title: 'Email verificata',
+			copy: 'La tua email è stata confermata con successo. Ora puoi accedere al tuo account.',
+			tone: 'success',
+			icon: 'check',
+		};
+	}
+
+	if (status === 'invalid_signature') {
+		return {
+			title: 'Link non valido',
+			copy: 'Il link di verifica non è valido o è scaduto. Richiedi una nuova email di verifica.',
+			tone: 'error',
+			icon: 'alert',
+		};
+	}
+
+	if (status === 'already_verified') {
+		return {
+			title: 'Email già verificata',
+			copy: 'Questa email risulta già confermata. Puoi accedere subito al tuo account.',
+			tone: 'success',
+			icon: 'check',
+		};
+	}
+
+	return null;
+});
+
+if (!statusState.value) {
+	router.push('/');
 }
 </script>
 
 <template>
-	<section class="h-[400px] py-[80px]">
-		<div class="my-container flex justify-center items-center h-full" v-if="statusMessage">
-			<p>{{ statusMessage }}</p>
+	<section class="auth-shell">
+		<div class="my-container">
+			<div class="auth-shell-frame">
+				<div class="auth-shell-head">
+					<div class="auth-shell-avatar" aria-hidden="true">
+						<svg
+							v-if="statusState?.icon === 'check'"
+							xmlns="http://www.w3.org/2000/svg"
+							viewBox="0 0 24 24"
+							class="auth-shell-avatar__icon"
+							fill="none"
+							stroke="currentColor"
+							stroke-width="2"
+							stroke-linecap="round"
+							stroke-linejoin="round">
+							<path d="M20 6 9 17l-5-5" />
+						</svg>
+						<svg
+							v-else
+							xmlns="http://www.w3.org/2000/svg"
+							viewBox="0 0 24 24"
+							class="auth-shell-avatar__icon"
+							fill="none"
+							stroke="currentColor"
+							stroke-width="2"
+							stroke-linecap="round"
+							stroke-linejoin="round">
+							<path d="M12 9v4" />
+							<path d="M12 17h.01" />
+							<circle cx="12" cy="12" r="9" />
+						</svg>
+					</div>
+					<h1 class="auth-shell-title">{{ statusState?.title }}</h1>
+					<p class="auth-shell-copy">{{ statusState?.copy }}</p>
+				</div>
+
+				<div class="auth-page-body auth-page-stack">
+					<div class="auth-feedback" :class="statusState?.tone === 'error' ? 'auth-feedback--error' : 'auth-feedback--success'">
+						{{ statusState?.copy }}
+					</div>
+					<NuxtLink to="/autenticazione" class="btn-cta btn-compact inline-flex items-center justify-center gap-[8px]">
+						Vai al login
+					</NuxtLink>
+				</div>
+			</div>
 		</div>
 	</section>
 </template>

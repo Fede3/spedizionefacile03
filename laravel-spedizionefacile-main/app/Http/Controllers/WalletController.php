@@ -37,7 +37,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\WalletMovement;
-use App\Services\StripeConfigService;
+use App\Services\StripePaymentService;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -49,7 +50,7 @@ use Stripe\StripeClient;
 class WalletController extends Controller
 {
     public function __construct(
-        private readonly StripeConfigService $stripeConfig,
+        private readonly StripePaymentService $stripePaymentService,
     ) {}
 
     // Mostra il saldo attuale del portafoglio dell'utente
@@ -93,71 +94,104 @@ class WalletController extends Controller
         $data = $request->validate([
             'amount' => ['required', 'numeric', 'min:1'],
             'payment_method_id' => ['required', 'string'],
+            'idempotency_key' => ['nullable', 'string', 'max:255'],
         ]);
 
         $user = $request->user();
         // Convertiamo l'importo da euro a centesimi (es. 10.00 euro -> 1000 centesimi)
         $amountCents = (int) round($data['amount'] * 100);
-        // Chiave unica per evitare di processare lo stesso pagamento due volte
-        $idempotencyKey = 'topup_'.$user->id.'_'.Str::uuid();
+        $idempotencyKey = $this->stripePaymentService->resolveWalletTopUpIdempotencyKey(
+            $user,
+            $amountCents,
+            (string) $data['payment_method_id'],
+            $data['idempotency_key'] ?? null
+        );
 
-        // Verifichiamo che Stripe sia configurato
-        $secret = $this->stripeConfig->getSecret();
-        if (! $secret) {
+        if (! $this->stripePaymentService->isConfigured()) {
             return response()->json([
                 'success' => false,
                 'message' => 'Stripe non configurato. Vai nelle impostazioni per inserire le chiavi API.',
             ], 503);
         }
 
-        $stripe = new StripeClient($secret);
-
-        // Assicuriamoci che l'utente abbia un "cliente" su Stripe
-        // (Stripe richiede un cliente per associare le carte di pagamento)
-        $stripeCtrl = app(StripeController::class);
-        $customerId = $stripeCtrl->createOrGetCustomer($user);
-
         try {
-            // Creiamo e confermiamo il pagamento su Stripe in un solo passaggio
-            $paymentIntent = $stripe->paymentIntents->create([
-                'amount' => $amountCents,
-                'currency' => 'eur',
-                'customer' => (string) $customerId,
-                'payment_method' => (string) $data['payment_method_id'],
-                'confirm' => true,           // Conferma subito il pagamento
-                'off_session' => true,       // Il pagamento avviene senza interazione dell'utente
-                'metadata' => [
-                    'type' => 'wallet_topup',
-                    'user_id' => (string) $user->id,
-                ],
-            ]);
+            $paymentIntent = $this->stripePaymentService->createWalletTopUpPayment(
+                $user,
+                $amountCents,
+                (string) $data['payment_method_id'],
+                $idempotencyKey
+            );
 
-            // Se il pagamento e' andato a buon fine, aggiungiamo i soldi al portafoglio
-            if ($paymentIntent->status === 'succeeded') {
-                $movement = WalletMovement::create([
-                    'user_id' => $user->id,
-                    'type' => 'credit',              // "credit" = soldi in entrata
-                    'amount' => $data['amount'],
-                    'currency' => 'EUR',
-                    'status' => 'confirmed',
-                    'idempotency_key' => $idempotencyKey,
-                    'description' => 'Ricarica portafoglio via carta',
-                    'source' => 'stripe',
-                    'reference' => $paymentIntent->id,
-                ]);
+            if (($paymentIntent['status'] ?? null) === 'succeeded') {
+                $result = DB::transaction(function () use ($user, $data, $paymentIntent, $idempotencyKey) {
+                    // Lock pessimistico sull'utente per serializzare aggiornamenti al saldo
+                    $lockedUser = \App\Models\User::query()->whereKey($user->id)->lockForUpdate()->firstOrFail();
+
+                    $existingMovement = WalletMovement::query()
+                        ->where('user_id', $lockedUser->id)
+                        ->where('idempotency_key', $idempotencyKey)
+                        ->lockForUpdate()
+                        ->first();
+
+                    if ($existingMovement) {
+                        return [
+                            'movement' => $existingMovement,
+                            'created' => false,
+                            'new_balance' => $lockedUser->walletBalance(),
+                        ];
+                    }
+
+                    $movement = WalletMovement::create([
+                        'user_id' => $lockedUser->id,
+                        'type' => 'credit',              // "credit" = soldi in entrata
+                        'amount' => $data['amount'],
+                        'currency' => 'EUR',
+                        'status' => 'confirmed',
+                        'idempotency_key' => $idempotencyKey,
+                        'description' => 'Ricarica portafoglio via carta',
+                        'source' => 'stripe',
+                        'reference' => $paymentIntent['payment_intent_id'],
+                    ]);
+
+                    return [
+                        'movement' => $movement,
+                        'created' => true,
+                        'new_balance' => $lockedUser->walletBalance(),
+                    ];
+                });
 
                 return response()->json([
                     'success' => true,
-                    'data' => $movement,
-                    'new_balance' => $user->walletBalance(),
-                ], 201);
+                    'data' => $result['movement'],
+                    'new_balance' => $result['new_balance'],
+                ], $result['created'] ? 201 : 200);
             }
 
             // Se il pagamento non e' riuscito (stato diverso da "succeeded")
             return response()->json([
                 'success' => false,
-                'message' => 'Pagamento non riuscito. Stato: '.$paymentIntent->status,
+                'message' => 'Pagamento non riuscito. Stato: '.($paymentIntent['status'] ?? 'unknown'),
             ], 402);
+        } catch (QueryException $e) {
+            $existingMovement = WalletMovement::query()
+                ->where('user_id', $user->id)
+                ->where('idempotency_key', $idempotencyKey)
+                ->first();
+
+            if ($existingMovement) {
+                return response()->json([
+                    'success' => true,
+                    'data' => $existingMovement,
+                    'new_balance' => $user->walletBalance(),
+                ], 200);
+            }
+
+            Log::error('Wallet top-up persistence error', ['error' => $e->getMessage()]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Errore durante il salvataggio della ricarica. Riprova.',
+            ], 500);
         } catch (CardException $e) {
             // La carta e' stata rifiutata (fondi insufficienti, carta scaduta, ecc.)
             return response()->json([
@@ -187,12 +221,18 @@ class WalletController extends Controller
 
         $user = $request->user();
 
+        // Verifica che il riferimento (ordine) appartenga all'utente autenticato
+        $order = \App\Models\Order::find($data['reference']);
+        if ($order && (int) $order->user_id !== (int) $user->id) {
+            return response()->json(['message' => 'Non autorizzato: questo ordine non appartiene al tuo account.'], 403);
+        }
+
         // Transazione con lock pessimistico per evitare double-spend da richieste concorrenti
         $result = DB::transaction(function () use ($user, $data) {
-            // Lock sugli ultimi movimenti dell'utente per serializzare gli accessi concorrenti
-            WalletMovement::where('user_id', $user->id)->lockForUpdate()->first();
+            // Lock sulla riga utente per serializzare gli accessi concorrenti al saldo
+            $lockedUser = \App\Models\User::query()->whereKey($user->id)->lockForUpdate()->firstOrFail();
 
-            $balance = $user->walletBalance();
+            $balance = $lockedUser->walletBalance();
 
             if ($balance < $data['amount']) {
                 return ['error' => 'Saldo insufficiente. Disponibile: '.number_format($balance, 2).' EUR'];

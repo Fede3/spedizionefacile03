@@ -542,7 +542,16 @@ const getExtraBandInfo = (cents) => ({
 });
 
 export const usePriceBands = () => {
-	const sanctum = useSanctumClient();
+	const runtimeConfig = useRuntimeConfig();
+	const apiBase = String(runtimeConfig.public?.apiBase || "http://127.0.0.1:8787").replace(/\/$/, "");
+
+	const publicApiFetch = async (path, options = {}) => {
+		const url = path.startsWith("http") ? path : `${apiBase}${path}`;
+		return await $fetch(url, {
+			credentials: "include",
+			...options,
+		});
+	};
 
 	// In SSR il modulo resta vivo tra richieste in dev.
 	// Ripartiamo sempre dal fallback per evitare che il server riusi
@@ -569,7 +578,7 @@ export const usePriceBands = () => {
 	const fetchFromApi = async () => {
 		loading.value = true;
 		try {
-			const res = await sanctum("/api/public/price-bands");
+			const res = await publicApiFetch("/api/public/price-bands");
 			const payload = res?.data || res || {};
 			const data = payload?.data || payload || {};
 
@@ -599,7 +608,6 @@ export const usePriceBands = () => {
 			loaded.value = true;
 			lastFetchTime = Date.now();
 		} catch (e) {
-			console.warn("[usePriceBands] API non disponibile, uso fallback locale:", e?.message || e);
 			priceBands.value = {
 				weight: [...FALLBACK_WEIGHT_BANDS],
 				volume: [...FALLBACK_VOLUME_BANDS],

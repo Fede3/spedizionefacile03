@@ -122,7 +122,7 @@ const modalUi = {
 					<button type="button" class="admin-flow-gate__button admin-flow-gate__button--ghost btn-secondary" @click="handleCancel">
 						Torna al flusso corretto
 					</button>
-					<button type="button" class="admin-flow-gate__button admin-flow-gate__button--primary btn-primary" :disabled="isSubmitting" @click="handleConfirm">
+					<button type="button" class="admin-flow-gate__button admin-flow-gate__button--primary btn-cta" :disabled="isSubmitting" @click="handleConfirm">
 						{{ isSubmitting ? 'Verifica in corso…' : 'Continua come admin' }}
 					</button>
 				</div>

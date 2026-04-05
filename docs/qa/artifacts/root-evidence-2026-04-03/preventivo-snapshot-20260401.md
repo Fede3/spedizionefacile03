@@ -1,0 +1,91 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e3]:
+    - link "Vai al contenuto" [ref=e4] [cursor=pointer]:
+      - /url: "#main-content"
+    - banner [ref=e5]:
+      - generic [ref=e9]:
+        - link "SF SpediamoFacile" [ref=e11] [cursor=pointer]:
+          - /url: /
+          - generic [ref=e13]: SF
+          - generic [ref=e14]: SpediamoFacile
+        - generic [ref=e15]:
+          - link "Carrello" [ref=e16] [cursor=pointer]:
+            - /url: /carrello
+            - img [ref=e17]
+            - generic [ref=e21]: Carrello
+          - button "Apri menu di navigazione" [ref=e22] [cursor=pointer]:
+            - img [ref=e23]
+    - main [ref=e24]:
+      - generic [ref=e28]:
+        - generic [ref=e30]:
+          - generic [ref=e31]:
+            - img [ref=e33]
+            - generic [ref=e38]
+          - button "Azzera il modulo" [ref=e41] [cursor=pointer]:
+            - img [ref=e42]
+            - generic [ref=e45]: Azzera
+        - generic [ref=e46]:
+          - navigation "Progresso spedizione" [ref=e48]:
+            - generic [ref=e51]
+            - list [ref=e58]
+          - generic [ref=e84]:
+            - region "Inserisci la tratta" [ref=e85]
+            - region "Inserisci misure e peso" [ref=e125]
+          - button "Calcola il prezzo" [ref=e177] [cursor=pointer]:
+            - generic [ref=e178]: Calcola il prezzo
+            - img [ref=e181]
+          - generic [ref=e183]:
+            - generic [ref=e184]
+            - generic [ref=e188]
+            - generic [ref=e194]
+    - contentinfo [ref=e198]:
+      - generic [ref=e200]:
+        - generic [ref=e201]:
+          - generic [ref=e202]:
+            - generic [ref=e204]: SF
+            - generic [ref=e205]: SpediamoFacile
+          - paragraph [ref=e206]: Confronta e prenota spedizioni nazionali e internazionali ai migliori prezzi. Ritiro a domicilio, tracking in tempo reale e supporto chiaro in ogni fase.
+          - generic [ref=e207]:
+            - generic [ref=e208]: Preventivo rapido
+            - generic [ref=e209]: Ritiro incluso
+            - generic [ref=e210]: Supporto dedicato
+          - generic [ref=e211]:
+            - link "Twitter" [ref=e212] [cursor=pointer]:
+              - /url: "#"
+            - link "Facebook" [ref=e215] [cursor=pointer]:
+              - /url: "#"
+            - link "Instagram" [ref=e218] [cursor=pointer]:
+              - /url: "#"
+            - link "LinkedIn" [ref=e221] [cursor=pointer]:
+              - /url: "#"
+          - link "info@spediamofacile.it" [ref=e224] [cursor=pointer]:
+            - /url: mailto:info@spediamofacile.it
+            - img [ref=e225]
+            - generic [ref=e228]: info@spediamofacile.it
+        - generic [ref=e229]:
+          - generic [ref=e230]:
+            - heading "Spedizioni" [level=3] [ref=e231]
+            - list [ref=e232]
+          - generic [ref=e243]:
+            - heading "Azienda" [level=3] [ref=e244]
+            - list [ref=e245]
+          - generic [ref=e254]:
+            - heading "Supporto" [level=3] [ref=e255]
+            - list [ref=e256]
+          - generic [ref=e261]:
+            - heading "Legale" [level=3] [ref=e262]
+            - list [ref=e263]
+      - generic [ref=e271]:
+        - generic [ref=e272]:
+          - paragraph [ref=e273]: Pronto a spedire?
+          - paragraph [ref=e274]: Calcola il tuo preventivo in meno di 30 secondi e passa subito al ritiro.
+        - link "Preventivo gratuito" [ref=e275] [cursor=pointer]:
+          - /url: /preventivo
+      - generic [ref=e277]:
+        - paragraph [ref=e278]: © 2026 SpediamoFacile. Tutti i diritti riservati. P.IVA 00000000000
+        - generic [ref=e279]:
+          - generic [ref=e280]: Visa
+          - generic [ref=e281]: Mastercard
+          - generic [ref=e282]: Stripe
+  - region "Notifications (F8)":
+    - list
