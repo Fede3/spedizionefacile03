@@ -100,7 +100,7 @@ const submitCoupon = () => {
 				height="18"
 				viewBox="0 0 24 24"
 				fill="none"
-				stroke="#095866"
+				stroke="var(--color-brand-primary)"
 				stroke-width="2"
 				stroke-linecap="round"
 				stroke-linejoin="round"
@@ -111,7 +111,7 @@ const submitCoupon = () => {
 				<path d="M15 15l6 6" />
 				<path d="M4 4l5 5" />
 			</svg>
-			<p class="text-[0.8125rem] text-[#095866] font-medium">
+			<p class="text-[0.8125rem] text-[var(--color-brand-primary)] font-medium">
 				Verranno creati
 				<span class="font-bold">{{ mergeGroupsCount }} ordini separati</span>
 				in base agli indirizzi. I pacchi con stessi indirizzi saranno uniti in una singola spedizione.
@@ -145,15 +145,15 @@ const submitCoupon = () => {
 				<div class="flex flex-wrap items-start gap-[8px] mb-[14px]">
 					<div class="flex items-center gap-[8px] min-w-0 flex-1">
 						<span class="sf-section-chip">{{ pkgIdx + 1 }}</span>
-						<span class="text-[0.9375rem] font-semibold text-[#252B42]">{{ pkg.package_type || 'Pacco' }}</span>
+						<span class="text-[0.9375rem] font-semibold text-[var(--color-brand-text)]">{{ pkg.package_type || 'Pacco' }}</span>
 						<span
 							v-if="pkg.content_description"
-							class="text-[0.75rem] text-[#737373] bg-[#F5F5F5] px-[8px] py-[2px] rounded-[4px] max-w-[150px] tablet:max-w-[240px] truncate">
+							class="text-[0.75rem] text-[var(--color-brand-text-secondary)] bg-[#F5F5F5] px-[8px] py-[2px] rounded-[4px] max-w-[150px] tablet:max-w-[240px] truncate">
 							{{ pkg.content_description }}
 						</span>
 					</div>
 					<span
-						class="text-[1.0625rem] font-bold text-[#095866] shrink-0 ml-auto"
+						class="text-[1.0625rem] font-bold text-[var(--color-brand-primary)] shrink-0 ml-auto"
 						:title="
 							'Prezzo unitario per questo collo: ' +
 							formatPrice(pkg.single_price) +
@@ -166,14 +166,14 @@ const submitCoupon = () => {
 				<!-- Package specs -->
 				<div class="flex flex-wrap gap-[8px] mb-[14px]">
 					<span
-						class="inline-flex items-center gap-[4px] bg-[#F5F5F5] text-[0.8125rem] text-[#252B42] px-[10px] py-[5px] rounded-[6px]"
+						class="inline-flex items-center gap-[4px] bg-[#F5F5F5] text-[0.8125rem] text-[var(--color-brand-text)] px-[10px] py-[5px] rounded-[6px]"
 						:title="'Peso del pacco: ' + pkg.weight + ' chilogrammi'">
 						<svg
 							width="14"
 							height="14"
 							viewBox="0 0 24 24"
 							fill="none"
-							stroke="#737373"
+							stroke="var(--color-brand-text-secondary)"
 							stroke-width="2"
 							stroke-linecap="round"
 							stroke-linejoin="round">
@@ -183,7 +183,7 @@ const submitCoupon = () => {
 						<span class="font-medium">{{ pkg.weight }} kg</span>
 					</span>
 					<span
-						class="inline-flex items-center gap-[4px] bg-[#F5F5F5] text-[0.8125rem] text-[#252B42] px-[10px] py-[5px] rounded-[6px]"
+						class="inline-flex items-center gap-[4px] bg-[#F5F5F5] text-[0.8125rem] text-[var(--color-brand-text)] px-[10px] py-[5px] rounded-[6px]"
 						:title="
 							'Dimensioni: larghezza ' + pkg.first_size + ' cm x altezza ' + pkg.second_size + ' cm x profondità ' + pkg.third_size + ' cm'
 						">
@@ -192,7 +192,7 @@ const submitCoupon = () => {
 							height="14"
 							viewBox="0 0 24 24"
 							fill="none"
-							stroke="#737373"
+							stroke="var(--color-brand-text-secondary)"
 							stroke-width="2"
 							stroke-linecap="round"
 							stroke-linejoin="round">
@@ -203,14 +203,14 @@ const submitCoupon = () => {
 					</span>
 					<span
 						v-if="(pkg.quantity || 1) > 1"
-						class="inline-flex items-center gap-[4px] bg-[#F5F5F5] text-[0.8125rem] text-[#252B42] px-[10px] py-[5px] rounded-[6px]"
+						class="inline-flex items-center gap-[4px] bg-[#F5F5F5] text-[0.8125rem] text-[var(--color-brand-text)] px-[10px] py-[5px] rounded-[6px]"
 						title="Numero di colli identici in questa spedizione">
 						<svg
 							width="14"
 							height="14"
 							viewBox="0 0 24 24"
 							fill="none"
-							stroke="#737373"
+							stroke="var(--color-brand-text-secondary)"
 							stroke-width="2"
 							stroke-linecap="round"
 							stroke-linejoin="round">
@@ -228,14 +228,14 @@ const submitCoupon = () => {
 					<div class="grid grid-cols-1 desktop:grid-cols-2 gap-[12px]">
 						<div v-if="pkg.origin_address" class="flex gap-[10px]">
 							<div
-								class="w-[32px] h-[32px] bg-[#095866]/10 rounded-[12px] flex items-center justify-center shrink-0 mt-[2px]"
+								class="w-[32px] h-[32px] bg-[var(--color-brand-primary)]/10 rounded-[12px] flex items-center justify-center shrink-0 mt-[2px]"
 								title="Indirizzo del mittente">
 								<svg
 									width="16"
 									height="16"
 									viewBox="0 0 24 24"
 									fill="none"
-									stroke="#095866"
+									stroke="var(--color-brand-primary)"
 									stroke-width="2"
 									stroke-linecap="round"
 									stroke-linejoin="round">
@@ -244,26 +244,26 @@ const submitCoupon = () => {
 								</svg>
 							</div>
 							<div class="min-w-0">
-								<p class="text-[0.75rem] font-semibold text-[#095866] uppercase tracking-wider mb-[2px]">Da:</p>
-								<p class="text-[0.8125rem] font-medium text-[#252B42] leading-snug">{{ pkg.origin_address.name }}</p>
-								<p class="text-[0.8125rem] text-[#737373] leading-snug">
+								<p class="text-[0.75rem] font-semibold text-[var(--color-brand-primary)] uppercase tracking-wider mb-[2px]">Da:</p>
+								<p class="text-[0.8125rem] font-medium text-[var(--color-brand-text)] leading-snug">{{ pkg.origin_address.name }}</p>
+								<p class="text-[0.8125rem] text-[var(--color-brand-text-secondary)] leading-snug">
 									{{ pkg.origin_address.address }} {{ pkg.origin_address.address_number }}
 								</p>
-								<p class="text-[0.8125rem] text-[#737373] leading-snug">
+								<p class="text-[0.8125rem] text-[var(--color-brand-text-secondary)] leading-snug">
 									{{ pkg.origin_address.postal_code }} {{ pkg.origin_address.city }} ({{ pkg.origin_address.province }})
 								</p>
 							</div>
 						</div>
 						<div v-if="pkg.destination_address" class="flex gap-[10px]">
 							<div
-								class="w-[32px] h-[32px] bg-[#E44203]/10 rounded-[12px] flex items-center justify-center shrink-0 mt-[2px]"
+								class="w-[32px] h-[32px] bg-[var(--color-brand-accent)]/10 rounded-[12px] flex items-center justify-center shrink-0 mt-[2px]"
 								title="Indirizzo del destinatario">
 								<svg
 									width="16"
 									height="16"
 									viewBox="0 0 24 24"
 									fill="none"
-									stroke="#E44203"
+									stroke="var(--color-brand-accent)"
 									stroke-width="2"
 									stroke-linecap="round"
 									stroke-linejoin="round">
@@ -272,12 +272,12 @@ const submitCoupon = () => {
 								</svg>
 							</div>
 							<div class="min-w-0">
-								<p class="text-[0.75rem] font-semibold text-[#E44203] uppercase tracking-wider mb-[2px]">A:</p>
-								<p class="text-[0.8125rem] font-medium text-[#252B42] leading-snug">{{ pkg.destination_address.name }}</p>
-								<p class="text-[0.8125rem] text-[#737373] leading-snug">
+								<p class="text-[0.75rem] font-semibold text-[var(--color-brand-accent)] uppercase tracking-wider mb-[2px]">A:</p>
+								<p class="text-[0.8125rem] font-medium text-[var(--color-brand-text)] leading-snug">{{ pkg.destination_address.name }}</p>
+								<p class="text-[0.8125rem] text-[var(--color-brand-text-secondary)] leading-snug">
 									{{ pkg.destination_address.address }} {{ pkg.destination_address.address_number }}
 								</p>
-								<p class="text-[0.8125rem] text-[#737373] leading-snug">
+								<p class="text-[0.8125rem] text-[var(--color-brand-text-secondary)] leading-snug">
 									{{ pkg.destination_address.postal_code }} {{ pkg.destination_address.city }} ({{ pkg.destination_address.province }})
 								</p>
 							</div>
@@ -291,14 +291,14 @@ const submitCoupon = () => {
 					class="border-t border-[#F0F0F0] pt-[12px] flex flex-wrap items-center gap-[12px]">
 					<span
 						v-if="pkg.services.service_type && pkg.services.service_type !== 'Nessuno'"
-						class="inline-flex items-center gap-[6px] text-[0.8125rem] text-[#252B42]"
+						class="inline-flex items-center gap-[6px] text-[0.8125rem] text-[var(--color-brand-text)]"
 						title="Servizio aggiuntivo selezionato per questa spedizione">
 						<svg
 							width="14"
 							height="14"
 							viewBox="0 0 24 24"
 							fill="none"
-							stroke="#095866"
+							stroke="var(--color-brand-primary)"
 							stroke-width="2"
 							stroke-linecap="round"
 							stroke-linejoin="round">
@@ -309,14 +309,14 @@ const submitCoupon = () => {
 					</span>
 					<span
 						v-if="pkg.services.date"
-						class="inline-flex items-center gap-[6px] text-[0.8125rem] text-[#252B42]"
+						class="inline-flex items-center gap-[6px] text-[0.8125rem] text-[var(--color-brand-text)]"
 						title="Data programmata per il ritiro del pacco">
 						<svg
 							width="14"
 							height="14"
 							viewBox="0 0 24 24"
 							fill="none"
-							stroke="#095866"
+							stroke="var(--color-brand-primary)"
 							stroke-width="2"
 							stroke-linecap="round"
 							stroke-linejoin="round">
@@ -335,10 +335,10 @@ const submitCoupon = () => {
 		<div class="checkout-order-summary__totals">
 			<!-- Subtotal -->
 			<div class="flex items-center justify-between py-[8px]">
-				<span class="text-[0.9375rem] text-[#737373]">
+				<span class="text-[0.9375rem] text-[var(--color-brand-text-secondary)]">
 					Subtotale ({{ totalPackages }} {{ totalPackages === 1 ? 'spedizione' : 'spedizioni' }})
 				</span>
-				<span class="text-[0.9375rem] font-medium text-[#252B42]">{{ getTotal }}</span>
+				<span class="text-[0.9375rem] font-medium text-[var(--color-brand-text)]">{{ getTotal }}</span>
 			</div>
 
 			<!-- Discount row -->
@@ -364,15 +364,15 @@ const submitCoupon = () => {
 			</div>
 
 			<!-- Divider -->
-			<div class="border-t-2 border-[#E9EBEC] mt-[4px] mb-[4px]"></div>
+			<div class="border-t-2 border-[var(--color-brand-border)] mt-[4px] mb-[4px]"></div>
 
 			<!-- Final total -->
 			<div class="flex items-center justify-between py-[8px]">
 				<div class="flex items-center gap-[8px]">
-					<span class="text-[1.0625rem] font-bold text-[#252B42]">Totale da pagare</span>
+					<span class="text-[1.0625rem] font-bold text-[var(--color-brand-text)]">Totale da pagare</span>
 					<span
 						v-if="promoSettings?.active && promoSettings?.label_text"
-						:style="{ backgroundColor: promoSettings.label_color || '#E44203' }"
+						:style="{ backgroundColor: promoSettings.label_color || 'var(--color-brand-accent)' }"
 						class="inline-flex items-center gap-[4px] px-[8px] py-[3px] rounded-[6px] text-white text-[0.6875rem] font-bold tracking-wide sf-section-chip">
 						<img
 							v-if="promoSettings.label_image"
@@ -387,7 +387,7 @@ const submitCoupon = () => {
 					</span>
 				</div>
 				<span
-					class="text-[1.25rem] font-bold text-[#095866]"
+					class="text-[1.25rem] font-bold text-[var(--color-brand-primary)]"
 					:title="
 						couponApplied
 							? `Totale originale: ${getTotal} - Sconto: ${formatEuro(couponApplied.discount_amount)}€ = ${finalTotalFormatted}`
@@ -401,7 +401,7 @@ const submitCoupon = () => {
 			<div class="mt-[12px] border-t border-[#F0F0F0] pt-[12px]">
 				<div class="flex flex-col tablet:flex-row tablet:items-start tablet:justify-between gap-[10px]">
 					<div class="min-w-0">
-						<p class="text-[0.875rem] font-medium text-[#252B42]">Codice promozionale o referral</p>
+						<p class="text-[0.875rem] font-medium text-[var(--color-brand-text)]">Codice promozionale o referral</p>
 						<p class="text-[0.75rem] text-[#6B7280] leading-[1.5]">
 							Invio o uscita dal campo per verificare il codice. Nessun pulsante aggiuntivo.
 						</p>

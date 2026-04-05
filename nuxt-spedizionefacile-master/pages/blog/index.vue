@@ -67,7 +67,7 @@ useHead(() => ({
 
 <template>
 	<section v-if="pending" class="flex min-h-[420px] items-center justify-center">
-		<div class="h-[40px] w-[40px] rounded-full border-3 border-[#E9EBEC] border-t-[#095866] animate-spin"></div>
+		<div class="h-[40px] w-[40px] rounded-full border-3 border-[var(--color-brand-border)] border-t-[var(--color-brand-primary)] animate-spin"></div>
 	</section>
 
 	<section v-else class="blog-index-shell py-[28px] desktop:py-[56px]">
@@ -76,7 +76,7 @@ useHead(() => ({
 				<div
 					class="flex flex-col gap-[18px] desktop:grid desktop:grid-cols-[minmax(0,1.18fr)_minmax(320px,0.82fr)] desktop:items-center desktop:gap-[28px]">
 					<div class="space-y-[12px]">
-						<p class="text-[0.75rem] font-semibold uppercase tracking-[0.14em] text-[#095866]">Blog</p>
+						<p class="text-[0.75rem] font-semibold uppercase tracking-[0.14em] text-[var(--color-brand-primary)]">Blog</p>
 						<h1 class="max-w-[16ch] text-[2rem] font-bold tracking-[-0.04em] text-[#1F2937] desktop:text-[3.1rem]">
 							Contenuti utili per spedire con meno attrito.
 						</h1>
@@ -88,14 +88,14 @@ useHead(() => ({
 							<span
 								v-for="pill in articlePills"
 								:key="pill"
-								class="inline-flex items-center rounded-full bg-[#F0F6F7] px-[12px] py-[6px] text-[0.75rem] font-semibold text-[#095866]">
+								class="inline-flex items-center rounded-full bg-[#F0F6F7] px-[12px] py-[6px] text-[0.75rem] font-semibold text-[var(--color-brand-primary)]">
 								{{ pill }}
 							</span>
 						</div>
 					</div>
 
 					<div class="rounded-[24px] border border-white/70 bg-white/80 p-[18px] shadow-[0_18px_40px_rgba(9,88,102,0.08)] backdrop-blur">
-						<p class="text-[0.75rem] font-semibold uppercase tracking-[0.12em] text-[#E44203]">Percorso consigliato</p>
+						<p class="text-[0.75rem] font-semibold uppercase tracking-[0.12em] text-[var(--color-brand-accent)]">Percorso consigliato</p>
 						<div class="mt-[12px] space-y-[12px] text-[0.85rem] leading-[1.6] text-[#5B6670]">
 							<p>Leggi una guida pratica, verifica i servizi utili e poi passa al preventivo solo quando il flusso è chiaro.</p>
 							<p>Questo riduce errori su imballaggio, dati spedizione e servizi accessori già dal primo tentativo.</p>
@@ -122,7 +122,7 @@ useHead(() => ({
 					:to="`/blog/${featuredArticle.slug}`"
 					class="mt-[18px] grid gap-[16px] rounded-[24px] border border-[#EDF2F5] bg-[#F8FBFC] p-[16px] transition-colors hover:border-[#CFE0E6] hover:bg-white desktop:grid-cols-[minmax(0,1.1fr)_minmax(260px,0.9fr)]">
 					<div class="space-y-[10px]">
-						<p class="text-[0.75rem] font-semibold uppercase tracking-[0.12em] text-[#095866]">
+						<p class="text-[0.75rem] font-semibold uppercase tracking-[0.12em] text-[var(--color-brand-primary)]">
 							{{ formatDateIt(featuredArticle.created_at, '') || 'Articolo blog' }}
 						</p>
 						<h3 class="text-[1.3rem] font-semibold tracking-[-0.03em] text-[#1F2937] desktop:text-[1.7rem]">
@@ -131,7 +131,7 @@ useHead(() => ({
 						<p class="text-[0.9rem] leading-[1.68] text-[#5B6670] desktop:text-[0.95rem]">
 							{{ getArticleDescription(featuredArticle) }}
 						</p>
-						<span class="inline-flex items-center gap-[8px] text-[0.875rem] font-semibold text-[#095866]">
+						<span class="inline-flex items-center gap-[8px] text-[0.875rem] font-semibold text-[var(--color-brand-primary)]">
 							Leggi l'articolo
 							<svg
 								xmlns="http://www.w3.org/2000/svg"
@@ -196,16 +196,16 @@ useHead(() => ({
 						</div>
 
 						<div class="mt-[14px] flex flex-1 flex-col">
-							<p class="text-[0.75rem] font-semibold uppercase tracking-[0.1em] text-[#095866]">
+							<p class="text-[0.75rem] font-semibold uppercase tracking-[0.1em] text-[var(--color-brand-primary)]">
 								{{ formatDateIt(article.created_at, 'Articolo blog') }}
 							</p>
-							<h3 class="mt-[8px] text-[1rem] font-semibold text-[#1F2937] transition-colors group-hover:text-[#095866]">
+							<h3 class="mt-[8px] text-[1rem] font-semibold text-[#1F2937] transition-colors group-hover:text-[var(--color-brand-primary)]">
 								{{ article.title }}
 							</h3>
 							<p class="mt-[10px] flex-1 text-[0.875rem] leading-[1.65] text-[#5B6670]">
 								{{ getArticleDescription(article) }}
 							</p>
-							<span class="mt-[14px] inline-flex items-center gap-[8px] text-[0.875rem] font-semibold text-[#095866]">
+							<span class="mt-[14px] inline-flex items-center gap-[8px] text-[0.875rem] font-semibold text-[var(--color-brand-primary)]">
 								Apri articolo
 								<svg
 									xmlns="http://www.w3.org/2000/svg"

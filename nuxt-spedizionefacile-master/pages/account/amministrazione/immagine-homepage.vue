@@ -112,17 +112,17 @@ onBeforeUnmount(() => {
 			</div>
 
 			<!-- Loading skeleton -->
-			<div v-if="isLoading" class="rounded-[12px] border border-[#E9EBEC] bg-white p-[20px] desktop:p-[28px] shadow-sm">
+			<div v-if="isLoading" class="rounded-[12px] border border-[var(--color-brand-border)] bg-white p-[20px] desktop:p-[28px] shadow-sm">
 				<div class="h-[20px] w-[200px] rounded bg-[#EEF2F5] animate-pulse mb-[14px]"></div>
 				<div class="grid grid-cols-1 desktop:grid-cols-[minmax(0,1fr)_340px] gap-[16px] desktop:gap-[20px]">
-					<div class="rounded-[12px] border border-[#E9EBEC] bg-[#F7FAFC] h-[320px] animate-pulse"></div>
-					<div class="rounded-[12px] border border-[#E9EBEC] bg-[#F7FAFC] h-[320px] animate-pulse"></div>
+					<div class="rounded-[12px] border border-[var(--color-brand-border)] bg-[#F7FAFC] h-[320px] animate-pulse"></div>
+					<div class="rounded-[12px] border border-[var(--color-brand-border)] bg-[#F7FAFC] h-[320px] animate-pulse"></div>
 				</div>
 			</div>
 
 			<!-- Editor -->
 			<template v-else>
-				<div class="rounded-[12px] border border-[#E9EBEC] bg-white p-[16px] desktop:p-[20px] shadow-sm">
+				<div class="rounded-[12px] border border-[var(--color-brand-border)] bg-white p-[16px] desktop:p-[20px] shadow-sm">
 					<div class="grid grid-cols-1 desktop:grid-cols-[minmax(0,1fr)_340px] gap-[16px] desktop:gap-[20px]">
 						<AdminHeroPreview
 							ref="previewRef"

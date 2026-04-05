@@ -13,7 +13,7 @@ const emit = defineEmits(['update:cardHolderName', 'save', 'cancel'])
 </script>
 
 <template>
-  <div class="bg-white rounded-[12px] p-[18px] tablet:p-[22px] desktop:p-[28px] shadow-sm border border-[#E9EBEC] max-w-[760px] mx-auto">
+  <div class="bg-white rounded-[12px] p-[18px] tablet:p-[22px] desktop:p-[28px] shadow-sm border border-[var(--color-brand-border)] max-w-[760px] mx-auto">
     <div class="mb-[16px]">
       <label class="block text-[0.75rem] font-semibold text-[#404040] mb-[5px]">Numero carta</label>
       <div class="account-carte-stripe-field" id="card-number"></div>
@@ -25,7 +25,7 @@ const emit = defineEmits(['update:cardHolderName', 'save', 'cancel'])
         type="text"
         :value="cardHolderName"
         @input="emit('update:cardHolderName', $event.target.value)"
-        class="w-full px-[14px] py-[11px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[12px] text-[0.875rem] text-[#252B42] placeholder:text-[#a0a0a0] focus:border-[#095866] focus:outline-none transition-colors"
+        class="w-full px-[14px] py-[11px] bg-[#F8F9FB] border border-[var(--color-brand-border)] rounded-[12px] text-[0.875rem] text-[var(--color-brand-text)] placeholder:text-[#a0a0a0] focus:border-[var(--color-brand-primary)] focus:outline-none transition-colors"
         placeholder="Mario Rossi"
         required />
     </div>

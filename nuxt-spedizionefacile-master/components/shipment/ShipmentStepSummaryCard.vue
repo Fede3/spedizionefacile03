@@ -105,7 +105,7 @@ const goToMiniStep = (step) => emit('go-mini-step', step);
 					</div>
 
 					<span class="summary-chevron-wrap">
-						<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#095866" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="summary-chevron-icon flex-shrink-0" :class="{ 'is-open': expanded }">
+						<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--color-brand-primary)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="summary-chevron-icon flex-shrink-0" :class="{ 'is-open': expanded }">
 							<polyline points="6 9 12 15 18 9" />
 						</svg>
 					</span>
@@ -125,14 +125,14 @@ const goToMiniStep = (step) => emit('go-mini-step', step);
 				<div v-show="expanded" class="accordion-content">
 					<div class="summary-details-row">
 						<div class="summary-detail-item">
-							<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#095866" stroke-width="2">
+							<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--color-brand-primary)" stroke-width="2">
 								<path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>
 							</svg>
 							<span class="summary-detail-label">Da</span>
 							<span class="summary-detail-value summary-detail-truncate">{{ summaryOriginCity }} → {{ summaryDestinationCity }}</span>
 						</div>
 						<div class="summary-detail-item">
-							<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#095866" stroke-width="2">
+							<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--color-brand-primary)" stroke-width="2">
 								<path d="M4 20h16M6 20V8m12 12V8M6 8h12M10 8v4m4-4v4"/>
 							</svg>
 							<span class="summary-detail-label">Misure</span>
@@ -142,7 +142,7 @@ const goToMiniStep = (step) => emit('go-mini-step', step);
 							</button>
 						</div>
 						<div class="summary-detail-item">
-							<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#095866" stroke-width="2">
+							<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--color-brand-primary)" stroke-width="2">
 								<path d="M8 6h12M8 12h12M8 18h12"/><circle cx="4" cy="6" r="1"/><circle cx="4" cy="12" r="1"/><circle cx="4" cy="18" r="1"/>
 							</svg>
 							<span class="summary-detail-label">Servizi</span>

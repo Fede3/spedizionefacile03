@@ -49,14 +49,14 @@ const getDetailKey = (pudo) => String(pudo.pudo_id || pudo.ui_key);
     <div
       v-if="loading"
       class="flex items-center justify-center h-full">
-      <span class="inline-block w-[28px] h-[28px] border-3 border-[#E9EBEC] border-t-[#095866] rounded-full animate-spin"></span>
+      <span class="inline-block w-[28px] h-[28px] border-3 border-[var(--color-brand-border)] border-t-[var(--color-brand-primary)] rounded-full animate-spin"></span>
     </div>
 
     <template v-else>
       <!-- Nessun risultato -->
       <p
         v-if="pudoResults.length === 0 && !searchError"
-        class="text-[0.875rem] text-[#737373] px-[10px] text-center flex-1 flex items-center justify-center">
+        class="text-[0.875rem] text-[var(--color-brand-text-secondary)] px-[10px] text-center flex-1 flex items-center justify-center">
         Nessun punto di ritiro trovato per questa zona. Prova con un'altra citta o CAP.
       </p>
 
@@ -71,8 +71,8 @@ const getDetailKey = (pudo) => String(pudo.pudo_id || pudo.ui_key);
           :class="[
             expandedPudoKey === getDetailKey(pudo) ? 'h-auto' : 'h-[168px]',
             selectedPudoKey === pudo.ui_key
-              ? 'border-[#095866] shadow-md'
-              : 'border-[#E9EBEC] hover:border-[#095866]/50',
+              ? 'border-[var(--color-brand-primary)] shadow-md'
+              : 'border-[var(--color-brand-border)] hover:border-[var(--color-brand-primary)]/50',
           ]"
           @click="emit('select', pudo)">
 
@@ -85,7 +85,7 @@ const getDetailKey = (pudo) => String(pudo.pudo_id || pudo.ui_key);
                   height="16"
                   viewBox="0 0 24 24"
                   fill="none"
-                  stroke="#095866"
+                  stroke="var(--color-brand-primary)"
                   stroke-width="2"
                   stroke-linecap="round"
                   stroke-linejoin="round"
@@ -93,16 +93,16 @@ const getDetailKey = (pudo) => String(pudo.pudo_id || pudo.ui_key);
                   <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
                   <polyline points="9 22 9 12 15 12 15 22" />
                 </svg>
-                <span class="text-[0.875rem] font-bold text-[#252B42] truncate">
+                <span class="text-[0.875rem] font-bold text-[var(--color-brand-text)] truncate">
                   {{ pudo.name }}
                 </span>
               </div>
               <div class="mt-[6px] flex flex-wrap items-center gap-[6px]">
-                <span class="inline-flex items-center h-[22px] px-[9px] rounded-full border border-[#CBE0E4] bg-[#F4FAFB] text-[#095866] text-[0.6875rem] font-semibold uppercase tracking-[0.2px]">
+                <span class="inline-flex items-center h-[22px] px-[9px] rounded-full border border-[#CBE0E4] bg-[#F4FAFB] text-[var(--color-brand-primary)] text-[0.6875rem] font-semibold uppercase tracking-[0.2px]">
                   Punto BRT
                 </span>
               </div>
-              <p class="text-[0.8125rem] text-[#737373] mt-[3px]">
+              <p class="text-[0.8125rem] text-[var(--color-brand-text-secondary)] mt-[3px]">
                 {{ pudo.address }}, {{ pudo.zip_code }} {{ pudo.city }}
               </p>
             </div>
@@ -121,7 +121,7 @@ const getDetailKey = (pudo) => String(pudo.pudo_id || pudo.ui_key);
                 class="w-[22px] h-[22px] rounded-full border-[2px] flex items-center justify-center"
                 :class="
                   selectedPudoKey === pudo.ui_key
-                    ? 'border-[#095866] bg-[#095866]'
+                    ? 'border-[var(--color-brand-primary)] bg-[var(--color-brand-primary)]'
                     : 'border-[#95A3B3] bg-transparent'
                 ">
                 <div

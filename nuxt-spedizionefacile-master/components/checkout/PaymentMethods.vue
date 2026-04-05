@@ -193,7 +193,7 @@ const emit = defineEmits(['select-payment-method', 'update:useNewCard', 'update:
 				<p class="checkout-payment-alt__title">Pagamento tramite Wallet</p>
 				<p class="checkout-payment-alt__text">
 					Saldo disponibile:
-					<span class="font-semibold text-[#095866]">{{ walletFormatted }}</span>
+					<span class="font-semibold text-[var(--color-brand-primary)]">{{ walletFormatted }}</span>
 				</p>
 				<p v-if="walletLoaded && !walletSufficient" class="checkout-payment-alt__error ux-alert ux-alert--critical">
 					Saldo insufficiente. Ricarica il wallet per procedere.

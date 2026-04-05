@@ -21,17 +21,17 @@ const emit = defineEmits(['select']);
 <template>
 	<ul
 		v-if="show && suggestions.length"
-		class="absolute z-50 top-full left-0 right-0 bg-white border border-[#E9EBEC] rounded-[12px] mt-[2px] max-h-[200px] overflow-y-auto shadow-lg">
+		class="absolute z-50 top-full left-0 right-0 bg-white border border-[var(--color-brand-border)] rounded-[12px] mt-[2px] max-h-[200px] overflow-y-auto shadow-lg">
 		<li
 			v-for="loc in suggestions"
 			:key="loc.postal_code + loc.place_name"
-			class="px-[14px] py-[12px] tablet:py-[10px] cursor-pointer hover:bg-[#f0fafb] text-[0.875rem] text-[#252B42] border-b border-[#F0F0F0] last:border-0"
+			class="px-[14px] py-[12px] tablet:py-[10px] cursor-pointer hover:bg-[#f0fafb] text-[0.875rem] text-[var(--color-brand-text)] border-b border-[#F0F0F0] last:border-0"
 			@mousedown.prevent="emit('select', loc)">
 			<template v-if="mode === 'cap'">
-				<span class="font-semibold">{{ loc.postal_code }}</span> - {{ loc.place_name }} <span class="text-[#737373]">({{ loc.province }}<template v-if="loc.country_code && loc.country_code !== 'IT'">, {{ loc.country_code }}</template>)</span>
+				<span class="font-semibold">{{ loc.postal_code }}</span> - {{ loc.place_name }} <span class="text-[var(--color-brand-text-secondary)]">({{ loc.province }}<template v-if="loc.country_code && loc.country_code !== 'IT'">, {{ loc.country_code }}</template>)</span>
 			</template>
 			<template v-else>
-				<span class="font-semibold">{{ loc.place_name }}</span> <span class="text-[#737373]">({{ loc.province }}<template v-if="loc.country_code && loc.country_code !== 'IT'">, {{ loc.country_code }}</template>) - {{ loc.postal_code }}</span>
+				<span class="font-semibold">{{ loc.place_name }}</span> <span class="text-[var(--color-brand-text-secondary)]">({{ loc.province }}<template v-if="loc.country_code && loc.country_code !== 'IT'">, {{ loc.country_code }}</template>) - {{ loc.postal_code }}</span>
 			</template>
 		</li>
 	</ul>

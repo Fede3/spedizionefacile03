@@ -47,7 +47,7 @@ const showNavbarDivider = computed(() => isNavbarLogo.value && !isAuthMinimalShe
 	justify-content: center;
 	flex: 0 0 auto;
 	border-radius: 999px;
-	background: #e44203;
+	background: var(--color-brand-accent);
 	color: #ffffff;
 }
 

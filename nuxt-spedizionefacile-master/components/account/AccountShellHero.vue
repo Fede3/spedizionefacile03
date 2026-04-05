@@ -74,7 +74,7 @@ defineEmits(['logout']);
             xmlns="http://www.w3.org/2000/svg"
             viewBox="0 0 24 24"
             class="h-[18px] w-[18px]"
-            :fill="card.iconColor || '#095866'"
+            :fill="card.iconColor || 'var(--color-brand-primary)'"
             v-html="accountCardIcons[card.iconKey]"></svg>
         </div>
         <div class="sf-account-summary-item__body">

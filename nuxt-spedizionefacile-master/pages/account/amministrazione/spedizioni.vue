@@ -150,7 +150,7 @@ onMounted(() => {
 					<svg
 						xmlns="http://www.w3.org/2000/svg"
 						viewBox="0 0 24 24"
-						class="absolute left-[12px] top-1/2 -translate-y-1/2 w-[18px] h-[18px] text-[#737373]"
+						class="absolute left-[12px] top-1/2 -translate-y-1/2 w-[18px] h-[18px] text-[var(--color-brand-text-secondary)]"
 						fill="currentColor">
 						<path
 							d="M9.5,3A6.5,6.5 0 0,1 16,9.5C16,11.11 15.41,12.59 14.44,13.73L14.71,14H15.5L20.5,19L19,20.5L14,15.5V14.71L13.73,14.44C12.59,15.41 11.11,16 9.5,16A6.5,6.5 0 0,1 3,9.5A6.5,6.5 0 0,1 9.5,3M9.5,5C7,5 5,7 5,9.5C5,12 7,14 9.5,14C12,14 14,12 14,9.5C14,7 12,5 9.5,5Z" />
@@ -160,7 +160,7 @@ onMounted(() => {
 						@input="onShipmentsSearch"
 						type="text"
 						placeholder="Cerca Parcel ID o utente..."
-						class="w-full pl-[40px] pr-[14px] py-[10px] bg-white border border-[#E9EBEC] rounded-[50px] text-[0.875rem] focus:border-[#095866] focus:outline-none" />
+						class="w-full pl-[40px] pr-[14px] py-[10px] bg-white border border-[var(--color-brand-border)] rounded-[50px] text-[0.875rem] focus:border-[var(--color-brand-primary)] focus:outline-none" />
 				</div>
 				<select
 					v-model="shipmentsStatusFilter"
@@ -168,7 +168,7 @@ onMounted(() => {
 						shipmentsPage = 1;
 						fetchShipments();
 					"
-					class="px-[14px] py-[10px] bg-white border border-[#E9EBEC] rounded-[50px] text-[0.875rem] focus:border-[#095866] focus:outline-none cursor-pointer">
+					class="px-[14px] py-[10px] bg-white border border-[var(--color-brand-border)] rounded-[50px] text-[0.875rem] focus:border-[var(--color-brand-primary)] focus:outline-none cursor-pointer">
 					<option value="">Tutti gli stati</option>
 					<option value="completed">Completato</option>
 					<option value="payed">Pagato</option>
@@ -178,11 +178,11 @@ onMounted(() => {
 				</select>
 			</div>
 
-			<div class="bg-white rounded-[12px] p-[24px] desktop:p-[32px] shadow-sm border border-[#E9EBEC]">
-				<h2 class="text-[1.125rem] font-bold text-[#252B42] mb-[20px]">Spedizioni</h2>
+			<div class="bg-white rounded-[12px] p-[24px] desktop:p-[32px] shadow-sm border border-[var(--color-brand-border)]">
+				<h2 class="text-[1.125rem] font-bold text-[var(--color-brand-text)] mb-[20px]">Spedizioni</h2>
 
 				<div v-if="tabLoading" class="py-[40px] flex justify-center">
-					<div class="w-[32px] h-[32px] border-3 border-[#E9EBEC] border-t-[#095866] rounded-full animate-spin"></div>
+					<div class="w-[32px] h-[32px] border-3 border-[var(--color-brand-border)] border-t-[var(--color-brand-primary)] rounded-full animate-spin"></div>
 				</div>
 
 				<div v-else-if="!shipmentsData.data?.length" class="text-center py-[48px]">
@@ -192,8 +192,8 @@ onMounted(() => {
 								d="M3,4A2,2 0 0,0 1,6V17H3A3,3 0 0,0 6,20A3,3 0 0,0 9,17H15A3,3 0 0,0 18,20A3,3 0 0,0 21,17H23V12L20,8H17V4M17,9.5H19.5L21.47,12H17M6,15.5A1.5,1.5 0 0,1 7.5,17A1.5,1.5 0 0,1 6,18.5A1.5,1.5 0 0,1 4.5,17A1.5,1.5 0 0,1 6,15.5M18,15.5A1.5,1.5 0 0,1 19.5,17A1.5,1.5 0 0,1 18,18.5A1.5,1.5 0 0,1 16.5,17A1.5,1.5 0 0,1 18,15.5Z" />
 						</svg>
 					</div>
-					<h2 class="text-[1.125rem] font-bold text-[#252B42] mb-[8px]">Nessuna spedizione BRT trovata</h2>
-					<p class="text-[#737373] text-[0.875rem]">Nessuna spedizione corrisponde ai filtri selezionati.</p>
+					<h2 class="text-[1.125rem] font-bold text-[var(--color-brand-text)] mb-[8px]">Nessuna spedizione BRT trovata</h2>
+					<p class="text-[var(--color-brand-text-secondary)] text-[0.875rem]">Nessuna spedizione corrisponde ai filtri selezionati.</p>
 				</div>
 
 				<div v-else class="space-y-[12px]">
@@ -201,11 +201,11 @@ onMounted(() => {
 						<div
 							v-for="(s, idx) in shipmentsData.data"
 							:key="s.id"
-							class="rounded-[12px] border border-[#E9EBEC] bg-[#F8FAFB] p-[14px] shadow-sm">
+							class="rounded-[12px] border border-[var(--color-brand-border)] bg-[#F8FAFB] p-[14px] shadow-sm">
 							<div class="flex items-start justify-between gap-[12px]">
 								<div class="min-w-0">
 									<div class="flex flex-wrap items-center gap-[8px] mb-[6px]">
-										<span class="text-[0.9375rem] font-bold text-[#252B42]">#{{ s.id }}</span>
+										<span class="text-[0.9375rem] font-bold text-[var(--color-brand-text)]">#{{ s.id }}</span>
 										<span
 											:class="[
 												'inline-flex items-center gap-[4px] px-[10px] py-[3px] rounded-full text-[0.6875rem] font-medium',
@@ -215,11 +215,11 @@ onMounted(() => {
 											{{ orderStatusConfig[s.status]?.label || s.status }}
 										</span>
 									</div>
-									<p class="text-[0.875rem] font-medium text-[#252B42] truncate">{{ s.user?.name }} {{ s.user?.surname }}</p>
-									<p class="text-[0.75rem] text-[#737373] truncate">{{ s.user?.email }}</p>
+									<p class="text-[0.875rem] font-medium text-[var(--color-brand-text)] truncate">{{ s.user?.name }} {{ s.user?.surname }}</p>
+									<p class="text-[0.75rem] text-[var(--color-brand-text-secondary)] truncate">{{ s.user?.email }}</p>
 								</div>
 								<div class="text-right shrink-0">
-									<p class="text-[0.75rem] text-[#737373]">{{ formatDate(s.created_at) }}</p>
+									<p class="text-[0.75rem] text-[var(--color-brand-text-secondary)]">{{ formatDate(s.created_at) }}</p>
 									<p v-if="s.is_cod" class="text-[0.875rem] font-semibold text-amber-700">&euro;{{ formatCurrency(s.cod_amount) }}</p>
 									<p v-else class="text-[0.75rem] text-[#C8CCD0]">&mdash;</p>
 								</div>
@@ -229,7 +229,7 @@ onMounted(() => {
 									{{ s.brt_parcel_id }}
 								</span>
 								<span v-else class="text-[#C8CCD0]">&mdash;</span>
-								<span v-if="s.brt_pudo_id" class="text-[0.625rem] font-semibold bg-[#095866]/10 text-[#095866] px-[6px] py-[2px] rounded">
+								<span v-if="s.brt_pudo_id" class="text-[0.625rem] font-semibold bg-[var(--color-brand-primary)]/10 text-[var(--color-brand-primary)] px-[6px] py-[2px] rounded">
 									PUDO
 								</span>
 							</div>
@@ -265,7 +265,7 @@ onMounted(() => {
 										changeOrderStatus(s.id, $event.target.value);
 										$event.target.value = '';
 									"
-									class="col-span-2 w-full px-[10px] py-[9px] rounded-[12px] bg-white text-[#252B42] text-[0.75rem] cursor-pointer border border-[#D7E1E4] font-medium focus:border-[#095866] focus:outline-none">
+									class="col-span-2 w-full px-[10px] py-[9px] rounded-[12px] bg-white text-[var(--color-brand-text)] text-[0.75rem] cursor-pointer border border-[#D7E1E4] font-medium focus:border-[var(--color-brand-primary)] focus:outline-none">
 									<option value="" selected disabled>Stato</option>
 									<option value="in_transit">In transito</option>
 									<option value="delivered">Consegnato</option>
@@ -278,7 +278,7 @@ onMounted(() => {
 					<div class="hidden tablet:block overflow-x-auto">
 						<table class="w-full text-[0.875rem]">
 							<thead>
-								<tr class="border-b border-[#E9EBEC] text-left text-[#737373]">
+								<tr class="border-b border-[var(--color-brand-border)] text-left text-[var(--color-brand-text-secondary)]">
 									<th class="pb-[12px] font-medium">Ordine</th>
 									<th class="pb-[12px] font-medium">Utente</th>
 									<th class="pb-[12px] font-medium">Parcel ID</th>
@@ -293,13 +293,13 @@ onMounted(() => {
 									v-for="(s, idx) in shipmentsData.data"
 									:key="s.id"
 									:class="['border-b border-[#F0F0F0] last:border-0', idx % 2 === 1 ? 'bg-[#FAFBFC]' : '']">
-									<td class="py-[14px] font-bold text-[#252B42]">#{{ s.id }}</td>
+									<td class="py-[14px] font-bold text-[var(--color-brand-text)]">#{{ s.id }}</td>
 									<td class="py-[14px] text-[#404040]">{{ s.user?.name }} {{ s.user?.surname }}</td>
 									<td class="py-[14px]">
 										<span class="font-mono text-[0.8125rem] text-indigo-700">{{ s.brt_parcel_id }}</span>
 										<span
 											v-if="s.brt_pudo_id"
-											class="ml-[4px] text-[0.625rem] font-semibold bg-[#095866]/10 text-[#095866] px-[6px] py-[2px] rounded"
+											class="ml-[4px] text-[0.625rem] font-semibold bg-[var(--color-brand-primary)]/10 text-[var(--color-brand-primary)] px-[6px] py-[2px] rounded"
 											title="Ritiro in Punto BRT">
 											PUDO
 										</span>
@@ -381,7 +381,7 @@ onMounted(() => {
 										<span v-if="s.is_cod" class="text-amber-700 font-medium">&euro;{{ formatCurrency(s.cod_amount) }}</span>
 										<span v-else class="text-[#C8CCD0]">&mdash;</span>
 									</td>
-									<td class="py-[14px] text-[#737373] text-[0.8125rem]">{{ formatDate(s.created_at) }}</td>
+									<td class="py-[14px] text-[var(--color-brand-text-secondary)] text-[0.8125rem]">{{ formatDate(s.created_at) }}</td>
 									<td class="py-[14px] text-right">
 										<div class="flex justify-end gap-[6px]">
 											<a
@@ -410,7 +410,7 @@ onMounted(() => {
 													changeOrderStatus(s.id, $event.target.value);
 													$event.target.value = '';
 												"
-												class="px-[6px] py-[5px] rounded-[6px] bg-[#095866] text-white text-[0.6875rem] cursor-pointer border-0 font-medium">
+												class="px-[6px] py-[5px] rounded-[6px] bg-[var(--color-brand-primary)] text-white text-[0.6875rem] cursor-pointer border-0 font-medium">
 												<option value="" selected disabled>Stato</option>
 												<option value="in_transit">In transito</option>
 												<option value="delivered">Consegnato</option>
@@ -432,7 +432,7 @@ onMounted(() => {
 								class="px-[12px] py-[8px] rounded-[12px] bg-[#F0F0F0] text-[0.8125rem] font-medium disabled:opacity-40 cursor-pointer hover:bg-[#E0E0E0]">
 								Precedente
 							</button>
-							<span class="text-[0.8125rem] text-[#737373]">Pagina {{ shipmentsPage }} di {{ shipmentsData.last_page }}</span>
+							<span class="text-[0.8125rem] text-[var(--color-brand-text-secondary)]">Pagina {{ shipmentsPage }} di {{ shipmentsData.last_page }}</span>
 							<button
 								@click="
 									shipmentsPage = Math.min(shipmentsData.last_page, shipmentsPage + 1);

@@ -23,27 +23,27 @@ const getProvinceCode = (provinceName) => {
 <template>
 	<!-- Summary cards -->
 	<div class="mb-[18px] grid gap-[12px] desktop:grid-cols-[minmax(0,1.35fr)_minmax(280px,0.65fr)]">
-		<div class="rounded-[12px] border border-[#E9EBEC] bg-white px-[16px] py-[14px] shadow-sm">
-			<p class="text-[0.75rem] font-semibold uppercase tracking-[1px] text-[#095866]">Vista rubrica</p>
-			<h2 class="mt-[6px] text-[1rem] font-bold text-[#252B42]">Indirizzi ordinati e pronti all&apos;uso</h2>
-			<p class="mt-[6px] text-[0.875rem] leading-[1.55] text-[#737373]">
+		<div class="rounded-[12px] border border-[var(--color-brand-border)] bg-white px-[16px] py-[14px] shadow-sm">
+			<p class="text-[0.75rem] font-semibold uppercase tracking-[1px] text-[var(--color-brand-primary)]">Vista rubrica</p>
+			<h2 class="mt-[6px] text-[1rem] font-bold text-[var(--color-brand-text)]">Indirizzi ordinati e pronti all&apos;uso</h2>
+			<p class="mt-[6px] text-[0.875rem] leading-[1.55] text-[var(--color-brand-text-secondary)]">
 				Mantieni in ordine i riferimenti più usati, aggiorna i dettagli in pochi tap e lascia sempre visibile quello principale.
 			</p>
 			<div class="mt-[12px] flex flex-wrap gap-[8px]">
-				<span class="inline-flex items-center gap-[6px] rounded-[14px] bg-[#F0F6F7] px-[12px] py-[6px] text-[0.75rem] font-semibold text-[#095866]">
+				<span class="inline-flex items-center gap-[6px] rounded-[14px] bg-[#F0F6F7] px-[12px] py-[6px] text-[0.75rem] font-semibold text-[var(--color-brand-primary)]">
 					<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M14.5,9A3.5,3.5 0 0,0 11,5.5A3.5,3.5 0 0,0 7.5,9A3.5,3.5 0 0,0 11,12.5A3.5,3.5 0 0,0 14.5,9M11,7A2,2 0 0,1 13,9A2,2 0 0,1 11,11A2,2 0 0,1 9,9A2,2 0 0,1 11,7M11,2C7.13,2 4,5.13 4,9C4,14.25 11,22 11,22C11,22 18,14.25 18,9A7,7 0 0,0 11,2M11,4A5,5 0 0,1 16,9C16,11.38 13.12,16.24 11,19.19C8.88,16.24 6,11.38 6,9A5,5 0 0,1 11,4Z"/></svg>
 					{{ addressStats.total }} salvati
 				</span>
-				<span class="inline-flex items-center gap-[6px] rounded-[14px] bg-[#FFF3EC] px-[12px] py-[6px] text-[0.75rem] font-semibold text-[#E44203]">
+				<span class="inline-flex items-center gap-[6px] rounded-[14px] bg-[#FFF3EC] px-[12px] py-[6px] text-[0.75rem] font-semibold text-[var(--color-brand-accent)]">
 					<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M23,12L20.56,9.22L20.9,5.54L17.29,4.72L15.4,1.54L12,3L8.6,1.54L6.71,4.72L3.1,5.53L3.44,9.21L1,12L3.44,14.78L3.1,18.47L6.71,19.29L8.6,22.47L12,21L15.4,22.46L17.29,19.28L20.9,18.46L20.56,14.78L23,12M13,17H11V15H13V17M13,13H11V7H13V13Z"/></svg>
 					{{ addressStats.defaults }} predefiniti
 				</span>
 			</div>
 		</div>
 		<div class="rounded-[12px] border border-[#DDECEE] bg-[#F8FCFD] px-[16px] py-[14px] shadow-sm">
-			<p class="text-[0.75rem] font-semibold uppercase tracking-[1px] text-[#095866]">Predefinito attivo</p>
-			<p class="mt-[8px] text-[1rem] font-bold text-[#252B42]">{{ defaultAddressName }}</p>
-			<p class="mt-[6px] text-[0.8125rem] leading-[1.55] text-[#737373]">
+			<p class="text-[0.75rem] font-semibold uppercase tracking-[1px] text-[var(--color-brand-primary)]">Predefinito attivo</p>
+			<p class="mt-[8px] text-[1rem] font-bold text-[var(--color-brand-text)]">{{ defaultAddressName }}</p>
+			<p class="mt-[6px] text-[0.8125rem] leading-[1.55] text-[var(--color-brand-text-secondary)]">
 				Un indirizzo principale alla volta, tutto il resto resta sempre modificabile o eliminabile senza perdere la rubrica.
 			</p>
 		</div>
@@ -51,7 +51,7 @@ const getProvinceCode = (provinceName) => {
 
 	<!-- Loading skeleton -->
 	<div v-if="!addresses" class="space-y-[12px]">
-		<div v-for="n in 2" :key="n" class="bg-white rounded-[12px] p-[24px] border border-[#E9EBEC] animate-pulse">
+		<div v-for="n in 2" :key="n" class="bg-white rounded-[12px] p-[24px] border border-[var(--color-brand-border)] animate-pulse">
 			<div class="flex items-center gap-[16px]">
 				<div class="w-[44px] h-[44px] rounded-[14px] bg-gray-200"></div>
 				<div class="flex-1 space-y-[8px]">
@@ -63,12 +63,12 @@ const getProvinceCode = (provinceName) => {
 	</div>
 
 	<!-- Empty state -->
-	<div v-else-if="addresses?.data?.length === 0" class="bg-white rounded-[12px] p-[48px] border border-[#E9EBEC] text-center">
+	<div v-else-if="addresses?.data?.length === 0" class="bg-white rounded-[12px] p-[48px] border border-[var(--color-brand-border)] text-center">
 		<div class="w-[72px] h-[72px] mx-auto mb-[20px] rounded-[18px] border border-[#E1EAEE] bg-[#F8F9FB] shadow-sm flex items-center justify-center">
 			<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="#C8CCD0"><path d="M12,11.5A2.5,2.5 0 0,1 9.5,9A2.5,2.5 0 0,1 12,6.5A2.5,2.5 0 0,1 14.5,9A2.5,2.5 0 0,1 12,11.5M12,2A7,7 0 0,0 5,9C5,14.25 12,22 12,22C12,22 19,14.25 19,9A7,7 0 0,0 12,2Z"/></svg>
 		</div>
-		<h2 class="text-[1.25rem] font-bold text-[#252B42] mb-[10px]">Nessun indirizzo salvato</h2>
-		<p class="text-[#737373] text-[0.9375rem] max-w-[400px] mx-auto mb-[24px] leading-[1.6]">
+		<h2 class="text-[1.25rem] font-bold text-[var(--color-brand-text)] mb-[10px]">Nessun indirizzo salvato</h2>
+		<p class="text-[var(--color-brand-text-secondary)] text-[0.9375rem] max-w-[400px] mx-auto mb-[24px] leading-[1.6]">
 			Salva i tuoi indirizzi per velocizzare la compilazione delle spedizioni.
 		</p>
 		<button
@@ -84,23 +84,23 @@ const getProvinceCode = (provinceName) => {
 		<div
 			v-for="address in addresses.data"
 			:key="address.id"
-			:class="['bg-white rounded-[12px] p-[16px] desktop:p-[20px] border transition-all', address.default ? 'border-[#095866] shadow-sm' : 'border-[#E9EBEC] hover:border-[#D7E1E4]']">
+			:class="['bg-white rounded-[12px] p-[16px] desktop:p-[20px] border transition-all', address.default ? 'border-[var(--color-brand-primary)] shadow-sm' : 'border-[var(--color-brand-border)] hover:border-[#D7E1E4]']">
 			<div class="flex flex-col gap-[12px] desktop:flex-row desktop:items-start desktop:gap-[16px]">
 				<!-- Icona -->
 				<div :class="['sf-icon-shell shrink-0', address.default ? 'sf-icon-shell--selected' : '']">
-					<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" :fill="address.default ? '#095866' : '#737373'"><path d="M12,11.5A2.5,2.5 0 0,1 9.5,9A2.5,2.5 0 0,1 12,6.5A2.5,2.5 0 0,1 14.5,9A2.5,2.5 0 0,1 12,11.5M12,2A7,7 0 0,0 5,9C5,14.25 12,22 12,22C12,22 19,14.25 19,9A7,7 0 0,0 12,2Z"/></svg>
+					<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" :fill="address.default ? 'var(--color-brand-primary)' : 'var(--color-brand-text-secondary)'"><path d="M12,11.5A2.5,2.5 0 0,1 9.5,9A2.5,2.5 0 0,1 12,6.5A2.5,2.5 0 0,1 14.5,9A2.5,2.5 0 0,1 12,11.5M12,2A7,7 0 0,0 5,9C5,14.25 12,22 12,22C12,22 19,14.25 19,9A7,7 0 0,0 12,2Z"/></svg>
 				</div>
 
 				<!-- Dati -->
 				<div class="flex-1 min-w-0">
 					<div class="flex flex-wrap items-center gap-[8px] mb-[4px]">
-						<h3 class="text-[0.9375rem] font-bold text-[#252B42]">{{ address.name }}</h3>
-						<span v-if="address.default" class="inline-block px-[8px] py-[2px] rounded-[12px] text-[0.6875rem] font-medium bg-[#095866]/10 text-[#095866]">
+						<h3 class="text-[0.9375rem] font-bold text-[var(--color-brand-text)]">{{ address.name }}</h3>
+						<span v-if="address.default" class="inline-block px-[8px] py-[2px] rounded-[12px] text-[0.6875rem] font-medium bg-[var(--color-brand-primary)]/10 text-[var(--color-brand-primary)]">
 							Predefinito
 						</span>
 					</div>
 					<p class="text-[0.875rem] text-[#404040]">{{ address.address }}</p>
-					<p class="text-[0.875rem] text-[#737373]">
+					<p class="text-[0.875rem] text-[var(--color-brand-text-secondary)]">
 						{{ address.postal_code }} {{ address.city }}
 						<span v-if="address.province_name">({{ getProvinceCode(address.province_name) }})</span>
 					</p>

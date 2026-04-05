@@ -21,7 +21,7 @@ useSeoMeta({
 <template>
   <section class="min-h-[500px] py-[40px] desktop:py-[60px]">
     <div class="my-container">
-      <div class="bg-white rounded-[12px] border border-[#E9EBEC] shadow-sm p-[32px_20px] desktop:p-[48px] max-w-[560px] mx-auto text-center">
+      <div class="bg-white rounded-[12px] border border-[var(--color-brand-border)] shadow-sm p-[32px_20px] desktop:p-[48px] max-w-[560px] mx-auto text-center">
         <!-- SVG illustrazione pacco smarrito -->
         <svg
           class="mx-auto mb-[24px] w-[100px] h-[100px]"
@@ -30,26 +30,26 @@ useSeoMeta({
           xmlns="http://www.w3.org/2000/svg"
         >
           <!-- Pacco -->
-          <rect x="20" y="30" width="60" height="50" rx="4" stroke="#095866" stroke-width="3" fill="#F0F9FB"/>
-          <line x1="20" y1="50" x2="80" y2="50" stroke="#095866" stroke-width="3"/>
-          <line x1="50" y1="50" x2="50" y2="80" stroke="#095866" stroke-width="2.5"/>
+          <rect x="20" y="30" width="60" height="50" rx="4" stroke="var(--color-brand-primary)" stroke-width="3" fill="#F0F9FB"/>
+          <line x1="20" y1="50" x2="80" y2="50" stroke="var(--color-brand-primary)" stroke-width="3"/>
+          <line x1="50" y1="50" x2="50" y2="80" stroke="var(--color-brand-primary)" stroke-width="2.5"/>
           <!-- Nastro superiore -->
-          <path d="M40 30 L50 18 L60 30" stroke="#E44203" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M40 30 L50 18 L60 30" stroke="var(--color-brand-accent)" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
           <!-- Punto interrogativo -->
-          <circle cx="75" cy="25" r="14" fill="#E44203" opacity="0.12"/>
-          <text x="75" y="31" text-anchor="middle" font-size="18" font-weight="bold" fill="#E44203">?</text>
+          <circle cx="75" cy="25" r="14" fill="var(--color-brand-accent)" opacity="0.12"/>
+          <text x="75" y="31" text-anchor="middle" font-size="18" font-weight="bold" fill="var(--color-brand-accent)">?</text>
         </svg>
 
         <!-- Codice errore -->
-        <h1 class="text-[4rem] font-extrabold text-[#095866] mb-[4px] leading-none">404</h1>
+        <h1 class="text-[4rem] font-extrabold text-[var(--color-brand-primary)] mb-[4px] leading-none">404</h1>
 
         <!-- Messaggio principale -->
-        <h2 class="text-[1.5rem] font-bold text-[#252B42] mb-[8px]">
+        <h2 class="text-[1.5rem] font-bold text-[var(--color-brand-text)] mb-[8px]">
           Pagina non trovata
         </h2>
 
         <!-- Testo descrittivo -->
-        <p class="text-[#737373] text-[0.9375rem] leading-relaxed mb-[28px]">
+        <p class="text-[var(--color-brand-text-secondary)] text-[0.9375rem] leading-relaxed mb-[28px]">
           Ci dispiace, la pagina che stai cercando non esiste o potrebbe essere
           stata spostata. Torna alla homepage per continuare la navigazione.
         </p>
@@ -67,8 +67,8 @@ useSeoMeta({
 
         <!-- Link secondario -->
         <p class="text-[#A0A5AB] text-[0.8125rem] mt-[16px]">
-          Oppure vai al <NuxtLink to="/preventivo" class="text-[#095866] hover:underline font-medium">preventivo</NuxtLink>
-          o alla pagina <NuxtLink to="/contatti" class="text-[#095866] hover:underline font-medium">contatti</NuxtLink>.
+          Oppure vai al <NuxtLink to="/preventivo" class="text-[var(--color-brand-primary)] hover:underline font-medium">preventivo</NuxtLink>
+          o alla pagina <NuxtLink to="/contatti" class="text-[var(--color-brand-primary)] hover:underline font-medium">contatti</NuxtLink>.
         </p>
       </div>
     </div>

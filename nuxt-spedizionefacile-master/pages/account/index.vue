@@ -184,7 +184,7 @@ const handleLogout = async () => {
 				v-for="(section, sectionIndex) in visibleSections"
 				:key="sectionIndex"
 				class="sf-account-section"
-				:style="{ '--sf-section-accent': section.pages[0]?.iconColor || '#095866' }">
+				:style="{ '--sf-section-accent': section.pages[0]?.iconColor || 'var(--color-brand-primary)' }">
 				<div class="sf-account-section__header">
 					<div class="sf-account-section__title-wrap">
 						<h2 class="sf-account-section__title">{{ section.title }}</h2>
@@ -202,7 +202,7 @@ const handleLogout = async () => {
 								class="sf-account-nav-tile__icon"
 								:style="{
 									'--sf-icon-bg': page.iconBg || '#edf6f8',
-									'--sf-icon-color': page.iconColor || '#095866',
+									'--sf-icon-color': page.iconColor || 'var(--color-brand-primary)',
 									'--sf-icon-border': page.iconBorder || 'rgba(9, 88, 102, 0.14)',
 								}">
 								<svg
@@ -213,7 +213,7 @@ const handleLogout = async () => {
 									v-html="cardIcons[page.iconKey]"></svg>
 							</div>
 							<div class="sf-account-nav-tile__body">
-								<h3 class="sf-account-nav-tile__title group-hover:text-[#095866]">
+								<h3 class="sf-account-nav-tile__title group-hover:text-[var(--color-brand-primary)]">
 									{{ page.title }}
 								</h3>
 								<p v-if="page.description" class="sf-account-nav-tile__meta">{{ page.description }}</p>

@@ -21,17 +21,17 @@ const emit = defineEmits(['show-detail', 'change-status']);
 				<div class="flex items-start justify-between gap-[12px]">
 					<div class="min-w-0">
 						<div class="flex flex-wrap items-center gap-[8px] mb-[6px]">
-							<span class="text-[0.9375rem] font-bold text-[#252B42]">#{{ order.id }}</span>
+							<span class="text-[0.9375rem] font-bold text-[var(--color-brand-text)]">#{{ order.id }}</span>
 							<span :class="['inline-flex items-center gap-[4px] px-[10px] py-[3px] rounded-full text-[0.6875rem] font-medium', orderStatusConfig[order.status]?.bg || 'bg-gray-50', orderStatusConfig[order.status]?.text || 'text-gray-700']">
 								{{ orderStatusConfig[order.status]?.label || order.status }}
 							</span>
 						</div>
-						<p class="text-[0.875rem] font-medium text-[#252B42] truncate">{{ order.user?.name }} {{ order.user?.surname }}</p>
-						<p class="text-[0.75rem] text-[#737373] truncate">{{ order.user?.email }}</p>
+						<p class="text-[0.875rem] font-medium text-[var(--color-brand-text)] truncate">{{ order.user?.name }} {{ order.user?.surname }}</p>
+						<p class="text-[0.75rem] text-[var(--color-brand-text-secondary)] truncate">{{ order.user?.email }}</p>
 					</div>
 					<div class="text-right shrink-0">
-						<p class="text-[1rem] font-bold text-[#252B42]">&euro;{{ formatCents(order.subtotal?.amount ?? order.subtotal) }}</p>
-						<p class="text-[0.75rem] text-[#737373]">{{ formatDate(order.created_at) }}</p>
+						<p class="text-[1rem] font-bold text-[var(--color-brand-text)]">&euro;{{ formatCents(order.subtotal?.amount ?? order.subtotal) }}</p>
+						<p class="text-[0.75rem] text-[var(--color-brand-text-secondary)]">{{ formatDate(order.created_at) }}</p>
 					</div>
 				</div>
 				<div class="admin-orders-card__meta">
@@ -126,7 +126,7 @@ const emit = defineEmits(['show-detail', 'change-status']);
 	position: absolute;
 	inset: 0 auto 0 0;
 	width: 4px;
-	background: linear-gradient(180deg, #0b5965 0%, #e45c20 100%);
+	background: linear-gradient(180deg, var(--color-brand-primary-light) 0%, #e45c20 100%);
 }
 
 .admin-orders-card__meta {
@@ -175,7 +175,7 @@ const emit = defineEmits(['show-detail', 'change-status']);
 	outline: none;
 	border-color: #bfd2d8;
 	box-shadow: 0 0 0 3px rgba(11, 89, 101, 0.08);
-	color: #0b5965;
+	color: var(--color-brand-primary-light);
 }
 
 .admin-orders-flat-view__status-select {
@@ -208,7 +208,7 @@ const emit = defineEmits(['show-detail', 'change-status']);
 	background: rgba(11, 89, 101, 0.08);
 	font-size: 0.68rem;
 	font-weight: 800;
-	color: #0b5965;
+	color: var(--color-brand-primary-light);
 }
 
 .admin-orders-table {

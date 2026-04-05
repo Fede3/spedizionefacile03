@@ -118,9 +118,9 @@ const getDescription = (guide) => {
 					v-for="guide in guides"
 					:key="guide.slug"
 					:to="`/guide/${guide.slug}`"
-					class="guide-card block rounded-[22px] overflow-hidden border border-[#E9EBEC] shadow-sm hover:shadow-lg hover:border-[#095866] transition-all group">
+					class="guide-card block rounded-[22px] overflow-hidden border border-[var(--color-brand-border)] shadow-sm hover:shadow-lg hover:border-[var(--color-brand-primary)] transition-all group">
 					<!-- Accent line -->
-					<div class="h-[3px] bg-[#E44203]"></div>
+					<div class="h-[3px] bg-[var(--color-brand-accent)]"></div>
 
 					<!-- Icon banner area -->
 					<div class="guide-card__banner flex items-center justify-center h-[104px] tablet:h-[116px] desktop:h-[120px]" v-html="getGuideIcon(guide)">
@@ -128,13 +128,13 @@ const getDescription = (guide) => {
 
 					<!-- Card body -->
 					<div class="guide-card__body p-[20px] tablet:p-[22px] desktop:p-[24px]">
-						<h2 class="text-[1rem] tablet:text-[1.0625rem] desktop:text-[1.125rem] font-medium text-[#222222] leading-[130%] tracking-[-0.4px] mb-[8px] group-hover:text-[#095866] transition-colors">
+						<h2 class="text-[1rem] tablet:text-[1.0625rem] desktop:text-[1.125rem] font-medium text-[#222222] leading-[130%] tracking-[-0.4px] mb-[8px] group-hover:text-[var(--color-brand-primary)] transition-colors">
 							{{ guide.title }}
 						</h2>
-						<p class="text-[0.8125rem] tablet:text-[0.875rem] desktop:text-[0.9375rem] text-[#737373] leading-[160%] tracking-[-0.24px] mb-[16px]">
+						<p class="text-[0.8125rem] tablet:text-[0.875rem] desktop:text-[0.9375rem] text-[var(--color-brand-text-secondary)] leading-[160%] tracking-[-0.24px] mb-[16px]">
 							{{ getDescription(guide) }}
 						</p>
-						<span class="guide-card__cta inline-flex items-center gap-[6px] h-[40px] px-[18px] rounded-[35px] bg-[#E44203] text-white font-semibold tracking-[-0.32px] text-[0.8125rem] group-hover:bg-[#c93800] transition-colors">
+						<span class="guide-card__cta inline-flex items-center gap-[6px] h-[40px] px-[18px] rounded-[35px] bg-[var(--color-brand-accent)] text-white font-semibold tracking-[-0.32px] text-[0.8125rem] group-hover:bg-[var(--color-brand-accent-hover)] transition-colors">
 							Leggi
 							<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8h10"/><path d="M9 4l4 4-4 4"/></svg>
 						</span>
@@ -164,7 +164,7 @@ const getDescription = (guide) => {
 	font-weight: 700;
 	letter-spacing: 0.12em;
 	text-transform: uppercase;
-	color: #095866;
+	color: var(--color-brand-primary);
 }
 
 .guide-intro-panel__title {
@@ -191,7 +191,7 @@ const getDescription = (guide) => {
 	min-height: 46px;
 	padding: 0 18px;
 	border-radius: 999px;
-	background: #E44203;
+	background: var(--color-brand-accent);
 	color: #fff;
 	font-size: 0.875rem;
 	font-weight: 700;
@@ -204,7 +204,7 @@ const getDescription = (guide) => {
 }
 
 .guide-card__banner {
-	background: linear-gradient(135deg, #095866 0%, #0b6d7d 100%);
+	background: linear-gradient(135deg, var(--color-brand-primary) 0%, #0b6d7d 100%);
 }
 
 .guide-card {

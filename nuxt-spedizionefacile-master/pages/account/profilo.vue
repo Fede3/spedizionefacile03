@@ -187,7 +187,7 @@ onMounted(() => {
 					<div class="h-[16px] w-full max-w-[560px] rounded-[12px] bg-[#F2F5F8] animate-pulse"></div>
 				</div>
 			</div>
-			<div class="rounded-[12px] border border-[#E9EBEC] bg-white p-[20px] tablet:p-[24px] desktop:p-[32px] shadow-sm">
+			<div class="rounded-[12px] border border-[var(--color-brand-border)] bg-white p-[20px] tablet:p-[24px] desktop:p-[32px] shadow-sm">
 				<div class="flex flex-col gap-[18px]">
 					<div class="flex items-center gap-[16px]">
 						<div class="h-[56px] w-[56px] rounded-full bg-[#EEF3F7] animate-pulse"></div>

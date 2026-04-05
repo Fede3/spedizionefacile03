@@ -30,7 +30,7 @@ const {
       <div v-if="cart?.data?.length > 0" class="mx-auto">
         <!-- Promo banner -->
         <div v-if="promoSettings?.active && promoSettings?.label_text" class="flex justify-center mb-[16px]">
-          <span :style="{ backgroundColor: promoSettings.label_color || '#E44203' }"
+          <span :style="{ backgroundColor: promoSettings.label_color || 'var(--color-brand-accent)' }"
             class="inline-flex items-center gap-[6px] px-[16px] py-[8px] rounded-[50px] text-white text-[0.9375rem] font-bold tracking-wide shadow-sm">
             <img v-if="promoSettings.label_image" :src="promoSettings.label_image" alt="" loading="lazy" decoding="async" width="40" height="20" class="h-[20px] w-auto" />
             {{ promoSettings.label_text }}
@@ -50,8 +50,8 @@ const {
           <!-- Header + checkout CTA -->
           <div class="flex flex-col desktop:flex-row desktop:items-end desktop:justify-between gap-[16px] mb-[20px]">
             <div>
-              <p class="text-[0.75rem] font-semibold uppercase tracking-[0.16em] text-[#095866] mb-[6px]">Spedizioni pronte</p>
-              <h2 class="text-[1.25rem] tablet:text-[1.5rem] font-bold text-[#252B42]">Controlla tutto prima del pagamento</h2>
+              <p class="text-[0.75rem] font-semibold uppercase tracking-[0.16em] text-[var(--color-brand-primary)] mb-[6px]">Spedizioni pronte</p>
+              <h2 class="text-[1.25rem] tablet:text-[1.5rem] font-bold text-[var(--color-brand-text)]">Controlla tutto prima del pagamento</h2>
               <p class="text-[0.875rem] text-[#6B7280] mt-[6px] max-w-[560px]">
                 Puoi modificare quantità, rivedere i dettagli di ogni collo e passare al checkout quando il riepilogo è corretto.
               </p>
@@ -66,14 +66,14 @@ const {
           <!-- Filters -->
           <div class="flex flex-col tablet:flex-row gap-[12px] tablet:gap-[16px] items-stretch tablet:items-center mb-[18px]">
             <div class="w-full tablet:flex-1 tablet:min-w-[200px] tablet:max-w-[400px]">
-              <select v-model="filterProvenienza" class="w-full bg-[#F8F9FB] border border-[#E9EBEC] rounded-[12px] h-[48px] tablet:h-[46px] px-[18px] text-[1rem] tablet:text-[0.875rem] text-[#404040] appearance-none cursor-pointer transition-[border-color,box-shadow] duration-200 focus:border-[#095866] focus:shadow-[0_0_0_3px_rgba(9,88,102,0.1)]">
+              <select v-model="filterProvenienza" class="w-full bg-[#F8F9FB] border border-[var(--color-brand-border)] rounded-[12px] h-[48px] tablet:h-[46px] px-[18px] text-[1rem] tablet:text-[0.875rem] text-[#404040] appearance-none cursor-pointer transition-[border-color,box-shadow] duration-200 focus:border-[var(--color-brand-primary)] focus:shadow-[0_0_0_3px_rgba(9,88,102,0.1)]">
                 <option value="">Provenienza</option>
                 <option v-for="city in uniqueCities" :key="city" :value="city">{{ city }}</option>
               </select>
             </div>
             <div class="w-full tablet:flex-1 tablet:min-w-[200px] tablet:max-w-[400px] tablet:ml-auto">
               <input type="text" v-model="filterRiferimento" placeholder="Cerca per riferimento, mittente o destinatario"
-                class="w-full bg-[#F8F9FB] border border-[#E9EBEC] rounded-[12px] h-[48px] tablet:h-[46px] px-[18px] text-[1rem] tablet:text-[0.875rem] text-[#404040] placeholder:text-[#a0a0a0] transition-[border-color,box-shadow] duration-200 focus:border-[#095866] focus:shadow-[0_0_0_3px_rgba(9,88,102,0.1)]" />
+                class="w-full bg-[#F8F9FB] border border-[var(--color-brand-border)] rounded-[12px] h-[48px] tablet:h-[46px] px-[18px] text-[1rem] tablet:text-[0.875rem] text-[#404040] placeholder:text-[#a0a0a0] transition-[border-color,box-shadow] duration-200 focus:border-[var(--color-brand-primary)] focus:shadow-[0_0_0_3px_rgba(9,88,102,0.1)]" />
             </div>
           </div>
 
@@ -94,10 +94,10 @@ const {
           <!-- Entries header -->
           <div class="flex items-end justify-between gap-[12px] mb-[16px]">
             <div>
-              <h2 class="text-[1.25rem] font-bold text-[#252B42]">Spedizioni</h2>
+              <h2 class="text-[1.25rem] font-bold text-[var(--color-brand-text)]">Spedizioni</h2>
               <p class="text-[0.8125rem] text-[#6B7280] mt-[2px]">I colli identici vengono raggruppati per aiutarti a controllare quantità e tratta più velocemente.</p>
             </div>
-            <span class="hidden tablet:inline-flex items-center gap-[6px] rounded-full bg-[#F2F6F7] px-[12px] py-[6px] text-[0.75rem] font-medium text-[#095866]">
+            <span class="hidden tablet:inline-flex items-center gap-[6px] rounded-full bg-[#F2F6F7] px-[12px] py-[6px] text-[0.75rem] font-medium text-[var(--color-brand-primary)]">
               {{ displayEntries.length }} {{ displayEntries.length === 1 ? 'blocco' : 'blocchi' }}
             </span>
           </div>
@@ -145,12 +145,12 @@ const {
       <!-- Empty cart -->
       <div v-else-if="status !== 'pending'" class="max-w-[600px] mx-auto py-[80px] text-center">
         <h1 class="sf-section-title text-center mb-[4px]">Carrello</h1>
-        <div class="w-[40px] h-[3px] bg-[#E44203] mx-auto mb-[32px]"></div>
-        <div class="w-[80px] h-[80px] mx-auto mb-[20px] bg-[#E44203] rounded-full flex items-center justify-center">
+        <div class="w-[40px] h-[3px] bg-[var(--color-brand-accent)] mx-auto mb-[32px]"></div>
+        <div class="w-[80px] h-[80px] mx-auto mb-[20px] bg-[var(--color-brand-accent)] rounded-full flex items-center justify-center">
           <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
         </div>
-        <h2 class="text-[1.25rem] font-bold text-[#252B42] mb-[10px]">Il carrello è vuoto</h2>
-        <p class="text-[#737373] text-[0.9375rem] max-w-[400px] mx-auto mb-[24px] leading-[1.6]">
+        <h2 class="text-[1.25rem] font-bold text-[var(--color-brand-text)] mb-[10px]">Il carrello è vuoto</h2>
+        <p class="text-[var(--color-brand-text-secondary)] text-[0.9375rem] max-w-[400px] mx-auto mb-[24px] leading-[1.6]">
           Non hai ancora aggiunto spedizioni al carrello. Configura la tua prima spedizione per iniziare.
         </p>
         <NuxtLink to="/preventivo"

@@ -73,7 +73,7 @@ const bonuses = computed(() => [
 		title: 'Ricarica e risparmia',
 		description: 'Ricarica il portafoglio per pagare le spedizioni in modo rapido e conveniente. Nessuna commissione sulle ricariche.',
 		badge: '0% commissioni',
-		badgeColor: 'bg-[#F0F6F7] text-[#095866]',
+		badgeColor: 'bg-[#F0F6F7] text-[var(--color-brand-primary)]',
 		meta: 'Wallet pronto per checkout e ricariche',
 		available: true,
 		proOnly: false,
@@ -127,7 +127,7 @@ const bonusHeaderStats = computed(() => [
 						<span
 							v-for="stat in bonusHeaderStats"
 							:key="stat.label"
-							class="inline-flex items-center gap-[6px] rounded-full bg-[#F0F6F7] px-[12px] py-[6px] text-[0.8125rem] font-semibold text-[#095866]">
+							class="inline-flex items-center gap-[6px] rounded-full bg-[#F0F6F7] px-[12px] py-[6px] text-[0.8125rem] font-semibold text-[var(--color-brand-primary)]">
 							{{ stat.label }}: {{ stat.value }}
 						</span>
 					</div>
@@ -137,8 +137,8 @@ const bonusHeaderStats = computed(() => [
 			<div class="sf-account-panel mb-[16px] rounded-[24px] px-[16px] py-[14px] desktop:px-[20px] desktop:py-[16px]">
 				<div class="flex flex-col gap-[10px] desktop:flex-row desktop:items-center desktop:justify-between">
 					<div>
-						<p class="text-[0.75rem] font-semibold uppercase tracking-[1px] text-[#095866]">Vantaggi attivi</p>
-						<h2 class="mt-[4px] text-[1rem] font-bold text-[#252B42]">Stessa shell, azioni piu' immediate</h2>
+						<p class="text-[0.75rem] font-semibold uppercase tracking-[1px] text-[var(--color-brand-primary)]">Vantaggi attivi</p>
+						<h2 class="mt-[4px] text-[1rem] font-bold text-[var(--color-brand-text)]">Stessa shell, azioni piu' immediate</h2>
 						<p class="mt-[4px] text-[0.875rem] leading-[1.55] text-[#667281]">
 							Apri subito la sezione giusta per referral, wallet o passaggio a Partner Pro senza uscire dal percorso account.
 						</p>
@@ -159,7 +159,7 @@ const bonusHeaderStats = computed(() => [
 					<div class="flex flex-col gap-[16px] desktop:flex-row desktop:items-start desktop:justify-between">
 						<div class="flex flex-col gap-[16px] desktop:flex-row desktop:items-start">
 							<div
-								class="flex h-[54px] w-[54px] shrink-0 items-center justify-center rounded-[18px] bg-[#F0F6F7] text-[#095866] shadow-[inset_0_1px_0_rgba(255,255,255,0.75)]">
+								class="flex h-[54px] w-[54px] shrink-0 items-center justify-center rounded-[18px] bg-[#F0F6F7] text-[var(--color-brand-primary)] shadow-[inset_0_1px_0_rgba(255,255,255,0.75)]">
 								<svg
 									xmlns="http://www.w3.org/2000/svg"
 									viewBox="0 0 24 24"
@@ -169,7 +169,7 @@ const bonusHeaderStats = computed(() => [
 							</div>
 							<div class="min-w-0">
 								<div class="flex flex-wrap items-center gap-[8px]">
-									<h2 class="text-[1.0625rem] font-bold text-[#252B42] transition-colors group-hover:text-[#095866]">
+									<h2 class="text-[1.0625rem] font-bold text-[var(--color-brand-text)] transition-colors group-hover:text-[var(--color-brand-primary)]">
 										{{ bonus.title }}
 									</h2>
 									<span
@@ -180,7 +180,7 @@ const bonusHeaderStats = computed(() => [
 								<p class="mt-[10px] max-w-[72ch] text-[0.875rem] leading-[1.6] text-[#667281]">
 									{{ bonus.description }}
 								</p>
-								<p class="mt-[10px] text-[0.75rem] font-medium text-[#737373]">
+								<p class="mt-[10px] text-[0.75rem] font-medium text-[var(--color-brand-text-secondary)]">
 									{{ bonus.meta }}
 								</p>
 							</div>
@@ -208,7 +208,7 @@ const bonusHeaderStats = computed(() => [
 						fill="currentColor"
 						v-html="accountCardIcons['tag-multiple']"></svg>
 				</div>
-				<h2 class="text-[1.2rem] font-bold text-[#252B42]">Nessun bonus disponibile</h2>
+				<h2 class="text-[1.2rem] font-bold text-[var(--color-brand-text)]">Nessun bonus disponibile</h2>
 				<p class="mx-auto mt-[10px] max-w-[420px] text-[0.9375rem] leading-[1.6] text-[#667281]">
 					Al momento non ci sono promozioni attive. Quando ci saranno nuovi vantaggi, compariranno qui nella stessa shell dell'account.
 				</p>

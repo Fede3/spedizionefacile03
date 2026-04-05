@@ -24,10 +24,10 @@ const emit = defineEmits(['toggle', 'apply', 'remove', 'update:couponCode'])
       @click="emit('toggle')"
       class="w-full flex items-center justify-between gap-[12px] text-left cursor-pointer">
       <div>
-        <p class="text-[0.9375rem] font-semibold text-[#252B42]">Hai un codice sconto?</p>
+        <p class="text-[0.9375rem] font-semibold text-[var(--color-brand-text)]">Hai un codice sconto?</p>
         <p class="text-[0.8125rem] text-[#6B7280] mt-[2px]">Applicalo solo se vuoi aggiornare il totale prima del checkout.</p>
       </div>
-      <div class="inline-flex items-center gap-[8px] text-[#095866] font-semibold text-[0.8125rem]">
+      <div class="inline-flex items-center gap-[8px] text-[var(--color-brand-primary)] font-semibold text-[0.8125rem]">
         <span>{{ showCouponPanel ? 'Nascondi' : 'Apri' }}</span>
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="transition-transform" :class="showCouponPanel ? 'rotate-180' : ''"><polyline points="6 9 12 15 18 9"/></svg>
       </div>
@@ -42,7 +42,7 @@ const emit = defineEmits(['toggle', 'apply', 'remove', 'update:couponCode'])
             :value="couponCode"
             @input="emit('update:couponCode', $event.target.value)"
             placeholder="PROVA123"
-            class="w-full bg-white border border-[#D7E1E4] rounded-[12px] h-[48px] tablet:h-[46px] px-[18px] text-[1rem] tablet:text-[0.875rem] text-[#404040] placeholder:text-[#8A939C] transition-[border-color,box-shadow] duration-200 focus:border-[#095866] focus:shadow-[0_0_0_3px_rgba(9,88,102,0.1)]" />
+            class="w-full bg-white border border-[#D7E1E4] rounded-[12px] h-[48px] tablet:h-[46px] px-[18px] text-[1rem] tablet:text-[0.875rem] text-[#404040] placeholder:text-[#8A939C] transition-[border-color,box-shadow] duration-200 focus:border-[var(--color-brand-primary)] focus:shadow-[0_0_0_3px_rgba(9,88,102,0.1)]" />
           <div v-else class="flex items-center gap-[10px] bg-emerald-50 border border-emerald-200 rounded-[12px] min-h-[46px] px-[18px]">
             <span class="text-emerald-700 font-semibold text-[0.875rem]">{{ couponCode.toUpperCase() }} (-{{ couponDiscount }}%)</span>
             <button @click="emit('remove')" class="text-red-500 text-[0.75rem] hover:underline cursor-pointer ml-auto">Rimuovi</button>
@@ -52,7 +52,7 @@ const emit = defineEmits(['toggle', 'apply', 'remove', 'update:couponCode'])
           v-if="!couponApplied"
           type="button"
           @click="emit('apply')"
-          class="inline-flex items-center justify-center gap-[6px] bg-[#095866] text-white font-semibold text-[0.9375rem] px-[24px] min-h-[48px] w-full tablet:w-auto rounded-[12px] hover:bg-[#074a56] transition-[background-color,transform] duration-200 cursor-pointer active:scale-[0.97]">
+          class="inline-flex items-center justify-center gap-[6px] bg-[var(--color-brand-primary)] text-white font-semibold text-[0.9375rem] px-[24px] min-h-[48px] w-full tablet:w-auto rounded-[12px] hover:bg-[var(--color-brand-primary-hover)] transition-[background-color,transform] duration-200 cursor-pointer active:scale-[0.97]">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
           Applica coupon
         </button>

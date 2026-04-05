@@ -49,14 +49,14 @@ const emit = defineEmits([
 					type="button"
 					@click="emit('set-viewport', 'desktop')"
 					class="h-[34px] rounded-[12px] text-[0.8125rem] font-semibold border"
-					:class="activeViewport === 'desktop' ? 'bg-[#095866] text-white border-[#095866]' : 'bg-white text-[#095866] border-[#B9D4DC]'">
+					:class="activeViewport === 'desktop' ? 'bg-[var(--color-brand-primary)] text-white border-[var(--color-brand-primary)]' : 'bg-white text-[var(--color-brand-primary)] border-[#B9D4DC]'">
 					Desktop
 				</button>
 				<button
 					type="button"
 					@click="emit('set-viewport', 'mobile')"
 					class="h-[34px] rounded-[12px] text-[0.8125rem] font-semibold border"
-					:class="activeViewport === 'mobile' ? 'bg-[#095866] text-white border-[#095866]' : 'bg-white text-[#095866] border-[#B9D4DC]'">
+					:class="activeViewport === 'mobile' ? 'bg-[var(--color-brand-primary)] text-white border-[var(--color-brand-primary)]' : 'bg-white text-[var(--color-brand-primary)] border-[#B9D4DC]'">
 					Mobile
 				</button>
 			</div>
@@ -72,7 +72,7 @@ const emit = defineEmits([
 					type="button"
 					@click="emit('set-mode', mode)"
 					class="h-[34px] rounded-[12px] text-[0.8125rem] font-semibold border capitalize"
-					:class="activeTransform.mode === mode ? 'bg-[#095866] text-white border-[#095866]' : 'bg-white text-[#095866] border-[#B9D4DC]'">
+					:class="activeTransform.mode === mode ? 'bg-[var(--color-brand-primary)] text-white border-[var(--color-brand-primary)]' : 'bg-white text-[var(--color-brand-primary)] border-[#B9D4DC]'">
 					{{ mode === 'fill' ? 'Fill' : mode === 'fit' ? 'Fit' : 'Crop' }}
 				</button>
 			</div>
@@ -92,7 +92,7 @@ const emit = defineEmits([
 					min="0.5"
 					max="4"
 					step="0.01"
-					class="w-full accent-[#095866]" />
+					class="w-full accent-[var(--color-brand-primary)]" />
 			</div>
 			<div>
 				<div class="flex items-center justify-between mb-[4px]">
@@ -106,7 +106,7 @@ const emit = defineEmits([
 					min="-1200"
 					max="1200"
 					step="1"
-					class="w-full accent-[#095866]" />
+					class="w-full accent-[var(--color-brand-primary)]" />
 			</div>
 			<div>
 				<div class="flex items-center justify-between mb-[4px]">
@@ -120,7 +120,7 @@ const emit = defineEmits([
 					min="-1200"
 					max="1200"
 					step="1"
-					class="w-full accent-[#095866]" />
+					class="w-full accent-[var(--color-brand-primary)]" />
 			</div>
 		</div>
 
@@ -129,13 +129,13 @@ const emit = defineEmits([
 			<button
 				type="button"
 				@click="emit('reset-viewport')"
-				class="h-[36px] rounded-[12px] border border-[#B9D4DC] bg-white text-[#095866] font-semibold text-[0.8125rem] hover:bg-[#F1F8FA]">
+				class="h-[36px] rounded-[12px] border border-[#B9D4DC] bg-white text-[var(--color-brand-primary)] font-semibold text-[0.8125rem] hover:bg-[#F1F8FA]">
 				Reset viewport
 			</button>
 			<button
 				type="button"
 				@click="emit('reset-all')"
-				class="h-[36px] rounded-[12px] border border-[#B9D4DC] bg-white text-[#095866] font-semibold text-[0.8125rem] hover:bg-[#F1F8FA]">
+				class="h-[36px] rounded-[12px] border border-[#B9D4DC] bg-white text-[var(--color-brand-primary)] font-semibold text-[0.8125rem] hover:bg-[#F1F8FA]">
 				Reset totale
 			</button>
 		</div>
@@ -145,7 +145,7 @@ const emit = defineEmits([
 			type="button"
 			@click="emit('save')"
 			:disabled="uploading || !hasPendingChanges"
-			class="mt-[14px] w-full h-[44px] rounded-[999px] bg-[#095866] hover:bg-[#074a56] text-white font-semibold text-[0.875rem] disabled:opacity-45 disabled:cursor-not-allowed">
+			class="mt-[14px] w-full h-[44px] rounded-[999px] bg-[var(--color-brand-primary)] hover:bg-[var(--color-brand-primary-hover)] text-white font-semibold text-[0.875rem] disabled:opacity-45 disabled:cursor-not-allowed">
 			{{ uploading ? 'Salvataggio...' : 'Salva immagine' }}
 		</button>
 

@@ -68,7 +68,7 @@ function onFieldBlur(pack, packIndex, field) {
 							<p class="preventivo-heading__subtitle">{{ preventivoSubtitle }}</p>
 						</div>
 					</div>
-					<button v-if="hasFormData" type="button" @click="resetForm" aria-label="Azzera il modulo" class="preventivo-heading__reset flex items-center gap-[4px] text-[0.75rem] text-[#999] hover:text-[#E44203] transition cursor-pointer group">
+					<button v-if="hasFormData" type="button" @click="resetForm" aria-label="Azzera il modulo" class="preventivo-heading__reset flex items-center gap-[4px] text-[0.75rem] text-[#999] hover:text-[var(--color-brand-accent)] transition cursor-pointer group">
 						<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="group-hover:rotate-[-180deg] transition-transform duration-300"><path d="M2.5 2v6h6"/><path d="M2.66 15.57a10 10 0 1 0 .57-8.38L2.5 8"/></svg>
 						<span class="hidden tablet:inline">Azzera</span>
 					</button>
@@ -230,13 +230,13 @@ function onFieldBlur(pack, packIndex, field) {
 					</div>
 					<!-- Promo banner -->
 					<div v-if="promoSettings?.active && promoSettings?.label_text" class="flex justify-center mt-[20px] desktop:mt-[16px]">
-						<span :style="{ backgroundColor: promoSettings.label_color || '#E44203' }" class="inline-flex items-center gap-[6px] px-[14px] py-[6px] rounded-[12px] text-white text-[0.875rem] font-bold tracking-wide shadow-sm">
+						<span :style="{ backgroundColor: promoSettings.label_color || 'var(--color-brand-accent)' }" class="inline-flex items-center gap-[6px] px-[14px] py-[6px] rounded-[12px] text-white text-[0.875rem] font-bold tracking-wide shadow-sm">
 							<img v-if="promoSettings.label_image" :src="promoSettings.label_image" alt="" loading="lazy" decoding="async" width="40" height="18" class="h-[18px] w-auto" />
 							{{ promoSettings.label_text }}
 						</span>
 					</div>
 					<!-- CTA continua -->
-					<div class="continue-button-wrapper bg-[#E44203] w-full text-white overflow-hidden" :class="['h-[56px] tablet:h-[60px]', promoSettings?.active && promoSettings?.label_text ? 'mt-[12px]' : 'mt-[18px] desktop:mt-[20px]', isStandalonePreventivoRoute ? 'continue-button-wrapper--sticky' : '']">
+					<div class="continue-button-wrapper bg-[var(--color-brand-accent)] w-full text-white overflow-hidden" :class="['h-[56px] tablet:h-[60px]', promoSettings?.active && promoSettings?.label_text ? 'mt-[12px]' : 'mt-[18px] desktop:mt-[20px]', isStandalonePreventivoRoute ? 'continue-button-wrapper--sticky' : '']">
 						<button v-if="!isCalculating" type="button" @click="continueToNextStep" :disabled="isCalculating || isAdvancingToServices" class="continue-cta-button w-full h-full cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed">
 							<span class="continue-cta-button__label">{{ continueButtonLabel }}</span>
 							<span class="continue-cta-button__tail">

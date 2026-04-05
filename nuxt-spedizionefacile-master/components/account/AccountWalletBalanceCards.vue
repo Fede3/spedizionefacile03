@@ -25,17 +25,17 @@ const statusLabel = computed(() => {
 </script>
 
 <template>
-	<div class="rounded-[18px] border border-[#E9EBEC] bg-white px-[16px] py-[14px] shadow-sm desktop:px-[20px] desktop:py-[18px]">
+	<div class="rounded-[18px] border border-[var(--color-brand-border)] bg-white px-[16px] py-[14px] shadow-sm desktop:px-[20px] desktop:py-[18px]">
 		<div class="flex flex-col gap-[10px] tablet:flex-row tablet:items-start tablet:justify-between">
 			<div>
-				<p class="text-[0.75rem] font-semibold uppercase tracking-[0.08em] text-[#095866]">Panoramica saldo</p>
-				<h2 class="mt-[4px] text-[1rem] font-bold text-[#252B42]">Fondi disponibili e prossima azione</h2>
+				<p class="text-[0.75rem] font-semibold uppercase tracking-[0.08em] text-[var(--color-brand-primary)]">Panoramica saldo</p>
+				<h2 class="mt-[4px] text-[1rem] font-bold text-[var(--color-brand-text)]">Fondi disponibili e prossima azione</h2>
 				<p class="mt-[4px] max-w-[640px] text-[0.8125rem] leading-[1.55] text-[#667281]">
 					Tieni sotto controllo il denaro pronto all'uso, le commissioni Pro e i passaggi utili per ricaricare o prelevare senza aprire altre pagine.
 				</p>
 			</div>
 
-			<span class="inline-flex w-fit items-center rounded-full bg-[#F0F6F7] px-[10px] py-[5px] text-[0.75rem] font-semibold text-[#095866]">
+			<span class="inline-flex w-fit items-center rounded-full bg-[#F0F6F7] px-[10px] py-[5px] text-[0.75rem] font-semibold text-[var(--color-brand-primary)]">
 				{{ statusLabel }}
 			</span>
 		</div>
@@ -65,7 +65,7 @@ const statusLabel = computed(() => {
 			<section class="rounded-[16px] bg-[#FAFCFD] px-[16px] py-[15px]">
 				<div class="mb-[12px] flex items-center gap-[8px]">
 					<div class="flex h-[34px] w-[34px] items-center justify-center rounded-[50px] bg-[#EDF7F8]">
-						<svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="text-[#095866]">
+						<svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="text-[var(--color-brand-primary)]">
 							<path
 								d="M21 18v1a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v1"
 								stroke="currentColor"
@@ -75,24 +75,24 @@ const statusLabel = computed(() => {
 							<path d="M21 12H10m11 0-3-3m3 3-3 3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
 						</svg>
 					</div>
-					<p class="text-[0.75rem] font-medium uppercase tracking-[1.2px] text-[#095866]">Saldo disponibile</p>
+					<p class="text-[0.75rem] font-medium uppercase tracking-[1.2px] text-[var(--color-brand-primary)]">Saldo disponibile</p>
 				</div>
 
 				<div v-if="isLoadingBalance && !hasBalanceData" class="animate-pulse space-y-[10px]">
-					<div class="h-[16px] w-[110px] rounded-full bg-[#E9EBEC]"></div>
+					<div class="h-[16px] w-[110px] rounded-full bg-[var(--color-brand-border)]"></div>
 					<div class="h-[34px] w-[170px] rounded-[12px] bg-[#F5F7F8]"></div>
-					<div class="h-[12px] w-[210px] rounded-full bg-[#E9EBEC]"></div>
+					<div class="h-[12px] w-[210px] rounded-full bg-[var(--color-brand-border)]"></div>
 				</div>
 
 				<template v-else>
-					<p class="text-[1.875rem] leading-none font-bold tracking-tight text-[#252B42] desktop:text-[2.25rem]">
+					<p class="text-[1.875rem] leading-none font-bold tracking-tight text-[var(--color-brand-text)] desktop:text-[2.25rem]">
 						&euro;{{ balance ? formatEuro(balance.balance || 0) : '0,00' }}
 					</p>
 					<p class="mt-[8px] text-[0.8125rem] leading-[1.5] text-[#667281]">
 						Importo subito utilizzabile per spedizioni, servizi e pagamenti dal wallet.
 					</p>
 					<div class="mt-[12px] flex flex-wrap gap-[8px]">
-						<span class="inline-flex rounded-full bg-[#F0F6F7] px-[10px] py-[5px] text-[0.75rem] font-semibold text-[#095866]">
+						<span class="inline-flex rounded-full bg-[#F0F6F7] px-[10px] py-[5px] text-[0.75rem] font-semibold text-[var(--color-brand-primary)]">
 							Utilizzabile subito
 						</span>
 						<span class="inline-flex rounded-full bg-[#F8F9FB] px-[10px] py-[5px] text-[0.75rem] font-semibold text-[#4B5563]">
@@ -105,7 +105,7 @@ const statusLabel = computed(() => {
 			<section v-if="isPro" class="rounded-[16px] bg-[#F7FBFB] px-[16px] py-[15px]">
 				<div class="mb-[12px] flex items-center gap-[8px]">
 					<div class="flex h-[34px] w-[34px] items-center justify-center rounded-[50px] bg-[#EDF7F8]">
-						<svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="text-[#095866]">
+						<svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="text-[var(--color-brand-primary)]">
 							<path
 								d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4z"
 								stroke="currentColor"
@@ -121,17 +121,17 @@ const statusLabel = computed(() => {
 								stroke-linejoin="round" />
 						</svg>
 					</div>
-					<p class="text-[0.75rem] font-medium uppercase tracking-[1.2px] text-[#095866]">Commissioni Pro</p>
+					<p class="text-[0.75rem] font-medium uppercase tracking-[1.2px] text-[var(--color-brand-primary)]">Commissioni Pro</p>
 				</div>
 
 				<div v-if="isLoadingBalance && !hasBalanceData" class="animate-pulse space-y-[10px]">
-					<div class="h-[16px] w-[120px] rounded-full bg-[#E9EBEC]"></div>
+					<div class="h-[16px] w-[120px] rounded-full bg-[var(--color-brand-border)]"></div>
 					<div class="h-[34px] w-[160px] rounded-[12px] bg-[#F5F7F8]"></div>
-					<div class="h-[12px] w-[200px] rounded-full bg-[#E9EBEC]"></div>
+					<div class="h-[12px] w-[200px] rounded-full bg-[var(--color-brand-border)]"></div>
 				</div>
 
 				<template v-else>
-					<p class="text-[1.875rem] leading-none font-bold tracking-tight text-[#252B42] desktop:text-[2.25rem]">
+					<p class="text-[1.875rem] leading-none font-bold tracking-tight text-[var(--color-brand-text)] desktop:text-[2.25rem]">
 						&euro;{{ balance ? formatEuro(balance.commission_balance || 0) : '0,00' }}
 					</p>
 					<p class="mt-[8px] text-[0.8125rem] leading-[1.5] text-[#667281]">
@@ -157,13 +157,13 @@ const statusLabel = computed(() => {
 			<section v-else class="rounded-[16px] bg-[#FAFCFD] px-[16px] py-[15px]">
 				<div class="flex items-start gap-[8px]">
 					<div class="flex h-[34px] w-[34px] items-center justify-center rounded-[50px] bg-[#EDF7F8]">
-						<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-[#095866]">
+						<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-[var(--color-brand-primary)]">
 							<rect x="1" y="4" width="22" height="16" rx="2" />
 							<line x1="1" y1="10" x2="23" y2="10" />
 						</svg>
 					</div>
 					<div class="min-w-0">
-						<h3 class="text-[0.9375rem] font-bold text-[#252B42]">Azioni rapide</h3>
+						<h3 class="text-[0.9375rem] font-bold text-[var(--color-brand-text)]">Azioni rapide</h3>
 						<p class="mt-[4px] text-[0.8125rem] leading-[1.5] text-[#667281]">
 							Ricarica il wallet o cambia carta senza rimbalzare tra schermate diverse.
 						</p>
@@ -173,7 +173,7 @@ const statusLabel = computed(() => {
 				<div class="mt-[14px] grid grid-cols-1 gap-[10px] tablet:grid-cols-2">
 					<NuxtLink
 						to="/account/carte"
-						class="flex items-center gap-[8px] rounded-[14px] border border-[#E6EDF0] bg-white px-[12px] py-[12px] text-[0.8125rem] font-medium text-[#095866] transition-colors hover:border-[#BFD8DE] hover:text-[#0B6D7D]">
+						class="flex items-center gap-[8px] rounded-[14px] border border-[#E6EDF0] bg-white px-[12px] py-[12px] text-[0.8125rem] font-medium text-[var(--color-brand-primary)] transition-colors hover:border-[#BFD8DE] hover:text-[#0B6D7D]">
 						<svg
 							width="17"
 							height="17"
@@ -183,7 +183,7 @@ const statusLabel = computed(() => {
 							stroke-width="2"
 							stroke-linecap="round"
 							stroke-linejoin="round"
-							class="text-[#095866]">
+							class="text-[var(--color-brand-primary)]">
 							<rect x="1" y="4" width="22" height="16" rx="2" />
 							<line x1="1" y1="10" x2="23" y2="10" />
 						</svg>
@@ -192,7 +192,7 @@ const statusLabel = computed(() => {
 
 					<NuxtLink
 						to="/account/spedizioni"
-						class="flex items-center gap-[8px] rounded-[14px] border border-[#E6EDF0] bg-white px-[12px] py-[12px] text-[0.8125rem] font-medium text-[#095866] transition-colors hover:border-[#BFD8DE] hover:text-[#0B6D7D]">
+						class="flex items-center gap-[8px] rounded-[14px] border border-[#E6EDF0] bg-white px-[12px] py-[12px] text-[0.8125rem] font-medium text-[var(--color-brand-primary)] transition-colors hover:border-[#BFD8DE] hover:text-[#0B6D7D]">
 						<svg
 							width="17"
 							height="17"
@@ -202,7 +202,7 @@ const statusLabel = computed(() => {
 							stroke-width="2"
 							stroke-linecap="round"
 							stroke-linejoin="round"
-							class="text-[#095866]">
+							class="text-[var(--color-brand-primary)]">
 							<path d="M1 3h15v13H1z" />
 							<path d="M16 8h4l3 3v5h-7V8z" />
 							<circle cx="5.5" cy="18.5" r="2.5" />
@@ -216,7 +216,7 @@ const statusLabel = computed(() => {
 
 		<div class="mt-[14px] flex flex-col gap-[8px] tablet:flex-row tablet:items-center tablet:justify-between">
 			<div>
-				<p class="text-[0.75rem] font-semibold uppercase tracking-[0.08em] text-[#095866]">Uso rapido</p>
+				<p class="text-[0.75rem] font-semibold uppercase tracking-[0.08em] text-[var(--color-brand-primary)]">Uso rapido</p>
 				<p class="mt-[3px] text-[0.875rem] leading-[1.5] text-[#667281]">
 					Le ricariche usano la carta predefinita; se cambi metodo, lo vedi subito nella prossima operazione.
 				</p>

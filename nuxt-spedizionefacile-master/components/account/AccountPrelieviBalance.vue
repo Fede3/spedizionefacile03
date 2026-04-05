@@ -32,14 +32,14 @@ const steps = [
 				<div>
 					<div class="flex items-center gap-[8px] mb-[10px]">
 						<div class="w-[36px] h-[36px] rounded-[50px] bg-[#edf7f8] flex items-center justify-center">
-							<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="#095866">
+							<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="var(--color-brand-primary)">
 								<path
 									d="M3,6H21V18H3V6M12,9A3,3 0 0,1 15,12A3,3 0 0,1 12,15A3,3 0 0,1 9,12A3,3 0 0,1 12,9M7,8A2,2 0 0,1 5,10V14A2,2 0 0,1 7,16H17A2,2 0 0,1 19,14V10A2,2 0 0,1 17,8H7Z" />
 							</svg>
 						</div>
-						<p class="text-[0.75rem] uppercase tracking-[1.2px] font-medium text-[#095866]">Saldo</p>
+						<p class="text-[0.75rem] uppercase tracking-[1.2px] font-medium text-[var(--color-brand-primary)]">Saldo</p>
 					</div>
-					<p class="text-[2rem] desktop:text-[2.5rem] font-bold tracking-tight leading-none text-[#252B42]">
+					<p class="text-[2rem] desktop:text-[2.5rem] font-bold tracking-tight leading-none text-[var(--color-brand-text)]">
 						&euro;{{ formatEuro(availableBalance) }}
 					</p>
 					<p class="text-[0.75rem] text-[#667281] mt-[6px]">Commissioni accumulate</p>
@@ -52,7 +52,7 @@ const steps = [
 							'w-full desktop:w-auto px-[24px] py-[12px] rounded-[12px] font-semibold text-[0.875rem] transition-all flex items-center justify-center gap-[8px]',
 							isLoading || hasPending || availableBalance < 1
 								? 'bg-[#edf1f3] cursor-not-allowed text-[#a5b3bb]'
-								: 'bg-[#095866] text-white hover:bg-[#074a56] cursor-pointer shadow-[0_2px_8px_rgba(9,88,102,0.2)]',
+								: 'bg-[var(--color-brand-primary)] text-white hover:bg-[var(--color-brand-primary-hover)] cursor-pointer shadow-[0_2px_8px_rgba(9,88,102,0.2)]',
 						]">
 						<svg
 							v-if="!isLoading && !hasPending"
@@ -121,8 +121,8 @@ const steps = [
 
 		<!-- Come funziona -->
 		<div class="sf-account-panel rounded-[16px] p-[16px] desktop:p-[20px]">
-			<h3 class="text-[0.875rem] font-bold text-[#252B42] mb-[12px] flex items-center gap-[8px]">
-				<svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#095866" stroke-width="2">
+			<h3 class="text-[0.875rem] font-bold text-[var(--color-brand-text)] mb-[12px] flex items-center gap-[8px]">
+				<svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--color-brand-primary)" stroke-width="2">
 					<circle cx="12" cy="12" r="10" />
 					<line x1="12" y1="16" x2="12" y2="12" />
 					<line x1="12" y1="8" x2="12.01" y2="8" />
@@ -132,7 +132,7 @@ const steps = [
 			<div class="space-y-[10px]">
 				<div v-for="(step, idx) in steps" :key="idx" class="flex items-start gap-[8px]">
 					<div
-						class="w-[30px] h-[30px] rounded-full bg-[#095866]/10 flex items-center justify-center shrink-0 text-[0.75rem] font-bold text-[#095866]">
+						class="w-[30px] h-[30px] rounded-full bg-[var(--color-brand-primary)]/10 flex items-center justify-center shrink-0 text-[0.75rem] font-bold text-[var(--color-brand-primary)]">
 						{{ idx + 1 }}
 					</div>
 					<p class="text-[0.8125rem] text-[#404040] leading-[1.5]">{{ step }}</p>

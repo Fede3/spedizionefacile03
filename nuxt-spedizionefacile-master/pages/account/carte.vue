@@ -218,7 +218,7 @@ const togglePaymentForm = async () => {
 			elements.value = stripe.elements();
 			const style = {
 				base: {
-					color: '#252B42',
+					color: 'var(--color-brand-text)',
 					fontFamily: '"Inter", sans-serif',
 					fontSize: '15px',
 					fontWeight: '400',
@@ -303,10 +303,10 @@ const togglePaymentForm = async () => {
 			<!-- Wallet link bar -->
 			<div
 				v-if="!showFormPayments"
-				class="mb-[16px] rounded-[12px] border border-[#E9EBEC] bg-white px-[16px] py-[14px] shadow-sm desktop:px-[18px]">
+				class="mb-[16px] rounded-[12px] border border-[var(--color-brand-border)] bg-white px-[16px] py-[14px] shadow-sm desktop:px-[18px]">
 				<div class="flex flex-col gap-[10px] tablet:flex-row tablet:items-center tablet:justify-between">
 					<div>
-						<p class="text-[0.75rem] font-semibold uppercase tracking-[0.08em] text-[#095866]">Metodi salvati</p>
+						<p class="text-[0.75rem] font-semibold uppercase tracking-[0.08em] text-[var(--color-brand-primary)]">Metodi salvati</p>
 						<p class="mt-[3px] text-[0.875rem] leading-[1.5] text-[#667281]">
 							{{ payments?.data?.length ? `${payments.data.length} carte salvate.` : 'Carte pronte per checkout e wallet.' }}
 						</p>
@@ -354,8 +354,8 @@ const togglePaymentForm = async () => {
 						</svg>
 					</div>
 					<div class="flex-1">
-						<h3 class="text-[0.875rem] font-bold text-[#252B42] mb-[4px]">Stripe non configurato</h3>
-						<p class="text-[0.75rem] text-[#737373] leading-[1.5] mb-[10px]">
+						<h3 class="text-[0.875rem] font-bold text-[var(--color-brand-text)] mb-[4px]">Stripe non configurato</h3>
+						<p class="text-[0.75rem] text-[var(--color-brand-text-secondary)] leading-[1.5] mb-[10px]">
 							<span v-if="isAdmin">Per abilitare carte, checkout e ricariche wallet configura Stripe dal pannello amministrazione.</span>
 							<span v-else>
 								I pagamenti con carta non sono ancora attivi su questo sito. Quando Stripe sarà configurato dall'amministratore potrai

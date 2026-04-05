@@ -92,8 +92,8 @@ const orderMetaPillStyle = (kind, status = '') => {
 			Consegnato: { backgroundColor: '#ECFDF3', color: '#047857' },
 			'In giacenza': { backgroundColor: '#FFF7ED', color: '#C2410C' },
 		},
-		packages: { backgroundColor: '#F0F6F7', color: '#095866' },
-		total: { backgroundColor: '#FFF5EB', color: '#E44203' },
+		packages: { backgroundColor: '#F0F6F7', color: 'var(--color-brand-primary)' },
+		total: { backgroundColor: '#FFF5EB', color: 'var(--color-brand-accent)' },
 	};
 
 	return palette[kind]?.[status] || palette[kind] || {};
@@ -105,7 +105,7 @@ const orderMetaPillStyle = (kind, status = '') => {
 		<div class="my-container">
 			<!-- Loading -->
 			<div v-if="orderStatus === 'pending'" class="space-y-[16px]">
-				<div class="bg-white rounded-[12px] p-[32px] border border-[#E9EBEC] animate-pulse">
+				<div class="bg-white rounded-[12px] p-[32px] border border-[var(--color-brand-border)] animate-pulse">
 					<div class="h-[24px] bg-gray-200 rounded w-[40%] mb-[16px]"></div>
 					<div class="h-[16px] bg-gray-200 rounded w-[60%] mb-[8px]"></div>
 					<div class="h-[16px] bg-gray-200 rounded w-[50%]"></div>
@@ -224,31 +224,31 @@ const orderMetaPillStyle = (kind, status = '') => {
 				</div>
 
 				<!-- Status & Summary -->
-				<div class="mb-[16px] rounded-[12px] border border-[#E9EBEC] bg-white p-[18px] tablet:p-[22px]">
+				<div class="mb-[16px] rounded-[12px] border border-[var(--color-brand-border)] bg-white p-[18px] tablet:p-[22px]">
 					<div class="grid grid-cols-1 gap-[12px] tablet:grid-cols-2 desktop:grid-cols-4">
 						<div class="rounded-[12px] border border-[#E9EEF2] bg-[#FBFCFD] px-[14px] py-[12px]">
 							<p class="mb-[4px] text-[0.6875rem] font-bold uppercase tracking-[0.14em] text-[#7A8695]">Tratta</p>
-							<p class="text-[0.9375rem] font-semibold leading-[1.35] text-[#252B42]">{{ orderRouteLabel }}</p>
+							<p class="text-[0.9375rem] font-semibold leading-[1.35] text-[var(--color-brand-text)]">{{ orderRouteLabel }}</p>
 						</div>
 						<div class="rounded-[12px] border border-[#E9EEF2] bg-white px-[14px] py-[12px]">
 							<p class="mb-[4px] text-[0.6875rem] font-bold uppercase tracking-[0.14em] text-[#7A8695]">Creato il</p>
-							<p class="text-[0.9375rem] font-semibold leading-[1.35] text-[#252B42]">{{ formatDate(orderData.created_at) }}</p>
+							<p class="text-[0.9375rem] font-semibold leading-[1.35] text-[var(--color-brand-text)]">{{ formatDate(orderData.created_at) }}</p>
 						</div>
 						<div class="rounded-[12px] border border-[#E9EEF2] bg-white px-[14px] py-[12px]">
 							<p class="mb-[4px] text-[0.6875rem] font-bold uppercase tracking-[0.14em] text-[#7A8695]">Totale</p>
-							<p class="text-[1rem] font-bold leading-[1.2] text-[#095866]">{{ orderSubtotalLabel }}</p>
+							<p class="text-[1rem] font-bold leading-[1.2] text-[var(--color-brand-primary)]">{{ orderSubtotalLabel }}</p>
 						</div>
 						<div class="rounded-[12px] border border-[#E9EEF2] bg-white px-[14px] py-[12px]">
 							<p class="mb-[4px] text-[0.6875rem] font-bold uppercase tracking-[0.14em] text-[#7A8695]">Pagamento</p>
-							<p class="text-[0.9375rem] font-semibold leading-[1.35] text-[#252B42]">{{ paymentMethodLabel(orderData.payment_method) }}</p>
+							<p class="text-[0.9375rem] font-semibold leading-[1.35] text-[var(--color-brand-text)]">{{ paymentMethodLabel(orderData.payment_method) }}</p>
 						</div>
 					</div>
 					<div
 						v-if="isCancellable && !isCancelledOrRefunded"
-						class="mt-[16px] flex flex-col gap-[10px] border-t border-[#E9EBEC] pt-[16px] desktop:flex-row desktop:items-center desktop:justify-between">
-						<p class="text-[0.75rem] text-[#737373]">
+						class="mt-[16px] flex flex-col gap-[10px] border-t border-[var(--color-brand-border)] pt-[16px] desktop:flex-row desktop:items-center desktop:justify-between">
+						<p class="text-[0.75rem] text-[var(--color-brand-text-secondary)]">
 							Per richiedere un rimborso, contatta l'
-							<NuxtLink to="/account/assistenza" class="text-[#095866] font-semibold underline">assistenza</NuxtLink>
+							<NuxtLink to="/account/assistenza" class="text-[var(--color-brand-primary)] font-semibold underline">assistenza</NuxtLink>
 							.
 						</p>
 						<button type="button" @click="openCancelModal" class="btn-secondary btn-compact inline-flex items-center gap-[6px]">
@@ -335,8 +335,8 @@ const orderMetaPillStyle = (kind, status = '') => {
 			</template>
 
 			<!-- Not found -->
-			<div v-else class="bg-white rounded-[12px] p-[48px] border border-[#E9EBEC] text-center">
-				<p class="text-[1rem] text-[#737373]">Ordine non trovato.</p>
+			<div v-else class="bg-white rounded-[12px] p-[48px] border border-[var(--color-brand-border)] text-center">
+				<p class="text-[1rem] text-[var(--color-brand-text-secondary)]">Ordine non trovato.</p>
 				<NuxtLink to="/account/spedizioni" class="btn-secondary btn-compact mt-[16px] inline-flex items-center gap-[6px]">
 					<svg
 						xmlns="http://www.w3.org/2000/svg"

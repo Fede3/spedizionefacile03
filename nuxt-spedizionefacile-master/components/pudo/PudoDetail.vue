@@ -42,20 +42,20 @@ const error = computed(() => props.detailsErrors[props.detailKey] || null);
       @click.stop>
       <div
         v-if="isLoading"
-        class="flex items-center gap-[6px] text-[#737373]">
-        <span class="inline-block w-[14px] h-[14px] border-2 border-[#095866] border-t-transparent rounded-full animate-spin"></span>
+        class="flex items-center gap-[6px] text-[var(--color-brand-text-secondary)]">
+        <span class="inline-block w-[14px] h-[14px] border-2 border-[var(--color-brand-primary)] border-t-transparent rounded-full animate-spin"></span>
         Caricamento dettagli...
       </div>
       <template v-else-if="details">
         <p
           v-if="details.opening_hours"
-          class="text-[#252B42]">
+          class="text-[var(--color-brand-text)]">
           <span class="font-semibold">Orari completi:</span>
           {{ formatOpeningHours(details.opening_hours) }}
         </p>
         <p
           v-if="details.localization_hint"
-          class="text-[#737373] mt-[4px]">
+          class="text-[var(--color-brand-text-secondary)] mt-[4px]">
           {{ details.localization_hint }}
         </p>
       </template>
@@ -69,7 +69,7 @@ const error = computed(() => props.detailsErrors[props.detailKey] || null);
     <button
       type="button"
       @click.stop="emit('toggle')"
-      class="mt-[6px] text-[0.75rem] text-[#095866] font-semibold hover:underline cursor-pointer">
+      class="mt-[6px] text-[0.75rem] text-[var(--color-brand-primary)] font-semibold hover:underline cursor-pointer">
       {{ expanded ? 'Chiudi dettagli' : 'Dettagli e orari' }}
     </button>
   </div>

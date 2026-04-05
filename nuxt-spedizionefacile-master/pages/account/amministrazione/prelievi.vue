@@ -122,15 +122,15 @@ onMounted(() => {
 				{{ actionMessage.text }}
 			</div>
 
-			<div class="mb-[20px] rounded-[12px] border border-[#E9EBEC] bg-[#F8FAFB] p-[14px] tablet:p-[18px]">
+			<div class="mb-[20px] rounded-[12px] border border-[var(--color-brand-border)] bg-[#F8FAFB] p-[14px] tablet:p-[18px]">
 				<div class="flex flex-col gap-[14px] desktop:flex-row desktop:items-center desktop:justify-between">
 					<div>
 						<p class="text-[0.75rem] font-semibold uppercase tracking-[0.6px] text-[#6B7280]">Toolbar prelievi</p>
-						<h2 class="mt-[4px] text-[1rem] font-semibold text-[#252B42]">Coda richieste e stato approvazioni</h2>
+						<h2 class="mt-[4px] text-[1rem] font-semibold text-[var(--color-brand-text)]">Coda richieste e stato approvazioni</h2>
 					</div>
 					<div class="flex flex-wrap items-center gap-[8px]">
 						<span
-							class="inline-flex min-h-[34px] items-center rounded-full border border-[#DCE7E8] bg-white px-[12px] text-[0.75rem] font-medium text-[#095866]">
+							class="inline-flex min-h-[34px] items-center rounded-full border border-[#DCE7E8] bg-white px-[12px] text-[0.75rem] font-medium text-[var(--color-brand-primary)]">
 							{{ withdrawalsData.length }} richieste
 						</span>
 						<span
@@ -142,51 +142,51 @@ onMounted(() => {
 			</div>
 
 			<div class="grid grid-cols-1 tablet:grid-cols-3 xl:grid-cols-4 gap-[16px] mb-[24px]">
-				<div class="bg-white rounded-[12px] p-[20px] border border-[#E9EBEC] shadow-sm">
+				<div class="bg-white rounded-[12px] p-[20px] border border-[var(--color-brand-border)] shadow-sm">
 					<div class="flex items-center gap-[8px] mb-[8px]">
 						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[18px] h-[18px] text-amber-600" fill="currentColor">
 							<path
 								d="M12,20A8,8 0 0,0 20,12A8,8 0 0,0 12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22C6.47,22 2,17.5 2,12A10,10 0 0,1 12,2M12.5,7V12.25L17,14.92L16.25,16.15L11,13V7H12.5Z" />
 						</svg>
-						<p class="text-[0.75rem] text-[#737373] uppercase tracking-[0.5px] font-medium">In attesa</p>
+						<p class="text-[0.75rem] text-[var(--color-brand-text-secondary)] uppercase tracking-[0.5px] font-medium">In attesa</p>
 					</div>
 					<p class="text-[1.75rem] font-bold text-amber-600">{{ pendingWithdrawals.length }}</p>
 				</div>
-				<div class="bg-white rounded-[12px] p-[20px] border border-[#E9EBEC] shadow-sm">
+				<div class="bg-white rounded-[12px] p-[20px] border border-[var(--color-brand-border)] shadow-sm">
 					<div class="flex items-center gap-[8px] mb-[8px]">
 						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[18px] h-[18px] text-emerald-600" fill="currentColor">
 							<path
 								d="M12 2C6.5 2 2 6.5 2 12S6.5 22 12 22 22 17.5 22 12 17.5 2 12 2M10 17L5 12L6.41 10.59L10 14.17L17.59 6.58L19 8L10 17Z" />
 						</svg>
-						<p class="text-[0.75rem] text-[#737373] uppercase tracking-[0.5px] font-medium">Approvate</p>
+						<p class="text-[0.75rem] text-[var(--color-brand-text-secondary)] uppercase tracking-[0.5px] font-medium">Approvate</p>
 					</div>
 					<p class="text-[1.75rem] font-bold text-emerald-600">{{ approvedWithdrawals.length }}</p>
 				</div>
-				<div class="bg-white rounded-[12px] p-[20px] border border-[#E9EBEC] shadow-sm">
+				<div class="bg-white rounded-[12px] p-[20px] border border-[var(--color-brand-border)] shadow-sm">
 					<div class="flex items-center gap-[8px] mb-[8px]">
-						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[18px] h-[18px] text-[#252B42]" fill="currentColor">
+						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[18px] h-[18px] text-[var(--color-brand-text)]" fill="currentColor">
 							<path
 								d="M15,18.5C12.49,18.5 10.32,17.08 9.24,15H15L16,13H8.58C8.53,12.67 8.5,12.34 8.5,12C8.5,11.66 8.53,11.33 8.58,11H15L16,9H9.24C10.32,6.92 12.5,5.5 15,5.5C16.61,5.5 18.09,6.09 19.23,7.07L21,5.29C19.41,3.86 17.31,3 15,3C11.08,3 7.76,5.51 6.52,9H3L2,11H6.06C6.02,11.33 6,11.66 6,12C6,12.34 6.02,12.67 6.06,13H3L2,15H6.52C7.76,18.49 11.08,21 15,21C17.31,21 19.41,20.14 21,18.71L19.22,16.93C18.09,17.91 16.62,18.5 15,18.5Z" />
 						</svg>
-						<p class="text-[0.75rem] text-[#737373] uppercase tracking-[0.5px] font-medium">Totale approvato</p>
+						<p class="text-[0.75rem] text-[var(--color-brand-text-secondary)] uppercase tracking-[0.5px] font-medium">Totale approvato</p>
 					</div>
-					<p class="text-[1.75rem] font-bold text-[#252B42]">&euro;{{ formatCurrency(totalApproved) }}</p>
+					<p class="text-[1.75rem] font-bold text-[var(--color-brand-text)]">&euro;{{ formatCurrency(totalApproved) }}</p>
 				</div>
-				<div class="bg-white rounded-[12px] p-[20px] border border-[#E9EBEC] shadow-sm">
+				<div class="bg-white rounded-[12px] p-[20px] border border-[var(--color-brand-border)] shadow-sm">
 					<div class="flex items-center gap-[8px] mb-[8px]">
 						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[18px] h-[18px] text-red-600" fill="currentColor">
 							<path
 								d="M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2M12,4A8,8 0 0,0 4,12C4,13.85 4.63,15.55 5.68,16.91L16.91,5.68C15.55,4.63 13.85,4 12,4M12,20A8,8 0 0,0 20,12C20,10.15 19.37,8.45 18.32,7.09L7.09,18.32C8.45,19.37 10.15,20 12,20Z" />
 						</svg>
-						<p class="text-[0.75rem] text-[#737373] uppercase tracking-[0.5px] font-medium">Rifiutate</p>
+						<p class="text-[0.75rem] text-[var(--color-brand-text-secondary)] uppercase tracking-[0.5px] font-medium">Rifiutate</p>
 					</div>
 					<p class="text-[1.75rem] font-bold text-red-600">{{ totalRejected }}</p>
 				</div>
 			</div>
 
-			<div class="bg-white rounded-[12px] p-[24px] desktop:p-[32px] shadow-sm border border-[#E9EBEC]">
-				<h2 class="text-[1.125rem] font-bold text-[#252B42] mb-[20px]">Richieste di prelievo</h2>
-				<div v-if="!withdrawalsData?.length" class="text-center py-[48px] text-[#737373]">
+			<div class="bg-white rounded-[12px] p-[24px] desktop:p-[32px] shadow-sm border border-[var(--color-brand-border)]">
+				<h2 class="text-[1.125rem] font-bold text-[var(--color-brand-text)] mb-[20px]">Richieste di prelievo</h2>
+				<div v-if="!withdrawalsData?.length" class="text-center py-[48px] text-[var(--color-brand-text-secondary)]">
 					<svg
 						xmlns="http://www.w3.org/2000/svg"
 						viewBox="0 0 24 24"
@@ -200,11 +200,11 @@ onMounted(() => {
 					<div
 						v-for="w in withdrawalsData"
 						:key="w.id"
-						class="rounded-[12px] border border-[#E9EBEC] bg-white p-[16px] tablet:p-[18px] hover:border-[#D7E1E4] transition-colors">
+						class="rounded-[12px] border border-[var(--color-brand-border)] bg-white p-[16px] tablet:p-[18px] hover:border-[#D7E1E4] transition-colors">
 						<div class="flex flex-col desktop:flex-row desktop:items-center justify-between gap-[12px]">
 							<div class="flex-1">
 								<div class="flex flex-wrap items-center gap-[10px] mb-[6px]">
-									<span class="text-[1.125rem] font-bold text-[#252B42]">&euro;{{ formatCurrency(w.amount) }}</span>
+									<span class="text-[1.125rem] font-bold text-[var(--color-brand-text)]">&euro;{{ formatCurrency(w.amount) }}</span>
 									<span
 										:class="[
 											'inline-flex items-center gap-[4px] px-[10px] py-[3px] rounded-full text-[0.6875rem] font-medium',
@@ -238,12 +238,12 @@ onMounted(() => {
 								</div>
 								<p class="text-[0.875rem] text-[#404040]">
 									<span class="font-medium">{{ w.user?.name }} {{ w.user?.surname }}</span>
-									<span class="text-[#737373] ml-[8px] break-all">{{ w.user?.email }}</span>
+									<span class="text-[var(--color-brand-text-secondary)] ml-[8px] break-all">{{ w.user?.email }}</span>
 								</p>
-								<p class="text-[0.75rem] text-[#737373] mt-[2px]">Richiesta: {{ formatDate(w.created_at) }}</p>
+								<p class="text-[0.75rem] text-[var(--color-brand-text-secondary)] mt-[2px]">Richiesta: {{ formatDate(w.created_at) }}</p>
 								<p
 									v-if="w.admin_notes"
-									class="mt-[8px] rounded-[12px] bg-[#F8FAFB] px-[12px] py-[10px] text-[0.75rem] text-[#737373] italic">
+									class="mt-[8px] rounded-[12px] bg-[#F8FAFB] px-[12px] py-[10px] text-[0.75rem] text-[var(--color-brand-text-secondary)] italic">
 									Note: {{ w.admin_notes }}
 								</p>
 							</div>
@@ -273,7 +273,7 @@ onMounted(() => {
 											v-model="rejectNotes"
 											type="text"
 											placeholder="Motivo (opzionale)"
-											class="w-full px-[12px] py-[8px] bg-[#F8F9FB] border border-[#E9EBEC] rounded-[12px] text-[0.8125rem] focus:border-[#095866] focus:outline-none" />
+											class="w-full px-[12px] py-[8px] bg-[#F8F9FB] border border-[var(--color-brand-border)] rounded-[12px] text-[0.8125rem] focus:border-[var(--color-brand-primary)] focus:outline-none" />
 										<button
 											@click="confirmReject(w.id)"
 											:disabled="actionLoading === w.id"

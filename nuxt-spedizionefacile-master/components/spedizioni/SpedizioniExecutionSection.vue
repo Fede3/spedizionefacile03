@@ -199,7 +199,7 @@ const runCardAction = (kind) => {
 		<div class="flex flex-col gap-[12px] border-b border-[#E9EEF2] pb-[14px] desktop:flex-row desktop:items-start desktop:justify-between">
 			<div class="max-w-[760px]">
 				<p class="sf-section-kicker mb-[6px]">Esecuzione spedizione</p>
-				<h3 class="text-[1.0625rem] font-bold leading-[1.15] text-[#252B42]">Ritiro, borderò e documenti</h3>
+				<h3 class="text-[1.0625rem] font-bold leading-[1.15] text-[var(--color-brand-text)]">Ritiro, borderò e documenti</h3>
 				<p class="mt-[6px] text-[0.875rem] leading-[1.5] text-[#617182]">
 					Il backend è già pronto: qui rendiamo visibili stato e azioni operative dell’ordine.
 				</p>
@@ -241,7 +241,7 @@ const runCardAction = (kind) => {
 				<div class="flex items-start justify-between gap-[10px]">
 					<div class="min-w-0">
 						<p class="text-[0.75rem] font-semibold uppercase tracking-[0.08em] text-[#7A8695]">{{ card.eyebrow }}</p>
-						<p class="mt-[6px] text-[1rem] font-bold leading-[1.2] text-[#252B42]">{{ card.title }}</p>
+						<p class="mt-[6px] text-[1rem] font-bold leading-[1.2] text-[var(--color-brand-text)]">{{ card.title }}</p>
 					</div>
 					<span
 						class="inline-flex shrink-0 rounded-full border px-[10px] py-[5px] text-[0.75rem] font-semibold"
@@ -257,9 +257,9 @@ const runCardAction = (kind) => {
 						<input
 							v-model="pickupForm.enabled"
 							type="checkbox"
-							class="mt-[3px] h-[16px] w-[16px] rounded border-[#C9D3DD] text-[#095866]" />
+							class="mt-[3px] h-[16px] w-[16px] rounded border-[#C9D3DD] text-[var(--color-brand-primary)]" />
 						<span class="min-w-0">
-							<span class="block text-[0.875rem] font-semibold text-[#252B42]">Richiedi ritiro per questo ordine</span>
+							<span class="block text-[0.875rem] font-semibold text-[var(--color-brand-text)]">Richiedi ritiro per questo ordine</span>
 							<span class="mt-[2px] block text-[0.8125rem] leading-[1.5] text-[#617182]">
 								Disattivalo per segnare il ritiro come non richiesto e pulire data, fascia e note operative salvate.
 							</span>

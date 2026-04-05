@@ -60,42 +60,42 @@ const sections = [
 <template>
 	<section class="min-h-[500px] py-[40px] desktop:py-[60px]">
 		<div class="my-container max-w-[800px]">
-			<h1 class="text-[2rem] font-bold text-[#252B42] mb-[8px]">Cookie Policy</h1>
-			<p class="text-[#737373] text-[0.875rem] mb-[32px]">Ultimo aggiornamento: {{ lastUpdate }}</p>
+			<h1 class="text-[2rem] font-bold text-[var(--color-brand-text)] mb-[8px]">Cookie Policy</h1>
+			<p class="text-[var(--color-brand-text-secondary)] text-[0.875rem] mb-[32px]">Ultimo aggiornamento: {{ lastUpdate }}</p>
 
 			<!-- Sezione introduttiva -->
 			<div
 				v-for="(section, i) in sections.slice(0, 1)"
 				:key="'intro-' + i"
-				class="bg-white rounded-[12px] border border-[#E9EBEC] p-[24px] mb-[24px]"
+				class="bg-white rounded-[12px] border border-[var(--color-brand-border)] p-[24px] mb-[24px]"
 			>
-				<h2 class="text-[1.125rem] font-semibold text-[#252B42] mb-[12px]">{{ section.title }}</h2>
-				<p class="text-[#737373] text-[0.9375rem] leading-[1.8]">{{ section.text }}</p>
+				<h2 class="text-[1.125rem] font-semibold text-[var(--color-brand-text)] mb-[12px]">{{ section.title }}</h2>
+				<p class="text-[var(--color-brand-text-secondary)] text-[0.9375rem] leading-[1.8]">{{ section.text }}</p>
 			</div>
 
 			<!-- Tabella tipi di cookie -->
-			<h2 class="text-[1.25rem] font-semibold text-[#252B42] mb-[16px]">Tipi di cookie utilizzati</h2>
+			<h2 class="text-[1.25rem] font-semibold text-[var(--color-brand-text)] mb-[16px]">Tipi di cookie utilizzati</h2>
 			<div class="space-y-[16px] mb-[24px]">
 				<div
 					v-for="(cookie, i) in cookieTypes"
 					:key="i"
-					class="bg-white rounded-[12px] border border-[#E9EBEC] p-[24px]"
+					class="bg-white rounded-[12px] border border-[var(--color-brand-border)] p-[24px]"
 				>
 					<div class="flex items-center gap-[8px] mb-[12px]">
-						<h3 class="text-[1rem] font-semibold text-[#252B42]">{{ cookie.name }}</h3>
+						<h3 class="text-[1rem] font-semibold text-[var(--color-brand-text)]">{{ cookie.name }}</h3>
 						<span
 							v-if="cookie.required"
-							class="text-[0.75rem] font-medium px-[8px] py-[2px] rounded-full bg-[#095866]/10 text-[#095866]"
+							class="text-[0.75rem] font-medium px-[8px] py-[2px] rounded-full bg-[var(--color-brand-primary)]/10 text-[var(--color-brand-primary)]"
 						>Sempre attivi</span>
 						<span
 							v-else
-							class="text-[0.75rem] font-medium px-[8px] py-[2px] rounded-full bg-[#F3F4F6] text-[#737373]"
+							class="text-[0.75rem] font-medium px-[8px] py-[2px] rounded-full bg-[#F3F4F6] text-[var(--color-brand-text-secondary)]"
 						>Previo consenso</span>
 					</div>
-					<p class="text-[#737373] text-[0.9375rem] leading-[1.8] mb-[8px]">{{ cookie.description }}</p>
+					<p class="text-[var(--color-brand-text-secondary)] text-[0.9375rem] leading-[1.8] mb-[8px]">{{ cookie.description }}</p>
 					<div class="text-[0.8125rem] text-[#A0A5AB] space-y-[4px]">
-						<p><span class="font-medium text-[#737373]">Esempi:</span> {{ cookie.examples }}</p>
-						<p><span class="font-medium text-[#737373]">Durata:</span> {{ cookie.duration }}</p>
+						<p><span class="font-medium text-[var(--color-brand-text-secondary)]">Esempi:</span> {{ cookie.examples }}</p>
+						<p><span class="font-medium text-[var(--color-brand-text-secondary)]">Durata:</span> {{ cookie.duration }}</p>
 					</div>
 				</div>
 			</div>
@@ -104,30 +104,30 @@ const sections = [
 			<div
 				v-for="(section, i) in sections.slice(1)"
 				:key="'section-' + i"
-				class="bg-white rounded-[12px] border border-[#E9EBEC] p-[24px] mb-[24px]"
+				class="bg-white rounded-[12px] border border-[var(--color-brand-border)] p-[24px] mb-[24px]"
 			>
-				<h2 class="text-[1.125rem] font-semibold text-[#252B42] mb-[12px]">{{ section.title }}</h2>
-				<p class="text-[#737373] text-[0.9375rem] leading-[1.8]">{{ section.text }}</p>
+				<h2 class="text-[1.125rem] font-semibold text-[var(--color-brand-text)] mb-[12px]">{{ section.title }}</h2>
+				<p class="text-[var(--color-brand-text-secondary)] text-[0.9375rem] leading-[1.8]">{{ section.text }}</p>
 				<ul v-if="section.links" class="mt-[12px] space-y-[6px]">
 					<li v-for="link in section.links" :key="link.url">
 						<a
 							:href="link.url"
 							target="_blank"
 							rel="noopener noreferrer"
-							class="text-[#095866] text-[0.875rem] hover:underline"
+							class="text-[var(--color-brand-primary)] text-[0.875rem] hover:underline"
 						>{{ link.text }}</a>
 					</li>
 				</ul>
 			</div>
 
 			<!-- Footer contatti -->
-			<div class="bg-[#F9FAFB] rounded-[12px] border border-[#E9EBEC] p-[24px]">
-				<h2 class="text-[1rem] font-semibold text-[#252B42] mb-[8px]">Maggiori informazioni</h2>
-				<p class="text-[#737373] text-[0.9375rem] leading-[1.8]">
+			<div class="bg-[#F9FAFB] rounded-[12px] border border-[var(--color-brand-border)] p-[24px]">
+				<h2 class="text-[1rem] font-semibold text-[var(--color-brand-text)] mb-[8px]">Maggiori informazioni</h2>
+				<p class="text-[var(--color-brand-text-secondary)] text-[0.9375rem] leading-[1.8]">
 					Per informazioni sul trattamento dei dati personali, consulta la nostra
-					<NuxtLink to="/privacy-policy" class="text-[#095866] hover:underline">Privacy Policy</NuxtLink>.
+					<NuxtLink to="/privacy-policy" class="text-[var(--color-brand-primary)] hover:underline">Privacy Policy</NuxtLink>.
 					Per domande specifiche sui cookie, scrivi a
-					<a href="mailto:privacy@spediamofacile.it" class="text-[#095866] hover:underline">privacy@spediamofacile.it</a>.
+					<a href="mailto:privacy@spediamofacile.it" class="text-[var(--color-brand-primary)] hover:underline">privacy@spediamofacile.it</a>.
 				</p>
 			</div>
 		</div>

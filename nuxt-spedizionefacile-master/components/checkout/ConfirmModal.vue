@@ -20,16 +20,16 @@ const emit = defineEmits(['close', 'confirm'])
           <div class="sf-modal-header">
             <div class="sf-modal-header__main">
               <div class="sf-modal-icon sf-modal-icon--accent">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#E44203" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--color-brand-accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
               </div>
               <div>
                 <h3 class="sf-modal-title">Conferma pagamento</h3>
                 <p class="sf-modal-description">
-                  Stai per pagare <span class="font-bold text-[#252B42]">{{ finalTotalFormatted }}</span>
+                  Stai per pagare <span class="font-bold text-[var(--color-brand-text)]">{{ finalTotalFormatted }}</span>
                   <template v-if="paymentMethod === 'carta'">con carta di credito</template>
                   <template v-else-if="paymentMethod === 'bonifico'">tramite bonifico bancario</template>
                   <template v-else-if="paymentMethod === 'wallet'">con il tuo wallet</template>
-                  per <span class="font-bold text-[#252B42]">{{ totalPackages }} {{ totalPackages === 1 ? 'spedizione' : 'spedizioni' }}</span>.
+                  per <span class="font-bold text-[var(--color-brand-text)]">{{ totalPackages }} {{ totalPackages === 1 ? 'spedizione' : 'spedizioni' }}</span>.
                 </p>
               </div>
             </div>

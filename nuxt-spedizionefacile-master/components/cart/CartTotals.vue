@@ -22,14 +22,14 @@ const emit = defineEmits(['checkout', 'empty-cart']);
 			<div class="sf-section-block__header">
 				<div class="sf-page-intro">
 					<span class="sf-section-kicker">Riepilogo</span>
-					<h3 class="text-[1.125rem] font-bold text-[#252B42]">Totale aggiornato del carrello</h3>
+					<h3 class="text-[1.125rem] font-bold text-[var(--color-brand-text)]">Totale aggiornato del carrello</h3>
 					<p class="text-[0.875rem] text-[#607184]">Importo calcolato di nuovo prima del checkout per evitare sorprese.</p>
 				</div>
 			</div>
 			<div class="sf-section-block__body">
 				<div class="flex items-center justify-between gap-[12px] border-b border-[#E1E7EA] py-[4px]">
 					<span class="text-[0.9375rem] font-medium text-[#4B5563]">Importo spedizioni</span>
-					<span class="text-[0.9375rem] font-semibold text-[#252B42]" :class="{ 'line-through text-[#9AA3AA]': couponApplied }">
+					<span class="text-[0.9375rem] font-semibold text-[var(--color-brand-text)]" :class="{ 'line-through text-[#9AA3AA]': couponApplied }">
 						{{ cartMeta?.total }}
 					</span>
 				</div>
@@ -39,10 +39,10 @@ const emit = defineEmits(['checkout', 'empty-cart']);
 				</div>
 				<div class="flex items-end justify-between gap-[12px]">
 					<div class="sf-page-intro">
-						<p class="text-[0.75rem] font-semibold uppercase tracking-[0.16em] text-[#095866]">Totale finale</p>
+						<p class="text-[0.75rem] font-semibold uppercase tracking-[0.16em] text-[var(--color-brand-primary)]">Totale finale</p>
 						<p class="text-[0.8125rem] text-[#6B7280]">Importo finale pronto per la conferma.</p>
 					</div>
-					<span class="text-[1.375rem] font-bold text-[#252B42]">{{ displayTotal }}</span>
+					<span class="text-[1.375rem] font-bold text-[var(--color-brand-text)]">{{ displayTotal }}</span>
 				</div>
 			</div>
 		</section>
@@ -50,7 +50,7 @@ const emit = defineEmits(['checkout', 'empty-cart']);
 		<section class="sf-section-block">
 			<div class="sf-page-intro">
 				<span class="sf-section-kicker">Prossimo passo</span>
-				<h3 class="text-[1.0625rem] font-bold text-[#252B42]">Completa il pagamento</h3>
+				<h3 class="text-[1.0625rem] font-bold text-[var(--color-brand-text)]">Completa il pagamento</h3>
 				<p class="text-[0.8125rem] leading-[1.5] text-[#6B7280]">
 					Nel checkout scegli il metodo di pagamento e confermi l'importo con più dettaglio.
 				</p>

@@ -25,12 +25,12 @@ const formatDate = (dateStr) => formatDateIt(dateStr);
 		<div class="sf-account-value-card h-full">
 			<div class="flex items-center gap-[10px]">
 				<div class="sf-account-value-card__icon">
-					<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="#095866">
+					<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="var(--color-brand-primary)">
 						<path
 							d="M10,7V9H12V17H14V7H10M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2M12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20A8,8 0 0,0 20,12A8,8 0 0,0 12,4Z" />
 					</svg>
 				</div>
-				<p class="text-[0.8125rem] text-[#737373] uppercase tracking-[0.8px] font-medium">Codice account</p>
+				<p class="text-[0.8125rem] text-[var(--color-brand-text-secondary)] uppercase tracking-[0.8px] font-medium">Codice account</p>
 			</div>
 			<div class="flex flex-col gap-[12px]">
 				<span
@@ -75,12 +75,12 @@ const formatDate = (dateStr) => formatDateIt(dateStr);
 		<div class="sf-account-value-card h-full">
 			<div class="flex items-center gap-[10px]">
 				<div class="sf-account-value-card__icon">
-					<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="#095866">
+					<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="var(--color-brand-primary)">
 						<path
 							d="M18,16.08C17.24,16.08 16.56,16.38 16.04,16.85L8.91,12.7C8.96,12.47 9,12.24 9,12C9,11.76 8.96,11.53 8.91,11.3L15.96,7.19C16.5,7.69 17.21,8 18,8A3,3 0 0,0 21,5A3,3 0 0,0 18,2A3,3 0 0,0 15,5C15,5.24 15.04,5.47 15.09,5.7L8.04,9.81C7.5,9.31 6.79,9 6,9A3,3 0 0,0 3,12A3,3 0 0,0 6,15C6.79,15 7.5,14.69 8.04,14.19L15.16,18.34C15.11,18.55 15.08,18.77 15.08,19C15.08,20.61 16.39,21.91 18,21.91C19.61,21.91 20.92,20.61 20.92,19C20.92,17.39 19.61,16.08 18,16.08Z" />
 					</svg>
 				</div>
-				<p class="text-[0.8125rem] uppercase tracking-[1px] text-[#737373] font-medium">Codice referral</p>
+				<p class="text-[0.8125rem] uppercase tracking-[1px] text-[var(--color-brand-text-secondary)] font-medium">Codice referral</p>
 			</div>
 			<div class="flex flex-col gap-[12px]">
 				<span
@@ -141,7 +141,7 @@ const formatDate = (dateStr) => formatDateIt(dateStr);
 							d="M15,18.5C12.49,18.5 10.32,17.08 9.24,15H15L16,13H8.58C8.53,12.67 8.5,12.34 8.5,12C8.5,11.66 8.53,11.33 8.58,11H15L16,9H9.24C10.32,6.92 12.5,5.5 15,5.5C16.61,5.5 18.09,6.09 19.23,7.07L21,5.29C19.41,3.86 17.31,3 15,3C11.08,3 7.76,5.51 6.52,9H3L2,11H6.06C6.02,11.33 6,11.66 6,12C6,12.34 6.02,12.67 6.06,13H3L2,15H6.52C7.76,18.49 11.08,21 15,21C17.31,21 19.41,20.14 21,18.71L19.22,16.93C18.09,17.91 16.62,18.5 15,18.5Z" />
 					</svg>
 				</div>
-				<p class="text-[0.75rem] text-[#737373] uppercase tracking-[0.5px] font-medium">Commissioni</p>
+				<p class="text-[0.75rem] text-[var(--color-brand-text-secondary)] uppercase tracking-[0.5px] font-medium">Commissioni</p>
 			</div>
 			<p class="sf-account-stat-card__value">&euro;{{ referralData ? formatEuro(referralData.total_earnings || 0) : '0,00' }}</p>
 		</div>
@@ -149,12 +149,12 @@ const formatDate = (dateStr) => formatDateIt(dateStr);
 		<div class="sf-account-stat-card">
 			<div class="flex items-center gap-[8px]">
 				<div class="sf-account-stat-card__icon">
-					<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="#095866">
+					<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="var(--color-brand-primary)">
 						<path
 							d="M12,5.5A3.5,3.5 0 0,1 15.5,9A3.5,3.5 0 0,1 12,12.5A3.5,3.5 0 0,1 8.5,9A3.5,3.5 0 0,1 12,5.5M5,8C5.56,8 6.08,8.15 6.53,8.42C6.38,9.85 6.8,11.27 7.66,12.38C7.16,13.34 6.16,14 5,14A3,3 0 0,1 2,11A3,3 0 0,1 5,8M19,8A3,3 0 0,1 22,11A3,3 0 0,1 19,14C17.84,14 16.84,13.34 16.34,12.38C17.2,11.27 17.62,9.85 17.47,8.42C17.92,8.15 18.44,8 19,8M5.5,18.25C5.5,16.18 8.41,14.5 12,14.5C15.59,14.5 18.5,16.18 18.5,18.25V20H5.5V18.25Z" />
 					</svg>
 				</div>
-				<p class="text-[0.75rem] text-[#737373] uppercase tracking-[0.5px] font-medium">Utilizzi</p>
+				<p class="text-[0.75rem] text-[var(--color-brand-text-secondary)] uppercase tracking-[0.5px] font-medium">Utilizzi</p>
 			</div>
 			<p class="sf-account-stat-card__value">{{ referralData?.total_usages || 0 }}</p>
 		</div>
@@ -167,14 +167,14 @@ const formatDate = (dateStr) => formatDateIt(dateStr);
 							d="M3,6H21V18H3V6M12,9A3,3 0 0,1 15,12A3,3 0 0,1 12,15A3,3 0 0,1 9,12A3,3 0 0,1 12,9M7,8A2,2 0 0,1 5,10V14A2,2 0 0,1 7,16H17A2,2 0 0,1 19,14V10A2,2 0 0,1 17,8H7Z" />
 					</svg>
 				</div>
-				<p class="text-[0.75rem] text-[#737373] uppercase tracking-[0.5px] font-medium">Saldo</p>
+				<p class="text-[0.75rem] text-[var(--color-brand-text-secondary)] uppercase tracking-[0.5px] font-medium">Saldo</p>
 			</div>
 			<p class="sf-account-stat-card__value text-emerald-600">
 				&euro;{{ earnings ? formatEuro(earnings.commission_balance || 0) : '0,00' }}
 			</p>
 			<NuxtLink
 				to="/account/prelievi"
-				class="inline-flex items-center gap-[4px] text-[0.8125rem] text-[#095866] font-medium hover:underline mt-[6px]">
+				class="inline-flex items-center gap-[4px] text-[0.8125rem] text-[var(--color-brand-primary)] font-medium hover:underline mt-[6px]">
 				Prelievi
 				<svg
 					xmlns="http://www.w3.org/2000/svg"
@@ -198,7 +198,7 @@ const formatDate = (dateStr) => formatDateIt(dateStr);
 					<path d="M2,2H4V20H22V22H2V2M7,10H17V13H7V10M11,15H21V18H11V15M6,4H22V8H6V4Z" />
 				</svg>
 			</div>
-			<h2 class="text-[1.125rem] font-bold text-[#252B42]">Storico</h2>
+			<h2 class="text-[1.125rem] font-bold text-[var(--color-brand-text)]">Storico</h2>
 		</div>
 
 		<div v-if="!earnings?.data?.length" class="text-center py-[48px]">
@@ -207,17 +207,17 @@ const formatDate = (dateStr) => formatDateIt(dateStr);
 					<path d="M16,11.78L20.24,4.45L21.97,5.45L16.74,14.5L10.23,10.75L5.46,19H22V21H2V3H4V17.54L9.5,8L16,11.78Z" />
 				</svg>
 			</div>
-			<p class="text-[1rem] font-medium text-[#252B42]">Nessuna commissione ancora</p>
-			<p class="text-[0.8125rem] text-[#737373] mt-[6px]">Condividi il codice referral.</p>
+			<p class="text-[1rem] font-medium text-[var(--color-brand-text)]">Nessuna commissione ancora</p>
+			<p class="text-[0.8125rem] text-[var(--color-brand-text-secondary)] mt-[6px]">Condividi il codice referral.</p>
 		</div>
 
 		<div v-else class="space-y-[12px] desktop:space-y-0">
 			<div class="desktop:hidden space-y-[10px]">
-				<div v-for="usage in earnings.data" :key="usage.id" class="bg-[#F8F9FB] rounded-[16px] p-[14px] border border-[#E9EBEC]">
+				<div v-for="usage in earnings.data" :key="usage.id" class="bg-[#F8F9FB] rounded-[16px] p-[14px] border border-[var(--color-brand-border)]">
 					<div class="flex items-start justify-between gap-[12px]">
 						<div>
-							<p class="text-[0.8125rem] font-semibold text-[#252B42]">{{ usage.buyer?.name || '\u2014' }}</p>
-							<p class="text-[0.75rem] text-[#737373] mt-[2px]">{{ formatDate(usage.created_at) }}</p>
+							<p class="text-[0.8125rem] font-semibold text-[var(--color-brand-text)]">{{ usage.buyer?.name || '\u2014' }}</p>
+							<p class="text-[0.75rem] text-[var(--color-brand-text-secondary)] mt-[2px]">{{ formatDate(usage.created_at) }}</p>
 						</div>
 						<span
 							:class="[
@@ -232,11 +232,11 @@ const formatDate = (dateStr) => formatDateIt(dateStr);
 						</span>
 					</div>
 					<div class="flex items-center justify-between gap-[10px] mt-[10px] text-[0.8125rem]">
-						<span class="text-[#737373]">Ordine</span>
+						<span class="text-[var(--color-brand-text-secondary)]">Ordine</span>
 						<span class="text-[#404040]">&euro;{{ formatEuro(usage.order_amount) }}</span>
 					</div>
 					<div class="flex items-center justify-between gap-[10px] mt-[6px] text-[0.8125rem]">
-						<span class="text-[#737373]">Commissione</span>
+						<span class="text-[var(--color-brand-text-secondary)]">Commissione</span>
 						<span class="font-semibold text-emerald-600">+&euro;{{ formatEuro(usage.commission_amount) }}</span>
 					</div>
 				</div>
@@ -244,7 +244,7 @@ const formatDate = (dateStr) => formatDateIt(dateStr);
 			<div class="hidden desktop:block overflow-x-auto">
 				<table class="w-full text-[0.875rem]">
 					<thead>
-						<tr class="border-b border-[#E9EBEC] text-left text-[#737373]">
+						<tr class="border-b border-[var(--color-brand-border)] text-left text-[var(--color-brand-text-secondary)]">
 							<th class="pb-[12px] font-medium">Data</th>
 							<th class="pb-[12px] font-medium">Cliente</th>
 							<th class="pb-[12px] font-medium text-right">Ordine</th>

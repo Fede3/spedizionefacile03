@@ -139,7 +139,7 @@ useHead({
 				<div
 					class="flex flex-col gap-[18px] desktop:grid desktop:grid-cols-[minmax(0,1.2fr)_minmax(320px,0.8fr)] desktop:items-center desktop:gap-[28px]">
 					<div class="space-y-[12px]">
-						<p class="text-[0.75rem] font-semibold uppercase tracking-[0.14em] text-[#095866]">Servizio accessorio</p>
+						<p class="text-[0.75rem] font-semibold uppercase tracking-[0.14em] text-[var(--color-brand-primary)]">Servizio accessorio</p>
 						<h1 class="text-[2rem] font-bold tracking-[-0.04em] text-[#1F2937] desktop:text-[3.2rem]">Pagamento alla consegna</h1>
 						<p class="max-w-[62ch] text-[0.9375rem] leading-[1.65] text-[#5B6670] desktop:text-[1.0625rem]">
 							Il corriere incassa per tuo conto al momento della consegna. Questa pagina ti aiuta a capire quando usarlo, quali dati servono
@@ -149,14 +149,14 @@ useHead({
 							<span
 								v-for="pill in summaryPills"
 								:key="pill"
-								class="inline-flex items-center rounded-full bg-[#F0F6F7] px-[12px] py-[6px] text-[0.75rem] font-semibold text-[#095866]">
+								class="inline-flex items-center rounded-full bg-[#F0F6F7] px-[12px] py-[6px] text-[0.75rem] font-semibold text-[var(--color-brand-primary)]">
 								{{ pill }}
 							</span>
 						</div>
 					</div>
 
 					<div class="rounded-[24px] border border-white/70 bg-white/75 p-[18px] shadow-[0_18px_40px_rgba(9,88,102,0.08)] backdrop-blur">
-						<p class="text-[0.75rem] font-semibold uppercase tracking-[0.12em] text-[#E44203]">Da tenere a mente</p>
+						<p class="text-[0.75rem] font-semibold uppercase tracking-[0.12em] text-[var(--color-brand-accent)]">Da tenere a mente</p>
 						<div class="mt-[12px] space-y-[12px]">
 							<div class="rounded-[18px] border border-[#E9EEF2] bg-[#F8FBFC] px-[14px] py-[12px]">
 								<p class="text-[0.8125rem] font-semibold text-[#1F2937]">Costo extra sempre visibile</p>
@@ -192,7 +192,7 @@ useHead({
 					</p>
 					<ul v-else class="mt-[12px] space-y-[8px]">
 						<li v-for="item in card.bullets" :key="item" class="flex items-start gap-[10px] text-[0.875rem] leading-[1.6] text-[#5B6670]">
-							<span class="mt-[7px] h-[7px] w-[7px] shrink-0 rounded-full bg-[#E44203]"></span>
+							<span class="mt-[7px] h-[7px] w-[7px] shrink-0 rounded-full bg-[var(--color-brand-accent)]"></span>
 							<span>{{ item }}</span>
 						</li>
 					</ul>
@@ -219,7 +219,7 @@ useHead({
 						class="rounded-[22px] border border-[#EDF2F5] bg-[#F8FBFC] px-[16px] py-[16px]">
 						<div class="flex items-center gap-[10px]">
 							<span
-								class="inline-flex h-[34px] w-[34px] items-center justify-center rounded-full bg-[#095866] text-[0.8125rem] font-bold text-white">
+								class="inline-flex h-[34px] w-[34px] items-center justify-center rounded-full bg-[var(--color-brand-primary)] text-[0.8125rem] font-bold text-white">
 								{{ step.step }}
 							</span>
 							<h3 class="text-[1rem] font-semibold text-[#1F2937]">{{ step.title }}</h3>
@@ -238,7 +238,7 @@ useHead({
 					<h2 class="mt-[8px] text-[1.25rem] font-semibold tracking-[-0.02em] text-[#1F2937]">Controlli da fare prima della conferma</h2>
 					<ul class="mt-[14px] space-y-[10px]">
 						<li v-for="item in guardrails" :key="item" class="flex items-start gap-[10px] text-[0.875rem] leading-[1.6] text-[#5B6670]">
-							<span class="mt-[7px] h-[7px] w-[7px] shrink-0 rounded-full bg-[#095866]"></span>
+							<span class="mt-[7px] h-[7px] w-[7px] shrink-0 rounded-full bg-[var(--color-brand-primary)]"></span>
 							<span>{{ item }}</span>
 						</li>
 					</ul>

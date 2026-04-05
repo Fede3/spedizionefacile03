@@ -9,23 +9,23 @@
 			</div>
 		</div>
 		<div class="grid grid-cols-1 desktop:grid-cols-[minmax(0,1fr)_320px] gap-[14px] desktop:gap-[18px]">
-			<div class="rounded-[24px] border border-[#E9EBEC] bg-white p-[18px] tablet:p-[22px] desktop:p-[28px]">
+			<div class="rounded-[24px] border border-[var(--color-brand-border)] bg-white p-[18px] tablet:p-[22px] desktop:p-[28px]">
 				<div class="space-y-[12px]">
 					<div class="h-[22px] w-[180px] rounded-[12px] bg-[#EEF3F7] animate-pulse"></div>
 					<div class="h-[16px] w-full rounded-[12px] bg-[#F2F5F8] animate-pulse"></div>
 					<div class="h-[16px] w-[82%] rounded-[12px] bg-[#F2F5F8] animate-pulse"></div>
 					<div class="grid grid-cols-1 sm:grid-cols-3 gap-[10px] pt-[8px]">
-						<div v-for="index in 3" :key="`skel-${index}`" class="h-[88px] rounded-[12px] bg-[#F7FAFC] border border-[#E9EBEC] animate-pulse"></div>
+						<div v-for="index in 3" :key="`skel-${index}`" class="h-[88px] rounded-[12px] bg-[#F7FAFC] border border-[var(--color-brand-border)] animate-pulse"></div>
 					</div>
 				</div>
 			</div>
-			<div class="rounded-[24px] border border-[#E9EBEC] bg-white p-[18px] tablet:p-[22px] desktop:p-[28px]">
+			<div class="rounded-[24px] border border-[var(--color-brand-border)] bg-white p-[18px] tablet:p-[22px] desktop:p-[28px]">
 				<div class="space-y-[12px]">
 					<div class="h-[22px] w-[160px] rounded-[12px] bg-[#EEF3F7] animate-pulse"></div>
 					<div class="h-[16px] w-[90%] rounded-[12px] bg-[#F2F5F8] animate-pulse"></div>
-					<div class="h-[52px] rounded-[12px] bg-[#F7FAFC] border border-[#E9EBEC] animate-pulse"></div>
-					<div class="h-[52px] rounded-[12px] bg-[#F7FAFC] border border-[#E9EBEC] animate-pulse"></div>
-					<div class="h-[52px] rounded-[12px] bg-[#F7FAFC] border border-[#E9EBEC] animate-pulse"></div>
+					<div class="h-[52px] rounded-[12px] bg-[#F7FAFC] border border-[var(--color-brand-border)] animate-pulse"></div>
+					<div class="h-[52px] rounded-[12px] bg-[#F7FAFC] border border-[var(--color-brand-border)] animate-pulse"></div>
+					<div class="h-[52px] rounded-[12px] bg-[#F7FAFC] border border-[var(--color-brand-border)] animate-pulse"></div>
 				</div>
 			</div>
 		</div>

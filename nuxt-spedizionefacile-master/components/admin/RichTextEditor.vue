@@ -111,9 +111,9 @@ const setColor = (event) => {
 </script>
 
 <template>
-	<div class="border border-[#E9EBEC] rounded-[12px] overflow-hidden bg-white">
+	<div class="border border-[var(--color-brand-border)] rounded-[12px] overflow-hidden bg-white">
 		<!-- Toolbar -->
-		<div v-if="editor" class="flex flex-wrap items-center gap-[2px] px-[8px] py-[6px] bg-[#F8F9FB] border-b border-[#E9EBEC]">
+		<div v-if="editor" class="flex flex-wrap items-center gap-[2px] px-[8px] py-[6px] bg-[#F8F9FB] border-b border-[var(--color-brand-border)]">
 			<!-- Bold -->
 			<button type="button" class="toolbar-btn" :class="{ active: editor.isActive('bold') }" title="Grassetto" aria-label="Grassetto" @click="editor.chain().focus().toggleBold().run()">
 				<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M15.6 10.79c.97-.67 1.65-1.77 1.65-2.79 0-2.26-1.75-4-4-4H7v14h7.04c2.09 0 3.71-1.7 3.71-3.79 0-1.52-.86-2.82-2.15-3.42zM10 6.5h3c.83 0 1.5.67 1.5 1.5s-.67 1.5-1.5 1.5h-3v-3zm3.5 9H10v-3h3.5c.83 0 1.5.67 1.5 1.5s-.67 1.5-1.5 1.5z"/></svg>
@@ -158,7 +158,7 @@ const setColor = (event) => {
 			<!-- Image -->
 			<button type="button" class="toolbar-btn" :disabled="imageUploading" title="Inserisci immagine" aria-label="Inserisci immagine" @click="addImage">
 				<svg v-if="!imageUploading" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg>
-				<span v-else class="inline-block w-[14px] h-[14px] border-2 border-[#095866] border-t-transparent rounded-full animate-spin"/>
+				<span v-else class="inline-block w-[14px] h-[14px] border-2 border-[var(--color-brand-primary)] border-t-transparent rounded-full animate-spin"/>
 			</button>
 
 			<div class="w-[1px] h-[20px] bg-[#D0D0D0] mx-[4px]"/>
@@ -188,10 +188,10 @@ const setColor = (event) => {
 	transition: background-color 0.15s, color 0.15s;
 }
 .toolbar-btn:hover {
-	background-color: #E9EBEC;
+	background-color: var(--color-brand-border);
 }
 .toolbar-btn.active {
-	background-color: #095866;
+	background-color: var(--color-brand-primary);
 	color: white;
 }
 .toolbar-btn:disabled {

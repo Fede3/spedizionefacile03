@@ -379,7 +379,7 @@ const saveService = async () => {
 }
 
 .service-editor-stat--teal::before {
-	background: linear-gradient(180deg, #0b5965 0%, #2d8190 100%);
+	background: linear-gradient(180deg, var(--color-brand-primary-light) 0%, #2d8190 100%);
 }
 
 .service-editor-stat--indigo::before {
@@ -496,7 +496,7 @@ const saveService = async () => {
 .service-editor-input:focus,
 .service-editor-textarea:focus {
 	outline: none;
-	border-color: #0b5965;
+	border-color: var(--color-brand-primary-light);
 	box-shadow: 0 0 0 3px rgba(11, 89, 101, 0.1);
 	background: #ffffff;
 }
@@ -566,7 +566,7 @@ const saveService = async () => {
 }
 
 .service-editor-toggle--active {
-	background: #0b5965;
+	background: var(--color-brand-primary-light);
 }
 
 .service-editor-toggle__thumb {
@@ -601,7 +601,7 @@ const saveService = async () => {
 .service-editor-state-pill--active {
 	border-color: rgba(11, 89, 101, 0.24);
 	background: rgba(11, 89, 101, 0.08);
-	color: #0b5965;
+	color: var(--color-brand-primary-light);
 }
 
 .service-editor-stack {
@@ -728,8 +728,8 @@ const saveService = async () => {
 }
 
 .service-editor-summary__item--done .service-editor-summary__dot {
-	border-color: #0b5965;
-	background: #0b5965;
+	border-color: var(--color-brand-primary-light);
+	background: var(--color-brand-primary-light);
 	box-shadow: 0 0 0 4px rgba(11, 89, 101, 0.08);
 }
 

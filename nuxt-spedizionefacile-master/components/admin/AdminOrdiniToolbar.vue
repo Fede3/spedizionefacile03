@@ -212,7 +212,7 @@ const emit = defineEmits([
 }
 
 .admin-orders-toolbar__stat--teal::before {
-	background: linear-gradient(180deg, #0b5965 0%, #2b8392 100%);
+	background: linear-gradient(180deg, var(--color-brand-primary-light) 0%, #2b8392 100%);
 }
 
 .admin-orders-toolbar__stat--slate::before {
@@ -309,7 +309,7 @@ const emit = defineEmits([
 .admin-orders-toolbar__input:focus,
 .admin-orders-toolbar__select:focus {
 	outline: none;
-	border-color: #0b5965;
+	border-color: var(--color-brand-primary-light);
 	box-shadow: 0 0 0 3px rgba(11, 89, 101, 0.1);
 }
 

@@ -124,11 +124,11 @@ onMounted(() => {
 			<!-- ===== USERS SUB-TAB ===== -->
 			<div v-if="activeSubTab === 'users'">
 				<!-- Toolbar -->
-				<div class="mb-[20px] rounded-[12px] border border-[#E9EBEC] bg-[#F8FAFB] p-[14px] tablet:p-[18px] shadow-sm">
+				<div class="mb-[20px] rounded-[12px] border border-[var(--color-brand-border)] bg-[#F8FAFB] p-[14px] tablet:p-[18px] shadow-sm">
 					<div class="flex flex-col gap-[14px] desktop:flex-row desktop:items-center desktop:justify-between">
 						<div>
 							<p class="text-[0.75rem] font-semibold uppercase tracking-[0.6px] text-[#6B7280]">Toolbar utenti</p>
-							<h2 class="mt-[4px] text-[1rem] font-semibold text-[#252B42]">Ricerca, filtri e azioni rapide</h2>
+							<h2 class="mt-[4px] text-[1rem] font-semibold text-[var(--color-brand-text)]">Ricerca, filtri e azioni rapide</h2>
 						</div>
 						<div class="flex flex-wrap items-center gap-[8px]">
 							<span class="sf-account-meta-pill">{{ filteredUsers.length }} risultati</span>
@@ -140,7 +140,7 @@ onMounted(() => {
 							<svg
 								xmlns="http://www.w3.org/2000/svg"
 								viewBox="0 0 24 24"
-								class="absolute left-[12px] top-1/2 -translate-y-1/2 w-[18px] h-[18px] text-[#737373]"
+								class="absolute left-[12px] top-1/2 -translate-y-1/2 w-[18px] h-[18px] text-[var(--color-brand-text-secondary)]"
 								fill="currentColor">
 								<path
 									d="M9.5,3A6.5,6.5 0 0,1 16,9.5C16,11.11 15.41,12.59 14.44,13.73L14.71,14H15.5L20.5,19L19,20.5L14,15.5V14.71L13.73,14.44C12.59,15.41 11.11,16 9.5,16A6.5,6.5 0 0,1 3,9.5A6.5,6.5 0 0,1 9.5,3M9.5,5C7,5 5,7 5,9.5C5,12 7,14 9.5,14C12,14 14,12 14,9.5C14,7 12,5 9.5,5Z" />
@@ -158,41 +158,41 @@ onMounted(() => {
 
 				<!-- Stats cards -->
 				<div class="grid grid-cols-1 tablet:grid-cols-3 gap-[12px] mb-[22px]">
-					<div class="bg-white rounded-[12px] p-[16px] tablet:p-[18px] border border-[#E9EBEC] shadow-sm">
+					<div class="bg-white rounded-[12px] p-[16px] tablet:p-[18px] border border-[var(--color-brand-border)] shadow-sm">
 						<div class="flex items-center gap-[8px] mb-[8px]">
-							<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[18px] h-[18px] text-[#252B42]" fill="currentColor">
+							<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[18px] h-[18px] text-[var(--color-brand-text)]" fill="currentColor">
 								<path
 									d="M12,4A4,4 0 0,1 16,8A4,4 0 0,1 12,12A4,4 0 0,1 8,8A4,4 0 0,1 12,4M12,14C16.42,14 20,15.79 20,18V20H4V18C4,15.79 7.58,14 12,14Z" />
 							</svg>
-							<p class="text-[0.75rem] text-[#737373] uppercase tracking-[0.5px] font-medium">Totale utenti</p>
+							<p class="text-[0.75rem] text-[var(--color-brand-text-secondary)] uppercase tracking-[0.5px] font-medium">Totale utenti</p>
 						</div>
-						<p class="text-[1.75rem] font-bold text-[#252B42]">{{ usersData.length }}</p>
+						<p class="text-[1.75rem] font-bold text-[var(--color-brand-text)]">{{ usersData.length }}</p>
 					</div>
-					<div class="bg-white rounded-[12px] p-[16px] tablet:p-[18px] border border-[#E9EBEC] shadow-sm">
+					<div class="bg-white rounded-[12px] p-[16px] tablet:p-[18px] border border-[var(--color-brand-border)] shadow-sm">
 						<div class="flex items-center gap-[8px] mb-[8px]">
 							<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[18px] h-[18px] text-emerald-600" fill="currentColor">
 								<path
 									d="M12 2C6.5 2 2 6.5 2 12S6.5 22 12 22 22 17.5 22 12 17.5 2 12 2M10 17L5 12L6.41 10.59L10 14.17L17.59 6.58L19 8L10 17Z" />
 							</svg>
-							<p class="text-[0.75rem] text-[#737373] uppercase tracking-[0.5px] font-medium">Verificati</p>
+							<p class="text-[0.75rem] text-[var(--color-brand-text-secondary)] uppercase tracking-[0.5px] font-medium">Verificati</p>
 						</div>
 						<p class="text-[1.75rem] font-bold text-emerald-600">{{ usersData.filter((u) => u.email_verified_at).length }}</p>
 					</div>
-					<div class="bg-white rounded-[12px] p-[16px] tablet:p-[18px] border border-[#E9EBEC] shadow-sm">
+					<div class="bg-white rounded-[12px] p-[16px] tablet:p-[18px] border border-[var(--color-brand-border)] shadow-sm">
 						<div class="flex items-center gap-[8px] mb-[8px]">
 							<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[18px] h-[18px] text-amber-600" fill="currentColor">
 								<path
 									d="M12,20A8,8 0 0,0 20,12A8,8 0 0,0 12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22C6.47,22 2,17.5 2,12A10,10 0 0,1 12,2M12.5,7V12.25L17,14.92L16.25,16.15L11,13V7H12.5Z" />
 							</svg>
-							<p class="text-[0.75rem] text-[#737373] uppercase tracking-[0.5px] font-medium">Non verificati</p>
+							<p class="text-[0.75rem] text-[var(--color-brand-text-secondary)] uppercase tracking-[0.5px] font-medium">Non verificati</p>
 						</div>
 						<p class="text-[1.75rem] font-bold text-amber-600">{{ unverifiedUsers.length }}</p>
 					</div>
 				</div>
 
 				<!-- Users list -->
-				<div class="bg-white rounded-[12px] p-[20px] tablet:p-[24px] desktop:p-[32px] shadow-sm border border-[#E9EBEC] overflow-hidden">
-					<h2 class="text-[1.125rem] font-bold text-[#252B42] mb-[20px]">Gestione account registrati</h2>
+				<div class="bg-white rounded-[12px] p-[20px] tablet:p-[24px] desktop:p-[32px] shadow-sm border border-[var(--color-brand-border)] overflow-hidden">
+					<h2 class="text-[1.125rem] font-bold text-[var(--color-brand-text)] mb-[20px]">Gestione account registrati</h2>
 					<AdminUtentiList
 						:users="filteredUsers"
 						:action-loading="actionLoading"
@@ -218,17 +218,17 @@ onMounted(() => {
 		<!-- Role change confirmation modal -->
 		<UModal v-model:open="showRoleConfirm" :dismissible="true" :close="false">
 			<template #title>
-				<h3 class="text-[1.125rem] font-bold text-[#252B42]">Conferma cambio ruolo</h3>
+				<h3 class="text-[1.125rem] font-bold text-[var(--color-brand-text)]">Conferma cambio ruolo</h3>
 			</template>
 			<template #body>
-				<p class="text-[0.9375rem] text-[#737373] leading-[1.6] mb-[12px]">
+				<p class="text-[0.9375rem] text-[var(--color-brand-text-secondary)] leading-[1.6] mb-[12px]">
 					Stai per cambiare il ruolo di
-					<strong class="text-[#252B42]">{{ roleChangeData.userName }}</strong>
+					<strong class="text-[var(--color-brand-text)]">{{ roleChangeData.userName }}</strong>
 					:
 				</p>
 				<div class="flex items-center gap-[12px] justify-center py-[12px]">
 					<span class="sf-account-meta-pill sf-account-meta-pill--muted">{{ roleChangeData.currentRole }}</span>
-					<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[20px] h-[20px] text-[#095866]" fill="currentColor">
+					<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[20px] h-[20px] text-[var(--color-brand-primary)]" fill="currentColor">
 						<path d="M4,11V13H16L10.5,18.5L11.92,19.92L19.84,12L11.92,4.08L10.5,5.5L16,11H4Z" />
 					</svg>
 					<span class="sf-account-meta-pill">{{ roleChangeData.newRole }}</span>

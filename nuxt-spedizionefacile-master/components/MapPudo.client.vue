@@ -188,7 +188,7 @@ const renderMapData = () => {
 				<b>${escapeHtml(point.name || 'Punto BRT')}</b><br>
 				${escapeHtml(point.address || '')}<br>
 				${escapeHtml([point.zip_code, point.city].filter(Boolean).join(' '))}
-				${point.distance_meters ? `<br><span style="color:#095866;font-weight:600">Distanza: ${escapeHtml(formatDistance(point.distance_meters))}</span>` : ''}
+				${point.distance_meters ? `<br><span style="color:var(--color-brand-primary);font-weight:600">Distanza: ${escapeHtml(formatDistance(point.distance_meters))}</span>` : ''}
 			</div>
 		`;
 		marker.bindPopup(popupHtml);
@@ -306,12 +306,12 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-	<div class="relative w-full h-full min-h-[320px] tablet:min-h-[360px] desktop:min-h-[420px] rounded-[12px] overflow-hidden border border-[#E9EBEC] bg-[#F4F7F9]">
+	<div class="relative w-full h-full min-h-[320px] tablet:min-h-[360px] desktop:min-h-[420px] rounded-[12px] overflow-hidden border border-[var(--color-brand-border)] bg-[#F4F7F9]">
 		<div ref="mapEl" class="w-full h-full" />
 
 		<div
 			v-if="!mapReady || (!tileLayerReady && !tileLayerError)"
-			class="absolute inset-0 flex items-center justify-center bg-[#F8F9FB]/90 text-[#737373] text-[0.875rem]">
+			class="absolute inset-0 flex items-center justify-center bg-[#F8F9FB]/90 text-[var(--color-brand-text-secondary)] text-[0.875rem]">
 			Caricamento mappa...
 		</div>
 

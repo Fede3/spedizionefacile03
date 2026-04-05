@@ -22,7 +22,7 @@ const emit = defineEmits([
 	<div class="auth-overlay-form auth-overlay-form--verification auth-page-verify">
 		<div class="auth-page-verify__head">
 			<div class="auth-page-verify__icon" aria-hidden="true">
-				<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#095866" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+				<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--color-brand-primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
 			</div>
 			<div class="auth-page-verify__copy">
 				<h3 class="auth-panel-title">Verifica il tuo account</h3>

@@ -206,7 +206,7 @@ const referralPreferenceItems = computed(() => [
 		key: 'referral_site_enabled',
 		title: 'Notifiche in-app',
 		description: 'Mostra avvisi e aggiornamenti nel centro notifiche dell account.',
-		tone: 'bg-[#F0F6F7] text-[#095866]',
+		tone: 'bg-[#F0F6F7] text-[var(--color-brand-primary)]',
 		helper: 'Attivo quando vuoi ricevere segnali dentro il sito.',
 	},
 	{
@@ -238,7 +238,7 @@ const smsPreferenceItem = computed(() => ({
 						<span
 							v-for="stat in notificationHeaderStats"
 							:key="stat.label"
-							class="inline-flex items-center gap-[6px] rounded-full bg-[#F0F6F7] px-[12px] py-[6px] text-[0.8125rem] font-semibold text-[#095866]">
+							class="inline-flex items-center gap-[6px] rounded-full bg-[#F0F6F7] px-[12px] py-[6px] text-[0.8125rem] font-semibold text-[var(--color-brand-primary)]">
 							{{ stat.label }}: {{ stat.value }}
 						</span>
 					</div>
@@ -291,35 +291,35 @@ const smsPreferenceItem = computed(() => ({
 				<div class="sf-account-stat-card">
 					<div class="flex items-center gap-[8px]">
 						<div class="sf-account-stat-card__icon">
-							<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="h-[16px] w-[16px]" fill="#095866">
+							<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="h-[16px] w-[16px]" fill="var(--color-brand-primary)">
 								<path
 									d="M12,22A2,2 0 0,0 14,20H10A2,2 0 0,0 12,22M18,16V11C18,7.93 16.37,5.36 13.5,4.68V4A1.5,1.5 0 0,0 12,2.5A1.5,1.5 0 0,0 10.5,4V4.68C7.64,5.36 6,7.92 6,11V16L4,18V19H20V18L18,16Z" />
 							</svg>
 						</div>
-						<p class="text-[0.75rem] uppercase tracking-[0.5px] font-medium text-[#737373]">Centro notifiche</p>
+						<p class="text-[0.75rem] uppercase tracking-[0.5px] font-medium text-[var(--color-brand-text-secondary)]">Centro notifiche</p>
 					</div>
 					<p class="sf-account-stat-card__value">{{ totalNotifications }}</p>
 				</div>
 				<div class="sf-account-stat-card">
 					<div class="flex items-center gap-[8px]">
 						<div class="sf-account-stat-card__icon">
-							<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="h-[16px] w-[16px]" fill="#095866">
+							<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="h-[16px] w-[16px]" fill="var(--color-brand-primary)">
 								<path d="M20,8H4V6H20M20,18H4V12H20M20,4H4C2.89,4 2,4.89 2,6V18A2,2 0 0,0 4,20H20A2,2 0 0,0 22,18V6C22,4.89 21.1,4 20,4Z" />
 							</svg>
 						</div>
-						<p class="text-[0.75rem] uppercase tracking-[0.5px] font-medium text-[#737373]">Non lette</p>
+						<p class="text-[0.75rem] uppercase tracking-[0.5px] font-medium text-[var(--color-brand-text-secondary)]">Non lette</p>
 					</div>
-					<p class="sf-account-stat-card__value text-[#095866]">{{ unreadCount }}</p>
+					<p class="sf-account-stat-card__value text-[var(--color-brand-primary)]">{{ unreadCount }}</p>
 				</div>
 				<div class="sf-account-stat-card">
 					<div class="flex items-center gap-[8px]">
 						<div class="sf-account-stat-card__icon">
-							<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="h-[16px] w-[16px]" fill="#095866">
+							<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="h-[16px] w-[16px]" fill="var(--color-brand-primary)">
 								<path
 									d="M18,16.08C17.24,16.08 16.56,16.38 16.04,16.85L8.91,12.7C8.96,12.47 9,12.24 9,12C9,11.76 8.96,11.53 8.91,11.3L15.96,7.19C16.5,7.69 17.21,8 18,8A3,3 0 0,0 21,5A3,3 0 0,0 18,2A3,3 0 0,0 15,5C15,5.24 15.04,5.47 15.09,5.7L8.04,9.81C7.5,9.31 6.79,9 6,9A3,3 0 0,0 3,12A3,3 0 0,0 6,15C6.79,15 7.5,14.69 8.04,14.19L15.16,18.34C15.11,18.55 15.08,18.77 15.08,19C15.08,20.61 16.39,21.91 18,21.91C19.61,21.91 20.92,20.61 20.92,19A2.92,2.92 0 0,0 18,16.08Z" />
 							</svg>
 						</div>
-						<p class="text-[0.75rem] uppercase tracking-[0.5px] font-medium text-[#737373]">Consensi attivi</p>
+						<p class="text-[0.75rem] uppercase tracking-[0.5px] font-medium text-[var(--color-brand-text-secondary)]">Consensi attivi</p>
 					</div>
 					<p class="sf-account-stat-card__value">{{ referralPreferencesEnabled }}</p>
 				</div>
@@ -330,8 +330,8 @@ const smsPreferenceItem = computed(() => ({
 					<div class="sf-account-panel rounded-[24px] p-[18px] desktop:p-[22px]">
 						<div class="mb-[16px] flex items-start justify-between gap-[12px]">
 							<div class="min-w-0">
-								<p class="text-[0.75rem] font-semibold uppercase tracking-[1px] text-[#095866]">Lista notifiche</p>
-								<h2 class="mt-[4px] text-[1.0625rem] font-bold text-[#252B42]">Messaggi in-app recenti</h2>
+								<p class="text-[0.75rem] font-semibold uppercase tracking-[1px] text-[var(--color-brand-primary)]">Lista notifiche</p>
+								<h2 class="mt-[4px] text-[1.0625rem] font-bold text-[var(--color-brand-text)]">Messaggi in-app recenti</h2>
 								<p class="mt-[4px] text-[0.875rem] leading-[1.55] text-[#667281]">
 									Segna le notifiche come lette una alla volta oppure svuota il non letto in un colpo solo.
 								</p>
@@ -341,21 +341,21 @@ const smsPreferenceItem = computed(() => ({
 
 						<div
 							v-if="notificationsQuery.status.value === 'pending' && !notificationList.length"
-							class="rounded-[20px] border border-[#E9EBEC] bg-[#F8F9FB] p-[24px] text-center">
-							<p class="text-[0.9375rem] font-semibold text-[#252B42]">Caricamento notifiche...</p>
-							<p class="mt-[6px] text-[0.8125rem] leading-[1.5] text-[#737373]">
+							class="rounded-[20px] border border-[var(--color-brand-border)] bg-[#F8F9FB] p-[24px] text-center">
+							<p class="text-[0.9375rem] font-semibold text-[var(--color-brand-text)]">Caricamento notifiche...</p>
+							<p class="mt-[6px] text-[0.8125rem] leading-[1.5] text-[var(--color-brand-text-secondary)]">
 								Stiamo recuperando gli ultimi aggiornamenti del tuo account.
 							</p>
 						</div>
 
-						<div v-else-if="!notificationList.length" class="rounded-[20px] border border-[#E9EBEC] bg-[#F8F9FB] p-[24px] text-center">
-							<div class="mx-auto mb-[14px] flex h-[60px] w-[60px] items-center justify-center rounded-full bg-[#EEF6F8] text-[#095866]">
+						<div v-else-if="!notificationList.length" class="rounded-[20px] border border-[var(--color-brand-border)] bg-[#F8F9FB] p-[24px] text-center">
+							<div class="mx-auto mb-[14px] flex h-[60px] w-[60px] items-center justify-center rounded-full bg-[#EEF6F8] text-[var(--color-brand-primary)]">
 								<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="h-[26px] w-[26px]" fill="currentColor">
 									<path
 										d="M12,22A2,2 0 0,0 14,20H10A2,2 0 0,0 12,22M18,16V11C18,7.93 16.37,5.36 13.5,4.68V4A1.5,1.5 0 0,0 12,2.5A1.5,1.5 0 0,0 10.5,4V4.68C7.64,5.36 6,7.92 6,11V16L4,18V19H20V18L18,16Z" />
 								</svg>
 							</div>
-							<p class="text-[1rem] font-semibold text-[#252B42]">Nessuna notifica disponibile</p>
+							<p class="text-[1rem] font-semibold text-[var(--color-brand-text)]">Nessuna notifica disponibile</p>
 							<p class="mx-auto mt-[6px] max-w-[440px] text-[0.875rem] leading-[1.6] text-[#667281]">
 								Quando il sistema referral o gli aggiornamenti account genereranno una notifica, comparirà qui.
 							</p>
@@ -367,7 +367,7 @@ const smsPreferenceItem = computed(() => ({
 								:key="notification.id"
 								:class="[
 									'sf-account-panel rounded-[20px] border p-[16px] transition-all',
-									notification.read_at ? 'border-[#E9EBEC] bg-white' : 'border-[#BFD8DD] bg-[#F5FBFC]',
+									notification.read_at ? 'border-[var(--color-brand-border)] bg-white' : 'border-[#BFD8DD] bg-[#F5FBFC]',
 								]">
 								<div class="flex flex-col gap-[14px] desktop:flex-row desktop:items-start desktop:justify-between">
 									<div class="min-w-0 space-y-[8px]">
@@ -376,11 +376,11 @@ const smsPreferenceItem = computed(() => ({
 											<span v-if="notification.read_at" class="sf-account-meta-pill sf-account-meta-pill--muted">Letta</span>
 											<span v-else class="sf-account-meta-pill">Nuova</span>
 										</div>
-										<h3 class="text-[1rem] font-bold text-[#252B42]">{{ notification.title || 'Aggiornamento account' }}</h3>
+										<h3 class="text-[1rem] font-bold text-[var(--color-brand-text)]">{{ notification.title || 'Aggiornamento account' }}</h3>
 										<p class="max-w-[75ch] text-[0.875rem] leading-[1.6] text-[#667281]">
 											{{ notification.body || 'Hai una nuova notifica nel tuo account.' }}
 										</p>
-										<div class="flex flex-wrap gap-[8px] text-[0.75rem] font-medium text-[#737373]">
+										<div class="flex flex-wrap gap-[8px] text-[0.75rem] font-medium text-[var(--color-brand-text-secondary)]">
 											<span>{{ formatDate(notification.created_at) }}</span>
 											<span v-if="notification.payload?.order_id">Ordine #{{ notification.payload.order_id }}</span>
 										</div>
@@ -409,15 +409,15 @@ const smsPreferenceItem = computed(() => ({
 				<div class="space-y-[14px]">
 					<div class="sf-account-panel rounded-[24px] p-[18px] desktop:p-[22px]">
 						<div class="flex items-start gap-[12px]">
-							<div class="flex h-[44px] w-[44px] shrink-0 items-center justify-center rounded-full bg-[#F0F6F7] text-[#095866]">
+							<div class="flex h-[44px] w-[44px] shrink-0 items-center justify-center rounded-full bg-[#F0F6F7] text-[var(--color-brand-primary)]">
 								<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="h-[22px] w-[22px]" fill="currentColor">
 									<path
 										d="M12,22A2,2 0 0,0 14,20H10A2,2 0 0,0 12,22M18,16V11C18,7.93 16.37,5.36 13.5,4.68V4A1.5,1.5 0 0,0 12,2.5A1.5,1.5 0 0,0 10.5,4V4.68C7.64,5.36 6,7.92 6,11V16L4,18V19H20V18L18,16Z" />
 								</svg>
 							</div>
 							<div class="min-w-0">
-								<p class="text-[0.75rem] font-semibold uppercase tracking-[1px] text-[#095866]">Preferenze referral</p>
-								<h2 class="mt-[4px] text-[1.0625rem] font-bold text-[#252B42]">Consenso per canali disponibili</h2>
+								<p class="text-[0.75rem] font-semibold uppercase tracking-[1px] text-[var(--color-brand-primary)]">Preferenze referral</p>
+								<h2 class="mt-[4px] text-[1.0625rem] font-bold text-[var(--color-brand-text)]">Consenso per canali disponibili</h2>
 								<p class="mt-[4px] text-[0.875rem] leading-[1.55] text-[#667281]">
 									Scegli dove ricevere gli aggiornamenti referral. I canali sito ed email sono attivi, mentre SMS non è ancora disponibile.
 								</p>
@@ -428,17 +428,17 @@ const smsPreferenceItem = computed(() => ({
 							<div
 								v-for="item in referralPreferenceItems"
 								:key="item.key"
-								class="rounded-[18px] border border-[#E9EBEC] bg-[#FBFCFD] px-[14px] py-[14px]">
+								class="rounded-[18px] border border-[var(--color-brand-border)] bg-[#FBFCFD] px-[14px] py-[14px]">
 								<div class="flex items-start justify-between gap-[12px]">
 									<div class="min-w-0">
 										<div class="flex flex-wrap items-center gap-[8px]">
-											<h3 class="text-[0.9375rem] font-bold text-[#252B42]">{{ item.title }}</h3>
+											<h3 class="text-[0.9375rem] font-bold text-[var(--color-brand-text)]">{{ item.title }}</h3>
 											<span :class="['inline-flex items-center rounded-full px-[10px] py-[4px] text-[0.6875rem] font-semibold', item.tone]">
 												Attivo
 											</span>
 										</div>
 										<p class="mt-[6px] text-[0.875rem] leading-[1.55] text-[#667281]">{{ item.description }}</p>
-										<p class="mt-[6px] text-[0.75rem] font-medium text-[#737373]">{{ item.helper }}</p>
+										<p class="mt-[6px] text-[0.75rem] font-medium text-[var(--color-brand-text-secondary)]">{{ item.helper }}</p>
 									</div>
 									<button
 										type="button"
@@ -456,14 +456,14 @@ const smsPreferenceItem = computed(() => ({
 								<div class="flex items-start justify-between gap-[12px]">
 									<div class="min-w-0">
 										<div class="flex flex-wrap items-center gap-[8px]">
-											<h3 class="text-[0.9375rem] font-bold text-[#252B42]">{{ smsPreferenceItem.title }}</h3>
+											<h3 class="text-[0.9375rem] font-bold text-[var(--color-brand-text)]">{{ smsPreferenceItem.title }}</h3>
 											<span
 												class="inline-flex items-center rounded-full bg-[#FFF7E8] px-[10px] py-[4px] text-[0.6875rem] font-semibold text-[#B45309]">
 												Non disponibile
 											</span>
 										</div>
 										<p class="mt-[6px] text-[0.875rem] leading-[1.55] text-[#667281]">{{ smsPreferenceItem.description }}</p>
-										<p class="mt-[6px] text-[0.75rem] font-medium text-[#737373]">{{ smsPreferenceItem.helper }}</p>
+										<p class="mt-[6px] text-[0.75rem] font-medium text-[var(--color-brand-text-secondary)]">{{ smsPreferenceItem.helper }}</p>
 									</div>
 									<button type="button" class="sf-toggle" disabled aria-disabled="true" aria-label="SMS non ancora disponibile">
 										<span class="sf-toggle__thumb"></span>

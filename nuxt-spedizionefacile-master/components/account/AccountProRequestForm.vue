@@ -32,13 +32,13 @@ const submitDisabled = computed(() => props.proRequestLoading || !props.canSubmi
 		<div class="sf-account-panel rounded-[24px] p-[18px] tablet:p-[22px] desktop:p-[28px] h-full">
 			<div class="flex flex-col tablet:flex-row tablet:items-start gap-[16px]">
 				<div class="sf-account-value-card__icon w-[64px] h-[64px] shrink-0 rounded-[18px]">
-					<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#095866" stroke-width="2">
+					<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--color-brand-primary)" stroke-width="2">
 						<path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
 					</svg>
 				</div>
 				<div class="min-w-0">
-					<h2 class="text-[1.25rem] tablet:text-[1.4rem] desktop:text-[1.5rem] font-bold text-[#252B42] mt-[6px]">Partner Pro</h2>
-					<p class="text-[#737373] text-[0.875rem] tablet:text-[0.9375rem] max-w-[620px] leading-[1.6] mt-[8px]">
+					<h2 class="text-[1.25rem] tablet:text-[1.4rem] desktop:text-[1.5rem] font-bold text-[var(--color-brand-text)] mt-[6px]">Partner Pro</h2>
+					<p class="text-[var(--color-brand-text-secondary)] text-[0.875rem] tablet:text-[0.9375rem] max-w-[620px] leading-[1.6] mt-[8px]">
 						Commissioni, link referral e prelievi.
 					</p>
 				</div>
@@ -46,16 +46,16 @@ const submitDisabled = computed(() => props.proRequestLoading || !props.canSubmi
 
 			<div class="sf-account-stat-grid mt-[18px]">
 				<div class="sf-account-stat-card">
-					<p class="text-[0.6875rem] uppercase tracking-[0.8px] text-[#737373] font-medium">Codice</p>
-					<p class="text-[0.875rem] font-semibold text-[#252B42] mt-[6px]">Referral personale</p>
+					<p class="text-[0.6875rem] uppercase tracking-[0.8px] text-[var(--color-brand-text-secondary)] font-medium">Codice</p>
+					<p class="text-[0.875rem] font-semibold text-[var(--color-brand-text)] mt-[6px]">Referral personale</p>
 				</div>
 				<div class="sf-account-stat-card">
-					<p class="text-[0.6875rem] uppercase tracking-[0.8px] text-[#737373] font-medium">Commissione</p>
-					<p class="text-[0.875rem] font-semibold text-[#252B42] mt-[6px]">5% su ogni spedizione</p>
+					<p class="text-[0.6875rem] uppercase tracking-[0.8px] text-[var(--color-brand-text-secondary)] font-medium">Commissione</p>
+					<p class="text-[0.875rem] font-semibold text-[var(--color-brand-text)] mt-[6px]">5% su ogni spedizione</p>
 				</div>
 				<div class="sf-account-stat-card">
-					<p class="text-[0.6875rem] uppercase tracking-[0.8px] text-[#737373] font-medium">Cliente</p>
-					<p class="text-[0.875rem] font-semibold text-[#252B42] mt-[6px]">-5% automatico</p>
+					<p class="text-[0.6875rem] uppercase tracking-[0.8px] text-[var(--color-brand-text-secondary)] font-medium">Cliente</p>
+					<p class="text-[0.875rem] font-semibold text-[var(--color-brand-text)] mt-[6px]">-5% automatico</p>
 				</div>
 			</div>
 
@@ -136,11 +136,11 @@ const submitDisabled = computed(() => props.proRequestLoading || !props.canSubmi
 		<!-- Request form -->
 		<div class="sf-account-panel rounded-[24px] p-[18px] tablet:p-[22px] desktop:p-[28px] h-full">
 			<div class="mb-[16px]">
-				<p class="text-[0.75rem] uppercase tracking-[1px] text-[#737373] font-medium">Richiesta Pro</p>
-				<h3 class="text-[1.125rem] tablet:text-[1.2rem] font-bold text-[#252B42] mt-[6px]">
+				<p class="text-[0.75rem] uppercase tracking-[1px] text-[var(--color-brand-text-secondary)] font-medium">Richiesta Pro</p>
+				<h3 class="text-[1.125rem] tablet:text-[1.2rem] font-bold text-[var(--color-brand-text)] mt-[6px]">
 					{{ isLocked ? 'Richiesta già registrata' : 'Richiedi accesso' }}
 				</h3>
-				<p class="text-[#737373] text-[0.875rem] leading-[1.55] mt-[8px]">
+				<p class="text-[var(--color-brand-text-secondary)] text-[0.875rem] leading-[1.55] mt-[8px]">
 					{{ isLocked ? 'Qui sotto trovi il riepilogo della richiesta corrente.' : 'Invia i dati aziendali essenziali.' }}
 				</p>
 			</div>
@@ -175,7 +175,7 @@ const submitDisabled = computed(() => props.proRequestLoading || !props.canSubmi
 
 				<div class="space-y-[10px]" :class="{ 'opacity-60': isLocked }">
 					<div>
-						<label class="block text-[0.8125rem] font-semibold text-[#252B42] mb-[6px]" for="pro_company_name">Ragione sociale</label>
+						<label class="block text-[0.8125rem] font-semibold text-[var(--color-brand-text)] mb-[6px]" for="pro_company_name">Ragione sociale</label>
 						<input
 							id="pro_company_name"
 							:value="proRequestForm.company_name"
@@ -186,7 +186,7 @@ const submitDisabled = computed(() => props.proRequestLoading || !props.canSubmi
 							class="form-input min-h-[48px]" />
 					</div>
 					<div>
-						<label class="block text-[0.8125rem] font-semibold text-[#252B42] mb-[6px]" for="pro_vat_number">Partita IVA</label>
+						<label class="block text-[0.8125rem] font-semibold text-[var(--color-brand-text)] mb-[6px]" for="pro_vat_number">Partita IVA</label>
 						<input
 							id="pro_vat_number"
 							:value="proRequestForm.vat_number"
@@ -197,7 +197,7 @@ const submitDisabled = computed(() => props.proRequestLoading || !props.canSubmi
 							class="form-input min-h-[48px]" />
 					</div>
 					<div>
-						<label class="block text-[0.8125rem] font-semibold text-[#252B42] mb-[6px]" for="pro_message">Messaggio</label>
+						<label class="block text-[0.8125rem] font-semibold text-[var(--color-brand-text)] mb-[6px]" for="pro_message">Messaggio</label>
 						<textarea
 							id="pro_message"
 							:value="proRequestForm.message"

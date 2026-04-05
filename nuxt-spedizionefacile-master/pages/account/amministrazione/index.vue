@@ -109,7 +109,7 @@ const kpiCards = computed(() => {
 			value: d.users.total,
 			subs: [
 				{ text: `${d.users.verified} verificati`, cls: 'text-emerald-600' },
-				{ text: `${d.users.pro} Pro`, cls: 'text-[#095866]' },
+				{ text: `${d.users.pro} Pro`, cls: 'text-[var(--color-brand-primary)]' },
 			],
 		},
 		{
@@ -235,7 +235,7 @@ const adminAlerts = computed(() => {
 						<span
 							v-for="item in dashboardHeaderMeta"
 							:key="item.label"
-							class="inline-flex items-center gap-[6px] rounded-full bg-[#F0F6F7] px-[12px] py-[6px] text-[0.8125rem] font-semibold text-[#095866]">
+							class="inline-flex items-center gap-[6px] rounded-full bg-[#F0F6F7] px-[12px] py-[6px] text-[0.8125rem] font-semibold text-[var(--color-brand-primary)]">
 							{{ item.label }}: {{ item.value }}
 						</span>
 					</div>
@@ -257,13 +257,13 @@ const adminAlerts = computed(() => {
 								<path :d="link.svgPath" />
 							</svg>
 						</div>
-						<p class="text-[0.8125rem] font-semibold leading-[1.15] text-[#252B42]">{{ link.label }}</p>
+						<p class="text-[0.8125rem] font-semibold leading-[1.15] text-[var(--color-brand-text)]">{{ link.label }}</p>
 					</NuxtLink>
 				</div>
 			</div>
 
 			<div v-if="isLoading" class="flex justify-center py-[48px]">
-				<div class="h-[40px] w-[40px] animate-spin rounded-full border-3 border-[#E9EBEC] border-t-[#095866]"></div>
+				<div class="h-[40px] w-[40px] animate-spin rounded-full border-3 border-[var(--color-brand-border)] border-t-[var(--color-brand-primary)]"></div>
 			</div>
 
 			<template v-else>
@@ -271,8 +271,8 @@ const adminAlerts = computed(() => {
 					<div class="sf-account-panel mb-[16px] rounded-[24px] px-[16px] py-[14px] desktop:px-[20px] desktop:py-[16px]">
 						<div class="flex flex-col gap-[10px] desktop:flex-row desktop:items-center desktop:justify-between">
 							<div>
-								<p class="text-[0.75rem] font-semibold uppercase tracking-[1px] text-[#095866]">Vista rapida</p>
-								<h2 class="mt-[4px] text-[1rem] font-bold text-[#252B42]">Dashboard operativa e non archivio completo</h2>
+								<p class="text-[0.75rem] font-semibold uppercase tracking-[1px] text-[var(--color-brand-primary)]">Vista rapida</p>
+								<h2 class="mt-[4px] text-[1rem] font-bold text-[var(--color-brand-text)]">Dashboard operativa e non archivio completo</h2>
 								<p class="mt-[4px] text-[0.875rem] leading-[1.55] text-[#667281]">
 									Questa schermata mostra gli ultimi {{ recentOrders.length }} ordini sincronizzati e le code prioritarie. Per filtro,
 									ricerca e storico completo usa la gestione ordini dedicata.
@@ -292,7 +292,7 @@ const adminAlerts = computed(() => {
 								class="flex flex-col gap-[10px] border-b border-[#E6EDF0] pb-[16px] desktop:flex-row desktop:items-start desktop:justify-between">
 								<div>
 									<p class="text-[0.75rem] font-semibold uppercase tracking-[0.08em] text-[#7A8695]">Monitor ordini</p>
-									<h2 class="mt-[4px] text-[1.2rem] font-bold text-[#252B42]">Andamento ultimi 30 giorni</h2>
+									<h2 class="mt-[4px] text-[1.2rem] font-bold text-[var(--color-brand-text)]">Andamento ultimi 30 giorni</h2>
 								</div>
 
 								<div class="flex flex-wrap gap-[8px]">
@@ -301,7 +301,7 @@ const adminAlerts = computed(() => {
 										:key="pk.key"
 										class="inline-flex flex-col rounded-[12px] border border-[#E2ECEF] bg-white px-[12px] py-[10px] shadow-[0_8px_18px_rgba(15,23,42,0.04)]">
 										<span class="text-[0.6875rem] font-medium uppercase tracking-[0.05em] text-[#7A8695]">{{ pk.label }}</span>
-										<span class="mt-[2px] text-[1rem] font-bold text-[#252B42]">{{ pk.value }}</span>
+										<span class="mt-[2px] text-[1rem] font-bold text-[var(--color-brand-text)]">{{ pk.value }}</span>
 									</span>
 								</div>
 							</div>
@@ -312,11 +312,11 @@ const adminAlerts = computed(() => {
 									:key="i"
 									class="group relative flex h-full flex-1 flex-col items-center justify-end">
 									<div
-										class="min-h-[6px] w-full rounded-t-[6px] bg-[#095866] transition-colors hover:bg-[#0b6d7e]"
+										class="min-h-[6px] w-full rounded-t-[6px] bg-[var(--color-brand-primary)] transition-colors hover:bg-[#0b6d7e]"
 										:style="{ height: `${(day.count / chartMax) * 100}%` }"></div>
 									<span v-if="i % 5 === 0" class="mt-[6px] text-[0.55rem] leading-none text-[#7A8695]">{{ day.date }}</span>
 									<div
-										class="pointer-events-none absolute bottom-full z-10 mb-[6px] whitespace-nowrap rounded-[6px] bg-[#252B42] px-[7px] py-[4px] text-[0.625rem] text-white opacity-0 transition-opacity group-hover:opacity-100">
+										class="pointer-events-none absolute bottom-full z-10 mb-[6px] whitespace-nowrap rounded-[6px] bg-[var(--color-brand-text)] px-[7px] py-[4px] text-[0.625rem] text-white opacity-0 transition-opacity group-hover:opacity-100">
 										{{ day.date }}: {{ day.count }} ordini
 									</div>
 								</div>
@@ -332,7 +332,7 @@ const adminAlerts = computed(() => {
 						<section class="sf-admin-chart-card rounded-[16px] bg-white p-[18px] desktop:p-[22px]">
 							<div class="border-b border-[#E9EEF2] pb-[14px]">
 								<p class="text-[0.75rem] font-semibold uppercase tracking-[0.08em] text-[#7A8695]">Priorita ora</p>
-								<h2 class="mt-[4px] text-[1.0625rem] font-bold text-[#252B42]">Code operative</h2>
+								<h2 class="mt-[4px] text-[1.0625rem] font-bold text-[var(--color-brand-text)]">Code operative</h2>
 							</div>
 
 							<div v-if="adminAlerts.length" class="mt-[16px] space-y-[10px]">
@@ -341,14 +341,14 @@ const adminAlerts = computed(() => {
 									:key="alert.key"
 									:to="alert.to"
 									class="sf-action-card sf-action-card--locked min-h-[62px] rounded-[14px] border-l-[3px]"
-									:class="alert.tone === 'critical' ? 'border-l-[#E44203]' : 'border-l-[#0E6572]'">
+									:class="alert.tone === 'critical' ? 'border-l-[var(--color-brand-accent)]' : 'border-l-[#0E6572]'">
 									<div class="sf-action-card__icon-shell" :class="alert.tone === 'critical' ? 'sf-action-card__icon-shell--accent' : ''">
 										<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="h-[18px] w-[18px]" fill="currentColor">
 											<path :d="alertSvgs[alert.key]" />
 										</svg>
 									</div>
 									<div class="min-w-0">
-										<p class="text-[0.875rem] font-semibold leading-[1.2] text-[#252B42]">{{ alert.label }}</p>
+										<p class="text-[0.875rem] font-semibold leading-[1.2] text-[var(--color-brand-text)]">{{ alert.label }}</p>
 									</div>
 								</NuxtLink>
 							</div>
@@ -378,10 +378,10 @@ const adminAlerts = computed(() => {
 										<path :d="card.svgPath" />
 									</svg>
 								</div>
-								<p class="text-[0.75rem] font-medium uppercase tracking-[0.5px] text-[#737373]">{{ card.label }}</p>
+								<p class="text-[0.75rem] font-medium uppercase tracking-[0.5px] text-[var(--color-brand-text-secondary)]">{{ card.label }}</p>
 							</div>
-							<p class="text-[1.5rem] font-bold" :class="card.valueClass || 'text-[#252B42]'">{{ card.value }}</p>
-							<div class="mt-[6px] flex gap-[10px] text-[0.6875rem] text-[#737373]">
+							<p class="text-[1.5rem] font-bold" :class="card.valueClass || 'text-[var(--color-brand-text)]'">{{ card.value }}</p>
+							<div class="mt-[6px] flex gap-[10px] text-[0.6875rem] text-[var(--color-brand-text-secondary)]">
 								<span v-for="sub in card.subs" :key="sub.text" :class="sub.cls">{{ sub.text }}</span>
 							</div>
 						</div>
@@ -390,14 +390,14 @@ const adminAlerts = computed(() => {
 					<div class="sf-admin-orders-card rounded-[12px] bg-white p-[20px] desktop:p-[28px]">
 						<div class="mb-[16px] flex items-center justify-between">
 							<div>
-								<h2 class="text-[1.0625rem] font-bold text-[#252B42]">Ultimi ordini</h2>
-								<p class="mt-[4px] text-[0.75rem] text-[#737373]">
+								<h2 class="text-[1.0625rem] font-bold text-[var(--color-brand-text)]">Ultimi ordini</h2>
+								<p class="mt-[4px] text-[0.75rem] text-[var(--color-brand-text-secondary)]">
 									Vista rapida limitata agli ultimi {{ recentOrders.length }} ordini sincronizzati.
 								</p>
 							</div>
 							<NuxtLink
 								to="/account/amministrazione/ordini"
-								class="inline-flex items-center gap-[4px] text-[0.75rem] font-medium text-[#737373] hover:text-[#095866] hover:underline">
+								class="inline-flex items-center gap-[4px] text-[0.75rem] font-medium text-[var(--color-brand-text-secondary)] hover:text-[var(--color-brand-primary)] hover:underline">
 								Gestione completa
 								<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="h-[14px] w-[14px]" fill="currentColor">
 									<path d="M4,11V13H16L10.5,18.5L11.92,19.92L19.84,12L11.92,4.08L10.5,5.5L16,11H4Z" />
@@ -405,7 +405,7 @@ const adminAlerts = computed(() => {
 							</NuxtLink>
 						</div>
 
-						<div v-if="!recentOrders.length" class="py-[28px] text-center text-[#737373]">
+						<div v-if="!recentOrders.length" class="py-[28px] text-center text-[var(--color-brand-text-secondary)]">
 							<p>Nessun ordine recente.</p>
 						</div>
 
@@ -413,13 +413,13 @@ const adminAlerts = computed(() => {
 							<div
 								v-for="order in recentOrders"
 								:key="order.id"
-								class="flex items-center justify-between rounded-[12px] border border-[#F0F0F0] p-[12px] transition-colors hover:border-[#E9EBEC]">
+								class="flex items-center justify-between rounded-[12px] border border-[#F0F0F0] p-[12px] transition-colors hover:border-[var(--color-brand-border)]">
 								<div class="flex items-center gap-[14px]">
-									<span class="text-[0.8125rem] font-bold text-[#252B42]">#{{ order.id }}</span>
+									<span class="text-[0.8125rem] font-bold text-[var(--color-brand-text)]">#{{ order.id }}</span>
 									<span class="text-[0.8125rem] text-[#404040]">{{ order.user?.name }} {{ order.user?.surname }}</span>
 								</div>
 								<div class="flex items-center gap-[12px]">
-									<span class="text-[0.875rem] font-semibold text-[#252B42]">
+									<span class="text-[0.875rem] font-semibold text-[var(--color-brand-text)]">
 										&euro;{{ formatCents(order.subtotal?.amount ?? order.subtotal) }}
 									</span>
 									<span
@@ -433,17 +433,17 @@ const adminAlerts = computed(() => {
 											:class="orderStatusConfig[order.status]?.text || 'text-gray-700'"></span>
 										{{ orderStatusConfig[order.status]?.label || order.status }}
 									</span>
-									<span class="hidden text-[0.75rem] text-[#737373] desktop:inline">{{ formatDate(order.created_at) }}</span>
+									<span class="hidden text-[0.75rem] text-[var(--color-brand-text-secondary)] desktop:inline">{{ formatDate(order.created_at) }}</span>
 								</div>
 							</div>
 						</div>
 					</div>
 				</div>
 
-				<div v-else class="py-[60px] text-center text-[#737373]">
+				<div v-else class="py-[60px] text-center text-[var(--color-brand-text-secondary)]">
 					<div class="sf-account-panel mx-auto max-w-[520px] rounded-[24px] p-[28px] desktop:p-[32px]">
 						<p class="text-[0.75rem] font-semibold uppercase tracking-[1px] text-[#B45309]">Dashboard non disponibile</p>
-						<h2 class="mt-[6px] text-[1.125rem] font-bold text-[#252B42]">Sincronizzazione interrotta</h2>
+						<h2 class="mt-[6px] text-[1.125rem] font-bold text-[var(--color-brand-text)]">Sincronizzazione interrotta</h2>
 						<p class="mt-[10px] text-[0.9375rem] leading-[1.6] text-[#667281]">
 							{{ loadError || 'Impossibile caricare i dati della dashboard. Riprova.' }}
 						</p>

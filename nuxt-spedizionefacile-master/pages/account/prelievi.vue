@@ -143,7 +143,7 @@ const lastWithdrawalLabel = computed(() => {
 });
 
 const withdrawalOverview = computed(() => [
-	{ label: 'Disponibile', value: `\u20AC${formatEuro(availableBalance.value)}`, tone: 'bg-[#F0F6F7] text-[#095866]' },
+	{ label: 'Disponibile', value: `\u20AC${formatEuro(availableBalance.value)}`, tone: 'bg-[#F0F6F7] text-[var(--color-brand-primary)]' },
 	{
 		label: 'In attesa',
 		value: pendingWithdrawals.value ? `${pendingWithdrawals.value} richiesta` : 'Nessuna',
@@ -184,7 +184,7 @@ const withdrawalUpsellBenefits = computed(() => [
 						<span
 							v-for="stat in withdrawalHeaderStats"
 							:key="stat.label"
-							class="inline-flex items-center gap-[6px] rounded-full bg-[#F0F6F7] px-[12px] py-[6px] text-[0.8125rem] font-semibold text-[#095866]">
+							class="inline-flex items-center gap-[6px] rounded-full bg-[#F0F6F7] px-[12px] py-[6px] text-[0.8125rem] font-semibold text-[var(--color-brand-primary)]">
 							{{ stat.label }}: {{ stat.value }}
 						</span>
 					</div>
@@ -229,7 +229,7 @@ const withdrawalUpsellBenefits = computed(() => [
 
 			<div v-if="!hasMounted" class="sf-account-panel rounded-[20px] p-[18px] desktop:p-[28px]">
 				<div class="animate-pulse space-y-[12px]">
-					<div class="h-[18px] w-[180px] rounded-full bg-[#E9EBEC]"></div>
+					<div class="h-[18px] w-[180px] rounded-full bg-[var(--color-brand-border)]"></div>
 					<div class="grid gap-[12px] desktop:grid-cols-3">
 						<div v-for="index in 3" :key="index" class="h-[92px] rounded-[16px] bg-[#F5F7F8]"></div>
 					</div>
@@ -242,11 +242,11 @@ const withdrawalUpsellBenefits = computed(() => [
 				class="sf-account-panel mb-[18px] rounded-[20px] px-[16px] py-[14px] desktop:px-[20px] desktop:py-[16px]">
 				<div class="grid gap-[12px] desktop:grid-cols-[minmax(0,1.05fr)_repeat(3,minmax(0,0.55fr))] desktop:items-center">
 					<div>
-						<p class="text-[0.75rem] font-semibold uppercase tracking-[1px] text-[#095866]">Panoramica prelievi</p>
-						<h2 class="mt-[4px] text-[1rem] font-bold text-[#252B42]">Saldo e stato richieste</h2>
+						<p class="text-[0.75rem] font-semibold uppercase tracking-[1px] text-[var(--color-brand-primary)]">Panoramica prelievi</p>
+						<h2 class="mt-[4px] text-[1rem] font-bold text-[var(--color-brand-text)]">Saldo e stato richieste</h2>
 					</div>
-					<div v-for="item in withdrawalOverview" :key="item.label" class="rounded-[12px] border border-[#E9EBEC] px-[14px] py-[12px]">
-						<p class="text-[0.75rem] font-semibold uppercase tracking-[0.8px] text-[#737373]">{{ item.label }}</p>
+					<div v-for="item in withdrawalOverview" :key="item.label" class="rounded-[12px] border border-[var(--color-brand-border)] px-[14px] py-[12px]">
+						<p class="text-[0.75rem] font-semibold uppercase tracking-[0.8px] text-[var(--color-brand-text-secondary)]">{{ item.label }}</p>
 						<span :class="['mt-[8px] inline-flex rounded-full px-[10px] py-[5px] text-[0.75rem] font-semibold', item.tone]">
 							{{ item.value }}
 						</span>
@@ -258,7 +258,7 @@ const withdrawalUpsellBenefits = computed(() => [
 			<div v-else-if="showProUpsell" class="sf-account-panel prelievi-upsell rounded-[24px] p-[20px] desktop:p-[28px]">
 				<div class="prelievi-upsell__intro">
 					<div class="prelievi-upsell__icon-shell">
-						<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="currentColor" class="text-[#095866]">
+						<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="currentColor" class="text-[var(--color-brand-primary)]">
 							<path
 								d="M5,6H23V18H5V6M14,9A3,3 0 0,1 17,12A3,3 0 0,1 14,15A3,3 0 0,1 11,12A3,3 0 0,1 14,9M9,8A2,2 0 0,1 7,10V14A2,2 0 0,1 9,16H19A2,2 0 0,1 21,14V10A2,2 0 0,1 19,8H9M1,10H3V20H19V22H1V10Z" />
 						</svg>
@@ -396,7 +396,7 @@ const withdrawalUpsellBenefits = computed(() => [
 	position: absolute;
 	inset: 0 auto 0 0;
 	width: 4px;
-	background: linear-gradient(180deg, #0b5965 0%, #e45c20 100%);
+	background: linear-gradient(180deg, var(--color-brand-primary-light) 0%, #e45c20 100%);
 }
 
 .prelievi-upsell__benefit-label {

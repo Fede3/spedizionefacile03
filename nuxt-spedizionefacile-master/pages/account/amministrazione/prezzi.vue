@@ -146,7 +146,7 @@ onMounted(() => {
 							:key="view.id"
 							type="button"
 							@click="adminView = view.id"
-							:class="adminView === view.id ? 'bg-[#095866] text-white border-[#095866]' : 'bg-[#F7FAFC] text-[#425466] border-[#D8E3E8]'"
+							:class="adminView === view.id ? 'bg-[var(--color-brand-primary)] text-white border-[var(--color-brand-primary)]' : 'bg-[#F7FAFC] text-[#425466] border-[#D8E3E8]'"
 							class="admin-prezzi-tab-btn">
 							{{ view.label }}
 						</button>
@@ -174,7 +174,7 @@ onMounted(() => {
 							</select>
 							<label
 								class="inline-flex min-h-[42px] items-center gap-[8px] whitespace-nowrap text-[0.8125rem] text-[#4F5D75] desktop:justify-self-end">
-								<input v-model="compactEuropeView" type="checkbox" class="rounded border-[#E9EBEC] text-[#095866] focus:ring-[#095866]" />
+								<input v-model="compactEuropeView" type="checkbox" class="rounded border-[var(--color-brand-border)] text-[var(--color-brand-primary)] focus:ring-[var(--color-brand-primary)]" />
 								Vista compatta
 							</label>
 						</div>
@@ -190,7 +190,7 @@ onMounted(() => {
 								<option value="operational_fees">Fee operative</option>
 							</select>
 							<div
-								class="inline-flex min-h-[42px] items-center gap-[8px] px-[12px] py-[10px] rounded-[12px] bg-[#F4FAFC] border border-[#D8E9F0] text-[0.8125rem] text-[#095866] desktop:justify-self-end">
+								class="inline-flex min-h-[42px] items-center gap-[8px] px-[12px] py-[10px] rounded-[12px] bg-[#F4FAFC] border border-[#D8E9F0] text-[0.8125rem] text-[var(--color-brand-primary)] desktop:justify-self-end">
 								{{ filteredServiceEntries.length }} regole visibili
 							</div>
 						</div>
@@ -265,7 +265,7 @@ onMounted(() => {
 
 			<!-- Loading -->
 			<div v-if="isLoading" class="py-[60px] flex justify-center">
-				<div class="w-[40px] h-[40px] border-3 border-[#E9EBEC] border-t-[#095866] rounded-full animate-spin"></div>
+				<div class="w-[40px] h-[40px] border-3 border-[var(--color-brand-border)] border-t-[var(--color-brand-primary)] rounded-full animate-spin"></div>
 			</div>
 
 			<template v-else>
@@ -332,7 +332,7 @@ onMounted(() => {
 						<div class="flex items-center gap-[8px] text-[0.75rem]">
 							<span
 								v-if="pricingVersion"
-								class="inline-flex items-center gap-[4px] px-[8px] py-[3px] rounded-[999px] bg-[#E8F4FB] text-[#095866] border border-[#B0D4E8]">
+								class="inline-flex items-center gap-[4px] px-[8px] py-[3px] rounded-[999px] bg-[#E8F4FB] text-[var(--color-brand-primary)] border border-[#B0D4E8]">
 								Versione {{ pricingVersion }}
 							</span>
 							<span

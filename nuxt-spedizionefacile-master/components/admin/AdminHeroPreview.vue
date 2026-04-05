@@ -51,12 +51,12 @@ defineExpose({
 			<!-- Desktop preview -->
 			<div class="sf-admin-hero-preview__frame p-[8px]">
 				<div class="flex items-center justify-between mb-[8px]">
-					<p class="text-[0.75rem] font-semibold text-[#252B42] uppercase tracking-[0.6px]">Desktop</p>
+					<p class="text-[0.75rem] font-semibold text-[var(--color-brand-text)] uppercase tracking-[0.6px]">Desktop</p>
 					<button
 						type="button"
 						@click="emit('set-viewport', 'desktop')"
 						class="sf-admin-hero-preview__button"
-						:class="activeViewport === 'desktop' ? 'bg-[#095866] text-white border-[#095866]' : ''">
+						:class="activeViewport === 'desktop' ? 'bg-[var(--color-brand-primary)] text-white border-[var(--color-brand-primary)]' : ''">
 						Modifica
 					</button>
 				</div>
@@ -95,12 +95,12 @@ defineExpose({
 			<!-- Mobile preview -->
 			<div class="sf-admin-hero-preview__frame p-[8px] w-full max-w-[980px]">
 				<div class="flex items-center justify-between mb-[8px]">
-					<p class="text-[0.75rem] font-semibold text-[#252B42] uppercase tracking-[0.6px]">Mobile</p>
+					<p class="text-[0.75rem] font-semibold text-[var(--color-brand-text)] uppercase tracking-[0.6px]">Mobile</p>
 					<button
 						type="button"
 						@click="emit('set-viewport', 'mobile')"
 						class="sf-admin-hero-preview__button"
-						:class="activeViewport === 'mobile' ? 'bg-[#095866] text-white border-[#095866]' : ''">
+						:class="activeViewport === 'mobile' ? 'bg-[var(--color-brand-primary)] text-white border-[var(--color-brand-primary)]' : ''">
 						Modifica
 					</button>
 				</div>

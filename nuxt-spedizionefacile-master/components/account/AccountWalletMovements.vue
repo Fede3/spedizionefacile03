@@ -26,7 +26,7 @@ const countLabel = computed(() => {
 });
 
 const getMovementColor = (mov) => {
-	return mov.type === 'credit' ? 'text-[#095866]' : 'text-[#B42318]';
+	return mov.type === 'credit' ? 'text-[var(--color-brand-primary)]' : 'text-[#B42318]';
 };
 
 const getMovementSign = (mov) => {
@@ -46,13 +46,13 @@ const getSourceLabel = (source) => {
 
 const getSourceColor = (source) => {
 	const colors = {
-		stripe: 'bg-[#EDF7F8] text-[#095866]',
+		stripe: 'bg-[#EDF7F8] text-[var(--color-brand-primary)]',
 		commission: 'bg-[#FFF4E8] text-[#B45309]',
 		withdrawal: 'bg-[#F5F7F8] text-[#4B5563]',
-		wallet: 'bg-[#EDF7F8] text-[#095866]',
+		wallet: 'bg-[#EDF7F8] text-[var(--color-brand-primary)]',
 		refund: 'bg-[#FEF2F2] text-[#B42318]',
 	};
-	return colors[source] || 'bg-[#F5F7F8] text-[#737373]';
+	return colors[source] || 'bg-[#F5F7F8] text-[var(--color-brand-text-secondary)]';
 };
 
 const getMovementTitle = (mov) => {
@@ -76,7 +76,7 @@ const getMovementSvg = (mov) => {
 </script>
 
 <template>
-	<div class="mt-[20px] rounded-[20px] border border-[#E9EBEC] bg-white p-[16px] shadow-sm desktop:mt-[24px] desktop:p-[24px]">
+	<div class="mt-[20px] rounded-[20px] border border-[var(--color-brand-border)] bg-white p-[16px] shadow-sm desktop:mt-[24px] desktop:p-[24px]">
 		<div class="mb-[14px] flex flex-col gap-[10px] sm:flex-row sm:items-start sm:justify-between desktop:mb-[18px]">
 			<div class="flex items-start gap-[12px]">
 				<div class="flex h-[36px] w-[36px] items-center justify-center rounded-[50px] bg-[#EDF7F8]">
@@ -89,14 +89,14 @@ const getMovementSvg = (mov) => {
 						stroke-width="2"
 						stroke-linecap="round"
 						stroke-linejoin="round"
-						class="text-[#095866]">
+						class="text-[var(--color-brand-primary)]">
 						<path d="M12 8v4l3 3" />
 						<circle cx="12" cy="12" r="10" />
 					</svg>
 				</div>
 
 				<div>
-					<h2 class="text-[1rem] font-bold text-[#252B42]">Movimenti</h2>
+					<h2 class="text-[1rem] font-bold text-[var(--color-brand-text)]">Movimenti</h2>
 					<p class="mt-[4px] text-[0.8125rem] leading-[1.5] text-[#667281]">
 						Ricariche, pagamenti, rimborsi e commissioni in ordine cronologico.
 					</p>
@@ -125,10 +125,10 @@ const getMovementSvg = (mov) => {
 				<div class="flex items-start gap-[12px]">
 					<div class="h-[38px] w-[38px] rounded-full bg-[#F5F7F8]"></div>
 					<div class="min-w-0 flex-1 space-y-[8px]">
-						<div class="h-[14px] w-[220px] max-w-full rounded-full bg-[#E9EBEC]"></div>
+						<div class="h-[14px] w-[220px] max-w-full rounded-full bg-[var(--color-brand-border)]"></div>
 						<div class="h-[12px] w-[160px] rounded-full bg-[#F0F0F0]"></div>
 					</div>
-					<div class="h-[14px] w-[74px] rounded-full bg-[#E9EBEC]"></div>
+					<div class="h-[14px] w-[74px] rounded-full bg-[var(--color-brand-border)]"></div>
 				</div>
 			</div>
 		</div>
@@ -150,7 +150,7 @@ const getMovementSvg = (mov) => {
 					<line x1="12" y1="16" x2="12.01" y2="16" />
 				</svg>
 			</div>
-			<p class="text-[0.9375rem] font-medium text-[#252B42]">Storico non disponibile</p>
+			<p class="text-[0.9375rem] font-medium text-[var(--color-brand-text)]">Storico non disponibile</p>
 			<p class="mx-auto mt-[6px] max-w-[420px] text-[0.8125rem] leading-[1.55] text-[#667281]">
 				{{ movementsError }}
 			</p>
@@ -190,7 +190,7 @@ const getMovementSvg = (mov) => {
 					<path d="M10 4v16" />
 				</svg>
 			</div>
-			<p class="text-[0.9375rem] font-medium text-[#252B42]">Nessun movimento</p>
+			<p class="text-[0.9375rem] font-medium text-[var(--color-brand-text)]">Nessun movimento</p>
 			<p class="mx-auto mt-[6px] max-w-[360px] text-[0.8125rem] leading-[1.55] text-[#667281]">
 				I movimenti appariranno qui dopo la prima ricarica o il primo pagamento con il portafoglio.
 			</p>
@@ -230,15 +230,15 @@ const getMovementSvg = (mov) => {
 						stroke-width="2"
 						stroke-linecap="round"
 						stroke-linejoin="round"
-						:class="mov.type === 'credit' ? 'text-[#095866]' : 'text-[#B42318]'">
+						:class="mov.type === 'credit' ? 'text-[var(--color-brand-primary)]' : 'text-[#B42318]'">
 						<path :d="getMovementSvg(mov)" />
 					</svg>
 				</div>
 
 				<div class="min-w-0 flex-1">
-					<p class="truncate text-[0.875rem] font-medium text-[#252B42]">{{ getMovementTitle(mov) }}</p>
+					<p class="truncate text-[0.875rem] font-medium text-[var(--color-brand-text)]">{{ getMovementTitle(mov) }}</p>
 					<div class="mt-[4px] flex flex-wrap items-center gap-[8px]">
-						<span class="text-[0.75rem] text-[#737373]">{{ formatDate(mov.created_at) }}</span>
+						<span class="text-[0.75rem] text-[var(--color-brand-text-secondary)]">{{ formatDate(mov.created_at) }}</span>
 						<span :class="['rounded-full px-[8px] py-[2px] text-[0.6875rem] font-medium', getSourceColor(mov.source)]">
 							{{ getSourceLabel(mov.source) }}
 						</span>

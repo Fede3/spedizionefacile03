@@ -38,11 +38,11 @@ const onCapInput = (event) => {
 <template>
 	<div class="bg-[#E4E4E4] rounded-[12px] p-[16px] tablet:p-[28px_32px]">
 		<div class="flex items-center justify-between mb-[16px]">
-			<h2 class="text-[1.125rem] font-bold text-[#252B42] flex items-center gap-[8px]">
+			<h2 class="text-[1.125rem] font-bold text-[var(--color-brand-text)] flex items-center gap-[8px]">
 				<!-- Origin icon -->
-				<svg v-if="isOrigin" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#E44203" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+				<svg v-if="isOrigin" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--color-brand-accent)" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
 				<!-- Destination icon -->
-				<svg v-else width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#095866" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+				<svg v-else width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--color-brand-primary)" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
 				{{ sectionTitle }}
 			</h2>
 			<button type="button" @click="handleEditClick" class="btn-secondary btn-compact inline-flex items-center gap-[6px]" :title="`Modifica ${sectionTitle.toLowerCase()}`">
@@ -52,49 +52,49 @@ const onCapInput = (event) => {
 		</div>
 
 		<!-- View mode -->
-		<div v-if="editingSection !== type" class="text-[0.875rem] text-[#252B42] space-y-[4px]">
+		<div v-if="editingSection !== type" class="text-[0.875rem] text-[var(--color-brand-text)] space-y-[4px]">
 			<p class="font-semibold">{{ address?.name }}</p>
 			<template v-if="!pudo || isOrigin">
 				<p>{{ address?.address }} {{ address?.address_number }}</p>
 				<p>{{ address?.postal_code }} {{ address?.city }} ({{ address?.province }})</p>
 			</template>
 			<template v-if="pudo && !isOrigin">
-				<div class="my-[8px] p-[10px] bg-[#095866]/10 rounded-[12px] flex items-start gap-[8px]">
-					<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#095866" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="shrink-0 mt-[2px]"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+				<div class="my-[8px] p-[10px] bg-[var(--color-brand-primary)]/10 rounded-[12px] flex items-start gap-[8px]">
+					<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--color-brand-primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="shrink-0 mt-[2px]"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
 					<div class="text-[0.8125rem]">
-						<span class="font-bold text-[#095866]">Ritiro in Punto BRT</span>
-						<p class="text-[#252B42] font-semibold mt-[2px]">{{ pudo.name }}</p>
-						<p class="text-[#737373]">{{ pudo.address }}, {{ pudo.zip_code }} {{ pudo.city }}</p>
+						<span class="font-bold text-[var(--color-brand-primary)]">Ritiro in Punto BRT</span>
+						<p class="text-[var(--color-brand-text)] font-semibold mt-[2px]">{{ pudo.name }}</p>
+						<p class="text-[var(--color-brand-text-secondary)]">{{ pudo.address }}, {{ pudo.zip_code }} {{ pudo.city }}</p>
 					</div>
 				</div>
 			</template>
-			<p v-if="address?.telephone_number && address.telephone_number !== '0000000000'" class="text-[#737373]">Tel: {{ address.telephone_number }}</p>
-			<p v-if="address?.email" class="text-[#737373]">{{ address.email }}</p>
+			<p v-if="address?.telephone_number && address.telephone_number !== '0000000000'" class="text-[var(--color-brand-text-secondary)]">Tel: {{ address.telephone_number }}</p>
+			<p v-if="address?.email" class="text-[var(--color-brand-text-secondary)]">{{ address.email }}</p>
 		</div>
 
 		<!-- Edit mode -->
 		<div v-else class="space-y-[10px]">
 			<div>
-				<label class="text-[0.75rem] text-[#737373]">Nome e Cognome</label>
-				<input type="text" :value="editAddress.name" @input="onFieldInput('name', $event.target.value)" class="w-full bg-white rounded-[12px] h-[44px] px-[10px] text-[1rem] border border-[#E9EBEC] transition-[border-color,box-shadow,background-color] duration-200 focus:border-[#095866] focus:shadow-[0_0_0_3px_rgba(9,88,102,0.1)]" />
+				<label class="text-[0.75rem] text-[var(--color-brand-text-secondary)]">Nome e Cognome</label>
+				<input type="text" :value="editAddress.name" @input="onFieldInput('name', $event.target.value)" class="w-full bg-white rounded-[12px] h-[44px] px-[10px] text-[1rem] border border-[var(--color-brand-border)] transition-[border-color,box-shadow,background-color] duration-200 focus:border-[var(--color-brand-primary)] focus:shadow-[0_0_0_3px_rgba(9,88,102,0.1)]" />
 			</div>
 			<div class="grid grid-cols-1 tablet:grid-cols-2 gap-[10px]">
 				<div>
-					<label class="text-[0.75rem] text-[#737373]">Indirizzo</label>
-					<input type="text" :value="editAddress.address" @input="onFieldInput('address', $event.target.value)" class="w-full bg-white rounded-[12px] h-[44px] px-[10px] text-[1rem] border border-[#E9EBEC] transition-[border-color,box-shadow,background-color] duration-200 focus:border-[#095866] focus:shadow-[0_0_0_3px_rgba(9,88,102,0.1)]" />
+					<label class="text-[0.75rem] text-[var(--color-brand-text-secondary)]">Indirizzo</label>
+					<input type="text" :value="editAddress.address" @input="onFieldInput('address', $event.target.value)" class="w-full bg-white rounded-[12px] h-[44px] px-[10px] text-[1rem] border border-[var(--color-brand-border)] transition-[border-color,box-shadow,background-color] duration-200 focus:border-[var(--color-brand-primary)] focus:shadow-[0_0_0_3px_rgba(9,88,102,0.1)]" />
 				</div>
 				<div>
-					<label class="text-[0.75rem] text-[#737373]">N. Civico</label>
-					<input type="text" :value="editAddress.address_number" @input="onFieldInput('address_number', $event.target.value)" class="w-full bg-white rounded-[12px] h-[44px] px-[10px] text-[1rem] border border-[#E9EBEC] transition-[border-color,box-shadow,background-color] duration-200 focus:border-[#095866] focus:shadow-[0_0_0_3px_rgba(9,88,102,0.1)]" />
+					<label class="text-[0.75rem] text-[var(--color-brand-text-secondary)]">N. Civico</label>
+					<input type="text" :value="editAddress.address_number" @input="onFieldInput('address_number', $event.target.value)" class="w-full bg-white rounded-[12px] h-[44px] px-[10px] text-[1rem] border border-[var(--color-brand-border)] transition-[border-color,box-shadow,background-color] duration-200 focus:border-[var(--color-brand-primary)] focus:shadow-[0_0_0_3px_rgba(9,88,102,0.1)]" />
 				</div>
 			</div>
 			<div class="grid grid-cols-2 tablet:grid-cols-3 gap-[10px]">
 				<div>
-					<label class="text-[0.75rem] text-[#737373]">Città</label>
-					<input type="text" :value="editAddress.city" @input="onFieldInput('city', $event.target.value)" class="w-full bg-white rounded-[12px] h-[44px] px-[10px] text-[1rem] border border-[#E9EBEC] transition-[border-color,box-shadow,background-color] duration-200 focus:border-[#095866] focus:shadow-[0_0_0_3px_rgba(9,88,102,0.1)]" required />
+					<label class="text-[0.75rem] text-[var(--color-brand-text-secondary)]">Città</label>
+					<input type="text" :value="editAddress.city" @input="onFieldInput('city', $event.target.value)" class="w-full bg-white rounded-[12px] h-[44px] px-[10px] text-[1rem] border border-[var(--color-brand-border)] transition-[border-color,box-shadow,background-color] duration-200 focus:border-[var(--color-brand-primary)] focus:shadow-[0_0_0_3px_rgba(9,88,102,0.1)]" required />
 				</div>
 				<div>
-					<label class="text-[0.75rem] text-[#737373]">CAP</label>
+					<label class="text-[0.75rem] text-[var(--color-brand-text-secondary)]">CAP</label>
 					<input
 						type="text"
 						:value="editAddress.postal_code"
@@ -102,22 +102,22 @@ const onCapInput = (event) => {
 						inputmode="numeric"
 						pattern="[0-9]{5}"
 						@input="onCapInput"
-						class="w-full bg-white rounded-[12px] h-[44px] px-[10px] text-[1rem] border border-[#E9EBEC] transition-[border-color,box-shadow,background-color] duration-200 focus:border-[#095866] focus:shadow-[0_0_0_3px_rgba(9,88,102,0.1)]"
+						class="w-full bg-white rounded-[12px] h-[44px] px-[10px] text-[1rem] border border-[var(--color-brand-border)] transition-[border-color,box-shadow,background-color] duration-200 focus:border-[var(--color-brand-primary)] focus:shadow-[0_0_0_3px_rgba(9,88,102,0.1)]"
 						required />
 				</div>
 				<div class="col-span-2 tablet:col-span-1">
-					<label class="text-[0.75rem] text-[#737373]">Provincia</label>
-					<input type="text" :value="editAddress.province" @input="onFieldInput('province', $event.target.value)" class="w-full bg-white rounded-[12px] h-[44px] px-[10px] text-[1rem] border border-[#E9EBEC] transition-[border-color,box-shadow,background-color] duration-200 focus:border-[#095866] focus:shadow-[0_0_0_3px_rgba(9,88,102,0.1)]" required />
+					<label class="text-[0.75rem] text-[var(--color-brand-text-secondary)]">Provincia</label>
+					<input type="text" :value="editAddress.province" @input="onFieldInput('province', $event.target.value)" class="w-full bg-white rounded-[12px] h-[44px] px-[10px] text-[1rem] border border-[var(--color-brand-border)] transition-[border-color,box-shadow,background-color] duration-200 focus:border-[var(--color-brand-primary)] focus:shadow-[0_0_0_3px_rgba(9,88,102,0.1)]" required />
 				</div>
 			</div>
 			<div class="grid grid-cols-1 tablet:grid-cols-2 gap-[10px]">
 				<div>
-					<label class="text-[0.75rem] text-[#737373]">Telefono</label>
-					<input type="tel" :value="editAddress.telephone_number" @input="onFieldInput('telephone_number', $event.target.value)" class="w-full bg-white rounded-[12px] h-[44px] px-[10px] text-[1rem] border border-[#E9EBEC] transition-[border-color,box-shadow,background-color] duration-200 focus:border-[#095866] focus:shadow-[0_0_0_3px_rgba(9,88,102,0.1)]" />
+					<label class="text-[0.75rem] text-[var(--color-brand-text-secondary)]">Telefono</label>
+					<input type="tel" :value="editAddress.telephone_number" @input="onFieldInput('telephone_number', $event.target.value)" class="w-full bg-white rounded-[12px] h-[44px] px-[10px] text-[1rem] border border-[var(--color-brand-border)] transition-[border-color,box-shadow,background-color] duration-200 focus:border-[var(--color-brand-primary)] focus:shadow-[0_0_0_3px_rgba(9,88,102,0.1)]" />
 				</div>
 				<div>
-					<label class="text-[0.75rem] text-[#737373]">Email</label>
-					<input type="email" :value="editAddress.email" @input="onFieldInput('email', $event.target.value)" class="w-full bg-white rounded-[12px] h-[44px] px-[10px] text-[1rem] border border-[#E9EBEC] transition-[border-color,box-shadow,background-color] duration-200 focus:border-[#095866] focus:shadow-[0_0_0_3px_rgba(9,88,102,0.1)]" />
+					<label class="text-[0.75rem] text-[var(--color-brand-text-secondary)]">Email</label>
+					<input type="email" :value="editAddress.email" @input="onFieldInput('email', $event.target.value)" class="w-full bg-white rounded-[12px] h-[44px] px-[10px] text-[1rem] border border-[var(--color-brand-border)] transition-[border-color,box-shadow,background-color] duration-200 focus:border-[var(--color-brand-primary)] focus:shadow-[0_0_0_3px_rgba(9,88,102,0.1)]" />
 				</div>
 			</div>
 			<div class="flex gap-[10px] justify-end">

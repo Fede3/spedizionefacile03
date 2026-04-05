@@ -95,7 +95,7 @@ definePageMeta({
 						{{ isLoading ? 'Invio in corso...' : 'Invia link recupero password' }}
 					</button>
 
-					<p class="text-center text-[0.8125rem] text-[#737373]">
+					<p class="text-center text-[0.8125rem] text-[var(--color-brand-text-secondary)]">
 						Ricordi la password?
 						<NuxtLink to="/autenticazione" class="auth-text-link">Torna al login</NuxtLink>
 					</p>

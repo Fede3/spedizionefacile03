@@ -94,18 +94,18 @@ onMounted(() => { fetchArticles(); });
 
 			<!-- Loading -->
 			<div v-if="isLoading" class="py-[60px] flex justify-center">
-				<div class="w-[40px] h-[40px] border-3 border-[#E9EBEC] border-t-[#095866] rounded-full animate-spin"></div>
+				<div class="w-[40px] h-[40px] border-3 border-[var(--color-brand-border)] border-t-[var(--color-brand-primary)] rounded-full animate-spin"></div>
 			</div>
 
-			<div v-else class="bg-white rounded-[12px] p-[24px] desktop:p-[32px] shadow-sm border border-[#E9EBEC]">
-				<h2 class="text-[1.125rem] font-bold text-[#252B42] mb-[20px]">Tutti i servizi</h2>
+			<div v-else class="bg-white rounded-[12px] p-[24px] desktop:p-[32px] shadow-sm border border-[var(--color-brand-border)]">
+				<h2 class="text-[1.125rem] font-bold text-[var(--color-brand-text)] mb-[20px]">Tutti i servizi</h2>
 
 				<div v-if="!articles.length" class="text-center py-[48px]">
 					<div class="w-[64px] h-[64px] mx-auto mb-[16px] bg-[#F8F9FB] rounded-full flex items-center justify-center">
 						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[28px] h-[28px]" fill="#C8CCD0"><path d="M12,2L2,7L12,12L22,7L12,2M2,17L12,22L22,17L12,12L2,17Z"/></svg>
 					</div>
-					<h2 class="text-[1.125rem] font-bold text-[#252B42] mb-[8px]">Nessun servizio presente</h2>
-					<p class="text-[#737373] text-[0.875rem] mb-[16px]">Crea il primo servizio per iniziare.</p>
+					<h2 class="text-[1.125rem] font-bold text-[var(--color-brand-text)] mb-[8px]">Nessun servizio presente</h2>
+					<p class="text-[var(--color-brand-text-secondary)] text-[0.875rem] mb-[16px]">Crea il primo servizio per iniziare.</p>
 					<NuxtLink to="/account/amministrazione/servizi/nuovo" class="btn-cta btn-compact inline-flex items-center gap-[6px]">
 						<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
 						Crea servizio
@@ -115,7 +115,7 @@ onMounted(() => { fetchArticles(); });
 				<div v-else class="overflow-x-auto">
 					<table class="w-full text-[0.875rem]">
 						<thead>
-							<tr class="border-b border-[#E9EBEC] text-left text-[#737373]">
+							<tr class="border-b border-[var(--color-brand-border)] text-left text-[var(--color-brand-text-secondary)]">
 								<th class="pb-[12px] font-medium">Titolo</th>
 								<th class="pb-[12px] font-medium">Slug</th>
 								<th class="pb-[12px] font-medium text-center">Pubblicato</th>
@@ -126,8 +126,8 @@ onMounted(() => { fetchArticles(); });
 						</thead>
 						<tbody>
 							<tr v-for="(article, idx) in articles" :key="article.id" :class="['border-b border-[#F0F0F0] last:border-0', idx % 2 === 1 ? 'bg-[#FAFBFC]' : '']">
-								<td class="py-[14px] font-medium text-[#252B42]">{{ article.title }}</td>
-								<td class="py-[14px]"><span class="font-mono text-[0.8125rem] bg-[#F0F0F0] px-[8px] py-[2px] rounded text-[#737373]">{{ article.slug }}</span></td>
+								<td class="py-[14px] font-medium text-[var(--color-brand-text)]">{{ article.title }}</td>
+								<td class="py-[14px]"><span class="font-mono text-[0.8125rem] bg-[#F0F0F0] px-[8px] py-[2px] rounded text-[var(--color-brand-text-secondary)]">{{ article.slug }}</span></td>
 								<td class="py-[14px] text-center">
 								<button
 									type="button"
@@ -146,7 +146,7 @@ onMounted(() => { fetchArticles(); });
 								</button>
 							</td>
 								<td class="py-[14px] text-center text-[#404040]">{{ article.sort_order ?? '-' }}</td>
-								<td class="py-[14px] text-[#737373] text-[0.8125rem]">{{ formatDate(article.created_at) }}</td>
+								<td class="py-[14px] text-[var(--color-brand-text-secondary)] text-[0.8125rem]">{{ formatDate(article.created_at) }}</td>
 								<td class="py-[14px] text-right">
 									<div class="flex justify-end gap-[6px]">
 										<NuxtLink :to="`/account/amministrazione/servizi/${article.id}`" class="btn-secondary btn-compact inline-flex items-center gap-[6px]">

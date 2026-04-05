@@ -261,7 +261,7 @@ onMounted(() => {
 			</section>
 
 			<div v-if="isLoading" class="py-[60px] flex justify-center">
-				<div class="w-[40px] h-[40px] border-3 border-[#E9EBEC] border-t-[#095866] rounded-full animate-spin"></div>
+				<div class="w-[40px] h-[40px] border-3 border-[var(--color-brand-border)] border-t-[var(--color-brand-primary)] rounded-full animate-spin"></div>
 			</div>
 
 			<template v-else>
@@ -288,7 +288,7 @@ onMounted(() => {
 						<div v-else class="overflow-x-auto">
 							<table class="w-full text-[0.875rem]">
 								<thead>
-									<tr class="border-b border-[#E9EBEC] text-left text-[#737373] bg-[#FAFBFC]">
+									<tr class="border-b border-[var(--color-brand-border)] text-left text-[var(--color-brand-text-secondary)] bg-[#FAFBFC]">
 										<th class="px-[20px] py-[14px] font-medium">Codice</th>
 										<th class="px-[20px] py-[14px] font-medium">Sconto</th>
 										<th class="px-[20px] py-[14px] font-medium">Stato</th>
@@ -302,12 +302,12 @@ onMounted(() => {
 										:key="coupon.id"
 										class="border-b border-[#F0F0F0] last:border-0 hover:bg-[#FAFBFC] transition-colors">
 										<td class="px-[20px] py-[14px]">
-											<span class="font-bold text-[#252B42] bg-[#F0F0F0] px-[10px] py-[4px] rounded-[8px] font-mono text-[0.8125rem]">
+											<span class="font-bold text-[var(--color-brand-text)] bg-[#F0F0F0] px-[10px] py-[4px] rounded-[8px] font-mono text-[0.8125rem]">
 												{{ coupon.code }}
 											</span>
 										</td>
 										<td class="px-[20px] py-[14px]">
-											<span class="font-semibold text-[#095866]">{{ coupon.percentage }}%</span>
+											<span class="font-semibold text-[var(--color-brand-primary)]">{{ coupon.percentage }}%</span>
 										</td>
 										<td class="px-[20px] py-[14px]">
 											<button
@@ -324,7 +324,7 @@ onMounted(() => {
 												</span>
 											</button>
 										</td>
-										<td class="px-[20px] py-[14px] text-[#737373] text-[0.8125rem]">
+										<td class="px-[20px] py-[14px] text-[var(--color-brand-text-secondary)] text-[0.8125rem]">
 											{{ coupon.created_at ? new Date(coupon.created_at).toLocaleDateString('it-IT') : '-' }}
 										</td>
 										<td class="px-[20px] py-[14px] text-right">

@@ -34,36 +34,36 @@ const emit = defineEmits(['update:open']);
 				<div class="sf-modal-divider" />
 				<div v-if="detailItem" class="sf-modal-body space-y-[16px] pb-[24px]">
 					<div class="bg-[#F8F9FB] rounded-[12px] p-[16px]">
-						<h4 class="text-[0.75rem] font-bold text-[#737373] uppercase tracking-wider mb-[8px]">Partenza</h4>
-						<p class="text-[0.9375rem] font-semibold text-[#252B42]">{{ detailItem.origin_address?.name }}</p>
+						<h4 class="text-[0.75rem] font-bold text-[var(--color-brand-text-secondary)] uppercase tracking-wider mb-[8px]">Partenza</h4>
+						<p class="text-[0.9375rem] font-semibold text-[var(--color-brand-text)]">{{ detailItem.origin_address?.name }}</p>
 						<p class="text-[0.8125rem] text-[#404040]">{{ detailItem.origin_address?.address }} {{ detailItem.origin_address?.address_number }}</p>
 						<p class="text-[0.8125rem] text-[#404040]">{{ detailItem.origin_address?.postal_code }} {{ detailItem.origin_address?.city }} <span v-if="detailItem.origin_address?.province">({{ detailItem.origin_address?.province }})</span></p>
-						<p v-if="detailItem.origin_address?.telephone_number" class="text-[0.75rem] text-[#737373] mt-[4px]">Tel: {{ detailItem.origin_address?.telephone_number }}</p>
+						<p v-if="detailItem.origin_address?.telephone_number" class="text-[0.75rem] text-[var(--color-brand-text-secondary)] mt-[4px]">Tel: {{ detailItem.origin_address?.telephone_number }}</p>
 					</div>
 					<div class="bg-[#F8F9FB] rounded-[12px] p-[16px]">
-						<h4 class="text-[0.75rem] font-bold text-[#737373] uppercase tracking-wider mb-[8px]">Destinazione</h4>
-						<p class="text-[0.9375rem] font-semibold text-[#252B42]">{{ detailItem.destination_address?.name }}</p>
+						<h4 class="text-[0.75rem] font-bold text-[var(--color-brand-text-secondary)] uppercase tracking-wider mb-[8px]">Destinazione</h4>
+						<p class="text-[0.9375rem] font-semibold text-[var(--color-brand-text)]">{{ detailItem.destination_address?.name }}</p>
 						<p class="text-[0.8125rem] text-[#404040]">{{ detailItem.destination_address?.address }} {{ detailItem.destination_address?.address_number }}</p>
 						<p class="text-[0.8125rem] text-[#404040]">{{ detailItem.destination_address?.postal_code }} {{ detailItem.destination_address?.city }} <span v-if="detailItem.destination_address?.province">({{ detailItem.destination_address?.province }})</span></p>
-						<p v-if="detailItem.destination_address?.telephone_number" class="text-[0.75rem] text-[#737373] mt-[4px]">Tel: {{ detailItem.destination_address?.telephone_number }}</p>
+						<p v-if="detailItem.destination_address?.telephone_number" class="text-[0.75rem] text-[var(--color-brand-text-secondary)] mt-[4px]">Tel: {{ detailItem.destination_address?.telephone_number }}</p>
 					</div>
 					<div class="bg-[#F8F9FB] rounded-[12px] p-[16px]">
-						<h4 class="text-[0.75rem] font-bold text-[#737373] uppercase tracking-wider mb-[8px]">Collo</h4>
-						<div class="grid grid-cols-2 gap-[8px] text-[0.8125rem] text-[#252B42]">
-							<p><span class="text-[#737373]">Tipo:</span> {{ detailItem.package_type }}</p>
-							<p><span class="text-[#737373]">Quantita:</span> {{ detailItem.quantity }}</p>
-							<p><span class="text-[#737373]">Peso:</span> {{ detailItem.weight }} kg</p>
-							<p><span class="text-[#737373]">Dimensioni:</span> {{ detailItem.first_size }}&times;{{ detailItem.second_size }}&times;{{ detailItem.third_size }} cm</p>
+						<h4 class="text-[0.75rem] font-bold text-[var(--color-brand-text-secondary)] uppercase tracking-wider mb-[8px]">Collo</h4>
+						<div class="grid grid-cols-2 gap-[8px] text-[0.8125rem] text-[var(--color-brand-text)]">
+							<p><span class="text-[var(--color-brand-text-secondary)]">Tipo:</span> {{ detailItem.package_type }}</p>
+							<p><span class="text-[var(--color-brand-text-secondary)]">Quantita:</span> {{ detailItem.quantity }}</p>
+							<p><span class="text-[var(--color-brand-text-secondary)]">Peso:</span> {{ detailItem.weight }} kg</p>
+							<p><span class="text-[var(--color-brand-text-secondary)]">Dimensioni:</span> {{ detailItem.first_size }}&times;{{ detailItem.second_size }}&times;{{ detailItem.third_size }} cm</p>
 						</div>
 					</div>
 					<div class="bg-[#F8F9FB] rounded-[12px] p-[16px]">
-						<h4 class="text-[0.75rem] font-bold text-[#737373] uppercase tracking-wider mb-[8px]">Servizi</h4>
-						<p class="text-[0.8125rem] text-[#252B42]">{{ detailItem.services?.service_type || 'Standard' }}</p>
-						<p v-if="detailItem.services?.date" class="text-[0.75rem] text-[#737373] mt-[4px]">Ritiro: {{ detailItem.services.date }}</p>
+						<h4 class="text-[0.75rem] font-bold text-[var(--color-brand-text-secondary)] uppercase tracking-wider mb-[8px]">Servizi</h4>
+						<p class="text-[0.8125rem] text-[var(--color-brand-text)]">{{ detailItem.services?.service_type || 'Standard' }}</p>
+						<p v-if="detailItem.services?.date" class="text-[0.75rem] text-[var(--color-brand-text-secondary)] mt-[4px]">Ritiro: {{ detailItem.services.date }}</p>
 					</div>
-					<div class="bg-[#095866]/5 rounded-[12px] p-[16px] flex items-center justify-between">
-						<span class="text-[0.875rem] font-bold text-[#252B42]">Importo</span>
-						<span class="text-[1.25rem] font-bold text-[#095866]">{{ formatPrice(detailItem.single_price) }}</span>
+					<div class="bg-[var(--color-brand-primary)]/5 rounded-[12px] p-[16px] flex items-center justify-between">
+						<span class="text-[0.875rem] font-bold text-[var(--color-brand-text)]">Importo</span>
+						<span class="text-[1.25rem] font-bold text-[var(--color-brand-primary)]">{{ formatPrice(detailItem.single_price) }}</span>
 					</div>
 				</div>
 			</section>

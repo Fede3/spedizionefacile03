@@ -56,32 +56,32 @@ const sections = [
 <template>
 	<section class="min-h-[500px] py-[40px] desktop:py-[60px]">
 		<div class="my-container max-w-[800px]">
-			<h1 class="text-[2rem] font-bold text-[#252B42] mb-[8px]">Privacy Policy</h1>
-			<p class="text-[#737373] text-[0.875rem] mb-[32px]">Ultimo aggiornamento: {{ lastUpdate }}</p>
+			<h1 class="text-[2rem] font-bold text-[var(--color-brand-text)] mb-[8px]">Privacy Policy</h1>
+			<p class="text-[var(--color-brand-text-secondary)] text-[0.875rem] mb-[32px]">Ultimo aggiornamento: {{ lastUpdate }}</p>
 
 			<div class="space-y-[24px]">
 				<div
 					v-for="(section, i) in sections"
 					:key="i"
-					class="bg-white rounded-[12px] border border-[#E9EBEC] p-[24px]"
+					class="bg-white rounded-[12px] border border-[var(--color-brand-border)] p-[24px]"
 				>
-					<h2 class="text-[1.125rem] font-semibold text-[#252B42] mb-[12px]">{{ section.title }}</h2>
-					<p class="text-[#737373] text-[0.9375rem] leading-[1.8]">{{ section.text }}</p>
+					<h2 class="text-[1.125rem] font-semibold text-[var(--color-brand-text)] mb-[12px]">{{ section.title }}</h2>
+					<p class="text-[var(--color-brand-text-secondary)] text-[0.9375rem] leading-[1.8]">{{ section.text }}</p>
 					<NuxtLink
 						v-if="section.link"
 						:to="section.link.url"
-						class="inline-block mt-[12px] text-[#095866] text-[0.875rem] font-medium hover:underline"
+						class="inline-block mt-[12px] text-[var(--color-brand-primary)] text-[0.875rem] font-medium hover:underline"
 					>
 						{{ section.link.text }}
 					</NuxtLink>
 				</div>
 			</div>
 
-			<div class="mt-[32px] bg-[#F9FAFB] rounded-[12px] border border-[#E9EBEC] p-[24px]">
-				<h2 class="text-[1rem] font-semibold text-[#252B42] mb-[8px]">Contatti per la privacy</h2>
-				<p class="text-[#737373] text-[0.9375rem] leading-[1.8]">
+			<div class="mt-[32px] bg-[#F9FAFB] rounded-[12px] border border-[var(--color-brand-border)] p-[24px]">
+				<h2 class="text-[1rem] font-semibold text-[var(--color-brand-text)] mb-[8px]">Contatti per la privacy</h2>
+				<p class="text-[var(--color-brand-text-secondary)] text-[0.9375rem] leading-[1.8]">
 					Per esercitare i tuoi diritti o per qualsiasi domanda sul trattamento dei dati, scrivi a
-					<a href="mailto:privacy@spediamofacile.it" class="text-[#095866] hover:underline">privacy@spediamofacile.it</a>.
+					<a href="mailto:privacy@spediamofacile.it" class="text-[var(--color-brand-primary)] hover:underline">privacy@spediamofacile.it</a>.
 				</p>
 			</div>
 		</div>

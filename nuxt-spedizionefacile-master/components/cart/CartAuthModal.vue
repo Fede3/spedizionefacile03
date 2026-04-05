@@ -70,14 +70,14 @@ const switchTab = (newTab) => {
 						<button
 							type="button"
 							class="px-[14px] py-[8px] rounded-[10px] text-[0.8125rem] font-semibold transition cursor-pointer"
-							:class="tab === 'login' ? 'bg-white text-[#252B42] shadow-sm' : 'text-[#737373]'"
+							:class="tab === 'login' ? 'bg-white text-[var(--color-brand-text)] shadow-sm' : 'text-[var(--color-brand-text-secondary)]'"
 							@click="switchTab('login')">
 							Accedi
 						</button>
 						<button
 							type="button"
 							class="px-[14px] py-[8px] rounded-[10px] text-[0.8125rem] font-semibold transition cursor-pointer"
-							:class="tab === 'register' ? 'bg-white text-[#252B42] shadow-sm' : 'text-[#737373]'"
+							:class="tab === 'register' ? 'bg-white text-[var(--color-brand-text)] shadow-sm' : 'text-[var(--color-brand-text-secondary)]'"
 							@click="switchTab('register')">
 							Registrati
 						</button>
@@ -158,7 +158,7 @@ const switchTab = (newTab) => {
 					<div v-if="error && error.toLowerCase().includes('verific')" class="text-[0.8125rem]">
 						<NuxtLink
 							:to="`/autenticazione?redirect=${encodeURIComponent(redirectPath)}`"
-							class="text-[#095866] font-semibold hover:underline cursor-pointer">
+							class="text-[var(--color-brand-primary)] font-semibold hover:underline cursor-pointer">
 							Apri verifica account
 						</NuxtLink>
 					</div>

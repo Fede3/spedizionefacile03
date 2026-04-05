@@ -16,21 +16,21 @@ const emit = defineEmits(['approve', 'delete', 'role-change']);
 		<div class="w-[64px] h-[64px] mx-auto mb-[16px] bg-[#F8F9FB] rounded-full flex items-center justify-center">
 			<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[28px] h-[28px]" fill="#C8CCD0"><path d="M12,4A4,4 0 0,1 16,8A4,4 0 0,1 12,12A4,4 0 0,1 8,8A4,4 0 0,1 12,4M12,14C16.42,14 20,15.79 20,18V20H4V18C4,15.79 7.58,14 12,14Z"/></svg>
 		</div>
-		<h2 class="text-[1.125rem] font-bold text-[#252B42] mb-[8px]">Nessun account trovato</h2>
-		<p class="text-[#737373] text-[0.875rem]">Nessun utente corrisponde ai filtri selezionati.</p>
+		<h2 class="text-[1.125rem] font-bold text-[var(--color-brand-text)] mb-[8px]">Nessun account trovato</h2>
+		<p class="text-[var(--color-brand-text-secondary)] text-[0.875rem]">Nessun utente corrisponde ai filtri selezionati.</p>
 	</div>
 
 	<template v-else>
 		<!-- Mobile cards -->
 		<div class="desktop:hidden grid grid-cols-1 tablet:grid-cols-2 gap-[12px]">
-			<div v-for="u in users" :key="u.id" class="rounded-[12px] border border-[#E9EBEC] bg-white p-[14px] tablet:p-[16px] shadow-sm">
+			<div v-for="u in users" :key="u.id" class="rounded-[12px] border border-[var(--color-brand-border)] bg-white p-[14px] tablet:p-[16px] shadow-sm">
 				<div class="flex items-start gap-[12px]">
-					<div class="flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-[12px] bg-[#EDF5F6] text-[#095866]">
+					<div class="flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-[12px] bg-[#EDF5F6] text-[var(--color-brand-primary)]">
 						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="h-[20px] w-[20px]" fill="currentColor"><path d="M12,4A4,4 0 0,1 16,8A4,4 0 0,1 12,12A4,4 0 0,1 8,8A4,4 0 0,1 12,4M12,14C16.42,14 20,15.79 20,18V20H4V18C4,15.79 7.58,14 12,14Z"/></svg>
 					</div>
 					<div class="min-w-0 flex-1">
 						<div class="flex flex-wrap items-center gap-[8px]">
-							<p class="min-w-0 flex-1 text-[0.9375rem] font-semibold text-[#252B42] leading-[1.3]">{{ u.name }} {{ u.surname }}</p>
+							<p class="min-w-0 flex-1 text-[0.9375rem] font-semibold text-[var(--color-brand-text)] leading-[1.3]">{{ u.name }} {{ u.surname }}</p>
 							<span :class="u.email_verified_at ? 'text-emerald-700 bg-emerald-50' : 'text-amber-700 bg-amber-50'" class="inline-flex items-center gap-[4px] px-[8px] py-[3px] rounded-full text-[0.6875rem] font-medium">
 								{{ u.email_verified_at ? 'Verificato' : 'Non verificato' }}
 							</span>
@@ -42,11 +42,11 @@ const emit = defineEmits(['approve', 'delete', 'role-change']);
 				<div class="mt-[12px] grid grid-cols-1 gap-[10px] text-[0.8125rem] tablet:grid-cols-2">
 					<div class="rounded-[12px] bg-[#F8FAFB] px-[12px] py-[10px]">
 						<p class="text-[0.6875rem] font-semibold uppercase tracking-[0.45px] text-[#7B8791]">Telefono</p>
-						<p class="mt-[4px] text-[#252B42]">{{ u.telephone_number || '\u2014' }}</p>
+						<p class="mt-[4px] text-[var(--color-brand-text)]">{{ u.telephone_number || '\u2014' }}</p>
 					</div>
 					<div class="rounded-[12px] bg-[#F8FAFB] px-[12px] py-[10px]">
 						<p class="text-[0.6875rem] font-semibold uppercase tracking-[0.45px] text-[#7B8791]">Registrazione</p>
-						<p class="mt-[4px] text-[#252B42]">{{ formatDate(u.created_at) }}</p>
+						<p class="mt-[4px] text-[var(--color-brand-text)]">{{ formatDate(u.created_at) }}</p>
 					</div>
 					<div class="rounded-[12px] bg-[#F8FAFB] px-[12px] py-[10px]">
 						<p class="text-[0.6875rem] font-semibold uppercase tracking-[0.45px] text-[#7B8791]">Ruolo attuale</p>
@@ -58,18 +58,18 @@ const emit = defineEmits(['approve', 'delete', 'role-change']);
 					</div>
 					<div class="rounded-[12px] bg-[#F8FAFB] px-[12px] py-[10px]">
 						<p class="text-[0.6875rem] font-semibold uppercase tracking-[0.45px] text-[#7B8791]">Referral</p>
-						<p class="mt-[4px] break-all font-mono text-[0.75rem] text-[#252B42]">{{ u.referral_code || '\u2014' }}</p>
+						<p class="mt-[4px] break-all font-mono text-[0.75rem] text-[var(--color-brand-text)]">{{ u.referral_code || '\u2014' }}</p>
 					</div>
 				</div>
 
 				<div class="mt-[12px] grid grid-cols-1 gap-[8px]">
-					<select :value="u.role || 'User'" @change="emit('role-change', u, $event.target.value); $event.target.value = u.role || 'User'" :disabled="actionLoading === `role-${u.id}`" class="w-full px-[12px] py-[10px] rounded-[12px] bg-white border border-[#E0E6E8] text-[0.875rem] cursor-pointer focus:border-[#095866] focus:outline-none">
+					<select :value="u.role || 'User'" @change="emit('role-change', u, $event.target.value); $event.target.value = u.role || 'User'" :disabled="actionLoading === `role-${u.id}`" class="w-full px-[12px] py-[10px] rounded-[12px] bg-white border border-[#E0E6E8] text-[0.875rem] cursor-pointer focus:border-[var(--color-brand-primary)] focus:outline-none">
 						<option value="User">Cliente</option>
 						<option value="Partner Pro">Partner Pro</option>
 						<option value="Admin">Admin</option>
 					</select>
 					<div class="grid grid-cols-2 gap-[8px]">
-						<button v-if="!u.email_verified_at" @click="emit('approve', u.id)" :disabled="actionLoading === u.id" class="inline-flex min-h-[42px] items-center justify-center gap-[4px] px-[12px] py-[9px] rounded-[12px] bg-[#095866] text-white text-[0.8125rem] font-medium cursor-pointer disabled:opacity-60">
+						<button v-if="!u.email_verified_at" @click="emit('approve', u.id)" :disabled="actionLoading === u.id" class="inline-flex min-h-[42px] items-center justify-center gap-[4px] px-[12px] py-[9px] rounded-[12px] bg-[var(--color-brand-primary)] text-white text-[0.8125rem] font-medium cursor-pointer disabled:opacity-60">
 							Approva
 						</button>
 						<div v-else class="inline-flex min-h-[42px] items-center justify-center px-[12px] py-[9px] rounded-[12px] bg-emerald-50 text-emerald-700 text-[0.8125rem] font-medium">
@@ -87,7 +87,7 @@ const emit = defineEmits(['approve', 'delete', 'role-change']);
 		<div class="hidden desktop:block overflow-x-auto">
 			<table class="w-full text-[0.875rem]">
 				<thead>
-					<tr class="border-b border-[#E9EBEC] text-left text-[#737373]">
+					<tr class="border-b border-[var(--color-brand-border)] text-left text-[var(--color-brand-text-secondary)]">
 						<th class="pb-[12px] font-medium">Nome</th>
 						<th class="pb-[12px] font-medium">Email</th>
 						<th class="pb-[12px] font-medium">Telefono</th>
@@ -100,11 +100,11 @@ const emit = defineEmits(['approve', 'delete', 'role-change']);
 				</thead>
 				<tbody>
 					<tr v-for="(u, idx) in users" :key="u.id" :class="['border-b border-[#F0F0F0] last:border-0', idx % 2 === 1 ? 'bg-[#FAFBFC]' : '']">
-						<td class="py-[14px] text-[#252B42] font-medium">{{ u.name }} {{ u.surname }}</td>
-						<td class="py-[14px] text-[#737373]">{{ u.email }}</td>
-						<td class="py-[14px] text-[#737373] text-[0.8125rem]">{{ u.telephone_number || '\u2014' }}</td>
+						<td class="py-[14px] text-[var(--color-brand-text)] font-medium">{{ u.name }} {{ u.surname }}</td>
+						<td class="py-[14px] text-[var(--color-brand-text-secondary)]">{{ u.email }}</td>
+						<td class="py-[14px] text-[var(--color-brand-text-secondary)] text-[0.8125rem]">{{ u.telephone_number || '\u2014' }}</td>
 						<td class="py-[14px]">
-							<select :value="u.role || 'User'" @change="emit('role-change', u, $event.target.value); $event.target.value = u.role || 'User'" :disabled="actionLoading === `role-${u.id}`" class="px-[8px] py-[4px] rounded-[6px] text-[0.75rem] font-medium border border-[#E9EBEC] cursor-pointer bg-white focus:border-[#095866] focus:outline-none">
+							<select :value="u.role || 'User'" @change="emit('role-change', u, $event.target.value); $event.target.value = u.role || 'User'" :disabled="actionLoading === `role-${u.id}`" class="px-[8px] py-[4px] rounded-[6px] text-[0.75rem] font-medium border border-[var(--color-brand-border)] cursor-pointer bg-white focus:border-[var(--color-brand-primary)] focus:outline-none">
 								<option value="User">Cliente</option>
 								<option value="Partner Pro">Partner Pro</option>
 								<option value="Admin">Admin</option>
@@ -121,10 +121,10 @@ const emit = defineEmits(['approve', 'delete', 'role-change']);
 								{{ u.email_verified_at ? 'Verificato' : 'Non verificato' }}
 							</span>
 						</td>
-						<td class="py-[14px] text-[#737373] text-[0.8125rem]">{{ formatDate(u.created_at) }}</td>
+						<td class="py-[14px] text-[var(--color-brand-text-secondary)] text-[0.8125rem]">{{ formatDate(u.created_at) }}</td>
 						<td class="py-[14px] text-right">
 							<div class="flex justify-end gap-[6px]">
-								<button v-if="!u.email_verified_at" @click="emit('approve', u.id)" :disabled="actionLoading === u.id" class="px-[10px] py-[6px] rounded-[12px] bg-[#095866] text-white text-[0.75rem] cursor-pointer disabled:opacity-60 flex items-center gap-[4px]">
+								<button v-if="!u.email_verified_at" @click="emit('approve', u.id)" :disabled="actionLoading === u.id" class="px-[10px] py-[6px] rounded-[12px] bg-[var(--color-brand-primary)] text-white text-[0.75rem] cursor-pointer disabled:opacity-60 flex items-center gap-[4px]">
 									<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[14px] h-[14px]" fill="currentColor"><path d="M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z"/></svg> Approva
 								</button>
 								<button @click="emit('delete', u)" :disabled="actionLoading === u.id" class="px-[10px] py-[6px] rounded-[12px] bg-red-600 text-white text-[0.75rem] cursor-pointer disabled:opacity-60 flex items-center gap-[4px]">

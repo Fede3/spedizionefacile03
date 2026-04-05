@@ -92,9 +92,9 @@ const saveGuide = async () => {
 
 			<div class="space-y-[20px]">
 				<!-- Info base -->
-				<div class="bg-white rounded-[12px] p-[24px] desktop:p-[32px] shadow-sm border border-[#E9EBEC]">
-					<h2 class="text-[1.125rem] font-bold text-[#252B42] mb-[20px] flex items-center gap-[8px]">
-						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[20px] h-[20px] text-[#095866]" fill="currentColor"><path d="M14,17H7V15H14M17,13H7V11H17M17,9H7V7H17M19,3H5C3.89,3 3,3.89 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V5C21,3.89 20.1,3 19,3Z"/></svg> Informazioni base
+				<div class="bg-white rounded-[12px] p-[24px] desktop:p-[32px] shadow-sm border border-[var(--color-brand-border)]">
+					<h2 class="text-[1.125rem] font-bold text-[var(--color-brand-text)] mb-[20px] flex items-center gap-[8px]">
+						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[20px] h-[20px] text-[var(--color-brand-primary)]" fill="currentColor"><path d="M14,17H7V15H14M17,13H7V11H17M17,9H7V7H17M19,3H5C3.89,3 3,3.89 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V5C21,3.89 20.1,3 19,3Z"/></svg> Informazioni base
 					</h2>
 					<div class="space-y-[16px] max-w-[700px]">
 						<div>
@@ -123,9 +123,9 @@ const saveGuide = async () => {
 				</div>
 
 				<!-- Sezioni -->
-				<div class="bg-white rounded-[12px] p-[24px] desktop:p-[32px] shadow-sm border border-[#E9EBEC]">
+				<div class="bg-white rounded-[12px] p-[24px] desktop:p-[32px] shadow-sm border border-[var(--color-brand-border)]">
 					<div class="flex items-center justify-between mb-[20px]">
-						<h2 class="text-[1.125rem] font-bold text-[#252B42] flex items-center gap-[8px]">
+						<h2 class="text-[1.125rem] font-bold text-[var(--color-brand-text)] flex items-center gap-[8px]">
 							<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[20px] h-[20px] text-indigo-600" fill="currentColor"><path d="M7,5H21V7H7V5M7,13V11H21V13H7M4,4.5A1.5,1.5 0 0,1 5.5,6A1.5,1.5 0 0,1 4,7.5A1.5,1.5 0 0,1 2.5,6A1.5,1.5 0 0,1 4,4.5M4,10.5A1.5,1.5 0 0,1 5.5,12A1.5,1.5 0 0,1 4,13.5A1.5,1.5 0 0,1 2.5,12A1.5,1.5 0 0,1 4,10.5M7,19V17H21V19H7M4,16.5A1.5,1.5 0 0,1 5.5,18A1.5,1.5 0 0,1 4,19.5A1.5,1.5 0 0,1 2.5,18A1.5,1.5 0 0,1 4,16.5Z"/></svg> Sezioni
 						</h2>
 						<button @click="addSection" class="btn-secondary btn-compact inline-flex items-center gap-[4px]">
@@ -134,9 +134,9 @@ const saveGuide = async () => {
 					</div>
 
 					<div class="space-y-[16px]">
-						<div v-for="(section, idx) in form.sections" :key="idx" class="p-[16px] rounded-[12px] border border-[#E9EBEC] bg-[#FAFBFC]">
+						<div v-for="(section, idx) in form.sections" :key="idx" class="p-[16px] rounded-[12px] border border-[var(--color-brand-border)] bg-[#FAFBFC]">
 							<div class="flex items-center justify-between mb-[12px]">
-								<span class="text-[0.8125rem] font-semibold text-[#252B42]">Sezione {{ idx + 1 }}</span>
+								<span class="text-[0.8125rem] font-semibold text-[var(--color-brand-text)]">Sezione {{ idx + 1 }}</span>
 								<button v-if="form.sections.length > 1" type="button" @click="removeSection(idx)" class="btn-danger btn-compact inline-flex items-center justify-center !px-0 !py-0 !w-[32px] !h-[32px]">
 									<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[16px] h-[16px]" fill="currentColor"><path d="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z"/></svg>
 								</button>

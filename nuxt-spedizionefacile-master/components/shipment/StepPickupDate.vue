@@ -28,7 +28,7 @@ const scrollTrack = (direction) => {
 					<path fill="currentColor" d="M1 21h22L12 2z" />
 				</svg>
 				<div class="min-w-0">
-					<p class="text-[0.9375rem] font-bold leading-[1.2] text-[#252B42]">Scegli il ritiro</p>
+					<p class="text-[0.9375rem] font-bold leading-[1.2] text-[var(--color-brand-text)]">Scegli il ritiro</p>
 					<p class="mt-[4px] text-[0.875rem] leading-[1.45] text-[#52606D]">{{ dateError }}</p>
 				</div>
 			</div>

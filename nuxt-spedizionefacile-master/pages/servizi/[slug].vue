@@ -140,7 +140,7 @@ useHead(() => {
 
 <template>
 	<section v-if="pending" class="flex min-h-[420px] items-center justify-center">
-		<div class="h-[40px] w-[40px] rounded-full border-3 border-[#E9EBEC] border-t-[#095866] animate-spin"></div>
+		<div class="h-[40px] w-[40px] rounded-full border-3 border-[var(--color-brand-border)] border-t-[var(--color-brand-primary)] animate-spin"></div>
 	</section>
 
 	<section v-else-if="service" class="service-detail-shell py-[28px] desktop:py-[56px]">
@@ -148,7 +148,7 @@ useHead(() => {
 			<div class="mt-[8px]">
 				<NuxtLink
 					to="/servizi"
-					class="inline-flex items-center gap-[8px] text-[0.875rem] font-medium text-[#095866] transition-colors hover:text-[#0B6D7D]">
+					class="inline-flex items-center gap-[8px] text-[0.875rem] font-medium text-[var(--color-brand-primary)] transition-colors hover:text-[#0B6D7D]">
 					<svg
 						xmlns="http://www.w3.org/2000/svg"
 						width="18"
@@ -170,7 +170,7 @@ useHead(() => {
 				<div
 					class="flex flex-col gap-[18px] desktop:grid desktop:grid-cols-[minmax(0,1.18fr)_minmax(320px,0.82fr)] desktop:items-center desktop:gap-[28px]">
 					<div class="space-y-[12px]">
-						<p class="text-[0.75rem] font-semibold uppercase tracking-[0.14em] text-[#095866]">Servizio</p>
+						<p class="text-[0.75rem] font-semibold uppercase tracking-[0.14em] text-[var(--color-brand-primary)]">Servizio</p>
 						<h1 class="text-[2rem] font-bold tracking-[-0.04em] text-[#1F2937] desktop:text-[3.1rem]">
 							{{ service.title }}
 						</h1>
@@ -181,14 +181,14 @@ useHead(() => {
 							<span
 								v-for="pill in servicePills"
 								:key="pill"
-								class="inline-flex items-center rounded-full bg-[#F0F6F7] px-[12px] py-[6px] text-[0.75rem] font-semibold text-[#095866]">
+								class="inline-flex items-center rounded-full bg-[#F0F6F7] px-[12px] py-[6px] text-[0.75rem] font-semibold text-[var(--color-brand-primary)]">
 								{{ pill }}
 							</span>
 						</div>
 					</div>
 
 					<div class="rounded-[24px] border border-white/70 bg-white/75 p-[18px] shadow-[0_18px_40px_rgba(9,88,102,0.08)] backdrop-blur">
-						<p class="text-[0.75rem] font-semibold uppercase tracking-[0.12em] text-[#E44203]">Quando usarlo</p>
+						<p class="text-[0.75rem] font-semibold uppercase tracking-[0.12em] text-[var(--color-brand-accent)]">Quando usarlo</p>
 						<div class="mt-[12px] space-y-[12px]">
 							<div
 								v-for="item in supportChecklist"

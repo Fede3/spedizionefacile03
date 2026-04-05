@@ -124,7 +124,7 @@ useHead(() => {
 
 <template>
 	<section v-if="pending" class="flex min-h-[420px] items-center justify-center">
-		<div class="h-[40px] w-[40px] rounded-full border-3 border-[#E9EBEC] border-t-[#095866] animate-spin"></div>
+		<div class="h-[40px] w-[40px] rounded-full border-3 border-[var(--color-brand-border)] border-t-[var(--color-brand-primary)] animate-spin"></div>
 	</section>
 
 	<section v-else-if="article" class="blog-detail-shell py-[28px] desktop:py-[56px]">
@@ -132,7 +132,7 @@ useHead(() => {
 			<div class="mt-[8px]">
 				<NuxtLink
 					to="/blog"
-					class="inline-flex items-center gap-[8px] text-[0.875rem] font-medium text-[#095866] transition-colors hover:text-[#0B6D7D]">
+					class="inline-flex items-center gap-[8px] text-[0.875rem] font-medium text-[var(--color-brand-primary)] transition-colors hover:text-[#0B6D7D]">
 					<svg
 						xmlns="http://www.w3.org/2000/svg"
 						width="18"
@@ -152,7 +152,7 @@ useHead(() => {
 
 			<section class="blog-hero-card rounded-[28px] border border-[#E4EAEE] px-[20px] py-[22px] desktop:px-[32px] desktop:py-[34px]">
 				<div class="space-y-[12px]">
-					<p class="text-[0.75rem] font-semibold uppercase tracking-[0.14em] text-[#095866]">Blog</p>
+					<p class="text-[0.75rem] font-semibold uppercase tracking-[0.14em] text-[var(--color-brand-primary)]">Blog</p>
 					<h1 class="max-w-[18ch] text-[2rem] font-bold tracking-[-0.04em] text-[#1F2937] desktop:text-[3rem]">
 						{{ article.title }}
 					</h1>
@@ -163,7 +163,7 @@ useHead(() => {
 						<span
 							v-for="pill in articlePills"
 							:key="pill"
-							class="inline-flex items-center rounded-full bg-[#F0F6F7] px-[12px] py-[6px] text-[0.75rem] font-semibold text-[#095866]">
+							class="inline-flex items-center rounded-full bg-[#F0F6F7] px-[12px] py-[6px] text-[0.75rem] font-semibold text-[var(--color-brand-primary)]">
 							{{ pill }}
 						</span>
 					</div>
@@ -224,8 +224,8 @@ useHead(() => {
 						v-if="prevArticle"
 						:to="`/blog/${prevArticle.slug}`"
 						class="group rounded-[22px] border border-[#EDF2F5] bg-[#F8FBFC] px-[16px] py-[16px] transition-colors hover:border-[#CFE0E6] hover:bg-white">
-						<p class="text-[0.75rem] font-semibold uppercase tracking-[0.08em] text-[#095866]">Articolo precedente</p>
-						<h3 class="mt-[8px] text-[1rem] font-semibold text-[#1F2937] transition-colors group-hover:text-[#095866]">
+						<p class="text-[0.75rem] font-semibold uppercase tracking-[0.08em] text-[var(--color-brand-primary)]">Articolo precedente</p>
+						<h3 class="mt-[8px] text-[1rem] font-semibold text-[#1F2937] transition-colors group-hover:text-[var(--color-brand-primary)]">
 							{{ prevArticle.title }}
 						</h3>
 					</NuxtLink>
@@ -233,8 +233,8 @@ useHead(() => {
 						v-if="nextArticle"
 						:to="`/blog/${nextArticle.slug}`"
 						class="group rounded-[22px] border border-[#EDF2F5] bg-[#F8FBFC] px-[16px] py-[16px] transition-colors hover:border-[#CFE0E6] hover:bg-white">
-						<p class="text-[0.75rem] font-semibold uppercase tracking-[0.08em] text-[#095866]">Articolo successivo</p>
-						<h3 class="mt-[8px] text-[1rem] font-semibold text-[#1F2937] transition-colors group-hover:text-[#095866]">
+						<p class="text-[0.75rem] font-semibold uppercase tracking-[0.08em] text-[var(--color-brand-primary)]">Articolo successivo</p>
+						<h3 class="mt-[8px] text-[1rem] font-semibold text-[#1F2937] transition-colors group-hover:text-[var(--color-brand-primary)]">
 							{{ nextArticle.title }}
 						</h3>
 					</NuxtLink>
@@ -295,7 +295,7 @@ useHead(() => {
 }
 
 .blog-prose :deep(a) {
-	color: #095866;
+	color: var(--color-brand-primary);
 	text-decoration: underline;
 }
 </style>

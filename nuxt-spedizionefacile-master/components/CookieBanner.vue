@@ -19,9 +19,9 @@ const accept = (type) => {
       v-if="visible"
       class="fixed right-[12px] bottom-[max(12px,env(safe-area-inset-bottom))] z-[9999] w-[min(calc(100vw-24px),340px)] rounded-[18px] border border-[#dce7ea] bg-white/96 px-[14px] py-[14px] shadow-[0_18px_45px_rgba(15,23,42,0.16)] backdrop-blur-[14px] tablet:right-[20px] tablet:bottom-[20px] tablet:w-[min(calc(100vw-40px),340px)] tablet:px-[16px] tablet:py-[16px]">
       <div class="grid gap-[12px]">
-        <p class="text-[0.78125rem] leading-[1.5] text-[#252B42]">
+        <p class="text-[0.78125rem] leading-[1.5] text-[var(--color-brand-text)]">
           Utilizziamo i cookie per migliorare la tua esperienza.
-          <NuxtLink to="/cookie-policy" class="text-[#095866] hover:underline font-medium">Scopri di più</NuxtLink>
+          <NuxtLink to="/cookie-policy" class="text-[var(--color-brand-primary)] hover:underline font-medium">Scopri di più</NuxtLink>
         </p>
         <div class="grid grid-cols-2 gap-[8px]">
           <button

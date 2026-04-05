@@ -62,7 +62,7 @@ onBeforeUnmount(() => { origin.cleanup(); dest.cleanup() })
       @select="origin.selectLocation">
       <template #suggestion="{ loc }">
         <span class="font-semibold">{{ loc.place_name }}</span>
-        <span class="text-[#737373]">
+        <span class="text-[var(--color-brand-text-secondary)]">
           <template v-if="getProvinceLabel(loc)">({{ getProvinceLabel(loc) }}) - </template>{{ loc.postal_code }}
         </span>
       </template>
@@ -85,7 +85,7 @@ onBeforeUnmount(() => { origin.cleanup(); dest.cleanup() })
       @blur="origin.hideSuggestions(); sv.onBlur('origin_cap', () => sv.validateCAP('origin_cap', originPostalCode))">
       <template #suggestion="{ loc }">
         <span class="font-semibold">{{ loc.postal_code }}</span> - {{ loc.place_name }}
-        <span v-if="getProvinceLabel(loc)" class="text-[#737373]"> ({{ getProvinceLabel(loc) }})</span>
+        <span v-if="getProvinceLabel(loc)" class="text-[var(--color-brand-text-secondary)]"> ({{ getProvinceLabel(loc) }})</span>
       </template>
     </PreventivoCityCapField>
 
@@ -104,7 +104,7 @@ onBeforeUnmount(() => { origin.cleanup(); dest.cleanup() })
       @select="dest.selectLocation">
       <template #suggestion="{ loc }">
         <span class="font-semibold">{{ loc.place_name }}</span>
-        <span class="text-[#737373]">
+        <span class="text-[var(--color-brand-text-secondary)]">
           <template v-if="getProvinceLabel(loc)">({{ getProvinceLabel(loc) }}) - </template>{{ loc.postal_code }}
         </span>
       </template>
@@ -127,7 +127,7 @@ onBeforeUnmount(() => { origin.cleanup(); dest.cleanup() })
       @blur="dest.hideSuggestions(); sv.onBlur('dest_cap', () => sv.validateCAP('dest_cap', destinationPostalCode))">
       <template #suggestion="{ loc }">
         <span class="font-semibold">{{ loc.postal_code }}</span> - {{ loc.place_name }}
-        <span v-if="getProvinceLabel(loc)" class="text-[#737373]"> ({{ getProvinceLabel(loc) }})</span>
+        <span v-if="getProvinceLabel(loc)" class="text-[var(--color-brand-text-secondary)]"> ({{ getProvinceLabel(loc) }})</span>
       </template>
     </PreventivoCityCapField>
   </div>

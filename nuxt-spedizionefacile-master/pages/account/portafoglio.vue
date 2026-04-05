@@ -129,7 +129,7 @@ const walletOverview = computed(() => {
 					: balanceError.value
 						? 'Ultimo dato disponibile: aggiorna per verificare il saldo.'
 						: 'Usabile subito per spedizioni e pagamenti.',
-			tone: 'bg-[#F0F6F7] text-[#095866]',
+			tone: 'bg-[#F0F6F7] text-[var(--color-brand-primary)]',
 		},
 		{
 			label: 'Carta predefinita',
@@ -261,7 +261,7 @@ onMounted(() => {
 						<span
 							v-for="stat in walletHeaderStats"
 							:key="stat.label"
-							class="inline-flex items-center gap-[6px] rounded-full bg-[#F0F6F7] px-[12px] py-[6px] text-[0.8125rem] font-semibold text-[#095866]">
+							class="inline-flex items-center gap-[6px] rounded-full bg-[#F0F6F7] px-[12px] py-[6px] text-[0.8125rem] font-semibold text-[var(--color-brand-primary)]">
 							{{ stat.label }}: {{ stat.value }}
 						</span>
 					</div>
@@ -310,15 +310,15 @@ onMounted(() => {
 							: 'desktop:grid-cols-[minmax(0,1.08fr)_repeat(3,minmax(0,0.68fr))]',
 					]">
 					<div>
-						<p class="text-[0.75rem] font-semibold uppercase tracking-[1px] text-[#095866]">Panoramica portafoglio</p>
-						<h2 class="mt-[4px] text-[1rem] font-bold text-[#252B42]">Saldo, carta e storico con una gerarchia piu chiara</h2>
+						<p class="text-[0.75rem] font-semibold uppercase tracking-[1px] text-[var(--color-brand-primary)]">Panoramica portafoglio</p>
+						<h2 class="mt-[4px] text-[1rem] font-bold text-[var(--color-brand-text)]">Saldo, carta e storico con una gerarchia piu chiara</h2>
 						<p class="mt-[4px] max-w-[560px] text-[0.8125rem] leading-[1.55] text-[#667281]">
 							Le ricariche usano la carta predefinita e, dopo ogni operazione, saldo e movimenti vengono aggiornati qui.
 						</p>
 					</div>
 
-					<div v-for="item in walletOverview" :key="item.label" class="rounded-[12px] border border-[#E9EBEC] px-[14px] py-[12px]">
-						<p class="text-[0.75rem] font-semibold uppercase tracking-[0.8px] text-[#737373]">{{ item.label }}</p>
+					<div v-for="item in walletOverview" :key="item.label" class="rounded-[12px] border border-[var(--color-brand-border)] px-[14px] py-[12px]">
+						<p class="text-[0.75rem] font-semibold uppercase tracking-[0.8px] text-[var(--color-brand-text-secondary)]">{{ item.label }}</p>
 						<span :class="['mt-[8px] inline-flex rounded-full px-[10px] py-[5px] text-[0.75rem] font-semibold', item.tone]">
 							{{ item.value }}
 						</span>

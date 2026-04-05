@@ -68,12 +68,12 @@ pageReady.value = await initRiepilogoPage();
 
 			<!-- Loading state per modifica dal carrello -->
 			<div v-if="loadingEditData" class="text-center py-[60px]">
-				<div class="inline-block w-[40px] h-[40px] border-4 border-[#E9EBEC] border-t-[#095866] rounded-full animate-spin mb-[16px]"></div>
-				<p class="text-[1rem] text-[#737373]">Caricamento dati spedizione...</p>
+				<div class="inline-block w-[40px] h-[40px] border-4 border-[var(--color-brand-border)] border-t-[var(--color-brand-primary)] rounded-full animate-spin mb-[16px]"></div>
+				<p class="text-[1rem] text-[var(--color-brand-text-secondary)]">Caricamento dati spedizione...</p>
 			</div>
 
 			<div v-else-if="!shipment" class="text-center py-[60px]">
-				<p class="text-[1rem] text-[#737373]">Nessuna spedizione pronta. Torna alla configurazione.</p>
+				<p class="text-[1rem] text-[var(--color-brand-text-secondary)]">Nessuna spedizione pronta. Torna alla configurazione.</p>
 				<NuxtLink to="/la-tua-spedizione/2" class="btn-secondary inline-flex mt-[20px] min-h-[48px] items-center justify-center">
 					Torna alla configurazione
 				</NuxtLink>
@@ -85,7 +85,7 @@ pageReady.value = await initRiepilogoPage();
 					<h1 class="sf-section-title max-w-[16ch]">{{ editingId ? 'Aggiorna spedizione' : 'Riepilogo' }}</h1>
 					<div v-if="!isEditFromCart" class="inline-flex items-center gap-[8px] rounded-[999px] border border-[#D6E7EA] bg-white px-[14px] py-[6px] shadow-[0_8px_18px_rgba(20,37,48,0.05)]">
 						<span class="sf-section-kicker !mb-0">Ordine</span>
-						<span class="font-mono text-[0.875rem] font-bold text-[#095866]">{{ preOrderNumber }}</span>
+						<span class="font-mono text-[0.875rem] font-bold text-[var(--color-brand-primary)]">{{ preOrderNumber }}</span>
 					</div>
 				</div>
 

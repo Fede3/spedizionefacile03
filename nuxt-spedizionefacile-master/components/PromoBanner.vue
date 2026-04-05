@@ -9,7 +9,7 @@ const props = defineProps({
 	banner: { type: Object, required: true },
 });
 
-const bgColor = computed(() => props.banner.banner_bg_color || '#095866');
+const bgColor = computed(() => props.banner.banner_bg_color || 'var(--color-brand-primary)');
 const textColor = computed(() => props.banner.banner_text_color || '#ffffff');
 </script>
 

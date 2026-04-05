@@ -32,9 +32,9 @@ const firstItem = computed(() => props.entry.items[0])
       </div>
       <div class="flex-1 min-w-0">
         <div class="flex items-center gap-[6px] tablet:gap-[8px] flex-wrap">
-          <span class="text-[0.8125rem] tablet:text-[0.9375rem] font-bold text-[#252B42]">{{ firstItem?.origin_address?.city || 'Partenza' }}</span>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#E44203" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="shrink-0 tablet:w-[18px] tablet:h-[18px]"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
-          <span class="text-[0.8125rem] tablet:text-[0.9375rem] font-bold text-[#252B42]">{{ firstItem?.destination_address?.city || 'Destinazione' }}</span>
+          <span class="text-[0.8125rem] tablet:text-[0.9375rem] font-bold text-[var(--color-brand-text)]">{{ firstItem?.origin_address?.city || 'Partenza' }}</span>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--color-brand-accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="shrink-0 tablet:w-[18px] tablet:h-[18px]"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+          <span class="text-[0.8125rem] tablet:text-[0.9375rem] font-bold text-[var(--color-brand-text)]">{{ firstItem?.destination_address?.city || 'Destinazione' }}</span>
         </div>
         <div class="flex items-center gap-[10px] mt-[6px] flex-wrap">
           <span class="text-[0.75rem] font-medium uppercase tracking-[0.08em] text-[#6B7280]">{{ entry.items.length }} colli</span>
@@ -47,22 +47,22 @@ const firstItem = computed(() => props.entry.items[0])
         </div>
       </div>
       <div class="text-right shrink-0">
-        <p class="text-[0.9375rem] tablet:text-[1.125rem] font-bold text-[#252B42]">{{ formatPrice(entry.totalCents) }}</p>
-        <p class="text-[0.6875rem] tablet:text-[0.75rem] text-[#737373]">totale gruppo</p>
+        <p class="text-[0.9375rem] tablet:text-[1.125rem] font-bold text-[var(--color-brand-text)]">{{ formatPrice(entry.totalCents) }}</p>
+        <p class="text-[0.6875rem] tablet:text-[0.75rem] text-[var(--color-brand-text-secondary)]">totale gruppo</p>
       </div>
       <div class="shrink-0 ml-[4px] transition-transform" :class="{ 'rotate-180': expanded }">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#737373" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--color-brand-text-secondary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
       </div>
     </button>
 
     <!-- Addresses -->
     <div class="mx-[16px] tablet:mx-[20px] mb-[4px] rounded-[12px] bg-[#F8FAFB] border border-[#EDF2F3] px-[14px] tablet:px-[16px] py-[12px] flex flex-wrap gap-x-[24px] gap-y-[8px] text-[0.75rem] tablet:text-[0.8125rem] text-[#404040]">
       <div class="flex items-start gap-[6px] min-w-0">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#E44203" stroke-width="2" class="shrink-0 mt-[2px]"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--color-brand-accent)" stroke-width="2" class="shrink-0 mt-[2px]"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
         <span class="break-words">{{ firstItem?.origin_address?.name || '' }} - {{ firstItem?.origin_address?.address || '' }}, {{ firstItem?.origin_address?.city || '' }}</span>
       </div>
       <div class="flex items-start gap-[6px] min-w-0">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#095866" stroke-width="2" class="shrink-0 mt-[2px]"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--color-brand-primary)" stroke-width="2" class="shrink-0 mt-[2px]"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
         <span class="break-words">{{ firstItem?.destination_address?.name || '' }} - {{ firstItem?.destination_address?.address || '' }}, {{ firstItem?.destination_address?.city || '' }}</span>
       </div>
     </div>
@@ -79,21 +79,21 @@ const firstItem = computed(() => props.entry.items[0])
             <NuxtImg :src="getPackageIcon(item)" alt="" width="22" height="22" loading="lazy" decoding="async" class="w-[18px] h-[18px] tablet:w-[22px] tablet:h-[22px]" />
           </div>
           <div class="flex-1 min-w-0">
-            <p class="text-[0.8125rem] tablet:text-[0.875rem] font-semibold text-[#252B42]">Collo {{ pIdx + 1 }} <span class="font-normal text-[#737373] ml-[4px]">{{ item.package_type || 'Pacco' }}</span></p>
-            <p class="text-[0.75rem] tablet:text-[0.8125rem] text-[#737373]">{{ item.weight }} kg <span class="mx-[4px]">&middot;</span> {{ item.first_size }}x{{ item.second_size }}x{{ item.third_size }} cm</p>
+            <p class="text-[0.8125rem] tablet:text-[0.875rem] font-semibold text-[var(--color-brand-text)]">Collo {{ pIdx + 1 }} <span class="font-normal text-[var(--color-brand-text-secondary)] ml-[4px]">{{ item.package_type || 'Pacco' }}</span></p>
+            <p class="text-[0.75rem] tablet:text-[0.8125rem] text-[var(--color-brand-text-secondary)]">{{ item.weight }} kg <span class="mx-[4px]">&middot;</span> {{ item.first_size }}x{{ item.second_size }}x{{ item.third_size }} cm</p>
           </div>
           <div class="text-right shrink-0 min-w-[60px] tablet:min-w-[70px]">
-            <span v-if="(item.quantity || 1) > 1" class="block text-[0.6875rem] text-[#737373]">{{ formatPrice(unitPrice(item)) }}/cad</span>
-            <span class="text-[0.8125rem] tablet:text-[0.875rem] font-semibold text-[#252B42]">{{ formatPrice(item.single_price) }}</span>
+            <span v-if="(item.quantity || 1) > 1" class="block text-[0.6875rem] text-[var(--color-brand-text-secondary)]">{{ formatPrice(unitPrice(item)) }}/cad</span>
+            <span class="text-[0.8125rem] tablet:text-[0.875rem] font-semibold text-[var(--color-brand-text)]">{{ formatPrice(item.single_price) }}</span>
           </div>
           <div class="w-full tablet:w-auto flex items-center justify-between tablet:justify-start gap-[8px] tablet:gap-[4px] pl-[40px] tablet:pl-0">
             <div class="flex items-center gap-[4px] shrink-0">
               <button type="button" @click="emit('update-quantity', item.id, (item.quantity || 1) - 1)" :disabled="(item.quantity || 1) <= 1" :class="quantityButtonClass">-</button>
-              <span class="min-w-[20px] text-center font-semibold text-[0.8125rem] text-[#252B42]">{{ item.quantity || 1 }}</span>
+              <span class="min-w-[20px] text-center font-semibold text-[0.8125rem] text-[var(--color-brand-text)]">{{ item.quantity || 1 }}</span>
               <button type="button" @click="emit('update-quantity', item.id, (item.quantity || 1) + 1)" :disabled="(item.quantity || 1) >= 100" :class="quantityButtonClass">+</button>
             </div>
             <div class="flex items-center gap-[6px] shrink-0">
-              <NuxtLink :to="`/riepilogo?edit=${item.id}`" class="min-w-[36px] min-h-[36px] tablet:min-w-0 tablet:min-h-0 flex items-center justify-center text-[#095866] hover:text-[#074a56] cursor-pointer" title="Modifica collo" aria-label="Modifica collo">
+              <NuxtLink :to="`/riepilogo?edit=${item.id}`" class="min-w-[36px] min-h-[36px] tablet:min-w-0 tablet:min-h-0 flex items-center justify-center text-[var(--color-brand-primary)] hover:text-[var(--color-brand-primary-hover)] cursor-pointer" title="Modifica collo" aria-label="Modifica collo">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
               </NuxtLink>
               <button type="button" @click="emit('delete', item.id)" class="min-w-[36px] min-h-[36px] tablet:min-w-0 tablet:min-h-0 flex items-center justify-center text-red-500 hover:text-red-700 cursor-pointer" title="Elimina collo" aria-label="Elimina collo">
@@ -107,7 +107,7 @@ const firstItem = computed(() => props.entry.items[0])
 
     <!-- Collapsed summary -->
     <div v-else class="px-[14px] tablet:px-[20px] pb-[16px] pt-[4px]">
-      <p class="text-[0.75rem] tablet:text-[0.8125rem] text-[#737373]">
+      <p class="text-[0.75rem] tablet:text-[0.8125rem] text-[var(--color-brand-text-secondary)]">
         {{ entry.items.map((i, idx) => `Collo ${idx + 1}: ${i.weight}kg`).join(' | ') }}
       </p>
     </div>

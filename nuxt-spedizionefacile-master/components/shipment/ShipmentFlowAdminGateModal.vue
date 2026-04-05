@@ -146,7 +146,7 @@ const modalUi = {
 }
 
 .admin-flow-gate__icon {
-	background: linear-gradient(135deg, #0d6b79 0%, #095866 100%);
+	background: linear-gradient(135deg, #0d6b79 0%, var(--color-brand-primary) 100%);
 	color: #fff;
 	font-size: 1.125rem;
 	font-weight: 800;

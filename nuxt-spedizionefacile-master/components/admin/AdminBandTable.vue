@@ -35,21 +35,21 @@ const onEditInput = (event) => {
 </script>
 
 <template>
-	<div class="bg-white rounded-[12px] p-[16px] tablet:p-[20px] desktop:p-[28px] shadow-sm border border-[#E9EBEC] overflow-hidden">
-		<h2 class="text-[1.125rem] font-bold text-[#252B42] mb-[6px] flex items-center gap-[8px]">
+	<div class="bg-white rounded-[12px] p-[16px] tablet:p-[20px] desktop:p-[28px] shadow-sm border border-[var(--color-brand-border)] overflow-hidden">
+		<h2 class="text-[1.125rem] font-bold text-[var(--color-brand-text)] mb-[6px] flex items-center gap-[8px]">
 			<slot name="icon" />
 			{{ title }}
 		</h2>
-		<p class="text-[0.75rem] text-[#737373] mb-[20px]">{{ subtitle }}</p>
+		<p class="text-[0.75rem] text-[var(--color-brand-text-secondary)] mb-[20px]">{{ subtitle }}</p>
 
-		<div v-if="!bands.length" class="text-center py-[32px] text-[#737373]">
+		<div v-if="!bands.length" class="text-center py-[32px] text-[var(--color-brand-text-secondary)]">
 			<p>Nessuna fascia configurata.</p>
 		</div>
 
 		<div v-else class="overflow-x-auto">
 			<table class="w-full text-[0.875rem]" :style="{ minWidth }">
 				<thead>
-					<tr class="border-b border-[#E9EBEC] text-left text-[#737373]">
+					<tr class="border-b border-[var(--color-brand-border)] text-left text-[var(--color-brand-text-secondary)]">
 						<th class="pb-[12px] font-medium">#</th>
 						<th class="pb-[12px] font-medium">Min</th>
 						<th class="pb-[12px] font-medium">Max</th>
@@ -63,17 +63,17 @@ const onEditInput = (event) => {
 				</thead>
 				<tbody>
 					<tr v-for="(band, idx) in bands" :key="band.id || idx" :class="['border-b border-[#F0F0F0] last:border-0', idx % 2 === 1 ? 'bg-[#FAFBFC]' : '']">
-						<td class="py-[14px] font-bold text-[#252B42]">{{ idx + 1 }}</td>
+						<td class="py-[14px] font-bold text-[var(--color-brand-text)]">{{ idx + 1 }}</td>
 						<td class="py-[14px] text-[#404040]">
-							<input v-model.number="band.min_value" type="number" min="0" :step="minMaxStep" class="w-[86px] h-[34px] px-[8px] rounded-[12px] border border-[#E9EBEC] bg-white text-[0.8125rem]">
+							<input v-model.number="band.min_value" type="number" min="0" :step="minMaxStep" class="w-[86px] h-[34px] px-[8px] rounded-[12px] border border-[var(--color-brand-border)] bg-white text-[0.8125rem]">
 						</td>
 						<td class="py-[14px] text-[#404040]">
-							<input v-model.number="band.max_value" type="number" min="0" :step="minMaxStep" class="w-[86px] h-[34px] px-[8px] rounded-[12px] border border-[#E9EBEC] bg-white text-[0.8125rem]">
+							<input v-model.number="band.max_value" type="number" min="0" :step="minMaxStep" class="w-[86px] h-[34px] px-[8px] rounded-[12px] border border-[var(--color-brand-border)] bg-white text-[0.8125rem]">
 						</td>
 						<!-- Prezzo base -->
 						<td class="py-[14px]">
 							<div v-if="editingCell === `${bandType}-${idx}-base_price`" class="flex items-center gap-[6px]">
-								<span class="text-[#737373]">&euro;</span>
+								<span class="text-[var(--color-brand-text-secondary)]">&euro;</span>
 								<input
 									:id="`edit-${bandType}-${idx}-base_price`"
 									:value="editValue"
@@ -82,17 +82,17 @@ const onEditInput = (event) => {
 									@keydown.esc="cancelEdit()"
 									@blur="confirmEdit(bandType, idx, 'base_price')"
 									type="number" min="0" step="0.01"
-									class="w-[100px] px-[10px] py-[8px] tablet:py-[6px] bg-white border-2 border-[#095866] rounded-[12px] text-[1rem] tablet:text-[0.8125rem] focus:outline-none"
+									class="w-[100px] px-[10px] py-[8px] tablet:py-[6px] bg-white border-2 border-[var(--color-brand-primary)] rounded-[12px] text-[1rem] tablet:text-[0.8125rem] focus:outline-none"
 									placeholder="0,00" />
 							</div>
-							<button v-else type="button" @click="startEdit(bandType, idx, 'base_price')" class="px-[12px] py-[6px] rounded-[12px] text-[0.875rem] font-semibold text-[#252B42] hover:bg-[#E8F4FB] transition-colors cursor-pointer border border-transparent hover:border-[#B0D4E8]">
+							<button v-else type="button" @click="startEdit(bandType, idx, 'base_price')" class="px-[12px] py-[6px] rounded-[12px] text-[0.875rem] font-semibold text-[var(--color-brand-text)] hover:bg-[#E8F4FB] transition-colors cursor-pointer border border-transparent hover:border-[#B0D4E8]">
 								{{ centsToEuro(band.base_price) }}
 							</button>
 						</td>
 						<!-- Prezzo scontato -->
 						<td class="py-[14px]">
 							<div v-if="editingCell === `${bandType}-${idx}-discount_price`" class="flex items-center gap-[6px]">
-								<span class="text-[#737373]">&euro;</span>
+								<span class="text-[var(--color-brand-text-secondary)]">&euro;</span>
 								<input
 									:id="`edit-${bandType}-${idx}-discount_price`"
 									:value="editValue"
@@ -101,10 +101,10 @@ const onEditInput = (event) => {
 									@keydown.esc="cancelEdit()"
 									@blur="confirmEdit(bandType, idx, 'discount_price')"
 									type="number" min="0" step="0.01"
-									class="w-[100px] px-[10px] py-[8px] tablet:py-[6px] bg-white border-2 border-[#095866] rounded-[12px] text-[1rem] tablet:text-[0.8125rem] focus:outline-none"
+									class="w-[100px] px-[10px] py-[8px] tablet:py-[6px] bg-white border-2 border-[var(--color-brand-primary)] rounded-[12px] text-[1rem] tablet:text-[0.8125rem] focus:outline-none"
 									placeholder="vuoto = usa base" />
 							</div>
-							<button v-else type="button" @click="startEdit(bandType, idx, 'discount_price')" class="px-[12px] py-[6px] rounded-[12px] text-[0.875rem] text-[#737373] hover:bg-[#E8F4FB] transition-colors cursor-pointer border border-transparent hover:border-[#B0D4E8]">
+							<button v-else type="button" @click="startEdit(bandType, idx, 'discount_price')" class="px-[12px] py-[6px] rounded-[12px] text-[0.875rem] text-[var(--color-brand-text-secondary)] hover:bg-[#E8F4FB] transition-colors cursor-pointer border border-transparent hover:border-[#B0D4E8]">
 								{{ band.discount_price != null ? centsToEuro(band.discount_price) : '-' }}
 							</button>
 						</td>
@@ -127,7 +127,7 @@ const onEditInput = (event) => {
 						<!-- Toggle visibile -->
 						<td class="py-[14px] text-center">
 							<button type="button" @click="toggleShowDiscount(bandType, idx)"
-								:class="band.show_discount ? 'bg-[#095866]' : 'bg-[#C8CCD0]'"
+								:class="band.show_discount ? 'bg-[var(--color-brand-primary)]' : 'bg-[#C8CCD0]'"
 								class="relative inline-flex h-[32px] w-[56px] tablet:h-[24px] tablet:w-[44px] items-center rounded-full transition-colors cursor-pointer">
 								<span :class="band.show_discount ? 'translate-x-[28px] tablet:translate-x-[22px]' : 'translate-x-[2px]'" class="inline-block h-[26px] w-[26px] tablet:h-[20px] tablet:w-[20px] transform rounded-full bg-white transition-transform shadow-sm" />
 							</button>
@@ -145,7 +145,7 @@ const onEditInput = (event) => {
 			</table>
 		</div>
 		<div class="mt-[14px] flex justify-end">
-			<button type="button" class="px-[16px] py-[8px] rounded-[999px] bg-[#095866] text-white text-[0.8125rem] font-medium hover:bg-[#074a56] cursor-pointer" @click="addBand(bandType)">
+			<button type="button" class="px-[16px] py-[8px] rounded-[999px] bg-[var(--color-brand-primary)] text-white text-[0.8125rem] font-medium hover:bg-[var(--color-brand-primary-hover)] cursor-pointer" @click="addBand(bandType)">
 				{{ addLabel }}
 			</button>
 		</div>

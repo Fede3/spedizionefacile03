@@ -58,16 +58,16 @@ const submitIcon = computed(() =>
 </script>
 
 <template>
-	<div class="bg-white rounded-[12px] p-[18px] desktop:p-[24px] shadow-sm border border-[#E9EBEC] max-w-[680px] mx-auto">
+	<div class="bg-white rounded-[12px] p-[18px] desktop:p-[24px] shadow-sm border border-[var(--color-brand-border)] max-w-[680px] mx-auto">
 		<!-- Header -->
-		<div class="mb-[18px] flex items-start gap-[12px] rounded-[12px] border border-[#E9EBEC] bg-[#F8FCFD] px-[14px] py-[12px]">
+		<div class="mb-[18px] flex items-start gap-[12px] rounded-[12px] border border-[var(--color-brand-border)] bg-[#F8FCFD] px-[14px] py-[12px]">
 			<div :class="['sf-icon-shell shrink-0', isEdit ? 'sf-icon-shell--selected' : 'sf-icon-shell--accent']">
-				<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="#095866"><path :d="headerIcon" /></svg>
+				<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="var(--color-brand-primary)"><path :d="headerIcon" /></svg>
 			</div>
 			<div>
-				<p class="text-[0.75rem] font-semibold uppercase tracking-[1px] text-[#095866]">{{ headerSubtitle }}</p>
-				<h2 class="mt-[4px] text-[1rem] font-bold text-[#252B42]">{{ headerTitle }}</h2>
-				<p class="mt-[4px] text-[0.8125rem] leading-[1.55] text-[#737373]">{{ headerDesc }}</p>
+				<p class="text-[0.75rem] font-semibold uppercase tracking-[1px] text-[var(--color-brand-primary)]">{{ headerSubtitle }}</p>
+				<h2 class="mt-[4px] text-[1rem] font-bold text-[var(--color-brand-text)]">{{ headerTitle }}</h2>
+				<p class="mt-[4px] text-[0.8125rem] leading-[1.55] text-[var(--color-brand-text-secondary)]">{{ headerDesc }}</p>
 			</div>
 		</div>
 
@@ -137,8 +137,8 @@ const submitIcon = computed(() =>
 					type="checkbox"
 					:checked="!!modelValue.default"
 					@change="updateField('default', $event.target.checked ? 1 : 0)"
-					class="w-[18px] h-[18px] accent-[#095866] cursor-pointer" />
-				<span class="text-[0.8125rem] text-[#737373]">Usa come indirizzo predefinito</span>
+					class="w-[18px] h-[18px] accent-[var(--color-brand-primary)] cursor-pointer" />
+				<span class="text-[0.8125rem] text-[var(--color-brand-text-secondary)]">Usa come indirizzo predefinito</span>
 			</label>
 			<div v-else class="mb-[20px]"></div>
 

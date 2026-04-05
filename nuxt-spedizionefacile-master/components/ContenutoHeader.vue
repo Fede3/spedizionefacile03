@@ -61,19 +61,19 @@ const showMinPriceDiscount = computed(() => {
 	<div class="relative z-[2] overflow-hidden pt-[18px] pb-[28px] tablet:pt-[32px] tablet:pb-[60px] desktop:pt-[64px] desktop:pb-[40px] desktop-xl:pt-[68px] desktop-xl:pb-[48px]" v-if="isHomepageHeroRoute">
 		<!-- Decorazione teal dietro la card -->
 		<div
-			class="pointer-events-none absolute right-[8px] top-[128px] h-[108px] w-[94px] rotate-[6deg] rounded-[12px] bg-gradient-to-br from-[#095866] to-[#0b6d7d] opacity-[0.05] tablet:right-[24px] tablet:top-[104px] tablet:h-[200px] tablet:w-[200px] tablet:opacity-[0.05] desktop:right-[2%] desktop:top-[48px] desktop:h-[140px] desktop:w-[620px] desktop:rotate-[5deg] desktop:opacity-[0.06] desktop-xl:right-[3%] desktop-xl:top-[48px] desktop-xl:h-[150px] desktop-xl:w-[700px]"></div>
+			class="pointer-events-none absolute right-[8px] top-[128px] h-[108px] w-[94px] rotate-[6deg] rounded-[12px] bg-gradient-to-br from-[var(--color-brand-primary)] to-[#0b6d7d] opacity-[0.05] tablet:right-[24px] tablet:top-[104px] tablet:h-[200px] tablet:w-[200px] tablet:opacity-[0.05] desktop:right-[2%] desktop:top-[48px] desktop:h-[140px] desktop:w-[620px] desktop:rotate-[5deg] desktop:opacity-[0.06] desktop-xl:right-[3%] desktop-xl:top-[48px] desktop-xl:h-[150px] desktop-xl:w-[700px]"></div>
 
 			<div class="relative grid grid-cols-[48%_52%] items-start gap-x-[10px] gap-y-[4px] tablet:grid-cols-[minmax(0,1fr)_minmax(0,0.9fr)] tablet:gap-x-[12px] tablet:gap-y-[6px] desktop:grid-cols-[minmax(0,340px)_minmax(0,1fr)] desktop:items-center desktop:gap-[24px] desktop-xl:grid-cols-[minmax(0,360px)_minmax(0,1fr)] desktop-xl:gap-[28px]">
 				<!-- Colonna sinistra: testo + card prezzo -->
 				<div class="relative z-[5] col-start-1 row-start-1 tablet:col-start-1 tablet:row-start-1 desktop:flex desktop:min-h-[300px] desktop:max-w-[420px] desktop:flex-col desktop:justify-center desktop:self-center desktop-xl:min-h-[320px]">
 					<h1 class="max-w-[158px] text-[#1a1a1a] text-[1.95rem] leading-[0.92] tracking-[-0.9px] font-extrabold tablet:max-w-none tablet:text-[3rem] desktop:max-w-[280px] desktop:text-[4.1rem] desktop:tracking-[-2.2px] desktop-xl:max-w-[300px] desktop-xl:text-[4.5rem] desktop-xl:tracking-[-2.6px]">
 						<span class="block">Spedisci</span>
-						<span class="block text-[#095866]">facile</span>
+						<span class="block text-[var(--color-brand-primary)]">facile</span>
 					</h1>
 
 				<!-- Card prezzo bianca in risalto -->
 				<div
-						class="relative z-[7] mt-[8px] flex w-[132px] overflow-hidden rounded-[12px] bg-gradient-to-br from-[#E44203] to-[#095866] shadow-[0_4px_12px_rgba(0,0,0,0.15)] tablet:mt-[16px] tablet:w-[320px] tablet:rounded-[12px] desktop:mt-[24px] desktop:w-[350px] desktop:shadow-[0_8px_24px_rgba(0,0,0,0.15)] desktop-xl:mt-[26px] desktop-xl:w-[370px]">
+						class="relative z-[7] mt-[8px] flex w-[132px] overflow-hidden rounded-[12px] bg-gradient-to-br from-[var(--color-brand-accent)] to-[var(--color-brand-primary)] shadow-[0_4px_12px_rgba(0,0,0,0.15)] tablet:mt-[16px] tablet:w-[320px] tablet:rounded-[12px] desktop:mt-[24px] desktop:w-[350px] desktop:shadow-[0_8px_24px_rgba(0,0,0,0.15)] desktop-xl:mt-[26px] desktop-xl:w-[370px]">
 					<div class="flex flex-col px-[10px] py-[8px] tablet:px-[24px] tablet:py-[20px] desktop:px-[30px] desktop:py-[22px] desktop-xl:px-[36px] desktop-xl:py-[26px]">
 						<span class="text-[0.8125rem] font-medium uppercase tracking-[0.8px] text-white/75 tablet:text-[0.875rem] desktop:text-[1rem] desktop:tracking-[1px] desktop-xl:text-[1.0625rem]">a partire da</span>
 						<div class="mt-[2px] flex items-baseline gap-[8px]">
@@ -95,7 +95,7 @@ const showMinPriceDiscount = computed(() => {
 				</div>
 				<div v-if="promoSettings?.active && promoSettings?.label_text" class="mt-[8px]">
 					<span
-						:style="{ backgroundColor: promoSettings.label_color || '#E44203' }"
+						:style="{ backgroundColor: promoSettings.label_color || 'var(--color-brand-accent)' }"
 						class="inline-flex items-center gap-[6px] px-[10px] py-[4px] rounded-[12px] text-white text-[0.75rem] font-bold tracking-wide shadow-sm">
 						<img v-if="promoSettings.label_image" :src="promoSettings.label_image" alt="" decoding="async" width="40" height="16" class="h-[16px] w-auto shrink-0" />
 						{{ promoSettings.label_text }}
@@ -195,7 +195,7 @@ const showMinPriceDiscount = computed(() => {
 	<!-- FAQ -->
 	<div class="relative z-2 flex flex-col items-center justify-between h-[calc(100%-38px)] desktop:h-[calc(100%-65px)] tablet:h-[calc(100%-50px)]" v-if="route.path === '/faq'">
 		<div class="mt-[34px] mid-desktop:mt-[18px] desktop:mt-[50px]">
-			<h1 class="text-[#E44203] text-center font-medium tracking-[1.8px] desktop-xl:text-[1.25rem] text-[0.875rem] tracking desktop:text-[1.125rem]">FAQ</h1>
+			<h1 class="text-[var(--color-brand-accent)] text-center font-medium tracking-[1.8px] desktop-xl:text-[1.25rem] text-[0.875rem] tracking desktop:text-[1.125rem]">FAQ</h1>
 			<p class="text-[1.375rem] desktop:text-[2.75rem] desktop-xl:text-[4.75rem] leading-[108%] tracking-[-0.552px] desktop:tracking-[-1.98px] font-medium text-[#222222] text-center mt-[10px] tablet:max-w-[360px] desktop-xl:max-w-[1056px] max-w-[320px] desktop:max-w-[620px]">
 				Risposte rapide alle domande comuni
 			</p>

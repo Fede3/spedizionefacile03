@@ -100,7 +100,7 @@ onUnmounted(() => {
 	<div class="w-full min-h-screen flex flex-col overflow-x-clip">
 		<a
 			href="#main-content"
-			class="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-[100] focus:bg-white focus:px-4 focus:py-2 focus:rounded-[12px] focus:shadow-lg focus:text-[#095866] focus:font-semibold">
+			class="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-[100] focus:bg-white focus:px-4 focus:py-2 focus:rounded-[12px] focus:shadow-lg focus:text-[var(--color-brand-primary)] focus:font-semibold">
 			Vai al contenuto
 		</a>
 		<Header />
@@ -118,7 +118,7 @@ onUnmounted(() => {
 		<button
 			v-if="showScrollTop && showFloatingUtilities"
 			@click="scrollToTop"
-			class="hidden tablet:flex fixed bottom-[max(18px,env(safe-area-inset-bottom))] left-[14px] tablet:bottom-[20px] tablet:left-[20px] z-[999] w-[46px] h-[46px] tablet:w-[44px] tablet:h-[44px] rounded-full bg-[#095866] text-white items-center justify-center shadow-lg opacity-40 hover:opacity-100 transition-[opacity,transform] duration-300 hover:scale-110 cursor-pointer"
+			class="hidden tablet:flex fixed bottom-[max(18px,env(safe-area-inset-bottom))] left-[14px] tablet:bottom-[20px] tablet:left-[20px] z-[999] w-[46px] h-[46px] tablet:w-[44px] tablet:h-[44px] rounded-full bg-[var(--color-brand-primary)] text-white items-center justify-center shadow-lg opacity-40 hover:opacity-100 transition-[opacity,transform] duration-300 hover:scale-110 cursor-pointer"
 			title="Torna su"
 			aria-label="Torna su">
 			<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[22px] h-[22px]" fill="currentColor">
@@ -134,7 +134,7 @@ onUnmounted(() => {
 			<NuxtLink
 				v-show="isAuthenticatedForUi"
 				to="/account/assistenza"
-				class="w-[48px] h-[48px] tablet:w-[44px] tablet:h-[44px] rounded-full bg-[#095866] text-white flex items-center justify-center shadow-lg opacity-40 hover:opacity-100 transition-[opacity,transform] duration-300 hover:scale-110"
+				class="w-[48px] h-[48px] tablet:w-[44px] tablet:h-[44px] rounded-full bg-[var(--color-brand-primary)] text-white flex items-center justify-center shadow-lg opacity-40 hover:opacity-100 transition-[opacity,transform] duration-300 hover:scale-110"
 				title="Assistenza"
 				aria-label="Assistenza">
 				<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[22px] h-[22px]" fill="currentColor">
@@ -147,7 +147,7 @@ onUnmounted(() => {
 				v-show="!isAuthenticatedForUi"
 				type="button"
 				@click="toggleGuestHelp"
-				class="w-[48px] h-[48px] tablet:w-[44px] tablet:h-[44px] rounded-full bg-[#095866] text-white flex items-center justify-center shadow-lg opacity-60 hover:opacity-100 transition-[opacity,transform] duration-300 hover:scale-110 cursor-pointer"
+				class="w-[48px] h-[48px] tablet:w-[44px] tablet:h-[44px] rounded-full bg-[var(--color-brand-primary)] text-white flex items-center justify-center shadow-lg opacity-60 hover:opacity-100 transition-[opacity,transform] duration-300 hover:scale-110 cursor-pointer"
 				aria-label="Aiuto"
 				:aria-expanded="showGuestHelp ? 'true' : 'false'"
 				aria-controls="guest-help-popover"
@@ -162,19 +162,19 @@ onUnmounted(() => {
 				v-if="showGuestHelp && !isAuthenticatedForUi"
 				id="guest-help-popover"
 				role="dialog"
-				class="absolute bottom-[58px] right-0 w-[280px] bg-white border border-[#E9EBEC] rounded-[12px] shadow-lg p-[14px]">
-				<p class="text-[0.875rem] font-semibold text-[#252B42]">Serve supporto?</p>
+				class="absolute bottom-[58px] right-0 w-[280px] bg-white border border-[var(--color-brand-border)] rounded-[12px] shadow-lg p-[14px]">
+				<p class="text-[0.875rem] font-semibold text-[var(--color-brand-text)]">Serve supporto?</p>
 				<p class="text-[0.8125rem] text-[#64748B] mt-[4px]">Puoi contattarci subito oppure accedere per aprire e seguire i ticket.</p>
 				<div class="mt-[10px] grid grid-cols-1 gap-[8px]">
 					<NuxtLink
 						to="/contatti"
-						class="inline-flex items-center justify-center h-[36px] rounded-[12px] bg-[#095866] text-white text-[0.8125rem] font-semibold hover:bg-[#074a56] transition-colors"
+						class="inline-flex items-center justify-center h-[36px] rounded-[12px] bg-[var(--color-brand-primary)] text-white text-[0.8125rem] font-semibold hover:bg-[var(--color-brand-primary-hover)] transition-colors"
 						@click="closeGuestHelp">
 						Contattaci
 					</NuxtLink>
 					<button
 						type="button"
-						class="inline-flex items-center justify-center h-[36px] rounded-[12px] border border-[#E9EBEC] text-[#1F2937] text-[0.8125rem] font-semibold hover:bg-[#F7FAFC] transition-colors cursor-pointer"
+						class="inline-flex items-center justify-center h-[36px] rounded-[12px] border border-[var(--color-brand-border)] text-[#1F2937] text-[0.8125rem] font-semibold hover:bg-[#F7FAFC] transition-colors cursor-pointer"
 						@click="openSupportAuthModal">
 						Accedi per ticket
 					</button>
