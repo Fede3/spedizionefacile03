@@ -128,7 +128,7 @@
 	height: 50px;
 	padding: 0 24px;
 	border-radius: 14px;
-	background: #e44203;
+	background: var(--color-brand-accent);
 	color: #fff;
 	text-decoration: none;
 	font-size: 0.98rem;
@@ -144,7 +144,7 @@
 }
 
 .hp-step-cta:focus-visible {
-	outline: 2px solid #095866;
+	outline: 2px solid var(--color-brand-primary);
 	outline-offset: 2px;
 }
 

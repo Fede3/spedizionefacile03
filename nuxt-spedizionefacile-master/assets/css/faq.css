@@ -26,7 +26,7 @@
 	font-weight: 700;
 	letter-spacing: 0.12em;
 	text-transform: uppercase;
-	color: #095866;
+	color: var(--color-brand-primary);
 }
 
 .faq-intro-panel__title {
@@ -60,7 +60,7 @@
 	border-radius: 999px;
 	font-size: 0.79rem;
 	font-weight: 700;
-	color: #095866;
+	color: var(--color-brand-primary);
 	background: #eef7f9;
 	border: 1px solid rgba(9, 88, 102, 0.08);
 }
@@ -100,7 +100,7 @@
 	height: 42px;
 	border-radius: 14px;
 	background: linear-gradient(135deg, rgba(9, 88, 102, 0.12), rgba(9, 88, 102, 0.03));
-	color: #095866;
+	color: var(--color-brand-primary);
 	font-size: 0.8rem;
 	font-weight: 800;
 }
@@ -120,7 +120,7 @@
 	height: 40px;
 	border-radius: 14px;
 	background: #f8fbfc;
-	color: #095866;
+	color: var(--color-brand-primary);
 	border: 1px solid rgba(9, 88, 102, 0.08);
 }
 
@@ -200,14 +200,14 @@
 }
 
 .faq-cta-panel__button--primary {
-	background: #E44203;
+	background: var(--color-brand-accent);
 	color: #fff;
 	box-shadow: 0 12px 24px rgba(228, 66, 3, 0.18);
 }
 
 .faq-cta-panel__button--secondary {
 	background: #fff;
-	color: #095866;
+	color: var(--color-brand-primary);
 	border: 1px solid rgba(9, 88, 102, 0.12);
 }
 

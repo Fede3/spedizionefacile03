@@ -1,7 +1,7 @@
 /* Navbar component styles — extracted from Navbar.vue */
 .navbar-accent-bar {
   height: 2px;
-  background: linear-gradient(90deg, #E44203 0%, #ff6a33 50%, #E44203 100%);
+  background: linear-gradient(90deg, var(--color-brand-accent) 0%, #ff6a33 50%, var(--color-brand-accent) 100%);
 }
 
 .navbar-shell {
@@ -144,7 +144,7 @@
 }
 
 .navbar-mobile-menu-link--active {
-  color: #095866;
+  color: var(--color-brand-primary);
   background: rgba(9, 88, 102, 0.04);
   font-weight: 650;
 }
@@ -163,7 +163,7 @@
 
 .navbar-mobile-menu-link__icon--active {
   background: rgba(9, 88, 102, 0.08);
-  color: #095866;
+  color: var(--color-brand-primary);
 }
 
 .navbar-mobile-auth-cta {

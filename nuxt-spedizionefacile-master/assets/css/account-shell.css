@@ -85,7 +85,7 @@
 	gap: 6px;
 	font-size: 0.75rem;
 	font-weight: 700;
-	color: #095866;
+	color: var(--color-brand-primary);
 	transition:
 		color 180ms ease,
 		transform 180ms ease;
@@ -106,7 +106,7 @@
 
 .sf-account-page-header__crumb-current {
 	font-weight: 700;
-	color: #252b42;
+	color: var(--color-brand-text);
 }
 
 .sf-account-page-header__crumb-divider {
@@ -214,13 +214,13 @@
 
 .sf-account-shell-tabs__item:hover,
 .sf-account-shell-tabs__item:focus-visible {
-	color: #252b42;
+	color: var(--color-brand-text);
 }
 
 .sf-account-shell-tabs__item--active {
 	background: #ffffff;
 	border-color: rgba(9, 88, 102, 0.12);
-	color: #252b42;
+	color: var(--color-brand-text);
 	box-shadow: 0 6px 14px rgba(20, 37, 48, 0.06);
 }
 
@@ -243,7 +243,7 @@
 	font-size: 0.75rem;
 	font-weight: 700;
 	line-height: 1;
-	color: #095866;
+	color: var(--color-brand-primary);
 }
 
 .sf-account-meta-pill--muted {
@@ -296,7 +296,7 @@
 	font-weight: 800;
 	line-height: 1.25;
 	letter-spacing: 0;
-	color: #252b42;
+	color: var(--color-brand-text);
 }
 
 .sf-account-action-band__lead p:last-child {
@@ -349,7 +349,7 @@
 	font-size: 1.02rem;
 	font-weight: 800;
 	line-height: 1.1;
-	color: #252b42;
+	color: var(--color-brand-text);
 }
 
 .sf-account-section__description {
@@ -366,9 +366,9 @@
 	min-width: 24px;
 	border-radius: 999px;
 	padding: 4px 8px;
-	border: 1px solid color-mix(in srgb, var(--sf-section-accent, #095866) 18%, white);
+	border: 1px solid color-mix(in srgb, var(--sf-section-accent, var(--color-brand-primary)) 18%, white);
 	background: rgba(255, 255, 255, 0.82);
-	color: var(--sf-section-accent, #095866);
+	color: var(--sf-section-accent, var(--color-brand-primary));
 	font-size: 0.6875rem;
 	font-weight: 700;
 }
@@ -478,7 +478,7 @@
 	border-radius: 12px;
 	border: 1px solid var(--sf-icon-border, rgba(9, 88, 102, 0.14));
 	background: var(--sf-icon-bg, #edf6f8);
-	color: var(--sf-icon-color, #095866);
+	color: var(--sf-icon-color, var(--color-brand-primary));
 	box-shadow: 0 6px 14px rgba(20, 37, 48, 0.05);
 }
 
@@ -502,7 +502,7 @@
 	font-size: 1rem;
 	font-weight: 800;
 	line-height: 1.2;
-	color: #252b42;
+	color: var(--color-brand-text);
 }
 
 .sf-account-nav-tile__title {
@@ -551,7 +551,7 @@
 .sf-account-nav-tile:focus-visible .sf-account-nav-tile__link {
 	border-color: rgba(9, 88, 102, 0.2);
 	background: #ffffff;
-	color: #095866;
+	color: var(--color-brand-primary);
 	box-shadow: 0 12px 20px rgba(9, 88, 102, 0.1);
 	transform: translateX(2px);
 }
@@ -573,7 +573,7 @@
 	font-size: 1.15rem;
 	font-weight: 800;
 	line-height: 1.2;
-	color: #252b42;
+	color: var(--color-brand-text);
 }
 
 .sf-account-value-card__actions {
@@ -589,7 +589,7 @@
 	width: 62px;
 	height: 62px;
 	border-radius: 999px;
-	background: linear-gradient(135deg, #095866 0%, #0d6674 100%);
+	background: linear-gradient(135deg, var(--color-brand-primary) 0%, #0d6674 100%);
 	color: #ffffff;
 	font-size: 1.12rem;
 	font-weight: 800;
@@ -631,7 +631,7 @@
 	border-radius: 10px;
 	border: 1px solid rgba(9, 88, 102, 0.14);
 	background: linear-gradient(180deg, rgba(238, 246, 248, 0.98) 0%, rgba(232, 243, 245, 0.98) 100%);
-	color: #095866;
+	color: var(--color-brand-primary);
 	box-shadow: none;
 }
 
@@ -646,14 +646,14 @@
 	font-size: 1.15rem;
 	font-weight: 800;
 	line-height: 1.1;
-	color: #252b42;
+	color: var(--color-brand-text);
 }
 
 .sf-account-summary-item__label {
 	font-size: 0.8125rem;
 	font-weight: 800;
 	line-height: 1.3;
-	color: #252b42;
+	color: var(--color-brand-text);
 }
 
 .sf-account-summary-item__meta {
@@ -706,7 +706,7 @@
 	border-radius: 12px;
 	border: 1px solid rgba(9, 88, 102, 0.14);
 	background: linear-gradient(180deg, rgba(238, 246, 248, 0.98) 0%, rgba(232, 243, 245, 0.98) 100%);
-	color: #095866;
+	color: var(--color-brand-primary);
 	box-shadow: 0 6px 14px rgba(9, 88, 102, 0.06);
 	flex-shrink: 0;
 }
@@ -715,14 +715,14 @@
 	font-size: 0.8125rem;
 	font-weight: 800;
 	line-height: 1.2;
-	color: #252b42;
+	color: var(--color-brand-text);
 }
 
 .sf-admin-stat-card__value {
 	font-size: 1.6rem;
 	font-weight: 800;
 	line-height: 1;
-	color: #252b42;
+	color: var(--color-brand-text);
 }
 
 .sf-admin-stat-card__meta {
@@ -767,7 +767,7 @@
 	border-radius: 999px;
 	border: 1px solid rgba(9, 88, 102, 0.14);
 	background: #edf6f8;
-	color: #095866;
+	color: var(--color-brand-primary);
 	font-size: 1.1rem;
 	font-weight: 700;
 	box-shadow: none;
@@ -799,7 +799,7 @@
 	font-size: 0.98rem;
 	font-weight: 800;
 	line-height: 1.2;
-	color: #252b42;
+	color: var(--color-brand-text);
 }
 
 .sf-admin-feature-card__meta {
@@ -812,7 +812,7 @@
 	grid-column: 2;
 	font-size: 0.8125rem;
 	font-weight: 700;
-	color: #095866;
+	color: var(--color-brand-primary);
 }
 
 .sf-admin-hero-panel,
@@ -843,7 +843,7 @@
 	font-size: 1rem;
 	font-weight: 800;
 	line-height: 1.15;
-	color: #252b42;
+	color: var(--color-brand-text);
 }
 
 .sf-admin-hero-panel__meta {
@@ -869,7 +869,7 @@
 }
 
 .sf-admin-hero-panel__upload:hover {
-	border-color: #095866;
+	border-color: var(--color-brand-primary);
 	background: linear-gradient(180deg, rgba(238, 246, 248, 0.98) 0%, rgba(255, 255, 255, 0.98) 100%);
 }
 
@@ -882,7 +882,7 @@
 	padding: 7px 12px;
 	background: #edf6f8;
 	border: 1px solid rgba(9, 88, 102, 0.14);
-	color: #095866;
+	color: var(--color-brand-primary);
 	font-size: 0.75rem;
 	font-weight: 700;
 }
@@ -895,7 +895,7 @@
 	font-size: 1rem;
 	font-weight: 800;
 	line-height: 1.15;
-	color: #252b42;
+	color: var(--color-brand-text);
 }
 
 .sf-admin-hero-preview__subtitle {
@@ -921,7 +921,7 @@
 	border: 1px solid #b9d4dc;
 	padding: 0 0.875rem;
 	background: #fff;
-	color: #095866;
+	color: var(--color-brand-primary);
 	font-size: 0.8125rem;
 	font-weight: 700;
 	line-height: 1;
@@ -936,7 +936,7 @@
 .sf-admin-hero-preview__button:hover,
 .sf-admin-hero-preview__button:focus-visible {
 	background: #edf6f8;
-	border-color: #095866;
+	border-color: var(--color-brand-primary);
 	box-shadow: 0 8px 18px rgba(14, 101, 114, 0.08);
 }
 
@@ -955,7 +955,7 @@
 	font-size: 1.5rem;
 	font-weight: 800;
 	line-height: 1;
-	color: #252b42;
+	color: var(--color-brand-text);
 }
 
 .sf-account-stat-card__sub,

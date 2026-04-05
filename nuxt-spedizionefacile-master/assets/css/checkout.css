@@ -119,7 +119,7 @@
   border-radius: 14px;
   border: 1px solid #dbe4e8;
   background: #fff;
-  color: #252b42;
+  color: var(--color-brand-text);
   font-size: 0.9375rem;
   transition: border-color 0.25s ease, box-shadow 0.25s ease, background-color 0.25s ease;
 }
@@ -128,8 +128,8 @@
 }
 .checkout-coupon-input:focus {
   outline: none;
-  border-color: #095866;
-  box-shadow: inset 0 0 0 1px #095866;
+  border-color: var(--color-brand-primary);
+  box-shadow: inset 0 0 0 1px var(--color-brand-primary);
 }
 .checkout-coupon-applied {
   display: flex;
@@ -178,7 +178,7 @@
   height: 42px;
   border-radius: 12px;
   background: #f3f6f7;
-  color: #095866;
+  color: var(--color-brand-primary);
   flex-shrink: 0;
 }
 .checkout-panel-head__copy { min-width: 0; }
@@ -186,7 +186,7 @@
   font-size: 1.1875rem;
   font-weight: 700;
   line-height: 1.05;
-  color: #252b42;
+  color: var(--color-brand-text);
 }
 .checkout-panel-head__text {
   margin-top: 4px;
@@ -226,7 +226,7 @@
   box-shadow: 0 12px 26px rgba(14, 42, 71, 0.08);
 }
 .checkout-payment-option--active {
-  border-color: #095866;
+  border-color: var(--color-brand-primary);
   background: rgba(9, 88, 102, 0.04);
   box-shadow: 0 2px 10px rgba(9, 88, 102, 0.12);
 }
@@ -244,7 +244,7 @@
   min-height: 24px;
   padding: 0 10px;
   border-radius: 999px;
-  background: #095866;
+  background: var(--color-brand-primary);
   color: #fff;
   font-size: 0.6875rem;
   font-weight: 700;
@@ -267,7 +267,7 @@
               box-shadow 0.35s cubic-bezier(0.4, 0, 0.2, 1);
 }
 .checkout-payment-option--active .checkout-payment-option__icon-shell {
-  background: #095866;
+  background: var(--color-brand-primary);
   border-color: transparent;
   color: #fff;
   box-shadow: 0 10px 18px rgba(9, 88, 102, 0.18);
@@ -281,7 +281,7 @@
   font-size: 0.9375rem;
   font-weight: 700;
   line-height: 1.25;
-  color: #252b42;
+  color: var(--color-brand-text);
 }
 .checkout-payment-option__text {
   font-size: 0.8125rem;
@@ -343,7 +343,7 @@
   cursor: pointer;
 }
 .checkout-payment-choice--selected {
-  border-color: #095866;
+  border-color: var(--color-brand-primary);
   background: rgba(9, 88, 102, 0.03);
   box-shadow: 0 10px 24px rgba(9, 88, 102, 0.09);
 }
@@ -355,7 +355,7 @@
   height: 32px;
   padding: 0 12px;
   border-radius: 10px;
-  background: #252b42;
+  background: var(--color-brand-text);
   color: #fff;
   font-size: 0.8125rem;
   font-weight: 800;
@@ -388,7 +388,7 @@
   font-size: 1rem;
   font-weight: 700;
   line-height: 1.25;
-  color: #252b42;
+  color: var(--color-brand-text);
 }
 .checkout-payment-choice__text {
   margin-top: 4px;
@@ -413,7 +413,7 @@
   position: absolute;
   inset: 5px;
   border-radius: 999px;
-  background: #095866;
+  background: var(--color-brand-primary);
   transform: scale(0);
   transition: transform 0.24s ease;
 }
@@ -450,7 +450,7 @@
 .checkout-payment-card-form__title {
   font-size: 0.9375rem;
   font-weight: 700;
-  color: #252b42;
+  color: var(--color-brand-text);
 }
 .checkout-payment-card-form__text {
   margin-top: 4px;
@@ -471,7 +471,7 @@
 .checkout-payment-card-form__checkbox {
   width: 16px;
   height: 16px;
-  accent-color: #095866;
+  accent-color: var(--color-brand-primary);
   cursor: pointer;
 }
 .checkout-payment-card-form__element {
@@ -497,7 +497,7 @@
 .checkout-payment-alt__title {
   font-size: 0.9375rem;
   font-weight: 700;
-  color: #252b42;
+  color: var(--color-brand-text);
 }
 .checkout-payment-alt__text {
   margin-top: 6px;
@@ -568,9 +568,9 @@
   transform: translateY(-1px);
 }
 .checkout-billing-pill--active {
-  border-color: #095866;
+  border-color: var(--color-brand-primary);
   background: rgba(9, 88, 102, 0.04);
-  color: #095866;
+  color: var(--color-brand-primary);
   box-shadow: 0 10px 20px rgba(9, 88, 102, 0.08);
 }
 .checkout-billing-pill--idle {
@@ -584,8 +584,8 @@
   border-radius: 10px;
 }
 .checkout-billing-subpill--active {
-  border-color: #095866;
-  background: #095866;
+  border-color: var(--color-brand-primary);
+  background: var(--color-brand-primary);
   color: #fff;
   box-shadow: 0 10px 18px rgba(9, 88, 102, 0.16);
 }
@@ -604,7 +604,7 @@
 .checkout-billing-context-note__title {
   font-size: 0.875rem;
   font-weight: 700;
-  color: #252b42;
+  color: var(--color-brand-text);
 }
 .checkout-billing-context-note__text {
   margin-top: 4px;
@@ -617,7 +617,7 @@
   font-size: 0.8125rem;
   line-height: 1.45;
   font-weight: 600;
-  color: #095866;
+  color: var(--color-brand-primary);
 }
 
 /* ── Billing form ── */
@@ -659,15 +659,15 @@
   border-radius: 12px;
   border: 1px solid transparent;
   background: #f8f9fa;
-  color: #252b42;
+  color: var(--color-brand-text);
   font-size: 0.9375rem;
   transition: border-color 0.25s ease, box-shadow 0.25s ease, background-color 0.25s ease;
 }
 .checkout-billing-input::placeholder { color: #a0a5ab; }
 .checkout-billing-input:focus {
   outline: none;
-  border-color: #095866;
-  box-shadow: inset 0 0 0 1px #095866;
+  border-color: var(--color-brand-primary);
+  box-shadow: inset 0 0 0 1px var(--color-brand-primary);
   background: #fff;
 }
 .checkout-billing-receipt-note {
@@ -723,7 +723,7 @@
   font-size: 1.3125rem;
   font-weight: 800;
   line-height: 1;
-  color: #252b42;
+  color: var(--color-brand-text);
 }
 .checkout-payment-footer__summary-chip {
   display: inline-flex;
@@ -736,7 +736,7 @@
   border: 1px solid rgba(9, 88, 102, 0.1);
   font-size: 0.75rem;
   font-weight: 700;
-  color: #095866;
+  color: var(--color-brand-primary);
   text-align: center;
 }
 .checkout-payment-footer__support {
@@ -761,11 +761,11 @@
   width: 20px;
   height: 20px;
   min-width: 20px;
-  accent-color: #095866;
+  accent-color: var(--color-brand-primary);
   cursor: pointer;
 }
 .checkout-payment-footer__terms-link {
-  color: #095866;
+  color: var(--color-brand-primary);
   font-weight: 600;
 }
 .checkout-payment-footer__hint {
@@ -798,7 +798,7 @@
               opacity 0.3s ease;
 }
 .checkout-payment-submit--active {
-  background: #e44203;
+  background: var(--color-brand-accent);
   box-shadow: 0 16px 32px rgba(228, 66, 3, 0.22);
 }
 .checkout-payment-submit--active:hover {

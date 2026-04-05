@@ -67,7 +67,7 @@
 .auth-segment--active {
   border: 1px solid #d7e2e7;
   background: #ffffff;
-  color: #0b5965;
+  color: var(--color-brand-primary-light);
   box-shadow: 0 6px 14px rgba(20, 37, 48, 0.06);
 }
 
@@ -209,7 +209,7 @@
 }
 
 .auth-panel-copy--accent {
-  color: #095866;
+  color: var(--color-brand-primary);
 }
 
 .auth-login-resend__copy {
@@ -229,7 +229,7 @@
   margin-top: 16px;
   text-align: center;
   font-size: 0.875rem;
-  color: #095866;
+  color: var(--color-brand-primary);
 }
 
 .auth-field-group {
@@ -241,7 +241,7 @@
 .auth-field-label {
   font-size: 0.75rem;
   font-weight: 600;
-  color: #252b42;
+  color: var(--color-brand-text);
 }
 
 .auth-field-select {
@@ -311,7 +311,7 @@
 .auth-checkbox {
   width: 1rem;
   height: 1rem;
-  accent-color: #095866;
+  accent-color: var(--color-brand-primary);
 }
 
 .auth-text-link:disabled {
@@ -328,7 +328,7 @@
   height: 3px;
   flex: 1 1 0;
   border-radius: 999px;
-  background: #e9ebec;
+  background: var(--color-brand-border);
   transition: background-color 160ms ease;
 }
 
@@ -400,7 +400,7 @@
 }
 
 .auth-text-link {
-  color: #095866;
+  color: var(--color-brand-primary);
   font-weight: 700;
   font-size: 0.875rem;
   cursor: pointer;

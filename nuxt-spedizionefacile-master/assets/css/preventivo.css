@@ -21,18 +21,18 @@
 	--quote-text-subtle: #777;
 	--quote-text-soft: #b8bcc4;
 	--quote-selector-shell-bg: #d5d9e0;
-	--quote-selector-active-bg: #e44203;
+	--quote-selector-active-bg: var(--color-brand-accent);
 	--quote-selector-active-fg: #ffffff;
 	--quote-selector-hover-bg: rgba(255, 255, 255, 0.42);
 	--quote-error-bg: #fff5f2;
-	--quote-error-fg: #e44203;
+	--quote-error-fg: var(--color-brand-accent);
 	--quote-active-icon-filter: brightness(0) saturate(100%) invert(100%);
 }
 
 .preventivo-shell__accent {
 	height: 4px;
 	margin: -15px -12px 12px;
-	background: linear-gradient(90deg, #095866 0%, #0b9ab3 50%, #095866 100%);
+	background: linear-gradient(90deg, var(--color-brand-primary) 0%, #0b9ab3 50%, var(--color-brand-primary) 100%);
 }
 
 .preventivo-form {
@@ -71,7 +71,7 @@
 	width: 2.25rem;
 	height: 2.25rem;
 	border-radius: 999px;
-	background: linear-gradient(135deg, #095866, #0b7d92);
+	background: linear-gradient(135deg, var(--color-brand-primary), #0b7d92);
 	color: #fff;
 	display: inline-flex;
 	align-items: center;
@@ -114,7 +114,7 @@
 
 .preventivo-heading__reset:hover {
 	background: #ffe8e0;
-	color: #e44203;
+	color: var(--color-brand-accent);
 }
 
 .preventivo-steps-strip {
@@ -138,7 +138,7 @@
 .preventivo-section__title {
 	margin: 0;
 	text-align: left;
-	color: #095866;
+	color: var(--color-brand-primary);
 	font-size: 1rem;
 	line-height: 1.25;
 	font-weight: 600;
@@ -201,12 +201,12 @@
 
 .route-card__badge--origin {
 	background: rgba(228, 66, 3, 0.1);
-	color: #e44203;
+	color: var(--color-brand-accent);
 }
 
 .route-card__badge--destination {
 	background: rgba(9, 88, 102, 0.1);
-	color: #095866;
+	color: var(--color-brand-primary);
 }
 
 .route-card__title {
@@ -232,7 +232,7 @@
 	gap: 0.35rem 0.5rem;
 	font-size: 0.78rem;
 	line-height: 1.25;
-	color: #095866;
+	color: var(--color-brand-primary);
 }
 
 .route-composer__note-label {
@@ -424,7 +424,7 @@
 	padding: 0.65rem 0.9rem;
 	border-radius: 999px;
 	background: rgba(228, 66, 3, 0.08);
-	color: #e44203;
+	color: var(--color-brand-accent);
 	font-size: 0.84rem;
 	font-weight: 700;
 	text-align: center;
@@ -568,7 +568,7 @@
 }
 
 .package-entry__delete:hover {
-	color: #e44203;
+	color: var(--color-brand-accent);
 	background: var(--quote-error-bg);
 	transform: translateY(-1px);
 }
@@ -659,7 +659,7 @@
 	border-radius: 999px;
 	border: 1.5px solid rgba(9, 88, 102, 0.2);
 	background: transparent;
-	color: #095866;
+	color: var(--color-brand-primary);
 	font-size: 0.875rem;
 	font-weight: 600;
 	transition:
@@ -769,7 +769,7 @@
 
 .continue-button-wrapper {
 	border-radius: 999px;
-	background: linear-gradient(135deg, #e44203 0%, #c73600 100%);
+	background: linear-gradient(135deg, var(--color-brand-accent) 0%, #c73600 100%);
 	box-shadow: 0 6px 24px rgba(228, 66, 3, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
 

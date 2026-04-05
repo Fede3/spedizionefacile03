@@ -21,7 +21,7 @@
   font-weight: 700;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: #095866;
+  color: var(--color-brand-primary);
 }
 
 .contact-intro-panel__title {
@@ -55,7 +55,7 @@
   border-radius: 999px;
   font-size: 0.79rem;
   font-weight: 700;
-  color: #095866;
+  color: var(--color-brand-primary);
   background: #eef7f9;
   border: 1px solid rgba(9, 88, 102, 0.08);
 }
@@ -93,7 +93,7 @@
 .contact-side-card__icon,
 .contact-actions-card__icon {
   font-size: 24px;
-  color: #095866;
+  color: var(--color-brand-primary);
 }
 
 .contact-success-card__title,
@@ -129,7 +129,7 @@
   min-height: 48px;
   padding: 0 18px;
   border-radius: 999px;
-  background: #E44203;
+  background: var(--color-brand-accent);
   color: #fff;
   font-size: 0.88rem;
   font-weight: 700;
@@ -283,7 +283,7 @@
 .contact-actions-card__item-link {
   font-size: 0.82rem;
   font-weight: 700;
-  color: #E44203;
+  color: var(--color-brand-accent);
 }
 
 @media (min-width: 48rem) {

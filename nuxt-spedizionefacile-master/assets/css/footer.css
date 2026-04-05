@@ -5,7 +5,7 @@
 .site-footer__top {
 	background:
 		radial-gradient(circle at top right, rgba(228, 66, 3, 0.18), transparent 30%),
-		linear-gradient(180deg, #095866 0%, #074a56 100%);
+		linear-gradient(180deg, var(--color-brand-primary) 0%, var(--color-brand-primary-hover) 100%);
 	color: #fff;
 }
 
@@ -78,7 +78,7 @@
 
 .site-footer__social-link:hover {
 	transform: translateY(-1px);
-	background: #E44203;
+	background: var(--color-brand-accent);
 	color: #fff;
 }
 

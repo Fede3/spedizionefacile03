@@ -21,7 +21,7 @@
 	font-weight: 700;
 	letter-spacing: 0.12em;
 	text-transform: uppercase;
-	color: #095866;
+	color: var(--color-brand-primary);
 }
 
 .about-hero-panel__title {
@@ -60,14 +60,14 @@
 }
 
 .about-hero-panel__cta--primary {
-	background: #E44203;
+	background: var(--color-brand-accent);
 	color: #fff;
 	box-shadow: 0 12px 24px rgba(228, 66, 3, 0.18);
 }
 
 .about-hero-panel__cta--secondary {
 	background: #fff;
-	color: #095866;
+	color: var(--color-brand-primary);
 	border: 1px solid rgba(9, 88, 102, 0.14);
 }
 
@@ -86,7 +86,7 @@
 	border-radius: 999px;
 	font-size: 0.79rem;
 	font-weight: 700;
-	color: #095866;
+	color: var(--color-brand-primary);
 	background: #eef7f9;
 	border: 1px solid rgba(9, 88, 102, 0.08);
 }
@@ -122,7 +122,7 @@
 
 .about-story-card__icon {
 	font-size: 24px;
-	color: #095866;
+	color: var(--color-brand-primary);
 }
 
 .about-story-card__body {

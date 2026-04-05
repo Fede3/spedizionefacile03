@@ -136,7 +136,7 @@
 	height: 48px;
 	border-radius: 14px;
 	background: linear-gradient(135deg, rgba(9, 88, 102, 0.14), rgba(9, 88, 102, 0.04));
-	color: #095866;
+	color: var(--color-brand-primary);
 }
 
 .service-spotlight-card__icon {
@@ -151,7 +151,7 @@
 	padding: 0 10px;
 	border-radius: 999px;
 	background: rgba(228, 66, 3, 0.08);
-	color: #E44203;
+	color: var(--color-brand-accent);
 	font-size: 0.75rem;
 	font-weight: 700;
 	white-space: nowrap;
@@ -205,7 +205,7 @@
 	padding: 0 14px;
 	border-radius: 14px;
 	background: #f4f9fb;
-	color: #095866;
+	color: var(--color-brand-primary);
 	font-size: 0.875rem;
 	font-weight: 700;
 	margin-top: auto;

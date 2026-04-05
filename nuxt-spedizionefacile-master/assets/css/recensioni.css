@@ -100,7 +100,7 @@
 }
 
 .hp-rev-card:focus-visible {
-	outline: 2px solid #095866;
+	outline: 2px solid var(--color-brand-primary);
 	outline-offset: 3px;
 }
 
@@ -173,7 +173,7 @@
 .hp-rev-stars {
 	font-size: 0.85rem;
 	letter-spacing: 1px;
-	color: #e44203;
+	color: var(--color-brand-accent);
 }
 
 .hp-rev-date {

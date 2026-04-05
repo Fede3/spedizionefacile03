@@ -65,7 +65,7 @@
 	gap: 5px;
 	font-size: 0.8125rem;
 	line-height: 1;
-	color: #737373;
+	color: var(--color-brand-text-secondary);
 	padding: 7px 12px;
 	border-radius: 999px;
 	border: 1px solid transparent;
@@ -82,7 +82,7 @@
 }
 
 .summary-mini-step.is-active {
-	background: #e44203;
+	background: var(--color-brand-accent);
 	color: #ffffff;
 	font-weight: 700;
 	padding-inline: 14px;
@@ -92,7 +92,7 @@
 .summary-mini-step.is-completed {
 	background: #eef7f8;
 	border-color: #d6e7ea;
-	color: #095866;
+	color: var(--color-brand-primary);
 	cursor: pointer;
 	font-weight: 700;
 }
@@ -100,7 +100,7 @@
 .summary-mini-step.is-completed:hover {
 	background: #eaf4f6;
 	border-color: #c8dde1;
-	color: #095866;
+	color: var(--color-brand-primary);
 }
 
 .summary-mini-step.is-disabled {
@@ -229,7 +229,7 @@
 	font-size: 1.25rem;
 	font-weight: 800;
 	line-height: 1;
-	color: #095866;
+	color: var(--color-brand-primary);
 	white-space: nowrap;
 }
 
@@ -313,7 +313,7 @@
 	border-radius: 999px;
 	border: 1px solid #c9d8df;
 	background: #f4f9fb;
-	color: #095866;
+	color: var(--color-brand-primary);
 	font-size: 0.6875rem;
 	font-weight: 700;
 	line-height: 1;
