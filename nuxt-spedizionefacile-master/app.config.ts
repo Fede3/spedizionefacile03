@@ -15,10 +15,10 @@
  *   e un pulsante X per chiuderla
  *
  * - tabs: le linguette per cambiare tra diverse viste (es. nelle pagine account)
- *   con colore primario verde scuro (#005961)
+ *   con colore primario teal (#005961)
  *
  * - breadcrumb: il percorso di navigazione (es. Home > Servizi > Pagamento)
- *   con link neri e pagina attiva in verde scuro
+ *   con link neri e pagina attiva in teal
  *
  * - user: il componente che mostra nome e avatar dell'utente
  *   (usato nelle recensioni)

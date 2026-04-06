@@ -57,9 +57,9 @@ defineEmits(['logout']);
           </NuxtLink>
         </template>
       </nav>
-      <button
+      <button type="button"
         v-if="showLogout"
-        type="button"
+        
         @click="$emit('logout')"
         :disabled="logoutLoading"
         class="btn-secondary btn-compact inline-flex items-center justify-center">
@@ -74,7 +74,7 @@ defineEmits(['logout']);
             xmlns="http://www.w3.org/2000/svg"
             viewBox="0 0 24 24"
             class="h-[18px] w-[18px]"
-            :fill="card.iconColor || 'var(--color-brand-primary)'"
+            :fill="card.iconColor || '#095866'"
             v-html="accountCardIcons[card.iconKey]"></svg>
         </div>
         <div class="sf-account-summary-item__body">

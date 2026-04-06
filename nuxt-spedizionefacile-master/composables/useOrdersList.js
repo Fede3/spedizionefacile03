@@ -35,11 +35,11 @@ export default function useOrdersList() {
 	const statusColor = (status) => {
 		const raw = statusRaw(status);
 		const map = {
-			pending: 'bg-yellow-100 text-yellow-700', processing: 'bg-blue-100 text-blue-700',
-			completed: 'bg-emerald-100 text-emerald-700', payment_failed: 'bg-red-100 text-red-700',
-			payed: 'bg-emerald-100 text-emerald-700', cancelled: 'bg-gray-200 text-gray-600',
-			refunded: 'bg-orange-100 text-orange-700', in_transit: 'bg-blue-100 text-blue-700',
-			delivered: 'bg-emerald-100 text-emerald-700', in_giacenza: 'bg-orange-100 text-orange-700',
+			pending: 'bg-yellow-100 text-yellow-700', processing: 'bg-[#eef8fa] text-[#095866]',
+			completed: 'bg-[#f0fdf4] text-[#0a8a7a]', payment_failed: 'bg-red-100 text-red-700',
+			payed: 'bg-[#f0fdf4] text-[#0a8a7a]', cancelled: 'bg-gray-200 text-gray-600',
+			refunded: 'bg-orange-100 text-orange-700', in_transit: 'bg-[#eef8fa] text-[#095866]',
+			delivered: 'bg-[#f0fdf4] text-[#0a8a7a]', in_giacenza: 'bg-orange-100 text-orange-700',
 		};
 		return map[raw] || 'bg-gray-100 text-gray-700';
 	};
@@ -65,10 +65,7 @@ export default function useOrdersList() {
 		catch { return dateStr; }
 	};
 
-	const formatPrice = (cents) => {
-		if (!cents && cents !== 0) return '0,00\u20AC';
-		return (cents / 100).toFixed(2).replace('.', ',') + '\u20AC';
-	};
+	// formatPrice auto-importato da utils/price.js
 
 	const getPackageIcon = (item) => {
 		const type = item?.package_type?.toLowerCase() || '';

@@ -25,7 +25,7 @@ const inputClass = 'form-input';
 		<div class="sf-section-block__body">
 			<form @submit.prevent="emit('submit')">
 				<!-- Tipo account -->
-				<h3 class="text-[1rem] font-bold text-[var(--color-brand-text)] mb-[12px]">Tipo account</h3>
+				<h3 class="font-montserrat text-[1rem] font-[800] text-[var(--color-brand-text)] mb-[12px]">Tipo account</h3>
 				<div class="flex flex-col tablet:flex-row items-stretch gap-[12px] mb-[20px]">
 					<label
 						v-for="opt in [
@@ -34,7 +34,7 @@ const inputClass = 'form-input';
 						]"
 						:key="opt.value"
 						:class="[
-							'flex min-h-[46px] flex-1 items-center justify-center gap-[6px] rounded-[14px] border px-[16px] py-[12px] text-center text-[0.9375rem] font-semibold transition-all cursor-pointer',
+							'flex min-h-[46px] flex-1 items-center justify-center gap-[6px] rounded-[100px] border px-[16px] py-[12px] text-center text-[0.9375rem] font-semibold transition-all cursor-pointer',
 							modelValue.user_type === opt.value
 								? 'border-[var(--color-brand-primary)] bg-[var(--color-brand-primary)] text-white shadow-sm'
 								: 'border-[#D8E3E7] bg-white text-[var(--color-brand-text)] hover:border-[var(--color-brand-primary)] hover:bg-[#F8FCFD]',
@@ -50,7 +50,7 @@ const inputClass = 'form-input';
 				</div>
 
 				<!-- Dati personali -->
-				<h3 class="text-[1rem] font-bold text-[var(--color-brand-text)] mb-[16px]">Dati personali</h3>
+				<h3 class="font-montserrat text-[1rem] font-[800] text-[var(--color-brand-text)] mb-[16px]">Dati personali</h3>
 				<div class="grid grid-cols-1 tablet:grid-cols-2 gap-[12px] mb-[16px]">
 					<div>
 						<label class="form-label">Nome *</label>
@@ -75,10 +75,10 @@ const inputClass = 'form-input';
 				</div>
 
 				<!-- Dati aziendali -->
-				<h3 class="text-[1rem] font-bold text-[var(--color-brand-text)] mb-[12px] mt-[24px] pt-[20px] border-t border-[#F0F0F0]">
+				<h3 class="font-montserrat text-[1rem] font-[800] text-[var(--color-brand-text)] mb-[12px] mt-[24px] pt-[20px] border-t border-[rgba(9,88,102,0.08)]">
 					Dati aziendali (opzionale)
 				</h3>
-				<p class="text-[0.8125rem] text-[var(--color-brand-text-secondary)] mb-[14px]">Compila solo se sei un commerciante o un'azienda.</p>
+				<p class="text-[0.8125rem] text-[var(--color-brand-text-secondary)] mb-[16px]">Compila solo se sei un commerciante o un'azienda.</p>
 				<div class="grid grid-cols-1 tablet:grid-cols-2 gap-[12px] mb-[12px]">
 					<div>
 						<label class="form-label">Ragione Sociale</label>
@@ -131,9 +131,9 @@ const inputClass = 'form-input';
 				</div>
 
 				<!-- Fatturazione -->
-				<h3 class="text-[1rem] font-bold text-[var(--color-brand-text)] mb-[12px] mt-[24px] pt-[20px] border-t border-[#F0F0F0]">Dati di fatturazione</h3>
-				<label class="flex items-center gap-[8px] cursor-pointer mb-[14px]">
-					<input type="checkbox" v-model="billingSameAsShipping" class="w-[18px] h-[18px] accent-[var(--color-brand-primary)] cursor-pointer" />
+				<h3 class="font-montserrat text-[1rem] font-[800] text-[var(--color-brand-text)] mb-[12px] mt-[24px] pt-[20px] border-t border-[rgba(9,88,102,0.08)]">Dati di fatturazione</h3>
+				<label class="flex items-center gap-[8px] cursor-pointer mb-[16px]">
+					<input type="checkbox" v-model="billingSameAsShipping" class="w-[18px] h-[18px] accent-[var(--color-brand-primary)] cursor-pointer rounded-[4px]" />
 					<span class="text-[0.8125rem] text-[var(--color-brand-text-secondary)]">Uguale ai dati di spedizione</span>
 				</label>
 				<template v-if="!billingSameAsShipping">
@@ -187,7 +187,7 @@ const inputClass = 'form-input';
 				</template>
 
 				<!-- Password -->
-				<h3 class="text-[1rem] font-bold text-[var(--color-brand-text)] mb-[12px] mt-[24px] pt-[20px] border-t border-[#F0F0F0]">Cambia password</h3>
+				<h3 class="font-montserrat text-[1rem] font-[800] text-[var(--color-brand-text)] mb-[12px] mt-[24px] pt-[20px] border-t border-[rgba(9,88,102,0.08)]">Cambia password</h3>
 				<div class="grid grid-cols-1 tablet:grid-cols-2 gap-[12px] mb-[24px]">
 					<div>
 						<label class="form-label">Nuova password</label>
@@ -236,7 +236,7 @@ const inputClass = 'form-input';
 					<button
 						type="submit"
 						:disabled="!!loading"
-						class="btn-cta btn-compact flex-1 inline-flex items-center justify-center gap-[6px] disabled:opacity-60 disabled:cursor-not-allowed">
+						class="btn-primary btn-compact flex-1 inline-flex items-center justify-center gap-[6px] disabled:opacity-60 disabled:cursor-not-allowed">
 						<svg
 							xmlns="http://www.w3.org/2000/svg"
 							width="18"

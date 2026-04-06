@@ -79,9 +79,9 @@ onMounted(() => {
 			<div
 				v-if="actionMessage"
 				:class="[
-					'mb-[20px] px-[16px] py-[12px] rounded-[12px] text-[0.875rem] font-medium flex items-center gap-[8px]',
+					'mb-[20px] px-[16px] py-[12px] rounded-[20px] text-[0.875rem] font-medium flex items-center gap-[8px]',
 					actionMessage.type === 'success'
-						? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+						? 'bg-[#f0fdf4] text-[#0a8a7a] border border-[#d1fae5]'
 						: 'bg-red-50 text-red-700 border border-red-200',
 				]">
 				<template v-if="actionMessage.type === 'success'">
@@ -98,30 +98,30 @@ onMounted(() => {
 			</div>
 
 			<div class="mb-[16px] grid grid-cols-1 tablet:grid-cols-3 gap-[10px]">
-				<div class="bg-white rounded-[12px] p-[14px] border border-[var(--color-brand-border)] shadow-sm">
+				<div class="bg-white rounded-[20px] p-[14px] border border-[var(--color-brand-border)] shadow-sm">
 					<p class="text-[0.6875rem] uppercase tracking-[0.5px] text-[var(--color-brand-text-secondary)] font-medium">Stripe</p>
 					<p class="text-[0.875rem] font-semibold text-[var(--color-brand-text)] mt-[4px]">Chiavi e webhook</p>
 				</div>
-				<div class="bg-white rounded-[12px] p-[14px] border border-[var(--color-brand-border)] shadow-sm">
+				<div class="bg-white rounded-[20px] p-[14px] border border-[var(--color-brand-border)] shadow-sm">
 					<p class="text-[0.6875rem] uppercase tracking-[0.5px] text-[var(--color-brand-text-secondary)] font-medium">BRT</p>
 					<p class="text-[0.875rem] font-semibold text-[var(--color-brand-text)] mt-[4px]">Credenziali operatore</p>
 				</div>
-				<div class="bg-white rounded-[12px] p-[14px] border border-[var(--color-brand-border)] shadow-sm">
+				<div class="bg-white rounded-[20px] p-[14px] border border-[var(--color-brand-border)] shadow-sm">
 					<p class="text-[0.6875rem] uppercase tracking-[0.5px] text-[var(--color-brand-text-secondary)] font-medium">Generali</p>
 					<p class="text-[0.875rem] font-semibold text-[var(--color-brand-text)] mt-[4px]">Nome sito e supporto</p>
 				</div>
 			</div>
 
 			<div class="grid grid-cols-1 desktop:grid-cols-2 gap-[16px]">
-				<div class="bg-white rounded-[12px] p-[20px] tablet:p-[24px] desktop:p-[28px] shadow-sm border border-[var(--color-brand-border)]">
+				<div class="bg-white rounded-[20px] p-[20px] tablet:p-[24px] desktop:p-[28px] shadow-sm border border-[var(--color-brand-border)]">
 					<h2 class="text-[1.125rem] font-bold text-[var(--color-brand-text)] mb-[20px] flex items-center gap-[8px]">
-						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[20px] h-[20px] text-purple-600" fill="currentColor">
+						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[20px] h-[20px] text-[var(--color-brand-primary)]" fill="currentColor">
 							<path d="M20,8H4V6H20M20,18H4V12H20M20,4H4C2.89,4 2,4.89 2,6V18A2,2 0 0,0 4,20H20A2,2 0 0,0 22,18V6C22,4.89 21.1,4 20,4Z" />
 						</svg>
 						Configurazione Stripe
 					</h2>
 					<div
-						class="mb-[20px] rounded-[12px] border border-[var(--color-brand-border)] bg-[#F8F9FB] px-[16px] py-[14px] text-[0.875rem] text-[#4b5563] leading-[1.6]">
+						class="mb-[20px] rounded-[20px] border border-[var(--color-brand-border)] bg-[#F5F6F9] px-[16px] py-[14px] text-[0.875rem] text-[var(--color-brand-text-secondary)] leading-[1.6]">
 						<p class="font-semibold text-[var(--color-brand-text)] mb-[4px]">Come funziona su questo sito</p>
 						<p>
 							Queste chiavi configurano l'account Stripe della piattaforma SpediamoFacile. I clienti non devono inserire chiavi: quando
@@ -143,35 +143,35 @@ onMounted(() => {
 					</div>
 					<div class="space-y-[14px] max-w-[600px]">
 						<div>
-							<label class="block text-[0.8125rem] font-medium text-[#404040] mb-[6px]">Public Key</label>
+							<label class="form-label">Public Key</label>
 							<input
 								v-model="settingsData.stripe_public_key"
 								type="text"
-								class="w-full px-[14px] py-[10px] bg-[#F8F9FB] border border-[var(--color-brand-border)] rounded-[12px] text-[0.875rem] font-mono focus:border-[var(--color-brand-primary)] focus:outline-none"
+								class="form-input font-mono"
 								placeholder="pk_..." />
 						</div>
 						<div>
-							<label class="block text-[0.8125rem] font-medium text-[#404040] mb-[6px]">Secret Key</label>
+							<label class="form-label">Secret Key</label>
 							<input
 								v-model="settingsData.stripe_secret_key"
 								type="password"
-								class="w-full px-[14px] py-[10px] bg-[#F8F9FB] border border-[var(--color-brand-border)] rounded-[12px] text-[0.875rem] font-mono focus:border-[var(--color-brand-primary)] focus:outline-none"
+								class="form-input font-mono"
 								placeholder="sk_..." />
 						</div>
 						<div>
-							<label class="block text-[0.8125rem] font-medium text-[#404040] mb-[6px]">Webhook Secret</label>
+							<label class="form-label">Webhook Secret</label>
 							<input
 								v-model="settingsData.stripe_webhook_secret"
 								type="password"
-								class="w-full px-[14px] py-[10px] bg-[#F8F9FB] border border-[var(--color-brand-border)] rounded-[12px] text-[0.875rem] font-mono focus:border-[var(--color-brand-primary)] focus:outline-none"
+								class="form-input font-mono"
 								placeholder="whsec_..." />
 						</div>
 					</div>
 				</div>
 
-				<div class="bg-white rounded-[12px] p-[20px] tablet:p-[24px] desktop:p-[28px] shadow-sm border border-[var(--color-brand-border)]">
+				<div class="bg-white rounded-[20px] p-[20px] tablet:p-[24px] desktop:p-[28px] shadow-sm border border-[var(--color-brand-border)]">
 					<h2 class="text-[1.125rem] font-bold text-[var(--color-brand-text)] mb-[20px] flex items-center gap-[8px]">
-						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[20px] h-[20px] text-indigo-600" fill="currentColor">
+						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[20px] h-[20px] text-[#095866]" fill="currentColor">
 							<path
 								d="M18,18.5A1.5,1.5 0 0,1 16.5,17A1.5,1.5 0 0,1 18,15.5A1.5,1.5 0 0,1 19.5,17A1.5,1.5 0 0,1 18,18.5M19.5,9.5L21.46,12H17V9.5M6,18.5A1.5,1.5 0 0,1 4.5,17A1.5,1.5 0 0,1 6,15.5A1.5,1.5 0 0,1 7.5,17A1.5,1.5 0 0,1 6,18.5M20,8H17V4H3C1.89,4 1,4.89 1,6V17H3A3,3 0 0,0 6,20A3,3 0 0,0 9,17H15A3,3 0 0,0 18,20A3,3 0 0,0 21,17H23V12L20,8Z" />
 						</svg>
@@ -179,30 +179,30 @@ onMounted(() => {
 					</h2>
 					<div class="space-y-[14px] max-w-[600px]">
 						<div>
-							<label class="block text-[0.8125rem] font-medium text-[#404040] mb-[6px]">Customer ID</label>
+							<label class="form-label">Customer ID</label>
 							<input
 								v-model="settingsData.brt_customer_id"
 								type="text"
-								class="w-full px-[14px] py-[10px] bg-[#F8F9FB] border border-[var(--color-brand-border)] rounded-[12px] text-[0.875rem] focus:border-[var(--color-brand-primary)] focus:outline-none" />
+								class="form-input" />
 						</div>
 						<div>
-							<label class="block text-[0.8125rem] font-medium text-[#404040] mb-[6px]">Username</label>
+							<label class="form-label">Username</label>
 							<input
 								v-model="settingsData.brt_username"
 								type="text"
-								class="w-full px-[14px] py-[10px] bg-[#F8F9FB] border border-[var(--color-brand-border)] rounded-[12px] text-[0.875rem] focus:border-[var(--color-brand-primary)] focus:outline-none" />
+								class="form-input" />
 						</div>
 						<div>
-							<label class="block text-[0.8125rem] font-medium text-[#404040] mb-[6px]">Password</label>
+							<label class="form-label">Password</label>
 							<input
 								v-model="settingsData.brt_password"
 								type="password"
-								class="w-full px-[14px] py-[10px] bg-[#F8F9FB] border border-[var(--color-brand-border)] rounded-[12px] text-[0.875rem] focus:border-[var(--color-brand-primary)] focus:outline-none" />
+								class="form-input" />
 						</div>
 					</div>
 				</div>
 
-				<div class="bg-white rounded-[12px] p-[20px] tablet:p-[24px] desktop:p-[28px] shadow-sm border border-[var(--color-brand-border)] desktop:col-span-2">
+				<div class="bg-white rounded-[20px] p-[20px] tablet:p-[24px] desktop:p-[28px] shadow-sm border border-[var(--color-brand-border)] desktop:col-span-2">
 					<h2 class="text-[1.125rem] font-bold text-[var(--color-brand-text)] mb-[20px] flex items-center gap-[8px]">
 						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[20px] h-[20px] text-[var(--color-brand-primary)]" fill="currentColor">
 							<path
@@ -212,25 +212,25 @@ onMounted(() => {
 					</h2>
 					<div class="space-y-[14px] max-w-[600px]">
 						<div>
-							<label class="block text-[0.8125rem] font-medium text-[#404040] mb-[6px]">Nome sito</label>
+							<label class="form-label">Nome sito</label>
 							<input
 								v-model="settingsData.site_name"
 								type="text"
-								class="w-full px-[14px] py-[10px] bg-[#F8F9FB] border border-[var(--color-brand-border)] rounded-[12px] text-[0.875rem] focus:border-[var(--color-brand-primary)] focus:outline-none" />
+								class="form-input" />
 						</div>
 						<div>
-							<label class="block text-[0.8125rem] font-medium text-[#404040] mb-[6px]">Email supporto</label>
+							<label class="form-label">Email supporto</label>
 							<input
 								v-model="settingsData.support_email"
 								type="email"
-								class="w-full px-[14px] py-[10px] bg-[#F8F9FB] border border-[var(--color-brand-border)] rounded-[12px] text-[0.875rem] focus:border-[var(--color-brand-primary)] focus:outline-none" />
+								class="form-input" />
 						</div>
 						<div>
-							<label class="block text-[0.8125rem] font-medium text-[#404040] mb-[6px]">Sovrapprezzo contrassegno (&euro;)</label>
+							<label class="form-label">Sovrapprezzo contrassegno (&euro;)</label>
 							<input
 								v-model="settingsData.cod_surcharge"
 								type="text"
-								class="w-full px-[14px] py-[10px] bg-[#F8F9FB] border border-[var(--color-brand-border)] rounded-[12px] text-[0.875rem] focus:border-[var(--color-brand-primary)] focus:outline-none"
+								class="form-input"
 								placeholder="3.50" />
 						</div>
 					</div>

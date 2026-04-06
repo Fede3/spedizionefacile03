@@ -1,14 +1,16 @@
 <!--
   COMPONENTE: Navbar (Navbar.vue)
-  SCOPO: Barra di navigazione principale — desktop nav + pulsanti + mobile menu (delegato a NavbarMobileMenu).
-  CSS estratto in assets/css/navbar.css
+  SCOPO: Barra di navigazione principale — desktop nav pills + azioni + mobile menu.
+  DESIGN: Replica esatta del prototipo Navbar.tsx.
+  CSS: assets/css/navbar.css
 -->
 <script setup>
 import '~/assets/css/navbar.css'
 
 const navLinks = [
-  { page: "/preventivo", text: "Preventivo", icon: 'price' },
   { page: "/servizi", text: "Servizi", icon: 'truck' },
+  { page: "/preventivo", text: "Preventivo", icon: 'price' },
+  { page: "/traccia-spedizione", text: "Traccia", icon: 'tracking' },
   { page: '/guide', text: 'Guide', icon: 'book' },
   { page: "/contatti", text: "Contatti", icon: 'message' },
 ];
@@ -40,7 +42,6 @@ const mobileAccountButtonLabel = computed(() => {
   return showAuthenticatedUi.value ? mobileAccountLabel.value : 'Accedi o Registrati';
 });
 const cartCount = computed(() => cart?.value?.data?.length || cart?.data?.length || 0);
-const scrolled = ref(false);
 const mobileMenuOpen = ref(false);
 const navbarBottomRef = ref(null);
 const menuTopPx = ref(0);
@@ -48,13 +49,8 @@ const menuTopPx = ref(0);
 const updateMenuPosition = () => {
   if (navbarBottomRef.value) {
     const rect = navbarBottomRef.value.getBoundingClientRect();
-    menuTopPx.value = rect.bottom + 12;
+    menuTopPx.value = rect.bottom;
   }
-};
-
-const onScroll = () => {
-  if (typeof window === 'undefined') return;
-  scrolled.value = window.scrollY > 8;
 };
 
 watch(mobileMenuOpen, (val) => { if (val) nextTick(() => updateMenuPosition()); });
@@ -71,6 +67,8 @@ const isNavActive = (page) => {
   return route.path === page || route.path.startsWith(page + '/');
 };
 
+const isCartActive = computed(() => route.path === '/carrello');
+
 const openGuestAuthModal = (tab = 'login') => {
   mobileMenuOpen.value = false;
   openAuthModal({ redirect: getRequestedPath(), tab });
@@ -78,35 +76,33 @@ const openGuestAuthModal = (tab = 'login') => {
 
 onMounted(() => {
   authUiHydrated.value = true;
-  onScroll();
-  window.addEventListener('scroll', onScroll, { passive: true });
   window.addEventListener('resize', updateMenuPosition);
 });
 
 onBeforeUnmount(() => {
   stopRouteWatch();
-  window.removeEventListener('scroll', onScroll);
   window.removeEventListener('resize', updateMenuPosition);
 });
 </script>
 
 <template>
   <div class="relative w-full">
-    <div v-if="!isAuthMinimalShellRoute" class="navbar-accent-bar h-[3px] w-full rounded-full"></div>
-
-    <div ref="navbarBottomRef" class="navbar-shell relative z-50 flex items-center justify-between px-[2px]"
-      :class="isAuthMinimalShellRoute ? 'h-[52px] sm:h-[58px] border-b border-[#edf0f3]' : 'h-[56px] sm:h-[64px] lg:h-[70px]'"
-      :style="!isAuthMinimalShellRoute ? { borderBottom: scrolled ? '1px solid rgba(9,88,102,0.08)' : '1px solid transparent' } : undefined">
-
+    <!-- Main bar — prototype: h-[56px] sm:h-[64px] lg:h-[70px] -->
+    <div
+      ref="navbarBottomRef"
+      class="relative z-50 flex items-center justify-between"
+      :class="isAuthMinimalShellRoute ? 'h-[52px] sm:h-[58px]' : 'h-[56px] sm:h-[64px] lg:h-[70px]'"
+    >
+      <!-- Logo -->
       <div class="flex min-w-0 flex-1 items-center gap-[6px] sm:gap-[8px] lg:flex-initial">
         <a href="/" class="flex items-center h-full outline-none shrink-0" @click="mobileMenuOpen = false">
           <Logo :is-navbar="true" />
         </a>
       </div>
 
-      <!-- Desktop nav pills -->
+      <!-- Desktop nav pills — prototype: centered, rounded-full, gap-x-[6px] -->
       <nav v-if="!isAuthMinimalShellRoute" class="hidden lg:flex justify-center flex-1">
-        <ul class="navbar-primary-nav">
+        <ul class="flex items-center justify-center gap-x-[6px]">
           <li v-for="nav in navLinks" :key="nav.page">
             <NuxtLink :to="nav.page" custom v-slot="{ href, navigate }">
               <a
@@ -121,31 +117,61 @@ onBeforeUnmount(() => {
         </ul>
       </nav>
 
-      <!-- Right-side actions -->
-      <div v-if="!isAuthMinimalShellRoute" class="flex shrink-0 items-center gap-[6px] sm:gap-[10px]">
-        <a v-if="showMobileQuoteCta" :href="mobileQuoteHref" class="inline-flex lg:hidden navbar-mobile-quote btn-cta btn-compact" @click="mobileMenuOpen = false">Preventivo</a>
+      <!-- Right actions — prototype: gap-[8px] sm:gap-[10px] -->
+      <div v-if="!isAuthMinimalShellRoute" class="flex shrink-0 items-center gap-[8px] sm:gap-[10px]">
+        <!-- Mobile quote CTA -->
+        <a v-if="showMobileQuoteCta" :href="mobileQuoteHref" class="inline-flex lg:hidden navbar-mobile-quote" @click="mobileMenuOpen = false">Preventivo</a>
 
-        <button type="button" class="hidden lg:inline-flex items-center gap-[6px] navbar-nav-action btn-secondary btn-compact"
-          @click="showAuthenticatedUi ? navigateTo('/account') : openGuestAuthModal('login')">
+        <!-- Login / Account — prototype: rounded-full, h-[42px], teal ghost -->
+        <button
+          v-if="!showAuthenticatedUi"
+          type="button"
+          class="hidden lg:inline-flex items-center gap-[6px] navbar-login-btn"
+          @click="openGuestAuthModal('login')"
+        >
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="shrink-0"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-          {{ accountButtonLabel }}
+          Accedi
         </button>
 
+        <NuxtLink
+          v-else
+          to="/account"
+          class="hidden lg:inline-flex items-center gap-[6px] navbar-login-btn"
+        >
+          <!-- Avatar initials circle -->
+          <div class="navbar-avatar-circle">
+            <span class="text-white text-[10px] font-[800]">{{ (accountButtonLabel || '?')[0] }}</span>
+          </div>
+          {{ accountButtonLabel }}
+        </NuxtLink>
+
+        <!-- Cart — prototype: gradient orange, rounded-full -->
         <NuxtLink to="/carrello" custom v-slot="{ href, navigate }">
           <a
             :href="href"
-            class="navbar-nav-action btn-secondary btn-compact"
-            :class="isNavActive('/carrello') ? 'navbar-nav-action--active' : ''"
-            @click="navigate">
+            class="navbar-cart-btn"
+            :class="isCartActive ? 'navbar-cart-btn--active' : ''"
+            @click="navigate"
+          >
             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="shrink-0"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
-            <span class="hidden sm:inline text-[14px] tracking-[-0.2px] font-semibold">Carrello</span>
-            <span v-if="cartCount > 0" class="navbar-nav-action__badge">{{ cartCount }}</span>
+            <span class="hidden sm:inline text-[14px] tracking-[-0.2px]" style="font-weight: 600">Carrello</span>
+            <span v-if="cartCount > 0" class="navbar-cart-badge">{{ cartCount }}</span>
           </a>
         </NuxtLink>
 
-        <button type="button" class="lg:hidden navbar-mobile-toggle btn-secondary btn-compact inline-flex items-center justify-center !w-[42px] !px-0" aria-label="Apri menu di navigazione" @click="mobileMenuOpen = !mobileMenuOpen">
-          <svg v-if="!mobileMenuOpen" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
-          <svg v-else xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        <!-- Hamburger — prototype: w-[42px] h-[42px] rounded-full bg-[#095866] -->
+        <button
+          type="button"
+          class="lg:hidden navbar-hamburger-btn"
+          :aria-label="mobileMenuOpen ? 'Chiudi menu' : 'Apri menu'"
+          :aria-expanded="mobileMenuOpen"
+          @click="mobileMenuOpen = !mobileMenuOpen"
+        >
+          <div class="navbar-hamburger" :class="{ 'navbar-hamburger--open': mobileMenuOpen }">
+            <span class="navbar-hamburger__line navbar-hamburger__line--1"></span>
+            <span class="navbar-hamburger__line navbar-hamburger__line--2"></span>
+            <span class="navbar-hamburger__line navbar-hamburger__line--3"></span>
+          </div>
         </button>
       </div>
     </div>
@@ -161,6 +187,7 @@ onBeforeUnmount(() => {
       :is-nav-active-fn="isNavActive"
       @close="mobileMenuOpen = false"
       @open-auth="openGuestAuthModal('login')"
+      @open-register="openGuestAuthModal('register')"
     />
   </div>
 </template>

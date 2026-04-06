@@ -29,7 +29,7 @@ const emit = defineEmits([
 </script>
 
 <template>
-	<div class="sf-account-panel admin-orders-toolbar rounded-[24px] p-[16px] tablet:p-[20px] desktop:p-[24px]">
+	<div class="sf-account-panel admin-orders-toolbar rounded-[20px] p-[16px] tablet:p-[20px] desktop:p-[24px]">
 		<div class="admin-orders-toolbar__top">
 			<div class="admin-orders-toolbar__copy">
 				<p class="admin-orders-toolbar__eyebrow">Vista ordini</p>

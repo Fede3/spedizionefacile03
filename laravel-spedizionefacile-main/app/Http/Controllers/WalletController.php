@@ -79,11 +79,9 @@ class WalletController extends Controller
         $movements = WalletMovement::query()
             ->where('user_id', auth()->id())
             ->orderByDesc('created_at')
-            ->get();
+            ->paginate(30);
 
-        return response()->json([
-            'data' => $movements,
-        ]);
+        return response()->json($movements);
     }
 
     // Ricarica il portafoglio usando una carta di credito salvata
@@ -221,16 +219,48 @@ class WalletController extends Controller
 
         $user = $request->user();
 
-        // Verifica che il riferimento (ordine) appartenga all'utente autenticato
+        // SEC-10: Il riferimento DEVE essere un ordine esistente appartenente all'utente
         $order = \App\Models\Order::find($data['reference']);
-        if ($order && (int) $order->user_id !== (int) $user->id) {
+        if (! $order) {
+            return response()->json(['message' => 'Ordine non trovato.'], 404);
+        }
+        if ((int) $order->user_id !== (int) $user->id) {
             return response()->json(['message' => 'Non autorizzato: questo ordine non appartiene al tuo account.'], 403);
         }
 
+        // SEC-10: Verifica che l'importo corrisponda al totale dell'ordine (anti-tamper)
+        $orderAmountEur = (int) $order->subtotal->amount() / 100;
+        $requestedAmount = round((float) $data['amount'], 2);
+        if (abs($orderAmountEur - $requestedAmount) > 0.01) {
+            Log::warning('Wallet pay amount mismatch', [
+                'user_id' => $user->id,
+                'order_id' => $order->id,
+                'order_amount_eur' => $orderAmountEur,
+                'requested_amount' => $requestedAmount,
+            ]);
+
+            return response()->json([
+                'message' => 'L\'importo non corrisponde al totale dell\'ordine.',
+            ], 422);
+        }
+
+        // SEC-10: L'ordine deve essere in attesa di pagamento
+        if (! $order->isAwaitingPayment()) {
+            return response()->json([
+                'message' => 'Questo ordine non è in attesa di pagamento.',
+            ], 422);
+        }
+
         // Transazione con lock pessimistico per evitare double-spend da richieste concorrenti
-        $result = DB::transaction(function () use ($user, $data) {
+        $result = DB::transaction(function () use ($user, $data, $order) {
             // Lock sulla riga utente per serializzare gli accessi concorrenti al saldo
             $lockedUser = \App\Models\User::query()->whereKey($user->id)->lockForUpdate()->firstOrFail();
+
+            // Lock sull'ordine per evitare doppio pagamento
+            $lockedOrder = \App\Models\Order::query()->lockForUpdate()->find($order->id);
+            if (! $lockedOrder || ! $lockedOrder->isAwaitingPayment()) {
+                return ['error' => 'Ordine non più disponibile per il pagamento.'];
+            }
 
             $balance = $lockedUser->walletBalance();
 

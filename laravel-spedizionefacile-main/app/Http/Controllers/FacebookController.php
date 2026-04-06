@@ -184,18 +184,21 @@ class FacebookController extends Controller
         $user = User::where('email', $facebookEmail)->first();
 
         if ($user) {
-            $updates = [];
+            $dirty = false;
             if (! $user->facebook_id) {
-                $updates['facebook_id'] = $facebookUser->getId();
+                $user->facebook_id = $facebookUser->getId();
+                $dirty = true;
             }
             if (! $user->avatar && $facebookUser->getAvatar()) {
-                $updates['avatar'] = $facebookUser->getAvatar();
+                $user->avatar = $facebookUser->getAvatar();
+                $dirty = true;
             }
             if (! $user->email_verified_at) {
-                $updates['email_verified_at'] = now();
+                $user->email_verified_at = now();
+                $dirty = true;
             }
-            if (! empty($updates)) {
-                $user->update($updates);
+            if ($dirty) {
+                $user->save();
             }
         } else {
             $socialIntent = $request->cookie('frontend_social_intent');
@@ -218,12 +221,13 @@ class FacebookController extends Controller
                 'telephone_number' => '',
                 'email_verified_at' => now(),
                 'password' => Str::random(16),
-                'facebook_id' => $facebookUser->getId(),
                 'avatar' => $facebookUser->getAvatar(),
                 'referred_by' => $validatedReferral,
                 'user_type' => in_array($userType, ['privato', 'commerciante'], true) ? $userType : 'privato',
             ]);
+            // Campi non in $fillable: vanno assegnati direttamente per sicurezza
             $user->role = 'User';
+            $user->facebook_id = $facebookUser->getId();
             $user->save();
         }
 

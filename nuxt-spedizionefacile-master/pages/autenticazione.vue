@@ -29,6 +29,20 @@ useSeoMeta({
 
 definePageMeta({ layout: 'auth', middleware: ['guest-auth'] });
 
+// Se l'utente arriva su /autenticazione, redirect alla home e apri l'overlay modale.
+// Questo evita la pagina intera dedicata — l'auth viene mostrata come box sopra la pagina.
+const { openAuthModal } = useAuthModal();
+const route = useRoute();
+const router = useRouter();
+onMounted(() => {
+	const tab = route.query.tab === 'register' ? 'register' : 'login';
+	const redirect = typeof route.query.redirect === 'string' ? route.query.redirect : '/';
+	router.replace('/');
+	nextTick(() => {
+		openAuthModal({ tab, redirect });
+	});
+});
+
 const {
 	selectedAuthTab,
 	onTabClick,
@@ -68,7 +82,7 @@ const authShellState = computed(() =>
 	selectedAuthTab.value === 'accedi'
 		? {
 				title: 'Bentornato',
-				copy: 'Accedi per gestire spedizioni, tracking e checkout senza passaggi inutili.',
+				copy: 'Accedi per gestire le tue spedizioni',
 			}
 		: {
 				title: 'Crea il tuo account',
@@ -80,7 +94,7 @@ const demoAccessCards = [
 	{
 		id: 'admin',
 		title: 'Admin',
-		caption: 'Console completa',
+		caption: 'Accesso completo',
 		email: 'admin@spediamofacile.it',
 		password: 'Admin2026!',
 		icon: 'shield',
@@ -88,7 +102,7 @@ const demoAccessCards = [
 	{
 		id: 'pro',
 		title: 'Cliente Pro',
-		caption: 'Area partner',
+		caption: 'Funzioni avanzate',
 		email: 'pro@spediamofacile.it',
 		password: 'Partner2026!',
 		icon: 'bolt',
@@ -96,7 +110,7 @@ const demoAccessCards = [
 	{
 		id: 'cliente',
 		title: 'Cliente',
-		caption: 'Account standard',
+		caption: 'Account base',
 		email: 'cliente@spediamofacile.it',
 		password: 'Cliente2026!',
 		icon: 'user',
@@ -137,7 +151,7 @@ onMounted(async () => {
 	<section class="auth-shell">
 		<div class="my-container">
 			<div class="auth-shell-frame">
-				<header class="sf-page-intro sf-page-intro--center auth-shell-head">
+				<header class="auth-shell-head">
 					<div class="auth-shell-avatar" aria-hidden="true">
 						<svg
 							xmlns="http://www.w3.org/2000/svg"
@@ -152,7 +166,6 @@ onMounted(async () => {
 							<circle cx="12" cy="8" r="3.25" />
 						</svg>
 					</div>
-					<span class="sf-section-kicker">Accesso e registrazione</span>
 					<h1 class="auth-shell-title">{{ authShellState.title }}</h1>
 					<p class="auth-shell-copy">{{ authShellState.copy }}</p>
 				</header>
@@ -193,79 +206,67 @@ onMounted(async () => {
 					@back="backToLoginFromVerification" />
 
 				<div v-else class="auth-page-stack">
-					<section class="sf-section-block auth-page-body">
-						<div class="sf-section-block__header auth-page-body__header">
-							<div class="auth-page-tabs" role="tablist" aria-label="Accesso o registrazione">
-								<button
-									type="button"
-									role="tab"
-									:aria-selected="selectedAuthTab === 'accedi' ? 'true' : 'false'"
-									:class="selectedAuthTab === 'accedi' ? 'auth-page-tab auth-page-tab--active' : 'auth-page-tab'"
-									@click="onTabClick('accedi')">
-									Accedi
-								</button>
-								<button
-									type="button"
-									role="tab"
-									:aria-selected="selectedAuthTab === 'registrati' ? 'true' : 'false'"
-									:class="selectedAuthTab === 'registrati' ? 'auth-page-tab auth-page-tab--active' : 'auth-page-tab'"
-									@click="onTabClick('registrati')">
-									Registrati
-								</button>
-							</div>
-						</div>
+					<div class="auth-page-tabs" role="tablist" aria-label="Accesso o registrazione">
+						<button
+							type="button"
+							role="tab"
+							:aria-selected="selectedAuthTab === 'accedi' ? 'true' : 'false'"
+							:class="selectedAuthTab === 'accedi' ? 'auth-page-tab auth-page-tab--active' : 'auth-page-tab'"
+							@click="onTabClick('accedi')">
+							Accedi
+						</button>
+						<button
+							type="button"
+							role="tab"
+							:aria-selected="selectedAuthTab === 'registrati' ? 'true' : 'false'"
+							:class="selectedAuthTab === 'registrati' ? 'auth-page-tab auth-page-tab--active' : 'auth-page-tab'"
+							@click="onTabClick('registrati')">
+							Registrati
+						</button>
+					</div>
 
-						<div class="sf-section-block__body auth-page-body__content">
-							<AuthLoginForm
-								v-if="selectedAuthTab === 'accedi'"
-								:credentials="credentials"
-								:is-loading="isLoading"
-								:show-login-password="showLoginPassword"
-								:message-error="messageError"
-								:message-loading="messageLoading"
-								:show-resend-verification="showResendVerification"
-								:resend-loading="resendLoading"
-								:resend-message="resendMessage"
-								:submit-handler="handleLogin"
-								@update:show-login-password="showLoginPassword = $event"
-								@resend-verification="resendVerificationEmail" />
+					<div class="auth-page-card">
+						<AuthLoginForm
+							v-if="selectedAuthTab === 'accedi'"
+							:credentials="credentials"
+							:is-loading="isLoading"
+							:show-login-password="showLoginPassword"
+							:message-error="messageError"
+							:message-loading="messageLoading"
+							:show-resend-verification="showResendVerification"
+							:resend-loading="resendLoading"
+							:resend-message="resendMessage"
+							:submit-handler="handleLogin"
+							@update:show-login-password="showLoginPassword = $event"
+							@resend-verification="resendVerificationEmail" />
 
-							<AuthRegisterForm
-								v-else
-								:register-form="registerForm"
-								:is-loading="isLoading"
-								:show-reg-password="showRegPassword"
-								:show-reg-password-confirm="showRegPasswordConfirm"
-								:message-error="messageError"
-								:message-loading="messageLoading"
-								:password-checks="passwordChecks"
-								:password-strength="passwordStrength"
-								:submit-handler="registerUser"
-								@update:show-reg-password="showRegPassword = $event"
-								@update:show-reg-password-confirm="showRegPasswordConfirm = $event" />
-						</div>
-					</section>
+						<AuthRegisterForm
+							v-else
+							:register-form="registerForm"
+							:is-loading="isLoading"
+							:show-reg-password="showRegPassword"
+							:show-reg-password-confirm="showRegPasswordConfirm"
+							:message-error="messageError"
+							:message-loading="messageLoading"
+							:password-checks="passwordChecks"
+							:password-strength="passwordStrength"
+							:submit-handler="registerUser"
+							@update:show-reg-password="showRegPassword = $event"
+							@update:show-reg-password-confirm="showRegPasswordConfirm = $event" />
+					</div>
 
-					<section v-if="selectedAuthTab === 'accedi'" class="sf-section-block auth-demo auth-demo--secondary">
-						<div class="sf-section-block__header">
-							<span class="sf-section-kicker">Profili demo</span>
-							<div class="sf-page-intro">
-								<h2 class="auth-demo__title">Apri un account di prova</h2>
-								<p class="sf-section-description auth-demo__copy">
-									Usa un profilo prova per verificare i flussi principali senza reinserire dati ogni volta.
-								</p>
-							</div>
-						</div>
-						<div class="sf-section-block__body auth-demo__grid">
+					<div v-if="selectedAuthTab === 'accedi'" class="auth-demo">
+						<p class="auth-demo__label">Accesso rapido demo</p>
+						<div class="auth-demo__grid">
 							<button
 								v-for="card in demoAccessCards"
 								:key="card.id"
 								type="button"
-								:class="['sf-action-card auth-demo-card', card.id === 'admin' ? 'sf-action-card--primary' : '']"
+								class="auth-demo-card"
 								:disabled="isLoading"
 								@click="applyDemoAccess(card)">
 								<span
-									class="sf-action-card__icon-shell auth-demo-card__icon-shell"
+									class="auth-demo-card__icon-shell"
 									:class="`auth-demo-card__icon-shell--${card.icon}`"
 									aria-hidden="true">
 									<svg
@@ -303,25 +304,11 @@ onMounted(async () => {
 										<circle cx="12" cy="8" r="3.25" />
 									</svg>
 								</span>
-								<span class="auth-demo-card__content">
-									<span class="sf-action-card__title">{{ card.title }}</span>
-									<span class="sf-action-card__text">{{ card.caption }}</span>
-								</span>
-								<svg
-									class="sf-action-card__arrow"
-									xmlns="http://www.w3.org/2000/svg"
-									viewBox="0 0 20 20"
-									fill="none"
-									stroke="currentColor"
-									stroke-width="1.8"
-									stroke-linecap="round"
-									stroke-linejoin="round"
-									aria-hidden="true">
-									<path d="M8 5l5 5-5 5" />
-								</svg>
+								<span class="auth-demo-card__title">{{ card.title }}</span>
+								<span class="auth-demo-card__caption">{{ card.caption }}</span>
 							</button>
 						</div>
-					</section>
+					</div>
 				</div>
 			</div>
 		</div>

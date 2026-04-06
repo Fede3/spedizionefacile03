@@ -16,7 +16,7 @@ const emit = defineEmits(['update:showForm', 'submit']);
 
 <template>
 	<div class="mt-[16px]">
-		<div v-if="addPackageSuccess" class="bg-emerald-50 border border-emerald-200 rounded-[50px] px-[14px] py-[10px] text-emerald-700 text-[0.8125rem] mb-[12px]">
+		<div v-if="addPackageSuccess" class="bg-[#f0fdf4] border border-[#d1fae5] rounded-[50px] px-[14px] py-[10px] text-[#0a8a7a] text-[0.8125rem] mb-[12px]">
 			Collo aggiunto con successo!
 		</div>
 
@@ -29,12 +29,12 @@ const emit = defineEmits(['update:showForm', 'submit']);
 			Aggiungi collo
 		</button>
 
-		<div v-if="showForm" class="bg-white rounded-[12px] p-[24px] border border-[var(--color-brand-border)]">
-			<h3 class="text-[1rem] font-bold text-[var(--color-brand-text)] mb-[16px]">Nuovo collo</h3>
+		<div v-if="showForm" class="bg-white rounded-[14px] p-[24px] border border-[var(--color-brand-border)]">
+			<h3 class="font-montserrat text-[1rem] font-[800] text-[var(--color-brand-text)] mb-[16px]">Nuovo collo</h3>
 			<div class="grid grid-cols-2 desktop:grid-cols-4 gap-[12px]">
 				<div>
 					<label class="block text-[0.75rem] text-[var(--color-brand-text-secondary)] mb-[4px]">Tipo</label>
-					<select v-model="newPackage.package_type" class="w-full bg-[#F8F9FB] border border-[var(--color-brand-border)] rounded-[12px] p-[8px] text-[0.875rem]">
+					<select v-model="newPackage.package_type" class="w-full bg-[#F8F9FB] border border-[var(--color-brand-border)] rounded-[14px] p-[8px] text-[0.875rem]">
 						<option value="Pacco">Pacco</option>
 						<option value="Busta">Busta</option>
 						<option value="Pallet">Pallet</option>
@@ -43,27 +43,27 @@ const emit = defineEmits(['update:showForm', 'submit']);
 				</div>
 				<div>
 					<label class="block text-[0.75rem] text-[var(--color-brand-text-secondary)] mb-[4px]">Quantita</label>
-					<input type="number" v-model="newPackage.quantity" min="1" max="999" class="w-full bg-[#F8F9FB] border border-[var(--color-brand-border)] rounded-[12px] p-[8px] text-[0.875rem]" />
+					<input type="number" v-model="newPackage.quantity" min="1" max="999" class="w-full bg-[#F8F9FB] border border-[var(--color-brand-border)] rounded-[14px] p-[8px] text-[0.875rem]" />
 				</div>
 				<div>
 					<label class="block text-[0.75rem] text-[var(--color-brand-text-secondary)] mb-[4px]">Peso (kg)</label>
-					<input type="number" v-model="newPackage.weight" min="0.1" max="1000" step="0.1" class="w-full bg-[#F8F9FB] border border-[var(--color-brand-border)] rounded-[12px] p-[8px] text-[0.875rem]" required />
+					<input type="number" v-model="newPackage.weight" min="0.1" max="1000" step="0.1" class="w-full bg-[#F8F9FB] border border-[var(--color-brand-border)] rounded-[14px] p-[8px] text-[0.875rem]" required />
 				</div>
 				<div>
 					<label class="block text-[0.75rem] text-[var(--color-brand-text-secondary)] mb-[4px]">Lunghezza (cm)</label>
-					<input type="number" v-model="newPackage.first_size" min="0.1" max="1000" step="0.1" class="w-full bg-[#F8F9FB] border border-[var(--color-brand-border)] rounded-[12px] p-[8px] text-[0.875rem]" required />
+					<input type="number" v-model="newPackage.first_size" min="0.1" max="1000" step="0.1" class="w-full bg-[#F8F9FB] border border-[var(--color-brand-border)] rounded-[14px] p-[8px] text-[0.875rem]" required />
 				</div>
 				<div>
 					<label class="block text-[0.75rem] text-[var(--color-brand-text-secondary)] mb-[4px]">Larghezza (cm)</label>
-					<input type="number" v-model="newPackage.second_size" min="0.1" max="1000" step="0.1" class="w-full bg-[#F8F9FB] border border-[var(--color-brand-border)] rounded-[12px] p-[8px] text-[0.875rem]" required />
+					<input type="number" v-model="newPackage.second_size" min="0.1" max="1000" step="0.1" class="w-full bg-[#F8F9FB] border border-[var(--color-brand-border)] rounded-[14px] p-[8px] text-[0.875rem]" required />
 				</div>
 				<div>
 					<label class="block text-[0.75rem] text-[var(--color-brand-text-secondary)] mb-[4px]">Altezza (cm)</label>
-					<input type="number" v-model="newPackage.third_size" min="0.1" max="1000" step="0.1" class="w-full bg-[#F8F9FB] border border-[var(--color-brand-border)] rounded-[12px] p-[8px] text-[0.875rem]" required />
+					<input type="number" v-model="newPackage.third_size" min="0.1" max="1000" step="0.1" class="w-full bg-[#F8F9FB] border border-[var(--color-brand-border)] rounded-[14px] p-[8px] text-[0.875rem]" required />
 				</div>
 				<div class="col-span-2">
 					<label class="block text-[0.75rem] text-[var(--color-brand-text-secondary)] mb-[4px]">Contenuto</label>
-					<input type="text" v-model="newPackage.content_description" placeholder="es. Elettronica" maxlength="255" class="w-full bg-[#F8F9FB] border border-[var(--color-brand-border)] rounded-[12px] p-[8px] text-[0.875rem]" />
+					<input type="text" v-model="newPackage.content_description" placeholder="es. Elettronica" maxlength="255" class="w-full bg-[#F8F9FB] border border-[var(--color-brand-border)] rounded-[14px] p-[8px] text-[0.875rem]" />
 				</div>
 			</div>
 			<div v-if="addPackageError" class="mt-[10px] text-red-500 text-[0.8125rem]">{{ addPackageError }}</div>

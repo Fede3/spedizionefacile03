@@ -111,9 +111,9 @@ const setColor = (event) => {
 </script>
 
 <template>
-	<div class="border border-[var(--color-brand-border)] rounded-[12px] overflow-hidden bg-white">
+	<div class="border border-[var(--color-brand-border)] rounded-[14px] overflow-hidden bg-white">
 		<!-- Toolbar -->
-		<div v-if="editor" class="flex flex-wrap items-center gap-[2px] px-[8px] py-[6px] bg-[#F8F9FB] border-b border-[var(--color-brand-border)]">
+		<div v-if="editor" class="flex flex-wrap items-center gap-[2px] px-[8px] py-[6px] bg-[#F5F6F9] border-b border-[var(--color-brand-border)]">
 			<!-- Bold -->
 			<button type="button" class="toolbar-btn" :class="{ active: editor.isActive('bold') }" title="Grassetto" aria-label="Grassetto" @click="editor.chain().focus().toggleBold().run()">
 				<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M15.6 10.79c.97-.67 1.65-1.77 1.65-2.79 0-2.26-1.75-4-4-4H7v14h7.04c2.09 0 3.71-1.7 3.71-3.79 0-1.52-.86-2.82-2.15-3.42zM10 6.5h3c.83 0 1.5.67 1.5 1.5s-.67 1.5-1.5 1.5h-3v-3zm3.5 9H10v-3h3.5c.83 0 1.5.67 1.5 1.5s-.67 1.5-1.5 1.5z"/></svg>

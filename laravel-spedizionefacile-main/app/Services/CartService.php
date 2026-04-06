@@ -42,28 +42,32 @@ class CartService
         }
         $quantity = min(999, max(1, (int) ($payload['quantity'] ?? 1)));
 
-        $weight = (float) preg_replace('/[^0-9.]/', '', (string) ($payload['weight'] ?? '0'));
-        $firstSize = (float) preg_replace('/[^0-9.]/', '', (string) ($payload['first_size'] ?? '0'));
-        $secondSize = (float) preg_replace('/[^0-9.]/', '', (string) ($payload['second_size'] ?? '0'));
-        $thirdSize = (float) preg_replace('/[^0-9.]/', '', (string) ($payload['third_size'] ?? '0'));
+        $weight = max(0, (float) preg_replace('/[^0-9.]/', '', (string) ($payload['weight'] ?? '0')));
+        $firstSize = max(0, (float) preg_replace('/[^0-9.]/', '', (string) ($payload['first_size'] ?? '0')));
+        $secondSize = max(0, (float) preg_replace('/[^0-9.]/', '', (string) ($payload['second_size'] ?? '0')));
+        $thirdSize = max(0, (float) preg_replace('/[^0-9.]/', '', (string) ($payload['third_size'] ?? '0')));
 
         $priceEngine = app(PriceEngineService::class);
-        $weightPrice = $priceEngine->calculateBandPrice('weight', $weight);
-        $volumePrice = $priceEngine->calculateBandPrice('volume', ($firstSize / 100) * ($secondSize / 100) * ($thirdSize / 100));
+        $volumeM3 = ($firstSize / 100) * ($secondSize / 100) * ($thirdSize / 100);
+
+        // Calcola direttamente in centesimi per evitare errori di arrotondamento float.
+        // Solo alla fine convertiamo in euro per i campi di visualizzazione.
+        // Se peso o volume sono zero (dati incompleti) il prezzo e' 0 — il frontend
+        // impedisce di aggiungere al carrello pacchi con dimensioni mancanti.
+        $weightPriceCents = $weight > 0 ? $priceEngine->calculateBandPriceCents('weight', $weight) : 0;
+        $volumePriceCents = $volumeM3 > 0 ? $priceEngine->calculateBandPriceCents('volume', $volumeM3) : 0;
 
         $capSupplementCents = $priceEngine->calculateCapSupplementCents(
             $originAddress['postal_code'] ?? null,
             $destinationAddress['postal_code'] ?? null,
         );
 
-        $weightPriceCents = (int) round($weightPrice * 100);
-        $volumePriceCents = (int) round($volumePrice * 100);
         $unitPriceCents = max($weightPriceCents, $volumePriceCents) + $capSupplementCents;
 
         return array_merge($payload, [
             'quantity' => $quantity,
-            'weight_price' => $weightPrice,
-            'volume_price' => $volumePrice,
+            'weight_price' => round($weightPriceCents / 100, 2),
+            'volume_price' => round($volumePriceCents / 100, 2),
             'single_price' => $unitPriceCents * $quantity,
             'unit_price_cents' => $unitPriceCents,
         ]);

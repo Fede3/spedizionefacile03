@@ -1,6 +1,7 @@
 <!--
   PAGINA: Cookie Policy (cookie-policy.vue)
   Informativa sui cookie utilizzati dal sito SpediamoFacile.
+  CSS condiviso: assets/css/legal.css
 -->
 <script setup>
 useSeoMeta({
@@ -58,76 +59,69 @@ const sections = [
 </script>
 
 <template>
-	<section class="min-h-[500px] py-[40px] desktop:py-[60px]">
-		<div class="my-container max-w-[800px]">
-			<h1 class="text-[2rem] font-bold text-[var(--color-brand-text)] mb-[8px]">Cookie Policy</h1>
-			<p class="text-[var(--color-brand-text-secondary)] text-[0.875rem] mb-[32px]">Ultimo aggiornamento: {{ lastUpdate }}</p>
+	<section class="legal-page">
+		<div class="legal-page__container">
+			<h1 class="legal-page__title">Cookie Policy</h1>
+			<p class="legal-page__subtitle">Ultimo aggiornamento: {{ lastUpdate }}</p>
 
 			<!-- Sezione introduttiva -->
-			<div
-				v-for="(section, i) in sections.slice(0, 1)"
-				:key="'intro-' + i"
-				class="bg-white rounded-[12px] border border-[var(--color-brand-border)] p-[24px] mb-[24px]"
-			>
-				<h2 class="text-[1.125rem] font-semibold text-[var(--color-brand-text)] mb-[12px]">{{ section.title }}</h2>
-				<p class="text-[var(--color-brand-text-secondary)] text-[0.9375rem] leading-[1.8]">{{ section.text }}</p>
+			<div class="legal-section">
+				<h2 class="legal-section__title">{{ sections[0].title }}</h2>
+				<p class="legal-section__text">{{ sections[0].text }}</p>
 			</div>
 
-			<!-- Tabella tipi di cookie -->
-			<h2 class="text-[1.25rem] font-semibold text-[var(--color-brand-text)] mb-[16px]">Tipi di cookie utilizzati</h2>
-			<div class="space-y-[16px] mb-[24px]">
-				<div
-					v-for="(cookie, i) in cookieTypes"
-					:key="i"
-					class="bg-white rounded-[12px] border border-[var(--color-brand-border)] p-[24px]"
-				>
-					<div class="flex items-center gap-[8px] mb-[12px]">
-						<h3 class="text-[1rem] font-semibold text-[var(--color-brand-text)]">{{ cookie.name }}</h3>
-						<span
-							v-if="cookie.required"
-							class="text-[0.75rem] font-medium px-[8px] py-[2px] rounded-full bg-[var(--color-brand-primary)]/10 text-[var(--color-brand-primary)]"
-						>Sempre attivi</span>
-						<span
-							v-else
-							class="text-[0.75rem] font-medium px-[8px] py-[2px] rounded-full bg-[#F3F4F6] text-[var(--color-brand-text-secondary)]"
-						>Previo consenso</span>
-					</div>
-					<p class="text-[var(--color-brand-text-secondary)] text-[0.9375rem] leading-[1.8] mb-[8px]">{{ cookie.description }}</p>
-					<div class="text-[0.8125rem] text-[#A0A5AB] space-y-[4px]">
-						<p><span class="font-medium text-[var(--color-brand-text-secondary)]">Esempi:</span> {{ cookie.examples }}</p>
-						<p><span class="font-medium text-[var(--color-brand-text-secondary)]">Durata:</span> {{ cookie.duration }}</p>
-					</div>
+			<!-- Tipi di cookie -->
+			<h2 class="legal-section__title legal-section__title--lg" style="margin-top: 28px; margin-bottom: 16px;">Tipi di cookie utilizzati</h2>
+
+			<div
+				v-for="(cookie, i) in cookieTypes"
+				:key="'cookie-' + i"
+				class="legal-section"
+			>
+				<div class="legal-cookie-header">
+					<h3 class="legal-cookie-header__name">{{ cookie.name }}</h3>
+					<span
+						v-if="cookie.required"
+						class="legal-badge legal-badge--active"
+					>Sempre attivi</span>
+					<span
+						v-else
+						class="legal-badge legal-badge--consent"
+					>Previo consenso</span>
 				</div>
+				<p class="legal-section__text" style="margin-bottom: 8px;">{{ cookie.description }}</p>
+				<p class="legal-detail-row"><strong>Esempi:</strong> {{ cookie.examples }}</p>
+				<p class="legal-detail-row"><strong>Durata:</strong> {{ cookie.duration }}</p>
 			</div>
 
 			<!-- Sezioni gestione e aggiornamenti -->
 			<div
 				v-for="(section, i) in sections.slice(1)"
 				:key="'section-' + i"
-				class="bg-white rounded-[12px] border border-[var(--color-brand-border)] p-[24px] mb-[24px]"
+				class="legal-section"
 			>
-				<h2 class="text-[1.125rem] font-semibold text-[var(--color-brand-text)] mb-[12px]">{{ section.title }}</h2>
-				<p class="text-[var(--color-brand-text-secondary)] text-[0.9375rem] leading-[1.8]">{{ section.text }}</p>
-				<ul v-if="section.links" class="mt-[12px] space-y-[6px]">
+				<h2 class="legal-section__title">{{ section.title }}</h2>
+				<p class="legal-section__text">{{ section.text }}</p>
+				<ul v-if="section.links" class="legal-list">
 					<li v-for="link in section.links" :key="link.url">
 						<a
 							:href="link.url"
 							target="_blank"
 							rel="noopener noreferrer"
-							class="text-[var(--color-brand-primary)] text-[0.875rem] hover:underline"
+							class="legal-link"
 						>{{ link.text }}</a>
 					</li>
 				</ul>
 			</div>
 
 			<!-- Footer contatti -->
-			<div class="bg-[#F9FAFB] rounded-[12px] border border-[var(--color-brand-border)] p-[24px]">
-				<h2 class="text-[1rem] font-semibold text-[var(--color-brand-text)] mb-[8px]">Maggiori informazioni</h2>
-				<p class="text-[var(--color-brand-text-secondary)] text-[0.9375rem] leading-[1.8]">
+			<div class="legal-footer-card">
+				<h2 class="legal-footer-card__title">Maggiori informazioni</h2>
+				<p class="legal-footer-card__text">
 					Per informazioni sul trattamento dei dati personali, consulta la nostra
-					<NuxtLink to="/privacy-policy" class="text-[var(--color-brand-primary)] hover:underline">Privacy Policy</NuxtLink>.
+					<NuxtLink to="/privacy-policy" class="legal-link">Privacy Policy</NuxtLink>.
 					Per domande specifiche sui cookie, scrivi a
-					<a href="mailto:privacy@spediamofacile.it" class="text-[var(--color-brand-primary)] hover:underline">privacy@spediamofacile.it</a>.
+					<a href="mailto:privacy@spediamofacile.it" class="legal-link">privacy@spediamofacile.it</a>.
 				</p>
 			</div>
 		</div>

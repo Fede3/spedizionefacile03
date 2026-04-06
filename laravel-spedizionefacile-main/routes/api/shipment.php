@@ -9,14 +9,15 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\LocationController;
-use App\Http\Controllers\SessionController;
+use App\Http\Controllers\AuthSessionController;
+use App\Http\Controllers\SessionDataController;
 use App\Http\Controllers\BrtController;
 
 /* ===== SESSIONE PREVENTIVO ===== */
 
-Route::get('/session', [SessionController::class, 'show']);
-Route::post('/session/first-step', [SessionController::class, 'firstStep']);
-Route::post('/session/second-step', [SessionController::class, 'secondStep']);
+Route::get('/session', [AuthSessionController::class, 'show']);
+Route::post('/session/first-step', [SessionDataController::class, 'firstStep']);
+Route::post('/session/second-step', [SessionDataController::class, 'secondStep']);
 
 /* ===== COMUNI, CAP, PROVINCE (autocompletamento indirizzi) ===== */
 

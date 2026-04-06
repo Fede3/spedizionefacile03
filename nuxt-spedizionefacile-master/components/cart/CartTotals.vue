@@ -1,96 +1,108 @@
 <!--
   FILE: components/cart/CartTotals.vue
-  SCOPO: Blocco riepilogo totali + pulsanti checkout/svuota.
-  PROPS: cartMeta, couponApplied, couponDiscount, appliedTotal, displayTotal
-  EMITS: checkout, empty-cart
+  SCOPO: Sidebar riepilogo — design prototipo (card bianca rounded-16, ring, promo inline, totale accent).
+  Integra anche sezione coupon collassabile.
+  PROPS: cartMeta, couponApplied, couponDiscount, appliedTotal, displayTotal, displayEntries,
+         couponCode, couponMessage, showCouponField, showCouponPanel
+  EMITS: checkout, empty-cart, toggle-coupon, apply-coupon, remove-coupon, update:coupon-code
 -->
 <script setup>
 defineProps({
-	cartMeta: { type: Object, default: () => ({}) },
-	couponApplied: { type: Boolean, default: false },
-	couponDiscount: { type: [Number, String], default: null },
-	appliedTotal: { type: [Number, String], default: null },
-	displayTotal: { type: [Number, String], default: null },
+  cartMeta: { type: Object, default: () => ({}) },
+  couponApplied: { type: Boolean, default: false },
+  couponDiscount: { type: [Number, String], default: null },
+  appliedTotal: { type: [Number, String], default: null },
+  displayTotal: { type: [Number, String], default: null },
+  displayEntries: { type: Array, default: () => [] },
+  couponCode: { type: String, default: '' },
+  couponMessage: { type: Object, default: null },
+  showCouponField: { type: Boolean, default: false },
+  showCouponPanel: { type: Boolean, default: false },
 });
 
-const emit = defineEmits(['checkout', 'empty-cart']);
+const emit = defineEmits(['toggle-coupon', 'apply-coupon', 'remove-coupon', 'update:coupon-code']);
 </script>
 
 <template>
-	<div class="mt-[24px] grid gap-[16px] desktop:grid-cols-[minmax(0,1fr)_320px]">
-		<section class="sf-section-block">
-			<div class="sf-section-block__header">
-				<div class="sf-page-intro">
-					<span class="sf-section-kicker">Riepilogo</span>
-					<h3 class="text-[1.125rem] font-bold text-[var(--color-brand-text)]">Totale aggiornato del carrello</h3>
-					<p class="text-[0.875rem] text-[#607184]">Importo calcolato di nuovo prima del checkout per evitare sorprese.</p>
-				</div>
-			</div>
-			<div class="sf-section-block__body">
-				<div class="flex items-center justify-between gap-[12px] border-b border-[#E1E7EA] py-[4px]">
-					<span class="text-[0.9375rem] font-medium text-[#4B5563]">Importo spedizioni</span>
-					<span class="text-[0.9375rem] font-semibold text-[var(--color-brand-text)]" :class="{ 'line-through text-[#9AA3AA]': couponApplied }">
-						{{ cartMeta?.total }}
-					</span>
-				</div>
-				<div v-if="couponApplied" class="flex items-center justify-between gap-[12px] border-b border-[#E1E7EA] py-[4px]">
-					<span class="text-[0.9375rem] font-semibold text-emerald-700">Sconto coupon ({{ couponDiscount }}%)</span>
-					<span class="text-[0.9375rem] font-semibold text-emerald-700">{{ appliedTotal }}</span>
-				</div>
-				<div class="flex items-end justify-between gap-[12px]">
-					<div class="sf-page-intro">
-						<p class="text-[0.75rem] font-semibold uppercase tracking-[0.16em] text-[var(--color-brand-primary)]">Totale finale</p>
-						<p class="text-[0.8125rem] text-[#6B7280]">Importo finale pronto per la conferma.</p>
-					</div>
-					<span class="text-[1.375rem] font-bold text-[var(--color-brand-text)]">{{ displayTotal }}</span>
-				</div>
-			</div>
-		</section>
+  <div class="bg-[#F5F6F9] rounded-[16px] ring-[1.5px] ring-[#DFE2E7] px-[20px] py-[20px]" style="box-shadow: 0 1px 4px rgba(0,0,0,0.03)">
 
-		<section class="sf-section-block">
-			<div class="sf-page-intro">
-				<span class="sf-section-kicker">Prossimo passo</span>
-				<h3 class="text-[1.0625rem] font-bold text-[var(--color-brand-text)]">Completa il pagamento</h3>
-				<p class="text-[0.8125rem] leading-[1.5] text-[#6B7280]">
-					Nel checkout scegli il metodo di pagamento e confermi l'importo con più dettaglio.
-				</p>
-			</div>
-			<button
-				type="button"
-				@click="emit('checkout')"
-				class="btn-cta btn-compact inline-flex min-h-[52px] items-center justify-center gap-[8px] text-[0.9375rem]">
-				Procedi al checkout
-				<svg
-					width="20"
-					height="20"
-					viewBox="0 0 24 24"
-					fill="none"
-					stroke="currentColor"
-					stroke-width="2"
-					stroke-linecap="round"
-					stroke-linejoin="round">
-					<line x1="5" y1="12" x2="19" y2="12" />
-					<polyline points="12 5 19 12 12 19" />
-				</svg>
-			</button>
-			<button
-				type="button"
-				@click="emit('empty-cart')"
-				class="btn-secondary btn-compact inline-flex min-h-[48px] items-center justify-center gap-[6px] text-[0.875rem] hover:border-red-300 hover:text-red-500 hover:bg-red-50">
-				<svg
-					width="18"
-					height="18"
-					viewBox="0 0 24 24"
-					fill="none"
-					stroke="currentColor"
-					stroke-width="2"
-					stroke-linecap="round"
-					stroke-linejoin="round">
-					<polyline points="3 6 5 6 21 6" />
-					<path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-				</svg>
-				Svuota carrello
-			</button>
-		</section>
-	</div>
+    <!-- Title -->
+    <h3 class="text-[var(--color-brand-text)] text-[16px] mb-[14px]" style="font-weight: 700">Riepilogo</h3>
+
+    <!-- Line items -->
+    <div class="space-y-[8px]">
+      <!-- Subtotale -->
+      <div class="flex justify-between text-[14px]">
+        <span class="text-[var(--color-brand-text-muted)]">Spedizioni ({{ cartMeta?.count || displayEntries?.length || 0 }})</span>
+        <span class="text-[var(--color-brand-text)]" :class="{ 'line-through text-[var(--color-brand-text-muted)]': couponApplied }" style="font-weight: 600">{{ cartMeta?.total }}</span>
+      </div>
+
+      <!-- Sconto coupon -->
+      <div v-if="couponApplied" class="flex justify-between text-[14px]">
+        <span class="text-[#0a8a7a]" style="font-weight: 600">Sconto ({{ couponDiscount }}%)</span>
+        <span class="text-[#0a8a7a]" style="font-weight: 600">{{ appliedTotal }}</span>
+      </div>
+
+      <!-- Divider -->
+      <div class="h-[1px] bg-[#DFE2E7]"></div>
+
+      <!-- Totale -->
+      <div class="flex justify-between items-baseline">
+        <span class="text-[var(--color-brand-text)] text-[15px]" style="font-weight: 700">Totale</span>
+        <span class="text-[var(--color-brand-accent)] text-[22px] tracking-tight" style="font-weight: 800">{{ displayTotal }}</span>
+      </div>
+      <span class="text-[var(--color-brand-text-secondary)] text-[13px] block" style="font-weight: 400">IVA inclusa</span>
+    </div>
+
+    <!-- Promo code toggle -->
+    <button
+      type="button"
+      @click="emit('toggle-coupon')"
+      :aria-expanded="showCouponPanel"
+      class="w-full flex items-center justify-between mt-[14px] pt-[12px] border-t border-[#DFE2E7] cursor-pointer"
+    >
+      <span class="text-[var(--color-brand-text)] text-[13px]" style="font-weight: 600">Codice sconto</span>
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#777" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+        class="transition-transform duration-300" :class="showCouponPanel ? 'rotate-180' : ''"><polyline points="6 9 12 15 18 9"/></svg>
+    </button>
+
+    <!-- Promo code form (collapsible) -->
+    <div v-if="showCouponPanel" class="mt-[10px] overflow-hidden">
+      <div class="flex gap-[6px]">
+        <!-- Applied state -->
+        <div v-if="couponApplied" class="flex-1 flex items-center gap-[6px] bg-[#f0fdf4] rounded-[12px] px-[12px] h-[48px] ring-[1.5px] ring-[#d1fae5]">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          <span class="text-[#0a8a7a] text-[12px]" style="font-weight: 600">{{ couponCode.toUpperCase() }} (-{{ couponDiscount }}%)</span>
+          <button
+            type="button"
+            @click="emit('remove-coupon')"
+            class="text-red-500 text-[11px] hover:underline cursor-pointer ml-auto"
+            style="font-weight: 600"
+          >Rimuovi</button>
+        </div>
+
+        <!-- Input state -->
+        <template v-else>
+          <input
+            type="text"
+            :value="couponCode"
+            @input="emit('update:coupon-code', $event.target.value)"
+            placeholder="Codice..."
+            class="flex-1 h-[48px] rounded-[12px] bg-white ring-[1.5px] ring-[#DFE2E7] focus:ring-[3px] focus:ring-[var(--color-brand-primary)]/60 px-[12px] text-[13px] text-[var(--color-brand-text)] uppercase placeholder:text-[var(--color-brand-text-muted)] placeholder:normal-case outline-none transition-all"
+            style="font-weight: 600"
+          />
+          <button
+            type="button"
+            @click="emit('apply-coupon')"
+            class="h-[48px] px-[14px] rounded-full text-white text-[12px] cursor-pointer outline-none transition-all hover:opacity-90"
+            style="font-weight: 700; background: linear-gradient(135deg, #095866, #0a7489)"
+          >OK</button>
+        </template>
+      </div>
+      <!-- Coupon feedback message -->
+      <p v-if="couponMessage" class="text-[12px] mt-[6px]" :class="couponMessage.type === 'success' ? 'text-[#0a8a7a]' : 'text-red-500'">
+        {{ couponMessage.text }}
+      </p>
+    </div>
+  </div>
 </template>

@@ -93,33 +93,27 @@ onMounted(() => {
 </script>
 
 <template>
-	<section v-if="profileUiReady" class="min-h-[600px] py-[40px] desktop:py-[80px]">
-		<div class="my-container">
-			<AccountPageHeader
-				:title="showEditForm ? 'Modifica dati' : 'Profilo e dati'"
-				description="Dati personali e di fatturazione."
-				:crumbs="
-					showEditForm
-						? [{ label: 'Account', to: '/account' }, { label: 'Profilo e dati', to: '/account/profilo' }, { label: 'Modifica dati' }]
-						: [{ label: 'Account', to: '/account' }, { label: 'Profilo e dati' }]
-				">
-				<template v-if="!showEditForm" #actions>
-					<button @click="showEditForm = true" class="btn-cta btn-compact inline-flex items-center gap-[6px] text-[0.875rem]">
-						<svg
-							xmlns="http://www.w3.org/2000/svg"
-							width="16"
-							height="16"
-							viewBox="0 0 24 24"
-							fill="none"
-							stroke="currentColor"
-							stroke-width="2">
-							<path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-							<path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-						</svg>
-						Modifica dati
-					</button>
-				</template>
-			</AccountPageHeader>
+	<section v-if="profileUiReady" class="min-h-[600px] py-[20px] tablet:py-[28px] desktop:py-[28px] bg-white">
+		<div class="my-container max-w-[1280px]">
+			<!-- Page shell header -->
+			<div class="flex flex-col gap-[16px] tablet:gap-[16px] mb-[20px]">
+				<NuxtLink to="/account"
+					class="flex items-center gap-[6px] text-[var(--color-brand-text-muted)] text-[13px] cursor-pointer hover:text-[var(--color-brand-text-secondary)] transition-colors duration-[350ms] font-[500]">
+					<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+					Dashboard
+				</NuxtLink>
+				<div class="flex items-center gap-[16px]">
+					<div class="w-[48px] h-[48px] rounded-[14px] bg-[#F5F6F9] flex items-center justify-center shrink-0">
+						<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--color-brand-text-muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+					</div>
+					<div>
+						<h1 class="text-[var(--color-brand-text)] text-[24px] tablet:text-[28px] tracking-[-0.5px] font-[800]">
+							{{ showEditForm ? 'Modifica dati' : 'Il mio profilo' }}
+						</h1>
+						<p class="text-[var(--color-brand-text-muted)] text-[13px] tablet:text-[14px] mt-[2px]">Gestisci i tuoi dati personali e le preferenze</p>
+					</div>
+				</div>
+			</div>
 
 			<!-- Messaggi -->
 			<div v-if="messageLoading" class="mb-[20px] ux-alert ux-alert--info">
@@ -178,30 +172,24 @@ onMounted(() => {
 	</section>
 
 	<!-- Skeleton -->
-	<section v-else class="min-h-[600px] py-[40px] desktop:py-[80px]">
-		<div class="my-container space-y-[18px]">
-			<div
-				class="rounded-[22px] border border-[#E3EBF0] bg-white px-[18px] py-[18px] shadow-[0_12px_30px_rgba(9,88,102,0.06)] tablet:px-[22px] tablet:py-[22px] desktop:px-[28px] desktop:py-[26px]">
-				<div class="space-y-[10px]">
-					<div class="h-[32px] w-[220px] rounded-[12px] bg-[#EEF3F7] animate-pulse"></div>
-					<div class="h-[16px] w-full max-w-[560px] rounded-[12px] bg-[#F2F5F8] animate-pulse"></div>
+	<section v-else class="min-h-[600px] py-[20px] tablet:py-[28px] desktop:py-[28px] bg-white">
+		<div class="my-container max-w-[1280px] space-y-[14px]">
+			<div class="space-y-[10px] mb-[20px]">
+				<div class="h-[14px] w-[80px] rounded-full bg-[#EEF3F7] animate-pulse"></div>
+				<div class="flex items-center gap-[16px]">
+					<div class="w-[48px] h-[48px] rounded-[14px] bg-[#EEF3F7] animate-pulse"></div>
+					<div class="space-y-[6px]">
+						<div class="h-[28px] w-[200px] rounded-[10px] bg-[#EEF3F7] animate-pulse"></div>
+						<div class="h-[14px] w-[260px] rounded-full bg-[#F2F5F8] animate-pulse"></div>
+					</div>
 				</div>
 			</div>
-			<div class="rounded-[12px] border border-[var(--color-brand-border)] bg-white p-[20px] tablet:p-[24px] desktop:p-[32px] shadow-sm">
-				<div class="flex flex-col gap-[18px]">
-					<div class="flex items-center gap-[16px]">
-						<div class="h-[56px] w-[56px] rounded-full bg-[#EEF3F7] animate-pulse"></div>
-						<div class="space-y-[8px] flex-1">
-							<div class="h-[22px] w-[180px] rounded-[12px] bg-[#EEF3F7] animate-pulse"></div>
-							<div class="h-[14px] w-[120px] rounded-full bg-[#F2F5F8] animate-pulse"></div>
-						</div>
-					</div>
-					<div class="grid grid-cols-1 tablet:grid-cols-2 gap-[12px]">
-						<div
-							v-for="index in 6"
-							:key="`skel-${index}`"
-							class="h-[84px] rounded-[12px] border border-[#EEF1F3] bg-[#FAFBFC] animate-pulse"></div>
-					</div>
+			<div class="rounded-[20px] bg-white p-[20px]" style="box-shadow: 0 1px 4px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.03);">
+				<div class="grid grid-cols-1 tablet:grid-cols-2 gap-[12px]">
+					<div
+						v-for="index in 6"
+						:key="`skel-${index}`"
+						class="h-[72px] rounded-[16px] bg-[#F5F6F9] animate-pulse"></div>
 				</div>
 			</div>
 		</div>

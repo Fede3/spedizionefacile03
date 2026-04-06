@@ -24,11 +24,11 @@ const statusLabels = {
 };
 
 const statusTone = {
-	completed: 'bg-emerald-50 text-emerald-700 border-emerald-200',
-	requested: 'bg-sky-50 text-sky-700 border-sky-200',
-	sent: 'bg-emerald-50 text-emerald-700 border-emerald-200',
-	pending: 'bg-slate-100 text-slate-700 border-slate-200',
-	not_requested: 'bg-slate-100 text-slate-700 border-slate-200',
+	completed: 'bg-[#f0fdf4] text-[#0a8a7a] border-[#d1fae5]',
+	requested: 'bg-[#eef7f8] text-[#095866] border-[#bdd5da]',
+	sent: 'bg-[#f0fdf4] text-[#0a8a7a] border-[#d1fae5]',
+	pending: 'bg-[#EEF0F3] text-[var(--color-brand-text-secondary)] border-[#DFE2E7]',
+	not_requested: 'bg-[#EEF0F3] text-[var(--color-brand-text-secondary)] border-[#DFE2E7]',
 	skipped: 'bg-amber-50 text-amber-700 border-amber-200',
 	failed: 'bg-red-50 text-red-700 border-red-200',
 };
@@ -37,7 +37,7 @@ const hasShipmentLabel = computed(() => Boolean(props.orderData?.has_label || pr
 const executionReady = computed(() => Boolean(props.executionData));
 
 const labelForStatus = (value) => statusLabels[value] || 'Da verificare';
-const toneForStatus = (value) => statusTone[value] || 'bg-slate-100 text-slate-700 border-slate-200';
+const toneForStatus = (value) => statusTone[value] || 'bg-[#EEF0F3] text-[var(--color-brand-text-secondary)] border-[#DFE2E7]';
 const formatOptionalDate = (value) => (value ? props.formatDate(value) : 'Non ancora');
 const formatPickupDate = (value) => {
 	if (!value) return 'Non ancora';
@@ -199,14 +199,14 @@ const runCardAction = (kind) => {
 		<div class="flex flex-col gap-[12px] border-b border-[#E9EEF2] pb-[14px] desktop:flex-row desktop:items-start desktop:justify-between">
 			<div class="max-w-[760px]">
 				<p class="sf-section-kicker mb-[6px]">Esecuzione spedizione</p>
-				<h3 class="text-[1.0625rem] font-bold leading-[1.15] text-[var(--color-brand-text)]">Ritiro, borderò e documenti</h3>
-				<p class="mt-[6px] text-[0.875rem] leading-[1.5] text-[#617182]">
+				<h3 class="font-montserrat text-[1.0625rem] font-[800] leading-[1.15] text-[var(--color-brand-text)]">Ritiro, borderò e documenti</h3>
+				<p class="mt-[6px] text-[0.875rem] leading-[1.5] text-[var(--color-brand-text-secondary)]">
 					Il backend è già pronto: qui rendiamo visibili stato e azioni operative dell’ordine.
 				</p>
 			</div>
 			<span
 				class="inline-flex items-center gap-[6px] rounded-full border px-[12px] py-[7px] text-[0.75rem] font-semibold"
-				:class="hasShipmentLabel ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-amber-200 bg-amber-50 text-amber-700'">
+				:class="hasShipmentLabel ? 'border-[#d1fae5] bg-[#f0fdf4] text-[#0a8a7a]' : 'border-amber-200 bg-amber-50 text-amber-700'">
 				{{ hasShipmentLabel ? 'Etichetta pronta' : 'Serve etichetta BRT' }}
 			</span>
 		</div>
@@ -216,7 +216,7 @@ const runCardAction = (kind) => {
 				<svg xmlns="http://www.w3.org/2000/svg" class="ux-alert__icon mt-[1px]" viewBox="0 0 24 24">
 					<path fill="currentColor" d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2Zm-1 14-4-4 1.41-1.41L11 13.17l5.59-5.58L18 9Z" />
 				</svg>
-				<p class="text-[0.875rem] leading-[1.5] text-[#52606D]">{{ executionSuccess }}</p>
+				<p class="text-[0.875rem] leading-[1.5] text-[var(--color-brand-text-secondary)]">{{ executionSuccess }}</p>
 			</div>
 		</div>
 
@@ -226,7 +226,7 @@ const runCardAction = (kind) => {
 					<path fill="currentColor" d="M11 15h2v2h-2zm0-8h2v6h-2z" />
 					<path fill="currentColor" d="M1 21h22L12 2z" />
 				</svg>
-				<p class="text-[0.875rem] leading-[1.5] text-[#52606D]">{{ executionError }}</p>
+				<p class="text-[0.875rem] leading-[1.5] text-[var(--color-brand-text-secondary)]">{{ executionError }}</p>
 			</div>
 		</div>
 
@@ -240,7 +240,7 @@ const runCardAction = (kind) => {
 			<article v-for="card in executionCards" :key="card.key" class="sf-account-value-card">
 				<div class="flex items-start justify-between gap-[10px]">
 					<div class="min-w-0">
-						<p class="text-[0.75rem] font-semibold uppercase tracking-[0.08em] text-[#7A8695]">{{ card.eyebrow }}</p>
+						<p class="text-[0.75rem] font-semibold uppercase tracking-[0.08em] text-[var(--color-brand-text-muted)]">{{ card.eyebrow }}</p>
 						<p class="mt-[6px] text-[1rem] font-bold leading-[1.2] text-[var(--color-brand-text)]">{{ card.title }}</p>
 					</div>
 					<span
@@ -250,7 +250,7 @@ const runCardAction = (kind) => {
 					</span>
 				</div>
 
-				<p class="text-[0.8125rem] leading-[1.5] text-[#617182]">{{ card.meta }}</p>
+				<p class="text-[0.8125rem] leading-[1.5] text-[var(--color-brand-text-secondary)]">{{ card.meta }}</p>
 
 				<div v-if="card.key === 'pickup'" class="grid gap-[10px]">
 					<label class="flex items-start gap-[10px] rounded-[14px] border border-[#E9EEF2] bg-[#FBFCFD] px-[14px] py-[12px]">
@@ -260,7 +260,7 @@ const runCardAction = (kind) => {
 							class="mt-[3px] h-[16px] w-[16px] rounded border-[#C9D3DD] text-[var(--color-brand-primary)]" />
 						<span class="min-w-0">
 							<span class="block text-[0.875rem] font-semibold text-[var(--color-brand-text)]">Richiedi ritiro per questo ordine</span>
-							<span class="mt-[2px] block text-[0.8125rem] leading-[1.5] text-[#617182]">
+							<span class="mt-[2px] block text-[0.8125rem] leading-[1.5] text-[var(--color-brand-text-secondary)]">
 								Disattivalo per segnare il ritiro come non richiesto e pulire data, fascia e note operative salvate.
 							</span>
 						</span>
@@ -291,7 +291,7 @@ const runCardAction = (kind) => {
 
 					<p
 						v-else
-						class="rounded-[12px] border border-[#E9EEF2] bg-white px-[14px] py-[12px] text-[0.8125rem] leading-[1.5] text-[#617182]">
+						class="rounded-[14px] border border-[#E9EEF2] bg-white px-[14px] py-[12px] text-[0.8125rem] leading-[1.5] text-[var(--color-brand-text-secondary)]">
 						Salvando, l’ordine verra' marcato come non richiesto e i riferimenti di ritiro verranno rimossi.
 					</p>
 				</div>

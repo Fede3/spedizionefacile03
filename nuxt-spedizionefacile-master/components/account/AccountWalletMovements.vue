@@ -26,7 +26,7 @@ const countLabel = computed(() => {
 });
 
 const getMovementColor = (mov) => {
-	return mov.type === 'credit' ? 'text-[var(--color-brand-primary)]' : 'text-[#B42318]';
+	return mov.type === 'credit' ? 'text-[#15803D]' : 'text-[#B42318]';
 };
 
 const getMovementSign = (mov) => {
@@ -48,7 +48,7 @@ const getSourceColor = (source) => {
 	const colors = {
 		stripe: 'bg-[#EDF7F8] text-[var(--color-brand-primary)]',
 		commission: 'bg-[#FFF4E8] text-[#B45309]',
-		withdrawal: 'bg-[#F5F7F8] text-[#4B5563]',
+		withdrawal: 'bg-[#F5F7F8] text-[var(--color-brand-text-secondary)]',
 		wallet: 'bg-[#EDF7F8] text-[var(--color-brand-primary)]',
 		refund: 'bg-[#FEF2F2] text-[#B42318]',
 	};
@@ -76,10 +76,10 @@ const getMovementSvg = (mov) => {
 </script>
 
 <template>
-	<div class="mt-[20px] rounded-[20px] border border-[var(--color-brand-border)] bg-white p-[16px] shadow-sm desktop:mt-[24px] desktop:p-[24px]">
-		<div class="mb-[14px] flex flex-col gap-[10px] sm:flex-row sm:items-start sm:justify-between desktop:mb-[18px]">
+	<div class="mt-[20px] rounded-[20px] border border-[var(--color-brand-border)] bg-white p-[18px] shadow-sm desktop:mt-[24px] desktop:p-[24px]">
+		<div class="mb-[16px] flex flex-col gap-[10px] sm:flex-row sm:items-start sm:justify-between desktop:mb-[16px]">
 			<div class="flex items-start gap-[12px]">
-				<div class="flex h-[36px] w-[36px] items-center justify-center rounded-[50px] bg-[#EDF7F8]">
+				<div class="flex h-[36px] w-[36px] items-center justify-center rounded-full bg-[#EDF7F8]">
 					<svg
 						width="20"
 						height="20"
@@ -96,21 +96,21 @@ const getMovementSvg = (mov) => {
 				</div>
 
 				<div>
-					<h2 class="text-[1rem] font-bold text-[var(--color-brand-text)]">Movimenti</h2>
-					<p class="mt-[4px] text-[0.8125rem] leading-[1.5] text-[#667281]">
+					<h2 class="font-montserrat text-[1rem] font-[800] text-[var(--color-brand-text)]">Movimenti</h2>
+					<p class="mt-[4px] text-[0.8125rem] leading-[1.5] text-[var(--color-brand-text-secondary)]">
 						Ricariche, pagamenti, rimborsi e commissioni in ordine cronologico.
 					</p>
 				</div>
 			</div>
 
-			<span class="inline-flex w-fit items-center rounded-full bg-[#F8F9FB] px-[10px] py-[5px] text-[0.75rem] font-semibold text-[#4B5563]">
+			<span class="inline-flex w-fit items-center rounded-full bg-[#F5F6F9] px-[10px] py-[5px] text-[0.75rem] font-semibold text-[var(--color-brand-text-secondary)]">
 				{{ countLabel }}
 			</span>
 		</div>
 
 		<div
 			v-if="movementsError && hasMovements"
-			class="mb-[14px] flex flex-col gap-[10px] rounded-[14px] border border-[#F3D1A7] bg-[#FFF7E8] px-[12px] py-[11px] text-[0.8125rem] text-[#B45309] tablet:flex-row tablet:items-center tablet:justify-between">
+			class="mb-[16px] flex flex-col gap-[10px] rounded-[14px] border border-[#F3D1A7] bg-[#FFF7E8] px-[12px] py-[11px] text-[0.8125rem] text-[#B45309] tablet:flex-row tablet:items-center tablet:justify-between">
 			<p class="leading-[1.5]">Non sono riuscito ad aggiornare tutto lo storico in tempo reale. Ti mostro l ultimo elenco disponibile.</p>
 			<button
 				type="button"
@@ -134,7 +134,7 @@ const getMovementSvg = (mov) => {
 		</div>
 
 		<div v-else-if="hasBlockingError" class="py-[32px] text-center">
-			<div class="mx-auto mb-[14px] flex h-[56px] w-[56px] items-center justify-center rounded-full bg-[#FEF2F2]">
+			<div class="mx-auto mb-[16px] flex h-[56px] w-[56px] items-center justify-center rounded-full bg-[#FEF2F2]">
 				<svg
 					width="24"
 					height="24"
@@ -151,7 +151,7 @@ const getMovementSvg = (mov) => {
 				</svg>
 			</div>
 			<p class="text-[0.9375rem] font-medium text-[var(--color-brand-text)]">Storico non disponibile</p>
-			<p class="mx-auto mt-[6px] max-w-[420px] text-[0.8125rem] leading-[1.55] text-[#667281]">
+			<p class="mx-auto mt-[6px] max-w-[420px] text-[0.8125rem] leading-[1.55] text-[var(--color-brand-text-secondary)]">
 				{{ movementsError }}
 			</p>
 			<button type="button" @click="emit('retry-movements')" class="btn-secondary btn-compact mt-[16px] inline-flex items-center gap-[6px]">
@@ -174,7 +174,7 @@ const getMovementSvg = (mov) => {
 		</div>
 
 		<div v-else-if="!hasMovements" class="py-[32px] text-center">
-			<div class="mx-auto mb-[14px] flex h-[56px] w-[56px] items-center justify-center rounded-full bg-[#F8F9FB]">
+			<div class="mx-auto mb-[16px] flex h-[56px] w-[56px] items-center justify-center rounded-full bg-[#F5F6F9]">
 				<svg
 					width="24"
 					height="24"
@@ -184,14 +184,14 @@ const getMovementSvg = (mov) => {
 					stroke-width="2"
 					stroke-linecap="round"
 					stroke-linejoin="round"
-					class="text-[#C8CCD0]">
+					class="text-[var(--color-brand-text-muted)]">
 					<path d="M4 4h16v16H4z" />
 					<path d="M4 10h16" />
 					<path d="M10 4v16" />
 				</svg>
 			</div>
 			<p class="text-[0.9375rem] font-medium text-[var(--color-brand-text)]">Nessun movimento</p>
-			<p class="mx-auto mt-[6px] max-w-[360px] text-[0.8125rem] leading-[1.55] text-[#667281]">
+			<p class="mx-auto mt-[6px] max-w-[360px] text-[0.8125rem] leading-[1.55] text-[var(--color-brand-text-secondary)]">
 				I movimenti appariranno qui dopo la prima ricarica o il primo pagamento con il portafoglio.
 			</p>
 			<NuxtLink to="/preventivo" class="btn-cta btn-compact mt-[16px] inline-flex items-center gap-[6px]">
@@ -215,11 +215,11 @@ const getMovementSvg = (mov) => {
 			<li
 				v-for="(mov, index) in movements"
 				:key="mov.id || `${mov.created_at || 'mov'}-${index}`"
-				class="flex flex-col gap-[10px] rounded-[14px] border border-[#EEF1F3] p-[12px] transition-colors hover:bg-[#F8F9FB] sm:flex-row sm:items-center sm:gap-[12px]">
+				class="flex flex-col gap-[10px] rounded-[14px] border border-[#EEF1F3] p-[12px] transition-colors hover:bg-[#F5F6F9] sm:flex-row sm:items-center sm:gap-[12px]">
 				<div
 					:class="[
-						'flex h-[38px] w-[38px] items-center justify-center rounded-[50px] shrink-0',
-						mov.type === 'credit' ? 'bg-[#EDF7F8]' : 'bg-[#FEF2F2]',
+						'flex h-[38px] w-[38px] items-center justify-center rounded-full shrink-0',
+						mov.type === 'credit' ? 'bg-[#E8F9EE]' : 'bg-[#FEF2F2]',
 					]">
 					<svg
 						width="18"
@@ -230,7 +230,7 @@ const getMovementSvg = (mov) => {
 						stroke-width="2"
 						stroke-linecap="round"
 						stroke-linejoin="round"
-						:class="mov.type === 'credit' ? 'text-[var(--color-brand-primary)]' : 'text-[#B42318]'">
+						:class="mov.type === 'credit' ? 'text-[#15803D]' : 'text-[#B42318]'">
 						<path :d="getMovementSvg(mov)" />
 					</svg>
 				</div>

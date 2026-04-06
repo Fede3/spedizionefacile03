@@ -35,7 +35,7 @@ const emit = defineEmits(['show-detail', 'change-status']);
 					</div>
 				</div>
 				<div class="admin-orders-card__meta">
-					<span class="text-[#404040]">{{ order.packages?.length || 0 }} colli</span>
+					<span class="text-[var(--color-brand-text)]">{{ order.packages?.length || 0 }} colli</span>
 					<span v-if="order.brt_parcel_id" class="admin-orders-flat-view__brt-chip">{{ order.brt_parcel_id }}</span>
 					<span v-if="order.brt_pudo_id" class="admin-orders-flat-view__pudo-chip">PUDO</span>
 				</div>
@@ -76,7 +76,7 @@ const emit = defineEmits(['show-detail', 'change-status']);
 								<span class="admin-orders-table__user-email">{{ order.user?.email }}</span>
 							</div>
 						</td>
-						<td class="admin-orders-table__cell text-[#404040]">{{ order.packages?.length || 0 }}</td>
+						<td class="admin-orders-table__cell text-[var(--color-brand-text)]">{{ order.packages?.length || 0 }}</td>
 						<td class="admin-orders-table__cell admin-orders-table__cell--amount">&euro;{{ formatCents(order.subtotal?.amount ?? order.subtotal) }}</td>
 						<td class="admin-orders-table__cell">
 							<span :class="['inline-flex items-center gap-[4px] px-[10px] py-[3px] rounded-full text-[0.6875rem] font-medium', orderStatusConfig[order.status]?.bg || 'bg-gray-50', orderStatusConfig[order.status]?.text || 'text-gray-700']">
@@ -85,7 +85,7 @@ const emit = defineEmits(['show-detail', 'change-status']);
 						</td>
 						<td class="admin-orders-table__cell">
 							<span v-if="order.brt_parcel_id" class="admin-orders-flat-view__brt-chip">{{ order.brt_parcel_id }}</span>
-							<span v-else class="text-[#C8CCD0]">&mdash;</span>
+							<span v-else class="text-[var(--color-brand-text-muted)]">&mdash;</span>
 							<span v-if="order.brt_pudo_id" class="admin-orders-flat-view__pudo-chip ml-[4px]" title="Ritiro in Punto BRT">PUDO</span>
 						</td>
 						<td class="admin-orders-table__cell admin-orders-table__cell--date">{{ formatDate(order.created_at) }}</td>
@@ -113,8 +113,8 @@ const emit = defineEmits(['show-detail', 'change-status']);
 	position: relative;
 	display: grid;
 	gap: 12px;
-	padding: 16px;
-	border-radius: 18px;
+	padding: 20px;
+	border-radius: 20px;
 	border: 1px solid #dbe7eb;
 	background: linear-gradient(180deg, #fbfcfd 0%, #f7fafb 100%);
 	box-shadow: 0 10px 18px rgba(20, 37, 48, 0.04);
@@ -147,8 +147,8 @@ const emit = defineEmits(['show-detail', 'change-status']);
 .admin-orders-flat-view__status-select {
 	width: 100%;
 	min-height: 38px;
-	border: 1px solid #d5e1e5;
-	border-radius: 14px;
+	border: 1.5px solid #DFE2E7;
+	border-radius: 12px;
 	background: linear-gradient(180deg, #ffffff 0%, #fbfcfd 100%);
 	font-size: 0.78rem;
 	font-weight: 700;
@@ -246,7 +246,7 @@ const emit = defineEmits(['show-detail', 'change-status']);
 }
 
 .admin-orders-table__row:hover {
-	background: #f7fbfc;
+	background: rgba(9, 88, 102, 0.03);
 }
 
 .admin-orders-table__cell {

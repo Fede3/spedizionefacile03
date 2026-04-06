@@ -13,9 +13,9 @@ class ContentController extends Controller
     // Mostra tutti i messaggi di contatto ricevuti dalla pagina "Contattaci"
     public function contactMessages(): JsonResponse
     {
-        $messages = ContactMessage::orderByDesc('created_at')->get();
+        $messages = ContactMessage::orderByDesc('created_at')->paginate(30);
 
-        return response()->json(['data' => $messages]);
+        return response()->json($messages);
     }
 
     // Segna un messaggio di contatto come letto

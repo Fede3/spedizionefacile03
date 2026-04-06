@@ -19,7 +19,7 @@
  * VINCOLI:
  *   - Richiede BRT configurato (config services.brt.client_id non vuoto)
  *   - L'ordine deve avere pacchi con indirizzi completi
- *   - Massimo 3 tentativi con retry incrementale (1s, 2s)
+ *   - Massimo 3 tentativi con retry incrementale (60s, 120s)
  *   - Non deve bloccare il flusso: se BRT fallisce, salva l'errore e continua
  *
  * ERRORI TIPICI:
@@ -47,6 +47,8 @@ use App\Models\Order;
 use App\Services\BrtService;
 use App\Services\ShipmentExecutionService;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
 
 /**
@@ -59,6 +61,8 @@ use Illuminate\Support\Facades\Log;
  */
 class GenerateBrtLabel implements ShouldQueue
 {
+    use InteractsWithQueue, SerializesModels;
+
     /**
      * Numero massimo di tentativi che Laravel eseguira' in caso di eccezione.
      * PERF-02: sostituisce il retry loop interno con sleep().
@@ -67,11 +71,13 @@ class GenerateBrtLabel implements ShouldQueue
 
     /**
      * Secondi di attesa tra un tentativo e l'altro (backoff esponenziale).
-     * Equivalente ai vecchi sleep(1) e sleep(2) ma non blocca il worker.
+     * Con queue=database/redis il worker aspetta 60s prima del primo retry
+     * e 120s prima del secondo, dando tempo a BRT di stabilizzarsi.
+     * Con queue=sync (sviluppo) Laravel esegue comunque subito.
      *
      * @var array<int>
      */
-    public array $backoff = [1, 2];
+    public array $backoff = [60, 120];
 
     public function __construct()
     {

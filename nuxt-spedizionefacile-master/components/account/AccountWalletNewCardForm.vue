@@ -15,7 +15,7 @@ defineEmits(["update:cardHolderName", "close"]);
 </script>
 
 <template>
-	<div class="space-y-[12px] rounded-[12px] border border-[var(--color-brand-border)] bg-white p-[14px]">
+	<div class="space-y-[12px] rounded-[20px] border border-[var(--color-brand-border)] bg-white p-[14px]">
 		<div class="flex items-start justify-between gap-[10px]">
 			<div>
 				<p class="text-[0.875rem] font-semibold text-[var(--color-brand-text)]">Nuova carta per la ricarica</p>
@@ -28,39 +28,39 @@ defineEmits(["update:cardHolderName", "close"]);
 			</button>
 		</div>
 
-		<div v-if="isPreparingNewCardForm" class="flex items-center gap-[10px] rounded-[12px] border border-[var(--color-brand-border)] bg-[#FAFCFD] px-[14px] py-[12px] text-[0.8125rem] text-[var(--color-brand-text-secondary)]">
+		<div v-if="isPreparingNewCardForm" class="flex items-center gap-[10px] rounded-[20px] border border-[var(--color-brand-border)] bg-[#FAFCFD] px-[14px] py-[12px] text-[0.8125rem] text-[var(--color-brand-text-secondary)]">
 			<div class="h-[20px] w-[20px] animate-spin rounded-full border-2 border-[var(--color-brand-border)] border-t-[var(--color-brand-primary)]"></div>
 			Preparazione modulo carta in corso...
 		</div>
 
 		<div v-else class="space-y-[12px]">
 			<div>
-				<label class="mb-[6px] block text-[0.8125rem] font-semibold text-[#404040]">Titolare carta</label>
+				<label class="mb-[6px] block text-[0.8125rem] font-semibold text-[var(--color-brand-text)]">Titolare carta</label>
 				<input
 					:value="cardHolderName"
 					@input="$emit('update:cardHolderName', $event.target.value)"
 					type="text"
 					placeholder="Mario Rossi"
-					class="w-full rounded-[12px] border border-[var(--color-brand-border)] bg-white px-[14px] py-[12px] text-[0.9375rem] text-[var(--color-brand-text)] placeholder:text-[#a0a0a0] transition-colors focus:border-[var(--color-brand-primary)] focus:outline-none" />
+					class="w-full rounded-[20px] border border-[var(--color-brand-border)] bg-white px-[14px] py-[12px] text-[0.9375rem] text-[var(--color-brand-text)] placeholder:text-[var(--color-brand-text-muted)] transition-colors focus:border-[var(--color-brand-primary)] focus:outline-none" />
 			</div>
 
 			<div>
-				<label class="mb-[6px] block text-[0.8125rem] font-semibold text-[#404040]">Numero carta</label>
+				<label class="mb-[6px] block text-[0.8125rem] font-semibold text-[var(--color-brand-text)]">Numero carta</label>
 				<div id="wallet-card-number" class="stripe-field"></div>
 			</div>
 
 			<div class="grid grid-cols-1 gap-[12px] tablet:grid-cols-[minmax(0,1fr)_132px]">
 				<div>
-					<label class="mb-[6px] block text-[0.8125rem] font-semibold text-[#404040]">Scadenza</label>
+					<label class="mb-[6px] block text-[0.8125rem] font-semibold text-[var(--color-brand-text)]">Scadenza</label>
 					<div id="wallet-card-expiry" class="stripe-field"></div>
 				</div>
 				<div class="min-w-0 tablet:w-[132px]">
-					<label class="mb-[6px] block text-[0.8125rem] font-semibold text-[#404040]">CVC</label>
+					<label class="mb-[6px] block text-[0.8125rem] font-semibold text-[var(--color-brand-text)]">CVC</label>
 					<div id="wallet-card-cvc" class="stripe-field"></div>
 				</div>
 			</div>
 
-			<p v-if="cardError" class="rounded-[12px] border border-red-200 bg-red-50 p-[10px] text-[0.8125rem] text-red-500">
+			<p v-if="cardError" class="rounded-[20px] border border-red-200 bg-red-50 p-[10px] text-[0.8125rem] text-red-500">
 				{{ cardError }}
 			</p>
 		</div>

@@ -93,9 +93,14 @@ onMounted(() => {
 
 			<!-- Sub-tab toggle -->
 			<div class="mb-[24px]">
-				<div class="sf-account-shell-tabs w-full tablet:w-fit">
+				<div class="sf-account-shell-tabs w-full tablet:w-fit" role="tablist" aria-label="Sezioni utenti">
 					<button
 						type="button"
+						role="tab"
+						id="tab-users"
+						:aria-selected="activeSubTab === 'users'"
+						aria-controls="tabpanel-users"
+						:tabindex="activeSubTab === 'users' ? 0 : -1"
 						@click="activeSubTab = 'users'"
 						:class="['sf-account-shell-tabs__item', activeSubTab === 'users' && 'sf-account-shell-tabs__item--active']">
 						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[16px] h-[16px]" fill="currentColor">
@@ -106,6 +111,11 @@ onMounted(() => {
 					</button>
 					<button
 						type="button"
+						role="tab"
+						id="tab-pro-requests"
+						:aria-selected="activeSubTab === 'pro_requests'"
+						aria-controls="tabpanel-pro-requests"
+						:tabindex="activeSubTab === 'pro_requests' ? 0 : -1"
 						@click="activeSubTab = 'pro_requests'"
 						:class="['sf-account-shell-tabs__item', activeSubTab === 'pro_requests' && 'sf-account-shell-tabs__item--active']">
 						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[16px] h-[16px]" fill="currentColor">
@@ -122,12 +132,12 @@ onMounted(() => {
 			</div>
 
 			<!-- ===== USERS SUB-TAB ===== -->
-			<div v-if="activeSubTab === 'users'">
+			<div v-if="activeSubTab === 'users'" id="tabpanel-users" role="tabpanel" aria-labelledby="tab-users">
 				<!-- Toolbar -->
-				<div class="mb-[20px] rounded-[12px] border border-[var(--color-brand-border)] bg-[#F8FAFB] p-[14px] tablet:p-[18px] shadow-sm">
-					<div class="flex flex-col gap-[14px] desktop:flex-row desktop:items-center desktop:justify-between">
+				<div class="mb-[20px] rounded-[20px] border border-[var(--color-brand-border)] bg-[#F8FAFB] p-[14px] tablet:p-[18px] shadow-sm">
+					<div class="flex flex-col gap-[16px] desktop:flex-row desktop:items-center desktop:justify-between">
 						<div>
-							<p class="text-[0.75rem] font-semibold uppercase tracking-[0.6px] text-[#6B7280]">Toolbar utenti</p>
+							<p class="text-[0.75rem] font-semibold uppercase tracking-[0.6px] text-[var(--color-brand-text-secondary)]">Toolbar utenti</p>
 							<h2 class="mt-[4px] text-[1rem] font-semibold text-[var(--color-brand-text)]">Ricerca, filtri e azioni rapide</h2>
 						</div>
 						<div class="flex flex-wrap items-center gap-[8px]">
@@ -157,8 +167,8 @@ onMounted(() => {
 				</div>
 
 				<!-- Stats cards -->
-				<div class="grid grid-cols-1 tablet:grid-cols-3 gap-[12px] mb-[22px]">
-					<div class="bg-white rounded-[12px] p-[16px] tablet:p-[18px] border border-[var(--color-brand-border)] shadow-sm">
+				<div class="grid grid-cols-1 tablet:grid-cols-3 gap-[12px] mb-[24px]">
+					<div class="bg-white rounded-[20px] p-[16px] tablet:p-[18px] border border-[var(--color-brand-border)] shadow-sm">
 						<div class="flex items-center gap-[8px] mb-[8px]">
 							<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[18px] h-[18px] text-[var(--color-brand-text)]" fill="currentColor">
 								<path
@@ -168,17 +178,17 @@ onMounted(() => {
 						</div>
 						<p class="text-[1.75rem] font-bold text-[var(--color-brand-text)]">{{ usersData.length }}</p>
 					</div>
-					<div class="bg-white rounded-[12px] p-[16px] tablet:p-[18px] border border-[var(--color-brand-border)] shadow-sm">
+					<div class="bg-white rounded-[20px] p-[16px] tablet:p-[18px] border border-[var(--color-brand-border)] shadow-sm">
 						<div class="flex items-center gap-[8px] mb-[8px]">
-							<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[18px] h-[18px] text-emerald-600" fill="currentColor">
+							<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[18px] h-[18px] text-[#095866]" fill="currentColor">
 								<path
 									d="M12 2C6.5 2 2 6.5 2 12S6.5 22 12 22 22 17.5 22 12 17.5 2 12 2M10 17L5 12L6.41 10.59L10 14.17L17.59 6.58L19 8L10 17Z" />
 							</svg>
 							<p class="text-[0.75rem] text-[var(--color-brand-text-secondary)] uppercase tracking-[0.5px] font-medium">Verificati</p>
 						</div>
-						<p class="text-[1.75rem] font-bold text-emerald-600">{{ usersData.filter((u) => u.email_verified_at).length }}</p>
+						<p class="text-[1.75rem] font-bold text-[#095866]">{{ usersData.filter((u) => u.email_verified_at).length }}</p>
 					</div>
-					<div class="bg-white rounded-[12px] p-[16px] tablet:p-[18px] border border-[var(--color-brand-border)] shadow-sm">
+					<div class="bg-white rounded-[20px] p-[16px] tablet:p-[18px] border border-[var(--color-brand-border)] shadow-sm">
 						<div class="flex items-center gap-[8px] mb-[8px]">
 							<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[18px] h-[18px] text-amber-600" fill="currentColor">
 								<path
@@ -191,7 +201,7 @@ onMounted(() => {
 				</div>
 
 				<!-- Users list -->
-				<div class="bg-white rounded-[12px] p-[20px] tablet:p-[24px] desktop:p-[32px] shadow-sm border border-[var(--color-brand-border)] overflow-hidden">
+				<div class="bg-white rounded-[20px] p-[20px] tablet:p-[24px] desktop:p-[32px] shadow-sm border border-[var(--color-brand-border)] overflow-hidden">
 					<h2 class="text-[1.125rem] font-bold text-[var(--color-brand-text)] mb-[20px]">Gestione account registrati</h2>
 					<AdminUtentiList
 						:users="filteredUsers"
@@ -204,7 +214,7 @@ onMounted(() => {
 			</div>
 
 			<!-- ===== PRO REQUESTS SUB-TAB ===== -->
-			<div v-if="activeSubTab === 'pro_requests'">
+			<div v-if="activeSubTab === 'pro_requests'" id="tabpanel-pro-requests" role="tabpanel" aria-labelledby="tab-pro-requests">
 				<AdminProRequestsList
 					:requests="proRequests"
 					:pro-request-status-config="proRequestStatusConfig"
@@ -233,7 +243,7 @@ onMounted(() => {
 					</svg>
 					<span class="sf-account-meta-pill">{{ roleChangeData.newRole }}</span>
 				</div>
-				<p class="text-[0.8125rem] text-amber-700 bg-amber-50 border border-amber-200 rounded-[12px] p-[10px] mt-[12px]">
+				<p class="text-[0.8125rem] text-amber-700 bg-amber-50 border border-amber-200 rounded-[20px] p-[10px] mt-[12px]">
 					<strong>Attenzione:</strong>
 					Questa azione modifichera' i permessi dell'utente.
 				</p>

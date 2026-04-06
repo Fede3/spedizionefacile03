@@ -13,6 +13,7 @@
  */
 import { useAuthUiSnapshotPersistence } from '~/composables/useAuthUiSnapshotPersistence';
 import { waitForPostAuthSync } from '~/utils/postAuthSync';
+import { humanizeSocialAuthError, sanitizeAuthRedirect } from '~/utils/authHelpers';
 
 export function useAutenticazione() {
 	const sanctum = useSanctumClient();
@@ -21,12 +22,8 @@ export function useAutenticazione() {
 	const { authProviders, refreshAuthProviders } = useAuthProviders();
 	const route = useRoute();
 	const requestUrl = useRequestURL();
-	const sanitizeRedirect = (redirect) => {
-		if (!redirect || typeof redirect !== 'string') return '/account';
-		return redirect.startsWith('/') ? redirect : '/account';
-	};
 	const finalizeAuth = async (responseUser) => {
-		const redirectTarget = sanitizeRedirect(String(route.query.redirect || '/account'));
+		const redirectTarget = sanitizeAuthRedirect(String(route.query.redirect || '/account'));
 		persistSnapshotFromUser(responseUser?.user || responseUser);
 		await waitForPostAuthSync(refreshIdentity);
 		try {
@@ -345,21 +342,7 @@ export function useAutenticazione() {
 	const socialAuthError = ref(false);
 	const socialAuthErrorMessage = ref('Errore durante l\'accesso social. Riprova.');
 
-	const humanizeSocialError = (rawError) => {
-		const map = {
-			google_email_missing: 'Il tuo account Google non ha un\'email disponibile. Usa un altro account oppure registrati con email.',
-			facebook_email_missing: 'Il tuo account Facebook non ha un\'email disponibile. Usa un altro account oppure registrati con email.',
-			apple_email_missing: 'Il tuo account Apple non ha un\'email disponibile. Usa un altro account oppure registrati con email.',
-			google_unavailable: 'Accesso con Google temporaneamente non disponibile. Completiamo prima la configurazione del provider.',
-			facebook_unavailable: 'Accesso con Facebook temporaneamente non disponibile. Completiamo prima la configurazione del provider.',
-			apple_unavailable: 'Accesso con Apple temporaneamente non disponibile. Completiamo prima la configurazione del provider.',
-		};
-		if (map[rawError]) return map[rawError];
-		if (rawError.startsWith('facebook_')) return 'Errore durante l\'accesso con Facebook. Riprova.';
-		if (rawError.startsWith('google_')) return 'Errore durante l\'accesso con Google. Riprova.';
-		if (rawError.startsWith('apple_')) return 'Errore durante l\'accesso con Apple. Riprova.';
-		return 'Errore durante l\'accesso social. Riprova.';
-	};
+	const humanizeSocialError = humanizeSocialAuthError;
 
 	const browserFrontendOrigin = ref(requestUrl.origin);
 	const frontendOrigin = computed(() => browserFrontendOrigin.value);

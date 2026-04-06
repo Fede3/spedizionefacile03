@@ -1,7 +1,10 @@
+/* ============================================================
+   Homepage "Servizi" section — prototype-aligned cards
+   ============================================================ */
 
 .hp-services-section {
 	margin-top: 64px;
-	padding: 56px 0 48px;
+	padding: 64px 0;
 	background: #f3f8fb;
 	border-top: 1px solid #dbe7ee;
 }
@@ -17,65 +20,55 @@
 	font-weight: 700;
 	letter-spacing: 0.28px;
 	text-transform: uppercase;
-	color: #0c6674;
+	color: var(--color-brand-primary);
 }
 
 .hp-services-title {
-	margin-top: 10px;
+	margin-top: 8px;
+	font-family: var(--font-montserrat);
 	font-size: clamp(1.95rem, 3.6vw, 3rem);
 	line-height: 1.06;
 	letter-spacing: -0.02em;
 	font-weight: 800;
-	color: #1d2738;
+	color: var(--color-brand-text);
 }
 
 .hp-services-subtitle {
-	margin-top: 12px;
+	margin-top: 16px;
 	font-size: 1rem;
 	line-height: 1.62;
-	color: #607083;
+	color: var(--color-brand-text-secondary);
 }
 
 .hp-services-grid {
-	margin-top: 22px;
+	margin-top: 32px;
 	display: grid;
 	grid-template-columns: 1fr;
-	gap: 14px;
+	gap: 16px;
 }
 
 .hp-services-card {
 	position: relative;
 	display: flex;
 	flex-direction: column;
-	gap: 12px;
-	padding: 18px;
+	gap: 8px;
+	padding: 20px;
 	border-radius: 20px;
-	border: 1px solid #d7e4eb;
+	border: 1px solid #D7E4EB;
 	background: #ffffff;
-	box-shadow: 0 4px 10px rgba(15, 23, 42, 0.05), 0 18px 30px rgba(15, 23, 42, 0.07);
 	min-height: 230px;
 	overflow: hidden;
 	text-decoration: none;
 	color: inherit;
-	will-change: transform;
-	transition: transform 0.24s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.24s ease, border-color 0.24s ease;
-}
-
-.hp-services-card::after {
-	content: '';
-	position: absolute;
-	inset: 0;
-	background: radial-gradient(circle at 18% 14%, rgba(9, 88, 102, 0.12), transparent 48%);
-	opacity: 0;
-	transition: opacity 0.24s ease;
-	pointer-events: none;
+	box-shadow: 0 4px 10px rgba(15, 23, 42, 0.05), 0 18px 30px rgba(15, 23, 42, 0.07);
+	transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1), border-color 0.4s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.4s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .hp-services-card:hover,
 .hp-services-card:focus-within {
 	transform: translateY(-4px);
-	border-color: #c6dde8;
-	box-shadow: 0 12px 24px rgba(15, 23, 42, 0.08), 0 22px 36px rgba(15, 23, 42, 0.1);
+	border-color: rgba(9, 88, 102, 0.25);
+	box-shadow: 0 12px 28px rgba(9, 88, 102, 0.1), 0 20px 40px rgba(9, 88, 102, 0.06);
 }
 
 .hp-services-card:focus-visible {
@@ -83,15 +76,10 @@
 	outline-offset: 3px;
 }
 
-.hp-services-card:hover::after,
-.hp-services-card:focus-within::after {
-	opacity: 1;
-}
-
 .hp-services-head {
 	display: flex;
 	align-items: center;
-	gap: 12px;
+	gap: 8px;
 }
 
 .hp-services-icon-wrap {
@@ -104,78 +92,76 @@
 	align-items: center;
 	justify-content: center;
 	flex-shrink: 0;
-	transition: transform 0.24s ease, box-shadow 0.24s ease, border-color 0.24s ease;
+	transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1), border-color 0.4s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.4s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-.hp-services-icon {
-	width: 40px;
-	height: 40px;
-	object-fit: contain;
+.hp-services-icon-svg {
+	width: 28px;
+	height: 28px;
+	color: var(--color-brand-primary, #095866);
+	transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .hp-services-card-title {
+	font-family: var(--font-montserrat);
 	font-size: 1.24rem;
 	line-height: 1.18;
 	font-weight: 780;
-	color: #1f2937;
+	color: var(--color-brand-text);
 	transition: color 0.24s ease;
 }
 
 .hp-services-card-text {
 	font-size: 0.97rem;
 	line-height: 1.58;
-	color: #526172;
+	color: var(--color-brand-text-secondary);
 }
 
 .hp-services-card:hover .hp-services-icon-wrap,
 .hp-services-card:focus-within .hp-services-icon-wrap {
-	transform: translateY(-2px) scale(1.04);
-	border-color: #b7d5e0;
-	box-shadow: 0 8px 16px rgba(15, 23, 42, 0.08);
+	transform: translateY(-3px) scale(1.06);
+	border-color: #b0d0de;
+	box-shadow: 0 10px 20px rgba(9, 88, 102, 0.1);
+}
+
+.hp-services-card:hover .hp-services-icon-svg,
+.hp-services-card:focus-within .hp-services-icon-svg {
+	transform: scale(1.08);
 }
 
 .hp-services-card:hover .hp-services-card-title,
 .hp-services-card:focus-within .hp-services-card-title {
-	color: #0a5f6d;
+	color: var(--color-brand-primary);
 }
 
-.hp-services-cta {
+/* CTA pill button (prototype style) */
+.hp-services-cta-pill {
 	margin-top: auto;
-	height: 40px;
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
 	align-self: flex-start;
-	padding: 0 15px;
-	border-radius: 12px;
-	background: var(--color-brand-accent);
+	height: 40px;
+	padding: 0 16px;
+	border-radius: 999px;
+	background: var(--color-brand-accent, #e44203);
 	color: #fff;
 	text-decoration: none;
 	font-size: 0.89rem;
 	font-weight: 700;
-	transition: background-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+	transition: background-color 0.4s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.4s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-.hp-services-cta:hover {
-	background: #cb3a00;
-	transform: translateY(-1px);
-	box-shadow: 0 10px 20px rgba(228, 66, 3, 0.22);
-}
-
-.hp-services-card:hover .hp-services-cta,
-.hp-services-card:focus-within .hp-services-cta {
-	box-shadow: 0 10px 20px rgba(228, 66, 3, 0.24);
-}
-
-.hp-services-cta:focus-visible {
-	outline: 2px solid var(--color-brand-primary);
-	outline-offset: 2px;
+.hp-services-card:hover .hp-services-cta-pill,
+.hp-services-card:focus-within .hp-services-cta-pill {
+	background: #d63b00;
+	box-shadow: 0 8px 24px rgba(228, 66, 3, 0.28);
 }
 
 @media (min-width: 48rem) {
 	.hp-services-section {
-		margin-top: 112px;
-		padding: 84px 0 72px;
+		margin-top: 64px;
+		padding: 80px 0;
 	}
 
 	.hp-services-grid {
@@ -187,17 +173,21 @@
 @media (min-width: 72rem) {
 	.hp-services-grid {
 		grid-template-columns: repeat(3, minmax(0, 1fr));
-		gap: 18px;
+		gap: 16px;
 	}
 }
 
 @media (max-width: 34rem) {
 	.hp-services-section {
-		padding: 60px 0 52px;
+		padding: 40px 0;
+	}
+
+	.hp-services-grid {
+		gap: 16px;
 	}
 
 	.hp-services-card {
-		padding: 15px;
+		padding: 16px;
 		border-radius: 18px;
 		min-height: 212px;
 	}
@@ -206,17 +196,28 @@
 		width: 52px;
 		height: 52px;
 	}
+
+	/* Touch targets: minimum 44px */
+	.hp-services-cta-pill {
+		min-height: 44px;
+		padding: 0 16px;
+	}
+
+	.hp-step-cta {
+		min-height: 48px;
+		width: 100%;
+	}
 }
 
 @media (min-width: 23.4375rem) and (max-width: 47.99rem) {
 	.hp-services-grid {
 		grid-template-columns: repeat(2, minmax(0, 1fr));
-		gap: 12px;
+		gap: 16px;
 	}
 
 	.hp-services-card {
 		min-height: 198px;
-		padding: 14px;
+		padding: 16px;
 	}
 
 	.hp-services-head {
@@ -229,9 +230,9 @@
 		border-radius: 14px;
 	}
 
-	.hp-services-icon {
-		width: 34px;
-		height: 34px;
+	.hp-services-icon-svg {
+		width: 24px;
+		height: 24px;
 	}
 
 	.hp-services-card-title {
@@ -243,27 +244,300 @@
 		line-height: 1.45;
 	}
 
-	.hp-services-cta {
-		height: 36px;
-		padding: 0 12px;
+	.hp-services-cta-pill {
 		font-size: 0.78rem;
-		border-radius: 10px;
+		height: 34px;
+		padding: 0 16px;
 	}
 }
 
 @media (prefers-reduced-motion: reduce) {
 	.hp-services-card,
-	.hp-services-card::after,
 	.hp-services-icon-wrap,
+	.hp-services-icon-svg,
 	.hp-services-card-title,
-	.hp-services-cta {
+	.hp-services-cta-pill {
 		transition: none;
 	}
 
 	.hp-services-card:hover,
-	.hp-services-card:focus-within,
-	.hp-services-cta:hover {
+	.hp-services-card:focus-within {
 		transform: none;
 	}
 }
 
+/* ============================================================
+   Homepage "Come funziona" — 4-step timeline (prototype-aligned)
+   Cards with icon box, decorative large number, connecting line,
+   responsive grid (1 col mobile → 2 col tablet → 4 col desktop).
+   ============================================================ */
+
+.hp-step-section {
+	margin-top: 64px;
+	padding: 64px 0;
+}
+
+.hp-step-shell {
+	padding: 0;
+}
+
+.hp-step-header {
+	max-width: 760px;
+	margin-inline: auto;
+	text-align: center;
+}
+
+.hp-step-eyebrow {
+	font-size: 13px;
+	font-weight: 700;
+	letter-spacing: 0.28px;
+	text-transform: uppercase;
+	color: var(--color-brand-primary);
+}
+
+.hp-step-title {
+	margin-top: 8px;
+	font-family: var(--font-montserrat);
+	font-size: clamp(1.85rem, 3.4vw, 2.95rem);
+	line-height: 1.06;
+	letter-spacing: -0.02em;
+	font-weight: 800;
+	color: var(--color-brand-text);
+}
+
+.hp-step-lead {
+	margin-top: 16px;
+	font-size: 16px;
+	line-height: 1.62;
+	color: var(--color-brand-text-secondary);
+}
+
+/* --- Timeline grid --- */
+
+.hp-step-timeline {
+	margin-top: 32px;
+	display: grid;
+	grid-template-columns: 1fr;
+	gap: 8px;
+	list-style: none;
+	padding: 0;
+	position: relative;
+}
+
+/* Desktop connecting gradient line */
+.hp-step-connecting-line {
+	display: none;
+}
+
+/* --- Single card (prototype layout: horizontal on mobile, vertical on desktop) --- */
+
+.hp-step-card {
+	position: relative;
+	display: grid;
+	grid-template-columns: 62px minmax(0, 1fr);
+	align-items: center;
+	gap: 8px;
+	padding: 16px;
+	border-radius: 20px;
+	background: rgba(255, 255, 255, 0.72);
+	backdrop-filter: blur(9px);
+	border: 1px solid rgba(255, 255, 255, 0.78);
+	overflow: hidden;
+	box-shadow: 0 4px 8px rgba(15, 23, 42, 0.04), 0 20px 40px rgba(15, 23, 42, 0.08);
+	cursor: default;
+	transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1), border-color 0.4s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.hp-step-card:hover {
+	transform: translateY(-4px);
+	border-color: rgba(9, 88, 102, 0.25);
+	box-shadow: 0 12px 28px rgba(9, 88, 102, 0.1), 0 20px 40px rgba(9, 88, 102, 0.06);
+}
+
+/* --- Numero grande decorativo (sfondo card) --- */
+
+.hp-step-deco-number {
+	position: absolute;
+	top: 6px;
+	right: 10px;
+	font-size: 48px;
+	font-weight: 800;
+	line-height: 1;
+	letter-spacing: -1.92px;
+	color: rgba(12, 102, 116, 0.08);
+	pointer-events: none;
+	user-select: none;
+	z-index: 0;
+}
+
+/* --- Icon box (replaces old number circle) --- */
+
+.hp-step-icon-box {
+	position: relative;
+	z-index: 1;
+	width: 58px;
+	height: 58px;
+	border-radius: 16px;
+	border: 1px solid rgba(210, 227, 235, 0.9);
+	background: rgba(247, 251, 253, 0.95);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	flex-shrink: 0;
+	color: var(--color-brand-primary, #095866);
+}
+
+/* --- Card content --- */
+
+.hp-step-card-content {
+	position: relative;
+	z-index: 1;
+}
+
+.hp-step-card-title {
+	position: relative;
+	z-index: 1;
+	font-family: var(--font-montserrat);
+	font-size: 17.9px;
+	line-height: 1.22;
+	font-weight: 800;
+	color: var(--color-brand-text);
+}
+
+.hp-step-card-text {
+	position: relative;
+	z-index: 1;
+	margin-top: 4px;
+	font-size: 15.2px;
+	line-height: 1.58;
+	color: var(--color-brand-text-secondary);
+}
+
+/* --- CTA row --- */
+
+.hp-step-cta-row {
+	margin-top: 24px;
+	display: flex;
+	justify-content: center;
+}
+
+.hp-step-cta {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 8px;
+	height: 50px;
+	padding: 0 24px;
+	border-radius: 999px;
+	background: var(--color-brand-accent, #E44203);
+	color: #fff;
+	text-decoration: none;
+	font-family: var(--font-montserrat);
+	font-size: 15.7px;
+	font-weight: 700;
+	box-shadow: 0 12px 24px rgba(228, 66, 3, 0.24);
+	transition: background-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.hp-step-cta svg {
+	transition: transform 0.2s ease;
+}
+
+.hp-step-cta:hover {
+	background: #cb3a00;
+	box-shadow: 0 16px 28px rgba(228, 66, 3, 0.28);
+	transform: translateY(-1px);
+}
+
+.hp-step-cta:hover svg {
+	transform: translateX(3px);
+}
+
+.hp-step-cta:focus-visible {
+	outline: 2px solid var(--color-brand-primary, #095866);
+	outline-offset: 3px;
+}
+
+/* ============================================================
+   Responsive: tablet (2 colonne)
+   ============================================================ */
+
+@media (min-width: 40rem) {
+	.hp-step-timeline {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		gap: 16px;
+	}
+}
+
+/* ============================================================
+   Responsive: desktop (4 colonne + connecting line)
+   ============================================================ */
+
+@media (min-width: 64rem) {
+	.hp-step-section {
+		padding: 80px 0;
+	}
+
+	.hp-step-timeline {
+		margin-top: 32px;
+		grid-template-columns: repeat(4, minmax(0, 1fr));
+		gap: 16px;
+	}
+
+	/* Desktop: vertical layout */
+	.hp-step-card {
+		grid-template-columns: 1fr;
+		align-items: flex-start;
+		gap: 16px;
+		padding: 20px;
+		min-height: 240px;
+	}
+
+	.hp-step-icon-box {
+		width: 62px;
+		height: 62px;
+	}
+
+	/* Desktop connecting gradient line */
+	.hp-step-connecting-line {
+		display: block;
+		position: absolute;
+		left: 4%;
+		right: 4%;
+		top: 62px;
+		height: 2px;
+		background: linear-gradient(to right, rgba(9, 88, 102, 0.2), rgba(228, 66, 3, 0.25));
+		z-index: 0;
+	}
+}
+
+/* ============================================================
+   Mobile piccoli
+   ============================================================ */
+
+@media (max-width: 39.99rem) {
+	.hp-step-section {
+		padding: 80px 0;
+	}
+
+	.hp-step-timeline {
+		gap: 8px;
+	}
+}
+
+/* ============================================================
+   Reduced motion
+   ============================================================ */
+
+@media (prefers-reduced-motion: reduce) {
+	.hp-step-card,
+	.hp-step-cta,
+	.hp-step-cta svg {
+		transition: none;
+	}
+
+	.hp-step-card:hover,
+	.hp-step-cta:hover {
+		transform: none;
+	}
+}

@@ -133,15 +133,16 @@ useHead({
 </script>
 
 <template>
-	<section class="service-detail-shell py-[28px] desktop:py-[56px]">
+	<section class="cod-page-shell min-h-screen py-[28px] desktop:py-[56px]">
 		<div class="my-container space-y-[20px] desktop:space-y-[28px]">
-			<section class="service-hero-card rounded-[28px] border border-[#E4EAEE] px-[20px] py-[22px] desktop:px-[32px] desktop:py-[34px]">
+			<!-- Hero -->
+			<section class="service-hero-card rounded-[14px] ring-[1px] ring-[#DFE2E7] px-[20px] py-[22px] shadow-[0_1px_4px_rgba(0,0,0,0.03)] desktop:px-[32px] desktop:py-[34px]">
 				<div
 					class="flex flex-col gap-[18px] desktop:grid desktop:grid-cols-[minmax(0,1.2fr)_minmax(320px,0.8fr)] desktop:items-center desktop:gap-[28px]">
 					<div class="space-y-[12px]">
-						<p class="text-[0.75rem] font-semibold uppercase tracking-[0.14em] text-[var(--color-brand-primary)]">Servizio accessorio</p>
-						<h1 class="text-[2rem] font-bold tracking-[-0.04em] text-[#1F2937] desktop:text-[3.2rem]">Pagamento alla consegna</h1>
-						<p class="max-w-[62ch] text-[0.9375rem] leading-[1.65] text-[#5B6670] desktop:text-[1.0625rem]">
+						<p class="sf-section-kicker">Servizio accessorio</p>
+						<h1 class="font-montserrat text-[2rem] font-[800] leading-[1.08] tracking-[-0.04em] text-[var(--color-brand-text)] desktop:text-[3.2rem]">Pagamento alla consegna</h1>
+						<p class="max-w-[62ch] text-[0.9375rem] leading-[1.65] text-[var(--color-brand-text-secondary)] desktop:text-[1.0625rem]">
 							Il corriere incassa per tuo conto al momento della consegna. Questa pagina ti aiuta a capire quando usarlo, quali dati servono
 							davvero e quali controlli fare prima di confermare una spedizione.
 						</p>
@@ -149,49 +150,50 @@ useHead({
 							<span
 								v-for="pill in summaryPills"
 								:key="pill"
-								class="inline-flex items-center rounded-full bg-[#F0F6F7] px-[12px] py-[6px] text-[0.75rem] font-semibold text-[var(--color-brand-primary)]">
+								class="inline-flex items-center rounded-full bg-[var(--color-brand-secondary-soft-bg)] px-[12px] py-[6px] text-[0.75rem] font-[700] text-[var(--color-brand-primary)]">
 								{{ pill }}
 							</span>
 						</div>
 					</div>
 
-					<div class="rounded-[24px] border border-white/70 bg-white/75 p-[18px] shadow-[0_18px_40px_rgba(9,88,102,0.08)] backdrop-blur">
-						<p class="text-[0.75rem] font-semibold uppercase tracking-[0.12em] text-[var(--color-brand-accent)]">Da tenere a mente</p>
+					<div class="rounded-[14px] ring-[1px] ring-[#DFE2E7] bg-white/75 p-[18px] shadow-[0_1px_4px_rgba(0,0,0,0.03)] backdrop-blur">
+						<p class="text-[0.75rem] font-[800] uppercase tracking-[0.12em] text-[var(--color-brand-accent)]">Da tenere a mente</p>
 						<div class="mt-[12px] space-y-[12px]">
-							<div class="rounded-[18px] border border-[#E9EEF2] bg-[#F8FBFC] px-[14px] py-[12px]">
-								<p class="text-[0.8125rem] font-semibold text-[#1F2937]">Costo extra sempre visibile</p>
-								<p class="mt-[4px] text-[0.8125rem] leading-[1.55] text-[#5B6670]">
+							<div class="rounded-[14px] ring-[1px] ring-[var(--color-brand-border)] bg-[var(--color-brand-secondary-soft-bg)] px-[14px] py-[12px]">
+								<p class="text-[0.8125rem] font-[700] text-[var(--color-brand-text)]">Costo extra sempre visibile</p>
+								<p class="mt-[4px] text-[0.8125rem] leading-[1.55] text-[var(--color-brand-text-secondary)]">
 									Il contrassegno non va trattato come nota generica: deve rientrare nel pricing mostrato prima del pagamento.
 								</p>
 							</div>
-							<div class="rounded-[18px] border border-[#E9EEF2] bg-[#F8FBFC] px-[14px] py-[12px]">
-								<p class="text-[0.8125rem] font-semibold text-[#1F2937]">Consegna e incasso non sono la stessa cosa</p>
-								<p class="mt-[4px] text-[0.8125rem] leading-[1.55] text-[#5B6670]">
-									La spedizione puo\' risultare consegnata prima che il riversamento sia effettivamente riconciliato.
+							<div class="rounded-[14px] ring-[1px] ring-[var(--color-brand-border)] bg-[var(--color-brand-secondary-soft-bg)] px-[14px] py-[12px]">
+								<p class="text-[0.8125rem] font-[700] text-[var(--color-brand-text)]">Consegna e incasso non sono la stessa cosa</p>
+								<p class="mt-[4px] text-[0.8125rem] leading-[1.55] text-[var(--color-brand-text-secondary)]">
+									La spedizione puo' risultare consegnata prima che il riversamento sia effettivamente riconciliato.
 								</p>
 							</div>
 						</div>
 						<div class="mt-[16px] flex flex-wrap gap-[10px]">
-							<NuxtLink to="/preventivo" class="btn-cta btn-compact inline-flex items-center justify-center">
+							<NuxtLink to="/preventivo" class="btn-cta btn-compact">
 								Calcola il preventivo
 							</NuxtLink>
-							<NuxtLink to="/contatti" class="btn-secondary btn-compact inline-flex items-center justify-center">Parla con noi</NuxtLink>
+							<NuxtLink to="/contatti" class="btn-secondary btn-compact">Parla con noi</NuxtLink>
 						</div>
 					</div>
 				</div>
 			</section>
 
+			<!-- Overview cards -->
 			<section class="grid gap-[16px] desktop:grid-cols-2">
 				<article
 					v-for="card in overviewCards"
 					:key="card.title"
-					class="rounded-[24px] border border-[#E9EEF2] bg-white px-[18px] py-[18px] shadow-[0_12px_26px_rgba(15,23,42,0.04)] desktop:px-[22px] desktop:py-[22px]">
-					<h2 class="text-[1.125rem] font-semibold tracking-[-0.02em] text-[#1F2937]">{{ card.title }}</h2>
-					<p v-if="card.description" class="mt-[10px] text-[0.875rem] leading-[1.65] text-[#5B6670] desktop:text-[0.9375rem]">
+					class="rounded-[14px] ring-[1px] ring-[#DFE2E7] bg-white px-[18px] py-[18px] shadow-[0_1px_4px_rgba(0,0,0,0.03)] desktop:px-[22px] desktop:py-[22px]">
+					<h2 class="font-montserrat text-[1.125rem] font-[800] tracking-[-0.02em] text-[var(--color-brand-text)]">{{ card.title }}</h2>
+					<p v-if="card.description" class="mt-[10px] text-[0.875rem] leading-[1.65] text-[var(--color-brand-text-secondary)] desktop:text-[0.9375rem]">
 						{{ card.description }}
 					</p>
 					<ul v-else class="mt-[12px] space-y-[8px]">
-						<li v-for="item in card.bullets" :key="item" class="flex items-start gap-[10px] text-[0.875rem] leading-[1.6] text-[#5B6670]">
+						<li v-for="item in card.bullets" :key="item" class="flex items-start gap-[10px] text-[0.875rem] leading-[1.6] text-[var(--color-brand-text-secondary)]">
 							<span class="mt-[7px] h-[7px] w-[7px] shrink-0 rounded-full bg-[var(--color-brand-accent)]"></span>
 							<span>{{ item }}</span>
 						</li>
@@ -199,11 +201,12 @@ useHead({
 				</article>
 			</section>
 
+			<!-- Come funziona -->
 			<section
-				class="rounded-[28px] border border-[#E9EEF2] bg-white px-[18px] py-[18px] shadow-[0_14px_30px_rgba(15,23,42,0.05)] desktop:px-[24px] desktop:py-[24px]">
+				class="rounded-[14px] ring-[1px] ring-[#DFE2E7] bg-white px-[18px] py-[18px] shadow-[0_1px_4px_rgba(0,0,0,0.03)] desktop:px-[24px] desktop:py-[24px]">
 				<div class="sf-page-intro">
 					<p class="sf-section-kicker">Come funziona</p>
-					<h2 class="text-[1.4rem] font-semibold tracking-[-0.03em] text-[#1F2937] desktop:text-[2rem]">
+					<h2 class="font-montserrat text-[1.4rem] font-[800] tracking-[-0.03em] text-[var(--color-brand-text)] desktop:text-[2rem]">
 						Dal checkout al riversamento, senza punti ciechi
 					</h2>
 					<p class="sf-section-description max-w-[64ch]">
@@ -216,28 +219,29 @@ useHead({
 					<article
 						v-for="step in flowSteps"
 						:key="step.step"
-						class="rounded-[22px] border border-[#EDF2F5] bg-[#F8FBFC] px-[16px] py-[16px]">
+						class="rounded-[14px] ring-[1px] ring-[#DFE2E7] bg-[var(--color-brand-secondary-soft-bg)] px-[16px] py-[16px]">
 						<div class="flex items-center gap-[10px]">
 							<span
 								class="inline-flex h-[34px] w-[34px] items-center justify-center rounded-full bg-[var(--color-brand-primary)] text-[0.8125rem] font-bold text-white">
 								{{ step.step }}
 							</span>
-							<h3 class="text-[1rem] font-semibold text-[#1F2937]">{{ step.title }}</h3>
+							<h3 class="font-montserrat text-[1rem] font-[700] text-[var(--color-brand-text)]">{{ step.title }}</h3>
 						</div>
-						<p class="mt-[10px] text-[0.875rem] leading-[1.65] text-[#5B6670]">
+						<p class="mt-[10px] text-[0.875rem] leading-[1.65] text-[var(--color-brand-text-secondary)]">
 							{{ step.description }}
 						</p>
 					</article>
 				</div>
 			</section>
 
+			<!-- Requisiti + Checklist -->
 			<section class="grid gap-[16px] desktop:grid-cols-[minmax(0,1.15fr)_minmax(320px,0.85fr)]">
 				<article
-					class="rounded-[24px] border border-[#E9EEF2] bg-white px-[18px] py-[18px] shadow-[0_12px_26px_rgba(15,23,42,0.04)] desktop:px-[22px] desktop:py-[22px]">
+					class="rounded-[14px] ring-[1px] ring-[#DFE2E7] bg-white px-[18px] py-[18px] shadow-[0_1px_4px_rgba(0,0,0,0.03)] desktop:px-[22px] desktop:py-[22px]">
 					<p class="sf-section-kicker">Requisiti e limiti</p>
-					<h2 class="mt-[8px] text-[1.25rem] font-semibold tracking-[-0.02em] text-[#1F2937]">Controlli da fare prima della conferma</h2>
+					<h2 class="mt-[8px] font-montserrat text-[1.25rem] font-[800] tracking-[-0.02em] text-[var(--color-brand-text)]">Controlli da fare prima della conferma</h2>
 					<ul class="mt-[14px] space-y-[10px]">
-						<li v-for="item in guardrails" :key="item" class="flex items-start gap-[10px] text-[0.875rem] leading-[1.6] text-[#5B6670]">
+						<li v-for="item in guardrails" :key="item" class="flex items-start gap-[10px] text-[0.875rem] leading-[1.6] text-[var(--color-brand-text-secondary)]">
 							<span class="mt-[7px] h-[7px] w-[7px] shrink-0 rounded-full bg-[var(--color-brand-primary)]"></span>
 							<span>{{ item }}</span>
 						</li>
@@ -245,25 +249,26 @@ useHead({
 				</article>
 
 				<article
-					class="rounded-[24px] border border-[#E9EEF2] bg-white px-[18px] py-[18px] shadow-[0_12px_26px_rgba(15,23,42,0.04)] desktop:px-[22px] desktop:py-[22px]">
+					class="rounded-[14px] ring-[1px] ring-[#DFE2E7] bg-white px-[18px] py-[18px] shadow-[0_1px_4px_rgba(0,0,0,0.03)] desktop:px-[22px] desktop:py-[22px]">
 					<p class="sf-section-kicker">Dati da raccogliere</p>
-					<h2 class="mt-[8px] text-[1.25rem] font-semibold tracking-[-0.02em] text-[#1F2937]">Checklist checkout</h2>
+					<h2 class="mt-[8px] font-montserrat text-[1.25rem] font-[800] tracking-[-0.02em] text-[var(--color-brand-text)]">Checklist checkout</h2>
 					<ul class="mt-[14px] space-y-[8px]">
 						<li
 							v-for="item in checkoutChecklist"
 							:key="item"
-							class="rounded-[16px] border border-[#EDF2F5] bg-[#F8FBFC] px-[12px] py-[10px] text-[0.875rem] leading-[1.55] text-[#5B6670]">
+							class="rounded-[14px] ring-[1px] ring-[#DFE2E7] bg-[var(--color-brand-secondary-soft-bg)] px-[12px] py-[10px] text-[0.875rem] leading-[1.55] text-[var(--color-brand-text-secondary)]">
 							{{ item }}
 						</li>
 					</ul>
 				</article>
 			</section>
 
+			<!-- Casi tipici -->
 			<section
-				class="rounded-[28px] border border-[#E9EEF2] bg-white px-[18px] py-[18px] shadow-[0_14px_30px_rgba(15,23,42,0.05)] desktop:px-[24px] desktop:py-[24px]">
+				class="rounded-[14px] ring-[1px] ring-[#DFE2E7] bg-white px-[18px] py-[18px] shadow-[0_1px_4px_rgba(0,0,0,0.03)] desktop:px-[24px] desktop:py-[24px]">
 				<div class="sf-page-intro">
 					<p class="sf-section-kicker">Casi tipici</p>
-					<h2 class="text-[1.4rem] font-semibold tracking-[-0.03em] text-[#1F2937] desktop:text-[2rem]">
+					<h2 class="font-montserrat text-[1.4rem] font-[800] tracking-[-0.03em] text-[var(--color-brand-text)] desktop:text-[2rem]">
 						Cosa succede se qualcosa va fuori binario
 					</h2>
 				</div>
@@ -272,60 +277,54 @@ useHead({
 					<article
 						v-for="scenario in scenarioCards"
 						:key="scenario.title"
-						class="rounded-[22px] border border-[#EDF2F5] bg-[#F8FBFC] px-[16px] py-[16px]">
-						<h3 class="text-[1rem] font-semibold text-[#1F2937]">{{ scenario.title }}</h3>
-						<p class="mt-[10px] text-[0.875rem] leading-[1.65] text-[#5B6670]">
+						class="rounded-[14px] ring-[1px] ring-[#DFE2E7] bg-[var(--color-brand-secondary-soft-bg)] px-[16px] py-[16px]">
+						<h3 class="font-montserrat text-[1rem] font-[700] text-[var(--color-brand-text)]">{{ scenario.title }}</h3>
+						<p class="mt-[10px] text-[0.875rem] leading-[1.65] text-[var(--color-brand-text-secondary)]">
 							{{ scenario.description }}
 						</p>
 					</article>
 				</div>
 			</section>
 
+			<!-- FAQ -->
 			<section
-				class="rounded-[28px] border border-[#E9EEF2] bg-white px-[18px] py-[18px] shadow-[0_14px_30px_rgba(15,23,42,0.05)] desktop:px-[24px] desktop:py-[24px]">
+				class="rounded-[14px] ring-[1px] ring-[#DFE2E7] bg-white px-[18px] py-[18px] shadow-[0_1px_4px_rgba(0,0,0,0.03)] desktop:px-[24px] desktop:py-[24px]">
 				<div class="sf-page-intro">
 					<p class="sf-section-kicker">FAQ</p>
-					<h2 class="text-[1.4rem] font-semibold tracking-[-0.03em] text-[#1F2937] desktop:text-[2rem]">
+					<h2 class="font-montserrat text-[1.4rem] font-[800] tracking-[-0.03em] text-[var(--color-brand-text)] desktop:text-[2rem]">
 						Domande frequenti sul contrassegno
 					</h2>
 				</div>
 
 				<div class="mt-[18px] grid gap-[14px] desktop:grid-cols-2">
-					<article v-for="faq in faqs" :key="faq.title" class="rounded-[22px] border border-[#EDF2F5] bg-[#F8FBFC] px-[16px] py-[16px]">
-						<h3 class="text-[1rem] font-semibold text-[#1F2937]">{{ faq.title }}</h3>
-						<p class="mt-[10px] text-[0.875rem] leading-[1.65] text-[#5B6670]">
+					<article v-for="faq in faqs" :key="faq.title" class="rounded-[14px] ring-[1px] ring-[#DFE2E7] bg-[var(--color-brand-secondary-soft-bg)] px-[16px] py-[16px]">
+						<h3 class="font-montserrat text-[1rem] font-[700] text-[var(--color-brand-text)]">{{ faq.title }}</h3>
+						<p class="mt-[10px] text-[0.875rem] leading-[1.65] text-[var(--color-brand-text-secondary)]">
 							{{ faq.text }}
 						</p>
 					</article>
 				</div>
 			</section>
 
-			<section
-				class="rounded-[26px] border border-[#DCE8EC] bg-[linear-gradient(135deg,#0f5f6d_0%,#0c4853_100%)] px-[20px] py-[20px] text-white shadow-[0_18px_40px_rgba(9,88,102,0.18)] desktop:px-[28px] desktop:py-[28px]">
-				<div class="flex flex-col gap-[16px] desktop:flex-row desktop:items-center desktop:justify-between">
-					<div class="max-w-[60ch]">
-						<p class="text-[0.75rem] font-semibold uppercase tracking-[0.14em] text-white/70">Prossimo passo</p>
-						<h2 class="mt-[8px] text-[1.35rem] font-semibold tracking-[-0.03em] desktop:text-[1.8rem]">
-							Se vuoi usare il contrassegno, conviene validare subito pricing e dati richiesti.
-						</h2>
-						<p class="mt-[10px] text-[0.9rem] leading-[1.65] text-white/80">
-							Parti dal preventivo per vedere il costo reale del servizio, oppure scrivici se devi gestire un flusso ricorrente o un caso
-							operativo fuori standard.
-						</p>
-					</div>
-
-					<div class="flex flex-wrap gap-[10px]">
-						<NuxtLink
-							to="/preventivo"
-							class="inline-flex min-h-[44px] items-center justify-center rounded-full bg-white px-[18px] text-[0.875rem] font-semibold text-[#0B5360] transition-transform duration-200 hover:-translate-y-[1px]">
-							Calcola il preventivo
-						</NuxtLink>
-						<NuxtLink
-							to="/contatti"
-							class="inline-flex min-h-[44px] items-center justify-center rounded-full border border-white/30 px-[18px] text-[0.875rem] font-semibold text-white transition-colors duration-200 hover:bg-white/10">
-							Contattaci
-						</NuxtLink>
-					</div>
+			<!-- CTA finale -->
+			<section class="services-bottom-cta">
+				<div class="services-bottom-cta__copy">
+					<p class="services-intro-panel__eyebrow" style="color: rgba(255,255,255,0.7)">Prossimo passo</p>
+					<h2 class="services-bottom-cta__title">
+						Se vuoi usare il contrassegno, conviene validare subito pricing e dati richiesti.
+					</h2>
+					<p class="services-bottom-cta__text">
+						Parti dal preventivo per vedere il costo reale del servizio, oppure scrivici se devi gestire un flusso ricorrente o un caso
+						operativo fuori standard.
+					</p>
+				</div>
+				<div class="services-bottom-cta__actions">
+					<NuxtLink to="/preventivo" class="btn-cta btn-compact">
+						Calcola il preventivo
+					</NuxtLink>
+					<NuxtLink to="/contatti" class="btn-secondary btn-compact">
+						Contattaci
+					</NuxtLink>
 				</div>
 			</section>
 		</div>
@@ -333,6 +332,10 @@ useHead({
 </template>
 
 <style scoped>
+.cod-page-shell {
+	background: linear-gradient(180deg, #F8F9FB 0%, #EEF0F3 100%);
+}
+
 .service-hero-card {
 	background:
 		radial-gradient(circle at top right, rgba(228, 66, 3, 0.16), transparent 30%),

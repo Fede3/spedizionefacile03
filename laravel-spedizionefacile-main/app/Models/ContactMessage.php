@@ -5,7 +5,7 @@
  *
  * DOVE SI USA:
  *   - ContactController.php — store (creazione), index (lista admin), markAsRead
- *   - AdminController.php — dashboard (conteggio messaggi non letti: whereNull read_at)
+ *   - Admin/DashboardController.php — dashboard (conteggio messaggi non letti: whereNull read_at)
  *
  * DATI IN INGRESSO:
  *   - name, surname, email, telephone_number, address, message, read_at
@@ -27,7 +27,7 @@
  *
  * COLLEGAMENTI:
  *   - app/Http/Controllers/ContactController.php — controller CRUD messaggi
- *   - app/Http/Controllers/AdminController.php — dashboard con conteggio non letti
+ *   - app/Http/Controllers/Admin/DashboardController.php — dashboard con conteggio non letti
  */
 
 namespace App\Models;

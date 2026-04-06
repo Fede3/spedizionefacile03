@@ -24,7 +24,16 @@ const emit = defineEmits(['confirm-payment', 'update:termsAccepted'])
         <p class="checkout-payment-footer__summary-label">Totale da pagare</p>
         <p class="checkout-payment-footer__summary-value">{{ finalTotalFormatted }}</p>
       </div>
-      <span class="checkout-payment-footer__summary-chip">{{ paymentMethod === 'bonifico' ? 'Pagamento differito' : 'Pagamento sicuro' }}</span>
+      <div class="flex flex-col items-end gap-[6px]">
+        <span class="checkout-payment-footer__summary-chip">{{ paymentMethod === 'bonifico' ? 'Pagamento differito' : 'IVA inclusa' }}</span>
+        <span class="checkout-security-badge">
+          <svg class="checkout-security-badge__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+          </svg>
+          Pagamento sicuro
+        </span>
+      </div>
     </div>
 
     <button type="button" @click="emit('confirm-payment')" :disabled="!canPay"
@@ -55,7 +64,7 @@ const emit = defineEmits(['confirm-payment', 'update:termsAccepted'])
     </p>
 
     <div v-if="isProcessing && paymentStep" class="checkout-payment-status__progress">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="shrink-0 animate-spin"><line x1="12" y1="2" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"/><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"/><line x1="2" y1="12" x2="6" y2="12"/><line x1="18" y1="12" x2="22" y2="12"/><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"/><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"/></svg>
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#095866" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="shrink-0 animate-spin"><line x1="12" y1="2" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"/><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"/><line x1="2" y1="12" x2="6" y2="12"/><line x1="18" y1="12" x2="22" y2="12"/><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"/><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"/></svg>
       <span>{{ paymentStep }}</span>
     </div>
   </div>

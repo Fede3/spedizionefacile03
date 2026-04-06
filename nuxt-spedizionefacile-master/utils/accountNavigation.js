@@ -66,9 +66,9 @@ const profileTone = {
 };
 
 const adminTone = {
-	iconBg: '#EEF4FF',
-	iconColor: '#1D4ED8',
-	iconBorder: 'rgba(29, 78, 216, 0.14)',
+	iconBg: '#eef7f8',
+	iconColor: '#095866',
+	iconBorder: 'rgba(9, 88, 102, 0.14)',
 };
 
 export const createAccountSections = ({ isAdmin = false, isPro = false } = {}) => {

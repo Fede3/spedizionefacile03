@@ -5,7 +5,7 @@
  *
  * DOVE SI USA:
  *   - CouponController.php — calculateCoupon cerca coupon attivo per codice
- *   - AdminController.php — CRUD coupon dal pannello admin
+ *   - Admin/CouponController.php — CRUD coupon dal pannello admin
  *
  * DATI IN INGRESSO:
  *   - code (es. "SCONTO10"), percentage (es. 10), active (bool)
@@ -30,7 +30,7 @@
  *
  * COLLEGAMENTI:
  *   - app/Http/Controllers/CouponController.php — calcolo sconto
- *   - app/Http/Controllers/AdminController.php — CRUD coupon admin
+ *   - app/Http/Controllers/Admin/CouponController.php — CRUD coupon admin
  */
 
 namespace App\Models;

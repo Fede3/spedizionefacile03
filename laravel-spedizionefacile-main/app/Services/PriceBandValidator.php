@@ -184,8 +184,8 @@ class PriceBandValidator
             if ($base < 0) {
                 $errors[sprintf('%s.%d.base_price', $type, $idx)] = sprintf('Fascia %s #%d: prezzo base non valido.', $type, $rowNum);
             }
-            if ($discount !== null && $discount < 0) {
-                $errors[sprintf('%s.%d.discount_price', $type, $idx)] = sprintf('Fascia %s #%d: prezzo scontato non valido.', $type, $rowNum);
+            if ($discount !== null && $discount <= 0) {
+                $errors[sprintf('%s.%d.discount_price', $type, $idx)] = sprintf('Fascia %s #%d: prezzo scontato deve essere maggiore di zero (usare null per nessuno sconto).', $type, $rowNum);
             }
             if ($discount !== null && $discount > $base) {
                 $errors[sprintf('%s.%d.discount_price', $type, $idx)] = sprintf('Fascia %s #%d: prezzo scontato non può superare il prezzo base.', $type, $rowNum);

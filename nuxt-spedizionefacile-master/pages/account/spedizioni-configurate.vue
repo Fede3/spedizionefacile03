@@ -73,17 +73,17 @@ const {
 
 			<!-- Stats -->
 			<div class="mb-[16px] grid grid-cols-1 tablet:grid-cols-3 gap-[10px]">
-				<div class="rounded-[12px] border border-[var(--color-brand-border)] bg-white px-[14px] py-[12px] shadow-sm">
-					<p class="text-[0.75rem] font-semibold uppercase tracking-[0.08em] text-[var(--color-brand-text-secondary)]">Spedizioni salvate</p>
-					<p class="mt-[2px] text-[1.125rem] font-bold text-[var(--color-brand-text)]">{{ totalShipmentsCount }}</p>
+				<div class="rounded-[12px] border border-[#E9EBEC] bg-white px-[14px] py-[12px] shadow-sm">
+					<p class="text-[0.75rem] font-semibold uppercase tracking-[0.08em] text-[#737373]">Spedizioni salvate</p>
+					<p class="mt-[2px] text-[1.125rem] font-bold text-[#252B42]">{{ totalShipmentsCount }}</p>
 				</div>
-				<div class="rounded-[12px] border border-[var(--color-brand-border)] bg-white px-[14px] py-[12px] shadow-sm">
-					<p class="text-[0.75rem] font-semibold uppercase tracking-[0.08em] text-[var(--color-brand-text-secondary)]">Filtri attivi</p>
-					<p class="mt-[2px] text-[1.125rem] font-bold text-[var(--color-brand-text)]">{{ activeFiltersCount }}</p>
+				<div class="rounded-[12px] border border-[#E9EBEC] bg-white px-[14px] py-[12px] shadow-sm">
+					<p class="text-[0.75rem] font-semibold uppercase tracking-[0.08em] text-[#737373]">Filtri attivi</p>
+					<p class="mt-[2px] text-[1.125rem] font-bold text-[#252B42]">{{ activeFiltersCount }}</p>
 				</div>
-				<div class="rounded-[12px] border border-[var(--color-brand-border)] bg-white px-[14px] py-[12px] shadow-sm">
-					<p class="text-[0.75rem] font-semibold uppercase tracking-[0.08em] text-[var(--color-brand-text-secondary)]">Selezionate</p>
-					<p class="mt-[2px] text-[1.125rem] font-bold text-[var(--color-brand-text)]">{{ selectedShipmentsCount }}</p>
+				<div class="rounded-[12px] border border-[#E9EBEC] bg-white px-[14px] py-[12px] shadow-sm">
+					<p class="text-[0.75rem] font-semibold uppercase tracking-[0.08em] text-[#737373]">Selezionate</p>
+					<p class="mt-[2px] text-[1.125rem] font-bold text-[#252B42]">{{ selectedShipmentsCount }}</p>
 				</div>
 			</div>
 
@@ -130,18 +130,18 @@ const {
 
 			<div v-else>
 				<!-- Toolbar filtri -->
-				<div class="bg-white border border-[var(--color-brand-border)] rounded-[12px] p-[14px] tablet:p-[18px_20px] mb-[12px] shadow-sm">
+				<div class="bg-white border border-[#E9EBEC] rounded-[12px] p-[14px] tablet:p-[18px_20px] mb-[12px] shadow-sm">
 					<div class="flex flex-col gap-[10px] tablet:flex-row tablet:items-start tablet:justify-between">
 						<div class="min-w-0">
-							<p class="text-[0.75rem] font-semibold uppercase tracking-[0.08em] text-[var(--color-brand-text-secondary)]">Filtri rapidi</p>
-							<p class="mt-[2px] text-[0.9375rem] font-semibold text-[var(--color-brand-text)]">
+							<p class="text-[0.75rem] font-semibold uppercase tracking-[0.08em] text-[#737373]">Filtri rapidi</p>
+							<p class="mt-[2px] text-[0.9375rem] font-semibold text-[#252B42]">
 								Trova, ordina e riusa le configurazioni salvate senza perdere il contesto.
 							</p>
 						</div>
 						<div class="flex flex-wrap items-center gap-[8px]">
-							<button
+							<button type="button"
 								@click="resetFilters"
-								type="button"
+								
 								class="btn-secondary btn-compact inline-flex items-center justify-center gap-[6px]">
 								<svg
 									width="17"
@@ -200,16 +200,16 @@ const {
 
 					<div
 						class="mt-[12px] flex flex-col gap-[10px] tablet:flex-row tablet:items-center tablet:justify-between border-t border-[#F0F0F0] pt-[12px]">
-						<div class="flex flex-wrap items-center gap-[8px] text-[0.75rem] text-[var(--color-brand-text-secondary)]">
-							<span class="inline-flex items-center gap-[6px] rounded-full bg-[#F8F9FB] px-[10px] py-[5px] font-semibold text-[var(--color-brand-text)]">
+						<div class="flex flex-wrap items-center gap-[8px] text-[0.75rem] text-[#737373]">
+							<span class="inline-flex items-center gap-[6px] rounded-full bg-[#F5F6F9] px-[10px] py-[5px] font-semibold text-[#252B42]">
 								Visibili {{ visibleShipmentsCount }}
 							</span>
-							<span class="inline-flex items-center gap-[6px] rounded-full bg-[#F8F9FB] px-[10px] py-[5px] font-semibold text-[var(--color-brand-text)]">
+							<span class="inline-flex items-center gap-[6px] rounded-full bg-[#F5F6F9] px-[10px] py-[5px] font-semibold text-[#252B42]">
 								{{ selectedShipmentsCount }} selezionate
 							</span>
 							<span
 								v-if="activeFiltersCount"
-								class="inline-flex items-center gap-[6px] rounded-full bg-[#EAF4F6] px-[10px] py-[5px] font-semibold text-[var(--color-brand-primary)]">
+								class="inline-flex items-center gap-[6px] rounded-full bg-[#EAF4F6] px-[10px] py-[5px] font-semibold text-[#095866]">
 								{{ activeFiltersCount }} filtri attivi
 							</span>
 						</div>
@@ -217,16 +217,16 @@ const {
 				</div>
 
 				<!-- Table -->
-				<div class="bg-white border border-[var(--color-brand-border)] rounded-[12px] overflow-hidden mb-[12px] shadow-sm">
+				<div class="bg-white border border-[#E9EBEC] rounded-[12px] overflow-hidden mb-[12px] shadow-sm">
 					<!-- Header -->
 					<div
-						class="hidden desktop:grid grid-cols-[3%_10%_10%_9%_8%_10%_22%_7%_9%_12%] gap-[4px] px-[14px] py-[12px] text-[0.75rem] font-bold text-[var(--color-brand-text)] border-b border-[var(--color-brand-border)] bg-[#FBFCFD]">
+						class="hidden desktop:grid grid-cols-[3%_10%_10%_9%_8%_10%_22%_7%_9%_12%] gap-[4px] px-[14px] py-[12px] text-[0.75rem] font-bold text-[#252B42] border-b border-[#E9EBEC] bg-[#FBFCFD]">
 						<span class="flex items-center">
 							<input
 								type="checkbox"
 								v-model="selectAll"
 								@change="toggleSelectAll"
-								class="w-[16px] h-[16px] accent-[var(--color-brand-primary)] cursor-pointer" />
+								class="w-[16px] h-[16px] accent-[#095866] cursor-pointer" />
 						</span>
 						<span>Data creazione</span>
 						<span>Provenienza</span>
@@ -270,14 +270,14 @@ const {
 
 					<!-- Empty -->
 					<div v-else class="p-[36px] text-center">
-						<div class="w-[60px] h-[60px] mx-auto mb-[16px] bg-[#F8F9FB] rounded-full flex items-center justify-center">
+						<div class="w-[60px] h-[60px] mx-auto mb-[16px] bg-[#F5F6F9] rounded-full flex items-center justify-center">
 							<svg width="28" height="28" viewBox="0 0 24 24" fill="#C8CCD0">
 								<path
 									d="M21,16.5C21,16.88 20.79,17.21 20.47,17.38L12.57,21.82C12.41,21.94 12.21,22 12,22C11.79,22 11.59,21.94 11.43,21.82L3.53,17.38C3.21,17.21 3,16.88 3,16.5V7.5C3,7.12 3.21,6.79 3.53,6.62L11.43,2.18C11.59,2.06 11.79,2 12,2C12.21,2 12.41,2.06 12.57,2.18L20.47,6.62C20.79,6.79 21,7.12 21,7.5V16.5Z" />
 							</svg>
 						</div>
-						<h2 class="text-[1.125rem] font-bold text-[var(--color-brand-text)] mb-[8px]">Nessuna spedizione configurata</h2>
-						<p class="text-[var(--color-brand-text-secondary)] text-[0.875rem] max-w-[400px] mx-auto mb-[20px] leading-[1.55]">
+						<h2 class="text-[1.125rem] font-bold text-[#252B42] mb-[8px]">Nessuna spedizione configurata</h2>
+						<p class="text-[#737373] text-[0.875rem] max-w-[400px] mx-auto mb-[20px] leading-[1.55]">
 							Le spedizioni salvate appariranno qui. Puoi salvarle dalla pagina delle spedizioni o crearne una nuova.
 						</p>
 						<NuxtLink to="/preventivo" class="btn-cta btn-compact inline-flex items-center gap-[6px] text-[0.875rem]">
@@ -298,11 +298,11 @@ const {
 					</div>
 
 					<!-- Pagination -->
-					<div class="flex flex-wrap items-center justify-center gap-[8px] py-[14px] border-t border-[var(--color-brand-border)]">
-						<button
+					<div class="flex flex-wrap items-center justify-center gap-[8px] py-[14px] border-t border-[#E9EBEC]">
+						<button type="button"
 							@click="prevPage"
 							:disabled="currentPage <= 1"
-							class="inline-flex items-center gap-[4px] text-[0.8125rem] font-medium text-[var(--color-brand-text)] hover:text-[var(--color-brand-primary)] disabled:text-[#C0C0C0] cursor-pointer disabled:cursor-not-allowed">
+							class="inline-flex items-center gap-[4px] text-[0.8125rem] font-medium text-[#252B42] hover:text-[#095866] disabled:text-[#C0C0C0] cursor-pointer disabled:cursor-not-allowed">
 							<svg
 								width="17"
 								height="17"
@@ -322,14 +322,14 @@ const {
 							@click="currentPage = page"
 							:class="[
 								'w-[30px] h-[30px] flex items-center justify-center rounded-[6px] text-[0.8125rem] font-semibold cursor-pointer',
-								currentPage === page ? 'bg-[var(--color-brand-primary)] text-white' : 'text-[var(--color-brand-text)] hover:bg-[#F0F0F0]',
+								currentPage === page ? 'bg-[#095866] text-white' : 'text-[#252B42] hover:bg-[#F0F0F0]',
 							]">
 							{{ page }}
 						</span>
-						<button
+						<button type="button"
 							@click="nextPage"
 							:disabled="currentPage >= totalPages"
-							class="inline-flex items-center gap-[4px] text-[0.8125rem] font-medium text-[var(--color-brand-text)] hover:text-[var(--color-brand-primary)] disabled:text-[#C0C0C0] cursor-pointer disabled:cursor-not-allowed">
+							class="inline-flex items-center gap-[4px] text-[0.8125rem] font-medium text-[#252B42] hover:text-[#095866] disabled:text-[#C0C0C0] cursor-pointer disabled:cursor-not-allowed">
 							Successivo
 							<svg
 								width="17"
@@ -348,11 +348,11 @@ const {
 
 				<!-- Bottom actions -->
 				<div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-[10px] sm:gap-[16px] mt-[16px]">
-					<button
+					<button type="button"
 						@click="askBulkDelete"
 						:disabled="selectedItems.length === 0 || bulkDeleteLoading"
-						type="button"
-						class="btn-danger inline-flex items-center justify-center gap-[6px] text-[0.875rem] px-[20px] desktop:px-[28px] h-[46px]">
+						
+						class="btn-danger inline-flex items-center justify-center gap-[6px] text-[0.875rem] px-[20px] desktop:px-[24px] h-[46px]">
 						<svg
 							width="17"
 							height="17"
@@ -367,11 +367,11 @@ const {
 						</svg>
 						{{ bulkDeleteLoading ? 'Eliminazione...' : `Elimina${selectedItems.length ? ` (${selectedItems.length})` : ''}` }}
 					</button>
-					<button
+					<button type="button"
 						@click="bulkAddToCart"
 						:disabled="selectedItems.length === 0 || addToCartLoading"
-						type="button"
-						class="btn-cta btn-compact inline-flex items-center justify-center gap-[6px] text-[0.875rem] px-[20px] desktop:px-[28px] h-[46px]">
+						
+						class="btn-cta btn-compact inline-flex items-center justify-center gap-[6px] text-[0.875rem] px-[20px] desktop:px-[24px] h-[46px]">
 						<svg
 							width="17"
 							height="17"

@@ -8,7 +8,8 @@
  */
 
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\ReferralController;
+use App\Http\Controllers\ReferralCodeController;
+use App\Http\Controllers\ReferralRewardController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\WithdrawalController;
 use App\Http\Controllers\ProRequestController;
@@ -26,12 +27,12 @@ Route::middleware(['auth:sanctum', 'throttle:10,1'])
 /* ===== REFERRAL ===== */
 
 Route::middleware('auth:sanctum')->prefix('referral')->group(function () {
-    Route::get('/my-code', [ReferralController::class, 'myCode']);
-    Route::post('/validate', [ReferralController::class, 'validate']);
-    Route::middleware(['throttle:5,1'])->post('/apply', [ReferralController::class, 'apply']);
-    Route::middleware(['throttle:5,1'])->post('/store', [ReferralController::class, 'storeReferral']);
-    Route::get('/my-discount', [ReferralController::class, 'myDiscount']);
-    Route::get('/earnings', [ReferralController::class, 'earnings']);
+    Route::get('/my-code', [ReferralCodeController::class, 'myCode']);
+    Route::post('/validate', [ReferralCodeController::class, 'validate']);
+    Route::middleware(['throttle:5,1'])->post('/apply', [ReferralRewardController::class, 'apply']);
+    Route::middleware(['throttle:5,1'])->post('/store', [ReferralCodeController::class, 'storeReferral']);
+    Route::get('/my-discount', [ReferralCodeController::class, 'myDiscount']);
+    Route::get('/earnings', [ReferralRewardController::class, 'earnings']);
 });
 
 /* ===== NOTIFICHE ===== */

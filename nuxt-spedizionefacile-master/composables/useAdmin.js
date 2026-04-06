@@ -83,31 +83,31 @@ export const useAdmin = () => {
 	/* Configurazione colori, icone e etichette per ogni stato ordine */
 	const orderStatusConfig = {
 		pending: { label: "In attesa", bg: "bg-amber-50", text: "text-amber-700", icon: "mdi:clock-outline" },
-		processing: { label: "In lavorazione", bg: "bg-blue-50", text: "text-blue-700", icon: "mdi:cog-outline" },
-		completed: { label: "Completato", bg: "bg-emerald-50", text: "text-emerald-700", icon: "mdi:check-circle-outline" },
-		payed: { label: "Pagato", bg: "bg-green-50", text: "text-green-700", icon: "mdi:credit-card-check-outline" },
+		processing: { label: "In lavorazione", bg: "bg-[#eef8fa]", text: "text-[#095866]", icon: "mdi:cog-outline" },
+		completed: { label: "Completato", bg: "bg-[#f0fdf4]", text: "text-[#0a8a7a]", icon: "mdi:check-circle-outline" },
+		payed: { label: "Pagato", bg: "bg-[#f0fdf4]", text: "text-[#0a8a7a]", icon: "mdi:credit-card-check-outline" },
 		payment_failed: { label: "Pagamento fallito", bg: "bg-red-50", text: "text-red-700", icon: "mdi:credit-card-off-outline" },
 		cancelled: { label: "Annullato", bg: "bg-gray-100", text: "text-gray-600", icon: "mdi:close-circle-outline" },
-		in_transit: { label: "In transito", bg: "bg-indigo-50", text: "text-indigo-700", icon: "mdi:truck-delivery-outline" },
-		delivered: { label: "Consegnato", bg: "bg-teal-50", text: "text-teal-700", icon: "mdi:package-variant-closed-check" },
+		in_transit: { label: "In transito", bg: "bg-[#eef8fa]", text: "text-[#095866]", icon: "mdi:truck-delivery-outline" },
+		delivered: { label: "Consegnato", bg: "bg-[#eef8fa]", text: "text-[#095866]", icon: "mdi:package-variant-closed-check" },
 		in_giacenza: { label: "In giacenza", bg: "bg-orange-50", text: "text-orange-700", icon: "mdi:package-variant" },
 	};
 
 	const withdrawalStatusConfig = {
 		pending: { label: "In attesa", icon: "mdi:clock-outline", bg: "bg-amber-50", text: "text-amber-700" },
-		approved: { label: "Approvata", icon: "mdi:check-circle-outline", bg: "bg-emerald-50", text: "text-emerald-700" },
+		approved: { label: "Approvata", icon: "mdi:check-circle-outline", bg: "bg-[#f0fdf4]", text: "text-[#0a8a7a]" },
 		rejected: { label: "Rifiutata", icon: "mdi:close-circle-outline", bg: "bg-red-50", text: "text-red-700" },
 	};
 
 	const referralStatusConfig = {
-		confirmed: { label: "Confermata", bg: "bg-emerald-50", text: "text-emerald-700" },
-		paid: { label: "Pagata", bg: "bg-blue-50", text: "text-blue-700" },
+		confirmed: { label: "Confermata", bg: "bg-[#f0fdf4]", text: "text-[#0a8a7a]" },
+		paid: { label: "Pagata", bg: "bg-[#eef8fa]", text: "text-[#095866]" },
 		pending: { label: "In attesa", bg: "bg-amber-50", text: "text-amber-700" },
 	};
 
 	const proRequestStatusConfig = {
 		pending: { label: "In attesa", bg: "bg-amber-50", text: "text-amber-700", icon: "mdi:clock-outline" },
-		approved: { label: "Approvata", bg: "bg-emerald-50", text: "text-emerald-700", icon: "mdi:check-circle-outline" },
+		approved: { label: "Approvata", bg: "bg-[#f0fdf4]", text: "text-[#0a8a7a]", icon: "mdi:check-circle-outline" },
 		rejected: { label: "Rifiutata", bg: "bg-red-50", text: "text-red-700", icon: "mdi:close-circle-outline" },
 	};
 

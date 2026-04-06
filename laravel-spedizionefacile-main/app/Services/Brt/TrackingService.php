@@ -129,6 +129,14 @@ class TrackingService
      * Mappa un evento BRT a uno stato dell'ordine.
      * I codici evento BRT sono stringhe come "DELIVERED", "IN_TRANSIT", ecc.
      * Alcuni eventi arrivano in italiano dal sistema BRT.
+     *
+     * ORDINE DI PRIORITA' (importante):
+     * 1. Consegnato — stato finale positivo, priorita' massima
+     * 2. Reso — pacco tornato al mittente, PRIMA di rifiutato (un rifiuto puo' diventare reso)
+     * 3. Rifiutato — destinatario ha rifiutato
+     * 4. In giacenza — problemi di consegna temporanei
+     * 5. In consegna — ultimo miglio, PRIMA di in_transit per evitare falso in_transit
+     * 6. In transito — stato generico di movimento
      */
     private function mapEventToStatus(string $eventCode, string $eventDesc): ?string
     {
@@ -143,7 +151,10 @@ class TrackingService
         }
 
         // Reso (pacco restituito al mittente) — PRIMA di in_transit per evitare conflitti
-        $resoKeywords = ['RESO', 'RESTITUITO', 'RETURNED', 'RETURN TO SENDER', 'RITORNO AL MITTENTE'];
+        $resoKeywords = [
+            'RESO', 'RESTITUITO', 'RETURNED', 'RETURN TO SENDER',
+            'RITORNO AL MITTENTE', 'RESO AL MITTENTE', 'RESTITUZIONE',
+        ];
         foreach ($resoKeywords as $kw) {
             if (str_contains($combined, $kw)) {
                 return Order::RETURNED;
@@ -159,7 +170,11 @@ class TrackingService
         }
 
         // In giacenza (problemi consegna)
-        $giacenzaKeywords = ['GIACENZA', 'STORAGE', 'MANCATA CONSEGNA', 'DESTINATARIO ASSENTE', 'FERMA DEPOSITO'];
+        $giacenzaKeywords = [
+            'GIACENZA', 'STORAGE', 'MANCATA CONSEGNA', 'DESTINATARIO ASSENTE',
+            'FERMA DEPOSITO', 'NON CONSEGNATO', 'TENTATIVO DI CONSEGNA',
+            'INDIRIZZO ERRATO', 'INDIRIZZO INSUFFICIENTE',
+        ];
         foreach ($giacenzaKeywords as $kw) {
             if (str_contains($combined, $kw)) {
                 return Order::IN_GIACENZA;
@@ -167,7 +182,10 @@ class TrackingService
         }
 
         // In consegna (ultimo miglio) — PRIMA di in_transit per catturare lo stato piu' specifico
-        $consegnaKeywords = ['IN CONSEGNA', 'OUT FOR DELIVERY', 'IN DISTRIBUZIONE'];
+        $consegnaKeywords = [
+            'IN CONSEGNA', 'OUT FOR DELIVERY', 'IN DISTRIBUZIONE',
+            'SVINCOLO GIACENZA', 'MESSO IN CONSEGNA',
+        ];
         foreach ($consegnaKeywords as $kw) {
             if (str_contains($combined, $kw)) {
                 return Order::OUT_FOR_DELIVERY;
@@ -175,7 +193,10 @@ class TrackingService
         }
 
         // In transito
-        $transitKeywords = ['IN_TRANSIT', 'IN TRANSITO', 'PARTITA', 'PRESA IN CARICO', 'RITIRAT', 'HUB'];
+        $transitKeywords = [
+            'IN_TRANSIT', 'IN TRANSITO', 'PARTITA', 'PRESA IN CARICO',
+            'RITIRAT', 'HUB', 'SPEDIZIONE CREATA',
+        ];
         foreach ($transitKeywords as $kw) {
             if (str_contains($combined, $kw)) {
                 return Order::IN_TRANSIT;

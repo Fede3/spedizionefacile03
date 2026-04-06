@@ -4,7 +4,7 @@
   CSS estratto in assets/css/contatti.css. Componenti: ContattiForm, ContattiSidebar.
 -->
 <script setup>
-import '~/assets/css/contatti.css'
+/* CSS gia incluso globalmente via nuxt.config.ts -> assets/css/contatti.css */
 
 useSeoMeta({
   title: 'Contatti | SpediamoFacile - Assistenza e Supporto',

@@ -6,7 +6,7 @@
  * DOVE SI USA:
  *   - StripeController.php — creazione transazione dopo pagamento
  *   - StripeWebhookController.php — aggiornamento stato da webhook
- *   - AdminController.php — statistiche fatturato (somma total dove status=succeeded)
+ *   - Admin/DashboardController.php — statistiche fatturato (somma total dove status=succeeded)
  *
  * DATI IN INGRESSO:
  *   - order_id, total (centesimi), ext_id (Stripe PaymentIntent ID), type (card/bank_transfer)

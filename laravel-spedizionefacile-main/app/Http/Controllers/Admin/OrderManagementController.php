@@ -19,7 +19,9 @@ class OrderManagementController extends Controller
     {
         $query = Order::with([
             'user:id,name,surname,email,role,user_type',
-            'packages',
+            'packages.originAddress',
+            'packages.destinationAddress',
+            'packages.service',
             'transactions',
         ])->orderByDesc('created_at');
 

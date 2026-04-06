@@ -8,7 +8,7 @@
  *   - OrderController.php — creazione ordini e gestione ciclo vita
  *   - StripeController.php — pagamento e transizione stato
  *   - BrtController.php — aggiornamento campi brt_* dopo creazione spedizione
- *   - AdminController.php — dashboard, lista ordini, cambio stato
+ *   - Admin/OrderManagementController.php — lista ordini, cambio stato
  *   - GenerateBrtLabel.php — listener che aggiorna i dati BRT dopo pagamento
  *
  * DATI IN INGRESSO:
@@ -105,10 +105,11 @@ class Order extends Model
         'refund_reason',                 // Motivo del rimborso
         'refunded_at',                   // Data e ora del rimborso completato
         'cancellation_fee',              // Commissione di annullamento in centesimi (200 = 2 EUR)
-        'payment_method',                // Metodo di pagamento originale (stripe, wallet, bonifico)
-        'stripe_payment_intent_id',      // ID PaymentIntent Stripe per rimborsi
         'billing_data',                  // Snapshot dati di fatturazione scelti al checkout
         'brt_last_tracking_check',       // Ultima volta che il tracking è stato sincronizzato
+        // SICUREZZA: i seguenti campi NON sono in $fillable (assegnare con $order->campo = valore):
+        // - payment_method: metodo di pagamento (stripe, wallet) — impostato solo dal server
+        // - stripe_payment_intent_id: ID PaymentIntent Stripe — impostato solo dal server
     ];
 
     // Converte automaticamente i campi nei tipi corretti
@@ -134,6 +135,9 @@ class Order extends Model
         'brt_label_base64',
         'brt_raw_response',
         'bordero_document_base64',
+        'stripe_payment_intent_id',
+        'pricing_signature',
+        'pricing_snapshot',
     ];
 
     // Questi sono gli stati possibili di un ordine:

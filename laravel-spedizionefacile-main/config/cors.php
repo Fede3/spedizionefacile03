@@ -36,7 +36,8 @@ return [
 
     // Origini (URL) da cui il frontend puo' fare richieste
     // Configurabile da .env con CORS_ALLOWED_ORIGINS (lista separata da virgole)
-    'allowed_origins' => explode(',', env('CORS_ALLOWED_ORIGINS', 'http://127.0.0.1:8787,http://localhost:8787,http://127.0.0.1:3001,http://localhost:3001')),
+    // Default: localhost dev + domini di produzione
+    'allowed_origins' => explode(',', env('CORS_ALLOWED_ORIGINS', 'http://127.0.0.1:8787,http://localhost:8787,http://127.0.0.1:3001,http://localhost:3001,http://localhost:3000,http://127.0.0.1:3000,https://spediamofacile.it,https://www.spediamofacile.it')),
 
     // Pattern regex per origini dinamiche (es. tunnel Cloudflare che cambiano URL ogni volta)
     'allowed_origins_patterns' => [

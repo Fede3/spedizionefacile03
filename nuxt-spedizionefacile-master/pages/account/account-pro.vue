@@ -265,6 +265,16 @@ const handleLogout = async () => {
 	</section>
 
 	<section v-else class="sf-account-shell min-h-[600px] py-[18px] tablet:py-[24px] desktop:py-[28px]">
-		<AccountProSkeleton />
+		<div class="my-container">
+			<div class="sf-account-panel rounded-[20px] p-[18px] desktop:p-[28px]">
+				<div class="animate-pulse space-y-[14px]">
+					<div class="h-[18px] w-[200px] rounded-full bg-[var(--color-brand-border)]"></div>
+					<div class="h-[14px] w-[320px] rounded-full bg-[#F0F2F4]"></div>
+					<div class="grid gap-[12px] desktop:grid-cols-3 mt-[18px]">
+						<div v-for="n in 3" :key="n" class="h-[90px] rounded-[20px] bg-[#F5F7F8]"></div>
+					</div>
+				</div>
+			</div>
+		</div>
 	</section>
 </template>

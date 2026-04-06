@@ -4,6 +4,13 @@ const route = useRoute();
 const { openAuthModal } = useAuthModal();
 const isAuthenticated = useAuthUiState().isAuthenticatedForUi;
 definePageMeta({ middleware: ['shipment-validation'] });
+
+useSeoMeta({
+	title: 'Configura la tua Spedizione — SpedizioneFacile',
+	description: 'Scegli servizi, date di ritiro e indirizzi per configurare la tua spedizione in pochi passaggi.',
+	ogTitle: 'Configura la tua Spedizione — SpedizioneFacile',
+	ogDescription: 'Scegli servizi, date di ritiro e indirizzi per configurare la tua spedizione in pochi passaggi.',
+});
 const { session, status, refresh } = useSession({ server: true });
 const sanctumClient = useSanctumClient();
 const dateError = ref(null);
@@ -23,7 +30,7 @@ const deliveryMode = computed({
 const SERVICE_ICON_FILTER_IDLE =
 	'brightness(0) saturate(100%) invert(23%) sepia(23%) saturate(1100%) hue-rotate(151deg) brightness(92%) contrast(88%)';
 const SERVICE_ICON_FILTER_ACTIVE =
-	'brightness(0) saturate(100%) invert(18%) sepia(31%) saturate(1350%) hue-rotate(150deg) brightness(88%) contrast(94%)';
+	'brightness(0) invert(1)';
 
 const {
 	chooseDate,
@@ -347,6 +354,20 @@ const showServicesReadinessNote = computed(() => {
 const isServicesAccordionOpen = computed(() => activeAccordionStep.value === 'services');
 const isAddressAccordionOpen = computed(() => activeAccordionStep.value === 'addresses');
 
+// --- PROVIDE: funzioni form/validazione iniettate nei componenti figli ---
+// Evita prop drilling di 19+ funzioni attraverso StepAddressSection → AddressFormFields
+provide('shipmentFormHandlers', {
+	fieldClass, getFieldError, fieldErrorText, getFieldAssist, applyFieldAssist, smartBlur,
+	onNameInput, onCityInput, onCityFocus, onProvinciaInput, onProvinceFocus,
+	onCapInput, onCapFocus, onTelefonoInput,
+	selectCity, selectProvincia, selectCap,
+	formatCitySuggestionLabel, formatCapSuggestionLabel, sv,
+});
+provide('shipmentSuggestions', {
+	originCitySuggestions, originProvinceSuggestions, originCapSuggestions,
+	destCitySuggestions, destProvinceSuggestions, destCapSuggestions,
+});
+
 const servicesPendingSummary = computed(() => {
 	const pendingItems = addressReadinessItems.value.filter((item) => !item.done).map((item) => item.label.toLowerCase());
 
@@ -447,19 +468,17 @@ const bindAccordionPanelTransitionEnd = (el, done) => {
 const onAccordionPanelBeforeEnter = (el) => {
 	el.style.height = '0px';
 	el.style.opacity = '0';
-	el.style.transform = 'translateY(-6px)';
 	el.style.overflow = 'hidden';
 };
 
 const onAccordionPanelEnter = (el, done) => {
-	el.style.transition = 'height 220ms ease, opacity 180ms ease, transform 180ms ease';
+	el.style.transition = 'height 350ms cubic-bezier(0.22,1,0.36,1), opacity 250ms ease';
 	void el.offsetHeight;
 	bindAccordionPanelTransitionEnd(el, done);
 
 	requestAnimationFrame(() => {
 		el.style.height = `${el.scrollHeight}px`;
 		el.style.opacity = '1';
-		el.style.transform = 'translateY(0)';
 	});
 };
 
@@ -470,19 +489,18 @@ const onAccordionPanelAfterEnter = (el) => {
 const onAccordionPanelBeforeLeave = (el) => {
 	el.style.height = `${el.scrollHeight}px`;
 	el.style.opacity = '1';
-	el.style.transform = 'translateY(0)';
 	el.style.overflow = 'hidden';
 };
 
 const onAccordionPanelLeave = (el, done) => {
-	el.style.transition = 'height 200ms ease, opacity 160ms ease, transform 160ms ease';
+	el.style.height = `${el.scrollHeight}px`;
+	el.style.transition = 'height 300ms cubic-bezier(0.22,1,0.36,1), opacity 200ms ease';
 	void el.offsetHeight;
 	bindAccordionPanelTransitionEnd(el, done);
 
 	requestAnimationFrame(() => {
 		el.style.height = '0px';
 		el.style.opacity = '0';
-		el.style.transform = 'translateY(-4px)';
 	});
 };
 
@@ -494,37 +512,37 @@ onMounted(initOnMounted);
 </script>
 
 <template>
-	<section>
-		<div class="my-container shipment-step-shell mt-[48px] tablet:mt-[72px] mb-[96px] tablet:mb-[120px]">
-			<div v-if="showInitialStepLoading" class="min-h-[560px] bg-[#E4E4E4] rounded-[12px] animate-pulse" />
+	<section class="shipment-step-page">
+		<div class="shipment-step-container">
+			<div v-if="showInitialStepLoading" class="min-h-[560px] bg-[#E4E4E4] rounded-[18px] animate-pulse" />
 			<form v-else ref="formRef" @submit.prevent="continueToCart">
-				<div ref="stepsRef" class="mb-[16px] tablet:mb-[18px]">
+				<div ref="stepsRef" class="mb-[6px] tablet:mb-[8px]">
 					<Steps :current-step="currentShipmentStep - 1" />
 				</div>
+				<ShipmentStepSummaryCard
+					v-if="currentStep === 2"
+					:expanded="summaryExpanded"
+					:compact-mobile="true"
+					:detail-panel="summaryDetailPanel"
+					:show-mini-steps="showSummaryMiniSteps"
+					:summary-mini-steps="summaryMiniSteps"
+					:summary-package-label="summaryPackageLabel"
+					:summary-package-type-info="summaryPackageTypeInfo"
+					:summary-dimensions-label="summaryDimensionsLabel"
+					:summary-route-label="summaryRouteLabel"
+					:summary-total-price="summaryTotalPrice"
+					:route-warning-message="routeWarningMessage"
+					:summary-origin-city="summaryOriginCity"
+					:summary-destination-city="summaryDestinationCity"
+					:can-expand-summary-dimensions="canExpandSummaryDimensions"
+					:can-expand-summary-services="canExpandSummaryServices"
+					:summary-services-label="summaryServicesLabel"
+					:summary-dimensions-items="summaryDimensionsItems"
+					:summary-services-items="summaryServicesItems"
+					@go-mini-step="goToSummaryMiniStep"
+					@toggle-detail-panel="toggleSummaryDetailPanel"
+					@update:expanded="summaryExpanded = $event" />
 				<div class="shipment-flow-accordion">
-					<ShipmentStepSummaryCard
-						v-if="currentStep === 2"
-						:expanded="summaryExpanded"
-						:compact-mobile="true"
-						:detail-panel="summaryDetailPanel"
-						:show-mini-steps="showSummaryMiniSteps"
-						:summary-mini-steps="summaryMiniSteps"
-						:summary-package-label="summaryPackageLabel"
-						:summary-package-type-info="summaryPackageTypeInfo"
-						:summary-dimensions-label="summaryDimensionsLabel"
-						:summary-route-label="summaryRouteLabel"
-						:summary-total-price="summaryTotalPrice"
-						:route-warning-message="routeWarningMessage"
-						:summary-origin-city="summaryOriginCity"
-						:summary-destination-city="summaryDestinationCity"
-						:can-expand-summary-dimensions="canExpandSummaryDimensions"
-						:can-expand-summary-services="canExpandSummaryServices"
-						:summary-services-label="summaryServicesLabel"
-						:summary-dimensions-items="summaryDimensionsItems"
-						:summary-services-items="summaryServicesItems"
-						@go-mini-step="goToSummaryMiniStep"
-						@toggle-detail-panel="toggleSummaryDetailPanel"
-						@update:expanded="summaryExpanded = $event" />
 					<section ref="servicesStageRef" class="shipment-flow-stage" :class="{ 'shipment-flow-stage--open': isServicesAccordionOpen }">
 						<button
 							type="button"
@@ -557,51 +575,54 @@ onMounted(initOnMounted);
 							@leave="onAccordionPanelLeave"
 							@after-leave="onAccordionPanelAfterLeave">
 							<div v-if="isServicesAccordionOpen" class="shipment-flow-stage__body shipment-flow-stage__body--services">
-								<div class="services-stage-block__details">
-									<ShipmentStepPickupDate
-										ref="pickupDateSectionRef"
-										:date-error="dateError"
-										:days-in-month="daysInMonth"
-										:services="services"
-										@choose-date="chooseDate" />
-									<ShipmentStepServicesGrid
-										:featured-service="featuredService"
-										:regular-services="regularServices"
-										:service-data="serviceData"
-										:service-card-errors="serviceCardErrors"
-										:is-service-expanded="isServiceExpanded"
-										:can-configure-service="canConfigureService"
-										:get-service-configure-label="getServiceConfigureLabel"
-										:contrassegno-incasso-options="contrassegnoIncassoOptions"
-										:contrassegno-rimborso-options="contrassegnoRimborsoOptions"
-										:requires-contrassegno-dettaglio="requiresContrassegnoDettaglio"
-										:insurance-packages="insurancePackages"
-										:normalize-currency-input="normalizeCurrencyInput"
-										:service-icon-filter-idle="SERVICE_ICON_FILTER_IDLE"
-										:service-icon-filter-active="SERVICE_ICON_FILTER_ACTIVE"
-										@toggle-featured-service="toggleFeaturedService"
-										@toggle-regular-service="toggleRegularService"
-										@handle-service-primary-action="handleServicePrimaryAction"
-										@activate-configured-service="activateConfiguredService"
-										@remove-configured-service="removeConfiguredService" />
-									<ShipmentServiceContentNotifications
-										:content-description="resolvedContentDescription"
-										:content-error="contentError"
-										:content-field-hint="contentFieldHint"
-										:sms-email-notification="smsEmailNotification"
-										:notification-price-label="notificationPriceLabel"
-										@update:content-description="userStore.contentDescription = $event"
-										@update:content-error="contentError = $event"
-										@update:sms-email-notification="smsEmailNotification = $event" />
-								</div>
+								<ShipmentStepPickupDate
+									ref="pickupDateSectionRef"
+									:date-error="dateError"
+									:days-in-month="daysInMonth"
+									:services="services"
+									@choose-date="chooseDate" />
+								<ShipmentStepServicesGrid
+									:featured-service="featuredService"
+									:regular-services="regularServices"
+									:service-data="serviceData"
+									:service-card-errors="serviceCardErrors"
+									:is-service-expanded="isServiceExpanded"
+									:can-configure-service="canConfigureService"
+									:get-service-configure-label="getServiceConfigureLabel"
+									:contrassegno-incasso-options="contrassegnoIncassoOptions"
+									:contrassegno-rimborso-options="contrassegnoRimborsoOptions"
+									:requires-contrassegno-dettaglio="requiresContrassegnoDettaglio"
+									:insurance-packages="insurancePackages"
+									:normalize-currency-input="normalizeCurrencyInput"
+									:service-icon-filter-idle="SERVICE_ICON_FILTER_IDLE"
+									:service-icon-filter-active="SERVICE_ICON_FILTER_ACTIVE"
+									@toggle-featured-service="toggleFeaturedService"
+									@toggle-regular-service="toggleRegularService"
+									@handle-service-primary-action="handleServicePrimaryAction"
+									@activate-configured-service="activateConfiguredService"
+									@remove-configured-service="removeConfiguredService" />
+								<ShipmentServiceContentNotifications
+									:content-description="resolvedContentDescription"
+									:content-error="contentError"
+									:content-field-hint="contentFieldHint"
+									:sms-email-notification="smsEmailNotification"
+									:notification-price-label="notificationPriceLabel"
+									@update:content-description="userStore.contentDescription = $event"
+									@update:content-error="contentError = $event"
+									@update:sms-email-notification="smsEmailNotification = $event" />
 								<div class="shipment-flow-stage__footer">
 									<p
 										class="shipment-flow-stage__footer-note"
 										:class="{ 'shipment-flow-stage__footer-note--ready': showServicesReadinessNote }">
 										{{ showServicesReadinessNote ? 'Apri il prossimo step e completa gli indirizzi qui sotto.' : servicesPendingSummary }}
 									</p>
-									<button type="button" class="btn-cta sf-nav-button shipment-flow-stage__advance" @click="openAddressAccordion">
-										Continua agli indirizzi
+									<button type="button" class="sf-flow-cta sf-flow-cta--primary shipment-flow-stage__advance" @click="openAddressAccordion">
+										<span>Continua agli indirizzi</span>
+										<span class="sf-flow-cta__arrow">
+											<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+												<path d="M5 12h14M12 5l7 7-7 7" />
+											</svg>
+										</span>
 									</button>
 								</div>
 							</div>
@@ -645,32 +666,6 @@ onMounted(initOnMounted);
 									:origin-address="originAddress"
 									:destination-address="destinationAddress"
 									:delivery-mode="deliveryMode"
-									:field-class="fieldClass"
-									:get-field-error="getFieldError"
-									:field-error-text="fieldErrorText"
-									:get-field-assist="getFieldAssist"
-									:apply-field-assist="applyFieldAssist"
-									:smart-blur="smartBlur"
-									:on-name-input="onNameInput"
-									:on-city-input="onCityInput"
-									:on-city-focus="onCityFocus"
-									:on-provincia-input="onProvinciaInput"
-									:on-province-focus="onProvinceFocus"
-									:on-cap-input="onCapInput"
-									:on-cap-focus="onCapFocus"
-									:on-telefono-input="onTelefonoInput"
-									:select-city="selectCity"
-									:select-provincia="selectProvincia"
-									:select-cap="selectCap"
-									:format-city-suggestion-label="formatCitySuggestionLabel"
-									:format-cap-suggestion-label="formatCapSuggestionLabel"
-									:sv="sv"
-									:origin-city-suggestions="originCitySuggestions"
-									:origin-province-suggestions="originProvinceSuggestions"
-									:origin-cap-suggestions="originCapSuggestions"
-									:dest-city-suggestions="destCitySuggestions"
-									:dest-province-suggestions="destProvinceSuggestions"
-									:dest-cap-suggestions="destCapSuggestions"
 									:saved-addresses="savedAddresses"
 									:loading-saved-addresses="loadingSavedAddresses"
 									:show-origin-address-selector="showOriginAddressSelector"
@@ -710,3 +705,32 @@ onMounted(initOnMounted);
 		</div>
 	</section>
 </template>
+
+<style scoped>
+.shipment-step-page {
+	min-height: 100vh;
+	background: linear-gradient(180deg, #F8F9FB 0%, #EEF0F3 100%);
+	padding-top: 28px;
+	padding-bottom: 96px;
+}
+
+@media (min-width: 45rem) {
+	.shipment-step-page {
+		padding-top: 40px;
+		padding-bottom: 120px;
+	}
+}
+
+.shipment-step-container {
+	width: 100%;
+	max-width: 1280px;
+	margin-inline: auto;
+	padding-inline: 14px;
+}
+
+@media (min-width: 40rem) {
+	.shipment-step-container {
+		padding-inline: 40px;
+	}
+}
+</style>

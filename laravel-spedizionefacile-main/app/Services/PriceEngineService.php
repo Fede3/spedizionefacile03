@@ -118,9 +118,18 @@ class PriceEngineService
         $this->cachedConfig = null;
     }
 
+    /**
+     * Calcola il prezzo in euro per un dato peso o volume.
+     *
+     * ATTENZIONE: usare calculateBandPriceCents() per calcoli interni per evitare
+     * errori di arrotondamento float. Questo metodo esiste solo per compatibilita'
+     * con il frontend che mostra il prezzo in euro.
+     *
+     * @throws \InvalidArgumentException se il valore e' <= 0 o supera il massimo
+     */
     public function calculateBandPrice(string $type, float $value): float
     {
-        return $this->calculateBandPriceCents($type, $value) / 100;
+        return round($this->calculateBandPriceCents($type, $value) / 100, 2);
     }
 
     /** Maximum accepted weight in kg. Anything above is rejected. */
@@ -129,14 +138,27 @@ class PriceEngineService
     /** Maximum accepted volume in m3. Anything above is rejected. */
     private const MAX_VOLUME_M3 = 100.0;
 
+    /**
+     * Calcola il prezzo in centesimi per un dato peso o volume.
+     *
+     * @throws \InvalidArgumentException se il valore e' <= 0 o supera il massimo
+     */
     public function calculateBandPriceCents(string $type, float $value): int
     {
         $type = $type === 'volume' ? 'volume' : 'weight';
 
-        // Validate value range
+        // Validate value range — zero or negative means invalid input, never a valid shipment
+        if ($value <= 0) {
+            throw new \InvalidArgumentException(
+                sprintf('Il %s deve essere maggiore di zero (ricevuto: %s).', $type === 'weight' ? 'peso' : 'volume', $value)
+            );
+        }
+
         $maxAllowed = $type === 'weight' ? self::MAX_WEIGHT_KG : self::MAX_VOLUME_M3;
-        if ($value <= 0 || $value > $maxAllowed) {
-            return 0;
+        if ($value > $maxAllowed) {
+            throw new \InvalidArgumentException(
+                sprintf('Il %s %s supera il massimo consentito di %s.', $type === 'weight' ? 'peso' : 'volume', $value, $maxAllowed)
+            );
         }
 
         $config = $this->getPricingConfig();

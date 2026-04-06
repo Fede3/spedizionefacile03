@@ -67,7 +67,10 @@ class PriceBand extends Model
     protected $casts = [
         'min_value' => 'decimal:4',
         'max_value' => 'decimal:4',
+        'base_price' => 'integer',       // Centesimi: 890 = 8,90 EUR
+        'discount_price' => 'integer',   // Centesimi scontati (null = nessuno sconto)
         'show_discount' => 'boolean',
+        'sort_order' => 'integer',
     ];
 
     // Aggiunge automaticamente effective_price e discount_percent alla risposta JSON

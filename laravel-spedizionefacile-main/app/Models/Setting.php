@@ -5,7 +5,7 @@
  *
  * DOVE SI USA:
  *   - SettingsController.php — getStripeConfig, saveStripeConfig
- *   - AdminController.php — settings, updateSettings
+ *   - Admin/DashboardController.php — settings, updateSettings
  *   - StripeController.php — legge stripe_key, stripe_secret come fallback a config()
  *   - WalletController.php — legge stripe_secret
  *
@@ -31,7 +31,7 @@
  *
  * COLLEGAMENTI:
  *   - app/Http/Controllers/SettingsController.php — configurazione Stripe dal frontend
- *   - app/Http/Controllers/AdminController.php — gestione impostazioni dal pannello admin
+ *   - app/Http/Controllers/Admin/DashboardController.php — gestione impostazioni dal pannello admin
  */
 
 namespace App\Models;

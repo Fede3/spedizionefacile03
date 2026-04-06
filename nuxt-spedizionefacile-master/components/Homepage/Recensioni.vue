@@ -29,40 +29,16 @@ const reviews = [
 		text: 'Uso spesso il contrassegno: riepilogo finale chiaro e zero sorprese al checkout.',
 		service: 'Contrassegno',
 	},
-	{
-		name: 'Sara M.',
-		role: 'Artigiana',
-		city: 'Bologna',
-		date: '22 Febbraio 2026',
-		text: 'Assistenza rapida e interfaccia ordinata. Finalmente un flusso spedizione comprensibile.',
-		service: 'Assicurazione',
-	},
-	{
-		name: 'Luca C.',
-		role: 'Marketplace Seller',
-		city: 'Napoli',
-		date: '19 Febbraio 2026',
-		text: 'Dal preventivo al pagamento tutto lineare. Mi fa risparmiare tempo ogni settimana.',
-		service: 'Ritiro a domicilio',
-	},
-	{
-		name: 'Francesca N.',
-		role: 'Privato',
-		city: 'Cagliari',
-		date: '16 Febbraio 2026',
-		text: 'Scelta del punto BRT semplice e chiara. Ho trovato subito il ritiro più vicino.',
-		service: 'Punto BRT',
-	},
 ];
 
-const visibleReviews = reviews.slice(0, 3).map((review) => ({
+const visibleReviews = reviews.map((review) => ({
 	...review,
-	googleUrl: review.googleUrl || buildGoogleReviewUrl(review),
+	googleUrl: buildGoogleReviewUrl(review),
 }));
 </script>
 
 <template>
-	<section class="hp-rev-section cv-auto">
+	<section class="hp-rev-section">
 		<div class="my-container font-montserrat">
 			<header class="hp-rev-head">
 				<p class="hp-rev-eyebrow">Recensioni</p>
@@ -73,15 +49,15 @@ const visibleReviews = reviews.slice(0, 3).map((review) => ({
 				<p class="hp-rev-subtitle">Feedback reali su prezzo, chiarezza del flusso e puntualità del ritiro.</p>
 			</header>
 
-				<div class="hp-rev-grid">
-					<a
-						v-for="(review, index) in visibleReviews"
-						:key="`${review.name}-${index}`"
-						class="hp-rev-card"
-						:href="review.googleUrl"
-						target="_blank"
-						rel="noopener noreferrer nofollow"
-						:aria-label="`Apri recensione Google di ${review.name}`">
+			<div class="hp-rev-grid">
+				<a
+					v-for="(review, index) in visibleReviews"
+					:key="`${review.name}-${index}`"
+					class="hp-rev-card"
+					:href="review.googleUrl"
+					target="_blank"
+					rel="noopener noreferrer nofollow"
+					:aria-label="`Apri recensione Google di ${review.name}`">
 					<div class="hp-rev-card-head">
 						<div class="hp-rev-person">
 							<div class="hp-rev-avatar" aria-hidden="true">{{ review.name.charAt(0) }}</div>
@@ -98,11 +74,14 @@ const visibleReviews = reviews.slice(0, 3).map((review) => ({
 						<span class="hp-rev-date">{{ review.date }}</span>
 					</div>
 
-					<p class="hp-rev-text">“{{ review.text }}”</p>
+					<p class="hp-rev-text">"{{ review.text }}"</p>
 
 					<div class="hp-rev-foot">
 						<span class="hp-rev-service">{{ review.service }}</span>
-						<span class="hp-rev-open">Apri su Google</span>
+						<span class="hp-rev-open">
+							Apri su Google
+							<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17L17 7"/><path d="M7 7h10v10"/></svg>
+						</span>
 					</div>
 				</a>
 			</div>

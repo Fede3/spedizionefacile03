@@ -11,17 +11,12 @@ defineEmits(['update:content-description', 'update:content-error', 'update:sms-e
 </script>
 
 <template>
-	<section class="service-support-shell sf-section-block">
-		<div class="service-support-shell__header sf-section-block__header">
-			<div class="service-support-shell__header-copy">
-				<h2 class="service-group-shell__title sf-section-title">Contenuto e notifiche</h2>
-				<p class="service-support-shell__text">Descrivi il pacco e attiva gli aggiornamenti solo se ti aiutano davvero a seguirlo.</p>
-			</div>
-		</div>
-		<div class="service-support-shell__grid sf-section-block__body">
-			<div class="service-support-panel service-support-panel--content">
-				<label for="content_description" class="service-support-panel__label">
-					Contenuto
+	<section class="service-details-section">
+		<h2 class="service-details-section__title sf-section-title">Dettagli</h2>
+		<div class="service-details-grid">
+			<div class="service-details-field">
+				<label for="content_description" class="service-details-field__label">
+					Contenuto del pacco
 					<span class="text-red-500 ml-[2px]">*</span>
 				</label>
 				<input
@@ -35,28 +30,22 @@ defineEmits(['update:content-description', 'update:content-error', 'update:sms-e
 					placeholder="Abbigliamento, documenti..."
 					maxlength="255"
 					required
-					:class="['service-support-panel__input', contentError ? 'input-preventivo-step-2--warning border-2' : '']" />
-				<p v-if="contentError" class="service-support-panel__error">
+					:class="['service-details-field__input', contentError ? 'input-preventivo-step-2--warning border-2' : '']" />
+				<p v-if="contentError" class="service-details-field__error">
 					{{ contentFieldHint }}
 				</p>
 			</div>
 
-			<div class="service-support-panel service-support-panel--notification" :class="{ 'is-active': smsEmailNotification }">
-				<div class="service-support-panel__notification-main">
-					<div class="service-support-panel__notification-copy">
-						<label class="service-support-panel__label service-support-panel__label--notification" for="notification-toggle">
-							Notifiche spedizione
-						</label>
-						<p class="service-support-panel__notification-text">Aggiornamenti via SMS ed email su ritiro, transito e consegna.</p>
-					</div>
-				</div>
-
-				<div class="service-support-panel__notification-side">
-					<span class="service-support-panel__price">{{ notificationPriceLabel }}</span>
+			<div class="service-details-field service-details-field--notification">
+				<label class="service-details-field__label" for="notification-toggle">
+					Notifiche
+				</label>
+				<div class="service-details-field__notification-row">
+					<span class="service-details-field__price">{{ notificationPriceLabel }}</span>
 					<button
 						id="notification-toggle"
 						type="button"
-						class="service-support-panel__checkbox"
+						class="service-details-field__checkbox"
 						:class="{ 'is-active': smsEmailNotification }"
 						:aria-label="smsEmailNotification ? 'Rimuovi notifiche spedizione' : 'Attiva notifiche spedizione'"
 						:aria-pressed="smsEmailNotification ? 'true' : 'false'"

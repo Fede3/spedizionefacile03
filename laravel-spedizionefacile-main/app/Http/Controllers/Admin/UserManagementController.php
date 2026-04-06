@@ -14,9 +14,9 @@ class UserManagementController extends Controller
     public function users(): JsonResponse
     {
         $users = User::orderByDesc('created_at')
-            ->get(['id', 'name', 'surname', 'email', 'role', 'user_type', 'telephone_number', 'email_verified_at', 'created_at']);
+            ->paginate(30, ['id', 'name', 'surname', 'email', 'role', 'user_type', 'telephone_number', 'email_verified_at', 'created_at']);
 
-        return response()->json(['data' => $users]);
+        return response()->json($users);
     }
 
     // Cambia il ruolo di un utente (es. da "User" a "Partner Pro" o "Admin")

@@ -1,18 +1,11 @@
 <!--
 	LAYOUT PREDEFINITO (layouts/default.vue)
 
-	Il "layout" e' la struttura base che avvolge tutte le pagine del sito.
-	Funziona come una "cornice" che rimane uguale in ogni pagina,
-	mentre il contenuto al centro cambia.
-
-	Questo layout predefinito contiene:
-	- Header (intestazione) in alto: con la barra di navigazione e il logo
-	- Contenuto della pagina al centro: cambia a seconda della pagina visitata
-	  (viene inserito automaticamente al posto di <slot />)
-	- Footer (piede di pagina) in basso: con i link e i social
-
-	Tutte le pagine del sito usano questo layout, a meno che non ne specifichino
-	uno diverso. Cosi' l'header e il footer appaiono sempre uguali ovunque.
+	Replica esatta del prototipo Layout.tsx:
+	- Sticky header (gestito in Header.vue)
+	- Main content: background gradient #F8F9FB -> #EEF0F3
+	- Scroll-to-top: fixed bottom-[80px] right-[16px], teal, appare dopo 400px
+	- Help button: fixed bottom-[24px] right-[16px], gradient teal
 -->
 <script setup>
 const { isAuthenticatedForUi } = useAuthUiState();
@@ -43,10 +36,8 @@ const scrollToTop = () => {
 	window.scrollTo({ top: 0, behavior: 'smooth' });
 };
 
-// Use passive listener for scroll — tells the browser we won't call preventDefault(),
-// allowing it to scroll without waiting for JS, improving scroll smoothness.
 const onScroll = () => {
-	showScrollTop.value = window.scrollY > 300;
+	showScrollTop.value = window.scrollY > 400;
 };
 
 const closeGuestHelp = () => {
@@ -97,15 +88,20 @@ onUnmounted(() => {
 </script>
 
 <template>
-	<div class="w-full min-h-screen flex flex-col overflow-x-clip">
+	<div class="w-full min-h-screen flex flex-col overflow-x-clip" style="font-family: 'Inter', sans-serif">
 		<a
 			href="#main-content"
-			class="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-[100] focus:bg-white focus:px-4 focus:py-2 focus:rounded-[12px] focus:shadow-lg focus:text-[var(--color-brand-primary)] focus:font-semibold">
+			class="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-[100] focus:bg-white focus:px-4 focus:py-2 focus:rounded-[18px] focus:shadow-lg focus:text-[var(--color-brand-primary)] focus:font-semibold">
 			Vai al contenuto
 		</a>
 		<Header />
 
-		<main id="main-content" class="flex-1 w-full max-w-full mx-auto overflow-x-clip">
+		<!-- Main content with prototype gradient bg -->
+		<main
+			id="main-content"
+			class="flex-1 w-full max-w-full mx-auto overflow-x-clip"
+			style="background: linear-gradient(180deg, #F8F9FB 0%, #EEF0F3 100%)"
+		>
 			<slot />
 		</main>
 
@@ -114,32 +110,34 @@ onUnmounted(() => {
 			<AuthOverlayModal v-if="!isAuthPageRoute" />
 		</ClientOnly>
 
-		<!-- Bottone torna su fisso in basso a sinistra -->
-		<button
-			v-if="showScrollTop && showFloatingUtilities"
-			@click="scrollToTop"
-			class="hidden tablet:flex fixed bottom-[max(18px,env(safe-area-inset-bottom))] left-[14px] tablet:bottom-[20px] tablet:left-[20px] z-[999] w-[46px] h-[46px] tablet:w-[44px] tablet:h-[44px] rounded-full bg-[var(--color-brand-primary)] text-white items-center justify-center shadow-lg opacity-40 hover:opacity-100 transition-[opacity,transform] duration-300 hover:scale-110 cursor-pointer"
-			title="Torna su"
-			aria-label="Torna su">
-			<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[22px] h-[22px]" fill="currentColor">
-				<path d="M7.41,15.41L12,10.83L16.59,15.41L18,14L12,8L6,14L7.41,15.41Z" />
-			</svg>
-		</button>
+		<!-- Scroll to top — animated, prototype position: bottom-[80px] right-[16px] -->
+		<Transition name="scroll-top-fade">
+			<button
+				v-if="showScrollTop && showFloatingUtilities"
+				@click="scrollToTop"
+				class="fixed bottom-[24px] left-[16px] sm:bottom-[24px] sm:left-[20px] z-[999] w-[48px] h-[48px] rounded-full bg-[var(--color-brand-primary)] text-white flex items-center justify-center cursor-pointer opacity-70 hover:opacity-100 hover:scale-110 active:scale-95 transition-all duration-200"
+				style="box-shadow: 0 4px 14px rgba(9, 88, 102, 0.25)"
+				title="Torna su"
+				aria-label="Torna in cima alla pagina">
+				<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+					<polyline points="18 15 12 9 6 15"></polyline>
+				</svg>
+			</button>
+		</Transition>
 
-		<!-- Bottone aiuto fisso in basso a destra -->
+		<!-- Help floating button — prototype: gradient teal, bottom-[24px] right-[16px] -->
 		<div
 			v-if="showFloatingUtilities"
 			ref="guestHelpPopoverRef"
-			class="hidden tablet:block fixed bottom-[max(18px,env(safe-area-inset-bottom))] right-[14px] tablet:bottom-[20px] tablet:right-[20px] z-[999]">
+			class="fixed bottom-[24px] right-[16px] sm:bottom-[24px] sm:right-[20px] z-[999]">
 			<NuxtLink
 				v-show="isAuthenticatedForUi"
 				to="/account/assistenza"
-				class="w-[48px] h-[48px] tablet:w-[44px] tablet:h-[44px] rounded-full bg-[var(--color-brand-primary)] text-white flex items-center justify-center shadow-lg opacity-40 hover:opacity-100 transition-[opacity,transform] duration-300 hover:scale-110"
+				class="layout-help-btn w-[48px] h-[48px] rounded-full text-white flex items-center justify-center cursor-pointer opacity-70 hover:opacity-100 hover:scale-110 active:scale-95 transition-all duration-200"
 				title="Assistenza"
 				aria-label="Assistenza">
-				<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[22px] h-[22px]" fill="currentColor">
-					<path
-						d="M11,18H13V16H11V18M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,20C7.59,20 4,16.41 4,12C4,7.59 7.59,4 12,4C16.41,4 20,7.59 20,12C20,16.41 16.41,20 12,20M12,6A4,4 0 0,0 8,10H10A2,2 0 0,1 12,8A2,2 0 0,1 14,10C14,12 11,11.75 11,15H13C13,12.75 16,12.5 16,10A4,4 0 0,0 12,6Z" />
+				<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+					<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
 				</svg>
 			</NuxtLink>
 
@@ -147,41 +145,94 @@ onUnmounted(() => {
 				v-show="!isAuthenticatedForUi"
 				type="button"
 				@click="toggleGuestHelp"
-				class="w-[48px] h-[48px] tablet:w-[44px] tablet:h-[44px] rounded-full bg-[var(--color-brand-primary)] text-white flex items-center justify-center shadow-lg opacity-60 hover:opacity-100 transition-[opacity,transform] duration-300 hover:scale-110 cursor-pointer"
+				class="layout-help-btn w-[48px] h-[48px] rounded-full text-white flex items-center justify-center cursor-pointer opacity-70 hover:opacity-100 hover:scale-110 active:scale-95 transition-all duration-200"
 				aria-label="Aiuto"
 				:aria-expanded="showGuestHelp ? 'true' : 'false'"
 				aria-controls="guest-help-popover"
 				title="Aiuto">
-				<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[22px] h-[22px]" fill="currentColor">
-					<path
-						d="M11,18H13V16H11V18M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,20C7.59,20 4,16.41 4,12C4,7.59 7.59,4 12,4C16.41,4 20,7.59 20,12C20,16.41 16.41,20 12,20M12,6A4,4 0 0,0 8,10H10A2,2 0 0,1 12,8A2,2 0 0,1 14,10C14,12 11,11.75 11,15H13C13,12.75 16,12.5 16,10A4,4 0 0,0 12,6Z" />
+				<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+					<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
 				</svg>
 			</button>
 
-			<div
-				v-if="showGuestHelp && !isAuthenticatedForUi"
-				id="guest-help-popover"
-				role="dialog"
-				class="absolute bottom-[58px] right-0 w-[280px] bg-white border border-[var(--color-brand-border)] rounded-[12px] shadow-lg p-[14px]">
-				<p class="text-[0.875rem] font-semibold text-[var(--color-brand-text)]">Serve supporto?</p>
-				<p class="text-[0.8125rem] text-[#64748B] mt-[4px]">Puoi contattarci subito oppure accedere per aprire e seguire i ticket.</p>
-				<div class="mt-[10px] grid grid-cols-1 gap-[8px]">
-					<NuxtLink
-						to="/contatti"
-						class="inline-flex items-center justify-center h-[36px] rounded-[12px] bg-[var(--color-brand-primary)] text-white text-[0.8125rem] font-semibold hover:bg-[var(--color-brand-primary-hover)] transition-colors"
-						@click="closeGuestHelp">
-						Contattaci
-					</NuxtLink>
-					<button
-						type="button"
-						class="inline-flex items-center justify-center h-[36px] rounded-[12px] border border-[var(--color-brand-border)] text-[#1F2937] text-[0.8125rem] font-semibold hover:bg-[#F7FAFC] transition-colors cursor-pointer"
-						@click="openSupportAuthModal">
-						Accedi per ticket
-					</button>
+			<Transition name="popover-fade">
+				<div
+					v-if="showGuestHelp && !isAuthenticatedForUi"
+					id="guest-help-popover"
+					role="dialog"
+					aria-label="Supporto"
+					class="absolute bottom-[58px] right-0 w-[280px] bg-white border border-[var(--color-brand-border)] rounded-[18px] shadow-lg p-[14px]">
+					<p class="text-[0.875rem] font-semibold text-[var(--color-brand-text)]">Serve supporto?</p>
+					<p class="text-[0.8125rem] text-[#64748B] mt-[4px]">Puoi contattarci subito oppure accedere per aprire e seguire i ticket.</p>
+					<div class="mt-[10px] grid grid-cols-1 gap-[8px]">
+						<NuxtLink
+							to="/contatti"
+							class="inline-flex items-center justify-center h-[36px] rounded-full bg-[var(--color-brand-primary)] text-white text-[0.8125rem] font-semibold hover:bg-[var(--color-brand-primary-hover)] transition-colors"
+							@click="closeGuestHelp">
+							Contattaci
+						</NuxtLink>
+						<button
+							type="button"
+							class="inline-flex items-center justify-center h-[36px] rounded-full border border-[var(--color-brand-border)] text-[var(--color-brand-text)] text-[0.8125rem] font-semibold hover:bg-[var(--color-brand-bg)] transition-colors cursor-pointer"
+							@click="openSupportAuthModal">
+							Accedi per ticket
+						</button>
+					</div>
 				</div>
-			</div>
+			</Transition>
 		</div>
 
 		<CookieBanner />
+
+		<!-- Global live region for screen reader announcements -->
+		<div id="a11y-live-region" aria-live="polite" aria-atomic="true" class="sr-only"></div>
 	</div>
 </template>
+
+<style scoped>
+/* Help button — prototype gradient */
+.layout-help-btn {
+	background: linear-gradient(135deg, #095866, #0a7489);
+	box-shadow: 0 6px 20px rgba(9, 88, 102, 0.3);
+	transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.layout-help-btn:hover {
+	transform: scale(1.08) translateY(-2px);
+	box-shadow: 0 8px 24px rgba(9, 88, 102, 0.35);
+}
+.layout-help-btn:active {
+	transform: scale(0.95);
+}
+
+/* Scroll-to-top fade transition */
+.scroll-top-fade-enter-active {
+	transition: opacity 0.3s ease, transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.scroll-top-fade-leave-active {
+	transition: opacity 0.3s ease, transform 0.3s ease;
+}
+.scroll-top-fade-enter-from {
+	opacity: 0;
+	transform: scale(0.8) translateY(10px);
+}
+.scroll-top-fade-leave-to {
+	opacity: 0;
+	transform: scale(0.8) translateY(10px);
+}
+
+/* Popover fade transition */
+.popover-fade-enter-active {
+	transition: opacity 0.2s ease, transform 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.popover-fade-leave-active {
+	transition: opacity 0.15s ease, transform 0.15s ease;
+}
+.popover-fade-enter-from {
+	opacity: 0;
+	transform: translateY(4px);
+}
+.popover-fade-leave-to {
+	opacity: 0;
+	transform: translateY(4px);
+}
+</style>

@@ -58,22 +58,22 @@ const submitIcon = computed(() =>
 </script>
 
 <template>
-	<div class="bg-white rounded-[12px] p-[18px] desktop:p-[24px] shadow-sm border border-[var(--color-brand-border)] max-w-[680px] mx-auto">
+	<div class="bg-white rounded-[20px] p-[18px] desktop:p-[24px] shadow-sm border border-[var(--color-brand-border)] max-w-[680px] mx-auto">
 		<!-- Header -->
-		<div class="mb-[18px] flex items-start gap-[12px] rounded-[12px] border border-[var(--color-brand-border)] bg-[#F8FCFD] px-[14px] py-[12px]">
+		<div class="mb-[16px] flex items-start gap-[12px] rounded-[20px] border border-[var(--color-brand-border)] bg-[#F8FCFD] px-[14px] py-[12px]">
 			<div :class="['sf-icon-shell shrink-0', isEdit ? 'sf-icon-shell--selected' : 'sf-icon-shell--accent']">
 				<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="var(--color-brand-primary)"><path :d="headerIcon" /></svg>
 			</div>
 			<div>
 				<p class="text-[0.75rem] font-semibold uppercase tracking-[1px] text-[var(--color-brand-primary)]">{{ headerSubtitle }}</p>
-				<h2 class="mt-[4px] text-[1rem] font-bold text-[var(--color-brand-text)]">{{ headerTitle }}</h2>
+				<h2 class="mt-[4px] font-montserrat text-[1rem] font-[800] text-[var(--color-brand-text)]">{{ headerTitle }}</h2>
 				<p class="mt-[4px] text-[0.8125rem] leading-[1.55] text-[var(--color-brand-text-secondary)]">{{ headerDesc }}</p>
 			</div>
 		</div>
 
 		<!-- Form -->
 		<form @submit.prevent="emit('submit')">
-			<div class="mb-[14px]">
+			<div class="mb-[16px]">
 				<label class="form-label">Nome / Riferimento *</label>
 				<input
 					type="text"
@@ -83,7 +83,7 @@ const submitIcon = computed(() =>
 					class="form-input"
 					required />
 			</div>
-			<div class="mb-[14px]">
+			<div class="mb-[16px]">
 				<label class="form-label">Indirizzo *</label>
 				<input
 					type="text"
@@ -93,7 +93,7 @@ const submitIcon = computed(() =>
 					class="form-input"
 					required />
 			</div>
-			<div class="grid grid-cols-1 tablet:grid-cols-2 gap-[12px] mb-[14px]">
+			<div class="grid grid-cols-1 tablet:grid-cols-2 gap-[12px] mb-[16px]">
 				<div>
 					<label class="form-label">Città *</label>
 					<input
@@ -118,7 +118,7 @@ const submitIcon = computed(() =>
 						required />
 				</div>
 			</div>
-			<div class="mb-[14px]">
+			<div class="mb-[16px]">
 				<label class="form-label">Provincia *</label>
 				<select
 					:value="modelValue.province_name"

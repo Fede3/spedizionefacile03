@@ -17,6 +17,8 @@
 useSeoMeta({
 	title: 'Riepilogo Spedizione | SpediamoFacile',
 	ogTitle: 'Riepilogo Spedizione | SpediamoFacile',
+	description: 'Controlla i dettagli della tua spedizione prima di aggiungerla al carrello o procedere al pagamento.',
+	ogDescription: 'Controlla i dettagli della tua spedizione prima di aggiungerla al carrello o procedere al pagamento.',
 });
 
 definePageMeta({
@@ -44,23 +46,19 @@ pageReady.value = await initRiepilogoPage();
 </script>
 
 <template>
-	<section class="min-h-[600px]">
-		<div class="my-container mt-[20px] tablet:mt-[32px] mb-[48px] tablet:mb-[84px] px-[12px] tablet:px-0">
+	<section class="riepilogo-page min-h-[600px]">
+		<div class="max-w-[1280px] mx-auto px-[14px] sm:px-[40px] mt-[24px] tablet:mt-[40px] mb-[60px] tablet:mb-[80px]">
 			<!-- Skeleton loading -->
 			<div v-if="!pageReady" class="space-y-[16px] animate-pulse">
-				<div class="h-[64px] rounded-[12px] border border-[#E5EAEC] bg-white/90"></div>
-				<div class="rounded-[12px] border border-[#E5EAEC] bg-white p-[18px] tablet:p-[24px] space-y-[14px]">
-					<div class="h-[24px] w-[44%] rounded-[12px] bg-[#EEF3F5]"></div>
-					<div class="grid grid-cols-1 tablet:grid-cols-2 gap-[12px]">
-						<div class="h-[124px] rounded-[12px] bg-[#EEF3F5]"></div>
-						<div class="h-[124px] rounded-[12px] bg-[#EEF3F5]"></div>
+				<div class="h-[64px] rounded-[16px] ring-[1.5px] ring-[#DFE2E7] bg-[#F5F6F9]" style="box-shadow: 0 1px 4px rgba(0,0,0,0.03)"></div>
+				<div class="rounded-[16px] ring-[1.5px] ring-[#DFE2E7] bg-[#F5F6F9] p-[20px] tablet:p-[20px] space-y-[14px]" style="box-shadow: 0 1px 4px rgba(0,0,0,0.03)">
+					<div class="h-[24px] w-[44%] rounded-[10px] bg-[#EEF0F3]"></div>
+					<div class="grid grid-cols-1 tablet:grid-cols-2 gap-[16px]">
+						<div class="h-[124px] rounded-[14px] bg-[#EEF0F3]"></div>
+						<div class="h-[124px] rounded-[14px] bg-[#EEF0F3]"></div>
 					</div>
-					<div class="h-[82px] rounded-[12px] bg-[#EEF3F5]"></div>
-					<div class="grid grid-flow-col auto-cols-[minmax(220px,1fr)] gap-[12px] overflow-hidden tablet:grid-flow-row tablet:grid-cols-3">
-						<div class="h-[78px] rounded-[12px] bg-[#F4F7F9]"></div>
-						<div class="h-[78px] rounded-[12px] bg-[#F4F7F9]"></div>
-						<div class="h-[78px] rounded-[12px] bg-[#F4F7F9]"></div>
-					</div>
+					<div class="h-[82px] rounded-[14px] bg-[#EEF0F3]"></div>
+					<div class="h-[72px] rounded-[14px] bg-[#EEF0F3]"></div>
 				</div>
 			</div>
 			<template v-else>
@@ -74,7 +72,7 @@ pageReady.value = await initRiepilogoPage();
 
 			<div v-else-if="!shipment" class="text-center py-[60px]">
 				<p class="text-[1rem] text-[var(--color-brand-text-secondary)]">Nessuna spedizione pronta. Torna alla configurazione.</p>
-				<NuxtLink to="/la-tua-spedizione/2" class="btn-secondary inline-flex mt-[20px] min-h-[48px] items-center justify-center">
+				<NuxtLink to="/la-tua-spedizione/2" class="riepilogo-back-link inline-flex mt-[20px] min-h-[50px] items-center justify-center rounded-full ring-[1.5px] ring-[#DFE2E7] bg-white px-[24px] py-[11px] font-bold text-[var(--color-brand-text-secondary)] hover:bg-[#F8F9FB] transition-colors">
 					Torna alla configurazione
 				</NuxtLink>
 			</div>
@@ -82,9 +80,10 @@ pageReady.value = await initRiepilogoPage();
 			<div v-else class="mx-auto">
 				<!-- Header -->
 				<div class="sf-page-intro sf-page-intro--center mb-[28px] tablet:mb-[32px]">
-					<h1 class="sf-section-title max-w-[16ch]">{{ editingId ? 'Aggiorna spedizione' : 'Riepilogo' }}</h1>
-					<div v-if="!isEditFromCart" class="inline-flex items-center gap-[8px] rounded-[999px] border border-[#D6E7EA] bg-white px-[14px] py-[6px] shadow-[0_8px_18px_rgba(20,37,48,0.05)]">
-						<span class="sf-section-kicker !mb-0">Ordine</span>
+					<p class="riepilogo-eyebrow text-[0.75rem] font-[700] uppercase tracking-wide text-[var(--color-brand-primary)]">Riepilogo ordine</p>
+					<h1 class="font-montserrat font-[800] tracking-[-0.5px] text-[var(--color-brand-text)]" style="font-size: clamp(1.5rem, 3.5vw, 1.75rem); line-height: 1.1">{{ editingId ? 'Aggiorna spedizione' : 'Riepilogo' }}</h1>
+					<div v-if="!isEditFromCart" class="inline-flex items-center gap-[8px] rounded-full ring-[1px] ring-[#DFE2E7] bg-white px-[14px] py-[6px]" style="box-shadow: 0 1px 4px rgba(0,0,0,0.03)">
+						<span class="text-[0.75rem] font-[700] uppercase tracking-wide text-[var(--color-brand-primary)]">Ordine</span>
 						<span class="font-mono text-[0.875rem] font-bold text-[var(--color-brand-primary)]">{{ preOrderNumber }}</span>
 					</div>
 				</div>
@@ -102,7 +101,7 @@ pageReady.value = await initRiepilogoPage();
 				/>
 
 				<!-- Indirizzi -->
-				<div class="grid grid-cols-1 desktop:grid-cols-2 gap-[16px] mb-[16px]">
+				<div class="grid grid-cols-1 desktop:grid-cols-2 gap-[16px] mb-[28px]">
 					<RiepilogoAddressCard
 						type="origin"
 						:address="shipment.origin_address"

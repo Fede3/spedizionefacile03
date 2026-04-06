@@ -149,7 +149,7 @@ const withdrawalOverview = computed(() => [
 		value: pendingWithdrawals.value ? `${pendingWithdrawals.value} richiesta` : 'Nessuna',
 		tone: 'bg-[#FFF7E8] text-[#B45309]',
 	},
-	{ label: 'Ultimo stato', value: lastWithdrawalLabel.value, tone: 'bg-[#F8F9FB] text-[#404040]' },
+	{ label: 'Ultimo stato', value: lastWithdrawalLabel.value, tone: 'bg-[#F5F6F9] text-[var(--color-brand-text)]' },
 ]);
 
 const withdrawalUpsellBenefits = computed(() => [
@@ -206,7 +206,7 @@ const withdrawalUpsellBenefits = computed(() => [
 				</template>
 			</AccountPageHeader>
 
-			<div v-if="pageError" class="ux-alert ux-alert--warning mb-[18px]">
+			<div v-if="pageError" class="ux-alert ux-alert--warning mb-[16px]">
 				<svg
 					xmlns="http://www.w3.org/2000/svg"
 					viewBox="0 0 24 24"
@@ -239,13 +239,13 @@ const withdrawalUpsellBenefits = computed(() => [
 			<!-- Panoramica (solo Pro) -->
 			<div
 				v-else-if="showProContent"
-				class="sf-account-panel mb-[18px] rounded-[20px] px-[16px] py-[14px] desktop:px-[20px] desktop:py-[16px]">
+				class="sf-account-panel mb-[16px] rounded-[20px] px-[16px] py-[14px] desktop:px-[20px] desktop:py-[16px]">
 				<div class="grid gap-[12px] desktop:grid-cols-[minmax(0,1.05fr)_repeat(3,minmax(0,0.55fr))] desktop:items-center">
 					<div>
 						<p class="text-[0.75rem] font-semibold uppercase tracking-[1px] text-[var(--color-brand-primary)]">Panoramica prelievi</p>
-						<h2 class="mt-[4px] text-[1rem] font-bold text-[var(--color-brand-text)]">Saldo e stato richieste</h2>
+						<h2 class="mt-[4px] font-montserrat text-[1rem] font-[800] text-[var(--color-brand-text)]">Saldo e stato richieste</h2>
 					</div>
-					<div v-for="item in withdrawalOverview" :key="item.label" class="rounded-[12px] border border-[var(--color-brand-border)] px-[14px] py-[12px]">
+					<div v-for="item in withdrawalOverview" :key="item.label" class="rounded-[20px] border border-[var(--color-brand-border)] px-[14px] py-[12px]">
 						<p class="text-[0.75rem] font-semibold uppercase tracking-[0.8px] text-[var(--color-brand-text-secondary)]">{{ item.label }}</p>
 						<span :class="['mt-[8px] inline-flex rounded-full px-[10px] py-[5px] text-[0.75rem] font-semibold', item.tone]">
 							{{ item.value }}
@@ -255,7 +255,7 @@ const withdrawalUpsellBenefits = computed(() => [
 			</div>
 
 			<!-- Not Pro -->
-			<div v-else-if="showProUpsell" class="sf-account-panel prelievi-upsell rounded-[24px] p-[20px] desktop:p-[28px]">
+			<div v-else-if="showProUpsell" class="sf-account-panel prelievi-upsell rounded-[20px] p-[20px] desktop:p-[28px]">
 				<div class="prelievi-upsell__intro">
 					<div class="prelievi-upsell__icon-shell">
 						<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="currentColor" class="text-[var(--color-brand-primary)]">
@@ -358,6 +358,7 @@ const withdrawalUpsellBenefits = computed(() => [
 
 .prelievi-upsell__title {
 	margin: 0;
+	font-family: var(--font-montserrat);
 	font-size: clamp(1.18rem, 1.05rem + 0.35vw, 1.5rem);
 	line-height: 1.12;
 	font-weight: 800;

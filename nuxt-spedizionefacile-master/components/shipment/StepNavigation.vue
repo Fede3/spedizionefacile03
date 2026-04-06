@@ -38,7 +38,7 @@ const readinessSummary = computed(() => {
 	return 'Completa i campi richiesti per continuare.';
 });
 
-const readinessSummaryTone = computed(() => (pendingReadinessItems.value.length ? 'text-[#516171]' : 'text-[#0f7a56]'));
+const readinessSummaryTone = computed(() => (pendingReadinessItems.value.length ? 'text-[var(--color-brand-text-secondary)]' : 'text-[#0f7a56]'));
 
 const openAddressLabel = computed(() => 'Compila indirizzi');
 </script>
@@ -46,53 +46,30 @@ const openAddressLabel = computed(() => 'Compila indirizzi');
 <template>
 	<!-- Desktop navigation -->
 	<div
-		class="mt-[28px] hidden tablet:flex flex-col tablet:flex-row flex-wrap gap-[12px] items-stretch tablet:items-center"
+		class="shipment-step-nav hidden tablet:flex mt-[16px]"
 		:class="showAddressFields ? 'justify-end' : showDesktopAdvanceButton ? 'justify-between' : 'justify-start'">
 		<template v-if="showAddressFields">
-			<button type="submit" :disabled="isSubmitting" class="btn-cta sf-nav-button">
-				{{ submitLabel }}
-				<svg
-					v-if="!isSubmitting"
-					width="18"
-					height="18"
-					viewBox="0 0 24 24"
-					fill="none"
-					stroke="currentColor"
-					stroke-width="2"
-					stroke-linecap="round"
-					stroke-linejoin="round">
-					<path d="M5 12h14M12 5l7 7-7 7" />
-				</svg>
+			<button type="submit" :disabled="isSubmitting" class="sf-flow-cta sf-flow-cta--primary">
+				<span>{{ submitLabel }}</span>
+				<span v-if="!isSubmitting" class="sf-flow-cta__arrow">
+					<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+						<path d="M5 12h14M12 5l7 7-7 7" />
+					</svg>
+				</span>
 			</button>
 		</template>
 		<template v-else>
-			<NuxtLink :to="backTarget" class="step-secondary-action btn-secondary sf-nav-button">
-				<svg
-					width="18"
-					height="18"
-					viewBox="0 0 24 24"
-					fill="none"
-					stroke="currentColor"
-					stroke-width="2"
-					stroke-linecap="round"
-					stroke-linejoin="round">
+			<NuxtLink :to="backTarget" class="sf-flow-cta sf-flow-cta--secondary">
+				<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
 					<path d="M19 12H5M12 19l-7-7 7-7" />
 				</svg>
-				{{ backLabel }}
+				<span>{{ backLabel }}</span>
 			</NuxtLink>
-			<button v-if="showDesktopAdvanceButton" type="button" @click="$emit('open-address-fields')" class="btn-cta sf-nav-button">
-				<svg
-					width="18"
-					height="18"
-					viewBox="0 0 24 24"
-					fill="none"
-					stroke="currentColor"
-					stroke-width="2"
-					stroke-linecap="round"
-					stroke-linejoin="round">
+			<button v-if="showDesktopAdvanceButton" type="button" @click="$emit('open-address-fields')" class="sf-flow-cta sf-flow-cta--primary">
+				<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
 					<path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
 				</svg>
-				{{ openAddressLabel }}
+				<span>{{ openAddressLabel }}</span>
 			</button>
 		</template>
 	</div>
@@ -124,18 +101,18 @@ const openAddressLabel = computed(() => 'Compila indirizzi');
 					<button
 						type="submit"
 						:disabled="isSubmitting"
-						class="shipment-mobile-actionbar__primary btn-cta sf-nav-button sf-nav-button--compact">
+						class="shipment-mobile-actionbar__primary sf-flow-cta sf-flow-cta--primary sf-flow-cta--compact">
 						{{ submitLabel }}
 					</button>
 				</template>
 				<template v-else>
-					<NuxtLink :to="backTarget" class="shipment-mobile-actionbar__secondary btn-secondary sf-nav-button sf-nav-button--compact">
+					<NuxtLink :to="backTarget" class="shipment-mobile-actionbar__secondary sf-flow-cta sf-flow-cta--secondary sf-flow-cta--compact">
 						{{ backLabel }}
 					</NuxtLink>
 					<button
 						type="button"
 						@click="$emit('open-address-fields')"
-						class="shipment-mobile-actionbar__primary btn-cta sf-nav-button sf-nav-button--compact">
+						class="shipment-mobile-actionbar__primary sf-flow-cta sf-flow-cta--primary sf-flow-cta--compact">
 						{{ openAddressLabel }}
 					</button>
 				</template>

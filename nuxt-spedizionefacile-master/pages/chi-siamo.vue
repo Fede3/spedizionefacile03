@@ -131,4 +131,4 @@ const sections = [
 	</section>
 </template>
 
-<\!-- CSS in assets/css/chi-siamo.css -->
+<\!-- CSS in assets/css/servizi.css (chi-siamo section) -->

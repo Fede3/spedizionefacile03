@@ -70,9 +70,8 @@ class UserController extends Controller
 
         // Se la password e' stata cambiata, la criptiamo prima di salvarla
         // (le password non si salvano MAI in chiaro nel database per motivi di sicurezza)
-        if (!empty($validated['password'])) {
-            $validated['password'] = bcrypt($validated['password']);
-        }
+        // Il cast 'hashed' sul modello User si occupa automaticamente di hashare la password.
+        // Non serve bcrypt() esplicito (causerebbe double-hashing).
 
         // Aggiorniamo i dati dell'utente nel database
         $user->update($validated);
@@ -120,12 +119,13 @@ class UserController extends Controller
             //    Sovrascriviamo i campi con valori anonimi prima del soft delete,
             //    cosi' i dati non sono recuperabili nemmeno dalla tabella deleted.
             $anonymizedId = 'deleted_' . $user->id;
-            $user->update([
+            // forceFill bypassa $fillable: necessario per azzerare anche i campi protetti
+            $user->forceFill([
                 'name'                       => 'Utente eliminato',
                 'surname'                    => '',
                 'email'                      => $anonymizedId . '@eliminato.local',
                 'telephone_number'           => null,
-                'password'                   => bcrypt(\Illuminate\Support\Str::random(64)),
+                'password'                   => \Illuminate\Support\Str::random(64),
                 'verification_code'          => null,
                 'verification_code_expires_at' => null,
                 'google_id'                  => null,
@@ -136,7 +136,7 @@ class UserController extends Controller
                 'stripe_account_id'          => null,
                 'referral_code'              => null,
                 'referred_by'                => null,
-            ]);
+            ])->save();
 
             // 4. Soft delete dell'utente (segna come eliminato nel DB)
             $user->delete();

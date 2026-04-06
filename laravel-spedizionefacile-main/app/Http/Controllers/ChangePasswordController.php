@@ -124,9 +124,11 @@ class ChangePasswordController extends Controller
                 ], Response::HTTP_BAD_REQUEST);
             }
             else {
-                // Aggiorniamo la password nel database (criptata con bcrypt per sicurezza)
+                // Aggiorniamo la password nel database
+                // Il cast 'hashed' sul modello User esegue bcrypt automaticamente,
+                // quindi NON usiamo bcrypt() qui per evitare doppio hash
                 $userData->update([
-                    'password' => bcrypt($request->password)
+                    'password' => $request->password
                 ]);
 
                 // Eliminiamo il token dal database perche' e' stato usato

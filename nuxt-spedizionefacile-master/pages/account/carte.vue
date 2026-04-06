@@ -4,7 +4,7 @@
   La logica Stripe (loadStripe, setup-intent, confirm) resta qui perche' dipende dal ciclo di vita della pagina.
 -->
 <script setup>
-import '~/assets/css/account-carte.css';
+// account-carte styles are in checkout.css (loaded globally via main.css)
 
 useHead({
 	link: [
@@ -243,7 +243,7 @@ const togglePaymentForm = async () => {
 </script>
 
 <template>
-	<section class="min-h-[600px] py-[32px] desktop:py-[72px]">
+	<section class="min-h-[600px] py-[28px] desktop:py-[56px] bg-white">
 		<div class="my-container">
 			<AccountPageHeader
 				:title="showFormPayments ? 'Aggiungi carta' : 'Carte e pagamenti'"
@@ -328,7 +328,7 @@ const togglePaymentForm = async () => {
 						? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
 						: textMessageType === 'error'
 							? 'bg-red-50 text-red-700 border border-red-200'
-							: 'bg-blue-50 text-blue-700 border border-blue-200',
+							: 'bg-[#eef7f8] text-[#095866] border border-[#B8DDE3]',
 				]">
 				{{ textMessage }}
 			</div>

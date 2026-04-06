@@ -53,22 +53,22 @@ function onFieldBlur(pack, packIndex, field) {
 	<section :class="isHomepageLikeRoute ? 'mt-[28px] tablet:mt-[36px] desktop:mt-[40px] relative z-10' : 'pt-[24px]'">
 		<div class="my-container">
 			<div
-				class="preventivo-shell bg-white w-full max-w-[1280px] rounded-[22px] relative z-10 overflow-hidden p-[15px_12px_16px] tablet:p-[24px_28px_28px] desktop:p-[24px_32px_30px] mx-auto"
+				class="preventivo-shell bg-[#F5F6F9] w-full max-w-[1280px] rounded-[22px] relative z-10 overflow-hidden p-[28px_14px_20px] tablet:p-[32px_32px_32px] desktop:p-[34px_40px_36px] mx-auto ring-[1px] ring-[#D8DCE3]"
 				:class="isHomepageLikeRoute
-					? 'shadow-[0_4px_20px_rgba(9,88,102,0.06),0_16px_48px_rgba(9,88,102,0.04)]'
-					: 'mt-[20px] shadow-[0_4px_20px_rgba(9,88,102,0.06),0_16px_48px_rgba(9,88,102,0.04)]'">
+					? 'shadow-[0_2px_12px_rgba(0,0,0,0.04),0_8px_32px_rgba(0,0,0,0.03)]'
+					: 'mt-[20px] shadow-[0_2px_12px_rgba(0,0,0,0.04),0_8px_32px_rgba(0,0,0,0.03)]'">
 				<div class="preventivo-shell__accent" aria-hidden="true"></div>
 				<div class="preventivo-heading">
 					<div class="preventivo-heading__copy">
 						<div class="preventivo-heading__icon" aria-hidden="true">
-							<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.15" stroke-linecap="round" stroke-linejoin="round"><path d="M14 16.5V6a1 1 0 0 0-1-1H4.5a1 1 0 0 0-1 1v11a1 1 0 0 0 1 1H14"/><path d="M14 8h3.2a1 1 0 0 1 .8.4l2.1 2.8a1 1 0 0 1 .2.6V17a1 1 0 0 1-1 1H14"/><circle cx="7.5" cy="18.5" r="1.5"/><circle cx="16.5" cy="18.5" r="1.5"/></svg>
+							<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
 						</div>
 						<div class="preventivo-heading__text">
 							<h2 class="preventivo-heading__title">Preventivo Rapido</h2>
 							<p class="preventivo-heading__subtitle">{{ preventivoSubtitle }}</p>
 						</div>
 					</div>
-					<button v-if="hasFormData" type="button" @click="resetForm" aria-label="Azzera il modulo" class="preventivo-heading__reset flex items-center gap-[4px] text-[0.75rem] text-[#999] hover:text-[var(--color-brand-accent)] transition cursor-pointer group">
+					<button v-if="hasFormData" type="button" @click="resetForm" aria-label="Azzera il modulo" class="preventivo-heading__reset flex items-center gap-[4px] cursor-pointer group">
 						<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="group-hover:rotate-[-180deg] transition-transform duration-300"><path d="M2.5 2v6h6"/><path d="M2.66 15.57a10 10 0 1 0 .57-8.38L2.5 8"/></svg>
 						<span class="hidden tablet:inline">Azzera</span>
 					</button>
@@ -81,7 +81,6 @@ function onFieldBlur(pack, packIndex, field) {
 						<!-- ── Tratta (partenza / destinazione) ── -->
 						<section class="preventivo-section" aria-labelledby="preventivo-tratta-title">
 							<h3 id="preventivo-tratta-title" class="preventivo-section__title">Inserisci la tratta</h3>
-							<p class="preventivo-section__lead">Inserisci comune o CAP di ritiro e consegna. Per l'Italia puoi usare uno dei due.</p>
 							<div class="route-composer">
 								<div class="route-composer__grid">
 									<!-- Partenza -->
@@ -89,7 +88,7 @@ function onFieldBlur(pack, packIndex, field) {
 										<div class="route-card__header">
 											<div class="route-card__heading">
 												<div class="route-card__badge route-card__badge--origin" aria-hidden="true">
-													<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-6-4.35-6-10a6 6 0 1 1 12 0c0 5.65-6 10-6 10Z"/><circle cx="12" cy="11" r="2.5"/></svg>
+													<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-6-4.35-6-10a6 6 0 1 1 12 0c0 5.65-6 10-6 10Z"/><circle cx="12" cy="11" r="2.5"/></svg>
 												</div>
 												<p class="route-card__title">Partenza</p>
 											</div>
@@ -119,14 +118,14 @@ function onFieldBlur(pack, packIndex, field) {
 									</div>
 									<!-- Connettore freccia -->
 									<div class="route-composer__connector" aria-hidden="true">
-										<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg>
+										<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg>
 									</div>
 									<!-- Destinazione -->
 									<div class="route-card route-card--destination">
 										<div class="route-card__header route-card__header--destination">
 											<div class="route-card__heading">
 												<div class="route-card__badge route-card__badge--destination" aria-hidden="true">
-													<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-6-4.35-6-10a6 6 0 1 1 12 0c0 5.65-6 10-6 10Z"/><circle cx="12" cy="11" r="2.5"/></svg>
+													<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-6-4.35-6-10a6 6 0 1 1 12 0c0 5.65-6 10-6 10Z"/><circle cx="12" cy="11" r="2.5"/></svg>
 												</div>
 												<p class="route-card__title">Destinazione</p>
 											</div>
@@ -230,13 +229,13 @@ function onFieldBlur(pack, packIndex, field) {
 					</div>
 					<!-- Promo banner -->
 					<div v-if="promoSettings?.active && promoSettings?.label_text" class="flex justify-center mt-[20px] desktop:mt-[16px]">
-						<span :style="{ backgroundColor: promoSettings.label_color || 'var(--color-brand-accent)' }" class="inline-flex items-center gap-[6px] px-[14px] py-[6px] rounded-[12px] text-white text-[0.875rem] font-bold tracking-wide shadow-sm">
+						<span :style="{ backgroundColor: promoSettings.label_color || 'var(--color-brand-accent)' }" class="inline-flex items-center gap-[6px] px-[14px] py-[6px] rounded-[14px] text-white text-[0.875rem] font-bold tracking-wide shadow-sm">
 							<img v-if="promoSettings.label_image" :src="promoSettings.label_image" alt="" loading="lazy" decoding="async" width="40" height="18" class="h-[18px] w-auto" />
 							{{ promoSettings.label_text }}
 						</span>
 					</div>
 					<!-- CTA continua -->
-					<div class="continue-button-wrapper bg-[var(--color-brand-accent)] w-full text-white overflow-hidden" :class="['h-[56px] tablet:h-[60px]', promoSettings?.active && promoSettings?.label_text ? 'mt-[12px]' : 'mt-[18px] desktop:mt-[20px]', isStandalonePreventivoRoute ? 'continue-button-wrapper--sticky' : '']">
+					<div class="continue-button-wrapper w-full text-white overflow-hidden" :class="['h-[56px] tablet:h-[60px]', promoSettings?.active && promoSettings?.label_text ? 'mt-[12px]' : 'mt-[18px] desktop:mt-[20px]', isStandalonePreventivoRoute ? 'continue-button-wrapper--sticky' : '']">
 						<button v-if="!isCalculating" type="button" @click="continueToNextStep" :disabled="isCalculating || isAdvancingToServices" class="continue-cta-button w-full h-full cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed">
 							<span class="continue-cta-button__label">{{ continueButtonLabel }}</span>
 							<span class="continue-cta-button__tail">
@@ -253,15 +252,15 @@ function onFieldBlur(pack, packIndex, field) {
 					<!-- Trust badges -->
 					<div class="preventivo-trust-row">
 						<span class="preventivo-trust-pill">
-							<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/><path d="m9 12 2 2 4-4"/></svg>
+							<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/><path d="m9 12 2 2 4-4"/></svg>
 							Pagamento sicuro
 						</span>
 						<span class="preventivo-trust-pill">
-							<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+							<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
 							Corriere BRT
 						</span>
 						<span class="preventivo-trust-pill">
-							<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
+							<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
 							Ritiro 24h
 						</span>
 					</div>

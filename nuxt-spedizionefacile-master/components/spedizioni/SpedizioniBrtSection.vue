@@ -14,11 +14,11 @@ const emit = defineEmits(['downloadLabel', 'regenerateLabel']);
 </script>
 
 <template>
-	<div class="bg-white rounded-[12px] p-[24px] border border-[var(--color-brand-border)] mt-[16px]">
-		<h3 class="text-[1rem] font-bold text-[var(--color-brand-text)] mb-[16px]">Spedizione BRT</h3>
+	<div class="bg-white rounded-[14px] p-[24px] border border-[var(--color-brand-border)] mt-[16px]">
+		<h3 class="font-montserrat text-[1rem] font-[800] text-[var(--color-brand-text)] mb-[16px]">Spedizione BRT</h3>
 
 		<!-- Tracking number e link prominente -->
-		<div v-if="orderData.brt_parcel_id" class="bg-[#F0F7F8] border border-[#C5DFE3] rounded-[12px] p-[16px] mb-[16px]">
+		<div v-if="orderData.brt_parcel_id" class="bg-[#F0F7F8] border border-[#C5DFE3] rounded-[14px] p-[16px] mb-[16px]">
 			<div class="flex items-start gap-[12px]">
 				<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--color-brand-primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="shrink-0 mt-[2px]"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
 				<div class="flex-1">
@@ -27,12 +27,12 @@ const emit = defineEmits(['downloadLabel', 'regenerateLabel']);
 					<div class="flex flex-wrap items-center gap-[10px]">
 						<NuxtLink
 							:to="`/traccia-spedizione?code=${encodeURIComponent(orderData.brt_parcel_id)}`"
-							class="inline-flex items-center gap-[6px] px-[14px] py-[8px] bg-[var(--color-brand-primary)] text-white rounded-[12px] font-semibold text-[0.8125rem] hover:bg-[var(--color-brand-primary-hover)] transition">
+							class="inline-flex items-center gap-[6px] px-[14px] py-[8px] bg-[var(--color-brand-primary)] text-white rounded-[14px] font-semibold text-[0.8125rem] hover:bg-[var(--color-brand-primary-hover)] transition">
 							<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
 							Traccia spedizione
 						</NuxtLink>
 						<a v-if="orderData.brt_tracking_url" :href="orderData.brt_tracking_url" target="_blank" rel="noopener noreferrer"
-							class="inline-flex items-center gap-[6px] px-[14px] py-[8px] border border-[var(--color-brand-primary)] text-[var(--color-brand-primary)] rounded-[12px] font-semibold text-[0.8125rem] hover:bg-[var(--color-brand-primary)] hover:text-white transition">
+							class="inline-flex items-center gap-[6px] px-[14px] py-[8px] border border-[var(--color-brand-primary)] text-[var(--color-brand-primary)] rounded-[14px] font-semibold text-[0.8125rem] hover:bg-[var(--color-brand-primary)] hover:text-white transition">
 							<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
 							Vedi su BRT
 						</a>
@@ -74,6 +74,6 @@ const emit = defineEmits(['downloadLabel', 'regenerateLabel']);
 
 		<!-- Messaggi rigenerazione -->
 		<div v-if="regenerateError" class="mt-[10px] bg-red-50 border border-red-200 rounded-[50px] px-[14px] py-[10px] text-red-600 text-[0.8125rem]">{{ regenerateError }}</div>
-		<div v-if="regenerateSuccess" class="mt-[10px] bg-emerald-50 border border-emerald-200 rounded-[50px] px-[14px] py-[10px] text-emerald-700 text-[0.8125rem]">Etichetta generata con successo!</div>
+		<div v-if="regenerateSuccess" class="mt-[10px] bg-[#f0fdf4] border border-[#d1fae5] rounded-[50px] px-[14px] py-[10px] text-[#0a8a7a] text-[0.8125rem]">Etichetta generata con successo!</div>
 	</div>
 </template>

@@ -2,12 +2,11 @@
 
 namespace Tests\Feature\Cart;
 
-use App\Http\Controllers\CustomLoginController;
 use App\Models\Package;
 use App\Models\PackageAddress;
 use App\Models\Service;
 use App\Models\User;
-use Illuminate\Http\Request;
+use App\Services\GuestCartMergeService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -106,21 +105,16 @@ class GuestCartPricingAuthorityTest extends TestCase
             ],
         ])['packages'];
 
-        $controller = app(CustomLoginController::class);
-        $request = Request::create('/api/login', 'POST');
-        $request->setLaravelSession(app('session.store'));
-        $request->session()->put('cart', [
+        $guestCart = [
             [
                 ...$packageData[0],
                 'origin_address' => $this->cartPayload()['origin_address'],
                 'destination_address' => $this->cartPayload()['destination_address'],
                 'services' => $this->cartPayload()['services'],
             ],
-        ]);
+        ];
 
-        $method = new \ReflectionMethod(CustomLoginController::class, 'mergeGuestCartIntoUserCart');
-        $method->setAccessible(true);
-        $method->invoke($controller, $request, $user);
+        app(GuestCartMergeService::class)->merge($guestCart, $user);
 
         $package = Package::query()->where('user_id', $user->id)->firstOrFail();
         $this->assertSame(1190, (int) $package->single_price);
@@ -173,19 +167,14 @@ class GuestCartPricingAuthorityTest extends TestCase
             'updated_at' => now(),
         ]);
 
-        $controller = app(CustomLoginController::class);
-        $request = Request::create('/api/login', 'POST');
-        $request->setLaravelSession(app('session.store'));
-        $request->session()->put('cart', [[
+        $guestCart = [[
             ...$this->cartPayload()['packages'][0],
             'origin_address' => $this->cartPayload()['origin_address'],
             'destination_address' => $this->cartPayload()['destination_address'],
             'services' => $this->cartPayload()['services'],
-        ]]);
+        ]];
 
-        $method = new \ReflectionMethod(CustomLoginController::class, 'mergeGuestCartIntoUserCart');
-        $method->setAccessible(true);
-        $method->invoke($controller, $request, $user);
+        app(GuestCartMergeService::class)->merge($guestCart, $user);
 
         $this->assertDatabaseHas('saved_shipments', [
             'user_id' => $user->id,

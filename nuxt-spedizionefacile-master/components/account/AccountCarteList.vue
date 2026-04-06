@@ -25,12 +25,12 @@ const getBrandIcon = (brand) => {
 <template>
   <!-- Loading skeleton -->
   <div v-if="status === 'pending'">
-    <div v-for="n in 2" :key="n" class="bg-white rounded-[12px] p-[16px] border border-[var(--color-brand-border)] mb-[10px]">
-      <div class="flex animate-pulse items-center gap-[12px]">
-        <div class="w-[48px] h-[32px] rounded-[6px] bg-gray-200"></div>
+    <div v-for="n in 2" :key="n" class="bg-white rounded-[20px] p-[16px] border border-[var(--color-brand-border)] mb-[10px]">
+      <div class="flex animate-pulse items-center gap-[16px]">
+        <div class="w-[56px] h-[38px] rounded-[10px] bg-gray-200"></div>
         <div class="flex-1 space-y-[7px]">
-          <div class="h-[14px] rounded bg-gray-200 w-[40%]"></div>
-          <div class="h-[12px] rounded bg-gray-200 w-[25%]"></div>
+          <div class="h-[14px] rounded-full bg-gray-200 w-[40%]"></div>
+          <div class="h-[12px] rounded-full bg-gray-200 w-[25%]"></div>
         </div>
       </div>
     </div>
@@ -39,11 +39,11 @@ const getBrandIcon = (brand) => {
   <!-- Cards loaded -->
   <template v-else-if="payments && payments.data">
     <!-- Empty state -->
-    <div v-if="payments.data.length === 0" class="bg-white rounded-[12px] p-[36px] shadow-sm border border-[var(--color-brand-border)] text-center">
-      <div class="w-[64px] h-[64px] mx-auto mb-[16px] bg-[#F8F9FB] rounded-full flex items-center justify-center">
+    <div v-if="payments.data.length === 0" class="bg-white rounded-[20px] p-[36px] shadow-sm border border-[var(--color-brand-border)] text-center">
+      <div class="w-[64px] h-[64px] mx-auto mb-[16px] bg-[#F5F6F9] rounded-full flex items-center justify-center">
         <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#C8CCD0" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
       </div>
-      <h2 class="text-[1.125rem] font-bold text-[var(--color-brand-text)] mb-[8px]">
+      <h2 class="font-montserrat text-[1.125rem] font-[800] text-[var(--color-brand-text)] mb-[8px]">
         {{ cardsFeatureAvailable ? 'Nessuna carta salvata' : 'Pagamenti con carta non ancora attivi' }}
       </h2>
       <p class="text-[var(--color-brand-text-secondary)] text-[0.875rem] max-w-[460px] mx-auto mb-[20px] leading-[1.55]">
@@ -51,29 +51,29 @@ const getBrandIcon = (brand) => {
         <span v-else-if="isAdmin">Configura Stripe per attivare carte e wallet.</span>
         <span v-else>Le carte saranno disponibili appena Stripe sarà attivo.</span>
       </p>
-      <button v-if="cardsFeatureAvailable" @click="emit('toggle-form')" class="btn-cta sf-nav-button px-[20px] py-[10px] font-semibold text-[0.875rem]">Aggiungi la tua prima carta</button>
-      <button v-else-if="isAdmin" @click="emit('open-admin-settings')" class="btn-cta sf-nav-button px-[20px] py-[10px] font-semibold text-[0.875rem]">Apri impostazioni Stripe</button>
+      <button v-if="cardsFeatureAvailable" @click="emit('toggle-form')" class="btn-cta btn-compact font-semibold text-[0.875rem]">Aggiungi la tua prima carta</button>
+      <button v-else-if="isAdmin" @click="emit('open-admin-settings')" class="btn-cta btn-compact font-semibold text-[0.875rem]">Apri impostazioni Stripe</button>
       <p v-else class="text-[var(--color-brand-text-secondary)] text-[0.875rem] font-medium">Quando Stripe sarà attivo, qui comparirà il pulsante per aggiungere la tua prima carta.</p>
     </div>
 
     <!-- Card items -->
     <div v-else class="space-y-[12px]">
       <div v-for="(payment, index) in payments.data" :key="index"
-        :class="['bg-white rounded-[12px] p-[14px] desktop:p-[18px] border transition-all', payment.default ? 'border-[var(--color-brand-primary)] shadow-sm' : 'border-[var(--color-brand-border)] hover:border-[#D7E1E4]']">
-        <div class="flex flex-col gap-[12px] tablet:flex-row tablet:items-center tablet:gap-[14px]">
+        :class="['bg-white rounded-[20px] p-[16px] desktop:p-[20px] border transition-all', payment.default ? 'border-[var(--color-brand-primary)] shadow-sm' : 'border-[var(--color-brand-border)] hover:border-[#D7E1E4]']">
+        <div class="flex flex-col gap-[12px] tablet:flex-row tablet:items-center tablet:gap-[16px]">
           <!-- Brand icon -->
-          <div :class="['w-[48px] h-[32px] rounded-[6px] flex items-center justify-center text-[0.6875rem] font-bold uppercase shrink-0', payment.default ? 'bg-[var(--color-brand-primary)] text-white' : 'bg-[#F0F0F0] text-[#404040]']">
+          <div :class="['w-[56px] h-[38px] rounded-[10px] flex items-center justify-center text-[0.75rem] font-bold uppercase tracking-wide shrink-0', payment.default ? 'bg-gradient-to-br from-[var(--color-brand-primary)] to-[var(--color-brand-primary-hover)] text-white' : 'bg-[#F0F4F5] text-[var(--color-brand-text)]']">
             {{ getBrandIcon(payment.brand)?.slice(0, 4) }}
           </div>
           <!-- Info -->
           <div class="min-w-0 w-full flex-1">
             <div class="flex flex-wrap items-center gap-[8px]">
-              <span class="text-[0.875rem] font-semibold text-[var(--color-brand-text)]">{{ getBrandIcon(payment.brand) }} **** {{ payment.last4 }}</span>
-              <span v-if="payment.default" class="inline-block px-[8px] py-[2px] rounded-full text-[0.6875rem] font-medium bg-[var(--color-brand-primary)]/10 text-[var(--color-brand-primary)]">Predefinita</span>
+              <span class="text-[0.9375rem] font-semibold text-[var(--color-brand-text)]">{{ getBrandIcon(payment.brand) }} &bull;&bull;&bull;&bull; {{ payment.last4 }}</span>
+              <span v-if="payment.default" class="inline-block px-[10px] py-[3px] rounded-full text-[0.6875rem] font-semibold bg-[#EDF7F8] text-[var(--color-brand-primary)]">Predefinita</span>
             </div>
             <div class="mt-[4px] flex flex-col gap-[4px] sm:flex-row sm:items-center sm:gap-[12px]">
-              <span class="text-[0.75rem] text-[var(--color-brand-text-secondary)]">{{ payment.holder_name }}</span>
-              <span class="text-[0.75rem] text-[#a0a0a0]">Scad. {{ payment.exp_month }}/{{ payment.exp_year }}</span>
+              <span class="text-[0.8125rem] text-[var(--color-brand-text-secondary)]">{{ payment.holder_name }}</span>
+              <span class="text-[0.75rem] text-[var(--color-brand-text-muted)]">Scad. {{ payment.exp_month }}/{{ payment.exp_year }}</span>
             </div>
           </div>
           <!-- Actions -->
@@ -111,7 +111,7 @@ const getBrandIcon = (brand) => {
   </template>
 
   <!-- Security note -->
-  <div class="mt-[20px] flex items-start gap-[10px] p-[12px] bg-[#F8F9FB] rounded-[12px]">
+  <div class="mt-[20px] flex items-start gap-[10px] p-[12px] bg-[#F5F6F9] rounded-[16px]">
     <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--color-brand-text-secondary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="shrink-0 mt-[1px]"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
     <p class="text-[0.75rem] text-[var(--color-brand-text-secondary)] leading-[1.5]">
       I dati delle carte sono gestiti in modo sicuro da Stripe. Non conserviamo mai i numeri completi delle tue carte.

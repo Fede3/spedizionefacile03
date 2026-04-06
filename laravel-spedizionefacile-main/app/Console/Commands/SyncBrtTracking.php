@@ -43,9 +43,17 @@ class SyncBrtTracking extends Command
         $specificOrderId = $this->option('order');
 
         // Recupera gli ordini da sincronizzare:
-        // - in_transit o processing (stati "attivi")
+        // - stati "attivi" che possono ancora cambiare stato
+        // - in_giacenza: puo' diventare delivered (nuovo tentativo), returned, o refused
+        // - returned/refused: vengono tracciati per max 7 giorni (conferma stato finale)
         // - con un riferimento BRT (altrimenti non possiamo interrogare)
-        $query = Order::whereIn('status', [Order::IN_TRANSIT, Order::PROCESSING, Order::LABEL_GENERATED, Order::OUT_FOR_DELIVERY])
+        $query = Order::whereIn('status', [
+            Order::IN_TRANSIT,
+            Order::PROCESSING,
+            Order::LABEL_GENERATED,
+            Order::OUT_FOR_DELIVERY,
+            Order::IN_GIACENZA,
+        ])
             ->where(function ($q) {
                 $q->whereNotNull('brt_numeric_sender_reference')
                     ->orWhereNotNull('brt_parcel_id');

@@ -34,7 +34,7 @@ const modalUi = {
 <template>
   <UModal :open="open" :dismissible="!loading" :close="false" :ui="modalUi" @update:open="$emit('update:open', $event)">
     <template #body>
-      <section class="sf-modal-content">
+      <section class="sf-modal-content" role="dialog" aria-modal="true" aria-labelledby="confirm-dialog-title">
         <div class="sf-modal-header">
           <div class="sf-modal-header__main">
             <div :class="['sf-modal-icon', tone === 'primary' ? '' : 'sf-modal-icon--accent']" aria-hidden="true">
@@ -42,7 +42,7 @@ const modalUi = {
               <svg v-else xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[1.2rem] h-[1.2rem]" fill="currentColor"><path d="M6,19A2,2 0 0,0 8,21H16A2,2 0 0,0 18,19V7H6V19M8,9H16V19H8V9M15.5,4L14.5,3H9.5L8.5,4H5V6H19V4H15.5Z"/></svg>
             </div>
             <div>
-              <h3 class="sf-modal-title">{{ title }}</h3>
+              <h3 id="confirm-dialog-title" class="sf-modal-title">{{ title }}</h3>
               <p class="sf-modal-description">{{ description }}</p>
             </div>
           </div>

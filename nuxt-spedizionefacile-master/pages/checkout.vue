@@ -11,7 +11,12 @@ useHead({
 		{ rel: 'preconnect', href: 'https://api.stripe.com', crossorigin: '' },
 	],
 });
-useSeoMeta({ title: 'Checkout | SpediamoFacile', ogTitle: 'Checkout | SpediamoFacile' });
+useSeoMeta({
+	title: 'Checkout | SpediamoFacile',
+	ogTitle: 'Checkout | SpediamoFacile',
+	description: 'Completa il pagamento della tua spedizione in modo sicuro con carta di credito o portafoglio.',
+	ogDescription: 'Completa il pagamento della tua spedizione in modo sicuro con carta di credito o portafoglio.',
+});
 
 definePageMeta({ middleware: ['app-auth', 'shipment-validation'] });
 
@@ -107,8 +112,8 @@ onMounted(async () => {
 </script>
 
 <template>
-	<section class="min-h-[600px] py-[30px] desktop:py-[50px] bg-[#F0F0F0]">
-		<div class="my-container">
+	<section class="checkout-page py-[24px] desktop:py-[40px]">
+		<div class="max-w-[1280px] mx-auto px-[14px] sm:px-[40px]">
 			<!-- Skeleton -->
 			<CheckoutSkeleton v-if="!pageReady" />
 
@@ -119,86 +124,91 @@ onMounted(async () => {
 				<CheckoutSuccess v-if="paymentSuccess" :success-order-id="successOrderId" :payment-method="paymentMethod" />
 
 				<!-- Checkout form -->
-				<div v-else class="mx-auto space-y-[24px]">
-					<div class="sf-page-intro sf-page-intro--center">
-						<span class="sf-section-kicker">Fase finale</span>
-						<h1 class="sf-section-title max-w-[16ch]">Checkout</h1>
-						<p class="sf-section-description max-w-[62ch]">
-							Riepilogo, documento fiscale e pagamento restano nello stesso flusso, senza cambiare linguaggio visivo.
+				<div v-else class="mx-auto space-y-[28px]">
+					<!-- Page header -->
+					<div class="mb-[4px]">
+						<h1 class="text-[var(--color-brand-text)] text-[clamp(1.5rem,3.5vw,1.75rem)] tracking-[-0.5px] font-montserrat" style="font-weight:800">Checkout</h1>
+						<p class="text-[var(--color-brand-text-secondary)] text-[14px] mt-[4px]" style="font-weight:400">
+							{{ totalPackages }} {{ totalPackages === 1 ? 'spedizione' : 'spedizioni' }}
+							<span v-if="existingOrderId"> &middot; Ordine #{{ existingOrderId }}</span>
 						</p>
-						<div class="flex flex-wrap items-center justify-center gap-[8px]">
-							<span class="sf-section-chip">{{ totalPackages }} {{ totalPackages === 1 ? 'spedizione' : 'spedizioni' }}</span>
-							<span v-if="existingOrderId" class="sf-section-chip">Ordine #{{ existingOrderId }}</span>
-						</div>
 					</div>
 
-					<!-- Order summary + coupon -->
-					<CheckoutOrderSummary
-						:display-packages="displayPackages"
-						:address-groups="addressGroups"
-						:has-multiple-groups="hasMultipleGroups"
-						:merge-groups-count="mergeGroupsCount"
-						:total-packages="totalPackages"
-						:content-description="contentDescription"
-						:existing-order-id="existingOrderId"
-						:get-total="getTotal"
-						:final-total-formatted="finalTotalFormatted"
-						:format-price="formatPrice"
-						:promo-settings="promoSettings"
-						:coupon-code="couponCode"
-						:coupon-loading="couponLoading"
-						:coupon-error="couponError"
-						:coupon-applied="couponApplied"
-						:coupon-panel-open="couponPanelOpen"
-						@update:coupon-code="couponCode = $event"
-						@update:coupon-panel-open="couponPanelOpen = $event"
-						@validate-coupon="validateCoupon"
-						@remove-coupon="removeCoupon" />
+					<!-- 2-column desktop: form (left) + order summary (right) -->
+					<div class="checkout-two-col">
+						<!-- Left column: payment + billing + footer -->
+						<div class="checkout-two-col__main">
+							<div class="checkout-payment-stack">
+								<!-- Payment methods -->
+								<CheckoutPaymentMethods
+									:payment-method="paymentMethod"
+									:payment-method-options="paymentMethodOptions"
+									:card-payments-unavailable="cardPaymentsUnavailable"
+									:card-payments-notice="cardPaymentsNotice"
+									:has-saved-card="hasSavedCard"
+									:default-payment="defaultPayment"
+									:use-new-card="useNewCard"
+									:should-show-card-form="shouldShowCardForm"
+									:stripe-loading="stripeLoading"
+									:card-error="cardError"
+									:save-card-for-future="saveCardForFuture"
+									:card-ref-callback="setCardRef"
+									:wallet-formatted="walletFormatted"
+									:wallet-loaded="walletLoaded"
+									:wallet-sufficient="walletSufficient"
+									@select-payment-method="selectPaymentMethod"
+									@update:use-new-card="useNewCard = $event"
+									@update:save-card-for-future="saveCardForFuture = $event" />
 
-					<div class="checkout-payment-stack">
-						<!-- Payment methods -->
-						<CheckoutPaymentMethods
-							:payment-method="paymentMethod"
-							:payment-method-options="paymentMethodOptions"
-							:card-payments-unavailable="cardPaymentsUnavailable"
-							:card-payments-notice="cardPaymentsNotice"
-							:has-saved-card="hasSavedCard"
-							:default-payment="defaultPayment"
-							:use-new-card="useNewCard"
-							:should-show-card-form="shouldShowCardForm"
-							:stripe-loading="stripeLoading"
-							:card-error="cardError"
-							:save-card-for-future="saveCardForFuture"
-							:card-ref-callback="setCardRef"
-							:wallet-formatted="walletFormatted"
-							:wallet-loaded="walletLoaded"
-							:wallet-sufficient="walletSufficient"
-							@select-payment-method="selectPaymentMethod"
-							@update:use-new-card="useNewCard = $event"
-							@update:save-card-for-future="saveCardForFuture = $event" />
+								<!-- Billing -->
+								<CheckoutBilling
+									:fatturazione-type="fatturazioneType"
+									:invoice-subject-type="invoiceSubjectType"
+									:fattura-data="fatturaData"
+									:billing-shipping-full-address="billingShippingFullAddress"
+									@update:fatturazione-type="fatturazioneType = $event"
+									@update:invoice-subject-type="invoiceSubjectType = $event" />
 
-						<!-- Billing -->
-						<CheckoutBilling
-							:fatturazione-type="fatturazioneType"
-							:invoice-subject-type="invoiceSubjectType"
-							:fattura-data="fatturaData"
-							:billing-shipping-full-address="billingShippingFullAddress"
-							@update:fatturazione-type="fatturazioneType = $event"
-							@update:invoice-subject-type="invoiceSubjectType = $event" />
+								<!-- Footer: totals + pay button + terms -->
+								<CheckoutPaymentFooter
+									:final-total-formatted="finalTotalFormatted"
+									:payment-method="paymentMethod"
+									:payment-action-label="paymentActionLabel"
+									:pay-button-tooltip="payButtonTooltip"
+									:can-pay="canPay"
+									:is-processing="isProcessing"
+									:payment-error="paymentError"
+									:payment-step="paymentStep"
+									:terms-accepted="termsAccepted"
+									@confirm-payment="confirmPayment"
+									@update:terms-accepted="termsAccepted = $event" />
+							</div>
+						</div>
 
-						<!-- Footer: totals + pay button + terms -->
-						<CheckoutPaymentFooter
-							:final-total-formatted="finalTotalFormatted"
-							:payment-method="paymentMethod"
-							:payment-action-label="paymentActionLabel"
-							:pay-button-tooltip="payButtonTooltip"
-							:can-pay="canPay"
-							:is-processing="isProcessing"
-							:payment-error="paymentError"
-							:payment-step="paymentStep"
-							:terms-accepted="termsAccepted"
-							@confirm-payment="confirmPayment"
-							@update:terms-accepted="termsAccepted = $event" />
+						<!-- Right column: order summary (sticky) -->
+						<div class="checkout-two-col__side">
+							<CheckoutOrderSummary
+								:display-packages="displayPackages"
+								:address-groups="addressGroups"
+								:has-multiple-groups="hasMultipleGroups"
+								:merge-groups-count="mergeGroupsCount"
+								:total-packages="totalPackages"
+								:content-description="contentDescription"
+								:existing-order-id="existingOrderId"
+								:get-total="getTotal"
+								:final-total-formatted="finalTotalFormatted"
+								:format-price="formatPrice"
+								:promo-settings="promoSettings"
+								:coupon-code="couponCode"
+								:coupon-loading="couponLoading"
+								:coupon-error="couponError"
+								:coupon-applied="couponApplied"
+								:coupon-panel-open="couponPanelOpen"
+								@update:coupon-code="couponCode = $event"
+								@update:coupon-panel-open="couponPanelOpen = $event"
+								@validate-coupon="validateCoupon"
+								@remove-coupon="removeCoupon" />
+						</div>
 					</div>
 				</div>
 

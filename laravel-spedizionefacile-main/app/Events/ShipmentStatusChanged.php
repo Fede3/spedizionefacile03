@@ -12,7 +12,7 @@
  *   - Proprieta' pubbliche accessibili dai listener
  *
  * CHIAMATO DA:
- *   - AdminController.php — updateOrderStatus() dopo cambio stato manuale
+ *   - Admin/OrderManagementController.php — updateOrderStatus() dopo cambio stato manuale
  *   - BrtController.php — deleteShipment() quando resetta lo stato
  *
  * EFFETTI COLLATERALI:

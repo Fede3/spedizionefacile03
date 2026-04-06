@@ -2,6 +2,11 @@
 @import "@nuxt/ui";
 @import "./checkout.css";
 
+.riepilogo-page {
+	min-height: 600px;
+	background: #ffffff;
+}
+
 @font-face {
 	font-family: "Inter";
 	font-style: normal;
@@ -84,8 +89,8 @@
 }
 
 @theme {
-	--font-inter: "Inter", sans-serif;
-	--font-montserrat: "Montserrat", sans-serif;
+	--font-inter: "Inter", ui-sans-serif, system-ui, -apple-system, sans-serif;
+	--font-montserrat: "Montserrat", ui-sans-serif, system-ui, -apple-system, sans-serif;
 
 	/* Palette colori del brand */
 	--color-brand-primary: #095866;
@@ -106,9 +111,13 @@
 	--color-brand-success: #0a8a7a;
 	--color-brand-warning: #f59e0b;
 	--color-brand-error: #ef4444;
-	--color-brand-text: #252B42;
-	--color-brand-text-secondary: #737373;
-	--color-brand-bg: #eeeeee;
+	/* TEXT COLOR SYSTEM (massimo 3 livelli + accent)
+	   Ogni colore ha UN ruolo specifico. MAI usare hex hardcoded. */
+	--color-brand-text: #1D2738;            /* Titoli, heading, testo forte */
+	--color-brand-text-secondary: #5A6474;  /* Body, descrizioni, paragrafi */
+	--color-brand-text-muted: #8A919C;      /* Label, placeholder, caption, hint */
+	--color-brand-bg: #ffffff;
+	--color-brand-page-gradient: linear-gradient(180deg, #F8F9FB 0%, #EEF0F3 100%);
 	--color-brand-card: #ffffff;
 	--color-brand-border: #E9EBEC;
 
@@ -138,6 +147,13 @@
 	/* TRANSITION */
 	--transition-fast: 150ms;
 	--transition-base: 250ms;
+
+	/* RADIUS SCALE */
+	--sf-radius-button: 100px;
+	--sf-radius-button-compact: 100px;
+	--sf-radius-control: 14px;
+	--sf-radius-card: 18px;
+	--sf-radius-pill: 999px;
 }
 
 @layer base {
@@ -149,14 +165,14 @@
 		--sf-motion-loop-slow: 8.5s;
 		--sf-ease-soft: cubic-bezier(0.22, 1, 0.36, 1);
 		--sf-ease-press: cubic-bezier(0.34, 1.56, 0.64, 1);
-		--sf-radius-button: 14px;
-		--sf-radius-button-compact: 12px;
+		--sf-radius-button: 100px;
+		--sf-radius-button-compact: 100px;
 		--sf-radius-control: 14px;
 		--sf-radius-card: 18px;
 		--sf-radius-pill: 999px;
 		--sf-space-section: clamp(24px, 3vw, 36px);
 		--sf-space-block: 18px;
-		--sf-space-control-gap: 12px;
+		--sf-space-control-gap: 8px;
 		--sf-border-soft: 1.5px solid #c8d8de;
 		--sf-border-strong: 1.5px solid var(--color-brand-primary-light);
 		--sf-shadow-soft: 0 6px 16px rgba(20, 37, 48, 0.05);
@@ -185,7 +201,7 @@
 		font-family: var(--font-inter);
 		font-size: 16px;
 		background-color: var(--color-brand-bg);
-		color: #222222;
+		color: var(--color-brand-text);
 	}
 
 	input,
@@ -195,16 +211,23 @@
 		font-family: var(--font-inter);
 	}
 
-	/* Transizioni base senza trasformazioni globali (evita drift/overflow) */
-	button,
+	/* ============================================================
+	   HOVER SYSTEM — 2 tipi standard, sottili ma visibili
+	   Tipo 1: Link/Bottoni → scurimento colore + leggero lift
+	   Tipo 2: Card/Box → border accent + leggera elevazione
+	   L'hover NON usa colori di contrasto (teal su arancione o viceversa)
+	   ma solo scurimento del colore esistente per non confondere con selezione.
+	   ============================================================ */
 	a {
+		transition: color var(--sf-motion-base) var(--sf-ease-soft);
+	}
+	button {
 		transition:
-			color var(--sf-motion-base) var(--sf-ease-soft),
 			background-color var(--sf-motion-base) var(--sf-ease-soft),
 			border-color var(--sf-motion-base) var(--sf-ease-soft),
 			box-shadow var(--sf-motion-base) var(--sf-ease-soft),
+			transform var(--sf-motion-base) var(--sf-ease-soft),
 			opacity var(--sf-motion-base) var(--sf-ease-soft);
-		will-change: auto;
 	}
 
 	/* Input transitions - only border and shadow, NOT all (causes mobile bugs) */
@@ -223,13 +246,107 @@
 		@apply outline-none;
 	}
 
-	/* Focus visible for accessibility */
+	/* (transition for a/button already defined above) */
+
+	/* ============================================================
+	   MICRO-INTERACTIONS — Subtle professional polish
+	   ============================================================ */
+
+	/* 1. Card hover lift — SOLO classi esplicite, nessun wildcard.
+	      Il [class*="-card"] era troppo generico e causava artefatti. */
+	:where(.sf-card, .sf-surface-card, .sf-action-card) {
+		transition:
+			transform var(--sf-motion-base) var(--sf-ease-soft),
+			box-shadow var(--sf-motion-base) var(--sf-ease-soft);
+	}
+	:where(.sf-card, .sf-surface-card, .sf-action-card):hover {
+		transform: translateY(-4px);
+		border-color: rgba(9, 88, 102, 0.25);
+		box-shadow: 0 12px 28px rgba(9, 88, 102, 0.1);
+	}
+
+	/* 2. Button press feedback — solo scale leggero su :active */
+	:where(button, [role="button"]):active {
+		transform: scale(0.97);
+		transition-timing-function: var(--sf-ease-press);
+		transition-duration: var(--sf-motion-fast);
+	}
+
+	/* 3. Focus ring — teal brand ring for all interactive elements
+	      (enhances the existing :focus-visible rule with ring + transition) */
 	:focus-visible {
 		outline: 2px solid var(--color-brand-primary);
 		outline-offset: 2px;
+		transition: outline-offset var(--sf-motion-fast) var(--sf-ease-soft);
+	}
+	/* Slightly inset ring for inputs */
+	:where(input, select, textarea):focus-visible {
+		outline-offset: -1px;
+		box-shadow: 0 0 0 3px rgba(9, 88, 102, 0.1);
 	}
 
-	/* (transition for a/button already defined above) */
+	/* 4. Link underline — RIMOSSO: la selezione/highlight del link
+	      basta da sola, la sottolineatura creava solo rumore visivo. */
+
+	/* 5. Loading skeleton pulse (brand-colored variant)
+	      Use .skeleton for a soft brand-tinted pulse. */
+	@keyframes sf-skeleton-pulse {
+		0%, 100% { opacity: 1; }
+		50%      { opacity: 0.45; }
+	}
+	.skeleton {
+		background: linear-gradient(90deg, #dde8eb 0%, #eef3f5 50%, #dde8eb 100%);
+		background-size: 200% 100%;
+		animation:
+			sf-shimmer 1.6s ease-in-out infinite,
+			sf-skeleton-pulse var(--sf-motion-loop) ease-in-out infinite;
+		border-radius: 8px;
+	}
+
+	/* 6. Smooth accordion / disclosure
+	      Extends the grid-row technique with opacity for polish. */
+	:where(details) > :where(summary) {
+		cursor: pointer;
+		list-style: none;
+	}
+	:where(details) > :where(summary)::-webkit-details-marker {
+		display: none;
+	}
+	:where(details) > :where(:not(summary)) {
+		overflow: hidden;
+	}
+	:where([data-accordion], details) {
+		--_accordion-rows: 0fr;
+	}
+	:where([data-accordion].is-open, details[open]) {
+		--_accordion-rows: 1fr;
+	}
+	:where([data-accordion], details) > :where(:not(summary):not(:first-child)) {
+		display: grid;
+		grid-template-rows: var(--_accordion-rows);
+		transition: grid-template-rows var(--sf-motion-slow) var(--sf-ease-soft);
+	}
+	:where([data-accordion], details) > :where(:not(summary):not(:first-child)) > * {
+		overflow: hidden;
+		transition: opacity var(--sf-motion-base) var(--sf-ease-soft);
+	}
+	:where([data-accordion]:not(.is-open), details:not([open])) > :where(:not(summary):not(:first-child)) > * {
+		opacity: 0;
+	}
+	:where([data-accordion].is-open, details[open]) > :where(:not(summary):not(:first-child)) > * {
+		opacity: 1;
+	}
+
+	/* Respect reduced-motion preference */
+	@media (prefers-reduced-motion: reduce) {
+		*,
+		*::before,
+		*::after {
+			animation-duration: 0.01ms !important;
+			animation-iteration-count: 1 !important;
+			transition-duration: 0.01ms !important;
+		}
+	}
 }
 
 @layer components {
@@ -240,8 +357,9 @@
 		transition: transform var(--sf-motion-base) var(--sf-ease-soft), box-shadow var(--sf-motion-base) var(--sf-ease-soft);
 	}
 	.card-hover:hover {
-		transform: translateY(-3px);
-		box-shadow: 0 12px 28px rgba(0, 0, 0, 0.12);
+		transform: translateY(-4px);
+		border-color: rgba(9, 88, 102, 0.25);
+		box-shadow: 0 12px 28px rgba(9, 88, 102, 0.1);
 	}
 
 	/* Buttons: smooth scale + shadow */
@@ -252,8 +370,8 @@
 			background-color var(--sf-motion-base) var(--sf-ease-soft);
 	}
 	.btn-hover:hover {
-		transform: translateY(-1px) scale(1.015);
-		box-shadow: 0 8px 16px rgba(0, 0, 0, 0.14);
+		transform: translateY(-2px);
+		box-shadow: 0 10px 28px rgba(9, 88, 102, 0.25);
 	}
 	.btn-hover:active {
 		transform: translateY(0) scale(0.985);
@@ -273,8 +391,8 @@
 	   ============================================================ */
 	/* Pulsante primario (azioni principali) */
 	.btn-primary {
-		@apply text-white font-semibold px-[24px] py-[12px] cursor-pointer;
-		border-radius: var(--sf-radius-button);
+		@apply text-white font-bold px-[28px] py-[13px] cursor-pointer;
+		border-radius: 999px;
 		background-color: var(--color-brand-primary);
 		transition:
 			background-color var(--sf-motion-base) var(--sf-ease-soft),
@@ -284,8 +402,8 @@
 	}
 	.btn-primary:hover {
 		background-color: var(--color-brand-primary-hover);
-		box-shadow: 0 10px 22px rgba(9, 88, 102, 0.18);
-		transform: translateY(-1px);
+		box-shadow: 0 10px 28px rgba(9, 88, 102, 0.25);
+		transform: translateY(-2px);
 	}
 	.btn-primary:active {
 		transform: translateY(0) scale(0.985);
@@ -298,15 +416,15 @@
 
 	.btn-compact {
 		@apply min-h-[42px] px-[18px] py-[10px] text-[0.9rem];
-		border-radius: var(--sf-radius-button-compact);
+		border-radius: 999px;
 	}
 
 	/* Pulsante secondario (azioni secondarie) */
 	.btn-secondary {
-		@apply font-semibold px-[20px] py-[11px] cursor-pointer;
-		border-radius: var(--sf-radius-button);
+		@apply font-bold px-[24px] py-[11px] cursor-pointer;
+		border-radius: 999px;
 		border: 1px solid #d7e4e8;
-		color: #365064;
+		color: var(--color-brand-text-secondary);
 		background: #ffffff;
 		transition:
 			background-color var(--sf-motion-base) var(--sf-ease-soft),
@@ -315,10 +433,11 @@
 			box-shadow var(--sf-motion-base) var(--sf-ease-soft);
 	}
 	.btn-secondary:hover {
-		background-color: #f8fbfc;
-		border-color: #bfd2d8;
-		color: #23384a;
-		box-shadow: 0 8px 18px rgba(20, 37, 48, 0.06);
+		background-color: #f0f7f8;
+		border-color: var(--color-brand-primary);
+		color: var(--color-brand-primary);
+		box-shadow: 0 8px 20px rgba(9, 88, 102, 0.1);
+		transform: translateY(-1px);
 	}
 	.btn-secondary:active {
 		transform: none;
@@ -348,8 +467,8 @@
 
 	/* Pulsante CTA arancione (call to action) */
 	.btn-cta {
-		@apply text-white font-semibold px-[22px] py-[11px] cursor-pointer;
-		border-radius: var(--sf-radius-button);
+		@apply text-white font-bold px-[28px] py-[13px] cursor-pointer;
+		border-radius: 999px;
 		border: 1px solid transparent;
 		background-color: var(--color-brand-accent);
 		box-shadow: 0 8px 18px rgba(228, 66, 3, 0.16);
@@ -360,7 +479,8 @@
 	}
 	.btn-cta:hover {
 		background-color: var(--color-brand-accent-hover);
-		box-shadow: 0 10px 22px rgba(228, 66, 3, 0.2);
+		box-shadow: 0 10px 32px rgba(228, 66, 3, 0.3);
+		transform: translateY(-2px);
 	}
 	.btn-cta:active {
 		transform: none;
@@ -373,10 +493,10 @@
 	}
 
 	.btn-tertiary {
-		@apply font-semibold px-[20px] py-[11px] cursor-pointer;
-		border-radius: var(--sf-radius-button);
+		@apply font-bold px-[24px] py-[11px] cursor-pointer;
+		border-radius: 999px;
 		border: 1px solid #d7e4e8;
-		color: #4f6072;
+		color: var(--color-brand-text-secondary);
 		background: #ffffff;
 		box-shadow: 0 8px 18px rgba(20, 37, 48, 0.05);
 		transition:
@@ -388,8 +508,9 @@
 	.btn-tertiary:hover {
 		background: #f8fbfc;
 		border-color: #bfd2d8;
-		color: #27384a;
+		color: var(--color-brand-text);
 		box-shadow: 0 12px 22px rgba(20, 37, 48, 0.08);
+		transform: translateY(-1px);
 	}
 	.btn-tertiary:active {
 		transform: none;
@@ -414,8 +535,8 @@
 		justify-content: center;
 		gap: 8px;
 		min-height: 52px;
-		padding: 0 26px;
-		border-radius: var(--sf-radius-button);
+		padding: 0 24px;
+		border-radius: 999px;
 		font-size: 0.96875rem;
 		font-weight: 700;
 		line-height: 1;
@@ -425,13 +546,13 @@
 		min-height: 48px;
 		padding: 0 20px;
 		font-size: 0.9rem;
-		border-radius: var(--sf-radius-button-compact);
+		border-radius: 999px;
 	}
 
 	/* Pulsante pericolo (eliminazione, annullamento) */
 	.btn-danger {
-		@apply bg-red-500 text-white font-semibold px-[24px] py-[12px] cursor-pointer;
-		border-radius: var(--sf-radius-button);
+		@apply bg-red-500 text-white font-bold px-[28px] py-[13px] cursor-pointer;
+		border-radius: 999px;
 		transition:
 			background-color var(--sf-motion-base) var(--sf-ease-soft),
 			box-shadow var(--sf-motion-base) var(--sf-ease-soft);
@@ -439,6 +560,7 @@
 	.btn-danger:hover {
 		@apply bg-red-600;
 		box-shadow: 0 10px 20px rgba(239, 68, 68, 0.22);
+		transform: translateY(-2px);
 	}
 
 	/* ============================================================
@@ -447,8 +569,8 @@
 	.card-base {
 		background: var(--color-brand-card);
 		border: 1px solid var(--color-brand-border);
-		border-radius: 16px;
-		padding: 24px;
+		border-radius: 20px;
+		padding: 20px;
 		box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
 	}
 
@@ -456,14 +578,31 @@
 	   FORM - Input, label, errore coerenti
 	   ============================================================ */
 	.form-input {
-		@apply w-full text-[0.875rem] bg-[#F8F9FB] border border-[var(--color-brand-border)] rounded-[12px] px-[14px] py-[12px] placeholder:text-[#a0a0a0] focus:outline-none;
+		@apply w-full bg-white focus:outline-none;
+		min-height: 48px;
+		padding: 0 16px;
+		border: 1.5px solid #DFE2E7;
+		border-radius: 12px;
 		color: var(--color-brand-text);
-		transition: border-color 0.2s ease, box-shadow 0.2s ease;
+		font-size: 0.9375rem;
+		font-weight: 500;
+		transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+	}
+	textarea.form-input {
+		padding: 16px;
+	}
+	.form-input::placeholder {
+		color: var(--color-brand-text-muted);
 	}
 	.form-input:focus {
 		border-color: var(--color-brand-primary);
 		box-shadow: 0 0 0 3px rgba(9, 88, 102, 0.1);
 		background: #fff;
+	}
+	.form-input:disabled {
+		opacity: 0.5;
+		background: #F7F8FA;
+		cursor: not-allowed;
 	}
 	.form-input.is-error {
 		border-color: var(--color-brand-error);
@@ -486,7 +625,7 @@
 		@apply inline-flex items-center gap-[4px] px-[10px] py-[3px] rounded-full text-[0.75rem] font-semibold;
 	}
 	.badge-success {
-		@apply bg-green-100 text-green-700;
+		@apply bg-[#f0fdf4] text-[#0a8a7a];
 	}
 	.badge-pending {
 		@apply bg-yellow-100 text-yellow-700;
@@ -495,7 +634,7 @@
 		@apply bg-red-100 text-red-700;
 	}
 	.badge-transit {
-		@apply bg-blue-100 text-blue-700;
+		@apply bg-[#eef7f8] text-[#095866];
 	}
 	.badge-draft {
 		@apply bg-gray-100 text-gray-700;
@@ -535,17 +674,24 @@
 	}
 
 	.sf-section-title {
-		font-size: clamp(1.3rem, 1.08rem + 0.9vw, 1.7rem);
-		line-height: 0.98;
-		font-weight: 800;
-		letter-spacing: -0.03em;
-		color: var(--color-brand-text);
+		font-family: var(--font-montserrat);
+		font-size: 1.0625rem;
+		line-height: 1.25;
+		font-weight: 600;
+		letter-spacing: -0.2px;
+		color: var(--color-brand-primary);
+	}
+
+	@media (min-width: 640px) {
+		.sf-section-title {
+			font-size: 1.125rem;
+		}
 	}
 
 	.sf-section-description {
 		font-size: 0.9375rem;
 		line-height: 1.55;
-		color: #5d6d7e;
+		color: var(--color-brand-text-secondary);
 		max-width: 64ch;
 	}
 
@@ -555,7 +701,7 @@
 		justify-content: center;
 		min-width: 88px;
 		height: 34px;
-		padding: 0 13px;
+		padding: 0 16px;
 		border-radius: 999px;
 		border: 1px solid var(--color-brand-secondary-soft-border);
 		background: rgba(234, 244, 246, 0.82);
@@ -582,36 +728,18 @@
 		isolation: isolate;
 		gap: var(--sf-space-block);
 		padding: var(--sf-space-section);
-		border-radius: var(--sf-radius-card);
-		border: 1px solid #d7e3e7;
-		background:
-			radial-gradient(circle at top right, rgba(9, 88, 102, 0.08) 0%, rgba(9, 88, 102, 0) 30%),
-			linear-gradient(180deg, #ffffff 0%, #f9fbfc 100%);
-		box-shadow:
-			0 16px 34px rgba(20, 37, 48, 0.07),
-			inset 0 1px 0 rgba(255, 255, 255, 0.82);
+		border-radius: 16px;
+		border: none;
+		background: #F8F9FB;
+		box-shadow: none;
 	}
 
 	.sf-section-block::before {
-		content: '';
-		position: absolute;
-		inset: 0 0 auto;
-		height: 3px;
-		background: linear-gradient(90deg, rgba(9, 88, 102, 0.92) 0%, rgba(10, 116, 137, 0.42) 58%, rgba(228, 66, 3, 0.42) 100%);
-		opacity: 0.95;
-		pointer-events: none;
+		display: none;
 	}
 
 	.sf-section-block::after {
-		content: '';
-		position: absolute;
-		top: -72px;
-		right: -54px;
-		width: 188px;
-		height: 188px;
-		border-radius: 999px;
-		background: radial-gradient(circle, rgba(9, 88, 102, 0.1) 0%, rgba(9, 88, 102, 0.04) 40%, rgba(9, 88, 102, 0) 72%);
-		pointer-events: none;
+		display: none;
 	}
 
 	.sf-section-block > * {
@@ -621,7 +749,7 @@
 
 	.sf-section-block__header {
 		display: grid;
-		gap: 6px;
+		gap: 8px;
 	}
 
 	.sf-section-block__body {
@@ -702,10 +830,10 @@
 		display: inline-flex;
 		align-items: center;
 		justify-content: center;
-		gap: 6px;
+		gap: 8px;
 		min-height: 36px;
-		padding: 0 14px;
-		border-radius: var(--sf-radius-button-compact);
+		padding: 0 16px;
+		border-radius: 999px;
 		border: 1px solid var(--color-brand-secondary-soft-border);
 		background: #ffffff;
 		color: var(--color-brand-secondary-soft-text);
@@ -737,11 +865,11 @@
 	.sf-action-card {
 		display: flex;
 		align-items: center;
-		gap: 12px;
+		gap: 8px;
 		position: relative;
 		overflow: clip;
 		min-height: 64px;
-		padding: 10px 12px;
+		padding: 8px 16px;
 		border-radius: 16px;
 		border: 1px solid #d7e3e7;
 		background:
@@ -861,7 +989,7 @@
 	}
 
 	.sf-action-card__arrow {
-		color: #8a98a8;
+		color: var(--color-brand-text-muted);
 		flex: 0 0 auto;
 		transition:
 			color var(--sf-motion-base) var(--sf-ease-soft),
@@ -870,7 +998,7 @@
 
 	.sf-action-card:hover .sf-action-card__arrow,
 	.sf-action-card:focus-visible .sf-action-card__arrow {
-		color: #5f7282;
+		color: var(--color-brand-text-secondary);
 		transform: translateX(1px);
 	}
 
@@ -897,7 +1025,7 @@
 	.sf-icon-shell--selected {
 		border-color: var(--color-brand-primary-light);
 		background: #eef7f9;
-		color: var(--color-brand-primary-light);
+		color: var(--color-brand-primary);
 		box-shadow: 0 10px 22px rgba(14, 101, 114, 0.12);
 	}
 
@@ -959,7 +1087,7 @@
 		margin-top: 2px;
 		font-size: 0.75rem;
 		line-height: 1.45;
-		color: #5f7181;
+		color: var(--color-brand-text-secondary);
 	}
 
 	/* ============================================================
@@ -967,7 +1095,7 @@
 	   ============================================================ */
 	.sf-modal-surface {
 		border: 1px solid #d9e6ea;
-		border-radius: 22px;
+		border-radius: 24px;
 		background: #ffffff;
 		box-shadow: 0 24px 72px rgba(15, 23, 42, 0.18);
 		overflow: hidden;
@@ -984,13 +1112,13 @@
 		align-items: flex-start;
 		justify-content: space-between;
 		gap: 16px;
-		padding: 22px 24px 18px;
+		padding: 24px;
 	}
 
 	.sf-modal-header__main {
 		display: flex;
 		align-items: flex-start;
-		gap: 12px;
+		gap: 8px;
 		min-width: 0;
 		flex: 1;
 	}
@@ -1017,6 +1145,7 @@
 
 	.sf-modal-title {
 		margin: 0;
+		font-family: var(--font-montserrat);
 		font-size: 1.25rem;
 		line-height: 1.1;
 		font-weight: 800;
@@ -1025,10 +1154,10 @@
 	}
 
 	.sf-modal-description {
-		margin: 6px 0 0;
+		margin: 8px 0 0;
 		font-size: 0.9375rem;
 		line-height: 1.55;
-		color: #607184;
+		color: var(--color-brand-text-secondary);
 	}
 
 	.sf-modal-close {
@@ -1041,7 +1170,7 @@
 		border-radius: 999px;
 		border: 1px solid #d7e4e8;
 		background: #ffffff;
-		color: #5f7282;
+		color: var(--color-brand-text-secondary);
 		box-shadow: 0 8px 18px rgba(20, 37, 48, 0.06);
 		cursor: pointer;
 		transition:
@@ -1077,7 +1206,7 @@
 		display: flex;
 		align-items: center;
 		justify-content: flex-end;
-		gap: 12px;
+		gap: 8px;
 		padding: 20px 24px 24px;
 		background: linear-gradient(180deg, rgba(248, 251, 252, 0) 0%, rgba(248, 251, 252, 0.9) 100%);
 	}
@@ -1088,8 +1217,8 @@
 
 	.sf-modal-summary {
 		display: grid;
-		gap: 12px;
-		padding: 14px 16px;
+		gap: 8px;
+		padding: 16px;
 		border: 1px solid var(--color-brand-secondary-soft-border);
 		border-radius: 16px;
 		background: linear-gradient(180deg, #f9fcfd 0%, #f1f8fa 100%);
@@ -1097,17 +1226,17 @@
 
 	@media (max-width: 39.99rem) {
 		.sf-modal-header {
-			padding: 18px 18px 16px;
+			padding: 20px;
 		}
 
 		.sf-modal-body {
-			padding: 18px 18px 0;
+			padding: 20px 20px 0;
 		}
 
 		.sf-modal-actions {
 			flex-direction: column-reverse;
 			align-items: stretch;
-			padding: 18px 18px 18px;
+			padding: 20px;
 		}
 
 		.sf-modal-actions > * {
@@ -1121,8 +1250,8 @@
 	.ux-alert {
 		display: flex;
 		align-items: flex-start;
-		gap: 10px;
-		padding: 12px 14px;
+		gap: 8px;
+		padding: 16px;
 		border-radius: 12px;
 		border: 1px solid transparent;
 		font-size: 0.875rem;
@@ -1146,13 +1275,13 @@
 	.ux-alert--soft {
 		background: #fff7ed;
 		border-color: #fcd9b2;
-		color: #8a5e2e;
+		color: var(--color-brand-text-muted);
 	}
 
 	.ux-alert--info {
-		background: #eff8ff;
-		border-color: #bfdbfe;
-		color: #1d4f91;
+		background: #eef7f8;
+		border-color: #bdd5da;
+		color: #095866;
 	}
 
 	.ux-alert--success {
@@ -1218,19 +1347,21 @@
 	}
 
 	.input-preventivo-rapido {
-		@apply bg-[#F1F1F1] text-[#767676] text-[1rem] tablet:text-[0.875rem] font-medium w-full h-[54px] leading-[54px] rounded-[8px] px-[18px] placeholder:text-[#767676] block mt-[15px] tracking-[-0.336px];
-		transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
-		border: 2px solid transparent;
+		@apply bg-white text-[#1D2738] text-[1rem] tablet:text-[0.9375rem] font-medium w-full h-[50px] leading-[50px] px-[16px] placeholder:text-[#A0A7B4] block mt-[8px] tracking-[-0.01em];
+		border-radius: var(--sf-radius-control);
+		border: 1.5px solid #D8DCE3;
+		transition: border-color var(--sf-motion-base) var(--sf-ease-soft), box-shadow var(--sf-motion-base) var(--sf-ease-soft), background-color var(--sf-motion-base) var(--sf-ease-soft);
 	}
 	.input-preventivo-rapido:focus {
 		background-color: #fff;
 		border-color: var(--color-brand-primary);
-		box-shadow: 0 0 0 3px rgba(9, 88, 102, 0.1);
+		box-shadow: 0 0 0 3px rgba(9, 88, 102, 0.12);
 		outline: none;
 	}
 
 	.label-preventivo-rapido {
-		@apply text-[1rem] tablet:text-[1.126rem] desktop:text-[1.25rem] text-black font-semibold desktop-xl:font-medium tracking-[-0.48px];
+		@apply text-[0.8125rem] tablet:text-[0.875rem] font-semibold tracking-[-0.01em] block;
+		color: var(--color-brand-text);
 	}
 
 	.label-popup {
@@ -1256,13 +1387,14 @@
 
 	.services-button {
 		@apply block text-[0.875rem] border border-[var(--color-brand-primary)] tracking-[0.2px] text-center text-[var(--color-brand-primary)] font-bold h-[42px] leading-[40px] mx-auto;
-		border-radius: var(--sf-radius-button-compact);
+		border-radius: 999px;
 		transition: background-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
 	}
 	.services-button:hover {
 		background-color: var(--color-brand-primary);
 		color: #fff;
-		transform: scale(1.02);
+		transform: translateY(-1px);
+		border-color: var(--color-brand-primary);
 	}
 
 	/* Contatti */
@@ -1311,14 +1443,9 @@
 	pointer-events: none;
 }
 
-/* Hardening step pills: evita conflitti colore/sfondo sul primo render mobile */
-.steps-pill-item {
-	background-color: transparent;
-}
-
-.steps-pill-active {
-	background-color: var(--color-brand-accent) !important;
-	border-color: var(--color-brand-accent) !important;
+/* Hardening stepper: evita conflitti colore/sfondo sul primo render */
+.steps-figma-item--active {
+	background-color: #095866 !important;
 	color: #ffffff !important;
 }
 
@@ -1420,5 +1547,261 @@
 		padding-left: 20px;
 		padding-right: 20px;
 		max-width: 1280px !important;
+	}
+}
+
+/* ============================================================
+   ContenutoHeader — shared utility classes
+   Used by: components/ContenutoHeader.vue (Servizi, Chi siamo, Guide, FAQ, etc.)
+   Merged from contenuto-header.css
+   ============================================================ */
+
+.content-header-kicker {
+	font-family: var(--font-montserrat);
+	color: var(--color-brand-primary);
+	font-size: 0.875rem;
+	font-weight: 700;
+	letter-spacing: 0.14em;
+	text-transform: uppercase;
+}
+
+.content-header-scroll-link {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-width: 132px;
+	height: 48px;
+	padding: 0 20px;
+	border-radius: 999px;
+	border: 1px solid #d9e6ea;
+	background: #ffffff;
+	color: var(--color-brand-primary);
+	font-size: 0.875rem;
+	font-weight: 700;
+	letter-spacing: -0.02em;
+	box-shadow: 0 10px 22px rgba(20, 37, 48, 0.05);
+	transition: transform 0.24s ease, background-color 0.24s ease, border-color 0.24s ease, box-shadow 0.24s ease;
+}
+
+.content-header-scroll-link:hover {
+	transform: translateY(-1px);
+	background: #f5fafb;
+	border-color: #c8dde1;
+	box-shadow: 0 14px 24px rgba(20, 37, 48, 0.08);
+}
+
+@media (min-width: 64rem) {
+	.content-header-kicker {
+		font-size: 1.0625rem;
+	}
+
+	.content-header-scroll-link {
+		min-width: 146px;
+		height: 56px;
+		font-size: 0.95rem;
+	}
+}
+
+/* ============================================================
+   SKELETON SHIMMER — Loading placeholder animation
+   Usage: <div class="sf-skeleton sf-skeleton--text" />
+   ============================================================ */
+@keyframes sf-shimmer {
+	0% { background-position: -200% 0; }
+	100% { background-position: 200% 0; }
+}
+.sf-skeleton {
+	background: linear-gradient(90deg, #e8ecef 25%, #f4f6f8 50%, #e8ecef 75%);
+	background-size: 200% 100%;
+	animation: sf-shimmer 1.6s ease-in-out infinite;
+	border-radius: 8px;
+}
+.sf-skeleton--text {
+	height: 14px;
+	width: 80%;
+	margin-bottom: 8px;
+}
+.sf-skeleton--title {
+	height: 22px;
+	width: 60%;
+	margin-bottom: 12px;
+}
+.sf-skeleton--avatar {
+	width: 40px;
+	height: 40px;
+	border-radius: 50%;
+}
+.sf-skeleton--card {
+	height: 120px;
+	border-radius: 16px;
+}
+.sf-skeleton--button {
+	height: 48px;
+	width: 140px;
+	border-radius: 999px;
+}
+
+/* ============================================================
+   STAGGER LIST — Cascade fade-in for list items
+   Usage: parent gets .sf-stagger, children auto-animate
+   ============================================================ */
+@keyframes sf-stagger-in {
+	from { opacity: 0; transform: translateY(8px); }
+	to { opacity: 1; transform: translateY(0); }
+}
+.sf-stagger > * {
+	animation: sf-stagger-in 0.3s var(--sf-ease-soft) both;
+}
+.sf-stagger > *:nth-child(1) { animation-delay: 0ms; }
+.sf-stagger > *:nth-child(2) { animation-delay: 50ms; }
+.sf-stagger > *:nth-child(3) { animation-delay: 100ms; }
+.sf-stagger > *:nth-child(4) { animation-delay: 150ms; }
+.sf-stagger > *:nth-child(5) { animation-delay: 200ms; }
+.sf-stagger > *:nth-child(6) { animation-delay: 250ms; }
+.sf-stagger > *:nth-child(7) { animation-delay: 300ms; }
+.sf-stagger > *:nth-child(8) { animation-delay: 350ms; }
+.sf-stagger > *:nth-child(n+9) { animation-delay: 400ms; }
+
+/* ============================================================
+   SMOOTH ACCORDION HEIGHT — for collapsible sections
+   ============================================================ */
+.sf-accordion-body {
+	display: grid;
+	grid-template-rows: 0fr;
+	transition: grid-template-rows var(--sf-motion-slow) var(--sf-ease-soft);
+}
+.sf-accordion-body.is-open {
+	grid-template-rows: 1fr;
+}
+.sf-accordion-body > * {
+	overflow: hidden;
+}
+
+/* ============================================================
+   STATUS DOT — Animated dot for live/active states
+   ============================================================ */
+@keyframes sf-dot-pulse {
+	0%, 100% { opacity: 1; transform: scale(1); }
+	50% { opacity: 0.5; transform: scale(0.85); }
+}
+.sf-status-dot {
+	width: 8px;
+	height: 8px;
+	border-radius: 50%;
+	background: var(--color-brand-success);
+	animation: sf-dot-pulse 2s ease-in-out infinite;
+}
+.sf-status-dot--warning {
+	background: var(--color-brand-accent);
+}
+.sf-status-dot--error {
+	background: var(--color-brand-error);
+}
+
+/* ============================================================
+   PROGRESS BAR — Animated fill for checkout/funnel steps
+   ============================================================ */
+@keyframes sf-progress-fill {
+	from { width: 0; }
+}
+.sf-progress-bar {
+	height: 4px;
+	background: #e5eaed;
+	border-radius: 999px;
+	overflow: hidden;
+}
+.sf-progress-bar__fill {
+	height: 100%;
+	background: linear-gradient(90deg, var(--color-brand-primary), var(--color-brand-primary-light));
+	border-radius: inherit;
+	animation: sf-progress-fill 0.6s var(--sf-ease-soft) both;
+	transition: width 0.4s var(--sf-ease-soft);
+}
+
+/* ============================================================
+   NUMBER COUNT-UP — Tabular nums for animated counters
+   ============================================================ */
+.sf-tabular-nums {
+	font-variant-numeric: tabular-nums;
+	font-feature-settings: 'tnum' 1;
+}
+
+/* ============================================================
+   MOBILE RESPONSIVE GUARDS — Global fixes for 375px viewport
+   Applied last to override any specificity conflicts.
+   ============================================================ */
+
+/* Ensure no horizontal overflow on any element */
+@media (max-width: 47.99rem) {
+	/* Global container padding — minimum 16px on each side */
+	.container,
+	[class*="__container"],
+	.mx-auto {
+		padding-left: max(16px, env(safe-area-inset-left, 0px));
+		padding-right: max(16px, env(safe-area-inset-right, 0px));
+	}
+
+	/* Card padding minimum 14px on mobile */
+	.card-base,
+	.sf-card,
+	.sf-surface-card,
+	.sf-section-block {
+		padding: 16px;
+	}
+
+	/* Buttons: minimum 44x44px touch targets */
+	.btn-primary,
+	.btn-secondary,
+	.btn-cta,
+	.btn-tertiary,
+	.btn-danger,
+	.sf-nav-button {
+		min-height: 44px;
+	}
+
+	/* Body text never below 14px */
+	.body-text,
+	.sf-section-description {
+		font-size: max(0.875rem, 14px);
+	}
+
+	/* Page titles scale down properly */
+	.page-title {
+		font-size: 1.375rem;
+	}
+
+	/* Action cards: full-width stacking */
+	.sf-action-card {
+		min-height: 56px;
+		padding: 8px 16px;
+	}
+
+	/* Modal surfaces: respect mobile edges */
+	.sf-modal-surface {
+		border-radius: 18px;
+		margin: 16px;
+		max-height: calc(100dvh - 24px);
+	}
+}
+
+/* Extra-small screens (375px and below) */
+@media (max-width: 23.4375rem) {
+	.page-title {
+		font-size: 1.25rem;
+	}
+
+	.section-title {
+		font-size: 1.0625rem;
+	}
+
+	.card-title {
+		font-size: 1rem;
+	}
+
+	/* Tighter card padding on very small screens */
+	.card-base,
+	.sf-card,
+	.sf-surface-card {
+		padding: 16px;
 	}
 }

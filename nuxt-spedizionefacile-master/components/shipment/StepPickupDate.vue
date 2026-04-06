@@ -29,7 +29,7 @@ const scrollTrack = (direction) => {
 				</svg>
 				<div class="min-w-0">
 					<p class="text-[0.9375rem] font-bold leading-[1.2] text-[var(--color-brand-text)]">Scegli il ritiro</p>
-					<p class="mt-[4px] text-[0.875rem] leading-[1.45] text-[#52606D]">{{ dateError }}</p>
+					<p class="mt-[4px] text-[0.875rem] leading-[1.45] text-[var(--color-brand-text-secondary)]">{{ dateError }}</p>
 				</div>
 			</div>
 		</div>
@@ -75,8 +75,8 @@ const scrollTrack = (direction) => {
 				</div>
 			</div>
 
-			<div class="pickup-date-slider-shell sf-section-block__body rounded-[14px] border border-[#E4ECEF] bg-[#F4F7F9] p-[8px]">
-				<div class="pickup-date-slider-track px-[2px]">
+			<div class="pickup-date-slider-shell sf-section-block__body max-w-full overflow-hidden rounded-[12px] bg-[#E6E9EE] p-[8px]" style="box-shadow: inset 0 1px 2px rgba(0,0,0,0.04)">
+				<div class="pickup-date-slider-track max-w-full overflow-hidden px-[2px]">
 					<div ref="trackRef" class="pickup-date-track" aria-label="Giorni disponibili per il ritiro">
 						<div class="pickup-date-track__list">
 							<button

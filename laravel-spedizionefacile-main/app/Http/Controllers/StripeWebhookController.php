@@ -36,6 +36,7 @@ namespace App\Http\Controllers;
 use App\Events\OrderPaid;
 use App\Models\Order;
 use App\Models\Setting;
+use App\Models\StripeWebhookEvent;
 use App\Models\Transaction;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -160,12 +161,37 @@ class StripeWebhookController extends Controller
         return $secret !== '' ? $secret : null;
     }
 
+    /**
+     * Eventi che modificano dati e richiedono controllo di idempotenza.
+     * Gli eventi in questa lista vengono registrati nella tabella stripe_webhook_events
+     * per evitare che Stripe retries creino duplicati.
+     */
+    private const IDEMPOTENT_EVENT_TYPES = [
+        'payment_intent.succeeded',
+        'payment_intent.payment_failed',
+    ];
+
     // Funzione principale che riceve e gestisce tutte le notifiche da Stripe
     public function handle(Request $request)
     {
         // Prima di tutto, verifichiamo che la notifica venga davvero da Stripe
         // (per sicurezza, per evitare che qualcuno finga di essere Stripe)
         $event = $this->verifySignature($request);
+
+        // ── Idempotenza a livello di evento Stripe ──────────────────
+        // Stripe puo' ritentare lo stesso webhook (timeout, errore di rete).
+        // L'ID evento (evt_...) resta lo stesso nei retry. Registriamo
+        // gli ID processati per evitare di rielaborare lo stesso evento.
+        if (in_array($event->type, self::IDEMPOTENT_EVENT_TYPES, true)) {
+            if (! StripeWebhookEvent::markAsProcessed($event->id, $event->type)) {
+                Log::info('Stripe webhook event already processed, skipping', [
+                    'event_id' => $event->id,
+                    'event_type' => $event->type,
+                ]);
+
+                return response()->json(['received' => true, 'skipped' => 'already_processed']);
+            }
+        }
 
         // In base al tipo di evento, chiamiamo la funzione giusta
         // "match" e' come un selettore: sceglie cosa fare in base al tipo di notifica
@@ -229,6 +255,23 @@ class StripeWebhookController extends Controller
 
         // Se l'ordine non esiste, non facciamo nulla
         if (! $order) {
+            return;
+        }
+
+        // ── Idempotenza a livello di payment_intent ─────────────────
+        // Se l'ordine ha gia' registrato questo payment_intent con una transazione
+        // succeeded, non c'e' nulla da fare. Questo e' un secondo livello di
+        // protezione oltre all'event-level idempotency in handle().
+        if (
+            $order->stripe_payment_intent_id === $intent->id
+            && $order->hasSuccessfulTransactionForExternalId($intent->id)
+            && $order->isPostPaymentState()
+        ) {
+            Log::info('Stripe paymentSucceeded: order already fully processed', [
+                'order_id' => $order->id,
+                'payment_intent_id' => $intent->id,
+            ]);
+
             return;
         }
 
@@ -353,6 +396,21 @@ class StripeWebhookController extends Controller
         $order = Order::where('id', $orderId)->first();
 
         if (! $order) {
+            return;
+        }
+
+        // ── Idempotenza: se esiste gia' una transazione failed per questo intent, skip ──
+        $existingFailedTransaction = $order->transactions()
+            ->where('ext_id', $intent->id)
+            ->where('status', 'failed')
+            ->exists();
+
+        if ($existingFailedTransaction && $order->rawStatus() === Order::PAYMENT_FAILED) {
+            Log::info('Stripe paymentFailed: already recorded for this intent', [
+                'order_id' => $order->id,
+                'payment_intent_id' => $intent->id,
+            ]);
+
             return;
         }
 

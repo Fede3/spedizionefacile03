@@ -6,6 +6,7 @@ const props = defineProps({
 const isNavbarLogo = computed(() => Boolean(props.isNavbar));
 const { isAuthMinimalShellRoute } = useShellRouteState();
 const showNavbarDivider = computed(() => isNavbarLogo.value && !isAuthMinimalShellRoute.value);
+const showDivider = computed(() => showNavbarDivider.value || !isNavbarLogo.value);
 </script>
 
 <template>
@@ -13,7 +14,7 @@ const showNavbarDivider = computed(() => isNavbarLogo.value && !isAuthMinimalShe
 		class="logo-mark"
 		:class="[
 			isNavbarLogo ? 'logo-mark--navbar' : 'logo-mark--footer',
-			showNavbarDivider ? 'logo-mark--with-divider' : ''
+			showDivider ? (isNavbarLogo ? 'logo-mark--with-divider' : 'logo-mark--with-divider-light') : ''
 		]">
 		<span class="logo-mark__glyph">SF</span>
 	</div>
@@ -21,7 +22,7 @@ const showNavbarDivider = computed(() => isNavbarLogo.value && !isAuthMinimalShe
 		<span
 			:class="[
 				showNavbarDivider ? 'desktop:ml-[31px] ml-[14px] tablet:ml-[26px]' : 'desktop:ml-[14px] ml-[10px] tablet:ml-[12px]',
-				'text-[#404040] font-semibold tracking-[-0.03em]',
+				'text-[var(--color-brand-text)] font-semibold tracking-[-0.03em]',
 			]"
 		>
 			<span class="inline max-w-[74px] truncate text-[0.75rem] sm:hidden">Spediamo</span>
@@ -30,10 +31,7 @@ const showNavbarDivider = computed(() => isNavbarLogo.value && !isAuthMinimalShe
 	</template>
 	<span
 		v-else
-		:class="[
-			showNavbarDivider ? 'desktop:ml-[31px] ml-[14px] tablet:ml-[26px]' : 'desktop:ml-[14px] ml-[10px] tablet:ml-[12px]',
-			'text-[0.75rem] desktop:text-[1.125rem] desktop-xl:text-[1.2rem] tablet:text-[1rem] font-semibold tracking-[-0.03em] !text-white'
-		]"
+		class="ml-[18px] sm:ml-[26px] lg:ml-[31px] text-[0.8125rem] sm:text-[1rem] lg:text-[1.125rem] font-semibold tracking-[-0.03em] !text-white"
 	>
 		SpediamoFacile
 	</span>
@@ -68,14 +66,22 @@ const showNavbarDivider = computed(() => isNavbarLogo.value && !isAuthMinimalShe
 	letter-spacing: -0.03em;
 }
 
-.logo-mark--with-divider::after {
+.logo-mark--with-divider::after,
+.logo-mark--with-divider-light::after {
 	content: "";
 	position: absolute;
 	right: -12px;
 	top: 0;
 	width: 2px;
 	height: 100%;
+}
+
+.logo-mark--with-divider::after {
 	background: #333333;
+}
+
+.logo-mark--with-divider-light::after {
+	background: #ffffff;
 }
 
 @media (min-width: 640px) {
@@ -89,7 +95,8 @@ const showNavbarDivider = computed(() => isNavbarLogo.value && !isAuthMinimalShe
 		font-size: 18px;
 	}
 
-	.logo-mark--with-divider::after {
+	.logo-mark--with-divider::after,
+	.logo-mark--with-divider-light::after {
 		right: -15px;
 	}
 }
@@ -105,7 +112,8 @@ const showNavbarDivider = computed(() => isNavbarLogo.value && !isAuthMinimalShe
 		font-size: 22px;
 	}
 
-	.logo-mark--with-divider::after {
+	.logo-mark--with-divider::after,
+	.logo-mark--with-divider-light::after {
 		right: -19px;
 		width: 4px;
 	}

@@ -319,7 +319,7 @@ onMounted(() => {
 												<span :class="['sf-toggle', { 'is-active': coupon.active }]">
 													<span class="sf-toggle__thumb"></span>
 												</span>
-												<span class="text-[0.8125rem] font-medium" :class="coupon.active ? 'text-emerald-700' : 'text-slate-500'">
+												<span class="text-[0.8125rem] font-medium" :class="coupon.active ? 'text-[#0a8a7a]' : 'text-[var(--color-brand-text-muted)]'">
 													{{ coupon.active ? 'Attivo' : 'Disattivato' }}
 												</span>
 											</button>

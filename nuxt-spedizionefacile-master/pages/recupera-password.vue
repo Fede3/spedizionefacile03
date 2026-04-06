@@ -50,7 +50,7 @@ definePageMeta({
 	<section class="auth-shell">
 		<div class="my-container">
 			<div class="auth-shell-frame">
-				<div class="auth-shell-head">
+				<header class="auth-shell-head">
 					<div class="auth-shell-avatar" aria-hidden="true">
 						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="auth-shell-avatar__icon" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
 							<rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
@@ -61,17 +61,19 @@ definePageMeta({
 					<p class="auth-shell-copy">
 						{{ messageSuccess ? 'Controlla la tua casella: ti abbiamo inviato il link per reimpostare la password.' : 'Inserisci la tua email per ricevere il link di reimpostazione.' }}
 					</p>
-				</div>
+				</header>
 
 				<div v-if="messageSuccess" class="auth-shell-message auth-feedback--success">
 					<div class="auth-shell-message__icon" aria-hidden="true">
-						<span>&#10003;</span>
+						<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+							<path d="M20 6L9 17l-5-5" />
+						</svg>
 					</div>
 					<div class="auth-shell-message__body">
 						<p class="auth-shell-message__title">Richiesta inviata</p>
 						<p class="auth-shell-message__copy">{{ messageSuccess }}</p>
 					</div>
-					<NuxtLink to="/autenticazione" class="btn-cta btn-compact inline-flex items-center justify-center gap-[8px] auth-shell-message__action">
+					<NuxtLink to="/autenticazione" class="btn-cta w-full inline-flex items-center justify-center gap-[8px] auth-shell-message__action">
 						Torna al login
 					</NuxtLink>
 				</div>
@@ -95,7 +97,7 @@ definePageMeta({
 						{{ isLoading ? 'Invio in corso...' : 'Invia link recupero password' }}
 					</button>
 
-					<p class="text-center text-[0.8125rem] text-[var(--color-brand-text-secondary)]">
+					<p class="text-center text-[0.8125rem]" style="color: var(--color-brand-text-secondary)">
 						Ricordi la password?
 						<NuxtLink to="/autenticazione" class="auth-text-link">Torna al login</NuxtLink>
 					</p>

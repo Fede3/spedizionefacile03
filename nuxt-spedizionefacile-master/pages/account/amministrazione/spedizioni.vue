@@ -111,11 +111,11 @@ onMounted(() => {
 				]"
 				back-to="/account/amministrazione"
 				back-label="Torna all'amministrazione" />
-			<div class="bg-blue-50 rounded-[12px] px-[16px] py-[10px] border border-blue-200 mb-[24px] flex items-center gap-[8px]">
-				<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[18px] h-[18px] text-blue-600 shrink-0" fill="currentColor">
+			<div class="bg-[#eef7f8] rounded-[20px] px-[16px] py-[10px] border border-[#bdd5da] mb-[24px] flex items-center gap-[8px]">
+				<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[18px] h-[18px] text-[#095866] shrink-0" fill="currentColor">
 					<path d="M13,9H11V7H13M13,17H11V11H13M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z" />
 				</svg>
-				<p class="text-[0.8125rem] text-blue-700">
+				<p class="text-[0.8125rem] text-[#095866]">
 					Questa sezione mostra
 					<strong>tutte le spedizioni BRT di tutti gli utenti</strong>
 					della piattaforma. Per le tue spedizioni personali, vai su "Le mie spedizioni".
@@ -126,9 +126,9 @@ onMounted(() => {
 			<div
 				v-if="actionMessage"
 				:class="[
-					'mb-[20px] px-[16px] py-[12px] rounded-[12px] text-[0.875rem] font-medium flex items-center gap-[8px]',
+					'mb-[20px] px-[16px] py-[12px] rounded-[20px] text-[0.875rem] font-medium flex items-center gap-[8px]',
 					actionMessage.type === 'success'
-						? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+						? 'bg-[#f0fdf4] text-[#0a8a7a] border border-[#d1fae5]'
 						: 'bg-red-50 text-red-700 border border-red-200',
 				]">
 				<svg
@@ -160,7 +160,7 @@ onMounted(() => {
 						@input="onShipmentsSearch"
 						type="text"
 						placeholder="Cerca Parcel ID o utente..."
-						class="w-full pl-[40px] pr-[14px] py-[10px] bg-white border border-[var(--color-brand-border)] rounded-[50px] text-[0.875rem] focus:border-[var(--color-brand-primary)] focus:outline-none" />
+						class="form-input pl-[40px]" />
 				</div>
 				<select
 					v-model="shipmentsStatusFilter"
@@ -168,7 +168,7 @@ onMounted(() => {
 						shipmentsPage = 1;
 						fetchShipments();
 					"
-					class="px-[14px] py-[10px] bg-white border border-[var(--color-brand-border)] rounded-[50px] text-[0.875rem] focus:border-[var(--color-brand-primary)] focus:outline-none cursor-pointer">
+					class="form-input cursor-pointer">
 					<option value="">Tutti gli stati</option>
 					<option value="completed">Completato</option>
 					<option value="payed">Pagato</option>
@@ -178,7 +178,7 @@ onMounted(() => {
 				</select>
 			</div>
 
-			<div class="bg-white rounded-[12px] p-[24px] desktop:p-[32px] shadow-sm border border-[var(--color-brand-border)]">
+			<div class="bg-white rounded-[20px] p-[24px] desktop:p-[32px] shadow-sm border border-[var(--color-brand-border)]">
 				<h2 class="text-[1.125rem] font-bold text-[var(--color-brand-text)] mb-[20px]">Spedizioni</h2>
 
 				<div v-if="tabLoading" class="py-[40px] flex justify-center">
@@ -186,7 +186,7 @@ onMounted(() => {
 				</div>
 
 				<div v-else-if="!shipmentsData.data?.length" class="text-center py-[48px]">
-					<div class="w-[64px] h-[64px] mx-auto mb-[16px] bg-[#F8F9FB] rounded-full flex items-center justify-center">
+					<div class="w-[64px] h-[64px] mx-auto mb-[16px] bg-[#F5F6F9] rounded-full flex items-center justify-center">
 						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[28px] h-[28px]" fill="#C8CCD0">
 							<path
 								d="M3,4A2,2 0 0,0 1,6V17H3A3,3 0 0,0 6,20A3,3 0 0,0 9,17H15A3,3 0 0,0 18,20A3,3 0 0,0 21,17H23V12L20,8H17V4M17,9.5H19.5L21.47,12H17M6,15.5A1.5,1.5 0 0,1 7.5,17A1.5,1.5 0 0,1 6,18.5A1.5,1.5 0 0,1 4.5,17A1.5,1.5 0 0,1 6,15.5M18,15.5A1.5,1.5 0 0,1 19.5,17A1.5,1.5 0 0,1 18,18.5A1.5,1.5 0 0,1 16.5,17A1.5,1.5 0 0,1 18,15.5Z" />
@@ -201,7 +201,7 @@ onMounted(() => {
 						<div
 							v-for="(s, idx) in shipmentsData.data"
 							:key="s.id"
-							class="rounded-[12px] border border-[var(--color-brand-border)] bg-[#F8FAFB] p-[14px] shadow-sm">
+							class="rounded-[20px] border border-[var(--color-brand-border)] bg-[#F8FAFB] p-[14px] shadow-sm">
 							<div class="flex items-start justify-between gap-[12px]">
 								<div class="min-w-0">
 									<div class="flex flex-wrap items-center gap-[8px] mb-[6px]">
@@ -221,14 +221,14 @@ onMounted(() => {
 								<div class="text-right shrink-0">
 									<p class="text-[0.75rem] text-[var(--color-brand-text-secondary)]">{{ formatDate(s.created_at) }}</p>
 									<p v-if="s.is_cod" class="text-[0.875rem] font-semibold text-amber-700">&euro;{{ formatCurrency(s.cod_amount) }}</p>
-									<p v-else class="text-[0.75rem] text-[#C8CCD0]">&mdash;</p>
+									<p v-else class="text-[0.75rem] text-[var(--color-brand-text-muted)]">&mdash;</p>
 								</div>
 							</div>
 							<div class="flex flex-wrap items-center gap-[8px] mt-[12px] text-[0.75rem]">
-								<span v-if="s.brt_parcel_id" class="font-mono bg-indigo-50 text-indigo-700 px-[6px] py-[2px] rounded">
+								<span v-if="s.brt_parcel_id" class="font-mono bg-[#eef7f8] text-[#095866] px-[6px] py-[2px] rounded">
 									{{ s.brt_parcel_id }}
 								</span>
-								<span v-else class="text-[#C8CCD0]">&mdash;</span>
+								<span v-else class="text-[var(--color-brand-text-muted)]">&mdash;</span>
 								<span v-if="s.brt_pudo_id" class="text-[0.625rem] font-semibold bg-[var(--color-brand-primary)]/10 text-[var(--color-brand-primary)] px-[6px] py-[2px] rounded">
 									PUDO
 								</span>
@@ -238,7 +238,7 @@ onMounted(() => {
 									v-if="s.brt_tracking_url"
 									:href="s.brt_tracking_url"
 									target="_blank"
-									class="inline-flex items-center justify-center gap-[4px] px-[12px] py-[9px] rounded-[12px] bg-indigo-50 text-indigo-700 text-[0.75rem] font-medium hover:bg-indigo-100 transition-colors">
+									class="inline-flex items-center justify-center gap-[4px] px-[12px] py-[9px] rounded-[100px] bg-[#eef7f8] text-[#095866] text-[0.75rem] font-medium hover:bg-[#dceef0] transition-colors">
 									<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[12px] h-[12px]" fill="currentColor">
 										<path
 											d="M18,15A3,3 0 0,1 21,18A3,3 0 0,1 18,21C16.69,21 15.58,20.17 15.17,19H14V17H15.17C15.58,15.83 16.69,15 18,15M18,17A1,1 0 0,0 17,18A1,1 0 0,0 18,19A1,1 0 0,0 19,18A1,1 0 0,0 18,17M6,15A3,3 0 0,1 9,18A3,3 0 0,1 6,21A3,3 0 0,1 3,18A3,3 0 0,1 6,15M6,17A1,1 0 0,0 5,18A1,1 0 0,0 6,19A1,1 0 0,0 7,18A1,1 0 0,0 6,17M11,7L9.5,13H13.5L12,7M9,3H14L18,17H12.5L12,15H11L10.5,17H5L9,3Z" />
@@ -248,7 +248,7 @@ onMounted(() => {
 								<button
 									v-if="s.brt_parcel_id"
 									@click="downloadLabel(s)"
-									class="inline-flex items-center justify-center gap-[4px] px-[12px] py-[9px] rounded-[12px] bg-emerald-50 text-emerald-700 text-[0.75rem] font-medium hover:bg-emerald-100 cursor-pointer transition-colors">
+									class="inline-flex items-center justify-center gap-[4px] px-[12px] py-[9px] rounded-[100px] bg-[#eef7f8] text-[#095866] text-[0.75rem] font-medium hover:bg-[#dceef0] cursor-pointer transition-colors">
 									<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[12px] h-[12px]" fill="currentColor">
 										<path d="M5,20H19V18H5M19,9H15V3H9V9H5L12,16L19,9Z" />
 									</svg>
@@ -257,7 +257,7 @@ onMounted(() => {
 								<button
 									v-else
 									disabled
-									class="inline-flex items-center justify-center gap-[4px] px-[12px] py-[9px] rounded-[12px] bg-gray-50 text-[#C8CCD0] text-[0.75rem] font-medium cursor-not-allowed">
+									class="inline-flex items-center justify-center gap-[4px] px-[12px] py-[9px] rounded-[100px] bg-gray-50 text-[var(--color-brand-text-muted)] text-[0.75rem] font-medium cursor-not-allowed">
 									No label
 								</button>
 								<select
@@ -265,7 +265,7 @@ onMounted(() => {
 										changeOrderStatus(s.id, $event.target.value);
 										$event.target.value = '';
 									"
-									class="col-span-2 w-full px-[10px] py-[9px] rounded-[12px] bg-white text-[var(--color-brand-text)] text-[0.75rem] cursor-pointer border border-[#D7E1E4] font-medium focus:border-[var(--color-brand-primary)] focus:outline-none">
+									class="form-input col-span-2 text-[0.75rem] font-medium cursor-pointer">
 									<option value="" selected disabled>Stato</option>
 									<option value="in_transit">In transito</option>
 									<option value="delivered">Consegnato</option>
@@ -278,14 +278,14 @@ onMounted(() => {
 					<div class="hidden tablet:block overflow-x-auto">
 						<table class="w-full text-[0.875rem]">
 							<thead>
-								<tr class="border-b border-[var(--color-brand-border)] text-left text-[var(--color-brand-text-secondary)]">
-									<th class="pb-[12px] font-medium">Ordine</th>
-									<th class="pb-[12px] font-medium">Utente</th>
-									<th class="pb-[12px] font-medium">Parcel ID</th>
-									<th class="pb-[12px] font-medium">Stato</th>
-									<th class="pb-[12px] font-medium">COD</th>
-									<th class="pb-[12px] font-medium">Data</th>
-									<th class="pb-[12px] font-medium text-right">Azioni</th>
+								<tr class="text-left text-[var(--color-brand-text-secondary)] bg-[#F6F8FA]">
+									<th class="px-[14px] py-[12px] font-medium first:rounded-tl-[14px]">Ordine</th>
+									<th class="px-[14px] py-[12px] font-medium">Utente</th>
+									<th class="px-[14px] py-[12px] font-medium">Parcel ID</th>
+									<th class="px-[14px] py-[12px] font-medium">Stato</th>
+									<th class="px-[14px] py-[12px] font-medium">COD</th>
+									<th class="px-[14px] py-[12px] font-medium">Data</th>
+									<th class="px-[14px] py-[12px] font-medium text-right last:rounded-tr-[14px]">Azioni</th>
 								</tr>
 							</thead>
 							<tbody>
@@ -294,9 +294,9 @@ onMounted(() => {
 									:key="s.id"
 									:class="['border-b border-[#F0F0F0] last:border-0', idx % 2 === 1 ? 'bg-[#FAFBFC]' : '']">
 									<td class="py-[14px] font-bold text-[var(--color-brand-text)]">#{{ s.id }}</td>
-									<td class="py-[14px] text-[#404040]">{{ s.user?.name }} {{ s.user?.surname }}</td>
+									<td class="py-[14px] text-[var(--color-brand-text)]">{{ s.user?.name }} {{ s.user?.surname }}</td>
 									<td class="py-[14px]">
-										<span class="font-mono text-[0.8125rem] text-indigo-700">{{ s.brt_parcel_id }}</span>
+										<span class="font-mono text-[0.8125rem] text-[#095866]">{{ s.brt_parcel_id }}</span>
 										<span
 											v-if="s.brt_pudo_id"
 											class="ml-[4px] text-[0.625rem] font-semibold bg-[var(--color-brand-primary)]/10 text-[var(--color-brand-primary)] px-[6px] py-[2px] rounded"
@@ -379,7 +379,7 @@ onMounted(() => {
 									</td>
 									<td class="py-[14px]">
 										<span v-if="s.is_cod" class="text-amber-700 font-medium">&euro;{{ formatCurrency(s.cod_amount) }}</span>
-										<span v-else class="text-[#C8CCD0]">&mdash;</span>
+										<span v-else class="text-[var(--color-brand-text-muted)]">&mdash;</span>
 									</td>
 									<td class="py-[14px] text-[var(--color-brand-text-secondary)] text-[0.8125rem]">{{ formatDate(s.created_at) }}</td>
 									<td class="py-[14px] text-right">
@@ -388,7 +388,7 @@ onMounted(() => {
 												v-if="s.brt_tracking_url"
 												:href="s.brt_tracking_url"
 												target="_blank"
-												class="px-[8px] py-[5px] rounded-[6px] bg-indigo-50 text-indigo-700 text-[0.6875rem] font-medium hover:bg-indigo-100 transition-colors inline-flex items-center gap-[3px]">
+												class="px-[10px] py-[5px] rounded-[100px] bg-[#eef7f8] text-[#095866] text-[0.6875rem] font-medium hover:bg-[#dceef0] transition-colors inline-flex items-center gap-[3px]">
 												<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[12px] h-[12px]" fill="currentColor">
 													<path
 														d="M18,15A3,3 0 0,1 21,18A3,3 0 0,1 18,21C16.69,21 15.58,20.17 15.17,19H14V17H15.17C15.58,15.83 16.69,15 18,15M18,17A1,1 0 0,0 17,18A1,1 0 0,0 18,19A1,1 0 0,0 19,18A1,1 0 0,0 18,17M6,15A3,3 0 0,1 9,18A3,3 0 0,1 6,21A3,3 0 0,1 3,18A3,3 0 0,1 6,15M6,17A1,1 0 0,0 5,18A1,1 0 0,0 6,19A1,1 0 0,0 7,18A1,1 0 0,0 6,17M11,7L9.5,13H13.5L12,7M9,3H14L18,17H12.5L12,15H11L10.5,17H5L9,3Z" />
@@ -398,19 +398,19 @@ onMounted(() => {
 											<button
 												v-if="s.brt_parcel_id"
 												@click="downloadLabel(s)"
-												class="px-[8px] py-[5px] rounded-[6px] bg-emerald-50 text-emerald-700 text-[0.6875rem] font-medium hover:bg-emerald-100 cursor-pointer transition-colors inline-flex items-center gap-[3px]">
+												class="px-[10px] py-[5px] rounded-[100px] bg-[#eef7f8] text-[#095866] text-[0.6875rem] font-medium hover:bg-[#dceef0] cursor-pointer transition-colors inline-flex items-center gap-[3px]">
 												<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[12px] h-[12px]" fill="currentColor">
 													<path d="M5,20H19V18H5M19,9H15V3H9V9H5L12,16L19,9Z" />
 												</svg>
 												Etichetta
 											</button>
-											<span v-else class="px-[8px] py-[5px] rounded-[6px] bg-gray-50 text-[#C8CCD0] text-[0.6875rem]">No label</span>
+											<span v-else class="px-[10px] py-[5px] rounded-[100px] bg-gray-50 text-[var(--color-brand-text-muted)] text-[0.6875rem]">No label</span>
 											<select
 												@change="
 													changeOrderStatus(s.id, $event.target.value);
 													$event.target.value = '';
 												"
-												class="px-[6px] py-[5px] rounded-[6px] bg-[var(--color-brand-primary)] text-white text-[0.6875rem] cursor-pointer border-0 font-medium">
+												class="px-[10px] py-[5px] rounded-[14px] bg-[var(--color-brand-primary)] text-white text-[0.6875rem] cursor-pointer border-[1.5px] border-[var(--color-brand-primary)] font-medium">
 												<option value="" selected disabled>Stato</option>
 												<option value="in_transit">In transito</option>
 												<option value="delivered">Consegnato</option>
@@ -422,25 +422,34 @@ onMounted(() => {
 							</tbody>
 						</table>
 
-						<div v-if="shipmentsData.last_page > 1" class="flex items-center justify-center gap-[8px] mt-[20px]">
+						<div v-if="shipmentsData.last_page > 1" class="flex items-center justify-center gap-[6px] mt-[24px] pt-[18px] border-t border-[#EEF1F3]">
 							<button
-								@click="
-									shipmentsPage = Math.max(1, shipmentsPage - 1);
-									fetchShipments();
-								"
+								@click="shipmentsPage = Math.max(1, shipmentsPage - 1); fetchShipments();"
 								:disabled="shipmentsPage <= 1"
-								class="px-[12px] py-[8px] rounded-[12px] bg-[#F0F0F0] text-[0.8125rem] font-medium disabled:opacity-40 cursor-pointer hover:bg-[#E0E0E0]">
-								Precedente
+								class="px-[14px] py-[8px] rounded-[100px] bg-white border-[1.5px] border-[#D8DCE3] text-[0.8125rem] font-medium disabled:opacity-40 cursor-pointer hover:border-[var(--color-brand-primary)] hover:text-[var(--color-brand-primary)] transition-colors">
+								<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[14px] h-[14px] inline-block mr-[2px]" fill="currentColor"><path d="M15.41,16.58L10.83,12L15.41,7.41L14,6L8,12L14,18L15.41,16.58Z"/></svg>
+								Prec
 							</button>
-							<span class="text-[0.8125rem] text-[var(--color-brand-text-secondary)]">Pagina {{ shipmentsPage }} di {{ shipmentsData.last_page }}</span>
+							<template v-for="p in shipmentsData.last_page" :key="p">
+								<button
+									v-if="p === 1 || p === shipmentsData.last_page || (p >= shipmentsPage - 1 && p <= shipmentsPage + 1)"
+									@click="shipmentsPage = p; fetchShipments();"
+									:class="[
+										'min-w-[36px] h-[36px] rounded-[100px] text-[0.8125rem] font-semibold cursor-pointer transition-colors',
+										p === shipmentsPage
+											? 'bg-[var(--color-brand-primary)] text-white'
+											: 'bg-white border-[1.5px] border-[#D8DCE3] text-[var(--color-brand-text)] hover:border-[var(--color-brand-primary)] hover:text-[var(--color-brand-primary)]',
+									]">
+									{{ p }}
+								</button>
+								<span v-else-if="p === shipmentsPage - 2 || p === shipmentsPage + 2" class="text-[var(--color-brand-text-muted)] text-[0.75rem] px-[2px]">...</span>
+							</template>
 							<button
-								@click="
-									shipmentsPage = Math.min(shipmentsData.last_page, shipmentsPage + 1);
-									fetchShipments();
-								"
+								@click="shipmentsPage = Math.min(shipmentsData.last_page, shipmentsPage + 1); fetchShipments();"
 								:disabled="shipmentsPage >= shipmentsData.last_page"
-								class="px-[12px] py-[8px] rounded-[12px] bg-[#F0F0F0] text-[0.8125rem] font-medium disabled:opacity-40 cursor-pointer hover:bg-[#E0E0E0]">
-								Successiva
+								class="px-[14px] py-[8px] rounded-[100px] bg-white border-[1.5px] border-[#D8DCE3] text-[0.8125rem] font-medium disabled:opacity-40 cursor-pointer hover:border-[var(--color-brand-primary)] hover:text-[var(--color-brand-primary)] transition-colors">
+								Succ
+								<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[14px] h-[14px] inline-block ml-[2px]" fill="currentColor"><path d="M8.59,16.58L13.17,12L8.59,7.41L10,6L16,12L10,18L8.59,16.58Z"/></svg>
 							</button>
 						</div>
 					</div>

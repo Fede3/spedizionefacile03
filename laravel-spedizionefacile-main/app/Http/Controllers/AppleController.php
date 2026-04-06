@@ -96,10 +96,18 @@ class AppleController extends Controller
         if (!$user && $appleEmail !== '') $user = User::where('email', $appleEmail)->first();
 
         if ($user) {
-            $updates = [];
-            if (!$user->apple_id) $updates['apple_id'] = $appleId;
-            if (!$user->email_verified_at) $updates['email_verified_at'] = now();
-            if (!empty($updates)) $user->update($updates);
+            $dirty = false;
+            if (!$user->apple_id) {
+                $user->apple_id = $appleId;
+                $dirty = true;
+            }
+            if (!$user->email_verified_at) {
+                $user->email_verified_at = now();
+                $dirty = true;
+            }
+            if ($dirty) {
+                $user->save();
+            }
         } else {
             if ($appleEmail === '') {
                 return $this->clearSocialCookies($this->redirectWithFrontendError($frontendUrl, $redirectPath, 'apple_email_missing'));
@@ -127,11 +135,13 @@ class AppleController extends Controller
 
         $user = new User([
             'email' => $appleEmail, 'name' => $name, 'surname' => $surname, 'telephone_number' => '',
-            'email_verified_at' => now(), 'password' => Str::random(32), 'apple_id' => $appleId,
+            'email_verified_at' => now(), 'password' => Str::random(32),
             'referred_by' => $validatedReferral,
             'user_type' => in_array($userType, ['privato', 'commerciante'], true) ? $userType : 'privato',
         ]);
+        // Campi non in $fillable: vanno assegnati direttamente per sicurezza
         $user->role = 'User';
+        $user->apple_id = $appleId;
         $user->save();
         return $user;
     }

@@ -33,7 +33,7 @@
  *
  * COLLEGAMENTI:
  *   - app/Models/ContactMessage.php — modello messaggio di contatto
- *   - AdminController.php — dashboard admin con conteggio messaggi non letti
+ *   - Admin/DashboardController.php — dashboard admin con conteggio messaggi non letti
  *   - pages/contatti.vue — pagina frontend del form contatti
  */
 

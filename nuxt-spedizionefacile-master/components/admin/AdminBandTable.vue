@@ -35,7 +35,7 @@ const onEditInput = (event) => {
 </script>
 
 <template>
-	<div class="bg-white rounded-[12px] p-[16px] tablet:p-[20px] desktop:p-[28px] shadow-sm border border-[var(--color-brand-border)] overflow-hidden">
+	<div class="bg-white rounded-[14px] p-[16px] tablet:p-[20px] desktop:p-[28px] shadow-sm border border-[var(--color-brand-border)] overflow-hidden">
 		<h2 class="text-[1.125rem] font-bold text-[var(--color-brand-text)] mb-[6px] flex items-center gap-[8px]">
 			<slot name="icon" />
 			{{ title }}
@@ -64,11 +64,11 @@ const onEditInput = (event) => {
 				<tbody>
 					<tr v-for="(band, idx) in bands" :key="band.id || idx" :class="['border-b border-[#F0F0F0] last:border-0', idx % 2 === 1 ? 'bg-[#FAFBFC]' : '']">
 						<td class="py-[14px] font-bold text-[var(--color-brand-text)]">{{ idx + 1 }}</td>
-						<td class="py-[14px] text-[#404040]">
-							<input v-model.number="band.min_value" type="number" min="0" :step="minMaxStep" class="w-[86px] h-[34px] px-[8px] rounded-[12px] border border-[var(--color-brand-border)] bg-white text-[0.8125rem]">
+						<td class="py-[14px] text-[var(--color-brand-text)]">
+							<input v-model.number="band.min_value" type="number" min="0" :step="minMaxStep" class="w-[86px] h-[34px] px-[8px] rounded-[12px] border-[1.5px] border-[#DFE2E7] bg-white text-[0.8125rem]">
 						</td>
-						<td class="py-[14px] text-[#404040]">
-							<input v-model.number="band.max_value" type="number" min="0" :step="minMaxStep" class="w-[86px] h-[34px] px-[8px] rounded-[12px] border border-[var(--color-brand-border)] bg-white text-[0.8125rem]">
+						<td class="py-[14px] text-[var(--color-brand-text)]">
+							<input v-model.number="band.max_value" type="number" min="0" :step="minMaxStep" class="w-[86px] h-[34px] px-[8px] rounded-[12px] border-[1.5px] border-[#DFE2E7] bg-white text-[0.8125rem]">
 						</td>
 						<!-- Prezzo base -->
 						<td class="py-[14px]">
@@ -82,10 +82,10 @@ const onEditInput = (event) => {
 									@keydown.esc="cancelEdit()"
 									@blur="confirmEdit(bandType, idx, 'base_price')"
 									type="number" min="0" step="0.01"
-									class="w-[100px] px-[10px] py-[8px] tablet:py-[6px] bg-white border-2 border-[var(--color-brand-primary)] rounded-[12px] text-[1rem] tablet:text-[0.8125rem] focus:outline-none"
+									class="w-[100px] px-[10px] py-[8px] tablet:py-[6px] bg-white border-2 border-[var(--color-brand-primary)] rounded-[14px] text-[1rem] tablet:text-[0.8125rem] focus:outline-none"
 									placeholder="0,00" />
 							</div>
-							<button v-else type="button" @click="startEdit(bandType, idx, 'base_price')" class="px-[12px] py-[6px] rounded-[12px] text-[0.875rem] font-semibold text-[var(--color-brand-text)] hover:bg-[#E8F4FB] transition-colors cursor-pointer border border-transparent hover:border-[#B0D4E8]">
+							<button v-else type="button" @click="startEdit(bandType, idx, 'base_price')" class="px-[12px] py-[6px] rounded-[14px] text-[0.875rem] font-semibold text-[var(--color-brand-text)] hover:bg-[#E8F4FB] transition-colors cursor-pointer border border-transparent hover:border-[#B0D4E8]">
 								{{ centsToEuro(band.base_price) }}
 							</button>
 						</td>
@@ -101,28 +101,28 @@ const onEditInput = (event) => {
 									@keydown.esc="cancelEdit()"
 									@blur="confirmEdit(bandType, idx, 'discount_price')"
 									type="number" min="0" step="0.01"
-									class="w-[100px] px-[10px] py-[8px] tablet:py-[6px] bg-white border-2 border-[var(--color-brand-primary)] rounded-[12px] text-[1rem] tablet:text-[0.8125rem] focus:outline-none"
+									class="w-[100px] px-[10px] py-[8px] tablet:py-[6px] bg-white border-2 border-[var(--color-brand-primary)] rounded-[14px] text-[1rem] tablet:text-[0.8125rem] focus:outline-none"
 									placeholder="vuoto = usa base" />
 							</div>
-							<button v-else type="button" @click="startEdit(bandType, idx, 'discount_price')" class="px-[12px] py-[6px] rounded-[12px] text-[0.875rem] text-[var(--color-brand-text-secondary)] hover:bg-[#E8F4FB] transition-colors cursor-pointer border border-transparent hover:border-[#B0D4E8]">
+							<button v-else type="button" @click="startEdit(bandType, idx, 'discount_price')" class="px-[12px] py-[6px] rounded-[14px] text-[0.875rem] text-[var(--color-brand-text-secondary)] hover:bg-[#E8F4FB] transition-colors cursor-pointer border border-transparent hover:border-[#B0D4E8]">
 								{{ band.discount_price != null ? centsToEuro(band.discount_price) : '-' }}
 							</button>
 						</td>
 						<!-- Effettivo -->
 						<td class="py-[14px]">
-							<span class="font-semibold text-emerald-600 text-[0.9375rem]">{{ centsToEuro(effectivePrice(band)) }}</span>
+							<span class="font-semibold text-[#095866] text-[0.9375rem]">{{ centsToEuro(effectivePrice(band)) }}</span>
 						</td>
 						<!-- Sconto -->
 						<td class="py-[14px]">
 							<template v-if="discountInfo(band) !== null">
-								<span v-if="discountInfo(band) > 0" class="inline-flex items-center gap-[4px] px-[8px] py-[3px] rounded-[6px] bg-emerald-50 text-emerald-700 text-[0.8125rem] font-semibold border border-emerald-200">
+								<span v-if="discountInfo(band) > 0" class="inline-flex items-center gap-[4px] px-[8px] py-[3px] rounded-[6px] bg-[#FFF5F2] text-[#E44203] text-[0.8125rem] font-semibold border border-[rgba(228,66,3,0.15)]">
 									-{{ discountInfo(band) }}%
 								</span>
 								<span v-else class="inline-flex items-center gap-[4px] px-[8px] py-[3px] rounded-[6px] bg-amber-50 text-amber-700 text-[0.75rem] font-medium border border-amber-200">
 									+{{ Math.abs(discountInfo(band)) }}% (aumento)
 								</span>
 							</template>
-							<span v-else class="text-[#C8CCD0]">-</span>
+							<span v-else class="text-[var(--color-brand-text-muted)]">-</span>
 						</td>
 						<!-- Toggle visibile -->
 						<td class="py-[14px] text-center">
@@ -135,9 +135,9 @@ const onEditInput = (event) => {
 						<!-- Azioni -->
 						<td class="py-[14px]">
 							<div class="flex items-center justify-end gap-[6px]">
-								<button type="button" class="px-[8px] py-[4px] rounded-[12px] border border-[#D5DDE1] text-[0.75rem] hover:bg-[#F4F8FA] cursor-pointer" @click="moveBand(bandType, idx, -1)">&#8593;</button>
-								<button type="button" class="px-[8px] py-[4px] rounded-[12px] border border-[#D5DDE1] text-[0.75rem] hover:bg-[#F4F8FA] cursor-pointer" @click="moveBand(bandType, idx, 1)">&#8595;</button>
-								<button type="button" class="px-[8px] py-[4px] rounded-[12px] border border-red-200 text-red-600 text-[0.75rem] hover:bg-red-50 cursor-pointer" @click="removeBand(bandType, idx)">Elimina</button>
+								<button type="button" class="px-[8px] py-[4px] rounded-[12px] border border-[#DFE2E7] text-[0.75rem] hover:bg-[#F4F8FA] cursor-pointer" @click="moveBand(bandType, idx, -1)">&#8593;</button>
+								<button type="button" class="px-[8px] py-[4px] rounded-[12px] border border-[#DFE2E7] text-[0.75rem] hover:bg-[#F4F8FA] cursor-pointer" @click="moveBand(bandType, idx, 1)">&#8595;</button>
+								<button type="button" class="px-[8px] py-[4px] rounded-[14px] border border-red-200 text-red-600 text-[0.75rem] hover:bg-red-50 cursor-pointer" @click="removeBand(bandType, idx)">Elimina</button>
 							</div>
 						</td>
 					</tr>

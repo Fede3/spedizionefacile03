@@ -7,7 +7,7 @@
  *   - Tutti i controller (auth()->user() restituisce questo modello)
  *   - WalletController.php — walletBalance(), commissionBalance()
  *   - ReferralController.php — referralUsagesAsPro(), isPro()
- *   - AdminController.php — gestione utenti, ruoli, portafogli
+ *   - Admin/UserManagementController.php — gestione utenti, ruoli, portafogli
  *
  * DATI IN INGRESSO:
  *   - Dati utente: name, surname, email, telephone_number, password, referral_code, referred_by
@@ -55,12 +55,13 @@ use Illuminate\Support\Str;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable
 {
-    use HasApiTokens, HasFactory, Notifiable;
+    use HasApiTokens, HasFactory, Notifiable, SoftDeletes;
 
     /**
      * Campi compilabili dall'esterno (mass assignment).
@@ -78,15 +79,15 @@ class User extends Authenticatable
         'referred_by',                   // Codice referral di chi lo ha invitato
         'identifier',                    // Identificativo univoco dell'utente
         'email_verified_at',             // Data e ora in cui l'email e' stata verificata
-        'stripe_account_id',             // ID dell'account Stripe (per pagamenti)
-        'customer_id',                   // ID cliente su Stripe
         'verification_code',             // Codice di verifica temporaneo per il login
         'verification_code_expires_at',  // Scadenza del codice di verifica
         'user_type',                     // Tipo account: "privato" o "commerciante"
-        'google_id',                     // ID Google OAuth (per login con Google)
-        'facebook_id',                   // ID Facebook OAuth (per login con Facebook)
-        'apple_id',                      // ID Apple OAuth (per login con Apple)
         'avatar',                        // URL dell'avatar (da Google)
+        // SICUREZZA: i seguenti campi NON sono in $fillable (assegnare con $user->campo = valore):
+        // - role: ruolo utente (User, Partner Pro, Admin)
+        // - stripe_account_id: ID account Stripe
+        // - customer_id: ID cliente Stripe
+        // - google_id, facebook_id, apple_id: ID provider OAuth
     ];
 
     /**
@@ -101,6 +102,11 @@ class User extends Authenticatable
         'remember_token',
         'verification_code',
         'verification_code_expires_at',
+        'stripe_account_id',
+        'customer_id',
+        'google_id',
+        'facebook_id',
+        'apple_id',
     ];
 
     /**

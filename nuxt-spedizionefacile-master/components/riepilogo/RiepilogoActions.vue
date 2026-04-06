@@ -21,20 +21,22 @@ const emit = defineEmits([
 		<span>{{ submitError }}</span>
 	</div>
 
-	<!-- Indietro + Procedi al pagamento -->
-	<div class="flex flex-col tablet:flex-row items-stretch tablet:items-center justify-between gap-[12px] mb-[24px]">
+	<!-- CTA: Procedi al pagamento (full width) -->
+	<button
+		v-if="!isEditFromCart"
+		@click="emit('proceed-checkout')"
+		:disabled="isSubmitting"
+		class="btn-cta w-full min-h-[56px] text-[1.0625rem] inline-flex items-center justify-center gap-[8px] mb-[16px] disabled:opacity-60 disabled:cursor-not-allowed">
+		<span v-if="isSubmitting">Caricamento...</span>
+		<span v-else>Procedi al pagamento</span>
+		<svg v-if="!isSubmitting" width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8z"/></svg>
+	</button>
+
+	<!-- Indietro -->
+	<div class="flex justify-center mb-[24px]">
 		<button @click="emit('go-back')" class="btn-secondary sf-nav-button inline-flex items-center justify-center gap-[8px]">
 			<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
 			{{ isEditFromCart ? 'Torna al carrello' : 'Indietro' }}
-		</button>
-		<button
-			v-if="!isEditFromCart"
-			@click="emit('proceed-checkout')"
-			:disabled="isSubmitting"
-			class="btn-cta sf-nav-button inline-flex items-center justify-center gap-[8px] disabled:opacity-60 disabled:cursor-not-allowed">
-			<span v-if="isSubmitting">Caricamento...</span>
-			<span v-else>Procedi al pagamento</span>
-			<svg v-if="!isSubmitting" width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8z"/></svg>
 		</button>
 	</div>
 

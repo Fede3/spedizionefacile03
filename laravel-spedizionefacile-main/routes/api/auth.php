@@ -14,7 +14,8 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\AppleController;
 use App\Http\Controllers\FacebookController;
 use App\Http\Controllers\GoogleController;
-use App\Http\Controllers\CustomLoginController;
+use App\Http\Controllers\LoginController;
+use App\Http\Controllers\RegisterController;
 use App\Http\Controllers\VerificationController;
 use App\Http\Controllers\ChangePasswordController;
 use App\Http\Controllers\CustomRegisterController;
@@ -30,6 +31,9 @@ Route::get('/user', function (Request $request) {
 })->middleware('auth:sanctum');
 
 Route::post('/logout', function (Request $request) {
+    // GDPR-07: Revoca tutti i token Sanctum prima del logout
+    $request->user()->tokens()->delete();
+
     Auth::guard('web')->logout();
     if ($request->hasSession()) {
         $request->session()->invalidate();
@@ -74,9 +78,9 @@ Route::get('/auth/facebook/redirect', [FacebookController::class, 'redirectToFac
 
 /* ===== LOGIN ===== */
 
-Route::middleware(['throttle:10,1'])->post('/custom-login', [CustomLoginController::class, 'login']);
-Route::middleware(['throttle:5,1'])->post('/resend-verification-email', [CustomLoginController::class, 'resendVerificationEmail']);
-Route::middleware(['throttle:5,1'])->post('/verify-code', [CustomLoginController::class, 'verifyCode']);
+Route::middleware(['throttle:10,1'])->post('/custom-login', [LoginController::class, 'login']);
+Route::middleware(['throttle:5,1'])->post('/resend-verification-email', [RegisterController::class, 'resendVerificationEmail']);
+Route::middleware(['throttle:5,1'])->post('/verify-code', [RegisterController::class, 'verifyCode']);
 
 /* ===== CONFERMA EMAIL ===== */
 
@@ -98,6 +102,8 @@ Route::get('/get-admin-image', [UserController::class, 'getAdminImage']);
 /* ===== ROTTE PROTETTE UTENTE ===== */
 
 Route::group(['middleware' => ['auth:sanctum']], function () {
-    Route::post('/auth/confirm-password', [CustomLoginController::class, 'confirmPassword']);
-    Route::apiResource('users', UserController::class);
+    Route::post('/auth/confirm-password', [LoginController::class, 'confirmPassword']);
+    // Solo le rotte necessarie — NO apiResource completo che espone GET /api/users
+    Route::get('/users/{user}', [UserController::class, 'show']);
+    Route::put('/users/{user}', [UserController::class, 'update']);
 });

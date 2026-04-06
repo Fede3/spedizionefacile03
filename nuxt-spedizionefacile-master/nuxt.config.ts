@@ -47,12 +47,18 @@ export default defineNuxtConfig({
   devtools: {
     enabled: process.env.NODE_ENV === 'development' && process.env.NUXT_ENABLE_DEVTOOLS === 'true',
   },
-  modules: ['@nuxt/ui', '@nuxt/image', '@pinia/nuxt', 'nuxt-auth-sanctum'],
+  modules: ['@nuxt/ui', '@nuxt/image', '@pinia/nuxt', 'nuxt-auth-sanctum', 'nuxt-security', '@nuxtjs/sitemap'],
   ui: {
     // Usiamo font locali via @fontsource in assets/css/main.css:
     // questo evita fetch esterni in build e mantiene il sistema tipografico
     // limitato a Inter + Montserrat.
     fonts: false,
+    // Colore primario: teal (coerente con --color-brand-primary #095866).
+    // Il default di Nuxt UI e' green — lo sovrascriviamo.
+    colors: {
+      primary: 'teal',
+      neutral: 'slate',
+    },
   },
 
   // @nuxt/image: abilita formato WebP automatico, qualita' 80%,
@@ -79,27 +85,21 @@ export default defineNuxtConfig({
   },
 
   css: [
-    '~/assets/css/main.css',
-    '~/assets/css/preventivo.css',
-    '~/assets/css/shipment-step.css',
-    '~/assets/css/checkout.css',
-    '~/assets/css/auth-overlay.css',
-    '~/assets/css/autenticazione.css',
-    '~/assets/css/contenuto-header.css',
-    '~/assets/css/summary-card.css',
-    '~/assets/css/footer.css',
-    '~/assets/css/recensioni.css',
-    '~/assets/css/faq.css',
-    '~/assets/css/servizi.css',
-    '~/assets/css/navbar.css',
-    '~/assets/css/account-carte.css',
-    '~/assets/css/contatti.css',
-    '~/assets/css/steps.css',
-    '~/assets/css/homepage-servizi.css',
-    '~/assets/css/chi-siamo.css',
-    '~/assets/css/homepage-step.css',
-    '~/assets/css/map-pudo.css',
-    '~/assets/css/admin-prezzi.css',
+    '~/assets/css/main.css',           // base + tokens + contenuto-header (checkout.css imported via @import)
+    '~/assets/css/preventivo.css',      // quote form
+    '~/assets/css/shipment-step.css',   // shipment flow + PUDO map markers
+    '~/assets/css/autenticazione.css',  // auth full-page + overlay
+    '~/assets/css/summary-card.css',    // shipment summary card
+    '~/assets/css/footer.css',          // site footer
+    '~/assets/css/recensioni.css',      // homepage reviews
+    '~/assets/css/faq.css',             // FAQ page
+    '~/assets/css/servizi.css',         // services + chi-siamo pages
+    '~/assets/css/navbar.css',          // site navbar
+    '~/assets/css/contatti.css',        // contacts page
+    '~/assets/css/steps.css',           // step navigation
+    '~/assets/css/homepage-servizi.css', // homepage services + step timeline
+    '~/assets/css/admin-prezzi.css',    // admin price panel
+    '~/assets/css/legal.css',           // legal/informative pages (privacy, cookie, termini, reclami)
   ],
 
   app: {
@@ -142,6 +142,8 @@ export default defineNuxtConfig({
         // Stripe preconnect is NOT here on purpose: it is added only on pages
         // that actually use Stripe (checkout, carte, portafoglio) via useHead()
         // to avoid wasting a connection on every page load.
+        // PWA manifest for installability and mobile home screen
+        { rel: 'manifest', href: '/manifest.json' },
       ],
     },
   },
@@ -325,6 +327,38 @@ export default defineNuxtConfig({
     },
   },
 
+  // nuxt-security: headers OWASP automatici per produzione.
+  // CSP con 'unsafe-inline' necessario per Nuxt UI + Tailwind inline styles.
+  security: {
+    headers: {
+      contentSecurityPolicy: {
+        'default-src': ["'self'"],
+        'script-src': ["'self'", "'unsafe-inline'", 'https://js.stripe.com'],
+        'style-src': ["'self'", "'unsafe-inline'"],
+        'img-src': ["'self'", 'data:', 'https:'],
+        'font-src': ["'self'"],
+        'connect-src': ["'self'", 'https://api.stripe.com', 'https://*.trycloudflare.com'],
+        'frame-src': ["'self'", 'https://js.stripe.com'],
+      },
+      permissionsPolicy: {
+        camera: [],
+        microphone: [],
+        geolocation: ['self'],
+      },
+      crossOriginEmbedderPolicy: false,
+    },
+    // Rate limiting non necessario qui — gestito lato Laravel/Caddy
+    rateLimiter: false,
+  },
+
+  // @nuxtjs/sitemap: generazione automatica sitemap.xml
+  site: {
+    url: 'https://spediamofacile.it',
+  },
+  sitemap: {
+    exclude: ['/account/**', '/checkout', '/riepilogo', '/carrello', '/autenticazione', '/login', '/registrazione', '/la-tua-spedizione/**'],
+  },
+
   devServer: {
     port: 3001,
     host: '0.0.0.0',
@@ -333,15 +367,23 @@ export default defineNuxtConfig({
   vite: {
     server: {
       allowedHosts: ['.trycloudflare.com', 'localhost', '127.0.0.1'],
+      // Vite 7 abilita HTTP/2 di default — forza compatibilità HTTP/1.1
+      // per proxy, tunnel e tool di preview che non supportano H2
+      h2: false,
+      allowHTTP1: true,
     },
     build: {
       // lightningcss minifier produces smaller CSS than default esbuild
       cssMinify: 'lightningcss',
       // Target modern browsers for smaller output (no legacy polyfills)
       target: 'es2022',
-      // Manteniamo il CSS in un bundle unico per evitare FOUC/flicker
-      // quando si passa da una route all'altra.
-      cssCodeSplit: false,
+      // PERF-04: abilita code-splitting CSS — i <style> dei componenti
+      // vengono estratti in chunk separati e caricati solo sulle pagine
+      // che li usano, invece di un singolo bundle monolitico (~218 KB)
+      // servito su OGNI route.
+      // I CSS globali (css[] in nuxt.config) restano nell'entry chunk e
+      // non sono affetti da questo flag, quindi nessun rischio FOUC reale.
+      cssCodeSplit: true,
       rollupOptions: {
         output: {
           // Separate heavy vendor libraries into their own chunks.

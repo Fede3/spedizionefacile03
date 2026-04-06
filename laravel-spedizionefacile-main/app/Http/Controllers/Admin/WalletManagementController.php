@@ -38,7 +38,7 @@ class WalletManagementController extends Controller
     {
         $movements = WalletMovement::where('user_id', $user->id)
             ->orderByDesc('created_at')
-            ->get();
+            ->paginate(30);
 
         return response()->json([
             'user' => [
@@ -48,7 +48,7 @@ class WalletManagementController extends Controller
                 'role' => $user->role,
                 'wallet_balance' => $user->walletBalance(),
             ],
-            'data' => $movements,
+            'movements' => $movements,
         ]);
     }
 
@@ -57,9 +57,9 @@ class WalletManagementController extends Controller
     {
         $requests = WithdrawalRequest::with('user:id,name,surname,email,role,referral_code')
             ->orderByDesc('created_at')
-            ->get();
+            ->paginate(30);
 
-        return response()->json(['data' => $requests]);
+        return response()->json($requests);
     }
 
     // Approva una richiesta di prelievo di un Partner Pro

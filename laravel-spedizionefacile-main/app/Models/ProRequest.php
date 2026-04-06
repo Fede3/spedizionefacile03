@@ -5,7 +5,7 @@
  *
  * DOVE SI USA:
  *   - ProRequestController.php — store, status, index (admin), approve, reject
- *   - AdminController.php — dashboard (conteggio richieste pending)
+ *   - Admin/DashboardController.php — dashboard (conteggio richieste pending)
  *
  * DATI IN INGRESSO:
  *   - user_id, company_name, vat_number, message, status, reviewed_at

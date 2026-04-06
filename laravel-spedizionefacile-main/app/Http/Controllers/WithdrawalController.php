@@ -17,7 +17,7 @@
  *
  * EFFETTI COLLATERALI:
  *   - Database: crea record in withdrawal_requests con status "pending"
- *   - L'approvazione avviene in AdminController.approveWithdrawal (crea debit in wallet_movements)
+ *   - L'approvazione avviene in Admin/WalletManagementController.approveWithdrawal (crea debit in wallet_movements)
  *
  * ERRORI TIPICI:
  *   - 403: utente non e' Partner Pro
@@ -25,7 +25,7 @@
  *
  * DOCUMENTI CORRELATI:
  *   - app/Models/WithdrawalRequest.php — modello richiesta prelievo
- *   - AdminController.php — approveWithdrawal/rejectWithdrawal per gestione admin
+ *   - Admin/WalletManagementController.php — approveWithdrawal/rejectWithdrawal per gestione admin
  *   - ReferralController.php — apply() crea le commissioni che vengono poi prelevate
  */
 

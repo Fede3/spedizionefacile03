@@ -82,13 +82,13 @@ const orderMetaPillStyle = (kind, status = '') => {
 	const palette = {
 		status: {
 			'In attesa': { backgroundColor: '#FFFBEB', color: '#B45309' },
-			'In lavorazione': { backgroundColor: '#EFF6FF', color: '#1D4ED8' },
+			'In lavorazione': { backgroundColor: '#eef7f8', color: '#095866' },
 			Completato: { backgroundColor: '#ECFDF3', color: '#047857' },
 			Fallito: { backgroundColor: '#FEF2F2', color: '#B91C1C' },
 			Pagato: { backgroundColor: '#ECFDF3', color: '#047857' },
-			Annullato: { backgroundColor: '#F3F4F6', color: '#4B5563' },
+			Annullato: { backgroundColor: 'var(--color-brand-bg-alt)', color: '#4B5563' },
 			Rimborsato: { backgroundColor: '#FFF7ED', color: '#C2410C' },
-			'In transito': { backgroundColor: '#EEF2FF', color: '#4338CA' },
+			'In transito': { backgroundColor: '#eef7f8', color: '#095866' },
 			Consegnato: { backgroundColor: '#ECFDF3', color: '#047857' },
 			'In giacenza': { backgroundColor: '#FFF7ED', color: '#C2410C' },
 		},
@@ -105,7 +105,7 @@ const orderMetaPillStyle = (kind, status = '') => {
 		<div class="my-container">
 			<!-- Loading -->
 			<div v-if="orderStatus === 'pending'" class="space-y-[16px]">
-				<div class="bg-white rounded-[12px] p-[32px] border border-[var(--color-brand-border)] animate-pulse">
+				<div class="bg-white rounded-[20px] p-[32px] border border-[var(--color-brand-border)] animate-pulse">
 					<div class="h-[24px] bg-gray-200 rounded w-[40%] mb-[16px]"></div>
 					<div class="h-[16px] bg-gray-200 rounded w-[60%] mb-[8px]"></div>
 					<div class="h-[16px] bg-gray-200 rounded w-[50%]"></div>
@@ -138,7 +138,7 @@ const orderMetaPillStyle = (kind, status = '') => {
 				<!-- Cancel success/error messages -->
 				<div
 					v-if="cancelSuccess"
-					class="bg-emerald-50 border border-emerald-200 rounded-[12px] px-[16px] py-[14px] flex items-start gap-[12px] mb-[16px]">
+					class="bg-[#f0fdf4] border border-[#d1fae5] rounded-[20px] px-[16px] py-[14px] flex items-start gap-[12px] mb-[16px]">
 					<svg
 						xmlns="http://www.w3.org/2000/svg"
 						width="22"
@@ -153,11 +153,11 @@ const orderMetaPillStyle = (kind, status = '') => {
 						<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
 						<polyline points="22 4 12 14.01 9 11.01" />
 					</svg>
-					<p class="text-[0.875rem] text-emerald-700 flex-1">{{ cancelSuccess }}</p>
+					<p class="text-[0.875rem] text-[#0a8a7a] flex-1">{{ cancelSuccess }}</p>
 				</div>
 				<div
 					v-if="cancelError && !showCancelModal"
-					class="bg-red-50 border border-red-200 rounded-[12px] px-[16px] py-[14px] flex items-start gap-[12px] mb-[16px]">
+					class="bg-red-50 border border-red-200 rounded-[20px] px-[16px] py-[14px] flex items-start gap-[12px] mb-[16px]">
 					<svg
 						xmlns="http://www.w3.org/2000/svg"
 						width="22"
@@ -179,7 +179,7 @@ const orderMetaPillStyle = (kind, status = '') => {
 				<!-- Refund info banner -->
 				<div
 					v-if="isCancelledOrRefunded && orderData.refund_status === 'completed'"
-					class="bg-orange-50 border border-orange-200 rounded-[12px] px-[16px] py-[14px] mb-[16px]">
+					class="bg-orange-50 border border-orange-200 rounded-[20px] px-[16px] py-[14px] mb-[16px]">
 					<div class="flex items-start gap-[12px]">
 						<svg
 							xmlns="http://www.w3.org/2000/svg"
@@ -224,22 +224,22 @@ const orderMetaPillStyle = (kind, status = '') => {
 				</div>
 
 				<!-- Status & Summary -->
-				<div class="mb-[16px] rounded-[12px] border border-[var(--color-brand-border)] bg-white p-[18px] tablet:p-[22px]">
+				<div class="mb-[16px] rounded-[20px] border border-[var(--color-brand-border)] bg-white p-[18px] tablet:p-[20px]">
 					<div class="grid grid-cols-1 gap-[12px] tablet:grid-cols-2 desktop:grid-cols-4">
-						<div class="rounded-[12px] border border-[#E9EEF2] bg-[#FBFCFD] px-[14px] py-[12px]">
-							<p class="mb-[4px] text-[0.6875rem] font-bold uppercase tracking-[0.14em] text-[#7A8695]">Tratta</p>
+						<div class="rounded-[14px] border border-[#E9EEF2] bg-[#FBFCFD] px-[14px] py-[12px]">
+							<p class="mb-[4px] text-[0.6875rem] font-bold uppercase tracking-[0.14em] text-[var(--color-brand-text-muted)]">Tratta</p>
 							<p class="text-[0.9375rem] font-semibold leading-[1.35] text-[var(--color-brand-text)]">{{ orderRouteLabel }}</p>
 						</div>
-						<div class="rounded-[12px] border border-[#E9EEF2] bg-white px-[14px] py-[12px]">
-							<p class="mb-[4px] text-[0.6875rem] font-bold uppercase tracking-[0.14em] text-[#7A8695]">Creato il</p>
+						<div class="rounded-[14px] border border-[#E9EEF2] bg-white px-[14px] py-[12px]">
+							<p class="mb-[4px] text-[0.6875rem] font-bold uppercase tracking-[0.14em] text-[var(--color-brand-text-muted)]">Creato il</p>
 							<p class="text-[0.9375rem] font-semibold leading-[1.35] text-[var(--color-brand-text)]">{{ formatDate(orderData.created_at) }}</p>
 						</div>
-						<div class="rounded-[12px] border border-[#E9EEF2] bg-white px-[14px] py-[12px]">
-							<p class="mb-[4px] text-[0.6875rem] font-bold uppercase tracking-[0.14em] text-[#7A8695]">Totale</p>
+						<div class="rounded-[14px] border border-[#E9EEF2] bg-white px-[14px] py-[12px]">
+							<p class="mb-[4px] text-[0.6875rem] font-bold uppercase tracking-[0.14em] text-[var(--color-brand-text-muted)]">Totale</p>
 							<p class="text-[1rem] font-bold leading-[1.2] text-[var(--color-brand-primary)]">{{ orderSubtotalLabel }}</p>
 						</div>
-						<div class="rounded-[12px] border border-[#E9EEF2] bg-white px-[14px] py-[12px]">
-							<p class="mb-[4px] text-[0.6875rem] font-bold uppercase tracking-[0.14em] text-[#7A8695]">Pagamento</p>
+						<div class="rounded-[14px] border border-[#E9EEF2] bg-white px-[14px] py-[12px]">
+							<p class="mb-[4px] text-[0.6875rem] font-bold uppercase tracking-[0.14em] text-[var(--color-brand-text-muted)]">Pagamento</p>
 							<p class="text-[0.9375rem] font-semibold leading-[1.35] text-[var(--color-brand-text)]">{{ paymentMethodLabel(orderData.payment_method) }}</p>
 						</div>
 					</div>
@@ -335,7 +335,7 @@ const orderMetaPillStyle = (kind, status = '') => {
 			</template>
 
 			<!-- Not found -->
-			<div v-else class="bg-white rounded-[12px] p-[48px] border border-[var(--color-brand-border)] text-center">
+			<div v-else class="bg-white rounded-[20px] p-[48px] border border-[var(--color-brand-border)] text-center">
 				<p class="text-[1rem] text-[var(--color-brand-text-secondary)]">Ordine non trovato.</p>
 				<NuxtLink to="/account/spedizioni" class="btn-secondary btn-compact mt-[16px] inline-flex items-center gap-[6px]">
 					<svg

@@ -65,7 +65,7 @@ if (!statusState.value) {
 	<section class="auth-shell">
 		<div class="my-container">
 			<div class="auth-shell-frame">
-				<div class="auth-shell-head">
+				<header class="auth-shell-head">
 					<div class="auth-shell-avatar" aria-hidden="true">
 						<svg
 							v-if="statusState?.icon === 'check'"
@@ -96,13 +96,13 @@ if (!statusState.value) {
 					</div>
 					<h1 class="auth-shell-title">{{ statusState?.title }}</h1>
 					<p class="auth-shell-copy">{{ statusState?.copy }}</p>
-				</div>
+				</header>
 
 				<div class="auth-page-body auth-page-stack">
 					<div class="auth-feedback" :class="statusState?.tone === 'error' ? 'auth-feedback--error' : 'auth-feedback--success'">
 						{{ statusState?.copy }}
 					</div>
-					<NuxtLink to="/autenticazione" class="btn-cta btn-compact inline-flex items-center justify-center gap-[8px]">
+					<NuxtLink to="/autenticazione" class="btn-cta w-full inline-flex items-center justify-center gap-[8px]">
 						Vai al login
 					</NuxtLink>
 				</div>

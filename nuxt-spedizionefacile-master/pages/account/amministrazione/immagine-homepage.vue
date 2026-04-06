@@ -93,9 +93,9 @@ onBeforeUnmount(() => {
 			<div
 				v-if="actionMessage"
 				:class="[
-					'mb-[20px] px-[16px] py-[12px] rounded-[12px] text-[0.875rem] font-medium flex items-center gap-[8px]',
+					'mb-[20px] px-[16px] py-[12px] rounded-[20px] text-[0.875rem] font-medium flex items-center gap-[8px]',
 					actionMessage.type === 'success'
-						? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+						? 'bg-[#f0fdf4] text-[#0a8a7a] border border-[#d1fae5]'
 						: 'bg-amber-50 text-amber-700 border border-amber-200',
 				]">
 				<template v-if="actionMessage.type === 'success'">
@@ -112,17 +112,17 @@ onBeforeUnmount(() => {
 			</div>
 
 			<!-- Loading skeleton -->
-			<div v-if="isLoading" class="rounded-[12px] border border-[var(--color-brand-border)] bg-white p-[20px] desktop:p-[28px] shadow-sm">
-				<div class="h-[20px] w-[200px] rounded bg-[#EEF2F5] animate-pulse mb-[14px]"></div>
+			<div v-if="isLoading" class="rounded-[20px] border border-[var(--color-brand-border)] bg-white p-[20px] desktop:p-[28px] shadow-sm">
+				<div class="h-[20px] w-[200px] rounded bg-[#EEF2F5] animate-pulse mb-[16px]"></div>
 				<div class="grid grid-cols-1 desktop:grid-cols-[minmax(0,1fr)_340px] gap-[16px] desktop:gap-[20px]">
-					<div class="rounded-[12px] border border-[var(--color-brand-border)] bg-[#F7FAFC] h-[320px] animate-pulse"></div>
-					<div class="rounded-[12px] border border-[var(--color-brand-border)] bg-[#F7FAFC] h-[320px] animate-pulse"></div>
+					<div class="rounded-[20px] border border-[var(--color-brand-border)] bg-[#F7FAFC] h-[320px] animate-pulse"></div>
+					<div class="rounded-[20px] border border-[var(--color-brand-border)] bg-[#F7FAFC] h-[320px] animate-pulse"></div>
 				</div>
 			</div>
 
 			<!-- Editor -->
 			<template v-else>
-				<div class="rounded-[12px] border border-[var(--color-brand-border)] bg-white p-[16px] desktop:p-[20px] shadow-sm">
+				<div class="rounded-[20px] border border-[var(--color-brand-border)] bg-white p-[16px] desktop:p-[20px] shadow-sm">
 					<div class="grid grid-cols-1 desktop:grid-cols-[minmax(0,1fr)_340px] gap-[16px] desktop:gap-[20px]">
 						<AdminHeroPreview
 							ref="previewRef"

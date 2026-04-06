@@ -25,10 +25,10 @@ const steps = [
 </script>
 
 <template>
-	<div class="mb-[18px] grid gap-[18px] desktop:grid-cols-[minmax(0,1.12fr)_minmax(320px,0.88fr)] desktop:items-stretch">
+	<div class="mb-[16px] grid gap-[16px] desktop:grid-cols-[minmax(0,1.12fr)_minmax(320px,0.88fr)] desktop:items-stretch">
 		<!-- Saldo -->
-		<div class="sf-account-panel rounded-[16px] p-[18px] desktop:p-[24px]">
-			<div class="flex flex-col gap-[14px] desktop:flex-row desktop:items-center desktop:justify-between">
+		<div class="sf-account-panel rounded-[20px] p-[18px] desktop:p-[24px]">
+			<div class="flex flex-col gap-[16px] desktop:flex-row desktop:items-center desktop:justify-between">
 				<div>
 					<div class="flex items-center gap-[8px] mb-[10px]">
 						<div class="w-[36px] h-[36px] rounded-[50px] bg-[#edf7f8] flex items-center justify-center">
@@ -42,18 +42,13 @@ const steps = [
 					<p class="text-[2rem] desktop:text-[2.5rem] font-bold tracking-tight leading-none text-[var(--color-brand-text)]">
 						&euro;{{ formatEuro(availableBalance) }}
 					</p>
-					<p class="text-[0.75rem] text-[#667281] mt-[6px]">Commissioni accumulate</p>
+					<p class="text-[0.75rem] text-[var(--color-brand-text-secondary)] mt-[6px]">Commissioni accumulate</p>
 				</div>
 				<div class="flex flex-col items-start desktop:items-end gap-[8px]">
 					<button
 						@click="emit('request-withdrawal')"
 						:disabled="isLoading || hasPending || availableBalance < 1"
-						:class="[
-							'w-full desktop:w-auto px-[24px] py-[12px] rounded-[12px] font-semibold text-[0.875rem] transition-all flex items-center justify-center gap-[8px]',
-							isLoading || hasPending || availableBalance < 1
-								? 'bg-[#edf1f3] cursor-not-allowed text-[#a5b3bb]'
-								: 'bg-[var(--color-brand-primary)] text-white hover:bg-[var(--color-brand-primary-hover)] cursor-pointer shadow-[0_2px_8px_rgba(9,88,102,0.2)]',
-						]">
+						class="btn-cta btn-compact w-full desktop:w-auto inline-flex items-center justify-center gap-[8px]">
 						<svg
 							v-if="!isLoading && !hasPending"
 							xmlns="http://www.w3.org/2000/svg"
@@ -78,7 +73,7 @@ const steps = [
 						</svg>
 						<span v-if="isLoading">Invio in corso...</span>
 						<span v-else-if="hasPending">Richiesta in attesa</span>
-						<span v-else>Preleva</span>
+						<span v-else>Richiedi prelievo</span>
 					</button>
 					<p v-if="hasPending" class="text-[0.6875rem] opacity-60">In attesa di approvazione dall'admin.</p>
 				</div>
@@ -120,8 +115,8 @@ const steps = [
 		</div>
 
 		<!-- Come funziona -->
-		<div class="sf-account-panel rounded-[16px] p-[16px] desktop:p-[20px]">
-			<h3 class="text-[0.875rem] font-bold text-[var(--color-brand-text)] mb-[12px] flex items-center gap-[8px]">
+		<div class="sf-account-panel rounded-[20px] p-[16px] desktop:p-[20px]">
+			<h3 class="font-montserrat text-[0.875rem] font-[800] text-[var(--color-brand-text)] mb-[12px] flex items-center gap-[8px]">
 				<svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--color-brand-primary)" stroke-width="2">
 					<circle cx="12" cy="12" r="10" />
 					<line x1="12" y1="16" x2="12" y2="12" />
@@ -135,7 +130,7 @@ const steps = [
 						class="w-[30px] h-[30px] rounded-full bg-[var(--color-brand-primary)]/10 flex items-center justify-center shrink-0 text-[0.75rem] font-bold text-[var(--color-brand-primary)]">
 						{{ idx + 1 }}
 					</div>
-					<p class="text-[0.8125rem] text-[#404040] leading-[1.5]">{{ step }}</p>
+					<p class="text-[0.8125rem] text-[var(--color-brand-text)] leading-[1.5]">{{ step }}</p>
 				</div>
 			</div>
 		</div>

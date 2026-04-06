@@ -5,7 +5,7 @@
  *
  * DOVE SI USA:
  *   - WithdrawalController.php — index (lista), store (creazione con status pending)
- *   - AdminController.php — withdrawals, approveWithdrawal, rejectWithdrawal
+ *   - Admin/WalletManagementController.php — withdrawals, approveWithdrawal, rejectWithdrawal
  *   - User::commissionBalance() — somma amount dove status in (approved, completed)
  *
  * DATI IN INGRESSO:
@@ -28,11 +28,11 @@
  *
  * PUNTI DI MODIFICA SICURI:
  *   - Per aggiungere metodo di prelievo (IBAN, PayPal): aggiungere campo in $fillable
- *   - La logica di approvazione/rifiuto e' in AdminController, non qui
+ *   - La logica di approvazione/rifiuto e' in Admin/WalletManagementController, non qui
  *
  * COLLEGAMENTI:
  *   - app/Http/Controllers/WithdrawalController.php — creazione richiesta lato utente
- *   - app/Http/Controllers/AdminController.php — approvazione/rifiuto lato admin
+ *   - app/Http/Controllers/Admin/WalletManagementController.php — approvazione/rifiuto lato admin
  *   - app/Models/User.php — commissionBalance() sottrae i prelievi approvati
  */
 

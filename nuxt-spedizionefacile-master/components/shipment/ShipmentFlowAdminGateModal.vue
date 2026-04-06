@@ -78,52 +78,65 @@ const modalUi = {
 		:ui="modalUi"
 		@update:open="(value) => { if (!value) handleCancel(); }">
 		<template #body>
-			<section class="admin-flow-gate sf-modal-content">
-				<div class="admin-flow-gate__header sf-modal-header">
+			<section class="sf-modal-content">
+				<div class="sf-modal-header">
 					<div class="sf-modal-header__main">
-						<div class="admin-flow-gate__icon sf-modal-icon" aria-hidden="true">!</div>
+						<div class="sf-modal-icon sf-modal-icon--accent" aria-hidden="true">
+							<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[1.2rem] h-[1.2rem]" fill="currentColor"><path d="M12,1L3,5V11C3,16.55 6.84,21.74 12,23C17.16,21.74 21,16.55 21,11V5L12,1M12,7C13.4,7 14.8,8.1 14.8,9.5V11C15.4,11 16,11.6 16,12.3V15.8C16,16.4 15.4,17 14.7,17H9.2C8.6,17 8,16.4 8,15.7V12.2C8,11.6 8.6,11 9.2,11V9.5C9.2,8.1 10.6,7 12,7M12,8.2C11.2,8.2 10.5,8.7 10.5,9.5V11H13.5V9.5C13.5,8.7 12.8,8.2 12,8.2Z"/></svg>
+						</div>
 						<div>
-							<h2 class="admin-flow-gate__title sf-modal-title">Accesso admin fuori flusso</h2>
-							<p class="admin-flow-gate__description sf-modal-description">
+							<h2 class="sf-modal-title">Accesso admin fuori flusso</h2>
+							<p class="sf-modal-description">
 							Stai aprendo una sezione del funnel senza il percorso normale. Per motivi di sicurezza,
 							conferma la password amministratore prima di continuare.
 							</p>
 						</div>
 					</div>
+					<button
+						type="button"
+						class="sf-modal-close"
+						aria-label="Chiudi"
+						@click="handleCancel">
+						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[1rem] h-[1rem]" fill="currentColor"><path d="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z"/></svg>
+					</button>
 				</div>
 
 				<div class="sf-modal-divider" />
 
-				<div class="admin-flow-gate__summary sf-modal-summary">
-					<div>
-						<span class="admin-flow-gate__label">Percorso richiesto</span>
-						<strong>{{ challenge?.targetPath }}</strong>
+				<div class="sf-modal-body">
+					<div class="sf-modal-summary" style="grid-template-columns: repeat(2, minmax(0, 1fr));">
+						<div>
+							<span class="admin-gate__label">Percorso richiesto</span>
+							<strong>{{ challenge?.targetPath }}</strong>
+						</div>
+						<div>
+							<span class="admin-gate__label">Fallback sicuro</span>
+							<strong>{{ challenge?.lastValidRoute }}</strong>
+						</div>
 					</div>
-					<div>
-						<span class="admin-flow-gate__label">Fallback sicuro</span>
-						<strong>{{ challenge?.lastValidRoute }}</strong>
+
+					<div class="grid gap-[8px]">
+						<label for="admin-flow-password" class="form-label">Password amministratore</label>
+						<input
+							id="admin-flow-password"
+							v-model="password"
+							type="password"
+							class="form-input"
+							autocomplete="current-password"
+							placeholder="Inserisci la password per continuare"
+							@keyup.enter="handleConfirm" />
+						<p v-if="errorMessage" class="text-[0.8125rem] font-semibold text-[#b42318]">{{ errorMessage }}</p>
 					</div>
 				</div>
 
-				<div class="admin-flow-gate__field sf-modal-body">
-					<label for="admin-flow-password" class="admin-flow-gate__field-label">Password amministratore</label>
-					<input
-						id="admin-flow-password"
-						v-model="password"
-						type="password"
-						class="admin-flow-gate__input"
-						autocomplete="current-password"
-						placeholder="Inserisci la password per continuare"
-						@keyup.enter="handleConfirm" />
-					<p v-if="errorMessage" class="admin-flow-gate__error">{{ errorMessage }}</p>
-				</div>
+				<div class="sf-modal-divider" />
 
-				<div class="admin-flow-gate__actions sf-modal-actions">
-					<button type="button" class="admin-flow-gate__button admin-flow-gate__button--ghost btn-secondary" @click="handleCancel">
+				<div class="sf-modal-actions">
+					<button type="button" class="btn-secondary btn-compact" @click="handleCancel">
 						Torna al flusso corretto
 					</button>
-					<button type="button" class="admin-flow-gate__button admin-flow-gate__button--primary btn-cta" :disabled="isSubmitting" @click="handleConfirm">
-						{{ isSubmitting ? 'Verifica in corso…' : 'Continua come admin' }}
+					<button type="button" class="btn-cta btn-compact" :disabled="isSubmitting" @click="handleConfirm">
+						{{ isSubmitting ? 'Verifica in corso...' : 'Continua come admin' }}
 					</button>
 				</div>
 			</section>
@@ -132,41 +145,7 @@ const modalUi = {
 </template>
 
 <style scoped>
-.admin-flow-gate {
-	display: grid;
-	gap: 18px;
-	padding: 0;
-}
-
-.admin-flow-gate__header {
-	display: grid;
-	grid-template-columns: auto 1fr;
-	gap: 14px;
-	align-items: start;
-}
-
-.admin-flow-gate__icon {
-	background: linear-gradient(135deg, #0d6b79 0%, var(--color-brand-primary) 100%);
-	color: #fff;
-	font-size: 1.125rem;
-	font-weight: 800;
-}
-
-.admin-flow-gate__title {
-	line-height: 1.1;
-}
-
-.admin-flow-gate__description {
-	margin-top: 6px;
-}
-
-.admin-flow-gate__summary {
-	display: grid;
-	grid-template-columns: repeat(2, minmax(0, 1fr));
-	gap: 12px;
-}
-
-.admin-flow-gate__label {
+.admin-gate__label {
 	display: block;
 	margin-bottom: 4px;
 	font-size: 0.72rem;
@@ -176,72 +155,9 @@ const modalUi = {
 	color: #6b7d87;
 }
 
-.admin-flow-gate__field {
-	display: grid;
-	gap: 8px;
-}
-
-.admin-flow-gate__field-label {
-	font-size: 0.92rem;
-	font-weight: 700;
-	color: #1c2740;
-}
-
-.admin-flow-gate__input {
-	width: 100%;
-	min-height: 52px;
-	padding: 0 16px;
-	border-radius: 16px;
-	border: 1px solid #dbe5ea;
-	background: #fff;
-	font-size: 1rem;
-	color: #1c2740;
-	outline: none;
-	transition: border-color 0.18s ease, box-shadow 0.18s ease;
-}
-
-.admin-flow-gate__input:focus {
-	border-color: #0d6b79;
-	box-shadow: inset 0 0 0 1px rgba(13, 107, 121, 0.2);
-}
-
-.admin-flow-gate__error {
-	font-size: 0.85rem;
-	font-weight: 600;
-	color: #b42318;
-}
-
-.admin-flow-gate__actions {
-	gap: 12px;
-}
-
-.admin-flow-gate__button {
-	min-height: 46px;
-	padding: 0 18px;
-	font-weight: 700;
-}
-
-.admin-flow-gate__button--primary:disabled {
-	opacity: 0.6;
-	cursor: not-allowed;
-}
-
 @media (max-width: 640px) {
-	.admin-flow-gate {
-		padding: 18px;
-		gap: 16px;
-	}
-
-	.admin-flow-gate__summary {
-		grid-template-columns: 1fr;
-	}
-
-	.admin-flow-gate__actions {
-		flex-direction: column-reverse;
-	}
-
-	.admin-flow-gate__button {
-		width: 100%;
+	.sf-modal-summary {
+		grid-template-columns: 1fr !important;
 	}
 }
 </style>

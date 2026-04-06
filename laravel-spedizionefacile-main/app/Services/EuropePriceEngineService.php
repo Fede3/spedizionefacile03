@@ -247,6 +247,20 @@ class EuropePriceEngineService
             ];
         }
 
+        // Validate weight and volume — zero or negative is never a valid shipment
+        if ($weightKg <= 0) {
+            return [
+                'status' => 'error',
+                'message' => 'Il peso deve essere maggiore di zero.',
+            ];
+        }
+        if ($volumeM3 <= 0) {
+            return [
+                'status' => 'error',
+                'message' => 'Il volume deve essere maggiore di zero.',
+            ];
+        }
+
         $config = $this->getPricingConfig();
         $band = $this->findMatchingBand($config['bands'], $weightKg, $volumeM3);
         if ($band === null) {

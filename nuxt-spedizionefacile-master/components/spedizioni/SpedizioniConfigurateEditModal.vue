@@ -21,59 +21,59 @@ const emit = defineEmits(['update:open', 'save']);
 		:close="false"
 		:ui="{ overlay: 'bg-[#09131c]/36 backdrop-blur-[6px]', content: '!divide-y-0 !ring-0 !p-0 sf-modal-surface w-[min(calc(100vw-1rem),56rem)]', body: '!p-0' }">
 		<template #body>
-			<div v-if="editItem" class="sf-modal-content">
+			<div v-if="editItem" class="sf-modal-content" role="dialog" aria-modal="true" aria-labelledby="edit-modal-title">
 				<div class="sf-modal-header">
 					<div class="sf-modal-header__main">
 						<div class="sf-modal-icon" aria-hidden="true">
 							<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
 						</div>
 						<div>
-							<h3 class="sf-modal-title">Modifica spedizione</h3>
+							<h3 id="edit-modal-title" class="sf-modal-title">Modifica spedizione</h3>
 							<p class="sf-modal-description">Aggiorna i dati essenziali mantenendo lo stesso formato del resto dell'account.</p>
 						</div>
 					</div>
-					<button type="button" @click="emit('update:open', false)" class="sf-modal-close">
-						<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+					<button type="button" @click="emit('update:open', false)" class="sf-modal-close" aria-label="Chiudi modifica spedizione">
+						<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
 					</button>
 				</div>
 				<div class="sf-modal-divider" />
 				<div class="space-y-[16px] px-[24px] pt-[20px]">
 					<!-- Partenza -->
-					<div class="bg-[#F8F9FB] rounded-[12px] p-[16px]">
+					<div class="bg-[#F8F9FB] rounded-[14px] p-[16px]">
 						<h4 class="text-[0.75rem] font-bold text-[var(--color-brand-text-secondary)] uppercase tracking-wider mb-[10px]">Partenza</h4>
 						<div class="grid grid-cols-1 sm:grid-cols-2 gap-[8px]">
-							<input v-model="editForm.origin_name" placeholder="Nome e Cognome" class="sm:col-span-2 bg-white border border-[var(--color-brand-border)] rounded-[12px] h-[38px] px-[12px] text-[0.8125rem]" />
-							<input v-model="editForm.origin_address" placeholder="Indirizzo" class="bg-white border border-[var(--color-brand-border)] rounded-[12px] h-[38px] px-[12px] text-[0.8125rem]" />
-							<input v-model="editForm.origin_address_number" placeholder="N. civico" class="bg-white border border-[var(--color-brand-border)] rounded-[12px] h-[38px] px-[12px] text-[0.8125rem]" />
-							<input v-model="editForm.origin_city" placeholder="Citta" class="bg-white border border-[var(--color-brand-border)] rounded-[12px] h-[38px] px-[12px] text-[0.8125rem]" />
-							<input v-model="editForm.origin_postal_code" placeholder="CAP" class="bg-white border border-[var(--color-brand-border)] rounded-[12px] h-[38px] px-[12px] text-[0.8125rem]" />
-							<input v-model="editForm.origin_province" placeholder="Provincia" class="bg-white border border-[var(--color-brand-border)] rounded-[12px] h-[38px] px-[12px] text-[0.8125rem]" />
-							<input v-model="editForm.origin_telephone" placeholder="Telefono" class="bg-white border border-[var(--color-brand-border)] rounded-[12px] h-[38px] px-[12px] text-[0.8125rem]" />
+							<input v-model="editForm.origin_name" placeholder="Nome e Cognome" aria-label="Nome e Cognome partenza" class="sm:col-span-2 bg-white border border-[var(--color-brand-border)] rounded-[14px] h-[38px] px-[12px] text-[0.8125rem]" />
+							<input v-model="editForm.origin_address" placeholder="Indirizzo" aria-label="Indirizzo partenza" class="bg-white border border-[var(--color-brand-border)] rounded-[14px] h-[38px] px-[12px] text-[0.8125rem]" />
+							<input v-model="editForm.origin_address_number" placeholder="N. civico" aria-label="Numero civico partenza" class="bg-white border border-[var(--color-brand-border)] rounded-[14px] h-[38px] px-[12px] text-[0.8125rem]" />
+							<input v-model="editForm.origin_city" placeholder="Citta" aria-label="Citta partenza" class="bg-white border border-[var(--color-brand-border)] rounded-[14px] h-[38px] px-[12px] text-[0.8125rem]" />
+							<input v-model="editForm.origin_postal_code" placeholder="CAP" aria-label="CAP partenza" class="bg-white border border-[var(--color-brand-border)] rounded-[14px] h-[38px] px-[12px] text-[0.8125rem]" />
+							<input v-model="editForm.origin_province" placeholder="Provincia" aria-label="Provincia partenza" class="bg-white border border-[var(--color-brand-border)] rounded-[14px] h-[38px] px-[12px] text-[0.8125rem]" />
+							<input v-model="editForm.origin_telephone" placeholder="Telefono" aria-label="Telefono partenza" class="bg-white border border-[var(--color-brand-border)] rounded-[14px] h-[38px] px-[12px] text-[0.8125rem]" />
 						</div>
 					</div>
 					<!-- Destinazione -->
-					<div class="bg-[#F8F9FB] rounded-[12px] p-[16px]">
+					<div class="bg-[#F8F9FB] rounded-[14px] p-[16px]">
 						<h4 class="text-[0.75rem] font-bold text-[var(--color-brand-text-secondary)] uppercase tracking-wider mb-[10px]">Destinazione</h4>
 						<div class="grid grid-cols-1 sm:grid-cols-2 gap-[8px]">
-							<input v-model="editForm.dest_name" placeholder="Nome e Cognome" class="sm:col-span-2 bg-white border border-[var(--color-brand-border)] rounded-[12px] h-[38px] px-[12px] text-[0.8125rem]" />
-							<input v-model="editForm.dest_address" placeholder="Indirizzo" class="bg-white border border-[var(--color-brand-border)] rounded-[12px] h-[38px] px-[12px] text-[0.8125rem]" />
-							<input v-model="editForm.dest_address_number" placeholder="N. civico" class="bg-white border border-[var(--color-brand-border)] rounded-[12px] h-[38px] px-[12px] text-[0.8125rem]" />
-							<input v-model="editForm.dest_city" placeholder="Citta" class="bg-white border border-[var(--color-brand-border)] rounded-[12px] h-[38px] px-[12px] text-[0.8125rem]" />
-							<input v-model="editForm.dest_postal_code" placeholder="CAP" class="bg-white border border-[var(--color-brand-border)] rounded-[12px] h-[38px] px-[12px] text-[0.8125rem]" />
-							<input v-model="editForm.dest_province" placeholder="Provincia" class="bg-white border border-[var(--color-brand-border)] rounded-[12px] h-[38px] px-[12px] text-[0.8125rem]" />
-							<input v-model="editForm.dest_telephone" placeholder="Telefono" class="bg-white border border-[var(--color-brand-border)] rounded-[12px] h-[38px] px-[12px] text-[0.8125rem]" />
+							<input v-model="editForm.dest_name" placeholder="Nome e Cognome" aria-label="Nome e Cognome destinazione" class="sm:col-span-2 bg-white border border-[var(--color-brand-border)] rounded-[14px] h-[38px] px-[12px] text-[0.8125rem]" />
+							<input v-model="editForm.dest_address" placeholder="Indirizzo" aria-label="Indirizzo destinazione" class="bg-white border border-[var(--color-brand-border)] rounded-[14px] h-[38px] px-[12px] text-[0.8125rem]" />
+							<input v-model="editForm.dest_address_number" placeholder="N. civico" aria-label="Numero civico destinazione" class="bg-white border border-[var(--color-brand-border)] rounded-[14px] h-[38px] px-[12px] text-[0.8125rem]" />
+							<input v-model="editForm.dest_city" placeholder="Citta" aria-label="Citta destinazione" class="bg-white border border-[var(--color-brand-border)] rounded-[14px] h-[38px] px-[12px] text-[0.8125rem]" />
+							<input v-model="editForm.dest_postal_code" placeholder="CAP" aria-label="CAP destinazione" class="bg-white border border-[var(--color-brand-border)] rounded-[14px] h-[38px] px-[12px] text-[0.8125rem]" />
+							<input v-model="editForm.dest_province" placeholder="Provincia" aria-label="Provincia destinazione" class="bg-white border border-[var(--color-brand-border)] rounded-[14px] h-[38px] px-[12px] text-[0.8125rem]" />
+							<input v-model="editForm.dest_telephone" placeholder="Telefono" aria-label="Telefono destinazione" class="bg-white border border-[var(--color-brand-border)] rounded-[14px] h-[38px] px-[12px] text-[0.8125rem]" />
 						</div>
 					</div>
 					<!-- Collo -->
-					<div class="bg-[#F8F9FB] rounded-[12px] p-[16px]">
+					<div class="bg-[#F8F9FB] rounded-[14px] p-[16px]">
 						<h4 class="text-[0.75rem] font-bold text-[var(--color-brand-text-secondary)] uppercase tracking-wider mb-[10px]">Collo</h4>
 						<div class="grid grid-cols-1 sm:grid-cols-2 desktop:grid-cols-3 gap-[8px]">
-							<div><label class="text-[0.6875rem] text-[var(--color-brand-text-secondary)]">Tipo</label><input v-model="editForm.package_type" class="w-full bg-white border border-[var(--color-brand-border)] rounded-[12px] h-[38px] px-[12px] text-[0.8125rem]" /></div>
-							<div><label class="text-[0.6875rem] text-[var(--color-brand-text-secondary)]">Quantita</label><input type="number" v-model="editForm.quantity" min="1" class="w-full bg-white border border-[var(--color-brand-border)] rounded-[12px] h-[38px] px-[12px] text-[0.8125rem]" /></div>
-							<div><label class="text-[0.6875rem] text-[var(--color-brand-text-secondary)]">Peso (kg)</label><input v-model="editForm.weight" class="w-full bg-white border border-[var(--color-brand-border)] rounded-[12px] h-[38px] px-[12px] text-[0.8125rem]" /></div>
-							<div><label class="text-[0.6875rem] text-[var(--color-brand-text-secondary)]">Lato 1 (cm)</label><input v-model="editForm.first_size" class="w-full bg-white border border-[var(--color-brand-border)] rounded-[12px] h-[38px] px-[12px] text-[0.8125rem]" /></div>
-							<div><label class="text-[0.6875rem] text-[var(--color-brand-text-secondary)]">Lato 2 (cm)</label><input v-model="editForm.second_size" class="w-full bg-white border border-[var(--color-brand-border)] rounded-[12px] h-[38px] px-[12px] text-[0.8125rem]" /></div>
-							<div><label class="text-[0.6875rem] text-[var(--color-brand-text-secondary)]">Lato 3 (cm)</label><input v-model="editForm.third_size" class="w-full bg-white border border-[var(--color-brand-border)] rounded-[12px] h-[38px] px-[12px] text-[0.8125rem]" /></div>
+							<div><label class="text-[0.6875rem] text-[var(--color-brand-text-secondary)]">Tipo</label><input v-model="editForm.package_type" class="w-full bg-white border border-[var(--color-brand-border)] rounded-[14px] h-[38px] px-[12px] text-[0.8125rem]" /></div>
+							<div><label class="text-[0.6875rem] text-[var(--color-brand-text-secondary)]">Quantita</label><input type="number" v-model="editForm.quantity" min="1" class="w-full bg-white border border-[var(--color-brand-border)] rounded-[14px] h-[38px] px-[12px] text-[0.8125rem]" /></div>
+							<div><label class="text-[0.6875rem] text-[var(--color-brand-text-secondary)]">Peso (kg)</label><input v-model="editForm.weight" class="w-full bg-white border border-[var(--color-brand-border)] rounded-[14px] h-[38px] px-[12px] text-[0.8125rem]" /></div>
+							<div><label class="text-[0.6875rem] text-[var(--color-brand-text-secondary)]">Lato 1 (cm)</label><input v-model="editForm.first_size" class="w-full bg-white border border-[var(--color-brand-border)] rounded-[14px] h-[38px] px-[12px] text-[0.8125rem]" /></div>
+							<div><label class="text-[0.6875rem] text-[var(--color-brand-text-secondary)]">Lato 2 (cm)</label><input v-model="editForm.second_size" class="w-full bg-white border border-[var(--color-brand-border)] rounded-[14px] h-[38px] px-[12px] text-[0.8125rem]" /></div>
+							<div><label class="text-[0.6875rem] text-[var(--color-brand-text-secondary)]">Lato 3 (cm)</label><input v-model="editForm.third_size" class="w-full bg-white border border-[var(--color-brand-border)] rounded-[14px] h-[38px] px-[12px] text-[0.8125rem]" /></div>
 						</div>
 					</div>
 				</div>

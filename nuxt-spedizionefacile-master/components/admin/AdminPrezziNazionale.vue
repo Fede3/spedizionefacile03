@@ -63,7 +63,7 @@ const bandTableShared = computed(() => ({
 			<div>
 				<h3 class="text-[0.9375rem] font-bold text-amber-800 mb-[4px]">Fasce di prezzo non ancora nel database</h3>
 				<p class="text-[0.8125rem] text-amber-700 mb-[12px]">Stai vedendo i valori predefiniti del calcolatore. Premi il pulsante per salvarli nel database e poterli modificare.</p>
-				<button
+				<button type="button"
 					@click="seedBands"
 					:disabled="seeding"
 					class="inline-flex items-center gap-[8px] px-[20px] py-[10px] bg-amber-600 hover:bg-amber-700 text-white rounded-[50px] text-[0.875rem] font-medium transition-colors cursor-pointer disabled:opacity-50">
@@ -87,7 +87,7 @@ const bandTableShared = computed(() => ({
 		v-bind="bandTableShared"
 		@update:edit-value="emit('update:editValue', $event)">
 		<template #icon>
-			<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[20px] h-[20px] text-[var(--color-brand-primary)]" fill="currentColor"><path d="M12,3A4,4 0 0,1 16,7C16,7.73 15.81,8.41 15.46,9H18C18.95,9 19.75,9.67 19.95,10.56C21.96,18.57 22,18.78 22,19A2,2 0 0,1 20,21H4A2,2 0 0,1 2,19C2,18.78 2.04,18.57 4.05,10.56C4.25,9.67 5.05,9 6,9H8.54C8.19,8.41 8,7.73 8,7A4,4 0 0,1 12,3M12,5A2,2 0 0,0 10,7A2,2 0 0,0 12,9A2,2 0 0,0 14,7A2,2 0 0,0 12,5Z"/></svg>
+			<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[20px] h-[20px] text-[#095866]" fill="currentColor"><path d="M12,3A4,4 0 0,1 16,7C16,7.73 15.81,8.41 15.46,9H18C18.95,9 19.75,9.67 19.95,10.56C21.96,18.57 22,18.78 22,19A2,2 0 0,1 20,21H4A2,2 0 0,1 2,19C2,18.78 2.04,18.57 4.05,10.56C4.25,9.67 5.05,9 6,9H8.54C8.19,8.41 8,7.73 8,7A4,4 0 0,1 12,3M12,5A2,2 0 0,0 10,7A2,2 0 0,0 12,9A2,2 0 0,0 14,7A2,2 0 0,0 12,5Z"/></svg>
 		</template>
 	</AdminBandTable>
 
@@ -103,85 +103,85 @@ const bandTableShared = computed(() => ({
 		v-bind="bandTableShared"
 		@update:edit-value="emit('update:editValue', $event)">
 		<template #icon>
-			<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[20px] h-[20px] text-indigo-600" fill="currentColor"><path d="M21,16.5C21,16.88 20.79,17.21 20.47,17.38L12.57,21.82C12.41,21.94 12.21,22 12,22C11.79,22 11.59,21.94 11.43,21.82L3.53,17.38C3.21,17.21 3,16.88 3,16.5V7.5C3,7.12 3.21,6.79 3.53,6.62L11.43,2.18C11.59,2.06 11.79,2 12,2C12.21,2 12.41,2.06 12.57,2.18L20.47,6.62C20.79,6.79 21,7.12 21,7.5V16.5M12,4.15L6.04,7.5L12,10.85L17.96,7.5L12,4.15M5,15.91L11,19.29V12.58L5,9.21V15.91M19,15.91V9.21L13,12.58V19.29L19,15.91Z"/></svg>
+			<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[20px] h-[20px] text-[#095866]" fill="currentColor"><path d="M21,16.5C21,16.88 20.79,17.21 20.47,17.38L12.57,21.82C12.41,21.94 12.21,22 12,22C11.79,22 11.59,21.94 11.43,21.82L3.53,17.38C3.21,17.21 3,16.88 3,16.5V7.5C3,7.12 3.21,6.79 3.53,6.62L11.43,2.18C11.59,2.06 11.79,2 12,2C12.21,2 12.41,2.06 12.57,2.18L20.47,6.62C20.79,6.79 21,7.12 21,7.5V16.5M12,4.15L6.04,7.5L12,10.85L17.96,7.5L12,4.15M5,15.91L11,19.29V12.58L5,9.21V15.91M19,15.91V9.21L13,12.58V19.29L19,15.91Z"/></svg>
 		</template>
 	</AdminBandTable>
 
 	<!-- Regole oltre 7a fascia -->
-	<div class="bg-white rounded-[12px] p-[16px] tablet:p-[20px] desktop:p-[28px] shadow-sm border border-[var(--color-brand-border)] overflow-hidden">
-		<div class="flex flex-wrap items-center justify-between gap-[12px] mb-[18px]">
+	<div class="bg-white rounded-[12px] p-[16px] tablet:p-[20px] desktop:p-[28px] shadow-sm border border-[#E9EBEC] overflow-hidden">
+		<div class="flex flex-wrap items-center justify-between gap-[12px] mb-[16px]">
 			<div>
-				<h2 class="text-[1.125rem] font-bold text-[var(--color-brand-text)] mb-[4px]">Regole oltre 7ª fascia</h2>
-				<p class="text-[0.75rem] text-[var(--color-brand-text-secondary)]">Configurazione scaglioni dinamici (es. 101-150, 151-200 e 0,401-0,600, 0,601-0,800).</p>
+				<h2 class="text-[1.125rem] font-bold text-[#252B42] mb-[4px]">Regole oltre 7ª fascia</h2>
+				<p class="text-[0.75rem] text-[#737373]">Configurazione scaglioni dinamici (es. 101-150, 151-200 e 0,401-0,600, 0,601-0,800).</p>
 			</div>
 			<button type="button" @click="extraRules.enabled = !extraRules.enabled"
-				:class="extraRules.enabled ? 'bg-[var(--color-brand-primary)]' : 'bg-[#C8CCD0]'"
+				:class="extraRules.enabled ? 'bg-[#095866]' : 'bg-[#C8CCD0]'"
 				class="relative inline-flex h-[32px] w-[56px] items-center rounded-full transition-colors cursor-pointer">
 				<span :class="extraRules.enabled ? 'translate-x-[28px]' : 'translate-x-[2px]'" class="inline-block h-[26px] w-[26px] transform rounded-full bg-white transition-transform shadow-sm" />
 			</button>
 		</div>
 
 		<div class="grid grid-cols-1 desktop:grid-cols-2 gap-[16px]">
-			<div class="space-y-[12px] p-[14px] rounded-[12px] border border-[var(--color-brand-border)] bg-[#FAFBFC]">
-				<h3 class="text-[0.875rem] font-semibold text-[var(--color-brand-text)]">Scaglioni Peso</h3>
+			<div class="space-y-[12px] p-[14px] rounded-[12px] border border-[#E9EBEC] bg-[#FAFBFC]">
+				<h3 class="text-[0.875rem] font-semibold text-[#252B42]">Scaglioni Peso</h3>
 				<div class="grid grid-cols-3 gap-[10px]">
-					<label class="text-[0.75rem] text-[var(--color-brand-text-secondary)]">Start
-						<input v-model.number="extraRules.weight_start" type="number" min="0" step="1" class="mt-[4px] w-full h-[38px] px-[10px] rounded-[12px] border border-[var(--color-brand-border)] bg-white text-[0.8125rem]">
+					<label class="text-[0.75rem] text-[#737373]">Start
+						<input v-model.number="extraRules.weight_start" type="number" min="0" step="1" class="mt-[4px] w-full h-[38px] px-[10px] rounded-[12px] border border-[#E9EBEC] bg-white text-[0.8125rem]">
 					</label>
-					<label class="text-[0.75rem] text-[var(--color-brand-text-secondary)]">Step
-						<input v-model.number="extraRules.weight_step" type="number" min="0.0001" step="1" class="mt-[4px] w-full h-[38px] px-[10px] rounded-[12px] border border-[var(--color-brand-border)] bg-white text-[0.8125rem]">
+					<label class="text-[0.75rem] text-[#737373]">Step
+						<input v-model.number="extraRules.weight_step" type="number" min="0.0001" step="1" class="mt-[4px] w-full h-[38px] px-[10px] rounded-[12px] border border-[#E9EBEC] bg-white text-[0.8125rem]">
 					</label>
-					<label class="text-[0.75rem] text-[var(--color-brand-text-secondary)]">Risoluzione
-						<input v-model.number="extraRules.weight_resolution" type="number" min="0.0001" step="1" class="mt-[4px] w-full h-[38px] px-[10px] rounded-[12px] border border-[var(--color-brand-border)] bg-white text-[0.8125rem]">
+					<label class="text-[0.75rem] text-[#737373]">Risoluzione
+						<input v-model.number="extraRules.weight_resolution" type="number" min="0.0001" step="1" class="mt-[4px] w-full h-[38px] px-[10px] rounded-[12px] border border-[#E9EBEC] bg-white text-[0.8125rem]">
 					</label>
 				</div>
 				<p class="text-[0.75rem] text-[#4F5D75]">Preview: {{ extraRuleExamples.firstWeightFrom }}-{{ extraRuleExamples.firstWeightTo }} / {{ extraRuleExamples.secondWeightFrom }}-{{ extraRuleExamples.secondWeightTo }}</p>
 			</div>
 
-			<div class="space-y-[12px] p-[14px] rounded-[12px] border border-[var(--color-brand-border)] bg-[#FAFBFC]">
-				<h3 class="text-[0.875rem] font-semibold text-[var(--color-brand-text)]">Scaglioni Volume (m&sup3;)</h3>
+			<div class="space-y-[12px] p-[14px] rounded-[12px] border border-[#E9EBEC] bg-[#FAFBFC]">
+				<h3 class="text-[0.875rem] font-semibold text-[#252B42]">Scaglioni Volume (m&sup3;)</h3>
 				<div class="grid grid-cols-3 gap-[10px]">
-					<label class="text-[0.75rem] text-[var(--color-brand-text-secondary)]">Start
-						<input v-model.number="extraRules.volume_start" type="number" min="0" step="0.001" class="mt-[4px] w-full h-[38px] px-[10px] rounded-[12px] border border-[var(--color-brand-border)] bg-white text-[0.8125rem]">
+					<label class="text-[0.75rem] text-[#737373]">Start
+						<input v-model.number="extraRules.volume_start" type="number" min="0" step="0.001" class="mt-[4px] w-full h-[38px] px-[10px] rounded-[12px] border border-[#E9EBEC] bg-white text-[0.8125rem]">
 					</label>
-					<label class="text-[0.75rem] text-[var(--color-brand-text-secondary)]">Step
-						<input v-model.number="extraRules.volume_step" type="number" min="0.0001" step="0.001" class="mt-[4px] w-full h-[38px] px-[10px] rounded-[12px] border border-[var(--color-brand-border)] bg-white text-[0.8125rem]">
+					<label class="text-[0.75rem] text-[#737373]">Step
+						<input v-model.number="extraRules.volume_step" type="number" min="0.0001" step="0.001" class="mt-[4px] w-full h-[38px] px-[10px] rounded-[12px] border border-[#E9EBEC] bg-white text-[0.8125rem]">
 					</label>
-					<label class="text-[0.75rem] text-[var(--color-brand-text-secondary)]">Risoluzione
-						<input v-model.number="extraRules.volume_resolution" type="number" min="0.0001" step="0.001" class="mt-[4px] w-full h-[38px] px-[10px] rounded-[12px] border border-[var(--color-brand-border)] bg-white text-[0.8125rem]">
+					<label class="text-[0.75rem] text-[#737373]">Risoluzione
+						<input v-model.number="extraRules.volume_resolution" type="number" min="0.0001" step="0.001" class="mt-[4px] w-full h-[38px] px-[10px] rounded-[12px] border border-[#E9EBEC] bg-white text-[0.8125rem]">
 					</label>
 				</div>
 				<p class="text-[0.75rem] text-[#4F5D75]">Preview: {{ extraRuleExamples.firstVolumeFrom.toFixed(3) }}-{{ extraRuleExamples.firstVolumeTo.toFixed(3) }} / {{ extraRuleExamples.secondVolumeFrom.toFixed(3) }}-{{ extraRuleExamples.secondVolumeTo.toFixed(3) }}</p>
 			</div>
 
-			<div class="space-y-[12px] p-[14px] rounded-[12px] border border-[var(--color-brand-border)] bg-[#FAFBFC]">
-				<h3 class="text-[0.875rem] font-semibold text-[var(--color-brand-text)]">Incrementi oltre 7ª fascia</h3>
+			<div class="space-y-[12px] p-[14px] rounded-[12px] border border-[#E9EBEC] bg-[#FAFBFC]">
+				<h3 class="text-[0.875rem] font-semibold text-[#252B42]">Incrementi oltre 7ª fascia</h3>
 				<div class="grid grid-cols-1 tablet:grid-cols-2 gap-[10px]">
-					<label class="text-[0.75rem] text-[var(--color-brand-text-secondary)]">Base prezzo extra
-						<select v-model="extraRules.base_price_cents_mode" class="mt-[4px] w-full h-[38px] px-[10px] rounded-[12px] border border-[var(--color-brand-border)] bg-white text-[0.8125rem]">
+					<label class="text-[0.75rem] text-[#737373]">Base prezzo extra
+						<select v-model="extraRules.base_price_cents_mode" class="mt-[4px] w-full h-[38px] px-[10px] rounded-[12px] border border-[#E9EBEC] bg-white text-[0.8125rem]">
 							<option value="last_band_effective">Ultima fascia effettiva</option>
 							<option value="manual">Manuale</option>
 						</select>
 					</label>
-					<label class="text-[0.75rem] text-[var(--color-brand-text-secondary)]">Incremento fisso per ogni fascia extra (&euro;)
+					<label class="text-[0.75rem] text-[#737373]">Incremento fisso per ogni fascia extra (&euro;)
 						<input
 							:value="(Number(extraRules.increment_cents || 0) / 100).toFixed(2).replace('.', ',')"
 							@input="extraRules.increment_cents = Math.max(0, euroToCents($event.target.value) ?? 0)"
 							type="text"
-							class="mt-[4px] w-full h-[38px] px-[10px] rounded-[12px] border border-[var(--color-brand-border)] bg-white text-[0.8125rem]">
+							class="mt-[4px] w-full h-[38px] px-[10px] rounded-[12px] border border-[#E9EBEC] bg-white text-[0.8125rem]">
 					</label>
 				</div>
-				<label v-if="extraRules.base_price_cents_mode === 'manual'" class="text-[0.75rem] text-[var(--color-brand-text-secondary)]">Prezzo base extra manuale (&euro;)
+				<label v-if="extraRules.base_price_cents_mode === 'manual'" class="text-[0.75rem] text-[#737373]">Prezzo base extra manuale (&euro;)
 					<input
 						:value="extraRules.base_price_cents_manual == null ? '' : (Number(extraRules.base_price_cents_manual || 0) / 100).toFixed(2).replace('.', ',')"
 						@input="extraRules.base_price_cents_manual = euroToCents($event.target.value)"
 						type="text"
-						class="mt-[4px] w-full h-[38px] px-[10px] rounded-[12px] border border-[var(--color-brand-border)] bg-white text-[0.8125rem]">
+						class="mt-[4px] w-full h-[38px] px-[10px] rounded-[12px] border border-[#E9EBEC] bg-white text-[0.8125rem]">
 				</label>
 			</div>
 
 			<div class="p-[14px] rounded-[12px] border border-[#D8E9F0] bg-[#F4FAFC]">
-				<h3 class="text-[0.875rem] font-semibold text-[var(--color-brand-primary)] mb-[10px]">Casi rapidi</h3>
+				<h3 class="text-[0.875rem] font-semibold text-[#095866] mb-[10px]">Casi rapidi</h3>
 				<div class="overflow-x-auto">
 					<table class="w-full min-w-[450px] text-[0.75rem]">
 						<thead>
@@ -201,7 +201,7 @@ const bandTableShared = computed(() => ({
 								<td class="py-[7px]">{{ row.volume }}</td>
 								<td class="py-[7px]">{{ row.weightPriceLabel }}</td>
 								<td class="py-[7px]">{{ row.volumePriceLabel }}</td>
-								<td class="py-[7px] font-bold text-[var(--color-brand-primary)]">{{ row.totalLabel }}</td>
+								<td class="py-[7px] font-bold text-[#095866]">{{ row.totalLabel }}</td>
 							</tr>
 						</tbody>
 					</table>
@@ -211,18 +211,18 @@ const bandTableShared = computed(() => ({
 	</div>
 
 	<!-- Supplementi CAP -->
-	<div class="bg-white rounded-[12px] p-[20px] tablet:p-[24px] desktop:p-[32px] shadow-sm border border-[var(--color-brand-border)]">
-		<div class="flex flex-wrap items-center justify-between gap-[12px] mb-[14px]">
+	<div class="bg-white rounded-[12px] p-[20px] tablet:p-[24px] desktop:p-[32px] shadow-sm border border-[#E9EBEC]">
+		<div class="flex flex-wrap items-center justify-between gap-[12px] mb-[16px]">
 			<div>
-				<h2 class="text-[1.125rem] font-bold text-[var(--color-brand-text)] mb-[4px]">Supplementi CAP</h2>
-				<p class="text-[0.75rem] text-[var(--color-brand-text-secondary)]">Prefisso CAP + importo + applicazione (origine / destinazione / entrambi).</p>
+				<h2 class="text-[1.125rem] font-bold text-[#252B42] mb-[4px]">Supplementi CAP</h2>
+				<p class="text-[0.75rem] text-[#737373]">Prefisso CAP + importo + applicazione (origine / destinazione / entrambi).</p>
 			</div>
-			<button type="button" class="px-[14px] py-[8px] rounded-[999px] bg-[var(--color-brand-primary)] text-white text-[0.8125rem] font-medium hover:bg-[var(--color-brand-primary-hover)] cursor-pointer" @click="addSupplement">
+			<button type="button" class="px-[14px] py-[8px] rounded-[999px] bg-[#095866] text-white text-[0.8125rem] font-medium hover:bg-[#074a56] cursor-pointer" @click="addSupplement">
 				Aggiungi supplemento
 			</button>
 		</div>
 
-		<div v-if="!supplementRules.length" class="p-[14px] rounded-[12px] border border-dashed border-[var(--color-brand-border)] text-[#6A7486] text-[0.8125rem]">
+		<div v-if="!supplementRules.length" class="p-[14px] rounded-[12px] border border-dashed border-[#E9EBEC] text-[#6A7486] text-[0.8125rem]">
 			Nessun supplemento attivo. Aggiungi una regola se necessario.
 		</div>
 

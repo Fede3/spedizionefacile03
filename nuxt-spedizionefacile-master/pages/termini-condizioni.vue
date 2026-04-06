@@ -1,6 +1,7 @@
 <!--
   PAGINA: Termini e Condizioni (termini-condizioni.vue)
   Condizioni generali di servizio per l'utilizzo della piattaforma SpediamoFacile.
+  CSS condiviso: assets/css/legal.css
 -->
 <script setup>
 useSeoMeta({
@@ -56,29 +57,27 @@ const sections = [
 </script>
 
 <template>
-	<section class="min-h-[500px] py-[40px] desktop:py-[60px]">
-		<div class="my-container max-w-[800px]">
-			<h1 class="text-[2rem] font-bold text-[var(--color-brand-text)] mb-[8px]">Termini e Condizioni</h1>
-			<p class="text-[var(--color-brand-text-secondary)] text-[0.875rem] mb-[32px]">Ultimo aggiornamento: {{ lastUpdate }}</p>
+	<section class="legal-page">
+		<div class="legal-page__container">
+			<h1 class="legal-page__title">Termini e Condizioni</h1>
+			<p class="legal-page__subtitle">Ultimo aggiornamento: {{ lastUpdate }}</p>
 
-			<div class="space-y-[24px]">
-				<div
-					v-for="(section, i) in sections"
-					:key="i"
-					class="bg-white rounded-[12px] border border-[var(--color-brand-border)] p-[24px]"
-				>
-					<h2 class="text-[1.125rem] font-semibold text-[var(--color-brand-text)] mb-[12px]">{{ section.title }}</h2>
-					<p class="text-[var(--color-brand-text-secondary)] text-[0.9375rem] leading-[1.8]">{{ section.text }}</p>
-				</div>
+			<div
+				v-for="(section, i) in sections"
+				:key="i"
+				class="legal-section"
+			>
+				<h2 class="legal-section__title">{{ section.title }}</h2>
+				<p class="legal-section__text">{{ section.text }}</p>
 			</div>
 
-			<div class="mt-[32px] bg-[#F9FAFB] rounded-[12px] border border-[var(--color-brand-border)] p-[24px]">
-				<h2 class="text-[1rem] font-semibold text-[var(--color-brand-text)] mb-[8px]">Hai domande sui termini?</h2>
-				<p class="text-[var(--color-brand-text-secondary)] text-[0.9375rem] leading-[1.8]">
+			<div class="legal-footer-card">
+				<h2 class="legal-footer-card__title">Hai domande sui termini?</h2>
+				<p class="legal-footer-card__text">
 					Per chiarimenti sui presenti termini e condizioni, contattaci a
-					<a href="mailto:info@spediamofacile.it" class="text-[var(--color-brand-primary)] hover:underline">info@spediamofacile.it</a>
+					<a href="mailto:info@spediamofacile.it" class="legal-link">info@spediamofacile.it</a>
 					oppure visita la pagina
-					<NuxtLink to="/contatti" class="text-[var(--color-brand-primary)] hover:underline">Contatti</NuxtLink>.
+					<NuxtLink to="/contatti" class="legal-link">Contatti</NuxtLink>.
 				</p>
 			</div>
 		</div>

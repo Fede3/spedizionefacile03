@@ -4,6 +4,7 @@
 -->
 <script setup>
 import { formatDateTimeIt } from '~/utils/date.js';
+import { formatEuro } from '~/utils/price.js';
 
 defineProps({
 	withdrawals: { type: Array, default: () => [] },
@@ -14,7 +15,7 @@ const statusConfig = {
 	pending: { label: 'In attesa', bg: 'bg-[#fff4e8]', text: 'text-[#b45309]', border: 'border-[#f3d1a7]' },
 	approved: { label: 'Approvata', bg: 'bg-[#edf7f8]', text: 'text-[var(--color-brand-primary)]', border: 'border-[#bfe0e6]' },
 	rejected: { label: 'Rifiutata', bg: 'bg-[#fef2f2]', text: 'text-[#b42318]', border: 'border-[#f3c1c1]' },
-	completed: { label: 'Completata', bg: 'bg-[#f5f7f8]', text: 'text-[#4b5563]', border: 'border-[#d9e1e5]' },
+	completed: { label: 'Completata', bg: 'bg-[#f5f7f8]', text: 'text-[var(--color-brand-text-secondary)]', border: 'border-[#d9e1e5]' },
 };
 
 const statusIcons = {
@@ -31,15 +32,15 @@ const formatDate = (dateStr) => formatDateTimeIt(dateStr);
 </script>
 
 <template>
-	<div class="bg-white rounded-[20px] p-[16px] desktop:p-[24px] shadow-sm border border-[var(--color-brand-border)]">
-		<div class="flex items-center gap-[10px] mb-[14px] desktop:mb-[16px]">
+	<div class="sf-account-panel rounded-[20px] p-[16px] desktop:p-[24px]">
+		<div class="flex items-center gap-[10px] mb-[16px] desktop:mb-[16px]">
 			<div class="w-[36px] h-[36px] rounded-[50px] bg-[#edf7f8] flex items-center justify-center">
 				<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="var(--color-brand-primary)">
 					<path
 						d="M13.5,8H12V13L16.28,15.54L17,14.33L13.5,12.25V8M13,3A9,9 0 0,0 4,12H1L4.96,16.03L9,12H6A7,7 0 0,1 13,5A7,7 0 0,1 20,12A7,7 0 0,1 13,19C11.07,19 9.32,18.21 8.06,16.94L6.64,18.36C8.27,19.99 10.51,21 13,21A9,9 0 0,0 22,12A9,9 0 0,0 13,3Z" />
 				</svg>
 			</div>
-			<h2 class="text-[1rem] font-bold text-[var(--color-brand-text)]">Storico</h2>
+			<h2 class="font-montserrat text-[1rem] font-[800] text-[var(--color-brand-text)]">Storico</h2>
 		</div>
 
 		<!-- Loading -->
@@ -49,7 +50,7 @@ const formatDate = (dateStr) => formatDateTimeIt(dateStr);
 
 		<!-- Empty -->
 		<div v-else-if="!withdrawals?.length" class="text-center py-[32px]">
-			<div class="w-[56px] h-[56px] mx-auto mb-[14px] rounded-full bg-[#F8F9FB] flex items-center justify-center">
+			<div class="w-[56px] h-[56px] mx-auto mb-[16px] rounded-full bg-[#F5F6F9] flex items-center justify-center">
 				<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="#C8CCD0">
 					<path
 						d="M3,6H21V18H3V6M12,9A3,3 0 0,1 15,12A3,3 0 0,1 12,15A3,3 0 0,1 9,12A3,3 0 0,1 12,9M7,8A2,2 0 0,1 5,10V14A2,2 0 0,1 7,16H17A2,2 0 0,1 19,14V10A2,2 0 0,1 17,8H7Z" />

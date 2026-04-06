@@ -32,7 +32,7 @@ onBeforeUnmount(() => stopNowTimer());
 					v-model="searchAddress"
 					type="text"
 					placeholder="es. Via Roma 10"
-					class="w-full bg-white rounded-[12px] h-[44px] px-[10px] text-[1rem] border border-[var(--color-brand-border)] transition-[border-color,box-shadow] duration-200 focus:border-[var(--color-brand-primary)] focus:shadow-[0_0_0_3px_rgba(9,88,102,0.1)]"
+					class="w-full bg-white rounded-[14px] h-[44px] px-[10px] text-[1rem] border border-[var(--color-brand-border)] transition-[border-color,box-shadow] duration-200 focus:border-[var(--color-brand-primary)] focus:shadow-[0_0_0_3px_rgba(9,88,102,0.1)]"
 					@keydown.enter.prevent="searchPudo" />
 			</div>
 
@@ -43,7 +43,7 @@ onBeforeUnmount(() => stopNowTimer());
 					v-model="searchCity"
 					type="text"
 					placeholder="es. Iglesias"
-					class="w-full bg-white rounded-[12px] h-[44px] px-[10px] text-[1rem] border border-[var(--color-brand-border)] transition-[border-color,box-shadow] duration-200 focus:border-[var(--color-brand-primary)] focus:shadow-[0_0_0_3px_rgba(9,88,102,0.1)]"
+					class="w-full bg-white rounded-[14px] h-[44px] px-[10px] text-[1rem] border border-[var(--color-brand-border)] transition-[border-color,box-shadow] duration-200 focus:border-[var(--color-brand-primary)] focus:shadow-[0_0_0_3px_rgba(9,88,102,0.1)]"
 					@keydown.enter.prevent="searchPudo" />
 			</div>
 
@@ -55,7 +55,7 @@ onBeforeUnmount(() => stopNowTimer());
 					type="text"
 					maxlength="5"
 					placeholder="es. 09016"
-					class="w-full bg-white rounded-[12px] h-[44px] px-[10px] text-[1rem] border border-[var(--color-brand-border)] transition-[border-color,box-shadow] duration-200 focus:border-[var(--color-brand-primary)] focus:shadow-[0_0_0_3px_rgba(9,88,102,0.1)]"
+					class="w-full bg-white rounded-[14px] h-[44px] px-[10px] text-[1rem] border border-[var(--color-brand-border)] transition-[border-color,box-shadow] duration-200 focus:border-[var(--color-brand-primary)] focus:shadow-[0_0_0_3px_rgba(9,88,102,0.1)]"
 					@keydown.enter.prevent="searchPudo" />
 			</div>
 
@@ -64,7 +64,7 @@ onBeforeUnmount(() => stopNowTimer());
 					type="button"
 					@click="searchPudo"
 					:disabled="loading || !hasSearchInput"
-					class="inline-flex items-center justify-center gap-[6px] h-[44px] px-[16px] bg-[var(--color-brand-primary)] text-white rounded-[12px] text-[0.875rem] font-semibold hover:bg-[var(--color-brand-primary-hover)] transition cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed whitespace-nowrap min-w-0 tablet:min-w-[142px]">
+					class="inline-flex items-center justify-center gap-[6px] h-[44px] px-[16px] bg-[var(--color-brand-primary)] text-white rounded-[14px] text-[0.875rem] font-semibold hover:bg-[var(--color-brand-primary-hover)] transition cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed whitespace-nowrap min-w-0 tablet:min-w-[142px]">
 					<svg v-if="!loading" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
 					<span v-if="loading" class="inline-block w-[16px] h-[16px] border-2 border-white border-t-transparent rounded-full animate-spin"></span>
 					{{ loading ? 'Ricerca...' : 'Cerca punti' }}
@@ -73,7 +73,7 @@ onBeforeUnmount(() => stopNowTimer());
 					type="button"
 					@click="useCurrentLocation"
 					:disabled="geolocating || loading"
-					class="inline-flex items-center justify-center gap-[6px] h-[44px] px-[14px] bg-white text-[var(--color-brand-primary)] border border-[#C6D2D5] rounded-[12px] text-[0.8125rem] font-semibold hover:bg-[#F2F8F9] transition cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed whitespace-nowrap min-w-0 tablet:min-w-[150px]">
+					class="inline-flex items-center justify-center gap-[6px] h-[44px] px-[14px] bg-white text-[var(--color-brand-primary)] border border-[#C6D2D5] rounded-[14px] text-[0.8125rem] font-semibold hover:bg-[#F2F8F9] transition cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed whitespace-nowrap min-w-0 tablet:min-w-[150px]">
 					<span v-if="geolocating" class="inline-block w-[14px] h-[14px] border-2 border-[var(--color-brand-primary)] border-t-transparent rounded-full animate-spin"></span>
 					<span v-else class="inline-flex items-center gap-[6px]">
 						<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -98,7 +98,7 @@ onBeforeUnmount(() => stopNowTimer());
 			<span v-if="searchMeta?.fallback" class="inline-flex items-center h-[28px] px-[10px] rounded-full bg-amber-50 text-amber-700 border border-amber-200 font-medium">
 				Fallback attivo
 			</span>
-			<span v-if="strategyListLabel" class="text-[#64748B]">Strategia: {{ strategyListLabel }}</span>
+			<span v-if="strategyListLabel" class="text-[var(--color-brand-text-secondary)]">Strategia: {{ strategyListLabel }}</span>
 		</div>
 
 		<div v-if="searched" class="mt-[12px] grid grid-cols-1 desktop:grid-cols-2 gap-[14px] items-stretch">
@@ -116,7 +116,7 @@ onBeforeUnmount(() => stopNowTimer());
 						<div
 							v-for="pudo in pudoResults"
 							:key="pudo.ui_key"
-							class="bg-white rounded-[12px] border-2 p-[14px] transition-[border-color,box-shadow] duration-200 cursor-pointer min-h-[168px]"
+							class="bg-white rounded-[14px] border-2 p-[14px] transition-[border-color,box-shadow] duration-200 cursor-pointer min-h-[168px]"
 							:class="[
 								expandedPudoKey === String(pudo.pudo_id || pudo.ui_key) ? 'h-auto' : 'h-[168px]',
 								selectedPudoKey === pudo.ui_key ? 'border-[var(--color-brand-primary)] shadow-md' : 'border-[var(--color-brand-border)] hover:border-[var(--color-brand-primary)]/50'
@@ -137,7 +137,7 @@ onBeforeUnmount(() => stopNowTimer());
 								</div>
 
 								<div class="flex flex-col items-end gap-[6px] shrink-0">
-									<span class="inline-flex items-center h-[26px] px-[10px] rounded-full bg-[#E7F3F6] border border-[#C0DFE6] text-[#0B5F70] text-[0.8125rem] font-black tracking-[0.15px] leading-none">
+									<span class="inline-flex items-center h-[26px] px-[10px] rounded-full bg-[#E7F3F6] border border-[#C0DFE6] text-[var(--color-brand-primary)] text-[0.8125rem] font-black tracking-[0.15px] leading-none">
 										Distanza: {{ distanceLabel(pudo) }}
 									</span>
 									<span class="inline-flex items-center px-[8px] h-[24px] rounded-full border text-[0.6875rem] font-semibold" :class="getPudoStatus(pudo).className">
@@ -151,7 +151,7 @@ onBeforeUnmount(() => stopNowTimer());
 								</div>
 							</div>
 
-							<div class="mt-[2px] grid gap-[2px] text-[0.75rem] text-[#64748B]">
+							<div class="mt-[2px] grid gap-[2px] text-[0.75rem] text-[var(--color-brand-text-secondary)]">
 								<p class="inline-flex items-center gap-[4px]">
 									<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
 									{{ getTodayHoursText(pudo) }}
@@ -172,7 +172,7 @@ onBeforeUnmount(() => stopNowTimer());
 										{{ pudoDetails[String(pudo.pudo_id || pudo.ui_key)].localization_hint }}
 									</p>
 								</template>
-								<p v-else-if="detailsErrors[String(pudo.pudo_id || pudo.ui_key)]" class="text-rose-600">
+								<p v-else-if="detailsErrors[String(pudo.pudo_id || pudo.ui_key)]" class="text-red-600">
 									{{ detailsErrors[String(pudo.pudo_id || pudo.ui_key)] }}
 								</p>
 							</div>
@@ -189,13 +189,13 @@ onBeforeUnmount(() => stopNowTimer());
 			</div>
 
 			<div class="order-1 desktop:order-2 h-[360px] tablet:h-[420px] desktop:h-[520px] desktop:sticky desktop:top-[92px]">
-				<div class="h-full bg-white rounded-[12px] border border-[var(--color-brand-border)] p-[8px] flex flex-col">
-					<div class="shrink-0 rounded-[12px] border border-[#D8E6EB] bg-[#F8FCFD] px-[10px] py-[8px]">
-						<p class="text-[0.75rem] text-[#506070]">
+				<div class="h-full bg-white rounded-[14px] border border-[var(--color-brand-border)] p-[8px] flex flex-col">
+					<div class="shrink-0 rounded-[14px] border border-[#D8E6EB] bg-[#F8FCFD] px-[10px] py-[8px]">
+						<p class="text-[0.75rem] text-[var(--color-brand-text-secondary)]">
 							Doppio clic sulla mappa per impostare il punto di riferimento e aggiornare automaticamente via, citta e CAP.
 						</p>
 						<p v-if="mapClickLoading" class="text-[0.75rem] font-semibold text-[var(--color-brand-primary)] mt-[4px]">Aggiornamento in corso...</p>
-						<p v-else-if="referenceUpdateMessage" class="text-[0.75rem] text-emerald-700 mt-[4px]">{{ referenceUpdateMessage }}</p>
+						<p v-else-if="referenceUpdateMessage" class="text-[0.75rem] text-[#0a8a7a] mt-[4px]">{{ referenceUpdateMessage }}</p>
 					</div>
 
 					<div class="mt-[8px] flex-1 min-h-0">
@@ -209,7 +209,7 @@ onBeforeUnmount(() => stopNowTimer());
 
 					<p
 						v-if="!loading && mapPoints.length === 0 && !searchError"
-						class="mt-[8px] text-[0.8125rem] text-[#6B7280]">
+						class="mt-[8px] text-[0.8125rem] text-[var(--color-brand-text-secondary)]">
 						Nessun punto trovato: la mappa mostra il riferimento inserito oppure la vista Italia.
 					</p>
 				</div>

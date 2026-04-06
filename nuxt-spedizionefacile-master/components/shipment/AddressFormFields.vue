@@ -2,38 +2,27 @@
 const props = defineProps({
 	type: { type: String, required: true, validator: (value) => ["origin", "dest"].includes(value) },
 	address: { type: Object, required: true },
-	fieldClass: { type: Function, required: true },
-	getFieldError: { type: Function, required: true },
-	fieldErrorText: { type: Function, required: true },
-	getFieldAssist: { type: Function, required: true },
-	applyFieldAssist: { type: Function, required: true },
-	smartBlur: { type: Function, required: true },
-	onNameInput: { type: Function, required: true },
-	onCityInput: { type: Function, required: true },
-	onCityFocus: { type: Function, required: true },
-	onProvinciaInput: { type: Function, required: true },
-	onProvinceFocus: { type: Function, required: true },
-	onCapInput: { type: Function, required: true },
-	onCapFocus: { type: Function, required: true },
-	onTelefonoInput: { type: Function, required: true },
-	selectCity: { type: Function, required: true },
-	selectProvincia: { type: Function, required: true },
-	selectCap: { type: Function, required: true },
-	formatCitySuggestionLabel: { type: Function, required: true },
-	formatCapSuggestionLabel: { type: Function, required: true },
-	sv: { type: Object, required: true },
 	citySuggestions: { type: Array, default: () => [] },
 	provinceSuggestions: { type: Array, default: () => [] },
 	capSuggestions: { type: Array, default: () => [] },
 	readonly: { type: Boolean, default: false },
 });
 
+// Funzioni form/validazione iniettate dal parent ([step].vue) via provide/inject
+const {
+	fieldClass, getFieldError, fieldErrorText, getFieldAssist, applyFieldAssist, smartBlur,
+	onNameInput, onCityInput, onCityFocus, onProvinciaInput, onProvinceFocus,
+	onCapInput, onCapFocus, onTelefonoInput,
+	selectCity, selectProvincia, selectCap,
+	formatCitySuggestionLabel, formatCapSuggestionLabel, sv,
+} = inject('shipmentFormHandlers');
+
 const typeKey = props.type;
 const idPrefix = typeKey === "origin" ? "" : "dest_";
 
 const readonlyClass = computed(() => (
 	props.readonly
-		? "!bg-white !border-[#CBD5DF] !text-[#4B5563] cursor-not-allowed"
+		? "!bg-white !border-[#CBD5DF] !text-[var(--color-brand-text-secondary)] cursor-not-allowed"
 		: ""
 ));
 

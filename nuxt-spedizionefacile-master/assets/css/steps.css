@@ -1,14 +1,20 @@
+/* ==========================================================
+   steps.css — Prototype-aligned pill stepper
+   Matches StepNav.tsx from the prototype reference.
+   ========================================================== */
 
 .steps-nav {
 	width: 100%;
-	overflow: visible;
+	max-width: 100%;
+	overflow: clip;
 }
 
+/* ── Mobile shell ─────────────────────────────────────────── */
 .steps-mobile-shell {
 	display: grid;
-	gap: 7px;
-	margin: 2px 0 10px;
-	padding: 9px 12px 11px;
+	gap: 8px;
+	margin: 2px 0 0;
+	padding: 8px 16px;
 	border-radius: 20px;
 	border: 1px solid rgba(9, 88, 102, 0.08);
 	background: linear-gradient(180deg, #ffffff 0%, #f8fbfc 100%);
@@ -19,7 +25,7 @@
 	display: flex;
 	align-items: center;
 	justify-content: flex-start;
-	gap: 10px;
+	gap: 8px;
 }
 
 .steps-mobile-copy {
@@ -33,24 +39,24 @@
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
-	gap: 10px;
+	gap: 8px;
 }
 
 .steps-mobile-kicker {
-	font-size: 0.6875rem;
+	font-size: 0.75rem;
 	line-height: 1;
 	font-weight: 700;
 	letter-spacing: 0.04em;
 	text-transform: uppercase;
-	color: #738295;
+	color: var(--color-brand-text-secondary);
 }
 
 .steps-mobile-title {
-	font-size: 0.9375rem;
+	font-size: 1.0625rem;
 	line-height: 1.1;
 	font-weight: 800;
 	letter-spacing: -0.02em;
-	color: #1f2a3c;
+	color: var(--color-brand-text, #1f2a3c);
 }
 
 .steps-mobile-percent {
@@ -59,14 +65,14 @@
 	justify-content: center;
 	min-width: 52px;
 	height: 28px;
-	padding: 0 9px;
+	padding: 0 8px;
 	border-radius: 14px;
 	background: rgba(9, 88, 102, 0.08);
 	border: 1px solid rgba(9, 88, 102, 0.14);
 	font-size: 0.75rem;
 	font-weight: 800;
 	line-height: 1;
-	color: #0e6572;
+	color: var(--color-brand-primary);
 	flex: 0 0 auto;
 }
 
@@ -84,108 +90,148 @@
 	border-radius: inherit;
 	background: linear-gradient(90deg, var(--color-brand-accent) 0%, #ff6a33 100%);
 	box-shadow: 0 4px 10px rgba(228, 66, 3, 0.14);
-	transition: width var(--sf-motion-base) var(--sf-ease-soft);
+	transition: width 0.45s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .steps-nav::-webkit-scrollbar {
 	display: none;
 }
 
-.steps-grid {
-	display: grid;
-	grid-template-columns: repeat(5, minmax(0, 1fr));
-	gap: 6px;
-	margin: 8px 0 10px;
-	padding: 0;
-	min-width: 0;
-}
+/* ── Desktop pill stepper (prototype aligned) ────────────── */
 
-.steps-pill-item {
+.steps-figma-bar {
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	min-width: 0;
-	min-height: 44px;
-	padding: 0 4px;
-	text-align: center;
-	border-radius: 14px;
+	gap: 0;
+	margin: 8px 0 0;
+	padding: 8px 0 0;
+	list-style: none;
 }
 
-.steps-pill-content {
-	display: flex;
-	width: 100%;
-	min-width: 0;
+/* Connector line between pills */
+.steps-figma-connector {
+	display: block;
+	flex: 0 0 auto;
+	width: 16px;
+	height: 2px;
+	border-radius: 999px;
+	background: #e4e4e8;
+	margin-inline: 4px;
+	transition: background-color 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.steps-figma-connector--done {
+	background: rgba(9, 88, 102, 0.3);
+}
+
+/* Step item — pill button */
+.steps-figma-item {
+	display: inline-flex;
 	align-items: center;
-	justify-content: center;
-	flex-direction: column;
 	gap: 4px;
+	padding: 4px 8px;
+	height: 38px;
+	border-radius: 999px;
+	font-size: 15px;
+	line-height: 1;
+	font-weight: 600;
+	white-space: nowrap;
+	user-select: none;
+	cursor: default;
+	transition: all 0.45s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-.steps-pill-status {
+/* Active step — solid teal pill with inner number circle */
+.steps-figma-item--active {
+	background: var(--color-brand-primary);
+	color: #ffffff;
+	font-weight: 700;
+	padding-left: 5px;
+	padding-right: 18px;
+	box-shadow: 0 2px 12px rgba(9, 88, 102, 0.25);
+}
+
+/* Completed step — transparent, teal text, clickable */
+.steps-figma-item--completed {
+	background: transparent;
+	color: var(--color-brand-primary);
+	font-weight: 600;
+	cursor: pointer;
+}
+
+.steps-figma-item--completed:hover {
+	background: rgba(9, 88, 102, 0.06);
+}
+
+/* Upcoming step — grey text */
+.steps-figma-item--upcoming {
+	background: transparent;
+	color: var(--color-brand-text-secondary);
+	font-weight: 500;
+}
+
+.steps-figma-item--upcoming:hover {
+	background: #eef0f3;
+}
+
+/* Number / check circles inside each step */
+.steps-figma-circle {
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
-	width: 20px;
-	height: 20px;
 	border-radius: 999px;
-	background: rgba(9, 88, 102, 0.08);
-	color: #0c5662;
-	font-size: 10px;
-	font-weight: 800;
-	line-height: 1;
 	flex: 0 0 auto;
 }
 
-.steps-pill-status.is-active {
-	background: rgba(255, 255, 255, 0.18);
-	color: #ffffff;
+.steps-figma-circle--active {
+	width: 28px;
+	height: 28px;
+	background: rgba(255, 255, 255, 0.2);
 }
 
-.steps-pill-status.is-completed {
-	background: rgba(9, 88, 102, 0.12);
-	color: #0c5662;
+.steps-figma-circle--completed {
+	width: 26px;
+	height: 26px;
+	background: rgba(9, 88, 102, 0.1);
+	color: var(--color-brand-primary);
 }
 
-.steps-pill-status.is-upcoming {
-	background: #eef2f6;
-	color: #7a8390;
+.steps-figma-circle--upcoming {
+	width: 26px;
+	height: 26px;
+	border: 1.5px solid #C0C5CE;
 }
 
-.steps-pill-label {
-	display: inline-flex;
-	max-width: 100%;
-	align-items: center;
-	justify-content: center;
-	font-size: 8.5px;
-	line-height: 1.1;
-	font-weight: 700;
-	letter-spacing: -0.12px;
-	text-align: center;
-	overflow: hidden;
-	text-overflow: ellipsis;
-	white-space: normal;
+.steps-figma-number {
+	font-weight: 800;
+	font-size: 12px;
+	line-height: 1;
 }
 
-.steps-pill-completed {
-	background: #eef7f9;
-	border-color: rgba(9, 88, 102, 0.16);
-	font-weight: 700;
+.steps-figma-item--upcoming .steps-figma-number {
+	font-weight: 600;
+	font-size: 11px;
+	color: var(--color-brand-text-secondary);
 }
 
-.steps-pill-completed:hover {
-	background: #e5f1f4;
-	border-color: rgba(9, 88, 102, 0.24);
+.steps-figma-label {
+	font-size: 15px;
+	line-height: 1;
 }
 
-.steps-pill-upcoming {
-	background: #f5f7fa;
-	border-color: #d7e1e8;
-	color: #647282;
-}
-
-.steps-pill-active {
-	background: var(--color-brand-accent);
-	box-shadow: 0 10px 18px rgba(228, 66, 3, 0.22);
+/* Figma bar: horizontal scroll on small/medium screens to prevent cutoff */
+@media (max-width: 63.99rem) {
+	.steps-figma-bar {
+		overflow-x: auto;
+		scrollbar-width: none;
+		-ms-overflow-style: none;
+		padding-inline: 4px;
+		justify-content: flex-start;
+	}
+	.steps-figma-bar::-webkit-scrollbar {
+		display: none;
+	}
 }
 
 @media (min-width: 64rem) {
@@ -197,31 +243,12 @@
 		display: none;
 	}
 
-	.steps-grid {
-		display: grid;
-		grid-template-columns: repeat(5, minmax(0, 1fr));
-		gap: 8px;
-		margin: 20px 0;
-		min-width: 0;
+	.steps-figma-bar {
+		margin: 20px 0 16px;
 	}
 
-	.steps-pill-item {
-		flex: 0 1 auto;
-		min-height: 42px;
-		padding-inline: 12px;
-		border-radius: 16px;
-	}
-
-	.steps-pill-label {
-		font-size: 14px;
-		line-height: 1;
-		letter-spacing: -0.28px;
-		white-space: nowrap;
-	}
-
-	.steps-pill-content {
-		flex-direction: row;
-		gap: 8px;
+	.steps-figma-connector {
+		width: 24px;
+		margin-inline: 6px;
 	}
 }
-

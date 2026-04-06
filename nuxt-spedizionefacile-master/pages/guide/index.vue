@@ -82,7 +82,7 @@ onMounted(async () => {
 		if (Array.isArray(data) && data.length > 0) {
 			guides.value = data;
 		}
-	} catch (e) {
+	} catch {
 		// API non disponibile, usa fallback hardcoded
 	}
 });
@@ -101,24 +101,31 @@ const getDescription = (guide) => {
 <template>
 	<section id="guide">
 		<div class="my-container">
-			<div class="guide-intro-panel mt-[24px] desktop:mt-[28px]">
+			<!-- Breadcrumb -->
+			<nav aria-label="Breadcrumb" class="flex items-center gap-[6px] text-[0.8125rem] text-[var(--color-brand-text-muted)] mt-[28px] desktop:mt-[56px]">
+				<NuxtLink to="/" class="transition-colors hover:text-[var(--color-brand-primary)]">Home</NuxtLink>
+				<span aria-hidden="true">/</span>
+				<span class="font-semibold text-[var(--color-brand-primary)]">Guide</span>
+			</nav>
+
+			<div class="guide-intro-panel mt-[16px] desktop:mt-[20px]">
 				<div class="guide-intro-panel__copy">
 					<p class="guide-intro-panel__eyebrow">Guide</p>
-					<h1 class="guide-intro-panel__title">Guide pratiche per spedire meglio, capire il flusso e ridurre gli errori.</h1>
+					<h1 class="guide-intro-panel__title font-montserrat">Guide pratiche per spedire meglio, capire il flusso e ridurre gli errori.</h1>
 					<p class="guide-intro-panel__text">Scegli l’argomento che ti serve e vai subito al punto: preparazione del pacco, contrassegno, assicurazione, tracking e gestione operativa.</p>
 				</div>
 
-				<NuxtLink to="/preventivo" class="guide-intro-panel__cta">
+				<NuxtLink to="/preventivo" class="btn-cta btn-compact inline-flex items-center justify-center self-start">
 					Vai al preventivo
 				</NuxtLink>
 			</div>
 
-			<div class="grid grid-cols-1 tablet:grid-cols-2 desktop:grid-cols-3 gap-[16px] tablet:gap-[20px] desktop:gap-[22px] mt-[24px] tablet:mt-[28px] mb-[64px] desktop:mb-[112px]">
+			<div v-if="guides.length" class="grid grid-cols-1 tablet:grid-cols-2 desktop:grid-cols-3 gap-[16px] tablet:gap-[20px] desktop:gap-[22px] mt-[24px] tablet:mt-[28px] mb-[64px] desktop:mb-[112px]">
 				<NuxtLink
 					v-for="guide in guides"
 					:key="guide.slug"
 					:to="`/guide/${guide.slug}`"
-					class="guide-card block rounded-[22px] overflow-hidden border border-[var(--color-brand-border)] shadow-sm hover:shadow-lg hover:border-[var(--color-brand-primary)] transition-all group">
+					class="guide-card block rounded-[20px] overflow-hidden border border-[var(--color-brand-border)] shadow-sm hover:shadow-lg hover:border-[var(--color-brand-primary)] transition-all group">
 					<!-- Accent line -->
 					<div class="h-[3px] bg-[var(--color-brand-accent)]"></div>
 
@@ -128,19 +135,29 @@ const getDescription = (guide) => {
 
 					<!-- Card body -->
 					<div class="guide-card__body p-[20px] tablet:p-[22px] desktop:p-[24px]">
-						<h2 class="text-[1rem] tablet:text-[1.0625rem] desktop:text-[1.125rem] font-medium text-[#222222] leading-[130%] tracking-[-0.4px] mb-[8px] group-hover:text-[var(--color-brand-primary)] transition-colors">
+						<h2 class="font-montserrat text-[1rem] tablet:text-[1.0625rem] desktop:text-[1.125rem] font-[800] text-[var(--color-brand-text)] leading-[130%] tracking-[-0.4px] mb-[8px] group-hover:text-[var(--color-brand-primary)] transition-colors">
 							{{ guide.title }}
 						</h2>
 						<p class="text-[0.8125rem] tablet:text-[0.875rem] desktop:text-[0.9375rem] text-[var(--color-brand-text-secondary)] leading-[160%] tracking-[-0.24px] mb-[16px]">
 							{{ getDescription(guide) }}
 						</p>
-						<span class="guide-card__cta inline-flex items-center gap-[6px] h-[40px] px-[18px] rounded-[35px] bg-[var(--color-brand-accent)] text-white font-semibold tracking-[-0.32px] text-[0.8125rem] group-hover:bg-[var(--color-brand-accent-hover)] transition-colors">
-							Leggi
-							<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8h10"/><path d="M9 4l4 4-4 4"/></svg>
+						<span class="guide-card__cta inline-flex items-center gap-[6px] text-[0.875rem] font-semibold text-[var(--color-brand-primary)]">
+							Leggi la guida
+							<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
 						</span>
 					</div>
 				</NuxtLink>
 			</div>
+
+			<!-- Empty state -->
+			<section
+				v-else
+				class="rounded-[20px] border border-dashed border-[#D6E3E7] bg-white px-[20px] py-[28px] text-center shadow-[0_12px_26px_rgba(15,23,42,0.04)] mt-[24px] mb-[64px]">
+				<h2 class="font-montserrat text-[1.2rem] font-[800] text-[var(--color-brand-text)]">Le guide sono in preparazione</h2>
+				<p class="mx-auto mt-[10px] max-w-[56ch] text-[0.9rem] leading-[1.65] text-[var(--color-brand-text-secondary)]">
+					Le guide pratiche compariranno qui non appena verranno pubblicate dal pannello amministrativo.
+				</p>
+			</section>
 		</div>
 	</section>
 </template>
@@ -172,8 +189,8 @@ const getDescription = (guide) => {
 	font-size: 1.55rem;
 	line-height: 1.08;
 	letter-spacing: -0.04em;
-	font-weight: 700;
-	color: #1f2937;
+	font-weight: 800;
+	color: var(--color-brand-text);
 }
 
 .guide-intro-panel__text {
@@ -184,27 +201,8 @@ const getDescription = (guide) => {
 	max-width: 64ch;
 }
 
-.guide-intro-panel__cta {
-	display: inline-flex;
-	align-items: center;
-	justify-content: center;
-	min-height: 46px;
-	padding: 0 18px;
-	border-radius: 999px;
-	background: var(--color-brand-accent);
-	color: #fff;
-	font-size: 0.875rem;
-	font-weight: 700;
-	box-shadow: 0 12px 24px rgba(228, 66, 3, 0.18);
-	transition: transform .24s ease, box-shadow .24s ease;
-}
-
-.guide-intro-panel__cta:hover {
-	transform: translateY(-1px);
-}
-
 .guide-card__banner {
-	background: linear-gradient(135deg, var(--color-brand-primary) 0%, #0b6d7d 100%);
+	background: linear-gradient(135deg, var(--color-brand-primary) 0%, var(--color-brand-primary-hover) 100%);
 }
 
 .guide-card {

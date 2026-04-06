@@ -8,7 +8,8 @@
  */
 
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\OrderController;
+use App\Http\Controllers\OrderListController;
+use App\Http\Controllers\OrderDetailController;
 use App\Http\Controllers\CouponController;
 use App\Http\Controllers\BrtController;
 use App\Http\Controllers\RefundController;
@@ -25,12 +26,13 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
 
     /* ===== ORDINI ===== */
 
-    Route::apiResource('orders', OrderController::class);
-    Route::middleware(['throttle:3,1'])->post('orders/{order}/cancel', [OrderController::class, 'cancel']);
-    Route::get('orders/{order}/invoice', [OrderController::class, 'invoice']);
+    Route::get('orders', [OrderListController::class, 'index']);
+    Route::get('orders/{order}', [OrderDetailController::class, 'show']);
+    Route::middleware(['throttle:3,1'])->post('orders/{order}/cancel', [OrderDetailController::class, 'cancel']);
+    Route::get('orders/{order}/invoice', [OrderDetailController::class, 'invoice']);
     Route::middleware(['throttle:5,1'])->get('orders/{order}/refund-eligibility', [RefundController::class, 'checkRefundEligibility']);
-    Route::middleware(['throttle:10,1'])->post('orders/{order}/add-package', [OrderController::class, 'addPackage']);
-    Route::middleware(['throttle:5,1'])->post('create-direct-order', [OrderController::class, 'createDirectOrder']);
+    Route::middleware(['throttle:10,1'])->post('orders/{order}/add-package', [OrderDetailController::class, 'addPackage']);
+    Route::middleware(['throttle:5,1'])->post('create-direct-order', [OrderDetailController::class, 'createDirectOrder']);
 
     /* ===== COUPON ===== */
 

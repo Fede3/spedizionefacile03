@@ -62,6 +62,23 @@ export const useQuickQuoteLocations = ({
 			return "";
 		}
 
+		// Gestisci il formato combinato "Città · CAP" (es. "Roma · 00118")
+		// Quando l'utente edita il campo dopo una selezione, il valore contiene " · ".
+		// Estraiamo la parte che l'utente sta modificando per la ricerca.
+		const separatorMatch = rawQuery.match(/^(.+?)\s*[·•]\s*(.*)$/);
+		if (separatorMatch) {
+			const cityPart = separatorMatch[1].trim();
+			const capPart = separatorMatch[2].trim();
+			clearLocationSearchError?.();
+			shipmentDetails[cityKey] = cityPart;
+			shipmentDetails[capKey] = capPart;
+			shipmentDetails[countryCodeKey] = currentCountryCode;
+			shipmentDetails[countryNameKey] = currentCountryName;
+			smartValidation.clearError(fieldKey);
+			// Cerca per la parte città (che è la più utile per i suggerimenti)
+			return cityPart;
+		}
+
 		if (isCapQuery(rawQuery)) {
 			clearLocationSearchError?.();
 			const filteredCap = normalizeCap(rawQuery, currentCountryCode);

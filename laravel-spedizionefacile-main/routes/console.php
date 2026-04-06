@@ -26,3 +26,9 @@ Schedule::command('orders:cleanup')->dailyAt('03:00');
 // Task pianificato: ogni ora, sincronizza lo stato tracking degli ordini BRT
 // (aggiorna ordini in_transit e processing interrogando le API BRT)
 Schedule::command('orders:sync-tracking')->hourly();
+
+// Task pianificato: ogni giorno alle 4:00, pulisce gli eventi webhook Stripe
+// processati piu' di 7 giorni fa (tabella idempotenza, non serve tenerli a lungo)
+Schedule::call(function () {
+    \App\Models\StripeWebhookEvent::pruneOlderThan(7);
+})->dailyAt('04:00');

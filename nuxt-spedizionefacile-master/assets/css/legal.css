@@ -1,0 +1,293 @@
+/* ============================================================
+   LEGAL PAGES (Cookie Policy, Privacy Policy, Termini, Reclami)
+   Design-system aligned: 8px grid, 20px card padding,
+   20px border-radius, #E6E9EE/#F5F6F9 internal panels,
+   inset shadow, teal titles centered, Inter 18px 600.
+   ============================================================ */
+
+.legal-page {
+	min-height: 500px;
+	padding: 32px 0 80px;
+	background: #ffffff;
+}
+
+.legal-page__container {
+	max-width: 800px;
+	width: 100%;
+	margin-left: auto;
+	margin-right: auto;
+	padding-left: 20px;
+	padding-right: 20px;
+}
+
+/* -- Page title: centered teal #095866, Inter 18px weight 600 -- */
+.legal-page__title {
+	font-family: Inter, var(--font-montserrat);
+	font-size: clamp(1.125rem, 1rem + 0.8vw, 1.5rem);
+	font-weight: 600;
+	line-height: 1.1;
+	letter-spacing: -0.02em;
+	color: #095866;
+	text-align: center;
+	margin: 0 0 8px;
+}
+
+.legal-page__subtitle {
+	font-size: 0.875rem;
+	color: #8A919C;
+	text-align: center;
+	margin: 0 0 32px;
+}
+
+/* -- Section cards: 20px padding, 20px border-radius ---------- */
+.legal-section {
+	background: #fff;
+	border-radius: 20px;
+	border: 1px solid rgba(9, 88, 102, 0.1);
+	padding: 20px;
+	box-shadow: 0 4px 12px rgba(17, 24, 39, 0.04);
+	transition:
+		transform var(--sf-motion-base, 260ms) var(--sf-ease-soft, ease),
+		border-color var(--sf-motion-base, 260ms) var(--sf-ease-soft, ease),
+		box-shadow var(--sf-motion-base, 260ms) var(--sf-ease-soft, ease);
+}
+
+.legal-section:hover {
+	transform: translateY(-4px);
+	border-color: rgba(9, 88, 102, 0.25);
+	box-shadow: 0 12px 28px rgba(9, 88, 102, 0.1), 0 20px 40px rgba(9, 88, 102, 0.06);
+}
+
+/* 64px section spacing at desktop, 24px at mobile */
+.legal-section + .legal-section {
+	margin-top: 24px;
+}
+
+/* -- Section heading: teal, Inter, 18px, 600 ------------------- */
+.legal-section__title {
+	font-family: Inter, var(--font-montserrat);
+	font-size: 1.125rem;
+	font-weight: 600;
+	line-height: 1.25;
+	color: #095866;
+	text-align: center;
+	margin: 0 0 16px;
+}
+
+/* Larger variant for standalone group headings */
+.legal-section__title--lg {
+	font-size: 1.25rem;
+}
+
+/* -- Section body text: primary #1D2738, secondary #5A6474 ----- */
+.legal-section__text {
+	font-size: 0.9375rem;
+	line-height: 1.7;
+	color: #5A6474;
+	margin: 0;
+}
+
+.legal-section__text + .legal-section__text {
+	margin-top: 12px;
+}
+
+/* -- Inline links ---------------------------------------------- */
+.legal-link {
+	color: #095866;
+	text-decoration: none;
+	font-weight: 500;
+	transition: text-decoration-color 0.2s ease;
+}
+
+.legal-link:hover {
+	text-decoration: underline;
+}
+
+/* -- Lists: internal panel style ------------------------------- */
+.legal-list {
+	list-style: none;
+	margin: 16px 0 0;
+	padding: 0;
+	display: grid;
+	gap: 8px;
+}
+
+.legal-list li {
+	position: relative;
+	padding-left: 18px;
+	font-size: 0.875rem;
+	line-height: 1.7;
+	color: #5A6474;
+}
+
+.legal-list li::before {
+	content: "";
+	position: absolute;
+	left: 0;
+	top: 0.55em;
+	width: 6px;
+	height: 6px;
+	border-radius: 50%;
+	background: #095866;
+}
+
+/* -- Badges / pills -------------------------------------------- */
+.legal-badge {
+	display: inline-flex;
+	align-items: center;
+	font-size: 0.75rem;
+	font-weight: 600;
+	padding: 2px 8px;
+	border-radius: 999px;
+}
+
+.legal-badge--active {
+	background: rgba(9, 88, 102, 0.1);
+	color: #095866;
+}
+
+.legal-badge--consent {
+	background: #F5F6F9;
+	color: #8A919C;
+}
+
+/* -- Detail rows (for cookie examples/duration) ---------------- */
+.legal-detail-row {
+	font-size: 0.8125rem;
+	line-height: 1.7;
+	color: #8A919C;
+}
+
+.legal-detail-row strong {
+	font-weight: 600;
+	color: #5A6474;
+}
+
+.legal-detail-row + .legal-detail-row {
+	margin-top: 4px;
+}
+
+/* -- Footer card: internal panel #F5F6F9, rounded-16px, inset shadow -- */
+.legal-footer-card {
+	margin-top: 64px;
+	background: #F5F6F9;
+	border-radius: 20px;
+	border: 1px solid rgba(9, 88, 102, 0.1);
+	padding: 20px;
+	box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.legal-footer-card__title {
+	font-family: Inter, var(--font-montserrat);
+	font-size: 1.125rem;
+	font-weight: 600;
+	color: #095866;
+	text-align: center;
+	margin: 0 0 8px;
+}
+
+.legal-footer-card__text {
+	font-size: 0.9375rem;
+	line-height: 1.7;
+	color: #5A6474;
+	margin: 0;
+}
+
+/* -- Reclami channel cards: internal panel + hover ------------- */
+.legal-channels {
+	display: grid;
+	gap: 16px;
+}
+
+.legal-channel-card {
+	display: flex;
+	align-items: flex-start;
+	gap: 8px;
+	padding: 16px;
+	background: #F5F6F9;
+	border-radius: 16px;
+	border: 1px solid rgba(9, 88, 102, 0.06);
+	box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.04);
+	transition:
+		transform var(--sf-motion-base, 260ms) var(--sf-ease-soft, ease),
+		border-color var(--sf-motion-base, 260ms) var(--sf-ease-soft, ease),
+		box-shadow var(--sf-motion-base, 260ms) var(--sf-ease-soft, ease);
+}
+
+.legal-channel-card:hover {
+	transform: translateY(-4px);
+	border-color: rgba(9, 88, 102, 0.25);
+	box-shadow: 0 12px 28px rgba(9, 88, 102, 0.1), 0 20px 40px rgba(9, 88, 102, 0.06);
+}
+
+.legal-channel-card__icon {
+	flex-shrink: 0;
+	margin-top: 2px;
+	color: #095866;
+}
+
+.legal-channel-card__title {
+	font-family: Inter, var(--font-montserrat);
+	font-size: 0.9375rem;
+	font-weight: 600;
+	color: #095866;
+	margin: 0 0 4px;
+}
+
+.legal-channel-card__text {
+	font-size: 0.875rem;
+	line-height: 1.7;
+	color: #5A6474;
+	margin: 0;
+}
+
+/* -- Cookie card header with badge ----------------------------- */
+.legal-cookie-header {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	margin-bottom: 12px;
+}
+
+.legal-cookie-header__name {
+	font-family: Inter, var(--font-montserrat);
+	font-size: 1rem;
+	font-weight: 600;
+	color: #095866;
+	margin: 0;
+}
+
+/* -- Responsive ------------------------------------------------ */
+@media (min-width: 720px) {
+	.legal-page__container {
+		padding-left: 40px;
+		padding-right: 40px;
+	}
+
+	.legal-section {
+		padding: 24px;
+	}
+
+	.legal-section + .legal-section {
+		margin-top: 32px;
+	}
+}
+
+@media (min-width: 1024px) {
+	.legal-page {
+		padding: 64px 0 112px;
+	}
+
+	.legal-page__container {
+		padding-left: 40px;
+		padding-right: 40px;
+	}
+
+	.legal-section + .legal-section {
+		margin-top: 64px;
+	}
+
+	.legal-footer-card {
+		padding: 28px;
+	}
+}

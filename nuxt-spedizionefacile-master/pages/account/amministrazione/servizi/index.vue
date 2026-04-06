@@ -84,8 +84,8 @@ onMounted(() => { fetchArticles(); });
 			<div
 				v-if="actionMessage"
 				:class="[
-					'mb-[20px] px-[16px] py-[12px] rounded-[12px] text-[0.875rem] font-medium flex items-center gap-[8px]',
-					actionMessage.type === 'success' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-red-50 text-red-700 border border-red-200',
+					'mb-[20px] px-[16px] py-[12px] rounded-[20px] text-[0.875rem] font-medium flex items-center gap-[8px]',
+					actionMessage.type === 'success' ? 'bg-[#f0fdf4] text-[#0a8a7a] border border-[#d1fae5]' : 'bg-red-50 text-red-700 border border-red-200',
 				]">
 				<template v-if="actionMessage.type === 'success'"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[18px] h-[18px] shrink-0" fill="currentColor"><path d="M12 2C6.5 2 2 6.5 2 12S6.5 22 12 22 22 17.5 22 12 17.5 2 12 2M10 17L5 12L6.41 10.59L10 14.17L17.59 6.58L19 8L10 17Z"/></svg></template>
 				<template v-else><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[18px] h-[18px] shrink-0" fill="currentColor"><path d="M13,13H11V7H13M13,17H11V15H13M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z"/></svg></template>
@@ -97,11 +97,11 @@ onMounted(() => { fetchArticles(); });
 				<div class="w-[40px] h-[40px] border-3 border-[var(--color-brand-border)] border-t-[var(--color-brand-primary)] rounded-full animate-spin"></div>
 			</div>
 
-			<div v-else class="bg-white rounded-[12px] p-[24px] desktop:p-[32px] shadow-sm border border-[var(--color-brand-border)]">
+			<div v-else class="bg-white rounded-[20px] p-[24px] desktop:p-[32px] shadow-sm border border-[var(--color-brand-border)]">
 				<h2 class="text-[1.125rem] font-bold text-[var(--color-brand-text)] mb-[20px]">Tutti i servizi</h2>
 
 				<div v-if="!articles.length" class="text-center py-[48px]">
-					<div class="w-[64px] h-[64px] mx-auto mb-[16px] bg-[#F8F9FB] rounded-full flex items-center justify-center">
+					<div class="w-[64px] h-[64px] mx-auto mb-[16px] bg-[#F5F6F9] rounded-full flex items-center justify-center">
 						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[28px] h-[28px]" fill="#C8CCD0"><path d="M12,2L2,7L12,12L22,7L12,2M2,17L12,22L22,17L12,12L2,17Z"/></svg>
 					</div>
 					<h2 class="text-[1.125rem] font-bold text-[var(--color-brand-text)] mb-[8px]">Nessun servizio presente</h2>
@@ -137,7 +137,7 @@ onMounted(() => { fetchArticles(); });
 									:aria-label="article.is_published ? `Nascondi servizio ${article.title}` : `Pubblica servizio ${article.title}`"
 									:class="[
 										'w-[44px] h-[24px] rounded-[9px] relative transition-colors cursor-pointer border',
-										article.is_published ? 'border-emerald-600 bg-emerald-500' : 'border-[#C8CCD0] bg-[#D6DADF]',
+										article.is_published ? 'border-[#0a8a7a] bg-[#0a8a7a]' : 'border-[#C8CCD0] bg-[#D6DADF]',
 									]">
 										<span :class="[
 											'absolute top-[2px] w-[18px] h-[18px] bg-white rounded-[7px] shadow transition-transform',
@@ -145,7 +145,7 @@ onMounted(() => { fetchArticles(); });
 										]"></span>
 								</button>
 							</td>
-								<td class="py-[14px] text-center text-[#404040]">{{ article.sort_order ?? '-' }}</td>
+								<td class="py-[14px] text-center text-[var(--color-brand-text)]">{{ article.sort_order ?? '-' }}</td>
 								<td class="py-[14px] text-[var(--color-brand-text-secondary)] text-[0.8125rem]">{{ formatDate(article.created_at) }}</td>
 								<td class="py-[14px] text-right">
 									<div class="flex justify-end gap-[6px]">

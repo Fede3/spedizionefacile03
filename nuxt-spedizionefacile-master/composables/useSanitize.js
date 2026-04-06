@@ -48,7 +48,17 @@ function cleanNode(node) {
 export function useSanitize() {
   const sanitize = (dirty) => {
     if (!dirty) return ''
-    if (import.meta.server) return dirty // SSR: no DOM available, return as-is
+
+    // SSR: no DOM available — strip all HTML tags as safe fallback
+    // to prevent unsanitized content from being rendered server-side.
+    if (import.meta.server) {
+      return String(dirty)
+        .replace(/<[^>]*>/g, '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+    }
 
     const doc = new DOMParser().parseFromString(dirty, 'text/html')
     for (const child of [...doc.body.childNodes]) {

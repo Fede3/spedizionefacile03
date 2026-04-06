@@ -168,71 +168,71 @@ const onInlineLeave = (el, done) => {
 		</div>
 
 		<div class="services-stage-shell__content font-montserrat">
-			<article
-				v-if="featuredService"
-				class="service-option service-option--featured"
-				:class="{ 'service-option--selected': featuredService.isSelected }">
-				<div
-					class="service-option__row service-option__row--featured service-option__row--interactive"
-					role="button"
-					tabindex="0"
-					@click="handleFeaturedSurfaceClick"
-					@keydown="handleFeaturedSurfaceKeydown">
-					<div class="service-option__main">
-						<div
-							class="service-option__icon-shell service-card-tile__icon-shell sf-icon-shell"
-							:class="{ 'service-card-tile__icon-shell--selected': featuredService.isSelected }">
+			<div class="service-option-list">
+				<article
+					v-if="featuredService"
+					class="service-option service-option--featured"
+					:class="{ 'service-option--selected': featuredService.isSelected }">
+					<div
+						class="service-option__row service-option__row--interactive"
+						role="button"
+						tabindex="0"
+						@click="handleFeaturedSurfaceClick"
+						@keydown="handleFeaturedSurfaceKeydown">
+						<div class="service-option__main">
 							<div
-								class="service-card-tile__icon"
-								:style="{
-									'--service-icon-bg': 'url(/img/quote/second-step/no-label.png)',
-									'--service-icon-width': '28px',
-									'--service-icon-height': '24px',
-									'--service-icon-filter': featuredService.isSelected ? serviceIconFilterActive : serviceIconFilterIdle,
-								}" />
-						</div>
-						<div class="service-option__copy">
-							<div class="service-option__headline">
-								<h3 class="service-option__title">{{ featuredService.name }}</h3>
-								<span class="service-option__badge service-option__badge--featured sf-section-chip">Consigliato</span>
+								class="service-option__icon-shell service-card-tile__icon-shell sf-icon-shell"
+								:class="{ 'service-card-tile__icon-shell--selected': featuredService.isSelected }">
+								<div
+									class="service-card-tile__icon"
+									:style="{
+										'--service-icon-bg': 'url(/img/quote/second-step/no-label.png)',
+										'--service-icon-width': '26px',
+										'--service-icon-height': '17px',
+										'--service-icon-filter': featuredService.isSelected ? serviceIconFilterActive : serviceIconFilterIdle,
+									}" />
 							</div>
-							<p v-if="getFeaturedServiceDescription" class="service-option__description">{{ getFeaturedServiceDescription }}</p>
+							<div class="service-option__copy">
+								<div class="service-option__headline">
+									<h3 class="service-option__title">{{ featuredService.name }}</h3>
+									<span class="service-option__badge service-option__badge--featured sf-section-chip">Consigliato</span>
+								</div>
+								<p v-if="getFeaturedServiceDescription" class="service-option__description">{{ getFeaturedServiceDescription }}</p>
+							</div>
+						</div>
+						<div class="service-option__aside">
+							<div class="service-option__price-stack">
+								<span class="service-option__price-current">{{ featuredService.currentPriceLabel }}</span>
+							</div>
+							<span
+								class="service-option__status-dot"
+								:class="{ 'service-option__status-dot--active': featuredService.isSelected }"
+								aria-hidden="true">
+								<svg
+									v-if="featuredService.isSelected"
+									width="13"
+									height="13"
+									viewBox="0 0 24 24"
+									fill="none"
+									stroke="currentColor"
+									stroke-width="2.6"
+									stroke-linecap="round"
+									stroke-linejoin="round">
+									<polyline points="20 6 9 17 4 12" />
+								</svg>
+							</span>
 						</div>
 					</div>
-					<div class="service-option__aside service-option__aside--featured">
-						<div class="service-option__price-stack service-option__price-stack--featured">
-							<span class="service-option__price-current">{{ featuredService.currentPriceLabel }}</span>
-						</div>
-						<span
-							class="service-option__status-dot"
-							:class="{ 'service-option__status-dot--active': featuredService.isSelected }"
-							aria-hidden="true">
-							<svg
-								v-if="featuredService.isSelected"
-								width="13"
-								height="13"
-								viewBox="0 0 24 24"
-								fill="none"
-								stroke="currentColor"
-								stroke-width="2.6"
-								stroke-linecap="round"
-								stroke-linejoin="round">
-								<polyline points="20 6 9 17 4 12" />
-							</svg>
-						</span>
-					</div>
-				</div>
-			</article>
-			<div class="service-group-shell">
-				<div class="service-option-list" :class="{ 'service-option-list--with-featured': featuredService }">
-					<article
-						v-for="(service, serviceIndex) in regularServices"
-						:key="service.key || serviceIndex"
-						class="service-option"
-						:class="{
-							'service-option--selected': service.isSelected,
-							'service-option--expanded': isServiceExpanded(service.key),
-						}">
+				</article>
+
+				<article
+					v-for="(service, serviceIndex) in regularServices"
+					:key="service.key || serviceIndex"
+					class="service-option"
+					:class="{
+						'service-option--selected': service.isSelected,
+						'service-option--expanded': isServiceExpanded(service.key),
+					}">
 						<div
 							class="service-option__row service-option__row--interactive"
 							role="button"
@@ -269,24 +269,45 @@ const onInlineLeave = (el, done) => {
 								<div class="service-option__price-stack">
 									<span class="service-option__price-current">{{ service.priceLabel }}</span>
 								</div>
-								<div class="service-option__actions">
-									<button
-										v-if="showCollapsedPrimaryAction(service)"
-										type="button"
-										:class="['service-option__cta', 'btn-compact', getCollapsedPrimaryClass(service)]"
-										:aria-expanded="isServiceExpanded(service.key) ? 'true' : 'false'"
-										:aria-controls="`service-inline-panel-${service.key || serviceIndex}`"
-										@click.stop.prevent="handleCollapsedPrimaryAction(service)">
-										{{ getCollapsedPrimaryLabel(service) }}
-									</button>
-									<button
-										v-if="showCollapsedRemoveAction(service)"
-										type="button"
-										class="service-option__link-action service-option__link-action--danger btn-danger btn-compact"
-										@click.stop.prevent="$emit('remove-configured-service', service)">
-										Rimuovi
-									</button>
-								</div>
+								<template v-if="!canConfigureService(service)">
+									<span
+										class="service-option__status-dot"
+										:class="{ 'service-option__status-dot--active': service.isSelected }"
+										aria-hidden="true">
+										<svg
+											v-if="service.isSelected"
+											width="13"
+											height="13"
+											viewBox="0 0 24 24"
+											fill="none"
+											stroke="currentColor"
+											stroke-width="2.6"
+											stroke-linecap="round"
+											stroke-linejoin="round">
+											<polyline points="20 6 9 17 4 12" />
+										</svg>
+									</span>
+								</template>
+								<template v-else>
+									<div class="service-option__actions">
+										<button
+											v-if="showCollapsedPrimaryAction(service)"
+											type="button"
+											:class="['service-option__cta', 'btn-compact', getCollapsedPrimaryClass(service)]"
+											:aria-expanded="isServiceExpanded(service.key) ? 'true' : 'false'"
+											:aria-controls="`service-inline-panel-${service.key || serviceIndex}`"
+											@click.stop.prevent="handleCollapsedPrimaryAction(service)">
+											{{ getCollapsedPrimaryLabel(service) }}
+										</button>
+										<button
+											v-if="showCollapsedRemoveAction(service)"
+											type="button"
+											class="service-option__link-action service-option__link-action--danger btn-danger btn-compact"
+											@click.stop.prevent="$emit('remove-configured-service', service)">
+											Rimuovi
+										</button>
+									</div>
+								</template>
 							</div>
 						</div>
 
@@ -437,6 +458,5 @@ const onInlineLeave = (el, done) => {
 					</article>
 				</div>
 			</div>
-		</div>
 	</section>
 </template>

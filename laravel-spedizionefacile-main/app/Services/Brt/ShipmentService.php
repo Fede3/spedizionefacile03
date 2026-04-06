@@ -47,8 +47,23 @@ class ShipmentService
             return ['success' => false, 'error' => 'Dati spedizione non validi per BRT: ' . implode(', ', $payloadErrors) . '.'];
         }
 
+        $dimensionErrors = $this->validatePackageDimensions($order->packages);
+        if (!empty($dimensionErrors)) {
+            return ['success' => false, 'error' => 'Dimensioni colli non valide per BRT: ' . implode(', ', $dimensionErrors) . '.'];
+        }
+
         $normalizedDest = $this->addressNormalizer->normalizeAddressForBrt($destination);
         $normalizedOrigin = $this->addressNormalizer->normalizeAddressForBrt($origin);
+
+        // Post-normalization: verify province abbreviations are exactly 2 chars.
+        // AddressNormalizer may fall back to the raw value if it cannot resolve the province.
+        if (strlen($normalizedOrigin['province']) !== 2) {
+            return ['success' => false, 'error' => 'Provincia mittente non valida per BRT: "' . ($origin->province ?? '') . '" non riconosciuta come sigla provincia.'];
+        }
+        if (strlen($normalizedDest['province']) !== 2) {
+            return ['success' => false, 'error' => 'Provincia destinatario non valida per BRT: "' . ($destination->province ?? '') . '" non riconosciuta come sigla provincia.'];
+        }
+
         $departureDepot = FilialeLookup::resolveFilialeByCap($origin->postal_code ?? '')
             ?? $this->config->departureDepot;
 
@@ -210,6 +225,47 @@ class ShipmentService
         return $errors;
     }
 
+    /**
+     * Validates package dimensions and individual weights before sending to BRT.
+     *
+     * BRT requires positive dimensions for parcels included in pParcelID.
+     * Missing or zero dimensions cause silent delivery routing failures.
+     *
+     * @param \Illuminate\Support\Collection $packages
+     * @return array List of validation error strings (empty = valid)
+     */
+    private function validatePackageDimensions($packages): array
+    {
+        $errors = [];
+        foreach ($packages as $index => $package) {
+            $label = 'collo #' . ($index + 1);
+            $weight = (float) preg_replace('/[^0-9.]/', '', $package->weight ?? '0');
+            $length = (int) ($package->first_size ?? 0);
+            $width = (int) ($package->second_size ?? 0);
+            $height = (int) ($package->third_size ?? 0);
+
+            if ($weight <= 0) {
+                $errors[] = $label . ': peso deve essere maggiore di 0';
+            }
+
+            // Dimensions are optional (BRT accepts shipments without pParcelID),
+            // but if ANY dimension is set, ALL three must be positive.
+            $hasDimensions = $length > 0 || $width > 0 || $height > 0;
+            if ($hasDimensions) {
+                if ($length <= 0) {
+                    $errors[] = $label . ': lunghezza deve essere maggiore di 0';
+                }
+                if ($width <= 0) {
+                    $errors[] = $label . ': larghezza deve essere maggiore di 0';
+                }
+                if ($height <= 0) {
+                    $errors[] = $label . ': altezza deve essere maggiore di 0';
+                }
+            }
+        }
+        return $errors;
+    }
+
     private function validateOrigin($origin): array
     {
         $missing = [];
@@ -217,6 +273,7 @@ class ShipmentService
         if (empty(trim(($origin->address ?? '') . ' ' . ($origin->address_number ?? '')))) $missing[] = 'indirizzo mittente';
         if (empty(trim($origin->postal_code ?? ''))) $missing[] = 'CAP mittente';
         if (empty(trim($origin->city ?? ''))) $missing[] = 'città mittente';
+        if (empty(trim($origin->province ?? ''))) $missing[] = 'provincia mittente';
         return $missing;
     }
 

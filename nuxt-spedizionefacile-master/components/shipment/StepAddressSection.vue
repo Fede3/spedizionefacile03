@@ -4,32 +4,6 @@ const props = defineProps({
 	originAddress: { type: Object, required: true },
 	destinationAddress: { type: Object, required: true },
 	deliveryMode: { type: String, required: true },
-	fieldClass: { type: Function, required: true },
-	getFieldError: { type: Function, required: true },
-	fieldErrorText: { type: Function, required: true },
-	getFieldAssist: { type: Function, required: true },
-	applyFieldAssist: { type: Function, required: true },
-	smartBlur: { type: Function, required: true },
-	onNameInput: { type: Function, required: true },
-	onCityInput: { type: Function, required: true },
-	onCityFocus: { type: Function, required: true },
-	onProvinciaInput: { type: Function, required: true },
-	onProvinceFocus: { type: Function, required: true },
-	onCapInput: { type: Function, required: true },
-	onCapFocus: { type: Function, required: true },
-	onTelefonoInput: { type: Function, required: true },
-	selectCity: { type: Function, required: true },
-	selectProvincia: { type: Function, required: true },
-	selectCap: { type: Function, required: true },
-	formatCitySuggestionLabel: { type: Function, required: true },
-	formatCapSuggestionLabel: { type: Function, required: true },
-	sv: { type: Object, required: true },
-	originCitySuggestions: { type: Array, default: () => [] },
-	originProvinceSuggestions: { type: Array, default: () => [] },
-	originCapSuggestions: { type: Array, default: () => [] },
-	destCitySuggestions: { type: Array, default: () => [] },
-	destProvinceSuggestions: { type: Array, default: () => [] },
-	destCapSuggestions: { type: Array, default: () => [] },
 	savedAddresses: { type: Array, default: () => [] },
 	loadingSavedAddresses: { type: Boolean, default: false },
 	showOriginAddressSelector: { type: Boolean, default: false },
@@ -41,6 +15,10 @@ const props = defineProps({
 	savingOriginAddress: { type: Boolean, default: false },
 	savingDestAddress: { type: Boolean, default: false },
 });
+
+// Funzioni form/validazione iniettate dal parent ([step].vue) via provide/inject
+const formHandlers = inject('shipmentFormHandlers');
+const suggestions = inject('shipmentSuggestions');
 
 const emit = defineEmits([
 	'update:delivery-mode',
@@ -74,28 +52,7 @@ watch(
 	{ immediate: true },
 );
 
-const sharedFieldProps = {
-	fieldClass: props.fieldClass,
-	getFieldError: props.getFieldError,
-	fieldErrorText: props.fieldErrorText,
-	getFieldAssist: props.getFieldAssist,
-	applyFieldAssist: props.applyFieldAssist,
-	smartBlur: props.smartBlur,
-	onNameInput: props.onNameInput,
-	onCityInput: props.onCityInput,
-	onCityFocus: props.onCityFocus,
-	onProvinciaInput: props.onProvinciaInput,
-	onProvinceFocus: props.onProvinceFocus,
-	onCapInput: props.onCapInput,
-	onCapFocus: props.onCapFocus,
-	onTelefonoInput: props.onTelefonoInput,
-	selectCity: props.selectCity,
-	selectProvincia: props.selectProvincia,
-	selectCap: props.selectCap,
-	formatCitySuggestionLabel: props.formatCitySuggestionLabel,
-	formatCapSuggestionLabel: props.formatCapSuggestionLabel,
-	sv: props.sv,
-};
+// sharedFieldProps non più necessario — AddressFormFields usa inject direttamente
 
 const openAddressBook = (target) => {
 	if (!props.isAuthenticated) {
@@ -243,10 +200,9 @@ const destSummaryLine = computed(() => {
 						v-else
 						type="origin"
 						:address="originAddress"
-						v-bind="sharedFieldProps"
-						:city-suggestions="originCitySuggestions"
-						:province-suggestions="originProvinceSuggestions"
-						:cap-suggestions="originCapSuggestions" />
+						:city-suggestions="suggestions.originCitySuggestions.value"
+						:province-suggestions="suggestions.originProvinceSuggestions.value"
+						:cap-suggestions="suggestions.originCapSuggestions.value" />
 				</div>
 
 				<div
@@ -323,10 +279,9 @@ const destSummaryLine = computed(() => {
 						v-if="isDestActive && deliveryMode !== 'pudo'"
 						type="dest"
 						:address="destinationAddress"
-						v-bind="sharedFieldProps"
-						:city-suggestions="destCitySuggestions"
-						:province-suggestions="destProvinceSuggestions"
-						:cap-suggestions="destCapSuggestions" />
+						:city-suggestions="suggestions.destCitySuggestions.value"
+						:province-suggestions="suggestions.destProvinceSuggestions.value"
+						:cap-suggestions="suggestions.destCapSuggestions.value" />
 				</div>
 			</div>
 		</div>

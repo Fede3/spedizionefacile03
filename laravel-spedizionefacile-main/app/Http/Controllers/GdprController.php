@@ -104,7 +104,7 @@ class GdprController extends Controller
                 'surname'                    => null,
                 'email'                      => $anonEmail,
                 'telephone_number'           => null,
-                'password'                   => bcrypt(bin2hex(random_bytes(16))),
+                'password'                   => bin2hex(random_bytes(16)), // Cast 'hashed' su User hashera' automaticamente
                 'google_id'                  => null,
                 'facebook_id'                => null,
                 'apple_id'                   => null,

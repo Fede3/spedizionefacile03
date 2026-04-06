@@ -4,8 +4,8 @@ const DEFAULT_SHIPMENT_SERVICES = [
 	{
 		key: 'senza_etichetta',
 		img: 'no-label.png',
-		width: 78,
-		height: 51,
+		width: 26,
+		height: 17,
 		name: 'Senza etichetta',
 		description: 'Niente stampante? Il corriere pensa a tutto lui.',
 		isSelected: false,

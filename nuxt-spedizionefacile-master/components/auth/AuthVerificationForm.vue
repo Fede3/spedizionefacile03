@@ -52,7 +52,7 @@ const emit = defineEmits([
 				type="button"
 				@click="emit('verify')"
 				:disabled="verificationLoading"
-				:class="['btn-cta', 'btn-compact', 'w-full', 'inline-flex', 'items-center', 'justify-center', 'gap-[8px]', verificationLoading ? 'opacity-70 cursor-not-allowed' : '']">
+				class="btn-cta w-full inline-flex items-center justify-center gap-[8px]">
 				<span v-if="verificationLoading">Verifica in corso...</span>
 				<span v-else>Verifica Account</span>
 			</button>

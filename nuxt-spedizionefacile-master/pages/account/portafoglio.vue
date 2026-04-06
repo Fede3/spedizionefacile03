@@ -137,7 +137,7 @@ const walletOverview = computed(() => {
 			description: stripeConfigured.value
 				? 'Le nuove ricariche useranno il metodo mostrato qui.'
 				: 'Stripe non risulta ancora configurato per le ricariche.',
-			tone: stripeConfigured.value ? 'bg-[#F8F9FB] text-[#404040]' : 'bg-[#FFF7E8] text-[#B45309]',
+			tone: stripeConfigured.value ? 'bg-[#F5F6F9] text-[var(--color-brand-text)]' : 'bg-[#FFF7E8] text-[#B45309]',
 		},
 		{
 			label: 'Storico',
@@ -145,7 +145,7 @@ const walletOverview = computed(() => {
 			description: movementsError.value
 				? 'Lo storico non si e aggiornato correttamente: puoi riprovare sotto.'
 				: 'Qui trovi ricariche, pagamenti, rimborsi e commissioni.',
-			tone: movementsError.value ? 'bg-[#FEF2F2] text-[#B42318]' : 'bg-[#F8F9FB] text-[#404040]',
+			tone: movementsError.value ? 'bg-[#FEF2F2] text-[#B42318]' : 'bg-[#F5F6F9] text-[var(--color-brand-text)]',
 		},
 	];
 
@@ -249,85 +249,61 @@ onMounted(() => {
 </script>
 
 <template>
-	<section class="sf-account-shell min-h-[600px] py-[24px] tablet:py-[28px] desktop:py-[48px]">
-		<div class="my-container">
-			<AccountPageHeader
-				eyebrow="Pagamenti"
-				title="Portafoglio"
-				description="Controlla saldo disponibile, carta predefinita e movimenti senza uscire dall'account."
-				:crumbs="[{ label: 'Account', to: '/account' }, { label: 'Portafoglio' }]">
-				<template #meta>
-					<div class="flex flex-wrap gap-[8px]">
-						<span
-							v-for="stat in walletHeaderStats"
-							:key="stat.label"
-							class="inline-flex items-center gap-[6px] rounded-full bg-[#F0F6F7] px-[12px] py-[6px] text-[0.8125rem] font-semibold text-[var(--color-brand-primary)]">
-							{{ stat.label }}: {{ stat.value }}
-						</span>
+	<section class="min-h-[600px] py-[20px] tablet:py-[28px] desktop:py-[28px] bg-white">
+		<div class="my-container max-w-[1280px]">
+			<!-- Page shell header -->
+			<div class="flex flex-col gap-[16px] tablet:gap-[16px] mb-[20px]">
+				<NuxtLink to="/account"
+					class="flex items-center gap-[6px] text-[var(--color-brand-text-muted)] text-[13px] cursor-pointer hover:text-[var(--color-brand-text-secondary)] transition-colors duration-[350ms] font-[500]">
+					<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+					Dashboard
+				</NuxtLink>
+				<div class="flex items-center gap-[16px]">
+					<div class="w-[48px] h-[48px] rounded-[14px] bg-[rgba(9,88,102,0.08)] flex items-center justify-center shrink-0">
+						<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#095866" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 18v1a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v1"/><path d="M21 12H10m11 0-3-3m3 3-3 3"/></svg>
 					</div>
-				</template>
-
-				<template #actions>
-					<div class="flex w-full flex-col gap-[10px] tablet:w-auto tablet:flex-row">
-						<button
-							type="button"
-							@click="refreshWalletData"
-							:disabled="isRefreshingWallet"
-							class="btn-secondary btn-compact inline-flex items-center justify-center gap-[8px] disabled:cursor-not-allowed disabled:opacity-60">
-							<svg
-								v-if="!isRefreshingWallet"
-								xmlns="http://www.w3.org/2000/svg"
-								width="16"
-								height="16"
-								viewBox="0 0 24 24"
-								fill="none"
-								stroke="currentColor"
-								stroke-width="2"
-								stroke-linecap="round"
-								stroke-linejoin="round">
-								<path d="M21 2v6h-6" />
-								<path d="M3 12a9 9 0 0 1 15-6.7L21 8" />
-								<path d="M3 22v-6h6" />
-								<path d="M21 12a9 9 0 0 1-15 6.7L3 16" />
-							</svg>
-							<span v-else class="h-[16px] w-[16px] rounded-full border-2 border-current border-r-transparent animate-spin"></span>
-							<span>{{ isRefreshingWallet ? 'Aggiornamento...' : 'Aggiorna dati' }}</span>
-						</button>
-
-						<NuxtLink to="/account/carte" class="btn-cta btn-compact inline-flex items-center justify-center gap-[8px]">
-							Carte e pagamenti
-						</NuxtLink>
-					</div>
-				</template>
-			</AccountPageHeader>
-
-			<div class="sf-account-panel mb-[18px] rounded-[20px] px-[16px] py-[14px] desktop:px-[20px] desktop:py-[16px]">
-				<div
-					:class="[
-						'grid gap-[12px] desktop:items-center',
-						isPro
-							? 'desktop:grid-cols-[minmax(0,1.08fr)_repeat(4,minmax(0,0.58fr))]'
-							: 'desktop:grid-cols-[minmax(0,1.08fr)_repeat(3,minmax(0,0.68fr))]',
-					]">
 					<div>
-						<p class="text-[0.75rem] font-semibold uppercase tracking-[1px] text-[var(--color-brand-primary)]">Panoramica portafoglio</p>
-						<h2 class="mt-[4px] text-[1rem] font-bold text-[var(--color-brand-text)]">Saldo, carta e storico con una gerarchia piu chiara</h2>
-						<p class="mt-[4px] max-w-[560px] text-[0.8125rem] leading-[1.55] text-[#667281]">
-							Le ricariche usano la carta predefinita e, dopo ogni operazione, saldo e movimenti vengono aggiornati qui.
-						</p>
-					</div>
-
-					<div v-for="item in walletOverview" :key="item.label" class="rounded-[12px] border border-[var(--color-brand-border)] px-[14px] py-[12px]">
-						<p class="text-[0.75rem] font-semibold uppercase tracking-[0.8px] text-[var(--color-brand-text-secondary)]">{{ item.label }}</p>
-						<span :class="['mt-[8px] inline-flex rounded-full px-[10px] py-[5px] text-[0.75rem] font-semibold', item.tone]">
-							{{ item.value }}
-						</span>
-						<p class="mt-[8px] text-[0.75rem] leading-[1.5] text-[#667281]">{{ item.description }}</p>
+						<h1 class="text-[var(--color-brand-text)] text-[24px] tablet:text-[28px] tracking-[-0.5px] font-[800]">Portafoglio</h1>
+						<p class="text-[var(--color-brand-text-muted)] text-[13px] tablet:text-[14px] mt-[2px]">Gestisci transazioni, metodi di pagamento e fatture</p>
 					</div>
 				</div>
 			</div>
 
-			<div class="grid grid-cols-1 gap-[18px] desktop:grid-cols-[minmax(0,0.94fr)_minmax(0,1.06fr)] desktop:items-start">
+			<!-- Dark wallet card (prototype-style) -->
+			<div class="rounded-[20px] px-[20px] tablet:px-[20px] py-[20px] relative overflow-hidden mb-[28px]"
+				style="background: linear-gradient(135deg, #1a2332 0%, #1d2738 50%, #2d3555 100%); box-shadow: 0 6px 24px rgba(29,39,56,0.25);">
+				<div class="absolute top-0 right-0 w-[200px] h-[200px] rounded-full opacity-[0.06]"
+					style="background: radial-gradient(circle, #095866 0%, transparent 70%);"></div>
+				<div class="relative z-10 flex flex-col tablet:flex-row tablet:items-center tablet:justify-between gap-[16px]">
+					<div>
+						<span class="text-white/50 text-[12px] uppercase tracking-[0.5px] block mb-[4px] font-[600]">Saldo wallet</span>
+						<span class="text-white text-[32px] tablet:text-[38px] tracking-[-0.8px] font-[800]">
+							{{ balanceOverviewValue }}
+						</span>
+					</div>
+					<div class="flex gap-[8px]">
+						<button
+							type="button"
+							@click="refreshWalletData"
+							:disabled="isRefreshingWallet"
+							class="h-[44px] px-[20px] rounded-full bg-white/[0.1] backdrop-blur-sm text-white text-[13px] font-[600] flex items-center gap-[6px] cursor-pointer hover:bg-white/[0.15] transition-colors duration-[350ms] disabled:opacity-60">
+							<span v-if="!isRefreshingWallet">
+								<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>
+							</span>
+							<span v-else class="h-[14px] w-[14px] rounded-full border-2 border-white border-r-transparent animate-spin"></span>
+							{{ isRefreshingWallet ? 'Aggiornamento...' : 'Aggiorna' }}
+						</button>
+						<NuxtLink to="/account/carte"
+							class="h-[44px] px-[20px] rounded-full text-white text-[13px] font-[700] flex items-center gap-[6px] cursor-pointer transition-colors duration-[350ms]"
+							style="background: linear-gradient(135deg, #E44203, #c73600); box-shadow: 0 4px 14px rgba(228,66,3,0.25);">
+							<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+							Carte
+						</NuxtLink>
+					</div>
+				</div>
+			</div>
+
+			<div class="grid grid-cols-1 gap-[28px] desktop:grid-cols-[minmax(0,0.94fr)_minmax(0,1.06fr)] desktop:items-start">
 				<AccountWalletBalanceCards
 					:balance="balance"
 					:is-pro="isPro"

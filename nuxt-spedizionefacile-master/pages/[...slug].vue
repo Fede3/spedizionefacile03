@@ -21,7 +21,7 @@ useSeoMeta({
 <template>
   <section class="min-h-[500px] py-[40px] desktop:py-[60px]">
     <div class="my-container">
-      <div class="bg-white rounded-[12px] border border-[var(--color-brand-border)] shadow-sm p-[32px_20px] desktop:p-[48px] max-w-[560px] mx-auto text-center">
+      <div class="bg-white rounded-[18px] border border-[var(--color-brand-border)] shadow-sm p-[32px_20px] desktop:p-[48px] max-w-[560px] mx-auto text-center">
         <!-- SVG illustrazione pacco smarrito -->
         <svg
           class="mx-auto mb-[24px] w-[100px] h-[100px]"
@@ -41,10 +41,10 @@ useSeoMeta({
         </svg>
 
         <!-- Codice errore -->
-        <h1 class="text-[4rem] font-extrabold text-[var(--color-brand-primary)] mb-[4px] leading-none">404</h1>
+        <h1 class="font-montserrat text-[4rem] font-[800] text-[var(--color-brand-primary)] mb-[4px] leading-none">404</h1>
 
         <!-- Messaggio principale -->
-        <h2 class="text-[1.5rem] font-bold text-[var(--color-brand-text)] mb-[8px]">
+        <h2 class="font-montserrat text-[1.5rem] font-[800] text-[var(--color-brand-text)] mb-[8px]">
           Pagina non trovata
         </h2>
 
@@ -66,7 +66,7 @@ useSeoMeta({
         </NuxtLink>
 
         <!-- Link secondario -->
-        <p class="text-[#A0A5AB] text-[0.8125rem] mt-[16px]">
+        <p class="text-[var(--color-brand-text-muted)] text-[0.8125rem] mt-[16px]">
           Oppure vai al <NuxtLink to="/preventivo" class="text-[var(--color-brand-primary)] hover:underline font-medium">preventivo</NuxtLink>
           o alla pagina <NuxtLink to="/contatti" class="text-[var(--color-brand-primary)] hover:underline font-medium">contatti</NuxtLink>.
         </p>

@@ -103,9 +103,9 @@ onMounted(() => {
 			<div
 				v-if="actionMessage"
 				:class="[
-					'mb-[20px] px-[16px] py-[12px] rounded-[12px] text-[0.875rem] font-medium flex items-center gap-[8px]',
+					'mb-[20px] px-[16px] py-[12px] rounded-[20px] text-[0.875rem] font-medium flex items-center gap-[8px]',
 					actionMessage.type === 'success'
-						? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+						? 'bg-[#f0fdf4] text-[#0a8a7a] border border-[#d1fae5]'
 						: 'bg-red-50 text-red-700 border border-red-200',
 				]">
 				<svg
@@ -122,10 +122,10 @@ onMounted(() => {
 				{{ actionMessage.text }}
 			</div>
 
-			<div class="mb-[20px] rounded-[12px] border border-[var(--color-brand-border)] bg-[#F8FAFB] p-[14px] tablet:p-[18px]">
-				<div class="flex flex-col gap-[14px] desktop:flex-row desktop:items-center desktop:justify-between">
+			<div class="mb-[20px] rounded-[20px] border border-[var(--color-brand-border)] bg-[#F8FAFB] p-[14px] tablet:p-[18px]">
+				<div class="flex flex-col gap-[16px] desktop:flex-row desktop:items-center desktop:justify-between">
 					<div>
-						<p class="text-[0.75rem] font-semibold uppercase tracking-[0.6px] text-[#6B7280]">Toolbar prelievi</p>
+						<p class="text-[0.75rem] font-semibold uppercase tracking-[0.6px] text-[var(--color-brand-text-secondary)]">Toolbar prelievi</p>
 						<h2 class="mt-[4px] text-[1rem] font-semibold text-[var(--color-brand-text)]">Coda richieste e stato approvazioni</h2>
 					</div>
 					<div class="flex flex-wrap items-center gap-[8px]">
@@ -134,7 +134,7 @@ onMounted(() => {
 							{{ withdrawalsData.length }} richieste
 						</span>
 						<span
-							class="inline-flex min-h-[34px] items-center rounded-full border border-[#E7ECEE] bg-white px-[12px] text-[0.75rem] font-medium text-[#5F6C75]">
+							class="inline-flex min-h-[34px] items-center rounded-full border border-[#E7ECEE] bg-white px-[12px] text-[0.75rem] font-medium text-[var(--color-brand-text-secondary)]">
 							{{ pendingWithdrawals.length }} in attesa
 						</span>
 					</div>
@@ -142,7 +142,7 @@ onMounted(() => {
 			</div>
 
 			<div class="grid grid-cols-1 tablet:grid-cols-3 xl:grid-cols-4 gap-[16px] mb-[24px]">
-				<div class="bg-white rounded-[12px] p-[20px] border border-[var(--color-brand-border)] shadow-sm">
+				<div class="bg-white rounded-[20px] p-[20px] border border-[var(--color-brand-border)] shadow-sm">
 					<div class="flex items-center gap-[8px] mb-[8px]">
 						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[18px] h-[18px] text-amber-600" fill="currentColor">
 							<path
@@ -152,17 +152,17 @@ onMounted(() => {
 					</div>
 					<p class="text-[1.75rem] font-bold text-amber-600">{{ pendingWithdrawals.length }}</p>
 				</div>
-				<div class="bg-white rounded-[12px] p-[20px] border border-[var(--color-brand-border)] shadow-sm">
+				<div class="bg-white rounded-[20px] p-[20px] border border-[var(--color-brand-border)] shadow-sm">
 					<div class="flex items-center gap-[8px] mb-[8px]">
-						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[18px] h-[18px] text-emerald-600" fill="currentColor">
+						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[18px] h-[18px] text-[#095866]" fill="currentColor">
 							<path
 								d="M12 2C6.5 2 2 6.5 2 12S6.5 22 12 22 22 17.5 22 12 17.5 2 12 2M10 17L5 12L6.41 10.59L10 14.17L17.59 6.58L19 8L10 17Z" />
 						</svg>
 						<p class="text-[0.75rem] text-[var(--color-brand-text-secondary)] uppercase tracking-[0.5px] font-medium">Approvate</p>
 					</div>
-					<p class="text-[1.75rem] font-bold text-emerald-600">{{ approvedWithdrawals.length }}</p>
+					<p class="text-[1.75rem] font-bold text-[#095866]">{{ approvedWithdrawals.length }}</p>
 				</div>
-				<div class="bg-white rounded-[12px] p-[20px] border border-[var(--color-brand-border)] shadow-sm">
+				<div class="bg-white rounded-[20px] p-[20px] border border-[var(--color-brand-border)] shadow-sm">
 					<div class="flex items-center gap-[8px] mb-[8px]">
 						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[18px] h-[18px] text-[var(--color-brand-text)]" fill="currentColor">
 							<path
@@ -172,7 +172,7 @@ onMounted(() => {
 					</div>
 					<p class="text-[1.75rem] font-bold text-[var(--color-brand-text)]">&euro;{{ formatCurrency(totalApproved) }}</p>
 				</div>
-				<div class="bg-white rounded-[12px] p-[20px] border border-[var(--color-brand-border)] shadow-sm">
+				<div class="bg-white rounded-[20px] p-[20px] border border-[var(--color-brand-border)] shadow-sm">
 					<div class="flex items-center gap-[8px] mb-[8px]">
 						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[18px] h-[18px] text-red-600" fill="currentColor">
 							<path
@@ -184,13 +184,13 @@ onMounted(() => {
 				</div>
 			</div>
 
-			<div class="bg-white rounded-[12px] p-[24px] desktop:p-[32px] shadow-sm border border-[var(--color-brand-border)]">
+			<div class="bg-white rounded-[20px] p-[24px] desktop:p-[32px] shadow-sm border border-[var(--color-brand-border)]">
 				<h2 class="text-[1.125rem] font-bold text-[var(--color-brand-text)] mb-[20px]">Richieste di prelievo</h2>
 				<div v-if="!withdrawalsData?.length" class="text-center py-[48px] text-[var(--color-brand-text-secondary)]">
 					<svg
 						xmlns="http://www.w3.org/2000/svg"
 						viewBox="0 0 24 24"
-						class="w-[40px] h-[40px] text-[#C8CCD0] mx-auto mb-[12px]"
+						class="w-[40px] h-[40px] text-[var(--color-brand-text-muted)] mx-auto mb-[12px]"
 						fill="currentColor">
 						<path d="M2,5H22V7H2V5M15,10H22V12H15V10M15,16H22V18H15V16M2,10H13L8,15H2V10M2,16H8L13,21H2V16Z" />
 					</svg>
@@ -200,7 +200,7 @@ onMounted(() => {
 					<div
 						v-for="w in withdrawalsData"
 						:key="w.id"
-						class="rounded-[12px] border border-[var(--color-brand-border)] bg-white p-[16px] tablet:p-[18px] hover:border-[#D7E1E4] transition-colors">
+						class="rounded-[20px] border border-[var(--color-brand-border)] bg-white p-[16px] tablet:p-[18px] hover:border-[#D7E1E4] transition-colors">
 						<div class="flex flex-col desktop:flex-row desktop:items-center justify-between gap-[12px]">
 							<div class="flex-1">
 								<div class="flex flex-wrap items-center gap-[10px] mb-[6px]">
@@ -236,14 +236,14 @@ onMounted(() => {
 										{{ withdrawalStatusConfig[w.status]?.label || w.status }}
 									</span>
 								</div>
-								<p class="text-[0.875rem] text-[#404040]">
+								<p class="text-[0.875rem] text-[var(--color-brand-text)]">
 									<span class="font-medium">{{ w.user?.name }} {{ w.user?.surname }}</span>
 									<span class="text-[var(--color-brand-text-secondary)] ml-[8px] break-all">{{ w.user?.email }}</span>
 								</p>
 								<p class="text-[0.75rem] text-[var(--color-brand-text-secondary)] mt-[2px]">Richiesta: {{ formatDate(w.created_at) }}</p>
 								<p
 									v-if="w.admin_notes"
-									class="mt-[8px] rounded-[12px] bg-[#F8FAFB] px-[12px] py-[10px] text-[0.75rem] text-[var(--color-brand-text-secondary)] italic">
+									class="mt-[8px] rounded-[20px] bg-[#F8FAFB] px-[12px] py-[10px] text-[0.75rem] text-[var(--color-brand-text-secondary)] italic">
 									Note: {{ w.admin_notes }}
 								</p>
 							</div>
@@ -254,7 +254,7 @@ onMounted(() => {
 									<button
 										@click="approveWithdrawal(w.id)"
 										:disabled="actionLoading === w.id"
-										class="w-full tablet:w-auto px-[16px] py-[8px] bg-emerald-600 hover:bg-emerald-700 text-white rounded-[12px] text-[0.8125rem] font-medium transition-colors cursor-pointer disabled:opacity-50 flex items-center justify-center gap-[4px]">
+										class="w-full tablet:w-auto px-[16px] py-[8px] bg-[#095866] hover:bg-[#07404a] text-white rounded-[20px] text-[0.8125rem] font-medium transition-colors cursor-pointer disabled:opacity-50 flex items-center justify-center gap-[4px]">
 										<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[16px] h-[16px]" fill="currentColor">
 											<path d="M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z" />
 										</svg>
@@ -263,7 +263,7 @@ onMounted(() => {
 									<button
 										@click="startReject(w.id)"
 										:disabled="actionLoading === w.id"
-										class="w-full tablet:w-auto px-[16px] py-[8px] bg-red-50 hover:bg-red-100 text-red-700 rounded-[12px] text-[0.8125rem] font-medium transition-colors cursor-pointer border border-red-200">
+										class="w-full tablet:w-auto px-[16px] py-[8px] bg-red-50 hover:bg-red-100 text-red-700 rounded-[20px] text-[0.8125rem] font-medium transition-colors cursor-pointer border border-red-200">
 										Rifiuta
 									</button>
 								</template>
@@ -273,16 +273,16 @@ onMounted(() => {
 											v-model="rejectNotes"
 											type="text"
 											placeholder="Motivo (opzionale)"
-											class="w-full px-[12px] py-[8px] bg-[#F8F9FB] border border-[var(--color-brand-border)] rounded-[12px] text-[0.8125rem] focus:border-[var(--color-brand-primary)] focus:outline-none" />
+											class="form-input" />
 										<button
 											@click="confirmReject(w.id)"
 											:disabled="actionLoading === w.id"
-											class="px-[14px] py-[8px] bg-red-600 hover:bg-red-700 text-white rounded-[12px] text-[0.8125rem] font-medium cursor-pointer disabled:opacity-50">
+											class="px-[14px] py-[8px] bg-red-600 hover:bg-red-700 text-white rounded-[20px] text-[0.8125rem] font-medium cursor-pointer disabled:opacity-50">
 											{{ actionLoading === w.id ? '...' : 'Conferma' }}
 										</button>
 										<button
 											@click="cancelReject"
-											class="px-[14px] py-[8px] bg-[#F0F0F0] hover:bg-[#E0E0E0] text-[#404040] rounded-[12px] text-[0.8125rem] font-medium cursor-pointer">
+											class="px-[14px] py-[8px] bg-[#F0F0F0] hover:bg-[#E0E0E0] text-[var(--color-brand-text)] rounded-[20px] text-[0.8125rem] font-medium cursor-pointer">
 											Annulla
 										</button>
 									</div>

@@ -6,7 +6,7 @@
  * DOVE SI USA:
  *   - ReferralController.php — apply() crea il record e accredita la commissione
  *   - User::commissionBalance() — somma commission_amount per calcolo saldo prelevabile
- *   - AdminController.php — referralStats() per statistiche admin
+ *   - Admin/ReferralStatsController.php — referralStats() per statistiche admin
  *
  * DATI IN INGRESSO:
  *   - buyer_id, pro_user_id, referral_code, order_id

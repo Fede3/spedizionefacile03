@@ -42,7 +42,7 @@ const togglePublished = async (article) => {
 		});
 		article.is_published = !article.is_published;
 		showSuccess(`Articolo "${article.title}" ${article.is_published ? 'pubblicato' : 'nascosto'}.`);
-	} catch (e) {
+	} catch {
 		showError(e, "Errore durante l'aggiornamento.");
 	} finally {
 		actionLoading.value = null;
@@ -56,7 +56,7 @@ const deleteArticle = async (article) => {
 		await sanctum(`/api/admin/articles/${article.id}`, { method: 'DELETE' });
 		showSuccess(`Articolo "${article.title}" eliminato.`);
 		await fetchArticles();
-	} catch (e) {
+	} catch {
 		showError(e, "Errore durante l'eliminazione.");
 	} finally {
 		actionLoading.value = null;
@@ -107,26 +107,26 @@ onMounted(() => {
 
 			<!-- Loading -->
 			<div v-if="isLoading" class="py-[60px] flex justify-center">
-				<div class="w-[40px] h-[40px] border-3 border-[var(--color-brand-border)] border-t-[var(--color-brand-primary)] rounded-full animate-spin" />
+				<div class="w-[40px] h-[40px] border-3 border-[#E9EBEC] border-t-[#095866] rounded-full animate-spin" />
 			</div>
 
 			<div v-else class="sf-section-block">
 				<div class="sf-section-block__header">
 					<div class="sf-page-intro">
-						<h2 class="text-[1.125rem] font-bold text-[var(--color-brand-text)]">Tutti gli articoli del blog</h2>
+						<h2 class="text-[1.125rem] font-bold text-[#252B42]">Tutti gli articoli del blog</h2>
 						<p class="text-[0.875rem] text-[#607184]">Pubblica, nascondi e aggiorna gli articoli con una vista più pulita e rapida.</p>
 					</div>
 				</div>
 
 				<div class="sf-section-block__body">
 					<div v-if="!articles.length" class="sf-page-intro sf-page-intro--center py-[28px]">
-						<div class="w-[64px] h-[64px] mx-auto bg-[#F8F9FB] rounded-full flex items-center justify-center">
+						<div class="w-[64px] h-[64px] mx-auto bg-[#F5F6F9] rounded-full flex items-center justify-center">
 							<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[28px] h-[28px]" fill="#C8CCD0">
 								<path
 									d="M20,11H4V8H20M20,15.5H4V12.5H20M20,20H4V17H20M21,3H3A1,1 0 0,0 2,4V20A2,2 0 0,0 4,22H20A2,2 0 0,0 22,20V4A1,1 0 0,0 21,3Z" />
 							</svg>
 						</div>
-						<h2 class="text-[1.125rem] font-bold text-[var(--color-brand-text)]">Nessun articolo presente</h2>
+						<h2 class="text-[1.125rem] font-bold text-[#252B42]">Nessun articolo presente</h2>
 						<p class="text-[#607184] text-[0.875rem]">Crea il primo articolo per iniziare.</p>
 						<NuxtLink
 							to="/account/amministrazione/blog/nuovo"
@@ -150,7 +150,7 @@ onMounted(() => {
 					<div v-else class="overflow-x-auto">
 						<table class="w-full text-[0.875rem]">
 							<thead>
-								<tr class="border-b border-[var(--color-brand-border)] text-left text-[#607184]">
+								<tr class="border-b border-[#E9EBEC] text-left text-[#607184]">
 									<th class="pb-[12px] pr-[16px] font-medium">Titolo</th>
 									<th class="pb-[12px] pr-[16px] font-medium">Slug</th>
 									<th class="pb-[12px] px-[12px] font-medium text-center">Stato</th>
@@ -164,7 +164,7 @@ onMounted(() => {
 									v-for="(article, idx) in articles"
 									:key="article.id"
 									:class="['border-b border-[#F0F0F0] last:border-0', idx % 2 === 1 ? 'bg-[#FAFBFC]' : '']">
-									<td class="py-[14px] pr-[16px] font-medium text-[var(--color-brand-text)] align-top">
+									<td class="py-[14px] pr-[16px] font-medium text-[#252B42] align-top">
 										<div class="max-w-[260px]">
 											<div class="font-semibold leading-[1.35]">{{ article.title }}</div>
 										</div>
@@ -173,8 +173,8 @@ onMounted(() => {
 										<span class="font-mono text-[0.8125rem] bg-[#F0F0F0] px-[8px] py-[2px] rounded text-[#607184]">{{ article.slug }}</span>
 									</td>
 									<td class="py-[14px] px-[12px] text-center align-top">
-										<button
-											type="button"
+										<button type="button"
+											
 											:disabled="actionLoading === `toggle-${article.id}`"
 											:aria-pressed="article.is_published"
 											:aria-label="article.is_published ? `Nascondi ${article.title}` : `Pubblica ${article.title}`"
@@ -194,7 +194,7 @@ onMounted(() => {
 												</svg>
 												Modifica
 											</NuxtLink>
-											<button
+											<button type="button"
 												:disabled="actionLoading === `delete-${article.id}`"
 												class="btn-danger btn-compact inline-flex items-center gap-[4px]"
 												@click="deleteArticle(article)">

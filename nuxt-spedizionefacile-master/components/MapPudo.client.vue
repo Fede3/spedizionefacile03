@@ -306,7 +306,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-	<div class="relative w-full h-full min-h-[320px] tablet:min-h-[360px] desktop:min-h-[420px] rounded-[12px] overflow-hidden border border-[var(--color-brand-border)] bg-[#F4F7F9]">
+	<div class="relative w-full h-full min-h-[320px] tablet:min-h-[360px] desktop:min-h-[420px] rounded-[14px] overflow-hidden border border-[var(--color-brand-border)] bg-[#F4F7F9]">
 		<div ref="mapEl" class="w-full h-full" />
 
 		<div
@@ -317,10 +317,10 @@ onBeforeUnmount(() => {
 
 		<div
 			v-else-if="tileLayerError"
-			class="absolute inset-0 flex items-center justify-center bg-[#F8F9FB]/95 text-[#64748B] text-[0.875rem] text-center px-[14px]">
+			class="absolute inset-0 flex items-center justify-center bg-[#F8F9FB]/95 text-[var(--color-brand-text-secondary)] text-[0.875rem] text-center px-[14px]">
 			Impossibile caricare la mappa ora. Riprova tra qualche secondo.
 		</div>
 	</div>
 </template>
 
-<\!-- CSS in assets/css/map-pudo.css -->
+<\!-- CSS in assets/css/shipment-step.css (PUDO markers section) -->

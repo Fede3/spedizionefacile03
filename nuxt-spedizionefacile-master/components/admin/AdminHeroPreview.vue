@@ -62,7 +62,7 @@ defineExpose({
 				</div>
 				<div
 					ref="localDesktopViewport"
-					class="relative overflow-hidden rounded-[12px] border border-[#D3DEE6] aspect-[1440/700] bg-[#EEF3F7]">
+					class="relative overflow-hidden rounded-[14px] border border-[#D3DEE6] aspect-[1440/700] bg-[#EEF3F7]">
 					<iframe
 						ref="localDesktopFrame"
 						title="Anteprima desktop hero"
@@ -106,7 +106,7 @@ defineExpose({
 				</div>
 				<div
 					ref="localMobileViewport"
-					class="relative overflow-hidden rounded-[12px] border border-[#D3DEE6] aspect-[390/220] bg-[#EEF3F7]">
+					class="relative overflow-hidden rounded-[14px] border border-[#D3DEE6] aspect-[390/220] bg-[#EEF3F7]">
 					<iframe
 						ref="localMobileFrame"
 						title="Anteprima mobile hero"

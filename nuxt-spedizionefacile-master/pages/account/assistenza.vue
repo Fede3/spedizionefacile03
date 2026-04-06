@@ -134,10 +134,10 @@ const handleSubmit = async () => {
 				</template>
 			</AccountPageHeader>
 
-			<div class="grid gap-[18px] desktop:grid-cols-[minmax(0,0.8fr)_minmax(0,1.1fr)] desktop:items-start">
+			<div class="grid gap-[16px] desktop:grid-cols-[minmax(0,0.8fr)_minmax(0,1.1fr)] desktop:items-start">
 				<div class="space-y-[14px]">
 					<div class="grid grid-cols-1 gap-[12px] tablet:grid-cols-2 desktop:grid-cols-1">
-						<div v-for="card in supportCards" :key="card.title" class="sf-account-panel rounded-[22px] p-[18px]">
+						<div v-for="card in supportCards" :key="card.title" class="sf-account-panel rounded-[20px] p-[18px]">
 							<div class="flex items-center gap-[12px]">
 								<div class="flex h-[42px] w-[42px] items-center justify-center rounded-full bg-[#F0F6F7] text-[var(--color-brand-primary)]">
 									<svg
@@ -155,7 +155,7 @@ const handleSubmit = async () => {
 						</div>
 					</div>
 
-					<div class="sf-account-panel rounded-[22px] p-[18px]">
+					<div class="sf-account-panel rounded-[20px] p-[18px]">
 						<div class="flex items-center gap-[10px]">
 							<div class="flex h-[40px] w-[40px] items-center justify-center rounded-full bg-[#F0F6F7] text-[var(--color-brand-primary)]">
 								<svg
@@ -167,14 +167,14 @@ const handleSubmit = async () => {
 							</div>
 							<div>
 								<p class="text-[0.75rem] font-semibold uppercase tracking-[1px] text-[var(--color-brand-primary)]">Per velocizzare</p>
-								<h3 class="mt-[2px] text-[1rem] font-bold text-[var(--color-brand-text)]">Cosa conviene scrivere</h3>
+								<h3 class="mt-[2px] font-montserrat text-[1rem] font-[800] text-[var(--color-brand-text)]">Cosa conviene scrivere</h3>
 							</div>
 						</div>
 						<ul class="mt-[14px] space-y-[10px]">
 							<li
 								v-for="item in supportChecklist"
 								:key="item"
-								class="flex items-start gap-[10px] text-[0.875rem] leading-[1.55] text-[#404040]">
+								class="flex items-start gap-[10px] text-[0.875rem] leading-[1.55] text-[var(--color-brand-text)]">
 								<span
 									class="mt-[2px] inline-flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-full bg-[#F0F6F7] text-[var(--color-brand-primary)]">
 									<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[12px] h-[12px]" fill="currentColor">
@@ -187,7 +187,7 @@ const handleSubmit = async () => {
 					</div>
 				</div>
 
-				<div class="sf-account-panel rounded-[24px] p-[20px] desktop:p-[28px]">
+				<div class="sf-account-panel rounded-[20px] p-[20px] desktop:p-[28px]">
 					<div class="flex items-start justify-between gap-[12px] mb-[20px] desktop:mb-[24px]">
 						<div class="flex items-center gap-[12px]">
 							<div class="flex h-[42px] w-[42px] items-center justify-center rounded-full bg-[#F0F6F7] text-[var(--color-brand-primary)]">
@@ -199,7 +199,7 @@ const handleSubmit = async () => {
 									v-html="accountCardIcons.headset"></svg>
 							</div>
 							<div>
-								<h2 class="text-[1.125rem] font-bold text-[var(--color-brand-text)]">Invia una richiesta</h2>
+								<h2 class="font-montserrat text-[1.125rem] font-[800] text-[var(--color-brand-text)]">Invia una richiesta</h2>
 								<p class="mt-[4px] text-[0.8125rem] text-[var(--color-brand-text-secondary)]">Oggetto chiaro e contesto essenziale per una risposta piu' rapida.</p>
 							</div>
 						</div>

@@ -58,7 +58,7 @@ const emit = defineEmits(['select-payment-method', 'update:useNewCard', 'update:
 				@click="emit('select-payment-method', option.key)"
 				:disabled="option.key === 'carta' && cardPaymentsUnavailable"
 				:class="[
-					'checkout-payment-option no-radius',
+					'checkout-payment-option',
 					paymentMethod === option.key ? 'checkout-payment-option--active' : 'checkout-payment-option--idle',
 					option.key === 'carta' && cardPaymentsUnavailable ? 'checkout-payment-option--disabled' : '',
 				]">
@@ -95,8 +95,8 @@ const emit = defineEmits(['select-payment-method', 'update:useNewCard', 'update:
 			</button>
 		</div>
 
-		<div v-if="cardPaymentsUnavailable" class="checkout-payment-notice ux-alert ux-alert--soft">
-			<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="ux-alert__icon" fill="currentColor" aria-hidden="true">
+		<div v-if="cardPaymentsUnavailable" class="checkout-payment-notice">
+			<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" class="shrink-0 mt-[1px]" fill="#8f5b00" aria-hidden="true">
 				<path d="M13,13H11V7H13M13,17H11V15H13M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z" />
 			</svg>
 			<div>{{ cardPaymentsNotice }}</div>
@@ -111,7 +111,7 @@ const emit = defineEmits(['select-payment-method', 'update:useNewCard', 'update:
 						type="button"
 						@click="emit('update:useNewCard', false)"
 						:class="[
-							'checkout-payment-choice no-radius',
+							'checkout-payment-choice',
 							!useNewCard ? 'checkout-payment-choice--selected' : 'checkout-payment-choice--idle',
 						]">
 						<span class="checkout-payment-choice__brand">{{ defaultPayment.card.brand?.toUpperCase() }}</span>
@@ -132,7 +132,7 @@ const emit = defineEmits(['select-payment-method', 'update:useNewCard', 'update:
 						@keydown.enter.prevent="emit('update:useNewCard', true)"
 						@keydown.space.prevent="emit('update:useNewCard', true)"
 						:class="[
-							'checkout-payment-choice checkout-payment-choice--expandable no-radius',
+							'checkout-payment-choice checkout-payment-choice--expandable',
 							!hasSavedCard || useNewCard ? 'checkout-payment-choice--selected' : 'checkout-payment-choice--idle',
 						]">
 						<div class="checkout-payment-choice__header">
@@ -162,10 +162,10 @@ const emit = defineEmits(['select-payment-method', 'update:useNewCard', 'update:
 								</div>
 
 								<div id="card-element" :ref="cardRefCallback" class="checkout-payment-card-form__element"></div>
-								<p v-if="stripeLoading" class="checkout-payment-card-form__helper ux-alert ux-alert--info">
+								<p v-if="stripeLoading" class="checkout-payment-card-form__helper">
 									Preparazione del modulo carta in corso...
 								</p>
-								<p v-if="cardError" class="checkout-payment-card-form__error ux-alert ux-alert--critical">{{ cardError }}</p>
+								<p v-if="cardError" class="checkout-payment-card-form__error">{{ cardError }}</p>
 								<label class="checkout-payment-card-form__save" @click.stop>
 									<input
 										type="checkbox"
@@ -195,10 +195,10 @@ const emit = defineEmits(['select-payment-method', 'update:useNewCard', 'update:
 					Saldo disponibile:
 					<span class="font-semibold text-[var(--color-brand-primary)]">{{ walletFormatted }}</span>
 				</p>
-				<p v-if="walletLoaded && !walletSufficient" class="checkout-payment-alt__error ux-alert ux-alert--critical">
+				<p v-if="walletLoaded && !walletSufficient" class="checkout-payment-alt__error">
 					Saldo insufficiente. Ricarica il wallet per procedere.
 				</p>
-				<p v-else-if="walletLoaded" class="checkout-payment-alt__success ux-alert ux-alert--success">
+				<p v-else-if="walletLoaded" class="checkout-payment-alt__success">
 					Saldo sufficiente per completare il pagamento.
 				</p>
 			</div>

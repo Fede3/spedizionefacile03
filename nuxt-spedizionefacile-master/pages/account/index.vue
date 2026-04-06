@@ -154,32 +154,60 @@ const handleLogout = async () => {
 </script>
 
 <template>
-	<section class="sf-account-shell py-[10px] tablet:py-[12px] desktop:py-[16px]">
-		<div class="my-container">
-			<AccountShellHero
-				:crumbs="[]"
-				:title="accountGreeting"
-				:description="accountHeaderDescription"
-				compact
-				action-band-title="Nuova spedizione"
-				action-band-description="Riparti dal preventivo con i dati del tuo account gia disponibili."
-				action-label="Nuova spedizione"
-				action-to="/preventivo"
-				:logout-loading="isLoggingOut"
-				@logout="handleLogout">
-				<template #identity>
-					<div class="sf-account-identity-avatar">{{ accountInitials }}</div>
-				</template>
-				<template #meta>
-					<span class="sf-account-meta-pill sf-account-meta-pill--muted">{{ userTypeLabel }}</span>
-					<span v-if="effectiveRole !== 'Cliente'" class="sf-account-meta-pill">{{ effectiveRole }}</span>
-				</template>
-			</AccountShellHero>
-		</div>
-	</section>
+	<section class="sf-account-shell py-[20px] tablet:py-[24px] desktop:py-[28px]">
+		<div class="my-container max-w-[1280px]">
+			<!-- Profile card (prototype-style) -->
+			<div class="sf-account-profile-card rounded-[22px] overflow-hidden mb-[24px]"
+				style="box-shadow: 0 0 0 1px rgba(9,88,102,0.05), 0 4px 20px rgba(9,88,102,0.06), 0 16px 48px rgba(9,88,102,0.04);">
+				<!-- Teal accent bar -->
+				<div class="h-[4px]" style="background: linear-gradient(90deg, #095866 0%, #0b9ab3 50%, #095866 100%);"></div>
+				<div class="px-[20px] tablet:px-[32px] py-[24px] tablet:py-[28px] bg-white">
+					<div class="flex flex-col tablet:flex-row tablet:items-center tablet:justify-between gap-[16px]">
+						<div class="flex items-center gap-[16px]">
+							<div class="sf-account-identity-avatar">{{ accountInitials }}</div>
+							<div>
+								<div class="flex items-center gap-[8px] flex-wrap">
+									<h1 class="text-[var(--color-brand-text)] text-[20px] tablet:text-[24px] tracking-[-0.5px] font-[800]">
+										{{ displayName }}
+									</h1>
+									<span v-if="effectiveRole !== 'Cliente'" class="sf-account-meta-pill">{{ effectiveRole }}</span>
+									<span class="sf-account-meta-pill sf-account-meta-pill--muted">{{ userTypeLabel }}</span>
+								</div>
+								<p class="text-[var(--color-brand-text-muted)] text-[13px] mt-[2px]">{{ userEmail }}</p>
+							</div>
+						</div>
+						<div class="flex items-center gap-[8px]">
+							<NuxtLink to="/preventivo"
+								class="h-[46px] px-[20px] rounded-full text-white text-[14px] font-[700] flex items-center gap-[7px] cursor-pointer transition-transform hover:-translate-y-[1px]"
+								style="background: #E44203; box-shadow: 0 4px 14px rgba(228,66,3,0.25);">
+								<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+								Nuova spedizione
+							</NuxtLink>
+							<button
+								@click="handleLogout"
+								:disabled="isLoggingOut"
+								class="h-[46px] w-[46px] rounded-full bg-[#F0F1F4] hover:bg-[#FFE8E0] text-[var(--color-brand-text-muted)] hover:text-[#E44203] flex items-center justify-center cursor-pointer transition-all duration-[350ms]">
+								<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+							</button>
+						</div>
+					</div>
 
-	<section class="sf-account-shell py-[4px] desktop:py-[8px]">
-		<div class="my-container">
+					<!-- Stats bar -->
+					<div class="flex items-center gap-[20px] tablet:gap-[32px] mt-[18px] pt-[16px] border-t border-[#F0F1F4]">
+						<div class="flex items-center gap-[8px]">
+							<div class="w-[28px] h-[28px] rounded-full flex items-center justify-center" style="background: rgba(228,66,3,0.07);">
+								<svg width="13" height="13" viewBox="0 0 24 24" fill="#E44203"><path d="M21,16.5C21,16.88 20.79,17.21 20.47,17.38L12.57,21.82C12.41,21.94 12.21,22 12,22C11.79,22 11.59,21.94 11.43,21.82L3.53,17.38C3.21,17.21 3,16.88 3,16.5V7.5C3,7.12 3.21,6.79 3.53,6.62L11.43,2.18C11.59,2.06 11.79,2 12,2C12.21,2 12.41,2.06 12.57,2.18L20.47,6.62C20.79,6.79 21,7.12 21,7.5V16.5M12,4.15L6.04,7.5L12,10.85L17.96,7.5L12,4.15M5,15.91L11,19.29V12.58L5,9.21V15.91M19,15.91V9.21L13,12.58V19.29L19,15.91Z"/></svg>
+							</div>
+							<div>
+								<span class="text-[var(--color-brand-text)] text-[16px] font-[800]">{{ memberSince || '--' }}</span>
+								<span class="text-[var(--color-brand-text-muted)] text-[12px] ml-[5px]">Membro dal</span>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<!-- Section blocks -->
 			<div
 				v-for="(section, sectionIndex) in visibleSections"
 				:key="sectionIndex"
@@ -197,19 +225,20 @@ const handleLogout = async () => {
 
 				<ul class="sf-account-nav-grid">
 					<li v-for="(page, pageIndex) in section.pages" :key="pageIndex" class="w-full">
-						<NuxtLink :to="resolveAccountPageUrl(page.url)" class="sf-account-nav-tile group">
+						<NuxtLink :to="resolveAccountPageUrl(page.url)" class="sf-account-nav-tile group"
+							:style="{
+								'--sf-icon-color': page.iconColor || 'var(--color-brand-primary)',
+							}">
 							<div
 								class="sf-account-nav-tile__icon"
 								:style="{
-									'--sf-icon-bg': page.iconBg || '#edf6f8',
 									'--sf-icon-color': page.iconColor || 'var(--color-brand-primary)',
-									'--sf-icon-border': page.iconBorder || 'rgba(9, 88, 102, 0.14)',
 								}">
 								<svg
 									xmlns="http://www.w3.org/2000/svg"
 									viewBox="0 0 24 24"
-									class="h-[22px] w-[22px]"
-									:fill="page.iconColor"
+									class="h-[20px] w-[20px]"
+									fill="#ffffff"
 									v-html="cardIcons[page.iconKey]"></svg>
 							</div>
 							<div class="sf-account-nav-tile__body">
@@ -218,10 +247,19 @@ const handleLogout = async () => {
 								</h3>
 								<p v-if="page.description" class="sf-account-nav-tile__meta">{{ page.description }}</p>
 							</div>
-							<span class="sf-account-nav-tile__link" aria-hidden="true">→</span>
+							<span class="sf-account-nav-tile__link" aria-hidden="true">
+								<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+							</span>
 						</NuxtLink>
 					</li>
 				</ul>
+			</div>
+
+			<!-- Help footer -->
+			<div class="flex items-center justify-center gap-[6px] text-[var(--color-brand-text-muted)] text-[13px] pt-[24px] font-[500]">
+				<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+				Hai bisogno di aiuto?
+				<NuxtLink to="/account/assistenza" class="text-[#095866] font-[600] hover:underline cursor-pointer">Contattaci</NuxtLink>
 			</div>
 		</div>
 	</section>

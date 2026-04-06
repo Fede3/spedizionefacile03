@@ -104,7 +104,7 @@ const saveService = async () => {
 				back-to="/account/amministrazione/servizi"
 				back-label="Torna ai servizi" />
 
-			<div class="service-editor-overview sf-account-panel mb-[20px] rounded-[24px] p-[18px] desktop:p-[24px]">
+			<div class="service-editor-overview sf-account-panel mb-[20px] rounded-[20px] p-[18px] desktop:p-[24px]">
 				<div class="service-editor-overview__copy">
 					<p class="service-editor-overview__eyebrow">Editor servizio</p>
 					<h2 class="service-editor-overview__title">Imposta struttura, tono e pubblicazione senza perdere il filo</h2>
@@ -118,7 +118,7 @@ const saveService = async () => {
 						<strong class="service-editor-stat__value">{{ publishStateLabel }}</strong>
 						<span class="service-editor-stat__meta">{{ publishStateHint }}</span>
 					</article>
-					<article class="service-editor-stat service-editor-stat--indigo">
+					<article class="service-editor-stat service-editor-stat--teal">
 						<span class="service-editor-stat__label">Sezioni</span>
 						<strong class="service-editor-stat__value">{{ sectionCount }}</strong>
 						<span class="service-editor-stat__meta">Blocchi principali del servizio</span>
@@ -135,8 +135,8 @@ const saveService = async () => {
 			<div
 				v-if="actionMessage"
 				:class="[
-					'mb-[20px] px-[16px] py-[12px] rounded-[12px] text-[0.875rem] font-medium flex items-center gap-[8px]',
-					actionMessage.type === 'success' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-red-50 text-red-700 border border-red-200',
+					'mb-[20px] px-[16px] py-[12px] rounded-[20px] text-[0.875rem] font-medium flex items-center gap-[8px]',
+					actionMessage.type === 'success' ? 'bg-[#f0fdf4] text-[#0a8a7a] border border-[#d1fae5]' : 'bg-red-50 text-red-700 border border-red-200',
 				]">
 				<template v-if="actionMessage.type === 'success'"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[18px] h-[18px] shrink-0" fill="currentColor"><path d="M12 2C6.5 2 2 6.5 2 12S6.5 22 12 22 22 17.5 22 12 17.5 2 12 2M10 17L5 12L6.41 10.59L10 14.17L17.59 6.58L19 8L10 17Z"/></svg></template>
 				<template v-else><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[18px] h-[18px] shrink-0" fill="currentColor"><path d="M13,13H11V7H13M13,17H11V15H13M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z"/></svg></template>
@@ -145,7 +145,7 @@ const saveService = async () => {
 
 			<div class="service-editor-layout">
 				<div class="service-editor-main">
-					<section class="sf-account-panel service-editor-panel service-editor-panel--teal rounded-[24px] p-[20px] desktop:p-[28px]">
+					<section class="sf-account-panel service-editor-panel service-editor-panel--teal rounded-[20px] p-[20px] desktop:p-[28px]">
 						<div class="service-editor-panel__header">
 							<div>
 								<h2 class="service-editor-panel__title">
@@ -195,7 +195,7 @@ const saveService = async () => {
 						</div>
 					</section>
 
-					<section class="sf-account-panel service-editor-panel service-editor-panel--indigo rounded-[24px] p-[20px] desktop:p-[28px]">
+					<section class="sf-account-panel service-editor-panel service-editor-panel--teal rounded-[20px] p-[20px] desktop:p-[28px]">
 						<div class="service-editor-panel__header service-editor-panel__header--split">
 							<div>
 								<h2 class="service-editor-panel__title">
@@ -210,7 +210,7 @@ const saveService = async () => {
 							</button>
 						</div>
 						<div class="service-editor-stack">
-							<div v-for="(section, idx) in form.sections" :key="idx" class="service-editor-stack-card service-editor-stack-card--indigo">
+							<div v-for="(section, idx) in form.sections" :key="idx" class="service-editor-stack-card service-editor-stack-card--teal">
 								<div class="service-editor-stack-card__head">
 									<span class="service-editor-stack-card__index">Sezione {{ idx + 1 }}</span>
 									<button
@@ -229,7 +229,7 @@ const saveService = async () => {
 						</div>
 					</section>
 
-					<section class="sf-account-panel service-editor-panel service-editor-panel--orange rounded-[24px] p-[20px] desktop:p-[28px]">
+					<section class="sf-account-panel service-editor-panel service-editor-panel--orange rounded-[20px] p-[20px] desktop:p-[28px]">
 						<div class="service-editor-panel__header service-editor-panel__header--split">
 							<div>
 								<h2 class="service-editor-panel__title">
@@ -265,7 +265,7 @@ const saveService = async () => {
 				</div>
 
 				<aside class="service-editor-side">
-					<div class="sf-account-panel service-editor-summary rounded-[24px] p-[20px] desktop:p-[24px]">
+					<div class="sf-account-panel service-editor-summary rounded-[20px] p-[20px] desktop:p-[24px]">
 						<div class="service-editor-summary__top">
 							<p class="service-editor-summary__eyebrow">Checklist</p>
 							<h2 class="service-editor-summary__title">Pronto alla pubblicazione</h2>
@@ -380,10 +380,6 @@ const saveService = async () => {
 
 .service-editor-stat--teal::before {
 	background: linear-gradient(180deg, var(--color-brand-primary-light) 0%, #2d8190 100%);
-}
-
-.service-editor-stat--indigo::before {
-	background: linear-gradient(180deg, #3f51b5 0%, #6576d1 100%);
 }
 
 .service-editor-stat--orange::before {
@@ -628,8 +624,8 @@ const saveService = async () => {
 	background: linear-gradient(180deg, #dfe8ec 0%, #eef4f6 100%);
 }
 
-.service-editor-stack-card--indigo::before {
-	background: linear-gradient(180deg, #4f62c5 0%, #8090df 100%);
+.service-editor-stack-card--teal::before {
+	background: linear-gradient(180deg, var(--color-brand-primary-light) 0%, #2d8190 100%);
 }
 
 .service-editor-stack-card--orange::before {

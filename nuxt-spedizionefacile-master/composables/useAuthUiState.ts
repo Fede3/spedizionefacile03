@@ -1,14 +1,13 @@
 import {
-	type AuthBootstrapStatus,
 	type AuthUiUser,
 	createEmptySnapshot,
 	snapshotFromUser,
 } from '~/utils/authUiState'
+import { useAuthBootstrapState } from '~/utils/authBootstrap'
 import { useAuthUiSnapshotPersistence } from '~/composables/useAuthUiSnapshotPersistence'
 
 export const useAuthUiState = () => {
-	const bootstrapReady = useState('auth-bootstrap-ready', () => false)
-	const bootstrapStatus = useState<AuthBootstrapStatus>('auth-bootstrap-status', () => 'idle')
+	const { bootstrapReady, bootstrapStatus } = useAuthBootstrapState()
 	const { authCookie, clearSnapshot, initialSnapshot, persistSnapshotFromUser } =
 		useAuthUiSnapshotPersistence()
 	const route = useRoute()

@@ -8,6 +8,13 @@
 <script setup>
 definePageMeta({ middleware: ['app-auth'] });
 
+useSeoMeta({
+	title: 'Indirizzi account | SpediamoFacile',
+	ogTitle: 'Indirizzi account | SpediamoFacile',
+	description: 'Gestisci la rubrica indirizzi salvati dalla tua area account SpediamoFacile.',
+	ogDescription: 'Rubrica indirizzi con aggiunta, modifica ed eliminazione rapida su SpediamoFacile.',
+});
+
 const messageError = ref(null);
 const messageSuccess = ref(null);
 const messageLoading = ref(null);
@@ -151,7 +158,7 @@ const deleteAddress = async (id) => {
 </script>
 
 <template>
-	<section class="min-h-[600px] py-[32px] desktop:py-[72px]">
+	<section class="sf-account-shell min-h-[600px] py-[28px] desktop:py-[56px]">
 		<div class="my-container">
 			<AccountPageHeader
 				:eyebrow="addressHeader.eyebrow"

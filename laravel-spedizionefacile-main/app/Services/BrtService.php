@@ -8,7 +8,7 @@
  * DOVE SI USA:
  *   - BrtController.php -- endpoint HTTP per operazioni BRT
  *   - GenerateBrtLabel.php -- listener che genera etichetta automaticamente dopo pagamento
- *   - AdminController.php -- regenerateLabel per rigenerazione manuale admin
+ *   - Admin/OrderManagementController.php -- rigenerazione manuale admin
  *   - RefundController.php -- cancellazione spedizione in caso di rimborso
  *
  * VINCOLI:

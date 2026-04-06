@@ -179,7 +179,7 @@ const getPasswordCheckMark = (passed) => (passed ? '✓' : '•')
 							class="form-input auth-field-input--password"
 							minlength="8"
 							required />
-				<button type="button" @click="emit('update:showRegPassword', !showRegPassword)" class="auth-password-toggle" tabindex="-1">
+				<button type="button" @click="emit('update:showRegPassword', !showRegPassword)" class="auth-password-toggle" tabindex="-1" :aria-label="showRegPassword ? 'Nascondi password' : 'Mostra password'">
 					<svg v-if="!showRegPassword" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
 					<svg v-else width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
 				</button>
@@ -218,7 +218,7 @@ const getPasswordCheckMark = (passed) => (passed ? '✓' : '•')
 							class="form-input auth-field-input--password"
 							minlength="8"
 							required />
-				<button type="button" @click="emit('update:showRegPasswordConfirm', !showRegPasswordConfirm)" class="auth-password-toggle" tabindex="-1">
+				<button type="button" @click="emit('update:showRegPasswordConfirm', !showRegPasswordConfirm)" class="auth-password-toggle" tabindex="-1" :aria-label="showRegPasswordConfirm ? 'Nascondi conferma password' : 'Mostra conferma password'">
 					<svg v-if="!showRegPasswordConfirm" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
 					<svg v-else width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
 				</button>
@@ -237,10 +237,24 @@ const getPasswordCheckMark = (passed) => (passed ? '✓' : '•')
 		</div>
 		<p v-if="messageError?.referred_by" role="alert" class="auth-feedback auth-feedback--error">{{ messageError.referred_by[0] }}</p>
 
-			<button
+			<label class="auth-privacy-consent">
+			<input
+				type="checkbox"
+				v-model="registerForm.privacy_accepted"
+				required
+				class="auth-privacy-consent__check" />
+			<span class="auth-privacy-consent__text">
+				Ho letto e accetto la
+				<NuxtLink to="/privacy-policy" target="_blank" class="auth-privacy-consent__link">Privacy Policy</NuxtLink>
+				e i
+				<NuxtLink to="/termini-condizioni" target="_blank" class="auth-privacy-consent__link">Termini e Condizioni</NuxtLink> *
+			</span>
+		</label>
+
+		<button
 				type="submit"
-				:disabled="isLoading"
-				:class="['btn-cta', 'btn-compact', 'w-full', 'inline-flex', 'items-center', 'justify-center', 'gap-[8px]', isLoading ? 'opacity-70 cursor-not-allowed' : '']">
+				:disabled="isLoading || !registerForm.privacy_accepted"
+				class="btn-cta w-full inline-flex items-center justify-center gap-[8px]">
 				<span v-if="isLoading">Registrazione in corso...</span>
 				<span v-else>Registrati e continua</span>
 			</button>

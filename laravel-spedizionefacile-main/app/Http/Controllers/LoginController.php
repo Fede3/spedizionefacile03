@@ -1,0 +1,149 @@
+<?php
+
+/**
+ * LoginController -- Login con email/password, conferma password admin.
+ *
+ * Estratto da CustomLoginController: gestisce login, confirmPassword e logout-related helpers.
+ * Gestisce verifica codice 6 cifre inline (se email non verificata) e trasferimento carrello ospite.
+ */
+
+namespace App\Http\Controllers;
+
+use App\Jobs\SendVerificationEmailJob;
+use App\Models\User;
+use App\Services\GuestCartMergeService;
+use App\Support\AuthUiCookie;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\ValidationException;
+use Carbon\Carbon;
+use Symfony\Component\HttpFoundation\Response;
+
+class LoginController extends Controller
+{
+    public function __construct(
+        private readonly GuestCartMergeService $guestCartMerge,
+    ) {}
+
+    private function resolveUserFromEmail(string $email): ?User
+    {
+        $normalized = trim(mb_strtolower($email));
+        $user = User::where('email', $normalized)->first();
+
+        if ($user) {
+            return $user;
+        }
+
+        $candidate = preg_replace('/@spedizionefacile\.it$/i', '@spediamofacile.it', $normalized);
+
+        if (! $candidate || $candidate === $normalized) {
+            return null;
+        }
+
+        return User::where('email', $candidate)->first();
+    }
+
+    /**
+     * login -- Verifica credenziali, gestisce verifica email e trasferisce carrello ospite.
+     *
+     * 1) Valida credenziali  2) Se email non verificata: genera/invia codice, return 403
+     * 3) Auth::login  4) Rigenera sessione  5) Trasferisce pacchi da sessione a DB
+     */
+    public function login(Request $request)
+    {
+        $request->validate([
+            'email' => 'required|email',
+            'password' => 'required',
+            'remember' => 'boolean',
+        ]);
+
+        $user = $this->resolveUserFromEmail((string) $request->email);
+        $guestCart = $request->hasSession() ? $request->session()->get('cart', []) : [];
+
+        if (! $user || ! Hash::check($request->password, $user->password)) {
+            throw ValidationException::withMessages([
+                'email' => ['Le credenziali non sono corrette.'],
+                'password' => ['Le credenziali non sono corrette.'],
+            ]);
+        }
+
+        if (! $user->email_verified_at) {
+            $verificationExpiresAt = $user->verification_code_expires_at
+                ? Carbon::parse($user->verification_code_expires_at)
+                : null;
+
+            if (! $user->verification_code || ($verificationExpiresAt && $verificationExpiresAt->isPast())) {
+                $code = str_pad((string) random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+                $user->update([
+                    'verification_code' => $code,
+                    'verification_code_expires_at' => now()->addMinutes(30),
+                ]);
+
+                try {
+                    SendVerificationEmailJob::dispatchSync($user);
+                } catch (\Throwable $e) {
+                    Log::warning('Invio email codice verifica fallito durante login.', [
+                        'user_id' => $user->id,
+                        'error' => $e->getMessage(),
+                    ]);
+                }
+            }
+
+            return response()->json([
+                'success' => false,
+                'requires_verification' => true,
+                'message' => 'Account non verificato. Inserisci il codice di verifica a 6 cifre inviato alla tua email.',
+            ], 403);
+        }
+
+        Auth::login($user, (bool) $request->remember);
+
+        if ($request->hasSession()) {
+            $request->session()->regenerate();
+        }
+
+        try {
+            $this->guestCartMerge->merge($guestCart, $user);
+            if ($request->hasSession()) {
+                $request->session()->forget('cart');
+            }
+        } catch (\Exception $e) {
+            Log::warning('Guest cart merge failed', ['user_id' => $user->id, 'error' => $e->getMessage()]);
+        }
+
+        return response()->json($user)->cookie(AuthUiCookie::issueForUser($user, (bool) $request->boolean('remember')));
+    }
+
+    /**
+     * Conferma la password dell'admin (fuori flusso standard).
+     */
+    public function confirmPassword(Request $request)
+    {
+        $request->validate([
+            'password' => 'required|string',
+        ]);
+
+        $user = $request->user();
+
+        if (! $user?->isAdmin()) {
+            abort(Response::HTTP_FORBIDDEN, 'Solo un amministratore può confermare l\'accesso fuori flusso.');
+        }
+
+        if (! $user || ! Hash::check((string) $request->password, (string) $user->password)) {
+            throw ValidationException::withMessages([
+                'password' => ['La password inserita non è corretta.'],
+            ]);
+        }
+
+        if ($request->hasSession()) {
+            $request->session()->put('auth.password_confirmed_at', now()->timestamp);
+        }
+
+        return response()->json([
+            'success' => true,
+            'confirmed_at' => now()->toIso8601String(),
+        ]);
+    }
+}

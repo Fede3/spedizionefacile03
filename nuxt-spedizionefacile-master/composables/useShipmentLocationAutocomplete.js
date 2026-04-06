@@ -1,18 +1,20 @@
 /**
  * useShipmentLocationAutocomplete
  *
- * Gestisce l'autocomplete per città, CAP e provincia nelle sezioni
- * di indirizzo (origin/dest) del form spedizione.
+ * Gestisce l'autocomplete per citta', CAP e provincia nelle sezioni
+ * di indirizzo (origin/dest) del form spedizione, oltre a input handlers
+ * per nome, telefono e smart blur per ogni campo.
  *
  * Contiene:
  * - Stato reactive dei suggerimenti (city, cap, provincia)
- * - Input handlers (onCityInput, onCapInput, onProvinciaInput)
+ * - Input handlers (onCityInput, onCapInput, onProvinciaInput, onNameInput, onTelefonoInput)
  * - Focus handlers (onCityFocus, onCapFocus, onProvinceFocus)
  * - Select handlers (selectCity, selectCap, selectProvincia)
  * - Formattazione label suggerimenti
- * - Helper di coerenza location
+ * - Validazione coerenza location (validateAddressLocationLink)
+ * - Smart blur per ogni campo
  *
- * Usato da: useShipmentStepValidation (orchestratore)
+ * Usato da: useShipmentStepValidation (facade)
  */
 export const useShipmentLocationAutocomplete = ({
 	deliveryMode,
@@ -175,7 +177,7 @@ export const useShipmentLocationAutocomplete = ({
 			sv.clearError(`${section}_postal_code`);
 			locationLinkHints[section] = [];
 			return true;
-		} catch (error) {
+		} catch {
 			locationLinkHints[section] = [];
 			return true;
 		}
@@ -246,7 +248,7 @@ export const useShipmentLocationAutocomplete = ({
 			}
 			setSectionCapSuggestions(section, filtered.slice(0, 40));
 			setProvinceSuggestionsFromLocations(section, filtered);
-		} catch (error) {
+		} catch {
 		}
 	};
 
@@ -317,13 +319,19 @@ export const useShipmentLocationAutocomplete = ({
 					normalizeLocationText(loc.place_name).startsWith(queryNorm)
 				);
 
-				if (capPrefix.length >= 3) {
+				// NON filtrare per CAP/provincia quando l'utente sta editando la città.
+				// Se il testo corrente non corrisponde esattamente a una località già selezionata,
+				// significa che l'utente sta modificando — mostra tutti i risultati.
+				const currentCity = normalizeLocationText(address.city || "");
+				const isEditingAfterSelection = currentCity && queryNorm !== currentCity;
+
+				if (!isEditingAfterSelection && capPrefix.length >= 3) {
 					suggestions = suggestions.filter((loc) =>
 						String(loc.postal_code || "").startsWith(capPrefix)
 					);
 				}
 
-				if (provincePrefix.length === 2) {
+				if (!isEditingAfterSelection && provincePrefix.length === 2) {
 					suggestions = suggestions.filter((loc) =>
 						normalizeLocationText(getProvinceLabel(loc)) === provincePrefix
 					);
@@ -351,7 +359,7 @@ export const useShipmentLocationAutocomplete = ({
 							.slice(0, 40)
 					);
 				}
-			} catch (error) {
+			} catch {
 				setSectionCitySuggestions(section, []);
 			}
 		}, delay);
@@ -413,13 +421,19 @@ export const useShipmentLocationAutocomplete = ({
 					? results.filter((loc) => String(loc.postal_code || "").startsWith(filtered))
 					: results.filter((loc) => String(loc.postal_code || "").toUpperCase().startsWith(filtered.toUpperCase()));
 
-				if (cityNorm.length >= 2) {
+				// Filtra per città/provincia solo se il CAP corrisponde ancora
+				// a quello già selezionato. Se l'utente sta editando il CAP,
+				// non filtrare — mostra tutte le località per quel CAP.
+				const currentCap = String(address.postal_code || "");
+				const isEditingCap = currentCap && filtered !== currentCap;
+
+				if (!isEditingCap && cityNorm.length >= 2) {
 					suggestions = suggestions.filter((loc) =>
 						normalizeLocationText(loc.place_name).startsWith(cityNorm)
 					);
 				}
 
-				if (countryCode === 'IT' && provinceNorm.length === 2) {
+				if (!isEditingCap && countryCode === 'IT' && provinceNorm.length === 2) {
 					suggestions = suggestions.filter((loc) =>
 						normalizeLocationText(getProvinceLabel(loc)) === provinceNorm
 					);
@@ -445,7 +459,7 @@ export const useShipmentLocationAutocomplete = ({
 						applyLocationToSection(section, suggestions[0]);
 					}
 				}
-			} catch (error) {
+			} catch {
 				setSectionCapSuggestions(section, []);
 			}
 		}, delay);
@@ -462,6 +476,48 @@ export const useShipmentLocationAutocomplete = ({
 		sv.onInput(`${section}_telephone_number`, () => sv.validateTelefono(`${section}_telephone_number`, formatted));
 	};
 
+	// --- Smart blur ---
+	const smartBlur = (section, field) => {
+		const key = `${section}_${field}`;
+		const addr = section === 'origin' ? originAddress.value : destinationAddress.value;
+		const value = addr[field];
+
+		if (field === 'full_name') {
+			sv.onBlur(key, () => sv.validateNomeCognome(key, value));
+		} else if (field === 'city') {
+			sv.onBlur(key, () => {
+				if (!value || !String(value).trim()) sv.setError(key, 'Città è obbligatoria');
+				else sv.clearError(key);
+			});
+			setTimeout(() => setSectionCitySuggestions(section, []), 200);
+			void validateAddressLocationLink(section);
+		} else if (field === 'postal_code') {
+			sv.onBlur(key, () => sv.validateCAP(key, value, { countryCode: getSectionCountryCode(section) }));
+			setTimeout(() => setSectionCapSuggestions(section, []), 200);
+			void validateAddressLocationLink(section);
+		} else if (field === 'telephone_number') {
+			sv.onBlur(key, () => sv.validateTelefono(key, value));
+		} else if (field === 'email') {
+			sv.onBlur(key, () => sv.validateEmail(key, value));
+		} else if (field === 'province') {
+			sv.onBlur(key, () => validateProvinceField(section, value));
+			// Hide autocomplete on blur
+			setTimeout(() => {
+				setSectionProvinceSuggestions(section, []);
+			}, 200);
+			void validateAddressLocationLink(section);
+		} else {
+			// Generic required field
+			sv.onBlur(key, () => {
+				if (!value || !String(value).trim()) {
+					sv.setError(key, 'Campo obbligatorio');
+				} else {
+					sv.clearError(key);
+				}
+			});
+		}
+	};
+
 	return {
 		applyLocationToSection,
 		destCapSuggestions,
@@ -471,7 +527,7 @@ export const useShipmentLocationAutocomplete = ({
 		formatCitySuggestionLabel,
 		getSectionAddress,
 		getSectionCountryCode,
-		isItalianSection,
+		isLocationCoherent,
 		locationLinkHints,
 		normalizeLocationText,
 		onCapFocus,
@@ -488,6 +544,7 @@ export const useShipmentLocationAutocomplete = ({
 		selectCap,
 		selectCity,
 		selectProvincia,
+		smartBlur,
 		validateAddressLocationLink,
 		validateProvinceField,
 	};

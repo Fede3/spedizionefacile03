@@ -7,7 +7,7 @@ useHead({
 </script>
 
 <template>
-	<div class="min-h-screen bg-[#F4F6F8]">
+	<div class="min-h-screen bg-[#F7F8FA]">
 		<header class="border-b border-[var(--color-brand-border)] bg-white">
 			<div class="my-container flex items-center py-[14px] tablet:py-[18px]">
 				<NuxtLink to="/" class="inline-flex items-center">

@@ -5,6 +5,7 @@
 -->
 <script setup>
 import { formatDateIt } from '~/utils/date.js';
+import { formatEuro, formatPrice } from '~/utils/price.js';
 
 const props = defineProps({
 	user: { type: Object, default: null },
@@ -21,7 +22,7 @@ const formatDate = (dateStr) => formatDateIt(dateStr);
 </script>
 
 <template>
-	<div class="sf-account-value-grid desktop:grid-cols-2 mb-[22px]">
+	<div class="sf-account-value-grid desktop:grid-cols-2 mb-[24px]">
 		<div class="sf-account-value-card h-full">
 			<div class="flex items-center gap-[10px]">
 				<div class="sf-account-value-card__icon">
@@ -132,7 +133,7 @@ const formatDate = (dateStr) => formatDateIt(dateStr);
 		</div>
 	</div>
 
-	<div class="sf-account-stat-grid mb-[22px]">
+	<div class="sf-account-stat-grid mb-[24px]">
 		<div class="sf-account-stat-card">
 			<div class="flex items-center gap-[8px]">
 				<div class="sf-account-stat-card__icon">
@@ -169,7 +170,7 @@ const formatDate = (dateStr) => formatDateIt(dateStr);
 				</div>
 				<p class="text-[0.75rem] text-[var(--color-brand-text-secondary)] uppercase tracking-[0.5px] font-medium">Saldo</p>
 			</div>
-			<p class="sf-account-stat-card__value text-emerald-600">
+			<p class="sf-account-stat-card__value text-[#095866]">
 				&euro;{{ earnings ? formatEuro(earnings.commission_balance || 0) : '0,00' }}
 			</p>
 			<NuxtLink
@@ -191,18 +192,18 @@ const formatDate = (dateStr) => formatDateIt(dateStr);
 		</div>
 	</div>
 
-	<div class="sf-account-panel rounded-[24px] p-[18px] desktop:p-[28px]">
+	<div class="sf-account-panel rounded-[20px] p-[18px] desktop:p-[28px]">
 		<div class="flex items-center gap-[12px] mb-[16px] desktop:mb-[20px]">
 			<div class="w-[40px] h-[40px] rounded-[50px] bg-amber-50 flex items-center justify-center">
 				<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="#D97706">
 					<path d="M2,2H4V20H22V22H2V2M7,10H17V13H7V10M11,15H21V18H11V15M6,4H22V8H6V4Z" />
 				</svg>
 			</div>
-			<h2 class="text-[1.125rem] font-bold text-[var(--color-brand-text)]">Storico</h2>
+			<h2 class="font-montserrat text-[1.125rem] font-[800] text-[var(--color-brand-text)]">Storico</h2>
 		</div>
 
 		<div v-if="!earnings?.data?.length" class="text-center py-[48px]">
-			<div class="w-[64px] h-[64px] mx-auto mb-[16px] rounded-full bg-[#F8F9FB] flex items-center justify-center">
+			<div class="w-[64px] h-[64px] mx-auto mb-[16px] rounded-full bg-[#F5F6F9] flex items-center justify-center">
 				<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="#C8CCD0">
 					<path d="M16,11.78L20.24,4.45L21.97,5.45L16.74,14.5L10.23,10.75L5.46,19H22V21H2V3H4V17.54L9.5,8L16,11.78Z" />
 				</svg>
@@ -213,7 +214,7 @@ const formatDate = (dateStr) => formatDateIt(dateStr);
 
 		<div v-else class="space-y-[12px] desktop:space-y-0">
 			<div class="desktop:hidden space-y-[10px]">
-				<div v-for="usage in earnings.data" :key="usage.id" class="bg-[#F8F9FB] rounded-[16px] p-[14px] border border-[var(--color-brand-border)]">
+				<div v-for="usage in earnings.data" :key="usage.id" class="bg-[#F5F6F9] rounded-[16px] p-[14px] border border-[var(--color-brand-border)]">
 					<div class="flex items-start justify-between gap-[12px]">
 						<div>
 							<p class="text-[0.8125rem] font-semibold text-[var(--color-brand-text)]">{{ usage.buyer?.name || '\u2014' }}</p>
@@ -223,9 +224,9 @@ const formatDate = (dateStr) => formatDateIt(dateStr);
 							:class="[
 								'inline-flex items-center gap-[4px] px-[10px] py-[3px] rounded-full text-[0.6875rem] font-medium',
 								usage.status === 'confirmed'
-									? 'bg-emerald-50 text-emerald-700'
+									? 'bg-[#f0fdf4] text-[#0a8a7a]'
 									: usage.status === 'paid'
-										? 'bg-blue-50 text-blue-700'
+										? 'bg-[#eef7f8] text-[#095866]'
 										: 'bg-amber-50 text-amber-700',
 							]">
 							{{ usage.status === 'confirmed' ? 'Confermata' : usage.status === 'paid' ? 'Pagata' : 'In attesa' }}
@@ -233,11 +234,11 @@ const formatDate = (dateStr) => formatDateIt(dateStr);
 					</div>
 					<div class="flex items-center justify-between gap-[10px] mt-[10px] text-[0.8125rem]">
 						<span class="text-[var(--color-brand-text-secondary)]">Ordine</span>
-						<span class="text-[#404040]">&euro;{{ formatEuro(usage.order_amount) }}</span>
+						<span class="text-[var(--color-brand-text)]">&euro;{{ formatEuro(usage.order_amount) }}</span>
 					</div>
 					<div class="flex items-center justify-between gap-[10px] mt-[6px] text-[0.8125rem]">
 						<span class="text-[var(--color-brand-text-secondary)]">Commissione</span>
-						<span class="font-semibold text-emerald-600">+&euro;{{ formatEuro(usage.commission_amount) }}</span>
+						<span class="font-semibold text-[#095866]">+&euro;{{ formatEuro(usage.commission_amount) }}</span>
 					</div>
 				</div>
 			</div>
@@ -254,18 +255,18 @@ const formatDate = (dateStr) => formatDateIt(dateStr);
 					</thead>
 					<tbody>
 						<tr v-for="usage in earnings.data" :key="usage.id" class="border-b border-[#F0F0F0] last:border-0">
-							<td class="py-[12px] text-[#404040]">{{ formatDate(usage.created_at) }}</td>
-							<td class="py-[12px] text-[#404040]">{{ usage.buyer?.name || '\u2014' }}</td>
-							<td class="py-[12px] text-right text-[#404040]">{{ formatPrice(Number(usage.order_amount) * 100) }}</td>
-							<td class="py-[12px] text-right font-semibold text-emerald-600">+{{ formatPrice(Number(usage.commission_amount) * 100) }}</td>
+							<td class="py-[12px] text-[var(--color-brand-text)]">{{ formatDate(usage.created_at) }}</td>
+							<td class="py-[12px] text-[var(--color-brand-text)]">{{ usage.buyer?.name || '\u2014' }}</td>
+							<td class="py-[12px] text-right text-[var(--color-brand-text)]">{{ formatPrice(Number(usage.order_amount) * 100) }}</td>
+							<td class="py-[12px] text-right font-semibold text-[#095866]">+{{ formatPrice(Number(usage.commission_amount) * 100) }}</td>
 							<td class="py-[12px] text-center">
 								<span
 									:class="[
 										'inline-block px-[10px] py-[3px] rounded-full text-[0.6875rem] font-medium',
 										usage.status === 'confirmed'
-											? 'bg-emerald-50 text-emerald-700'
+											? 'bg-[#f0fdf4] text-[#0a8a7a]'
 											: usage.status === 'paid'
-												? 'bg-blue-50 text-blue-700'
+												? 'bg-[#eef7f8] text-[#095866]'
 												: 'bg-amber-50 text-amber-700',
 									]">
 									{{ usage.status === 'confirmed' ? 'Confermata' : usage.status === 'paid' ? 'Pagata' : 'In attesa' }}

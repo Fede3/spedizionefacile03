@@ -83,14 +83,14 @@ onMounted(() => {
 				v-if="selectedUserId"
 				class="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-[20px]"
 				@click.self="closeUserMovements">
-				<div class="bg-white rounded-[12px] p-[28px] shadow-2xl max-w-[700px] w-full max-h-[80vh] overflow-y-auto">
+				<div class="bg-white rounded-[20px] p-[28px] shadow-2xl max-w-[700px] w-full max-h-[80vh] overflow-y-auto">
 					<div class="flex items-center justify-between mb-[24px]">
 						<h3 class="text-[1.125rem] font-bold text-[var(--color-brand-text)]">Movimenti di {{ selectedUserName }}</h3>
 						<button
 							@click="closeUserMovements"
 							class="btn-secondary btn-compact inline-flex h-[36px] w-[36px] items-center justify-center !px-0"
 							aria-label="Chiudi movimenti">
-							<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[18px] h-[18px] text-[#404040]" fill="currentColor">
+							<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[18px] h-[18px] text-[var(--color-brand-text)]" fill="currentColor">
 								<path d="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z" />
 							</svg>
 						</button>
@@ -100,7 +100,7 @@ onMounted(() => {
 						<li
 							v-for="mov in userMovements"
 							:key="mov.id"
-							class="flex items-center justify-between p-[12px] rounded-[14px] hover:bg-[#F8F9FB]">
+							class="flex items-center justify-between p-[12px] rounded-[14px] hover:bg-[#F5F6F9]">
 							<div class="flex-1 min-w-0">
 								<p class="text-[0.875rem] font-medium text-[var(--color-brand-text)] truncate">{{ mov.description }}</p>
 								<div class="flex items-center gap-[8px] mt-[2px]">
@@ -113,7 +113,7 @@ onMounted(() => {
 							<span
 								:class="[
 									'text-[0.9375rem] font-bold tabular-nums whitespace-nowrap ml-[16px]',
-									mov.type === 'credit' ? 'text-emerald-600' : 'text-red-500',
+									mov.type === 'credit' ? 'text-[#095866]' : 'text-red-500',
 								]">
 								{{ mov.type === 'credit' ? '+' : '-' }}&euro;{{ formatCurrency(mov.amount) }}
 							</span>
@@ -122,10 +122,10 @@ onMounted(() => {
 				</div>
 			</div>
 
-			<div class="mb-[20px] rounded-[12px] border border-[var(--color-brand-border)] bg-[#F8FAFB] p-[14px] tablet:p-[18px]">
-				<div class="flex flex-col gap-[14px] desktop:flex-row desktop:items-center desktop:justify-between">
+			<div class="mb-[20px] rounded-[20px] border border-[var(--color-brand-border)] bg-[#F8FAFB] p-[14px] tablet:p-[18px]">
+				<div class="flex flex-col gap-[16px] desktop:flex-row desktop:items-center desktop:justify-between">
 					<div>
-						<p class="text-[0.75rem] font-semibold uppercase tracking-[0.6px] text-[#6B7280]">Toolbar finanze</p>
+						<p class="text-[0.75rem] font-semibold uppercase tracking-[0.6px] text-[var(--color-brand-text-secondary)]">Toolbar finanze</p>
 						<h2 class="mt-[4px] text-[1rem] font-semibold text-[var(--color-brand-text)]">Saldi e movimenti</h2>
 					</div>
 					<div class="flex flex-wrap items-center gap-[8px]">
@@ -135,8 +135,8 @@ onMounted(() => {
 				</div>
 			</div>
 
-			<div class="grid grid-cols-1 sm:grid-cols-3 gap-[12px] mb-[22px]">
-				<div class="bg-white rounded-[12px] p-[16px] tablet:p-[18px] border border-[var(--color-brand-border)] shadow-sm">
+			<div class="grid grid-cols-1 sm:grid-cols-3 gap-[12px] mb-[24px]">
+				<div class="bg-white rounded-[20px] p-[16px] tablet:p-[18px] border border-[var(--color-brand-border)] shadow-sm">
 					<div class="flex items-center gap-[8px] mb-[8px]">
 						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[18px] h-[18px] text-[var(--color-brand-text)]" fill="currentColor">
 							<path
@@ -146,7 +146,7 @@ onMounted(() => {
 					</div>
 					<p class="text-[1.75rem] font-bold text-[var(--color-brand-text)]">{{ walletUsersCount }}</p>
 				</div>
-				<div class="bg-white rounded-[12px] p-[16px] tablet:p-[18px] border border-[var(--color-brand-border)] shadow-sm">
+				<div class="bg-white rounded-[20px] p-[16px] tablet:p-[18px] border border-[var(--color-brand-border)] shadow-sm">
 					<div class="flex items-center gap-[8px] mb-[8px]">
 						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[18px] h-[18px] text-[var(--color-brand-primary)]" fill="currentColor">
 							<path
@@ -156,25 +156,25 @@ onMounted(() => {
 					</div>
 					<p class="text-[1.75rem] font-bold text-[var(--color-brand-text)]">&euro;{{ formatCurrency(totalWalletBalance) }}</p>
 				</div>
-				<div class="bg-white rounded-[12px] p-[16px] tablet:p-[18px] border border-[var(--color-brand-border)] shadow-sm">
+				<div class="bg-white rounded-[20px] p-[16px] tablet:p-[18px] border border-[var(--color-brand-border)] shadow-sm">
 					<div class="flex items-center gap-[8px] mb-[8px]">
-						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[18px] h-[18px] text-emerald-600" fill="currentColor">
+						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[18px] h-[18px] text-[#095866]" fill="currentColor">
 							<path
 								d="M3,6H21V18H3V6M12,9A3,3 0 0,1 15,12A3,3 0 0,1 12,15A3,3 0 0,1 9,12A3,3 0 0,1 12,9M7,8A2,2 0 0,1 5,10V14A2,2 0 0,1 7,16H17A2,2 0 0,1 19,14V10A2,2 0 0,1 17,8H7Z" />
 						</svg>
 						<p class="text-[0.75rem] text-[var(--color-brand-text-secondary)] uppercase tracking-[0.5px] font-medium">Commissioni residue</p>
 					</div>
-					<p class="text-[1.75rem] font-bold text-emerald-600">&euro;{{ formatCurrency(totalCommissionBalance) }}</p>
+					<p class="text-[1.75rem] font-bold text-[#095866]">&euro;{{ formatCurrency(totalCommissionBalance) }}</p>
 				</div>
 			</div>
 
-			<div class="bg-white rounded-[12px] p-[24px] desktop:p-[32px] shadow-sm border border-[var(--color-brand-border)]">
+			<div class="bg-white rounded-[20px] p-[24px] desktop:p-[32px] shadow-sm border border-[var(--color-brand-border)]">
 				<h2 class="text-[1.125rem] font-bold text-[var(--color-brand-text)] mb-[20px]">Utenti con movimenti</h2>
 				<div v-if="!walletOverview?.length" class="text-center py-[48px] text-[var(--color-brand-text-secondary)]">
 					<svg
 						xmlns="http://www.w3.org/2000/svg"
 						viewBox="0 0 24 24"
-						class="w-[40px] h-[40px] text-[#C8CCD0] mx-auto mb-[12px]"
+						class="w-[40px] h-[40px] text-[var(--color-brand-text-muted)] mx-auto mb-[12px]"
 						fill="currentColor">
 						<path
 							d="M5,6H23V18H5V6M14,9A3,3 0 0,1 17,12A3,3 0 0,1 14,15A3,3 0 0,1 11,12A3,3 0 0,1 14,9M9,8A2,2 0 0,1 7,10V14A2,2 0 0,1 9,16H19A2,2 0 0,1 21,14V10A2,2 0 0,1 19,8H9M1,10H3V20H19V22H1V10Z" />
@@ -183,7 +183,7 @@ onMounted(() => {
 				</div>
 				<div v-else class="space-y-[12px]">
 					<div class="desktop:hidden grid grid-cols-1 tablet:grid-cols-2 gap-[12px]">
-						<div v-for="u in walletOverview" :key="u.id" class="rounded-[12px] border border-[var(--color-brand-border)] bg-white p-[14px] shadow-sm">
+						<div v-for="u in walletOverview" :key="u.id" class="rounded-[20px] border border-[var(--color-brand-border)] bg-white p-[14px] shadow-sm">
 							<div class="flex items-start justify-between gap-[12px]">
 								<div class="min-w-0">
 									<p class="text-[0.9375rem] font-semibold text-[var(--color-brand-text)] truncate">{{ u.name }}</p>
@@ -194,7 +194,7 @@ onMounted(() => {
 											u.role === 'Partner Pro'
 												? 'bg-[var(--color-brand-primary)]/10 text-[var(--color-brand-primary)]'
 												: u.role === 'Admin'
-													? 'bg-purple-50 text-purple-700'
+													? 'bg-[#eef7f8] text-[#095866]'
 													: 'bg-gray-100 text-gray-600',
 										]">
 										{{ u.role || 'Cliente' }}
@@ -206,9 +206,9 @@ onMounted(() => {
 								</div>
 							</div>
 							<div class="grid grid-cols-2 gap-[10px] mt-[12px]">
-								<div class="rounded-[12px] bg-[#F8F9FB] border border-[var(--color-brand-border)] p-[10px]">
+								<div class="rounded-[20px] bg-[#F5F6F9] border border-[var(--color-brand-border)] p-[10px]">
 									<p class="text-[0.6875rem] text-[var(--color-brand-text-secondary)] uppercase tracking-[0.5px] mb-[2px]">Commissioni</p>
-									<p class="text-[0.9375rem] font-bold text-emerald-600">&euro;{{ formatCurrency(u.commission_balance) }}</p>
+									<p class="text-[0.9375rem] font-bold text-[#095866]">&euro;{{ formatCurrency(u.commission_balance) }}</p>
 								</div>
 								<button @click="viewUserMovements(u.id, u.name)" class="btn-secondary btn-compact justify-center">Movimenti</button>
 							</div>
@@ -241,14 +241,14 @@ onMounted(() => {
 												u.role === 'Partner Pro'
 													? 'bg-[var(--color-brand-primary)]/10 text-[var(--color-brand-primary)]'
 													: u.role === 'Admin'
-														? 'bg-purple-50 text-purple-700'
+														? 'bg-[#eef7f8] text-[#095866]'
 														: 'bg-gray-100 text-gray-600',
 											]">
 											{{ u.role || 'Cliente' }}
 										</span>
 									</td>
 									<td class="py-[14px] text-right font-semibold text-[var(--color-brand-text)]">&euro;{{ formatCurrency(u.wallet_balance) }}</td>
-									<td class="py-[14px] text-right font-semibold text-emerald-600">&euro;{{ formatCurrency(u.commission_balance) }}</td>
+									<td class="py-[14px] text-right font-semibold text-[#095866]">&euro;{{ formatCurrency(u.commission_balance) }}</td>
 									<td class="py-[14px] text-center">
 										<button
 											@click="viewUserMovements(u.id, u.name)"

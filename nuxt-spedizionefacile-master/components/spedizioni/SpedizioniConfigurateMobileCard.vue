@@ -47,11 +47,11 @@ const emit = defineEmits(['toggle', 'edit', 'delete']);
 			</span>
 		</div>
 		<div class="mt-[12px] grid grid-cols-1 sm:grid-cols-2 gap-[8px]">
-			<div class="rounded-[12px] bg-[#F8F9FB] px-[12px] py-[10px]">
+			<div class="rounded-[14px] bg-[#F8F9FB] px-[12px] py-[10px]">
 				<p class="text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-[var(--color-brand-text-secondary)]">Da</p>
 				<p class="mt-[2px] text-[0.8125rem] font-semibold text-[var(--color-brand-text)] leading-[1.25]">{{ item.origin_address?.city || '\u2014' }}</p>
 			</div>
-			<div class="rounded-[12px] bg-[#F8F9FB] px-[12px] py-[10px]">
+			<div class="rounded-[14px] bg-[#F8F9FB] px-[12px] py-[10px]">
 				<p class="text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-[var(--color-brand-text-secondary)]">A</p>
 				<p class="mt-[2px] text-[0.8125rem] font-semibold text-[var(--color-brand-text)] leading-[1.25]">{{ item.destination_address?.city || '\u2014' }}</p>
 			</div>

@@ -198,10 +198,9 @@ export default function useSavedShipments() {
 	};
 
 	/* --- Helpers --- */
-	const formatPrice = (cents) => {
-		if (!cents && cents !== 0) return '\u2014';
-		return (Number(cents) / 100).toFixed(2).replace('.', ',') + '\u20AC';
-	};
+	// formatPrice auto-importato da utils/price.js
+	// Per saved shipments senza prezzo, usiamo '—' direttamente nel template
+	const formatPriceOrDash = (cents) => (!cents && cents !== 0) ? '\u2014' : formatPrice(cents);
 
 	const destKey = (item) => {
 		const d = item.destination_address;
@@ -252,6 +251,6 @@ export default function useSavedShipments() {
 		addToCartLoading, bulkAddToCart,
 		showEdit, editItem, editForm, editSaving, openEdit, saveEdit,
 		feedbackMessage, feedbackType,
-		formatPrice, isDuplicateDest, formatCreatedDate, getPackageIcon,
+		formatPrice, formatPriceOrDash, isDuplicateDest, formatCreatedDate, getPackageIcon,
 	};
 }

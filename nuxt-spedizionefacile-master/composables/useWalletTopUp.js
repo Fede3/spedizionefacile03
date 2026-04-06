@@ -25,7 +25,7 @@ export function useWalletTopUp(props, emit) {
 	const messageType = ref('success');
 	const topUpAttemptKey = ref('');
 	const topUpAttemptSignature = ref('');
-	const presetAmounts = [10, 25, 50, 100, 200];
+	const presetAmounts = [5, 10, 20, 50];
 
 	/* ── New-card form state ── */
 	const showNewCardForm = ref(false);

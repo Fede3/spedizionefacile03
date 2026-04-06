@@ -1,4 +1,5 @@
 import { waitForPostAuthSync } from '~/utils/postAuthSync'
+import { humanizeSocialAuthError, sanitizeAuthRedirect } from '~/utils/authHelpers'
 
 /**
  * Composable: useAuthOverlay
@@ -33,6 +34,7 @@ export function useAuthOverlay() {
     role: 'Cliente',
     user_type: 'privato',
     referred_by: '',
+    privacy_accepted: false,
   })
 
   const isLoading = ref(false)
@@ -64,12 +66,7 @@ export function useAuthOverlay() {
     /temporaneamente non disponibile/i.test(socialError.value) ? 'muted' : 'error',
   )
 
-  const sanitizeRedirect = (redirect?: string) => {
-    if (!redirect || typeof redirect !== 'string') return '/'
-    return redirect.startsWith('/') && !redirect.startsWith('//') ? redirect : '/'
-  }
-
-  const currentRedirect = computed(() => sanitizeRedirect(redirectPath.value || route.fullPath))
+  const currentRedirect = computed(() => sanitizeAuthRedirect(redirectPath.value || route.fullPath, '/'))
   const isBusy = computed(() => isLoading.value || resendLoading.value || verificationLoading.value)
 
   // --- Helpers ---
@@ -113,21 +110,7 @@ export function useAuthOverlay() {
     return 'Operazione non riuscita. Riprova.'
   }
 
-  const humanizeSocialError = (rawError: string) => {
-    const map: Record<string, string> = {
-      google_email_missing: "Il tuo account Google non ha un\u2019email disponibile. Usa un altro account oppure registrati con email.",
-      facebook_email_missing: "Il tuo account Facebook non ha un\u2019email disponibile. Usa un altro account oppure registrati con email.",
-      apple_email_missing: "Il tuo account Apple non ha un\u2019email disponibile. Usa un altro account oppure registrati con email.",
-      google_unavailable: 'Accesso con Google temporaneamente non disponibile. Completiamo prima la configurazione del provider.',
-      facebook_unavailable: 'Accesso con Facebook temporaneamente non disponibile. Completiamo prima la configurazione del provider.',
-      apple_unavailable: 'Accesso con Apple temporaneamente non disponibile. Completiamo prima la configurazione del provider.',
-    }
-    if (map[rawError]) return map[rawError]
-    if (rawError.startsWith('facebook_')) return "Errore durante l\u2019accesso con Facebook. Riprova."
-    if (rawError.startsWith('google_')) return "Errore durante l\u2019accesso con Google. Riprova."
-    if (rawError.startsWith('apple_')) return "Errore durante l\u2019accesso con Apple. Riprova."
-    return "Errore durante l\u2019accesso social. Riprova."
-  }
+  const humanizeSocialError = humanizeSocialAuthError
 
   // --- Social Auth ---
   const refreshProviderStatus = async () => {

@@ -16,16 +16,23 @@
 	COLLEGAMENTI: components/Preventivo.vue, pages/la-tua-spedizione/[step].vue
 
 	I 5 PASSI:
-	1. Misure — inserimento dimensioni e peso del pacco
+	1. Colli — inserimento dimensioni e peso del pacco
 	2. Servizi — scelta dei servizi aggiuntivi
-	3. Ritiro — inserimento indirizzo di ritiro e consegna
-	4. Conferma — riepilogo di tutti i dati
+	3. Indirizzi — inserimento indirizzo di ritiro e consegna
+	4. Riepilogo — riepilogo di tutti i dati
 	5. Pagamento — pagamento della spedizione
 
-	COMPORTAMENTO:
-	- Step attivo: evidenziato in arancione
-	- Step completati: cliccabili per tornare indietro
-	- Step futuri: grigi e non cliccabili
+	LAYOUT FIGMA (DESKTOP):
+	- 5 step in riga orizzontale
+	- Ogni step: cerchio 32px con numero + label sotto
+	- Step attivo: cerchio teal pieno (#095866), testo bianco, label teal bold
+	- Step completato: cerchio teal con check (✓), label teal, cliccabile
+	- Step futuro: cerchio grigio (#B0B5BD) vuoto, label grigia
+	- Connettori: linea tratteggiata grigia (#D8DCE3) tra i cerchi, 2px dash
+	- Connettore completato: linea solida teal
+
+	LAYOUT FIGMA (MOBILE):
+	- Progress bar orizzontale con percentuale + label step corrente
 -->
 <script setup>
 const props = defineProps({
@@ -34,7 +41,7 @@ const props = defineProps({
 
 const emit = defineEmits(['navigate']);
 
-const steps = ["Misure", "Servizi", "Indirizzi", "Conferma", "Pagamento"];
+const steps = ["Colli", "Servizi", "Indirizzi", "Riepilogo", "Pagamento"];
 const route = useRoute();
 
 // Auto-detect step from route if not explicitly passed
@@ -56,6 +63,10 @@ const currentStepLabel = computed(() => steps[activeStep.value] || steps[0]);
 const progressPercent = computed(() => (((activeStep.value + 1) / steps.length) * 100));
 
 const canNavigate = (index) => {
+	return index < activeStep.value;
+};
+
+const isCompleted = (index) => {
 	return index < activeStep.value;
 };
 
@@ -87,6 +98,7 @@ const handleClick = (index) => {
 
 <template>
 	<nav class="steps-nav" id="preventivo" aria-label="Progresso spedizione">
+		<!-- Mobile: progress bar + label -->
 		<div class="steps-mobile-shell desktop:hidden">
 			<div class="steps-mobile-meta">
 				<div class="steps-mobile-copy">
@@ -102,48 +114,46 @@ const handleClick = (index) => {
 			</div>
 		</div>
 
-		<ul class="steps-grid hidden desktop:grid">
-			<li
-				v-for="(step, index) in steps"
-				:key="index"
-				class="steps-pill-item transition-[background-color,color,opacity,border-color,box-shadow,transform] duration-150 select-none rounded-[12px] border"
-				:aria-current="index === activeStep ? 'step' : undefined"
-				:aria-label="getStepAriaLabel(step, index)"
-				:title="getStepAriaLabel(step, index)"
-				:class="{
-					'steps-pill-active text-white font-semibold shadow-[0_2px_10px_rgba(228,66,3,0.2)] border-transparent': index === activeStep,
-					'steps-pill-completed text-[#0d5965] cursor-pointer hover:text-[#0d5965]': canNavigate(index) && index !== activeStep,
-					'steps-pill-upcoming text-[#6b7480] cursor-default': index > activeStep,
-				}"
-				@click="handleClick(index)">
-				<span class="steps-pill-content">
-					<span
-						class="steps-pill-status"
-						:class="{
-							'is-active': index === activeStep,
-							'is-completed': canNavigate(index) && index !== activeStep,
-							'is-upcoming': index > activeStep,
-						}"
-						aria-hidden="true">
-						<svg
-							v-if="canNavigate(index) && index !== activeStep"
-							width="12"
-							height="12"
-							viewBox="0 0 24 24"
-							fill="none"
-							stroke="currentColor"
-							stroke-width="2.7"
-							stroke-linecap="round"
-							stroke-linejoin="round">
+		<!-- Desktop: pill-style stepper matching prototype -->
+		<ol class="steps-figma-bar hidden desktop:flex">
+			<template v-for="(step, index) in steps" :key="index">
+				<!-- Connector line between steps -->
+				<span
+					v-if="index > 0"
+					class="steps-figma-connector"
+					:class="{ 'steps-figma-connector--done': isCompleted(index) }"
+					aria-hidden="true" />
+
+				<li
+					class="steps-figma-item"
+					:aria-current="index === activeStep ? 'step' : undefined"
+					:aria-label="getStepAriaLabel(step, index)"
+					:title="getStepAriaLabel(step, index)"
+					:class="{
+						'steps-figma-item--active': index === activeStep,
+						'steps-figma-item--completed': isCompleted(index),
+						'steps-figma-item--upcoming': index > activeStep,
+					}"
+					@click="handleClick(index)">
+					<!-- Active: number inside translucent circle -->
+					<span v-if="index === activeStep" class="steps-figma-circle steps-figma-circle--active">
+						<span class="steps-figma-number">{{ index + 1 }}</span>
+					</span>
+					<!-- Completed: teal tinted check circle -->
+					<span v-else-if="isCompleted(index)" class="steps-figma-circle steps-figma-circle--completed">
+						<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
 							<polyline points="20 6 9 17 4 12" />
 						</svg>
-						<span v-else>{{ index + 1 }}</span>
 					</span>
-					<span class="steps-pill-label">{{ step }}</span>
-				</span>
-			</li>
-		</ul>
+					<!-- Upcoming: bordered number circle -->
+					<span v-else class="steps-figma-circle steps-figma-circle--upcoming">
+						<span class="steps-figma-number">{{ index + 1 }}</span>
+					</span>
+					<span class="steps-figma-label">{{ step }}</span>
+				</li>
+			</template>
+		</ol>
 	</nav>
 </template>
 
-<\!-- CSS in assets/css/steps.css -->
+<!-- CSS in assets/css/steps.css -->

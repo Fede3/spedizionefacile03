@@ -35,24 +35,20 @@ export default function useOrderDetail(orderId) {
 	const statusColor = (status) => {
 		const map = {
 			'In attesa': 'bg-yellow-100 text-yellow-700',
-			'In lavorazione': 'bg-blue-100 text-blue-700',
-			Completato: 'bg-emerald-100 text-emerald-700',
+			'In lavorazione': 'bg-[#eef8fa] text-[#095866]',
+			Completato: 'bg-[#f0fdf4] text-[#0a8a7a]',
 			Fallito: 'bg-red-100 text-red-700',
-			Pagato: 'bg-emerald-100 text-emerald-700',
+			Pagato: 'bg-[#f0fdf4] text-[#0a8a7a]',
 			Annullato: 'bg-gray-200 text-gray-600',
 			Rimborsato: 'bg-orange-100 text-orange-700',
-			'In transito': 'bg-blue-100 text-blue-700',
-			Consegnato: 'bg-emerald-100 text-emerald-700',
+			'In transito': 'bg-[#eef8fa] text-[#095866]',
+			Consegnato: 'bg-[#f0fdf4] text-[#0a8a7a]',
 			'In giacenza': 'bg-orange-100 text-orange-700',
 		};
 		return map[status] || 'bg-gray-100 text-gray-700';
 	};
 
-	const formatPrice = (cents) => {
-		if (!cents && cents !== 0) return '0,00€';
-		const euros = Number(cents) / 100;
-		return euros.toFixed(2).replace('.', ',') + '€';
-	};
+	// formatPrice auto-importato da utils/price.js
 
 	const paymentMethodLabel = (method) => {
 		const map = { stripe: 'Carta di credito (Stripe)', wallet: 'Portafoglio', bonifico: 'Bonifico' };

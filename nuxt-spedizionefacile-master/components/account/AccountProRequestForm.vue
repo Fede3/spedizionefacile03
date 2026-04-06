@@ -27,17 +27,17 @@ const submitDisabled = computed(() => props.proRequestLoading || !props.canSubmi
 </script>
 
 <template>
-	<div class="grid grid-cols-1 desktop:grid-cols-[minmax(0,1fr)_420px] gap-[14px] desktop:gap-[18px]">
+	<div class="grid grid-cols-1 desktop:grid-cols-[minmax(0,1fr)_420px] gap-[16px] desktop:gap-[16px]">
 		<!-- Info card -->
-		<div class="sf-account-panel rounded-[24px] p-[18px] tablet:p-[22px] desktop:p-[28px] h-full">
+		<div class="sf-account-panel rounded-[20px] p-[18px] tablet:p-[20px] desktop:p-[28px] h-full">
 			<div class="flex flex-col tablet:flex-row tablet:items-start gap-[16px]">
-				<div class="sf-account-value-card__icon w-[64px] h-[64px] shrink-0 rounded-[18px]">
+				<div class="sf-account-value-card__icon w-[64px] h-[64px] shrink-0 rounded-[20px]">
 					<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--color-brand-primary)" stroke-width="2">
 						<path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
 					</svg>
 				</div>
 				<div class="min-w-0">
-					<h2 class="text-[1.25rem] tablet:text-[1.4rem] desktop:text-[1.5rem] font-bold text-[var(--color-brand-text)] mt-[6px]">Partner Pro</h2>
+					<h2 class="font-montserrat text-[1.25rem] tablet:text-[1.4rem] desktop:text-[1.5rem] font-[800] text-[var(--color-brand-text)] mt-[6px]">Partner Pro</h2>
 					<p class="text-[var(--color-brand-text-secondary)] text-[0.875rem] tablet:text-[0.9375rem] max-w-[620px] leading-[1.6] mt-[8px]">
 						Commissioni, link referral e prelievi.
 					</p>
@@ -62,7 +62,7 @@ const submitDisabled = computed(() => props.proRequestLoading || !props.canSubmi
 			<!-- Pending -->
 			<div
 				v-if="hasRequest && statusType === 'pending'"
-				class="mt-[18px] bg-amber-50 border border-amber-200 rounded-[12px] p-[16px] tablet:p-[18px]">
+				class="mt-[18px] bg-amber-50 border border-amber-200 rounded-[20px] p-[16px] tablet:p-[18px]">
 				<div class="flex items-start gap-[10px]">
 					<svg
 						xmlns="http://www.w3.org/2000/svg"
@@ -86,7 +86,7 @@ const submitDisabled = computed(() => props.proRequestLoading || !props.canSubmi
 			<!-- Approved -->
 			<div
 				v-else-if="hasRequest && statusType === 'approved'"
-				class="mt-[18px] bg-emerald-50 border border-emerald-200 rounded-[12px] p-[16px] tablet:p-[18px]">
+				class="mt-[18px] bg-[#f0fdf4] border border-[#d1fae5] rounded-[20px] p-[16px] tablet:p-[18px]">
 				<div class="flex items-start gap-[10px]">
 					<svg
 						xmlns="http://www.w3.org/2000/svg"
@@ -101,8 +101,8 @@ const submitDisabled = computed(() => props.proRequestLoading || !props.canSubmi
 						<polyline points="22 4 12 14.01 9 11.01" />
 					</svg>
 					<div>
-						<p class="text-[0.9375rem] font-semibold text-emerald-800">Richiesta approvata</p>
-						<p class="text-[0.8125rem] text-emerald-700 mt-[4px] leading-[1.5]">Ricarica la pagina.</p>
+						<p class="text-[0.9375rem] font-semibold text-[#0a8a7a]">Richiesta approvata</p>
+						<p class="text-[0.8125rem] text-[#0a8a7a] mt-[4px] leading-[1.5]">Ricarica la pagina.</p>
 					</div>
 				</div>
 			</div>
@@ -110,7 +110,7 @@ const submitDisabled = computed(() => props.proRequestLoading || !props.canSubmi
 			<!-- Rejected -->
 			<div
 				v-else-if="hasRequest && statusType === 'rejected'"
-				class="mt-[18px] bg-red-50 border border-red-200 rounded-[12px] p-[16px] tablet:p-[18px]">
+				class="mt-[18px] bg-red-50 border border-red-200 rounded-[20px] p-[16px] tablet:p-[18px]">
 				<div class="flex items-start gap-[10px]">
 					<svg
 						xmlns="http://www.w3.org/2000/svg"
@@ -134,10 +134,10 @@ const submitDisabled = computed(() => props.proRequestLoading || !props.canSubmi
 		</div>
 
 		<!-- Request form -->
-		<div class="sf-account-panel rounded-[24px] p-[18px] tablet:p-[22px] desktop:p-[28px] h-full">
+		<div class="sf-account-panel rounded-[20px] p-[18px] tablet:p-[20px] desktop:p-[28px] h-full">
 			<div class="mb-[16px]">
 				<p class="text-[0.75rem] uppercase tracking-[1px] text-[var(--color-brand-text-secondary)] font-medium">Richiesta Pro</p>
-				<h3 class="text-[1.125rem] tablet:text-[1.2rem] font-bold text-[var(--color-brand-text)] mt-[6px]">
+				<h3 class="font-montserrat text-[1.125rem] tablet:text-[1.2rem] font-[800] text-[var(--color-brand-text)] mt-[6px]">
 					{{ isLocked ? 'Richiesta già registrata' : 'Richiedi accesso' }}
 				</h3>
 				<p class="text-[var(--color-brand-text-secondary)] text-[0.875rem] leading-[1.55] mt-[8px]">
@@ -145,7 +145,7 @@ const submitDisabled = computed(() => props.proRequestLoading || !props.canSubmi
 				</p>
 			</div>
 
-			<div v-if="proRequestSuccess" class="bg-emerald-50 border border-emerald-200 rounded-[12px] p-[16px] tablet:p-[18px] text-center">
+			<div v-if="proRequestSuccess" class="bg-[#f0fdf4] border border-[#d1fae5] rounded-[20px] p-[16px] tablet:p-[18px] text-center">
 				<svg
 					xmlns="http://www.w3.org/2000/svg"
 					width="32"
@@ -158,14 +158,14 @@ const submitDisabled = computed(() => props.proRequestLoading || !props.canSubmi
 					<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
 					<polyline points="22 4 12 14.01 9 11.01" />
 				</svg>
-				<p class="text-[1rem] font-semibold text-emerald-800">Richiesta inviata!</p>
-				<p class="text-[0.8125rem] text-emerald-700 mt-[4px] leading-[1.5]">Ti aggiorneremo appena possibile.</p>
+				<p class="text-[1rem] font-semibold text-[#0a8a7a]">Richiesta inviata!</p>
+				<p class="text-[0.8125rem] text-[#0a8a7a] mt-[4px] leading-[1.5]">Ti aggiorneremo appena possibile.</p>
 			</div>
 			<div v-else class="space-y-[14px]">
-				<p v-if="proRequestError" class="text-red-600 text-[0.8125rem] bg-red-50 p-[10px] rounded-[12px] border border-red-100">
+				<p v-if="proRequestError" class="text-red-600 text-[0.8125rem] bg-red-50 p-[10px] rounded-[20px] border border-red-100">
 					{{ proRequestError }}
 				</p>
-				<p v-if="isLocked" class="text-[#516171] text-[0.8125rem] bg-slate-50 p-[10px] rounded-[12px] border border-slate-200">
+				<p v-if="isLocked" class="text-[var(--color-brand-text-secondary)] text-[0.8125rem] bg-[#F5F6F9] p-[10px] rounded-[20px] border border-[#DFE2E7]">
 					{{
 						statusType === 'approved'
 							? 'Accesso già approvato: aggiorna la pagina per entrare nell’area Partner Pro.'

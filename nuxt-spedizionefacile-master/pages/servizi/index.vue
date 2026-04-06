@@ -66,62 +66,91 @@ const getServiceDescription = (service) => service.description || service.meta_d
 </script>
 
 <template>
-	<section id="servizi" class="services-page-shell">
-		<div class="my-container">
-			<div class="services-intro-panel">
-				<div class="services-intro-panel__copy">
-					<p class="services-intro-panel__eyebrow">Servizi pensati per ridurre attrito</p>
-					<h2 class="services-intro-panel__title">Ogni opzione è chiara, leggibile e pronta a rientrare nel tuo flusso di spedizione.</h2>
-					<p class="services-intro-panel__text">Dalla stampa etichetta al contrassegno, fino al ritiro a domicilio e alla copertura assicurativa: qui trovi un catalogo semplice da orientare anche da smartphone.</p>
+	<div class="services-page-shell">
+		<!-- Hero -->
+		<section class="services-section services-section--white">
+			<div class="my-container">
+				<div class="services-intro-panel">
+					<div class="services-intro-panel__copy">
+						<p class="services-intro-panel__eyebrow">I nostri servizi</p>
+						<h1 class="services-intro-panel__title">Ogni opzione è chiara, leggibile e pronta a rientrare nel tuo flusso di spedizione.</h1>
+						<p class="services-intro-panel__text">Dalla stampa etichetta al contrassegno, fino al ritiro a domicilio e alla copertura assicurativa: qui trovi un catalogo semplice da orientare anche da smartphone.</p>
+					</div>
+
+					<div class="services-intro-panel__actions">
+						<NuxtLink to="/preventivo" class="btn-cta btn-compact">
+							Vai al preventivo
+						</NuxtLink>
+						<NuxtLink to="/contatti" class="btn-secondary btn-compact">
+							Parla con noi
+						</NuxtLink>
+					</div>
 				</div>
 
-				<div class="services-intro-panel__actions">
-					<NuxtLink to="/preventivo" class="services-intro-panel__cta services-intro-panel__cta--primary">
-						Vai al preventivo
-					</NuxtLink>
-					<NuxtLink to="/contatti" class="services-intro-panel__cta services-intro-panel__cta--secondary">
-						Parla con noi
+				<div class="services-quick-pills">
+					<span class="services-quick-pill">Ritiro a domicilio</span>
+					<span class="services-quick-pill">Attivazione in pochi click</span>
+					<span class="services-quick-pill">Supporto rapido</span>
+				</div>
+			</div>
+		</section>
+
+		<!-- Grid servizi -->
+		<section class="services-section services-section--alt">
+			<div class="my-container">
+				<div class="services-grid">
+					<NuxtLink
+						v-for="service in services"
+						:key="service.slug"
+						:to="getServiceLink(service)"
+						class="service-spotlight-card"
+					>
+						<div class="service-spotlight-card__top">
+							<span class="service-spotlight-card__icon-shell">
+								<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="service-spotlight-card__icon" fill="currentColor" v-html="getServiceSvg(service)"></svg>
+							</span>
+							<span class="service-spotlight-card__badge">{{ getServiceMeta(service).badge }}</span>
+						</div>
+
+						<div class="service-spotlight-card__body">
+							<h3 class="service-spotlight-card__title">{{ service.title }}</h3>
+							<p class="service-spotlight-card__text">{{ getServiceDescription(service) }}</p>
+						</div>
+
+						<div class="service-spotlight-card__chips">
+							<span v-for="chip in getServiceMeta(service).chips" :key="chip" class="service-spotlight-card__chip">{{ chip }}</span>
+						</div>
+
+						<div class="service-spotlight-card__footer">
+							<span>Scopri il servizio</span>
+							<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+						</div>
 					</NuxtLink>
 				</div>
 			</div>
+		</section>
 
-			<div class="services-quick-pills">
-				<span class="services-quick-pill">Ritiro a domicilio</span>
-				<span class="services-quick-pill">Attivazione in pochi click</span>
-				<span class="services-quick-pill">Supporto rapido</span>
+		<!-- CTA finale -->
+		<section class="services-section services-section--white">
+			<div class="my-container">
+				<div class="services-bottom-cta">
+					<div class="services-bottom-cta__copy">
+						<p class="services-intro-panel__eyebrow">Prossimo passo</p>
+						<h2 class="services-bottom-cta__title">Non trovi quello che cerchi?</h2>
+						<p class="services-bottom-cta__text">Calcola un preventivo per scoprire tutti i servizi disponibili per la tua spedizione, oppure contattaci per un caso operativo specifico.</p>
+					</div>
+					<div class="services-bottom-cta__actions">
+						<NuxtLink to="/preventivo" class="btn-cta btn-compact">
+							Calcola il preventivo
+						</NuxtLink>
+						<NuxtLink to="/contatti" class="btn-secondary btn-compact">
+							Parla con noi
+						</NuxtLink>
+					</div>
+				</div>
 			</div>
-
-			<div class="services-grid">
-				<NuxtLink
-					v-for="service in services"
-					:key="service.slug"
-					:to="getServiceLink(service)"
-					class="service-spotlight-card"
-				>
-					<div class="service-spotlight-card__top">
-						<span class="service-spotlight-card__icon-shell">
-							<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="service-spotlight-card__icon" fill="currentColor" v-html="getServiceSvg(service)"></svg>
-						</span>
-						<span class="service-spotlight-card__badge">{{ getServiceMeta(service).badge }}</span>
-					</div>
-
-					<div class="service-spotlight-card__body">
-						<h3 class="service-spotlight-card__title">{{ service.title }}</h3>
-						<p class="service-spotlight-card__text">{{ getServiceDescription(service) }}</p>
-					</div>
-
-					<div class="service-spotlight-card__chips">
-						<span v-for="chip in getServiceMeta(service).chips" :key="chip" class="service-spotlight-card__chip">{{ chip }}</span>
-					</div>
-
-					<div class="service-spotlight-card__footer">
-						<span>Scopri il servizio</span>
-						<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
-					</div>
-				</NuxtLink>
-			</div>
-		</div>
-	</section>
+		</section>
+	</div>
 </template>
 
 <!-- CSS in assets/css/servizi.css -->

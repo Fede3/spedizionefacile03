@@ -6,7 +6,7 @@
  * DOVE SI USA:
  *   - WalletController.php — topUp (credit da Stripe), payWithWallet (debit per spedizione)
  *   - ReferralController.php — apply (credit commissione al Partner Pro, source=commission)
- *   - AdminController.php — approveWithdrawal (debit per prelievo approvato, source=withdrawal)
+ *   - Admin/WalletManagementController.php — approveWithdrawal (debit per prelievo approvato, source=withdrawal)
  *   - User::walletBalance() — somma credit - debit dove status=confirmed
  *
  * DATI IN INGRESSO:
@@ -36,7 +36,7 @@
  * COLLEGAMENTI:
  *   - app/Models/User.php — walletBalance() e commissionBalance() calcolano saldi
  *   - app/Http/Controllers/WalletController.php — controller portafoglio
- *   - app/Http/Controllers/AdminController.php — gestione admin portafogli e prelievi
+ *   - app/Http/Controllers/Admin/WalletManagementController.php — gestione admin portafogli e prelievi
  */
 
 namespace App\Models;
@@ -61,6 +61,15 @@ class WalletMovement extends Model
         'reference',        // Riferimento (es. ID dell'ordine pagato)
         'description',      // Descrizione leggibile del movimento (es. "Ricarica portafoglio")
         'source',           // Fonte del movimento (es. "stripe", "referral", "admin")
+    ];
+
+    /**
+     * Campi nascosti nelle risposte JSON.
+     * La chiave di idempotenza e' un dato interno del server e non deve
+     * essere esposta al frontend.
+     */
+    protected $hidden = [
+        'idempotency_key',
     ];
 
     // Converte automaticamente l'importo in un numero con 2 decimali

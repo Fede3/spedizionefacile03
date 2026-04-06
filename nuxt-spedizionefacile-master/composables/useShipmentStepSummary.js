@@ -1,4 +1,5 @@
 import { calculateShipmentServiceSurcharge } from "~/utils/shipmentServicePricing";
+import { formatEuro } from "~/utils/price.js";
 
 export const useShipmentStepSummary = ({
 	destinationAddress,
@@ -44,7 +45,7 @@ export const useShipmentStepSummary = ({
 		return Number.isFinite(parsed) ? parsed : null;
 	};
 
-	const formatPriceAmount = (amount) => Number(amount).toFixed(2).replace('.', ',');
+	const formatPriceAmount = (amount) => formatEuro(amount);
 
 	const pickBestPriceAmount = (candidates) => {
 		const valid = candidates.filter((value) => value !== null && Number.isFinite(value));

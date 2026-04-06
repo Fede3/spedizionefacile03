@@ -137,16 +137,16 @@ onMounted(() => {
 			<div class="admin-prezzi-tabs-card sf-section-block">
 				<div class="grid gap-[12px]">
 					<div class="grid grid-cols-1 tablet:grid-cols-3 gap-[10px] tablet:gap-[12px] desktop:max-w-[800px] desktop:w-full">
-						<button
+						<button type="button"
 							v-for="view in [
 								{ id: 'nazionale', label: 'Nazionale' },
 								{ id: 'europa', label: 'Europa monocollo' },
 								{ id: 'servizi', label: 'Servizi e supplementi' },
 							]"
 							:key="view.id"
-							type="button"
+							
 							@click="adminView = view.id"
-							:class="adminView === view.id ? 'bg-[var(--color-brand-primary)] text-white border-[var(--color-brand-primary)]' : 'bg-[#F7FAFC] text-[#425466] border-[#D8E3E8]'"
+							:class="adminView === view.id ? 'bg-[#095866] text-white border-[#095866]' : 'bg-[#F7FAFC] text-[#425466] border-[#D8E3E8]'"
 							class="admin-prezzi-tab-btn">
 							{{ view.label }}
 						</button>
@@ -157,16 +157,16 @@ onMounted(() => {
 						<div
 							v-if="adminView === 'europa'"
 							class="grid w-full grid-cols-1 tablet:grid-cols-2 desktop:grid-cols-[minmax(0,1fr)_160px_160px_180px_auto] gap-[10px]">
-							<input v-model="europeSearch" type="text" placeholder="Cerca paese o codice..." class="admin-prezzi-input" />
-							<select v-model="europeStatusFilter" class="admin-prezzi-input">
+							<input v-model="europeSearch" type="text" placeholder="Cerca paese o codice..." aria-label="Cerca paese o codice Europa" class="admin-prezzi-input" />
+							<select v-model="europeStatusFilter" aria-label="Filtra per stato tariffa Europa" class="admin-prezzi-input">
 								<option value="all">Tutti</option>
 								<option value="active">Prezzo attivo</option>
 								<option value="quote_required">Solo preventivo</option>
 							</select>
-							<select v-model="europeBandFilter" class="admin-prezzi-input">
+							<select v-model="europeBandFilter" aria-label="Filtra per fascia Europa" class="admin-prezzi-input">
 								<option v-for="option in europeBandFilters" :key="option.value" :value="option.value">{{ option.label }}</option>
 							</select>
-							<select v-model="europeSort" class="admin-prezzi-input">
+							<select v-model="europeSort" aria-label="Ordina tariffe Europa" class="admin-prezzi-input">
 								<option value="country_asc">Ordina per paese</option>
 								<option value="price_asc">Prezzo crescente</option>
 								<option value="price_desc">Prezzo decrescente</option>
@@ -174,7 +174,7 @@ onMounted(() => {
 							</select>
 							<label
 								class="inline-flex min-h-[42px] items-center gap-[8px] whitespace-nowrap text-[0.8125rem] text-[#4F5D75] desktop:justify-self-end">
-								<input v-model="compactEuropeView" type="checkbox" class="rounded border-[var(--color-brand-border)] text-[var(--color-brand-primary)] focus:ring-[var(--color-brand-primary)]" />
+								<input v-model="compactEuropeView" type="checkbox" class="rounded border-[#E9EBEC] text-[#095866] focus:ring-[#095866]" />
 								Vista compatta
 							</label>
 						</div>
@@ -182,15 +182,15 @@ onMounted(() => {
 						<div
 							v-else-if="adminView === 'servizi'"
 							class="grid w-full grid-cols-1 tablet:grid-cols-2 desktop:grid-cols-[minmax(0,1fr)_190px_auto] gap-[10px]">
-							<input v-model="serviceSearch" type="text" placeholder="Cerca regola o supplemento..." class="admin-prezzi-input" />
-							<select v-model="serviceFilter" class="admin-prezzi-input">
+							<input v-model="serviceSearch" type="text" placeholder="Cerca regola o supplemento..." aria-label="Cerca regola o supplemento" class="admin-prezzi-input" />
+							<select v-model="serviceFilter" aria-label="Filtra per sezione servizi" class="admin-prezzi-input">
 								<option value="all">Tutte le sezioni</option>
 								<option value="service_pricing">Servizi utente</option>
 								<option value="automatic_supplements">Supplementi automatici</option>
 								<option value="operational_fees">Fee operative</option>
 							</select>
 							<div
-								class="inline-flex min-h-[42px] items-center gap-[8px] px-[12px] py-[10px] rounded-[12px] bg-[#F4FAFC] border border-[#D8E9F0] text-[0.8125rem] text-[var(--color-brand-primary)] desktop:justify-self-end">
+								class="inline-flex min-h-[42px] items-center gap-[8px] px-[12px] py-[10px] rounded-[12px] bg-[#F4FAFC] border border-[#D8E9F0] text-[0.8125rem] text-[#095866] desktop:justify-self-end">
 								{{ filteredServiceEntries.length }} regole visibili
 							</div>
 						</div>
@@ -265,7 +265,7 @@ onMounted(() => {
 
 			<!-- Loading -->
 			<div v-if="isLoading" class="py-[60px] flex justify-center">
-				<div class="w-[40px] h-[40px] border-3 border-[var(--color-brand-border)] border-t-[var(--color-brand-primary)] rounded-full animate-spin"></div>
+				<div class="w-[40px] h-[40px] border-3 border-[#E9EBEC] border-t-[#095866] rounded-full animate-spin"></div>
 			</div>
 
 			<template v-else>
@@ -332,7 +332,7 @@ onMounted(() => {
 						<div class="flex items-center gap-[8px] text-[0.75rem]">
 							<span
 								v-if="pricingVersion"
-								class="inline-flex items-center gap-[4px] px-[8px] py-[3px] rounded-[999px] bg-[#E8F4FB] text-[var(--color-brand-primary)] border border-[#B0D4E8]">
+								class="inline-flex items-center gap-[4px] px-[8px] py-[3px] rounded-[999px] bg-[#E8F4FB] text-[#095866] border border-[#B0D4E8]">
 								Versione {{ pricingVersion }}
 							</span>
 							<span
@@ -344,7 +344,7 @@ onMounted(() => {
 								Modifiche non salvate
 							</span>
 						</div>
-						<button @click="savePriceBands" :disabled="saving || !hasChanges" class="admin-prezzi-save-btn">
+						<button type="button" @click="savePriceBands" :disabled="saving || !hasChanges" class="admin-prezzi-save-btn">
 							<svg
 								v-if="saving"
 								xmlns="http://www.w3.org/2000/svg"
