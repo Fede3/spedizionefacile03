@@ -18,7 +18,6 @@ const feedback = ref('');
 const feedbackType = ref('success');
 
 const selected = ref(null);
-const reference = ref('');
 const confirming = ref(false);
 
 const fetchPending = async () => {
@@ -59,17 +58,16 @@ const formatAmount = (cents) => {
 
 const openConfirm = (order) => {
 	selected.value = order;
-	reference.value = '';
 	feedback.value = '';
 };
 
 const closeConfirm = () => {
 	if (confirming.value) return;
 	selected.value = null;
-	reference.value = '';
 };
 
-const confirm = async () => {
+// Riceve il reference dal modal AdminBankTransferConfirmModal (P5 estratto)
+const confirmWithReference = async (referenceValue) => {
 	if (!selected.value || confirming.value) return;
 	confirming.value = true;
 	feedback.value = '';
@@ -77,13 +75,12 @@ const confirm = async () => {
 		await sanctum(`/api/admin/orders/${selected.value.id}/confirm-bank-transfer`, {
 			method: 'POST',
 			body: {
-				bank_transfer_reference: reference.value || null,
+				bank_transfer_reference: referenceValue || null,
 			},
 		});
 		feedback.value = `Bonifico confermato per ordine #${selected.value.id}. Etichetta BRT in generazione.`;
 		feedbackType.value = 'success';
 		selected.value = null;
-		reference.value = '';
 		await fetchPending();
 	} catch (error) {
 		feedback.value = error?.response?._data?.message || error?.data?.message || 'Impossibile confermare il bonifico.';
@@ -220,51 +217,12 @@ const summaryItems = computed(() => {
 			</section>
 		</div>
 
-		<!-- Confirm Modal -->
-		<Teleport to="body">
-			<div v-if="selected" class="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 px-[16px]" @click.self="closeConfirm">
-				<div class="relative max-h-[90vh] w-full max-w-[480px] overflow-y-auto rounded-[18px] bg-white shadow-2xl p-[20px]">
-					<div class="flex items-center gap-[12px] mb-[16px]">
-						<div class="w-[44px] h-[44px] rounded-full bg-[#EEF6F8] flex items-center justify-center shrink-0">
-							<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#095866" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 6h18v12H5z"/><circle cx="14" cy="12" r="3"/></svg>
-						</div>
-						<div>
-							<h3 class="font-montserrat text-[1.125rem] font-[800] text-[var(--color-brand-text)]">Conferma ricezione bonifico</h3>
-							<p class="text-[0.8125rem] text-[var(--color-brand-text-secondary)]">Ordine #{{ selected.id }} — {{ formatAmount(selected.payable_total_cents ?? selected.subtotal_cents ?? (selected.subtotal?.amount ? Number(selected.subtotal.amount) * 100 : null)) }}</p>
-						</div>
-					</div>
-
-					<div class="space-y-[12px]">
-						<div class="bg-[#F8F9FB] rounded-[12px] px-[14px] py-[10px] text-[0.8125rem] text-[var(--color-brand-text-secondary)]">
-							<p>Causale attesa: <strong class="font-mono text-[var(--color-brand-text)]">ORD-{{ selected.id }}</strong></p>
-							<p v-if="selected.user">Cliente: {{ selected.user.name }} {{ selected.user.surname }}</p>
-						</div>
-
-						<div>
-							<label class="block text-[0.75rem] text-[var(--color-brand-text-secondary)] uppercase font-medium mb-[4px]">
-								Riferimento contabile (opzionale)
-							</label>
-							<input
-								v-model="reference"
-								type="text"
-								maxlength="128"
-								placeholder="Es. CRO bonifico o numero estratto conto"
-								class="w-full bg-[#F8F9FB] border border-[var(--color-brand-border)] rounded-[12px] px-[12px] py-[10px] text-[0.875rem] focus:border-[var(--color-brand-primary)] focus:outline-none" />
-						</div>
-
-						<p class="text-[0.75rem] text-[var(--color-brand-text-muted)]">
-							Confermando, l'ordine passa a "Completato" e parte la generazione automatica dell'etichetta BRT. Il cliente riceverà una email di conferma.
-						</p>
-					</div>
-
-					<div class="mt-[20px] flex flex-col gap-[8px] tablet:flex-row tablet:justify-end">
-						<button type="button" class="btn-secondary btn-compact" :disabled="confirming" @click="closeConfirm">Annulla</button>
-						<button type="button" class="btn-cta btn-compact" :disabled="confirming" @click="confirm">
-							{{ confirming ? 'Conferma in corso...' : 'Conferma ricezione' }}
-						</button>
-					</div>
-				</div>
-			</div>
-		</Teleport>
+		<!-- Confirm Modal — estratto come AdminBankTransferConfirmModal (P5) -->
+		<AdminBankTransferConfirmModal
+			:order="selected"
+			:confirming="confirming"
+			:format-amount="formatAmount"
+			@close="closeConfirm"
+			@confirm="(ref) => confirmWithReference(ref)" />
 	</section>
 </template>
