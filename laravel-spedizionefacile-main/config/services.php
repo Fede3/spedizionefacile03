@@ -60,22 +60,24 @@ return [
         'redirect' => env('GOOGLE_REDIRECT_URI'),          // URL dove Google rimanda dopo il login
     ],
 
-    // Facebook OAuth - permette agli utenti di registrarsi/loggarsi con Facebook
-    'facebook' => [
-        'client_id' => env('FACEBOOK_CLIENT_ID'),
-        'client_secret' => env('FACEBOOK_CLIENT_SECRET'),
-        'redirect' => env('FACEBOOK_REDIRECT_URI'),
-    ],
+    // -- ARCHIVIATO 2026-04-24-v2 -- Facebook OAuth rimosso (manteniamo solo Google).
+    // -- ARCHIVIATO 2026-04-24-v2 -- File archiviato in _archive/cleanup-2026-04-24-v2/oauth-extra-providers/
+    // -- ARCHIVIATO 2026-04-24-v2 -- 'facebook' => [
+    // -- ARCHIVIATO 2026-04-24-v2 --     'client_id' => env('FACEBOOK_CLIENT_ID'),
+    // -- ARCHIVIATO 2026-04-24-v2 --     'client_secret' => env('FACEBOOK_CLIENT_SECRET'),
+    // -- ARCHIVIATO 2026-04-24-v2 --     'redirect' => env('FACEBOOK_REDIRECT_URI'),
+    // -- ARCHIVIATO 2026-04-24-v2 -- ],
 
-    // Apple OAuth - disponibile solo quando credenziali e callback sono configurati
-    'apple' => [
-        'client_id' => env('APPLE_CLIENT_ID'),
-        'client_secret' => env('APPLE_CLIENT_SECRET'),
-        'redirect' => env('APPLE_REDIRECT_URI'),
-        'team_id' => env('APPLE_TEAM_ID'),
-        'key_id' => env('APPLE_KEY_ID'),
-        'private_key' => env('APPLE_PRIVATE_KEY'),
-    ],
+    // -- ARCHIVIATO 2026-04-24-v2 -- Apple OAuth rimosso (manteniamo solo Google).
+    // -- ARCHIVIATO 2026-04-24-v2 -- File archiviato in _archive/cleanup-2026-04-24-v2/oauth-extra-providers/
+    // -- ARCHIVIATO 2026-04-24-v2 -- 'apple' => [
+    // -- ARCHIVIATO 2026-04-24-v2 --     'client_id' => env('APPLE_CLIENT_ID'),
+    // -- ARCHIVIATO 2026-04-24-v2 --     'client_secret' => env('APPLE_CLIENT_SECRET'),
+    // -- ARCHIVIATO 2026-04-24-v2 --     'redirect' => env('APPLE_REDIRECT_URI'),
+    // -- ARCHIVIATO 2026-04-24-v2 --     'team_id' => env('APPLE_TEAM_ID'),
+    // -- ARCHIVIATO 2026-04-24-v2 --     'key_id' => env('APPLE_KEY_ID'),
+    // -- ARCHIVIATO 2026-04-24-v2 --     'private_key' => env('APPLE_PRIVATE_KEY'),
+    // -- ARCHIVIATO 2026-04-24-v2 -- ],
 
     // Stripe - sistema di pagamento con carta di credito
     'stripe' => [

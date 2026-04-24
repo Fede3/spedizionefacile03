@@ -11,8 +11,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\UserController;
-use App\Http\Controllers\AppleController;
-use App\Http\Controllers\FacebookController;
+// -- ARCHIVIATO 2026-04-24-v2 -- use App\Http\Controllers\AppleController;
+// -- ARCHIVIATO 2026-04-24-v2 -- use App\Http\Controllers\FacebookController;
 use App\Http\Controllers\GoogleController;
 use App\Http\Controllers\LoginController;
 use App\Http\Controllers\RegisterController;
@@ -58,21 +58,11 @@ Route::get('/auth/providers', function () {
         && filled(config("services.{$provider}.client_secret"))
         && filled(config("services.{$provider}.redirect"));
 
-    $isAppleConfigured = static function (): bool {
-        $hasDirectSecret = filled(config('services.apple.client_secret'));
-        $hasDerivedSecret = filled(config('services.apple.team_id'))
-            && filled(config('services.apple.key_id'))
-            && filled(config('services.apple.private_key'));
-
-        return filled(config('services.apple.client_id'))
-            && filled(config('services.apple.redirect'))
-            && ($hasDirectSecret || $hasDerivedSecret);
-    };
-
+    // -- ARCHIVIATO 2026-04-24-v2 -- Facebook + Apple OAuth rimossi, manteniamo solo Google.
     return response()->json([
         'google' => $isConfigured('google'),
-        'facebook' => $isConfigured('facebook'),
-        'apple' => $isAppleConfigured(),
+        'facebook' => false,
+        'apple' => false,
     ]);
 });
 
@@ -86,9 +76,9 @@ Route::middleware([
     \Illuminate\Session\Middleware\StartSession::class,
     \Illuminate\View\Middleware\ShareErrorsFromSession::class,
 ])->group(function () {
-    Route::get('/auth/apple/redirect', [AppleController::class, 'redirectToApple']);
+    // -- ARCHIVIATO 2026-04-24-v2 -- Route::get('/auth/apple/redirect', [AppleController::class, 'redirectToApple']);
     Route::get('/auth/google/redirect', [GoogleController::class, 'redirectToGoogle']);
-    Route::get('/auth/facebook/redirect', [FacebookController::class, 'redirectToFacebook']);
+    // -- ARCHIVIATO 2026-04-24-v2 -- Route::get('/auth/facebook/redirect', [FacebookController::class, 'redirectToFacebook']);
 });
 
 /* ===== LOGIN ===== */

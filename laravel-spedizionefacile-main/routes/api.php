@@ -40,7 +40,7 @@ require $routeDir . '/payments.php';
 require $routeDir . '/community.php';
 require $routeDir . '/admin.php';
 require $routeDir . '/public.php';
-require $routeDir . '/claims.php';
+// -- ARCHIVIATO 2026-04-24-v2 -- require $routeDir . '/claims.php';
 // -- ARCHIVIATO 2026-04-20 -- require $routeDir . '/push.php';
 // -- ARCHIVIATO 2026-04-20 -- require $routeDir . '/pro.php';
 require $routeDir . '/invoices.php';

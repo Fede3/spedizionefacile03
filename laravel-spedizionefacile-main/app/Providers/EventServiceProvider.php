@@ -36,10 +36,9 @@ class EventServiceProvider extends ServiceProvider
 
         \App\Events\ShipmentStatusChanged::class => [
             \App\Listeners\SendShipmentStatusEmail::class,
-            // F08/F09: SMS + Push transazionali sui cambi stato spedizione.
-            // Il listener filtra per opt-in utente; salta in silenzio
-            // se manca preferenza, numero o subscription.
-            \App\Listeners\SendShipmentSmsNotification::class,
+            // -- ARCHIVIATO 2026-04-24-v2 -- SendShipmentSmsNotification (SMS disabilitati).
+            // -- ARCHIVIATO 2026-04-24-v2 -- File archiviato in _archive/cleanup-2026-04-24-v2/sms-backend-service/
+            // -- ARCHIVIATO 2026-04-24-v2 -- \App\Listeners\SendShipmentSmsNotification::class,
         ],
 
         \App\Events\OrderPaymentFailed::class => [

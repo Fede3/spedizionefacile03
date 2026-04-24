@@ -32,9 +32,9 @@
  */
 
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\AppleController;
+// -- ARCHIVIATO 2026-04-24-v2 -- use App\Http\Controllers\AppleController;
 use App\Http\Controllers\BrtWebhookController;
-use App\Http\Controllers\FacebookController;
+// -- ARCHIVIATO 2026-04-24-v2 -- use App\Http\Controllers\FacebookController;
 use App\Http\Controllers\GoogleController;
 use App\Http\Controllers\StripeWebhookController;
 use Laravel\Sanctum\Http\Controllers\CsrfCookieController;
@@ -83,8 +83,8 @@ Route::post('/webhooks/brt/tracking', [BrtWebhookController::class, 'handleTrack
 // perche' il redirect di Google arriva direttamente nel browser dell'utente,
 // quindi deve usare il middleware web per gestire la sessione e i cookie.
 Route::get('/auth/google/callback', [GoogleController::class, 'handleGoogleCallback']);
-Route::get('/auth/facebook/callback', [FacebookController::class, 'handleFacebookCallback']);
-Route::match(['GET', 'POST'], '/auth/apple/callback', [AppleController::class, 'handleAppleCallback']);
+// -- ARCHIVIATO 2026-04-24-v2 -- Route::get('/auth/facebook/callback', [FacebookController::class, 'handleFacebookCallback']);
+// -- ARCHIVIATO 2026-04-24-v2 -- Route::match(['GET', 'POST'], '/auth/apple/callback', [AppleController::class, 'handleAppleCallback']);
 
 // SENTRY-OBS-04: rotta di test per verificare integrazione Sentry.
 // Uso: dopo il deploy, visita /_test-sentry → verifica in Sentry dashboard

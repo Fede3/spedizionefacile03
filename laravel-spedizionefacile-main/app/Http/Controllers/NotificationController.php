@@ -28,15 +28,41 @@ namespace App\Http\Controllers;
 
 use App\Models\UserNotification;
 use App\Models\UserNotificationPreference;
-use App\Services\SmsService;
+// -- ARCHIVIATO 2026-04-24-v2 -- use App\Services\SmsService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 
 class NotificationController extends Controller
 {
-    public function __construct(
-        private readonly SmsService $sms,
-    ) {}
+    // -- ARCHIVIATO 2026-04-24-v2 -- SmsService archiviato: la normalizzazione numero
+    // telefono resta inline (usata solo qui per salvare phone_number utente).
+    // File archiviato in _archive/cleanup-2026-04-24-v2/sms-backend-service/
+
+    /**
+     * Normalizza un numero di telefono in formato E.164.
+     * Ex: "333 1234567" -> "+393331234567". Restituisce null se non valido.
+     * Copia locale della logica originariamente in SmsService::normalize().
+     */
+    private function normalizePhone(string $raw): ?string
+    {
+        $defaultCountry = (string) config('services.sms.default_country_code', '+39');
+        $cleaned = preg_replace('/[\s\-().]/', '', trim($raw)) ?? '';
+        if ($cleaned === '') {
+            return null;
+        }
+        if (Str::startsWith($cleaned, '00')) {
+            $cleaned = '+' . substr($cleaned, 2);
+        }
+        if (!Str::startsWith($cleaned, '+')) {
+            $cleaned = ltrim($cleaned, '0');
+            $cleaned = $defaultCountry . $cleaned;
+        }
+        if (!preg_match('/^\+\d{8,15}$/', $cleaned)) {
+            return null;
+        }
+        return $cleaned;
+    }
 
     /**
      * Lista tutte le notifiche dell'utente, ordinate dalla piu' recente.
@@ -164,7 +190,7 @@ class NotificationController extends Controller
                 $data['sms_marketing'] = false;
                 $data['referral_sms_enabled'] = false;
             } else {
-                $normalized = $this->sms->normalize($rawPhone);
+                $normalized = $this->normalizePhone($rawPhone);
                 if ($normalized === null) {
                     return response()->json([
                         'message' => 'Numero di telefono non valido. Usa formato +393331234567 o 333 1234567.',

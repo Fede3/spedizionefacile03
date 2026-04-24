@@ -429,11 +429,11 @@ class Order extends Model
             ->withPivot('quantity');
     }
 
-    // Relazione: un ordine può avere MOLTI reclami (F03)
-    public function claims(): HasMany
-    {
-        return $this->hasMany(Claim::class);
-    }
+    // -- ARCHIVIATO 2026-04-24-v2 -- Claims/Reclami archiviati in _archive/cleanup-2026-04-24-v2/claims-backend/
+    // -- ARCHIVIATO 2026-04-24-v2 -- public function claims(): HasMany
+    // -- ARCHIVIATO 2026-04-24-v2 -- {
+    // -- ARCHIVIATO 2026-04-24-v2 --     return $this->hasMany(Claim::class);
+    // -- ARCHIVIATO 2026-04-24-v2 -- }
 
     /**
      * Collega un pacco all'ordine tramite la tabella pivot package_order.

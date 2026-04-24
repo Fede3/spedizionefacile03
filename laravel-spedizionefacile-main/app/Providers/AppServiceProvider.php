@@ -10,9 +10,9 @@ use App\Services\CartService;
 // -- ARCHIVIATO 2026-04-20 -- use App\Services\Sdi\FattureInCloudProvider;
 // -- ARCHIVIATO 2026-04-20 -- use App\Services\Sdi\NullSdiProvider;
 // -- ARCHIVIATO 2026-04-20 -- use App\Services\Sdi\SdiProviderInterface;
-use App\Services\Sms\NullSmsProvider;
-use App\Services\Sms\SmsProviderInterface;
-use App\Services\Sms\TwilioSmsProvider;
+// -- ARCHIVIATO 2026-04-24-v2 -- use App\Services\Sms\NullSmsProvider;
+// -- ARCHIVIATO 2026-04-24-v2 -- use App\Services\Sms\SmsProviderInterface;
+// -- ARCHIVIATO 2026-04-24-v2 -- use App\Services\Sms\TwilioSmsProvider;
 use App\Services\StripeConfigService;
 use Illuminate\Queue\Events\JobFailed;
 use Illuminate\Support\Facades\Gate;
@@ -43,20 +43,19 @@ class AppServiceProvider extends ServiceProvider
             return new StripeClient($secret ?: 'sk_test_spedizionefacile_disabled');
         });
 
-        // Provider SMS pluggable. Default: NullSmsProvider (no-op + log).
-        // Per abilitare Twilio impostare SMS_DRIVER=twilio in .env.
-        $this->app->singleton(SmsProviderInterface::class, function () {
-            $driver = config('services.sms.driver', 'null');
-
-            return match ($driver) {
-                'twilio' => new TwilioSmsProvider(
-                    accountSid: config('services.sms.twilio.sid'),
-                    authToken: config('services.sms.twilio.token'),
-                    from: config('services.sms.twilio.from'),
-                ),
-                default => new NullSmsProvider(),
-            };
-        });
+        // -- ARCHIVIATO 2026-04-24-v2 -- Provider SMS pluggable (default NullSmsProvider).
+        // -- ARCHIVIATO 2026-04-24-v2 -- Modulo archiviato in _archive/cleanup-2026-04-24-v2/sms-backend-service/
+        // -- ARCHIVIATO 2026-04-24-v2 -- $this->app->singleton(SmsProviderInterface::class, function () {
+        // -- ARCHIVIATO 2026-04-24-v2 --     $driver = config('services.sms.driver', 'null');
+        // -- ARCHIVIATO 2026-04-24-v2 --     return match ($driver) {
+        // -- ARCHIVIATO 2026-04-24-v2 --         'twilio' => new TwilioSmsProvider(
+        // -- ARCHIVIATO 2026-04-24-v2 --             accountSid: config('services.sms.twilio.sid'),
+        // -- ARCHIVIATO 2026-04-24-v2 --             authToken: config('services.sms.twilio.token'),
+        // -- ARCHIVIATO 2026-04-24-v2 --             from: config('services.sms.twilio.from'),
+        // -- ARCHIVIATO 2026-04-24-v2 --         ),
+        // -- ARCHIVIATO 2026-04-24-v2 --         default => new NullSmsProvider(),
+        // -- ARCHIVIATO 2026-04-24-v2 --     };
+        // -- ARCHIVIATO 2026-04-24-v2 -- });
 
         // -- ARCHIVIATO 2026-04-20 -- Provider SDI pluggable (fatturazione elettronica).
         // -- ARCHIVIATO 2026-04-20 -- Modulo archiviato in _archive/2026-04-20-features-rimosse/sdi-fatturazione/
