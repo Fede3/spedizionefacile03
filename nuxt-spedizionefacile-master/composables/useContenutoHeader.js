@@ -177,6 +177,9 @@ export default function useContenutoHeader() {
 
 		if (route.path === '/') {
 			if (homepageHeroEndpointAvailable.value) {
+				// Guard: ferma eventuale interval precedente prima di crearne uno nuovo.
+				// Evita accumulo di polling duplicati su navigazioni SPA Home → altro → Home.
+				if (homepageHeroPoll) { clearInterval(homepageHeroPoll); homepageHeroPoll = null; }
 				homepageHeroPoll = setInterval(refreshHomepageImage, 30000);
 				window.addEventListener('focus', refreshHomepageImage);
 				window.addEventListener('storage', onHomepageImageStorage);

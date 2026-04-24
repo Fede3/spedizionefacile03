@@ -235,7 +235,10 @@ export function usePayment(cart) {
       })
 
       // Mount lazy: aspetta che il container v-if diventi disponibile.
-      watch(
+      // Il watcher viene fermato su unmount per evitare remount duplicato
+      // se l'utente naviga away e poi torna al pagamento (Stripe Elements
+      // accetta un solo mount point; remount causa errori silenti).
+      const stopCardMountWatch = watch(
         cardElementContainer,
         (el) => {
           if (el && cardElement.value && !cardMounted.value) {
@@ -245,6 +248,16 @@ export function usePayment(cart) {
         },
         { flush: 'post', immediate: true },
       )
+
+      if (getCurrentScope()) {
+        onScopeDispose(() => {
+          stopCardMountWatch()
+          if (cardElement.value && cardMounted.value) {
+            try { cardElement.value.unmount() } catch { /* element already destroyed */ }
+            cardMounted.value = false
+          }
+        })
+      }
 
       // Carica eventuale carta salvata (silenzioso se 404).
       try {
@@ -535,7 +548,15 @@ export function usePayment(cart) {
       { label: 'wallet pay' },
     )
     if (!res?.success || !res?.data?.id) {
-      throw new Error(res?.message || 'Saldo insufficiente o pagamento wallet non riuscito.')
+      // Messaggio contestuale: cerca di distinguere saldo insufficiente
+      // da errore tecnico/rete per evitare false comunicazioni all'utente.
+      const serverMessage = res?.message || res?.error
+      const isInsufficientFunds = typeof serverMessage === 'string'
+        && /saldo|insufficien|insufficient/i.test(serverMessage)
+      const fallback = isInsufficientFunds
+        ? 'Saldo wallet insufficiente per completare il pagamento.'
+        : 'Errore durante l\'addebito dal wallet. Riprova tra poco o contatta l\'assistenza.'
+      throw new Error(serverMessage || fallback)
     }
 
     paymentStep.value = 'Finalizzazione...'
