@@ -369,6 +369,10 @@ export const adminNavGroups = [
 		title: 'Il tuo account',
 		tone: 'admin',
 		items: [
+			// L'admin è anche un utente: deve poter usare il suo account privato.
+			// Aggiunte Spedizioni + Fatture (mancavano, l'admin non poteva vederle dal pannello).
+			{ label: 'Spedizioni', to: '/account/spedizioni', iconKey: 'truck-fast' },
+			{ label: 'Fatture', to: '/account/fatture', iconKey: 'clipboard-list' },
 			{ label: 'Profilo', to: '/account/profilo', iconKey: 'account' },
 			{ label: 'Indirizzi', to: '/account/indirizzi', iconKey: 'map-marker' },
 			{ label: 'Portafoglio', to: '/account/portafoglio', iconKey: 'wallet' },
