@@ -23,12 +23,12 @@ const showDivider = computed(() => showNavbarDivider.value || !isNavbarLogo.valu
 	<template v-if="isNavbarLogo">
 		<span
 			:class="[
-				showNavbarDivider ? 'desktop:ml-[31px] ml-[14px] tablet:ml-[26px]' : 'desktop:ml-[14px] ml-[10px] tablet:ml-[12px]',
+				showNavbarDivider ? 'desktop:ml-[31px] ml-[10px] tablet:ml-[26px]' : 'desktop:ml-[14px] ml-[8px] tablet:ml-[12px]',
 				'text-[var(--color-brand-text)] font-semibold tracking-[-0.03em]',
 			]"
 		>
-			<span class="inline max-w-[74px] truncate text-[0.75rem] sm:hidden">Spediamo</span>
-			<span class="hidden text-[0.8125rem] tablet:text-[1rem] desktop:text-[1.125rem] desktop-xl:text-[1.2rem] sm:inline">SpediamoFacile</span>
+			<!-- Brand intero su tutti i breakpoint — mobile usa font-size più piccolo invece di troncare. -->
+			<span class="text-[0.75rem] tablet:text-[1rem] desktop:text-[1.125rem] desktop-xl:text-[1.2rem]">SpediamoFacile</span>
 		</span>
 	</template>
 	<span

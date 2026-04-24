@@ -4,7 +4,7 @@ import '~/assets/css/navbar.css'
 const navLinks = [
   { page: "/servizi", text: "Servizi", icon: 'truck' },
   { page: "/preventivo", to: "/la-tua-spedizione/2?step=colli", text: "Preventivo", icon: 'price' },
-  { page: "/traccia-spedizione", text: "Traccia", icon: 'tracking' },
+  { page: "/traccia", text: "Traccia", icon: 'tracking' },
   { page: '/guide', text: 'Guide', icon: 'book' },
   { page: "/contatti", text: "Contatti", icon: 'message' },
 ];

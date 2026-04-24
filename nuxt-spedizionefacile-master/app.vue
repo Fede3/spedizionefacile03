@@ -36,7 +36,7 @@ const canonicalHref = computed(() => `${siteOrigin}${route.path === '/' ? '' : r
 // dimentica di specificare l'immagine (es. 404, preview dinamici).
 const defaultOgImage = `${siteOrigin}/og/default.png`;
 useSeoMeta({
-	ogSiteName: 'SpedizioneFacile',
+	ogSiteName: 'SpediamoFacile',
 	ogLocale: 'it_IT',
 	ogType: 'website',
 	twitterCard: 'summary_large_image',

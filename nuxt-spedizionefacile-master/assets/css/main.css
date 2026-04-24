@@ -198,6 +198,15 @@ input[type="number"] {
 		--shadow-cta: 0 8px 24px rgba(228, 66, 3, 0.28);
 		--shadow-focus: 0 0 0 3px rgba(9, 88, 102, 0.60);
 
+		/* === Z-INDEX TOKENS (no più z-[9999] random) === */
+		--z-base: 1;
+		--z-sticky: 100;
+		--z-dropdown: 500;
+		--z-overlay: 1000;
+		--z-modal: 1100;
+		--z-toast: 1200;
+		--z-tooltip: 1300;
+
 		/* === BUTTON HEIGHTS 4 TIER === */
 		--button-height-xs: 32px;
 		--button-height-sm: 36px;

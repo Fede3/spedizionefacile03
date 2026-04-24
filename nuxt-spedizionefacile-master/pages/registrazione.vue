@@ -12,7 +12,6 @@ const route = useRoute();
 useSeoMeta({
 	title: 'Registrati | SpediamoFacile',
 	description: 'Crea il tuo account SpediamoFacile e inizia a spedire con BRT a prezzi vantaggiosi.',
-	robots: 'noindex, nofollow',
 });
 
 await navigateTo(

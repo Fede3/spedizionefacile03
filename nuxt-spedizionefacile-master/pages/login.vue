@@ -12,7 +12,6 @@ const route = useRoute();
 useSeoMeta({
 	title: 'Accedi | SpediamoFacile',
 	description: 'Accedi al tuo account SpediamoFacile per gestire spedizioni, portafoglio e ordini.',
-	robots: 'noindex, nofollow',
 });
 
 await navigateTo(

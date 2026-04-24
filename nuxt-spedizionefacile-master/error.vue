@@ -44,7 +44,7 @@ const description = computed(() => {
 // popolato dal backend (es. header `Retry-After`) o da una env var.
 const maintenanceEta = computed(() => 'Stimato: pochi minuti')
 
-const pageTitle = computed(() => `${statusCode.value} · ${heading.value} — SpedizioneFacile`)
+const pageTitle = computed(() => `${statusCode.value} · ${heading.value} — SpediamoFacile`)
 
 useSeoMeta({
 	title: pageTitle,

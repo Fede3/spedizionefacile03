@@ -23,7 +23,7 @@ export const buildSiteSchema = (overrideBaseUrl) => {
     '@context': 'https://schema.org',
     '@type': 'Organization',
     '@id': `${baseUrl}/#organization`,
-    name: 'SpedizioneFacile',
+    name: 'SpediamoFacile',
     url: baseUrl,
     logo: {
       '@type': 'ImageObject',
@@ -52,7 +52,7 @@ export const buildSiteSchema = (overrideBaseUrl) => {
     '@type': 'WebSite',
     '@id': `${baseUrl}/#website`,
     url: baseUrl,
-    name: 'SpedizioneFacile',
+    name: 'SpediamoFacile',
     inLanguage: 'it-IT',
     publisher: { '@id': `${baseUrl}/#organization` },
     potentialAction: {

@@ -131,6 +131,7 @@ export default defineNuxtConfig({
 		'/la-tua-spedizione/**': { prerender: false },
 		// Redirect legacy.
 		'/termini-condizioni': { redirect: { to: '/termini-e-condizioni', statusCode: 301 } },
+		'/traccia-spedizione': { redirect: { to: '/traccia', statusCode: 301 } },
 	},
 
 	experimental: {

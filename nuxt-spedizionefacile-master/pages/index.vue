@@ -5,8 +5,8 @@ import Preventivo from '~/components/shipment/Preventivo.vue';
 
 // ───────────────────────── SEO ─────────────────────────
 useSeoMeta({
-	title: 'SpedizioneFacile — Spedizioni BRT al miglior prezzo',
-	ogTitle: 'SpedizioneFacile — Spedizioni BRT al miglior prezzo',
+	title: 'SpediamoFacile — Spedizioni BRT al miglior prezzo',
+	ogTitle: 'SpediamoFacile — Spedizioni BRT al miglior prezzo',
 	description:
 		'Spedisci pacchi in Italia ed Europa con BRT alle migliori tariffe. Preventivo in 30 secondi, ritiro a domicilio, tracking in tempo reale.',
 	ogDescription:
@@ -24,7 +24,7 @@ useHead({
 			'@context': 'https://schema.org',
 			'@type': 'WebApplication',
 			'@id': 'https://spediamofacile.it/#webapp',
-			name: 'SpedizioneFacile',
+			name: 'SpediamoFacile',
 			url: 'https://spediamofacile.it',
 			applicationCategory: 'BusinessApplication',
 			applicationSubCategory: 'Shipping',
@@ -50,7 +50,7 @@ useHead({
 // ───────────────── FAQ accordion ─────────────────
 const faqs = [
 	{
-		q: 'Quanto costa spedire con SpedizioneFacile?',
+		q: 'Quanto costa spedire con SpediamoFacile?',
 		a: 'Le tariffe partono da 5,90 € per pacchi fino a 5 kg in Italia. Il prezzo dipende da peso, dimensioni e destinazione: calcolalo in 30 secondi senza registrazione.',
 	},
 	{

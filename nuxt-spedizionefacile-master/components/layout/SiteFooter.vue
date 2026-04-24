@@ -187,7 +187,7 @@ const socials = [
 		<div class="site-footer__bottom">
 			<div class="site-footer__bottom-shell">
 				<p class="site-footer__legal">
-					P.IVA 00000000000 &middot; SDI XXXXXXX &middot; &copy; {{ currentYear }} SpedizioneFacile. Tutti i diritti riservati.
+					P.IVA 00000000000 &middot; SDI XXXXXXX &middot; &copy; {{ currentYear }} SpediamoFacile. Tutti i diritti riservati.
 				</p>
 				<button
 					type="button"
