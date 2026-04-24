@@ -1,4 +1,4 @@
-// === utils/checkout.ts — Helper checkout / post-pagamento ===
+// === utils/checkout.js — Helper checkout / post-pagamento ===
 // Consolidamento di:
 //   - utils/checkoutSuccess.ts  (build/read/clear checkout success query, status)
 //   - utils/stripeErrors.ts     (mappa errori Stripe IT, translateStripeError)
@@ -16,12 +16,9 @@
  * method into the URL so the success screen survives full-page reloads.
  * `clearCheckoutSuccessQuery` removes those params once they've been consumed
  * to keep the URL clean.
+ *
+ * @typedef {import('vue-router').LocationQuery} LocationQuery
  */
-import type { LocationQuery } from 'vue-router'
-
-/* ------------------------------------------------------------------ */
-/*  Constants                                                         */
-/* ------------------------------------------------------------------ */
 
 const QUERY_KEY_SUCCESS = 'checkout_success'
 const QUERY_KEY_ORDER_IDS = 'order_ids'
@@ -32,8 +29,10 @@ const QUERY_KEY_PAYMENT_METHOD = 'payment_method'
  * Used by components that need to decide whether an order is in a terminal
  * positive state.  "pending" is included because bonifico orders start in
  * pending and are still considered successful from the checkout perspective.
+ *
+ * @type {readonly string[]}
  */
-export const SUCCESSFUL_ORDER_STATUSES: readonly string[] = [
+export const SUCCESSFUL_ORDER_STATUSES = Object.freeze([
   'paid',
   'payed',
   'completed',
@@ -44,25 +43,17 @@ export const SUCCESSFUL_ORDER_STATUSES: readonly string[] = [
   'out_for_delivery',
   'delivered',
   'pending',
-]
-
-/* ------------------------------------------------------------------ */
-/*  Build                                                             */
-/* ------------------------------------------------------------------ */
-
-interface BuildCheckoutSuccessOpts {
-  orderIds: (string | number)[]
-  paymentMethod: string
-}
+])
 
 /**
  * Merges checkout-success query params into an existing query object.
  * Returns a new LocationQuery that the caller can pass to `router.replace`.
+ *
+ * @param {LocationQuery} baseQuery
+ * @param {{ orderIds: (string|number)[], paymentMethod: string }} opts
+ * @returns {LocationQuery}
  */
-export function buildCheckoutSuccessQuery(
-  baseQuery: LocationQuery,
-  { orderIds, paymentMethod }: BuildCheckoutSuccessOpts,
-): LocationQuery {
+export function buildCheckoutSuccessQuery(baseQuery, { orderIds, paymentMethod }) {
   return {
     ...baseQuery,
     [QUERY_KEY_SUCCESS]: '1',
@@ -71,20 +62,13 @@ export function buildCheckoutSuccessQuery(
   }
 }
 
-/* ------------------------------------------------------------------ */
-/*  Read                                                              */
-/* ------------------------------------------------------------------ */
-
-interface CheckoutSuccessState {
-  active: boolean
-  orderIds: string[]
-  paymentMethod: string
-}
-
 /**
  * Reads the checkout-success state from the current route query.
+ *
+ * @param {LocationQuery} query
+ * @returns {{ active: boolean, orderIds: string[], paymentMethod: string }}
  */
-export function readCheckoutSuccessState(query: LocationQuery): CheckoutSuccessState {
+export function readCheckoutSuccessState(query) {
   const active = query[QUERY_KEY_SUCCESS] === '1'
   if (!active) {
     return { active: false, orderIds: [], paymentMethod: '' }
@@ -105,15 +89,14 @@ export function readCheckoutSuccessState(query: LocationQuery): CheckoutSuccessS
   return { active: true, orderIds, paymentMethod }
 }
 
-/* ------------------------------------------------------------------ */
-/*  Clear                                                             */
-/* ------------------------------------------------------------------ */
-
 /**
  * Returns a new LocationQuery with checkout-success params stripped out.
  * The caller should pass this to `router.replace({ query })` to clean the URL.
+ *
+ * @param {LocationQuery} query
+ * @returns {LocationQuery}
  */
-export function clearCheckoutSuccessQuery(query: LocationQuery): LocationQuery {
+export function clearCheckoutSuccessQuery(query) {
   const cleaned = { ...query }
   delete cleaned[QUERY_KEY_SUCCESS]
   delete cleaned[QUERY_KEY_ORDER_IDS]
@@ -126,7 +109,7 @@ export function clearCheckoutSuccessQuery(query: LocationQuery): LocationQuery {
 // ─────────────────────────────────────────────────────────────────
 
 /**
- * stripeErrors.ts — messaggi errore Stripe unificati in italiano.
+ * stripeErrors — messaggi errore Stripe unificati in italiano.
  *
  * Prima di questo file, le mappe erano duplicate in usePaymentFlow,
  * usePaymentProcess e useWalletTopUp con testi leggermente diversi.
@@ -135,9 +118,10 @@ export function clearCheckoutSuccessQuery(query: LocationQuery): LocationQuery {
  * Stripe restituisce `err.code` (API error) o `err.decline_code`
  * (carta rifiutata). I codici non mappati ricadono sul message
  * originale (che può essere in EN).
+ *
+ * @type {Record<string, string>}
  */
-
-export const STRIPE_ERRORS_IT: Record<string, string> = {
+export const STRIPE_ERRORS_IT = {
 	card_declined: "Carta rifiutata. Verifica i dati o usa un'altra carta.",
 	insufficient_funds: 'Fondi insufficienti sulla carta.',
 	expired_card: 'Carta scaduta.',
@@ -163,9 +147,12 @@ export const STRIPE_ERRORS_IT: Record<string, string> = {
 /**
  * Traduce un errore Stripe nel messaggio italiano corrispondente.
  * Fallback sul message originale o generico se il codice non è mappato.
+ *
+ * @param {*} err
+ * @param {string} [fallback='Errore durante il pagamento. Riprova.']
+ * @returns {string}
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function translateStripeError(err: any, fallback = 'Errore durante il pagamento. Riprova.'): string {
+export function translateStripeError(err, fallback = 'Errore durante il pagamento. Riprova.') {
 	if (!err) return fallback;
 	const code = err?.code || err?.decline_code;
 	if (code && STRIPE_ERRORS_IT[code]) return STRIPE_ERRORS_IT[code];

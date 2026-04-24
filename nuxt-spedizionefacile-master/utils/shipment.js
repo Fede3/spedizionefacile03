@@ -1,9 +1,9 @@
-// === utils/shipment.ts — Helper funnel spedizione ===
+// === utils/shipment.js — Helper funnel spedizione ===
 // Consolidamento di:
 //   - utils/shipmentFlowState.ts     (state machine, stage, routes, derive)
 //   - utils/clientSubmissionId.ts    (idempotency key per checkout/preventivo)
 // Tutti gli export originali sono preservati identici.
-// Nota: la logica di pricing servizi rimane in utils/shipmentServicePricing.ts
+// Nota: la logica di pricing servizi rimane in utils/shipmentServicePricing.js
 // (file complesso di 718 LOC, non coinvolto in questo consolidamento).
 
 // ─────────────────────────────────────────────────────────────────
@@ -11,134 +11,135 @@
 // ─────────────────────────────────────────────────────────────────
 
 // Alias legacy `summary` deve puntare al payment route: il vecchio step Conferma è stato unificato nel Pagamento, e i deep-link esistenti devono continuare a funzionare.
-export const SHIPMENT_FLOW_ROUTES = {
+export const SHIPMENT_FLOW_ROUTES = Object.freeze({
 	quote: '/preventivo',
 	packages: '/la-tua-spedizione/2?step=colli',
 	services: '/la-tua-spedizione/2?step=servizi',
 	addresses: '/la-tua-spedizione/2?step=indirizzi',
 	summary: '/la-tua-spedizione/2?step=pagamento',
 	payment: '/la-tua-spedizione/2?step=pagamento',
-} as const
+})
 
-export type ShipmentFlowStage = 'quote' | 'packages' | 'services' | 'addresses' | 'summary' | 'payment'
+/**
+ * @typedef {'quote' | 'packages' | 'services' | 'addresses' | 'summary' | 'payment'} ShipmentFlowStage
+ */
 
-export interface ShipmentFlowState {
-	quote_ready: boolean
-	services_ready: boolean
-	addresses_ready: boolean
-	summary_ready: boolean
-	last_valid_route: string
-}
+/**
+ * @typedef {Object} ShipmentFlowState
+ * @property {boolean} quote_ready
+ * @property {boolean} services_ready
+ * @property {boolean} addresses_ready
+ * @property {boolean} summary_ready
+ * @property {string} last_valid_route
+ */
 
-export interface RouteLike {
-	path?: string
-	fullPath?: string
-	query?: Record<string, string | string[] | undefined | null>
-	hash?: string
-}
+/**
+ * @typedef {Object} RouteLike
+ * @property {string} [path]
+ * @property {string} [fullPath]
+ * @property {Record<string, string | string[] | undefined | null>} [query]
+ * @property {string} [hash]
+ */
 
-interface AddressDraft {
-	name?: string
-	full_name?: string
-	address?: string
-	address_number?: string
-	intercom_code?: string
-	city?: string
-	postal_code?: string
-	province?: string
-	country?: string
-	additional_information?: string
-	telephone_number?: string
-	email?: string
-	type?: string
-}
+/**
+ * @typedef {Object} AddressDraft
+ * @property {string} [name]
+ * @property {string} [full_name]
+ * @property {string} [address]
+ * @property {string} [address_number]
+ * @property {string} [intercom_code]
+ * @property {string} [city]
+ * @property {string} [postal_code]
+ * @property {string} [province]
+ * @property {string} [country]
+ * @property {string} [additional_information]
+ * @property {string} [telephone_number]
+ * @property {string} [email]
+ * @property {string} [type]
+ */
 
-interface PackageDraft {
-	package_type?: string
-	quantity?: number | string
-	weight?: number | string
-	first_size?: number | string
-	second_size?: number | string
-	third_size?: number | string
-	[key: string]: unknown
-}
+/**
+ * @typedef {Object} PackageDraft
+ * @property {string} [package_type]
+ * @property {number | string} [quantity]
+ * @property {number | string} [weight]
+ * @property {number | string} [first_size]
+ * @property {number | string} [second_size]
+ * @property {number | string} [third_size]
+ */
 
-export interface StepAddressState {
-	full_name: string
-	additional_information: string
-	address: string
-	address_number: string
-	intercom_code: string
-	country: string
-	city: string
-	postal_code: string
-	province: string
-	telephone_number: string
-	email: string
-	type: string
-}
+/**
+ * @typedef {Object} StepAddressState
+ * @property {string} full_name
+ * @property {string} additional_information
+ * @property {string} address
+ * @property {string} address_number
+ * @property {string} intercom_code
+ * @property {string} country
+ * @property {string} city
+ * @property {string} postal_code
+ * @property {string} province
+ * @property {string} telephone_number
+ * @property {string} email
+ * @property {string} type
+ */
 
-export interface ShipmentFlowDeriveInput {
-	packages?: PackageDraft[]
-	pickup_date?: string
-	content_description?: string
-	origin_address?: AddressDraft | null
-	destination_address?: AddressDraft | null
-	services?: {
-		service_type?: string
-		date?: string
-		serviceData?: Record<string, unknown>
-		sms_email_notification?: boolean
-	}
-	service_data?: Record<string, unknown>
-	sms_email_notification?: boolean
-	delivery_mode?: string
-	selected_pudo?: unknown
-	flow_state?: Partial<ShipmentFlowState>
-	[key: string]: unknown
-}
+/**
+ * @typedef {Object} ShipmentFlowDeriveInput
+ * @property {PackageDraft[]} [packages]
+ * @property {string} [pickup_date]
+ * @property {string} [content_description]
+ * @property {AddressDraft | null} [origin_address]
+ * @property {AddressDraft | null} [destination_address]
+ * @property {{ service_type?: string, date?: string, serviceData?: Record<string, unknown>, sms_email_notification?: boolean }} [services]
+ * @property {Record<string, unknown>} [service_data]
+ * @property {boolean} [sms_email_notification]
+ * @property {string} [delivery_mode]
+ * @property {unknown} [selected_pudo]
+ * @property {Partial<ShipmentFlowState>} [flow_state]
+ */
 
-interface UserStoreLikeInput {
-	shipmentDetails?: {
-		origin_city?: string
-		destination_city?: string
-		date?: string
-		[key: string]: unknown
-	}
-	packages?: PackageDraft[]
-	pendingShipment?: {
-		packages?: PackageDraft[]
-		origin_address?: AddressDraft | null
-		destination_address?: AddressDraft | null
-		content_description?: string
-		pickup_date?: string
-		delivery_mode?: string
-		pudo?: unknown
-		services?: { date?: string, [key: string]: unknown }
-		[key: string]: unknown
-	} | null
-	deliveryMode?: string
-	selectedPudo?: unknown
-	pickupDate?: string
-	contentDescription?: string
-	originAddressData?: AddressDraft | null
-	destinationAddressData?: AddressDraft | null
-	[key: string]: unknown
-}
+/**
+ * @typedef {Object} UserStoreLikeInput
+ * @property {{ origin_city?: string, destination_city?: string, date?: string }} [shipmentDetails]
+ * @property {PackageDraft[]} [packages]
+ * @property {{ packages?: PackageDraft[], origin_address?: AddressDraft | null, destination_address?: AddressDraft | null, content_description?: string, pickup_date?: string, delivery_mode?: string, pudo?: unknown, services?: { date?: string } } | null} [pendingShipment]
+ * @property {string} [deliveryMode]
+ * @property {unknown} [selectedPudo]
+ * @property {string} [pickupDate]
+ * @property {string} [contentDescription]
+ * @property {AddressDraft | null} [originAddressData]
+ * @property {AddressDraft | null} [destinationAddressData]
+ */
 
-// Helper interno: signature diversa dalla versione esportata in utils/auth.ts
+// Helper interno: signature diversa dalla versione esportata in utils/auth.js
 // (qui forza string | undefined, mentre in auth è generico). Resta privato.
-const getRouteQueryValue = (value: unknown): string | undefined => {
-	if (Array.isArray(value)) return value[0] as string | undefined
-	return value as string | undefined
+/**
+ * @param {unknown} value
+ * @returns {string | undefined}
+ */
+const getRouteQueryValue = (value) => {
+	if (Array.isArray(value)) return value[0]
+	return value
 }
 
-const normalizeShipmentStep = (value: unknown, fallback = 'colli'): string => {
+/**
+ * @param {unknown} value
+ * @param {string} [fallback]
+ * @returns {string}
+ */
+const normalizeShipmentStep = (value, fallback = 'colli') => {
 	const normalized = String(getRouteQueryValue(value) || '').trim()
 	return normalized || fallback
 }
 
-export const buildShipmentFlowLocation = (routeLike: RouteLike = {}, step: string = 'colli') => ({
+/**
+ * Costruisce una location Nuxt per una route dentro il funnel spedizione.
+ * @param {RouteLike} [routeLike]
+ * @param {string} [step]
+ * @returns {{ path: string, query: Record<string, string>, hash: string | undefined }}
+ */
+export const buildShipmentFlowLocation = (routeLike = {}, step = 'colli') => ({
 	path: '/la-tua-spedizione/2',
 	query: {
 		...(routeLike?.query || {}),
@@ -147,7 +148,13 @@ export const buildShipmentFlowLocation = (routeLike: RouteLike = {}, step: strin
 	hash: routeLike?.hash,
 })
 
-export const buildShipmentFlowEditLocation = (editId: number | string, step = 'pagamento') => ({
+/**
+ * Costruisce la location per modificare un item del carrello dentro il flusso.
+ * @param {number | string} editId
+ * @param {string} [step]
+ * @returns {{ path: string, query: Record<string, string> }}
+ */
+export const buildShipmentFlowEditLocation = (editId, step = 'pagamento') => ({
 	path: '/la-tua-spedizione/2',
 	query: {
 		step: normalizeShipmentStep(step, 'pagamento'),
@@ -155,23 +162,43 @@ export const buildShipmentFlowEditLocation = (editId: number | string, step = 'p
 	},
 })
 
-const hasMeaningfulText = (value: unknown): boolean => String(value || '').trim().length > 0
+/**
+ * @param {unknown} value
+ * @returns {boolean}
+ */
+const hasMeaningfulText = (value) => String(value || '').trim().length > 0
 
-const hasPositiveQueryId = (value: unknown): boolean => {
+/**
+ * @param {unknown} value
+ * @returns {boolean}
+ */
+const hasPositiveQueryId = (value) => {
 	const raw = Array.isArray(value) ? value[0] : value
 	if (raw === undefined || raw === null || raw === '') return false
 	const parsed = Number(raw)
 	return Number.isFinite(parsed) ? parsed > 0 : hasMeaningfulText(raw)
 }
 
-const normalizeServiceTypeList = (serviceType: unknown): string[] => String(serviceType || '')
+/**
+ * @param {unknown} serviceType
+ * @returns {string[]}
+ */
+const normalizeServiceTypeList = (serviceType) => String(serviceType || '')
 	.split(',')
 	.map((value) => value.trim())
 	.filter(Boolean)
 
-const hasPackages = (packages: unknown): packages is PackageDraft[] => Array.isArray(packages) && packages.length > 0
+/**
+ * @param {unknown} packages
+ * @returns {boolean}
+ */
+const hasPackages = (packages) => Array.isArray(packages) && packages.length > 0
 
-const toPositiveNumber = (value: unknown): number => {
+/**
+ * @param {unknown} value
+ * @returns {number}
+ */
+const toPositiveNumber = (value) => {
 	const normalized = String(value ?? '')
 		.replace(',', '.')
 		.replace(/[^0-9.]/g, '')
@@ -179,7 +206,11 @@ const toPositiveNumber = (value: unknown): number => {
 	return Number.isFinite(parsed) ? parsed : 0
 }
 
-const hasCompletePackageDetails = (pack: PackageDraft = {}): boolean => (
+/**
+ * @param {PackageDraft} [pack]
+ * @returns {boolean}
+ */
+const hasCompletePackageDetails = (pack = {}) => (
 	hasMeaningfulText(pack?.package_type)
 	&& toPositiveNumber(pack?.quantity) >= 1
 	&& toPositiveNumber(pack?.weight) > 0
@@ -188,9 +219,17 @@ const hasCompletePackageDetails = (pack: PackageDraft = {}): boolean => (
 	&& toPositiveNumber(pack?.third_size) > 0
 )
 
-const hasPackagesReady = (packages: unknown): boolean => hasPackages(packages) && packages.every((pack) => hasCompletePackageDetails(pack))
+/**
+ * @param {unknown} packages
+ * @returns {boolean}
+ */
+const hasPackagesReady = (packages) => hasPackages(packages) && packages.every((pack) => hasCompletePackageDetails(pack))
 
-const hasAddressDraft = (address: AddressDraft | null | undefined = {}): boolean => {
+/**
+ * @param {AddressDraft | null | undefined} [address]
+ * @returns {boolean}
+ */
+const hasAddressDraft = (address = {}) => {
 	const a = address || {}
 	return (
 		hasMeaningfulText(a.name || a.full_name)
@@ -200,7 +239,12 @@ const hasAddressDraft = (address: AddressDraft | null | undefined = {}): boolean
 	)
 }
 
-export const deriveShipmentFlowState = (data: ShipmentFlowDeriveInput = {}): ShipmentFlowState => {
+/**
+ * Deriva lo stato del flusso da un payload sessione/server.
+ * @param {ShipmentFlowDeriveInput} [data]
+ * @returns {ShipmentFlowState}
+ */
+export const deriveShipmentFlowState = (data = {}) => {
 	const quoteReady = hasPackagesReady(data?.packages)
 	const pickupDate = data?.pickup_date || data?.services?.date || ''
 	const contentDescription = data?.content_description || ''
@@ -210,7 +254,7 @@ export const deriveShipmentFlowState = (data: ShipmentFlowDeriveInput = {}): Shi
 		&& hasAddressDraft(data?.destination_address)
 	const summaryReady = addressesReady
 
-	let lastValidRoute: string = SHIPMENT_FLOW_ROUTES.packages
+	let lastValidRoute = SHIPMENT_FLOW_ROUTES.packages
 	if (summaryReady) {
 		lastValidRoute = SHIPMENT_FLOW_ROUTES.summary
 	}
@@ -230,7 +274,12 @@ export const deriveShipmentFlowState = (data: ShipmentFlowDeriveInput = {}): Shi
 	}
 }
 
-export const resolveShipmentFlowState = (data: ShipmentFlowDeriveInput = {}): ShipmentFlowState => {
+/**
+ * Se il payload contiene già flow_state persistito, lo normalizza usando derive come fallback.
+ * @param {ShipmentFlowDeriveInput} [data]
+ * @returns {ShipmentFlowState}
+ */
+export const resolveShipmentFlowState = (data = {}) => {
 	const raw = data?.flow_state
 	const fallback = deriveShipmentFlowState(data)
 	if (!raw || typeof raw !== 'object') return fallback
@@ -246,7 +295,11 @@ export const resolveShipmentFlowState = (data: ShipmentFlowDeriveInput = {}): Sh
 	}
 }
 
-const getFlowStateRank = (flowState: Partial<ShipmentFlowState> = {}): number => {
+/**
+ * @param {Partial<ShipmentFlowState>} [flowState]
+ * @returns {number}
+ */
+const getFlowStateRank = (flowState = {}) => {
 	if (flowState?.summary_ready) return 4
 	if (flowState?.addresses_ready) return 3
 	if (flowState?.services_ready) return 2
@@ -254,14 +307,24 @@ const getFlowStateRank = (flowState: Partial<ShipmentFlowState> = {}): number =>
 	return 0
 }
 
-export const pickMostAdvancedShipmentFlowState = (...states: Array<Partial<ShipmentFlowState> | null | undefined>): ShipmentFlowState => states
-	.filter((state): state is Partial<ShipmentFlowState> => !!state && typeof state === 'object')
-	.reduce<Partial<ShipmentFlowState> | null>((best, candidate) => {
+/**
+ * Fra più snapshot di flow-state sceglie quello più avanzato.
+ * @param {...(Partial<ShipmentFlowState> | null | undefined)} states
+ * @returns {ShipmentFlowState}
+ */
+export const pickMostAdvancedShipmentFlowState = (...states) => states
+	.filter((state) => !!state && typeof state === 'object')
+	.reduce((best, candidate) => {
 		if (!best) return candidate
 		return getFlowStateRank(candidate) > getFlowStateRank(best) ? candidate : best
-	}, null) as ShipmentFlowState || deriveShipmentFlowState({})
+	}, null) || deriveShipmentFlowState({})
 
-export const getShipmentFlowStage = (routeLike: RouteLike): ShipmentFlowStage | null => {
+/**
+ * Determina lo stage corrispondente a una route (quote/packages/services/ecc.).
+ * @param {RouteLike} routeLike
+ * @returns {ShipmentFlowStage | null}
+ */
+export const getShipmentFlowStage = (routeLike) => {
 	const path = String(routeLike?.path || routeLike?.fullPath || '')
 	const query = routeLike?.query || {}
 	const stepQuery = normalizeShipmentStep(query.step, '')
@@ -281,7 +344,12 @@ export const getShipmentFlowStage = (routeLike: RouteLike): ShipmentFlowStage | 
 	return null
 }
 
-export const isShipmentFlowResumeException = (routeLike: RouteLike): boolean => {
+/**
+ * Riconosce route di ripresa (edit, pagamento con order_id) per bypassare il guard.
+ * @param {RouteLike} routeLike
+ * @returns {boolean}
+ */
+export const isShipmentFlowResumeException = (routeLike) => {
 	const path = String(routeLike?.path || routeLike?.fullPath || '')
 	const query = routeLike?.query || {}
 	const stepQuery = normalizeShipmentStep(query.step, '')
@@ -295,7 +363,13 @@ export const isShipmentFlowResumeException = (routeLike: RouteLike): boolean => 
 	return false
 }
 
-export const canAccessShipmentFlowRoute = (routeLike: RouteLike, flowState: Partial<ShipmentFlowState> | null | undefined): boolean => {
+/**
+ * Decide se l'utente può accedere a una route del funnel dato lo stato corrente.
+ * @param {RouteLike} routeLike
+ * @param {Partial<ShipmentFlowState> | null | undefined} flowState
+ * @returns {boolean}
+ */
+export const canAccessShipmentFlowRoute = (routeLike, flowState) => {
 	if (isShipmentFlowResumeException(routeLike)) return true
 
 	const stage = getShipmentFlowStage(routeLike)
@@ -307,16 +381,31 @@ export const canAccessShipmentFlowRoute = (routeLike: RouteLike, flowState: Part
 	return true
 }
 
-export const getShipmentFlowStepNumber = (flowState: Partial<ShipmentFlowState> | null | undefined): 1 | 2 | 3 | 4 => {
+/**
+ * Converte uno stato flusso nello step numerico (1-4) esposto all'UI.
+ * @param {Partial<ShipmentFlowState> | null | undefined} flowState
+ * @returns {1 | 2 | 3 | 4}
+ */
+export const getShipmentFlowStepNumber = (flowState) => {
 	if (flowState?.summary_ready) return 4
 	if (flowState?.services_ready) return 3
 	if (flowState?.quote_ready) return 2
 	return 1
 }
 
-export const extractShipmentServicesArray = (data: ShipmentFlowDeriveInput = {}): string[] => normalizeServiceTypeList(data?.services?.service_type || '')
+/**
+ * Estrae la lista di servizi selezionati dal payload della sessione.
+ * @param {ShipmentFlowDeriveInput} [data]
+ * @returns {string[]}
+ */
+export const extractShipmentServicesArray = (data = {}) => normalizeServiceTypeList(data?.services?.service_type || '')
 
-export const toStepAddressState = (address: AddressDraft | null = null): StepAddressState | null => {
+/**
+ * Normalizza un indirizzo draft nella forma attesa dagli step address.
+ * @param {AddressDraft | null} [address]
+ * @returns {StepAddressState | null}
+ */
+export const toStepAddressState = (address = null) => {
 	if (!address || typeof address !== 'object') return null
 
 	return {
@@ -335,25 +424,25 @@ export const toStepAddressState = (address: AddressDraft | null = null): StepAdd
 	}
 }
 
-export interface BuiltPendingShipment {
-	origin_address: AddressDraft
-	destination_address: AddressDraft
-	services: {
-		service_type?: string
-		date?: string
-		serviceData: Record<string, unknown>
-		sms_email_notification: boolean
-		[key: string]: unknown
-	}
-	packages: PackageDraft[]
-	content_description: string
-	delivery_mode: string
-	pudo: unknown
-	sms_email_notification: boolean
-	client_submission_id?: string
-}
+/**
+ * @typedef {Object} BuiltPendingShipment
+ * @property {AddressDraft} origin_address
+ * @property {AddressDraft} destination_address
+ * @property {{ service_type?: string, date?: string, serviceData: Record<string, unknown>, sms_email_notification: boolean }} services
+ * @property {PackageDraft[]} packages
+ * @property {string} content_description
+ * @property {string} delivery_mode
+ * @property {unknown} pudo
+ * @property {boolean} sms_email_notification
+ * @property {string} [client_submission_id]
+ */
 
-export const buildPendingShipmentFromSession = (data: ShipmentFlowDeriveInput = {}): BuiltPendingShipment | null => {
+/**
+ * Costruisce il payload completo di pendingShipment partendo dai dati sessione.
+ * @param {ShipmentFlowDeriveInput} [data]
+ * @returns {BuiltPendingShipment | null}
+ */
+export const buildPendingShipmentFromSession = (data = {}) => {
 	const flowState = resolveShipmentFlowState(data)
 	if (!flowState.summary_ready) return null
 	if (!hasPackages(data?.packages)) return null
@@ -368,17 +457,17 @@ export const buildPendingShipmentFromSession = (data: ShipmentFlowDeriveInput = 
 		services: {
 			...(data.services || {}),
 			serviceData: {
-				...((data.service_data || data?.services?.serviceData || {}) as Record<string, unknown>),
+				...((data.service_data || data?.services?.serviceData || {})),
 				sms_email_notification: Boolean(
 					data?.sms_email_notification
 					?? data?.services?.sms_email_notification
-					?? (data?.service_data as { sms_email_notification?: boolean } | undefined)?.sms_email_notification,
+					?? data?.service_data?.sms_email_notification,
 				),
 			},
 			sms_email_notification: Boolean(
 				data?.sms_email_notification
 				?? data?.services?.sms_email_notification
-				?? (data?.service_data as { sms_email_notification?: boolean } | undefined)?.sms_email_notification,
+				?? data?.service_data?.sms_email_notification,
 			),
 		},
 		packages: Array.isArray(data.packages) ? [...data.packages] : [],
@@ -388,13 +477,18 @@ export const buildPendingShipmentFromSession = (data: ShipmentFlowDeriveInput = 
 		sms_email_notification: Boolean(
 			data?.sms_email_notification
 			?? data?.services?.sms_email_notification
-			?? (data?.service_data as { sms_email_notification?: boolean } | undefined)?.sms_email_notification,
+			?? data?.service_data?.sms_email_notification,
 		),
 		client_submission_id: clientSubmissionId || undefined,
 	}
 }
 
-export const deriveShipmentFlowStateFromUserStore = (shipmentFlowStore: UserStoreLikeInput = {}): ShipmentFlowState => {
+/**
+ * Deriva il flow-state partendo dallo store locale (sessionStorage).
+ * @param {UserStoreLikeInput} [shipmentFlowStore]
+ * @returns {ShipmentFlowState}
+ */
+export const deriveShipmentFlowStateFromUserStore = (shipmentFlowStore = {}) => {
 	const shipmentDetails = shipmentFlowStore?.shipmentDetails || {}
 	const packages = Array.isArray(shipmentFlowStore?.packages) ? shipmentFlowStore.packages : []
 	const pendingShipment = shipmentFlowStore?.pendingShipment || {}
@@ -403,7 +497,7 @@ export const deriveShipmentFlowStateFromUserStore = (shipmentFlowStore: UserStor
 	const selectedPudo = shipmentFlowStore?.selectedPudo || pendingShipment?.pudo || null
 
 	const quoteReady = hasPackagesReady(packages)
-	const pickupDate = shipmentFlowStore?.pickupDate || shipmentDetails?.date || (pendingShipment as { pickup_date?: string })?.pickup_date || ''
+	const pickupDate = shipmentFlowStore?.pickupDate || shipmentDetails?.date || pendingShipment?.pickup_date || ''
 	const contentDescription = shipmentFlowStore?.contentDescription || pendingShipment?.content_description || ''
 	const servicesReady = quoteReady && hasMeaningfulText(contentDescription) && hasMeaningfulText(pickupDate)
 
@@ -416,7 +510,7 @@ export const deriveShipmentFlowStateFromUserStore = (shipmentFlowStore: UserStor
 		&& hasAddressDraft(originAddress)
 		&& hasDestinationReady
 	const pendingServicesReady = hasMeaningfulText(pendingShipment?.content_description || '')
-		&& hasMeaningfulText((pendingShipment as { pickup_date?: string })?.pickup_date || pendingShipment?.services?.date || '')
+		&& hasMeaningfulText(pendingShipment?.pickup_date || pendingShipment?.services?.date || '')
 	const pendingDestinationReady = deliveryMode === 'pudo'
 		? Boolean(selectedPudo) || hasAddressDraft(pendingShipment?.destination_address || null)
 		: hasAddressDraft(pendingShipment?.destination_address || null)
@@ -426,7 +520,7 @@ export const deriveShipmentFlowStateFromUserStore = (shipmentFlowStore: UserStor
 		&& pendingDestinationReady
 	const summaryReady = addressesReady || pendingSummaryReady
 
-	let lastValidRoute: string = SHIPMENT_FLOW_ROUTES.packages
+	let lastValidRoute = SHIPMENT_FLOW_ROUTES.packages
 	if (summaryReady) {
 		lastValidRoute = SHIPMENT_FLOW_ROUTES.summary
 	}
@@ -446,23 +540,30 @@ export const deriveShipmentFlowStateFromUserStore = (shipmentFlowStore: UserStor
 	}
 }
 
-interface TrimmableUserStore {
-	pendingShipment?: unknown
-	originAddressData?: unknown
-	destinationAddressData?: unknown
-	selectedPudo?: unknown
-	servicesArray?: unknown
-	contentDescription?: unknown
-	pickupDate?: unknown
-	smsEmailNotification?: unknown
-	serviceData?: unknown
-	packages?: unknown
-	totalPrice?: unknown
-	isQuoteStarted?: unknown
-	stepNumber?: unknown
-}
+/**
+ * @typedef {Object} TrimmableUserStore
+ * @property {unknown} [pendingShipment]
+ * @property {unknown} [originAddressData]
+ * @property {unknown} [destinationAddressData]
+ * @property {unknown} [selectedPudo]
+ * @property {unknown} [servicesArray]
+ * @property {unknown} [contentDescription]
+ * @property {unknown} [pickupDate]
+ * @property {unknown} [smsEmailNotification]
+ * @property {unknown} [serviceData]
+ * @property {unknown} [packages]
+ * @property {unknown} [totalPrice]
+ * @property {unknown} [isQuoteStarted]
+ * @property {unknown} [stepNumber]
+ */
 
-export const trimUserStoreToFlowState = (shipmentFlowStore: TrimmableUserStore | null | undefined, flowState: Partial<ShipmentFlowState> | null | undefined): void => {
+/**
+ * Azzera le parti di store che eccedono lo stato valido (es. quando si torna indietro).
+ * @param {TrimmableUserStore | null | undefined} shipmentFlowStore
+ * @param {Partial<ShipmentFlowState> | null | undefined} flowState
+ * @returns {void}
+ */
+export const trimUserStoreToFlowState = (shipmentFlowStore, flowState) => {
 	if (!shipmentFlowStore || !flowState) return
 
 	if (!flowState.summary_ready) {
@@ -497,24 +598,35 @@ export const trimUserStoreToFlowState = (shipmentFlowStore: TrimmableUserStore |
 // ─────────────────────────────────────────────────────────────────
 
 // Idempotency key client-side: protegge preventivo e checkout da doppio submit e retry di rete (usato da backend Stripe/ordini per deduplica).
-const normalizeSubmissionId = (value: unknown): string => String(value ?? '').trim()
+/**
+ * @param {unknown} value
+ * @returns {string}
+ */
+const normalizeSubmissionId = (value) => String(value ?? '').trim()
 
-export const createClientSubmissionId = (): string => (
+/**
+ * Genera un nuovo ID submission client (idempotency key).
+ * @returns {string}
+ */
+export const createClientSubmissionId = () => (
 	`sub-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`
 )
 
-interface SubmissionSource {
-	client_submission_id?: unknown
-	[key: string]: unknown
-}
+/**
+ * @typedef {Object} SubmissionSource
+ * @property {unknown} [client_submission_id]
+ */
 
-interface NestedSubmissionSource extends SubmissionSource {
-	data?: NestedSubmissionSource | null
-	pendingShipment?: NestedSubmissionSource | null
-	[key: string]: unknown
-}
+/**
+ * @typedef {SubmissionSource & { data?: NestedSubmissionSource | null, pendingShipment?: NestedSubmissionSource | null }} NestedSubmissionSource
+ */
 
-export const readClientSubmissionId = (...sources: Array<SubmissionSource | null | undefined>): string | null => {
+/**
+ * Cerca il primo client_submission_id valido fra le sorgenti passate (flat).
+ * @param {...(SubmissionSource | null | undefined)} sources
+ * @returns {string | null}
+ */
+export const readClientSubmissionId = (...sources) => {
 	for (const source of sources) {
 		if (!source || typeof source !== 'object') continue
 		const submissionId = normalizeSubmissionId(source.client_submission_id)
@@ -524,9 +636,14 @@ export const readClientSubmissionId = (...sources: Array<SubmissionSource | null
 	return null
 }
 
-export const readNestedClientSubmissionId = (...sources: Array<NestedSubmissionSource | null | undefined>): string | null => {
+/**
+ * Cerca ricorsivamente client_submission_id nelle chiavi pendingShipment/data.
+ * @param {...(NestedSubmissionSource | null | undefined)} sources
+ * @returns {string | null}
+ */
+export const readNestedClientSubmissionId = (...sources) => {
 	const queue = [...sources]
-	const visited = new Set<object>()
+	const visited = new Set()
 
 	while (queue.length > 0) {
 		const source = queue.shift()
@@ -548,7 +665,12 @@ export const readNestedClientSubmissionId = (...sources: Array<NestedSubmissionS
 	return null
 }
 
-export const ensureClientSubmissionId = (target: SubmissionSource | null | undefined): string => {
+/**
+ * Se target non ha un client_submission_id, ne genera uno e lo salva in place.
+ * @param {SubmissionSource | null | undefined} target
+ * @returns {string}
+ */
+export const ensureClientSubmissionId = (target) => {
 	const existing = readClientSubmissionId(target)
 	if (existing) return existing
 

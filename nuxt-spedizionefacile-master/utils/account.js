@@ -1,4 +1,4 @@
-// === utils/account.ts — Helper navigation account ===
+// === utils/account.js — Helper navigation account ===
 // Consolidamento di:
 //   - utils/accountNavigation.ts        (icons + createAccountSections)
 //   - utils/accountNavigationGroups.ts  (adminNavGroups / clientNavGroups / proNavGroups)
@@ -8,26 +8,28 @@
 // SEZIONE 1 — ex utils/accountNavigation.ts
 // ─────────────────────────────────────────────────────────────────
 
-export type AccountIconKey =
-	| 'truck-fast'
-	| 'package'
-	| 'credit-card'
-	| 'wallet'
-	| 'bank-transfer'
-	| 'account'
-	| 'map-marker'
-	| 'headset'
-	| 'chart-box'
-	| 'clipboard-list'
-	| 'truck-delivery'
-	| 'account-group'
-	| 'share-variant'
-	| 'services-cog'
-	| 'tag-multiple'
-	| 'email'
-	| 'cog-outline'
+/**
+ * @typedef {'truck-fast'
+ *   | 'package'
+ *   | 'credit-card'
+ *   | 'wallet'
+ *   | 'bank-transfer'
+ *   | 'account'
+ *   | 'map-marker'
+ *   | 'headset'
+ *   | 'chart-box'
+ *   | 'clipboard-list'
+ *   | 'truck-delivery'
+ *   | 'account-group'
+ *   | 'share-variant'
+ *   | 'services-cog'
+ *   | 'tag-multiple'
+ *   | 'email'
+ *   | 'cog-outline'} AccountIconKey
+ */
 
-export const accountCardIcons: Record<AccountIconKey, string> = {
+/** @type {Record<AccountIconKey, string>} */
+export const accountCardIcons = {
 	'truck-fast':
 		'<path d="M3,4A2,2 0 0,0 1,6V17H3A3,3 0 0,0 6,20A3,3 0 0,0 9,17H15A3,3 0 0,0 18,20A3,3 0 0,0 21,17H23V12L20,8H17V4M10,6L14,10L10,14V11H4V9H10M17,9.5H19.5L21.47,12H17M6,15.5A1.5,1.5 0 0,1 7.5,17A1.5,1.5 0 0,1 6,18.5A1.5,1.5 0 0,1 4.5,17A1.5,1.5 0 0,1 6,15.5M18,15.5A1.5,1.5 0 0,1 19.5,17A1.5,1.5 0 0,1 18,18.5A1.5,1.5 0 0,1 16.5,17A1.5,1.5 0 0,1 18,15.5Z"/>',
 	package:
@@ -62,63 +64,80 @@ export const accountCardIcons: Record<AccountIconKey, string> = {
 		'<path d="M12,8A4,4 0 0,1 16,12A4,4 0 0,1 12,16A4,4 0 0,1 8,12A4,4 0 0,1 12,8M12,10A2,2 0 0,0 10,12A2,2 0 0,0 12,14A2,2 0 0,0 14,12A2,2 0 0,0 12,10M10,22C9.75,22 9.54,21.82 9.5,21.58L9.13,18.93C8.5,18.68 7.96,18.34 7.44,17.94L4.95,18.95C4.73,19.03 4.46,18.95 4.34,18.73L2.34,15.27C2.21,15.05 2.27,14.78 2.46,14.63L4.57,12.97C4.53,12.65 4.5,12.33 4.5,12C4.5,11.67 4.53,11.34 4.57,11L2.46,9.37C2.27,9.22 2.21,8.95 2.34,8.73L4.34,5.27C4.46,5.05 4.73,4.96 4.95,5.05L7.44,6.05C7.96,5.66 8.5,5.32 9.13,5.07L9.5,2.42C9.54,2.18 9.75,2 10,2H14C14.25,2 14.46,2.18 14.5,2.42L14.87,5.07C15.5,5.32 16.04,5.66 16.56,6.05L19.05,5.05C19.27,4.96 19.54,5.05 19.66,5.27L21.66,8.73C21.79,8.95 21.73,9.22 21.54,9.37L19.43,11C19.47,11.34 19.5,11.67 19.5,12C19.5,12.33 19.47,12.65 19.43,12.97L21.54,14.63C21.73,14.78 21.79,15.05 21.66,15.27L19.66,18.73C19.54,18.95 19.27,19.04 19.05,18.95L16.56,17.94C16.04,18.34 15.5,18.68 14.87,18.93L14.5,21.58C14.46,21.82 14.25,22 14,22H10Z"/>',
 }
 
-interface AccountTone {
-	iconBg: string
-	iconColor: string
-	iconBorder: string
-}
+/**
+ * @typedef {Object} AccountTone
+ * @property {string} iconBg
+ * @property {string} iconColor
+ * @property {string} iconBorder
+ */
 
-const shippingTone: AccountTone = {
+/** @type {AccountTone} */
+const shippingTone = {
 	iconBg: '#ECF8F8',
 	iconColor: '#0F766E',
 	iconBorder: 'rgba(15, 118, 110, 0.14)',
 }
 
-const paymentTone: AccountTone = {
+/** @type {AccountTone} */
+const paymentTone = {
 	iconBg: '#FFF4EE',
 	iconColor: '#E44203',
 	iconBorder: 'rgba(228, 66, 3, 0.14)',
 }
 
-const proTone: AccountTone = {
+/** @type {AccountTone} */
+const proTone = {
 	iconBg: '#FFF6EF',
 	iconColor: '#C2410C',
 	iconBorder: 'rgba(194, 65, 12, 0.14)',
 }
 
-const profileTone: AccountTone = {
+/** @type {AccountTone} */
+const profileTone = {
 	iconBg: '#F4F6F8',
 	iconColor: '#52606D',
 	iconBorder: 'rgba(82, 96, 109, 0.14)',
 }
 
-const adminTone: AccountTone = {
+/** @type {AccountTone} */
+const adminTone = {
 	iconBg: '#eef7f8',
 	iconColor: '#095866',
 	iconBorder: 'rgba(9, 88, 102, 0.14)',
 }
 
-export interface AccountPage extends AccountTone {
-	title: string
-	description?: string
-	url: string
-	visible: boolean
-	iconKey: AccountIconKey
-}
+/**
+ * @typedef {Object} AccountPage
+ * @property {string} iconBg
+ * @property {string} iconColor
+ * @property {string} iconBorder
+ * @property {string} title
+ * @property {string} [description]
+ * @property {string} url
+ * @property {boolean} visible
+ * @property {AccountIconKey} iconKey
+ */
 
-export interface AccountSection {
-	title: string
-	pages: AccountPage[]
-}
+/**
+ * @typedef {Object} AccountSection
+ * @property {string} title
+ * @property {AccountPage[]} pages
+ */
 
-export interface CreateAccountSectionsOptions {
-	isAdmin?: boolean
-	isPro?: boolean
-}
+/**
+ * @typedef {Object} CreateAccountSectionsOptions
+ * @property {boolean} [isAdmin]
+ * @property {boolean} [isPro]
+ */
 
+/**
+ * Crea le sezioni di navigazione della pagina Account in funzione di ruolo admin/pro.
+ * @param {CreateAccountSectionsOptions} [options]
+ * @returns {AccountSection[]}
+ */
 export const createAccountSections = (
-	{ isAdmin = false, isPro = false }: CreateAccountSectionsOptions = {},
-): AccountSection[] => {
+	{ isAdmin = false, isPro = false } = {},
+) => {
 	return [
 		{
 			title: 'Spedizioni',
@@ -273,24 +292,29 @@ export const createAccountSections = (
 // SEZIONE 2 — ex utils/accountNavigationGroups.ts
 // ─────────────────────────────────────────────────────────────────
 
-export type AccountNavTone = 'admin' | 'pro' | 'client'
+/**
+ * @typedef {'admin' | 'pro' | 'client'} AccountNavTone
+ */
 
-export interface AccountNavItem {
-	label: string
-	to: string
-	iconKey: AccountIconKey
-	exact?: boolean
-	badge?: number | string
-}
+/**
+ * @typedef {Object} AccountNavItem
+ * @property {string} label
+ * @property {string} to
+ * @property {AccountIconKey} iconKey
+ * @property {boolean} [exact]
+ * @property {number | string} [badge]
+ */
 
-export interface AccountNavGroup {
-	key?: string
-	title?: string
-	tone: AccountNavTone
-	items: AccountNavItem[]
-}
+/**
+ * @typedef {Object} AccountNavGroup
+ * @property {string} [key]
+ * @property {string} [title]
+ * @property {AccountNavTone} tone
+ * @property {AccountNavItem[]} items
+ */
 
-export const adminNavGroups: AccountNavGroup[] = [
+/** @type {AccountNavGroup[]} */
+export const adminNavGroups = [
 	{
 		key: 'dashboard',
 		tone: 'admin',
@@ -354,7 +378,8 @@ export const adminNavGroups: AccountNavGroup[] = [
 	},
 ]
 
-export const clientNavGroups: AccountNavGroup[] = [
+/** @type {AccountNavGroup[]} */
+export const clientNavGroups = [
 	{
 		tone: 'client',
 		items: [
@@ -370,7 +395,8 @@ export const clientNavGroups: AccountNavGroup[] = [
 	},
 ]
 
-export const proNavGroups: AccountNavGroup[] = [
+/** @type {AccountNavGroup[]} */
+export const proNavGroups = [
 	{
 		tone: 'client',
 		items: [

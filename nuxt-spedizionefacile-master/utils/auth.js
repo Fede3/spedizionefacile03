@@ -1,4 +1,4 @@
-// === utils/auth.ts — Helper autenticazione consolidati ===
+// === utils/auth.js — Helper autenticazione consolidati ===
 // Consolidamento di:
 //   - utils/authUiState.ts     (snapshot, cookie, extract/parse)
 //   - utils/authHelpers.ts     (sanitizeAuthRedirect, humanizeSocialAuthError)
@@ -11,31 +11,39 @@
 // SEZIONE 1 — ex utils/authUiState.ts
 // ─────────────────────────────────────────────────────────────────
 
-export type AuthUiSnapshot = {
-	authenticated: boolean;
-	name: string;
-	surname: string;
-	email: string;
-	createdAt: string;
-	userType: string;
-	role: string | null;
-};
+/**
+ * @typedef {Object} AuthUiSnapshot
+ * @property {boolean} authenticated
+ * @property {string} name
+ * @property {string} surname
+ * @property {string} email
+ * @property {string} createdAt
+ * @property {string} userType
+ * @property {string | null} role
+ */
 
-export type AuthUiUser = {
-	name?: string | null;
-	surname?: string | null;
-	email?: string | null;
-	created_at?: string | null;
-	user_type?: string | null;
-	role?: string | null;
-};
+/**
+ * @typedef {Object} AuthUiUser
+ * @property {string | null} [name]
+ * @property {string | null} [surname]
+ * @property {string | null} [email]
+ * @property {string | null} [created_at]
+ * @property {string | null} [user_type]
+ * @property {string | null} [role]
+ */
 
-export type AuthBootstrapStatus = 'idle' | 'pending' | 'resolved' | 'failed';
+/**
+ * @typedef {'idle' | 'pending' | 'resolved' | 'failed'} AuthBootstrapStatus
+ */
 
 export const AUTH_UI_COOKIE = 'sf_auth_ui';
 export const AUTH_UI_STORAGE = 'sf_auth_ui_cache';
 
-export const createEmptySnapshot = (): AuthUiSnapshot => ({
+/**
+ * Crea uno snapshot auth vuoto (utente non autenticato).
+ * @returns {AuthUiSnapshot}
+ */
+export const createEmptySnapshot = () => ({
 	authenticated: false,
 	name: '',
 	surname: '',
@@ -45,7 +53,12 @@ export const createEmptySnapshot = (): AuthUiSnapshot => ({
 	role: null,
 });
 
-export const snapshotFromUser = (user: AuthUiUser): AuthUiSnapshot => ({
+/**
+ * Costruisce uno snapshot a partire dai campi di un utente autenticato.
+ * @param {AuthUiUser} user
+ * @returns {AuthUiSnapshot}
+ */
+export const snapshotFromUser = (user) => ({
 	authenticated: true,
 	name: String(user.name || ''),
 	surname: String(user.surname || ''),
@@ -55,13 +68,18 @@ export const snapshotFromUser = (user: AuthUiUser): AuthUiSnapshot => ({
 	role: user.role || null,
 });
 
-export const parseStoredSnapshot = (value: string | null): AuthUiSnapshot => {
+/**
+ * Parsa uno snapshot salvato (JSON string) restituendo sempre un oggetto valido.
+ * @param {string | null} value
+ * @returns {AuthUiSnapshot}
+ */
+export const parseStoredSnapshot = (value) => {
 	if (!value) {
 		return createEmptySnapshot();
 	}
 
 	try {
-		const parsed = JSON.parse(value) as Partial<AuthUiSnapshot>;
+		const parsed = JSON.parse(value);
 		if (!parsed.authenticated) {
 			return createEmptySnapshot();
 		}
@@ -80,22 +98,43 @@ export const parseStoredSnapshot = (value: string | null): AuthUiSnapshot => {
 	}
 };
 
-export const extractCookieValue = (cookieHeader: string, name: string): string | null => {
+/**
+ * Estrae il valore di un cookie dalla stringa Cookie header (ritorna null se assente).
+ * @param {string} cookieHeader
+ * @param {string} name
+ * @returns {string | null}
+ */
+export const extractCookieValue = (cookieHeader, name) => {
 	const match = cookieHeader.match(new RegExp(`(?:^|; )${name}=([^;]*)`));
 	return match?.[1] ? decodeURIComponent(match[1]) : null;
 };
 
-export const hasAuthSessionCookie = (cookieHeader: string): boolean =>
+/**
+ * Indica se nella Cookie header è presente almeno un cookie di sessione (_session).
+ * @param {string} cookieHeader
+ * @returns {boolean}
+ */
+export const hasAuthSessionCookie = (cookieHeader) =>
 	/(?:^|;\s*)(?:[^=;]+_session)=/.test(cookieHeader);
 
-export const readAuthUiSnapshotFromCookieHeader = (cookieHeader: string): AuthUiSnapshot =>
+/**
+ * Legge lo snapshot auth dai cookie presenti nella Cookie header.
+ * @param {string} cookieHeader
+ * @returns {AuthUiSnapshot}
+ */
+export const readAuthUiSnapshotFromCookieHeader = (cookieHeader) =>
 	parseStoredSnapshot(extractCookieValue(cookieHeader, AUTH_UI_COOKIE));
 
-export const isAuthenticatedSnapshotValue = (value: unknown): value is AuthUiSnapshot =>
+/**
+ * Type-guard: true se il valore è uno snapshot autenticato.
+ * @param {unknown} value
+ * @returns {boolean}
+ */
+export const isAuthenticatedSnapshotValue = (value) =>
 	Boolean(
 		value
 		&& typeof value === 'object'
-		&& (value as Partial<AuthUiSnapshot>).authenticated,
+		&& value.authenticated,
 	);
 
 // ─────────────────────────────────────────────────────────────────
@@ -118,8 +157,11 @@ export const isAuthenticatedSnapshotValue = (value: unknown): value is AuthUiSna
 /**
  * Valida e normalizza un path di redirect post-auth.
  * Previene open redirect rifiutando path non relativi.
+ * @param {string | null} [redirect]
+ * @param {string} [fallback]
+ * @returns {string}
  */
-export const sanitizeAuthRedirect = (redirect?: string | null, fallback = '/account'): string => {
+export const sanitizeAuthRedirect = (redirect, fallback = '/account') => {
 	if (!redirect || typeof redirect !== 'string') return fallback
 	if (redirect.startsWith('/') && !redirect.startsWith('//')) {
 		const normalized = redirect !== '/' && redirect.endsWith('/') ? redirect.slice(0, -1) : redirect
@@ -143,7 +185,8 @@ export const sanitizeAuthRedirect = (redirect?: string | null, fallback = '/acco
 
 // ── Social auth error messages ──
 
-const SOCIAL_ERROR_MAP: Record<string, string> = {
+/** @type {Record<string, string>} */
+const SOCIAL_ERROR_MAP = {
 	google_email_missing: "Il tuo account Google non ha un\u2019email disponibile. Usa un altro account oppure registrati con email.",
 	facebook_email_missing: "Il tuo account Facebook non ha un\u2019email disponibile. Usa un altro account oppure registrati con email.",
 	apple_email_missing: "Il tuo account Apple non ha un\u2019email disponibile. Usa un altro account oppure registrati con email.",
@@ -154,8 +197,10 @@ const SOCIAL_ERROR_MAP: Record<string, string> = {
 
 /**
  * Traduce un codice errore social auth in un messaggio leggibile per l'utente.
+ * @param {string} rawError
+ * @returns {string}
  */
-export const humanizeSocialAuthError = (rawError: string): string => {
+export const humanizeSocialAuthError = (rawError) => {
 	if (SOCIAL_ERROR_MAP[rawError]) return SOCIAL_ERROR_MAP[rawError]
 	if (rawError.startsWith('facebook_')) return "Errore durante l\u2019accesso con Facebook. Riprova."
 	if (rawError.startsWith('google_')) return "Errore durante l\u2019accesso con Google. Riprova."
@@ -167,36 +212,70 @@ export const humanizeSocialAuthError = (rawError: string): string => {
 // SEZIONE 3 — ex utils/authRouting.ts
 // ─────────────────────────────────────────────────────────────────
 
-export type AuthOverlayTab = 'login' | 'register'
+/**
+ * @typedef {'login' | 'register'} AuthOverlayTab
+ */
 
-const isSameOrNestedPath = (path: string, prefix: string) =>
+/**
+ * Indica se path coincide con prefix o ne è una sotto-route.
+ * @param {string} path
+ * @param {string} prefix
+ * @returns {boolean}
+ */
+const isSameOrNestedPath = (path, prefix) =>
   path === prefix || path.startsWith(`${prefix}/`)
 
-export const getRouteQueryValue = <T>(value: T | T[] | undefined | null): T | undefined =>
+/**
+ * Normalizza un valore di query route: se è array prende il primo elemento.
+ * @template T
+ * @param {T | T[] | undefined | null} value
+ * @returns {T | undefined}
+ */
+export const getRouteQueryValue = (value) =>
   Array.isArray(value) ? value[0] : value ?? undefined
 
-export const normalizeAuthTab = (value: unknown): AuthOverlayTab =>
+/**
+ * Normalizza il valore del tab dell'overlay auth (default login).
+ * @param {unknown} value
+ * @returns {AuthOverlayTab}
+ */
+export const normalizeAuthTab = (value) =>
   value === 'register' || value === 'registrati' ? 'register' : 'login'
 
-export const normalizeRequestedPath = (path?: string | null, fallback = '/') => {
+/**
+ * Normalizza il path richiesto dall'utente post-auth applicando sanitize + trim slash.
+ * @param {string | null} [path]
+ * @param {string} [fallback]
+ * @returns {string}
+ */
+export const normalizeRequestedPath = (path, fallback = '/') => {
   const sanitized = sanitizeAuthRedirect(path, fallback)
   return sanitized !== '/' && sanitized.endsWith('/') ? sanitized.slice(0, -1) : sanitized
 }
 
-export const resolveAuthOverlayHost = (requestedPath: string) => {
+/**
+ * Restituisce la pagina su cui montare l'overlay auth in base al path richiesto.
+ * @param {string} requestedPath
+ * @returns {string}
+ */
+export const resolveAuthOverlayHost = (requestedPath) => {
   if (isSameOrNestedPath(requestedPath, '/checkout')) return '/carrello'
   if (isSameOrNestedPath(requestedPath, '/account')) return '/'
   return requestedPath
 }
 
+/**
+ * Costruisce una location Nuxt { path, query } per aprire il modale auth nel punto corretto.
+ * @param {Object} params
+ * @param {boolean} [params.forgot]
+ * @param {string | null} [params.requestedPath]
+ * @param {AuthOverlayTab} [params.tab]
+ * @returns {{ path: string, query: Record<string, string> }}
+ */
 export const buildAuthOverlayLocation = ({
   forgot = false,
   requestedPath,
   tab = 'login',
-}: {
-  forgot?: boolean
-  requestedPath?: string | null
-  tab?: AuthOverlayTab
 }) => {
   const redirect = normalizeRequestedPath(requestedPath, '/')
   const path = resolveAuthOverlayHost(redirect)
@@ -211,26 +290,31 @@ export const buildAuthOverlayLocation = ({
   }
 }
 
+/**
+ * Costruisce un redirect dal vecchio flusso auth standalone al modale overlay attuale.
+ * @param {{ query?: Record<string, unknown> } | null | undefined} routeLike
+ * @param {Object} [options]
+ * @param {AuthOverlayTab} [options.defaultTab]
+ * @param {boolean} [options.allowRequestedMode]
+ * @param {boolean} [options.allowRequestedTab]
+ * @param {boolean} [options.forceForgot]
+ * @param {string} [options.fallbackPath]
+ * @returns {{ path: string, query: Record<string, string> }}
+ */
 export const buildLegacyAuthOverlayRedirect = (
-  routeLike: { query?: Record<string, unknown> } | null | undefined,
+  routeLike,
   {
     defaultTab = 'login',
     allowRequestedMode = false,
     allowRequestedTab = false,
     forceForgot = false,
     fallbackPath = '/',
-  }: {
-    defaultTab?: AuthOverlayTab
-    allowRequestedMode?: boolean
-    allowRequestedTab?: boolean
-    forceForgot?: boolean
-    fallbackPath?: string
   } = {},
 ) => {
   const query = routeLike?.query || {}
-  const requestedRedirect = getRouteQueryValue(query.redirect as string | string[] | undefined)
-  const requestedMode = getRouteQueryValue(query.mode as string | string[] | undefined)
-  const requestedTab = getRouteQueryValue(query.tab as string | string[] | undefined)
+  const requestedRedirect = getRouteQueryValue(query.redirect)
+  const requestedMode = getRouteQueryValue(query.mode)
+  const requestedTab = getRouteQueryValue(query.tab)
 
   const targetTab = allowRequestedMode && requestedMode === 'register'
     ? 'register'
@@ -264,20 +348,22 @@ export const buildLegacyAuthOverlayRedirect = (
 
 // ── Tipi ──
 
-export type AuthBootstrapResult = {
-	bootstrapReady: ReturnType<typeof useState<boolean>>
-	bootstrapStatus: ReturnType<typeof useState<'idle' | 'pending' | 'resolved' | 'failed'>>
-}
+/**
+ * @typedef {Object} AuthBootstrapResult
+ * @property {ReturnType<typeof useState<boolean>>} bootstrapReady
+ * @property {ReturnType<typeof useState<'idle' | 'pending' | 'resolved' | 'failed'>>} bootstrapStatus
+ */
 
 // ── Stato condiviso ──
 
 /**
  * Accede allo stato globale (useState) del bootstrap auth.
  * Tutti i consumatori usano le stesse chiavi, garantendo coerenza.
+ * @returns {AuthBootstrapResult}
  */
-export const useAuthBootstrapState = (): AuthBootstrapResult => {
+export const useAuthBootstrapState = () => {
 	const bootstrapReady = useState('auth-bootstrap-ready', () => false)
-	const bootstrapStatus = useState<'idle' | 'pending' | 'resolved' | 'failed'>('auth-bootstrap-status', () => 'idle')
+	const bootstrapStatus = useState('auth-bootstrap-status', () => 'idle')
 	return { bootstrapReady, bootstrapStatus }
 }
 
@@ -291,12 +377,14 @@ export const useAuthBootstrapState = (): AuthBootstrapResult => {
  *   - skipIfNoSnapshot: salta init() se non c'è una snapshot auth (guest-auth pattern)
  *
  * Restituisce il risultato dello stato bootstrap dopo l'esecuzione.
+ *
+ * @param {Object} [options]
+ * @param {boolean} [options.force]
+ * @param {boolean} [options.skipIfNoSnapshot]
+ * @param {boolean} [options.hasAuthenticatedSnapshot]
+ * @returns {Promise<AuthBootstrapResult>}
  */
-export const runAuthBootstrap = async (options?: {
-	force?: boolean
-	skipIfNoSnapshot?: boolean
-	hasAuthenticatedSnapshot?: boolean
-}): Promise<AuthBootstrapResult> => {
+export const runAuthBootstrap = async (options) => {
 	const { bootstrapReady, bootstrapStatus } = useAuthBootstrapState()
 	const { init } = useSanctumAuth()
 
@@ -320,7 +408,7 @@ export const runAuthBootstrap = async (options?: {
 		await init()
 		bootstrapStatus.value = 'resolved'
 	} catch (error) {
-		const err = error as { status?: number; response?: { status?: number } }
+		const err = error
 		const status = Number(err?.status ?? err?.response?.status ?? 0)
 
 		if ([401, 419].includes(status)) {
@@ -338,25 +426,28 @@ export const runAuthBootstrap = async (options?: {
 
 // ── SSR cookie check ──
 
-export type SsrAuthCheck = {
-	cookie: string
-	authSnapshot: AuthUiSnapshot
-	hasSessionCookie: boolean
-	isAuthenticated: boolean
-}
+/**
+ * @typedef {Object} SsrAuthCheck
+ * @property {string} cookie
+ * @property {AuthUiSnapshot} authSnapshot
+ * @property {boolean} hasSessionCookie
+ * @property {boolean} isAuthenticated
+ */
 
-export type SsrAuthValidation = {
-	checked: boolean
-	authenticated: boolean
-	user: AuthUiUser | null
-}
+/**
+ * @typedef {Object} SsrAuthValidation
+ * @property {boolean} checked
+ * @property {boolean} authenticated
+ * @property {AuthUiUser | null} user
+ */
 
 /**
  * Legge lo stato auth dai cookie nella request SSR.
- * Usato da admin.js e app-auth.ts per decidere se fare redirect
+ * Usato da admin.js e app-auth.js per decidere se fare redirect
  * prima che il client abbia bootstrappato.
+ * @returns {SsrAuthCheck}
  */
-export const readSsrAuthState = (): SsrAuthCheck => {
+export const readSsrAuthState = () => {
 	const cookie = useRequestHeaders(['cookie'])?.cookie || ''
 	const authSnapshot = readAuthUiSnapshotFromCookieHeader(cookie)
 	const sessionCookie = hasAuthSessionCookie(cookie)
@@ -372,8 +463,13 @@ export const readSsrAuthState = (): SsrAuthCheck => {
 	}
 }
 
-export const validateSsrAuthSession = async (): Promise<SsrAuthValidation> => {
-	const validationState = useState<SsrAuthValidation>('auth-ssr-validation', () => ({
+/**
+ * Valida la sessione SSR chiamando /api/user con i cookie propagati.
+ * Il risultato viene memoizzato in useState('auth-ssr-validation').
+ * @returns {Promise<SsrAuthValidation>}
+ */
+export const validateSsrAuthSession = async () => {
+	const validationState = useState('auth-ssr-validation', () => ({
 		checked: false,
 		authenticated: false,
 		user: null,
@@ -408,7 +504,7 @@ export const validateSsrAuthSession = async (): Promise<SsrAuthValidation> => {
 	const timeout = setTimeout(() => controller.abort(), 1800)
 
 	try {
-		const user = await requestFetch<AuthUiUser>('/api/user', {
+		const user = await requestFetch('/api/user', {
 			method: 'GET',
 			headers: {
 				accept: 'application/json',
@@ -442,10 +538,19 @@ export const validateSsrAuthSession = async (): Promise<SsrAuthValidation> => {
 
 const POST_AUTH_RETRY_DELAYS = [0, 180, 420, 900]
 
-const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
+/**
+ * @param {number} ms
+ * @returns {Promise<void>}
+ */
+const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
 
+/**
+ * Riprova a chiamare refreshIdentity con backoff per far assestare i cookie post-login.
+ * @param {() => Promise<unknown>} refreshIdentity
+ * @returns {Promise<boolean>}
+ */
 export const waitForPostAuthSync = async (
-	refreshIdentity: () => Promise<unknown>,
+	refreshIdentity,
 ) => {
 	for (const delay of POST_AUTH_RETRY_DELAYS) {
 		if (delay > 0) {

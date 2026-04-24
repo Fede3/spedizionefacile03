@@ -7,29 +7,49 @@ import {
 	resolveShipmentFlowState,
 	SHIPMENT_FLOW_ROUTES,
 	trimUserStoreToFlowState,
-	type RouteLike,
 } from '~/utils/shipment';
 
-const BLOCK_TOAST_KEY = 'shipment-flow-guard-toast';
-type AuthUserWithRole = { role?: string | null };
+/** @typedef {import('~/utils/shipment').RouteLike} RouteLike */
 
-const scheduleClientToast = (callback: () => void) => {
+const BLOCK_TOAST_KEY = 'shipment-flow-guard-toast';
+
+/**
+ * @typedef {Object} AuthUserWithRole
+ * @property {string|null} [role]
+ */
+
+/**
+ * Pianifica l'esecuzione di un toast client-side dopo il prossimo repaint.
+ * @param {() => void} callback
+ * @returns {void}
+ */
+const scheduleClientToast = (callback) => {
 	if (typeof window === 'undefined') return;
 	window.requestAnimationFrame(() => {
 		window.setTimeout(callback, 0);
 	});
 };
 
-const normalizeRouteQueryValue = (value: unknown): string | string[] | undefined => {
+/**
+ * Normalizza il valore di una query della route mantenendo solo stringhe valide.
+ * @param {unknown} value
+ * @returns {string | string[] | undefined}
+ */
+const normalizeRouteQueryValue = (value) => {
 	if (Array.isArray(value)) {
-		const normalized = value.filter((item): item is string => typeof item === 'string');
+		const normalized = value.filter((item) => typeof item === 'string');
 		return normalized.length ? normalized : undefined;
 	}
 	return typeof value === 'string' ? value : undefined;
 };
 
-const toShipmentRouteLike = (routeLike: unknown): RouteLike => {
-	const route = routeLike as { path?: unknown; fullPath?: unknown; hash?: unknown; query?: Record<string, unknown> } | null;
+/**
+ * Converte un oggetto route-like in una forma normalizzata compatibile con le utility shipment.
+ * @param {unknown} routeLike
+ * @returns {RouteLike}
+ */
+const toShipmentRouteLike = (routeLike) => {
+	const route = routeLike;
 	const query = Object.fromEntries(
 		Object.entries(route?.query || {})
 			.map(([key, value]) => [key, normalizeRouteQueryValue(value)])
@@ -44,7 +64,12 @@ const toShipmentRouteLike = (routeLike: unknown): RouteLike => {
 	};
 };
 
-const isShipmentProtectedPath = (routeLike: RouteLike) => {
+/**
+ * Verifica se il path appartiene al flusso protetto "la-tua-spedizione".
+ * @param {RouteLike} routeLike
+ * @returns {boolean}
+ */
+const isShipmentProtectedPath = (routeLike) => {
 	const path = String(routeLike?.path || routeLike?.fullPath || '');
 	return path.startsWith('/la-tua-spedizione');
 };
@@ -110,7 +135,7 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
 		shipmentFlowStore.hydrateFromSession();
 	}
 
-	const localFlowState = deriveShipmentFlowStateFromUserStore(shipmentFlowStore as unknown as Record<string, unknown>);
+	const localFlowState = deriveShipmentFlowStateFromUserStore(shipmentFlowStore);
 
 	if (isShipmentFlowResumeException(targetRoute)) {
 		return;
@@ -156,7 +181,7 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
 	const flowState = pickMostAdvancedShipmentFlowState(remoteFlowState, localFlowState);
 	const hasAccess = canAccessShipmentFlowRoute(targetRoute, flowState);
 
-	const userRole = String((user.value as AuthUserWithRole | null)?.role || '').trim();
+	const userRole = String(user.value?.role || '').trim();
 	if (userRole === 'Admin') {
 		if (!hasAccess && !isShipmentFlowResumeException(targetRoute)) {
 			openGate({

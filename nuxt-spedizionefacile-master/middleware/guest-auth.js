@@ -1,6 +1,11 @@
 import { isAuthenticatedSnapshotValue, runAuthBootstrap } from '~/utils/auth'
 
-const getGuestRedirectTarget = (query: Record<string, unknown>) => {
+/**
+ * Determina la destinazione di redirect per utenti già autenticati che accedono a pagine guest.
+ * @param {Record<string, unknown>} query
+ * @returns {string}
+ */
+const getGuestRedirectTarget = (query) => {
 	const redirectValue = Array.isArray(query.redirect) ? query.redirect[0] : query.redirect
 	return typeof redirectValue === 'string' && redirectValue.startsWith('/') ? redirectValue : '/account'
 }
