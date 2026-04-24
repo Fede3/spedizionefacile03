@@ -21,6 +21,57 @@
 import { useCheckoutOrderContext } from '~/composables/useCheckoutOrderContext'
 import { buildCheckoutSuccessQuery, translateStripeError } from '~/utils/checkout'
 
+// Chiave localStorage per il draft pagamento in corso.
+// Serve a recuperare lo stato dopo redirect 3DS o sessione scaduta.
+const PENDING_PAYMENT_KEY = 'sf_pending_payment'
+const PENDING_PAYMENT_TTL_MS = 24 * 60 * 60 * 1000 // 24 ore
+
+function safeLocalGet(key) {
+  if (typeof window === 'undefined') return null
+  try {
+    const raw = window.localStorage.getItem(key)
+    return raw ? JSON.parse(raw) : null
+  } catch {
+    return null
+  }
+}
+
+function safeLocalSet(key, value) {
+  if (typeof window === 'undefined') return
+  try {
+    window.localStorage.setItem(key, JSON.stringify(value))
+  } catch {
+    /* storage pieno o disabilitato */
+  }
+}
+
+function safeLocalRemove(key) {
+  if (typeof window === 'undefined') return
+  try {
+    window.localStorage.removeItem(key)
+  } catch {
+    /* storage disabilitato */
+  }
+}
+
+/**
+ * Legge un eventuale pagamento in sospeso (non completato) dal localStorage.
+ * Ritorna null se scaduto o assente. Esportata per usi esterni (es. pagina di recovery).
+ */
+export function loadPendingPayment() {
+  const data = safeLocalGet(PENDING_PAYMENT_KEY)
+  if (!data) return null
+  if (data.expiresAt && data.expiresAt < Date.now()) {
+    safeLocalRemove(PENDING_PAYMENT_KEY)
+    return null
+  }
+  return data
+}
+
+export function clearPendingPayment() {
+  safeLocalRemove(PENDING_PAYMENT_KEY)
+}
+
 /**
  * Composable principale di pagamento checkout.
  *
@@ -84,12 +135,12 @@ export function usePayment(cart) {
     paymentStep,
   })
 
-  async function ensurePaymentAuthContext() {
+  async function ensurePaymentAuthContext({ force = false } = {}) {
     const hasUiSnapshot = Boolean(authCookie.value?.authenticated)
 
-    if (!isAuthenticated.value) {
+    if (force || !isAuthenticated.value) {
       try {
-        await runAuthBootstrap({ force: hasUiSnapshot })
+        await runAuthBootstrap({ force: force || hasUiSnapshot })
       } catch (error) {
         console.warn('[usePayment] auth bootstrap failed before payment:', error?.message || error)
       }
@@ -110,6 +161,51 @@ export function usePayment(cart) {
     } catch (error) {
       console.warn('[usePayment] csrf refresh failed before payment:', error?.message || error)
     }
+  }
+
+  /**
+   * Esegue una chiamata API e in caso di 401 (sessione scaduta durante 3DS)
+   * prova a rinnovare la sessione Sanctum e ritenta. Max 2 retry.
+   * Se fallisce comunque, rilancia l'errore per mostrare messaggio chiaro all'utente.
+   */
+  async function callWithAuthRetry(fn, { attempts = 2, label = 'payment call' } = {}) {
+    let lastError = null
+    for (let attempt = 0; attempt <= attempts; attempt++) {
+      try {
+        return await fn()
+      } catch (error) {
+        lastError = error
+        const status = error?.response?.status
+          ?? error?.statusCode
+          ?? error?.status
+          ?? (error?.data?.statusCode)
+        const is401 = status === 401 || status === 419
+        if (is401 && attempt < attempts) {
+          console.warn(`[usePayment] ${label}: 401, tentativo re-auth #${attempt + 1}`)
+          try {
+            await ensurePaymentAuthContext({ force: true })
+          } catch (authErr) {
+            console.warn('[usePayment] re-auth fallito:', authErr?.message || authErr)
+          }
+          continue
+        }
+        throw error
+      }
+    }
+    throw lastError
+  }
+
+  /**
+   * Salva nel localStorage lo stato del pagamento in corso (prima di 3DS).
+   * Permette di recuperare l'ordine dopo eventuale disconnessione durante la challenge.
+   */
+  function persistPaymentDraft(draft) {
+    if (!draft?.orderId) return
+    safeLocalSet(PENDING_PAYMENT_KEY, {
+      ...draft,
+      createdAt: Date.now(),
+      expiresAt: Date.now() + PENDING_PAYMENT_TTL_MS,
+    })
   }
 
   // ---------- INIT STRIPE ----------
@@ -278,6 +374,16 @@ export function usePayment(cart) {
     const submissionId = submissionContext.client_submission_id
     const useSaved = hasSavedCard.value && !useNewCard.value
 
+    // Persist draft PRIMA del 3DS: se la sessione Sanctum scade durante la challenge,
+    // l'utente puo' recuperare l'ordine al re-login.
+    persistPaymentDraft({
+      orderId,
+      paymentMethod: 'carta',
+      submissionId,
+      isExisting,
+      amount: Number(cart.finalTotal?.value ?? 0),
+    })
+
     paymentStep.value = 'Conferma pagamento...'
 
     if (useSaved) {
@@ -367,19 +473,28 @@ export function usePayment(cart) {
     await onPaymentSuccess(orderId, 'carta')
   }
 
-  /** Notifica backend che l'ordine è stato pagato (per invio email + sync stato). */
+  /**
+   * Notifica backend che l'ordine è stato pagato (per invio email + sync stato).
+   * Gestisce automaticamente 401 durante 3DS: re-auth + retry (max 2 tentativi).
+   * Se anche dopo il retry fallisce, lancia errore ma il draft resta in localStorage
+   * così l'utente può ritrovare il suo ordine dopo il re-login.
+   */
   async function markOrderPaid(orderId, extId, isExisting, submissionId) {
     paymentStep.value = 'Finalizzazione...'
     const endpoint = isExisting ? '/api/stripe/existing-order-paid' : '/api/stripe/order-paid'
-    await sanctum(endpoint, {
-      method: 'POST',
-      body: {
-        order_id: orderId,
-        ext_id: extId,
-        is_existing_order: isExisting,
-        client_submission_id: submissionId,
-      },
-    })
+    await callWithAuthRetry(
+      () =>
+        sanctum(endpoint, {
+          method: 'POST',
+          body: {
+            order_id: orderId,
+            ext_id: extId,
+            is_existing_order: isExisting,
+            client_submission_id: submissionId,
+          },
+        }),
+      { label: 'markOrderPaid' },
+    )
   }
 
   // ---------- WALLET ----------
@@ -397,31 +512,47 @@ export function usePayment(cart) {
     })
     const submissionId = submissionContext.client_submission_id
 
+    persistPaymentDraft({
+      orderId,
+      paymentMethod: 'wallet',
+      submissionId,
+      isExisting,
+      amount: Number(cart.finalTotal?.value ?? 0),
+    })
+
     paymentStep.value = 'Addebito saldo wallet...'
     const amountEur = Number(cart.finalTotal?.value ?? 0)
-    const res = await sanctum('/api/wallet/pay', {
-      method: 'POST',
-      body: {
-        amount: amountEur,
-        reference: `order-${orderId}`,
-        description: `Pagamento ordine #${orderId}`,
-      },
-    })
+    const res = await callWithAuthRetry(
+      () =>
+        sanctum('/api/wallet/pay', {
+          method: 'POST',
+          body: {
+            amount: amountEur,
+            reference: `order-${orderId}`,
+            description: `Pagamento ordine #${orderId}`,
+          },
+        }),
+      { label: 'wallet pay' },
+    )
     if (!res?.success || !res?.data?.id) {
       throw new Error(res?.message || 'Saldo insufficiente o pagamento wallet non riuscito.')
     }
 
     paymentStep.value = 'Finalizzazione...'
-    await sanctum('/api/stripe/mark-order-completed', {
-      method: 'POST',
-      body: {
-        order_id: orderId,
-        payment_type: 'wallet',
-        ext_id: `wallet-${res.data.id}`,
-        is_existing_order: isExisting,
-        ...submissionContext,
-      },
-    })
+    await callWithAuthRetry(
+      () =>
+        sanctum('/api/stripe/mark-order-completed', {
+          method: 'POST',
+          body: {
+            order_id: orderId,
+            payment_type: 'wallet',
+            ext_id: `wallet-${res.data.id}`,
+            is_existing_order: isExisting,
+            ...submissionContext,
+          },
+        }),
+      { label: 'wallet mark-completed' },
+    )
     await onPaymentSuccess(orderId, 'wallet')
   }
 
@@ -436,16 +567,28 @@ export function usePayment(cart) {
     })
     const submissionId = submissionContext.client_submission_id
 
-    paymentStep.value = 'Registrazione ordine...'
-    await sanctum('/api/stripe/mark-order-completed', {
-      method: 'POST',
-      body: {
-        order_id: orderId,
-        payment_type: 'bonifico',
-        is_existing_order: isExisting,
-        ...submissionContext,
-      },
+    persistPaymentDraft({
+      orderId,
+      paymentMethod: 'bonifico',
+      submissionId,
+      isExisting,
+      amount: Number(cart.finalTotal?.value ?? 0),
     })
+
+    paymentStep.value = 'Registrazione ordine...'
+    await callWithAuthRetry(
+      () =>
+        sanctum('/api/stripe/mark-order-completed', {
+          method: 'POST',
+          body: {
+            order_id: orderId,
+            payment_type: 'bonifico',
+            is_existing_order: isExisting,
+            ...submissionContext,
+          },
+        }),
+      { label: 'bonifico mark-completed' },
+    )
     await onPaymentSuccess(orderId, 'bonifico')
   }
 
@@ -462,6 +605,9 @@ export function usePayment(cart) {
   async function onPaymentSuccess(orderId, method) {
     paymentSuccess.value = true
     successOrderId.value = orderId
+
+    // Pagamento riuscito: rimuovi il draft di recovery dal localStorage.
+    clearPendingPayment()
 
     // GA4 archiviato — purchase event non più inviato a gtag.
     // Plausible riceve `payment_success` via useFunnelAnalytics.

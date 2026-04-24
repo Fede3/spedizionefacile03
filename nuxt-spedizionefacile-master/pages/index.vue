@@ -81,9 +81,20 @@ const faqs = [
 		a: 'Per le spedizioni nazionali la consegna avviene in 24/48 ore lavorative. In Europa i tempi vanno da 2 a 5 giorni lavorativi a seconda del paese.',
 	},
 ];
-const openFaq = ref(-1);
+// Accordion multi-aperto: cliccando una FAQ non chiude le altre.
+// Prima era singolo (un solo indice), ma gli utenti si lamentavano
+// che le risposte precedenti "sparivano".
+const openFaqIndexes = ref([]);
+function isFaqOpen(i) {
+	return openFaqIndexes.value.includes(i);
+}
 function toggleFaq(i) {
-	openFaq.value = openFaq.value === i ? -1 : i;
+	const idx = openFaqIndexes.value.indexOf(i);
+	if (idx >= 0) {
+		openFaqIndexes.value.splice(idx, 1);
+	} else {
+		openFaqIndexes.value.push(i);
+	}
 }
 
 // ───────────── Fade-in on scroll (IntersectionObserver) ─────────────
@@ -371,13 +382,13 @@ onBeforeUnmount(() => observer?.disconnect());
 						v-for="(item, i) in faqs"
 						:key="i"
 						class="faq__item"
-						:data-open="openFaq === i ? 'true' : 'false'"
+						:data-open="isFaqOpen(i) ? 'true' : 'false'"
 						data-reveal
 					>
 						<button
 							type="button"
 							class="faq__q"
-							:aria-expanded="openFaq === i"
+							:aria-expanded="isFaqOpen(i)"
 							:aria-controls="`faq-panel-${i}`"
 							:id="`faq-trigger-${i}`"
 							@click="toggleFaq(i)"
@@ -390,7 +401,7 @@ onBeforeUnmount(() => observer?.disconnect());
 							</span>
 						</button>
 						<div
-							v-show="openFaq === i"
+							v-show="isFaqOpen(i)"
 							:id="`faq-panel-${i}`"
 							role="region"
 							:aria-labelledby="`faq-trigger-${i}`"

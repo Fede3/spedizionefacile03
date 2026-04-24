@@ -5,7 +5,6 @@ const client = useSanctumClient();
 const visible = ref(false);
 const showPreferences = ref(false);
 const bannerRef = ref(null);
-const { isAccountRoute, isQuoteFlowRoute } = useShellRouteState();
 
 const preferences = reactive({
 	analytics: false,
@@ -45,10 +44,12 @@ const applyStoredConsent = () => {
 };
 
 const reopenCookieBanner = useState('reopenCookieBanner', () => false);
-const isDenseSurfaceRoute = computed(() => isAccountRoute.value || isQuoteFlowRoute.value);
-const isFlowSurfaceRoute = computed(() => isQuoteFlowRoute.value);
+// Prima applicavamo varianti visive diverse per home / account / funnel.
+// Gli utenti percepivano il banner come "diverso in home vs altre pagine":
+// ora uniformiamo l'aspetto sitewide (una sola versione, sempre uguale).
 const isCompactBanner = computed(() => !showPreferences.value);
-const bannerRole = computed(() => (isDenseSurfaceRoute.value ? 'region' : 'dialog'));
+// Il banner resta 'dialog' (accessibile + focus-friendly) in tutte le pagine.
+const bannerRole = 'dialog';
 
 const bannerTitle = computed(() => 'Gestisci i cookie');
 const bannerMessage = computed(() => 'Usiamo i cookie necessari per far funzionare il sito e, se vuoi, anche quelli funzionali e analitici.');
@@ -124,8 +125,6 @@ const acceptCustom = () => {
 			ref="bannerRef"
 			:class="[
 				'cookie-banner',
-				isDenseSurfaceRoute ? 'cookie-banner--dense' : '',
-				isFlowSurfaceRoute ? 'cookie-banner--flow' : '',
 				isCompactBanner ? 'cookie-banner--compact' : '',
 			]"
 			:role="bannerRole"
