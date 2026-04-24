@@ -285,7 +285,7 @@
   border-radius: 999px;
   background: var(--color-neutral-100);
   outline: 1.5px solid var(--color-border);
-  font-size: 0.8125rem;
+  font-size: 0.875rem;
   font-weight: 600;
   color: var(--color-brand-text-secondary);
 }
@@ -337,7 +337,7 @@
   outline-offset: -1.5px;
   background: #ffffff;
   color: var(--color-brand-text);
-  font-size: 0.9375rem;
+  font-size: 1rem;
   font-weight: 500;
   transition: outline-color var(--sf-t1) var(--sf-ease), box-shadow var(--sf-t1) var(--sf-ease), background-color var(--sf-t1) var(--sf-ease);
 }
@@ -373,7 +373,7 @@
 .checkout-coupon-hint,
 .checkout-coupon-error {
   margin: 0;
-  font-size: 0.8125rem;
+  font-size: 0.875rem;
   line-height: 1.45;
 }
 .checkout-coupon-hint {
@@ -414,7 +414,7 @@
 }
 .checkout-panel-head__text {
   margin: 4px 0 0;
-  font-size: 0.9375rem; /* 15px */
+  font-size: 1rem; /* 15px */
   line-height: 1.5;
   color: rgba(29, 39, 56, 0.66);
   font-weight: 500;
@@ -509,7 +509,7 @@
   border-radius: 999px;
   background: var(--color-brand-primary);
   color: var(--color-brand-bg);
-  font-size: 0.6875rem;
+  font-size: 0.75rem;
   font-weight: 700;
   line-height: 1;
   box-shadow: 0 4px 12px rgba(9, 88, 102, 0.2);
@@ -670,7 +670,7 @@
   border-radius: 8px;
   background: var(--color-brand-text);
   color: #fff;
-  font-size: 0.8125rem;
+  font-size: 0.875rem;
   font-weight: 800;
   letter-spacing: 0.04em;
   flex-shrink: 0;
@@ -700,14 +700,14 @@
   color: var(--color-brand-text-muted);
 }
 .checkout-payment-choice__title {
-  font-size: 0.9375rem;
+  font-size: 1rem;
   font-weight: 700;
   line-height: 1.25;
   color: var(--color-brand-text);
 }
 .checkout-payment-choice__text {
   margin-top: 2px;
-  font-size: 0.8125rem;
+  font-size: 0.875rem;
   line-height: 1.45;
   color: var(--color-brand-text-muted);
   font-weight: 400;
@@ -772,13 +772,13 @@
 }
 .checkout-payment-card-form__intro { min-width: 0; }
 .checkout-payment-card-form__title {
-  font-size: 0.9375rem;
+  font-size: 1rem;
   font-weight: 700;
   color: var(--color-brand-text);
 }
 .checkout-payment-card-form__text {
   margin-top: 2px;
-  font-size: 0.8125rem;
+  font-size: 0.875rem;
   line-height: 1.5;
   color: var(--color-brand-text-muted);
   font-weight: 400;
@@ -787,7 +787,7 @@
   display: inline-flex;
   align-items: center;
   gap: 10px;
-  font-size: 0.8125rem;
+  font-size: 0.875rem;
   line-height: 1.35;
   color: var(--color-brand-text-secondary);
   cursor: pointer;
@@ -852,7 +852,7 @@
 }
 .checkout-payment-alt__text {
   margin: 0;
-  font-size: 0.9rem;
+  font-size: 1rem;
   line-height: 1.55;
   color: rgba(29, 39, 56, 0.7);
   font-weight: 400;
@@ -931,7 +931,7 @@
 .checkout-billing-subpill {
   min-height: 34px;
   padding: 0 16px;
-  font-size: 0.8125rem;
+  font-size: 0.875rem;
   border-radius: 9px;
 }
 .checkout-billing-subpill--active {
@@ -985,13 +985,13 @@
   padding: 12px 14px;
 }
 .checkout-choice-card__title {
-  font-size: 0.9375rem;
+  font-size: 1rem;
   font-weight: 700;
   line-height: 1.2;
   color: var(--color-brand-text);
 }
 .checkout-choice-card__text {
-  font-size: 0.8125rem;
+  font-size: 0.875rem;
   line-height: 1.45;
   color: var(--color-brand-text-secondary);
   font-weight: 400;
@@ -1071,7 +1071,7 @@
 }
 .checkout-mini-switch__text {
   margin: 0;
-  font-size: 0.6875rem;
+  font-size: 0.75rem;
   line-height: 1.35;
   color: var(--color-brand-text-secondary);
   max-width: 460px;
@@ -1091,20 +1091,20 @@
   box-shadow: var(--checkout-section-box-shadow);
 }
 .checkout-billing-context-note__title {
-  font-size: 0.8125rem;
+  font-size: 0.875rem;
   font-weight: 700;
   color: var(--color-brand-text);
 }
 .checkout-billing-context-note__text {
   margin-top: 2px;
-  font-size: 0.8125rem;
+  font-size: 0.875rem;
   line-height: 1.42;
   color: var(--color-brand-text-muted);
   font-weight: 400;
 }
 .checkout-billing-context-note__prefill {
   margin-top: 4px;
-  font-size: 0.8125rem;
+  font-size: 0.875rem;
   line-height: 1.45;
   font-weight: 600;
   color: var(--color-brand-primary);
@@ -1159,7 +1159,7 @@
   outline-offset: -1.5px;
   background: #ffffff;
   color: var(--color-brand-text);
-  font-size: 0.9375rem;
+  font-size: 1rem;
   font-weight: 500;
   transition: outline-color var(--sf-t1) var(--sf-ease), box-shadow var(--sf-t1) var(--sf-ease), background-color var(--sf-t1) var(--sf-ease);
 }
@@ -1201,7 +1201,7 @@
   border-radius: 10px;
   cursor: pointer;
   user-select: none;
-  font-size: 0.8125rem;
+  font-size: 0.875rem;
   font-weight: 600;
   color: var(--color-brand-text, #252b42);
   transition: background-color var(--sf-t1) var(--sf-ease);
@@ -1366,7 +1366,7 @@
   gap: 8px;
   cursor: pointer;
   color: var(--color-brand-text-secondary);
-  font-size: 0.8125rem;
+  font-size: 0.875rem;
   line-height: 1.45;
 }
 .checkout-payment-footer__terms-text {
@@ -1428,7 +1428,7 @@
   min-width: 0;
   padding: 0 22px 0 26px;
   border-radius: 999px;
-  font-size: 0.9375rem;
+  font-size: 1rem;
   font-weight: 700;
   letter-spacing: -0.005em;
   color: #fff;
@@ -1663,7 +1663,7 @@
   }
 
   .checkout-payment-option__title {
-    font-size: 0.8125rem;
+    font-size: 0.875rem;
   }
 
   .checkout-payment-choice {

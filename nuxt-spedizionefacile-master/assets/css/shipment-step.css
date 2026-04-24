@@ -56,7 +56,7 @@
 .field-gentle-error {
 	margin-top: 0;
 	display: block;
-	font-size: 0.8125rem;
+	font-size: 0.875rem;
 	font-weight: 600;
 	color: #E44203;
 	line-height: 1.35;
@@ -141,7 +141,7 @@
 	display: inline-flex;
 	align-items: center;
 	gap: 8px;
-	font-size: 0.8125rem;
+	font-size: 0.875rem;
 	line-height: 1.45;
 	font-weight: 600;
 }
@@ -253,7 +253,7 @@
 	margin: 0;
 	font-family: var(--font-montserrat);
 	color: var(--color-brand-text);
-	font-size: 1.0625rem;
+	font-size: 1.125rem;
 	line-height: 1.2;
 	letter-spacing: -0.45px;
 	font-weight: 800;
@@ -261,7 +261,7 @@
 
 .shipment-stage-card__summary {
 	margin: 0;
-	font-size: 0.8125rem;
+	font-size: 0.875rem;
 	line-height: 1.4;
 	font-weight: 600;
 	color: var(--color-brand-text-muted);
@@ -349,12 +349,12 @@
 	min-width: 88px;
 	height: 34px;
 	padding: 0 16px;
-	font-size: 0.78rem;
+	font-size: 0.875rem;
 }
 
 .flow-section-header__meta {
 	flex: 0 0 auto;
-	font-size: 0.7rem;
+	font-size: 0.75rem;
 	font-weight: 700;
 	letter-spacing: 0.05em;
 	text-transform: uppercase;
@@ -444,7 +444,7 @@
 
 .address-stage-menu__empty-text {
 	margin: 0;
-	font-size: 0.74rem;
+	font-size: 0.75rem;
 	line-height: 1.35;
 	color: var(--color-brand-text-secondary);
 }
@@ -494,7 +494,7 @@
 }
 
 .address-stage-menu__link {
-	font-size: 0.8125rem;
+	font-size: 0.875rem;
 	font-weight: 700;
 	color: var(--color-brand-primary);
 }
@@ -604,7 +604,7 @@
 	align-items: center;
 	gap: 8px;
 	font-family: var(--font-montserrat);
-	font-size: 1.0625rem;
+	font-size: 1.125rem;
 	font-weight: 800;
 	letter-spacing: -0.01em;
 	color: var(--color-brand-text);
@@ -644,7 +644,7 @@
 	padding: 0;
 	border: 0;
 	background: transparent;
-	font-size: 0.67rem;
+	font-size: 0.75rem;
 	font-weight: 700;
 	color: var(--color-brand-text-secondary);
 	cursor: pointer;
@@ -724,7 +724,7 @@
 	border-radius: 0;
 	background: transparent;
 	color: var(--color-brand-text-secondary);
-	font-size: 0.8125rem;
+	font-size: 0.875rem;
 	font-weight: 600;
 	cursor: pointer;
 	transition: color var(--sf-t1) var(--sf-ease);
@@ -780,7 +780,7 @@
 
 .address-delivery-shell__title {
 	margin: 0;
-	font-size: 0.96rem;
+	font-size: 1rem;
 	line-height: 1.2;
 	font-weight: 800;
 	color: var(--color-brand-text);
@@ -827,7 +827,7 @@
 }
 
 .address-delivery-choice__title {
-	font-size: 0.79rem;
+	font-size: 0.875rem;
 	font-weight: 800;
 	line-height: 1.2;
 	color: var(--color-brand-text);
@@ -851,7 +851,7 @@
 
 .address-pudo-selected__name {
 	margin: 0;
-	font-size: 0.9rem;
+	font-size: 1rem;
 	font-weight: 800;
 	line-height: 1.2;
 	color: var(--color-brand-text);
@@ -878,7 +878,7 @@
 
 .address-pudo-selected__name {
 	margin: 0;
-	font-size: 0.9375rem;
+	font-size: 1rem;
 	font-weight: 800;
 	line-height: 1.2;
 	color: var(--color-brand-text);
@@ -886,7 +886,7 @@
 
 .address-pudo-selected__address {
 	margin: 0;
-	font-size: 0.8125rem;
+	font-size: 0.875rem;
 	line-height: 1.4;
 	color: var(--color-brand-text-secondary);
 }
@@ -928,7 +928,7 @@
 
 .pickup-date-card__text {
 	max-width: 34rem;
-	font-size: 0.8125rem;
+	font-size: 0.875rem;
 	font-weight: 500;
 	color: var(--color-brand-text-secondary);
 	margin-top: 0;
@@ -1058,7 +1058,7 @@
 	line-height: 1.1;
 	background: transparent;
 	color: var(--color-brand-text-muted);
-	font-size: 0.62rem;
+	font-size: 0.75rem;
 	font-weight: 800;
 	letter-spacing: 0.06em;
 	text-transform: uppercase;
@@ -1077,14 +1077,14 @@
 }
 
 .pickup-date-option__day {
-	font-size: 1.14rem;
+	font-size: 1.125rem;
 	line-height: 1;
 	font-weight: 800;
 	color: var(--color-brand-text);
 }
 
 .pickup-date-option__month {
-	font-size: 0.72rem;
+	font-size: 0.75rem;
 	line-height: 1.1;
 	font-weight: 700;
 	color: var(--color-brand-text-secondary);
@@ -1258,7 +1258,7 @@
 .service-option__title {
 	margin: 0;
 	font-family: var(--font-montserrat);
-	font-size: 0.9375rem;
+	font-size: 1rem;
 	line-height: 1.2;
 	font-weight: 700;
 	letter-spacing: -0.1px;
@@ -1287,7 +1287,7 @@
 	border-radius: 999px;
 	background: rgba(9, 88, 102, 0.1);
 	color: var(--color-brand-primary);
-	font-size: 0.625rem;
+	font-size: 0.75rem;
 	font-weight: 700;
 	line-height: 1;
 }
@@ -1295,14 +1295,14 @@
 .service-option__badge--featured {
 	background: var(--color-brand-primary);
 	color: #ffffff;
-	font-size: 0.6875rem;
+	font-size: 0.75rem;
 	letter-spacing: 0.02em;
 }
 
 .service-option__description {
 	margin: 0;
 	max-width: none;
-	font-size: 0.8125rem;
+	font-size: 0.875rem;
 	line-height: 1.4;
 	color: var(--color-brand-text-muted);
 	font-weight: 500;
@@ -1330,7 +1330,7 @@
 }
 
 .service-option__price-current {
-	font-size: 0.98rem;
+	font-size: 1rem;
 	line-height: 1.15;
 	font-weight: 800;
 	color: var(--color-brand-text);
@@ -1357,7 +1357,7 @@
 	padding: 0 16px;
 	border-radius: 999px;
 	border: none;
-	font-size: 0.76rem;
+	font-size: 0.75rem;
 	font-weight: 800;
 	line-height: 1;
 	cursor: pointer;
@@ -1435,7 +1435,7 @@
 
 .address-entry-card__summary-line {
 	margin: 0;
-	font-size: 0.74rem;
+	font-size: 0.75rem;
 	line-height: 1.3;
 	font-weight: 700;
 	color: var(--color-brand-text-secondary);
@@ -1458,7 +1458,7 @@
 	line-height: 1;
 	white-space: nowrap;
 	color: var(--color-brand-text-secondary);
-	font-size: 0.76rem;
+	font-size: 0.75rem;
 	font-weight: 700;
 	cursor: pointer;
 	transition: color var(--sf-t1) var(--sf-ease);
@@ -1783,7 +1783,7 @@
 	}
 
 	.address-entry-card__title {
-		font-size: 0.98rem;
+		font-size: 1rem;
 	}
 
 	.address-entry-card__link-action {
@@ -1837,7 +1837,7 @@
 }
 
 .service-option__link-action--danger {
-	font-size: 0.8rem;
+	font-size: 0.875rem;
 	font-weight: 700;
 	color: var(--color-warning-text-strong);
 }
@@ -1912,7 +1912,7 @@
 }
 
 .address-entry-card__title {
-	font-size: 1.0625rem;
+	font-size: 1.125rem;
 }
 
 .address-entry-card__actions {
@@ -1920,13 +1920,13 @@
 }
 
 .address-entry-card__link-action {
-	font-size: 0.78rem;
+	font-size: 0.875rem;
 	font-weight: 700;
 	letter-spacing: 0.01em;
 }
 
 .address-entry-card__summary-line {
-	font-size: 0.9rem;
+	font-size: 1rem;
 	line-height: 1.35;
 	color: var(--color-brand-text-secondary);
 }
@@ -1970,7 +1970,7 @@
 .service-support-shell__text {
 	margin: 0;
 	max-width: 40rem;
-	font-size: 0.82rem;
+	font-size: 0.875rem;
 	line-height: 1.45;
 	color: var(--color-brand-text-secondary);
 }
@@ -2033,7 +2033,7 @@
 }
 
 .address-entry-card__title {
-	font-size: 1.0625rem;
+	font-size: 1.125rem;
 }
 
 .address-entry-card__actions {
@@ -2047,7 +2047,7 @@
 	border-radius: 999px;
 	background: var(--color-brand-card);
 	color: var(--color-brand-text);
-	font-size: 0.78rem;
+	font-size: 0.875rem;
 	font-weight: 700;
 	letter-spacing: 0.01em;
 	box-shadow: 0 4px 10px rgba(20, 37, 48, 0.04);
@@ -2083,7 +2083,7 @@
 }
 
 .address-entry-card__summary-line {
-	font-size: 0.9rem;
+	font-size: 1rem;
 	color: var(--color-brand-text-secondary);
 }
 
@@ -2271,11 +2271,11 @@
 	}
 
 	.pickup-date-option__day {
-		font-size: 1.05rem;
+		font-size: 1.125rem;
 	}
 
 	.pickup-date-option__month {
-		font-size: 0.68rem;
+		font-size: 0.75rem;
 	}
 
 	/* Address form: stack fields properly on mobile */
@@ -2356,7 +2356,7 @@
 		width: 30px;
 		height: 30px;
 		flex: 0 0 30px;
-		font-size: 0.8125rem;
+		font-size: 0.875rem;
 	}
 
 	.shipment-flow-stage .shipment-flow-stage__title {
@@ -2375,7 +2375,7 @@
 	}
 
 	.pickup-date-option__day {
-		font-size: 0.95rem;
+		font-size: 1rem;
 	}
 
 	.shipment-mobile-actionbar__shell {
@@ -2831,7 +2831,7 @@
 	border: 0;
 	text-align: center;
 	color: var(--color-brand-text);
-	font-size: 1.0625rem;
+	font-size: 1.125rem;
 	font-weight: 800;
 	font-variant-numeric: tabular-nums;
 	line-height: 1;
@@ -3092,7 +3092,7 @@
 	}
 
 	.sf-shared-segment--compact .sf-shared-segment__title {
-		font-size: 0.8125rem;
+		font-size: 0.875rem;
 	}
 
 	.package-entry__type-switcher-shell .package-type-switcher.sf-shared-segment-strip {
@@ -3618,7 +3618,7 @@
 .payment-auth-required__title {
 	margin: 0;
 	font-family: var(--font-montserrat, 'Montserrat', sans-serif);
-	font-size: 1.0625rem;
+	font-size: 1.125rem;
 	font-weight: 800;
 	line-height: 1.2;
 	color: var(--color-brand-text, #1d2738);

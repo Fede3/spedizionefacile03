@@ -544,7 +544,7 @@
 
 .auth-panel-title {
 	font-family: var(--font-inter);
-	font-size: 1.05rem;
+	font-size: 1.125rem;
 	font-weight: 600;
 	color: var(--color-brand-text);
 }
@@ -561,7 +561,7 @@
 }
 
 .auth-login-resend__copy {
-	font-size: 0.9375rem;
+	font-size: 1rem;
 	font-weight: 600;
 	color: var(--color-brand-text);
 }
@@ -713,7 +713,7 @@
 	display: flex;
 	align-items: center;
 	gap: 4px;
-	font-size: 0.72rem;
+	font-size: 0.75rem;
 	line-height: 1.35;
 	color: var(--color-brand-text-muted);
 }
@@ -726,7 +726,7 @@
 	margin-top: 0;
 	padding: 0.62rem 0.74rem;
 	border-radius: 16px;
-	font-size: 0.8rem;
+	font-size: 0.875rem;
 	line-height: 1.5;
 }
 
@@ -1084,7 +1084,7 @@
 
 .auth-shell-copy {
 	max-width: 32rem;
-	font-size: 0.95rem;
+	font-size: 1rem;
 	line-height: 1.55;
 	color: var(--color-brand-text-secondary);
 }
@@ -1232,7 +1232,7 @@
 }
 
 .auth-demo__label {
-	font-size: 0.8rem;
+	font-size: 0.875rem;
 	font-weight: 600;
 	color: var(--color-brand-text-secondary);
 	text-align: center;
@@ -1252,7 +1252,7 @@
 
 .auth-demo__title {
 	font-family: var(--font-montserrat);
-	font-size: 1.05rem;
+	font-size: 1.125rem;
 	font-weight: 800;
 	line-height: 1.2;
 	letter-spacing: -0.03em;
@@ -1327,14 +1327,14 @@
 }
 
 .auth-demo-card__title {
-	font-size: 0.8125rem;
+	font-size: 0.875rem;
 	font-weight: 700;
 	color: var(--color-brand-text);
 	line-height: 1.2;
 }
 
 .auth-demo-card__copy {
-	font-size: 0.8rem;
+	font-size: 0.875rem;
 }
 
 /* ── White card container for forms ─────────────────────── */
@@ -1434,7 +1434,7 @@
 
 .auth-divider-oppure span {
 	flex: 0 0 auto;
-	font-size: 0.8rem;
+	font-size: 0.875rem;
 	font-weight: 600;
 	color: var(--color-brand-text-secondary);
 	text-transform: lowercase;
