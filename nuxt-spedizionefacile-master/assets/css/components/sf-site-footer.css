@@ -162,7 +162,9 @@
 }
 .site-footer__link {
 	display: inline-block;
+	padding-block: 8px;
 	font-size: 0.9375rem;
+	line-height: 1.4;
 	color: #cfe0e4;
 	text-decoration: none;
 	transition: color var(--sf-t1) var(--sf-ease);
@@ -174,7 +176,9 @@
 	text-underline-offset: 3px;
 }
 .site-footer__link:focus-visible {
-	outline: none;
+	outline: 2px solid #fff;
+	outline-offset: 2px;
+	border-radius: 4px;
 }
 
 /* === 3) Bottom bar === */

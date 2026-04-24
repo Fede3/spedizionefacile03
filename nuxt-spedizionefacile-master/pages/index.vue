@@ -91,9 +91,8 @@ onBeforeUnmount(() => observer?.disconnect());
 
 <template>
 	<div class="home">
-		<!-- H1 per a11y/SEO: il titolo visibile principale è il box Preventivo,
-		     ma serve un heading di livello 1 annunciabile agli screen reader. -->
-		<h1 class="sr-only">SpediamoFacile — Preventivo rapido per spedizioni BRT</h1>
+		<!-- H1 visibile "Spedisci in tutta Italia" in ContenutoHeader.vue:74 — uno solo per pagina. -->
+		<p class="sr-only">SpediamoFacile — Preventivo rapido per spedizioni BRT con ritiro a domicilio.</p>
 		<!-- ═══════════════════ PREVENTIVO RAPIDO (collegato al ventaglio) ═══════════════════ -->
 		<!-- ClientOnly: il form preventivo e' interattivo e richiede JS. Evita
 		     hydration mismatch su SSR (fallback mantiene la stessa altezza). -->

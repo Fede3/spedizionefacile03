@@ -776,9 +776,10 @@
 }
 
 .preventivo-form .quantity-stepper__button {
-	width: 36px;
-	flex: 0 0 36px;
+	width: 44px;
+	flex: 0 0 44px;
 	height: 100%;
+	min-height: 44px;
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
@@ -786,7 +787,7 @@
 	color: var(--color-text-ghost);
 	border: 0;
 	padding: 0;
-	min-width: 0;
+	min-width: 44px;
 	cursor: pointer;
 	font-size: 1rem;
 	font-weight: 700;

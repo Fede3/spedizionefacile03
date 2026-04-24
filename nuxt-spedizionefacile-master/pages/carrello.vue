@@ -201,7 +201,7 @@ const {
             <line x1="12" y1="22.08" x2="12" y2="12"/>
           </svg>
         </div>
-        <h3 class="sf-empty-state__title">Il tuo carrello è vuoto</h3>
+        <h1 class="sf-empty-state__title">Il tuo carrello è vuoto</h1>
         <p class="sf-empty-state__copy">Calcola un preventivo e aggiungi la tua prima spedizione: bastano pochi secondi.</p>
         <div class="sf-empty-state__actions">
           <NuxtLink to="/preventivo" class="sf-empty-state__cta" aria-label="Calcola preventivo">
