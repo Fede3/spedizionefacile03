@@ -157,9 +157,9 @@
    Prototype: w-[42px] h-[42px] rounded-full bg-[var(--color-brand-primary)]
    ============================================================ */
 .navbar-hamburger-btn {
-  width: 42px;
-  height: 42px;
-  min-width: 42px;
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
   padding: 0;
   display: inline-flex;
   align-items: center;
