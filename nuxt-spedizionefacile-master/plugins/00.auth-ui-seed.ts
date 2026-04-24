@@ -3,7 +3,8 @@ import {
 	AUTH_UI_STORAGE,
 	type AuthUiSnapshot,
 	createEmptySnapshot,
-} from '~/utils/authUiState'
+	parseStoredSnapshot,
+} from '~/utils/auth'
 
 export default defineNuxtPlugin(() => {
 	const authCookie = useCookie<AuthUiSnapshot | undefined>(AUTH_UI_COOKIE, {
@@ -13,27 +14,37 @@ export default defineNuxtPlugin(() => {
 	const initialSnapshot = useState<AuthUiSnapshot>('auth-ui-initial-snapshot', createEmptySnapshot)
 	const storedSnapshot = useState<AuthUiSnapshot>('auth-ui-stored-snapshot', createEmptySnapshot)
 
-	if (authCookie.value?.authenticated) {
-		initialSnapshot.value = authCookie.value
+	const cookieSnapshot = typeof authCookie.value === 'string'
+		? parseStoredSnapshot(authCookie.value)
+		: (authCookie.value || createEmptySnapshot())
+
+	if (cookieSnapshot.authenticated) {
+		initialSnapshot.value = cookieSnapshot
 	}
 
 	if (import.meta.client) {
-		storedSnapshot.value = createEmptySnapshot()
+		const rawStoredSnapshot = window.localStorage.getItem(AUTH_UI_STORAGE)
+		let parsedStoredSnapshot: AuthUiSnapshot | null = null
 
-		// Keep client-side storage aligned with the SSR snapshot so hydration
-		// does not briefly fall back to a guest UI on fresh tabs/reloads.
+		if (rawStoredSnapshot) {
+			try {
+				parsedStoredSnapshot = JSON.parse(rawStoredSnapshot)
+			} catch {
+				window.localStorage.removeItem(AUTH_UI_STORAGE)
+			}
+		}
+
 		if (initialSnapshot.value.authenticated) {
-			if (!authCookie.value?.authenticated) {
+			if (!cookieSnapshot.authenticated) {
 				authCookie.value = initialSnapshot.value
 			}
 			storedSnapshot.value = initialSnapshot.value
 			window.localStorage.setItem(AUTH_UI_STORAGE, JSON.stringify(initialSnapshot.value))
+		} else if (parsedStoredSnapshot?.authenticated) {
+			storedSnapshot.value = parsedStoredSnapshot
 		} else {
+			storedSnapshot.value = createEmptySnapshot()
 			window.localStorage.removeItem(AUTH_UI_STORAGE)
 		}
-
-		// Non promuoviamo piu' il localStorage a "verita'" iniziale:
-		// lato SSR quel dato non esiste e genera il classico flip guest -> logged
-		// durante hydration. Lo snapshot iniziale deve arrivare solo da cookie.
 	}
 })

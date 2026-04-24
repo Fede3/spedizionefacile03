@@ -32,7 +32,7 @@ use Illuminate\Http\JsonResponse;
 
 class PublicArticleController extends Controller
 {
-    private const LIST_COLUMNS = ['id', 'title', 'slug', 'meta_description', 'intro', 'icon', 'featured_image', 'sort_order', 'created_at'];
+    private const LIST_COLUMNS = ['id', 'title', 'slug', 'meta_description', 'intro', 'icon', 'featured_image', 'sort_order', 'created_at', 'updated_at'];
 
     private function publishedList(string $type): JsonResponse
     {
@@ -59,18 +59,6 @@ class PublicArticleController extends Controller
         }
 
         return response()->json(['data' => $article]);
-    }
-
-    // Lista articoli blog pubblicati
-    public function blog(): JsonResponse
-    {
-        return $this->publishedList('blog');
-    }
-
-    // Singolo articolo blog per slug
-    public function blogArticle(string $slug): JsonResponse
-    {
-        return $this->publishedDetail('blog', $slug, 'Articolo non trovato.');
     }
 
     // Lista guide pubblicate

@@ -8,12 +8,18 @@ use Illuminate\Support\Facades\Log;
 class BrtPayloadBuilder
 {
     private const SERVICE_MAPPING = [
+        // Audit F16: allineati ai service_type strutturati del FE (snake_case)
+        'consegna_al_piano'       => ['field' => 'particularitiesDeliveryManagement', 'value' => 'CP'],
         'consegna al piano'       => ['field' => 'particularitiesDeliveryManagement', 'value' => 'CP'],
         'delivery al piano'       => ['field' => 'particularitiesDeliveryManagement', 'value' => 'CP'],
+        'ritiro_al_piano'         => ['field' => 'particularitiesPickupManagement', 'value' => 'RP'],
         'ritiro al piano'         => ['field' => 'particularitiesPickupManagement', 'value' => 'RP'],
         'pickup al piano'         => ['field' => 'particularitiesPickupManagement', 'value' => 'RP'],
+        'sponda_idraulica'        => ['field' => 'particularitiesDeliveryManagement', 'value' => 'SU'],
         'sponda idraulica'        => ['field' => 'particularitiesDeliveryManagement', 'value' => 'SU'],
         'sponda idraulica ritiro' => ['field' => 'particularitiesPickupManagement', 'value' => 'SU'],
+        'consegna_appuntamento'   => ['field' => 'particularitiesDeliveryManagement', 'value' => 'AP'],
+        'consegna su appuntamento'=> ['field' => 'particularitiesDeliveryManagement', 'value' => 'AP'],
         'giacenza'                => ['field' => 'particularitiesDeliveryManagement', 'value' => 'GI'],
         'express'                 => ['field' => 'serviceType', 'value' => 'E'],
         'priority'                => ['field' => 'serviceType', 'value' => 'P'],
@@ -32,37 +38,68 @@ class BrtPayloadBuilder
         $pickupCodes = [];
 
         foreach ($order->packages as $package) {
-            if ($package->service && !empty($package->service->service_type)) {
-                $serviceType = mb_strtolower(trim($package->service->service_type), 'UTF-8');
+            if (! $package->service) {
+                continue;
+            }
 
-                if (isset(self::SERVICE_MAPPING[$serviceType])) {
-                    $mapping = self::SERVICE_MAPPING[$serviceType];
+            // Audit F16: service_type puo' essere una lista csv (es. "contrassegno, sponda_idraulica").
+            // Esplodiamo e normalizziamo ogni token prima del lookup SERVICE_MAPPING.
+            $tokens = [];
+            if (! empty($package->service->service_type)) {
+                foreach (explode(',', (string) $package->service->service_type) as $raw) {
+                    $token = mb_strtolower(trim($raw), 'UTF-8');
+                    if ($token !== '' && $token !== 'nessuno') {
+                        $tokens[] = $token;
+                    }
+                }
+            }
 
-                    if ($mapping['field'] === 'particularitiesDeliveryManagement') {
-                        if (!in_array($mapping['value'], $deliveryCodes, true)) {
-                            $deliveryCodes[] = $mapping['value'];
-                            $appliedServices[] = ['app_service' => $package->service->service_type, 'brt_field' => $mapping['field'], 'brt_value' => $mapping['value']];
-                        }
-                    } elseif ($mapping['field'] === 'particularitiesPickupManagement') {
-                        if (!in_array($mapping['value'], $pickupCodes, true)) {
-                            $pickupCodes[] = $mapping['value'];
-                            $appliedServices[] = ['app_service' => $package->service->service_type, 'brt_field' => $mapping['field'], 'brt_value' => $mapping['value']];
-                        }
-                    } else {
-                        // Other scalar fields (e.g. serviceType): first-write wins
-                        if (!isset($payload['createData'][$mapping['field']])) {
-                            $payload['createData'][$mapping['field']] = $mapping['value'];
-                            $appliedServices[] = ['app_service' => $package->service->service_type, 'brt_field' => $mapping['field'], 'brt_value' => $mapping['value']];
-                        }
+            // Audit F16: anche i flag in service_data.flags[] vengono mappati.
+            $serviceDataFlags = is_array($package->service->service_data ?? null)
+                ? ($package->service->service_data['flags'] ?? [])
+                : [];
+            if (is_array($serviceDataFlags)) {
+                foreach ($serviceDataFlags as $flag) {
+                    $token = mb_strtolower(trim((string) $flag), 'UTF-8');
+                    if ($token !== '' && ! in_array($token, $tokens, true)) {
+                        $tokens[] = $token;
+                    }
+                }
+            }
+
+            foreach ($tokens as $serviceType) {
+                if (! isset(self::SERVICE_MAPPING[$serviceType])) {
+                    Log::info('BRT service not mapped', [
+                        'order_id' => $order->id,
+                        'service_type' => $serviceType,
+                    ]);
+                    continue;
+                }
+
+                $mapping = self::SERVICE_MAPPING[$serviceType];
+
+                if ($mapping['field'] === 'particularitiesDeliveryManagement') {
+                    if (! in_array($mapping['value'], $deliveryCodes, true)) {
+                        $deliveryCodes[] = $mapping['value'];
+                        $appliedServices[] = ['app_service' => $serviceType, 'brt_field' => $mapping['field'], 'brt_value' => $mapping['value']];
+                    }
+                } elseif ($mapping['field'] === 'particularitiesPickupManagement') {
+                    if (! in_array($mapping['value'], $pickupCodes, true)) {
+                        $pickupCodes[] = $mapping['value'];
+                        $appliedServices[] = ['app_service' => $serviceType, 'brt_field' => $mapping['field'], 'brt_value' => $mapping['value']];
                     }
                 } else {
-                    Log::info('BRT service not mapped', ['order_id' => $order->id, 'service_type' => $package->service->service_type]);
+                    // Other scalar fields (e.g. serviceType): first-write wins
+                    if (! isset($payload['createData'][$mapping['field']])) {
+                        $payload['createData'][$mapping['field']] = $mapping['value'];
+                        $appliedServices[] = ['app_service' => $serviceType, 'brt_field' => $mapping['field'], 'brt_value' => $mapping['value']];
+                    }
                 }
             }
         }
 
         if (!empty($options['insurance_amount'])) {
-            $payload['createData']['insuranceAmount'] = (float) ($options['insurance_amount'] / 100);
+            $payload['createData']['insuranceAmount'] = round((float) ($options['insurance_amount'] / 100), 2);
             $payload['createData']['insuranceCurrency'] = 'EUR';
             $appliedServices[] = ['app_service' => 'assicurazione', 'brt_field' => 'insuranceAmount', 'brt_value' => $payload['createData']['insuranceAmount']];
         }
@@ -104,10 +141,14 @@ class BrtPayloadBuilder
             }
         }
 
-        if (!empty($parcelsWithDimensions)) {
-            $payload['createData']['pParcelID'] = $parcelsWithDimensions;
-            $appliedServices[] = ['app_service' => 'dimensioni_colli', 'brt_field' => 'pParcelID', 'brt_value' => count($parcelsWithDimensions) . ' colli'];
-        }
+        // NOTE: campo "pParcelID" rimosso dal payload: BRT REST API rigetta con
+        // errore -68 "Unrecognized field". Dimensioni colli opzionali per label
+        // base. Se servono, scoprire il nome corretto dalla doc BRT REST 3.x
+        // (candidati: "parcels", "parcelsData", "parcelDetails") e testare.
+        // if (!empty($parcelsWithDimensions)) {
+        //     $payload['createData']['pParcelID'] = $parcelsWithDimensions;
+        //     $appliedServices[] = ['app_service' => 'dimensioni_colli', 'brt_field' => 'pParcelID', 'brt_value' => count($parcelsWithDimensions) . ' colli'];
+        // }
 
         if (!empty($appliedServices)) {
             Log::info('BRT services applied to shipment', ['order_id' => $order->id, 'services' => $appliedServices]);
@@ -171,7 +212,7 @@ class BrtPayloadBuilder
         ];
 
         if (!empty($data['is_cod']) && !empty($data['cod_amount'])) {
-            $createData['cashOnDelivery'] = (float) ($data['cod_amount'] / 100);
+            $createData['cashOnDelivery'] = round((float) ($data['cod_amount'] / 100), 2);
             $createData['codPaymentType'] = $data['cod_payment_type'] ?? 'BM';
             $createData['codCurrency'] = 'EUR';
         }
@@ -183,7 +224,7 @@ class BrtPayloadBuilder
             }
         }
 
-        return [
+        $payload = [
             'payload' => [
                 'account' => $config->accountPayload(),
                 'createData' => $createData,
@@ -192,6 +233,35 @@ class BrtPayloadBuilder
             ],
             'numericSenderReference' => $numericSenderReference,
         ];
+
+        $payload['payload'] = self::sanitizeCreateData($payload['payload']);
+
+        return $payload;
+    }
+
+    /**
+     * Rimuove i campi sender override non supportati dall'API BRT.
+     * BRT richiede solo senderCustomerCode — tutti gli altri campi sender
+     * vengono ignorati o causano errore.
+     */
+    public static function sanitizeCreateData(array $data): array
+    {
+        // BRT REST API non riconosce NESSUN campo sender* tranne senderCustomerCode
+        // nel payload di creazione shipment (il mittente è dedotto dal client code).
+        // L'invio di altri senderXxx genera errore -68 "Unrecognized field".
+        // Whitelist per essere future-proof: se Laravel aggiunge senderQualcosaNuovo,
+        // viene sanitizzato automaticamente senza dover aggiornare una blacklist.
+        $allowedSenderFields = ['senderCustomerCode'];
+
+        if (isset($data['createData']) && is_array($data['createData'])) {
+            foreach (array_keys($data['createData']) as $key) {
+                if (str_starts_with((string) $key, 'sender') && !in_array($key, $allowedSenderFields, true)) {
+                    unset($data['createData'][$key]);
+                }
+            }
+        }
+
+        return $data;
     }
 
     public static function defaultLabelParameters(): array

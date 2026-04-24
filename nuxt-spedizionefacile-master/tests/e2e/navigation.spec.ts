@@ -34,15 +34,15 @@ test.describe('Navigazione', () => {
 
     test('T8.1.8 - bottone login visibile da guest', async ({ page }) => {
       await page.goto('/')
-      // There are two auth links: one for desktop (hidden on mobile) and one for mobile (hidden on desktop)
-      // Use a broader locator and check that at least one is visible
-      const loginLinks = page.locator('a[href*="autenticazione"]')
-      await expect(loginLinks.first()).toBeAttached({ timeout: 10000 })
-      // At least one of the auth links should be visible depending on viewport
-      const count = await loginLinks.count()
+      // The login button is now a <button> that opens the auth modal (not a link to /autenticazione)
+      // On desktop it has class navbar-login-btn, on mobile it's in the hamburger menu
+      const loginButtons = page.locator('button.navbar-login-btn')
+      await expect(loginButtons.first()).toBeAttached({ timeout: 10000 })
+      // At least one of the login buttons should be visible depending on viewport
+      const count = await loginButtons.count()
       let anyVisible = false
       for (let i = 0; i < count; i++) {
-        if (await loginLinks.nth(i).isVisible()) {
+        if (await loginButtons.nth(i).isVisible()) {
           anyVisible = true
           break
         }
@@ -67,10 +67,8 @@ test.describe('Pagine Statiche', () => {
     { path: '/contatti', name: 'Contatti', testId: 'T8.4.3' },
     { path: '/privacy-policy', name: 'Privacy Policy', testId: 'T8.4.4' },
     { path: '/cookie-policy', name: 'Cookie Policy', testId: 'T8.4.5' },
-    { path: '/termini-condizioni', name: 'Termini e Condizioni', testId: 'T8.4.6' },
-    { path: '/reclami', name: 'Reclami', testId: 'T8.4.7' },
+    { path: '/termini-e-condizioni', name: 'Termini e Condizioni', testId: 'T8.4.6' },
     { path: '/servizi', name: 'Servizi', testId: 'T8.4.8' },
-    { path: '/blog', name: 'Blog', testId: 'T8.4.10' },
     { path: '/guide', name: 'Guide', testId: 'T8.4.12' },
   ]
 
@@ -86,10 +84,9 @@ test.describe('Pagine Statiche', () => {
 
   test('T8.4.3 - form contatti presente', async ({ page }) => {
     await page.goto('/contatti')
-    // The contact page has a <form> with inputs: name, surname, email, telephone, address, message
     await expect(page.locator('form')).toBeVisible({ timeout: 10000 })
-    await expect(page.locator('#email')).toBeVisible()
-    await expect(page.locator('#message')).toBeVisible()
+    await expect(page.locator('#contact-email')).toBeVisible()
+    await expect(page.locator('#contact-message')).toBeVisible()
   })
 })
 

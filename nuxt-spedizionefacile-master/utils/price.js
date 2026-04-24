@@ -62,6 +62,18 @@ export const formatPriceIntl = (cents) => {
 }
 
 /**
+ * Variante "safe" di formatPriceIntl: ritorna "—" per valori non finiti.
+ * Usata nelle pagine ordini/collo per gestire lo stato loading/missing.
+ * @param {number|null|undefined} cents
+ * @returns {string}
+ */
+export const formatPriceSafe = (cents) => {
+  const value = Number(cents)
+  if (!Number.isFinite(value)) return '—'
+  return new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR' }).format(value / 100)
+}
+
+/**
  * Parse input utente (formato italiano/misto) → centesimi
  * Supporta: "12,50", "12.50", "1.234,56", "12,50 EUR", "€12,50"
  * @param {string} raw

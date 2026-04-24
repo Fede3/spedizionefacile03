@@ -26,9 +26,12 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
 
     /* ===== PAGAMENTO ORDINI ESISTENTI ===== */
 
-    Route::middleware(['throttle:10,1'])->post('stripe/mark-order-completed', [StripeCheckoutController::class, 'markOrderCompleted']);
+    // Il completamento finale di wallet/bonifico puo' essere ritentato piu' volte
+    // dalla stessa UI durante i probe locali o dopo retry di rete. Qui manteniamo
+    // il rate limit, ma con margine piu' alto per non bloccare un checkout valido.
+    Route::middleware(['throttle:60,1,stripe-mark-order-completed:'])->post('stripe/mark-order-completed', [StripeCheckoutController::class, 'markOrderCompleted']);
 
-    Route::middleware(['throttle:10,1'])->group(function () {
+    Route::middleware(['throttle:60,1'])->group(function () {
         Route::post('stripe/existing-order-payment', [StripeCheckoutController::class, 'createPayment']);
         Route::post('stripe/existing-order-payment-intent', [StripeCheckoutController::class, 'createPaymentIntent']);
         Route::post('stripe/existing-order-paid', [StripeCheckoutController::class, 'orderPaid']);

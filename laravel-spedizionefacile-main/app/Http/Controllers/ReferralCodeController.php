@@ -9,6 +9,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\DiscountPreviewService;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -54,15 +55,13 @@ class ReferralCodeController extends Controller
      * Verifica se un codice referral e' valido.
      * Usato dal frontend per mostrare un messaggio di conferma prima di procedere al pagamento.
      */
-    public function validate(Request $request): JsonResponse
+    public function validate(Request $request, DiscountPreviewService $discountPreviewService): JsonResponse
     {
         $data = $request->validate([
             'code' => ['required', 'string', 'size:8'],
         ]);
 
-        $proUser = User::where('referral_code', strtoupper($data['code']))
-            ->where('role', 'Partner Pro')
-            ->first();
+        $proUser = $discountPreviewService->resolveReferralPartner($data['code']);
 
         if (! $proUser) {
             return response()->json(['valid' => false, 'message' => 'Codice non valido.'], 404);
@@ -74,7 +73,7 @@ class ReferralCodeController extends Controller
 
         return response()->json([
             'valid' => true,
-            'discount_percent' => 5,
+            'discount_percent' => $discountPreviewService->referralDiscountPercent(),
             'pro_name' => $proUser->name,
         ]);
     }
@@ -84,7 +83,7 @@ class ReferralCodeController extends Controller
      * Chiamato quando un utente si registra tramite un link referral (es. ?ref=ABC12345)
      * o quando inserisce manualmente un codice referral.
      */
-    public function storeReferral(Request $request): JsonResponse
+    public function storeReferral(Request $request, DiscountPreviewService $discountPreviewService): JsonResponse
     {
         $data = $request->validate([
             'code' => ['required', 'string', 'size:8'],
@@ -92,9 +91,7 @@ class ReferralCodeController extends Controller
 
         $code = strtoupper($data['code']);
 
-        $proUser = User::where('referral_code', $code)
-            ->where('role', 'Partner Pro')
-            ->first();
+        $proUser = $discountPreviewService->resolveReferralPartner($code);
 
         if (! $proUser) {
             return response()->json(['message' => 'Codice referral non valido.'], 404);
@@ -106,13 +103,28 @@ class ReferralCodeController extends Controller
             return response()->json(['message' => 'Non puoi usare il tuo stesso codice.'], 422);
         }
 
+        if ($user->referred_by) {
+            if (strtoupper($user->referred_by) === $code) {
+                return response()->json([
+                    'success' => true,
+                    'referred_by' => $code,
+                    'discount_percent' => $discountPreviewService->referralDiscountPercent(),
+                    'pro_name' => $proUser->name,
+                ]);
+            }
+
+            return response()->json([
+                'message' => 'Hai gia un codice referral associato e non puo essere sostituito.',
+            ], 409);
+        }
+
         $user->referred_by = $code;
         $user->save();
 
         return response()->json([
             'success' => true,
             'referred_by' => $code,
-            'discount_percent' => 5,
+            'discount_percent' => $discountPreviewService->referralDiscountPercent(),
             'pro_name' => $proUser->name,
         ]);
     }
@@ -121,7 +133,7 @@ class ReferralCodeController extends Controller
      * Mostra lo sconto referral attivo dell'utente.
      * Se l'utente e' stato invitato da un Partner Pro, restituisce le informazioni sullo sconto.
      */
-    public function myDiscount(): JsonResponse
+    public function myDiscount(DiscountPreviewService $discountPreviewService): JsonResponse
     {
         $user = auth()->user();
 
@@ -131,9 +143,7 @@ class ReferralCodeController extends Controller
             ]);
         }
 
-        $proUser = User::where('referral_code', $user->referred_by)
-            ->where('role', 'Partner Pro')
-            ->first();
+        $proUser = $discountPreviewService->resolveReferralPartner($user->referred_by);
 
         if (! $proUser) {
             return response()->json([
@@ -141,11 +151,8 @@ class ReferralCodeController extends Controller
             ]);
         }
 
-        return response()->json([
-            'has_discount' => true,
-            'referral_code' => $user->referred_by,
-            'discount_percent' => 5,
-            'pro_name' => $proUser->name,
-        ]);
+        return response()->json(
+            $discountPreviewService->buildReferralDiscountInfo($proUser, $user->referred_by)
+        );
     }
 }

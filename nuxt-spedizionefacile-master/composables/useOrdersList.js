@@ -5,17 +5,23 @@
  * Gestisce: fetch ordini, filtri per stato, formattazione, annullamento,
  * salvataggio come "spedizione configurata", statistiche.
  */
+import { computed, onMounted, ref } from 'vue';
+import { formatDateIt } from '~/utils/date.js';
+import { getBrtTrackingReference } from '~/utils/brtTracking';
+
 export default function useOrdersList() {
 	const sanctum = useSanctumClient();
 
 	/* --- Filtri stato --- */
 	const filters = ref(["Tutti", "Aperti", "Chiusi", "Annullati", "In giacenza"]);
-	const activeFilter = ref(0);
+	const activeFilter = ref("Tutti");
 	const textFilter = ref("Tutti");
+	const searchQuery = ref("");
 
-	const changeFilter = (filter, filterIndex) => {
-		activeFilter.value = filterIndex;
-		textFilter.value = filter;
+	const changeFilter = (filter, filterIndex = null) => {
+		const nextFilter = typeof filter === 'string' && filter ? filter : filters.value[filterIndex] || 'Tutti';
+		activeFilter.value = nextFilter;
+		textFilter.value = nextFilter;
 	};
 
 	/* --- Fetch ordini --- */
@@ -27,7 +33,9 @@ export default function useOrdersList() {
 			'In attesa': 'pending', 'In lavorazione': 'processing', 'Completato': 'completed',
 			'Fallito': 'payment_failed', 'Pagato': 'payed', 'Annullato': 'cancelled',
 			'Rimborsato': 'refunded', 'In transito': 'in_transit', 'Consegnato': 'delivered',
-			'In giacenza': 'in_giacenza',
+			'In giacenza': 'in_giacenza', 'Etichetta generata': 'label_generated',
+			'In consegna': 'out_for_delivery', 'Reso': 'returned', 'Rifiutato': 'refused',
+			'In attesa di bonifico': 'awaiting_bank_transfer',
 		};
 		return map[status] || status;
 	};
@@ -40,30 +48,49 @@ export default function useOrdersList() {
 			payed: 'bg-[#f0fdf4] text-[#0a8a7a]', cancelled: 'bg-gray-200 text-gray-600',
 			refunded: 'bg-orange-100 text-orange-700', in_transit: 'bg-[#eef8fa] text-[#095866]',
 			delivered: 'bg-[#f0fdf4] text-[#0a8a7a]', in_giacenza: 'bg-orange-100 text-orange-700',
+			label_generated: 'bg-[#eef8fa] text-[#095866]', out_for_delivery: 'bg-[#dff0f3] text-[#074a56]',
+			returned: 'bg-orange-100 text-orange-700', refused: 'bg-red-100 text-red-700',
+			awaiting_bank_transfer: 'bg-[#F5F3FF] text-[#6D28D9]',
 		};
 		return map[raw] || 'bg-gray-100 text-gray-700';
 	};
 
 	/* --- Filtro ordini --- */
 	const filteredOrders = computed(() => {
-		if (!orders.value?.data) return [];
-		if (textFilter.value === 'Tutti') return orders.value.data;
-		const filterMap = {
-			'Aperti': ['In attesa', 'In lavorazione', 'In transito', 'Pagato'],
-			'Chiusi': ['Completato', 'Consegnato'],
-			'Annullati': ['Annullato', 'Rimborsato', 'Fallito'],
-			'In giacenza': ['In giacenza'],
-		};
-		const allowed = filterMap[textFilter.value] || [];
-		return orders.value.data.filter(order => allowed.includes(order.status));
+		const list = orders.value?.data || [];
+		const normalizedSearch = searchQuery.value.trim().toLowerCase();
+		const baseList = textFilter.value === 'Tutti'
+			? list
+			: (() => {
+				const filterMap = {
+					'Aperti': ['In attesa', 'In lavorazione', 'In transito', 'Pagato', 'Etichetta generata', 'In consegna', 'In attesa di bonifico'],
+					'Chiusi': ['Completato', 'Consegnato'],
+					'Annullati': ['Annullato', 'Rimborsato', 'Fallito', 'Reso', 'Rifiutato'],
+					'In giacenza': ['In giacenza'],
+				};
+				const allowed = filterMap[textFilter.value] || [];
+				return list.filter(order => allowed.includes(order.status));
+			})();
+
+		if (!normalizedSearch) return baseList;
+
+		return baseList.filter((order) => {
+			const haystack = [
+				getOrderReferenceLabel(order),
+				getTrackingLabel(order),
+				getSenderName(order),
+				getRecipientName(order),
+				getRouteLabel(order),
+			]
+				.filter(Boolean)
+				.join(' ')
+				.toLowerCase();
+			return haystack.includes(normalizedSearch);
+		});
 	});
 
 	/* --- Formattazione --- */
-	const formatDate = (dateStr) => {
-		if (!dateStr) return '\u2014';
-		try { return new Date(dateStr).toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit', year: 'numeric' }); }
-		catch { return dateStr; }
-	};
+	const formatDate = (dateStr) => formatDateIt(dateStr, '\u2014');
 
 	// formatPrice auto-importato da utils/price.js
 
@@ -87,15 +114,37 @@ export default function useOrdersList() {
 		return order.packages[0].services?.service_type?.split(',')[0]?.trim() || 'Espresso Nazionale';
 	};
 
-	const getSenderName = (order) => order.packages?.[0]?.origin_address?.name || '\u2014';
-	const getRecipientName = (order) => order.packages?.[0]?.destination_address?.name || '\u2014';
+	const resolveContactLabel = (address) => {
+		if (!address) return '\u2014';
+		const name = String(address.name || '').trim();
+		if (name && name.toUpperCase() !== 'N/D') return name;
+		const city = String(address.city || '').trim();
+		const province = String(address.province || '').trim();
+		if (city && province) return `${city} (${province})`;
+		if (city) return city;
+		const street = String(address.address || '').trim();
+		return street || '\u2014';
+	};
+
+	const getSenderName = (order) => resolveContactLabel(order.packages?.[0]?.origin_address);
+	const getRecipientName = (order) => resolveContactLabel(order.packages?.[0]?.destination_address);
 
 	const getOrderSubtotalLabel = (order) => {
-		if (typeof order?.subtotal === 'string' && order.subtotal.trim()) return order.subtotal.replace(/\s*EUR$/i, '\u20AC');
-		return formatPrice(order?.subtotal_cents || 0);
+		if (typeof order?.payable_total === 'string' && order.payable_total.trim()) return order.payable_total.replace(/\s*EUR$/i, '\u20AC');
+		return formatPrice(order?.payable_total_cents ?? order?.subtotal_cents ?? 0);
 	};
 
 	const getOrderDateLabel = (order) => formatDate(order?.created_at);
+
+	const getOrderReferenceLabel = (order) => {
+		const ref = order?.reference || order?.order_number || order?.tracking_number;
+		if (ref) return String(ref);
+		return order?.id ? `#${order.id}` : '\u2014';
+	};
+
+	const getTrackingLabel = (order) => {
+		return getBrtTrackingReference(order) || '';
+	};
 
 	const getOrderPackageLabel = (order) => {
 		const count = Number(order?.packages?.length || 0);
@@ -119,13 +168,25 @@ export default function useOrdersList() {
 	/* --- Statistiche --- */
 	const orderStats = computed(() => {
 		const list = orders.value?.data || [];
-		const openStatuses = ['In attesa', 'In lavorazione', 'In transito', 'Pagato'];
-		const pendingStatuses = ['In attesa', 'Fallito', 'Pagato'];
+		const openStatuses = ['In attesa', 'In lavorazione', 'In transito', 'Pagato', 'Etichetta generata', 'In consegna', 'In attesa di bonifico'];
+		const pendingStatuses = ['In attesa', 'Fallito', 'Pagato', 'In attesa di bonifico'];
 		return {
 			total: list.length,
 			open: list.filter(o => openStatuses.includes(o.status)).length,
 			pending: list.filter(o => isPendingPayment(o) || pendingStatuses.includes(o.status)).length,
 		};
+	});
+
+	const filterPills = computed(() => {
+		const list = orders.value?.data || [];
+		const countByStatus = (statuses) => list.filter((order) => statuses.includes(order.status)).length;
+		return [
+			{ id: 'Tutti', label: 'Tutti', count: list.length },
+			{ id: 'Aperti', label: 'Aperti', count: countByStatus(['In attesa', 'In lavorazione', 'In transito', 'Pagato', 'Etichetta generata', 'In consegna', 'In attesa di bonifico']) },
+			{ id: 'Chiusi', label: 'Chiusi', count: countByStatus(['Completato', 'Consegnato']) },
+			{ id: 'Annullati', label: 'Annullati', count: countByStatus(['Annullato', 'Rimborsato', 'Fallito', 'Reso', 'Rifiutato']) },
+			{ id: 'In giacenza', label: 'In giacenza', count: countByStatus(['In giacenza']) },
+		];
 	});
 
 	/* --- Modale dettaglio --- */
@@ -164,7 +225,10 @@ export default function useOrdersList() {
 	const loadSavedShipments = async () => {
 		try { savedShipmentsList.value = (await sanctum("/api/saved-shipments"))?.data || []; } catch {}
 	};
-	onMounted(loadSavedShipments);
+	onMounted(() => {
+		void refresh();
+		void loadSavedShipments();
+	});
 
 	const isAlreadySaved = (order) => {
 		if (savedToConfigured.value[order.id]) return true;
@@ -244,11 +308,11 @@ export default function useOrdersList() {
 	};
 
 	return {
-		filters, activeFilter, textFilter, changeFilter,
+		filters, filterPills, activeFilter, textFilter, searchQuery, changeFilter,
 		orders, refresh, ordersStatus, filteredOrders,
 		statusRaw, statusColor,
 		formatDate, formatPrice, getPackageIcon, getRouteLabel, getServiceLabel,
-		getSenderName, getRecipientName, getOrderSubtotalLabel, getOrderDateLabel, getOrderPackageLabel,
+		getSenderName, getRecipientName, getOrderSubtotalLabel, getOrderDateLabel, getOrderReferenceLabel, getTrackingLabel, getOrderPackageLabel,
 		isPendingPayment, getPendingReason, orderStats,
 		showDetail, detailItem,
 		cancellingOrder, saveError, isCancellable, cancelOrder,

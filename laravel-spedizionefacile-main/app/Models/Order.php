@@ -87,6 +87,8 @@ class Order extends Model
         'is_cod',                        // Se true, il pagamento e' in contrassegno (paga il destinatario)
         'cod_amount',                    // Importo da incassare in contrassegno
         'cod_payment_type',              // Tipo pagamento contrassegno BRT: BM, CC, AS
+        'cod_incasso_type',              // Modalita incasso destinatario: contanti|assegno (audit F01)
+        'insurance_amount_cents',        // Valore dichiarato assicurazione in centesimi (audit F02)
         'brt_error',                     // Eventuale errore nella generazione etichetta BRT
         'brt_tracking_number',           // Numero di tracking BRT (parcelNumberFrom)
         'brt_parcel_number_to',          // Ultimo numero collo (parcelNumberTo) per multi-collo
@@ -107,6 +109,21 @@ class Order extends Model
         'cancellation_fee',              // Commissione di annullamento in centesimi (200 = 2 EUR)
         'billing_data',                  // Snapshot dati di fatturazione scelti al checkout
         'brt_last_tracking_check',       // Ultima volta che il tracking è stato sincronizzato
+        // Campi fatturazione elettronica SDI
+        'sdi_status',                    // pending | sent | accepted | rejected | archived
+        'sdi_xml_path',                  // Path XML FatturaPA in storage privato
+        'sdi_transmission_id',           // ID trasmissione provider
+        'sdi_invoice_number',            // Numero progressivo fattura (es. "2026/00012")
+        'sdi_sent_at',                   // Timestamp invio al provider
+        'sdi_accepted_at',               // Timestamp ricevuta accettazione SDI
+        'sdi_rejected_at',               // Timestamp scarto/rifiuto SDI
+        'sdi_last_error',                // Ultimo messaggio di errore SDI
+        // Campi ritiro programmato (F04 — audit BRT 2026-04-18)
+        'pickup_date',                   // Data ritiro programmata (modificabile finché non ritirato)
+        // Campi bonifico bancario (F05 — audit BRT 2026-04-18)
+        'bank_transfer_confirmed_at',    // Quando admin ha confermato la ricezione del bonifico
+        'bank_transfer_reference',       // Riferimento bonifico (CRO/altro) inserito da admin
+        'bank_transfer_confirmed_by',    // User ID admin che ha confermato
         // SICUREZZA: i seguenti campi NON sono in $fillable (assegnare con $order->campo = valore):
         // - payment_method: metodo di pagamento (stripe, wallet) — impostato solo dal server
         // - stripe_payment_intent_id: ID PaymentIntent Stripe — impostato solo dal server
@@ -117,6 +134,7 @@ class Order extends Model
         'subtotal' => 'integer',             // Centesimi: 890 = 8,90 EUR
         'is_cod' => 'boolean',
         'cod_amount' => 'integer',           // Centesimi contrassegno
+        'insurance_amount_cents' => 'integer', // Centesimi valore assicurato (audit F02)
         'refund_amount' => 'integer',        // Centesimi rimborsati
         'cancellation_fee' => 'integer',     // Commissione annullamento in centesimi
         'pricing_snapshot' => 'array',
@@ -129,7 +147,24 @@ class Order extends Model
         'documents_sent_customer_at' => 'datetime',
         'documents_sent_admin_at' => 'datetime',
         'brt_last_tracking_check' => 'datetime',
+        'sdi_sent_at' => 'datetime',
+        'sdi_accepted_at' => 'datetime',
+        'sdi_rejected_at' => 'datetime',
+        'pickup_date' => 'date',
+        'bank_transfer_confirmed_at' => 'datetime',
     ];
+
+    /* ===== COSTANTI STATI SDI ===== */
+
+    const SDI_PENDING = 'pending';     // XML generato, non ancora inviato
+
+    const SDI_SENT = 'sent';           // Inviato al provider, in attesa ricevuta
+
+    const SDI_ACCEPTED = 'accepted';   // Consegnata al destinatario (RC/MC)
+
+    const SDI_REJECTED = 'rejected';   // Scartata dallo SDI o mancata consegna
+
+    const SDI_ARCHIVED = 'archived';   // Spostata in conservazione sostitutiva
 
     protected $hidden = [
         'brt_label_base64',
@@ -167,6 +202,8 @@ class Order extends Model
 
     const REFUNDED = 'refunded';              // Rimborsato - il rimborso e' stato completato
 
+    const AWAITING_BANK_TRANSFER = 'awaiting_bank_transfer'; // In attesa di bonifico bancario (F05)
+
     /**
      * Traduce lo stato dell'ordine dall'inglese all'italiano.
      * Viene usato per mostrare lo stato in modo comprensibile all'utente.
@@ -188,6 +225,7 @@ class Order extends Model
             'in_giacenza' => 'In giacenza',
             'returned' => 'Reso',
             'refused' => 'Rifiutato',
+            'awaiting_bank_transfer' => 'In attesa di bonifico',
         ];
 
         return $data[$status] ?? $status;
@@ -302,6 +340,72 @@ class Order extends Model
         return new MyMoney($subtotal);
     }
 
+    /**
+     * Contesto sconto persistito nello snapshot prezzi dell'ordine.
+     *
+     * Resta null quando l'ordine non ha coupon/referral applicati in modo canonico.
+     */
+    public function discountContext(): ?array
+    {
+        $snapshot = $this->getAttribute('pricing_snapshot');
+
+        if (! is_array($snapshot)) {
+            return null;
+        }
+
+        $discountContext = $snapshot['discount_context'] ?? null;
+
+        return is_array($discountContext) ? $discountContext : null;
+    }
+
+    public function grossSubtotalCents(): int
+    {
+        return (int) ($this->getRawOriginal('subtotal') ?? $this->getAttributes()['subtotal'] ?? 0);
+    }
+
+    public function discountAmountCents(): int
+    {
+        $discountAmount = $this->discountContext()['discount_amount'] ?? null;
+
+        if (! is_numeric($discountAmount)) {
+            return 0;
+        }
+
+        return max(0, (int) round(((float) $discountAmount) * 100));
+    }
+
+    public function payableTotalCents(): int
+    {
+        $grossSubtotal = $this->grossSubtotalCents();
+        $discountAmount = $this->discountAmountCents();
+        $candidate = $this->discountContext()['final_total_raw'] ?? null;
+
+        if (! is_numeric($candidate)) {
+            return max(0, $grossSubtotal - $discountAmount);
+        }
+
+        $candidateCents = max(0, (int) round(((float) $candidate) * 100));
+
+        if ($candidateCents === 0 && $discountAmount > 0 && $discountAmount < $grossSubtotal) {
+            return $grossSubtotal - $discountAmount;
+        }
+
+        if ($candidateCents === 0 && $discountAmount === 0) {
+            return $grossSubtotal;
+        }
+
+        if ($candidateCents > $grossSubtotal) {
+            return $grossSubtotal;
+        }
+
+        return $candidateCents;
+    }
+
+    public function payableTotal(): MyMoney
+    {
+        return new MyMoney($this->payableTotalCents());
+    }
+
     // Relazione: ogni ordine appartiene a UN utente
     // Cioe' ogni ordine e' stato fatto da una persona specifica
     public function user(): BelongsTo
@@ -323,6 +427,12 @@ class Order extends Model
     {
         return $this->belongsToMany(Package::class, 'package_order')
             ->withPivot('quantity');
+    }
+
+    // Relazione: un ordine può avere MOLTI reclami (F03)
+    public function claims(): HasMany
+    {
+        return $this->hasMany(Claim::class);
     }
 
     /**

@@ -1,159 +1,110 @@
 # SpediamoFacile Monorepo
 
-Questo repository contiene:
+Workspace monorepo di **SpediamoFacile**, piattaforma di intermediazione spedizioni BRT con:
 
-- **Backend Laravel** in `laravel-spedizionefacile-main`
-- **Frontend Nuxt** in `nuxt-spedizionefacile-master`
+- preventivo rapido e funnel ordine one-page
+- pagamenti carta, bonifico, wallet e PayPal
+- account cliente e console admin
+- tracking, documenti, etichette e integrazione BRT
+- coupon/referral e wallet
 
-## Avvio con GitHub Codespaces (solo UI, senza terminale)
+Questo file e' una **landing pulita della repo**.  
+La documentazione canonica vive in [`docs/README.md`](docs/README.md).
 
-1. **Crea un Codespace**  
-   - Vai su GitHub → *Code* → *Codespaces* → *Create codespace on main*.
+## Come leggere la repo
 
-2. **Attendi la configurazione automatica**  
-   - Lo script `scripts/avvia-tutto.sh` installa le dipendenze mancanti e avvia Laravel (8000) e Nuxt (3000).
+La root e' una **workspace shell**, non il posto dove capire tutto il prodotto.
 
-3. **Apri il sito**  
-   - Apri il link della porta **3000** dalla scheda *Ports* del Codespace.
+- `nuxt-spedizionefacile-master/` -> frontend Nuxt vivo
+- `laravel-spedizionefacile-main/` -> backend Laravel vivo
+- `docs/` -> documentazione canonica e attiva
+- `_archive/` -> snapshot tecnici, refactor superseded, materiale archiviato del workspace
+- `docs/archive/` -> storico documentale e handoff non piu' canonici
+- `_LOG/` -> evidenze locali di test, screenshot e probe
+- `output/`, `_data/` -> artefatti operativi e dati locali di supporto
+- `scripts/` -> tooling locale e automazioni di supporto
 
-### Se vedi errore 502 sulla porta 3000
+Output locali strutturati:
 
-- Aspetta 20-40 secondi e ricarica la pagina: Nuxt può impiegare qualche secondo al primo avvio.
-- Se resta 502, dal Codespace usa **Command Palette → Codespaces: Rebuild Container** e riapri la porta **3000**.
-- Il backend API deve rispondere sulla porta **8000**; se 8000 è su e 3000 no, il problema è solo nel processo Nuxt e il rebuild lo riallinea.
+- `output/runtime-state/` -> URL preview, porte e stato runtime locali
+- `output/scratch/` -> scratch e dump temporanei non autorevoli
+- `scripts/local-tools/claude/` -> launcher Claude locali non runtime
 
-4. **Backend collegato automaticamente**  
-   - `NUXT_PUBLIC_API_BASE` viene costruita usando `CODESPACE_NAME` e `GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN`, così il frontend usa l’URL pubblico della porta 8000.
+Regola pratica:
 
-## API Portafoglio (backend)
+- **codice runtime** = frontend + backend
+- **fonte documentale** = `docs/`
+- **storico e output** = fuori dal percorso canonico del prodotto
 
-Il backend espone gli endpoint seguenti (base URL = `NUXT_PUBLIC_API_BASE`):
+## Inizia qui
 
-- `GET /api/wallet/balance` → saldo calcolato dai movimenti confermati.
-- `GET /api/wallet/movements` → lista movimenti.
-- `POST /api/wallet/top-up` → ricarica (idempotente).
-- `POST /api/wallet/payment` → pagamento (idempotente, crea movimento in stato `pending`).
-- `POST /api/wallet/payment-confirmation` → conferma pagamento tramite riferimento.
+- [`docs/README.md`](docs/README.md) -> indice documentale ufficiale
+- [`docs/QUICKSTART.md`](docs/QUICKSTART.md) -> setup locale
+- [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) -> panoramica di sistema
+- [`docs/FEATURE_BOUNDARIES.md`](docs/FEATURE_BOUNDARIES.md) -> mappa delle feature core e dei boundary reali
+- [`docs/FRONTEND_STRUCTURE.md`](docs/FRONTEND_STRUCTURE.md) -> struttura frontend reale
+- [`docs/BACKEND_STRUCTURE.md`](docs/BACKEND_STRUCTURE.md) -> struttura backend reale
+- [`docs/DESIGN_SYSTEM.md`](docs/DESIGN_SYSTEM.md) -> grammatica UI condivisa
 
-La logica è idempotente: lo stesso `idempotency_key` non crea movimenti duplicati e il saldo deriva sempre dai movimenti confermati.
+Se devi orientarti rapidamente, l'ordine consigliato e' questo:
 
-## Soluzione definitiva con Cloudflare Tunnel (gratis)
+1. [`docs/README.md`](docs/README.md)
+2. [`docs/QUICKSTART.md`](docs/QUICKSTART.md)
+3. [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)
+4. [`docs/FEATURE_BOUNDARIES.md`](docs/FEATURE_BOUNDARIES.md)
+5. [`docs/FRONTEND_STRUCTURE.md`](docs/FRONTEND_STRUCTURE.md) oppure [`docs/BACKEND_STRUCTURE.md`](docs/BACKEND_STRUCTURE.md)
 
-Se Codespaces termina i minuti o non vuoi usare Netlify/Render, puoi pubblicare **frontend e backend** con Cloudflare Tunnel.
+## Scope core launch
 
-### Cosa fa questa soluzione
+Il core launch che questa repo deve tenere perfettamente funzionante e' questo:
 
-- Usa `scripts/avvia-cloudflare.ps1` (Windows PowerShell) per avviare Laravel (8000) e Nuxt (3000).
-- Crea due URL pubblici `trycloudflare.com`:
-  - uno per il backend API
-  - uno per il frontend sito
-- Imposta automaticamente `NUXT_PUBLIC_API_BASE` sul tunnel backend, così registrazione/login/form e chiamate API puntano all’URL giusto.
+- quick quote / preventivo rapido
+- funnel canonico `/la-tua-spedizione/[step]`
+- ordine -> pagamento -> documenti -> account/admin
+- pagamenti: carta, bonifico, wallet, PayPal
+- tracking / PUDO / BRT
+- wallet
+- coupon/referral reali
+- account cliente
+- admin operativo
 
-### Passi rapidi (Codespaces)
+Funzioni fuori dal core launch:
 
-1. Apri Codespace sul branch aggiornato.
-2. Esegui script unico:
-   - `powershell -ExecutionPolicy Bypass -File .\scripts\avvia-cloudflare.ps1`
-3. Copia il link mostrato come **Frontend pubblico** e aprilo.
+- reclami dedicati
+- SDI / fatturazione elettronica avanzata
+- spedizioni salvate
+- superfici duplicate o legacy non canoniche
 
-### Note importanti
+## Avvio locale
 
-- Gli URL `trycloudflare.com` sono comodi e gratuiti, ma possono cambiare al riavvio.
-- Se vuoi URL stabili “per sempre”, crea un tunnel Cloudflare dal dashboard Zero Trust e associa due hostname (es. `app.tuodominio.it` e `api.tuodominio.it`) verso le porte 3000/8000.
-- Non inserire mai token o credenziali nel repository: usa variabili ambiente nel provider/ambiente di esecuzione.
+Per l'avvio locale e le procedure operative usa:
 
+- [`docs/QUICKSTART.md`](docs/QUICKSTART.md)
+- [`docs/DEBUGGING.md`](docs/DEBUGGING.md)
+- [`docs/DEPLOY.md`](docs/DEPLOY.md)
 
-### Diagnostica automatica (quando non si connette)
+Non usare questo file come manuale operativo lungo: il suo scopo e' solo orientare rapidamente.
 
-Se usi Cloudflare Tunnel, `http://127.0.0.1:8787` può essere la porta metrics di `cloudflared`; se invece usi Caddy locale, `8787` è il sito principale.
+## Nota sulla documentazione
 
-Esegui questo comando unico per raccogliere tutto lo stato in automatico:
+La repo contiene molto storico utile.  
+Lo storico non va perso, ma **non deve essere confuso con il codice vivo**.
 
-```powershell
-powershell -ExecutionPolicy Bypass -File .\scripts\raccogli-stato.ps1
-```
+Per questo:
 
-Il comando crea `tmp-diagnostica/report.txt`: incolla quel file e possiamo capire subito dove si blocca (frontend, backend o tunnel) senza altri passaggi manuali.
+- `docs/` contiene la documentazione canonica
+- `docs/archive/` contiene storico documentale e audit superseded
+- `_archive/` contiene snapshot tecnici e materiale repo non piu' vivo
+- `_LOG/`, `output/`, `_data/` contengono artefatti di lavoro locale o verifiche
 
+Shortcut pratico:
 
-## Avvio locale consigliato (Caddy su 8787)
+- per capire il prodotto attuale: `docs/`
+- per ricostruire una scelta storica: `docs/archive/`
+- per recuperare codice o refactor superseded: `_archive/`
+- per prove locali, screenshot e audit: `_LOG/`
 
-Se stai già vedendo il sito su `http://127.0.0.1:8787`, questa è la modalità corretta: origine unica per frontend + API.
+## Nota per agenti e tooling
 
-1. Avvio automatico completo:
-
-```bash
-powershell -ExecutionPolicy Bypass -File .\scripts\avvia-locale.ps1
-```
-
-2. Apri il sito:
-
-- `http://127.0.0.1:8787`
-
-Lo script avvia Nuxt (3000), Laravel (8000) e Caddy (8787) se disponibile.
-
-### Bundle automatico di supporto (Windows)
-
-Per condividere tutto in un colpo solo (config + log + check HTTP), esegui in PowerShell:
-
-```powershell
-powershell -ExecutionPolicy Bypass -File .\scripts\support-bundle.ps1
-```
-
-Output atteso: `OK: creato ...support_bundle_*.zip`
-
-> Nota sicurezza: il bundle copia solo file di configurazione di esempio (`.env.example`), non i tuoi `.env` reali.
-
-## Account di prova e controllo amministrativo
-
-Dopo `php artisan migrate --seed` trovi questi account pronti:
-
-- **Admin**: `admin@spediamofacile.it` / `Admin2026!`
-- **Cliente**: `cliente@spediamofacile.it` / `Cliente2026!`
-- **Cliente test**: `prova@spediamofacile.it` / `Prova2026!`
-- **Partner Pro**: `pro@spediamofacile.it` / `Partner2026!`
-
-### Dove controllare tutti gli account registrati
-
-1. Accedi con l'utente admin.
-2. Apri **Il tuo account → Amministrazione**.
-3. Vai al tab **Account** (`/account/amministrazione`):
-   - vedi elenco completo utenti registrati,
-   - approvi account non verificati,
-   - elimini account in caso di bug/registrazioni errate.
-
-> Nota: l'eliminazione dell'utente amministratore attualmente loggato è bloccata per sicurezza.
-
-
-## Nota PR refresh regressioni UI/Preventivo
-
-È disponibile una PR di refresh dedicata alle regressioni segnalate su:
-- layout preventivo/carrello compresso,
-- immagine hero home non visibile,
-- stato sessione/navbar al ritorno in home,
-- blocco del bottone **Continua** nello step spedizione,
-- wrapping dell’icona cestino nello step 1.
-
-Se nel repository vedi più PR aperte, usa quella con titolo che inizia con **"PR refresh"**.
-
-
-## Ripristino rapido errore Vue "Element is missing end tag"
-
-Se in locale compare un errore 500 con `Element is missing end tag` su `pages/la-tua-spedizione/[step].vue`, allinea il file al branch corrente prima di riavviare:
-
-```bash
-git checkout -- nuxt-spedizionefacile-master/pages/la-tua-spedizione/[step].vue
-cd nuxt-spedizionefacile-master
-npm run build
-```
-
-Questo evita che una modifica locale non chiusa correttamente blocchi tutta l'app.
-
-Se l'errore resta, esegui anche `git fetch --all && git reset --hard origin/work` nella root del progetto prima della build, per riallineare i file locali corrotti.
-
-In alternativa puoi usare lo script automatico:
-
-```bash
-bash scripts/ripristina-vue.sh
-```
-
+[`CLAUDE.md`](CLAUDE.md) e' un documento operativo per agenti/tooling e continuita di sessione.  
+Non e' la documentazione prodotto principale: per quella, partire sempre da [`docs/README.md`](docs/README.md).

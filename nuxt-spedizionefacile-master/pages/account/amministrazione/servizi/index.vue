@@ -1,19 +1,11 @@
-<!--
-  FILE: pages/account/amministrazione/servizi/index.vue
-  SCOPO: Pannello admin — lista servizi con pubblicazione, ordinamento e azioni CRUD.
-  API: GET /api/admin/services — lista servizi,
-       PATCH /api/admin/services/{id}/publish — pubblica/bozza,
-       DELETE /api/admin/services/{id} — elimina servizio.
-  ROUTE: /account/amministrazione/servizi (middleware sanctum:auth + admin).
-
-  COLLEGAMENTI:
-    - pages/account/amministrazione/servizi/nuovo.vue → crea nuovo servizio.
-    - pages/account/amministrazione/servizi/[id].vue → modifica servizio.
-    - pages/servizi/index.vue → lista servizi pubblica.
--->
-<script setup>
+﻿<script setup>
 definePageMeta({
-	middleware: ["app-auth", "admin"],
+	middleware: ['app-auth', 'admin'],
+});
+
+useSeoMeta({
+	title: 'Admin - Servizi | SpediamoFacile',
+	robots: 'noindex, nofollow',
 });
 
 const sanctum = useSanctumClient();
@@ -21,147 +13,279 @@ const { actionLoading, actionMessage, showSuccess, showError, formatDate } = use
 
 const isLoading = ref(true);
 const articles = ref([]);
+const searchQuery = ref('');
+const statusFilter = ref('all');
+
+const publishedArticles = computed(() => articles.value.filter((article) => Boolean(article?.is_published)));
+const draftArticles = computed(() => articles.value.filter((article) => !article?.is_published));
+const orderedArticles = computed(() =>
+	articles.value.filter((article) => article?.sort_order !== null && article?.sort_order !== undefined && article?.sort_order !== '')
+);
+
+const filteredArticles = computed(() => {
+	const query = searchQuery.value.trim().toLowerCase();
+
+	return articles.value.filter((article) => {
+		const matchesStatus = statusFilter.value === 'all'
+			? true
+			: statusFilter.value === 'published'
+				? Boolean(article?.is_published)
+				: !article?.is_published;
+
+		if (!matchesStatus) return false;
+		if (!query) return true;
+
+		const haystack = [
+			article?.title,
+			article?.slug,
+			article?.intro,
+			article?.meta_description,
+		]
+			.filter(Boolean)
+			.join(' ')
+			.toLowerCase();
+
+		return haystack.includes(query);
+	});
+});
+
+const servicePreview = (article) =>
+	article?.intro?.trim() || article?.meta_description?.trim() || 'Apri il servizio per completare descrizione, vantaggi e contenuti del catalogo pubblico.';
 
 const fetchArticles = async () => {
 	isLoading.value = true;
 	try {
-		const res = await sanctum("/api/admin/articles?type=service");
+		const res = await sanctum('/api/admin/articles?type=service');
 		articles.value = res?.data || res || [];
-	} catch (e) { articles.value = []; }
-	finally { isLoading.value = false; }
+	} catch (e) {
+		articles.value = [];
+		showError(e, 'Errore nel caricamento dei servizi.');
+	} finally {
+		isLoading.value = false;
+	}
 };
 
 const togglePublished = async (article) => {
 	actionLoading.value = `toggle-${article.id}`;
 	try {
 		await sanctum(`/api/admin/articles/${article.id}`, {
-			method: "PUT",
+			method: 'PUT',
 			body: { ...article, is_published: !article.is_published },
 		});
 		article.is_published = !article.is_published;
-		showSuccess(`Servizio "${article.title}" ${article.is_published ? 'pubblicato' : 'nascosto'}.`);
-	} catch (e) { showError(e, "Errore durante l'aggiornamento."); }
-	finally { actionLoading.value = null; }
+		showSuccess(`Servizio "${article.title}" ${article.is_published ? 'pubblicato' : 'salvato come bozza'}.`);
+	} catch (e) {
+		showError(e, "Errore durante l'aggiornamento.");
+	} finally {
+		actionLoading.value = null;
+	}
 };
 
 const deleteArticle = async (article) => {
 	if (!confirm(`Sei sicuro di voler eliminare il servizio "${article.title}"?`)) return;
 	actionLoading.value = `delete-${article.id}`;
 	try {
-		await sanctum(`/api/admin/articles/${article.id}`, { method: "DELETE" });
+		await sanctum(`/api/admin/articles/${article.id}`, { method: 'DELETE' });
 		showSuccess(`Servizio "${article.title}" eliminato.`);
 		await fetchArticles();
-	} catch (e) { showError(e, "Errore durante l'eliminazione."); }
-	finally { actionLoading.value = null; }
+	} catch (e) {
+		showError(e, "Errore durante l'eliminazione.");
+	} finally {
+		actionLoading.value = null;
+	}
 };
 
-onMounted(() => { fetchArticles(); });
+onMounted(() => {
+	fetchArticles();
+});
 </script>
 
 <template>
-	<section class="min-h-[600px] py-[40px] desktop:py-[60px] desktop-xl:py-[80px]">
-		<div class="my-container">
+	<section class="sf-account-shell min-h-[600px] py-[24px] tablet:py-[28px] desktop:py-[28px]">
+		<div class="my-container sf-stack-section">
 			<AccountPageHeader
-				eyebrow="Admin"
+				eyebrow="Area amministrazione"
 				title="Servizi"
-				description="Gestisci i servizi editoriali visibili nel catalogo pubblico: pubblicazione, ordine, modifica e rimozione da un'unica console."
+				description="Catalogo servizi, visibilita e ordine in una lista piu pulita e coerente con il resto della console."
 				:crumbs="[
 					{ label: 'Account', to: '/account' },
 					{ label: 'Amministrazione', to: '/account/amministrazione' },
 					{ label: 'Servizi' },
 				]"
 				back-to="/account/amministrazione"
-				back-label="Torna all'amministrazione">
-				<template #actions>
-					<NuxtLink to="/account/amministrazione/servizi/nuovo" class="btn-cta btn-compact inline-flex items-center justify-center gap-[6px]">
-						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[18px] h-[18px]" fill="currentColor"><path d="M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z"/></svg>
-						Nuovo servizio
-					</NuxtLink>
-				</template>
-			</AccountPageHeader>
+				back-label="Torna all'amministrazione" />
 
-			<!-- Action message -->
-			<div
-				v-if="actionMessage"
-				:class="[
-					'mb-[20px] px-[16px] py-[12px] rounded-[20px] text-[0.875rem] font-medium flex items-center gap-[8px]',
-					actionMessage.type === 'success' ? 'bg-[#f0fdf4] text-[#0a8a7a] border border-[#d1fae5]' : 'bg-red-50 text-red-700 border border-red-200',
-				]">
-				<template v-if="actionMessage.type === 'success'"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[18px] h-[18px] shrink-0" fill="currentColor"><path d="M12 2C6.5 2 2 6.5 2 12S6.5 22 12 22 22 17.5 22 12 17.5 2 12 2M10 17L5 12L6.41 10.59L10 14.17L17.59 6.58L19 8L10 17Z"/></svg></template>
-				<template v-else><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[18px] h-[18px] shrink-0" fill="currentColor"><path d="M13,13H11V7H13M13,17H11V15H13M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z"/></svg></template>
-				{{ actionMessage.text }}
+			<AdminActionBanner :message="actionMessage?.text || ''" :tone="actionMessage?.type || ''" />
+
+			<div class="grid grid-cols-2 tablet:grid-cols-4 gap-[14px]">
+				<div class="rounded-[18px] bg-white p-[18px] ring-[1px] ring-[#DFE2E7]" style="box-shadow: 0 2px 12px rgba(9,88,102,0.08)">
+					<div class="flex items-start gap-[12px]">
+						<div class="w-[36px] h-[36px] rounded-[10px] bg-[#F0F7F8] flex items-center justify-center">
+							<svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[18px] h-[18px] text-[var(--color-brand-primary)]" fill="currentColor">
+								<path d="M12,2L2,7L12,12L22,7L12,2M4,9.5V16.5L12,21L20,16.5V9.5L12,14L4,9.5Z" />
+							</svg>
+						</div>
+						<div>
+							<p class="text-[0.6875rem] font-semibold uppercase tracking-[0.5px] text-[#7A8392] mb-[2px]">Servizi</p>
+							<p class="text-[1.5rem] font-bold text-[#1d2738] leading-tight">{{ articles.length }}</p>
+						</div>
+					</div>
+				</div>
+
+				<div class="rounded-[18px] bg-white p-[18px] ring-[1px] ring-[#DFE2E7]" style="box-shadow: 0 2px 12px rgba(9,88,102,0.08)">
+					<div class="flex items-start gap-[12px]">
+						<div class="w-[36px] h-[36px] rounded-[10px] bg-[#ECFDF3] flex items-center justify-center">
+							<svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[18px] h-[18px] text-[#047857]" fill="currentColor">
+								<path d="M12 2C6.5 2 2 6.5 2 12S6.5 22 12 22 22 17.5 22 12 17.5 2 12 2M10 17L5 12L6.41 10.59L10 14.17L17.59 6.58L19 8L10 17Z" />
+							</svg>
+						</div>
+						<div>
+							<p class="text-[0.6875rem] font-semibold uppercase tracking-[0.5px] text-[#7A8392] mb-[2px]">Pubblicati</p>
+							<p class="text-[1.5rem] font-bold text-[#047857] leading-tight">{{ publishedArticles.length }}</p>
+						</div>
+					</div>
+				</div>
+
+				<div class="rounded-[18px] bg-white p-[18px] ring-[1px] ring-[#DFE2E7]" style="box-shadow: 0 2px 12px rgba(9,88,102,0.08)">
+					<div class="flex items-start gap-[12px]">
+						<div class="w-[36px] h-[36px] rounded-[10px] bg-[#FFF7F2] flex items-center justify-center">
+							<svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[18px] h-[18px] text-[#E44203]" fill="currentColor">
+								<path d="M12,20A8,8 0 0,0 20,12A8,8 0 0,0 12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22C6.47,22 2,17.5 2,12A10,10 0 0,1 12,2M12.5,7V12.25L17,14.92L16.25,16.15L11,13V7H12.5Z" />
+							</svg>
+						</div>
+						<div>
+							<p class="text-[0.6875rem] font-semibold uppercase tracking-[0.5px] text-[#7A8392] mb-[2px]">Bozze</p>
+							<p class="text-[1.5rem] font-bold text-[#E44203] leading-tight">{{ draftArticles.length }}</p>
+						</div>
+					</div>
+				</div>
+
+				<div class="rounded-[18px] bg-white p-[18px] ring-[1px] ring-[#DFE2E7]" style="box-shadow: 0 2px 12px rgba(9,88,102,0.08)">
+					<div class="flex items-start gap-[12px]">
+						<div class="w-[36px] h-[36px] rounded-[10px] bg-[#F7FAFC] flex items-center justify-center">
+							<svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[18px] h-[18px] text-[#6A7486]" fill="currentColor">
+								<path d="M19,3H5A2,2 0 0,0 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V5A2,2 0 0,0 19,3M7,7H17V9H7V7M7,11H17V13H7V11M7,15H13V17H7V15Z" />
+							</svg>
+						</div>
+						<div>
+							<p class="text-[0.6875rem] font-semibold uppercase tracking-[0.5px] text-[#7A8392] mb-[2px]">Ordinati</p>
+							<p class="text-[1.5rem] font-bold text-[#1d2738] leading-tight">{{ orderedArticles.length }}</p>
+						</div>
+					</div>
+				</div>
 			</div>
 
-			<!-- Loading -->
-			<div v-if="isLoading" class="py-[60px] flex justify-center">
+			<div v-if="isLoading" class="py-[32px] flex justify-center">
 				<div class="w-[40px] h-[40px] border-3 border-[var(--color-brand-border)] border-t-[var(--color-brand-primary)] rounded-full animate-spin"></div>
 			</div>
 
-			<div v-else class="bg-white rounded-[20px] p-[24px] desktop:p-[32px] shadow-sm border border-[var(--color-brand-border)]">
-				<h2 class="text-[1.125rem] font-bold text-[var(--color-brand-text)] mb-[20px]">Tutti i servizi</h2>
-
-				<div v-if="!articles.length" class="text-center py-[48px]">
-					<div class="w-[64px] h-[64px] mx-auto mb-[16px] bg-[#F5F6F9] rounded-full flex items-center justify-center">
-						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[28px] h-[28px]" fill="#C8CCD0"><path d="M12,2L2,7L12,12L22,7L12,2M2,17L12,22L22,17L12,12L2,17Z"/></svg>
+			<div
+				v-else
+				class="rounded-[18px] bg-white ring-[1px] ring-[#DFE2E7] overflow-hidden"
+				style="box-shadow: 0 2px 12px rgba(9,88,102,0.08)">
+				<div class="px-[18px] py-[18px] border-b border-[#EEF2F4] flex flex-col gap-[14px] desktop:flex-row desktop:items-center desktop:justify-between">
+					<div class="max-w-[720px]">
+						<p class="text-[0.75rem] font-semibold uppercase tracking-[0.08em] text-[#6A7486] mb-[6px]">Catalogo</p>
+						<h2 class="text-[1.125rem] font-bold text-[#1d2738] font-['Montserrat',sans-serif]">Catalogo servizi</h2>
+						<p class="text-[0.875rem] text-[#5A6474] mt-[4px]">Ritiro, pagamento, coperture e opzioni extra in un solo pannello operativo, senza card giganti o azioni disperse.</p>
 					</div>
-					<h2 class="text-[1.125rem] font-bold text-[var(--color-brand-text)] mb-[8px]">Nessun servizio presente</h2>
-					<p class="text-[var(--color-brand-text-secondary)] text-[0.875rem] mb-[16px]">Crea il primo servizio per iniziare.</p>
-					<NuxtLink to="/account/amministrazione/servizi/nuovo" class="btn-cta btn-compact inline-flex items-center gap-[6px]">
-						<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-						Crea servizio
+					<NuxtLink to="/account/amministrazione/servizi/nuovo" class="btn-primary btn-compact inline-flex items-center justify-center gap-[6px] shrink-0">
+						<svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[18px] h-[18px]" fill="currentColor">
+							<path d="M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z" />
+						</svg>
+						Nuovo servizio
 					</NuxtLink>
 				</div>
 
-				<div v-else class="overflow-x-auto">
-					<table class="w-full text-[0.875rem]">
-						<thead>
-							<tr class="border-b border-[var(--color-brand-border)] text-left text-[var(--color-brand-text-secondary)]">
-								<th class="pb-[12px] font-medium">Titolo</th>
-								<th class="pb-[12px] font-medium">Slug</th>
-								<th class="pb-[12px] font-medium text-center">Pubblicato</th>
-								<th class="pb-[12px] font-medium text-center">Ordine</th>
-								<th class="pb-[12px] font-medium">Data</th>
-								<th class="pb-[12px] font-medium text-right">Azioni</th>
-							</tr>
-						</thead>
-						<tbody>
-							<tr v-for="(article, idx) in articles" :key="article.id" :class="['border-b border-[#F0F0F0] last:border-0', idx % 2 === 1 ? 'bg-[#FAFBFC]' : '']">
-								<td class="py-[14px] font-medium text-[var(--color-brand-text)]">{{ article.title }}</td>
-								<td class="py-[14px]"><span class="font-mono text-[0.8125rem] bg-[#F0F0F0] px-[8px] py-[2px] rounded text-[var(--color-brand-text-secondary)]">{{ article.slug }}</span></td>
-								<td class="py-[14px] text-center">
-								<button
-									type="button"
-									@click="togglePublished(article)"
-									:disabled="actionLoading === `toggle-${article.id}`"
-									:aria-pressed="article.is_published ? 'true' : 'false'"
-									:aria-label="article.is_published ? `Nascondi servizio ${article.title}` : `Pubblica servizio ${article.title}`"
-									:class="[
-										'w-[44px] h-[24px] rounded-[9px] relative transition-colors cursor-pointer border',
-										article.is_published ? 'border-[#0a8a7a] bg-[#0a8a7a]' : 'border-[#C8CCD0] bg-[#D6DADF]',
-									]">
-										<span :class="[
-											'absolute top-[2px] w-[18px] h-[18px] bg-white rounded-[7px] shadow transition-transform',
-											article.is_published ? 'left-[23px]' : 'left-[2px]',
-										]"></span>
-								</button>
-							</td>
-								<td class="py-[14px] text-center text-[var(--color-brand-text)]">{{ article.sort_order ?? '-' }}</td>
-								<td class="py-[14px] text-[var(--color-brand-text-secondary)] text-[0.8125rem]">{{ formatDate(article.created_at) }}</td>
-								<td class="py-[14px] text-right">
-									<div class="flex justify-end gap-[6px]">
-										<NuxtLink :to="`/account/amministrazione/servizi/${article.id}`" class="btn-secondary btn-compact inline-flex items-center gap-[6px]">
-											<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[14px] h-[14px]" fill="currentColor"><path d="M20.71,7.04C21.1,6.65 21.1,6 20.71,5.63L18.37,3.29C18,2.9 17.35,2.9 16.96,3.29L15.12,5.12L18.87,8.87M3,17.25V21H6.75L17.81,9.93L14.06,6.18L3,17.25Z"/></svg> Modifica
-										</NuxtLink>
-										<button type="button" @click="deleteArticle(article)" :disabled="actionLoading === `delete-${article.id}`" class="btn-danger btn-compact inline-flex items-center gap-[6px]">
-											<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[14px] h-[14px]" fill="currentColor"><path d="M19,4H15.5L14.5,3H9.5L8.5,4H5V6H19M6,19A2,2 0 0,0 8,21H16A2,2 0 0,0 18,19V7H6V19Z"/></svg> Elimina
-										</button>
-									</div>
-								</td>
-							</tr>
-						</tbody>
-					</table>
+				<div class="px-[18px] py-[18px] border-b border-[#EEF2F4] bg-[#FBFCFD]">
+					<div class="grid grid-cols-1 desktop:grid-cols-[minmax(0,1fr)_auto] gap-[14px] items-start">
+						<label class="relative block">
+							<span class="sr-only">Cerca servizio</span>
+							<svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="absolute left-[12px] top-1/2 -translate-y-1/2 w-[16px] h-[16px] text-[#94A3B8]" fill="currentColor">
+								<path d="M9.5,3A6.5,6.5 0 0,1 16,9.5C16,11.11 15.41,12.59 14.44,13.73L14.71,14H15.5L20.5,19L19,20.5L14,15.5V14.71L13.73,14.44C12.59,15.41 11.11,16 9.5,16A6.5,6.5 0 0,1 3,9.5A6.5,6.5 0 0,1 9.5,3M9.5,5C7,5 5,7 5,9.5C5,12 7,14 9.5,14C12,14 14,12 14,9.5C14,7 12,5 9.5,5Z" />
+							</svg>
+							<input
+								v-model="searchQuery"
+								type="text"
+								placeholder="Cerca per nome, slug o descrizione..."
+								class="w-full h-[44px] pl-[40px] pr-[14px] rounded-[14px] border border-[#DFE2E7] bg-white text-[0.875rem] text-[#1d2738] placeholder-[#94A3B8] outline-none transition focus:border-[#095866] focus:ring-[3px] focus:ring-[#095866]/10" />
+						</label>
+
+						<div class="flex flex-wrap items-center gap-[8px]">
+							<button
+								type="button"
+								class="h-[38px] px-[14px] rounded-full text-[0.8125rem] font-semibold transition-colors"
+								:class="statusFilter === 'all' ? 'bg-[#095866] text-white' : 'bg-white text-[#526071] ring-[1px] ring-[#DFE2E7] hover:bg-[#F5F8FA]'"
+								@click="statusFilter = 'all'">
+								Tutti {{ articles.length }}
+							</button>
+							<button
+								type="button"
+								class="h-[38px] px-[14px] rounded-full text-[0.8125rem] font-semibold transition-colors"
+								:class="statusFilter === 'published' ? 'bg-[#095866] text-white' : 'bg-white text-[#526071] ring-[1px] ring-[#DFE2E7] hover:bg-[#F5F8FA]'"
+								@click="statusFilter = 'published'">
+								Pubblicati {{ publishedArticles.length }}
+							</button>
+							<button
+								type="button"
+								class="h-[38px] px-[14px] rounded-full text-[0.8125rem] font-semibold transition-colors"
+								:class="statusFilter === 'draft' ? 'bg-[#095866] text-white' : 'bg-white text-[#526071] ring-[1px] ring-[#DFE2E7] hover:bg-[#F5F8FA]'"
+								@click="statusFilter = 'draft'">
+								Bozze {{ draftArticles.length }}
+							</button>
+						</div>
+					</div>
+				</div>
+
+				<div v-if="!articles.length" class="px-[18px] py-[30px] text-center">
+					<div class="w-[60px] h-[60px] mx-auto rounded-full flex items-center justify-center bg-[#F0F7F8] mb-[14px]">
+						<svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[28px] h-[28px] text-[#7A8B96]" fill="currentColor">
+							<path d="M12,2L2,7L12,12L22,7L12,2M4,9.5V16.5L12,21L20,16.5V9.5L12,14L4,9.5Z" />
+						</svg>
+					</div>
+					<h3 class="text-[18px] font-bold text-[#1d2738] font-['Montserrat',sans-serif] mb-[8px]">Nessun servizio presente</h3>
+					<p class="text-[14px] text-[#5A6474] max-w-[560px] mx-auto">Apri i servizi opzionali davvero utili al checkout e gestiscili da una console unica, ordinata e coerente col resto dell'admin.</p>
+					<div class="mt-[16px] flex flex-wrap items-center justify-center gap-[8px]">
+						<span class="inline-flex items-center px-[10px] py-[5px] rounded-full bg-[#F4FAFC] text-[var(--color-brand-primary)] text-[0.75rem] font-medium border border-[#D8E9F0]">Contrassegno</span>
+						<span class="inline-flex items-center px-[10px] py-[5px] rounded-full bg-[#F8FAFC] text-[#5A6474] text-[0.75rem] font-medium border border-[#E5EAF0]">Ritiro dedicato</span>
+						<span class="inline-flex items-center px-[10px] py-[5px] rounded-full bg-[#FFF7F2] text-[#A34B18] text-[0.75rem] font-medium border border-[#F2D6C6]">Assicurazione</span>
+					</div>
+					<NuxtLink to="/account/amministrazione/servizi/nuovo" class="btn-primary btn-compact inline-flex items-center justify-center gap-[6px] mt-[18px]">
+						<svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[18px] h-[18px]" fill="currentColor">
+							<path d="M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z" />
+						</svg>
+						Crea il primo servizio
+					</NuxtLink>
+				</div>
+
+				<div v-else-if="!filteredArticles.length" class="px-[18px] py-[26px] text-center">
+					<h3 class="text-[17px] font-bold text-[#1d2738] font-['Montserrat',sans-serif] mb-[8px]">Nessun servizio con i filtri correnti</h3>
+					<p class="text-[14px] text-[#5A6474] max-w-[520px] mx-auto">Prova a cambiare stato o ricerca per ritrovare piu rapidamente i servizi del catalogo pubblico.</p>
+				</div>
+
+				<div v-else class="divide-y divide-[#EEF2F4]">
+					<div
+						v-for="article in filteredArticles"
+						:key="article.id"
+						class="px-[18px] py-[16px] hover:bg-[#FBFCFD] transition-colors">
+						<AdminContentCatalogRow
+							:article="article"
+							:preview-text="servicePreview(article)"
+							:edit-to="`/account/amministrazione/servizi/${article.id}`"
+							kind="service"
+							published-label="Pubblicato"
+							draft-label="Bozza"
+							created-label="Creato"
+							updated-label="Aggiornato"
+							:format-date="formatDate"
+							:is-toggling="actionLoading === `toggle-${article.id}`"
+							:is-deleting="actionLoading === `delete-${article.id}`"
+							@toggle="togglePublished(article)"
+							@delete="deleteArticle(article)" />
+					</div>
 				</div>
 			</div>
 		</div>
 	</section>
 </template>
+

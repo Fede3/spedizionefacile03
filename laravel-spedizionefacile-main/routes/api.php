@@ -15,7 +15,8 @@
  *   - payments.php   → Stripe pagamenti/carte, portafoglio virtuale
  *   - community.php  → Referral, notifiche, prelievi, Partner Pro, contatti
  *   - admin.php      → Pannello amministrazione
- *   - public.php     → Contenuti pubblici (blog, guide, servizi), GDPR
+ *   - public.php     → Contenuti pubblici (guide, servizi), GDPR
+ *   - invoices.php   → Fatture PDF (M10 — InvoicePdfGenerator)
  *
  * COME FUNZIONA IL MIDDLEWARE "statefulApi":
  *   Configurato in bootstrap/app.php con $middleware->statefulApi().
@@ -39,3 +40,7 @@ require $routeDir . '/payments.php';
 require $routeDir . '/community.php';
 require $routeDir . '/admin.php';
 require $routeDir . '/public.php';
+require $routeDir . '/claims.php';
+// -- ARCHIVIATO 2026-04-20 -- require $routeDir . '/push.php';
+// -- ARCHIVIATO 2026-04-20 -- require $routeDir . '/pro.php';
+require $routeDir . '/invoices.php';

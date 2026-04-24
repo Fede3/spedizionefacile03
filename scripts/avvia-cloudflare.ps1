@@ -1,10 +1,15 @@
 $ErrorActionPreference = 'Stop'
 
 $root = Split-Path -Parent $PSScriptRoot
-$urlOnlineFile = Join-Path $root 'URL_ONLINE.txt'
+$runtimeStateDir = Join-Path $root 'output\runtime-state'
+$urlOnlineFile = Join-Path $runtimeStateDir 'URL_ONLINE.txt'
 $backendLog = Join-Path $env:TEMP 'cloudflared-backend.log'
 $frontendLog = Join-Path $env:TEMP 'cloudflared-frontend.log'
 $exposeBackendTunnel = $env:EXPOSE_BACKEND_TUNNEL -eq '1'
+
+if (-not (Test-Path $runtimeStateDir)) {
+  New-Item -ItemType Directory -Path $runtimeStateDir | Out-Null
+}
 
 function Resolve-Executable([string]$label, [string[]]$candidates, [switch]$Optional) {
   foreach ($candidate in $candidates) {

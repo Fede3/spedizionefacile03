@@ -128,6 +128,10 @@
     </table>
 
     <div class="totals">
+        @if(!empty($discountCents))
+            <div class="row">Totale lordo: {{ number_format(($grossSubtotalCents ?? $subtotalCents + $discountCents) / 100, 2, ',', '.') }} &euro;</div>
+            <div class="row">Sconto: -{{ number_format($discountCents / 100, 2, ',', '.') }} &euro;</div>
+        @endif
         <div class="row">Imponibile: {{ number_format($imponibileCents / 100, 2, ',', '.') }} &euro;</div>
         <div class="row">IVA (22%): {{ number_format($ivaCents / 100, 2, ',', '.') }} &euro;</div>
         <div class="row total">TOTALE: {{ number_format($subtotalCents / 100, 2, ',', '.') }} &euro;</div>

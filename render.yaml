@@ -1,31 +1,58 @@
+# =============================================================================
+# render.yaml — Sprint 7.3
+# =============================================================================
+# Blueprint Render. Ogni push su main triggera deploy. PR preview automatiche.
+# Piano "starter" su backend (no auto-suspend, requisito per health check
+# continuo e per evitare cold start di 30+ secondi al primo request).
+# =============================================================================
+
 previews:
   generation: automatic
 
 services:
+  # ---------------------------------------------------------------------------
+  # Backend Laravel (Docker PHP-FPM + nginx via supervisord)
+  # ---------------------------------------------------------------------------
   - type: web
     name: spedizionefacile-api
     env: docker
-    plan: free
+    plan: starter  # upgrade da free — evita auto-suspend e cold start
+    region: frankfurt  # vicino utenti IT, latenza <50ms
     rootDir: laravel-spedizionefacile-main
     dockerfilePath: ./Dockerfile
     autoDeploy: true
+
+    # Health check: Render polla questo endpoint e riavvia se 5 fallimenti
+    # consecutivi (300s). /api/health/live e' leggero (no DB check).
+    healthCheckPath: /api/health/live
+
     buildFilter:
       paths:
         - laravel-spedizionefacile-main/**
+
     envVars:
+      # ---- Applicazione -----------------------------------------------------
       - key: APP_ENV
         value: production
       - key: APP_DEBUG
         value: "false"
       - key: APP_KEY
-        generateValue: true
+        generateValue: true  # Render genera una volta e persiste
       - key: APP_URL
         fromService:
           name: spedizionefacile-api
           type: web
           property: hostport
+      - key: APP_TIMEZONE
+        value: Europe/Rome
+      - key: APP_LOCALE
+        value: it
       - key: LOG_CHANNEL
-        value: stderr
+        value: stderr  # Render raccoglie stderr → Logs dashboard
+      - key: LOG_LEVEL
+        value: warning
+
+      # ---- Database (Postgres managed) --------------------------------------
       - key: DB_CONNECTION
         value: pgsql
       - key: DB_HOST
@@ -49,27 +76,242 @@ services:
           name: spedizionefacile-db
           property: password
 
+      # ---- Cache / Queue / Session (Redis managed) --------------------------
+      # Redis Key Value service "spedizionefacile-redis" fornisce connessione.
+      # SESSION_DRIVER=database (W0): session in DB, niente dipendenza Redis per login.
+      # Se Redis e' down: il worker non drena piu', ma l'API risponde lo stesso
+      # grazie a QUEUE_FALLBACK_SYNC gestito in config/queue.php.
+      - key: CACHE_STORE
+        value: redis
+      - key: SESSION_DRIVER
+        value: database
+      - key: QUEUE_CONNECTION
+        value: redis
+      - key: ENABLE_QUEUE_WORKER
+        value: "false"  # worker dedicato in servizio separato (vedi sotto)
+      - key: REDIS_CLIENT
+        value: phpredis
+      - key: REDIS_HOST
+        fromService:
+          type: redis
+          name: spedizionefacile-redis
+          property: host
+      - key: REDIS_PORT
+        fromService:
+          type: redis
+          name: spedizionefacile-redis
+          property: port
+      - key: REDIS_PASSWORD
+        fromService:
+          type: redis
+          name: spedizionefacile-redis
+          property: password
+      - key: REDIS_DB
+        value: "0"
+      - key: REDIS_CACHE_DB
+        value: "1"
+
+      # ---- Sanctum / CORS (popolati dopo che frontend e' deployato) --------
+      - key: SANCTUM_STATEFUL_DOMAINS
+        sync: false  # valore manuale da dashboard Render
+      - key: CORS_ALLOWED_ORIGINS
+        sync: false
+
+      # ---- Email (Resend) ---------------------------------------------------
+      - key: MAIL_MAILER
+        value: smtp
+      - key: MAIL_HOST
+        value: smtp.resend.com
+      - key: MAIL_PORT
+        value: "465"
+      - key: MAIL_USERNAME
+        value: resend
+      - key: MAIL_PASSWORD
+        sync: false  # RE_API_KEY da dashboard
+      - key: MAIL_ENCRYPTION
+        value: ssl
+      - key: MAIL_FROM_ADDRESS
+        value: noreply@spediamofacileaccount.com
+
+      # ---- BRT --------------------------------------------------------------
+      - key: BRT_CLIENT_ID
+        sync: false
+      - key: BRT_PASSWORD
+        sync: false
+      - key: BRT_API_URL
+        value: https://api.brt.it/rest/v1/shipments
+      - key: BRT_PUDO_API_URL
+        value: https://api.brt.it
+      - key: BRT_PUDO_TOKEN
+        sync: false
+      - key: BRT_DEPARTURE_DEPOT
+        value: "0"
+      - key: BRT_VERIFY_SSL
+        value: "true"
+
+      # ---- Stripe -----------------------------------------------------------
+      - key: STRIPE_KEY
+        sync: false
+      - key: STRIPE_SECRET
+        sync: false
+      - key: STRIPE_WEBHOOK_SECRET
+        sync: false
+
+  # ---------------------------------------------------------------------------
+  # Frontend Nuxt
+  # ---------------------------------------------------------------------------
   - type: web
     name: spedizionefacile-web
     env: node
-    plan: free
+    plan: starter
+    region: frankfurt
     rootDir: nuxt-spedizionefacile-master
-    buildCommand: npm install && npm run build
+    buildCommand: npm ci && npm run build
     startCommand: node .output/server/index.mjs
     autoDeploy: true
+    healthCheckPath: /
     buildFilter:
       paths:
         - nuxt-spedizionefacile-master/**
     envVars:
+      - key: NODE_ENV
+        value: production
       - key: NUXT_PUBLIC_API_BASE
         fromService:
           name: spedizionefacile-api
           type: web
           property: hostport
 
+  # ---------------------------------------------------------------------------
+  # Queue worker (Sprint 7.6) — processa job Redis fuori dal web container
+  # ---------------------------------------------------------------------------
+  # Separato dal web per: evitare che job lunghi impattino latenza API,
+  # scalare workers orizzontalmente, rolling restart indipendente.
+  - type: worker
+    name: spedizionefacile-queue
+    env: docker
+    plan: starter
+    region: frankfurt
+    rootDir: laravel-spedizionefacile-main
+    dockerfilePath: ./Dockerfile
+    autoDeploy: true
+    buildFilter:
+      paths:
+        - laravel-spedizionefacile-main/**
+    # --tries=3: retry max 3 volte prima di marcare failed
+    # --timeout=60: SIGTERM dopo 60s (job in loop -> killati)
+    # --max-jobs=1000: riavvio worker dopo 1000 job (protezione memory leak)
+    # --max-time=3600: riavvio dopo 1h (picking up new deploys)
+    dockerCommand: php /var/www/html/artisan queue:work redis --tries=3 --timeout=60 --max-jobs=1000 --max-time=3600 --sleep=3
+    envVars:
+      # Stesso set del web service: il worker ha bisogno di DB/Redis/Mail/BRT.
+      # Nota: duplicazione intenzionale. Render non supporta "inherit from web"
+      # dichiarativamente — usare un Env Group manuale via dashboard per
+      # evitare drift (docs/DEPLOY.md → sezione "Queue & Cache Redis").
+      - key: APP_ENV
+        value: production
+      - key: APP_DEBUG
+        value: "false"
+      - key: APP_KEY
+        sync: false
+      - key: APP_TIMEZONE
+        value: Europe/Rome
+      - key: LOG_CHANNEL
+        value: stderr
+      - key: LOG_LEVEL
+        value: warning
+      # DB — stessa istanza del web
+      - key: DB_CONNECTION
+        value: pgsql
+      - key: DB_HOST
+        fromDatabase: { name: spedizionefacile-db, property: host }
+      - key: DB_PORT
+        fromDatabase: { name: spedizionefacile-db, property: port }
+      - key: DB_DATABASE
+        fromDatabase: { name: spedizionefacile-db, property: database }
+      - key: DB_USERNAME
+        fromDatabase: { name: spedizionefacile-db, property: username }
+      - key: DB_PASSWORD
+        fromDatabase: { name: spedizionefacile-db, property: password }
+      # Redis — stessa istanza del web
+      - key: REDIS_CLIENT
+        value: phpredis
+      - key: QUEUE_CONNECTION
+        value: redis
+      - key: CACHE_STORE
+        value: redis
+      - key: REDIS_HOST
+        fromService: { type: redis, name: spedizionefacile-redis, property: host }
+      - key: REDIS_PORT
+        fromService: { type: redis, name: spedizionefacile-redis, property: port }
+      - key: REDIS_PASSWORD
+        fromService: { type: redis, name: spedizionefacile-redis, property: password }
+      - key: REDIS_DB
+        value: "0"
+      - key: REDIS_CACHE_DB
+        value: "1"
+      # Mail, BRT, Stripe: i secrets sono replicati manualmente via dashboard
+      - key: MAIL_MAILER
+        sync: false
+      - key: MAIL_PASSWORD
+        sync: false
+      - key: MAIL_FROM_ADDRESS
+        value: noreply@spediamofacileaccount.com
+      - key: BRT_CLIENT_ID
+        sync: false
+      - key: BRT_PASSWORD
+        sync: false
+      - key: STRIPE_SECRET
+        sync: false
+      - key: STRIPE_WEBHOOK_SECRET
+        sync: false
+      - key: SENTRY_LARAVEL_DSN
+        sync: false
+
+  # ---------------------------------------------------------------------------
+  # Cron: backup DB daily (Sprint 7.5)
+  # ---------------------------------------------------------------------------
+  # Esegue pg_dump ogni notte alle 03:00 UTC (05:00 Europe/Rome d'estate).
+  # Output su Backblaze B2 (piu' economico di S3: $6/TB/mese).
+  # Rollback: Suspend del servizio dal dashboard Render.
+  - type: cron
+    name: spedizionefacile-backup
+    env: docker
+    plan: starter
+    region: frankfurt
+    schedule: "0 3 * * *"  # 03:00 UTC daily
+    rootDir: laravel-spedizionefacile-main
+    dockerfilePath: ./Dockerfile
+    dockerCommand: bash /var/www/html/scripts/backup-daily.sh
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: spedizionefacile-db
+          property: connectionString
+      - key: B2_APPLICATION_KEY_ID
+        sync: false  # impostare da dashboard Render
+      - key: B2_APPLICATION_KEY
+        sync: false
+      - key: B2_BUCKET
+        value: spedizionefacile-backups
+      - key: RETENTION_DAYS
+        value: "30"
+
 databases:
   - name: spedizionefacile-db
     databaseName: spedizionefacile
     user: spedizionefacile
-    plan: free
-    region: ohio
+    plan: starter  # upgrade da free — evita deletion dopo 90gg inattivita'
+    region: frankfurt
+
+# -----------------------------------------------------------------------------
+# Redis managed (Sprint 7.6)
+# -----------------------------------------------------------------------------
+# Piano "starter" 25MB — sufficiente per queue + cache L1 di 1k utenti attivi.
+# Upgrade a standard (256MB) quando si superano i 500 job/h in media.
+redises:
+  - name: spedizionefacile-redis
+    plan: starter
+    region: frankfurt
+    maxmemoryPolicy: allkeys-lru  # evict chiavi meno usate quando pieno
+    ipAllowList: []  # solo reti interne Render

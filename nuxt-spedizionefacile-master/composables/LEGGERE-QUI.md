@@ -1,30 +1,27 @@
-# Composables - Leggere Qui
+# Composables - Puntatore Locale
 
-Questa cartella contiene i "composable" di Nuxt/Vue. Un composable e una funzione riutilizzabile che incapsula logica condivisa tra piu pagine. Si importano con `useNomeFunzione()`.
+Questa guida locale non e' piu' autorevole: i composable vivi vanno letti a
+partire dalle docs canoniche e dai boundary reali del frontend.
 
-## I 3 file principali
+Per orientarti senza duplicare documentazione, parti da qui:
 
-1. **useCart.js** - Gestisce il carrello della spesa. Sceglie automaticamente l'endpoint giusto: `/api/cart` per utenti loggati, `/api/guest-cart` per ospiti. Fornisce la lista dei prodotti, la funzione di refresh, e lo stato della richiesta.
-2. **useSession.js** - Gestisce la sessione del preventivo. Legge i dati temporanei dal server (`/api/session`): pacchi, indirizzi, servizi, prezzo totale, step corrente. Funziona anche per utenti non loggati.
-3. **useSmartValidation.js** - Gestisce la validazione intelligente dei form con messaggi di errore in italiano.
+- [../../docs/FRONTEND_STRUCTURE.md](../../docs/FRONTEND_STRUCTURE.md)
+- [../../docs/FEATURE_BOUNDARIES.md](../../docs/FEATURE_BOUNDARIES.md)
+- [../../docs/DESIGN_SYSTEM.md](../../docs/DESIGN_SYSTEM.md)
 
-## Ordine di lettura consigliato
+Entry point locali consigliati:
 
-1. `useSession.js` - Come vengono recuperati i dati del preventivo (il piu semplice)
-2. `useCart.js` - Come funziona il carrello con switch automatico loggato/ospite
-3. `useSmartValidation.js` - Come viene gestita la validazione dei form
+1. `useShipmentStepPageOrchestration.js`
+2. `useCart.js`
+3. `usePayment.js`
+4. `useAuth.js`
+5. `../stores/shipmentFlowStore.ts`
 
-## Quale file modificare per...
+Regola pratica:
 
-| Esigenza | File |
-|----------|------|
-| Cambiare gli endpoint del carrello | `useCart.js` (riga 23) |
-| Aggiungere dati alla sessione | `useSession.js` |
-| Modificare la validazione dei form | `useSmartValidation.js` |
-| Aggiungere un nuovo composable | Creare un file `useNomeFunzione.js` in questa cartella |
+- `composables/` = logica stateful e boundary di feature
+- `stores/` = stato condiviso minimo
+- `docs/` = source of truth documentale
 
-## Note importanti
-
-- I composable usano `useSanctumAuth()` per verificare se l'utente e loggato
-- I composable usano `useSanctumFetch()` per fare richieste autenticate al backend
-- Lo store Pinia (`../stores/userStore.js`) e diverso dai composable: lo store mantiene stato globale persistente, i composable incapsulano logica riutilizzabile
+Se trovi informazioni in conflitto tra questo file e `docs/`, vale sempre
+`docs/`.

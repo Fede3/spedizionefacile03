@@ -6,27 +6,31 @@
  * DOVE SI USA:
  *   - BillingAddressController.php — CRUD indirizzi di fatturazione
  *   - nuxt: pages/checkout.vue (selezione indirizzo fattura)
+ *   - pages/account/profilo.vue (tab Fatturazione)
+ *   - SdiService (legge vat_number / fiscal_code / sdi_code / pec_email)
  *
- * DATI IN INGRESSO:
- *   - name (nome/ragione sociale), address, city, province_name, postal_code
- *   Esempio: BillingAddress::create(['name' => 'Mario Rossi Srl', 'city' => 'Milano'])
+ * CAMPI FISCALI (aggiunti in F07 — fatturazione elettronica SDI):
+ *   - is_business (bool): true per aziende, false per privati
+ *   - company_name: ragione sociale (obbligatoria se is_business=true)
+ *   - fiscal_code: codice fiscale (16 char — obbligatorio per privati)
+ *   - vat_number: Partita IVA 11 cifre (obbligatoria per aziende)
+ *   - sdi_code: codice destinatario SDI 7 char (default "0000000")
+ *   - pec_email: indirizzo PEC alternativa a sdi_code
+ *   - country: ISO alpha-2 (default "IT")
  *
- * DATI IN USCITA:
- *   - Record salvato in tabella billing_addresses
- *
- * VINCOLI:
- *   - province_name e' il nome completo della provincia (es. "Milano"), non la sigla ("MI")
- *   - Non ha relazione diretta con User (non c'e' user_id)
+ * VINCOLI (applicativi, vedi BillingAddressStoreRequest):
+ *   - Aziende: company_name + vat_number OBBLIGATORI + (sdi_code o pec_email)
+ *   - Privati: fiscal_code OBBLIGATORIO; sdi_code fallback "0000000"
  *
  * ERRORI TIPICI:
  *   - Confusione con UserAddress o PackageAddress: BillingAddress e' solo per la fatturazione
- *
- * PUNTI DI MODIFICA SICURI:
- *   - Per aggiungere user_id: aggiungere in $fillable e nella migrazione, poi creare relazione
+ *   - Passare P.IVA di 10 cifre (sbagliata): validazione checksum fallisce
  *
  * COLLEGAMENTI:
- *   - app/Http/Controllers/BillingAddressController.php — controller CRUD
- *   - app/Http/Resources/BillingAddressResource.php — formattazione per risposta API
+ *   - app/Http/Requests/BillingAddressStoreRequest.php — validazione request
+ *   - app/Rules/ItalianVatNumber.php — checksum algoritmo ministeriale
+ *   - app/Rules/ItalianFiscalCode.php — pattern CF
+ *   - app/Services/Sdi/SdiService.php — usa questi dati per generare XML FatturaPA
  */
 
 namespace App\Models;
@@ -39,17 +43,70 @@ class BillingAddress extends Model
      * Campi compilabili dall'esterno.
      */
     protected $fillable = [
-        'name',            // Nome o ragione sociale per la fattura
+        'name',            // Nome/cognome referente (persona fisica, anche se azienda)
+        'is_business',     // true se azienda, false se privato
+        'company_name',    // Ragione sociale (solo aziende)
+        'fiscal_code',     // Codice fiscale
+        'vat_number',      // Partita IVA
+        'sdi_code',        // Codice destinatario SDI 7 char
+        'pec_email',       // PEC alternativa
         'address',         // Via/piazza/corso
-        'city',            // Citta'
-        'province_name',   // Nome della provincia (es. "Milano", "Roma")
-        'postal_code',     // CAP - Codice di Avviamento Postale
+        'city',            // Città
+        'province_name',   // Nome/sigla della provincia
+        'postal_code',     // CAP
+        'country',         // Paese ISO alpha-2 (default IT)
     ];
 
-    /* protected static function booted()
+    protected $casts = [
+        'is_business' => 'boolean',
+    ];
+
+    protected $attributes = [
+        'is_business' => false,
+        'sdi_code' => '0000000',
+        'country' => 'IT',
+    ];
+
+    /**
+     * Mutator: normalizza vat_number rimuovendo prefisso "IT" e spazi.
+     */
+    public function setVatNumberAttribute(?string $value): void
     {
-        static::creating(function ($address) {
-            $address->identifier = (string) Str::uuid();
-        });
-    } */
+        if ($value === null) {
+            $this->attributes['vat_number'] = null;
+
+            return;
+        }
+
+        $normalized = strtoupper(preg_replace('/\s+/', '', $value) ?? '');
+        if (str_starts_with($normalized, 'IT')) {
+            $normalized = substr($normalized, 2);
+        }
+
+        $this->attributes['vat_number'] = $normalized !== '' ? $normalized : null;
+    }
+
+    /**
+     * Mutator: uppercase il codice fiscale senza spazi.
+     */
+    public function setFiscalCodeAttribute(?string $value): void
+    {
+        if ($value === null) {
+            $this->attributes['fiscal_code'] = null;
+
+            return;
+        }
+
+        $normalized = strtoupper(preg_replace('/\s+/', '', $value) ?? '');
+        $this->attributes['fiscal_code'] = $normalized !== '' ? $normalized : null;
+    }
+
+    /**
+     * Mutator: uppercase il codice SDI e fallback "0000000" se vuoto.
+     */
+    public function setSdiCodeAttribute(?string $value): void
+    {
+        $normalized = strtoupper(preg_replace('/\s+/', '', (string) $value) ?? '');
+        $this->attributes['sdi_code'] = $normalized !== '' ? $normalized : '0000000';
+    }
 }

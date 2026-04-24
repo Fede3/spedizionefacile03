@@ -28,7 +28,7 @@ const scrollTrack = (direction) => {
 			data-pickup-date-alert
 			role="alert"
 			aria-live="polite"
-			class="mb-[12px] rounded-[12px] p-[12px] bg-[#fef3f2] border border-[#fecdca]">
+			class="mb-[12px] rounded-[16px] p-[12px] bg-[#fef3f2] border border-[#fecdca]">
 			<p class="text-[13px] font-[600] text-[#b91c1c]">{{ dateError }}</p>
 		</div>
 
@@ -47,20 +47,22 @@ const scrollTrack = (direction) => {
 			</div>
 
 			<!-- Scroll arrows -->
-			<div v-if="showTrackNav" class="flex items-center gap-[6px]" aria-label="Scorri i giorni disponibili">
+			<div v-if="showTrackNav" class="flex items-center gap-[6px]" role="group" aria-label="Scorri i giorni disponibili">
 				<button
 					type="button"
-					class="w-[36px] h-[36px] rounded-full bg-white ring-[1px] ring-[#DFE2E7] text-[#777] flex items-center justify-center hover:bg-[#095866] hover:text-white transition-all duration-[350ms] cursor-pointer active:scale-[0.93]"
+					aria-label="Giorni precedenti"
+					class="w-[36px] h-[36px] rounded-full bg-white ring-[1px] ring-[#DFE2E7] text-[#777] flex items-center justify-center hover:bg-[#095866] hover:text-white transition-all duration-[350ms] cursor-pointer active:scale-[0.97]"
 					@click="scrollTrack(-1)">
-					<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+					<svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
 						<path d="m15 18-6-6 6-6"/>
 					</svg>
 				</button>
 				<button
 					type="button"
-					class="w-[36px] h-[36px] rounded-full bg-white ring-[1px] ring-[#DFE2E7] text-[#777] flex items-center justify-center hover:bg-[#095866] hover:text-white transition-all duration-[350ms] cursor-pointer active:scale-[0.93]"
+					aria-label="Giorni successivi"
+					class="w-[36px] h-[36px] rounded-full bg-white ring-[1px] ring-[#DFE2E7] text-[#777] flex items-center justify-center hover:bg-[#095866] hover:text-white transition-all duration-[350ms] cursor-pointer active:scale-[0.97]"
 					@click="scrollTrack(1)">
-					<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+					<svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
 						<path d="m9 18 6-6-6-6"/>
 					</svg>
 				</button>
@@ -72,18 +74,22 @@ const scrollTrack = (direction) => {
 			class="rounded-[16px] px-[14px] sm:px-[16px] pt-[14px] sm:pt-[16px] pb-[14px] sm:pb-[16px] relative"
 			style="background:#E6E9EE; box-shadow:inset 0 1px 2px rgba(0,0,0,0.04)">
 
-			<!-- "Primo" badge above first card -->
+			<!-- Badge "Primo" centrato orizzontalmente sulla PRIMA card giorno.
+			     Posizione = container-pad + track-pad + metà day-button.
+			     Mobile:  14px + 10px + 39px = 63px (day-button 78px)
+			     Sm+:     16px + 10px + 42px = 68px (day-button 84px)
+			     translateX(-50%) centra il pill sul punto calcolato. -->
 			<div
-				class="absolute top-[5px] left-[18px] sm:left-[20px] z-10 pointer-events-none flex justify-center"
-				style="width:78px">
-				<span class="px-[8px] py-[1px] rounded-full text-[9px] bg-[#E44203] text-white font-[700]">Primo</span>
+				class="absolute top-[-10px] z-10 pointer-events-none left-[63px] sm:left-[68px]"
+				style="transform: translateX(-50%);">
+				<span class="inline-block px-[10px] py-[3px] rounded-full text-[10px] bg-[#095866] text-white font-[700] leading-none">Primo</span>
 			</div>
 
 			<!-- Scrollable row -->
 			<div
 				ref="trackRef"
-				class="flex gap-[8px] overflow-x-auto snap-x snap-mandatory px-[4px] pb-[4px] pt-[10px]"
-				style="scrollbar-width:none; -webkit-overflow-scrolling:touch"
+				class="flex gap-[8px] overflow-x-auto snap-x snap-mandatory px-[10px] pb-[6px] pt-[10px]"
+				style="scrollbar-width:none; -webkit-overflow-scrolling:touch; scroll-padding-inline: 10px"
 				aria-label="Giorni disponibili per il ritiro">
 
 				<button
@@ -92,27 +98,27 @@ const scrollTrack = (direction) => {
 					type="button"
 					:id="`date-${day.formattedDate}`"
 					:data-pickup-day="day.formattedDate"
-					class="snap-start shrink-0 w-[78px] sm:w-[84px] h-[92px] sm:h-[98px] rounded-[14px] flex flex-col items-center justify-center cursor-pointer transition-all duration-[350ms]"
+					class="snap-start shrink-0 w-[78px] sm:w-[84px] h-[92px] sm:h-[98px] rounded-[16px] flex flex-col items-center justify-center cursor-pointer transition-all duration-[350ms]"
 					:class="isSelectedDay(day)
-						? 'ring-[2.5px] ring-[#095866] bg-white shadow-[0_4px_16px_rgba(9,88,102,0.15)]'
-						: 'ring-[1.5px] ring-[#DFE2E7] bg-white hover:ring-[2px] hover:ring-[#095866]/50 hover:shadow-[0_2px_10px_rgba(9,88,102,0.08)]'"
+						? 'ring-[2px] ring-[#095866] bg-[rgba(9,88,102,0.06)] shadow-[0_4px_16px_rgba(9,88,102,0.12)]'
+						: 'ring-[1px] ring-[rgba(9,88,102,0.32)] bg-white hover:ring-[1px] hover:ring-[rgba(9,88,102,0.55)] hover:bg-[rgba(9,88,102,0.03)] hover:shadow-[0_2px_10px_rgba(9,88,102,0.06)]'"
 					:aria-pressed="isSelectedDay(day) ? 'true' : 'false'"
 					:aria-label="`Seleziona ${day.weekday} ${day.dayNumber} ${day.monthAbbr}`"
 					@click="emit('choose-date', day)">
 
 					<span
 						class="text-[11px] uppercase tracking-[0.5px] font-[700]"
-						:class="isSelectedDay(day) ? 'text-[#095866]' : 'text-[#999]'">
+						:class="isSelectedDay(day) ? 'text-[#095866]' : 'text-[var(--color-brand-text-muted)]'">
 						{{ day.weekday }}
 					</span>
 					<span
-						class="text-[26px] sm:text-[28px] font-[800] leading-none mt-[2px] mb-[1px] tracking-tight"
+						class="text-[20px] sm:text-[22px] font-[800] leading-none mt-[2px] mb-[1px] tracking-tight"
 						:class="isSelectedDay(day) ? 'text-[#095866]' : 'text-[#1d2738]'">
 						{{ day.dayNumber }}
 					</span>
 					<span
 						class="text-[11px] font-[600]"
-						:class="isSelectedDay(day) ? 'text-[#095866]' : 'text-[#999]'">
+						:class="isSelectedDay(day) ? 'text-[#095866]' : 'text-[var(--color-brand-text-muted)]'">
 						{{ day.monthAbbr }}
 					</span>
 				</button>

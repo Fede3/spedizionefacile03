@@ -5,6 +5,9 @@
   checklist operative e FAQ leggibili anche da mobile.
 -->
 <script setup>
+// CSS split route-specific: servizi.css usato solo in /servizi/* + /chi-siamo.
+import '~/assets/css/servizi.css';
+
 useSeoMeta({
 	title: 'Pagamento alla Consegna (Contrassegno) | SpediamoFacile',
 	ogTitle: 'Pagamento alla Consegna | SpediamoFacile',
@@ -19,7 +22,7 @@ const overviewCards = [
 	{
 		title: "Cos'e'",
 		description:
-			"Il pagamento alla consegna e' un servizio accessorio in cui il corriere incassa dal destinatario l'importo indicato dal mittente e poi lo riversa con la modalita' prevista dal vettore.",
+			"Il pagamento alla consegna è un servizio accessorio in cui il corriere incassa dal destinatario l'importo indicato dal mittente e poi lo riversa con la modalita' prevista dal vettore.",
 	},
 	{
 		title: 'Quando conviene',
@@ -63,7 +66,7 @@ const guardrails = [
 	'Verifica sempre eventuali limiti e soglie del corriere prima di confermare la spedizione.',
 	'Dati completi del destinatario e numero di telefono riducono i tentativi di consegna a vuoto.',
 	'Se vendi merce di valore, valuta copertura assicurativa e foto di pre-imballo.',
-	"Se il destinatario non paga, la spedizione puo' andare in giacenza o rientrare al mittente con costi collegati.",
+	"Se il destinatario non paga, la spedizione può andare in giacenza o rientrare al mittente con costi collegati.",
 ];
 
 const checkoutChecklist = [
@@ -76,12 +79,12 @@ const checkoutChecklist = [
 
 const scenarioCards = [
 	{
-		title: "Il destinatario non paga o non e' presente",
+		title: "Il destinatario non paga o non è presente",
 		description:
-			"La consegna non si chiude. Il collo puo' andare in giacenza oppure tornare al mittente secondo le condizioni del corriere.",
+			"La consegna non si chiude. Il collo può andare in giacenza oppure tornare al mittente secondo le condizioni del corriere.",
 	},
 	{
-		title: "L'accredito non e' immediato",
+		title: "L'accredito non è immediato",
 		description:
 			"I tempi di riversamento dipendono dal vettore e dalla modalita' selezionata. Il flusso va letto come processo separato dalla sola consegna.",
 	},
@@ -94,8 +97,8 @@ const scenarioCards = [
 
 const faqs = [
 	{
-		title: "Il pagamento alla consegna e' solo in contanti?",
-		text: "Per i servizi nazionali e' normalmente in contanti; alcune reti offrono varianti o servizi correlati. Verifica sempre le condizioni del vettore scelto.",
+		title: "Il pagamento alla consegna è solo in contanti?",
+		text: "Per i servizi nazionali è normalmente in contanti; alcune reti offrono varianti o servizi correlati. Verifica sempre le condizioni del vettore scelto.",
 	},
 	{
 		title: 'Come scelgo come ricevere i soldi incassati?',
@@ -128,20 +131,45 @@ useHead({
 				})),
 			}),
 		},
+		{
+			type: 'application/ld+json',
+			innerHTML: JSON.stringify({
+				'@context': 'https://schema.org',
+				'@type': 'Service',
+				name: 'Pagamento alla consegna',
+				url: 'https://spediamofacile.it/servizi/pagamento-alla-consegna',
+				serviceType: 'Cash on Delivery',
+				provider: {
+					'@type': 'Organization',
+					'@id': 'https://spediamofacile.it/#organization',
+					name: 'SpediamoFacile',
+				},
+				areaServed: { '@type': 'Country', name: 'IT' },
+				description:
+					'Spedisci con pagamento alla consegna: il corriere incassa per tuo conto al momento della consegna.',
+			}),
+		},
 	],
 });
+
+// Breadcrumb: Home › Servizi › Pagamento alla consegna
+useBreadcrumbSchema([
+	{ name: 'Home', url: '/' },
+	{ name: 'Servizi', url: '/servizi' },
+	{ name: 'Pagamento alla consegna' },
+]);
 </script>
 
 <template>
-	<section class="cod-page-shell min-h-screen py-[28px] desktop:py-[56px]">
+	<section class="cod-page-shell min-h-screen py-[24px] desktop:py-[28px]">
 		<div class="my-container space-y-[20px] desktop:space-y-[28px]">
 			<!-- Hero -->
-			<section class="service-hero-card rounded-[14px] ring-[1px] ring-[#DFE2E7] px-[20px] py-[22px] shadow-[0_1px_4px_rgba(0,0,0,0.03)] desktop:px-[32px] desktop:py-[34px]">
+			<section class="service-hero-card rounded-[16px] ring-[1px] ring-[#DFE2E7] px-[20px] py-[22px] shadow-[0_1px_4px_rgba(0,0,0,0.03)] desktop:px-[32px] desktop:py-[34px]">
 				<div
 					class="flex flex-col gap-[18px] desktop:grid desktop:grid-cols-[minmax(0,1.2fr)_minmax(320px,0.8fr)] desktop:items-center desktop:gap-[28px]">
 					<div class="space-y-[12px]">
 						<p class="sf-section-kicker">Servizio accessorio</p>
-						<h1 class="font-montserrat text-[2rem] font-[800] leading-[1.08] tracking-[-0.04em] text-[var(--color-brand-text)] desktop:text-[3.2rem]">Pagamento alla consegna</h1>
+						<h1 class="font-montserrat text-[1.125rem] font-[800] leading-[1.12] tracking-[-0.03em] text-[var(--color-brand-text)] desktop:text-[1.5rem]">Pagamento alla consegna</h1>
 						<p class="max-w-[62ch] text-[0.9375rem] leading-[1.65] text-[var(--color-brand-text-secondary)] desktop:text-[1.0625rem]">
 							Il corriere incassa per tuo conto al momento della consegna. Questa pagina ti aiuta a capire quando usarlo, quali dati servono
 							davvero e quali controlli fare prima di confermare una spedizione.
@@ -156,19 +184,19 @@ useHead({
 						</div>
 					</div>
 
-					<div class="rounded-[14px] ring-[1px] ring-[#DFE2E7] bg-white/75 p-[18px] shadow-[0_1px_4px_rgba(0,0,0,0.03)] backdrop-blur">
-						<p class="text-[0.75rem] font-[800] uppercase tracking-[0.12em] text-[var(--color-brand-accent)]">Da tenere a mente</p>
+					<div class="rounded-[16px] ring-[1px] ring-[#DFE2E7] bg-white/75 p-[18px] shadow-[0_1px_4px_rgba(0,0,0,0.03)] backdrop-blur">
+						<p class="text-[0.75rem] font-[800] uppercase tracking-[0.12em] text-[var(--color-brand-primary)]">Da tenere a mente</p>
 						<div class="mt-[12px] space-y-[12px]">
-							<div class="rounded-[14px] ring-[1px] ring-[var(--color-brand-border)] bg-[var(--color-brand-secondary-soft-bg)] px-[14px] py-[12px]">
+							<div class="rounded-[16px] ring-[1px] ring-[var(--color-brand-border)] bg-[var(--color-brand-secondary-soft-bg)] px-[14px] py-[12px]">
 								<p class="text-[0.8125rem] font-[700] text-[var(--color-brand-text)]">Costo extra sempre visibile</p>
 								<p class="mt-[4px] text-[0.8125rem] leading-[1.55] text-[var(--color-brand-text-secondary)]">
 									Il contrassegno non va trattato come nota generica: deve rientrare nel pricing mostrato prima del pagamento.
 								</p>
 							</div>
-							<div class="rounded-[14px] ring-[1px] ring-[var(--color-brand-border)] bg-[var(--color-brand-secondary-soft-bg)] px-[14px] py-[12px]">
+							<div class="rounded-[16px] ring-[1px] ring-[var(--color-brand-border)] bg-[var(--color-brand-secondary-soft-bg)] px-[14px] py-[12px]">
 								<p class="text-[0.8125rem] font-[700] text-[var(--color-brand-text)]">Consegna e incasso non sono la stessa cosa</p>
 								<p class="mt-[4px] text-[0.8125rem] leading-[1.55] text-[var(--color-brand-text-secondary)]">
-									La spedizione puo' risultare consegnata prima che il riversamento sia effettivamente riconciliato.
+									La spedizione può risultare consegnata prima che il riversamento sia effettivamente riconciliato.
 								</p>
 							</div>
 						</div>
@@ -187,14 +215,14 @@ useHead({
 				<article
 					v-for="card in overviewCards"
 					:key="card.title"
-					class="rounded-[14px] ring-[1px] ring-[#DFE2E7] bg-white px-[18px] py-[18px] shadow-[0_1px_4px_rgba(0,0,0,0.03)] desktop:px-[22px] desktop:py-[22px]">
-					<h2 class="font-montserrat text-[1.125rem] font-[800] tracking-[-0.02em] text-[var(--color-brand-text)]">{{ card.title }}</h2>
+					class="rounded-[16px] ring-[1px] ring-[#DFE2E7] bg-white px-[18px] py-[18px] shadow-[0_1px_4px_rgba(0,0,0,0.03)] desktop:px-[22px] desktop:py-[22px] transition-all duration-300 hover:-translate-y-[2px] hover:shadow-[0_4px_16px_rgba(9,88,102,0.08)] hover:ring-[#095866]/30">
+					<h2 class="font-montserrat text-[1rem] font-[800] tracking-[-0.02em] text-[var(--color-brand-text)]">{{ card.title }}</h2>
 					<p v-if="card.description" class="mt-[10px] text-[0.875rem] leading-[1.65] text-[var(--color-brand-text-secondary)] desktop:text-[0.9375rem]">
 						{{ card.description }}
 					</p>
 					<ul v-else class="mt-[12px] space-y-[8px]">
 						<li v-for="item in card.bullets" :key="item" class="flex items-start gap-[10px] text-[0.875rem] leading-[1.6] text-[var(--color-brand-text-secondary)]">
-							<span class="mt-[7px] h-[7px] w-[7px] shrink-0 rounded-full bg-[var(--color-brand-accent)]"></span>
+							<span class="mt-[7px] h-[7px] w-[7px] shrink-0 rounded-full bg-[var(--color-brand-primary)]"></span>
 							<span>{{ item }}</span>
 						</li>
 					</ul>
@@ -203,14 +231,14 @@ useHead({
 
 			<!-- Come funziona -->
 			<section
-				class="rounded-[14px] ring-[1px] ring-[#DFE2E7] bg-white px-[18px] py-[18px] shadow-[0_1px_4px_rgba(0,0,0,0.03)] desktop:px-[24px] desktop:py-[24px]">
+				class="rounded-[16px] ring-[1px] ring-[#DFE2E7] bg-white px-[18px] py-[18px] shadow-[0_1px_4px_rgba(0,0,0,0.03)] desktop:px-[24px] desktop:py-[24px]">
 				<div class="sf-page-intro">
 					<p class="sf-section-kicker">Come funziona</p>
-					<h2 class="font-montserrat text-[1.4rem] font-[800] tracking-[-0.03em] text-[var(--color-brand-text)] desktop:text-[2rem]">
+					<h2 class="font-montserrat text-[1.0625rem] font-[800] tracking-[-0.03em] text-[var(--color-brand-text)] desktop:text-[1.25rem]">
 						Dal checkout al riversamento, senza punti ciechi
 					</h2>
 					<p class="sf-section-description max-w-[64ch]">
-						Il valore del contrassegno non e' soltanto operativo: va trattato come parte del flusso economico e documentale della
+						Il valore del contrassegno non è soltanto operativo: va trattato come parte del flusso economico e documentale della
 						spedizione.
 					</p>
 				</div>
@@ -219,7 +247,7 @@ useHead({
 					<article
 						v-for="step in flowSteps"
 						:key="step.step"
-						class="rounded-[14px] ring-[1px] ring-[#DFE2E7] bg-[var(--color-brand-secondary-soft-bg)] px-[16px] py-[16px]">
+						class="rounded-[16px] ring-[1px] ring-[#DFE2E7] bg-[var(--color-brand-secondary-soft-bg)] px-[16px] py-[16px] transition-all duration-300 hover:-translate-y-[2px] hover:shadow-[0_4px_16px_rgba(9,88,102,0.08)] hover:ring-[#095866]/30">
 						<div class="flex items-center gap-[10px]">
 							<span
 								class="inline-flex h-[34px] w-[34px] items-center justify-center rounded-full bg-[var(--color-brand-primary)] text-[0.8125rem] font-bold text-white">
@@ -237,9 +265,9 @@ useHead({
 			<!-- Requisiti + Checklist -->
 			<section class="grid gap-[16px] desktop:grid-cols-[minmax(0,1.15fr)_minmax(320px,0.85fr)]">
 				<article
-					class="rounded-[14px] ring-[1px] ring-[#DFE2E7] bg-white px-[18px] py-[18px] shadow-[0_1px_4px_rgba(0,0,0,0.03)] desktop:px-[22px] desktop:py-[22px]">
+					class="rounded-[16px] ring-[1px] ring-[#DFE2E7] bg-white px-[18px] py-[18px] shadow-[0_1px_4px_rgba(0,0,0,0.03)] desktop:px-[22px] desktop:py-[22px]">
 					<p class="sf-section-kicker">Requisiti e limiti</p>
-					<h2 class="mt-[8px] font-montserrat text-[1.25rem] font-[800] tracking-[-0.02em] text-[var(--color-brand-text)]">Controlli da fare prima della conferma</h2>
+					<h2 class="mt-[8px] font-montserrat text-[1rem] font-[800] tracking-[-0.02em] text-[var(--color-brand-text)]">Controlli da fare prima della conferma</h2>
 					<ul class="mt-[14px] space-y-[10px]">
 						<li v-for="item in guardrails" :key="item" class="flex items-start gap-[10px] text-[0.875rem] leading-[1.6] text-[var(--color-brand-text-secondary)]">
 							<span class="mt-[7px] h-[7px] w-[7px] shrink-0 rounded-full bg-[var(--color-brand-primary)]"></span>
@@ -249,14 +277,14 @@ useHead({
 				</article>
 
 				<article
-					class="rounded-[14px] ring-[1px] ring-[#DFE2E7] bg-white px-[18px] py-[18px] shadow-[0_1px_4px_rgba(0,0,0,0.03)] desktop:px-[22px] desktop:py-[22px]">
+					class="rounded-[16px] ring-[1px] ring-[#DFE2E7] bg-white px-[18px] py-[18px] shadow-[0_1px_4px_rgba(0,0,0,0.03)] desktop:px-[22px] desktop:py-[22px]">
 					<p class="sf-section-kicker">Dati da raccogliere</p>
-					<h2 class="mt-[8px] font-montserrat text-[1.25rem] font-[800] tracking-[-0.02em] text-[var(--color-brand-text)]">Checklist checkout</h2>
+					<h2 class="mt-[8px] font-montserrat text-[1rem] font-[800] tracking-[-0.02em] text-[var(--color-brand-text)]">Checklist checkout</h2>
 					<ul class="mt-[14px] space-y-[8px]">
 						<li
 							v-for="item in checkoutChecklist"
 							:key="item"
-							class="rounded-[14px] ring-[1px] ring-[#DFE2E7] bg-[var(--color-brand-secondary-soft-bg)] px-[12px] py-[10px] text-[0.875rem] leading-[1.55] text-[var(--color-brand-text-secondary)]">
+							class="rounded-[16px] ring-[1px] ring-[#DFE2E7] bg-[var(--color-brand-secondary-soft-bg)] px-[12px] py-[10px] text-[0.875rem] leading-[1.55] text-[var(--color-brand-text-secondary)]">
 							{{ item }}
 						</li>
 					</ul>
@@ -265,10 +293,10 @@ useHead({
 
 			<!-- Casi tipici -->
 			<section
-				class="rounded-[14px] ring-[1px] ring-[#DFE2E7] bg-white px-[18px] py-[18px] shadow-[0_1px_4px_rgba(0,0,0,0.03)] desktop:px-[24px] desktop:py-[24px]">
+				class="rounded-[16px] ring-[1px] ring-[#DFE2E7] bg-white px-[18px] py-[18px] shadow-[0_1px_4px_rgba(0,0,0,0.03)] desktop:px-[24px] desktop:py-[24px]">
 				<div class="sf-page-intro">
 					<p class="sf-section-kicker">Casi tipici</p>
-					<h2 class="font-montserrat text-[1.4rem] font-[800] tracking-[-0.03em] text-[var(--color-brand-text)] desktop:text-[2rem]">
+					<h2 class="font-montserrat text-[1.0625rem] font-[800] tracking-[-0.03em] text-[var(--color-brand-text)] desktop:text-[1.25rem]">
 						Cosa succede se qualcosa va fuori binario
 					</h2>
 				</div>
@@ -277,7 +305,7 @@ useHead({
 					<article
 						v-for="scenario in scenarioCards"
 						:key="scenario.title"
-						class="rounded-[14px] ring-[1px] ring-[#DFE2E7] bg-[var(--color-brand-secondary-soft-bg)] px-[16px] py-[16px]">
+						class="rounded-[16px] ring-[1px] ring-[#DFE2E7] bg-[var(--color-brand-secondary-soft-bg)] px-[16px] py-[16px] transition-all duration-300 hover:-translate-y-[2px] hover:shadow-[0_4px_16px_rgba(9,88,102,0.08)] hover:ring-[#095866]/30">
 						<h3 class="font-montserrat text-[1rem] font-[700] text-[var(--color-brand-text)]">{{ scenario.title }}</h3>
 						<p class="mt-[10px] text-[0.875rem] leading-[1.65] text-[var(--color-brand-text-secondary)]">
 							{{ scenario.description }}
@@ -288,16 +316,16 @@ useHead({
 
 			<!-- FAQ -->
 			<section
-				class="rounded-[14px] ring-[1px] ring-[#DFE2E7] bg-white px-[18px] py-[18px] shadow-[0_1px_4px_rgba(0,0,0,0.03)] desktop:px-[24px] desktop:py-[24px]">
+				class="rounded-[16px] ring-[1px] ring-[#DFE2E7] bg-white px-[18px] py-[18px] shadow-[0_1px_4px_rgba(0,0,0,0.03)] desktop:px-[24px] desktop:py-[24px]">
 				<div class="sf-page-intro">
 					<p class="sf-section-kicker">FAQ</p>
-					<h2 class="font-montserrat text-[1.4rem] font-[800] tracking-[-0.03em] text-[var(--color-brand-text)] desktop:text-[2rem]">
+					<h2 class="font-montserrat text-[1.0625rem] font-[800] tracking-[-0.03em] text-[var(--color-brand-text)] desktop:text-[1.25rem]">
 						Domande frequenti sul contrassegno
 					</h2>
 				</div>
 
 				<div class="mt-[18px] grid gap-[14px] desktop:grid-cols-2">
-					<article v-for="faq in faqs" :key="faq.title" class="rounded-[14px] ring-[1px] ring-[#DFE2E7] bg-[var(--color-brand-secondary-soft-bg)] px-[16px] py-[16px]">
+					<article v-for="faq in faqs" :key="faq.title" class="rounded-[16px] ring-[1px] ring-[#DFE2E7] bg-[var(--color-brand-secondary-soft-bg)] px-[16px] py-[16px] transition-all duration-300 hover:-translate-y-[2px] hover:shadow-[0_4px_16px_rgba(9,88,102,0.08)] hover:ring-[#095866]/30">
 						<h3 class="font-montserrat text-[1rem] font-[700] text-[var(--color-brand-text)]">{{ faq.title }}</h3>
 						<p class="mt-[10px] text-[0.875rem] leading-[1.65] text-[var(--color-brand-text-secondary)]">
 							{{ faq.text }}
@@ -333,7 +361,7 @@ useHead({
 
 <style scoped>
 .cod-page-shell {
-	background: linear-gradient(180deg, #F8F9FB 0%, #EEF0F3 100%);
+	background: linear-gradient(180deg, var(--surface-page, #F8F9FB) 0%, var(--surface-page-end, #EEF0F3) 100%);
 }
 
 .service-hero-card {

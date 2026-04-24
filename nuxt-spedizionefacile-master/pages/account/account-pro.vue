@@ -1,25 +1,18 @@
-<!--
-  FILE: pages/account/account-pro.vue
-  SCOPO: Pagina Partner Pro — area funzione dedicata, non switch di ruolo.
-  API: POST /api/pro-requests, GET /api/referral-stats, GET /api/commissions.
-  COMPONENTI: AccountProRequestForm, AccountProDashboard, AccountProSkeleton, AccountPageHeader.
-  ROUTE: /account/account-pro (middleware sanctum:auth).
--->
-<script setup>
+﻿<script setup>
 definePageMeta({ middleware: ['app-auth'] });
 
 useSeoMeta({
-	title: 'Referral e commissioni | SpediamoFacile',
-	ogTitle: 'Referral e commissioni | SpediamoFacile',
-	description: 'Gestisci richiesta Partner Pro, referral e commissioni dalla tua area account SpediamoFacile.',
-	ogDescription: 'Area Partner Pro con referral, commissioni e stato richiesta su SpediamoFacile.',
+	title: 'Area Partner Pro | SpediamoFacile',
+	ogTitle: 'Area Partner Pro | SpediamoFacile',
+	description: 'Gestisci richiesta Partner Pro, link invito, commissioni e saldo dalla tua area account SpediamoFacile.',
+	ogDescription: 'Area Partner Pro con richiesta accesso, link invito, commissioni e saldo su SpediamoFacile.',
+	robots: 'noindex, nofollow',
 });
 
-const { user, logout } = useSanctumAuth();
+const { user } = useSanctumAuth();
 const sanctum = useSanctumClient();
-const { clearSnapshot, authCookie } = useAuthUiSnapshotPersistence();
+const { authCookie } = useAuthUiSnapshotPersistence();
 const accountProUiReady = ref(false);
-const isLoggingOut = ref(false);
 const pageError = ref(null);
 
 const effectiveRole = computed(() => user.value?.role || authCookie.value?.role || null);
@@ -43,6 +36,37 @@ const normalizedProRequestStatus = computed(() => {
 		status: raw.status || raw.data?.status || null,
 		has_request: Boolean(raw.has_request ?? raw.data?.has_request ?? raw.status ?? raw.data?.status),
 	};
+});
+
+const requestStatusLabel = computed(() => {
+	if (isPro.value) return 'Partner Pro attivo';
+	switch (String(normalizedProRequestStatus.value?.status || '')) {
+		case 'pending':
+			return 'Richiesta in revisione';
+		case 'approved':
+			return 'Accesso approvato';
+		case 'rejected':
+			return 'Da aggiornare';
+		default:
+			return 'Richiedi accesso';
+	}
+});
+
+const partnerHeaderDescription = computed(() => {
+	if (isPro.value) {
+		return 'Condividi il tuo link, monitora utilizzi e tieni sotto controllo commissioni e saldo da un unico pannello ordinato.';
+	}
+
+	switch (String(normalizedProRequestStatus.value?.status || '')) {
+		case 'pending':
+			return 'La richiesta è in revisione. Qui restano visibili vantaggi, stato e prossimi passi senza uscire dall’account.';
+		case 'approved':
+			return 'La richiesta è stata approvata. Aggiorna la sessione per entrare nella dashboard Partner Pro completa.';
+		case 'rejected':
+			return 'Aggiorna i dati aziendali e reinvia la richiesta per attivare inviti, commissioni e saldo prelevabile.';
+		default:
+			return 'Attiva Partner Pro per invitare clienti, accumulare commissioni tracciate e sbloccare il saldo prelevabile.';
+	}
 });
 
 const canSubmitProRequest = computed(() => {
@@ -97,7 +121,7 @@ const fetchData = async () => {
 		earnings.value = earningsData;
 		pageError.value = null;
 	} catch {
-		pageError.value = 'Non riesco a caricare referral e commissioni. Riprova.';
+		pageError.value = 'Non riesco a caricare inviti e commissioni. Riprova.';
 	} finally {
 		isLoading.value = false;
 		hasLoadedPartnerArea.value = true;
@@ -177,42 +201,21 @@ const copyAccountCode = () => {
 const shareWhatsApp = () => {
 	if (referralData.value?.whatsapp_link) window.open(referralData.value.whatsapp_link, '_blank');
 };
-const handleLogout = async () => {
-	isLoggingOut.value = true;
-	try {
-		clearSnapshot();
-		await logout();
-	} finally {
-		isLoggingOut.value = false;
-	}
-};
 </script>
 
 <template>
-	<section v-if="accountProUiReady" class="sf-account-shell min-h-[600px] py-[18px] tablet:py-[24px] desktop:py-[28px]">
-		<div class="my-container space-y-[16px] tablet:space-y-[18px]">
+	<section v-if="accountProUiReady" class="sf-account-shell min-h-[600px] py-[20px] tablet:py-[24px] desktop:py-[28px]">
+		<div class="my-container space-y-[20px] tablet:space-y-[22px]">
 			<AccountPageHeader
-				eyebrow="Partner Pro"
-				title="Referral e commissioni"
-				description=""
+				eyebrow="Account"
+				title="Area Partner Pro"
+				:description="partnerHeaderDescription"
 				:crumbs="[{ label: 'Account', to: '/account' }, { label: 'Area Partner Pro' }]">
 				<template #meta>
-					<span class="sf-account-meta-pill">{{ isPro ? 'Partner Pro attivo' : 'Richiesta accesso' }}</span>
-					<span v-if="!isPro && normalizedProRequestStatus" class="sf-account-meta-pill sf-account-meta-pill--muted">
-						{{ normalizedProRequestStatus.status || 'In verifica' }}
-					</span>
+					<span class="sf-account-meta-pill">{{ requestStatusLabel }}</span>
 				</template>
 				<template #actions>
-					<div class="flex flex-wrap gap-[8px]">
-						<NuxtLink to="/preventivo" class="btn-cta btn-compact inline-flex items-center justify-center">Nuova spedizione</NuxtLink>
-						<button
-							type="button"
-							:disabled="isLoggingOut"
-							class="btn-secondary btn-compact inline-flex items-center justify-center"
-							@click="handleLogout">
-							{{ isLoggingOut ? 'Uscita...' : 'Esci' }}
-						</button>
-					</div>
+					<NuxtLink to="/preventivo" class="btn-primary btn-compact inline-flex items-center justify-center">Nuova spedizione</NuxtLink>
 				</template>
 			</AccountPageHeader>
 
@@ -239,6 +242,7 @@ const handleLogout = async () => {
 
 			<AccountProRequestForm
 				v-if="!isPro"
+				class="sf-animate-in sf-animate-in-1"
 				:pro-request-status="normalizedProRequestStatus"
 				:pro-request-form="proRequestForm"
 				:pro-request-error="proRequestError"
@@ -251,6 +255,7 @@ const handleLogout = async () => {
 
 			<AccountProDashboard
 				v-else
+				class="sf-animate-in sf-animate-in-1"
 				:user="user"
 				:referral-data="referralData"
 				:earnings="earnings"
@@ -266,15 +271,16 @@ const handleLogout = async () => {
 
 	<section v-else class="sf-account-shell min-h-[600px] py-[18px] tablet:py-[24px] desktop:py-[28px]">
 		<div class="my-container">
-			<div class="sf-account-panel rounded-[20px] p-[18px] desktop:p-[28px]">
+			<div class="sf-account-panel rounded-[16px] p-[18px] desktop:p-[20px]">
 				<div class="animate-pulse space-y-[14px]">
 					<div class="h-[18px] w-[200px] rounded-full bg-[var(--color-brand-border)]"></div>
 					<div class="h-[14px] w-[320px] rounded-full bg-[#F0F2F4]"></div>
 					<div class="grid gap-[12px] desktop:grid-cols-3 mt-[18px]">
-						<div v-for="n in 3" :key="n" class="h-[90px] rounded-[20px] bg-[#F5F7F8]"></div>
+						<div v-for="n in 3" :key="n" class="h-[90px] rounded-[16px] bg-[#F5F7F8]"></div>
 					</div>
 				</div>
 			</div>
 		</div>
 	</section>
 </template>
+

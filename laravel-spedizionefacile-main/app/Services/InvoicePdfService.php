@@ -81,21 +81,54 @@ class InvoicePdfService
             $userName = trim(($order->user->name ?? '') . ' ' . ($order->user->surname ?? ''));
         }
 
-        // Usa billing_data se disponibile, altrimenti dati utente base
+        // Usa billing_data se disponibile, altrimenti dati utente base.
+        // Supporta chiavi vecchie (name/vat_number/fiscal_code) e nuove (F07:
+        // ragione_sociale/p_iva/codice_fiscale/codice_sdi/pec) con fallback.
         $billingData = $order->billing_data;
         if (is_array($billingData) && ! empty($billingData)) {
-            $ops .= $this->drawLabelValue($this->marginLeft, $y, 'Nome:', $billingData['name'] ?? $userName);
+            $subjectType = $billingData['subject_type'] ?? ($billingData['is_business'] ?? false ? 'azienda' : 'privato');
+            $isBusiness = $subjectType === 'azienda' || ($billingData['is_business'] ?? false) === true;
+
+            // Intestatario: ragione sociale (azienda) o nome completo (privato)
+            $intestatario = $isBusiness
+                ? ($billingData['ragione_sociale'] ?? $billingData['company_name'] ?? $billingData['name'] ?? $userName)
+                : ($billingData['nome_completo'] ?? $billingData['name'] ?? $userName);
+
+            $ops .= $this->drawLabelValue($this->marginLeft, $y, $isBusiness ? 'Ragione soc.:' : 'Nome:', (string) $intestatario);
             $y += 14;
-            if (! empty($billingData['fiscal_code'])) {
-                $ops .= $this->drawLabelValue($this->marginLeft, $y, 'Cod. Fiscale:', $billingData['fiscal_code']);
+
+            // P.IVA (aziende)
+            $vat = $billingData['p_iva'] ?? $billingData['vat_number'] ?? null;
+            if (! empty($vat)) {
+                $ops .= $this->drawLabelValue($this->marginLeft, $y, 'P.IVA:', (string) $vat);
                 $y += 14;
             }
-            if (! empty($billingData['vat_number'])) {
-                $ops .= $this->drawLabelValue($this->marginLeft, $y, 'P.IVA:', $billingData['vat_number']);
+
+            // Codice fiscale
+            $cf = $billingData['codice_fiscale'] ?? $billingData['fiscal_code'] ?? null;
+            if (! empty($cf)) {
+                $ops .= $this->drawLabelValue($this->marginLeft, $y, 'Cod. Fiscale:', (string) $cf);
                 $y += 14;
             }
-            if (! empty($billingData['address'])) {
-                $ops .= $this->drawLabelValue($this->marginLeft, $y, 'Indirizzo:', $billingData['address']);
+
+            // Codice SDI (F07)
+            $sdi = $billingData['codice_sdi'] ?? $billingData['sdi_code'] ?? null;
+            if (! empty($sdi) && $sdi !== '0000000') {
+                $ops .= $this->drawLabelValue($this->marginLeft, $y, 'Codice SDI:', (string) $sdi);
+                $y += 14;
+            }
+
+            // PEC (F07)
+            $pec = $billingData['pec'] ?? $billingData['pec_email'] ?? null;
+            if (! empty($pec)) {
+                $ops .= $this->drawLabelValue($this->marginLeft, $y, 'PEC:', (string) $pec);
+                $y += 14;
+            }
+
+            // Indirizzo
+            $address = $billingData['indirizzo'] ?? $billingData['address'] ?? '';
+            if (! empty($address)) {
+                $ops .= $this->drawLabelValue($this->marginLeft, $y, 'Indirizzo:', (string) $address);
                 $y += 14;
             }
             $cityLine = trim(($billingData['postal_code'] ?? '') . ' ' . ($billingData['city'] ?? '') . ' ' . ($billingData['province'] ?? ''));
@@ -184,14 +217,25 @@ class InvoicePdfService
         $y += 16;
 
         // ── TOTALI ──────────────────────────────────────────────
-        // Usa il subtotale reale dell'ordine (include supplementi servizi)
-        $subtotalCents = $order->getRawOriginal('subtotal');
+        // Il documento deve riflettere il totale davvero pagabile, non il lordo prima degli sconti.
+        $grossSubtotalCents = $order->grossSubtotalCents();
+        $discountCents = $order->discountAmountCents();
+        $subtotalCents = $order->payableTotalCents();
         $vatRate = 22;
         // Scorporo IVA dal totale (il prezzo include gia' l'IVA)
         $imponibileCents = (int) round($subtotalCents / (1 + $vatRate / 100));
         $ivaCents = $subtotalCents - $imponibileCents;
 
         $rightX = $this->pageWidth - $this->marginRight;
+
+        if ($discountCents > 0) {
+            $ops .= $this->drawText($rightX - 180, $y, 9, 'Totale lordo:', 'F1');
+            $ops .= $this->drawText($rightX, $y, 9, number_format($grossSubtotalCents / 100, 2, ',', '.') . ' EUR', 'F1', 'right');
+            $y += 14;
+            $ops .= $this->drawText($rightX - 180, $y, 9, 'Sconto:', 'F1');
+            $ops .= $this->drawText($rightX, $y, 9, '-' . number_format($discountCents / 100, 2, ',', '.') . ' EUR', 'F1', 'right');
+            $y += 14;
+        }
 
         $ops .= $this->drawText($rightX - 180, $y, 9, 'Imponibile:', 'F1');
         $ops .= $this->drawText($rightX, $y, 9, number_format($imponibileCents / 100, 2, ',', '.') . ' EUR', 'F1', 'right');

@@ -8,7 +8,7 @@ test.describe('Accessibilita', () => {
   const pages = [
     '/',
     '/preventivo',
-    '/autenticazione',
+    '/?auth_modal=login',
     '/carrello',
     '/chi-siamo',
     '/contatti',

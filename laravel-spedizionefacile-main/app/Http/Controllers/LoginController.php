@@ -46,10 +46,36 @@ class LoginController extends Controller
     }
 
     /**
+     * Hash bcrypt "dummy" cache-ato in memoria, usato per mantenere costante
+     * il tempo di risposta quando l'email non esiste (Sprint 6.4 anti-enumeration).
+     * E' generato on-demand con Hash::make(...) cosi' eredita il cost di bcrypt
+     * configurato per l'ambiente (es. 12 in prod, 4 in testing): confrontare un
+     * hash con cost diverso dagli hash degli utenti reali reintrodurrebbe il
+     * timing signal.
+     *
+     * Ref: https://cheatsheetseries.owasp.org/cheatsheets/Authentication_Cheat_Sheet.html#authentication-responses
+     */
+    private static ?string $timingSafeDummyHash = null;
+
+    private function timingSafeDummyHash(): string
+    {
+        if (self::$timingSafeDummyHash === null) {
+            self::$timingSafeDummyHash = Hash::make('dummy-password-for-timing-attack-prevention');
+        }
+
+        return self::$timingSafeDummyHash;
+    }
+
+    /**
      * login -- Verifica credenziali, gestisce verifica email e trasferisce carrello ospite.
      *
      * 1) Valida credenziali  2) Se email non verificata: genera/invia codice, return 403
      * 3) Auth::login  4) Rigenera sessione  5) Trasferisce pacchi da sessione a DB
+     *
+     * Anti-enumerazione (Sprint 6.4): se l'email non esiste, eseguiamo comunque
+     * un Hash::check contro un hash bcrypt dummy per mantenere costante il tempo
+     * di risposta. L'errore e' generico ("credenziali non corrette") e non rivela
+     * mai se l'email e' registrata.
      */
     public function login(Request $request)
     {
@@ -62,7 +88,14 @@ class LoginController extends Controller
         $user = $this->resolveUserFromEmail((string) $request->email);
         $guestCart = $request->hasSession() ? $request->session()->get('cart', []) : [];
 
-        if (! $user || ! Hash::check($request->password, $user->password)) {
+        // Anti-timing: se l'utente non esiste facciamo comunque un Hash::check
+        // contro un hash dummy. bcrypt a cost 12 impiega ~80-150 ms sia per il
+        // dummy che per un hash reale, quindi i due rami hanno costo simile.
+        $passwordValid = $user
+            ? Hash::check($request->password, $user->password)
+            : Hash::check($request->password, $this->timingSafeDummyHash());
+
+        if (! $user || ! $passwordValid) {
             throw ValidationException::withMessages([
                 'email' => ['Le credenziali non sono corrette.'],
                 'password' => ['Le credenziali non sono corrette.'],

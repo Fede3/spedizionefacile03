@@ -1,14 +1,3 @@
-<!--
-  FILE: pages/[...slug].vue
-  SCOPO: Pagina 404 — catch-all per URL non trovati.
-
-  API: nessuna.
-  COMPONENTI: nessuno (pagina standalone).
-  ROUTE: qualsiasi URL non matchato (catch-all).
-
-  VINCOLI: SVG inline, nessun <Icon>. Stile coerente col sito (colori brand, rounded, shadow).
-  COLLEGAMENTI: pages/index.vue (link homepage).
--->
 <script setup>
 definePageMeta({ layout: 'default' });
 
@@ -19,9 +8,9 @@ useSeoMeta({
 </script>
 
 <template>
-  <section class="min-h-[500px] py-[40px] desktop:py-[60px]">
+  <section class="min-h-[400px] py-[24px] desktop:py-[28px]">
     <div class="my-container">
-      <div class="bg-white rounded-[18px] border border-[var(--color-brand-border)] shadow-sm p-[32px_20px] desktop:p-[48px] max-w-[560px] mx-auto text-center">
+      <div class="bg-white rounded-[18px] border border-[var(--color-brand-border)] shadow-sm p-[20px_16px] desktop:p-[24px] max-w-[560px] mx-auto text-center">
         <!-- SVG illustrazione pacco smarrito -->
         <svg
           class="mx-auto mb-[24px] w-[100px] h-[100px]"
@@ -34,10 +23,10 @@ useSeoMeta({
           <line x1="20" y1="50" x2="80" y2="50" stroke="var(--color-brand-primary)" stroke-width="3"/>
           <line x1="50" y1="50" x2="50" y2="80" stroke="var(--color-brand-primary)" stroke-width="2.5"/>
           <!-- Nastro superiore -->
-          <path d="M40 30 L50 18 L60 30" stroke="var(--color-brand-accent)" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M40 30 L50 18 L60 30" stroke="var(--color-brand-primary)" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
           <!-- Punto interrogativo -->
-          <circle cx="75" cy="25" r="14" fill="var(--color-brand-accent)" opacity="0.12"/>
-          <text x="75" y="31" text-anchor="middle" font-size="18" font-weight="bold" fill="var(--color-brand-accent)">?</text>
+          <circle cx="75" cy="25" r="14" fill="var(--color-brand-primary)" opacity="0.12"/>
+          <text x="75" y="31" text-anchor="middle" font-size="18" font-weight="bold" fill="var(--color-brand-primary)">?</text>
         </svg>
 
         <!-- Codice errore -->
@@ -67,8 +56,8 @@ useSeoMeta({
 
         <!-- Link secondario -->
         <p class="text-[var(--color-brand-text-muted)] text-[0.8125rem] mt-[16px]">
-          Oppure vai al <NuxtLink to="/preventivo" class="text-[var(--color-brand-primary)] hover:underline font-medium">preventivo</NuxtLink>
-          o alla pagina <NuxtLink to="/contatti" class="text-[var(--color-brand-primary)] hover:underline font-medium">contatti</NuxtLink>.
+          Oppure vai al <NuxtLink to="/preventivo" class="text-[var(--color-brand-primary)] hover:opacity-80 font-medium">preventivo</NuxtLink>
+          o alla pagina <NuxtLink to="/contatti" class="text-[var(--color-brand-primary)] hover:opacity-80 font-medium">contatti</NuxtLink>.
         </p>
       </div>
     </div>

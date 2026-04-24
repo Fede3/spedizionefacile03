@@ -13,6 +13,10 @@ use Illuminate\Http\Request;
 
 class SavedShipmentController extends Controller
 {
+    public function __construct(
+        private readonly CartService $cartService,
+    ) {}
+
     private function packageIsSaved(int $userId, int|string $packageId): bool
     {
         return DB::table('saved_shipments')
@@ -68,7 +72,7 @@ class SavedShipmentController extends Controller
 
             $packages = [];
             foreach ($data['packages'] as $packageData) {
-                $pricedPackage = CartService::pricePackageData(
+                $pricedPackage = $this->cartService->pricePackageData(
                     $packageData,
                     $data['origin_address'] ?? [],
                     $data['destination_address'] ?? [],
@@ -148,7 +152,7 @@ class SavedShipmentController extends Controller
             $shouldReprice = !empty($packageFields) || isset($data['origin_address']) || isset($data['destination_address']);
 
             if ($shouldReprice) {
-                $pricedPackage = CartService::pricePackageData(
+                $pricedPackage = $this->cartService->pricePackageData(
                     $packageFields,
                     $package->originAddress?->toArray() ?? [],
                     $package->destinationAddress?->toArray() ?? [],
@@ -209,7 +213,7 @@ class SavedShipmentController extends Controller
             $newDest = $original->destinationAddress ? PackageAddress::create($original->destinationAddress->replicate()->toArray()) : null;
             $newService = $original->service ? Service::create($original->service->replicate()->toArray()) : null;
 
-            $pricedPackage = CartService::pricePackageData([
+            $pricedPackage = $this->cartService->pricePackageData([
                 'package_type' => $original->package_type,
                 'quantity' => $original->quantity,
                 'weight' => $original->weight,

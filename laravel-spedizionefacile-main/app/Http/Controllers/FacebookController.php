@@ -5,13 +5,28 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use App\Support\AuthUiCookie;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Laravel\Socialite\Facades\Socialite;
 use Laravel\Socialite\Two\FacebookProvider;
 
+/**
+ * FILE: FacebookController.php
+ * SCOPO: Facebook OAuth con state session-based (Sprint 6.3 BLOCKER GO-LIVE).
+ *
+ * SICUREZZA:
+ *   - State in SESSIONE (non cookie), TTL 10 min, single-shot via pull().
+ *   - PKCE non applicato: Facebook Login non supporta S256 via Graph API flow
+ *     legacy; state + Sanctum CSRF rimangono difese primarie.
+ */
 class FacebookController extends Controller
 {
+    private const STATE_TTL_MINUTES = 10;
+    private const SESSION_STATE_KEY = 'oauth_state_facebook';
+    private const SESSION_STATE_CREATED_KEY = 'oauth_state_facebook_created_at';
+
     private function isFacebookConfigured(): bool
     {
         return filled(config('services.facebook.client_id'))
@@ -119,6 +134,10 @@ class FacebookController extends Controller
             return $this->redirectWithFrontendError($frontend, $redirectPath, 'facebook_unavailable');
         }
 
+        $state = Str::random(40);
+        $request->session()->put(self::SESSION_STATE_KEY, $state);
+        $request->session()->put(self::SESSION_STATE_CREATED_KEY, now()->timestamp);
+
         $redirectUri = config('services.facebook.redirect');
         /** @var FacebookProvider $facebook */
         $facebook = Socialite::driver('facebook');
@@ -126,6 +145,7 @@ class FacebookController extends Controller
             ->stateless()
             ->redirectUrl($redirectUri)
             ->scopes(['email'])
+            ->with(['state' => $state])
             ->redirect();
 
         $intent = trim((string) $request->query('intent', 'login'));
@@ -133,11 +153,11 @@ class FacebookController extends Controller
         $userType = trim((string) $request->query('user_type', ''));
 
         return $response
-            ->withCookie(cookie('frontend_redirect', $frontend, 15, '/', null, false, false))
-            ->withCookie(cookie('frontend_redirect_path', $redirectPath, 15, '/', null, false, false))
-            ->withCookie(cookie('frontend_social_intent', $intent === 'register' ? 'register' : 'login', 15, '/', null, false, false))
-            ->withCookie(cookie('frontend_social_referral', $referral !== '' ? strtoupper($referral) : '', 15, '/', null, false, false))
-            ->withCookie(cookie('frontend_social_user_type', in_array($userType, ['privato', 'commerciante'], true) ? $userType : 'privato', 15, '/', null, false, false));
+            ->withCookie(cookie('frontend_redirect', $frontend, self::STATE_TTL_MINUTES, '/', null, false, false))
+            ->withCookie(cookie('frontend_redirect_path', $redirectPath, self::STATE_TTL_MINUTES, '/', null, false, false))
+            ->withCookie(cookie('frontend_social_intent', $intent === 'register' ? 'register' : 'login', self::STATE_TTL_MINUTES, '/', null, false, false))
+            ->withCookie(cookie('frontend_social_referral', $referral !== '' ? strtoupper($referral) : '', self::STATE_TTL_MINUTES, '/', null, false, false))
+            ->withCookie(cookie('frontend_social_user_type', in_array($userType, ['privato', 'commerciante'], true) ? $userType : 'privato', self::STATE_TTL_MINUTES, '/', null, false, false));
     }
 
     public function handleFacebookCallback(Request $request)
@@ -146,12 +166,31 @@ class FacebookController extends Controller
         $redirectPath = $this->normalizeRedirectPath((string) ($request->cookie('frontend_redirect_path') ?: '/'));
 
         if (! $this->isFacebookConfigured()) {
-            return $this->redirectWithFrontendError($frontendUrl, $redirectPath, 'facebook_unavailable')
-                ->withoutCookie('frontend_redirect')
-                ->withoutCookie('frontend_redirect_path')
-                ->withoutCookie('frontend_social_intent')
-                ->withoutCookie('frontend_social_referral')
-                ->withoutCookie('frontend_social_user_type');
+            return $this->clearSocialState(
+                $this->redirectWithFrontendError($frontendUrl, $redirectPath, 'facebook_unavailable'),
+                $request
+            );
+        }
+
+        // pull() atomic: blocca replay sul medesimo session id.
+        $expectedState = (string) $request->session()->pull(self::SESSION_STATE_KEY, '');
+        $stateCreatedAt = (int) $request->session()->pull(self::SESSION_STATE_CREATED_KEY, 0);
+        $receivedState = trim((string) $request->query('state', ''));
+
+        if ($expectedState === '' || $receivedState === '' || ! hash_equals($expectedState, $receivedState)) {
+            $this->logSecurityEvent($request, 'state.mismatch');
+            return $this->clearSocialState(
+                $this->redirectWithFrontendError($frontendUrl, $redirectPath, 'facebook_invalid_state'),
+                $request
+            );
+        }
+
+        if ($stateCreatedAt <= 0 || Carbon::createFromTimestamp($stateCreatedAt)->addMinutes(self::STATE_TTL_MINUTES)->isPast()) {
+            $this->logSecurityEvent($request, 'state.expired', ['age_seconds' => $stateCreatedAt > 0 ? now()->timestamp - $stateCreatedAt : null]);
+            return $this->clearSocialState(
+                $this->redirectWithFrontendError($frontendUrl, $redirectPath, 'facebook_invalid_state'),
+                $request
+            );
         }
 
         try {
@@ -163,22 +202,18 @@ class FacebookController extends Controller
                 ->redirectUrl($redirectUri)
                 ->user();
         } catch (\Exception $e) {
-            return $this->redirectWithFrontendError($frontendUrl, $redirectPath, 'facebook_failed')
-                ->withoutCookie('frontend_redirect')
-                ->withoutCookie('frontend_redirect_path')
-                ->withoutCookie('frontend_social_intent')
-                ->withoutCookie('frontend_social_referral')
-                ->withoutCookie('frontend_social_user_type');
+            return $this->clearSocialState(
+                $this->redirectWithFrontendError($frontendUrl, $redirectPath, 'facebook_failed'),
+                $request
+            );
         }
 
         $facebookEmail = $facebookUser->getEmail();
         if (! $facebookEmail) {
-            return $this->redirectWithFrontendError($frontendUrl, $redirectPath, 'facebook_email_missing')
-                ->withoutCookie('frontend_redirect')
-                ->withoutCookie('frontend_redirect_path')
-                ->withoutCookie('frontend_social_intent')
-                ->withoutCookie('frontend_social_referral')
-                ->withoutCookie('frontend_social_user_type');
+            return $this->clearSocialState(
+                $this->redirectWithFrontendError($frontendUrl, $redirectPath, 'facebook_email_missing'),
+                $request
+            );
         }
 
         $user = User::where('email', $facebookEmail)->first();
@@ -222,12 +257,15 @@ class FacebookController extends Controller
                 'email_verified_at' => now(),
                 'password' => Str::random(16),
                 'avatar' => $facebookUser->getAvatar(),
-                'referred_by' => $validatedReferral,
                 'user_type' => in_array($userType, ['privato', 'commerciante'], true) ? $userType : 'privato',
             ]);
             // Campi non in $fillable: vanno assegnati direttamente per sicurezza
             $user->role = 'User';
             $user->facebook_id = $facebookUser->getId();
+            // referred_by gia' validato sopra contro referral_code di un Partner Pro esistente
+            if ($validatedReferral !== null) {
+                $user->referred_by = $validatedReferral;
+            }
             $user->save();
         }
 
@@ -243,5 +281,31 @@ class FacebookController extends Controller
             ->withoutCookie('frontend_social_intent')
             ->withoutCookie('frontend_social_referral')
             ->withoutCookie('frontend_social_user_type');
+    }
+
+    private function clearSocialState($response, Request $request)
+    {
+        if ($request->hasSession()) {
+            $request->session()->forget([
+                self::SESSION_STATE_KEY,
+                self::SESSION_STATE_CREATED_KEY,
+            ]);
+        }
+
+        return $response
+            ->withoutCookie('frontend_redirect')
+            ->withoutCookie('frontend_redirect_path')
+            ->withoutCookie('frontend_social_intent')
+            ->withoutCookie('frontend_social_referral')
+            ->withoutCookie('frontend_social_user_type');
+    }
+
+    private function logSecurityEvent(Request $request, string $reason, array $context = []): void
+    {
+        Log::channel('security')->warning('oauth.facebook.'.$reason, array_merge([
+            'ip' => $request->ip(),
+            'user_agent' => substr((string) $request->userAgent(), 0, 255),
+            'timestamp' => now()->toIso8601String(),
+        ], $context));
     }
 }

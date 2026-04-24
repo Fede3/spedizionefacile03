@@ -3,6 +3,10 @@
  * FILE: ArticleController.php
  * SCOPO: Gestisce il CRUD degli articoli (guide e servizi) dal pannello admin.
  *
+ * NOTE: Il tipo "blog" non e' piu' supportato. Il modulo blog e' stato
+ * rimosso (pagine pubbliche, admin e route) ma il modello Article viene
+ * mantenuto condiviso con guide e servizi.
+ *
  * DOVE SI USA: Pannello admin (gestione guide e servizi), pagine pubbliche guide/servizi
  *
  * DATI IN INGRESSO:
@@ -45,7 +49,7 @@ use Illuminate\Support\Str;
 
 class ArticleController extends Controller
 {
-    private const ALLOWED_TYPES = 'guide,service,blog';
+    private const ALLOWED_TYPES = 'guide,service';
 
     // Lista articoli, filtrabile per tipo (guide o service)
     public function index(Request $request): JsonResponse
@@ -138,14 +142,15 @@ class ArticleController extends Controller
         ]);
     }
 
-    // Carica un'immagine per un articolo
-    public function uploadImage(Request $request, Article $article): JsonResponse
+    // Carica un'immagine per un articolo.
+    // Sprint 6.7 security hardening: ArticleImageUploadRequest + ImageSanitizer.
+    public function uploadImage(\App\Http\Requests\ArticleImageUploadRequest $request, Article $article, \App\Services\Security\ImageSanitizer $sanitizer): JsonResponse
     {
-        $request->validate([
-            'image' => 'required|image|max:5120',
-        ]);
-
-        $path = $request->file('image')->store('articles', 'public');
+        $path = $sanitizer->sanitizeAndStore(
+            $request->file('image'),
+            'articles',
+            'public'
+        );
 
         $article->update(['featured_image' => Storage::url($path)]);
 

@@ -3,6 +3,9 @@
   Template dinamico servizi con fetch SSR, SEO reale lato server e shell pubblica coerente.
 -->
 <script setup>
+// CSS split route-specific: servizi.css usato solo in /servizi/* + /chi-siamo.
+import '~/assets/css/servizi.css';
+
 const route = useRoute();
 const slug = computed(() => String(route.params.slug || ''));
 
@@ -21,6 +24,9 @@ const service = computed(() => {
 if (!service.value) {
 	await navigateTo('/servizi');
 }
+
+// Canonical dinamico: /servizi/<slug-reale>
+useCanonical({ path: () => `/servizi/${service.value?.slug || slug.value}` });
 
 const parseArrayPayload = (value) => {
 	if (!value) return [];
@@ -91,11 +97,21 @@ useSeoMeta({
 	ogTitle: () => (service.value?.title ? `${service.value.title} | SpediamoFacile` : 'Servizio | SpediamoFacile'),
 	description: () => serviceMetaDescription.value,
 	ogDescription: () => serviceMetaDescription.value,
+	ogImage: () => service.value?.featured_image || 'https://spediamofacile.it/og/default.png',
+	twitterImage: () => service.value?.featured_image || 'https://spediamofacile.it/og/default.png',
 });
+
+// Breadcrumb schema: Home › Servizi › <titolo>
+useBreadcrumbSchema([
+	{ name: 'Home', url: '/' },
+	{ name: 'Servizi', url: '/servizi' },
+	{ name: computed(() => service.value?.title || 'Servizio').value },
+]);
 
 useHead(() => {
 	if (!service.value) return {};
 
+	// JSON-LD Service completo: @id provider, areaServed, serviceType
 	const scripts = [
 		{
 			key: 'service-schema',
@@ -105,10 +121,16 @@ useHead(() => {
 				'@type': 'Service',
 				name: service.value.title,
 				url: `https://spediamofacile.it/servizi/${slug.value}`,
+				serviceType: 'Spedizione',
 				provider: {
 					'@type': 'Organization',
+					'@id': 'https://spediamofacile.it/#organization',
 					name: 'SpediamoFacile',
 					url: 'https://spediamofacile.it',
+				},
+				areaServed: {
+					'@type': 'Country',
+					name: 'IT',
 				},
 				description: serviceMetaDescription.value,
 			}),
@@ -145,7 +167,7 @@ useHead(() => {
 
 	<div v-else-if="service" class="service-detail-shell min-h-screen">
 		<!-- Breadcrumb -->
-		<section class="pt-[28px] desktop:pt-[48px]">
+		<section class="pt-[24px] desktop:pt-[28px]">
 			<div class="my-container">
 				<NuxtLink
 					to="/servizi"
@@ -160,16 +182,17 @@ useHead(() => {
 		</section>
 
 		<!-- Hero -->
-		<section class="py-[28px] desktop:py-[36px]">
+		<section class="py-[22px] desktop:py-[28px]">
 			<div class="my-container">
-				<div class="service-hero-card rounded-[14px] ring-[1px] ring-[#DFE2E7] px-[20px] py-[22px] shadow-[0_1px_4px_rgba(0,0,0,0.03)] desktop:px-[32px] desktop:py-[34px]">
-					<div class="flex flex-col gap-[18px] desktop:grid desktop:grid-cols-[minmax(0,1.18fr)_minmax(320px,0.82fr)] desktop:items-center desktop:gap-[28px]">
-						<div class="space-y-[12px]">
-							<p class="sf-section-kicker">Servizio</p>
-							<h1 class="font-montserrat text-[2rem] font-[800] leading-[1.08] tracking-[-0.04em] text-[var(--color-brand-text)] desktop:text-[3.2rem]">
+				<div class="service-hero-card rounded-[16px] ring-[1px] ring-[#DFE2E7] px-[18px] py-[18px] shadow-[0_1px_4px_rgba(0,0,0,0.03)] desktop:px-[28px] desktop:py-[28px]">
+					<div class="flex flex-col gap-[16px] desktop:grid desktop:grid-cols-[minmax(0,1.16fr)_minmax(300px,0.84fr)] desktop:items-center desktop:gap-[22px]">
+						<div class="space-y-[10px]">
+							<span class="inline-flex items-center h-[22px] px-[10px] rounded-full bg-[rgba(228,66,3,0.10)] text-[11px] font-[800] uppercase tracking-[0.08em] text-[var(--color-brand-accent)]">Servizio</span>
+							<span class="block w-[24px] h-[2px] rounded-full" style="background: linear-gradient(90deg, var(--color-brand-accent) 0%, var(--color-brand-primary) 100%)" aria-hidden="true" />
+							<h1 class="font-montserrat text-[1.75rem] font-[800] leading-[1.05] tracking-[-0.015em] text-[var(--color-brand-text)] desktop:text-[2rem]">
 								{{ service.title }}
 							</h1>
-							<p class="max-w-[62ch] text-[0.9375rem] leading-[1.65] text-[var(--color-brand-text-secondary)] desktop:text-[1.0625rem]">
+							<p class="max-w-[58ch] text-[0.9375rem] leading-[1.6] text-[var(--color-brand-text-secondary)]">
 								{{ service.intro || serviceMetaDescription }}
 							</p>
 							<div class="flex flex-wrap gap-[8px]">
@@ -182,17 +205,17 @@ useHead(() => {
 							</div>
 						</div>
 
-						<div class="rounded-[14px] ring-[1px] ring-[#DFE2E7] bg-white/75 p-[18px] shadow-[0_1px_4px_rgba(0,0,0,0.03)] backdrop-blur">
-							<p class="text-[0.75rem] font-[800] uppercase tracking-[0.12em] text-[var(--color-brand-accent)]">Quando usarlo</p>
-							<div class="mt-[12px] space-y-[12px]">
+						<div class="rounded-[16px] ring-[1px] ring-[#DFE2E7] bg-white/75 p-[16px] shadow-[0_1px_4px_rgba(0,0,0,0.03)] backdrop-blur">
+							<p class="text-[0.75rem] font-[800] uppercase tracking-[0.12em] text-[var(--color-brand-primary)]">Quando usarlo</p>
+							<div class="mt-[10px] space-y-[10px]">
 								<div
 									v-for="item in supportChecklist"
 									:key="item"
-									class="rounded-[14px] ring-[1px] ring-[var(--color-brand-border)] bg-[var(--color-brand-secondary-soft-bg)] px-[14px] py-[12px] text-[0.8125rem] leading-[1.55] text-[var(--color-brand-text-secondary)]">
+									class="rounded-[16px] ring-[1px] ring-[var(--color-brand-border)] bg-[var(--color-brand-secondary-soft-bg)] px-[14px] py-[10px] text-[0.8125rem] leading-[1.5] text-[var(--color-brand-text-secondary)]">
 									{{ item }}
 								</div>
 							</div>
-							<div class="mt-[16px] flex flex-wrap gap-[10px]">
+							<div class="mt-[14px] flex flex-wrap gap-[8px]">
 								<NuxtLink to="/preventivo" class="btn-cta btn-compact">
 									Calcola il preventivo
 								</NuxtLink>
@@ -205,13 +228,13 @@ useHead(() => {
 		</section>
 
 		<!-- Overview cards -->
-		<section v-if="overviewCards.length" class="py-[28px] desktop:py-[36px]">
+		<section v-if="overviewCards.length" class="py-[24px] desktop:py-[30px]">
 			<div class="my-container">
 				<div class="grid gap-[16px] desktop:grid-cols-2">
 					<article
 						v-for="card in overviewCards"
 						:key="card.heading"
-						class="rounded-[14px] ring-[1px] ring-[#DFE2E7] bg-white px-[18px] py-[18px] shadow-[0_1px_4px_rgba(0,0,0,0.03)] desktop:px-[22px] desktop:py-[22px]">
+						class="rounded-[16px] ring-[1px] ring-[#DFE2E7] bg-white px-[18px] py-[18px] shadow-[0_1px_4px_rgba(0,0,0,0.03)] desktop:px-[22px] desktop:py-[22px]">
 						<h2 class="font-montserrat text-[1.125rem] font-[800] tracking-[-0.02em] text-[var(--color-brand-text)]">{{ card.heading }}</h2>
 						<p class="mt-[10px] text-[0.875rem] leading-[1.65] text-[var(--color-brand-text-secondary)] desktop:text-[0.9375rem]">
 							{{ card.text }}
@@ -222,9 +245,9 @@ useHead(() => {
 		</section>
 
 		<!-- Detail sections -->
-		<section v-if="detailSections.length" class="py-[28px] desktop:py-[36px]">
+		<section v-if="detailSections.length" class="py-[24px] desktop:py-[30px]">
 			<div class="my-container">
-				<div class="rounded-[14px] ring-[1px] ring-[#DFE2E7] bg-white px-[18px] py-[18px] shadow-[0_1px_4px_rgba(0,0,0,0.03)] desktop:px-[24px] desktop:py-[24px]">
+				<div class="rounded-[16px] ring-[1px] ring-[#DFE2E7] bg-white px-[18px] py-[18px] shadow-[0_1px_4px_rgba(0,0,0,0.03)] desktop:px-[24px] desktop:py-[24px]">
 					<div class="sf-page-intro">
 						<p class="sf-section-kicker">Approfondimento</p>
 						<h2 class="font-montserrat text-[1.4rem] font-[800] tracking-[-0.03em] text-[var(--color-brand-text)] desktop:text-[2rem]">Come entra nel flusso operativo</h2>
@@ -238,7 +261,7 @@ useHead(() => {
 						<article
 							v-for="section in detailSections"
 							:key="section.heading"
-							class="rounded-[14px] ring-[1px] ring-[#DFE2E7] bg-[var(--color-brand-secondary-soft-bg)] px-[16px] py-[16px]">
+							class="rounded-[16px] ring-[1px] ring-[#DFE2E7] bg-[var(--color-brand-secondary-soft-bg)] px-[16px] py-[16px]">
 							<h3 class="font-montserrat text-[1rem] font-[700] text-[var(--color-brand-text)]">{{ section.heading }}</h3>
 							<p class="mt-[10px] text-[0.875rem] leading-[1.65] text-[var(--color-brand-text-secondary)]">
 								{{ section.text }}
@@ -250,9 +273,9 @@ useHead(() => {
 		</section>
 
 		<!-- FAQ -->
-		<section v-if="serviceFaqs.length" class="py-[28px] desktop:py-[36px]">
+		<section v-if="serviceFaqs.length" class="py-[24px] desktop:py-[30px]">
 			<div class="my-container">
-				<div class="rounded-[14px] ring-[1px] ring-[#DFE2E7] bg-white px-[18px] py-[18px] shadow-[0_1px_4px_rgba(0,0,0,0.03)] desktop:px-[24px] desktop:py-[24px]">
+				<div class="rounded-[16px] ring-[1px] ring-[#DFE2E7] bg-white px-[18px] py-[18px] shadow-[0_1px_4px_rgba(0,0,0,0.03)] desktop:px-[24px] desktop:py-[24px]">
 					<div class="sf-page-intro">
 						<p class="sf-section-kicker">FAQ</p>
 						<h2 class="font-montserrat text-[1.4rem] font-[800] tracking-[-0.03em] text-[var(--color-brand-text)] desktop:text-[2rem]">
@@ -264,7 +287,7 @@ useHead(() => {
 						<article
 							v-for="faq in serviceFaqs"
 							:key="faq.title"
-							class="rounded-[14px] ring-[1px] ring-[#DFE2E7] bg-[var(--color-brand-secondary-soft-bg)] px-[16px] py-[16px]">
+							class="rounded-[16px] ring-[1px] ring-[#DFE2E7] bg-[var(--color-brand-secondary-soft-bg)] px-[16px] py-[16px]">
 							<h3 class="font-montserrat text-[1rem] font-[700] text-[var(--color-brand-text)]">{{ faq.title }}</h3>
 							<p class="mt-[10px] text-[0.875rem] leading-[1.65] text-[var(--color-brand-text-secondary)]">
 								{{ faq.text }}
@@ -276,7 +299,7 @@ useHead(() => {
 		</section>
 
 		<!-- CTA finale -->
-		<section class="py-[28px] desktop:py-[36px]">
+		<section class="py-[24px] desktop:py-[30px]">
 			<div class="my-container">
 				<div class="services-bottom-cta">
 					<div class="services-bottom-cta__copy">
@@ -304,7 +327,7 @@ useHead(() => {
 
 <style scoped>
 .service-detail-shell {
-	background: linear-gradient(180deg, #F8F9FB 0%, #EEF0F3 100%);
+	background: linear-gradient(180deg, var(--surface-page, #F8F9FB) 0%, var(--surface-page-end, #EEF0F3) 100%);
 }
 
 .service-hero-card {

@@ -1,19 +1,19 @@
-<!--
-	LAYOUT PREDEFINITO (layouts/default.vue)
-
-	Replica esatta del prototipo Layout.tsx:
-	- Sticky header (gestito in Header.vue)
-	- Main content: background gradient #F8F9FB -> #EEF0F3
-	- Scroll-to-top: fixed bottom-[80px] right-[16px], teal, appare dopo 400px
-	- Help button: fixed bottom-[24px] right-[16px], gradient teal
--->
+<!-- Layout default — replica Prototipo Layout.tsx: sticky header, main con gradient
+     #F8F9FB→#EEF0F3, scroll-to-top (>400px) e help button flottanti. -->
 <script setup>
+import { normalizeAuthTab, normalizeRequestedPath } from '~/utils/auth';
+
+useCanonical();
+
 const { isAuthenticatedForUi } = useAuthUiState();
 const { openAuthModal } = useAuthModal();
 const route = useRoute();
+const router = useRouter();
 const { isAccountRoute, isAuthPageRoute, isQuoteFlowRoute } = useShellRouteState();
 const authUiHydrated = ref(false);
-const showMarketingFooter = computed(() => !isAuthPageRoute.value && !isAccountRoute.value);
+// Footer visibile ovunque tranne le pagine auth dedicate (/accedi, /registrati, /recupera-password).
+// Le pagine /account/* mostrano il footer come il resto del sito per coerenza UX.
+const showMarketingFooter = computed(() => !isAuthPageRoute.value);
 const showFloatingUtilities = computed(
 	() => authUiHydrated.value && !isAuthPageRoute.value && !isQuoteFlowRoute.value && !isAccountRoute.value,
 );
@@ -70,6 +70,41 @@ const onDocumentPointerDown = (event) => {
 	closeGuestHelp();
 };
 
+const syncRouteAuthOverlay = async () => {
+	if (import.meta.server) return;
+	if (isAuthPageRoute.value) return;
+
+	const authModalQuery = Array.isArray(route.query.auth_modal) ? route.query.auth_modal[0] : route.query.auth_modal;
+	const authForgotQuery = Array.isArray(route.query.auth_forgot) ? route.query.auth_forgot[0] : route.query.auth_forgot;
+
+	if (!authModalQuery && !authForgotQuery) {
+		return;
+	}
+
+	const redirectQuery = Array.isArray(route.query.redirect) ? route.query.redirect[0] : route.query.redirect;
+	const modalOptions = {
+		redirect: normalizeRequestedPath(redirectQuery, route.path || '/'),
+		tab: normalizeAuthTab(authModalQuery),
+		mode: authForgotQuery === '1' || authForgotQuery === 'true' ? 'forgot' : null,
+	};
+
+	const nextQuery = { ...route.query };
+	delete nextQuery.auth_modal;
+	delete nextQuery.auth_forgot;
+	delete nextQuery.redirect;
+	await router.replace({ path: route.path, query: nextQuery, hash: route.hash });
+	await nextTick();
+	openAuthModal(modalOptions);
+};
+
+watch(
+	() => [route.query.auth_modal, route.query.auth_forgot, route.query.redirect, isAuthPageRoute.value],
+	() => {
+		void syncRouteAuthOverlay();
+	},
+	{ immediate: true },
+);
+
 onMounted(() => {
 	authUiHydrated.value = true;
 	onScroll();
@@ -100,36 +135,41 @@ onUnmounted(() => {
 		<main
 			id="main-content"
 			class="flex-1 w-full max-w-full mx-auto overflow-x-clip"
-			style="background: linear-gradient(180deg, #F8F9FB 0%, #EEF0F3 100%)"
+			style="background: var(--gradient-page-surface)"
 		>
 			<slot />
 		</main>
 
-		<Footer v-if="showMarketingFooter" />
+		<SiteFooter v-if="showMarketingFooter" />
 		<ClientOnly>
-			<AuthOverlayModal v-if="!isAuthPageRoute" />
+			<!-- W5.1 perf: lazy-mount per scaricare il bundle del modal solo quando serve. -->
+			<LazyAuthOverlayModal v-if="!isAuthPageRoute" />
 		</ClientOnly>
 
-		<!-- Scroll to top — animated, prototype position: bottom-[80px] right-[16px] -->
-		<Transition name="scroll-top-fade">
+		<!-- Scroll to top — placeholder fisso con opacity toggle (no mount/unmount → no CLS). -->
+		<div
+			class="fixed bottom-[80px] right-[16px] sm:bottom-[80px] sm:right-[20px] z-[950] w-[48px] h-[48px] transition-opacity duration-300"
+			:class="showScrollTop && showFloatingUtilities ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'"
+			:aria-hidden="showScrollTop && showFloatingUtilities ? 'false' : 'true'">
 			<button
-				v-if="showScrollTop && showFloatingUtilities"
+				type="button"
 				@click="scrollToTop"
-				class="fixed bottom-[24px] left-[16px] sm:bottom-[24px] sm:left-[20px] z-[999] w-[48px] h-[48px] rounded-full bg-[var(--color-brand-primary)] text-white flex items-center justify-center cursor-pointer opacity-70 hover:opacity-100 hover:scale-110 active:scale-95 transition-all duration-200"
+				class="w-full h-full rounded-full bg-[#095866] text-white flex items-center justify-center cursor-pointer hover:bg-[#0b6d7d] hover:scale-110 active:scale-95 transition-all duration-200"
 				style="box-shadow: 0 4px 14px rgba(9, 88, 102, 0.25)"
 				title="Torna su"
-				aria-label="Torna in cima alla pagina">
+				aria-label="Torna in cima alla pagina"
+				:tabindex="showScrollTop && showFloatingUtilities ? 0 : -1">
 				<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
 					<polyline points="18 15 12 9 6 15"></polyline>
 				</svg>
 			</button>
-		</Transition>
+		</div>
 
-		<!-- Help floating button — prototype: gradient teal, bottom-[24px] right-[16px] -->
+		<!-- Help floating button — fixed, bottom-[24px] right-[16px] -->
 		<div
 			v-if="showFloatingUtilities"
 			ref="guestHelpPopoverRef"
-			class="fixed bottom-[24px] right-[16px] sm:bottom-[24px] sm:right-[20px] z-[999]">
+			class="fixed bottom-[24px] right-[16px] sm:bottom-[24px] sm:right-[20px] z-[950]">
 			<NuxtLink
 				v-show="isAuthenticatedForUi"
 				to="/account/assistenza"
@@ -161,9 +201,9 @@ onUnmounted(() => {
 					id="guest-help-popover"
 					role="dialog"
 					aria-label="Supporto"
-					class="absolute bottom-[58px] right-0 w-[280px] bg-white border border-[var(--color-brand-border)] rounded-[18px] shadow-lg p-[14px]">
+					class="absolute bottom-[56px] right-0 w-[280px] bg-white border border-[var(--color-brand-border)] rounded-[18px] shadow-lg p-[14px]">
 					<p class="text-[0.875rem] font-semibold text-[var(--color-brand-text)]">Serve supporto?</p>
-					<p class="text-[0.8125rem] text-[#64748B] mt-[4px]">Puoi contattarci subito oppure accedere per aprire e seguire i ticket.</p>
+					<p class="text-[0.8125rem] text-[#777] mt-[4px]">Puoi contattarci subito oppure accedere per aprire e seguire i ticket.</p>
 					<div class="mt-[10px] grid grid-cols-1 gap-[8px]">
 						<NuxtLink
 							to="/contatti"
@@ -182,7 +222,11 @@ onUnmounted(() => {
 			</Transition>
 		</div>
 
-		<CookieBanner />
+		<!-- Banner consenso cookie GDPR (components/CookieBanner.vue).
+			 Lazy auto-import: si carica solo client-side, monta solo se manca consenso. -->
+		<ClientOnly>
+			<LazyCookieBanner />
+		</ClientOnly>
 
 		<!-- Global live region for screen reader announcements -->
 		<div id="a11y-live-region" aria-live="polite" aria-atomic="true" class="sr-only"></div>
@@ -194,7 +238,7 @@ onUnmounted(() => {
 .layout-help-btn {
 	background: linear-gradient(135deg, #095866, #0a7489);
 	box-shadow: 0 6px 20px rgba(9, 88, 102, 0.3);
-	transition: transform 0.2s ease, box-shadow 0.2s ease;
+	transition: transform var(--sf-t1) var(--sf-ease), box-shadow var(--sf-t1) var(--sf-ease);
 }
 .layout-help-btn:hover {
 	transform: scale(1.08) translateY(-2px);

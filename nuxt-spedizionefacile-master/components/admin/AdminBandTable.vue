@@ -1,8 +1,3 @@
-<!--
-  COMPONENTE: AdminBandTable.vue
-  SCOPO: Tabella riutilizzabile per fasce peso e volume nel pannello admin prezzi.
-         Accetta bands, tipo (weight/volume) e le funzioni di editing dal parent.
--->
 <script setup>
 const props = defineProps({
 	bands: { type: Array, required: true },
@@ -35,7 +30,7 @@ const onEditInput = (event) => {
 </script>
 
 <template>
-	<div class="bg-white rounded-[14px] p-[16px] tablet:p-[20px] desktop:p-[28px] shadow-sm border border-[var(--color-brand-border)] overflow-hidden">
+	<div class="rounded-[16px] p-[16px] tablet:p-[20px] desktop:p-[28px] border border-[var(--color-brand-border)] overflow-hidden">
 		<h2 class="text-[1.125rem] font-bold text-[var(--color-brand-text)] mb-[6px] flex items-center gap-[8px]">
 			<slot name="icon" />
 			{{ title }}
@@ -46,7 +41,7 @@ const onEditInput = (event) => {
 			<p>Nessuna fascia configurata.</p>
 		</div>
 
-		<div v-else class="overflow-x-auto">
+		<div v-else class="overflow-hidden">
 			<table class="w-full text-[0.875rem]" :style="{ minWidth }">
 				<thead>
 					<tr class="border-b border-[var(--color-brand-border)] text-left text-[var(--color-brand-text-secondary)]">
@@ -82,10 +77,10 @@ const onEditInput = (event) => {
 									@keydown.esc="cancelEdit()"
 									@blur="confirmEdit(bandType, idx, 'base_price')"
 									type="number" min="0" step="0.01"
-									class="w-[100px] px-[10px] py-[8px] tablet:py-[6px] bg-white border-2 border-[var(--color-brand-primary)] rounded-[14px] text-[1rem] tablet:text-[0.8125rem] focus:outline-none"
+									class="w-[100px] px-[10px] py-[8px] tablet:py-[6px] bg-white border-2 border-[var(--color-brand-primary)] rounded-[16px] text-[1rem] tablet:text-[0.8125rem] focus:outline-none"
 									placeholder="0,00" />
 							</div>
-							<button v-else type="button" @click="startEdit(bandType, idx, 'base_price')" class="px-[12px] py-[6px] rounded-[14px] text-[0.875rem] font-semibold text-[var(--color-brand-text)] hover:bg-[#E8F4FB] transition-colors cursor-pointer border border-transparent hover:border-[#B0D4E8]">
+							<button v-else type="button" @click="startEdit(bandType, idx, 'base_price')" class="px-[12px] py-[6px] rounded-[16px] text-[0.875rem] font-semibold text-[var(--color-brand-text)] hover:bg-[rgba(9,88,102,0.06)] transition-colors cursor-pointer border border-transparent hover:border-[rgba(9,88,102,0.2)]">
 								{{ centsToEuro(band.base_price) }}
 							</button>
 						</td>
@@ -101,10 +96,10 @@ const onEditInput = (event) => {
 									@keydown.esc="cancelEdit()"
 									@blur="confirmEdit(bandType, idx, 'discount_price')"
 									type="number" min="0" step="0.01"
-									class="w-[100px] px-[10px] py-[8px] tablet:py-[6px] bg-white border-2 border-[var(--color-brand-primary)] rounded-[14px] text-[1rem] tablet:text-[0.8125rem] focus:outline-none"
+									class="w-[100px] px-[10px] py-[8px] tablet:py-[6px] bg-white border-2 border-[var(--color-brand-primary)] rounded-[16px] text-[1rem] tablet:text-[0.8125rem] focus:outline-none"
 									placeholder="vuoto = usa base" />
 							</div>
-							<button v-else type="button" @click="startEdit(bandType, idx, 'discount_price')" class="px-[12px] py-[6px] rounded-[14px] text-[0.875rem] text-[var(--color-brand-text-secondary)] hover:bg-[#E8F4FB] transition-colors cursor-pointer border border-transparent hover:border-[#B0D4E8]">
+							<button v-else type="button" @click="startEdit(bandType, idx, 'discount_price')" class="px-[12px] py-[6px] rounded-[16px] text-[0.875rem] text-[var(--color-brand-text-secondary)] hover:bg-[rgba(9,88,102,0.06)] transition-colors cursor-pointer border border-transparent hover:border-[rgba(9,88,102,0.2)]">
 								{{ band.discount_price != null ? centsToEuro(band.discount_price) : '-' }}
 							</button>
 						</td>
@@ -115,7 +110,7 @@ const onEditInput = (event) => {
 						<!-- Sconto -->
 						<td class="py-[14px]">
 							<template v-if="discountInfo(band) !== null">
-								<span v-if="discountInfo(band) > 0" class="inline-flex items-center gap-[4px] px-[8px] py-[3px] rounded-[6px] bg-[#FFF5F2] text-[#E44203] text-[0.8125rem] font-semibold border border-[rgba(228,66,3,0.15)]">
+								<span v-if="discountInfo(band) > 0" class="inline-flex items-center gap-[4px] px-[8px] py-[3px] rounded-[6px] bg-[#EDF6F7] text-[#095866] text-[0.8125rem] font-semibold border border-[rgba(9,88,102,0.15)]">
 									-{{ discountInfo(band) }}%
 								</span>
 								<span v-else class="inline-flex items-center gap-[4px] px-[8px] py-[3px] rounded-[6px] bg-amber-50 text-amber-700 text-[0.75rem] font-medium border border-amber-200">
@@ -127,6 +122,9 @@ const onEditInput = (event) => {
 						<!-- Toggle visibile -->
 						<td class="py-[14px] text-center">
 							<button type="button" @click="toggleShowDiscount(bandType, idx)"
+								role="switch"
+								:aria-checked="band.show_discount ? 'true' : 'false'"
+								:aria-label="`Mostra sconto per questa fascia: ${band.show_discount ? 'attivo' : 'disattivato'}`"
 								:class="band.show_discount ? 'bg-[var(--color-brand-primary)]' : 'bg-[#C8CCD0]'"
 								class="relative inline-flex h-[32px] w-[56px] tablet:h-[24px] tablet:w-[44px] items-center rounded-full transition-colors cursor-pointer">
 								<span :class="band.show_discount ? 'translate-x-[28px] tablet:translate-x-[22px]' : 'translate-x-[2px]'" class="inline-block h-[26px] w-[26px] tablet:h-[20px] tablet:w-[20px] transform rounded-full bg-white transition-transform shadow-sm" />
@@ -135,9 +133,9 @@ const onEditInput = (event) => {
 						<!-- Azioni -->
 						<td class="py-[14px]">
 							<div class="flex items-center justify-end gap-[6px]">
-								<button type="button" class="px-[8px] py-[4px] rounded-[12px] border border-[#DFE2E7] text-[0.75rem] hover:bg-[#F4F8FA] cursor-pointer" @click="moveBand(bandType, idx, -1)">&#8593;</button>
-								<button type="button" class="px-[8px] py-[4px] rounded-[12px] border border-[#DFE2E7] text-[0.75rem] hover:bg-[#F4F8FA] cursor-pointer" @click="moveBand(bandType, idx, 1)">&#8595;</button>
-								<button type="button" class="px-[8px] py-[4px] rounded-[14px] border border-red-200 text-red-600 text-[0.75rem] hover:bg-red-50 cursor-pointer" @click="removeBand(bandType, idx)">Elimina</button>
+								<button type="button" class="px-[8px] py-[4px] rounded-[12px] border border-[#DFE2E7] text-[0.75rem] hover:bg-[rgba(9,88,102,0.04)] cursor-pointer" @click="moveBand(bandType, idx, -1)">&#8593;</button>
+								<button type="button" class="px-[8px] py-[4px] rounded-[12px] border border-[#DFE2E7] text-[0.75rem] hover:bg-[rgba(9,88,102,0.04)] cursor-pointer" @click="moveBand(bandType, idx, 1)">&#8595;</button>
+								<button type="button" class="px-[8px] py-[4px] rounded-[16px] border border-red-200 text-red-600 text-[0.75rem] hover:bg-red-50 cursor-pointer" @click="removeBand(bandType, idx)">Elimina</button>
 							</div>
 						</td>
 					</tr>

@@ -14,6 +14,14 @@ class PackageStoreRequest extends FormRequest
 
     protected function prepareForValidation(): void
     {
+        $pudo = $this->input('pudo');
+        $selectedPudo = $this->input('selected_pudo');
+        if ((empty($pudo) || ! is_array($pudo)) && is_array($selectedPudo) && ! empty($selectedPudo)) {
+            $this->merge([
+                'pudo' => $selectedPudo,
+            ]);
+        }
+
         $services = $this->input('services', []);
         if (is_array($services) && isset($services['serviceData']) && is_array($services['serviceData'])) {
             $services['service_data'] = $services['service_data'] ?? $services['serviceData'];
@@ -122,6 +130,7 @@ class PackageStoreRequest extends FormRequest
             'content_description' => 'nullable|string|max:255',
             'billing_data' => 'nullable|array',
             'client_submission_id' => 'nullable|string|max:255',
+            'discount_context' => 'nullable|array',
 
             /* PUDO - Punto di ritiro BRT (opzionale) */
             /* delivery_mode: 'home' = domicilio, 'pudo' = ritiro in punto BRT convenzionato */

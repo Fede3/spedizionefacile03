@@ -1,10 +1,9 @@
-<!--
-  PAGINA: Aggiorna Password (aggiorna-password.vue)
-  Form per impostare una nuova password dopo aver cliccato il link di recupero.
-  Richiede il token di reset dalla URL (?token=XXX) e precompila l'email se presente.
-  Dopo il successo, reindirizza automaticamente alla pagina di autenticazione.
--->
+<!-- Aggiorna Password — landing post-link-recupero. Richiede ?token=XXX, precompila email se presente.
+     Redirect a /autenticazione dopo successo. -->
 <script setup>
+import '~/assets/css/autenticazione.css';
+import { buildAuthOverlayLocation } from '~/utils/auth';
+
 useSeoMeta({
 	title: 'Aggiorna Password | SpediamoFacile',
 	ogTitle: 'Aggiorna Password | SpediamoFacile',
@@ -14,6 +13,10 @@ useSeoMeta({
 
 const route = useRoute();
 const router = useRouter();
+const loginOverlayLocation = buildAuthOverlayLocation({
+	requestedPath: '/',
+	tab: 'login',
+});
 
 const data = ref({
 	resetToken: '',
@@ -100,7 +103,7 @@ const updatePassword = async () => {
 
 		messageSuccess.value = response.message || 'Password aggiornata con successo.';
 		setTimeout(() => {
-			router.push('/autenticazione');
+			router.push(loginOverlayLocation);
 		}, 1200);
 	} catch (error) {
 		const backendErrors = error?.response?._data?.errors || error?.data?.errors || null;
@@ -145,7 +148,7 @@ const updatePassword = async () => {
 						<p class="auth-shell-message__title">Password aggiornata</p>
 						<p class="auth-shell-message__copy">{{ messageSuccess }}</p>
 					</div>
-					<NuxtLink to="/autenticazione" class="btn-cta w-full inline-flex items-center justify-center gap-[8px] auth-shell-message__action">
+					<NuxtLink :to="loginOverlayLocation" class="btn-cta w-full inline-flex items-center justify-center gap-[8px] auth-shell-message__action">
 						Torna al login
 					</NuxtLink>
 				</div>

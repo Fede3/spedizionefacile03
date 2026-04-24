@@ -31,8 +31,12 @@ Route::get('/user', function (Request $request) {
 })->middleware('auth:sanctum');
 
 Route::post('/logout', function (Request $request) {
+    $user = $request->user();
     // GDPR-07: Revoca tutti i token Sanctum prima del logout
-    $request->user()->tokens()->delete();
+    $user->tokens()->delete();
+
+    // F14 audit
+    \App\Services\AuditLogService::log('auth.logout', null, [], ['user' => $user]);
 
     Auth::guard('web')->logout();
     if ($request->hasSession()) {
@@ -45,7 +49,7 @@ Route::post('/logout', function (Request $request) {
 
 /* ===== REGISTRAZIONE ===== */
 
-Route::middleware(['throttle:5,1'])->post('/custom-register', [CustomRegisterController::class, 'register']);
+Route::middleware(['throttle:10,1'])->post('/custom-register', [CustomRegisterController::class, 'register']);
 
 /* ===== PROVIDER OAUTH ===== */
 
@@ -72,13 +76,24 @@ Route::get('/auth/providers', function () {
     ]);
 });
 
-Route::get('/auth/apple/redirect', [AppleController::class, 'redirectToApple']);
-Route::get('/auth/google/redirect', [GoogleController::class, 'redirectToGoogle']);
-Route::get('/auth/facebook/redirect', [FacebookController::class, 'redirectToFacebook']);
+// Sprint 6.3 (BLOCKER GO-LIVE): le rotte di redirect OAuth devono avere una
+// SESSIONE attiva per salvare lo state CSRF + (Google) il code_verifier PKCE.
+// Con Sanctum statefulApi() la sessione viene caricata solo se l'Origin e'
+// tra gli host trusted, condizione non garantita quando il browser segue un
+// redirect top-level. Aggiungiamo esplicitamente StartSession in modo che
+// l'OAuth handshake sia indipendente dai controlli stateful.
+Route::middleware([
+    \Illuminate\Session\Middleware\StartSession::class,
+    \Illuminate\View\Middleware\ShareErrorsFromSession::class,
+])->group(function () {
+    Route::get('/auth/apple/redirect', [AppleController::class, 'redirectToApple']);
+    Route::get('/auth/google/redirect', [GoogleController::class, 'redirectToGoogle']);
+    Route::get('/auth/facebook/redirect', [FacebookController::class, 'redirectToFacebook']);
+});
 
 /* ===== LOGIN ===== */
 
-Route::middleware(['throttle:10,1'])->post('/custom-login', [LoginController::class, 'login']);
+Route::middleware(['throttle:30,1'])->post('/custom-login', [LoginController::class, 'login']);
 Route::middleware(['throttle:5,1'])->post('/resend-verification-email', [RegisterController::class, 'resendVerificationEmail']);
 Route::middleware(['throttle:5,1'])->post('/verify-code', [RegisterController::class, 'verifyCode']);
 
@@ -95,8 +110,9 @@ Route::middleware(['throttle:5,1'])->post('/update-password', [ChangePasswordCon
 
 /* ===== UPLOAD FILE (admin) E IMMAGINE ADMIN ===== */
 
+// Sprint 6.7: throttle avatar upload admin 30/min
 Route::post('/upload-file', [UserController::class, 'uploadFile'])
-    ->middleware(['auth:sanctum', CheckAdmin::class]);
+    ->middleware(['auth:sanctum', CheckAdmin::class, 'throttle:30,1']);
 Route::get('/get-admin-image', [UserController::class, 'getAdminImage']);
 
 /* ===== ROTTE PROTETTE UTENTE ===== */

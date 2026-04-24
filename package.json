@@ -1,0 +1,20 @@
+{
+	"name": "spedizionefacile-monorepo",
+	"private": true,
+	"version": "0.0.0",
+	"description": "Root workspace for SpedizioneFacile (Nuxt frontend + Laravel backend). Hosts Husky hooks, commitlint and lint-staged for cross-project quality gates.",
+	"engines": {
+		"node": ">=20",
+		"npm": ">=9"
+	},
+	"scripts": {
+		"prepare": "husky",
+		"commitlint": "commitlint --edit"
+	},
+	"devDependencies": {
+		"@commitlint/cli": "^19.6.1",
+		"@commitlint/config-conventional": "^19.6.0",
+		"husky": "^9.1.7",
+		"lint-staged": "^15.2.11"
+	}
+}

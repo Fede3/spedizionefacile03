@@ -1,17 +1,13 @@
-<!--
-  PAGINA: Verifica Email (verifica-email.vue)
-  Pagina di atterraggio dopo il click sul link di verifica email.
-  Legge il parametro ?status dalla URL e mostra il messaggio corrispondente:
-  - "verified": email verificata con successo
-  - "invalid_signature": link non valido
-  - "already_verified": email gia' verificata
-  Se nessuno status e' presente, reindirizza alla homepage.
--->
+<!-- Verifica Email — landing post-click link email. ?status ∈ verified|invalid_signature|already_verified.
+     Nessun status → redirect homepage. -->
 <script setup>
+import '~/assets/css/autenticazione.css';
+import { buildAuthOverlayLocation } from '~/utils/auth';
+
 useSeoMeta({
 	title: 'Verifica Email | SpediamoFacile',
 	ogTitle: 'Verifica Email | SpediamoFacile',
-	description: 'Conferma la tua email e completa l’attivazione dell’account SpediamoFacile.',
+	description: 'Conferma la tua email e completa l\'attivazione dell\'account SpediamoFacile.',
 	ogDescription: 'Verifica la tua email su SpediamoFacile.',
 });
 
@@ -22,6 +18,10 @@ definePageMeta({
 
 const route = useRoute();
 const router = useRouter();
+const loginOverlayLocation = buildAuthOverlayLocation({
+	requestedPath: '/',
+	tab: 'login',
+});
 
 const status = route.query.status;
 
@@ -102,7 +102,7 @@ if (!statusState.value) {
 					<div class="auth-feedback" :class="statusState?.tone === 'error' ? 'auth-feedback--error' : 'auth-feedback--success'">
 						{{ statusState?.copy }}
 					</div>
-					<NuxtLink to="/autenticazione" class="btn-cta w-full inline-flex items-center justify-center gap-[8px]">
+					<NuxtLink :to="loginOverlayLocation" class="btn-cta w-full inline-flex items-center justify-center gap-[8px]">
 						Vai al login
 					</NuxtLink>
 				</div>

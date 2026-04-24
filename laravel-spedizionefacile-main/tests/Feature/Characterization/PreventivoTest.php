@@ -912,4 +912,60 @@ class PreventivoTest extends TestCase
         $response->assertStatus(422);
         $response->assertJsonValidationErrors(['packages']);
     }
+
+    public function test_session_payload_persists_submission_context_across_second_step_when_frontend_omits_it(): void
+    {
+        $user = User::factory()->create();
+
+        $firstStep = $this->actingAs($user)
+            ->postJson('/api/session/first-step', $this->basePayload())
+            ->assertOk();
+
+        $firstSubmissionId = $firstStep->json('data.client_submission_id');
+        $this->assertNotEmpty($firstSubmissionId);
+
+        $secondStep = $this->actingAs($user)
+            ->postJson('/api/session/second-step', [
+                'content_description' => 'Libri',
+                'pickup_date' => '2026-04-22',
+                'services' => [
+                    'service_type' => 'Nessuno',
+                    'date' => '2026-04-22',
+                    'time' => '09:00-18:00',
+                ],
+            ])
+            ->assertOk();
+
+        $secondStep->assertJsonPath('data.client_submission_id', $firstSubmissionId);
+
+        $this->actingAs($user)
+            ->getJson('/api/session')
+            ->assertOk()
+            ->assertJsonPath('data.client_submission_id', $firstSubmissionId);
+    }
+
+    public function test_first_step_rotates_submission_context_when_quote_changes(): void
+    {
+        $user = User::factory()->create();
+
+        $firstStep = $this->actingAs($user)
+            ->postJson('/api/session/first-step', $this->basePayload())
+            ->assertOk();
+
+        $firstSubmissionId = $firstStep->json('data.client_submission_id');
+        $this->assertNotEmpty($firstSubmissionId);
+
+        $changedQuote = $this->basePayload([
+            'weight' => '9',
+            'first_size' => '45',
+            'second_size' => '30',
+            'third_size' => '22',
+        ]);
+
+        $secondQuote = $this->actingAs($user)
+            ->postJson('/api/session/first-step', $changedQuote)
+            ->assertOk();
+
+        $this->assertNotSame($firstSubmissionId, $secondQuote->json('data.client_submission_id'));
+    }
 }

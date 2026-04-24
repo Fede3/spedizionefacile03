@@ -1,0 +1,46 @@
+/**
+ * @typedef {Object} BreadcrumbItem
+ * @property {string} name
+ * @property {string} [url]
+ */
+
+/**
+ * Inietta uno schema.org BreadcrumbList nell'head della pagina a partire da una lista di item.
+ * @param {BreadcrumbItem[]} items lista ordinata di breadcrumb (1-based nel risultato)
+ */
+export const useBreadcrumbSchema = (items) => {
+  if (!Array.isArray(items) || items.length === 0) return
+
+  const runtimeConfig = useRuntimeConfig()
+  const baseUrl = String(
+    runtimeConfig.public?.siteUrl || 'https://spediamofacile.it',
+  ).replace(/\/+$/, '')
+
+  /**
+   * @param {string} [url]
+   * @returns {string | undefined}
+   */
+  const resolveUrl = (url) => {
+    if (!url) return undefined
+    if (/^https?:\/\//i.test(url)) return url
+    const clean = url.startsWith('/') ? url : `/${url}`
+    return `${baseUrl}${clean === '/' ? '' : clean}`
+  }
+
+  const schema = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: items.map((item, index) => {
+      const element = {
+        '@type': 'ListItem',
+        position: index + 1,
+        name: item.name,
+      }
+      const resolved = resolveUrl(item.url)
+      if (resolved) element.item = resolved
+      return element
+    }),
+  }
+
+  useSchemaOrg(schema, 'breadcrumb-schema')
+}

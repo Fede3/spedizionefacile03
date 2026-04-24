@@ -1,19 +1,26 @@
-<!--
-  FILE: pages/registrazione.vue
-  SCOPO: Redirect permanente a /autenticazione (compatibilita' vecchi link).
-  API: nessuna.
-  ROUTE: /registrazione (middleware sanctum:guest).
--->
-<script setup>
-// Solo utenti non autenticati
+<script setup lang="ts">
+import '~/assets/css/autenticazione.css';
+import { buildLegacyAuthOverlayRedirect } from '~/utils/auth';
+
 definePageMeta({
-	middleware: ["guest-auth"],
+	layout: false,
+	middleware: ['guest-auth'],
 });
 
-// Redirect alla pagina unificata di autenticazione
-navigateTo("/autenticazione");
+const route = useRoute();
+
+useSeoMeta({
+	title: 'Registrati | SpediamoFacile',
+	description: 'Crea il tuo account SpediamoFacile e inizia a spedire con BRT a prezzi vantaggiosi.',
+	robots: 'noindex, nofollow',
+});
+
+await navigateTo(
+	buildLegacyAuthOverlayRedirect(route, { defaultTab: 'register' }),
+	{ redirectCode: 302, replace: true },
+);
 </script>
 
 <template>
-	<div></div>
+	<div />
 </template>

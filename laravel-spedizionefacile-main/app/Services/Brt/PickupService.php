@@ -8,9 +8,9 @@
  *   - BrtService.php — delegato da requestHomePickup()
  *   - ShipmentExecutionService.php — flusso automatico post-etichetta
  *
- * ENDPOINT BRT: POST /rest/v1/shipments/pickup
- * Il ritiro e' SEPARATO dalla creazione spedizione e richiede
- * che l'etichetta sia gia' stata generata (brt_parcel_id presente).
+ * Il ritiro e' un boundary contrattuale BRT: in produzione va chiamato
+ * solo se BRT abilita un endpoint esplicito sul contratto cliente.
+ * Se non e' configurato, l'ordine resta trasparente come manual_required.
  *
  * COLLEGAMENTI:
  *   - BrtConfig.php — configurazione e client HTTP
@@ -38,6 +38,20 @@ class PickupService
      */
     public function requestPickup(Order $order, array $pickupRequest): array
     {
+        if (! $this->config->pickupEnabled || ! $this->config->pickupEndpoint) {
+            Log::warning('BRT pickup API not configured; manual pickup required', [
+                'order_id' => $order->id,
+                'pickup_enabled' => $this->config->pickupEnabled,
+                'has_pickup_endpoint' => (bool) $this->config->pickupEndpoint,
+            ]);
+
+            return [
+                'success' => false,
+                'status' => 'manual_required',
+                'error' => 'Ritiro BRT da gestire manualmente: endpoint pickup non configurato sul contratto API.',
+            ];
+        }
+
         $order->loadMissing(['packages.originAddress', 'user']);
 
         $origin = $order->packages->first()?->originAddress;
@@ -52,9 +66,15 @@ class PickupService
         $pickupDate = $pickupRequest['date'] ?? now()->addWeekday()->format('Y-m-d');
         $timeSlot = $pickupRequest['time_slot'] ?? '09:00-18:00';
         $notes = $pickupRequest['notes'] ?? '';
+        ['from' => $pickupTimeFrom, 'to' => $pickupTimeTo] = $this->normalizeTimeSlot($timeSlot);
 
         $totalParcels = $order->packages->sum(fn ($pkg) => max(1, (int) ($pkg->quantity ?? 1)));
-        $totalWeight = $order->packages->sum(fn ($pkg) => (float) preg_replace('/[^0-9.]/', '', $pkg->weight ?? '0'));
+        $totalWeight = $order->packages->sum(function ($pkg) {
+            $weight = $this->normalizeWeightValue($pkg->weight ?? '0');
+            $quantity = max(1, (int) ($pkg->quantity ?? 1));
+
+            return $weight * $quantity;
+        });
 
         // Normalize origin address using the same normalizer used by ShipmentService,
         // so BRT receives consistent, validated city/postal_code/province values.
@@ -76,8 +96,8 @@ class PickupService
                 'pickupContactPhone' => $origin->telephone_number ?? '',
                 'pickupContactEMail' => $origin->email ?? ($order->user?->email ?? ''),
                 'pickupDate' => $pickupDate,
-                'pickupTimeSlotFrom' => $this->extractTimeSlotPart($timeSlot, 'from'),
-                'pickupTimeSlotTo' => $this->extractTimeSlotPart($timeSlot, 'to'),
+                'pickupTimeSlotFrom' => $pickupTimeFrom,
+                'pickupTimeSlotTo' => $pickupTimeTo,
                 'numberOfParcels' => $totalParcels,
                 'weightKG' => max(1, (int) ceil($totalWeight)),
                 'pickupNotes' => mb_substr($notes, 0, 120),
@@ -92,18 +112,11 @@ class PickupService
                 'payload' => $payloadForLog,
             ]);
 
-            $response = $this->config->shipmentClient()
-                ->post($this->config->apiUrl . '/pickup', $payload);
-
-            $body = $response->json();
-
-            Log::info('BRT requestPickup response', [
-                'order_id' => $order->id,
-                'http_status' => $response->status(),
-            ]);
+            [$response, $body, $resolvedUrl] = $this->sendPickupRequest($order, $payload);
 
             if (! $response->successful()) {
-                $errorMsg = $body['executionMessage']['message']
+                $errorSource = $body['createResponse'] ?? $body;
+                $errorMsg = $errorSource['executionMessage']['message']
                     ?? 'Errore API BRT ritiro (HTTP ' . $response->status() . ')';
                 return [
                     'success' => false,
@@ -112,12 +125,14 @@ class PickupService
                 ];
             }
 
-            $execCode = $body['executionMessage']['code'] ?? -1;
+            $responseData = $body['createResponse'] ?? $body;
+            $execCode = $responseData['executionMessage']['code'] ?? -1;
             if ($execCode < 0) {
-                $errorMsg = $body['executionMessage']['message']
+                $errorMsg = $responseData['executionMessage']['message']
                     ?? 'Errore richiesta ritiro BRT (code: ' . $execCode . ')';
                 Log::warning('BRT requestPickup error response', [
                     'order_id' => $order->id,
+                    'url' => $resolvedUrl,
                     'exec_code' => $execCode,
                     'message' => $errorMsg,
                 ]);
@@ -128,12 +143,15 @@ class PickupService
                 ];
             }
 
-            $pickupReference = $body['pickupConfirmationNumber']
+            $pickupReference = $responseData['pickupConfirmationNumber']
+                ?? $responseData['confirmationNumber']
+                ?? $body['pickupConfirmationNumber']
                 ?? $body['confirmationNumber']
                 ?? ('PU-' . $order->id . '-' . now()->format('Ymd'));
 
             Log::info('BRT requestPickup success', [
                 'order_id' => $order->id,
+                'url' => $resolvedUrl,
                 'pickup_reference' => $pickupReference,
             ]);
 
@@ -155,15 +173,62 @@ class PickupService
         }
     }
 
+    private function sendPickupRequest(Order $order, array $payload): array
+    {
+        $url = (string) $this->config->pickupEndpoint;
+        $response = $this->config->shipmentClient()->post($url, $payload);
+        $body = $response->json();
+        if (! is_array($body)) {
+            $body = [];
+        }
+
+        Log::info('BRT requestPickup response', [
+            'order_id' => $order->id,
+            'url' => $url,
+            'http_status' => $response->status(),
+        ]);
+
+        if ($response->status() === 404) {
+            Log::warning('BRT requestPickup endpoint not found', [
+                'order_id' => $order->id,
+                'url' => $url,
+            ]);
+        }
+
+        return [$response, $body, $url];
+    }
+
     /**
      * Estrae l'orario di inizio o fine da una fascia oraria "HH:MM-HH:MM".
      */
-    private function extractTimeSlotPart(string $timeSlot, string $part): string
+    private function normalizeTimeSlot(string $timeSlot): array
     {
-        $segments = explode('-', $timeSlot);
-        if ($part === 'from') {
-            return trim($segments[0] ?? '09:00');
+        $normalized = preg_replace('/\s+/', '', trim($timeSlot));
+        if (preg_match('/^(?<from>\d{2}:\d{2})-(?<to>\d{2}:\d{2})$/', $normalized, $matches)) {
+            return [
+                'from' => $matches['from'],
+                'to' => $matches['to'],
+            ];
         }
-        return trim($segments[1] ?? '18:00');
+
+        Log::warning('BRT pickup time slot malformed, using safe default', [
+            'time_slot' => $timeSlot,
+        ]);
+
+        return [
+            'from' => '09:00',
+            'to' => '18:00',
+        ];
+    }
+
+    private function normalizeWeightValue(mixed $rawWeight): float
+    {
+        $normalized = str_replace(',', '.', (string) $rawWeight);
+        $normalized = preg_replace('/[^0-9.]/', '', $normalized) ?? '0';
+        if ($normalized === '' || substr_count($normalized, '.') > 1) {
+            return 0.0;
+        }
+
+        return (float) $normalized;
     }
 }

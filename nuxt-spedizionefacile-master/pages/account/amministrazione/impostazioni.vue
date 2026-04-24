@@ -1,16 +1,4 @@
-<!--
-  FILE: pages/account/amministrazione/impostazioni.vue
-  SCOPO: Pannello admin — impostazioni generali del sito.
-         Configurazione Stripe (chiavi API), BRT (credenziali), parametri generali.
-  API: GET /api/admin/settings — leggi impostazioni,
-       POST /api/admin/settings — salva impostazioni.
-  ROUTE: /account/amministrazione/impostazioni (middleware sanctum:auth + admin).
-
-  VINCOLI: le chiavi API sono sensibili, gestite lato server.
-
-  COLLEGAMENTI:
-    - composables/useAdmin.js → utility condivise admin.
--->
+<!-- FILE: pages/account/amministrazione/impostazioni.vue -->
 <script setup>
 definePageMeta({
 	middleware: ['app-auth', 'admin'],
@@ -21,6 +9,7 @@ useSeoMeta({
 	ogTitle: 'Impostazioni admin | SpediamoFacile',
 	description: 'Gestisci configurazione Stripe, BRT e parametri generali dal pannello admin SpediamoFacile.',
 	ogDescription: 'Configurazione tecnica di Stripe, BRT e impostazioni generali nel pannello admin SpediamoFacile.',
+	robots: 'noindex, nofollow',
 });
 
 useHead({
@@ -63,85 +52,70 @@ onMounted(() => {
 </script>
 
 <template>
-	<section class="min-h-[600px] py-[40px] desktop:py-[60px] desktop-xl:py-[80px]">
-		<div class="my-container">
+	<section class="sf-account-shell min-h-[600px] py-[24px] tablet:py-[28px] desktop:py-[28px]">
+		<div class="my-container sf-stack-section">
 			<AccountPageHeader
 				eyebrow="Area amministrazione"
 				title="Impostazioni"
-				description="Configurazione tecnica di Stripe, BRT e parametri generali in una shell piu' ordinata e meno dispersiva."
+				description="Configurazione tecnica di Stripe, BRT e parametri generali in una pagina unica, piu ordinata e meno dispersiva."
 				:crumbs="[
 					{ label: 'Account', to: '/account' },
 					{ label: 'Amministrazione', to: '/account/amministrazione' },
 					{ label: 'Impostazioni' },
 				]" />
 
-			<!-- Action message -->
-			<div
-				v-if="actionMessage"
-				:class="[
-					'mb-[20px] px-[16px] py-[12px] rounded-[20px] text-[0.875rem] font-medium flex items-center gap-[8px]',
-					actionMessage.type === 'success'
-						? 'bg-[#f0fdf4] text-[#0a8a7a] border border-[#d1fae5]'
-						: 'bg-red-50 text-red-700 border border-red-200',
-				]">
-				<template v-if="actionMessage.type === 'success'">
-					<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[18px] h-[18px] shrink-0" fill="currentColor">
-						<path d="M12 2C6.5 2 2 6.5 2 12S6.5 22 12 22 22 17.5 22 12 17.5 2 12 2M10 17L5 12L6.41 10.59L10 14.17L17.59 6.58L19 8L10 17Z" />
-					</svg>
-				</template>
-				<template v-else>
-					<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[18px] h-[18px] shrink-0" fill="currentColor">
-						<path d="M13,13H11V7H13M13,17H11V15H13M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z" />
-					</svg>
-				</template>
-				{{ actionMessage.text }}
-			</div>
+			<AdminActionBanner :message="actionMessage?.text || ''" :tone="actionMessage?.type || ''" />
 
-			<div class="mb-[16px] grid grid-cols-1 tablet:grid-cols-3 gap-[10px]">
-				<div class="bg-white rounded-[20px] p-[14px] border border-[var(--color-brand-border)] shadow-sm">
-					<p class="text-[0.6875rem] uppercase tracking-[0.5px] text-[var(--color-brand-text-secondary)] font-medium">Stripe</p>
-					<p class="text-[0.875rem] font-semibold text-[var(--color-brand-text)] mt-[4px]">Chiavi e webhook</p>
-				</div>
-				<div class="bg-white rounded-[20px] p-[14px] border border-[var(--color-brand-border)] shadow-sm">
-					<p class="text-[0.6875rem] uppercase tracking-[0.5px] text-[var(--color-brand-text-secondary)] font-medium">BRT</p>
-					<p class="text-[0.875rem] font-semibold text-[var(--color-brand-text)] mt-[4px]">Credenziali operatore</p>
-				</div>
-				<div class="bg-white rounded-[20px] p-[14px] border border-[var(--color-brand-border)] shadow-sm">
-					<p class="text-[0.6875rem] uppercase tracking-[0.5px] text-[var(--color-brand-text-secondary)] font-medium">Generali</p>
-					<p class="text-[0.875rem] font-semibold text-[var(--color-brand-text)] mt-[4px]">Nome sito e supporto</p>
+			<div
+				class="rounded-[18px] bg-white ring-[1px] ring-[#DFE2E7] px-[18px] py-[18px]"
+				style="box-shadow: 0 2px 12px rgba(9,88,102,0.08)">
+				<div class="flex flex-col gap-[12px] desktop:flex-row desktop:items-start desktop:justify-between">
+					<div class="max-w-[760px]">
+						<p class="text-[0.75rem] font-semibold uppercase tracking-[0.08em] text-[#6A7486] mb-[6px]">Configurazione piattaforma</p>
+						<h2 class="text-[1.125rem] font-bold text-[#1d2738] font-['Montserrat',sans-serif]">Chiavi operative e parametri sensibili</h2>
+						<p class="text-[0.875rem] text-[#5A6474] mt-[4px] leading-[1.65]">
+							Questa pagina resta intenzionalmente semplice: una guida breve sopra, tre gruppi di campi sotto e un solo salvataggio finale.
+							Qui imposti le chiavi che governano checkout, wallet e integrazione BRT.
+						</p>
+					</div>
+					<div class="flex flex-wrap items-center gap-[8px]">
+						<span class="inline-flex items-center px-[10px] py-[5px] rounded-full bg-[#F4FAFC] text-[var(--color-brand-primary)] text-[0.75rem] font-medium border border-[#D8E9F0]">Chiavi lato server</span>
+						<span class="inline-flex items-center px-[10px] py-[5px] rounded-full bg-[#F8FAFC] text-[#5A6474] text-[0.75rem] font-medium border border-[#E5EAF0]">Solo corriere BRT</span>
+						<span class="inline-flex items-center px-[10px] py-[5px] rounded-full bg-[#FFF7F2] text-[#A34B18] text-[0.75rem] font-medium border border-[#F2D6C6]">Salvataggio manuale</span>
+					</div>
 				</div>
 			</div>
 
 			<div class="grid grid-cols-1 desktop:grid-cols-2 gap-[16px]">
-				<div class="bg-white rounded-[20px] p-[20px] tablet:p-[24px] desktop:p-[28px] shadow-sm border border-[var(--color-brand-border)]">
-					<h2 class="text-[1.125rem] font-bold text-[var(--color-brand-text)] mb-[20px] flex items-center gap-[8px]">
-						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[20px] h-[20px] text-[var(--color-brand-primary)]" fill="currentColor">
-							<path d="M20,8H4V6H20M20,18H4V12H20M20,4H4C2.89,4 2,4.89 2,6V18A2,2 0 0,0 4,20H20A2,2 0 0,0 22,18V6C22,4.89 21.1,4 20,4Z" />
-						</svg>
-						Configurazione Stripe
-					</h2>
-					<div
-						class="mb-[20px] rounded-[20px] border border-[var(--color-brand-border)] bg-[#F5F6F9] px-[16px] py-[14px] text-[0.875rem] text-[var(--color-brand-text-secondary)] leading-[1.6]">
-						<p class="font-semibold text-[var(--color-brand-text)] mb-[4px]">Come funziona su questo sito</p>
-						<p>
-							Queste chiavi configurano l'account Stripe della piattaforma SpediamoFacile. I clienti non devono inserire chiavi: quando
-							Stripe è attivo potranno aggiungere carte, pagare al checkout e ricaricare il wallet normalmente.
-						</p>
-						<p class="mt-[8px]">
-							Per una configurazione completa servono:
-							<span class="font-medium text-[var(--color-brand-text)]">Publishable Key</span>
-							,
-							<span class="font-medium text-[var(--color-brand-text)]">Secret Key</span>
-							e
-							<span class="font-medium text-[var(--color-brand-text)]">Webhook Secret</span>
-							.
-						</p>
-						<p class="mt-[8px]">
-							Webhook Stripe da impostare:
-							<span class="font-mono text-[0.8125rem] text-[var(--color-brand-text)]">{{ stripeWebhookUrl }}</span>
+				<div
+					class="rounded-[18px] bg-white ring-[1px] ring-[#DFE2E7] p-[18px] tablet:p-[20px] desktop:p-[22px] overflow-hidden"
+					style="box-shadow: 0 2px 12px rgba(9,88,102,0.08)">
+					<div class="mb-[18px]">
+						<h2 class="text-[16px] font-bold text-[#1d2738] font-['Montserrat',sans-serif] flex items-center gap-[10px]">
+							<div class="w-[38px] h-[38px] rounded-[10px] bg-[#095866]/[0.08] flex items-center justify-center shrink-0">
+								<svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[18px] h-[18px] text-[#095866]" fill="currentColor">
+									<path d="M20,8H4V6H20M20,18H4V12H20M20,4H4C2.89,4 2,4.89 2,6V18A2,2 0 0,0 4,20H20A2,2 0 0,0 22,18V6C22,4.89 21.1,4 20,4Z" />
+								</svg>
+							</div>
+							Configurazione Stripe
+						</h2>
+						<p class="text-[0.875rem] text-[#5A6474] mt-[8px] leading-[1.65]">
+							Le chiavi qui sotto pilotano checkout, ricariche wallet e salvataggio carte. Teniamo il contenuto essenziale e la gerarchia molto chiara.
 						</p>
 					</div>
-					<div class="space-y-[14px] max-w-[600px]">
+
+					<div class="mb-[18px] rounded-[16px] bg-[#F8FBFC] border border-[#DFE8EC] px-[16px] py-[14px] text-[0.875rem] text-[#4F5C6C] leading-[1.65]">
+						<p class="font-semibold text-[#1d2738] mb-[6px]">Controlli rapidi</p>
+						<ul class="space-y-[6px]">
+							<li>Wallet, carte e checkout leggono questa configurazione.</li>
+							<li>Il webhook Stripe deve puntare a questo endpoint.</li>
+						</ul>
+						<div class="mt-[10px] inline-flex items-center px-[10px] py-[6px] rounded-[12px] bg-white border border-[#E5EAF0] text-[0.75rem] font-medium text-[#526071] break-all">
+							{{ stripeWebhookUrl }}
+						</div>
+					</div>
+
+					<div class="space-y-[14px] max-w-[640px]">
 						<div>
 							<label class="form-label">Public Key</label>
 							<input
@@ -169,15 +143,32 @@ onMounted(() => {
 					</div>
 				</div>
 
-				<div class="bg-white rounded-[20px] p-[20px] tablet:p-[24px] desktop:p-[28px] shadow-sm border border-[var(--color-brand-border)]">
-					<h2 class="text-[1.125rem] font-bold text-[var(--color-brand-text)] mb-[20px] flex items-center gap-[8px]">
-						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[20px] h-[20px] text-[#095866]" fill="currentColor">
-							<path
-								d="M18,18.5A1.5,1.5 0 0,1 16.5,17A1.5,1.5 0 0,1 18,15.5A1.5,1.5 0 0,1 19.5,17A1.5,1.5 0 0,1 18,18.5M19.5,9.5L21.46,12H17V9.5M6,18.5A1.5,1.5 0 0,1 4.5,17A1.5,1.5 0 0,1 6,15.5A1.5,1.5 0 0,1 7.5,17A1.5,1.5 0 0,1 6,18.5M20,8H17V4H3C1.89,4 1,4.89 1,6V17H3A3,3 0 0,0 6,20A3,3 0 0,0 9,17H15A3,3 0 0,0 18,20A3,3 0 0,0 21,17H23V12L20,8Z" />
-						</svg>
-						Configurazione BRT
-					</h2>
-					<div class="space-y-[14px] max-w-[600px]">
+				<div
+					class="rounded-[18px] bg-white ring-[1px] ring-[#DFE2E7] p-[18px] tablet:p-[20px] desktop:p-[22px] overflow-hidden"
+					style="box-shadow: 0 2px 12px rgba(9,88,102,0.08)">
+					<div class="mb-[18px]">
+						<h2 class="text-[16px] font-bold text-[#1d2738] font-['Montserrat',sans-serif] flex items-center gap-[10px]">
+							<div class="w-[38px] h-[38px] rounded-[10px] bg-[#095866]/[0.08] flex items-center justify-center shrink-0">
+								<svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[18px] h-[18px] text-[#095866]" fill="currentColor">
+									<path d="M18,18.5A1.5,1.5 0 0,1 16.5,17A1.5,1.5 0 0,1 18,15.5A1.5,1.5 0 0,1 19.5,17A1.5,1.5 0 0,1 18,18.5M19.5,9.5L21.46,12H17V9.5M6,18.5A1.5,1.5 0 0,1 4.5,17A1.5,1.5 0 0,1 6,15.5A1.5,1.5 0 0,1 7.5,17A1.5,1.5 0 0,1 6,18.5M20,8H17V4H3C1.89,4 1,4.89 1,6V17H3A3,3 0 0,0 6,20A3,3 0 0,0 9,17H15A3,3 0 0,0 18,20A3,3 0 0,0 21,17H23V12L20,8Z" />
+								</svg>
+							</div>
+							Configurazione BRT
+						</h2>
+						<p class="text-[0.875rem] text-[#5A6474] mt-[8px] leading-[1.65]">
+							Questa sezione contiene solo le credenziali operative del corriere reale della piattaforma. Nessun altro corriere deve entrare in questa pagina.
+						</p>
+					</div>
+
+					<div class="mb-[18px] rounded-[16px] bg-[#FBFCFD] border border-[#E5EAF0] px-[16px] py-[14px] text-[0.875rem] text-[#4F5C6C] leading-[1.65]">
+						<p class="font-semibold text-[#1d2738] mb-[6px]">Prima di salvare</p>
+						<ul class="space-y-[6px]">
+							<li>Verifica customer ID, username e password.</li>
+							<li>Queste credenziali impattano creazione spedizioni, tracking ed etichette.</li>
+						</ul>
+					</div>
+
+					<div class="space-y-[14px] max-w-[640px]">
 						<div>
 							<label class="form-label">Customer ID</label>
 							<input
@@ -202,15 +193,24 @@ onMounted(() => {
 					</div>
 				</div>
 
-				<div class="bg-white rounded-[20px] p-[20px] tablet:p-[24px] desktop:p-[28px] shadow-sm border border-[var(--color-brand-border)] desktop:col-span-2">
-					<h2 class="text-[1.125rem] font-bold text-[var(--color-brand-text)] mb-[20px] flex items-center gap-[8px]">
-						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[20px] h-[20px] text-[var(--color-brand-primary)]" fill="currentColor">
-							<path
-								d="M16.36,14C16.44,13.34 16.5,12.68 16.5,12C16.5,11.32 16.44,10.66 16.36,10H19.74C19.9,10.64 20,11.31 20,12C20,12.69 19.9,13.36 19.74,14M14.59,19.56C15.19,18.45 15.65,17.25 15.97,16H18.92C17.96,17.65 16.43,18.93 14.59,19.56M14.34,14H9.66C9.56,13.34 9.5,12.68 9.5,12C9.5,11.32 9.56,10.65 9.66,10H14.34C14.43,10.65 14.5,11.32 14.5,12C14.5,12.68 14.43,13.34 14.34,14M12,19.96C11.17,18.76 10.5,17.43 10.09,16H13.91C13.5,17.43 12.83,18.76 12,19.96M8,8H5.08C6.03,6.34 7.57,5.06 9.4,4.44C8.8,5.55 8.35,6.75 8,8M5.08,16H8C8.35,17.25 8.8,18.45 9.4,19.56C7.57,18.93 6.03,17.65 5.08,16M4.26,14C4.1,13.36 4,12.69 4,12C4,11.31 4.1,10.64 4.26,10H7.64C7.56,10.66 7.5,11.32 7.5,12C7.5,12.68 7.56,13.34 7.64,14M12,4.03C12.83,5.23 13.5,6.57 13.91,8H10.09C10.5,6.57 11.17,5.23 12,4.03M18.92,8H15.97C15.65,6.75 15.19,5.55 14.59,4.44C16.43,5.07 17.96,6.34 18.92,8M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z" />
-						</svg>
-						Impostazioni generali
-					</h2>
-					<div class="space-y-[14px] max-w-[600px]">
+				<div
+					class="rounded-[18px] bg-white ring-[1px] ring-[#DFE2E7] p-[18px] tablet:p-[20px] desktop:p-[22px] desktop:col-span-2 overflow-hidden"
+					style="box-shadow: 0 2px 12px rgba(9,88,102,0.08)">
+					<div class="mb-[18px]">
+						<h2 class="text-[16px] font-bold text-[#1d2738] font-['Montserrat',sans-serif] flex items-center gap-[10px]">
+							<div class="w-[38px] h-[38px] rounded-[10px] bg-[#095866]/[0.08] flex items-center justify-center shrink-0">
+								<svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[18px] h-[18px] text-[#095866]" fill="currentColor">
+									<path d="M12,15.5A3.5,3.5 0 0,1 8.5,12A3.5,3.5 0 0,1 12,8.5A3.5,3.5 0 0,1 15.5,12A3.5,3.5 0 0,1 12,15.5M19.43,12.97C19.47,12.65 19.5,12.33 19.5,12C19.5,11.67 19.47,11.34 19.43,11L21.54,9.37C21.73,9.22 21.78,8.95 21.66,8.73L19.66,5.27C19.54,5.05 19.27,4.96 19.05,5.05L16.56,6.05C16.04,5.66 15.5,5.32 14.87,5.07L14.5,2.42C14.46,2.18 14.25,2 14,2H10C9.75,2 9.54,2.18 9.5,2.42L9.13,5.07C8.5,5.32 7.96,5.66 7.44,6.05L4.95,5.05C4.73,4.96 4.46,5.05 4.34,5.27L2.34,8.73C2.21,8.95 2.27,9.22 2.46,9.37L4.57,11C4.53,11.34 4.5,11.67 4.5,12C4.5,12.33 4.53,12.65 4.57,12.97L2.46,14.63C2.27,14.78 2.21,15.05 2.34,15.27L4.34,18.73C4.46,18.95 4.73,19.04 4.95,18.95L7.44,17.94C7.96,18.34 8.5,18.68 9.13,18.93L9.5,21.58C9.54,21.82 9.75,22 10,22H14C14.25,22 14.46,21.82 14.5,21.58L14.87,18.93C15.5,18.67 16.04,18.34 16.56,17.94L19.05,18.95C19.27,19.04 19.54,18.95 19.66,18.73L21.66,15.27C21.78,15.05 21.73,14.78 21.54,14.63L19.43,12.97Z" />
+								</svg>
+							</div>
+							Impostazioni generali
+						</h2>
+						<p class="text-[0.875rem] text-[#5A6474] mt-[8px] leading-[1.65]">
+							Qui teniamo solo i parametri davvero utili al team: nome sito, contatto supporto e sovrapprezzo contrassegno.
+						</p>
+					</div>
+
+					<div class="grid grid-cols-1 desktop:grid-cols-3 gap-[14px] max-w-[1100px]">
 						<div>
 							<label class="form-label">Nome sito</label>
 							<input
@@ -237,13 +237,19 @@ onMounted(() => {
 				</div>
 			</div>
 
-			<div class="mt-[16px] flex flex-col gap-[10px] tablet:flex-row tablet:items-center tablet:justify-between">
-				<p class="text-[0.8125rem] text-[var(--color-brand-text-secondary)]">Salva solo quando hai completato Stripe, BRT e impostazioni generali.</p>
+			<div
+				class="rounded-[18px] bg-white ring-[1px] ring-[#DFE2E7] px-[18px] py-[16px] flex flex-col gap-[10px] tablet:flex-row tablet:items-center tablet:justify-between"
+				style="box-shadow: 0 2px 12px rgba(9,88,102,0.08)">
+				<div>
+					<p class="text-[0.875rem] font-semibold text-[#1d2738]">Salvataggio finale</p>
+					<p class="text-[0.8125rem] text-[#5A6474] mt-[2px]">Salva dopo aver verificato tutte le sezioni. Le chiavi restano lato server e non vanno duplicate altrove.</p>
+				</div>
 				<button
 					@click="saveSettings"
 					:disabled="savingSettings"
-					class="btn-cta btn-compact inline-flex w-full items-center justify-center gap-[8px] tablet:w-auto disabled:opacity-50">
+					class="inline-flex w-full items-center justify-center gap-[8px] tablet:w-auto h-[40px] px-[18px] rounded-full bg-gradient-to-r from-[#095866] to-[#0a6e7f] text-white text-[13px] font-semibold shadow-[0_2px_8px_rgba(9,88,102,0.25)] hover:shadow-[0_4px_14px_rgba(9,88,102,0.35)] transition-all disabled:opacity-50 cursor-pointer">
 					<svg
+						aria-hidden="true"
 						v-if="savingSettings"
 						xmlns="http://www.w3.org/2000/svg"
 						viewBox="0 0 24 24"
@@ -251,9 +257,8 @@ onMounted(() => {
 						fill="currentColor">
 						<path d="M12,4V2A10,10 0 0,0 2,12H4A8,8 0 0,1 12,4Z" />
 					</svg>
-					<svg v-else xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[18px] h-[18px]" fill="currentColor">
-						<path
-							d="M15,9H5V5H15M12,19A3,3 0 0,1 9,16A3,3 0 0,1 12,13A3,3 0 0,1 15,16A3,3 0 0,1 12,19M17,3H5C3.89,3 3,3.9 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V7L17,3Z" />
+					<svg aria-hidden="true" v-else xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[18px] h-[18px]" fill="currentColor">
+						<path d="M15,9H5V5H15M12,19A3,3 0 0,1 9,16A3,3 0 0,1 12,13A3,3 0 0,1 15,16A3,3 0 0,1 12,19M17,3H5C3.89,3 3,3.9 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V7L17,3Z" />
 					</svg>
 					{{ savingSettings ? 'Salvataggio...' : 'Salva impostazioni' }}
 				</button>

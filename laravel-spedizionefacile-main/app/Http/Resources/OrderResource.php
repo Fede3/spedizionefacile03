@@ -33,7 +33,7 @@ class OrderResource extends JsonResource
         $rawStatus = $this->getAttributes()['status'] ?? $this->status;
 
         // Calcola se l'ordine e' annullabile (per mostrare/nascondere il bottone nel frontend)
-        $cancellable = in_array($rawStatus, ['pending', 'payment_failed', 'completed', 'processing', 'in_transit']);
+        $cancellable = in_array($rawStatus, ['pending', 'payment_failed', 'completed', 'processing', 'in_transit', 'awaiting_bank_transfer']);
 
         return [
             'id' => $this->id,
@@ -41,6 +41,11 @@ class OrderResource extends JsonResource
             'raw_status' => $rawStatus,                                  // Stato originale in inglese (per logica frontend)
             'subtotal' => $this->subtotal->formatted(),                  // Prezzo formattato
             'subtotal_cents' => (int) $this->subtotal->amount(),         // Prezzo in centesimi (per calcoli frontend)
+            'gross_subtotal_cents' => $this->grossSubtotalCents(),       // Totale lordo in centesimi, prima degli sconti
+            'discount_amount_cents' => $this->discountAmountCents(),     // Sconto applicato in centesimi
+            'payable_total' => $this->payableTotal()->formatted(),       // Totale scontato da pagare
+            'payable_total_cents' => $this->payableTotalCents(),         // Totale scontato in centesimi
+            'discount_context' => $this->discountContext(),              // Dettaglio coupon/referral persistito nello snapshot
             'client_submission_id' => $this->client_submission_id,
             'pricing_signature' => $this->pricing_signature,
             'pricing_snapshot_version' => $this->pricing_snapshot_version,
@@ -69,6 +74,13 @@ class OrderResource extends JsonResource
             'refunded_at' => $this->refunded_at ? $this->refunded_at->setTimezone('Europe/Rome')->format('d/m/Y H:i') : null,
             'cancellation_fee' => $this->cancellation_fee ? number_format($this->cancellation_fee / 100, 2, ',', '.') . ' EUR' : null,
             'payment_method' => $this->payment_method,                   // Metodo di pagamento originale
+            // F04 — data ritiro programmata (rieditabile finché non ritirato)
+            'pickup_date' => $this->pickup_date?->format('Y-m-d'),
+            'pickup_status' => $this->pickup_status,
+            'pickup_time_slot' => $this->pickup_time_slot,
+            // F05 — conferma bonifico (null se non ancora confermato)
+            'bank_transfer_confirmed_at' => $this->bank_transfer_confirmed_at?->setTimezone('Europe/Rome')->format('d/m/Y H:i'),
+            'bank_transfer_reference' => $this->bank_transfer_reference,
         ];
     }
 }

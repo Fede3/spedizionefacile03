@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use App\Models\Coupon;
+
 class CheckoutSubmissionContextService
 {
     public function fromRequestArray(array $input): array
@@ -15,12 +17,23 @@ class CheckoutSubmissionContextService
             }
         }
 
+        $discountContext = $this->normalizeDiscountContext($input['discount_context'] ?? null);
+        if ($discountContext !== null) {
+            $context['discount_context'] = $discountContext;
+        }
+
         return $context;
     }
 
     public function enrich(array $context, array $snapshot, array $seed = []): array
     {
         $normalizedSnapshot = $this->sortRecursive($snapshot);
+        $discountContext = $this->canonicalDiscountContextForSnapshot(
+            $this->normalizeDiscountContext($context['discount_context'] ?? null),
+            $normalizedSnapshot,
+            $seed,
+        );
+        $storageSnapshot = $this->attachDiscountContextToSnapshot($normalizedSnapshot, $discountContext);
         $version = 1;
 
         $signature = $this->fingerprint([
@@ -41,7 +54,8 @@ class CheckoutSubmissionContextService
             'client_submission_id' => $submissionId,
             'pricing_signature' => $signature,
             'pricing_snapshot_version' => $version,
-            'pricing_snapshot' => $normalizedSnapshot,
+            'pricing_snapshot' => $storageSnapshot,
+            'discount_context' => $discountContext,
         ];
     }
 
@@ -83,7 +97,7 @@ class CheckoutSubmissionContextService
                 'selected' => $this->normalizeServiceTypeList((string) ($service?->service_type ?? 'Nessuno')),
                 'service_payload' => $this->compactServiceData($serviceData),
             ],
-            (int) app(CartService::class)::subtotalFromModels($collection)->amount(),
+            (int) app(CartService::class)->subtotalFromModels($collection)->amount(),
             $billingData,
             $groupSnapshots,
         );
@@ -339,12 +353,48 @@ class CheckoutSubmissionContextService
             'tubi',
             'tubo',
             'rod_tube',
+            // Audit F16: servizi acquistabili separatamente
+            'consegna_al_piano',
+            'consegna_appuntamento',
+            'sponda_idraulica',
         ];
 
-        return collect($flagKeys)
-            ->filter(fn (string $key) => ! empty($serviceData[$key]))
+        $fromTopLevel = collect($flagKeys)
+            ->filter(fn (string $key) => $this->hasMeaningfulServiceFlag($serviceData[$key] ?? null))
             ->values()
             ->all();
+
+        // I flag possono arrivare anche dentro service_data.flags[] (Nuxt FE)
+        $nestedFlags = [];
+        if (! empty($serviceData['flags']) && is_array($serviceData['flags'])) {
+            foreach ($serviceData['flags'] as $flag) {
+                $key = (string) $flag;
+                if (in_array($key, $flagKeys, true) && ! in_array($key, $fromTopLevel, true)) {
+                    $nestedFlags[] = $key;
+                }
+            }
+        }
+
+        return array_values(array_unique(array_merge($fromTopLevel, $nestedFlags)));
+    }
+
+    private function hasMeaningfulServiceFlag(mixed $value): bool
+    {
+        if (is_array($value)) {
+            foreach ($value as $nested) {
+                if ($this->hasMeaningfulServiceFlag($nested)) {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        if (is_bool($value)) {
+            return $value;
+        }
+
+        return trim((string) $value) !== '';
     }
 
     private function normalizeCurrencyToCents(mixed $value): int
@@ -395,6 +445,144 @@ class CheckoutSubmissionContextService
             ->filter()
             ->values()
             ->all();
+    }
+
+    private function normalizeDiscountContext(mixed $value): ?array
+    {
+        if (! is_array($value)) {
+            return null;
+        }
+
+        $type = mb_strtolower(trim((string) ($value['type'] ?? '')), 'UTF-8');
+        $code = mb_strtoupper(trim((string) ($value['code'] ?? '')), 'UTF-8');
+
+        if ($type === '' || $code === '') {
+            return null;
+        }
+
+        $discountContext = [
+            'type' => $type,
+            'code' => $code,
+            'discount_percent' => $this->normalizeDecimalAmount($value['discount_percent'] ?? null),
+            'discount_amount' => $this->normalizeDecimalAmount($value['discount_amount'] ?? null),
+            'subtotal_raw' => $this->normalizeDecimalAmount($value['subtotal_raw'] ?? null),
+            'final_total_raw' => $this->normalizeDecimalAmount($value['final_total_raw'] ?? null),
+        ];
+
+        $proName = trim((string) ($value['pro_name'] ?? ''));
+        if ($proName !== '') {
+            $discountContext['pro_name'] = $proName;
+        }
+
+        return $this->sortRecursive($discountContext);
+    }
+
+    private function canonicalDiscountContextForSnapshot(?array $discountContext, array $snapshot, array $seed = []): ?array
+    {
+        if ($discountContext === null) {
+            return null;
+        }
+
+        $subtotalCents = (int) ($snapshot['total_cents'] ?? 0);
+        if ($subtotalCents <= 0) {
+            return null;
+        }
+
+        $subtotalRaw = round($subtotalCents / 100, 2);
+        $type = (string) ($discountContext['type'] ?? '');
+        $code = (string) ($discountContext['code'] ?? '');
+
+        if ($type === 'coupon') {
+            $coupon = Coupon::query()
+                ->usable()
+                ->where('code', $code)
+                ->first();
+
+            if (! $coupon) {
+                return null;
+            }
+
+            [$valid] = $coupon->validateForUser(isset($seed['user_id']) ? (int) $seed['user_id'] : null);
+            if (! $valid) {
+                return null;
+            }
+
+            return $this->buildCanonicalDiscountContext(
+                type: 'coupon',
+                code: $coupon->code,
+                percentage: (float) $coupon->percentage,
+                subtotalRaw: $subtotalRaw,
+            );
+        }
+
+        if ($type === 'referral') {
+            /** @var ReferralAccountingService $referralAccounting */
+            $referralAccounting = app(ReferralAccountingService::class);
+            $proUser = $referralAccounting->resolveReferralPartner($code);
+
+            if (! $proUser || (isset($seed['user_id']) && (int) $seed['user_id'] === (int) $proUser->id)) {
+                return null;
+            }
+
+            $breakdown = $referralAccounting->buildReferralBreakdown($subtotalRaw);
+
+            return $this->sortRecursive(array_merge(
+                $this->buildCanonicalDiscountContext(
+                    type: 'referral',
+                    code: $code,
+                    percentage: (float) $breakdown['percentage'],
+                    subtotalRaw: $subtotalRaw,
+                ),
+                [
+                    'pro_name' => (string) $proUser->name,
+                ],
+            ));
+        }
+
+        return null;
+    }
+
+    private function buildCanonicalDiscountContext(string $type, string $code, float $percentage, float $subtotalRaw): array
+    {
+        $discountAmount = round($subtotalRaw * ($percentage / 100), 2);
+        $finalTotal = max(0, round($subtotalRaw - $discountAmount, 2));
+
+        return $this->sortRecursive([
+            'type' => $type,
+            'code' => mb_strtoupper(trim($code), 'UTF-8'),
+            'discount_percent' => round($percentage, 2),
+            'discount_amount' => $discountAmount,
+            'subtotal_raw' => $subtotalRaw,
+            'final_total_raw' => $finalTotal,
+        ]);
+    }
+
+    private function normalizeDecimalAmount(mixed $value): float
+    {
+        if ($value === null || $value === '') {
+            return 0.0;
+        }
+
+        if (is_numeric($value)) {
+            return round((float) $value, 2);
+        }
+
+        $normalized = preg_replace('/[â‚¬\sEUR\xa0]/iu', '', (string) $value) ?? '';
+        $normalized = preg_replace('/\.(?=\d{3}(?:\D|$))/u', '', $normalized) ?? $normalized;
+        $normalized = str_replace(',', '.', $normalized);
+
+        return is_numeric($normalized) ? round((float) $normalized, 2) : 0.0;
+    }
+
+    private function attachDiscountContextToSnapshot(array $snapshot, ?array $discountContext): array
+    {
+        if ($discountContext === null) {
+            return $snapshot;
+        }
+
+        $snapshot['discount_context'] = $discountContext;
+
+        return $this->sortRecursive($snapshot);
     }
 
     private function fingerprint(array $payload): string

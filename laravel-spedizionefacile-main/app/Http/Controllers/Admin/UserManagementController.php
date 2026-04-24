@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Concerns\LogsAudit;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
@@ -10,6 +11,8 @@ use Illuminate\Support\Str;
 
 class UserManagementController extends Controller
 {
+    use LogsAudit;
+
     // Mostra la lista di tutti gli utenti registrati sul sito
     public function users(): JsonResponse
     {
@@ -37,6 +40,11 @@ class UserManagementController extends Controller
 
         $user->save();
 
+        $this->audit('admin.user.role_change', $user, [
+            'from' => $oldRole,
+            'to' => $data['role'],
+        ]);
+
         return response()->json([
             'success' => true,
             'message' => "Ruolo aggiornato da '{$oldRole}' a '{$data['role']}'.",
@@ -51,7 +59,13 @@ class UserManagementController extends Controller
             'user_type' => 'required|in:privato,commerciante',
         ]);
 
+        $oldType = $user->user_type;
         $user->update(['user_type' => $validated['user_type']]);
+
+        $this->audit('admin.user.user_type_change', $user, [
+            'from' => $oldType,
+            'to' => $validated['user_type'],
+        ]);
 
         return response()->json(['success' => true, 'message' => "Tipo account aggiornato a {$validated['user_type']}."]);
     }
@@ -73,6 +87,8 @@ class UserManagementController extends Controller
             'email_verified_at' => now(),
         ]);
 
+        $this->audit('admin.user.approve', $user);
+
         return response()->json([
             'success' => true,
             'message' => 'Account verificato con successo.',
@@ -90,6 +106,12 @@ class UserManagementController extends Controller
                 'message' => 'Non puoi eliminare il tuo account amministratore attivo.',
             ], 422);
         }
+
+        // Audit prima del delete cosi' user/role sono ancora disponibili nel context
+        $this->audit('admin.user.delete', $user, [
+            'email' => $user->email,
+            'role' => $user->role,
+        ]);
 
         $user->delete();
 

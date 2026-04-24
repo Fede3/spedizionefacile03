@@ -102,9 +102,13 @@ class ShipmentExecutionControllerTest extends TestCase
         $intruder = $this->actingAsUser();
         $order = $this->createOrderForUser($owner);
 
-        $this->getJson("/api/orders/{$order->id}/execution")
-            ->assertStatus(403)
-            ->assertJsonPath('message', 'Non autorizzato.');
+        $response = $this->getJson("/api/orders/{$order->id}/execution")
+            ->assertStatus(403);
+
+        $this->assertContains($response->json('message'), [
+            'Non autorizzato.',
+            'This action is unauthorized.',
+        ]);
 
         $this->assertNotSame($owner->id, $intruder->id);
     }
@@ -235,6 +239,82 @@ class ShipmentExecutionControllerTest extends TestCase
                 'pickup_request.date',
                 'pickup_request.time_slot',
             ]);
+    }
+
+    public function test_reschedule_pickup_blocks_orders_already_in_transit(): void
+    {
+        $user = $this->actingAsUser();
+        $order = $this->createOrderForUser($user);
+
+        $this->patchJson("/api/orders/{$order->id}/pickup", [
+            'pickup_date' => now()->addDays(2)->format('Y-m-d'),
+            'pickup_time_slot' => '09:00-12:00',
+        ])
+            ->assertStatus(422)
+            ->assertJsonPath('success', false);
+    }
+
+    public function test_reschedule_pickup_delegates_to_execution_service_and_returns_payload(): void
+    {
+        $user = $this->actingAsUser();
+        $order = $this->createOrderForUser($user);
+        $newPickupDate = now()->startOfDay()->addWeekdays(2)->format('Y-m-d');
+
+        $order->forceFill([
+            'status' => Order::LABEL_GENERATED,
+            'pickup_status' => 'requested',
+            'pickup_date' => now()->addDay(),
+        ])->save();
+
+        $mock = Mockery::mock(ShipmentExecutionService::class);
+        $mock->shouldReceive('reschedulePickup')
+            ->once()
+            ->withArgs(function (Order $candidateOrder, array $payload) use ($order, $newPickupDate) {
+                return $candidateOrder->is($order)
+                    && ($payload['pickup_date'] ?? null) === $newPickupDate
+                    && ($payload['pickup_time_slot'] ?? null) === '09:00-12:00'
+                    && ($payload['pickup_notes'] ?? null) === 'Citofono 12';
+            })
+            ->andReturn([
+                'success' => true,
+                'old_date' => now()->addDay()->format('Y-m-d'),
+                'pickup_date' => $newPickupDate,
+                'pickup_time_slot' => '09:00-12:00',
+                'pickup_notes' => 'Citofono 12',
+                'brt_result' => [
+                    'success' => true,
+                    'pickup_reference' => 'PU-NEW-001',
+                ],
+                'brt_synced' => true,
+            ]);
+        $mock->shouldReceive('getExecutionPayload')
+            ->once()
+            ->andReturn([
+                'shipment_status' => 'completed',
+                'pickup_status' => 'requested',
+                'pickup_requested_at' => '2026-04-23T10:15:00+02:00',
+                'carrier_pickup_ref' => 'PU-NEW-001',
+                'pickup_time_slot' => '09:00-12:00',
+                'pickup_notes' => 'Citofono 12',
+                'bordero_status' => 'pending',
+                'carrier_bordero_ref' => null,
+                'documents_status' => 'pending',
+                'documents_sent_customer_at' => null,
+                'documents_sent_admin_at' => null,
+                'last_error' => null,
+            ]);
+        app()->instance(ShipmentExecutionService::class, $mock);
+
+        $this->patchJson("/api/orders/{$order->id}/pickup", [
+            'pickup_date' => $newPickupDate,
+            'pickup_time_slot' => '09:00-12:00',
+            'pickup_notes' => 'Citofono 12',
+        ])
+            ->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('message', 'Data di ritiro aggiornata.')
+            ->assertJsonPath('data.pickup_status', 'requested')
+            ->assertJsonPath('data.carrier_pickup_ref', 'PU-NEW-001');
     }
 
     public function test_create_bordero_returns_bordero_reference_and_payload(): void

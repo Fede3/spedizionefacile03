@@ -53,11 +53,40 @@ use Illuminate\Support\Facades\Log;
 use Symfony\Component\HttpFoundation\Response;
 class CustomRegisterController extends Controller
 {
-    // Registra un nuovo utente nel sistema
+    /**
+     * register -- Registrazione con risposta anti-enumeration (Sprint 6.4).
+     *
+     * Se l'email e' gia' registrata, NON restituiamo 422 "email gia' in uso"
+     * (enumeration oracle). Rispondiamo con lo stesso messaggio di successo
+     * di una registrazione normale, SENZA creare un utente ne' inviare email.
+     * L'utente legittimo che si registra una seconda volta riceve comunque
+     * l'istruzione di controllare l'email, poiche' la verifica a 6 cifre
+     * non arrivera' mai: l'attaccante non puo' distinguere i due casi.
+     *
+     * Il tentativo duplicato viene loggato per audit (rilevamento credential
+     * stuffing e enumeration brute-force).
+     *
+     * Ref: https://cheatsheetseries.owasp.org/cheatsheets/Authentication_Cheat_Sheet.html#authentication-responses
+     */
     public function register(RegisterRequest $request)
     {
         // Prendiamo i dati validati dal modulo di registrazione
         $data = $request->validated();
+
+        // Anti-enumerazione: se l'email e' gia' registrata, fingiamo di aver
+        // completato la registrazione senza creare nulla. Il confronto usa
+        // una query DB di pari costo rispetto al ramo "nuovo utente".
+        if (User::where('email', $data['email'])->exists()) {
+            Log::info('Tentativo di registrazione con email duplicata.', [
+                'email' => $data['email'],
+                'ip' => $request->ip(),
+            ]);
+
+            return CustomResponse::setSuccessResponse(
+                'Registrazione completata! Inserisci il codice di verifica a 6 cifre inviato alla tua email.',
+                Response::HTTP_CREATED
+            );
+        }
 
         // Uniamo il prefisso telefonico al numero di telefono (es. "+39 3331234567")
         $data['telephone_number'] = $data['prefix'] . ' ' . $data['telephone_number'];
@@ -91,6 +120,11 @@ class CustomRegisterController extends Controller
             // Creiamo l'utente nel database
             $user = new User($data);
             $user->role = 'User'; // Il ruolo e' sempre "User" per i nuovi registrati
+            // referred_by non e' piu' in $fillable: va assegnato esplicitamente dopo la validazione
+            // del codice Partner Pro effettuata sopra (sezione "if (!empty($data['referred_by']))")
+            if (!empty($data['referred_by'])) {
+                $user->referred_by = $data['referred_by'];
+            }
             $user->verification_code = $code;
             $user->verification_code_expires_at = now()->addMinutes(30); // Il codice scade dopo 30 minuti
             $user->save();

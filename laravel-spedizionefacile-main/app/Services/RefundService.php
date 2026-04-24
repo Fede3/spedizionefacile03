@@ -3,7 +3,9 @@
 namespace App\Services;
 
 use App\Models\Order;
+use App\Models\Transaction;
 use App\Models\WalletMovement;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Stripe\Exception\ApiErrorException;
@@ -15,9 +17,128 @@ class RefundService
 
     private StripeConfigService $stripeConfig;
 
-    public function __construct(?StripeConfigService $stripeConfig = null)
+    private StripeClient $stripe;
+
+    public function __construct(?StripeConfigService $stripeConfig = null, ?StripeClient $stripe = null)
     {
         $this->stripeConfig = $stripeConfig ?? app(StripeConfigService::class);
+        $this->stripe = $stripe ?? app(StripeClient::class);
+    }
+
+    /**
+     * Process a full order cancellation with optional refund.
+     *
+     * Runs inside a DB transaction with pessimistic locking to prevent double-refunds.
+     * Returns a result array on success or throws RuntimeException / Exception on failure.
+     *
+     * @return array{refund_amount_cents: int, commission_cents: int, refund_method: string, brt_cancelled: bool}
+     *
+     * @throws \RuntimeException  Business-logic failure (order no longer cancellable).
+     * @throws \Exception         Unexpected infrastructure failure.
+     */
+    public function processCancellation(Order $order, ?string $reason = null): array
+    {
+        return DB::transaction(function () use ($order, $reason) {
+            // Re-load with pessimistic lock to serialise concurrent requests.
+            $order = Order::query()->lockForUpdate()->findOrFail($order->id);
+
+            $eligibility = $this->calculateEligibility($order);
+
+            if (! $eligibility['eligible']) {
+                throw new \RuntimeException($eligibility['reason']);
+            }
+
+            $brtCancelled = $this->cancelBrtShipmentIfNeeded($order);
+
+            $refundAmountCents = $eligibility['refund_amount_cents'];
+            $commissionCents   = $eligibility['commission_cents'];
+            $refundMethod      = 'wallet';
+
+            if ($refundAmountCents > 0) {
+                $refundMethod = $this->routeRefund($order, $refundAmountCents);
+
+                Transaction::create([
+                    'order_id' => $order->id,
+                    'ext_id'   => 'refund_' . $order->id . '_' . now()->timestamp,
+                    'type'     => 'refund_' . $refundMethod,
+                    'status'   => 'succeeded',
+                    'total'    => -$refundAmountCents,
+                ]);
+            }
+
+            $order->status            = $refundAmountCents > 0 ? Order::REFUNDED : Order::CANCELLED;
+            $order->refund_status     = $refundAmountCents > 0 ? 'completed' : 'none';
+            $order->refund_amount     = $refundAmountCents;
+            $order->refund_method     = $refundMethod;
+            $order->refund_reason     = $reason ?? 'Annullamento richiesto dall\'utente';
+            $order->refunded_at       = $refundAmountCents > 0 ? now() : null;
+            $order->cancellation_fee  = $commissionCents;
+            $order->save();
+
+            Log::info('Order cancelled and refunded', [
+                'order_id'           => $order->id,
+                'refund_amount_cents' => $refundAmountCents,
+                'commission_cents'   => $commissionCents,
+                'refund_method'      => $refundMethod,
+                'brt_cancelled'      => $brtCancelled,
+            ]);
+
+            return [
+                'refund_amount_cents' => $refundAmountCents,
+                'commission_cents'    => $commissionCents,
+                'refund_method'       => $refundMethod,
+                'brt_cancelled'       => $brtCancelled,
+            ];
+        });
+    }
+
+    /**
+     * Cancel the BRT shipment tied to the order, if any.
+     */
+    private function cancelBrtShipmentIfNeeded(Order $order): bool
+    {
+        if (! $order->brt_numeric_sender_reference) {
+            return false;
+        }
+
+        try {
+            $brtService = new BrtService;
+            $brtResult  = $brtService->deleteShipment((int) $order->brt_numeric_sender_reference);
+            $success    = $brtResult['success'] ?? false;
+
+            if (! $success) {
+                Log::warning('BRT deleteShipment failed during cancellation', [
+                    'order_id'       => $order->id,
+                    'brt_reference'  => $order->brt_numeric_sender_reference,
+                    'brt_error'      => $brtResult['error'] ?? 'Errore sconosciuto',
+                ]);
+            }
+
+            return $success;
+        } catch (\Exception $e) {
+            Log::error('BRT deleteShipment exception during cancellation', [
+                'order_id' => $order->id,
+                'error'    => $e->getMessage(),
+            ]);
+
+            return false;
+        }
+    }
+
+    /**
+     * Route refund to the correct channel (Stripe or wallet).
+     */
+    private function routeRefund(Order $order, int $refundAmountCents): string
+    {
+        if ($order->payment_method === 'stripe' && $order->stripe_payment_intent_id) {
+            $this->processStripeRefund($order, $refundAmountCents);
+
+            return 'stripe';
+        }
+
+        $this->processWalletRefund($order, $refundAmountCents);
+
+        return 'wallet';
     }
 
     public function calculateEligibility(Order $order): array
@@ -58,7 +179,7 @@ class RefundService
         $secret = $this->stripeConfig->getSecret();
         if (!$secret) throw new \Exception('Stripe non configurato. Impossibile processare il rimborso.');
 
-        $stripe = new StripeClient($secret);
+        $stripe = $this->stripe;
 
         try {
             // La idempotency key e' deterministica sull'ordine: anche se questa funzione venisse

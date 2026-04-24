@@ -25,6 +25,10 @@ use Illuminate\Http\Request;
 
 class CartItemController extends Controller
 {
+    public function __construct(
+        private readonly CartService $cartService,
+    ) {}
+
     // ── Helpers ──────────────────────────────────────────────────
 
     private function packageIsInCart(int $userId, int|string $packageId): bool
@@ -69,8 +73,8 @@ class CartItemController extends Controller
                 ->whereIn('id', $existingPackageIds)
                 ->get();
 
-            $servicesData = CartService::normalizeServiceData($data['services']);
-            $servicesData = CartService::applyPudoData($servicesData, $data);
+            $servicesData = $this->cartService->normalizeServiceData($data['services']);
+            $servicesData = $this->cartService->applyPudoData($servicesData, $data);
 
             $packages = [];
             $origin = null;
@@ -78,7 +82,7 @@ class CartItemController extends Controller
             $services = null;
 
             foreach ($data['packages'] as $packageData) {
-                $pricedPackage = CartService::pricePackageData(
+                $pricedPackage = $this->cartService->pricePackageData(
                     $packageData,
                     $data['origin_address'] ?? [],
                     $data['destination_address'] ?? [],
@@ -86,7 +90,7 @@ class CartItemController extends Controller
                 $newQty = (int) ($pricedPackage['quantity'] ?? 1);
                 $newUnitPriceCents = (int) ($pricedPackage['unit_price_cents'] ?? 0);
 
-                $newServiceSig = CartService::buildServiceSignatureFromArray(
+                $newServiceSig = $this->cartService->buildServiceSignatureFromArray(
                     $servicesData['service_type'] ?? 'Nessuno',
                     $servicesData['service_data'] ?? [],
                 );
@@ -95,7 +99,7 @@ class CartItemController extends Controller
                     if (! $existing->originAddress || ! $existing->destinationAddress || ! $existing->service) {
                         return false;
                     }
-                    return CartService::isDuplicate(
+                    return $this->cartService->isDuplicate(
                         $pricedPackage,
                         $data['origin_address'] ?? [],
                         $data['destination_address'] ?? [],
@@ -103,12 +107,12 @@ class CartItemController extends Controller
                         $existing->toArray(),
                         $existing->originAddress->toArray(),
                         $existing->destinationAddress->toArray(),
-                        CartService::buildServiceSignatureFromService($existing->service),
+                        $this->cartService->buildServiceSignatureFromService($existing->service),
                     );
                 });
 
                 if ($duplicate) {
-                    $merged = CartService::mergeQuantity(
+                    $merged = $this->cartService->mergeQuantity(
                         (int) $duplicate->single_price,
                         (int) $duplicate->quantity,
                         $newQty,
@@ -174,6 +178,12 @@ class CartItemController extends Controller
     public function update(Request $request, $id)
     {
         $userId = auth()->id();
+
+        if (! $request->filled('pudo.pudo_id') && is_array($request->input('selected_pudo'))) {
+            $request->merge([
+                'pudo' => $request->input('selected_pudo'),
+            ]);
+        }
 
         if (! $this->packageIsInCart($userId, $id)) {
             return response()->json(['message' => 'Pacco non trovato nel carrello'], 404);
@@ -245,14 +255,14 @@ class CartItemController extends Controller
             $package->load(['originAddress', 'destinationAddress']);
 
             if (isset($data['services']) && $package->service) {
-                $servicesData = CartService::normalizeServiceData($data['services']);
-                $servicesData = CartService::applyPudoData($servicesData, $data);
+                $servicesData = $this->cartService->normalizeServiceData($data['services']);
+                $servicesData = $this->cartService->applyPudoData($servicesData, $data);
                 $package->service->update($servicesData);
             }
 
             if (isset($data['packages']) && count($data['packages']) > 0) {
                 $packageData = $data['packages'][0];
-                $pricedPackage = CartService::pricePackageData(
+                $pricedPackage = $this->cartService->pricePackageData(
                     $packageData,
                     $package->originAddress?->toArray() ?? [],
                     $package->destinationAddress?->toArray() ?? [],
@@ -311,7 +321,7 @@ class CartItemController extends Controller
             ->firstOrFail();
 
         $newQty = (int) $request->quantity;
-        $pricedPackage = CartService::pricePackageModel($package, $newQty);
+        $pricedPackage = $this->cartService->pricePackageModel($package, $newQty);
 
         $package->update([
             'quantity' => $newQty,

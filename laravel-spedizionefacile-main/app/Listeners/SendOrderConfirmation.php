@@ -31,11 +31,20 @@ namespace App\Listeners;
 
 use App\Events\OrderPaid;
 use App\Mail\OrderConfirmationMail;
+use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 
-class SendOrderConfirmation
+class SendOrderConfirmation implements ShouldQueue
 {
+    use InteractsWithQueue;
+
+    /**
+     * Number of times the queued listener may be attempted.
+     */
+    public int $tries = 3;
+
     public function __construct()
     {
         //

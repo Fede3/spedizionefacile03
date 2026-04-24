@@ -22,6 +22,8 @@ class UserAddressResource extends JsonResource
     public function toArray(Request $request): array
     {
         return [
+            'id' => $this->id,                                  // ID univoco indirizzo
+            'type' => $this->type,                              // Tipo: 'origin' | 'destination' (per filtro tabs frontend)
             'name' => $this->name,                              // Nome associato all'indirizzo
             'address' => $this->address,                        // Via/piazza
             'additional_information' => $this->additional_information, // Info aggiuntive

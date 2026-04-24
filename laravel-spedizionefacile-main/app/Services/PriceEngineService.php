@@ -211,7 +211,7 @@ class PriceEngineService
 
     public function calculateCapSupplement(?string $originCap, ?string $destinationCap): float
     {
-        return $this->calculateCapSupplementCents($originCap, $destinationCap) / 100;
+        return round($this->calculateCapSupplementCents($originCap, $destinationCap) / 100, 2);
     }
 
     public function savePricingConfig(array $input): array

@@ -1,0 +1,599 @@
+/* ============================================================
+   Homepage "Servizi" section — prototype-aligned cards
+   ============================================================ */
+
+.hp-services-section {
+	margin-top: 32px;
+	padding: 36px 0;
+	background: rgba(243, 248, 251, 0.7);
+	border-top: none;
+}
+
+.hp-services-header {
+	text-align: center;
+	max-width: 760px;
+	margin-inline: auto;
+}
+
+/* Legacy eyebrow kept for back-compat */
+.hp-services-eyebrow {
+	font-size: 0.8125rem;
+	font-weight: 700;
+	letter-spacing: 0.28px;
+	text-transform: uppercase;
+	color: var(--color-brand-primary);
+}
+
+/* Pill kicker — pattern design system v2 (arancione 11px uppercase) */
+.hp-services-kicker {
+	display: inline-flex;
+	align-items: center;
+	height: 22px;
+	padding: 0 10px;
+	border-radius: 999px;
+	background: rgba(228, 66, 3, 0.10);
+	color: var(--color-brand-accent, #E44203);
+	font-size: 11px;
+	font-weight: 800;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	line-height: 1;
+}
+
+/* Accent-bar 2px × 24px gradient */
+.hp-services-accent-bar {
+	display: block;
+	width: 24px;
+	height: 2px;
+	margin: 10px auto 6px;
+	border-radius: 999px;
+	background: linear-gradient(90deg, var(--color-brand-accent) 0%, var(--color-brand-primary) 100%);
+}
+
+.hp-services-title {
+	margin-top: 4px;
+	font-family: var(--font-montserrat);
+	font-size: clamp(1.5rem, 2.8vw, 2rem);
+	line-height: 1.08;
+	letter-spacing: -0.015em;
+	font-weight: 800;
+	color: var(--color-brand-text);
+}
+
+.hp-services-subtitle {
+	max-width: 680px;
+	margin: 14px auto 0;
+	font-size: 1rem;
+	line-height: 1.58;
+	color: var(--color-brand-text-secondary);
+}
+
+.hp-services-grid {
+	margin-top: 32px;
+	display: grid;
+	grid-template-columns: 1fr;
+	gap: 18px;
+}
+
+.hp-services-card {
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+	padding: 22px;
+	border-radius: 16px;
+	border: 1px solid var(--color-border-teal-faint);
+	background: #ffffff;
+	min-height: 188px;
+	overflow: hidden;
+	text-decoration: none;
+	color: inherit;
+	box-shadow: 0 4px 12px rgba(15, 23, 42, 0.05), 0 16px 28px rgba(15, 23, 42, 0.06);
+	transition: transform 0.2s cubic-bezier(0.22, 1, 0.36, 1), border-color 0.4s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.hp-services-card:hover,
+.hp-services-card:focus-within {
+	transform: translateY(-2px);
+	border-color: rgba(9, 88, 102, 0.25);
+	box-shadow: 0 4px 16px rgba(9, 88, 102, 0.08), 0 12px 32px rgba(9, 88, 102, 0.04);
+}
+
+.hp-services-card:focus-visible {
+	outline: 2px solid var(--color-brand-primary);
+	outline-offset: 3px;
+}
+
+.hp-services-head {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+}
+
+.hp-services-icon-wrap {
+	width: 58px;
+	height: 58px;
+	border-radius: 16px;
+	border: 1px solid var(--color-border-teal-faint);
+	background: var(--surface-teal-wash);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	flex-shrink: 0;
+	transition: transform 0.2s cubic-bezier(0.22, 1, 0.36, 1), border-color 0.4s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.hp-services-icon-svg {
+	width: 28px;
+	height: 28px;
+	color: var(--color-brand-primary, var(--color-brand-primary));
+	transition: transform 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.hp-services-card-title {
+	font-family: var(--font-montserrat);
+	font-size: 1.18rem;
+	line-height: 1.14;
+	font-weight: 780;
+	color: var(--color-brand-text);
+	transition: color 0.24s ease;
+}
+
+.hp-services-card-text {
+	font-size: 0.96rem;
+	line-height: 1.55;
+	color: var(--color-brand-text-secondary);
+}
+
+.hp-services-card:hover .hp-services-icon-wrap,
+.hp-services-card:focus-within .hp-services-icon-wrap {
+	transform: translateY(-2px);
+	border-color: var(--color-border-teal-soft);
+	box-shadow: 0 4px 16px rgba(9, 88, 102, 0.08);
+}
+
+.hp-services-card:hover .hp-services-icon-svg,
+.hp-services-card:focus-within .hp-services-icon-svg {
+	transform: scale(1.02);
+}
+
+.hp-services-card:hover .hp-services-card-title,
+.hp-services-card:focus-within .hp-services-card-title {
+	color: var(--color-brand-primary);
+}
+
+/* CTA pill button (prototype style) */
+.hp-services-cta-pill {
+	margin-top: auto;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	align-self: flex-start;
+	min-height: 38px;
+	padding: 0 16px;
+	border-radius: 999px;
+	border: 1px solid rgba(9, 88, 102, 0.12);
+	background: rgba(9, 88, 102, 0.08);
+	color: var(--color-brand-primary, var(--color-brand-primary));
+	text-decoration: none;
+	font-size: 0.82rem;
+	font-weight: 700;
+	transition:
+		background-color 0.2s cubic-bezier(0.22, 1, 0.36, 1),
+		box-shadow 0.4s cubic-bezier(0.22, 1, 0.36, 1),
+		border-color 0.2s cubic-bezier(0.22, 1, 0.36, 1),
+		color 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.hp-services-card:hover .hp-services-cta-pill,
+.hp-services-card:focus-within .hp-services-cta-pill {
+	background: rgba(9, 88, 102, 0.12);
+	border-color: rgba(9, 88, 102, 0.22);
+	color: var(--color-teal-700);
+	box-shadow: 0 8px 20px rgba(9, 88, 102, 0.12);
+}
+
+@media (min-width: 48rem) {
+	.hp-services-section {
+		margin-top: 32px;
+		padding: 40px 0;
+	}
+
+	.hp-services-grid {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		gap: 16px;
+	}
+}
+
+@media (min-width: 72rem) {
+	.hp-services-grid {
+		grid-template-columns: repeat(3, minmax(0, 1fr));
+		gap: 16px;
+	}
+}
+
+@media (max-width: 34rem) {
+	.hp-services-section {
+		padding: 32px 0;
+	}
+
+	.hp-services-grid {
+		gap: 16px;
+	}
+
+	.hp-services-card {
+		padding: 18px;
+		border-radius: 18px;
+		min-height: 0;
+	}
+
+	.hp-services-icon-wrap {
+		width: 52px;
+		height: 52px;
+	}
+
+	/* Touch targets: minimum 44px */
+	.hp-services-cta-pill {
+		min-height: 44px;
+		padding: 0 18px;
+	}
+}
+
+@media (min-width: 35rem) and (max-width: 47.99rem) {
+	.hp-services-card {
+		min-height: 188px;
+		padding: 18px;
+	}
+
+	.hp-services-head {
+		align-items: center;
+	}
+
+	.hp-services-icon-wrap {
+		width: 48px;
+		height: 48px;
+		border-radius: 16px;
+	}
+
+	.hp-services-icon-svg {
+		width: 24px;
+		height: 24px;
+	}
+
+	.hp-services-card-title {
+		font-size: 1.02rem;
+	}
+
+	.hp-services-card-text {
+		font-size: 0.84rem;
+		line-height: 1.45;
+	}
+
+	.hp-services-cta-pill {
+		font-size: 0.78rem;
+		min-height: 36px;
+		padding: 0 16px;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.hp-services-card,
+	.hp-services-icon-wrap,
+	.hp-services-icon-svg,
+	.hp-services-card-title,
+	.hp-services-cta-pill {
+		transition: none;
+	}
+
+	.hp-services-card:hover,
+	.hp-services-card:focus-within {
+		transform: none;
+	}
+}
+
+/* ============================================================
+   Homepage "Come funziona" — 4-step timeline (prototype-aligned)
+   Cards with icon box, decorative large number, connecting line,
+   responsive grid (1 col mobile → 2 col tablet → 4 col desktop).
+   ============================================================ */
+
+.hp-step-section {
+	margin-top: 32px;
+	padding: 28px 0;
+	background: rgba(243, 248, 251, 0.7);
+}
+
+.hp-step-shell {
+	padding: 0;
+}
+
+.hp-step-header {
+	max-width: 760px;
+	margin-inline: auto;
+	text-align: center;
+}
+
+/* Legacy eyebrow (mantenuto per back-compat) */
+.hp-step-eyebrow {
+	font-size: 13px;
+	font-weight: 700;
+	letter-spacing: 0.28px;
+	text-transform: uppercase;
+	color: var(--color-brand-primary);
+}
+
+/* Pill kicker v2 */
+.hp-step-kicker {
+	display: inline-flex;
+	align-items: center;
+	height: 22px;
+	padding: 0 10px;
+	border-radius: 999px;
+	background: rgba(228, 66, 3, 0.10);
+	color: var(--color-brand-accent, #E44203);
+	font-size: 11px;
+	font-weight: 800;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	line-height: 1;
+}
+
+.hp-step-accent-bar {
+	display: block;
+	width: 24px;
+	height: 2px;
+	margin: 10px auto 6px;
+	border-radius: 999px;
+	background: linear-gradient(90deg, var(--color-brand-accent) 0%, var(--color-brand-primary) 100%);
+}
+
+.hp-step-title {
+	margin-top: 4px;
+	font-family: var(--font-montserrat);
+	font-size: clamp(1.5rem, 2.8vw, 2rem);
+	line-height: 1.08;
+	letter-spacing: -0.015em;
+	font-weight: 800;
+	color: var(--color-brand-text);
+}
+
+.hp-step-lead {
+	margin-top: 16px;
+	font-size: 16px;
+	line-height: 1.62;
+	color: var(--color-brand-text-secondary);
+}
+
+/* --- Timeline grid --- */
+
+.hp-step-timeline {
+	margin-top: 32px;
+	display: grid;
+	grid-template-columns: 1fr;
+	gap: 8px;
+	list-style: none;
+	padding: 0;
+	position: relative;
+}
+
+/* Desktop connecting gradient line */
+.hp-step-connecting-line {
+	display: none;
+}
+
+/* --- Single card (prototype layout: horizontal on mobile, vertical on desktop) --- */
+
+.hp-step-card {
+	position: relative;
+	display: grid;
+	grid-template-columns: 62px minmax(0, 1fr);
+	align-items: center;
+	gap: 8px;
+	padding: 16px;
+	border-radius: 16px;
+	background: rgba(255, 255, 255, 0.72);
+	backdrop-filter: blur(9px);
+	border: 1px solid rgba(255, 255, 255, 0.78);
+	overflow: hidden;
+	box-shadow: 0 4px 8px rgba(15, 23, 42, 0.04), 0 20px 40px rgba(15, 23, 42, 0.08);
+	cursor: default;
+	transition: transform 0.2s cubic-bezier(0.22, 1, 0.36, 1), border-color 0.4s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.hp-step-card:hover {
+	transform: translateY(-2px);
+	border-color: rgba(9, 88, 102, 0.25);
+	box-shadow: 0 4px 16px rgba(9, 88, 102, 0.08), 0 12px 32px rgba(9, 88, 102, 0.04);
+}
+
+/* --- Numero grande decorativo (sfondo card) --- */
+
+.hp-step-deco-number {
+	position: absolute;
+	top: 6px;
+	right: 10px;
+	font-size: 48px;
+	font-weight: 800;
+	line-height: 1;
+	letter-spacing: -1.92px;
+	color: rgba(12, 102, 116, 0.08);
+	pointer-events: none;
+	user-select: none;
+	z-index: 0;
+}
+
+/* --- Icon box (replaces old number circle) --- */
+
+.hp-step-icon-box {
+	position: relative;
+	z-index: 1;
+	width: 58px;
+	height: 58px;
+	border-radius: 16px;
+	border: 1px solid rgba(210, 227, 235, 0.9);
+	background: rgba(247, 251, 253, 0.95);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	flex-shrink: 0;
+	color: var(--color-brand-primary, var(--color-brand-primary));
+}
+
+/* --- Card content --- */
+
+.hp-step-card-content {
+	position: relative;
+	z-index: 1;
+}
+
+.hp-step-card-title {
+	position: relative;
+	z-index: 1;
+	font-family: var(--font-montserrat);
+	font-size: 17.9px;
+	line-height: 1.22;
+	font-weight: 800;
+	color: var(--color-brand-text);
+}
+
+.hp-step-card-text {
+	position: relative;
+	z-index: 1;
+	margin-top: 4px;
+	font-size: 15.2px;
+	line-height: 1.58;
+	color: var(--color-brand-text-secondary);
+}
+
+/* --- CTA row --- */
+
+.hp-step-cta-row {
+	margin-top: 24px;
+	display: flex;
+	justify-content: center;
+}
+
+.hp-step-cta {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 8px;
+	height: 42px;
+	padding: 0 20px;
+	border-radius: 999px;
+	background: var(--color-brand-accent, var(--color-brand-accent));
+	color: #fff;
+	text-decoration: none;
+	font-family: var(--font-montserrat);
+	font-size: 15.7px;
+	font-weight: 700;
+	box-shadow: 0 12px 24px rgba(228, 66, 3, 0.24);
+	transition: background-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.hp-step-cta svg {
+	transition: transform 0.2s ease;
+}
+
+.hp-step-cta:hover {
+	background: var(--color-brand-accent-hover);
+	box-shadow: 0 16px 28px rgba(228, 66, 3, 0.28);
+	transform: translateY(-1px);
+}
+
+.hp-step-cta:hover svg {
+	transform: translateX(3px);
+}
+
+.hp-step-cta:active {
+	transform: scale(0.98);
+}
+
+.hp-step-cta:focus-visible {
+	outline: 2px solid var(--color-brand-primary, var(--color-brand-primary));
+	outline-offset: 3px;
+}
+
+/* ============================================================
+   Responsive: tablet (2 colonne)
+   ============================================================ */
+
+@media (min-width: 40rem) {
+	.hp-step-timeline {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		gap: 16px;
+	}
+}
+
+/* ============================================================
+   Responsive: desktop (4 colonne + connecting line)
+   ============================================================ */
+
+@media (min-width: 64rem) {
+	.hp-step-section {
+		padding: 32px 0;
+	}
+
+	.hp-step-timeline {
+		margin-top: 24px;
+		grid-template-columns: repeat(4, minmax(0, 1fr));
+		gap: 16px;
+	}
+
+	/* Desktop: vertical layout */
+	.hp-step-card {
+		grid-template-columns: 1fr;
+		align-items: flex-start;
+		gap: 12px;
+		padding: 16px;
+		min-height: 200px;
+	}
+
+	.hp-step-icon-box {
+		width: 62px;
+		height: 62px;
+	}
+
+	/* Desktop connecting gradient line */
+	.hp-step-connecting-line {
+		display: block;
+		position: absolute;
+		left: 4%;
+		right: 4%;
+		top: 62px;
+		height: 2px;
+		background: linear-gradient(to right, rgba(9, 88, 102, 0.2), rgba(9, 88, 102, 0.35));
+		z-index: 0;
+	}
+}
+
+/* ============================================================
+   Mobile piccoli
+   ============================================================ */
+
+@media (max-width: 39.99rem) {
+	.hp-step-section {
+		padding: 24px 0;
+	}
+
+	.hp-step-timeline {
+		gap: 8px;
+	}
+}
+
+/* ============================================================
+   Reduced motion
+   ============================================================ */
+
+@media (prefers-reduced-motion: reduce) {
+	.hp-step-card,
+	.hp-step-cta,
+	.hp-step-cta svg {
+		transition: none;
+	}
+
+	.hp-step-card:hover,
+	.hp-step-cta:hover {
+		transform: none;
+	}
+}

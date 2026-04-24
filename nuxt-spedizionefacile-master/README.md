@@ -1,75 +1,63 @@
-# Nuxt Minimal Starter
+# SpediamoFacile Frontend (Nuxt)
 
-Look at the [Nuxt documentation](https://nuxt.com/docs/getting-started/introduction) to learn more.
+Questa cartella contiene il frontend vivo di SpediamoFacile.
 
-## Setup
+Non e' un progetto Nuxt generico: qui vivono le superfici core del prodotto:
 
-Make sure to install dependencies:
+- home e quick quote
+- funnel canonico `/la-tua-spedizione/[step]`
+- carrello e pagamento
+- account cliente
+- console admin
+- tracking, guide, servizi e contenuti pubblici
+
+## Da dove partire
+
+Se stai entrando ora nel frontend, i riferimenti canonici sono:
+
+- [../docs/FRONTEND_STRUCTURE.md](../docs/FRONTEND_STRUCTURE.md)
+- [../docs/FEATURE_BOUNDARIES.md](../docs/FEATURE_BOUNDARIES.md)
+- [../docs/DESIGN_SYSTEM.md](../docs/DESIGN_SYSTEM.md)
+
+Entry point utili:
+
+- `pages/index.vue` -> home + preventivo rapido
+- `pages/la-tua-spedizione/[step].vue` -> funnel canonico
+- `pages/account/**` -> account cliente e admin
+- `composables/useCart.js` -> checkout/cart boundary
+- `composables/usePayment.js` -> payment boundary
+- `stores/shipmentFlowStore.ts` -> stato condiviso del funnel
+
+## Regole importanti
+
+- una sola route canonica per il funnel: `/la-tua-spedizione/[step]`
+- `pages/preventivo.vue`, `pages/checkout.vue` e `pages/riepilogo.vue` sono compat legacy, non superfici concorrenti
+- i file grandi del funnel e del pagamento vanno spezzati solo dopo avere fissato il comportamento corretto
+- niente nuova complessita accidentale: evitare route duplicate, page-controller enormi e CSS monolitico nuovo
+
+## Setup rapido
+
+Da root workspace:
 
 ```bash
-# npm
-npm install
-
-# pnpm
-pnpm install
-
-# yarn
-yarn install
-
-# bun
-bun install
-```
-
-## Development Server
-
-Start the development server on `http://localhost:3000`:
-
-```bash
-# npm
+cd nuxt-spedizionefacile-master
+npm ci
 npm run dev
-
-# pnpm
-pnpm dev
-
-# yarn
-yarn dev
-
-# bun
-bun run dev
 ```
 
-## Production
+Dev locale canonico: `http://127.0.0.1:8787`
 
-Build the application for production:
+## Build
 
 ```bash
-# npm
 npm run build
-
-# pnpm
-pnpm build
-
-# yarn
-yarn build
-
-# bun
-bun run build
 ```
 
-Locally preview production build:
+## Cosa non mettere qui
 
-```bash
-# npm
-npm run preview
+- log locali
+- screenshot
+- note temporanee di audit
+- documentazione storica o handoff
 
-# pnpm
-pnpm preview
-
-# yarn
-yarn preview
-
-# bun
-bun run preview
-```
-
-Check out the [deployment documentation](https://nuxt.com/docs/getting-started/deployment) for more information.
+Quelli stanno nella workspace root, in aree separate dal runtime vivo.

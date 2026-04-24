@@ -172,36 +172,23 @@ class UserController extends Controller
         ]);
     }
 
-    // Questa funzione permette di caricare un'immagine (usata per l'immagine dell'admin)
-    // Accetta solo file immagine (jpg, jpeg, png, webp) con dimensione massima 2MB
-    public function uploadFile(Request $request)  {
-        // Verifichiamo che il file sia un'immagine valida e non troppo grande
-        $request->validate([
-            'admin_image' => 'required|image|mimes:jpg,jpeg,png,webp|max:2048'
-        ]);
+    // Questa funzione permette di caricare un'immagine (usata per l'immagine dell'admin).
+    // Sprint 6.7 security hardening: validazione tramite AdminAvatarUploadRequest
+    // (extension + real MIME + dimensions + magic byte), sanitizzazione tramite
+    // ImageSanitizer (hash filename, EXIF strip, dir whitelist).
+    public function uploadFile(\App\Http\Requests\AdminAvatarUploadRequest $request, \App\Services\Security\ImageSanitizer $sanitizer)
+    {
+        $path = $sanitizer->sanitizeAndStore(
+            $request->file('admin_image'),
+            'attach',
+            'public'
+        );
 
-        // Controlliamo che il file sia stato effettivamente inviato nella richiesta
-        if ($request->hasFile('admin_image')) {
-
-            // Generiamo un nome unico per il file (per evitare che due file abbiano lo stesso nome)
-            $fileName = uniqid() . '.' . $request->file('admin_image')->extension();
-
-            // Salviamo il file nella cartella "attach" del disco pubblico
-            // (accessibile da chiunque visiti il sito)
-            $path = $request->file('admin_image')->storeAs('attach', $fileName, 'public');
-
-            return response()->json([
-                'success' => true,
-                'message' => 'File caricato con successo',
-                'admin_image' => $path
-            ]);
-        }
-
-        // Se arriviamo qui, significa che non c'era nessun file nella richiesta
         return response()->json([
-            'success' => false,
-            'message' => 'Nessun file trovato'
-        ], 400);
+            'success' => true,
+            'message' => 'File caricato con successo',
+            'admin_image' => $path,
+        ]);
     }
 
     // Questa funzione recupera l'ultima immagine caricata dall'admin

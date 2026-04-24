@@ -82,6 +82,16 @@ class ShipmentServicePricingService
             $items[] = $this->buildFixedItem('sponda_idraulica', $servicePricing['sponda_idraulica'], (int) ($servicePricing['sponda_idraulica']['price_cents'] ?? 0), false);
         }
 
+        // Audit F16: consegna al piano acquistabile separatamente
+        if (in_array('consegna_al_piano', $selected, true) && ($servicePricing['consegna_al_piano']['enabled'] ?? false)) {
+            $items[] = $this->buildFixedItem('consegna_al_piano', $servicePricing['consegna_al_piano'], (int) ($servicePricing['consegna_al_piano']['price_cents'] ?? 0), false);
+        }
+
+        // Audit F16: consegna su appuntamento acquistabile separatamente
+        if (in_array('consegna_appuntamento', $selected, true) && ($servicePricing['consegna_appuntamento']['enabled'] ?? false)) {
+            $items[] = $this->buildFixedItem('consegna_appuntamento', $servicePricing['consegna_appuntamento'], (int) ($servicePricing['consegna_appuntamento']['price_cents'] ?? 0), false);
+        }
+
         if (in_array('contrassegno', $selected, true) && ($servicePricing['contrassegno']['enabled'] ?? false)) {
             $amount = $this->extractContrassegnoAmount($serviceData);
             $fee = $this->calculateThresholdFeeCents($amount, $servicePricing['contrassegno']);
@@ -146,6 +156,43 @@ class ShipmentServicePricingService
         return $this->parseCurrencyAmount($contrassegno['importo'] ?? null);
     }
 
+    /**
+     * Estrae la modalita' di rimborso contrassegno (bonifico/assegno/assegno_circolare)
+     * e la converte in codice BRT: BM=bonifico, AS=assegno bancario, CC=assegno circolare.
+     *
+     * Audit F01: contrassegno acquistabile.
+     *
+     * @return string Uno tra: BM | AS | CC (default BM).
+     */
+    public function extractCodPaymentType(array $serviceData = []): string
+    {
+        $contrassegno = $serviceData['contrassegno'] ?? $serviceData['Contrassegno'] ?? [];
+        $modalita = mb_strtolower(trim((string) ($contrassegno['modalita_rimborso'] ?? '')), 'UTF-8');
+
+        return match ($modalita) {
+            'assegno' => 'AS',
+            'assegno_circolare' => 'CC',
+            default => 'BM', // bonifico o vuoto
+        };
+    }
+
+    /**
+     * Estrae la modalita' di incasso (contanti|assegno): istruzione operativa
+     * al corriere su cosa accettare dal destinatario. BRT non la richiede in API
+     * ma la persistiamo per tracciabilita' e note operative.
+     *
+     * Audit F01.
+     *
+     * @return string|null Uno tra: contanti | assegno | null (se non specificato).
+     */
+    public function extractCodIncassoType(array $serviceData = []): ?string
+    {
+        $contrassegno = $serviceData['contrassegno'] ?? $serviceData['Contrassegno'] ?? [];
+        $modalita = mb_strtolower(trim((string) ($contrassegno['modalita_incasso'] ?? '')), 'UTF-8');
+
+        return in_array($modalita, ['contanti', 'assegno'], true) ? $modalita : null;
+    }
+
     public function extractAssicurazioneAmount(array $serviceData = []): float
     {
         $assicurazione = $serviceData['assicurazione'] ?? $serviceData['Assicurazione'] ?? [];
@@ -201,6 +248,12 @@ class ShipmentServicePricingService
         }
         if (str_contains($normalized, 'sponda')) {
             return 'sponda_idraulica';
+        }
+        if (str_contains($normalized, 'consegna') && str_contains($normalized, 'piano')) {
+            return 'consegna_al_piano';
+        }
+        if (str_contains($normalized, 'appuntamento')) {
+            return 'consegna_appuntamento';
         }
         if (str_contains($normalized, 'notifiche') || str_contains($normalized, 'sms')) {
             return 'sms_email_notification';

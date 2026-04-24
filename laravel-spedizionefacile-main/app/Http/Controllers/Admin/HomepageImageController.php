@@ -3,22 +3,20 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\HomepageImageUploadRequest;
 use App\Models\Setting;
+use App\Services\Security\ImageSanitizer;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 
 class HomepageImageController extends Controller
 {
-    // Upload immagine homepage
-    public function uploadHomepageImage(Request $request): JsonResponse
+    public function __construct(private readonly ImageSanitizer $sanitizer)
     {
-        $request->validate([
-            'image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:5120',
-            'config' => 'nullable',
-            'desktop' => 'nullable|array',
-            'mobile' => 'nullable|array',
-        ]);
+    }
 
+    // Upload immagine homepage
+    public function uploadHomepageImage(HomepageImageUploadRequest $request): JsonResponse
+    {
         if (
             !$request->hasFile('image') &&
             !$request->filled('config') &&
@@ -38,9 +36,12 @@ class HomepageImageController extends Controller
         );
 
         if ($request->hasFile('image')) {
-            $file = $request->file('image');
-            $filename = 'homepage_' . time() . '.' . $file->getClientOriginalExtension();
-            $path = $file->storeAs('attach', $filename, 'public');
+            // Sprint 6.7: sanitize + hash filename + strip EXIF
+            $path = $this->sanitizer->sanitizeAndStore(
+                $request->file('image'),
+                'homepage',
+                'public'
+            );
             $currentConfig['image_url'] = '/storage/' . $path;
         }
 

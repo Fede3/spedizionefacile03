@@ -46,11 +46,24 @@ use App\Models\Location;
 use Illuminate\Http\Request;
 use App\Utils\CustomResponse;
 use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Cache;
 use App\Http\Resources\LocationResource;
 use Symfony\Component\HttpFoundation\Response;
 
 class LocationController extends Controller
 {
+    /**
+     * Paesi serviti da SpediamoFacile secondo il listino commerciale BRT.
+     * La ricerca localita' (DB + fallback Photon) accetta SOLO questi paesi.
+     * Qualsiasi altra nazione (USA, Giappone, ecc.) viene scartata.
+     */
+    private const ALLOWED_COUNTRIES = [
+        'IT', 'AT', 'BE', 'BG', 'CH', 'CZ', 'DE', 'DK', 'EE', 'ES',
+        'FI', 'FR', 'GB', 'GR', 'HR', 'HU', 'LT', 'LU', 'LV', 'NL',
+        'PL', 'PT', 'RO', 'SE', 'SI', 'SK',
+    ];
+
     private const COUNTRY_NAMES = [
         'IT' => 'Italia',
         'AT' => 'Austria',
@@ -127,6 +140,87 @@ class LocationController extends Controller
      * Richiede almeno 2 caratteri per iniziare la ricerca (per evitare troppe risposte).
      * Restituisce massimo 20 risultati.
      */
+    /**
+     * Alias italiani delle citta' estere piu' cercate.
+     * Il DB contiene i nomi originali (Paris, London, Athens...) ma
+     * gli utenti italiani cercano in italiano (Parigi, Londra, Atene...).
+     * Se la query matcha un alias, la traduciamo nel nome ufficiale.
+     */
+    private const CITY_ALIASES_IT = [
+        'parigi' => 'Paris',
+        'londra' => 'London',
+        'atene' => 'Athens',
+        'bruxelles' => 'Bruxelles',
+        'vienna' => 'Wien',
+        'monaco di baviera' => 'München',
+        'monaco' => 'München',
+        'berlino' => 'Berlin',
+        'francoforte' => 'Frankfurt am Main',
+        'amburgo' => 'Hamburg',
+        'colonia' => 'Köln',
+        'stoccarda' => 'Stuttgart',
+        'dusseldorf' => 'Düsseldorf',
+        'norimberga' => 'Nürnberg',
+        'barcellona' => 'Barcelona',
+        'madrid' => 'Madrid',
+        'siviglia' => 'Sevilla',
+        'valencia' => 'Valencia',
+        'saragozza' => 'Zaragoza',
+        'malaga' => 'Málaga',
+        'lisbona' => 'Lisboa',
+        'porto' => 'Porto',
+        'varsavia' => 'Warszawa',
+        'cracovia' => 'Kraków',
+        'danzica' => 'Gdańsk',
+        'breslavia' => 'Wrocław',
+        'poznan' => 'Poznań',
+        'praga' => 'Praha',
+        'brno' => 'Brno',
+        'budapest' => 'Budapest',
+        'bucarest' => 'București',
+        'zagabria' => 'Zagreb',
+        'lubiana' => 'Ljubljana',
+        'amsterdam' => 'Amsterdam',
+        'rotterdam' => 'Rotterdam',
+        'aja' => 'Den Haag',
+        'utrecht' => 'Utrecht',
+        'anversa' => 'Antwerpen',
+        'gand' => 'Gent',
+        'bruges' => 'Brugge',
+        'liegi' => 'Liège',
+        'salisburgo' => 'Salzburg',
+        'graz' => 'Graz',
+        'innsbruck' => 'Innsbruck',
+        // Nuovi paesi importati (UK, Scandinavia, Baltici, Svizzera, Lussemburgo)
+        'londra' => 'London',
+        'edimburgo' => 'Edinburgh',
+        'glasgow' => 'Glasgow',
+        'manchester' => 'Manchester',
+        'liverpool' => 'Liverpool',
+        'birmingham' => 'Birmingham',
+        'copenaghen' => 'København',
+        'aarhus' => 'Aarhus',
+        'stoccolma' => 'Stockholm',
+        'goteborg' => 'Göteborg',
+        'helsinki' => 'Helsinki',
+        'tampere' => 'Tampere',
+        'riga' => 'Riga',
+        'vilnius' => 'Vilnius',
+        'tallinn' => 'Tallinn',
+        'lussemburgo' => 'Luxembourg',
+        'zurigo' => 'Zürich',
+        'ginevra' => 'Genève',
+        'basilea' => 'Basel',
+        'berna' => 'Bern',
+        'losanna' => 'Lausanne',
+        'bratislava' => 'Bratislava',
+        'sofia' => 'Sofia',
+        'plovdiv' => 'Plovdiv',
+        // Grecia (non nel DB ma teniamo alias per futuro)
+        'atene' => 'Athens',
+        'salonicco' => 'Thessaloniki',
+    ];
+
     public function search(Request $request)
     {
         $query = trim((string) $request->input('q', ''));
@@ -137,6 +231,41 @@ class LocationController extends Controller
         // Se l'utente ha scritto meno di 2 caratteri, non cerchiamo nulla
         if (mb_strlen($query) < 2) {
             return response()->json([]);
+        }
+
+        // Se l'utente scrive in italiano una citta' estera nota, traduci nel nome DB.
+        $queryNormalized = mb_strtolower(trim($query));
+        if (isset(self::CITY_ALIASES_IT[$queryNormalized])) {
+            $query = self::CITY_ALIASES_IT[$queryNormalized];
+        } else {
+            $matched = false;
+            // 1. Prefisso parziale: "parig" -> matcha "parigi" -> "Paris"
+            foreach (self::CITY_ALIASES_IT as $italianName => $originalName) {
+                if (str_starts_with($italianName, $queryNormalized) && mb_strlen($queryNormalized) >= 3) {
+                    $query = $originalName;
+                    $matched = true;
+                    break;
+                }
+            }
+            // 2. Fuzzy match (tolleranza typo): "ahtene" -> "atene" -> "Athens"
+            // Attivo solo per query di 4+ caratteri per evitare falsi positivi.
+            if (! $matched && mb_strlen($queryNormalized) >= 4) {
+                $bestMatch = null;
+                $bestDistance = PHP_INT_MAX;
+                foreach (self::CITY_ALIASES_IT as $italianName => $originalName) {
+                    $lenDiff = abs(mb_strlen($italianName) - mb_strlen($queryNormalized));
+                    if ($lenDiff > 2) continue;
+                    $distance = levenshtein($queryNormalized, $italianName);
+                    // Max 2 errori di digitazione, preferisce match con distanza minore
+                    if ($distance <= 2 && $distance < $bestDistance) {
+                        $bestDistance = $distance;
+                        $bestMatch = $originalName;
+                    }
+                }
+                if ($bestMatch) {
+                    $query = $bestMatch;
+                }
+            }
         }
 
         // Ricerca CAP: prefisso numerico (es. 001 -> 00100, 00118, ...)
@@ -179,7 +308,104 @@ class LocationController extends Controller
             ->limit($limit)
             ->get();
 
+        // Fallback live su Photon (OpenStreetMap) quando il DB locale non ha dati.
+        // Copertura: qualsiasi paese del mondo, dati sempre aggiornati da OSM.
+        // Esempi d'uso: Grecia (non nel DB), Irlanda, Norvegia, citta' minori.
+        if ($results->isEmpty()) {
+            $fallback = $this->searchPhotonFallback($query, $countryCode);
+            if (!empty($fallback)) {
+                return response()->json($this->withCountryMetadata(collect($fallback)));
+            }
+        }
+
         return response()->json($this->withCountryMetadata($results));
+    }
+
+    /**
+     * Fallback live su Photon (OpenStreetMap) quando il DB locale non ha dati.
+     * - Gratuito, nessuna API key
+     * - Aggiornato continuamente da OSM (dati piu' freschi di GeoNames)
+     * - Copre ogni paese del mondo
+     * - Cache 24h per evitare chiamate ripetute sulla stessa query
+     * - Timeout 4s per non bloccare la UX se il servizio e' lento/offline
+     */
+    private function searchPhotonFallback(string $query, ?string $countryCode = null): array
+    {
+        $cacheKey = 'loc:photon:' . md5(mb_strtolower(trim($query)) . '|' . ($countryCode ?? ''));
+
+        return Cache::remember($cacheKey, 86400, function () use ($query, $countryCode) {
+            try {
+                // verify=false su dev Windows dove manca il CA bundle cURL.
+                // In produzione Linux/Docker la verify SSL e' attiva di default.
+                $verify = config('app.env') === 'production';
+                $response = Http::timeout(4)
+                    ->withOptions(['verify' => $verify])
+                    ->get('https://photon.komoot.io/api/', [
+                        'q' => $query,
+                        'limit' => 20,
+                        'lang' => 'en',
+                    ]);
+
+                if (! $response->ok()) {
+                    return [];
+                }
+
+                $features = $response->json('features', []);
+                $results = [];
+                $seen = [];
+
+                foreach ($features as $feature) {
+                    $props = $feature['properties'] ?? [];
+                    $cc = strtoupper((string) ($props['countrycode'] ?? ''));
+
+                    // Scarta paesi fuori dalla whitelist commerciale (no USA, JP, ecc).
+                    if (! in_array($cc, self::ALLOWED_COUNTRIES, true)) {
+                        continue;
+                    }
+
+                    // Se e' stato selezionato un paese specifico, filtra solo quello
+                    if ($countryCode && $cc !== strtoupper($countryCode)) {
+                        continue;
+                    }
+
+                    $postcode = trim((string) ($props['postcode'] ?? ''));
+                    $placeName = trim((string) ($props['name'] ?? $props['city'] ?? ''));
+
+                    // Scarta risultati senza CAP o senza nome citta'
+                    if (! $postcode || ! $placeName) {
+                        continue;
+                    }
+
+                    // Tieni solo tipologie rilevanti (citta', paesi, comuni)
+                    $osmKey = $props['osm_key'] ?? '';
+                    $osmValue = $props['osm_value'] ?? '';
+                    $accepted = ($osmKey === 'place' && in_array($osmValue, ['city', 'town', 'village', 'municipality', 'suburb', 'hamlet'], true))
+                        || ($osmKey === 'boundary' && $osmValue === 'administrative');
+                    if (! $accepted) {
+                        continue;
+                    }
+
+                    // Deduplica per postcode+citta'
+                    $dedupKey = $postcode . '|' . mb_strtolower($placeName);
+                    if (isset($seen[$dedupKey])) {
+                        continue;
+                    }
+                    $seen[$dedupKey] = true;
+
+                    // Converti in stdClass per compatibilita' con withCountryMetadata()
+                    $obj = new \stdClass();
+                    $obj->postal_code = $postcode;
+                    $obj->place_name = $placeName;
+                    $obj->province = trim((string) ($props['state'] ?? $props['county'] ?? ''));
+                    $obj->country_code = $cc;
+                    $results[] = $obj;
+                }
+
+                return $results;
+            } catch (\Throwable $e) {
+                return [];
+            }
+        });
     }
 
     /**

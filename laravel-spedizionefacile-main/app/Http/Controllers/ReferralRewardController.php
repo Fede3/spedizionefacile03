@@ -1,9 +1,9 @@
 <?php
 
 /**
- * ReferralRewardController -- Applicazione referral a ordini e guadagni Partner Pro.
+ * ReferralRewardController -- Applicazione economica del referral su ordini gia' eleggibili e guadagni Partner Pro.
  *
- * Estratto da ReferralController: gestisce apply (applicazione codice a ordine) e earnings (statistiche guadagni).
+ * Estratto da ReferralController: gestisce apply (reward reale su ordine) e earnings (statistiche guadagni).
  * Queste funzioni riguardano la parte economica del sistema referral.
  */
 
@@ -12,8 +12,7 @@ namespace App\Http\Controllers;
 use App\Events\ReferralApplied;
 use App\Models\Order;
 use App\Models\ReferralUsage;
-use App\Models\User;
-use App\Models\WalletMovement;
+use App\Services\ReferralAccountingService;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -21,11 +20,18 @@ use Illuminate\Support\Facades\DB;
 
 class ReferralRewardController extends Controller
 {
+    /*
+     * Boundary note:
+     * - CouponController fa la preview/validazione del codice nel checkout;
+     * - questo controller registra l'utilizzo referral reale su un ordine eleggibile;
+     * - qui nascono sia ReferralUsage sia il WalletMovement di commissione per il Partner Pro.
+     */
+
     /**
      * Applica il codice referral a un ordine specifico.
      * Registra l'utilizzo del codice, calcola lo sconto e accredita la commissione al Partner Pro.
      */
-    public function apply(Request $request): JsonResponse
+    public function apply(Request $request, ReferralAccountingService $referralAccountingService): JsonResponse
     {
         $data = $request->validate([
             'code' => ['required', 'string', 'size:8'],
@@ -34,10 +40,7 @@ class ReferralRewardController extends Controller
         ]);
 
         $buyer = auth()->user();
-
-        $proUser = User::where('referral_code', strtoupper($data['code']))
-            ->where('role', 'Partner Pro')
-            ->first();
+        $proUser = $referralAccountingService->resolveReferralPartner($data['code']);
 
         if (! $proUser) {
             return response()->json(['message' => 'Codice referral non valido.'], 404);
@@ -45,6 +48,12 @@ class ReferralRewardController extends Controller
 
         if ($proUser->id === $buyer->id) {
             return response()->json(['message' => 'Non puoi usare il tuo stesso codice.'], 422);
+        }
+
+        if (! $buyer->referred_by || strtoupper($buyer->referred_by) !== strtoupper($data['code'])) {
+            return response()->json([
+                'message' => 'Il referral attivo dell\'account non coincide con il codice inviato.',
+            ], 422);
         }
 
         $order = Order::query()
@@ -61,7 +70,7 @@ class ReferralRewardController extends Controller
         }
 
         try {
-            $result = DB::transaction(function () use ($buyer, $proUser, $order) {
+            $result = DB::transaction(function () use ($buyer, $proUser, $order, $referralAccountingService) {
                 $lockedOrder = Order::query()
                     ->whereKey($order->id)
                     ->where('user_id', $buyer->id)
@@ -76,6 +85,12 @@ class ReferralRewardController extends Controller
                     return response()->json(['message' => 'Ordine non ancora pagato.'], 422);
                 }
 
+                if (! $this->matchesPaidReferralContext($lockedOrder, (string) $proUser->referral_code)) {
+                    return response()->json([
+                        'message' => 'Il referral non risulta applicato allo snapshot pagato dell\'ordine.',
+                    ], 422);
+                }
+
                 $existingUsage = ReferralUsage::query()
                     ->where('order_id', $lockedOrder->id)
                     ->first();
@@ -84,37 +99,15 @@ class ReferralRewardController extends Controller
                     return response()->json(['message' => 'Questo ordine ha già un referral applicato.'], 409);
                 }
 
-                $orderAmount = round(((int) $lockedOrder->subtotal->amount()) / 100, 2);
-                $discountAmount = round($orderAmount * 0.05, 2);
-                $commissionAmount = round($orderAmount * 0.05, 2);
-                $code = strtoupper($proUser->referral_code);
-
-                $usage = ReferralUsage::create([
-                    'buyer_id' => $buyer->id,
-                    'pro_user_id' => $proUser->id,
-                    'referral_code' => $code,
-                    'order_id' => $lockedOrder->id,
-                    'order_amount' => $orderAmount,
-                    'discount_amount' => $discountAmount,
-                    'commission_amount' => $commissionAmount,
-                    'status' => 'confirmed',
-                ]);
-
-                WalletMovement::create([
-                    'user_id' => $proUser->id,
-                    'type' => 'credit',
-                    'amount' => $commissionAmount,
-                    'currency' => 'EUR',
-                    'status' => 'confirmed',
-                    'idempotency_key' => 'commission_referral_order_' . $lockedOrder->id,
-                    'description' => 'Commissione referral da ' . $buyer->name . ' (ordine #' . $lockedOrder->id . ')',
-                    'source' => 'commission',
-                    'reference' => 'referral_order_' . $lockedOrder->id,
-                ]);
+                $usage = $referralAccountingService->createConfirmedReferralUsageAndCommissionCredit(
+                    $buyer,
+                    $proUser,
+                    $lockedOrder
+                );
 
                 return [
                     'success' => true,
-                    'discount_amount' => $discountAmount,
+                    'discount_amount' => round((float) $usage->discount_amount, 2),
                     'usage' => $usage,
                 ];
             });
@@ -169,6 +162,15 @@ class ReferralRewardController extends Controller
             Order::IN_GIACENZA,
             'payed',
         ], true);
+    }
+
+    private function matchesPaidReferralContext(Order $order, string $code): bool
+    {
+        $context = $order->discountContext();
+
+        return is_array($context)
+            && ($context['type'] ?? null) === 'referral'
+            && strtoupper((string) ($context['code'] ?? '')) === strtoupper($code);
     }
 
     private function isReferralUniqueConstraintViolation(QueryException $e): bool

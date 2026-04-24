@@ -42,18 +42,36 @@ class RegisterTest extends TestCase
         $this->assertDatabaseHas('users', ['email' => 'mario@example.com']);
     }
 
-    // T11.1.4 - Email duplicata
-    public function test_register_fails_with_duplicate_email(): void
+    // T11.1.4 - Email duplicata: anti-enumeration (Sprint 6.4).
+    // La risposta deve essere identica a una registrazione nuova (201 success),
+    // SENZA creare un secondo utente ne' sovrascrivere quello esistente.
+    public function test_register_with_duplicate_email_returns_generic_success(): void
     {
-        User::factory()->create(['email' => 'existing@example.com']);
+        Mail::fake();
+
+        $existing = User::factory()->create([
+            'email' => 'existing@example.com',
+            'name' => 'Giuseppe',
+        ]);
 
         $response = $this->postJson('/api/custom-register', $this->validRegistrationData([
             'email' => 'existing@example.com',
             'email_confirmation' => 'existing@example.com',
         ]));
 
-        $response->assertUnprocessable()
-            ->assertJsonValidationErrors(['email']);
+        // Risposta identica alla registrazione di una nuova email
+        $response->assertCreated()
+            ->assertJson(['success' => true]);
+
+        // L'utente esistente non e' stato sovrascritto
+        $this->assertDatabaseHas('users', [
+            'email' => 'existing@example.com',
+            'name' => 'Giuseppe',
+        ]);
+        $this->assertEquals(1, User::where('email', 'existing@example.com')->count());
+
+        // Nessuna email di verifica inviata al duplicato
+        Mail::assertNothingSent();
     }
 
     // T11.1.5 - Password corta (meno di 8 caratteri)

@@ -25,6 +25,7 @@ class EventServiceProvider extends ServiceProvider
     protected $listen = [
         \App\Events\OrderPaid::class => [
             \App\Listeners\MarkOrderProcessing::class,
+            \App\Listeners\RegisterPaidOrderDiscountAccounting::class,
             \App\Listeners\GenerateBrtLabel::class,
             \App\Listeners\SendOrderConfirmation::class,
         ],
@@ -35,6 +36,10 @@ class EventServiceProvider extends ServiceProvider
 
         \App\Events\ShipmentStatusChanged::class => [
             \App\Listeners\SendShipmentStatusEmail::class,
+            // F08/F09: SMS + Push transazionali sui cambi stato spedizione.
+            // Il listener filtra per opt-in utente; salta in silenzio
+            // se manca preferenza, numero o subscription.
+            \App\Listeners\SendShipmentSmsNotification::class,
         ],
 
         \App\Events\OrderPaymentFailed::class => [
@@ -44,6 +49,14 @@ class EventServiceProvider extends ServiceProvider
         \App\Events\ReferralApplied::class => [
             \App\Listeners\DispatchReferralNotifications::class,
         ],
+    ];
+
+    /**
+     * F14 — Subscriber che registra gli handler per gli eventi auth in
+     * un solo posto. Vedi LogAuthenticationEvents::subscribe().
+     */
+    protected $subscribe = [
+        \App\Listeners\LogAuthenticationEvents::class,
     ];
 
     public function shouldDiscoverEvents(): bool

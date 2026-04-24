@@ -1,22 +1,4 @@
-<!--
-  FILE: pages/account/portafoglio.vue
-  SCOPO: Portafoglio — saldo, ricarica via Stripe, storico movimenti, saldo commissioni Pro.
-
-  API: GET /api/wallet/balance (saldo principale + commissioni),
-       GET /api/wallet/movements (storico movimenti), POST /api/wallet/top-up (ricarica),
-       GET /api/stripe/default-payment-method (carta predefinita per la ricarica).
-  COMPONENTI: AccountWalletBalanceCards, AccountWalletTopUp, AccountWalletMovements.
-  ROUTE: /account/portafoglio (middleware sanctum:auth).
-
-  DATI IN INGRESSO: nessuno (carica automaticamente saldo e movimenti dell'utente).
-  DATI IN USCITA: ricarica portafoglio con carta predefinita.
-
-  VINCOLI: Stripe.js viene caricato solo quando serve per aggiungere una nuova carta inline.
-           Il saldo commissioni e' visibile solo ai Partner Pro (isPro computed).
-  ERRORI TIPICI: non aggiornare saldo/movimenti/carta predefinita dopo una ricarica riuscita.
-  PUNTI DI MODIFICA SICURI: importi preimpostati (nella sub-componente TopUp), stili card saldo.
-  COLLEGAMENTI: pages/account/carte.vue, pages/account/prelievi.vue, controllers/WalletController.php.
--->
+<!-- FILE: pages/account/portafoglio.vue -->
 <script setup>
 import { formatEuro } from '~/utils/price.js';
 
@@ -35,6 +17,7 @@ useSeoMeta({
 	ogTitle: 'Portafoglio account | SpediamoFacile',
 	description: 'Controlla saldo, ricariche e movimenti del portafoglio dal tuo account SpediamoFacile.',
 	ogDescription: 'Saldo, ricariche e storico movimenti del portafoglio SpediamoFacile.',
+	robots: 'noindex, nofollow',
 });
 
 const { user } = useSanctumAuth();
@@ -72,7 +55,7 @@ const formatCardBrand = (brand) => {
 	return value.charAt(0).toUpperCase() + value.slice(1);
 };
 
-/* Controlla se l'utente e' un Partner Pro */
+/* Controlla se l'utente è un Partner Pro */
 const effectiveRole = computed(() => uiSnapshot.value.role || user.value?.role || null);
 const isPro = computed(() => effectiveRole.value === 'Partner Pro');
 
@@ -118,34 +101,21 @@ const walletHeaderStats = computed(() => [
 	{ label: 'Carta', value: defaultPaymentMethodLabel.value },
 ]);
 
-const walletOverview = computed(() => {
+const walletHeroHighlights = computed(() => {
 	const items = [
-		{
-			label: 'Disponibile',
-			value: balanceOverviewValue.value,
-			description:
-				balanceError.value && !balance.value
-					? 'Il saldo non e disponibile adesso: usa il retry per sincronizzare di nuovo i dati.'
-					: balanceError.value
-						? 'Ultimo dato disponibile: aggiorna per verificare il saldo.'
-						: 'Usabile subito per spedizioni e pagamenti.',
-			tone: 'bg-[#F0F6F7] text-[var(--color-brand-primary)]',
-		},
 		{
 			label: 'Carta predefinita',
 			value: defaultPaymentMethodLabel.value,
 			description: stripeConfigured.value
-				? 'Le nuove ricariche useranno il metodo mostrato qui.'
-				: 'Stripe non risulta ancora configurato per le ricariche.',
-			tone: stripeConfigured.value ? 'bg-[#F5F6F9] text-[var(--color-brand-text)]' : 'bg-[#FFF7E8] text-[#B45309]',
+				? 'Pronta per le prossime ricariche.'
+				: 'Serve una carta salvata per ricaricare.',
 		},
 		{
 			label: 'Storico',
 			value: movementCountLabel.value,
 			description: movementsError.value
-				? 'Lo storico non si e aggiornato correttamente: puoi riprovare sotto.'
-				: 'Qui trovi ricariche, pagamenti, rimborsi e commissioni.',
-			tone: movementsError.value ? 'bg-[#FEF2F2] text-[#B42318]' : 'bg-[#F5F6F9] text-[var(--color-brand-text)]',
+				? 'Ultimo elenco da verificare.'
+				: 'Pagamenti, ricariche e rimborsi.',
 		},
 	];
 
@@ -153,8 +123,15 @@ const walletOverview = computed(() => {
 		items.push({
 			label: 'Commissioni Pro',
 			value: commissionOverviewValue.value,
-			description: 'Restano separate dal saldo del wallet e puoi prelevarle dalla sezione dedicata.',
-			tone: 'bg-[#F4FBF6] text-[#15803D]',
+			description: 'Restano separate dal saldo wallet.',
+		});
+	} else {
+		items.push({
+			label: 'Ricarica',
+			value: stripeConfigured.value ? 'Carta attiva' : 'Da configurare',
+			description: stripeConfigured.value
+				? 'Puoi confermare in pochi secondi.'
+				: 'Attiva una carta per iniziare.',
 		});
 	}
 
@@ -249,66 +226,90 @@ onMounted(() => {
 </script>
 
 <template>
-	<section class="min-h-[600px] py-[20px] tablet:py-[28px] desktop:py-[28px] bg-white">
+	<section class="sf-account-shell min-h-[600px] py-[20px] tablet:py-[24px] desktop:py-[28px]">
 		<div class="my-container max-w-[1280px]">
-			<!-- Page shell header -->
-			<div class="flex flex-col gap-[16px] tablet:gap-[16px] mb-[20px]">
-				<NuxtLink to="/account"
-					class="flex items-center gap-[6px] text-[var(--color-brand-text-muted)] text-[13px] cursor-pointer hover:text-[var(--color-brand-text-secondary)] transition-colors duration-[350ms] font-[500]">
-					<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
-					Dashboard
-				</NuxtLink>
-				<div class="flex items-center gap-[16px]">
-					<div class="w-[48px] h-[48px] rounded-[14px] bg-[rgba(9,88,102,0.08)] flex items-center justify-center shrink-0">
-						<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#095866" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 18v1a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v1"/><path d="M21 12H10m11 0-3-3m3 3-3 3"/></svg>
-					</div>
-					<div>
-						<h1 class="text-[var(--color-brand-text)] text-[24px] tablet:text-[28px] tracking-[-0.5px] font-[800]">Portafoglio</h1>
-						<p class="text-[var(--color-brand-text-muted)] text-[13px] tablet:text-[14px] mt-[2px]">Gestisci transazioni, metodi di pagamento e fatture</p>
-					</div>
-				</div>
-			</div>
-
-			<!-- Dark wallet card (prototype-style) -->
-			<div class="rounded-[20px] px-[20px] tablet:px-[20px] py-[20px] relative overflow-hidden mb-[28px]"
-				style="background: linear-gradient(135deg, #1a2332 0%, #1d2738 50%, #2d3555 100%); box-shadow: 0 6px 24px rgba(29,39,56,0.25);">
-				<div class="absolute top-0 right-0 w-[200px] h-[200px] rounded-full opacity-[0.06]"
-					style="background: radial-gradient(circle, #095866 0%, transparent 70%);"></div>
-				<div class="relative z-10 flex flex-col tablet:flex-row tablet:items-center tablet:justify-between gap-[16px]">
-					<div>
-						<span class="text-white/50 text-[12px] uppercase tracking-[0.5px] block mb-[4px] font-[600]">Saldo wallet</span>
-						<span class="text-white text-[32px] tablet:text-[38px] tracking-[-0.8px] font-[800]">
-							{{ balanceOverviewValue }}
+			<AccountPageHeader
+				eyebrow="Wallet"
+				title="Portafoglio"
+				description="Saldo, ricariche e movimenti in una vista piu ordinata e coerente col resto dell'account."
+				current="Portafoglio">
+				<template #meta>
+					<div class="flex flex-wrap items-center gap-[8px]">
+						<span
+							v-for="stat in walletHeaderStats"
+							:key="stat.label"
+							class="sf-account-meta-pill">
+							{{ stat.label }}: {{ stat.value }}
 						</span>
 					</div>
-					<div class="flex gap-[8px]">
-						<button
-							type="button"
-							@click="refreshWalletData"
-							:disabled="isRefreshingWallet"
-							class="h-[44px] px-[20px] rounded-full bg-white/[0.1] backdrop-blur-sm text-white text-[13px] font-[600] flex items-center gap-[6px] cursor-pointer hover:bg-white/[0.15] transition-colors duration-[350ms] disabled:opacity-60">
-							<span v-if="!isRefreshingWallet">
-								<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>
-							</span>
-							<span v-else class="h-[14px] w-[14px] rounded-full border-2 border-white border-r-transparent animate-spin"></span>
-							{{ isRefreshingWallet ? 'Aggiornamento...' : 'Aggiorna' }}
-						</button>
-						<NuxtLink to="/account/carte"
-							class="h-[44px] px-[20px] rounded-full text-white text-[13px] font-[700] flex items-center gap-[6px] cursor-pointer transition-colors duration-[350ms]"
-							style="background: linear-gradient(135deg, #E44203, #c73600); box-shadow: 0 4px 14px rgba(228,66,3,0.25);">
-							<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
-							Carte
-						</NuxtLink>
+				</template>
+			</AccountPageHeader>
+
+			<!-- Wallet hero card: palette brand (teal) coerente sitewide, bordo delicato. -->
+			<div class="rounded-[20px] px-[20px] py-[20px] relative overflow-hidden mb-[20px] sf-animate-in sf-animate-in-1 tablet:px-[24px] tablet:py-[22px]"
+				style="background: linear-gradient(135deg, #F3FAFB 0%, #E6F2F4 55%, #DDEBEE 100%); border: 1px solid rgba(9, 88, 102, 0.12); box-shadow: 0 2px 8px rgba(9, 88, 102, 0.06);">
+				<!-- Subtle dot pattern texture -->
+				<div class="absolute inset-0 sf-wallet-dot-pattern pointer-events-none"></div>
+				<div class="absolute top-0 right-0 w-[180px] h-[180px] rounded-full opacity-[0.06]"
+					style="background: radial-gradient(circle, #095866 0%, transparent 70%);"></div>
+				<!-- Decorative corner accent -->
+				<div class="absolute bottom-[-40px] left-[-40px] w-[120px] h-[120px] rounded-full opacity-[0.04]"
+					style="background: radial-gradient(circle, #E44203 0%, transparent 70%);"></div>
+				<div class="relative z-10 flex flex-col gap-[18px]">
+					<div class="flex flex-col gap-[14px] desktop:flex-row desktop:items-end desktop:justify-between">
+						<div class="max-w-[560px]">
+							<span class="text-[var(--color-brand-text-muted)] text-[11px] uppercase tracking-[0.12em] block mb-[6px] font-[700]">Wallet personale</span>
+							<p class="text-[var(--color-brand-text)] text-[2rem] leading-none tracking-[-1px] font-[800] tablet:text-[2.5rem]">
+								{{ balanceOverviewValue }}
+							</p>
+							<p class="mt-[10px] max-w-[520px] text-[0.875rem] leading-[1.55] text-[var(--color-brand-text-secondary)]">
+								Saldo disponibile per spedizioni, ricariche e controllo movimenti in una sola superficie pulita.
+							</p>
+						</div>
+						<div class="flex flex-wrap gap-[8px]">
+							<button
+								type="button"
+								@click="refreshWalletData"
+								:disabled="isRefreshingWallet"
+								class="h-[38px] px-[14px] rounded-full bg-white text-[var(--color-brand-primary)] text-[12px] font-[700] flex items-center gap-[6px] cursor-pointer border border-[rgba(9,88,102,0.12)] hover:bg-[rgba(9,88,102,0.04)] transition-colors duration-[250ms] disabled:opacity-60">
+								<span v-if="!isRefreshingWallet">
+									<svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>
+								</span>
+								<span v-else class="h-[14px] w-[14px] rounded-full border-2 border-[var(--color-brand-primary)] border-r-transparent animate-spin"></span>
+								{{ isRefreshingWallet ? 'Aggiornamento...' : 'Aggiorna' }}
+							</button>
+							<NuxtLink to="/account/carte"
+								class="h-[38px] px-[14px] rounded-full text-white text-[12px] font-[700] flex items-center gap-[6px] cursor-pointer transition-colors duration-[350ms] sf-cta-glow"
+								style="background: var(--gradient-cta);">
+								<svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+								Carte
+							</NuxtLink>
+							<!-- -- ARCHIVIATO 2026-04-20: CTA Prelievi (_archive/frontend-simplification-2026-04-20/features/prelievi-dedicati) -- -->
+						</div>
+					</div>
+
+					<div class="grid grid-cols-1 gap-[10px] tablet:grid-cols-3">
+						<div
+							v-for="item in walletHeroHighlights"
+							:key="item.label"
+							class="rounded-[16px] border border-[rgba(9,88,102,0.08)] bg-white/70 px-[14px] py-[13px]">
+							<p class="text-[0.6875rem] font-[700] uppercase tracking-[0.12em] text-[var(--color-brand-text-muted)]">{{ item.label }}</p>
+							<p class="mt-[6px] text-[0.9375rem] font-[800] leading-[1.25] text-[var(--color-brand-text)]">{{ item.value }}</p>
+							<p class="mt-[5px] text-[0.75rem] leading-[1.45] text-[var(--color-brand-text-secondary)]">{{ item.description }}</p>
+						</div>
 					</div>
 				</div>
 			</div>
 
-			<div class="grid grid-cols-1 gap-[28px] desktop:grid-cols-[minmax(0,0.94fr)_minmax(0,1.06fr)] desktop:items-start">
+			<div class="grid grid-cols-1 gap-[20px] desktop:grid-cols-[minmax(0,0.94fr)_minmax(0,1.06fr)] desktop:items-start sf-animate-in sf-animate-in-2">
 				<AccountWalletBalanceCards
 					:balance="balance"
 					:is-pro="isPro"
 					:is-loading-balance="isLoadingBalance"
 					:balance-error="balanceError"
+					:default-payment-method-label="defaultPaymentMethodLabel"
+					:movement-count-label="movementCountLabel"
+					:stripe-configured="stripeConfigured"
 					@retry-balance="retryBalance" />
 
 				<AccountWalletTopUp
@@ -318,11 +319,13 @@ onMounted(() => {
 					@payment-method-updated="onPaymentMethodUpdated" />
 			</div>
 
-			<AccountWalletMovements
-				:movements="movements"
-				:is-loading-movements="isLoadingMovements"
-				:movements-error="movementsError"
-				@retry-movements="retryMovements" />
+			<div class="mt-[20px] sf-animate-in sf-animate-in-3">
+				<AccountWalletMovements
+					:movements="movements"
+					:is-loading-movements="isLoadingMovements"
+					:movements-error="movementsError"
+					@retry-movements="retryMovements" />
+			</div>
 		</div>
 	</section>
 </template>

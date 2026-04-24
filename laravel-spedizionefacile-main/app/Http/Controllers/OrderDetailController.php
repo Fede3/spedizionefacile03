@@ -14,9 +14,11 @@ use App\Http\Requests\PackageStoreRequest;
 use App\Http\Resources\OrderResource;
 use App\Models\Order;
 use App\Models\Package;
+use App\Services\CartService;
 use App\Services\CheckoutSubmissionContextService;
 use App\Services\DirectOrderService;
 use App\Services\InvoicePdfService;
+use App\Services\RefundService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
@@ -28,6 +30,7 @@ class OrderDetailController extends Controller
     public function __construct(
         private readonly CheckoutSubmissionContextService $submissionContext,
         private readonly DirectOrderService $directOrder,
+        private readonly CartService $cartService,
     ) {}
 
     private function hydrateMissingOrderSubmissionContext(Order $order, array $incomingContext = []): void
@@ -50,6 +53,9 @@ class OrderDetailController extends Controller
         $preferredSubmissionId = trim((string) ($order->client_submission_id ?: ($incomingContext['client_submission_id'] ?? '')));
         if ($preferredSubmissionId !== '') {
             $contextSeed['client_submission_id'] = $preferredSubmissionId;
+        }
+        if (array_key_exists('discount_context', $incomingContext)) {
+            $contextSeed['discount_context'] = $incomingContext['discount_context'];
         }
 
         $context = $this->submissionContext->enrich(
@@ -107,6 +113,9 @@ class OrderDetailController extends Controller
     {
         Gate::authorize('view', $order);
 
+        $this->hydrateMissingOrderSubmissionContext($order);
+        $order->refresh();
+
         $order->load([
             'packages.originAddress',
             'packages.destinationAddress',
@@ -127,6 +136,7 @@ class OrderDetailController extends Controller
         $data = $request->validated();
         $userId = auth()->id();
         $servicesData = $this->normalizeServiceData($data['services'] ?? []);
+        $servicesData = $this->cartService->applyPudoData($servicesData, $data);
         $serviceData = $servicesData['service_data'] ?? [];
 
         // 1. Price packages server-side (security: never trust frontend prices)
@@ -138,8 +148,9 @@ class OrderDetailController extends Controller
         $pricedPackages = $pricing['priced_packages'];
         $subtotalCents = $pricing['subtotal_cents'];
 
-        // 2. COD and service surcharges
+        // 2. COD, Insurance and service surcharges (audit F01/F02)
         $cod = $this->directOrder->resolveCodDetails($servicesData, $serviceData);
+        $insurance = $this->directOrder->resolveInsuranceDetails($servicesData, $serviceData);
         $serviceSurchargeCents = $this->directOrder->calculateServiceSurcharge(
             $servicesData, $serviceData, $pricedPackages, $data,
         );
@@ -152,7 +163,7 @@ class OrderDetailController extends Controller
 
         // 3. Persist inside a transaction with idempotency check
         return DB::transaction(function () use (
-            $data, $userId, $pricedPackages, $servicesData, $cod,
+            $data, $userId, $pricedPackages, $servicesData, $cod, $insurance,
             $pudoId, $orderSubtotalCents, $request,
         ) {
             DB::table('users')->where('id', $userId)->lockForUpdate()->first();
@@ -180,8 +191,13 @@ class OrderDetailController extends Controller
             if ($existingOrder) {
                 $this->hydrateMissingOrderSubmissionContext($existingOrder, [
                     'client_submission_id' => $submissionContext['client_submission_id'],
+                    'discount_context' => $submissionContext['discount_context'] ?? null,
                 ]);
                 $existingOrder->refresh();
+
+                if ($discountContextError = $this->syncDiscountContextOnOrder($existingOrder, $submissionContext)) {
+                    return $discountContextError;
+                }
 
                 if (
                     filled($existingOrder->pricing_signature)
@@ -193,6 +209,8 @@ class OrderDetailController extends Controller
                 return response()->json([
                     'order_id' => $existingOrder->id,
                     'order_number' => 'SF-' . str_pad((string) $existingOrder->id, 6, '0', STR_PAD_LEFT),
+                    'amount_cents' => $existingOrder->payableTotalCents(),
+                    'client_submission_id' => (string) $existingOrder->client_submission_id,
                 ]);
             }
 
@@ -200,6 +218,9 @@ class OrderDetailController extends Controller
                 $data, $userId, $pricedPackages, $servicesData,
                 $cod['is_cod'], $cod['cod_amount'], $pudoId,
                 $orderSubtotalCents, $submissionContext,
+                $cod['cod_payment_type'] ?? null,
+                $cod['cod_incasso_type'] ?? null,
+                $insurance['insurance_amount_cents'] ?? null,
             );
 
             return response()->json($result);
@@ -208,13 +229,89 @@ class OrderDetailController extends Controller
 
     /**
      * Annulla un ordine con eventuale rimborso.
-     * Delega al RefundController che gestisce la logica completa di rimborso.
+     *
+     * Calls RefundService directly (not RefundController) to avoid bypassing
+     * middleware. Authorization is handled via OrderPolicy::cancel().
      */
     public function cancel(Request $request, Order $order)
     {
-        $refundController = app(RefundController::class);
+        Gate::authorize('cancel', $order);
 
-        return $refundController->requestCancellation($request, $order);
+        $request->validate(['reason' => 'nullable|string|max:500']);
+
+        // Quick pre-check outside the transaction for a fast 422 response.
+        $refundService = app(RefundService::class);
+        $preCheck = $refundService->calculateEligibility($order);
+        if (! $preCheck['eligible']) {
+            return response()->json(['error' => $preCheck['reason']], 422);
+        }
+
+        try {
+            $result = $refundService->processCancellation($order, $request->reason);
+
+            $refundEur     = number_format($result['refund_amount_cents'] / 100, 2, ',', '.');
+            $commissionEur = number_format($result['commission_cents'] / 100, 2, ',', '.');
+
+            return response()->json([
+                'success'        => true,
+                'message'        => $result['refund_amount_cents'] > 0
+                    ? "Ordine annullato. Rimborso di {$refundEur} EUR processato (commissione: {$commissionEur} EUR)."
+                    : 'Ordine annullato con successo.',
+                'refund_amount'  => $refundEur,
+                'commission'     => $commissionEur,
+                'refund_method'  => $result['refund_method'],
+                'brt_cancelled'  => $result['brt_cancelled'],
+            ]);
+        } catch (\RuntimeException $e) {
+            return response()->json(['error' => $e->getMessage()], 422);
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Order cancellation failed', [
+                'order_id' => $order->id,
+                'error'    => $e->getMessage(),
+                'trace'    => $e->getTraceAsString(),
+            ]);
+
+            return response()->json([
+                'error' => 'Errore durante l\'annullamento dell\'ordine. Riprova o contatta l\'assistenza.',
+            ], 500);
+        }
+    }
+
+    private function syncDiscountContextOnOrder(Order $order, array $context): ?\Illuminate\Http\JsonResponse
+    {
+        $incomingDiscountContext = $this->normalizeDiscountContextValue($context['discount_context'] ?? null);
+
+        if ($incomingDiscountContext === null) {
+            return null;
+        }
+
+        $currentSnapshot = $order->getAttribute('pricing_snapshot');
+        $resolvedSnapshot = is_array($currentSnapshot) ? $currentSnapshot : [];
+        $currentDiscountContext = $this->normalizeDiscountContextValue($resolvedSnapshot['discount_context'] ?? null);
+
+        if ($currentDiscountContext !== null && $currentDiscountContext !== $incomingDiscountContext) {
+            return response()->json(['error' => 'Contesto preventivo non coerente con l\'ordine.'], 422);
+        }
+
+        if ($currentDiscountContext === null) {
+            $resolvedSnapshot['discount_context'] = $incomingDiscountContext;
+            $order->forceFill([
+                'pricing_snapshot' => $resolvedSnapshot,
+            ])->save();
+        }
+
+        return null;
+    }
+
+    private function normalizeDiscountContextValue(mixed $value): ?array
+    {
+        $normalized = $this->submissionContext->fromRequestArray([
+            'discount_context' => $value,
+        ]);
+
+        return is_array($normalized['discount_context'] ?? null)
+            ? $normalized['discount_context']
+            : null;
     }
 
     /**
@@ -224,9 +321,7 @@ class OrderDetailController extends Controller
      */
     public function addPackage(Request $request, Order $order)
     {
-        if ($order->user_id !== auth()->id()) {
-            return response()->json(['error' => 'Non autorizzato.'], 403);
-        }
+        Gate::authorize('addPackage', $order);
 
         if (! in_array($order->status, [Order::PENDING, Order::PAYMENT_FAILED])) {
             return response()->json(['error' => 'Si possono aggiungere colli solo agli ordini in attesa di pagamento.'], 422);

@@ -1,266 +1,178 @@
-<script setup>
-const props = defineProps({
-	registerForm: { type: Object, required: true },
-	isLoading: { type: Boolean, default: false },
-	showRegPassword: { type: Boolean, default: false },
-	showRegPasswordConfirm: { type: Boolean, default: false },
-	messageError: { type: Object, default: null },
-	messageLoading: { type: String, default: null },
-	passwordChecks: { type: Object, required: true },
-	passwordStrength: { type: Number, default: 0 },
-	submitHandler: { type: Function, default: null },
+<script setup lang="ts">
+// Form di registrazione (radio profilo + dati personali + password + privacy + Turnstile).
+// La logica di handleRegister + gating CAPTCHA vive in useAuthOverlay / wrapper — qui solo presentazione.
+
+defineProps({
+  form: { type: Object, required: true },
+  isLoading: { type: Boolean, default: false },
+  showPassword: { type: Boolean, default: false },
+  showPasswordConfirm: { type: Boolean, default: false },
+  turnstile: { type: Object, required: true },
 })
 
-const emit = defineEmits([
-	'update:showRegPassword',
-	'update:showRegPasswordConfirm',
-])
+const emit = defineEmits<{
+  (e: 'submit'): void
+  (e: 'toggle-password'): void
+  (e: 'toggle-password-confirm'): void
+}>()
 
-const submitRegister = () => {
-	props.submitHandler?.()
-}
-
-const getPasswordMeterClass = (index) => {
-	if (!props.registerForm.password || props.passwordStrength < index) {
-		return 'auth-password-meter__bar'
-	}
-
-	if (props.passwordStrength <= 2) return 'auth-password-meter__bar auth-password-meter__bar--weak'
-	if (props.passwordStrength <= 3) return 'auth-password-meter__bar auth-password-meter__bar--medium'
-	return 'auth-password-meter__bar auth-password-meter__bar--strong'
-}
-
-const getPasswordCheckClass = (passed) => (
-	passed ? 'auth-password-checklist__item auth-password-checklist__item--good' : 'auth-password-checklist__item'
-)
-
-const getPasswordCheckMark = (passed) => (passed ? '✓' : '•')
+const INPUT_CLS = 'w-full h-[46px] rounded-[12px] px-[14px] text-[14px] font-medium text-[#1d2738] bg-white ring-[1.5px] ring-[#DFE2E7] focus:ring-[2.5px] focus:ring-[#095866]/50 placeholder:text-[#aaa] outline-none transition-all duration-200'
+const LABEL_CLS = 'text-[#777] text-[11px] uppercase tracking-[0.4px] font-bold block'
+const CTA_CLS = 'btn-cta-filled w-full h-[50px] rounded-full text-[14px] flex items-center justify-center gap-[10px] mt-[4px] cursor-pointer active:scale-[0.985] focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-[#E44203]/25 disabled:cursor-wait'
 </script>
 
 <template>
-	<form method="post" @submit.prevent="submitRegister" class="auth-overlay-form auth-page-form">
-		<fieldset class="auth-choice-group">
-			<legend class="auth-choice-group__label">Profilo</legend>
-			<div class="auth-segmented-row auth-register-segmented--role" role="radiogroup" aria-label="Ruolo account">
-				<label
-					:class="[
-						'auth-segment',
-						registerForm.role === 'Cliente'
-							? 'auth-segment--active'
-							: '',
-					]">
-					<input type="radio" value="Cliente" v-model="registerForm.role" class="sr-only" />
-					Cliente
-				</label>
-				<label
-					:class="[
-						'auth-segment',
-						registerForm.role === 'Partner Pro'
-							? 'auth-segment--active'
-							: '',
-					]">
-					<input type="radio" value="Partner Pro" v-model="registerForm.role" class="sr-only" />
-					Partner Pro
-				</label>
-			</div>
-		</fieldset>
+  <form
+    class="flex flex-col gap-[14px]"
+    action="javascript:void(0)"
+    method="post"
+    @submit.capture.prevent.stop="emit('submit')"
+  >
+    <!-- Tipo profilo: radio inline compatti -->
+    <fieldset class="auth-overlay-profile-radios" aria-label="Tipo profilo">
+      <label class="auth-overlay-profile-radio">
+        <input v-model="form.user_type" type="radio" value="privato" class="auth-overlay-profile-radio__input" />
+        <span class="auth-overlay-profile-radio__dot" aria-hidden="true" />
+        <span class="auth-overlay-profile-radio__label">Privato</span>
+      </label>
+      <label class="auth-overlay-profile-radio">
+        <input v-model="form.user_type" type="radio" value="commerciante" class="auth-overlay-profile-radio__input" />
+        <span class="auth-overlay-profile-radio__dot" aria-hidden="true" />
+        <span class="auth-overlay-profile-radio__label">Azienda</span>
+      </label>
+    </fieldset>
 
-		<fieldset class="auth-choice-group">
-			<legend class="auth-choice-group__label">Tipo account</legend>
-			<div class="auth-segmented-row" role="radiogroup" aria-label="Tipo account">
-				<label
-					:class="[
-						'auth-segment',
-						registerForm.user_type === 'privato'
-							? 'auth-segment--active'
-							: '',
-					]">
-					<input type="radio" value="privato" v-model="registerForm.user_type" class="sr-only" />
-					Privato
-				</label>
-				<label
-					:class="[
-						'auth-segment',
-						registerForm.user_type === 'commerciante'
-							? 'auth-segment--active'
-							: '',
-					]">
-					<input type="radio" value="commerciante" v-model="registerForm.user_type" class="sr-only" />
-					Azienda
-				</label>
-			</div>
-		</fieldset>
+    <!-- Nome / Cognome -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-[8px]">
+      <div class="flex flex-col gap-[5px]">
+        <label :class="LABEL_CLS" for="auth-reg-name">Nome</label>
+        <input id="auth-reg-name" v-model="form.name" :class="INPUT_CLS" type="text" autocomplete="given-name" placeholder="Mario" />
+      </div>
+      <div class="flex flex-col gap-[5px]">
+        <label :class="LABEL_CLS" for="auth-reg-surname">Cognome</label>
+        <input id="auth-reg-surname" v-model="form.surname" :class="INPUT_CLS" type="text" autocomplete="family-name" placeholder="Rossi" />
+      </div>
+    </div>
 
-		<div class="auth-grid-two">
-					<div class="auth-field-group">
-						<label for="reg_name" class="auth-field-label">Nome *</label>
-						<input
-							type="text"
-							id="reg_name"
-							v-model="registerForm.name"
-							placeholder="Il tuo nome"
-							autocomplete="given-name"
-							class="form-input"
-							required />
-					</div>
-			<div class="auth-field-group">
-				<label for="reg_surname" class="auth-field-label">Cognome *</label>
-						<input
-							type="text"
-							id="reg_surname"
-							v-model="registerForm.surname"
-							placeholder="Il tuo cognome"
-							autocomplete="family-name"
-							class="form-input"
-							required />
-			</div>
-		</div>
+    <!-- Email / Conferma email -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-[8px]">
+      <div class="flex flex-col gap-[5px]">
+        <label :class="LABEL_CLS" for="auth-reg-email">Email</label>
+        <input id="auth-reg-email" v-model="form.email" :class="INPUT_CLS" type="email" autocomplete="email" placeholder="nome@email.com" />
+      </div>
+      <div class="flex flex-col gap-[5px]">
+        <label :class="LABEL_CLS" for="auth-reg-email-confirm">Conferma email</label>
+        <input id="auth-reg-email-confirm" v-model="form.email_confirmation" :class="INPUT_CLS" type="email" autocomplete="email" placeholder="Conferma email" />
+      </div>
+    </div>
 
-		<p v-if="messageError?.name" role="alert" class="auth-feedback auth-feedback--error">{{ messageError.name[0] }}</p>
-		<p v-if="messageError?.surname" role="alert" class="auth-feedback auth-feedback--error">{{ messageError.surname[0] }}</p>
+    <!-- Prefisso / Telefono -->
+    <div class="grid grid-cols-1 md:grid-cols-[104px_1fr] gap-[8px]">
+      <div class="flex flex-col gap-[5px]">
+        <label :class="LABEL_CLS" for="auth-reg-prefix">Prefisso</label>
+        <select id="auth-reg-prefix" v-model="form.prefix" :class="[INPUT_CLS, 'pr-[36px]']" style="appearance: auto">
+          <option value="+39">+39 IT</option>
+          <option value="+49">+49 DE</option>
+        </select>
+      </div>
+      <div class="flex flex-col gap-[5px]">
+        <label :class="LABEL_CLS" for="auth-reg-phone">Telefono</label>
+        <input id="auth-reg-phone" v-model="form.telephone_number" :class="INPUT_CLS" type="tel" autocomplete="tel" placeholder="Numero di telefono" />
+      </div>
+    </div>
 
-		<div class="auth-field-group">
-			<label for="reg_telephone" class="auth-field-label">Telefono *</label>
-			<div class="auth-grid-phone">
-					<select v-model="registerForm.prefix" id="reg_prefix" class="form-input auth-field-select" autocomplete="tel-country-code">
-					<option value="+39">+39 IT</option>
-					<option value="+49">+49 DE</option>
-				</select>
-				<input
-						type="tel"
-						id="reg_telephone"
-						placeholder="Numero di telefono"
-						v-model="registerForm.telephone_number"
-						autocomplete="tel-national"
-						class="form-input"
-						required />
-			</div>
-		</div>
+    <!-- Password / Conferma password -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-[8px]">
+      <div class="flex flex-col gap-[5px]">
+        <label :class="LABEL_CLS" for="auth-reg-password">Password</label>
+        <div class="relative">
+          <input
+            id="auth-reg-password"
+            v-model="form.password"
+            :class="[INPUT_CLS, 'pr-[44px]']"
+            :type="showPassword ? 'text' : 'password'"
+            autocomplete="new-password"
+            placeholder="Min. 8 caratteri"
+          />
+          <button
+            type="button"
+            :aria-label="showPassword ? 'Nascondi password' : 'Mostra password'"
+            class="absolute right-[14px] top-1/2 -translate-y-1/2 text-[#C0C5CC] hover:text-[#777] cursor-pointer transition-colors bg-transparent border-0 p-0"
+            tabindex="-1"
+            @click="emit('toggle-password')"
+          >
+            <svg v-if="showPassword" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-4 h-4" fill="currentColor"><path d="M2,5.27L3.28,4L20,20.72L18.73,22L15.65,18.92C14.5,19.3 13.28,19.5 12,19.5C7,19.5 2.73,16.39 1,12C1.69,10.24 2.79,8.69 4.19,7.46L2,5.27M12,9A3,3 0 0,1 15,12C15,12.35 14.94,12.69 14.83,13L11,9.17C11.31,9.06 11.65,9 12,9M12,4.5C17,4.5 21.27,7.61 23,12C22.18,14.08 20.79,15.88 19,17.19L17.58,15.76C18.94,14.82 20.06,13.54 20.82,12C19.17,8.64 15.76,6.5 12,6.5C10.91,6.5 9.84,6.68 8.84,7.03L7.31,5.5C8.77,4.85 10.36,4.5 12,4.5M3.18,12C4.83,15.36 8.24,17.5 12,17.5C12.69,17.5 13.37,17.43 14,17.29L11.72,15C10.29,14.85 9.15,13.71 9,12.28L5.6,8.87C4.61,9.72 3.78,10.78 3.18,12Z" /></svg>
+            <svg v-else xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-4 h-4" fill="currentColor"><path d="M12,9A3,3 0 0,1 15,12A3,3 0 0,1 12,15A3,3 0 0,1 9,12A3,3 0 0,1 12,9M12,4.5C17,4.5 21.27,7.61 23,12C21.27,16.39 17,19.5 12,19.5C7,19.5 2.73,16.39 1,12C2.73,7.61 7,4.5 12,4.5M3.18,12C4.83,15.36 8.24,17.5 12,17.5C15.76,17.5 19.17,15.36 20.82,12C19.17,8.64 15.76,6.5 12,6.5C8.24,6.5 4.83,8.64 3.18,12Z" /></svg>
+          </button>
+        </div>
+      </div>
+      <div class="flex flex-col gap-[5px]">
+        <label :class="LABEL_CLS" for="auth-reg-password-confirm">Conferma password</label>
+        <div class="relative">
+          <input
+            id="auth-reg-password-confirm"
+            v-model="form.password_confirmation"
+            :class="[INPUT_CLS, 'pr-[44px]']"
+            :type="showPasswordConfirm ? 'text' : 'password'"
+            autocomplete="new-password"
+            placeholder="Ripeti password"
+          />
+          <button
+            type="button"
+            :aria-label="showPasswordConfirm ? 'Nascondi conferma password' : 'Mostra conferma password'"
+            class="absolute right-[14px] top-1/2 -translate-y-1/2 text-[#C0C5CC] hover:text-[#777] cursor-pointer transition-colors bg-transparent border-0 p-0"
+            tabindex="-1"
+            @click="emit('toggle-password-confirm')"
+          >
+            <svg v-if="showPasswordConfirm" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-4 h-4" fill="currentColor"><path d="M2,5.27L3.28,4L20,20.72L18.73,22L15.65,18.92C14.5,19.3 13.28,19.5 12,19.5C7,19.5 2.73,16.39 1,12C1.69,10.24 2.79,8.69 4.19,7.46L2,5.27M12,9A3,3 0 0,1 15,12C15,12.35 14.94,12.69 14.83,13L11,9.17C11.31,9.06 11.65,9 12,9M12,4.5C17,4.5 21.27,7.61 23,12C22.18,14.08 20.79,15.88 19,17.19L17.58,15.76C18.94,14.82 20.06,13.54 20.82,12C19.17,8.64 15.76,6.5 12,6.5C10.91,6.5 9.84,6.68 8.84,7.03L7.31,5.5C8.77,4.85 10.36,4.5 12,4.5M3.18,12C4.83,15.36 8.24,17.5 12,17.5C12.69,17.5 13.37,17.43 14,17.29L11.72,15C10.29,14.85 9.15,13.71 9,12.28L5.6,8.87C4.61,9.72 3.78,10.78 3.18,12Z" /></svg>
+            <svg v-else xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-4 h-4" fill="currentColor"><path d="M12,9A3,3 0 0,1 15,12A3,3 0 0,1 12,15A3,3 0 0,1 9,12A3,3 0 0,1 12,9M12,4.5C17,4.5 21.27,7.61 23,12C21.27,16.39 17,19.5 12,19.5C7,19.5 2.73,16.39 1,12C2.73,7.61 7,4.5 12,4.5M3.18,12C4.83,15.36 8.24,17.5 12,17.5C15.76,17.5 19.17,15.36 20.82,12C19.17,8.64 15.76,6.5 12,6.5C8.24,6.5 4.83,8.64 3.18,12Z" /></svg>
+          </button>
+        </div>
+      </div>
+    </div>
 
-		<p v-if="messageError?.telephone_number" role="alert" class="auth-feedback auth-feedback--error">{{ messageError.telephone_number[0] }}</p>
+    <!-- Password hint -->
+    <p class="text-[var(--color-brand-text-muted)] text-[10px] -mt-[2px] font-normal">Min. 8 caratteri, maiuscola, minuscola e numero</p>
 
-		<div class="auth-field-group">
-			<label for="reg_email" class="auth-field-label">Email *</label>
-					<input
-						type="email"
-						id="reg_email"
-						placeholder="La tua email"
-						v-model="registerForm.email"
-						autocomplete="email"
-						class="form-input"
-						required />
-		</div>
+    <label class="flex items-start gap-[9px] rounded-[14px] bg-white/70 px-[11px] py-[10px] ring-[1px] ring-[#DFE2E7]">
+      <input
+        v-model="form.privacy_accepted"
+        type="checkbox"
+        class="mt-[1px] h-[16px] w-[16px] shrink-0 accent-[#095866]"
+      />
+      <span class="text-[11px] leading-[1.55] text-[#667085]">
+        Accetto la
+        <NuxtLink to="/privacy-policy" class="font-semibold text-[#095866] underline underline-offset-2 hover:text-[#0a7489]">
+          Privacy Policy
+        </NuxtLink>
+        e i
+        <NuxtLink to="/termini-e-condizioni" class="font-semibold text-[#095866] underline underline-offset-2 hover:text-[#0a7489]">
+          Termini e Condizioni
+        </NuxtLink>.
+      </span>
+    </label>
 
-		<div class="auth-field-group">
-			<label for="reg_email_confirmation" class="auth-field-label">Conferma email *</label>
-					<input
-						type="email"
-						id="reg_email_confirmation"
-						placeholder="Conferma la tua email"
-						v-model="registerForm.email_confirmation"
-						autocomplete="email"
-						class="form-input"
-						required />
-		</div>
+    <div class="flex justify-center mt-[4px]">
+      <NuxtTurnstile
+        v-model="turnstile.token.value"
+        @expired="turnstile.onExpire"
+        @error="turnstile.onError"
+      />
+    </div>
 
-		<p v-if="messageError?.email" role="alert" class="auth-feedback auth-feedback--error">
-			{{ Array.isArray(messageError.email) ? messageError.email[0] : messageError.email }}
-		</p>
-
-		<div class="auth-field-group">
-			<label for="reg_password" class="auth-field-label">Password *</label>
-			<div class="auth-password-wrap">
-						<input
-							:type="showRegPassword ? 'text' : 'password'"
-							id="reg_password"
-							placeholder="Minimo 8 caratteri"
-							v-model="registerForm.password"
-							autocomplete="new-password"
-							class="form-input auth-field-input--password"
-							minlength="8"
-							required />
-				<button type="button" @click="emit('update:showRegPassword', !showRegPassword)" class="auth-password-toggle" tabindex="-1" :aria-label="showRegPassword ? 'Nascondi password' : 'Mostra password'">
-					<svg v-if="!showRegPassword" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-					<svg v-else width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
-				</button>
-			</div>
-			<div v-if="registerForm.password" class="auth-password-meter" aria-hidden="true">
-				<div v-for="i in 5" :key="i" :class="getPasswordMeterClass(i)" />
-			</div>
-			<ul v-if="registerForm.password" class="auth-password-checklist">
-				<li :class="getPasswordCheckClass(passwordChecks.minLength)">
-					<span>{{ getPasswordCheckMark(passwordChecks.minLength) }}</span> Minimo 8 caratteri
-				</li>
-				<li :class="getPasswordCheckClass(passwordChecks.hasLower)">
-					<span>{{ getPasswordCheckMark(passwordChecks.hasLower) }}</span> Una lettera minuscola
-				</li>
-				<li :class="getPasswordCheckClass(passwordChecks.hasUpper)">
-					<span>{{ getPasswordCheckMark(passwordChecks.hasUpper) }}</span> Una lettera maiuscola
-				</li>
-				<li :class="getPasswordCheckClass(passwordChecks.hasNumber)">
-					<span>{{ getPasswordCheckMark(passwordChecks.hasNumber) }}</span> Un numero
-				</li>
-				<li :class="getPasswordCheckClass(passwordChecks.hasSymbol)">
-					<span>{{ getPasswordCheckMark(passwordChecks.hasSymbol) }}</span> Un simbolo speciale (es. @!#.-_)
-				</li>
-			</ul>
-		</div>
-
-		<div class="auth-field-group">
-			<label for="reg_password_confirmation" class="auth-field-label">Conferma password *</label>
-			<div class="auth-password-wrap">
-						<input
-							:type="showRegPasswordConfirm ? 'text' : 'password'"
-							id="reg_password_confirmation"
-							placeholder="Ripeti la password"
-							v-model="registerForm.password_confirmation"
-							autocomplete="new-password"
-							class="form-input auth-field-input--password"
-							minlength="8"
-							required />
-				<button type="button" @click="emit('update:showRegPasswordConfirm', !showRegPasswordConfirm)" class="auth-password-toggle" tabindex="-1" :aria-label="showRegPasswordConfirm ? 'Nascondi conferma password' : 'Mostra conferma password'">
-					<svg v-if="!showRegPasswordConfirm" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-					<svg v-else width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
-				</button>
-			</div>
-		</div>
-
-		<p v-if="messageError?.password" role="alert" class="auth-feedback auth-feedback--error">
-			<span v-for="(error, index) in messageError.password" :key="index" class="block">
-				{{ error }}
-			</span>
-		</p>
-
-		<div v-if="registerForm.referred_by" class="auth-feedback auth-feedback--success">
-			<p class="font-semibold">Codice referral applicato: <strong>{{ registerForm.referred_by }}</strong></p>
-			<p>Riceverai uno sconto del 5% su tutte le spedizioni.</p>
-		</div>
-		<p v-if="messageError?.referred_by" role="alert" class="auth-feedback auth-feedback--error">{{ messageError.referred_by[0] }}</p>
-
-			<label class="auth-privacy-consent">
-			<input
-				type="checkbox"
-				v-model="registerForm.privacy_accepted"
-				required
-				class="auth-privacy-consent__check" />
-			<span class="auth-privacy-consent__text">
-				Ho letto e accetto la
-				<NuxtLink to="/privacy-policy" target="_blank" class="auth-privacy-consent__link">Privacy Policy</NuxtLink>
-				e i
-				<NuxtLink to="/termini-condizioni" target="_blank" class="auth-privacy-consent__link">Termini e Condizioni</NuxtLink> *
-			</span>
-		</label>
-
-		<button
-				type="submit"
-				:disabled="isLoading || !registerForm.privacy_accepted"
-				class="btn-cta w-full inline-flex items-center justify-center gap-[8px]">
-				<span v-if="isLoading">Registrazione in corso...</span>
-				<span v-else>Registrati e continua</span>
-			</button>
-
-		<p v-if="messageLoading" class="auth-login-status">
-			{{ messageLoading }}
-		</p>
-	</form>
+    <button
+      type="button"
+      :class="CTA_CLS"
+      :disabled="isLoading || !form.privacy_accepted || !turnstile.isReady.value"
+      @click="emit('submit')"
+    >
+      <template v-if="isLoading">
+        <svg class="animate-spin w-[18px] h-[18px]" viewBox="0 0 24 24" fill="none"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" /><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>
+      </template>
+      <template v-else>
+        Crea account
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" /></svg>
+      </template>
+    </button>
+  </form>
 </template>

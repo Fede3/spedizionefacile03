@@ -24,6 +24,23 @@
  *   (usato nelle recensioni)
  */
 export default defineAppConfig({
+	// LEGAL-TODO: dati reali da inserire prima di go-live (responsabilità utente).
+	// Grep marker [INSERIRE_ per trovare tutti i punti da completare.
+	// Riferimenti normativi: DPR 633/72 art. 35 (P.IVA), d.lgs 196/2003 + 101/2018
+	// (Codice Privacy it.), GDPR Art. 30 (Registro Trattamenti).
+	legal: {
+		companyName: 'SpediamoFacile S.r.l.',
+		vatNumber: '[INSERIRE_PIVA]',              // es. 'IT01234567890'
+		fiscalCode: '[INSERIRE_CF]',               // se diverso da P.IVA
+		registeredOffice: '[INSERIRE_SEDE_LEGALE]',// es. 'Via Roma 1, 00100 Roma (RM)'
+		rea: '[INSERIRE_REA]',                     // es. 'RM-1234567'
+		shareCapital: '[INSERIRE_CAPITALE]',       // es. '10.000,00 €'
+		legalRepresentative: '[INSERIRE_RAPPRESENTANTE_LEGALE]',
+		dpoName: '[INSERIRE_NOME_DPO]',            // se nominato (facoltativo PMI)
+		dpoEmail: 'privacy@spediamofacile.it',     // contatto privacy di default
+		supportEmail: 'info@spediamofacile.it',
+		pec: '[INSERIRE_PEC]',                     // richiesta per società
+	},
 	ui: {
 		icons: {
 			arrowDown: 'i-mdi-arrow-down',
@@ -165,7 +182,7 @@ export default defineAppConfig({
 					link: {
 						list: "border-default",
 						indicator: "rounded-full",
-						trigger: "focus:outline-none",
+						trigger: "focus:outline-none focus-visible:outline-[3px] focus-visible:outline-[rgba(9,88,102,0.45)] focus-visible:outline-offset-2",
 					},
 				},
 				orientation: {
@@ -298,7 +315,7 @@ export default defineAppConfig({
 						link: "text-[#005961] font-bold",
 					},
 					false: {
-						link: "text-black font-normal hover:underline",
+						link: "text-black font-normal hover:text-[var(--color-brand-primary)]",
 					},
 				},
 				disabled: {

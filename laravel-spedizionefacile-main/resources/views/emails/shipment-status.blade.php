@@ -119,7 +119,7 @@
                                             </tr>
                                             <tr>
                                                 <td style="color: #777; font-size: 13px;">Importo</td>
-                                                <td align="right" style="color: #095866; font-size: 17px; font-weight: 700;">{{ number_format($order->getRawOriginal('subtotal') / 100, 2, ',', '.') }} &euro;</td>
+                                                <td align="right" style="color: #095866; font-size: 17px; font-weight: 700;">{{ number_format($order->payableTotalCents() / 100, 2, ',', '.') }} &euro;</td>
                                             </tr>
                                         </table>
                                     </td>
@@ -190,8 +190,9 @@
                             <p style="margin: 0 0 4px; color: #bbb; font-size: 11px; text-align: center;">
                                 Per assistenza: <a href="mailto:assistenza@spediamofacile.it" style="color: #095866; text-decoration: none;">assistenza@spediamofacile.it</a>
                             </p>
-                            <p style="margin: 0; color: #bbb; font-size: 11px; text-align: center;">
-                                <a href="{{ config('app.frontend_url') }}/account/notifiche?unsubscribe=1" style="color: #999; text-decoration: underline;">Gestisci preferenze email</a>
+                            <p style="margin-top: 24px; padding-top: 16px; border-top: 1px solid #eee; font-size: 12px; color: #999; text-align: center;">
+                                <a href="{{ url('/account/notifiche') }}" style="color: #095866; text-decoration: underline;">Gestisci preferenze notifiche</a>
+                                &middot; <a href="{{ url('/privacy-policy') }}" style="color: #095866; text-decoration: underline;">Privacy Policy</a>
                             </p>
                         </td>
                     </tr>

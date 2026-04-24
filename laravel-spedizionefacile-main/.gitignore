@@ -17,3 +17,34 @@ yarn-error.log
 /.fleet
 /.idea
 /.vscode
+
+# Logs
+*.log
+/storage/logs/*.log
+logs/
+
+# Test coverage
+/coverage
+/.phpunit.cache
+.phpunit.result.cache
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor backups
+*.swp
+*.swo
+*.bak
+*.orig
+
+# Env locali aggiuntivi
+.env.local
+.env.*.local
+.env.testing
+!.env.example
+!.env.production.example
+
+# Temp
+tmp/
+.tmp/

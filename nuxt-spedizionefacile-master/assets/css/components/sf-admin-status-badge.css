@@ -1,0 +1,44 @@
+/*
+ * sf-admin-status-badge.css — Badge stato admin unificato
+ *
+ * Estratto da components/admin/AdminStatusBadge.vue.
+ * Toni: success / warning / info / neutral / danger (token admin-status-*).
+ */
+
+.admin-status-badge {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	padding: 4px 12px;
+	border-radius: var(--admin-radius-pill);
+	font-size: 0.6875rem;
+	font-weight: 700;
+	line-height: 1.2;
+	letter-spacing: 0.1px;
+	white-space: nowrap;
+}
+
+.admin-status-badge--success {
+	color: var(--admin-status-success-text);
+	background: var(--admin-status-success-bg);
+}
+
+.admin-status-badge--warning {
+	color: var(--admin-status-warning-text);
+	background: var(--admin-status-warning-bg);
+}
+
+.admin-status-badge--info {
+	color: var(--admin-status-info-text);
+	background: var(--admin-status-info-bg);
+}
+
+.admin-status-badge--neutral {
+	color: var(--admin-status-neutral-text);
+	background: var(--admin-status-neutral-bg);
+}
+
+.admin-status-badge--danger {
+	color: var(--admin-status-danger-text);
+	background: var(--admin-status-danger-bg);
+}

@@ -1,0 +1,28 @@
+/*
+ * sf-account-profilo-view.css — Profilo account (vista sola lettura)
+ *
+ * Estratto da components/account/AccountProfiloView.vue.
+ * Contiene trigger + conferma eliminazione account (GDPR art. 17).
+ */
+
+/* Hover dedicato al trigger "Elimina account": wash rosso usando il token brand-error. */
+.sf-profilo-delete-trigger:hover {
+	background: rgba(239, 68, 68, 0.06);
+}
+
+/* Variante danger del CTA: riusa la scala .sf-flow-cta ma con palette error (no Tailwind red-*). */
+.sf-profilo-delete-confirm {
+	background: var(--color-brand-error);
+	color: #ffffff;
+	box-shadow: 0 6px 18px rgba(239, 68, 68, 0.24);
+}
+
+.sf-profilo-delete-confirm:hover {
+	background: #dc2626;
+	box-shadow: 0 8px 22px rgba(239, 68, 68, 0.32);
+}
+
+.sf-profilo-delete-confirm:focus-visible {
+	outline: 3px solid rgba(239, 68, 68, 0.45);
+	outline-offset: 2px;
+}

@@ -3,5 +3,15 @@
   "extends": "./.nuxt/tsconfig.json",
   "compilerOptions": {
     "types": ["node"]
-  }
+  },
+  "exclude": [
+    "node_modules",
+    ".output",
+    "output",
+    "_archive",
+    "_LOG",
+    "playwright-report",
+    "test-results",
+    "tests"
+  ]
 }

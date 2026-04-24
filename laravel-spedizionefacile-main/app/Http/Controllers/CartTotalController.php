@@ -27,6 +27,10 @@ use Illuminate\Http\Request;
 
 class CartTotalController extends Controller
 {
+    public function __construct(
+        private readonly CartService $cartService,
+    ) {}
+
     // ── Helpers ──────────────────────────────────────────────────
 
     /**
@@ -63,12 +67,12 @@ class CartTotalController extends Controller
      */
     protected function meta($packages): array
     {
-        $subtotal = CartService::subtotalFromModels($packages);
+        $subtotal = $this->cartService->subtotalFromModels($packages);
         return [
             'empty' => $packages->isEmpty(),
             'subtotal' => $subtotal->formatted(),
             'total' => $subtotal->formatted(),
-            'address_groups' => CartService::buildAddressGroups($packages),
+            'address_groups' => $this->cartService->buildAddressGroups($packages),
         ];
     }
 
@@ -89,14 +93,14 @@ class CartTotalController extends Controller
 
         // Auto-merge pacchi identici: può cancellare record nel DB,
         // quindi ricarichiamo per avere solo i pacchi ancora esistenti.
-        $merged = CartService::mergeIdenticalPackages($packages, $userId);
+        $merged = $this->cartService->mergeIdenticalPackages($packages, $userId);
         if ($merged > 0) {
             $packages = $this->loadCartPackages($userId);
         }
 
         // Normalizza eventuali prezzi legacy in memoria (nessun reload necessario:
         // normalizePackagePricing aggiorna i modelli già caricati via ->save()).
-        CartService::normalizePackagePricing($packages);
+        $this->cartService->normalizePackagePricing($packages);
 
         // Pulizia pacchi non validi: filtra dalla collezione già in memoria.
         $invalidPackages = $packages->filter(fn ($pkg) =>
@@ -136,7 +140,7 @@ class CartTotalController extends Controller
             return response()->json(['message' => 'Nulla da unire.', 'merged' => 0]);
         }
 
-        $merged = DB::transaction(fn () => CartService::mergeIdenticalPackages($packages, $userId));
+        $merged = DB::transaction(fn () => $this->cartService->mergeIdenticalPackages($packages, $userId));
 
         return response()->json([
             'message' => $merged > 0 ? "$merged pacchi identici uniti." : 'Nessun pacco da unire.',

@@ -1,9 +1,4 @@
-<!--
-  FILE: components/account/AccountWalletMovements.vue
-  SCOPO: Storico movimenti del portafoglio — lista cronologica con icona, fonte, importo.
-  PROPS: movements (Array), isLoadingMovements (Boolean), movementsError (String).
--->
-<script setup>
+﻿<script setup>
 import { formatDateTimeIt } from '~/utils/date.js';
 
 const props = defineProps({
@@ -76,11 +71,11 @@ const getMovementSvg = (mov) => {
 </script>
 
 <template>
-	<div class="mt-[20px] rounded-[20px] border border-[var(--color-brand-border)] bg-white p-[18px] shadow-sm desktop:mt-[24px] desktop:p-[24px]">
+	<div class="mt-[14px] rounded-[16px] bg-white p-[16px] desktop:mt-[18px] desktop:p-[20px]" style="box-shadow: 0 2px 8px rgba(9,88,102,0.06), 0 0 0 1px rgba(9,88,102,0.04);">
 		<div class="mb-[16px] flex flex-col gap-[10px] sm:flex-row sm:items-start sm:justify-between desktop:mb-[16px]">
 			<div class="flex items-start gap-[12px]">
 				<div class="flex h-[36px] w-[36px] items-center justify-center rounded-full bg-[#EDF7F8]">
-					<svg
+					<svg aria-hidden="true"
 						width="20"
 						height="20"
 						viewBox="0 0 24 24"
@@ -110,7 +105,7 @@ const getMovementSvg = (mov) => {
 
 		<div
 			v-if="movementsError && hasMovements"
-			class="mb-[16px] flex flex-col gap-[10px] rounded-[14px] border border-[#F3D1A7] bg-[#FFF7E8] px-[12px] py-[11px] text-[0.8125rem] text-[#B45309] tablet:flex-row tablet:items-center tablet:justify-between">
+			class="mb-[16px] flex flex-col gap-[10px] rounded-[16px] border border-[#F3D1A7] bg-[#FFF7E8] px-[12px] py-[11px] text-[0.8125rem] text-[#B45309] tablet:flex-row tablet:items-center tablet:justify-between">
 			<p class="leading-[1.5]">Non sono riuscito ad aggiornare tutto lo storico in tempo reale. Ti mostro l ultimo elenco disponibile.</p>
 			<button
 				type="button"
@@ -121,7 +116,7 @@ const getMovementSvg = (mov) => {
 		</div>
 
 		<div v-if="isLoadingMovements && !hasMovements" class="space-y-[10px] py-[4px]">
-			<div v-for="index in 4" :key="index" class="animate-pulse rounded-[14px] border border-[#EEF1F3] p-[12px]">
+			<div v-for="index in 4" :key="index" class="animate-pulse rounded-[16px] border border-[#EEF1F3] p-[12px]">
 				<div class="flex items-start gap-[12px]">
 					<div class="h-[38px] w-[38px] rounded-full bg-[#F5F7F8]"></div>
 					<div class="min-w-0 flex-1 space-y-[8px]">
@@ -135,7 +130,7 @@ const getMovementSvg = (mov) => {
 
 		<div v-else-if="hasBlockingError" class="py-[32px] text-center">
 			<div class="mx-auto mb-[16px] flex h-[56px] w-[56px] items-center justify-center rounded-full bg-[#FEF2F2]">
-				<svg
+				<svg aria-hidden="true"
 					width="24"
 					height="24"
 					viewBox="0 0 24 24"
@@ -155,7 +150,7 @@ const getMovementSvg = (mov) => {
 				{{ movementsError }}
 			</p>
 			<button type="button" @click="emit('retry-movements')" class="btn-secondary btn-compact mt-[16px] inline-flex items-center gap-[6px]">
-				<svg
+				<svg aria-hidden="true"
 					width="16"
 					height="16"
 					viewBox="0 0 24 24"
@@ -175,7 +170,7 @@ const getMovementSvg = (mov) => {
 
 		<div v-else-if="!hasMovements" class="py-[32px] text-center">
 			<div class="mx-auto mb-[16px] flex h-[56px] w-[56px] items-center justify-center rounded-full bg-[#F5F6F9]">
-				<svg
+				<svg aria-hidden="true"
 					width="24"
 					height="24"
 					viewBox="0 0 24 24"
@@ -194,8 +189,8 @@ const getMovementSvg = (mov) => {
 			<p class="mx-auto mt-[6px] max-w-[360px] text-[0.8125rem] leading-[1.55] text-[var(--color-brand-text-secondary)]">
 				I movimenti appariranno qui dopo la prima ricarica o il primo pagamento con il portafoglio.
 			</p>
-			<NuxtLink to="/preventivo" class="btn-cta btn-compact mt-[16px] inline-flex items-center gap-[6px]">
-				<svg
+			<NuxtLink to="/preventivo" class="btn-primary btn-compact mt-[16px] inline-flex items-center gap-[6px]">
+				<svg aria-hidden="true"
 					width="17"
 					height="17"
 					viewBox="0 0 24 24"
@@ -215,13 +210,18 @@ const getMovementSvg = (mov) => {
 			<li
 				v-for="(mov, index) in movements"
 				:key="mov.id || `${mov.created_at || 'mov'}-${index}`"
-				class="flex flex-col gap-[10px] rounded-[14px] border border-[#EEF1F3] p-[12px] transition-colors hover:bg-[#F5F6F9] sm:flex-row sm:items-center sm:gap-[12px]">
+				:class="[
+					'flex flex-col gap-[10px] rounded-[16px] rounded-l-[14px] border border-[#EEF1F3] p-[12px] sm:flex-row sm:items-center sm:gap-[12px] sf-movement-row',
+					mov.type === 'credit' ? 'sf-movement-row--credit' : 'sf-movement-row--debit',
+				]">
 				<div
 					:class="[
-						'flex h-[38px] w-[38px] items-center justify-center rounded-full shrink-0',
-						mov.type === 'credit' ? 'bg-[#E8F9EE]' : 'bg-[#FEF2F2]',
+						'flex h-[38px] w-[38px] items-center justify-center rounded-full shrink-0 ring-2 ring-offset-1',
+						mov.type === 'credit'
+							? 'bg-[#E8F9EE] ring-[#22C55E]/20'
+							: 'bg-[#FEF2F2] ring-[#EF4444]/20',
 					]">
-					<svg
+					<svg aria-hidden="true"
 						width="18"
 						height="18"
 						viewBox="0 0 24 24"
@@ -252,3 +252,4 @@ const getMovementSvg = (mov) => {
 		</ul>
 	</div>
 </template>
+

@@ -1,0 +1,197 @@
+/**
+ * useEcommerceAnalytics — Eventi GA4 e-commerce standard.
+ *
+ * Espone 5 metodi coerenti con il data model "Recommended E-commerce events"
+ * (https://developers.google.com/analytics/devguides/collection/ga4/ecommerce).
+ *
+ * Prezzi: sempre EUR con decimal point (19.90), NON cents. Il conversore
+ * centsToEur() converte da backend (cents) a payload GA4 (euro decimal).
+ *
+ * Safe-by-default:
+ *   - Se gtag non e' inizializzato (GA4 disabilitato o consent denied) i metodi
+ *     sono no-op silenziosi, la pagina non si rompe.
+ *   - Parallelo al flusso useFunnelAnalytics esistente: entrambi possono
+ *     convivere. useEcommerceAnalytics si limita a eventi e-commerce standard.
+ *
+ * Currency: EUR (hard-coded). Se in futuro vendiamo in USD, renderlo config.
+ */
+
+export type EcommerceItem = {
+	item_id: string | number
+	item_name: string
+	price: number
+	quantity: number
+	item_category?: string
+	item_variant?: string
+	[extra: string]: string | number | undefined
+}
+
+type GtagEventParams = {
+	currency?: string
+	value?: number
+	items?: EcommerceItem[]
+	transaction_id?: string
+	payment_type?: string
+	coupon?: string
+	shipping?: number
+	tax?: number
+	[k: string]: unknown
+}
+
+const centsToEur = (cents: number | string | null | undefined): number => {
+	const n = Number(cents || 0)
+	if (!Number.isFinite(n)) return 0
+	return Math.round(n) / 100
+}
+
+const safeGtag = (event: string, params: GtagEventParams): void => {
+	if (typeof window === 'undefined') return
+	const gtag = (window as unknown as { gtag?: (...args: unknown[]) => void }).gtag
+	if (typeof gtag !== 'function') return
+	try {
+		gtag('event', event, params)
+	} catch {
+		// analytics non deve rompere la pagina
+	}
+}
+
+export const useEcommerceAnalytics = () => {
+	/**
+	 * view_item — quando il preventivo e' stato calcolato e l'utente vede il prezzo.
+	 * Riceve il risultato del preventivo con prezzo in cents + tipo pacco.
+	 */
+	const viewItem = (payload: {
+		quoteType?: string
+		priceCents?: number
+		weightKg?: number
+		packageType?: string
+	}): void => {
+		const value = centsToEur(payload.priceCents ?? 0)
+		safeGtag('view_item', {
+			currency: 'EUR',
+			value,
+			items: [
+				{
+					item_id: `quote-${payload.quoteType || 'nazionale'}`,
+					item_name: `Preventivo ${payload.quoteType || 'spedizione'}`,
+					item_category: payload.packageType || 'pacco',
+					price: value,
+					quantity: 1,
+					item_variant: payload.weightKg ? `${payload.weightKg}kg` : undefined,
+				},
+			],
+		})
+	}
+
+	/**
+	 * add_to_cart — servizi aggiuntivi selezionati nello step 2 (assicurazione,
+	 * contrassegno, sms/email, priorita' etc.).
+	 */
+	const addToCart = (payload: {
+		services: Array<{ id?: string | number; name: string; priceCents?: number }>
+	}): void => {
+		const items: EcommerceItem[] = (payload.services || []).map((s, i) => ({
+			item_id: s.id ? String(s.id) : `service-${i}`,
+			item_name: s.name || 'Servizio',
+			item_category: 'servizio',
+			price: centsToEur(s.priceCents),
+			quantity: 1,
+		}))
+		const value = items.reduce((sum, it) => sum + (it.price * it.quantity), 0)
+		safeGtag('add_to_cart', {
+			currency: 'EUR',
+			value,
+			items,
+		})
+	}
+
+	/**
+	 * begin_checkout — l'utente entra nello step pagamento (step 4).
+	 */
+	const beginCheckout = (payload: {
+		totalCents: number
+		items?: EcommerceItem[]
+	}): void => {
+		const value = centsToEur(payload.totalCents)
+		safeGtag('begin_checkout', {
+			currency: 'EUR',
+			value,
+			items: payload.items || [
+				{
+					item_id: 'shipment',
+					item_name: 'Spedizione',
+					item_category: 'shipment',
+					price: value,
+					quantity: 1,
+				},
+			],
+		})
+	}
+
+	/**
+	 * add_payment_info — l'utente ha selezionato un metodo di pagamento (carta,
+	 * wallet, bonifico, paypal, google_pay).
+	 */
+	const addPaymentInfo = (payload: {
+		paymentType: string
+		totalCents: number
+	}): void => {
+		const value = centsToEur(payload.totalCents)
+		safeGtag('add_payment_info', {
+			currency: 'EUR',
+			value,
+			payment_type: payload.paymentType || 'unknown',
+			items: [
+				{
+					item_id: 'shipment',
+					item_name: 'Spedizione',
+					item_category: 'shipment',
+					price: value,
+					quantity: 1,
+				},
+			],
+		})
+	}
+
+	/**
+	 * purchase — pagamento completato con successo.
+	 * `transactionId` e' l'id ordine (order_id); `totalCents` e' il totale pagato.
+	 */
+	const purchase = (payload: {
+		transactionId: string | number
+		totalCents: number
+		items?: EcommerceItem[]
+		coupon?: string
+		paymentType?: string
+		shippingCents?: number
+		taxCents?: number
+	}): void => {
+		const value = centsToEur(payload.totalCents)
+		safeGtag('purchase', {
+			currency: 'EUR',
+			value,
+			transaction_id: String(payload.transactionId),
+			coupon: payload.coupon,
+			payment_type: payload.paymentType,
+			shipping: payload.shippingCents != null ? centsToEur(payload.shippingCents) : undefined,
+			tax: payload.taxCents != null ? centsToEur(payload.taxCents) : undefined,
+			items: payload.items || [
+				{
+					item_id: `order-${payload.transactionId}`,
+					item_name: 'Spedizione',
+					item_category: 'shipment',
+					price: value,
+					quantity: 1,
+				},
+			],
+		})
+	}
+
+	return {
+		viewItem,
+		addToCart,
+		beginCheckout,
+		addPaymentInfo,
+		purchase,
+	}
+}

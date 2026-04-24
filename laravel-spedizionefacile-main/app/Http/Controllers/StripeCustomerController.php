@@ -79,7 +79,26 @@ class StripeCustomerController extends Controller
     public function getDefaultPaymentMethod(Request $request)
     {
         $user = $request->user();
-        if (!$user->customer_id || !$this->stripe->isConfigured()) return response()->json(['card' => null]);
-        return response()->json(['card' => $this->stripe->getDefaultPaymentMethod($user)]);
+        if (!$user || !$this->stripe->isConfigured()) {
+            return response()->json(['card' => null]);
+        }
+        try {
+            // Accesso a customer_id (cast 'encrypted') puo' fallire con
+            // DecryptException se il dato nel DB e' stato cifrato con una APP_KEY
+            // diversa da quella attuale. In quel caso trattiamo come "nessuna carta"
+            // e ripuliamo silenziosamente il campo invece di 500.
+            $customerId = $user->customer_id;
+            if (!$customerId) {
+                return response()->json(['card' => null]);
+            }
+            return response()->json(['card' => $this->stripe->getDefaultPaymentMethod($user)]);
+        } catch (\Illuminate\Contracts\Encryption\DecryptException $e) {
+            Log::warning('customer_id decrypt failed, resetting', ['user_id' => $user->id]);
+            $user->forceFill(['customer_id' => null])->saveQuietly();
+            return response()->json(['card' => null]);
+        } catch (\Throwable $e) {
+            Log::warning('getDefaultPaymentMethod failed', ['error' => $e->getMessage(), 'user_id' => $user->id]);
+            return response()->json(['card' => null]);
+        }
     }
 }

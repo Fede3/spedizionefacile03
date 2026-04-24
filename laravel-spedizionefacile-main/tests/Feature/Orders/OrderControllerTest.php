@@ -3,6 +3,7 @@
 namespace Tests\Feature\Orders;
 
 use App\Models\Order;
+use App\Models\Coupon;
 use App\Models\Package;
 use App\Models\PackageAddress;
 use App\Models\Service;
@@ -197,13 +198,44 @@ class OrderControllerTest extends TestCase
             ->postJson('/api/create-direct-order', $this->directOrderPayload());
 
         $response->assertSuccessful();
-        $response->assertJsonStructure(['order_id', 'order_number']);
+        $response->assertJsonStructure(['order_id', 'order_number', 'client_submission_id']);
+        $this->assertNotEmpty($response->json('client_submission_id'));
 
         // Order created with server-calculated subtotal
         $this->assertDatabaseHas('orders', [
             'user_id' => $user->id,
             'status'  => 'pending',
         ]);
+    }
+
+    public function test_create_direct_order_persists_discount_context_inside_pricing_snapshot(): void
+    {
+        $user = User::factory()->create();
+        Coupon::factory()->create([
+            'code' => 'SAVE5',
+            'percentage' => 5,
+            'active' => true,
+        ]);
+
+        $response = $this->actingAs($user)
+            ->postJson('/api/create-direct-order', $this->directOrderPayload([
+                'client_submission_id' => 'direct-discount-context-001',
+                'discount_context' => [
+                    'type' => 'coupon',
+                    'code' => 'SAVE5',
+                    'discount_percent' => 5,
+                    'discount_amount' => 0.6,
+                    'subtotal_raw' => 11.9,
+                    'final_total_raw' => 11.3,
+                ],
+            ]))
+            ->assertSuccessful();
+
+        $order = Order::query()->findOrFail($response->json('order_id'));
+
+        $this->assertSame('SAVE5', data_get($order->pricing_snapshot, 'discount_context.code'));
+        $this->assertSame('coupon', data_get($order->pricing_snapshot, 'discount_context.type'));
+        $this->assertEquals(5.0, data_get($order->pricing_snapshot, 'discount_context.discount_percent'));
     }
 
     public function test_create_direct_order_is_idempotent_for_the_same_submission_context(): void
@@ -231,6 +263,8 @@ class OrderControllerTest extends TestCase
         $secondOrderId = $second->json('order_id');
 
         $this->assertSame($firstOrderId, $secondOrderId);
+        $this->assertSame('direct-submission-001', $first->json('client_submission_id'));
+        $this->assertSame('direct-submission-001', $second->json('client_submission_id'));
         $this->assertSame(1, Order::query()->where('user_id', $user->id)->where('client_submission_id', 'direct-submission-001')->count());
 
         $order = Order::query()->findOrFail($firstOrderId);
@@ -318,6 +352,39 @@ class OrderControllerTest extends TestCase
             ->postJson('/api/create-direct-order', $payload)
             ->assertStatus(422)
             ->assertJsonValidationErrors(['pudo.pudo_id']);
+    }
+
+    public function test_create_direct_order_accepts_selected_pudo_alias_and_persists_delivery_mode_context(): void
+    {
+        $user = User::factory()->create();
+        $payload = $this->directOrderPayload([
+            'client_submission_id' => 'direct-submission-selected-pudo-001',
+            'delivery_mode' => 'pudo',
+            'selected_pudo' => [
+                'pudo_id' => 'BRT-POINT-001',
+                'name' => 'BRT Point Roma Centro',
+                'address' => 'Via del Punto 12',
+                'city' => 'Roma',
+                'zip_code' => '00119',
+                'province' => 'RM',
+            ],
+        ]);
+
+        $response = $this->actingAs($user)
+            ->postJson('/api/create-direct-order', $payload)
+            ->assertSuccessful();
+
+        $order = Order::query()
+            ->with(['packages.service'])
+            ->findOrFail($response->json('order_id'));
+
+        $this->assertSame('BRT-POINT-001', $order->brt_pudo_id);
+        $this->assertSame('pudo', data_get($order->pricing_snapshot, 'services.service_payload.delivery_mode'));
+        $this->assertSame('BRT-POINT-001', data_get($order->pricing_snapshot, 'services.service_payload.pudo.pudo_id'));
+
+        $serviceData = $order->packages->first()?->service?->service_data ?? [];
+        $this->assertSame('pudo', data_get($serviceData, 'delivery_mode'));
+        $this->assertSame('BRT-POINT-001', data_get($serviceData, 'pudo.pudo_id'));
     }
 
     public function test_add_package_rotates_pricing_context_on_pending_order(): void

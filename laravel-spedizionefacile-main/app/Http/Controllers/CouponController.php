@@ -1,7 +1,7 @@
 <?php
 /**
  * FILE: CouponController.php
- * SCOPO: Calcola lo sconto da applicare in base a codice coupon o codice referral.
+ * SCOPO: Preview/validazione di coupon o referral nel checkout.
  *
  * COSA ENTRA:
  *   - Request con coupon (codice inserito) e total (totale carrello in euro)
@@ -11,17 +11,20 @@
  *   - JSON error se codice non valido (HTTP 404) o auto-referral (HTTP 422)
  *
  * CHIAMATO DA:
- *   - routes/api.php — POST /api/coupon
- *   - nuxt: pages/checkout.vue (campo codice promozionale)
+ *   - routes/api.php -> POST /api/calculate-coupon
+ *   - nuxt: composables/useCart.js -> validateCoupon()
+ *   - nuxt: ShipmentStepPagamento / checkout UI
  *
  * EFFETTI COLLATERALI:
- *   - Nessuno (sola lettura: verifica coupon e calcola sconto senza salvare)
+ *   - Nessuno: sola lettura, non salva lo sconto nell'ordine
  *
  * VINCOLI:
  *   - L'ordine di ricerca e': prima coupon admin, poi codice referral Partner Pro
  *   - I codici referral danno SEMPRE il 5% di sconto (hardcoded)
  *   - L'utente NON puo' usare il proprio codice referral su se stesso
- *   - Questa funzione e' di sola lettura: non salva nulla, solo calcola lo sconto
+ *   - Questa funzione produce solo una preview UI dello sconto
+ *   - Non crea ReferralUsage, non muove WalletMovement e non persiste il discount nell'ordine
+ *   - La commissione Partner Pro NON nasce qui: il credito reale viene registrato da ReferralRewardController
  *
  * ERRORI TIPICI:
  *   - 404: codice non corrisponde a nessun coupon attivo ne' codice referral
@@ -32,27 +35,35 @@
  *   - Per aggiungere un tipo di sconto: aggiungere un blocco dopo il check referral
  *
  * COLLEGAMENTI:
- *   - app/Models/Coupon.php — modello coupon con code, percentage, active
- *   - ReferralController.php — gestione completa dei codici referral e commissioni
- *   - pages/checkout.vue — campo codice promozionale
+ *   - app/Models/Coupon.php -> modello coupon con code, percentage, active
+ *   - ReferralRewardController.php -> accredito reale della commissione referral
+ *   - composables/useCart.js -> preview coupon/referral lato checkout
  */
 
 namespace App\Http\Controllers;
 
 use App\Models\Coupon;
-use App\Models\User;
 use Illuminate\Http\Request;
-use App\Cart\MyMoney;
+use App\Services\DiscountPreviewService;
+
 class CouponController extends Controller
 {
+    /*
+     * Boundary note:
+     * - questo controller serve solo per preview/validazione del codice nel checkout;
+     * - il source of truth monetario dell'ordine non nasce qui;
+     * - per la parte economica post-ordine vedere ReferralRewardController.
+     */
+
     // Calcola lo sconto da applicare in base al codice inserito dall'utente
-    public function calculateCoupon(Request $request) {
+    public function calculateCoupon(Request $request, DiscountPreviewService $discountPreviewService)
+    {
         $data = $request->validate([
             'coupon' => 'required|string|max:50',
             'total' => 'required|numeric|min:0',
         ]);
 
-        $couponCode = $data['coupon'];   // Il codice inserito dall'utente
+        $couponCode = strtoupper(trim($data['coupon']));   // Il codice inserito dall'utente
         $total = $data['total'];          // Il totale del carrello in euro
 
         // PRIMA controlliamo se e' un coupon classico (creato dall'admin)
@@ -60,30 +71,22 @@ class CouponController extends Controller
         $coupon = Coupon::where('code', $couponCode)->where('active', true)->first();
 
         if ($coupon) {
-            // Calcoliamo lo sconto in base alla percentuale del coupon
-            $percentageValue = $coupon->percentage;
-            $discountAmount = $total * ($percentageValue / 100);
-            $finalAmount = $total - $discountAmount;
+            // SEC-NEW-07: Verifica anti-abuso (scadenza, limiti globali e per-utente)
+            $userId = auth()->id();
+            [$isValid, $errorMessage] = $coupon->validateForUser($userId);
 
-            // Convertiamo il totale scontato in centesimi per la formattazione
-            $finalAmountCents = intval(round($finalAmount * 100));
-            $newAmount = new MyMoney($finalAmountCents);
+            if (! $isValid) {
+                return response()->json(['error' => $errorMessage], 422);
+            }
 
-            return response()->json([
-                'success' => true,
-                'type' => 'coupon',
-                'percentage' => $percentageValue,
-                'discount_amount' => round($discountAmount, 2),
-                'new_total' => $newAmount->formatted(),          // Totale formattato (es. "8,55 EUR")
-                'new_total_raw' => round($finalAmount, 2),       // Totale come numero (es. 8.55)
-            ]);
+            return response()->json(
+                $discountPreviewService->buildCouponPreview($coupon, (float) $total)
+            );
         }
 
         // POI controlliamo se e' un codice referral di un Partner Pro
         // I codici referral sono codici di 8 caratteri assegnati ai Partner Pro
-        $proUser = User::where('referral_code', strtoupper($couponCode))
-            ->where('role', 'Partner Pro')
-            ->first();
+        $proUser = $discountPreviewService->resolveReferralPartner($couponCode);
 
         if ($proUser) {
             $buyer = auth()->user();
@@ -95,24 +98,9 @@ class CouponController extends Controller
                 ], 422);
             }
 
-            // I codici referral danno sempre il 5% di sconto
-            $percentageValue = 5;
-            $discountAmount = $total * ($percentageValue / 100);
-            $finalAmount = $total - $discountAmount;
-
-            $finalAmountCents = intval(round($finalAmount * 100));
-            $newAmount = new MyMoney($finalAmountCents);
-
-            return response()->json([
-                'success' => true,
-                'type' => 'referral',
-                'percentage' => $percentageValue,
-                'discount_amount' => round($discountAmount, 2),
-                'new_total' => $newAmount->formatted(),
-                'new_total_raw' => round($finalAmount, 2),
-                'referral_code' => strtoupper($couponCode),
-                'pro_user_name' => $proUser->name,
-            ]);
+            return response()->json(
+                $discountPreviewService->buildReferralPreview($proUser, (float) $total, $couponCode)
+            );
         }
 
         // Se il codice non corrisponde ne' a un coupon ne' a un codice referral, e' non valido

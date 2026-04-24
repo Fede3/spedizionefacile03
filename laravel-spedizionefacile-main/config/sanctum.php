@@ -127,9 +127,32 @@ return [
     */
 
     'middleware' => [
-        'authenticate_session' => Laravel\Sanctum\Http\Middleware\AuthenticateSession::class,
+        // 'authenticate_session' DISABILITATO: la middleware richiede che in sessione
+        // sia presente 'password_hash_web' sincronizzato con il DB. Nei flussi OAuth
+        // (Google/Facebook/Apple) e dopo session()->regenerate() post-login, l'hash
+        // puo' mancare: AuthenticateSession allora esegue logoutCurrentDevice() al
+        // primo request successivo, disconnettendo l'utente — visibile in modo
+        // evidente durante il redirect 3DS Stripe (pausa 30-90s sul payment).
+        // In SPA stateful la protezione session hijack è già garantita dai cookie
+        // HttpOnly + SameSite=lax + CSRF token. Riattivare solo dopo aver
+        // allineato tutti i controller auth a salvare password_hash_web in sessione.
+        // 'authenticate_session' => Laravel\Sanctum\Http\Middleware\AuthenticateSession::class,
         'encrypt_cookies' => App\Http\Middleware\EncryptCookies::class,
         'validate_csrf_token' => Illuminate\Foundation\Http\Middleware\ValidateCsrfToken::class,
     ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Registrazione Rotte Sanctum (disabilitata — override locale)
+    |--------------------------------------------------------------------------
+    |
+    | Con false Sanctum NON registra automaticamente GET /sanctum/csrf-cookie.
+    | La rotta equivalente e' ridefinita in routes/web.php con rate limiting
+    | (throttle:30,1) per evitare abusi / SSRF amplification. Mantiene
+    | lo stesso controller e nome ('sanctum.csrf-cookie') di Sanctum.
+    |
+    */
+
+    'routes' => false,
 
 ];

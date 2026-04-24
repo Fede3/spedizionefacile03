@@ -6,12 +6,33 @@ use App\Models\User;
 use App\Services\AppleJwtService;
 use App\Support\AuthUiCookie;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
+/**
+ * FILE: AppleController.php
+ * SCOPO: Sign in with Apple OAuth con state session-based + nonce (RFC 6749/OIDC).
+ *
+ * SICUREZZA (Sprint 6.3 — BLOCKER GO-LIVE):
+ *   - State in SESSIONE (non cookie), TTL 10 min, single-shot via pull().
+ *   - Nonce aggiuntivo per validare l'ID token contro replay (OIDC best practice,
+ *     https://developer.apple.com/documentation/signinwithapplerestapi).
+ *   - PKCE NON supportato da Sign in with Apple (REST API): state+nonce sono
+ *     le contromisure equivalenti.
+ *   - Ogni state/nonce mismatch logga su channel "security".
+ */
 class AppleController extends Controller
 {
+    /** TTL state/nonce in minuti. */
+    private const STATE_TTL_MINUTES = 10;
+
+    private const SESSION_STATE_KEY = 'oauth_state_apple';
+    private const SESSION_STATE_CREATED_KEY = 'oauth_state_apple_created_at';
+    private const SESSION_NONCE_KEY = 'oauth_nonce_apple';
+
     private AppleJwtService $jwt;
 
     public function __construct(?AppleJwtService $jwt = null)
@@ -29,13 +50,20 @@ class AppleController extends Controller
         }
 
         $state = Str::random(40);
+        $nonce = Str::random(40);
         $intent = trim((string) $request->query('intent', 'login'));
         $referral = trim((string) $request->query('ref', ''));
         $userType = trim((string) $request->query('user_type', ''));
 
+        // Salviamo state + nonce in SESSIONE (bound al session id). Fix CVSS 5.9.
+        $request->session()->put(self::SESSION_STATE_KEY, $state);
+        $request->session()->put(self::SESSION_STATE_CREATED_KEY, now()->timestamp);
+        $request->session()->put(self::SESSION_NONCE_KEY, $nonce);
+
         $query = http_build_query([
             'client_id' => config('services.apple.client_id'), 'redirect_uri' => config('services.apple.redirect'),
-            'response_type' => 'code', 'response_mode' => 'form_post', 'scope' => 'name email', 'state' => $state,
+            'response_type' => 'code', 'response_mode' => 'form_post', 'scope' => 'name email',
+            'state' => $state, 'nonce' => $nonce,
         ]);
 
         return redirect('https://appleid.apple.com/auth/authorize?' . $query)
@@ -43,8 +71,7 @@ class AppleController extends Controller
             ->withCookie($this->cookie('frontend_redirect_path', $redirectPath))
             ->withCookie($this->cookie('frontend_social_intent', $intent === 'register' ? 'register' : 'login'))
             ->withCookie($this->cookie('frontend_social_referral', $referral !== '' ? strtoupper($referral) : ''))
-            ->withCookie($this->cookie('frontend_social_user_type', in_array($userType, ['privato', 'commerciante'], true) ? $userType : 'privato'))
-            ->withCookie($this->cookie('frontend_social_state', $state));
+            ->withCookie($this->cookie('frontend_social_user_type', in_array($userType, ['privato', 'commerciante'], true) ? $userType : 'privato'));
     }
 
     public function handleAppleCallback(Request $request)
@@ -53,22 +80,32 @@ class AppleController extends Controller
         $redirectPath = $this->normalizeRedirectPath((string) ($request->cookie('frontend_redirect_path') ?: '/'));
 
         if (!$this->isAppleConfigured()) {
-            return $this->clearSocialCookies($this->redirectWithFrontendError($frontendUrl, $redirectPath, 'apple_unavailable'));
+            return $this->clearSocialCookies($this->redirectWithFrontendError($frontendUrl, $redirectPath, 'apple_unavailable'), $request);
         }
 
-        $expectedState = trim((string) $request->cookie('frontend_social_state', ''));
+        // pull() = read+delete atomic → replay bloccato.
+        $expectedState = (string) $request->session()->pull(self::SESSION_STATE_KEY, '');
+        $stateCreatedAt = (int) $request->session()->pull(self::SESSION_STATE_CREATED_KEY, 0);
+        $expectedNonce = (string) $request->session()->pull(self::SESSION_NONCE_KEY, '');
         $receivedState = trim((string) $request->input('state', $request->query('state', '')));
-        if ($expectedState === '' || !hash_equals($expectedState, $receivedState)) {
-            return $this->clearSocialCookies($this->redirectWithFrontendError($frontendUrl, $redirectPath, 'apple_invalid_state'));
+
+        if ($expectedState === '' || $receivedState === '' || !hash_equals($expectedState, $receivedState)) {
+            $this->logSecurityEvent($request, 'state.mismatch');
+            return $this->clearSocialCookies($this->redirectWithFrontendError($frontendUrl, $redirectPath, 'apple_invalid_state'), $request);
+        }
+
+        if ($stateCreatedAt <= 0 || Carbon::createFromTimestamp($stateCreatedAt)->addMinutes(self::STATE_TTL_MINUTES)->isPast()) {
+            $this->logSecurityEvent($request, 'state.expired', ['age_seconds' => $stateCreatedAt > 0 ? now()->timestamp - $stateCreatedAt : null]);
+            return $this->clearSocialCookies($this->redirectWithFrontendError($frontendUrl, $redirectPath, 'apple_invalid_state'), $request);
         }
 
         if ($request->filled('error')) {
-            return $this->clearSocialCookies($this->redirectWithFrontendError($frontendUrl, $redirectPath, 'apple_failed'));
+            return $this->clearSocialCookies($this->redirectWithFrontendError($frontendUrl, $redirectPath, 'apple_failed'), $request);
         }
 
         $authorizationCode = trim((string) $request->input('code', ''));
         if ($authorizationCode === '') {
-            return $this->clearSocialCookies($this->redirectWithFrontendError($frontendUrl, $redirectPath, 'apple_failed'));
+            return $this->clearSocialCookies($this->redirectWithFrontendError($frontendUrl, $redirectPath, 'apple_failed'), $request);
         }
 
         try {
@@ -84,8 +121,17 @@ class AppleController extends Controller
 
             $claims = $this->jwt->parseIdTokenClaims($idToken);
             $this->jwt->validateAppleClaims($claims);
+
+            // Nonce binding (OIDC): se Apple ha restituito un nonce, DEVE matchare
+            // quello salvato in sessione prima del redirect. Se il claim manca
+            // (flussi form_post legacy) la validazione state copre il vettore CSRF.
+            $returnedNonce = trim((string) ($claims['nonce'] ?? ''));
+            if ($expectedNonce !== '' && $returnedNonce !== '' && !hash_equals($expectedNonce, $returnedNonce)) {
+                $this->logSecurityEvent($request, 'nonce.mismatch');
+                throw new \RuntimeException('Apple nonce mismatch.');
+            }
         } catch (\Throwable $e) {
-            return $this->clearSocialCookies($this->redirectWithFrontendError($frontendUrl, $redirectPath, 'apple_failed'));
+            return $this->clearSocialCookies($this->redirectWithFrontendError($frontendUrl, $redirectPath, 'apple_failed'), $request);
         }
 
         $appleId = trim((string) ($claims['sub'] ?? ''));
@@ -118,7 +164,19 @@ class AppleController extends Controller
         Auth::login($user, true);
         if ($request->hasSession()) $request->session()->regenerate();
 
-        return $this->clearSocialCookies(redirect($frontendUrl . $redirectPath)->withCookie(AuthUiCookie::issueForUser($user, true)));
+        return $this->clearSocialCookies(redirect($frontendUrl . $redirectPath)->withCookie(AuthUiCookie::issueForUser($user, true)), $request);
+    }
+
+    /**
+     * Logga un evento di sicurezza su channel "security" (Sprint W1.1 → Sentry).
+     */
+    private function logSecurityEvent(Request $request, string $reason, array $context = []): void
+    {
+        Log::channel('security')->warning('oauth.apple.'.$reason, array_merge([
+            'ip' => $request->ip(),
+            'user_agent' => substr((string) $request->userAgent(), 0, 255),
+            'timestamp' => now()->toIso8601String(),
+        ], $context));
     }
 
     private function createUserFromApple(Request $request, string $appleId, string $appleEmail, array $appleUserPayload, array $claims): User
@@ -136,12 +194,15 @@ class AppleController extends Controller
         $user = new User([
             'email' => $appleEmail, 'name' => $name, 'surname' => $surname, 'telephone_number' => '',
             'email_verified_at' => now(), 'password' => Str::random(32),
-            'referred_by' => $validatedReferral,
             'user_type' => in_array($userType, ['privato', 'commerciante'], true) ? $userType : 'privato',
         ]);
         // Campi non in $fillable: vanno assegnati direttamente per sicurezza
         $user->role = 'User';
         $user->apple_id = $appleId;
+        // referred_by gia' validato sopra contro referral_code di un Partner Pro esistente
+        if ($validatedReferral !== null) {
+            $user->referred_by = $validatedReferral;
+        }
         $user->save();
         return $user;
     }
@@ -197,8 +258,16 @@ class AppleController extends Controller
         return cookie($name, $value, $minutes, '/', null, false, false);
     }
 
-    private function clearSocialCookies($response)
+    private function clearSocialCookies($response, ?Request $request = null)
     {
+        if ($request && $request->hasSession()) {
+            $request->session()->forget([
+                self::SESSION_STATE_KEY,
+                self::SESSION_STATE_CREATED_KEY,
+                self::SESSION_NONCE_KEY,
+            ]);
+        }
+
         return $response->withoutCookie('frontend_redirect')->withoutCookie('frontend_redirect_path')
             ->withoutCookie('frontend_social_intent')->withoutCookie('frontend_social_referral')
             ->withoutCookie('frontend_social_user_type')->withoutCookie('frontend_social_state');

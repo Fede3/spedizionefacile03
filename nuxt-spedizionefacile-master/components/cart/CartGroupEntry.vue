@@ -1,11 +1,6 @@
-<!--
-  FILE: components/cart/CartGroupEntry.vue
-  SCOPO: Riga carrello raggruppata (multi-collo, spedizione unica) — design prototipo.
-  Card con rounded-14, ring, subtle shadow. Expand/collapse per dettagli colli.
-  PROPS: entry, expanded
-  EMITS: toggle, update-quantity(id, qty), delete(id)
--->
 <script setup>
+import { buildShipmentFlowEditLocation } from '~/utils/shipment'
+
 const props = defineProps({
   entry: { type: Object, required: true },
   expanded: { type: Boolean, default: false },
@@ -18,6 +13,7 @@ const props = defineProps({
 const emit = defineEmits(['toggle', 'update-quantity', 'delete'])
 
 const firstItem = computed(() => props.entry.items[0])
+const toEditLocation = (itemId) => buildShipmentFlowEditLocation(itemId)
 </script>
 
 <template>
@@ -27,7 +23,7 @@ const firstItem = computed(() => props.entry.items[0])
     <button
       type="button"
       @click="emit('toggle')"
-      class="w-full flex items-start gap-[14px] p-[16px] sm:p-[18px] hover:bg-[#FAFBFC] transition cursor-pointer text-left"
+      class="w-full flex items-start gap-[14px] p-[16px] sm:p-[18px] hover:bg-[rgba(9,88,102,0.03)] transition cursor-pointer text-left"
     >
       <!-- Icon box with group color accent -->
       <div class="w-[48px] h-[48px] rounded-[12px] bg-[#F8F9FB] ring-[1px] ring-[#DFE2E7] flex items-center justify-center shrink-0 relative">
@@ -44,7 +40,7 @@ const firstItem = computed(() => props.entry.items[0])
         <!-- Route -->
         <div class="flex items-center gap-[6px] mb-[2px] flex-wrap">
           <span class="text-[var(--color-brand-text)] text-[15px] sm:text-[16px]" style="font-weight: 700">{{ firstItem?.origin_address?.city || 'Partenza' }}</span>
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--color-brand-accent)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="shrink-0"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--color-brand-primary)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="shrink-0"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
           <span class="text-[var(--color-brand-text)] text-[15px] sm:text-[16px]" style="font-weight: 700">{{ firstItem?.destination_address?.city || 'Destinazione' }}</span>
           <!-- BRT pill -->
           <span class="text-[var(--color-brand-text-secondary)] text-[13px] px-[6px] py-[1px] rounded-full ring-[1px] ring-[#DFE2E7] bg-[#FAFBFC] shrink-0 ml-[2px]" style="font-weight: 600">
@@ -67,7 +63,7 @@ const firstItem = computed(() => props.entry.items[0])
         <!-- Addresses -->
         <div class="flex flex-col sm:flex-row sm:items-center gap-[2px] sm:gap-[12px] mt-[6px] text-[13px] text-[var(--color-brand-text-secondary)]">
           <span class="flex items-center gap-[4px]">
-            <span class="w-[5px] h-[5px] rounded-full bg-[var(--color-brand-accent)] shrink-0"></span>
+            <span class="w-[5px] h-[5px] rounded-full bg-[var(--color-brand-primary)] shrink-0"></span>
             {{ firstItem?.origin_address?.name || 'Mittente' }} &ndash; {{ firstItem?.origin_address?.city || 'N/D' }}
           </span>
           <span class="flex items-center gap-[4px]">
@@ -100,7 +96,7 @@ const firstItem = computed(() => props.entry.items[0])
         >
           <!-- Package icon -->
           <div class="w-[36px] h-[36px] rounded-[10px] bg-white ring-[1px] ring-[#DFE2E7] flex items-center justify-center shrink-0">
-            <NuxtImg :src="getPackageIcon(item)" alt="" width="20" height="20" loading="lazy" decoding="async" class="w-[20px] h-[20px] object-contain" />
+            <NuxtImg :src="getPackageIcon(item)" :alt="item.package_type || 'Tipo collo'" width="20" height="20" loading="lazy" decoding="async" class="w-[20px] h-[20px] object-contain" />
           </div>
 
           <!-- Info -->
@@ -127,25 +123,27 @@ const firstItem = computed(() => props.entry.items[0])
             <div class="flex items-center gap-[1px] bg-[#F8F9FB] rounded-full ring-[1px] ring-[#DFE2E7]">
               <button
                 type="button"
+                aria-label="Diminuisci quantità"
                 @click="emit('update-quantity', item.id, (item.quantity || 1) - 1)"
                 :disabled="(item.quantity || 1) <= 1"
-                class="w-[28px] h-[28px] flex items-center justify-center cursor-pointer hover:bg-[#E6E9EE] rounded-l-full transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                class="w-[28px] h-[28px] flex items-center justify-center cursor-pointer hover:bg-[rgba(9,88,102,0.08)] rounded-l-full transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
               >
-                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#777" stroke-width="2.5" stroke-linecap="round"><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                <svg aria-hidden="true" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#777" stroke-width="2.5" stroke-linecap="round"><line x1="5" y1="12" x2="19" y2="12"/></svg>
               </button>
               <span class="w-[22px] text-center text-[11px] text-[var(--color-brand-text)]" style="font-weight: 700">{{ item.quantity || 1 }}</span>
               <button
                 type="button"
+                aria-label="Aumenta quantità"
                 @click="emit('update-quantity', item.id, (item.quantity || 1) + 1)"
                 :disabled="(item.quantity || 1) >= 100"
-                class="w-[28px] h-[28px] flex items-center justify-center cursor-pointer hover:bg-[#E6E9EE] rounded-r-full transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                class="w-[28px] h-[28px] flex items-center justify-center cursor-pointer hover:bg-[rgba(9,88,102,0.08)] rounded-r-full transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
               >
-                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#777" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                <svg aria-hidden="true" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#777" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
               </button>
             </div>
             <!-- Edit -->
             <NuxtLink
-              :to="`/riepilogo?edit=${item.id}`"
+              :to="toEditLocation(item.id)"
               class="w-[28px] h-[28px] rounded-full bg-[#E6E9EE] flex items-center justify-center hover:bg-[#D5D9E0] cursor-pointer transition-colors"
               title="Modifica collo"
               aria-label="Modifica collo"
@@ -160,7 +158,7 @@ const firstItem = computed(() => props.entry.items[0])
               title="Elimina collo"
               aria-label="Elimina collo"
             >
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#E44203" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#095866" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
             </button>
           </div>
         </div>

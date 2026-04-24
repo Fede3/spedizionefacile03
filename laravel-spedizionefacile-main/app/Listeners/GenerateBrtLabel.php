@@ -5,12 +5,12 @@
  * SCOPO: Listener che genera automaticamente l'etichetta BRT dopo il pagamento di un ordine.
  *
  * DOVE SI USA:
- *   - EventServiceProvider — registrato come listener di OrderPaid
+ *   - EventServiceProvider: registrato come listener di OrderPaid
  *   - Scatenato da StripeController.php quando il pagamento va a buon fine
  *
  * DATI IN INGRESSO:
  *   - OrderPaid event con order (l'ordine appena pagato)
- *   Esempio: event(new OrderPaid($order)) → GenerateBrtLabel.handle() viene chiamato
+ *   Esempio: event(new OrderPaid($order)) -> GenerateBrtLabel.handle() viene chiamato
  *
  * DATI IN USCITA:
  *   - Nessun ritorno (void), ma aggiorna l'ordine nel database con dati BRT
@@ -29,36 +29,28 @@
  *   - Email fallita: non blocca, l'errore viene solo loggato
  *
  * PUNTI DI MODIFICA SICURI:
- *   - Per cambiare numero tentativi: modificare MAX_RETRIES
- *   - Per aggiungere opzioni BRT: modificare il blocco $options prima del ciclo for
- *   - Per cambiare il comportamento post-successo: modificare il blocco if result.success
+ *   - Per cambiare numero tentativi: modificare $tries / $backoff
+ *   - Per aggiungere opzioni BRT: modificare OrderBrtFulfillmentService::buildAutomaticShipmentOptions()
+ *   - Per cambiare il comportamento post-successo: modificare OrderBrtFulfillmentService
  *
  * COLLEGAMENTI:
- *   - app/Services/BrtService.php — servizio che comunica con API BRT
- *   - app/Events/OrderPaid.php — evento che scatena questo listener
- *   - app/Services/ShipmentExecutionService.php — completa pickup/borderò/documenti
- *   - app/Listeners/MarkOrderProcessing.php — altro listener OrderPaid (cambia stato a processing)
+ *   - app/Services/BrtService.php - servizio che comunica con API BRT
+ *   - app/Services/OrderBrtFulfillmentService.php - boundary canonico order-centric del fulfillment BRT
+ *   - app/Events/OrderPaid.php - evento che scatena questo listener
+ *   - app/Services/ShipmentExecutionService.php - completa pickup/bordero/documenti dopo la label
+ *   - app/Listeners/MarkOrderProcessing.php - altro listener OrderPaid (cambia stato a processing)
  */
 
 namespace App\Listeners;
 
 use App\Events\OrderPaid;
-use App\Models\Order;
 use App\Services\BrtService;
-use App\Services\ShipmentExecutionService;
+use App\Services\OrderBrtFulfillmentService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
 
-/**
- * Implementa ShouldQueue: il listener gira in background quando il queue driver
- * non e' "sync". Con queue=sync (sviluppo/default) rimane sincrono ma il retry
- * viene gestito da Laravel tramite $backoff invece di sleep() bloccante.
- *
- * IN PRODUZIONE: impostare QUEUE_CONNECTION=database (o redis) nel .env
- * per far ritornare immediatamente la risposta HTTP all'utente dopo il pagamento.
- */
 class GenerateBrtLabel implements ShouldQueue
 {
     use InteractsWithQueue, SerializesModels;
@@ -71,134 +63,47 @@ class GenerateBrtLabel implements ShouldQueue
 
     /**
      * Secondi di attesa tra un tentativo e l'altro (backoff esponenziale).
-     * Con queue=database/redis il worker aspetta 60s prima del primo retry
-     * e 120s prima del secondo, dando tempo a BRT di stabilizzarsi.
-     * Con queue=sync (sviluppo) Laravel esegue comunque subito.
      *
      * @var array<int>
      */
     public array $backoff = [60, 120];
 
-    public function __construct()
-    {
-        //
-    }
-
-    /**
-     * handle — Genera etichetta BRT e aggiorna l'ordine.
-     *
-     * PERF-02: il retry non avviene piu' con un loop interno e sleep() bloccante.
-     * In caso di eccezione Laravel ri-accoda il job con i delay definiti in $backoff.
-     * Con QUEUE_CONNECTION=database/redis la risposta HTTP al cliente e' immediata.
-     *
-     * COME LEGGERLO:
-     *   1. Controlli iniziali: BRT configurato? Etichetta gia' presente?
-     *   2. Preparazione opzioni (contrassegno, PUDO)
-     *   3. Chiamata singola a BrtService.createShipment — eccezioni triggerano retry
-     *   4. Successo: salva dati BRT nell'ordine, avvia post-label flow
-     *   5. Fallimento definitivo: salva errore in brt_error (hook failed())
-     *
-     * COSA EVITARE:
-     *   - Non rimuovere il refresh() prima dell'update: evita conflitti con MarkOrderProcessing
-     */
     public function handle(OrderPaid $event): void
     {
         $order = $event->order;
+        $fulfillment = app(OrderBrtFulfillmentService::class);
 
-        // Se BRT non e' configurato (manca il client_id), salta la generazione
-        // Questo succede ad esempio in ambiente di sviluppo locale
         if (! config('services.brt.client_id')) {
-            $order->documents_status = 'skipped';
-            $order->execution_error = trim(($order->execution_error ? $order->execution_error.' | ' : '').'BRT non configurato: etichetta e documenti non generati.');
-            $order->save();
+            $fulfillment->markSkippedBecauseBrtNotConfigured($order);
 
             Log::info('BRT not configured, skipping label generation for order #'.$order->id);
 
             return;
         }
 
-        // Se l'ordine ha gia' un'etichetta BRT, non ne serve un'altra
         if ($order->brt_parcel_id) {
             return;
         }
 
-        // Prepara le opzioni aggiuntive per la spedizione
-        $options = [];
-        // Se l'ordine e' in contrassegno (il destinatario paga alla consegna)
-        if ($order->is_cod && $order->cod_amount) {
-            $options['is_cod'] = true;
-            $options['cod_amount'] = $order->cod_amount;
-            $options['cod_payment_type'] = $order->cod_payment_type ?? 'BM';
-        }
-        // Se l'utente ha scelto un punto di ritiro/consegna (PUDO)
-        if ($order->brt_pudo_id) {
-            $options['pudo_id'] = $order->brt_pudo_id;
-        }
-
-        // Chiamata singola a BRT: in caso di eccezione Laravel ri-accoda il job
-        // con il delay definito in $backoff, senza bloccare il worker con sleep().
+        $options = $fulfillment->buildAutomaticShipmentOptions($order);
         $result = app(BrtService::class)->createShipment($order, $options);
 
         if (! ($result['success'] ?? false)) {
-            // Genera un'eccezione per far scattare il retry di Laravel
             throw new \RuntimeException(
                 'BRT label generation failed for order #'.$order->id.': '.($result['error'] ?? 'Errore sconosciuto')
             );
         }
 
-        // Ricarica l'ordine dal database per avere lo stato piu' aggiornato
-        // (MarkOrderProcessing potrebbe averlo gia' modificato)
-        $order->refresh();
-
-        // Salva tutti i dati BRT nell'ordine e aggiorna lo stato
-        $allLabels = $result['all_labels'] ?? [];
-
-        $order->fill([
-            'brt_parcel_id' => $result['parcel_id'],
-            'brt_numeric_sender_reference' => $result['numeric_sender_reference'],
-            'brt_tracking_url' => $result['tracking_url'],
-            'brt_all_labels' => ! empty($allLabels) ? $allLabels : null,
-            'brt_tracking_number' => $result['tracking_number'] ?? null,
-            'brt_parcel_number_to' => $result['parcel_number_to'] ?? null,
-            'brt_departure_depot' => $result['departure_depot'] ?? null,
-            'brt_arrival_terminal' => $result['arrival_terminal'] ?? null,
-            'brt_arrival_depot' => $result['arrival_depot'] ?? null,
-            'brt_delivery_zone' => $result['delivery_zone'] ?? null,
-            'brt_series_number' => $result['series_number'] ?? null,
-            'brt_service_type' => $result['service_type'] ?? null,
-            'brt_raw_response' => $result['raw_response'] ?? null,
-            'status' => Order::LABEL_GENERATED,
-            'brt_error' => null, // Pulisci eventuali errori precedenti
-        ]);
-
-        $order->brt_label_base64 = $result['label_base64'] ?? null;
-        $order->save();
-
-        try {
-            app(ShipmentExecutionService::class)->runAutomaticPostLabelFlow($order->fresh());
-        } catch (\Exception $e) {
-            $order->refresh();
-            $order->documents_status = 'failed';
-            $order->execution_error = trim(($order->execution_error ? $order->execution_error.' | ' : '').'Post-elaborazione documenti fallita: '.$e->getMessage());
-            $order->save();
-
-            Log::error('Failed to complete shipment documents flow after label generation', [
-                'order_id' => $order->id,
-                'error' => $e->getMessage(),
-            ]);
-        }
+        $order = $fulfillment->finalizeSuccessfulShipment($order, $result);
 
         Log::info('BRT label generated automatically for order #'.$order->id, [
-            'parcel_id' => $result['parcel_id'],
+            'parcel_id' => $result['parcel_id'] ?? null,
             'tracking_number' => $result['tracking_number'] ?? null,
             'tracking_url' => $result['tracking_url'] ?? null,
             'departure_depot' => $result['departure_depot'] ?? null,
             'arrival_depot' => $result['arrival_depot'] ?? null,
             'service_type' => $result['service_type'] ?? null,
         ]);
-
-        // L'invio email al cliente viene gestito da runAutomaticPostLabelFlow()
-        // che invia ShipmentDocumentsMail (email unica con etichetta + bordero).
     }
 
     /**
@@ -208,11 +113,12 @@ class GenerateBrtLabel implements ShouldQueue
     public function failed(OrderPaid $event, \Throwable $exception): void
     {
         $order = $event->order;
-        $order->brt_error = $exception->getMessage();
-        $order->save();
+        $message = $exception->getMessage();
+
+        app(OrderBrtFulfillmentService::class)->markGenerationFailed($order, $message);
 
         Log::error('BRT auto label generation failed after '.$this->tries.' attempts for order #'.$order->id, [
-            'error' => $exception->getMessage(),
+            'error' => $message,
         ]);
     }
 }

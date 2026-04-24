@@ -10,16 +10,52 @@ export const useShipmentStepSummary = ({
 	showAddressFields,
 	status,
 	stepsRef,
-	userStore,
+	shipmentFlowStore,
 }) => {
 	const { priceBands, loadPriceBands } = usePriceBands();
 	const stepsVisible = ref(true);
+	const clientDraftSummaryReady = ref(false);
 	let stepsObserver = null;
 	let stepsVisibilityRaf = null;
 
 	onMounted(() => {
 		loadPriceBands();
+		nextTick(() => {
+			clientDraftSummaryReady.value = true;
+		});
 	});
+
+	const cleanDisplayText = (value) => {
+		const raw = String(value ?? '').trim();
+		if (!raw) return '';
+
+		const normalized = typeof normalizeLocationText === 'function'
+			? normalizeLocationText(raw)
+			: raw.replace(/\s+/g, ' ').trim();
+		const lowered = normalized.toLowerCase();
+
+		if (
+			!normalized
+			|| lowered === 'n/d'
+			|| lowered === 'nd'
+			|| lowered === '—'
+			|| lowered === '-'
+			|| lowered === 'null'
+			|| lowered === 'undefined'
+		) {
+			return '';
+		}
+
+		return normalized;
+	};
+
+	const firstMeaningfulValue = (...candidates) => {
+		for (const candidate of candidates) {
+			const normalized = cleanDisplayText(candidate);
+			if (normalized) return normalized;
+		}
+		return '';
+	};
 
 	const parsePriceAmount = (value) => {
 		if (value === null || value === undefined) return null;
@@ -82,8 +118,15 @@ export const useShipmentStepSummary = ({
 		return total > 0 ? total : null;
 	};
 
+	const summaryPackagesSource = computed(() => {
+		if (clientDraftSummaryReady.value) {
+			return Array.isArray(editablePackages.value) ? editablePackages.value : [];
+		}
+		return Array.isArray(session.value?.data?.packages) ? session.value.data.packages : [];
+	});
+
 	const summaryPackageLabel = computed(() => {
-		const count = editablePackages.value.length;
+		const count = summaryPackagesSource.value.length;
 		return `${count} ${count === 1 ? 'collo' : 'colli'}`;
 	});
 
@@ -114,7 +157,7 @@ export const useShipmentStepSummary = ({
 	};
 
 	const summaryPackageTypeInfo = computed(() => {
-		const types = (editablePackages.value || [])
+		const types = (summaryPackagesSource.value || [])
 			.map((pack) => normalizePackageTypeLabel(pack?.package_type || 'Pacco'))
 			.filter(Boolean);
 
@@ -136,41 +179,75 @@ export const useShipmentStepSummary = ({
 	});
 
 	const summaryOriginCity = computed(() => {
+		if (!clientDraftSummaryReady.value) {
+			return session.value?.data?.shipment_details?.origin_city || 'â€”';
+		}
 		const liveCity = String(originAddress.value?.city || '').trim();
 		if (liveCity) return liveCity;
 		if (showAddressFields.value) return '—';
 		return (
-			userStore.originAddressData?.city
-			|| userStore.shipmentDetails?.origin_city
+			shipmentFlowStore.originAddressData?.city
+			|| shipmentFlowStore.shipmentDetails?.origin_city
 			|| session.value?.data?.shipment_details?.origin_city
 			|| '—'
 		);
 	});
 
 	const summaryDestinationCity = computed(() => {
-		const pudoCity = String(userStore.selectedPudo?.city || '').trim();
+		if (!clientDraftSummaryReady.value) {
+			return session.value?.data?.shipment_details?.destination_city || 'â€”';
+		}
+		const pudoCity = String(shipmentFlowStore.selectedPudo?.city || '').trim();
 		if (pudoCity) return pudoCity;
 
 		const liveCity = String(destinationAddress.value?.city || '').trim();
 		if (liveCity) return liveCity;
 		if (showAddressFields.value) return '—';
 		return (
-			userStore.destinationAddressData?.city
-			|| userStore.shipmentDetails?.destination_city
+			shipmentFlowStore.destinationAddressData?.city
+			|| shipmentFlowStore.shipmentDetails?.destination_city
 			|| session.value?.data?.shipment_details?.destination_city
 			|| '—'
 		);
 	});
 
 	const summaryRouteLabel = computed(() => `${summaryOriginCity.value} → ${summaryDestinationCity.value}`);
+	const resolvedSummaryOriginCity = computed(() => (
+		firstMeaningfulValue(
+			originAddress.value?.city,
+			shipmentFlowStore.originAddressData?.city,
+			shipmentFlowStore.pendingShipment?.origin_address?.city,
+			session.value?.data?.origin_address?.city,
+			shipmentFlowStore.shipmentDetails?.origin_city,
+			session.value?.data?.shipment_details?.origin_city,
+			summaryOriginCity.value,
+		) || '—'
+	));
+
+	const resolvedSummaryDestinationCity = computed(() => (
+		firstMeaningfulValue(
+			shipmentFlowStore.selectedPudo?.city,
+			shipmentFlowStore.pendingShipment?.selected_pudo?.city,
+			session.value?.data?.selected_pudo?.city,
+			destinationAddress.value?.city,
+			shipmentFlowStore.destinationAddressData?.city,
+			shipmentFlowStore.pendingShipment?.destination_address?.city,
+			session.value?.data?.destination_address?.city,
+			shipmentFlowStore.shipmentDetails?.destination_city,
+			session.value?.data?.shipment_details?.destination_city,
+			summaryDestinationCity.value,
+		) || '—'
+	));
+
+	const resolvedSummaryRouteLabel = computed(() => `${resolvedSummaryOriginCity.value} → ${resolvedSummaryDestinationCity.value}`);
 	const normalizeRouteText = (value) => normalizeLocationText(String(value || '').replace(/\s+/g, ' '));
 	const normalizeRouteNumber = (value) => String(value || '').trim().toLowerCase().replace(/\s+/g, '');
 	const routeConsistencyState = computed(() => {
 		const originCity = normalizeRouteText(originAddress.value?.city);
 		const destinationCity = normalizeRouteText(
-			userStore.selectedPudo?.city
+			shipmentFlowStore.selectedPudo?.city
 			|| destinationAddress.value?.city
-			|| userStore.shipmentDetails?.destination_city
+			|| shipmentFlowStore.shipmentDetails?.destination_city
 		);
 		if (!originCity || !destinationCity) {
 			return { blocking: false, warning: false, message: '' };
@@ -178,9 +255,9 @@ export const useShipmentStepSummary = ({
 
 		const originCap = String(originAddress.value?.postal_code || '').trim();
 		const destinationCap = String(
-			userStore.selectedPudo?.zip_code
+			shipmentFlowStore.selectedPudo?.zip_code
 			|| destinationAddress.value?.postal_code
-			|| userStore.shipmentDetails?.destination_postal_code
+			|| shipmentFlowStore.shipmentDetails?.destination_postal_code
 			|| ''
 		).trim();
 		const sameCity = originCity === destinationCity;
@@ -188,12 +265,12 @@ export const useShipmentStepSummary = ({
 
 		const originStreet = normalizeRouteText(originAddress.value?.address);
 		const destinationStreet = normalizeRouteText(
-			userStore.selectedPudo?.address
+			shipmentFlowStore.selectedPudo?.address
 			|| destinationAddress.value?.address
 		);
 		const originNumber = normalizeRouteNumber(originAddress.value?.address_number);
 		const destinationNumber = normalizeRouteNumber(
-			userStore.selectedPudo ? 'SNC' : destinationAddress.value?.address_number
+			shipmentFlowStore.selectedPudo ? 'SNC' : destinationAddress.value?.address_number
 		);
 		const sameAddress =
 			sameCity
@@ -228,11 +305,11 @@ export const useShipmentStepSummary = ({
 		routeConsistencyState.value.warning ? routeConsistencyState.value.message : ''
 	));
 	const selectedServicesFromState = computed(() => {
-		const local = Array.isArray(userStore.servicesArray) ? userStore.servicesArray.filter(Boolean) : [];
+		const local = Array.isArray(shipmentFlowStore.servicesArray) ? shipmentFlowStore.servicesArray.filter(Boolean) : [];
 		if (local.length) return local;
 
 		const persisted = String(
-			userStore.pendingShipment?.services?.service_type
+			shipmentFlowStore.pendingShipment?.services?.service_type
 			|| session.value?.data?.services?.service_type
 			|| "",
 		)
@@ -321,8 +398,8 @@ export const useShipmentStepSummary = ({
 
 	const summaryTotalPrice = computed(() => {
 		const sessionPackagesAmount = getPackagesTotal(session.value?.data?.packages);
-		const storePackagesAmount = getPackagesTotal(userStore.packages?.value || userStore.packages);
-		const pendingAmount = getPackagesTotal(userStore.pendingShipment?.packages);
+		const storePackagesAmount = getPackagesTotal(shipmentFlowStore.packages?.value || shipmentFlowStore.packages);
+		const pendingAmount = getPackagesTotal(shipmentFlowStore.pendingShipment?.packages);
 		const editableAmount = getPackagesTotal(editablePackages.value);
 
 		const baseAmount = pickBestPriceAmount([
@@ -330,20 +407,20 @@ export const useShipmentStepSummary = ({
 			editableAmount,
 			sessionPackagesAmount,
 			storePackagesAmount,
-			parsePriceAmount(userStore.totalPrice),
+			parsePriceAmount(shipmentFlowStore.totalPrice),
 			parsePriceAmount(session.value?.data?.total_price),
 		]);
 
-		const pendingServices = userStore.pendingShipment?.services || {};
+		const pendingServices = shipmentFlowStore.pendingShipment?.services || {};
 		const sessionServices = session.value?.data?.services || {};
-		const selectedServices = Array.isArray(userStore.servicesArray) && userStore.servicesArray.length
-			? userStore.servicesArray
+		const selectedServices = Array.isArray(shipmentFlowStore.servicesArray) && shipmentFlowStore.servicesArray.length
+			? shipmentFlowStore.servicesArray
 			: (pendingServices.service_type || sessionServices.service_type || "");
-		const selectedServiceData = Object.keys(userStore.serviceData || {}).length
-			? userStore.serviceData
+		const selectedServiceData = Object.keys(shipmentFlowStore.serviceData || {}).length
+			? shipmentFlowStore.serviceData
 			: (pendingServices.serviceData || sessionServices.serviceData || {});
 		const notificationsEnabled = Boolean(
-			userStore.smsEmailNotification
+			shipmentFlowStore.smsEmailNotification
 			|| pendingServices.sms_email_notification
 			|| pendingServices.serviceData?.sms_email_notification
 			|| session.value?.data?.sms_email_notification
@@ -358,11 +435,11 @@ export const useShipmentStepSummary = ({
 			pricingConfig: priceBands.value,
 			packages: editablePackages.value?.length
 				? editablePackages.value
-				: (userStore.pendingShipment?.packages || session.value?.data?.packages || []),
-			originAddress: originAddress.value || userStore.originAddressData || session.value?.data?.origin_address || {},
-			destinationAddress: destinationAddress.value || userStore.destinationAddressData || session.value?.data?.destination_address || {},
-			deliveryMode: userStore.deliveryMode || userStore.pendingShipment?.delivery_mode || session.value?.data?.delivery_mode || "home",
-			selectedPudo: userStore.selectedPudo || userStore.pendingShipment?.selected_pudo || session.value?.data?.selected_pudo || null,
+				: (shipmentFlowStore.pendingShipment?.packages || session.value?.data?.packages || []),
+			originAddress: originAddress.value || shipmentFlowStore.originAddressData || session.value?.data?.origin_address || {},
+			destinationAddress: destinationAddress.value || shipmentFlowStore.destinationAddressData || session.value?.data?.destination_address || {},
+			deliveryMode: shipmentFlowStore.deliveryMode || shipmentFlowStore.pendingShipment?.delivery_mode || session.value?.data?.delivery_mode || "home",
+			selectedPudo: shipmentFlowStore.selectedPudo || shipmentFlowStore.pendingShipment?.selected_pudo || session.value?.data?.selected_pudo || null,
 		}).total;
 
 		return formatPriceAmount(baseAmount + serviceSurcharge);
@@ -375,10 +452,9 @@ export const useShipmentStepSummary = ({
 	const summaryMiniSteps = computed(() => {
 		const defs = [
 			{ id: 1, label: 'Misure', to: '/#preventivo' },
-			{ id: 2, label: 'Servizi', to: '/la-tua-spedizione/2' },
-			{ id: 3, label: 'Indirizzi', to: '/la-tua-spedizione/2?step=ritiro' },
-			{ id: 4, label: 'Conferma', to: '/riepilogo' },
-			{ id: 5, label: 'Pagamento', to: '/checkout' },
+			{ id: 2, label: 'Servizi', to: '/la-tua-spedizione/2?step=servizi' },
+			{ id: 3, label: 'Indirizzi', to: '/la-tua-spedizione/2?step=indirizzi' },
+			{ id: 4, label: 'Pagamento', to: '/la-tua-spedizione/2?step=pagamento' },
 		];
 
 		return defs.map((step) => {
@@ -527,13 +603,13 @@ export const useShipmentStepSummary = ({
 		summaryDetailPanel,
 		summaryDimensionsItems,
 		summaryDimensionsLabel,
-		summaryDestinationCity,
+		summaryDestinationCity: resolvedSummaryDestinationCity,
 		summaryExpanded,
 		summaryMiniSteps,
-		summaryOriginCity,
+		summaryOriginCity: resolvedSummaryOriginCity,
 		summaryPackageLabel,
 		summaryPackageTypeInfo,
-		summaryRouteLabel,
+		summaryRouteLabel: resolvedSummaryRouteLabel,
 		summaryServicesItems,
 		summaryServicesLabel,
 		summaryTotalPrice,

@@ -29,7 +29,12 @@ class ShipmentService
         $destination = $package->destinationAddress;
         if (!$origin || !$destination) return ['success' => false, 'error' => 'Indirizzi di partenza o destinazione mancanti.'];
 
-        $totalWeight = $order->packages->sum(fn ($pkg) => (float) preg_replace('/[^0-9.]/', '', $pkg->weight ?? '0'));
+        $totalWeight = $order->packages->sum(function ($pkg) {
+            $weight = (float) preg_replace('/[^0-9.]/', '', $pkg->weight ?? '0');
+            $quantity = max(1, (int) ($pkg->quantity ?? 1));
+
+            return $weight * $quantity;
+        });
         $totalParcels = $order->packages->sum(fn ($pkg) => max(1, (int) ($pkg->quantity ?? 1)));
 
         $missingOriginFields = $this->validateOrigin($origin);
@@ -108,7 +113,7 @@ class ShipmentService
 
         if (!empty($options['is_cod']) && !empty($options['cod_amount'])) {
             $payload['createData']['isCODMandatory'] = 1;
-            $payload['createData']['cashOnDelivery'] = (float) ($options['cod_amount'] / 100);
+            $payload['createData']['cashOnDelivery'] = round((float) ($options['cod_amount'] / 100), 2);
             $payload['createData']['codPaymentType'] = $options['cod_payment_type'] ?? $order->cod_payment_type ?? 'BM';
             $payload['createData']['codCurrency'] = 'EUR';
         }
@@ -122,6 +127,8 @@ class ShipmentService
         if (empty($origin->telephone_number)) {
             Log::warning('BRT sender telephone missing, proceeding without it', ['order_id' => $order->id, 'origin_id' => $origin->id ?? null]);
         }
+
+        $payload = BrtPayloadBuilder::sanitizeCreateData($payload);
 
         try {
             $payloadForLog = $payload;

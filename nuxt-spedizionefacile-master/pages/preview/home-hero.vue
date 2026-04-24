@@ -3,6 +3,11 @@ definePageMeta({
 	layout: false,
 });
 
+useSeoMeta({
+	title: 'Preview Home Hero | SpediamoFacile',
+	robots: 'noindex, nofollow',
+});
+
 const viewport = computed(() => (useRoute().query.viewport === 'mobile' ? 'mobile' : 'desktop'));
 </script>
 

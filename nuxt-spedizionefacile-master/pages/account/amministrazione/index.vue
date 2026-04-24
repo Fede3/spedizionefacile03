@@ -1,19 +1,15 @@
-<!--
-  FILE: pages/account/amministrazione/index.vue
-  SCOPO: Dashboard amministrazione — root leggibile con grafico, KPI essenziali e coda operativa.
-  API: GET /api/admin/dashboard — dati KPI e ordini recenti.
-  ROUTE: /account/amministrazione (middleware sanctum:auth + admin).
--->
 <script setup>
+import '~/assets/css/pages/admin-index.css';
 definePageMeta({
 	middleware: ['app-auth', 'admin'],
 });
 
 useSeoMeta({
-	title: 'Dashboard admin | SpediamoFacile',
-	ogTitle: 'Dashboard admin | SpediamoFacile',
-	description: 'Panoramica amministrazione con KPI essenziali, code operative e andamento ordini.',
-	ogDescription: 'Dashboard amministrativa SpediamoFacile con ordini, ricavi, utenti e coda operativa.',
+	title: 'Console amministrazione | SpediamoFacile',
+	ogTitle: 'Console amministrazione | SpediamoFacile',
+	description: 'Priorita operative, KPI essenziali, andamento ordini e attivita recente in una console amministrativa piu ordinata.',
+	ogDescription: 'Console amministrazione SpediamoFacile con priorita operative, KPI essenziali, andamento ordini e attivita recente.',
+	robots: 'noindex, nofollow',
 });
 
 const sanctum = useSanctumClient();
@@ -26,11 +22,10 @@ const loadError = ref('');
 const fetchDashboard = async () => {
 	loadError.value = '';
 	try {
-		const res = await sanctum('/api/admin/dashboard');
-		dashboardData.value = res;
+		dashboardData.value = await sanctum('/api/admin/dashboard');
 	} catch {
 		dashboardData.value = null;
-		loadError.value = 'Impossibile sincronizzare la dashboard amministrativa.';
+		loadError.value = 'Impossibile sincronizzare la console amministrativa.';
 	}
 };
 
@@ -39,428 +34,286 @@ onMounted(async () => {
 	isLoading.value = false;
 });
 
-const chartMax = computed(() => {
-	if (!dashboardData.value?.daily_orders?.length) return 1;
-	return Math.max(1, ...dashboardData.value.daily_orders.map((d) => d.count));
-});
-
+const pendingOrders = computed(() => dashboardData.value?.orders?.pending ?? 0);
+const failedPayments = computed(() => dashboardData.value?.orders?.payment_failed ?? 0);
+const inTransitShipments = computed(() => dashboardData.value?.shipments?.in_transit ?? 0);
+const deliveredShipments = computed(() => dashboardData.value?.shipments?.delivered ?? 0);
+const shipmentsWithoutLabel = computed(() => dashboardData.value?.shipments?.without_label ?? 0);
+const monthOrders = computed(() => dashboardData.value?.orders?.month ?? 0);
+const todayOrders = computed(() => dashboardData.value?.orders?.today ?? 0);
+const weekOrders = computed(() => dashboardData.value?.orders?.week ?? 0);
+const totalUsers = computed(() => dashboardData.value?.users?.total ?? 0);
+const proUsers = computed(() => dashboardData.value?.users?.pro ?? 0);
+const revenueMonth = computed(() => dashboardData.value?.revenue_month ?? 0);
 const recentOrders = computed(() => dashboardData.value?.recent_orders || []);
+const dailyOrders = computed(() => dashboardData.value?.daily_orders || []);
+const unreadMessages = computed(() => dashboardData.value?.unread_messages ?? 0);
+const pendingWithdrawals = computed(() => dashboardData.value?.pending_withdrawals ?? 0);
+const pendingProRequests = computed(() => dashboardData.value?.pending_pro_requests ?? 0);
 
-const dashboardSummary = computed(() => {
-	const d = dashboardData.value;
-	if (!d) return 'Caricamento indicatori amministrativi in corso.';
-	const orderCount = d.orders?.total ?? 0;
-	const recentCount = recentOrders.value.length;
-	const pendingCount = d.pending_withdrawals ?? 0;
-	return `${orderCount} ordini totali, ${recentCount} recenti, ${pendingCount} prelievi in attesa.`;
+const urgentActions = computed(() => {
+	const items = [];
+	if (pendingOrders.value > 0) {
+		items.push({ key: 'orders', label: `${pendingOrders.value} ordini in attesa`, to: '/account/amministrazione/ordini', tone: 'accent', cta: 'Apri ordini' });
+	}
+	if (shipmentsWithoutLabel.value > 0) {
+		items.push({ key: 'labels', label: `${shipmentsWithoutLabel.value} etichette da generare`, to: '/account/amministrazione/spedizioni', tone: 'primary', cta: 'Apri spedizioni' });
+	}
+	if (pendingWithdrawals.value > 0) {
+		items.push({ key: 'withdrawals', label: `${pendingWithdrawals.value} prelievi in attesa`, to: '/account/amministrazione/prelievi', tone: 'accent', cta: 'Apri prelievi' });
+	}
+	// -- ARCHIVIATO 2026-04-20: Messaggi (admin-messaggi-sistema) — sostituito da email/contatto esterno --
+	// if (unreadMessages.value > 0) {
+	// 	items.push({ key: 'messages', label: `${unreadMessages.value} messaggi da leggere`, to: '/account/amministrazione/messaggi', tone: 'primary', cta: 'Apri messaggi' });
+	// }
+	if (pendingProRequests.value > 0) {
+		items.push({ key: 'pro', label: `${pendingProRequests.value} richieste Pro`, to: '/account/amministrazione/utenti', tone: 'accent', cta: 'Apri utenti' });
+	}
+	if (failedPayments.value > 0) {
+		items.push({ key: 'payments', label: `${failedPayments.value} pagamenti falliti`, to: '/account/amministrazione/ordini', tone: 'accent', cta: 'Apri ordini' });
+	}
+	if (inTransitShipments.value > 0) {
+		items.push({ key: 'transit', label: `${inTransitShipments.value} spedizioni in transito`, to: '/account/amministrazione/spedizioni', tone: 'primary', cta: 'Apri spedizioni' });
+	}
+	return items.slice(0, 3);
 });
 
-const dashboardHeaderMeta = computed(() => {
-	const d = dashboardData.value;
-	if (!d) return [];
-	return [
-		{ label: 'Ordini recenti', value: recentOrders.value.length },
-		{ label: 'Prelievi in attesa', value: d.pending_withdrawals ?? 0 },
-		{ label: 'Utenti Pro', value: d.users?.pro ?? 0 },
-	];
+const primaryUrgentAction = computed(() => urgentActions.value[0] || null);
+const notificationTitle = computed(() => primaryUrgentAction.value?.label || 'Nessuna urgenza aperta');
+const notificationDescription = computed(() => {
+	if (!primaryUrgentAction.value) {
+		return 'Console allineata: puoi leggere andamento, ordini e aggiornamenti senza code urgenti aperte.';
+	}
+	return 'Apri solo la coda che richiede davvero intervento.';
 });
 
-const kpiCards = computed(() => {
-	const d = dashboardData.value;
-	if (!d) return [];
-	return [
-		{
-			key: 'orders',
-			bg: 'bg-[#eef7f8]',
-			color: 'text-[#095866]',
-			accent: '#095866',
-			border: '#B8DDE3',
-			svgPath:
-				'M13,12H20V13.5H13M13,9.5H20V11H13M13,14.5H20V16H13M21,4H3A2,2 0 0,0 1,6V19A2,2 0 0,0 3,21H21A2,2 0 0,0 23,19V6A2,2 0 0,0 21,4M21,19H12V6H21',
-			label: 'Ordini',
-			value: d.orders.total,
-			subs: [
-				{ text: `${d.orders.pending} in attesa`, cls: 'text-amber-600' },
-				{ text: `${d.orders.completed} completati`, cls: 'text-[#095866]' },
-			],
-		},
-		{
-			key: 'revenue',
-			bg: 'bg-[#eef7f8]',
-			color: 'text-[#095866]',
-			accent: '#15803D',
-			border: '#D8EFD9',
-			svgPath:
-				'M15,18.5C12.49,18.5 10.32,17.08 9.24,15H15L16,13H8.58C8.53,12.67 8.5,12.34 8.5,12C8.5,11.66 8.53,11.33 8.58,11H15L16,9H9.24C10.32,6.92 12.5,5.5 15,5.5C16.61,5.5 18.09,6.09 19.23,7.07L21,5.29C19.41,3.86 17.31,3 15,3C11.08,3 7.76,5.51 6.52,9H3L2,11H6.06C6.02,11.33 6,11.66 6,12C6,12.34 6.02,12.67 6.06,13H3L2,15H6.52C7.76,18.49 11.08,21 15,21C17.31,21 19.41,20.14 21,18.71L19.22,16.93C18.09,17.91 16.62,18.5 15,18.5Z',
-			label: 'Ricavi',
-			value: `EUR ${formatCents(d.revenue)}`,
-			valueClass: 'text-[#095866]',
-			subs: [{ text: `EUR ${formatCents(d.revenue_month)} questo mese`, cls: 'text-[#095866]' }],
-		},
-		{
-			key: 'users',
-			bg: 'bg-[#eef7f8]',
-			color: 'text-[#095866]',
-			accent: '#0F766E',
-			border: '#B8DDE3',
-			svgPath:
-				'M16,13C15.71,13 15.38,13 15.03,13.05C16.19,13.89 17,15 17,16.5V18H22V16.5C22,14.17 18.33,13 16,13M8,13C5.67,13 2,14.17 2,16.5V18H14V16.5C14,14.17 10.33,13 8,13M8,11A3,3 0 0,0 11,8A3,3 0 0,0 8,5A3,3 0 0,0 5,8A3,3 0 0,0 8,11M16,11A3,3 0 0,0 19,8A3,3 0 0,0 16,5A3,3 0 0,0 13,8A3,3 0 0,0 16,11Z',
-			label: 'Utenti',
-			value: d.users.total,
-			subs: [
-				{ text: `${d.users.verified} verificati`, cls: 'text-[#095866]' },
-				{ text: `${d.users.pro} Pro`, cls: 'text-[var(--color-brand-primary)]' },
-			],
-		},
-		{
-			key: 'tracking',
-			bg: 'bg-[#eef7f8]',
-			color: 'text-[#095866]',
-			accent: '#0F766E',
-			border: '#D6ECE9',
-			svgPath:
-				'M18,18.5A1.5,1.5 0 0,1 16.5,17A1.5,1.5 0 0,1 18,15.5A1.5,1.5 0 0,1 19.5,17A1.5,1.5 0 0,1 18,18.5M19.5,9.5L21.46,12H17V9.5M6,18.5A1.5,1.5 0 0,1 4.5,17A1.5,1.5 0 0,1 6,15.5A1.5,1.5 0 0,1 7.5,17A1.5,1.5 0 0,1 6,18.5M20,8H17V4H3C1.89,4 1,4.89 1,6V17H3A3,3 0 0,0 6,20A3,3 0 0,0 9,17H15A3,3 0 0,0 18,20A3,3 0 0,0 21,17H23V12L20,8Z',
-			label: 'Tracking',
-			value: d.shipments.with_label,
-			subs: [
-				{ text: `${d.shipments.in_transit} in transito`, cls: 'text-[#095866]' },
-				{ text: `${d.shipments.delivered} consegnate`, cls: 'text-teal-600' },
-			],
-		},
-	];
-});
+const statsCards = computed(() => [
+	{
+		key: 'ordini',
+		label: 'Ordini attivi',
+		value: pendingOrders.value,
+		meta: `${monthOrders.value} registrati nel mese corrente`,
+		icon: 'M4 6h2v12H4V6zm4 2h2v10H8V8zm4-4h2v14h-2V4zm4 6h2v8h-2v-8z',
+	},
+	{
+		key: 'ricavi',
+		label: 'Ricavi mese',
+		value: formatCents(revenueMonth.value),
+		meta: `${todayOrders.value} ordini registrati oggi`,
+		icon: 'M11.8 10.9c-2.27-.59-3-1.2-3-2.15 0-1.09 1.01-1.85 2.7-1.85 1.78 0 2.44.85 2.5 2.1h2.21c-.07-1.72-1.12-3.3-3.21-3.81V3h-3v2.16c-1.94.42-3.5 1.68-3.5 3.61 0 2.31 1.91 3.46 4.7 4.13 2.5.6 3 1.48 3 2.41 0 .69-.49 1.79-2.7 1.79-2.06 0-2.87-.92-2.98-2.1h-2.2c.12 2.19 1.76 3.42 3.68 3.83V21h3v-2.15c1.95-.37 3.5-1.5 3.5-3.55 0-2.84-2.43-3.81-4.7-4.4z',
+	},
+	{
+		key: 'utenti',
+		label: 'Clienti registrati',
+		value: totalUsers.value,
+		meta: `${proUsers.value} account Pro attivi`,
+		icon: 'M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5z',
+	},
+	{
+		key: 'spedizioni',
+		label: 'Spedizioni BRT',
+		value: inTransitShipments.value,
+		meta: `${shipmentsWithoutLabel.value} da etichettare`,
+		icon: 'M20 8h-3V4H3c-1.1 0-2 .9-2 2v11h2c0 1.66 1.34 3 3 3s3-1.34 3-3h6c0 1.66 1.34 3 3 3s3-1.34 3-3h2v-5l-3-4z',
+	},
+]);
 
-const periodKpis = computed(() => {
-	const d = dashboardData.value;
-	if (!d) return [];
-	return [
-		{ key: 'today', label: 'Oggi', value: d.orders.today },
-		{ key: 'week', label: 'Settimana', value: d.orders.week },
-		{ key: 'month', label: 'Mese', value: d.orders.month },
-	];
-});
+// Shortcuts rimossi: duplicavano la sidebar amministrativa (Ordini, Spedizioni,
+// Messaggi, Utenti). La console resta focalizzata su urgenze, KPI e attivita' recente.
 
-const adminQuickLinks = [
-	{
-		label: 'Ordini',
-		to: '/account/amministrazione/ordini',
-		iconBg: '#eef7f8',
-		iconColor: '#095866',
-		hoverBorder: '#B8DDE3',
-		svgPath:
-			'M13,12H20V13.5H13M13,9.5H20V11H13M13,14.5H20V16H13M21,4H3A2,2 0 0,0 1,6V19A2,2 0 0,0 3,21H21A2,2 0 0,0 23,19V6A2,2 0 0,0 21,4M21,19H12V6H21',
-	},
-	{
-		label: 'Tracking',
-		to: '/account/amministrazione/spedizioni',
-		iconBg: '#ECF8F8',
-		iconColor: '#0F766E',
-		hoverBorder: '#B9DDD8',
-		svgPath:
-			'M3,4A2,2 0 0,0 1,6V17H3A3,3 0 0,0 6,20A3,3 0 0,0 9,17H15A3,3 0 0,0 18,20A3,3 0 0,0 21,17H23V12L20,8H17V4M10,6L14,10L10,14V11H4V9H10M17,9.5H19.5L21.47,12H17M6,15.5A1.5,1.5 0 0,1 7.5,17A1.5,1.5 0 0,1 6,18.5A1.5,1.5 0 0,1 4.5,17A1.5,1.5 0 0,1 6,15.5M18,15.5A1.5,1.5 0 0,1 19.5,17A1.5,1.5 0 0,1 18,18.5A1.5,1.5 0 0,1 16.5,17A1.5,1.5 0 0,1 18,15.5Z',
-	},
-	{
-		label: 'Prelievi',
-		to: '/account/amministrazione/prelievi',
-		iconBg: '#FFF7E8',
-		iconColor: '#B45309',
-		hoverBorder: '#E7D3A6',
-		svgPath: 'M2,5H22V7H2V5M15,10H22V12H15V10M15,16H22V18H15V16M2,10H13L8,15H2V10M2,16H8L13,21H2V16Z',
-	},
-	{
-		label: 'Messaggi',
-		to: '/account/amministrazione/messaggi',
-		iconBg: '#eef7f8',
-		iconColor: '#095866',
-		hoverBorder: '#B8DDE3',
-		svgPath: 'M20,8L12,13L4,8V6L12,11L20,6M20,4H4C2.89,4 2,4.89 2,6V18A2,2 0 0,0 4,20H20A2,2 0 0,0 22,18V6C22,4.89 21.1,4 20,4Z',
-	},
-	{
-		label: 'Utenti',
-		to: '/account/amministrazione/utenti',
-		iconBg: '#F4F5F7',
-		iconColor: '#475569',
-		hoverBorder: '#D5DAE1',
-		svgPath:
-			'M16,13C15.71,13 15.38,13 15.03,13.05C16.19,13.89 17,15 17,16.5V18H22V16.5C22,14.17 18.33,13 16,13M8,13C5.67,13 2,14.17 2,16.5V18H14V16.5C14,14.17 10.33,13 8,13M8,11A3,3 0 0,0 11,8A3,3 0 0,0 8,5A3,3 0 0,0 5,8A3,3 0 0,0 8,11M16,11A3,3 0 0,0 19,8A3,3 0 0,0 16,5A3,3 0 0,0 13,8A3,3 0 0,0 16,11Z',
-	},
-];
+const analyticsProps = computed(() => ({
+	days: dailyOrders.value,
+	today: todayOrders.value,
+	week: weekOrders.value,
+	month: monthOrders.value,
+	dailyRevenue: dashboardData.value?.daily_revenue ?? dashboardData.value?.dailyRevenue ?? [],
+	revenueToday: dashboardData.value?.revenue_today ?? 0,
+	revenueWeek: dashboardData.value?.revenue_week ?? 0,
+	revenueMonth: revenueMonth.value,
+	statusDistribution: dashboardData.value?.status_distribution ?? dashboardData.value?.orders_status_distribution ?? dashboardData.value?.shipment_status_distribution ?? [],
+}));
 
-const alertSvgs = {
-	withdrawals: 'M12.5,6.9C12.5,6.9 17,13 17,15.5A4.5,4.5 0 0,1 12.5,20A4.5,4.5 0 0,1 8,15.5C8,13 12.5,6.9 12.5,6.9Z',
-	messages: 'M20,8L12,13L4,8V6L12,11L20,6M20,4H4C2.89,4 2,4.89 2,6V18A2,2 0 0,0 4,20H20A2,2 0 0,0 22,18V6C22,4.89 21.1,4 20,4Z',
-	payments: 'M20,8H4V6H20M20,18H4V12H20M20,4H4C2.89,4 2,4.89 2,6V18A2,2 0 0,0 4,20H20A2,2 0 0,0 22,18V6C22,4.89 21.1,4 20,4Z',
-	labels: 'M2,10.96C1.5,10.68 1.5,10.23 2,9.96L12,3.96L22,9.96C22.5,10.23 22.5,10.68 22,10.96L12,16.96L2,10.96Z',
-	pro: 'M12,17.27L18.18,21L16.54,13.97L22,9.24L14.81,8.62L12,2L9.19,8.62L2,9.24L7.45,13.97L5.82,21L12,17.27Z',
+const activityItems = computed(() =>
+	recentOrders.value.slice(0, 5).map((order) => ({
+		id: order.id,
+		customerName: [order.user?.name, order.user?.surname].filter(Boolean).join(' ') || order.user?.email || 'Cliente',
+		status: orderStatusConfig[order.status]?.label || order.status || 'Aggiornamento',
+		statusKey: order.status || 'pending',
+		amount: formatCents(order.total ?? order.total_amount ?? order.subtotal ?? 0),
+		date: formatDate(order.created_at),
+	})),
+);
+
+const statusBadgeStyle = (status) => {
+	const map = {
+		pending: { color: '#b45309', bg: 'rgba(180,83,9,0.08)' },
+		processing: { color: '#095866', bg: 'rgba(9,88,102,0.08)' },
+		label_generated: { color: '#095866', bg: 'rgba(9,88,102,0.08)' },
+		completed: { color: '#059669', bg: 'rgba(5,150,105,0.08)' },
+		payed: { color: '#059669', bg: 'rgba(5,150,105,0.08)' },
+		payment_failed: { color: '#dc2626', bg: 'rgba(220,38,38,0.08)' },
+		cancelled: { color: '#475569', bg: 'rgba(71,85,105,0.08)' },
+		refunded: { color: '#E44203', bg: 'rgba(228,66,3,0.08)' },
+		in_transit: { color: '#095866', bg: 'rgba(9,88,102,0.08)' },
+		out_for_delivery: { color: '#0a9396', bg: 'rgba(10,147,150,0.08)' },
+		delivered: { color: '#059669', bg: 'rgba(5,150,105,0.08)' },
+		in_giacenza: { color: '#E44203', bg: 'rgba(228,66,3,0.08)' },
+		returned: { color: '#E44203', bg: 'rgba(228,66,3,0.08)' },
+		refused: { color: '#dc2626', bg: 'rgba(220,38,38,0.08)' },
+	};
+
+	return map[status] || { color: '#475569', bg: 'rgba(71,85,105,0.08)' };
 };
-
-const adminAlerts = computed(() => {
-	const d = dashboardData.value;
-	if (!d) return [];
-	return [
-		d.pending_withdrawals > 0
-			? {
-					key: 'withdrawals',
-					to: '/account/amministrazione/prelievi',
-					label: `${d.pending_withdrawals} prelievi in attesa`,
-					tone: 'warning',
-				}
-			: null,
-		d.unread_messages > 0
-			? { key: 'messages', to: '/account/amministrazione/messaggi', label: `${d.unread_messages} messaggi non letti`, tone: 'info' }
-			: null,
-		d.orders.payment_failed > 0
-			? { key: 'payments', to: '/account/amministrazione/ordini', label: `${d.orders.payment_failed} pagamenti falliti`, tone: 'critical' }
-			: null,
-		d.shipments.without_label > 0
-			? { key: 'labels', to: '/account/amministrazione/ordini', label: `${d.shipments.without_label} senza etichetta`, tone: 'warning' }
-			: null,
-		d.pending_pro_requests > 0
-			? { key: 'pro', to: '/account/amministrazione/utenti', label: `${d.pending_pro_requests} richieste Pro`, tone: 'info' }
-			: null,
-	].filter(Boolean);
-});
 </script>
 
 <template>
-	<section class="sf-account-shell min-h-[600px] py-[24px] tablet:py-[28px] desktop:py-[48px]">
-		<div class="my-container">
+	<section class="sf-account-shell min-h-[600px] py-[24px] sm:py-[28px] lg:py-[32px]">
+		<div class="my-container space-y-[16px]">
 			<AccountPageHeader
-				eyebrow="Area amministrazione"
-				title="Console admin"
-				:description="dashboardSummary"
-				:crumbs="[{ label: 'Account', to: '/account' }, { label: 'Amministrazione' }]">
-				<template #meta>
-					<div v-if="dashboardHeaderMeta.length" class="flex flex-wrap gap-[8px]">
-						<span
-							v-for="item in dashboardHeaderMeta"
-							:key="item.label"
-							class="inline-flex items-center gap-[6px] rounded-full bg-[#F0F6F7] px-[12px] py-[6px] text-[0.8125rem] font-semibold text-[var(--color-brand-primary)]">
-							{{ item.label }}: {{ item.value }}
-						</span>
+				class="sf-account-shell-hero--compact sf-admin-console-header"
+				:crumbs="[{ label: 'Account', to: '/account' }, { label: 'Amministrazione' }]"
+				title="Console amministrazione"
+				description="Priorita operative, KPI essenziali, andamento ordini e attivita recente in una console piu ordinata.">
+				<template #actions>
+					<div class="flex items-center gap-[8px] shrink-0">
+						<NuxtLink to="/account/amministrazione/ordini" class="sf-admin-btn-primary">
+							<svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="14" height="14" fill="currentColor">
+								<path d="M4 6h2v12H4V6zm4 2h2v10H8V8zm4-4h2v14h-2V4zm4 6h2v8h-2v-8z" />
+							</svg>
+							Gestisci ordini
+						</NuxtLink>
 					</div>
 				</template>
 			</AccountPageHeader>
 
-			<div class="sf-account-panel mb-[16px] rounded-[20px] p-[16px] tablet:p-[18px]">
-				<div class="grid grid-cols-2 gap-[8px] tablet:grid-cols-3 desktop:grid-cols-5">
-					<NuxtLink
-						v-for="link in adminQuickLinks"
-						:key="link.to"
-						:to="link.to"
-						class="sf-admin-quick-link group flex min-h-[52px] items-center gap-[10px] rounded-[20px] px-[14px] py-[10px]"
-						:style="{ '--sf-link-hover-border': link.hoverBorder }">
-						<div
-							class="sf-admin-quick-link__icon flex h-[32px] w-[32px] shrink-0 items-center justify-center rounded-[20px]"
-							:style="{ backgroundColor: link.iconBg, color: link.iconColor }">
-							<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="h-[18px] w-[18px]" fill="currentColor">
-								<path :d="link.svgPath" />
-							</svg>
-						</div>
-						<p class="text-[0.8125rem] font-semibold leading-[1.15] text-[var(--color-brand-text)]">{{ link.label }}</p>
-					</NuxtLink>
-				</div>
-			</div>
-
-			<div v-if="isLoading" class="flex justify-center py-[48px]">
-				<div class="h-[40px] w-[40px] animate-spin rounded-full border-3 border-[var(--color-brand-border)] border-t-[var(--color-brand-primary)]"></div>
-			</div>
-
-			<template v-else>
-				<div v-if="dashboardData">
-					<div class="sf-account-panel mb-[16px] rounded-[20px] px-[16px] py-[14px] desktop:px-[20px] desktop:py-[16px]">
-						<div class="flex flex-col gap-[10px] desktop:flex-row desktop:items-center desktop:justify-between">
-							<div>
-								<p class="text-[0.75rem] font-semibold uppercase tracking-[1px] text-[var(--color-brand-primary)]">Vista rapida</p>
-								<h2 class="mt-[4px] text-[1rem] font-bold text-[var(--color-brand-text)]">Dashboard operativa e non archivio completo</h2>
-								<p class="mt-[4px] text-[0.875rem] leading-[1.55] text-[var(--color-brand-text-secondary)]">
-									Questa schermata mostra gli ultimi {{ recentOrders.length }} ordini sincronizzati e le code prioritarie. Per filtro,
-									ricerca e storico completo usa la gestione ordini dedicata.
+			<template v-if="dashboardData || isLoading">
+				<div v-if="dashboardData || isLoading" class="space-y-[16px]">
+					<section class="sf-admin-console-surface sf-admin-console-surface--hub">
+						<div class="sf-admin-console-surface__intro">
+							<div class="min-w-0">
+								<p class="sf-admin-console-surface__eyebrow">Andamento operativo</p>
+								<h2
+									class="text-[1.2rem] font-[800] leading-[1.08] text-[var(--color-brand-text)]"
+									style="font-family: var(--font-montserrat)">
+									Ordini, ricavi e attivita recente
+								</h2>
+								<p class="mt-[6px] text-[0.9rem] leading-[1.5] text-[var(--color-brand-text-secondary)]">
+									Una sola superficie per leggere urgenze, volumi e ultimi aggiornamenti senza pannelli ridondanti.
 								</p>
 							</div>
-							<div class="flex flex-wrap gap-[8px]">
-								<span class="sf-account-meta-pill">Ordini live</span>
-								<span class="sf-account-meta-pill sf-account-meta-pill--muted">Coda admin</span>
+							<div class="sf-admin-console-surface__intro-badges">
+								<span class="sf-admin-console-surface__badge">Aggiornamento live</span>
+								<span class="sf-admin-console-surface__badge sf-admin-console-surface__badge--accent">KPI essenziali</span>
 							</div>
 						</div>
-					</div>
 
-					<div class="mb-[20px] grid gap-[16px] desktop:grid-cols-[minmax(0,1.2fr)_minmax(320px,0.8fr)]">
-						<section
-							class="sf-admin-chart-card rounded-[16px] bg-[linear-gradient(180deg,#ffffff_0%,#f8fbfc_100%)] p-[20px] desktop:p-[28px]">
-							<div
-								class="flex flex-col gap-[10px] border-b border-[#E6EDF0] pb-[16px] desktop:flex-row desktop:items-start desktop:justify-between">
-								<div>
-									<p class="text-[0.75rem] font-semibold uppercase tracking-[0.08em] text-[var(--color-brand-text-muted)]">Monitor ordini</p>
-									<h2 class="mt-[4px] text-[1.2rem] font-bold text-[var(--color-brand-text)]">Andamento ultimi 30 giorni</h2>
+						<section class="sf-admin-console-notice" :class="primaryUrgentAction ? 'sf-admin-console-notice--alert' : 'sf-admin-console-notice--calm'">
+							<div class="sf-admin-console-notice__body">
+								<div class="sf-admin-console-notice__copy">
+									<p class="sf-admin-console-notice__eyebrow">Notifiche</p>
+									<h2 class="sf-admin-console-notice__title">{{ notificationTitle }}</h2>
+									<p v-if="primaryUrgentAction" class="sf-admin-console-notice__description">{{ notificationDescription }}</p>
 								</div>
-
-								<div class="flex flex-wrap gap-[8px]">
-									<span
-										v-for="pk in periodKpis"
-										:key="pk.key"
-										class="inline-flex flex-col rounded-[20px] border border-[#E2ECEF] bg-white px-[12px] py-[10px] shadow-[0_8px_18px_rgba(15,23,42,0.04)]">
-										<span class="text-[0.6875rem] font-medium uppercase tracking-[0.05em] text-[var(--color-brand-text-muted)]">{{ pk.label }}</span>
-										<span class="mt-[2px] text-[1rem] font-bold text-[var(--color-brand-text)]">{{ pk.value }}</span>
-									</span>
+								<div class="sf-admin-console-notice__actions">
+									<NuxtLink
+										v-if="primaryUrgentAction"
+										:to="primaryUrgentAction.to"
+										class="sf-admin-btn-secondary sf-admin-console-notice__cta">
+										{{ primaryUrgentAction.cta }}
+									</NuxtLink>
+									<span v-else class="sf-admin-console-notice__status">Allineato</span>
 								</div>
-							</div>
-
-							<div v-if="dashboardData.daily_orders?.length" class="mt-[18px] flex h-[180px] items-end gap-[6px]">
-								<div
-									v-for="(day, i) in dashboardData.daily_orders"
-									:key="i"
-									class="group relative flex h-full flex-1 flex-col items-center justify-end">
-									<div
-										class="min-h-[6px] w-full rounded-t-[6px] bg-[var(--color-brand-primary)] transition-colors hover:bg-[var(--color-brand-primary-light)]"
-										:style="{ height: `${(day.count / chartMax) * 100}%` }"></div>
-									<span v-if="i % 5 === 0" class="mt-[6px] text-[0.55rem] leading-none text-[var(--color-brand-text-muted)]">{{ day.date }}</span>
-									<div
-										class="pointer-events-none absolute bottom-full z-10 mb-[6px] whitespace-nowrap rounded-[6px] bg-[var(--color-brand-text)] px-[7px] py-[4px] text-[0.625rem] text-white opacity-0 transition-opacity group-hover:opacity-100">
-										{{ day.date }}: {{ day.count }} ordini
-									</div>
-								</div>
-							</div>
-
-							<div
-								v-else
-								class="mt-[18px] rounded-[20px] border border-dashed border-[#D4E1E7] bg-white px-[16px] py-[24px] text-center text-[0.875rem] text-[var(--color-brand-text-secondary)]">
-								Nessun dato disponibile per il grafico ordini.
 							</div>
 						</section>
 
-						<section class="sf-admin-chart-card rounded-[16px] bg-white p-[18px] desktop:p-[20px]">
-							<div class="border-b border-[#E9EEF2] pb-[14px]">
-								<p class="text-[0.75rem] font-semibold uppercase tracking-[0.08em] text-[var(--color-brand-text-muted)]">Priorita ora</p>
-								<h2 class="mt-[4px] text-[1.0625rem] font-bold text-[var(--color-brand-text)]">Code operative</h2>
-							</div>
-
-							<div v-if="adminAlerts.length" class="mt-[16px] space-y-[10px]">
-								<NuxtLink
-									v-for="alert in adminAlerts"
-									:key="alert.key"
-									:to="alert.to"
-									class="sf-action-card sf-action-card--locked min-h-[62px] rounded-[14px] border-l-[3px]"
-									:class="alert.tone === 'critical' ? 'border-l-[var(--color-brand-accent)]' : 'border-l-[var(--color-brand-primary-light)]'">
-									<div class="sf-action-card__icon-shell" :class="alert.tone === 'critical' ? 'sf-action-card__icon-shell--accent' : ''">
-										<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="h-[18px] w-[18px]" fill="currentColor">
-											<path :d="alertSvgs[alert.key]" />
+						<section class="sf-admin-stats-grid">
+							<article v-for="card in statsCards" :key="card.key" class="sf-admin-stat-card">
+								<div class="sf-admin-stat-card__top">
+									<span class="sf-admin-stat-card__icon">
+										<svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+											<path :d="card.icon" />
 										</svg>
-									</div>
-									<div class="min-w-0">
-										<p class="text-[0.875rem] font-semibold leading-[1.2] text-[var(--color-brand-text)]">{{ alert.label }}</p>
-									</div>
+									</span>
+									<span class="sf-admin-stat-card__label">{{ card.label }}</span>
+								</div>
+								<p class="sf-admin-stat-card__value">{{ card.value }}</p>
+								<p class="sf-admin-stat-card__meta">{{ card.meta }}</p>
+							</article>
+						</section>
+
+						<!-- W5.1 perf: bundle analytics (754 righe + chart deps) lazy-loaded
+							 per abbattere il JS iniziale della dashboard admin. -->
+						<LazyAdminConsoleAnalytics class="sf-admin-console-analytics" v-bind="analyticsProps" />
+
+						<section class="sf-admin-console-subsection">
+							<div class="flex items-center justify-between gap-[12px]">
+								<div class="min-w-0">
+									<h2
+										class="text-[1.2rem] font-[800] leading-[1.08] text-[var(--color-brand-text)]"
+										style="font-family: var(--font-montserrat)">
+										Ultimi aggiornamenti
+									</h2>
+									<p class="mt-[6px] text-[0.9rem] leading-[1.5] text-[var(--color-brand-text-secondary)]">
+										Le ultime operazioni, con il dettaglio che serve per aprire subito la coda giusta.
+									</p>
+								</div>
+								<NuxtLink to="/account/amministrazione/ordini" class="text-[0.85rem] font-[700] text-[var(--color-brand-primary)] hover:text-[#0b6c7f]">
+									Tutti gli ordini
 								</NuxtLink>
 							</div>
 
-							<div
-								v-else
-								class="mt-[16px] rounded-[20px] border border-dashed border-[#D4E1E7] bg-[#F8FBFC] px-[14px] py-[18px] text-[0.875rem] text-[var(--color-brand-text-secondary)]">
-								Nessuna priorita aperta.
+							<div v-if="!activityItems.length" class="mt-[18px] rounded-[16px] border border-[var(--color-brand-border)] bg-[#FAFBFC] px-[16px] py-[18px] text-[0.9rem] text-[var(--color-brand-text-secondary)]">
+								Nessun aggiornamento recente disponibile.
+							</div>
+
+							<div v-else class="sf-admin-console-feed">
+								<NuxtLink
+									v-for="item in activityItems.slice(0, 8)"
+									:key="item.id"
+									to="/account/amministrazione/ordini"
+									class="sf-admin-console-feed__item"
+								>
+										<div class="flex items-start justify-between gap-[12px]">
+											<div class="min-w-0">
+												<p class="text-[0.72rem] font-[800] tracking-[0.14em] uppercase text-[var(--color-brand-text-muted)]">
+													Ordine #{{ item.id }}
+												</p>
+												<p class="mt-[6px] text-[0.95rem] font-[800] leading-[1.2] text-[var(--color-brand-text)]">
+													{{ item.customerName }}
+												</p>
+											</div>
+										<span
+											class="inline-flex shrink-0 items-center rounded-full px-[10px] py-[5px] text-[0.72rem] font-[800]"
+											:style="{ color: statusBadgeStyle(item.statusKey).color, background: statusBadgeStyle(item.statusKey).bg }">
+											{{ item.status }}
+										</span>
+									</div>
+										<div class="mt-[8px] flex flex-wrap items-center justify-between gap-[8px] text-[0.82rem] text-[var(--color-brand-text-secondary)]">
+											<span>{{ item.amount }} &euro;</span>
+											<span>{{ item.date }}</span>
+										</div>
+									</NuxtLink>
 							</div>
 						</section>
-					</div>
-
-					<div class="mb-[20px] grid grid-cols-1 gap-[12px] tablet:grid-cols-2 desktop:grid-cols-4 desktop:gap-[16px]">
-						<div
-							v-for="card in kpiCards"
-							:key="card.key"
-							class="sf-admin-kpi-card rounded-[20px] bg-white p-[14px] tablet:p-[16px]"
-							:style="{ borderColor: card.border, boxShadow: `inset 0 3px 0 ${card.accent}, 0 8px 18px rgba(20, 37, 48, 0.045)` }">
-							<div class="mb-[6px] flex items-center gap-[8px]">
-								<div class="flex h-[32px] w-[32px] items-center justify-center rounded-[50px]" :class="card.bg">
-									<svg
-										xmlns="http://www.w3.org/2000/svg"
-										viewBox="0 0 24 24"
-										class="h-[18px] w-[18px]"
-										:class="card.color"
-										fill="currentColor">
-										<path :d="card.svgPath" />
-									</svg>
-								</div>
-								<p class="text-[0.75rem] font-medium uppercase tracking-[0.5px] text-[var(--color-brand-text-secondary)]">{{ card.label }}</p>
-							</div>
-							<p class="text-[1.5rem] font-bold" :class="card.valueClass || 'text-[var(--color-brand-text)]'">{{ card.value }}</p>
-							<div class="mt-[6px] flex gap-[10px] text-[0.6875rem] text-[var(--color-brand-text-secondary)]">
-								<span v-for="sub in card.subs" :key="sub.text" :class="sub.cls">{{ sub.text }}</span>
-							</div>
-						</div>
-					</div>
-
-					<div class="sf-admin-orders-card rounded-[20px] bg-white p-[20px] desktop:p-[28px]">
-						<div class="mb-[16px] flex items-center justify-between">
-							<div>
-								<h2 class="text-[1.0625rem] font-bold text-[var(--color-brand-text)]">Ultimi ordini</h2>
-								<p class="mt-[4px] text-[0.75rem] text-[var(--color-brand-text-secondary)]">
-									Vista rapida limitata agli ultimi {{ recentOrders.length }} ordini sincronizzati.
-								</p>
-							</div>
-							<NuxtLink
-								to="/account/amministrazione/ordini"
-								class="inline-flex items-center gap-[4px] text-[0.75rem] font-medium text-[var(--color-brand-text-secondary)] hover:text-[var(--color-brand-primary)] hover:underline">
-								Gestione completa
-								<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="h-[14px] w-[14px]" fill="currentColor">
-									<path d="M4,11V13H16L10.5,18.5L11.92,19.92L19.84,12L11.92,4.08L10.5,5.5L16,11H4Z" />
-								</svg>
-							</NuxtLink>
-						</div>
-
-						<div v-if="!recentOrders.length" class="py-[28px] text-center text-[var(--color-brand-text-secondary)]">
-							<p>Nessun ordine recente.</p>
-						</div>
-
-						<div v-else class="space-y-[8px]">
-							<div
-								v-for="order in recentOrders"
-								:key="order.id"
-								class="flex items-center justify-between rounded-[20px] border border-[#F0F0F0] p-[12px] transition-colors hover:border-[var(--color-brand-border)]">
-								<div class="flex items-center gap-[16px]">
-									<span class="text-[0.8125rem] font-bold text-[var(--color-brand-text)]">#{{ order.id }}</span>
-									<span class="text-[0.8125rem] text-[var(--color-brand-text)]">{{ order.user?.name }} {{ order.user?.surname }}</span>
-								</div>
-								<div class="flex items-center gap-[12px]">
-									<span class="text-[0.875rem] font-semibold text-[var(--color-brand-text)]">
-										&euro;{{ formatCents(order.subtotal?.amount ?? order.subtotal) }}
-									</span>
-									<span
-										:class="[
-											'inline-flex items-center gap-[4px] rounded-full px-[10px] py-[3px] text-[0.6875rem] font-medium',
-											orderStatusConfig[order.status]?.bg || 'bg-gray-50',
-											orderStatusConfig[order.status]?.text || 'text-gray-700',
-										]">
-										<span
-											class="h-[8px] w-[8px] rounded-full bg-current"
-											:class="orderStatusConfig[order.status]?.text || 'text-gray-700'"></span>
-										{{ orderStatusConfig[order.status]?.label || order.status }}
-									</span>
-									<span class="hidden text-[0.75rem] text-[var(--color-brand-text-secondary)] desktop:inline">{{ formatDate(order.created_at) }}</span>
-								</div>
-							</div>
-						</div>
-					</div>
+					</section>
 				</div>
 
-				<div v-else class="py-[60px] text-center text-[var(--color-brand-text-secondary)]">
-					<div class="sf-account-panel mx-auto max-w-[520px] rounded-[20px] p-[28px] desktop:p-[32px]">
-						<p class="text-[0.75rem] font-semibold uppercase tracking-[1px] text-[#B45309]">Dashboard non disponibile</p>
-						<h2 class="mt-[6px] text-[1.125rem] font-bold text-[var(--color-brand-text)]">Sincronizzazione interrotta</h2>
-						<p class="mt-[10px] text-[0.9375rem] leading-[1.6] text-[var(--color-brand-text-secondary)]">
-							{{ loadError || 'Impossibile caricare i dati della dashboard. Riprova.' }}
-						</p>
-						<button
-							type="button"
-							class="btn-secondary mt-[16px]"
-							@click="
-								isLoading = true;
-								fetchDashboard().then(() => {
-									isLoading = false;
-								});
-							">
-							Riprova
-						</button>
+				<div v-else class="py-[32px]">
+					<div class="space-y-[12px]">
+						<AdminActionBanner :message="loadError || 'Impossibile caricare i dati della console.'" tone="error" />
+						<div class="flex justify-center">
+							<button
+								type="button"
+								class="sf-admin-btn-secondary"
+								@click="isLoading = true; fetchDashboard().then(() => { isLoading = false; })"
+							>
+								Riprova
+							</button>
+						</div>
 					</div>
 				</div>
 			</template>
 		</div>
 	</section>
 </template>
+

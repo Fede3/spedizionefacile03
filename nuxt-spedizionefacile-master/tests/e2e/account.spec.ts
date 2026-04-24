@@ -1,69 +1,41 @@
 import { test, expect } from '@playwright/test';
 import { resolveE2EStorageState } from './utils/authState';
 
-const accountStorageState = resolveE2EStorageState('account');
+const accountStorageState = resolveE2EStorageState('customer');
 const hasAuthStorage = Boolean(accountStorageState);
 
+const expectGuestAuthOverlay = async (page) => {
+	await expect(page.getByRole('tab', { name: /accedi/i })).toBeVisible({ timeout: 30000 });
+	await expect(page.getByRole('tab', { name: /registrati/i })).toBeVisible({ timeout: 30000 });
+};
+
+const openProtectedAccountRoute = async (page, path) => {
+	await page.goto(path, { waitUntil: 'domcontentloaded' });
+};
+
+const expectAuthenticatedAccountPage = async (page, headingName) => {
+	await expect(page.locator('#auth-modal-email')).toHaveCount(0);
+	await expect(page.locator('main').getByRole('heading', headingName)).toBeVisible({ timeout: 30000 });
+};
+
+const protectedAccountRoutes = [
+	['T6.1', '/account', 'dashboard richiede autenticazione'],
+	['T6.2', '/account/profilo', 'profilo richiede autenticazione'],
+	['T6.3', '/account/indirizzi', 'indirizzi richiede autenticazione'],
+	['T6.4', '/account/carte', 'carte richiede autenticazione'],
+	['T6.5', '/account/portafoglio', 'portafoglio richiede autenticazione'],
+	['T6.6', '/account/spedizioni', 'spedizioni richiede autenticazione'],
+	['T6.9', '/account/assistenza', 'assistenza richiede autenticazione'],
+	['T6.11', '/account/account-pro', 'area partner pro richiede autenticazione'],
+];
+
 test.describe('Account - Protezione Route', () => {
-	test('T6.1 - dashboard richiede autenticazione', async ({ page }) => {
-		await page.goto('/account');
-		await page.waitForLoadState('networkidle');
-		await expect(page).toHaveURL(/autenticazione/, { timeout: 30000 });
-	});
-
-	test('T6.2 - profilo richiede autenticazione', async ({ page }) => {
-		await page.goto('/account/profilo');
-		await page.waitForLoadState('networkidle');
-		await expect(page).toHaveURL(/autenticazione/, { timeout: 30000 });
-	});
-
-	test('T6.3 - indirizzi richiede autenticazione', async ({ page }) => {
-		await page.goto('/account/indirizzi');
-		await page.waitForLoadState('networkidle');
-		await expect(page).toHaveURL(/autenticazione/, { timeout: 30000 });
-	});
-
-	test('T6.4 - carte richiede autenticazione', async ({ page }) => {
-		await page.goto('/account/carte');
-		await page.waitForLoadState('networkidle');
-		await expect(page).toHaveURL(/autenticazione/, { timeout: 30000 });
-	});
-
-	test('T6.5 - portafoglio richiede autenticazione', async ({ page }) => {
-		await page.goto('/account/portafoglio');
-		await page.waitForLoadState('networkidle');
-		await expect(page).toHaveURL(/autenticazione/, { timeout: 30000 });
-	});
-
-	test('T6.6 - spedizioni richiede autenticazione', async ({ page }) => {
-		await page.goto('/account/spedizioni');
-		await page.waitForLoadState('networkidle');
-		await expect(page).toHaveURL(/autenticazione/, { timeout: 30000 });
-	});
-
-	test('T6.7 - spedizioni configurate richiede autenticazione', async ({ page }) => {
-		await page.goto('/account/spedizioni-configurate');
-		await page.waitForLoadState('networkidle');
-		await expect(page).toHaveURL(/autenticazione/, { timeout: 30000 });
-	});
-
-	test('T6.8 - bonus richiede autenticazione', async ({ page }) => {
-		await page.goto('/account/bonus');
-		await page.waitForLoadState('networkidle');
-		await expect(page).toHaveURL(/autenticazione/, { timeout: 30000 });
-	});
-
-	test('T6.9 - assistenza richiede autenticazione', async ({ page }) => {
-		await page.goto('/account/assistenza');
-		await page.waitForLoadState('networkidle');
-		await expect(page).toHaveURL(/autenticazione/, { timeout: 30000 });
-	});
-
-	test('T6.10 - prelievi richiede autenticazione', async ({ page }) => {
-		await page.goto('/account/prelievi');
-		await page.waitForLoadState('networkidle');
-		await expect(page).toHaveURL(/autenticazione/, { timeout: 30000 });
-	});
+	for (const [code, path, label] of protectedAccountRoutes) {
+		test(`${code} - ${label}`, async ({ page }) => {
+			await openProtectedAccountRoute(page, path);
+			await expectGuestAuthOverlay(page);
+		});
+	}
 });
 
 test.describe('Account - Pagine (richiede auth)', () => {
@@ -71,71 +43,93 @@ test.describe('Account - Pagine (richiede auth)', () => {
 		test.use({ storageState: accountStorageState });
 	}
 
-	// Questi test richiedono un utente autenticato.
-	// Per bootstrap rapido: eseguire tests/e2e/auth.setup.spec.ts
-	// oppure valorizzare PLAYWRIGHT_STORAGE_STATE / TEST_STORAGE_STATE.
 	test.skip(!hasAuthStorage, 'Richiede utente autenticato - attivare con auth setup');
 
-	test('T6.1.1 - dashboard mostra card grid', async ({ page }) => {
+	test('T6.1.1 - dashboard mostra spedizioni, metriche e storico', async ({ page }) => {
 		await page.goto('/account');
-		await expect(page.getByRole('link', { name: /^spedizioni/i })).toBeVisible();
-		await expect(page.getByRole('link', { name: /^portafoglio/i })).toBeVisible();
-		await expect(page.getByRole('link', { name: /^profilo/i })).toBeVisible();
+		const main = page.locator('main');
+		await expectAuthenticatedAccountPage(page, { name: 'Il tuo account', exact: true });
+		await expect(main.getByRole('heading', { name: /spedizioni attive/i })).toBeVisible();
+		await expect(main.getByText(/^spedite$/i).first()).toBeVisible();
+		await expect(main.getByRole('heading', { name: /ultime spedizioni/i })).toBeVisible();
 	});
 
 	test('T6.1.2 - dashboard link funzionanti', async ({ page }) => {
 		await page.goto('/account');
-		await page.getByRole('link', { name: /^profilo/i }).click();
-		await expect(page).toHaveURL(/account\/profilo/);
+		await expectAuthenticatedAccountPage(page, { name: 'Il tuo account', exact: true });
+		await page.locator('main').getByRole('link', { name: /tutte le spedizioni/i }).first().click();
+		await expect(page).toHaveURL(/account\/spedizioni/);
+		await expectAuthenticatedAccountPage(page, { name: 'Le tue spedizioni', exact: true });
 	});
 
 	test('T6.2.1 - profilo mostra dati utente', async ({ page }) => {
 		await page.goto('/account/profilo');
-		await page.waitForLoadState('networkidle');
-		await expect(page.getByText(/numero di telefono/i)).toBeVisible();
-		await expect(page.getByText(/tipo account/i)).toBeVisible();
+		await expectAuthenticatedAccountPage(page, { name: /il mio profilo/i });
+		await expect(page.getByText(/^nome \*$/i)).toBeVisible();
+		await expect(page.getByText(/^email \*$/i)).toBeVisible();
+		await expect(page.getByText(/^telefono$/i)).toBeVisible();
+		await expect(page.getByRole('button', { name: /salva modifiche/i })).toBeVisible();
 	});
 
-	test('T6.2.2 - toggle edit mode', async ({ page }) => {
+	test('T6.2.2 - controlli edit mode visibili e stabili', async ({ page }) => {
 		await page.goto('/account/profilo');
-		const editBtn = page.getByText(/modifica/i).first();
-		await editBtn.click();
-		await expect(page.locator('input[type="text"]').first()).toBeEnabled();
+		await expectAuthenticatedAccountPage(page, { name: /il mio profilo/i });
+		await expect(page.getByRole('button', { name: /salva modifiche/i })).toBeVisible();
+		await page.getByRole('button', { name: /annulla/i }).click();
+		await expect(page.locator('main').getByRole('heading', { name: /il mio profilo/i })).toBeVisible();
+		await expect(page).toHaveURL(/\/account\/profilo/);
+		await expect(page.getByRole('button', { name: /salva modifiche/i })).toBeVisible();
 	});
 
 	test('T6.3.1 - lista indirizzi visibile', async ({ page }) => {
 		await page.goto('/account/indirizzi');
-		await page.waitForLoadState('networkidle');
-		// Should show address list or empty state
-		const content = await page.locator('main').textContent();
-		expect(content?.length).toBeGreaterThan(0);
+		await expect(page.locator('#auth-modal-email')).toHaveCount(0);
+		const main = page.locator('main');
+		await expect(main.getByRole('heading', { name: /i tuoi indirizzi/i })).toBeVisible();
+		await expect(main.getByPlaceholder(/cerca per etichetta, nome, citt/i)).toBeVisible();
+		await expect(main.getByRole('button', { name: /nuovo indirizzo/i })).toBeVisible();
+		await expect(main.getByText(/la tua rubrica/i).first()).toBeVisible();
 	});
 
 	test('T6.4.1 - lista carte visibile', async ({ page }) => {
 		await page.goto('/account/carte');
-		await page.waitForLoadState('networkidle');
-		const content = await page.locator('main').textContent();
-		expect(content?.length).toBeGreaterThan(0);
+		await expect(page.locator('#auth-modal-email')).toHaveCount(0);
+		const main = page.locator('main');
+		await expect(main.getByRole('heading', { name: /carte e pagamenti/i })).toBeVisible();
+		await expect(main.getByRole('heading', { name: /carte salvate e wallet nello stesso punto/i })).toBeVisible();
+		await expect(main.getByRole('link', { name: /apri portafoglio/i })).toBeVisible();
+		await expect(main.getByText(/nessuna carta salvata|pagamenti con carta non ancora attivi|predefinita/i).first()).toBeVisible();
 	});
 
 	test('T6.5.1 - saldo portafoglio visibile', async ({ page }) => {
 		await page.goto('/account/portafoglio');
-		await page.waitForLoadState('networkidle');
-		// Should show balance
+		await expect(page.locator('#auth-modal-email')).toHaveCount(0);
 		await expect(page.getByText(/saldo|balance|€/i).first()).toBeVisible();
 	});
 
 	test('T6.6.1 - lista spedizioni visibile', async ({ page }) => {
 		await page.goto('/account/spedizioni');
-		await page.waitForLoadState('networkidle');
-		const content = await page.locator('main').textContent();
-		expect(content?.length).toBeGreaterThan(0);
+		await expectAuthenticatedAccountPage(page, { name: 'Le tue spedizioni', exact: true });
+		await expect(page.getByPlaceholder('Cerca riferimento, tracking, mittente o destinatario...')).toBeVisible();
 	});
 
-	test('T6.8.1 - bonus/referral visibile', async ({ page }) => {
-		await page.goto('/account/bonus');
-		await page.waitForLoadState('networkidle');
-		const content = await page.locator('main').textContent();
-		expect(content?.length).toBeGreaterThan(0);
+	test('T6.9.1 - assistenza mostra azioni rapide e ticket', async ({ page }) => {
+		await page.goto('/account/assistenza');
+		await expect(page.locator('#auth-modal-email')).toHaveCount(0);
+		const main = page.locator('main');
+		await expect(main.getByRole('heading', { name: 'Assistenza', exact: true })).toBeVisible();
+		await expect(main.getByRole('heading', { name: /da dove vuoi partire/i })).toBeVisible();
+		await expect(main.getByRole('heading', { name: /apri un ticket/i })).toBeVisible();
+		await expect(main.getByText(/segui una spedizione/i)).toBeVisible();
+		await expect(main.getByRole('button', { name: /invia richiesta/i })).toBeVisible();
+	});
+
+	test('T6.12.1 - area partner pro mostra richiesta o dashboard coerente', async ({ page }) => {
+		await page.goto('/account/account-pro');
+		await expectAuthenticatedAccountPage(page, { name: 'Area Partner Pro', exact: true });
+		const main = page.locator('main');
+		const content = (await main.textContent()) || '';
+		expect(content).toMatch(/Richiedi accesso|Richiesta registrata|Condividi il link/);
+		expect(content).toMatch(/Come funziona|Link invito|Storico commissioni/);
 	});
 });

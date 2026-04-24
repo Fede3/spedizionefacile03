@@ -38,20 +38,33 @@ namespace App\Http\Controllers;
 
 use App\Models\WalletMovement;
 use App\Services\StripePaymentService;
+use App\Services\WalletOrderLinkService;
+use App\Services\WalletOrderPaymentService;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Str;
 use Stripe\Exception\CardException;
-use Stripe\StripeClient;
 
 class WalletController extends Controller
 {
     public function __construct(
         private readonly StripePaymentService $stripePaymentService,
+        private readonly WalletOrderLinkService $walletOrderLink,
+        private readonly WalletOrderPaymentService $walletOrderPayment,
     ) {}
+
+    /*
+     * Boundary note:
+     * - questo controller possiede saldo, movimenti, top-up e debit wallet;
+     * - NON completa da solo un ordine pagato con wallet;
+     * - l'ordine viene finalizzato dal secondo step
+     *   `POST /api/stripe/mark-order-completed` in StripeCheckoutController.
+     * - il contratto canonico `order-{id}` / `wallet-{id}` vive in WalletOrderLinkService.
+     *
+     * Per capire il flusso reale: docs/FEATURE_BOUNDARIES.md -> Wallet / Payment.
+     */
 
     // Mostra il saldo attuale del portafoglio dell'utente
     // Per i Partner Pro mostra anche il saldo delle commissioni
@@ -61,8 +74,8 @@ class WalletController extends Controller
 
         return response()->json(
             [
-                'balance' => $user->walletBalance(),                                    // Saldo portafoglio in euro
-                'commission_balance' => $user->isPro() ? $user->commissionBalance() : null, // Commissioni (solo Pro)
+                'balance' => $user->walletBalance(),
+                'commission_balance' => $user->isPro() ? $user->commissionBalance() : null,
                 'currency' => 'EUR',
             ],
             200,
@@ -73,7 +86,7 @@ class WalletController extends Controller
 
     // Mostra la lista di tutti i movimenti del portafoglio dell'utente
     // (ricariche, pagamenti, commissioni, prelievi, ecc.)
-    // Ordinati dal piu' recente al piu' vecchio
+    // Ordinati dal più recente al più vecchio
     public function movements(): JsonResponse
     {
         $movements = WalletMovement::query()
@@ -88,7 +101,6 @@ class WalletController extends Controller
     // Crea un pagamento su Stripe e, se va a buon fine, aggiunge i soldi al portafoglio
     public function topUp(Request $request): JsonResponse
     {
-        // Controlliamo che l'importo sia almeno 1 euro e che sia stata fornita una carta
         $data = $request->validate([
             'amount' => ['required', 'numeric', 'min:1'],
             'payment_method_id' => ['required', 'string'],
@@ -96,7 +108,6 @@ class WalletController extends Controller
         ]);
 
         $user = $request->user();
-        // Convertiamo l'importo da euro a centesimi (es. 10.00 euro -> 1000 centesimi)
         $amountCents = (int) round($data['amount'] * 100);
         $idempotencyKey = $this->stripePaymentService->resolveWalletTopUpIdempotencyKey(
             $user,
@@ -122,7 +133,6 @@ class WalletController extends Controller
 
             if (($paymentIntent['status'] ?? null) === 'succeeded') {
                 $result = DB::transaction(function () use ($user, $data, $paymentIntent, $idempotencyKey) {
-                    // Lock pessimistico sull'utente per serializzare aggiornamenti al saldo
                     $lockedUser = \App\Models\User::query()->whereKey($user->id)->lockForUpdate()->firstOrFail();
 
                     $existingMovement = WalletMovement::query()
@@ -141,7 +151,7 @@ class WalletController extends Controller
 
                     $movement = WalletMovement::create([
                         'user_id' => $lockedUser->id,
-                        'type' => 'credit',              // "credit" = soldi in entrata
+                        'type' => 'credit',
                         'amount' => $data['amount'],
                         'currency' => 'EUR',
                         'status' => 'confirmed',
@@ -165,7 +175,6 @@ class WalletController extends Controller
                 ], $result['created'] ? 201 : 200);
             }
 
-            // Se il pagamento non e' riuscito (stato diverso da "succeeded")
             return response()->json([
                 'success' => false,
                 'message' => 'Pagamento non riuscito. Stato: '.($paymentIntent['status'] ?? 'unknown'),
@@ -191,13 +200,11 @@ class WalletController extends Controller
                 'message' => 'Errore durante il salvataggio della ricarica. Riprova.',
             ], 500);
         } catch (CardException $e) {
-            // La carta e' stata rifiutata (fondi insufficienti, carta scaduta, ecc.)
             return response()->json([
                 'success' => false,
                 'message' => 'Pagamento rifiutato: '.$e->getMessage(),
             ], 400);
         } catch (\Exception $e) {
-            // Errore generico durante il pagamento
             Log::error('Wallet top-up error', ['error' => $e->getMessage()]);
 
             return response()->json([
@@ -207,29 +214,39 @@ class WalletController extends Controller
         }
     }
 
-    // Paga una spedizione usando il saldo del portafoglio
-    // Controlla che ci siano fondi sufficienti e registra il movimento di uscita
+    // Paga una spedizione usando il saldo del portafoglio.
+    // Questo endpoint crea SOLO il movimento debit verificato.
+    // La completion dell'ordine vive nel secondo step
+    // StripeCheckoutController::markOrderCompleted().
     public function payWithWallet(Request $request): JsonResponse
     {
         $data = $request->validate([
             'amount' => ['required', 'numeric', 'min:0.01'],
-            'reference' => ['required', 'string', 'max:64'],       // Riferimento (es. ID ordine)
+            'reference' => ['required', 'string', 'max:64'],
             'description' => ['nullable', 'string', 'max:255'],
         ]);
 
         $user = $request->user();
 
-        // SEC-10: Il riferimento DEVE essere un ordine esistente appartenente all'utente
-        $order = \App\Models\Order::find($data['reference']);
+        $orderReference = $this->walletOrderLink->normalizeOrderReference($data['reference']);
+        $orderId = $orderReference
+            ? $this->walletOrderLink->extractOrderId($orderReference)
+            : null;
+
+        if (! $orderId) {
+            return response()->json(['message' => 'Riferimento ordine non valido.'], 422);
+        }
+
+        $order = \App\Models\Order::find($orderId);
         if (! $order) {
             return response()->json(['message' => 'Ordine non trovato.'], 404);
         }
+
         if ((int) $order->user_id !== (int) $user->id) {
             return response()->json(['message' => 'Non autorizzato: questo ordine non appartiene al tuo account.'], 403);
         }
 
-        // SEC-10: Verifica che l'importo corrisponda al totale dell'ordine (anti-tamper)
-        $orderAmountEur = (int) $order->subtotal->amount() / 100;
+        $orderAmountEur = round($order->payableTotalCents() / 100, 2);
         $requestedAmount = round((float) $data['amount'], 2);
         if (abs($orderAmountEur - $requestedAmount) > 0.01) {
             Log::warning('Wallet pay amount mismatch', [
@@ -237,51 +254,27 @@ class WalletController extends Controller
                 'order_id' => $order->id,
                 'order_amount_eur' => $orderAmountEur,
                 'requested_amount' => $requestedAmount,
+                'gross_subtotal_cents' => $order->grossSubtotalCents(),
+                'payable_total_cents' => $order->payableTotalCents(),
             ]);
 
             return response()->json([
-                'message' => 'L\'importo non corrisponde al totale dell\'ordine.',
+                'message' => "L'importo non corrisponde al totale dell'ordine.",
             ], 422);
         }
 
-        // SEC-10: L'ordine deve essere in attesa di pagamento
         if (! $order->isAwaitingPayment()) {
             return response()->json([
                 'message' => 'Questo ordine non è in attesa di pagamento.',
             ], 422);
         }
 
-        // Transazione con lock pessimistico per evitare double-spend da richieste concorrenti
-        $result = DB::transaction(function () use ($user, $data, $order) {
-            // Lock sulla riga utente per serializzare gli accessi concorrenti al saldo
-            $lockedUser = \App\Models\User::query()->whereKey($user->id)->lockForUpdate()->firstOrFail();
-
-            // Lock sull'ordine per evitare doppio pagamento
-            $lockedOrder = \App\Models\Order::query()->lockForUpdate()->find($order->id);
-            if (! $lockedOrder || ! $lockedOrder->isAwaitingPayment()) {
-                return ['error' => 'Ordine non più disponibile per il pagamento.'];
-            }
-
-            $balance = $lockedUser->walletBalance();
-
-            if ($balance < $data['amount']) {
-                return ['error' => 'Saldo insufficiente. Disponibile: '.number_format($balance, 2).' EUR'];
-            }
-
-            $movement = WalletMovement::create([
-                'user_id' => $user->id,
-                'type' => 'debit',
-                'amount' => $data['amount'],
-                'currency' => 'EUR',
-                'status' => 'confirmed',
-                'idempotency_key' => 'pay_'.$user->id.'_'.Str::uuid(),
-                'reference' => $data['reference'],
-                'description' => $data['description'] ?? 'Pagamento spedizione',
-                'source' => 'wallet',
-            ]);
-
-            return ['movement' => $movement, 'new_balance' => $user->walletBalance()];
-        });
+        $result = $this->walletOrderPayment->createOrReuseOrderDebit(
+            $user,
+            $order,
+            $orderAmountEur,
+            $data['description'] ?? 'Pagamento spedizione'
+        );
 
         if (isset($result['error'])) {
             return response()->json(['message' => $result['error']], 422);
@@ -291,6 +284,6 @@ class WalletController extends Controller
             'success' => true,
             'data' => $result['movement'],
             'new_balance' => $result['new_balance'],
-        ], 201);
+        ], ($result['created'] ?? false) ? 201 : 200);
     }
 }

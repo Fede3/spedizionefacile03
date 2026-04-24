@@ -2,9 +2,12 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-URL_ONLINE_FILE="${ROOT_DIR}/URL_ONLINE.txt"
+RUNTIME_STATE_DIR="${ROOT_DIR}/output/runtime-state"
+URL_ONLINE_FILE="${RUNTIME_STATE_DIR}/URL_ONLINE.txt"
 BACKEND_LOG="/tmp/cloudflared-backend.log"
 FRONTEND_LOG="/tmp/cloudflared-frontend.log"
+
+mkdir -p "$RUNTIME_STATE_DIR"
 
 NUXT_PORT="${NUXT_PORT:-3001}"
 LARAVEL_PORT="${LARAVEL_PORT:-8000}"

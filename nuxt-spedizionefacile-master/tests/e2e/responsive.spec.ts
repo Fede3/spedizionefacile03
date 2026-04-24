@@ -13,7 +13,7 @@ const pages = [
   { path: '/', name: 'Homepage' },
   { path: '/preventivo', name: 'Preventivo' },
   { path: '/carrello', name: 'Carrello' },
-  { path: '/autenticazione', name: 'Autenticazione' },
+  { path: '/?auth_modal=login', name: 'Auth Modal' },
   { path: '/chi-siamo', name: 'Chi Siamo' },
   { path: '/contatti', name: 'Contatti' },
   { path: '/faq', name: 'FAQ' },

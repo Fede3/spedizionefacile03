@@ -1,6 +1,10 @@
 /**
  * composables/useWalletTopUp.js
  * Stripe setup, card form lifecycle, top-up payment logic for wallet recharge.
+ *
+ * Boundary wallet:
+ * - questo file ricarica il saldo prepagato;
+ * - il pagamento di un ordine con wallet vive in usePayment -> /api/wallet/pay.
  */
 export function useWalletTopUp(props, emit) {
 	const { user, refreshIdentity } = useSanctumAuth();

@@ -290,9 +290,9 @@ class StripeWebhookController extends Controller
                 return;
             }
 
-            if ((int) $intent->amount !== (int) $lockedOrder->subtotal->amount()) {
+            if ((int) $intent->amount !== $lockedOrder->payableTotalCents()) {
                 $intentAmount = (int) $intent->amount;
-                $orderAmount = (int) $lockedOrder->subtotal->amount();
+                $orderAmount = $lockedOrder->payableTotalCents();
                 $mismatchPercent = $orderAmount > 0
                     ? abs($intentAmount - $orderAmount) / $orderAmount * 100
                     : 100;
@@ -302,6 +302,8 @@ class StripeWebhookController extends Controller
                     'payment_intent_id' => $intent->id,
                     'intent_amount' => $intentAmount,
                     'order_amount' => $orderAmount,
+                    'gross_subtotal_cents' => $lockedOrder->grossSubtotalCents(),
+                    'discount_amount_cents' => $lockedOrder->discountAmountCents(),
                     'mismatch_percent' => round($mismatchPercent, 2),
                 ]);
 
@@ -460,6 +462,40 @@ class StripeWebhookController extends Controller
         });
     }
 
+    /**
+     * Trova un utente a partire dallo stripe_account_id.
+     *
+     * Dato che il campo e' cifrato at-rest (cast 'encrypted' con IV random),
+     * non possiamo usare User::where('stripe_account_id', $id). Effettuiamo
+     * quindi una scansione in memoria ristretta ai soli Partner Pro che hanno
+     * un account Stripe configurato. Il numero e' limitato (ordine delle centinaia
+     * al massimo) e i webhook Stripe account.updated/deauthorized sono rari,
+     * quindi l'overhead e' accettabile. Si usa chunkById per evitare carichi
+     * memory eccessivi in caso di crescita.
+     */
+    protected function findUserByStripeAccountId(?string $stripeAccountId): ?User
+    {
+        if (! $stripeAccountId) {
+            return null;
+        }
+
+        $found = null;
+
+        User::query()
+            ->where('role', 'Partner Pro')
+            ->whereNotNull('stripe_account_id')
+            ->chunkById(200, function ($users) use ($stripeAccountId, &$found) {
+                foreach ($users as $u) {
+                    if ($u->stripe_account_id === $stripeAccountId) {
+                        $found = $u;
+                        return false; // interrompe chunkById
+                    }
+                }
+            });
+
+        return $found;
+    }
+
     // Gestisce l'evento "account Stripe aggiornato"
     // Quando un Partner Pro completa o modifica il suo profilo Stripe,
     // aggiorniamo le informazioni nel nostro database
@@ -470,7 +506,8 @@ class StripeWebhookController extends Controller
         $stripeAccountId = $intent->id;
 
         // Cerchiamo l'utente che ha questo account Stripe
-        $user = User::where('stripe_account_id', $stripeAccountId)->first();
+        // Lookup decriptato lato app (vedi findUserByStripeAccountId).
+        $user = $this->findUserByStripeAccountId($stripeAccountId);
 
         if (! $user) {
             return;
@@ -498,7 +535,8 @@ class StripeWebhookController extends Controller
             return;
         }
 
-        $user = User::where('stripe_account_id', $stripeAccountId)->first();
+        // Lookup decriptato lato app (vedi findUserByStripeAccountId).
+        $user = $this->findUserByStripeAccountId($stripeAccountId);
 
         if (! $user) {
             return;

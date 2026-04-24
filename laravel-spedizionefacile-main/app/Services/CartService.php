@@ -11,24 +11,24 @@ class CartService
 {
     // --- Price helpers ---
 
-    public static function euroToCents(float|int|null $euro): int
+    public function euroToCents(float|int|null $euro): int
     {
         return (int) round(($euro ?? 0) * 100);
     }
 
-    public static function unitPrice(int $totalPriceCents, int $quantity): int
+    public function unitPrice(int $totalPriceCents, int $quantity): int
     {
         return $quantity > 0 ? (int) round($totalPriceCents / $quantity) : $totalPriceCents;
     }
 
-    public static function mergeQuantity(int $existingPriceCents, int $existingQty, int $addedQty, ?int $newUnitPriceCents = null): array
+    public function mergeQuantity(int $existingPriceCents, int $existingQty, int $addedQty, ?int $newUnitPriceCents = null): array
     {
-        $unitPrice = $newUnitPriceCents ?? self::unitPrice($existingPriceCents, $existingQty);
+        $unitPrice = $newUnitPriceCents ?? $this->unitPrice($existingPriceCents, $existingQty);
         $totalQty = $existingQty + $addedQty;
         return ['quantity' => $totalQty, 'single_price' => $unitPrice * $totalQty];
     }
 
-    public static function pricePackageData(
+    public function pricePackageData(
         array $packageData,
         array $originAddress = [],
         array $destinationAddress = [],
@@ -73,12 +73,12 @@ class CartService
         ]);
     }
 
-    public static function pricePackageModel(Package $package, ?int $quantity = null): array
+    public function pricePackageModel(Package $package, ?int $quantity = null): array
     {
         $origin = $package->originAddress?->toArray() ?? [];
         $destination = $package->destinationAddress?->toArray() ?? [];
 
-        return self::pricePackageData([
+        return $this->pricePackageData([
             'package_type' => $package->package_type,
             'quantity' => $quantity ?? (int) $package->quantity,
             'weight' => $package->weight,
@@ -88,12 +88,12 @@ class CartService
         ], $origin, $destination);
     }
 
-    public static function normalizePackagePricing($packages): int
+    public function normalizePackagePricing($packages): int
     {
         $updated = 0;
 
         foreach ($packages as $package) {
-            $priced = self::pricePackageModel($package);
+            $priced = $this->pricePackageModel($package);
 
             if (
                 (int) $package->quantity !== (int) $priced['quantity']
@@ -116,12 +116,12 @@ class CartService
 
     // --- Duplicate detection ---
 
-    public static function normalize(?string $value): string
+    public function normalize(?string $value): string
     {
         return mb_strtolower(trim($value ?? ''), 'UTF-8');
     }
 
-    public static function samePackageDimensions(array $a, array $b): bool
+    public function samePackageDimensions(array $a, array $b): bool
     {
         return ($a['package_type'] ?? '') === ($b['package_type'] ?? '')
             && (string) ($a['weight'] ?? '') === (string) ($b['weight'] ?? '')
@@ -130,7 +130,7 @@ class CartService
             && (string) ($a['third_size'] ?? '') === (string) ($b['third_size'] ?? '');
     }
 
-    public static function sameAddress(array $a, array $b): bool
+    public function sameAddress(array $a, array $b): bool
     {
         return ($a['city'] ?? '') === ($b['city'] ?? '')
             && ($a['postal_code'] ?? '') === ($b['postal_code'] ?? '')
@@ -138,37 +138,37 @@ class CartService
             && ($a['address'] ?? '') === ($b['address'] ?? '');
     }
 
-    public static function isDuplicate(
+    public function isDuplicate(
         array $packageData, array $originAddress, array $destAddress, string $serviceSignature,
         array $existingPkg, array $existingOrigin, array $existingDest, string $existingServiceSig
     ): bool {
-        return self::samePackageDimensions($packageData, $existingPkg)
-            && self::sameAddress($originAddress, $existingOrigin)
-            && self::sameAddress($destAddress, $existingDest)
+        return $this->samePackageDimensions($packageData, $existingPkg)
+            && $this->sameAddress($originAddress, $existingOrigin)
+            && $this->sameAddress($destAddress, $existingDest)
             && $serviceSignature === $existingServiceSig;
     }
 
     // --- Merge key ---
 
-    public static function buildMergeKey(Package $pkg): string
+    public function buildMergeKey(Package $pkg): string
     {
         $o = $pkg->originAddress;
         $d = $pkg->destinationAddress;
         $s = $pkg->service;
 
         return implode('|', [
-            self::normalize($pkg->package_type),
+            $this->normalize($pkg->package_type),
             (string) $pkg->weight, (string) $pkg->first_size, (string) $pkg->second_size, (string) $pkg->third_size,
-            $o ? self::normalize($o->name) . '|' . self::normalize($o->address) . '|' . self::normalize($o->city) . '|' . self::normalize($o->postal_code) : 'no-origin',
-            $d ? self::normalize($d->name) . '|' . self::normalize($d->address) . '|' . self::normalize($d->city) . '|' . self::normalize($d->postal_code) : 'no-dest',
-            $s ? self::normalize($s->service_type) : 'nessuno',
-            $s ? self::buildServiceSignatureFromService($s) : 'no-service-data',
+            $o ? $this->normalize($o->name) . '|' . $this->normalize($o->address) . '|' . $this->normalize($o->city) . '|' . $this->normalize($o->postal_code) : 'no-origin',
+            $d ? $this->normalize($d->name) . '|' . $this->normalize($d->address) . '|' . $this->normalize($d->city) . '|' . $this->normalize($d->postal_code) : 'no-dest',
+            $s ? $this->normalize($s->service_type) : 'nessuno',
+            $s ? $this->buildServiceSignatureFromService($s) : 'no-service-data',
         ]);
     }
 
     // --- Address grouping ---
 
-    public static function buildAddressGroups($packages): array
+    public function buildAddressGroups($packages): array
     {
         if ($packages->isEmpty()) return [];
         $groups = [];
@@ -179,16 +179,16 @@ class CartService
             $serviceType = $package->service->service_type ?? 'Nessuno';
 
             $originParts = $origin ? implode('|', [
-                self::normalize($origin->name), self::normalize($origin->address), self::normalize($origin->address_number),
-                self::normalize($origin->city), self::normalize($origin->postal_code), self::normalize($origin->province),
+                $this->normalize($origin->name), $this->normalize($origin->address), $this->normalize($origin->address_number),
+                $this->normalize($origin->city), $this->normalize($origin->postal_code), $this->normalize($origin->province),
             ]) : 'no-origin';
 
             $destParts = $destination ? implode('|', [
-                self::normalize($destination->name), self::normalize($destination->address), self::normalize($destination->address_number),
-                self::normalize($destination->city), self::normalize($destination->postal_code), self::normalize($destination->province),
+                $this->normalize($destination->name), $this->normalize($destination->address), $this->normalize($destination->address_number),
+                $this->normalize($destination->city), $this->normalize($destination->postal_code), $this->normalize($destination->province),
             ]) : 'no-dest';
 
-            $key = md5($originParts . '::' . $destParts . '::' . self::normalize($serviceType));
+            $key = md5($originParts . '::' . $destParts . '::' . $this->normalize($serviceType));
 
             if (!isset($groups[$key])) {
                 $groups[$key] = [
@@ -207,14 +207,14 @@ class CartService
 
     // --- Subtotal calculation (delegates surcharge to CartSurchargeCalculator) ---
 
-    public static function subtotalFromModels($packages): MyMoney
+    public function subtotalFromModels($packages): MyMoney
     {
         $subtotal = $packages->sum(fn ($p) => (int) $p->single_price);
         $subtotal += CartSurchargeCalculator::fromModels($packages);
         return new MyMoney($subtotal);
     }
 
-    public static function subtotalFromArray(array $packages): MyMoney
+    public function subtotalFromArray(array $packages): MyMoney
     {
         $subtotal = 0;
         foreach ($packages as $package) {
@@ -226,7 +226,7 @@ class CartService
 
     // --- Service signatures ---
 
-    public static function buildServiceSignatureFromService(Service $service): string
+    public function buildServiceSignatureFromService(Service $service): string
     {
         return app(ShipmentServicePricingService::class)->buildSelectionSignature(
             $service->service_type ?? 'Nessuno', $service->service_data ?? [],
@@ -234,14 +234,14 @@ class CartService
         );
     }
 
-    public static function buildServiceSignatureFromArray(string $serviceType, array $serviceData = []): string
+    public function buildServiceSignatureFromArray(string $serviceType, array $serviceData = []): string
     {
         return app(ShipmentServicePricingService::class)->buildSelectionSignature(
             $serviceType, $serviceData, (bool) ($serviceData['sms_email_notification'] ?? false),
         );
     }
 
-    public static function buildServiceSignatureFromGuest(array $services = []): string
+    public function buildServiceSignatureFromGuest(array $services = []): string
     {
         $serviceData = $services['serviceData'] ?? $services['service_data'] ?? [];
         return app(ShipmentServicePricingService::class)->buildSelectionSignature(
@@ -253,19 +253,19 @@ class CartService
 
     // --- Backward compat: surcharge calculation delegates ---
 
-    public static function calculateGroupedSurchargeFromModels($packages): int
+    public function calculateGroupedSurchargeFromModels($packages): int
     {
         return CartSurchargeCalculator::fromModels($packages);
     }
 
-    public static function calculateGroupedSurchargeFromArray(array $packages): int
+    public function calculateGroupedSurchargeFromArray(array $packages): int
     {
         return CartSurchargeCalculator::fromArray($packages);
     }
 
     // --- Service normalization ---
 
-    public static function normalizeServiceData(array $servicesData): array
+    public function normalizeServiceData(array $servicesData): array
     {
         $servicesData['service_type'] = !empty($servicesData['service_type']) ? $servicesData['service_type'] : 'Nessuno';
         $servicesData['date'] = $servicesData['date'] ?? '';
@@ -293,7 +293,7 @@ class CartService
         if ($pickupDate !== '' || ! empty($pickupRequest)) {
             $servicesData['service_data']['pickup_request'] = [
                 'enabled' => (bool) ($pickupRequest['enabled'] ?? ($pickupDate !== '')),
-                'date' => self::normalizePickupRequestDate($pickupDate),
+                'date' => $this->normalizePickupRequestDate($pickupDate),
                 'time_slot' => $pickupTime !== '' ? $pickupTime : '09:00-18:00',
                 'notes' => trim((string) ($pickupRequest['notes'] ?? '')),
             ];
@@ -304,7 +304,7 @@ class CartService
         return $servicesData;
     }
 
-    private static function normalizePickupRequestDate(string $pickupDate): string
+    private function normalizePickupRequestDate(string $pickupDate): string
     {
         $pickupDate = trim($pickupDate);
         if ($pickupDate === '') {
@@ -324,7 +324,7 @@ class CartService
 
     // --- PUDO helpers ---
 
-    public static function applyPudoData(array $servicesData, array $requestData): array
+    public function applyPudoData(array $servicesData, array $requestData): array
     {
         if (!empty($requestData['pudo']) && ($requestData['delivery_mode'] ?? 'home') === 'pudo') {
             $serviceData = $servicesData['service_data'] ?? [];
@@ -341,7 +341,7 @@ class CartService
 
     // --- Merge operations ---
 
-    public static function mergeIdenticalPackages($packages, int $userId): int
+    public function mergeIdenticalPackages($packages, int $userId): int
     {
         $cartPackageIds = \Illuminate\Support\Facades\DB::table('cart_user')
             ->where('user_id', $userId)
@@ -372,7 +372,7 @@ class CartService
 
         $groups = [];
         foreach ($packages as $pkg) {
-            $groups[self::buildMergeKey($pkg)][] = $pkg;
+            $groups[$this->buildMergeKey($pkg)][] = $pkg;
         }
 
         $merged = 0;
@@ -412,7 +412,7 @@ class CartService
                 continue;
             }
 
-            $pricedMaster = self::pricePackageModel($master, $masterQty);
+            $pricedMaster = $this->pricePackageModel($master, $masterQty);
 
             $master->update([
                 'quantity' => $pricedMaster['quantity'],

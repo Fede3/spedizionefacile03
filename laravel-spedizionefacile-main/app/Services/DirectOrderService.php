@@ -97,21 +97,51 @@ class DirectOrderService
     /**
      * Resolve COD (contrassegno) details from services data.
      *
-     * @return array{is_cod: bool, cod_amount: float|null}
+     * Audit F01: oltre a is_cod e cod_amount (in centesimi), restituisce
+     * - cod_payment_type: codice BRT (BM|CC|AS) per rimborso al mittente
+     * - cod_incasso_type: modalita' incasso destinatario (contanti|assegno)
+     *
+     * @return array{is_cod: bool, cod_amount: int|null, cod_payment_type: string|null, cod_incasso_type: string|null}
      */
     public function resolveCodDetails(array $servicesData, array $serviceData): array
     {
         $serviceType = $servicesData['service_type'] ?? '';
         $isCod = in_array('contrassegno', $this->servicePricing->normalizeSelectedServices($serviceType), true);
-        $codAmount = $isCod ? $this->servicePricing->extractContrassegnoAmount($serviceData) : null;
+        $codAmountEur = $isCod ? $this->servicePricing->extractContrassegnoAmount($serviceData) : 0.0;
+        $codAmountCents = $codAmountEur > 0 ? (int) round($codAmountEur * 100) : null;
 
-        return ['is_cod' => $isCod, 'cod_amount' => $codAmount];
+        return [
+            'is_cod' => $isCod,
+            'cod_amount' => $codAmountCents,
+            'cod_payment_type' => $isCod ? $this->servicePricing->extractCodPaymentType($serviceData) : null,
+            'cod_incasso_type' => $isCod ? $this->servicePricing->extractCodIncassoType($serviceData) : null,
+        ];
+    }
+
+    /**
+     * Resolve insurance details from services data.
+     *
+     * Audit F02: estrae valore dichiarato (in centesimi) se servizio selezionato.
+     *
+     * @return array{has_insurance: bool, insurance_amount_cents: int|null}
+     */
+    public function resolveInsuranceDetails(array $servicesData, array $serviceData): array
+    {
+        $serviceType = $servicesData['service_type'] ?? '';
+        $hasInsurance = in_array('assicurazione', $this->servicePricing->normalizeSelectedServices($serviceType), true);
+        $amountEur = $hasInsurance ? $this->servicePricing->extractAssicurazioneAmount($serviceData) : 0.0;
+        $amountCents = $amountEur > 0 ? (int) round($amountEur * 100) : null;
+
+        return [
+            'has_insurance' => $hasInsurance,
+            'insurance_amount_cents' => $amountCents,
+        ];
     }
 
     /**
      * Persist the direct order: addresses, service, packages, order, pivots.
      *
-     * @return array{order_id: int, order_number: string}
+     * @return array{order_id: int, order_number: string, client_submission_id: string}
      */
     public function persistDirectOrder(
         array $data,
@@ -119,10 +149,13 @@ class DirectOrderService
         array $pricedPackages,
         array $servicesData,
         bool $isCod,
-        ?float $codAmount,
+        ?int $codAmount,
         ?string $pudoId,
         int $orderSubtotalCents,
         array $submissionContext,
+        ?string $codPaymentType = null,
+        ?string $codIncassoType = null,
+        ?int $insuranceAmountCents = null,
     ): array {
         $origin = PackageAddress::create($data['origin_address']);
         $destination = PackageAddress::create($data['destination_address']);
@@ -153,7 +186,10 @@ class DirectOrderService
             'subtotal' => $orderSubtotalCents,
             'status' => Order::PENDING,
             'is_cod' => $isCod,
-            'cod_amount' => $codAmount > 0 ? $codAmount : null,
+            'cod_amount' => $codAmount !== null && $codAmount > 0 ? $codAmount : null,
+            'cod_payment_type' => $codPaymentType,
+            'cod_incasso_type' => $codIncassoType,
+            'insurance_amount_cents' => $insuranceAmountCents !== null && $insuranceAmountCents > 0 ? $insuranceAmountCents : null,
             'brt_pudo_id' => $pudoId,
             'client_submission_id' => $submissionContext['client_submission_id'],
             'pricing_signature' => $submissionContext['pricing_signature'],
@@ -168,6 +204,8 @@ class DirectOrderService
         return [
             'order_id' => $order->id,
             'order_number' => 'SF-' . str_pad((string) $order->id, 6, '0', STR_PAD_LEFT),
+            'amount_cents' => $order->payableTotalCents(),
+            'client_submission_id' => (string) $submissionContext['client_submission_id'],
         ];
     }
 

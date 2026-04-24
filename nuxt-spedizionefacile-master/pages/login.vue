@@ -1,18 +1,26 @@
-<!--
-  FILE: pages/login.vue
-  SCOPO: Redirect 301 a /autenticazione (compatibilita' vecchi link, preserva ?redirect).
-  API: nessuna.
-  ROUTE: /login (middleware sanctum:guest).
--->
-<script setup>
-// Redirect permanente alla pagina unificata di autenticazione
-// Preserva il parametro redirect se presente nell'URL
+<script setup lang="ts">
+import '~/assets/css/autenticazione.css';
+import { buildLegacyAuthOverlayRedirect } from '~/utils/auth';
+
+definePageMeta({
+	layout: false,
+	middleware: ['guest-auth'],
+});
+
 const route = useRoute();
-const redirectParam = route.query.redirect;
-const target = redirectParam ? `/autenticazione?redirect=${encodeURIComponent(String(redirectParam))}` : '/autenticazione';
-navigateTo(target, { redirectCode: 301 });
+
+useSeoMeta({
+	title: 'Accedi | SpediamoFacile',
+	description: 'Accedi al tuo account SpediamoFacile per gestire spedizioni, portafoglio e ordini.',
+	robots: 'noindex, nofollow',
+});
+
+await navigateTo(
+	buildLegacyAuthOverlayRedirect(route, { defaultTab: 'login' }),
+	{ redirectCode: 302, replace: true },
+);
 </script>
 
 <template>
-	<div></div>
+	<div />
 </template>

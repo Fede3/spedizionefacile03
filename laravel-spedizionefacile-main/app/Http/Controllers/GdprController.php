@@ -141,10 +141,13 @@ class GdprController extends Controller
      *
      * Dati inclusi:
      *   - Profilo utente (senza password e campi di sicurezza)
-     *   - Ordini (senza dati tecnici BRT come etichette e payload grezzi)
+     *   - Ordini con dati di fatturazione (senza dati tecnici BRT)
      *   - Indirizzi della rubrica
      *   - Movimenti del portafoglio
      *   - Spedizioni salvate
+     *   - Preferenze notifiche
+     *   - Preferenze cookie e log consenso
+     *   - Storico sessioni di login
      */
     public function dataExport(Request $request): JsonResponse
     {
@@ -162,10 +165,11 @@ class GdprController extends Controller
             'referral_code'    => $user->referral_code,
             'referred_by'      => $user->referred_by,
             'email_verified_at' => $user->email_verified_at,
+            'privacy_accepted_at' => $user->privacy_accepted_at,
             'created_at'       => $user->created_at,
         ];
 
-        // Ordini (senza dati tecnici BRT voluminosi)
+        // Ordini con dati di fatturazione completi (senza dati tecnici BRT voluminosi)
         $orders = Order::where('user_id', $user->id)
             ->select([
                 'id', 'status', 'subtotal', 'payment_method',
@@ -197,13 +201,47 @@ class GdprController extends Controller
             ->where('user_id', $user->id)
             ->pluck('package_id');
 
+        // Preferenze notifiche
+        $notificationPreferences = UserNotificationPreference::where('user_id', $user->id)
+            ->select([
+                'referral_site_enabled', 'referral_email_enabled', 'referral_sms_enabled',
+                'email_opt_in_at', 'sms_opt_in_at',
+                'created_at', 'updated_at',
+            ])
+            ->first();
+
+        // Log consenso cookie (GDPR Art. 7 — prova del consenso)
+        $cookieConsents = DB::table('cookie_consents')
+            ->where('user_id', $user->id)
+            ->select([
+                'analytics', 'marketing', 'functional',
+                'ip_address', 'user_agent', 'consented_at',
+            ])
+            ->orderByDesc('consented_at')
+            ->get();
+
+        // Storico sessioni di login (dalla tabella sessions di Laravel)
+        $loginSessions = DB::table('sessions')
+            ->where('user_id', $user->id)
+            ->select(['ip_address', 'user_agent', 'last_activity'])
+            ->orderByDesc('last_activity')
+            ->get()
+            ->map(fn ($session) => [
+                'ip_address'    => $session->ip_address,
+                'user_agent'    => $session->user_agent,
+                'last_activity' => date('c', $session->last_activity),
+            ]);
+
         return response()->json([
-            'export_date' => now()->toIso8601String(),
-            'profile'     => $profile,
-            'orders'      => $orders,
-            'addresses'   => $addresses,
-            'wallet_movements' => $walletMovements,
+            'export_date'               => now()->toIso8601String(),
+            'profile'                   => $profile,
+            'orders'                    => $orders,
+            'addresses'                 => $addresses,
+            'wallet_movements'          => $walletMovements,
             'saved_shipment_package_ids' => $savedPackageIds,
+            'notification_preferences'  => $notificationPreferences,
+            'cookie_consents'           => $cookieConsents,
+            'login_sessions'            => $loginSessions,
         ]);
     }
 

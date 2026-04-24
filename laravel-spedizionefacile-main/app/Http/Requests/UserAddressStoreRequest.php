@@ -23,6 +23,9 @@ class UserAddressStoreRequest extends FormRequest
 
     /**
      * Regole di validazione per l'indirizzo in rubrica.
+     *
+     * Quando `profile_type = 'business'` si attivano validazioni dedicate
+     * sui campi fiscali aziendali (ragione sociale, P.IVA, SDI, PEC).
      */
     public function rules(): array
     {
@@ -41,7 +44,34 @@ class UserAddressStoreRequest extends FormRequest
             'province_name' => 'nullable|string',           // Nome provincia - opzionale
             'telephone_number' => 'nullable|string',        // Telefono - opzionale
             'email' => 'nullable|string',                   // Email - opzionale
-            'default' => 'nullable'                         // Se impostare come predefinito - opzionale
+            'default' => 'nullable',                        // Se impostare come predefinito - opzionale
+
+            // Profilo: privato o business. I campi fiscali sottostanti
+            // sono obbligatori solo quando profile_type = 'business'.
+            'profile_type' => 'nullable|string|in:private,business',
+
+            // Campi business (condizionali su profile_type = 'business')
+            'company_name' => 'required_if:profile_type,business|nullable|string|max:120',
+            'vat_number' => 'required_if:profile_type,business|nullable|string|min:8|max:20',
+            'sdi_code' => 'nullable|string|size:7',
+            'pec_email' => 'nullable|email|max:120',
+        ];
+    }
+
+    /**
+     * Messaggi di errore in italiano, specifici per i campi business.
+     * Gli altri campi usano i messaggi globali di resources/lang/it/validation.php.
+     */
+    public function messages(): array
+    {
+        return [
+            'company_name.required_if' => 'La ragione sociale è obbligatoria per i profili business.',
+            'vat_number.required_if' => 'La partita IVA è obbligatoria per i profili business.',
+            'vat_number.min' => 'La partita IVA deve contenere almeno :min caratteri.',
+            'vat_number.max' => 'La partita IVA non può superare :max caratteri.',
+            'sdi_code.size' => 'Il codice SDI deve essere di :size caratteri.',
+            'pec_email.email' => 'La PEC deve essere un indirizzo email valido.',
+            'profile_type.in' => 'Il tipo profilo deve essere "private" o "business".',
         ];
     }
 }

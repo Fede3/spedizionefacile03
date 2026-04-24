@@ -21,9 +21,9 @@ Route::post('/session/second-step', [SessionDataController::class, 'secondStep']
 
 /* ===== COMUNI, CAP, PROVINCE (autocompletamento indirizzi) ===== */
 
-Route::get('/locations/search', [LocationController::class, 'search']);
-Route::get('/locations/by-cap', [LocationController::class, 'byCap']);
-Route::get('/locations/by-city', [LocationController::class, 'byCity']);
+Route::middleware(['throttle:180,1'])->get('/locations/search', [LocationController::class, 'search']);
+Route::middleware(['throttle:180,1'])->get('/locations/by-cap', [LocationController::class, 'byCap']);
+Route::middleware(['throttle:180,1'])->get('/locations/by-city', [LocationController::class, 'byCity']);
 
 /* ===== TRACKING PUBBLICO ===== */
 

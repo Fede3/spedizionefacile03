@@ -1,0 +1,3 @@
+# Normalizza a LF — evita che i hook Husky si rompano su Windows/CRLF.
+.husky/* text eol=lf
+*.sh    text eol=lf

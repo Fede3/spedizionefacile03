@@ -26,7 +26,7 @@ class PasswordResetRequestTest extends TestCase
 
         $response->assertOk()->assertJson([
             'success' => true,
-            'message' => 'Ti è stata inviata un\'email per il recupero della password. Controlla la tua casella di posta.',
+            'message' => 'Se l\'email è registrata riceverai un link di reset entro pochi minuti.',
         ]);
 
         $this->assertDatabaseHas('password_reset_tokens', [
@@ -46,7 +46,7 @@ class PasswordResetRequestTest extends TestCase
 
         $response->assertOk()->assertJson([
             'success' => true,
-            'message' => 'Ti è stata inviata un\'email per il recupero della password. Controlla la tua casella di posta.',
+            'message' => 'Se l\'email è registrata riceverai un link di reset entro pochi minuti.',
         ]);
 
         $this->assertDatabaseMissing('password_reset_tokens', [

@@ -203,6 +203,31 @@ class CartControllerTest extends TestCase
             ->assertJsonValidationErrors(['pudo.pudo_id']);
     }
 
+    public function test_cart_store_accepts_selected_pudo_alias_and_persists_delivery_mode_context(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)
+            ->postJson('/api/cart', $this->validCartPayload([
+                'delivery_mode' => 'pudo',
+                'selected_pudo' => [
+                    'pudo_id' => 'BRT-POINT-002',
+                    'name' => 'BRT Point Milano Nord',
+                    'address' => 'Via del Punto 22',
+                    'city' => 'Milano',
+                    'zip_code' => '20121',
+                    'province' => 'MI',
+                ],
+            ]))
+            ->assertSuccessful();
+
+        $package = Package::query()->with('service')->where('user_id', $user->id)->firstOrFail();
+        $serviceData = $package->service?->service_data ?? [];
+
+        $this->assertSame('pudo', data_get($serviceData, 'delivery_mode'));
+        $this->assertSame('BRT-POINT-002', data_get($serviceData, 'pudo.pudo_id'));
+    }
+
     /* ================================================================== */
     /*  T11.2.2: Get cart contents                                         */
     /* ================================================================== */

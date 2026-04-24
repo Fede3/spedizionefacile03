@@ -1,0 +1,165 @@
+import type { AccountIconKey } from './accountNavigation'
+
+export type AccountNavTone = 'admin' | 'pro' | 'client'
+
+export interface AccountNavItem {
+	label: string
+	to: string
+	iconKey: AccountIconKey
+	exact?: boolean
+	badge?: number | string
+}
+
+export interface AccountNavGroup {
+	key?: string
+	title?: string
+	tone: AccountNavTone
+	items: AccountNavItem[]
+}
+
+export const adminNavGroups: AccountNavGroup[] = [
+	{
+		key: 'dashboard',
+		tone: 'admin',
+		items: [
+			{ label: 'Dashboard', to: '/account', iconKey: 'chart-box', exact: true },
+		],
+	},
+	{
+		key: 'operativo',
+		title: 'Operativo',
+		tone: 'admin',
+		items: [
+			{ label: 'Ordini', to: '/account/amministrazione/ordini', iconKey: 'clipboard-list' },
+			{ label: 'Spedizioni', to: '/account/amministrazione/spedizioni', iconKey: 'truck-delivery' },
+			{ label: 'Bonifici', to: '/account/amministrazione/bonifici', iconKey: 'bank-transfer' },
+			// -- ARCHIVIATO 2026-04-20: Test BRT tool dev (_archive/frontend-simplification-2026-04-20/features/admin-test-brt) --
+			// { label: 'Test BRT', to: '/account/amministrazione/test-brt', iconKey: 'bug' },
+		],
+	},
+	{
+		key: 'clienti',
+		title: 'Clienti',
+		tone: 'client',
+		items: [
+			{ label: 'Utenti', to: '/account/amministrazione/utenti', iconKey: 'account-group' },
+			// -- ARCHIVIATO 2026-04-20: Messaggi sistema (_archive/frontend-simplification-2026-04-20/features/admin-messaggi-sistema) --
+			// { label: 'Messaggi', to: '/account/amministrazione/messaggi', iconKey: 'email' },
+			// -- ARCHIVIATO 2026-04-20: Reclami (_archive/frontend-simplification-2026-04-20/features/reclami-dedicato) --
+			// { label: 'Reclami', to: '/account/amministrazione/reclami', iconKey: 'email' },
+			// -- ARCHIVIATO 2026-04-20: Inviti/Referral dashboard (_archive/frontend-simplification-2026-04-20/features/admin-referral-dashboard) --
+			// { label: 'Inviti', to: '/account/amministrazione/referral', iconKey: 'share-variant' },
+		],
+	},
+	{
+		key: 'finanza',
+		title: 'Finanza',
+		tone: 'pro',
+		items: [
+			// -- ARCHIVIATO 2026-04-20: Saldi utenti (duplicato di gestione wallet in utenti) (_archive/frontend-simplification-2026-04-20/features/admin-portafogli-duplicato) --
+			// { label: 'Saldi utenti', to: '/account/amministrazione/portafogli', iconKey: 'admin-wallet' },
+			{ label: 'Prezzi', to: '/account/amministrazione/prezzi', iconKey: 'tag-multiple' },
+			// -- ARCHIVIATO 2026-04-20: Prelievi (_archive/frontend-simplification-2026-04-20/features/prelievi-dedicati) --
+			// { label: 'Prelievi', to: '/account/amministrazione/prelievi', iconKey: 'bank-transfer' },
+			// -- ARCHIVIATO 2026-04-20: Coupon (_archive/frontend-simplification-2026-04-20/features/admin-coupon-sistema) --
+			// { label: 'Coupon', to: '/account/amministrazione/coupon', iconKey: 'tag-multiple' },
+		],
+	},
+	{
+		key: 'contenuti',
+		title: 'Contenuti',
+		tone: 'admin',
+		items: [
+			// -- ARCHIVIATO 2026-04-20: Guide editor admin (_archive/frontend-simplification-2026-04-20/features/admin-guide-editor) --
+			// { label: 'Guide', to: '/account/amministrazione/guide', iconKey: 'book-open' },
+			{ label: 'Servizi', to: '/account/amministrazione/servizi', iconKey: 'services-cog' },
+			// -- ARCHIVIATO 2026-04-20: Hero editor (_archive/frontend-simplification-2026-04-20/features/admin-immagine-homepage-editor) --
+			// { label: 'Hero', to: '/account/amministrazione/immagine-homepage', iconKey: 'image' },
+		],
+	},
+	{
+		key: 'sistema',
+		title: 'Sistema',
+		tone: 'admin',
+		items: [
+			{ label: 'Impostazioni', to: '/account/amministrazione/impostazioni', iconKey: 'cog-outline' },
+			// -- ARCHIVIATO 2026-04-20: Audit log (_archive/frontend-simplification-2026-04-20/features/admin-audit-log) --
+			// { label: 'Audit log', to: '/account/amministrazione/audit-log', iconKey: 'clipboard-list' },
+		],
+	},
+	{
+		key: 'account-personale',
+		title: 'Il tuo account',
+		tone: 'admin',
+		items: [
+			{ label: 'Profilo', to: '/account/profilo', iconKey: 'account' },
+			{ label: 'Indirizzi', to: '/account/indirizzi', iconKey: 'map-marker' },
+			{ label: 'Portafoglio', to: '/account/portafoglio', iconKey: 'wallet' },
+			{ label: 'Carte', to: '/account/carte', iconKey: 'credit-card' },
+			// -- ARCHIVIATO 2026-04-20: Modelli spedizione (_archive/frontend-simplification-2026-04-20/features/spedizioni-configurate) --
+			// { label: 'Modelli spedizione', to: '/account/spedizioni-configurate', iconKey: 'package' },
+			{ label: 'Assistenza', to: '/account/assistenza', iconKey: 'headset' },
+		],
+	},
+]
+
+export const clientNavGroups: AccountNavGroup[] = [
+	{
+		tone: 'client',
+		items: [
+			{ label: 'Dashboard', to: '/account', iconKey: 'chart-box', exact: true },
+			{ label: 'Spedizioni', to: '/account/spedizioni', iconKey: 'truck-fast' },
+			// -- ARCHIVIATO 2026-04-20: Modelli (_archive/frontend-simplification-2026-04-20/features/spedizioni-configurate) --
+			// { label: 'Modelli', to: '/account/spedizioni-configurate', iconKey: 'package' },
+			{ label: 'Fatture', to: '/account/fatture', iconKey: 'clipboard-list' },
+			{ label: 'Portafoglio', to: '/account/portafoglio', iconKey: 'wallet' },
+			{ label: 'Carte', to: '/account/carte', iconKey: 'credit-card' },
+			{ label: 'Profilo', to: '/account/profilo', iconKey: 'account' },
+			{ label: 'Indirizzi', to: '/account/indirizzi', iconKey: 'map-marker' },
+			// -- ARCHIVIATO 2026-04-20: Notifiche in-app (_archive/frontend-simplification-2026-04-20/features/notifiche-in-app) --
+			// { label: 'Notifiche', to: '/account/notifiche', iconKey: 'bell' },
+			// -- ARCHIVIATO 2026-04-20: Reclami (_archive/frontend-simplification-2026-04-20/features/reclami-dedicato) --
+			// { label: 'Reclami', to: '/account/reclami', iconKey: 'headset' },
+			{ label: 'Assistenza', to: '/account/assistenza', iconKey: 'headset' },
+			// -- ARCHIVIATO 2026-04-20: Bonus (_archive/frontend-simplification-2026-04-20/features/bonus-fedelta) --
+			// { label: 'Bonus', to: '/account/bonus', iconKey: 'tag-multiple' },
+		],
+	},
+]
+
+export const proNavGroups: AccountNavGroup[] = [
+	{
+		tone: 'client',
+		items: [
+			{ label: 'Dashboard', to: '/account', iconKey: 'chart-box', exact: true },
+			{ label: 'Spedizioni', to: '/account/spedizioni', iconKey: 'truck-fast' },
+			// -- ARCHIVIATO 2026-04-20: Modelli (_archive/frontend-simplification-2026-04-20/features/spedizioni-configurate) --
+			// { label: 'Modelli', to: '/account/spedizioni-configurate', iconKey: 'package' },
+			{ label: 'Fatture', to: '/account/fatture', iconKey: 'clipboard-list' },
+			{ label: 'Portafoglio', to: '/account/portafoglio', iconKey: 'wallet' },
+			{ label: 'Carte', to: '/account/carte', iconKey: 'credit-card' },
+			{ label: 'Profilo', to: '/account/profilo', iconKey: 'account' },
+			{ label: 'Indirizzi', to: '/account/indirizzi', iconKey: 'map-marker' },
+			// -- ARCHIVIATO 2026-04-20: Notifiche in-app (_archive/frontend-simplification-2026-04-20/features/notifiche-in-app) --
+			// { label: 'Notifiche', to: '/account/notifiche', iconKey: 'bell' },
+			// -- ARCHIVIATO 2026-04-20: Reclami (_archive/frontend-simplification-2026-04-20/features/reclami-dedicato) --
+			// { label: 'Reclami', to: '/account/reclami', iconKey: 'headset' },
+			{ label: 'Assistenza', to: '/account/assistenza', iconKey: 'headset' },
+		],
+	},
+	{
+		title: 'Strumenti Pro',
+		tone: 'pro',
+		items: [
+			// -- ARCHIVIATO 2026-04-20 --
+			// { label: 'Dashboard Pro', to: '/account/pro/dashboard', iconKey: 'chart-line', badge: 'PRO' },
+			// { label: 'Caricamento bulk', to: '/account/pro/bulk-upload', iconKey: 'upload', badge: 'PRO' },
+			// { label: 'Chiavi API', to: '/account/pro/api-keys', iconKey: 'key', badge: 'PRO' },
+			{ label: 'Partner Pro', to: '/account/account-pro', iconKey: 'share-variant' },
+			// -- ARCHIVIATO 2026-04-20: Bonus (_archive/frontend-simplification-2026-04-20/features/bonus-fedelta) --
+			// { label: 'Bonus', to: '/account/bonus', iconKey: 'tag-multiple' },
+			// -- ARCHIVIATO 2026-04-20: Prelievi (_archive/frontend-simplification-2026-04-20/features/prelievi-dedicati) --
+			// { label: 'Prelievi', to: '/account/prelievi', iconKey: 'bank-transfer' },
+		],
+	},
+]

@@ -32,6 +32,9 @@ if (!guide.value) {
 	await navigateTo('/guide');
 }
 
+// Canonical dinamico: /guide/<slug-reale>
+useCanonical({ path: () => `/guide/${guide.value?.slug || slug.value}` });
+
 const parseArrayPayload = (value) => {
 	if (!value) return [];
 	if (Array.isArray(value)) return value;
@@ -84,8 +87,22 @@ useSeoMeta({
 	ogTitle: () => (guide.value?.title ? `${guide.value.title} | SpediamoFacile` : 'Guida | SpediamoFacile'),
 	description: () => guideMetaDescription.value,
 	ogDescription: () => guideMetaDescription.value,
+	ogType: 'article',
+	ogImage: () => guide.value?.featured_image || 'https://spediamofacile.it/og/default.png',
+	twitterImage: () => guide.value?.featured_image || 'https://spediamofacile.it/og/default.png',
+	articlePublishedTime: () => guide.value?.created_at || undefined,
+	articleModifiedTime: () => guide.value?.updated_at || guide.value?.created_at || undefined,
+	articleSection: 'Guide',
 });
 
+// Breadcrumb schema: Home › Guide › <titolo>
+useBreadcrumbSchema([
+	{ name: 'Home', url: '/' },
+	{ name: 'Guide', url: '/guide' },
+	{ name: computed(() => guide.value?.title || 'Guida').value },
+]);
+
+// JSON-LD Article completo: dateModified, publisher.logo, mainEntityOfPage object
 useHead(() => {
 	if (!guide.value) return {};
 
@@ -99,17 +116,28 @@ useHead(() => {
 					'@type': 'Article',
 					headline: guide.value.title,
 					description: guideMetaDescription.value,
-					mainEntityOfPage: `https://spediamofacile.it/guide/${slug.value}`,
+					inLanguage: 'it-IT',
+					mainEntityOfPage: {
+						'@type': 'WebPage',
+						'@id': `https://spediamofacile.it/guide/${slug.value}`,
+					},
+					image: guide.value.featured_image || 'https://spediamofacile.it/og-image.jpg',
+					datePublished: guide.value.created_at || undefined,
+					dateModified: guide.value.updated_at || guide.value.created_at || undefined,
 					author: {
 						'@type': 'Organization',
 						name: 'SpediamoFacile',
+						url: 'https://spediamofacile.it',
 					},
 					publisher: {
 						'@type': 'Organization',
 						name: 'SpediamoFacile',
 						url: 'https://spediamofacile.it',
+						logo: {
+							'@type': 'ImageObject',
+							url: 'https://spediamofacile.it/img/logo-spedizionefacile.png',
+						},
 					},
-					datePublished: guide.value.created_at || undefined,
 				}),
 			},
 		],
@@ -122,8 +150,8 @@ useHead(() => {
 		<div class="h-[40px] w-[40px] rounded-full border-3 border-[var(--color-brand-border)] border-t-[var(--color-brand-primary)] animate-spin"></div>
 	</section>
 
-	<section v-else-if="guide" class="guide-detail-shell min-h-screen py-[28px] desktop:py-[56px]">
-		<div class="my-container space-y-[20px] desktop:space-y-[28px]">
+	<section v-else-if="guide" class="guide-detail-shell min-h-screen py-[20px] desktop:py-[24px]">
+		<div class="my-container space-y-[18px] desktop:space-y-[24px]">
 			<!-- Breadcrumb -->
 			<nav aria-label="Breadcrumb" class="flex items-center gap-[6px] text-[0.8125rem] text-[var(--color-brand-text-secondary)]">
 				<NuxtLink to="/" class="transition-colors hover:text-[var(--color-brand-primary)]">Home</NuxtLink>
@@ -133,13 +161,14 @@ useHead(() => {
 				<span class="font-semibold text-[var(--color-brand-primary)] truncate max-w-[28ch]">{{ guide.title }}</span>
 			</nav>
 
-			<section class="guide-hero-card rounded-[14px] ring-[1px] ring-[#DFE2E7] px-[20px] py-[22px] shadow-[0_1px_4px_rgba(0,0,0,0.03)] desktop:px-[32px] desktop:py-[34px]">
-				<div class="space-y-[12px]">
-					<p class="text-[0.75rem] font-semibold uppercase tracking-[0.14em] text-[var(--color-brand-primary)]">Guida</p>
-					<h1 class="max-w-[16ch] font-montserrat text-[2rem] font-[800] tracking-[-0.04em] text-[var(--color-brand-text)] desktop:text-[3rem]">
+			<section class="guide-hero-card rounded-[16px] ring-[1px] ring-[#DFE2E7] px-[18px] py-[18px] shadow-[0_1px_4px_rgba(0,0,0,0.03)] desktop:px-[28px] desktop:py-[28px]">
+				<div class="space-y-[10px]">
+					<span class="inline-flex items-center h-[22px] px-[10px] rounded-full bg-[rgba(228,66,3,0.10)] text-[11px] font-[800] uppercase tracking-[0.08em] text-[var(--color-brand-accent)]">Guida</span>
+					<span class="block w-[24px] h-[2px] rounded-full" style="background: linear-gradient(90deg, var(--color-brand-accent) 0%, var(--color-brand-primary) 100%)" aria-hidden="true" />
+					<h1 class="max-w-[24ch] font-montserrat text-[1.75rem] font-[800] tracking-[-0.015em] leading-[1.05] text-[var(--color-brand-text)] desktop:text-[2rem]">
 						{{ guide.title }}
 					</h1>
-					<p class="max-w-[68ch] text-[0.95rem] leading-[1.68] text-[var(--color-brand-text-secondary)] desktop:text-[1.0625rem]">
+					<p class="max-w-[64ch] text-[0.9375rem] leading-[1.6] text-[var(--color-brand-text-secondary)]">
 						{{ guide.intro || guideMetaDescription }}
 					</p>
 					<div class="flex flex-wrap gap-[8px]">
@@ -153,11 +182,11 @@ useHead(() => {
 				</div>
 			</section>
 
-			<section v-if="firstSections.length" class="grid gap-[16px] desktop:grid-cols-2">
+			<section v-if="firstSections.length" class="grid gap-[14px] desktop:grid-cols-2">
 				<article
 					v-for="section in firstSections"
 					:key="section.heading"
-					class="rounded-[14px] ring-[1px] ring-[#DFE2E7] bg-white px-[18px] py-[18px] shadow-[0_1px_4px_rgba(0,0,0,0.03)] desktop:px-[22px] desktop:py-[22px]">
+					class="rounded-[16px] ring-[1px] ring-[#DFE2E7] bg-white px-[18px] py-[18px] shadow-[0_1px_4px_rgba(0,0,0,0.03)] desktop:px-[22px] desktop:py-[22px]">
 					<h2 class="font-montserrat text-[1.125rem] font-[800] tracking-[-0.02em] text-[var(--color-brand-text)]">{{ section.heading }}</h2>
 					<p class="mt-[10px] text-[0.875rem] leading-[1.7] text-[var(--color-brand-text-secondary)] desktop:text-[0.9375rem]">
 						{{ section.text }}
@@ -167,7 +196,7 @@ useHead(() => {
 
 			<section
 				v-if="remainingSections.length"
-				class="rounded-[14px] ring-[1px] ring-[#DFE2E7] bg-white px-[18px] py-[18px] shadow-[0_1px_4px_rgba(0,0,0,0.03)] desktop:px-[24px] desktop:py-[24px]">
+				class="rounded-[16px] ring-[1px] ring-[#DFE2E7] bg-white px-[18px] py-[18px] shadow-[0_1px_4px_rgba(0,0,0,0.03)] desktop:px-[24px] desktop:py-[24px]">
 				<div class="sf-page-intro">
 					<p class="sf-section-kicker">Approfondimento</p>
 					<h2 class="font-montserrat text-[1.4rem] font-[800] tracking-[-0.03em] text-[var(--color-brand-text)] desktop:text-[2rem]">
@@ -179,7 +208,7 @@ useHead(() => {
 					<article
 						v-for="section in remainingSections"
 						:key="section.heading"
-						class="rounded-[14px] ring-[1px] ring-[#DFE2E7] bg-[var(--color-brand-secondary-soft-bg)] px-[16px] py-[16px]">
+						class="rounded-[16px] ring-[1px] ring-[#DFE2E7] bg-[var(--color-brand-secondary-soft-bg)] px-[16px] py-[16px]">
 						<h3 class="font-montserrat text-[1rem] font-[800] text-[var(--color-brand-text)]">{{ section.heading }}</h3>
 						<p class="mt-[10px] text-[0.875rem] leading-[1.65] text-[var(--color-brand-text-secondary)]">
 							{{ section.text }}
@@ -190,7 +219,7 @@ useHead(() => {
 
 			<section
 				v-if="prevGuide || nextGuide"
-				class="rounded-[14px] ring-[1px] ring-[#DFE2E7] bg-white px-[18px] py-[18px] shadow-[0_1px_4px_rgba(0,0,0,0.03)] desktop:px-[24px] desktop:py-[24px]">
+				class="rounded-[16px] ring-[1px] ring-[#DFE2E7] bg-white px-[18px] py-[18px] shadow-[0_1px_4px_rgba(0,0,0,0.03)] desktop:px-[24px] desktop:py-[24px]">
 				<div class="sf-page-intro">
 					<p class="sf-section-kicker">Continua a leggere</p>
 					<h2 class="font-montserrat text-[1.35rem] font-[800] tracking-[-0.03em] text-[var(--color-brand-text)] desktop:text-[1.8rem]">
@@ -202,7 +231,7 @@ useHead(() => {
 					<NuxtLink
 						v-if="prevGuide"
 						:to="`/guide/${prevGuide.slug}`"
-						class="guide-nav-card group rounded-[14px] ring-[1px] ring-[#DFE2E7] bg-[var(--color-brand-secondary-soft-bg)] px-[16px] py-[16px] transition-all duration-300 hover:ring-[var(--color-brand-secondary-soft-border)] hover:bg-white">
+						class="guide-nav-card group rounded-[16px] ring-[1px] ring-[#DFE2E7] bg-[var(--color-brand-secondary-soft-bg)] px-[16px] py-[16px] transition-all duration-300 hover:ring-[var(--color-brand-secondary-soft-border)] hover:bg-white">
 						<p class="text-[0.75rem] font-semibold uppercase tracking-[0.08em] text-[var(--color-brand-primary)]">Guida precedente</p>
 						<h3 class="mt-[8px] font-montserrat text-[1rem] font-[800] text-[var(--color-brand-text)] transition-colors group-hover:text-[var(--color-brand-primary)]">
 							{{ prevGuide.title }}
@@ -211,7 +240,7 @@ useHead(() => {
 					<NuxtLink
 						v-if="nextGuide"
 						:to="`/guide/${nextGuide.slug}`"
-						class="guide-nav-card group rounded-[14px] ring-[1px] ring-[#DFE2E7] bg-[var(--color-brand-secondary-soft-bg)] px-[16px] py-[16px] transition-all duration-300 hover:ring-[var(--color-brand-secondary-soft-border)] hover:bg-white">
+						class="guide-nav-card group rounded-[16px] ring-[1px] ring-[#DFE2E7] bg-[var(--color-brand-secondary-soft-bg)] px-[16px] py-[16px] transition-all duration-300 hover:ring-[var(--color-brand-secondary-soft-border)] hover:bg-white">
 						<p class="text-[0.75rem] font-semibold uppercase tracking-[0.08em] text-[var(--color-brand-primary)]">Guida successiva</p>
 						<h3 class="mt-[8px] font-montserrat text-[1rem] font-[800] text-[var(--color-brand-text)] transition-colors group-hover:text-[var(--color-brand-primary)]">
 							{{ nextGuide.title }}
@@ -221,14 +250,14 @@ useHead(() => {
 			</section>
 
 			<section
-				class="rounded-[14px] ring-[1px] ring-[var(--color-brand-secondary-soft-border)] bg-[linear-gradient(135deg,#0f5f6d_0%,#0c4853_100%)] px-[20px] py-[20px] text-white shadow-[0_1px_4px_rgba(0,0,0,0.03)] desktop:px-[28px] desktop:py-[28px]">
-				<div class="flex flex-col gap-[16px] desktop:flex-row desktop:items-center desktop:justify-between">
+				class="rounded-[16px] ring-[1px] ring-[var(--color-brand-secondary-soft-border)] bg-[linear-gradient(135deg,#0f5f6d_0%,#0c4853_100%)] px-[18px] py-[18px] text-white shadow-[0_1px_4px_rgba(0,0,0,0.03)] desktop:px-[24px] desktop:py-[24px]">
+				<div class="flex flex-col gap-[14px] desktop:flex-row desktop:items-center desktop:justify-between">
 					<div class="max-w-[60ch]">
 						<p class="text-[0.75rem] font-semibold uppercase tracking-[0.14em] text-white/70">Passo successivo</p>
-						<h2 class="mt-[8px] font-montserrat text-[1.35rem] font-[800] tracking-[-0.03em] desktop:text-[1.8rem]">
+						<h2 class="mt-[8px] font-montserrat text-[1.2rem] font-[800] tracking-[-0.03em] desktop:text-[1.55rem]">
 							Vuoi passare dalla teoria al preventivo?
 						</h2>
-						<p class="mt-[10px] text-[0.9rem] leading-[1.65] text-white/80">
+						<p class="mt-[8px] text-[0.9rem] leading-[1.58] text-white/80">
 							Usa la guida come checklist pratica e poi apri il preventivo per trasformare i consigli in una spedizione reale.
 						</p>
 					</div>
@@ -236,12 +265,12 @@ useHead(() => {
 					<div class="flex flex-wrap gap-[10px]">
 						<NuxtLink
 							to="/preventivo"
-							class="inline-flex min-h-[44px] items-center justify-center rounded-full bg-white px-[18px] text-[0.875rem] font-[700] text-[var(--color-brand-primary)] shadow-[0_8px_20px_rgba(0,0,0,0.1)] transition-transform duration-200 hover:-translate-y-[1px] hover:shadow-[0_12px_28px_rgba(0,0,0,0.14)]">
+							class="btn btn-cta">
 							Calcola il preventivo
 						</NuxtLink>
 						<NuxtLink
 							to="/guide"
-							class="inline-flex min-h-[44px] items-center justify-center rounded-full border border-white/30 px-[18px] text-[0.875rem] font-[700] text-white transition-colors duration-200 hover:bg-white/10 hover:border-white/50">
+							class="inline-flex h-[40px] items-center justify-center rounded-full border border-white/35 px-[18px] text-[0.875rem] font-[700] text-white transition-colors duration-200 hover:bg-white/10 hover:border-white/60">
 							Tutte le guide
 						</NuxtLink>
 					</div>
@@ -253,7 +282,7 @@ useHead(() => {
 
 <style scoped>
 .guide-detail-shell {
-	background: linear-gradient(180deg, #F8F9FB 0%, #EEF0F3 100%);
+	background: linear-gradient(180deg, var(--surface-page, #F8F9FB) 0%, var(--surface-page-end, #EEF0F3) 100%);
 }
 
 .guide-hero-card {
@@ -264,13 +293,13 @@ useHead(() => {
 
 .guide-nav-card {
 	transition:
-		transform 0.3s cubic-bezier(0.22, 1, 0.36, 1),
-		box-shadow 0.3s cubic-bezier(0.22, 1, 0.36, 1),
-		background-color 0.3s ease;
+		transform var(--sf-t2) var(--sf-ease),
+		box-shadow var(--sf-t2) var(--sf-ease),
+		background-color var(--sf-t2) var(--sf-ease);
 }
 
 .guide-nav-card:hover {
-	transform: translateY(-3px);
-	box-shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
+	transform: translateY(-2px);
+	box-shadow: 0 4px 16px rgba(9, 88, 102, 0.08);
 }
 </style>

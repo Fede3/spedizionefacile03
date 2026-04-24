@@ -155,6 +155,22 @@ class LoginTest extends TestCase
         $response->assertOk();
     }
 
+    public function test_unauthenticated_api_route_clears_auth_ui_cookie(): void
+    {
+        $user = User::factory()->create();
+
+        $response = $this
+            ->withCookie(AuthUiCookie::NAME, json_encode(AuthUiCookie::payloadForUser($user), JSON_UNESCAPED_UNICODE))
+            ->postJson('/api/create-direct-order', []);
+
+        $response->assertUnauthorized();
+
+        $cookie = $this->findCookie($response, AuthUiCookie::NAME);
+
+        $this->assertNotNull($cookie);
+        $this->assertLessThanOrEqual(time(), $cookie?->getExpiresTime() ?? PHP_INT_MAX);
+    }
+
     public function test_logout_clears_auth_ui_cookie(): void
     {
         $user = User::factory()->create();

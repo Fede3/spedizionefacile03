@@ -1,25 +1,7 @@
-<!--
-  FILE: pages/account/spedizioni/[id].vue
-  SCOPO: Dettaglio ordine — stato, colli, indirizzi, etichetta BRT, link tracking, annullamento e rimborso.
-
-  API: GET /api/orders/{id} (dettaglio ordine), GET /api/brt/label/{orderId} (download PDF etichetta),
-       POST /api/brt/create-shipment (rigenera etichetta), POST /api/orders/{id}/cancel (annulla),
-       GET /api/orders/{id}/refund-eligibility (verifica idoneita' rimborso),
-       POST /api/orders/{id}/add-package (aggiungi collo a ordine in attesa).
-  COMPONENTI: SpedizioniOrderPackageCard, SpedizioniAddPackageForm, SpedizioniBrtSection, SpedizioniCancelModal.
-  ROUTE: /account/spedizioni/:id (middleware sanctum:auth).
-
-  DATI IN INGRESSO: route.params.id (ID ordine dalla URL).
-  DATI IN USCITA: download PDF etichetta, navigazione a /traccia-spedizione?code=XXX.
-
-  VINCOLI: l'etichetta BRT si scarica come blob PDF. La rigenerazione chiama l'API BRT.
-           Il rimborso ha una commissione di 2 EUR per ordini gia' in lavorazione.
-           Ordini in_transit NON sono rimborsabili.
-  COLLEGAMENTI: pages/account/spedizioni/index.vue, pages/traccia-spedizione.vue,
-                controllers/OrderController.php, controllers/BrtController.php.
--->
+<!-- FILE: pages/account/spedizioni/[id].vue -->
 <script setup>
 definePageMeta({ middleware: ['app-auth'] });
+import { formatDateTimeIt } from '~/utils/date.js';
 
 const route = useRoute();
 const orderId = route.params.id;
@@ -76,24 +58,43 @@ useSeoMeta({
 	ogTitle: () => (orderData.value?.id ? `Ordine #${orderData.value.id} | SpediamoFacile` : 'Dettaglio spedizione | SpediamoFacile'),
 	description: 'Consulta stato, colli, tracking e documenti della tua spedizione su SpediamoFacile.',
 	ogDescription: 'Dettaglio ordine con stato, colli, tracking e documenti su SpediamoFacile.',
+	robots: 'noindex, nofollow',
 });
+
+// F04 — Modale riprogrammazione data ritiro
+const showRescheduleModal = ref(false);
+const canRescheduleFinal = computed(() => {
+	const raw = orderData.value?.raw_status;
+	const blockedStatuses = ['in_transit', 'out_for_delivery', 'delivered', 'in_giacenza', 'returned', 'refused', 'cancelled', 'refunded', 'payment_failed'];
+	return !!orderData.value && !blockedStatuses.includes(raw);
+});
+const onPickupRescheduled = async () => {
+	// Ricarica i dati ordine dopo riprogrammazione
+	if (order?.refresh) {
+		try { await order.refresh(); } catch (_) { /* ignore */ }
+	}
+};
 
 const orderMetaPillStyle = (kind, status = '') => {
 	const palette = {
 		status: {
 			'In attesa': { backgroundColor: '#FFFBEB', color: '#B45309' },
 			'In lavorazione': { backgroundColor: '#eef7f8', color: '#095866' },
+			'Etichetta generata': { backgroundColor: '#eef7f8', color: '#095866' },
 			Completato: { backgroundColor: '#ECFDF3', color: '#047857' },
 			Fallito: { backgroundColor: '#FEF2F2', color: '#B91C1C' },
 			Pagato: { backgroundColor: '#ECFDF3', color: '#047857' },
 			Annullato: { backgroundColor: 'var(--color-brand-bg-alt)', color: '#4B5563' },
 			Rimborsato: { backgroundColor: '#FFF7ED', color: '#C2410C' },
 			'In transito': { backgroundColor: '#eef7f8', color: '#095866' },
+			'In consegna': { backgroundColor: '#dff0f3', color: '#074a56' },
 			Consegnato: { backgroundColor: '#ECFDF3', color: '#047857' },
 			'In giacenza': { backgroundColor: '#FFF7ED', color: '#C2410C' },
+			Reso: { backgroundColor: '#FFF7ED', color: '#C2410C' },
+			Rifiutato: { backgroundColor: '#FEF2F2', color: '#B91C1C' },
 		},
 		packages: { backgroundColor: '#F0F6F7', color: 'var(--color-brand-primary)' },
-		total: { backgroundColor: '#FFF5EB', color: 'var(--color-brand-accent)' },
+		total: { backgroundColor: 'rgba(9,88,102,0.06)', color: 'var(--color-brand-primary)' },
 	};
 
 	return palette[kind]?.[status] || palette[kind] || {};
@@ -101,11 +102,11 @@ const orderMetaPillStyle = (kind, status = '') => {
 </script>
 
 <template>
-	<section class="min-h-[600px] py-[40px] desktop:py-[80px]">
-		<div class="my-container">
+	<section class="sf-account-shell min-h-[600px] py-[20px] tablet:py-[24px] desktop:py-[28px]">
+		<div class="my-container max-w-[1280px]">
 			<!-- Loading -->
 			<div v-if="orderStatus === 'pending'" class="space-y-[16px]">
-				<div class="bg-white rounded-[20px] p-[32px] border border-[var(--color-brand-border)] animate-pulse">
+				<div class="bg-white rounded-[16px] p-[16px] border border-[var(--color-brand-border)] animate-pulse">
 					<div class="h-[24px] bg-gray-200 rounded w-[40%] mb-[16px]"></div>
 					<div class="h-[16px] bg-gray-200 rounded w-[60%] mb-[8px]"></div>
 					<div class="h-[16px] bg-gray-200 rounded w-[50%]"></div>
@@ -114,7 +115,7 @@ const orderMetaPillStyle = (kind, status = '') => {
 
 			<template v-else-if="orderData">
 				<AccountPageHeader
-					eyebrow="Dettaglio spedizione"
+					eyebrow="Dettaglio ordine"
 					:title="`Ordine #${orderData.id}`"
 					:description="'Controlla stato, colli, tracking BRT ed eventuali azioni ancora disponibili per questa spedizione.'"
 					:crumbs="[
@@ -138,8 +139,8 @@ const orderMetaPillStyle = (kind, status = '') => {
 				<!-- Cancel success/error messages -->
 				<div
 					v-if="cancelSuccess"
-					class="bg-[#f0fdf4] border border-[#d1fae5] rounded-[20px] px-[16px] py-[14px] flex items-start gap-[12px] mb-[16px]">
-					<svg
+					class="bg-[#f0fdf4] border border-[#d1fae5] rounded-[16px] px-[16px] py-[14px] flex items-start gap-[12px] mb-[16px]">
+					<svg aria-hidden="true"
 						xmlns="http://www.w3.org/2000/svg"
 						width="22"
 						height="22"
@@ -157,8 +158,8 @@ const orderMetaPillStyle = (kind, status = '') => {
 				</div>
 				<div
 					v-if="cancelError && !showCancelModal"
-					class="bg-red-50 border border-red-200 rounded-[20px] px-[16px] py-[14px] flex items-start gap-[12px] mb-[16px]">
-					<svg
+					class="bg-red-50 border border-red-200 rounded-[16px] px-[16px] py-[14px] flex items-start gap-[12px] mb-[16px]">
+					<svg aria-hidden="true"
 						xmlns="http://www.w3.org/2000/svg"
 						width="22"
 						height="22"
@@ -179,9 +180,9 @@ const orderMetaPillStyle = (kind, status = '') => {
 				<!-- Refund info banner -->
 				<div
 					v-if="isCancelledOrRefunded && orderData.refund_status === 'completed'"
-					class="bg-orange-50 border border-orange-200 rounded-[20px] px-[16px] py-[14px] mb-[16px]">
+					class="bg-orange-50 border border-orange-200 rounded-[16px] px-[16px] py-[14px] mb-[16px]">
 					<div class="flex items-start gap-[12px]">
-						<svg
+						<svg aria-hidden="true"
 							xmlns="http://www.w3.org/2000/svg"
 							width="22"
 							height="22"
@@ -224,21 +225,21 @@ const orderMetaPillStyle = (kind, status = '') => {
 				</div>
 
 				<!-- Status & Summary -->
-				<div class="mb-[16px] rounded-[20px] border border-[var(--color-brand-border)] bg-white p-[18px] tablet:p-[20px]">
+				<div class="mb-[16px] rounded-[16px] border border-[var(--color-brand-border)] bg-white p-[18px] tablet:p-[20px]">
 					<div class="grid grid-cols-1 gap-[12px] tablet:grid-cols-2 desktop:grid-cols-4">
-						<div class="rounded-[14px] border border-[#E9EEF2] bg-[#FBFCFD] px-[14px] py-[12px]">
+						<div class="rounded-[16px] border border-[#E9EEF2] bg-[#FBFCFD] px-[14px] py-[12px]">
 							<p class="mb-[4px] text-[0.6875rem] font-bold uppercase tracking-[0.14em] text-[var(--color-brand-text-muted)]">Tratta</p>
 							<p class="text-[0.9375rem] font-semibold leading-[1.35] text-[var(--color-brand-text)]">{{ orderRouteLabel }}</p>
 						</div>
-						<div class="rounded-[14px] border border-[#E9EEF2] bg-white px-[14px] py-[12px]">
+						<div class="rounded-[16px] border border-[#E9EEF2] bg-white px-[14px] py-[12px]">
 							<p class="mb-[4px] text-[0.6875rem] font-bold uppercase tracking-[0.14em] text-[var(--color-brand-text-muted)]">Creato il</p>
-							<p class="text-[0.9375rem] font-semibold leading-[1.35] text-[var(--color-brand-text)]">{{ formatDate(orderData.created_at) }}</p>
+							<p class="text-[0.9375rem] font-semibold leading-[1.35] text-[var(--color-brand-text)]">{{ formatDateTimeIt(orderData.created_at, '—') }}</p>
 						</div>
-						<div class="rounded-[14px] border border-[#E9EEF2] bg-white px-[14px] py-[12px]">
+						<div class="rounded-[16px] border border-[#E9EEF2] bg-white px-[14px] py-[12px]">
 							<p class="mb-[4px] text-[0.6875rem] font-bold uppercase tracking-[0.14em] text-[var(--color-brand-text-muted)]">Totale</p>
 							<p class="text-[1rem] font-bold leading-[1.2] text-[var(--color-brand-primary)]">{{ orderSubtotalLabel }}</p>
 						</div>
-						<div class="rounded-[14px] border border-[#E9EEF2] bg-white px-[14px] py-[12px]">
+						<div class="rounded-[16px] border border-[#E9EEF2] bg-white px-[14px] py-[12px]">
 							<p class="mb-[4px] text-[0.6875rem] font-bold uppercase tracking-[0.14em] text-[var(--color-brand-text-muted)]">Pagamento</p>
 							<p class="text-[0.9375rem] font-semibold leading-[1.35] text-[var(--color-brand-text)]">{{ paymentMethodLabel(orderData.payment_method) }}</p>
 						</div>
@@ -251,19 +252,59 @@ const orderMetaPillStyle = (kind, status = '') => {
 							<NuxtLink to="/account/assistenza" class="text-[var(--color-brand-primary)] font-semibold underline">assistenza</NuxtLink>
 							.
 						</p>
-						<button type="button" @click="openCancelModal" class="btn-secondary btn-compact inline-flex items-center gap-[6px]">
-							<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[14px] h-[14px]" fill="currentColor">
-								<path
-									d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,4A8,8 0 0,1 20,12A8,8 0 0,1 12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4M7,10L12,15L17,10H7Z" />
+						<div class="flex flex-wrap gap-[8px]">
+							<button
+								v-if="canRescheduleFinal"
+								type="button"
+								class="btn btn-secondary btn-sm inline-flex items-center gap-[6px]"
+								style="color:var(--color-brand-primary);border-color:rgba(9,88,102,0.22);"
+								@click="showRescheduleModal = true">
+								<svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[14px] h-[14px]" fill="currentColor">
+									<path d="M19,3H18V1H16V3H8V1H6V3H5C3.89,3 3,3.9 3,5V21A2,2 0 0,0 5,23H19A2,2 0 0,0 21,21V5A2,2 0 0,0 19,3M19,21H5V8H19V21Z" />
+								</svg>
+								Cambia data ritiro
+							</button>
+							<!-- -- ARCHIVIATO 2026-04-20: CTA Reclamo dedicato (_archive/frontend-simplification-2026-04-20/features/reclami-dedicato) -- -->
+							<NuxtLink
+								to="/account/assistenza"
+								class="btn btn-secondary btn-sm inline-flex items-center gap-[6px]"
+								style="color:var(--color-brand-primary);border-color:rgba(9,88,102,0.22);">
+								<svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[14px] h-[14px]" fill="currentColor">
+									<path d="M13,13H11V7H13M13,17H11V15H13M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z" />
+								</svg>
+								Assistenza
+							</NuxtLink>
+							<button type="button" @click="openCancelModal" class="btn btn-secondary btn-sm inline-flex items-center gap-[6px]" style="color:#B91C1C;border-color:rgba(185,28,28,0.22);">
+								<svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[14px] h-[14px]" fill="currentColor">
+									<path
+										d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,4A8,8 0 0,1 20,12A8,8 0 0,1 12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4M7,10L12,15L17,10H7Z" />
+								</svg>
+								Blocca il pacco
+							</button>
+						</div>
+					</div>
+					<div
+						v-else-if="orderData?.brt_parcel_id && !isCancelledOrRefunded"
+						class="mt-[16px] flex flex-col gap-[10px] border-t border-[var(--color-brand-border)] pt-[16px] desktop:flex-row desktop:items-center desktop:justify-between">
+						<p class="text-[0.75rem] text-[var(--color-brand-text-secondary)]">
+							Hai riscontrato un problema con questa spedizione? Contatta l'assistenza e il nostro team ti risponderà entro 48h.
+						</p>
+						<!-- -- ARCHIVIATO 2026-04-20: CTA Reclamo dedicato (_archive/frontend-simplification-2026-04-20/features/reclami-dedicato) -- -->
+						<NuxtLink
+							to="/account/assistenza"
+							class="btn btn-secondary btn-sm inline-flex items-center gap-[6px]"
+							style="color:var(--color-brand-primary);border-color:rgba(9,88,102,0.22);">
+							<svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[14px] h-[14px]" fill="currentColor">
+								<path d="M13,13H11V7H13M13,17H11V15H13M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z" />
 							</svg>
-							Blocca il pacco
-						</button>
+							Assistenza
+						</NuxtLink>
 					</div>
 				</div>
 
 				<!-- Packages -->
 				<div v-if="orderData.packages?.length" class="space-y-[12px]">
-					<SpedizioniOrderPackageCard
+					<ShipmentOrderPackageCard
 						v-for="(pkg, pkgIdx) in orderData.packages"
 						:key="pkg.id || pkgIdx"
 						:pkg="pkg"
@@ -273,7 +314,7 @@ const orderMetaPillStyle = (kind, status = '') => {
 				</div>
 
 				<!-- Aggiungi collo -->
-				<SpedizioniAddPackageForm
+				<ShipmentAddPackageForm
 					v-if="isPendingPayment"
 					:show-form="showAddPackageForm"
 					:adding-package="addingPackage"
@@ -287,7 +328,7 @@ const orderMetaPillStyle = (kind, status = '') => {
 					@submit="submitAddPackage" />
 
 				<!-- BRT Section -->
-				<SpedizioniBrtSection
+				<ShipmentBrtSection
 					v-if="!isCancelledOrRefunded"
 					:order-data="orderData"
 					:regenerating="regenerating"
@@ -296,7 +337,7 @@ const orderMetaPillStyle = (kind, status = '') => {
 					@download-label="downloadLabel"
 					@regenerate-label="regenerateLabel" />
 
-				<SpedizioniExecutionSection
+				<ShipmentExecutionSection
 					v-if="!isCancelledOrRefunded"
 					:order-data="orderData"
 					:execution-data="executionData"
@@ -315,8 +356,8 @@ const orderMetaPillStyle = (kind, status = '') => {
 
 				<!-- Back -->
 				<div class="mt-[24px]">
-					<NuxtLink to="/account/spedizioni" class="btn-secondary btn-compact inline-flex items-center gap-[6px]">
-						<svg
+					<NuxtLink to="/account/spedizioni" class="btn btn-secondary btn-sm inline-flex items-center gap-[6px]">
+						<svg aria-hidden="true"
 							xmlns="http://www.w3.org/2000/svg"
 							width="18"
 							height="18"
@@ -335,10 +376,10 @@ const orderMetaPillStyle = (kind, status = '') => {
 			</template>
 
 			<!-- Not found -->
-			<div v-else class="bg-white rounded-[20px] p-[48px] border border-[var(--color-brand-border)] text-center">
+			<div v-else class="bg-white rounded-[16px] p-[20px] border border-[var(--color-brand-border)] text-center">
 				<p class="text-[1rem] text-[var(--color-brand-text-secondary)]">Ordine non trovato.</p>
-				<NuxtLink to="/account/spedizioni" class="btn-secondary btn-compact mt-[16px] inline-flex items-center gap-[6px]">
-					<svg
+				<NuxtLink to="/account/spedizioni" class="btn btn-secondary btn-sm mt-[16px] inline-flex items-center gap-[6px]">
+					<svg aria-hidden="true"
 						xmlns="http://www.w3.org/2000/svg"
 						width="18"
 						height="18"
@@ -356,7 +397,7 @@ const orderMetaPillStyle = (kind, status = '') => {
 			</div>
 
 			<!-- Cancel Modal -->
-			<SpedizioniCancelModal
+			<ShipmentCancelModal
 				:show="showCancelModal"
 				:loading-eligibility="loadingEligibility"
 				:refund-eligibility="refundEligibility"
@@ -368,6 +409,17 @@ const orderMetaPillStyle = (kind, status = '') => {
 				@update:show="showCancelModal = $event"
 				@update:cancel-reason="cancelReason = $event"
 				@confirm="confirmCancellation" />
+
+			<!-- F04 — Reschedule Pickup Modal -->
+			<ReschedulePickupModal
+				v-if="orderData"
+				:show="showRescheduleModal"
+				:order-id="orderData.id"
+				:current-pickup-date="orderData.pickup_date"
+				:current-time-slot="orderData.pickup_time_slot"
+				:current-notes="orderData.pickup_notes"
+				@update:show="showRescheduleModal = $event"
+				@updated="onPickupRescheduled" />
 		</div>
 	</section>
 </template>

@@ -1,33 +1,25 @@
-# Listeners - Leggere Qui
+# Listeners - Puntatore Locale
 
-Questa cartella contiene gli "ascoltatori" di eventi. Quando un evento viene lanciato nel sistema (es. un ordine viene pagato), i listener registrati reagiscono automaticamente eseguendo azioni specifiche.
+Questa guida locale non e' piu' autorevole: i listener vanno letti insieme agli
+eventi e al flow reale post-pagamento/post-ordine.
 
-## I 3 file principali
+Per partire dai boundary corretti:
 
-1. **GenerateBrtLabel.php** - Genera automaticamente l'etichetta BRT quando un ordine viene pagato (evento `OrderPaid`). Chiama `BrtService`, salva l'etichetta nell'ordine, e invia l'email all'utente. Include retry fino a 3 tentativi.
-2. **MarkOrderProcessing.php** - Cambia lo stato dell'ordine da `pending` a `processing` quando viene pagato (evento `OrderPaid`).
-3. **CartEmpty.php** - Svuota il carrello dell'utente quando viene creato un ordine (evento `OrderCreated`).
+- [../../../docs/BACKEND_STRUCTURE.md](../../../docs/BACKEND_STRUCTURE.md)
+- [../../../docs/FEATURE_BOUNDARIES.md](../../../docs/FEATURE_BOUNDARIES.md)
 
-## Ordine di lettura consigliato
+Reading order locale consigliato:
 
-1. Leggere prima `../Events/OrderPaid.php` per capire cosa contiene l'evento
-2. `MarkOrderProcessing.php` - Il listener piu semplice
-3. `GenerateBrtLabel.php` - Il listener piu complesso e critico
-4. Controllare `../Providers/EventServiceProvider.php` per vedere la mappatura eventi -> listener
+1. `../Events/OrderPaid.php`
+2. `MarkOrderProcessing.php`
+3. `GenerateBrtLabel.php`
+4. `../Providers/EventServiceProvider.php`
 
-## Quale file modificare per...
+Regola pratica:
 
-| Esigenza | File |
-|----------|------|
-| Cambiare cosa succede dopo il pagamento | `GenerateBrtLabel.php` e/o `MarkOrderProcessing.php` |
-| Aggiungere un'azione post-pagamento | Creare un nuovo listener e registrarlo in `EventServiceProvider.php` sotto `OrderPaid` |
-| Disabilitare la generazione automatica BRT | Commentare `GenerateBrtLabel::class` in `EventServiceProvider.php` |
-| Cambiare il numero di retry per BRT | `GenerateBrtLabel.php` costante `MAX_RETRIES` (riga 34) |
-| Cambiare lo stato post-pagamento | `MarkOrderProcessing.php` (riga 37) |
+- evento = annuncio
+- listener = reazione
+- service = business o adapter piu' pesante
 
-## Mappatura eventi corrente
-
-Definita in `../Providers/EventServiceProvider.php`:
-
-- `OrderPaid` -> `MarkOrderProcessing`, `GenerateBrtLabel`
-- `UserRegistered` -> `SendVerificationEmail` (in Jobs)
+Se trovi informazioni in conflitto tra questo file e `docs/`, vale sempre
+`docs/`.

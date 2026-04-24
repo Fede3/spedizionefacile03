@@ -65,6 +65,16 @@ return [
             'replace_placeholders' => true,
         ],
 
+        // Canale dedicato agli eventi di sicurezza (OAuth state mismatch,
+        // CSRF sospetti, replay attempts). Consigliato forward a Sentry
+        // in Sprint W1.1. Richiesto da Sprint 6.3 (BLOCKER GO-LIVE).
+        'security' => [
+            'driver' => 'single',
+            'path' => storage_path('logs/security.log'),
+            'level' => env('LOG_SECURITY_LEVEL', 'warning'),
+            'replace_placeholders' => true,
+        ],
+
         'daily' => [
             'driver' => 'daily',
             'path' => storage_path('logs/laravel.log'),

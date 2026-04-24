@@ -1,0 +1,163 @@
+/*
+  sf-bank-transfer-instructions.css
+  Istruzioni per pagamento tramite bonifico bancario (F05).
+  Estratto da components/checkout/BankTransferInstructions.vue per ridurre bundle di style scoped.
+  Classi .bank-transfer-instructions* e .bti-* uniche a questo componente.
+*/
+
+.bank-transfer-instructions {
+	max-width: 620px;
+	margin: 20px auto 0;
+	padding: 20px;
+	background: linear-gradient(180deg, #ffffff 0%, #F7FAFB 100%);
+	border: 1px solid #DCE4EA;
+	border-radius: 16px;
+	box-shadow: 0 6px 18px rgba(15, 23, 42, 0.04);
+	text-align: left;
+}
+
+.bank-transfer-instructions__header {
+	display: flex;
+	gap: 12px;
+	align-items: flex-start;
+	margin-bottom: 16px;
+}
+
+.bank-transfer-instructions__icon {
+	flex: 0 0 auto;
+	width: 40px;
+	height: 40px;
+	border-radius: 12px;
+	background: rgba(9, 88, 102, 0.08);
+	color: var(--color-brand-primary);
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.bank-transfer-instructions__title {
+	margin: 0 0 4px;
+	font-family: var(--font-montserrat, 'Montserrat', sans-serif);
+	font-size: 16px;
+	font-weight: 800;
+	color: var(--color-brand-text);
+}
+
+.bank-transfer-instructions__subtitle {
+	margin: 0;
+	font-size: 13px;
+	line-height: 1.5;
+	color: var(--color-brand-text-secondary);
+}
+
+.bank-transfer-instructions__grid {
+	display: grid;
+	grid-template-columns: 1fr;
+	gap: 10px;
+}
+
+@media (min-width: 40rem) {
+	.bank-transfer-instructions__grid {
+		grid-template-columns: 1fr 1fr;
+	}
+	.bti-field--highlight {
+		grid-column: span 2;
+	}
+}
+
+.bti-field {
+	padding: 12px 14px;
+	background: #ffffff;
+	border: 1px solid #E6ECF0;
+	border-radius: 12px;
+}
+
+.bti-field--highlight {
+	background: linear-gradient(180deg, #FFF7F0 0%, #FFF1E8 100%);
+	border-color: rgba(228, 66, 3, 0.28);
+}
+
+.bti-field__label {
+	font-size: 10.5px;
+	font-weight: 800;
+	letter-spacing: 0.12em;
+	text-transform: uppercase;
+	color: var(--color-brand-text-muted);
+	margin-bottom: 6px;
+}
+
+.bti-field__row {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px;
+}
+
+.bti-field__value {
+	font-size: 14px;
+	font-weight: 700;
+	color: var(--color-brand-text);
+	word-break: break-all;
+}
+
+.bti-field__value--mono {
+	font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
+	letter-spacing: 0.02em;
+}
+
+.bti-field__value--strong {
+	font-size: 16px;
+	color: var(--color-brand-primary);
+}
+
+.bti-field__hint {
+	margin: 6px 0 0;
+	font-size: 11.5px;
+	color: #9A4A00;
+	font-weight: 600;
+}
+
+.bti-copy {
+	flex: 0 0 auto;
+	padding: 4px 10px;
+	font-size: 11.5px;
+	font-weight: 700;
+	color: var(--color-brand-primary);
+	background: rgba(9, 88, 102, 0.06);
+	border: 1px solid rgba(9, 88, 102, 0.2);
+	border-radius: 999px;
+	cursor: pointer;
+	transition: background var(--sf-t1) var(--sf-ease);
+}
+
+.bti-copy:hover {
+	background: rgba(9, 88, 102, 0.12);
+}
+
+.bti-copy--primary {
+	color: #fff;
+	background: #E44203;
+	border-color: #E44203;
+}
+
+.bti-copy--primary:hover {
+	background: #C83A02;
+	border-color: #C83A02;
+}
+
+.bank-transfer-instructions__footer {
+	margin-top: 14px;
+	padding: 10px 12px;
+	display: flex;
+	gap: 8px;
+	align-items: flex-start;
+	background: rgba(9, 88, 102, 0.06);
+	border-radius: 10px;
+	color: var(--color-brand-text-secondary);
+	font-size: 12px;
+	line-height: 1.5;
+}
+
+.bank-transfer-instructions__footer p {
+	margin: 0;
+}

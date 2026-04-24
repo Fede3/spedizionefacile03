@@ -1,0 +1,115 @@
+/* sf-contact-faq.css — stili componente ContactFAQ (FAQ grid pagina contatti). */
+
+/* Grid responsive: 1 col mobile, 2 col tablet, 3 col desktop */
+.contact-faq-items {
+	display: grid;
+	gap: 16px;
+	grid-template-columns: 1fr;
+}
+
+@media (min-width: 48rem) {
+	.contact-faq-items {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+}
+
+@media (min-width: 64rem) {
+	.contact-faq-items {
+		grid-template-columns: repeat(3, minmax(0, 1fr));
+	}
+}
+
+.contact-faq-item {
+	background: #fff;
+	border: 1px solid rgba(9, 88, 102, 0.12);
+	border-radius: 16px;
+	overflow: hidden;
+	transition: border-color var(--sf-t1) var(--sf-ease), box-shadow var(--sf-t1) var(--sf-ease);
+	align-self: start;
+}
+
+.contact-faq-item:hover {
+	border-color: rgba(9, 88, 102, 0.25);
+	box-shadow: 0 4px 14px rgba(9, 88, 102, 0.06);
+}
+
+.contact-faq-item.is-open {
+	border-color: var(--color-brand-accent, #E44203);
+	box-shadow: 0 6px 20px rgba(228, 66, 3, 0.08);
+}
+
+.contact-faq-toggle {
+	width: 100%;
+	display: grid;
+	grid-template-columns: auto 1fr auto;
+	align-items: center;
+	gap: 12px;
+	padding: 16px 18px;
+	background: none;
+	border: none;
+	cursor: pointer;
+	font-size: 0.9375rem;
+	font-weight: 600;
+	color: #1d2738;
+	text-align: left;
+	transition: color var(--sf-t1) var(--sf-ease);
+}
+
+.contact-faq-pill {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 36px;
+	height: 36px;
+	border-radius: 12px;
+	background: linear-gradient(135deg, rgba(9, 88, 102, 0.16), rgba(9, 88, 102, 0.04));
+	color: var(--color-brand-primary, #095866);
+	flex-shrink: 0;
+}
+
+.contact-faq-question {
+	line-height: 1.35;
+}
+
+.contact-faq-toggle:hover .contact-faq-question {
+	color: var(--color-brand-primary, #095866);
+}
+
+.contact-faq-chevron {
+	color: var(--color-brand-primary, #095866);
+	transition: transform var(--sf-t1) var(--sf-ease);
+	flex-shrink: 0;
+}
+
+.contact-faq-item.is-open .contact-faq-chevron {
+	transform: rotate(180deg);
+	color: var(--color-brand-accent, #E44203);
+}
+
+.contact-faq-content {
+	max-height: 0;
+	overflow: hidden;
+	transition: max-height var(--sf-t1) var(--sf-ease);
+}
+
+.contact-faq-item.is-open .contact-faq-content {
+	max-height: 400px;
+}
+
+.contact-faq-content p {
+	margin: 0;
+	padding: 0 18px 18px 66px;
+	font-size: 0.9rem;
+	line-height: 1.6;
+	color: rgba(29, 39, 56, 0.78);
+}
+
+@media (max-width: 23.4375rem) {
+	.contact-faq-toggle {
+		padding: 14px 14px;
+		gap: 10px;
+	}
+	.contact-faq-content p {
+		padding: 0 14px 14px 56px;
+	}
+}

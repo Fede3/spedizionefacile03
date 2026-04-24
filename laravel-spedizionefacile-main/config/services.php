@@ -85,6 +85,56 @@ return [
         'webhook_secret' => env('STRIPE_WEBHOOK_SECRET')   // Segreto per verificare i webhook
     ],
 
+    // Referral / coupon preview - percentuale sconto usata dal boundary preview condiviso
+    'referral' => [
+        'discount_percent' => env('REFERRAL_DISCOUNT_PERCENT', 5),
+    ],
+
+    // -- ARCHIVIATO 2026-04-20 -- SDI (Sistema di Interscambio) - fatturazione elettronica italiana
+    // -- ARCHIVIATO 2026-04-20 -- Modulo archiviato in _archive/2026-04-20-features-rimosse/sdi-fatturazione/
+    // -- ARCHIVIATO 2026-04-20 -- 'sdi' => [
+    // -- ARCHIVIATO 2026-04-20 --     'provider' => env('SDI_PROVIDER', 'null'),
+    // -- ARCHIVIATO 2026-04-20 --     'cedente' => [
+    // -- ARCHIVIATO 2026-04-20 --         'company_name' => env('SDI_CEDENTE_COMPANY', 'SpediamoFacile S.r.l.'),
+    // -- ARCHIVIATO 2026-04-20 --         'vat_number' => env('SDI_CEDENTE_VAT', '00000000000'),
+    // -- ARCHIVIATO 2026-04-20 --         'fiscal_code' => env('SDI_CEDENTE_FISCAL_CODE'),
+    // -- ARCHIVIATO 2026-04-20 --         'address' => env('SDI_CEDENTE_ADDRESS', 'Via Esempio 1'),
+    // -- ARCHIVIATO 2026-04-20 --         'postal_code' => env('SDI_CEDENTE_CAP', '20100'),
+    // -- ARCHIVIATO 2026-04-20 --         'city' => env('SDI_CEDENTE_CITY', 'Milano'),
+    // -- ARCHIVIATO 2026-04-20 --         'province' => env('SDI_CEDENTE_PROVINCE', 'MI'),
+    // -- ARCHIVIATO 2026-04-20 --         'country' => env('SDI_CEDENTE_COUNTRY', 'IT'),
+    // -- ARCHIVIATO 2026-04-20 --         'regime_fiscale' => env('SDI_CEDENTE_REGIME', 'RF01'),
+    // -- ARCHIVIATO 2026-04-20 --     ],
+    // -- ARCHIVIATO 2026-04-20 --     'fic' => [
+    // -- ARCHIVIATO 2026-04-20 --         'api_token' => env('FIC_API_TOKEN'),
+    // -- ARCHIVIATO 2026-04-20 --         'company_id' => env('FIC_COMPANY_ID'),
+    // -- ARCHIVIATO 2026-04-20 --     ],
+    // -- ARCHIVIATO 2026-04-20 -- ],
+
+    // SMS - provider pluggable (default: null = nessun invio reale, solo log).
+    // Per attivare Twilio: SMS_DRIVER=twilio + TWILIO_ACCOUNT_SID + TWILIO_AUTH_TOKEN + TWILIO_FROM in .env
+    // Numero di default normalizzato con prefisso +39 (Italia) se mancante.
+    'sms' => [
+        'driver' => env('SMS_DRIVER', 'null'),               // "null" oppure "twilio"
+        'default_country_code' => env('SMS_DEFAULT_COUNTRY_CODE', '+39'),
+        'twilio' => [
+            'sid' => env('TWILIO_ACCOUNT_SID'),               // Account SID Twilio (ACxxx...)
+            'token' => env('TWILIO_AUTH_TOKEN'),              // Auth Token Twilio
+            'from' => env('TWILIO_FROM'),                     // Sender ID o numero E.164 acquistato
+        ],
+    ],
+
+    // -- ARCHIVIATO 2026-04-20 -- PUSH - Web Push (VAPID) per notifiche su PWA installate.
+    // -- ARCHIVIATO 2026-04-20 -- Modulo archiviato in _archive/2026-04-20-features-rimosse/pwa-push/
+    // -- ARCHIVIATO 2026-04-20 -- 'push' => [
+    // -- ARCHIVIATO 2026-04-20 --     'vapid' => [
+    // -- ARCHIVIATO 2026-04-20 --         'subject' => env('VAPID_SUBJECT', 'mailto:supporto@spediamofacile.it'),
+    // -- ARCHIVIATO 2026-04-20 --         'public_key' => env('VAPID_PUBLIC_KEY'),
+    // -- ARCHIVIATO 2026-04-20 --         'private_key' => env('VAPID_PRIVATE_KEY'),
+    // -- ARCHIVIATO 2026-04-20 --     ],
+    // -- ARCHIVIATO 2026-04-20 --     'ttl' => (int) env('PUSH_TTL', 86400),
+    // -- ARCHIVIATO 2026-04-20 -- ],
+
     // BRT - corriere per le spedizioni
     'brt' => [
         'client_id' => env('BRT_CLIENT_ID'),               // ID cliente BRT
@@ -94,6 +144,11 @@ return [
         'pudo_token' => env('BRT_PUDO_TOKEN'),              // Token per le API dei punti ritiro
         'departure_depot' => env('BRT_DEPARTURE_DEPOT', 89), // Filiale BRT di partenza (default: 89 = Milano Bovisa)
         'verify_ssl' => env('BRT_VERIFY_SSL', true),          // Verifica SSL (disabilitare solo in sviluppo)
+        'pickup_enabled' => env('BRT_PICKUP_ENABLED', false),  // Attiva solo se BRT ha abilitato l'endpoint ritiro sul contratto
+        'pickup_endpoint' => env('BRT_PICKUP_ENDPOINT'),       // Endpoint ritiro esplicito; se vuoto non chiamiamo API non documentate
+        // Webhook push tracking
+        'webhook_secret' => env('BRT_WEBHOOK_SECRET'),             // Segreto HMAC-SHA256 per verifica firma (prioritario)
+        'webhook_allowed_ips' => env('BRT_WEBHOOK_ALLOWED_IPS'),   // IP BRT separati da virgola (fallback se no secret)
     ],
 
 ];

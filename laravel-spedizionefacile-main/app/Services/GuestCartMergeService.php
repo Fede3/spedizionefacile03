@@ -17,6 +17,10 @@ use Illuminate\Support\Facades\Log;
  */
 class GuestCartMergeService
 {
+    public function __construct(
+        private readonly CartService $cartService,
+    ) {}
+
     /**
      * Merge guest cart packages into the authenticated user's database cart.
      *
@@ -48,7 +52,7 @@ class GuestCartMergeService
                 ->whereIn('id', $cartPackageIds)
                 ->get();
 
-            CartService::mergeIdenticalPackages($mergedPackages, $user->id);
+            $this->cartService->mergeIdenticalPackages($mergedPackages, $user->id);
 
             $cartPackageIds = DB::table('cart_user')
                 ->where('user_id', $user->id)
@@ -58,7 +62,7 @@ class GuestCartMergeService
                 ->whereIn('id', $cartPackageIds)
                 ->get();
 
-            CartService::normalizePackagePricing($mergedPackages);
+            $this->cartService->normalizePackagePricing($mergedPackages);
         });
     }
 
@@ -72,7 +76,7 @@ class GuestCartMergeService
         $createdPackages = [];
 
         foreach ($packages as $package) {
-            $pricedPackage = CartService::pricePackageData(
+            $pricedPackage = $this->cartService->pricePackageData(
                 $package,
                 $package['origin_address'] ?? [],
                 $package['destination_address'] ?? [],

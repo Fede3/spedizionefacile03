@@ -1,9 +1,3 @@
-<!--
-  COMPONENTE: AdminPrezziServizi.vue
-  SCOPO: Sezione "Servizi e supplementi" del pannello admin prezzi — servizi utente,
-         supplementi automatici, fee operative con scaglioni peso e campi configurabili.
-  PROPS: Riceve stato e funzioni dal composable useAdminPrezzi via props.
--->
 <script setup>
 const props = defineProps({
 	servicePricingEntries: { type: Array, required: true },
@@ -27,17 +21,17 @@ const props = defineProps({
 	<div class="space-y-[18px]">
 		<!-- Stats cards -->
 		<div class="grid grid-cols-1 desktop:grid-cols-3 gap-[16px]">
-			<div class="rounded-[14px] border border-[#D8E9F0] bg-[#F4FAFC] p-[18px]">
+			<div class="rounded-[16px] border border-[#DFE2E7] bg-white p-[18px] shadow-sm">
 				<p class="text-[0.75rem] font-semibold uppercase tracking-[0.08em] text-[var(--color-brand-text-secondary)] mb-[8px]">Servizi utente</p>
 				<p class="text-[1.5rem] font-bold text-[var(--color-brand-primary)]">{{ servicePricingEntries.length }}</p>
 				<p class="text-[0.8125rem] text-[var(--color-brand-text-secondary)] mt-[6px]">Prezzi visibili nel flusso utente e nel riepilogo.</p>
 			</div>
-			<div class="rounded-[14px] border border-[#F4E2D6] bg-[#FFF8F2] p-[18px]">
+			<div class="rounded-[16px] border border-[#DFE2E7] bg-white p-[18px] shadow-sm">
 				<p class="text-[0.75rem] font-semibold uppercase tracking-[0.08em] text-[#A05D28] mb-[8px]">Supplementi automatici</p>
-				<p class="text-[1.5rem] font-bold text-[var(--color-brand-accent)]">{{ automaticSupplementEntries.length }}</p>
+				<p class="text-[1.5rem] font-bold text-[var(--color-brand-primary)]">{{ automaticSupplementEntries.length }}</p>
 				<p class="text-[0.8125rem] text-[#7C5A46] mt-[6px]">Regole che scattano da destinazione, forma collo o punto BRT.</p>
 			</div>
-			<div class="rounded-[14px] border border-[#E4E7EC] bg-[#FBFCFD] p-[18px]">
+			<div class="rounded-[16px] border border-[#DFE2E7] bg-white p-[18px] shadow-sm">
 				<p class="text-[0.75rem] font-semibold uppercase tracking-[0.08em] text-[var(--color-brand-text-secondary)] mb-[8px]">Fee operative</p>
 				<p class="text-[1.5rem] font-bold text-[var(--color-brand-text)]">{{ operationalFeeEntries.length }}</p>
 				<p class="text-[0.8125rem] text-[var(--color-brand-text-secondary)] mt-[6px]">Costi gestionali come giacenza, separati dalle scelte utente.</p>
@@ -68,6 +62,9 @@ const props = defineProps({
 
 					<button
 						type="button"
+						role="switch"
+						:aria-checked="entry.rule.enabled ? 'true' : 'false'"
+						:aria-label="`Attiva regola ${entry.rule.name || 'servizio'}`"
 						@click="entry.rule.enabled = !entry.rule.enabled"
 						:class="entry.rule.enabled ? 'bg-[var(--color-brand-primary)]' : 'bg-[#C8CCD0]'"
 						class="relative inline-flex h-[32px] w-[56px] items-center rounded-full transition-colors cursor-pointer shrink-0">
@@ -122,7 +119,7 @@ const props = defineProps({
 				</div>
 
 				<!-- Tiers -->
-				<div v-if="entry.rule.tiers?.length" class="mt-[16px] rounded-[14px] border border-[#E9EEF2] bg-[#FBFCFD] p-[14px]">
+				<div v-if="entry.rule.tiers?.length" class="mt-[16px] rounded-[16px] border border-[#E9EEF2] bg-[#FBFCFD] p-[14px]">
 					<div class="flex items-center justify-between gap-[10px] mb-[10px]">
 						<h4 class="text-[0.8125rem] font-semibold text-[var(--color-brand-text)]">Scaglioni peso</h4>
 						<button type="button" class="px-[12px] py-[7px] rounded-full bg-[var(--color-brand-primary)] text-white text-[0.75rem] font-medium cursor-pointer" @click="addTierRow(entry.rule)">Aggiungi soglia</button>
@@ -137,7 +134,7 @@ const props = defineProps({
 								Prezzo (&euro;)
 								<input :value="formatEuro(toEuros(tier.price_cents || 0))" @input="tier.price_cents = euroToCents($event.target.value) || 0" type="text" class="mt-[4px] w-full h-[40px] px-[12px] rounded-[12px] border border-[#DFE2E7] bg-white text-[0.8125rem] text-[var(--color-brand-text)]">
 							</label>
-							<button type="button" class="h-[40px] px-[12px] rounded-[14px] border border-red-200 text-red-600 text-[0.75rem] font-medium hover:bg-red-50 cursor-pointer" @click="removeTierRow(entry.rule, tierIndex)">Rimuovi</button>
+							<button type="button" class="h-[40px] px-[12px] rounded-[16px] border border-red-200 text-red-600 text-[0.75rem] font-medium hover:bg-red-50 cursor-pointer" @click="removeTierRow(entry.rule, tierIndex)">Rimuovi</button>
 						</div>
 					</div>
 				</div>

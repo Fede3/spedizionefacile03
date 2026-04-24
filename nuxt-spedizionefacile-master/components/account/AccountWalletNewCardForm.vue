@@ -1,9 +1,3 @@
-<!--
-  FILE: components/account/AccountWalletNewCardForm.vue
-  SCOPO: Form inline per aggiunta nuova carta Stripe nel wallet top-up.
-  PROPS: isPreparingNewCardForm, cardHolderName, cardError, hasSavedCard.
-  EVENTS: update:cardHolderName, close.
--->
 <script setup>
 defineProps({
   isPreparingNewCardForm: { type: Boolean, default: false },
@@ -15,7 +9,7 @@ defineEmits(["update:cardHolderName", "close"]);
 </script>
 
 <template>
-	<div class="space-y-[12px] rounded-[20px] border border-[var(--color-brand-border)] bg-white p-[14px]">
+	<div class="space-y-[12px] rounded-[16px] border border-[var(--color-brand-border)] bg-white p-[14px]">
 		<div class="flex items-start justify-between gap-[10px]">
 			<div>
 				<p class="text-[0.875rem] font-semibold text-[var(--color-brand-text)]">Nuova carta per la ricarica</p>
@@ -23,12 +17,12 @@ defineEmits(["update:cardHolderName", "close"]);
 					La useremo per questa operazione e la salveremo come carta predefinita per checkout e wallet.
 				</p>
 			</div>
-			<button type="button" @click="$emit('close')" class="whitespace-nowrap text-[0.8125rem] font-medium text-[var(--color-brand-primary)] hover:underline">
+			<button type="button" @click="$emit('close')" class="whitespace-nowrap text-[0.8125rem] font-medium text-[var(--color-brand-primary)] hover:opacity-80 transition-opacity cursor-pointer">
 				{{ hasSavedCard ? 'Usa carta salvata' : 'Chiudi' }}
 			</button>
 		</div>
 
-		<div v-if="isPreparingNewCardForm" class="flex items-center gap-[10px] rounded-[20px] border border-[var(--color-brand-border)] bg-[#FAFCFD] px-[14px] py-[12px] text-[0.8125rem] text-[var(--color-brand-text-secondary)]">
+		<div v-if="isPreparingNewCardForm" class="flex items-center gap-[10px] rounded-[16px] border border-[var(--color-brand-border)] bg-[#FAFCFD] px-[14px] py-[12px] text-[0.8125rem] text-[var(--color-brand-text-secondary)]">
 			<div class="h-[20px] w-[20px] animate-spin rounded-full border-2 border-[var(--color-brand-border)] border-t-[var(--color-brand-primary)]"></div>
 			Preparazione modulo carta in corso...
 		</div>
@@ -41,7 +35,7 @@ defineEmits(["update:cardHolderName", "close"]);
 					@input="$emit('update:cardHolderName', $event.target.value)"
 					type="text"
 					placeholder="Mario Rossi"
-					class="w-full rounded-[20px] border border-[var(--color-brand-border)] bg-white px-[14px] py-[12px] text-[0.9375rem] text-[var(--color-brand-text)] placeholder:text-[var(--color-brand-text-muted)] transition-colors focus:border-[var(--color-brand-primary)] focus:outline-none" />
+					class="w-full rounded-[16px] border border-[var(--color-brand-border)] bg-white px-[14px] py-[12px] text-[0.9375rem] text-[var(--color-brand-text)] placeholder:text-[var(--color-brand-text-muted)] transition-colors focus:border-[var(--color-brand-primary)] focus:outline-none" />
 			</div>
 
 			<div>
@@ -60,7 +54,7 @@ defineEmits(["update:cardHolderName", "close"]);
 				</div>
 			</div>
 
-			<p v-if="cardError" class="rounded-[20px] border border-red-200 bg-red-50 p-[10px] text-[0.8125rem] text-red-500">
+			<p v-if="cardError" class="rounded-[16px] border border-red-200 bg-red-50 p-[10px] text-[0.8125rem] text-red-500">
 				{{ cardError }}
 			</p>
 		</div>
@@ -74,7 +68,7 @@ defineEmits(["update:cardHolderName", "close"]);
   border-radius: 12px;
   background-color: #ffffff;
   padding: 12px 16px;
-  transition: border-color 0.2s, box-shadow 0.2s;
+  transition: border-color var(--sf-t1) var(--sf-ease), box-shadow var(--sf-t1) var(--sf-ease);
 }
 .stripe-field:focus-within {
   border-color: var(--color-brand-primary);

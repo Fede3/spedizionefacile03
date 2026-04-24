@@ -1,3 +1,5 @@
+import { formatResolvedLocation } from "~/utils/quickQuoteContract";
+
 export const useQuickQuoteLocations = ({
 	shipmentDetails,
 	search,
@@ -36,6 +38,54 @@ export const useQuickQuoteLocations = ({
 	const normalizeCap = (value = "", countryCode = "IT") => smartValidation.filterCAP(String(value).trim(), { countryCode });
 	const resolveCountryCode = (location) => String(location?.country_code || "IT").trim().toUpperCase() || "IT";
 	const resolveCountryName = (location) => String(location?.country_name || (resolveCountryCode(location) === "IT" ? "Italia" : resolveCountryCode(location))).trim();
+	const parseLocationDraft = (value = "", countryCode = "IT") => {
+		const rawQuery = String(value || "").trim();
+		if (!rawQuery) {
+			return {
+				rawQuery: "",
+				cityPart: "",
+				normalizedCap: "",
+				queryForSearch: "",
+				isCombined: false,
+				isCapOnly: false,
+			};
+		}
+
+		const combinedMatch = rawQuery.match(/^(.+?)(?:\s*[\/,;-]\s*|\s+[·•]?\s*)(\d{3,5})$/u);
+		if (combinedMatch) {
+			const cityPart = combinedMatch[1].trim();
+			const normalizedCap = normalizeCap(combinedMatch[2], countryCode);
+			return {
+				rawQuery,
+				cityPart,
+				normalizedCap,
+				queryForSearch: normalizedCap || cityPart,
+				isCombined: Boolean(cityPart && normalizedCap),
+				isCapOnly: false,
+			};
+		}
+
+		if (isCapQuery(rawQuery)) {
+			const normalizedCap = normalizeCap(rawQuery, countryCode);
+			return {
+				rawQuery,
+				cityPart: "",
+				normalizedCap,
+				queryForSearch: normalizedCap,
+				isCombined: false,
+				isCapOnly: true,
+			};
+		}
+
+		return {
+			rawQuery,
+			cityPart: "",
+			normalizedCap: "",
+			queryForSearch: rawQuery,
+			isCombined: false,
+			isCapOnly: false,
+		};
+	};
 
 	const formatLocationDisplay = (city = "", cap = "") => {
 		const trimmedCity = String(city || "").trim();
@@ -45,12 +95,13 @@ export const useQuickQuoteLocations = ({
 	};
 
 	const applyQueryDraftToShipment = (queryRef, cityKey, capKey, fieldKey, countryCodeKey, countryNameKey) => {
-		const rawQuery = String(queryRef.value || "").trim();
 		const currentCountryCode = String(shipmentDetails[countryCodeKey] || "IT").trim().toUpperCase() || "IT";
 		const currentCountryName = String(
 			shipmentDetails[countryNameKey]
 			|| (currentCountryCode === "IT" ? "Italia" : currentCountryCode),
 		).trim();
+		const parsedQuery = parseLocationDraft(queryRef.value, currentCountryCode);
+		const rawQuery = parsedQuery.rawQuery;
 
 		if (!rawQuery) {
 			clearLocationSearchError?.();
@@ -77,6 +128,18 @@ export const useQuickQuoteLocations = ({
 			smartValidation.clearError(fieldKey);
 			// Cerca per la parte città (che è la più utile per i suggerimenti)
 			return cityPart;
+		}
+
+		if (parsedQuery.isCombined) {
+			clearLocationSearchError?.();
+			shipmentDetails[cityKey] = parsedQuery.cityPart;
+			shipmentDetails[capKey] = parsedQuery.normalizedCap;
+			shipmentDetails[countryCodeKey] = currentCountryCode;
+			shipmentDetails[countryNameKey] = currentCountryName;
+			onCapInputSmart(fieldKey, parsedQuery.normalizedCap, currentCountryCode);
+			smartValidation.clearError(fieldKey);
+			queryRef.value = formatLocationDisplay(parsedQuery.cityPart, parsedQuery.normalizedCap);
+			return parsedQuery.normalizedCap;
 		}
 
 		if (isCapQuery(rawQuery)) {
@@ -133,26 +196,37 @@ export const useQuickQuoteLocations = ({
 	};
 
 	const getSuggestionsForQuery = async (queryValue, linkedCity = "", countryCode = "IT") => {
-		const query = String(queryValue || "").trim();
-		if (!query) return [];
+		const parsedQuery = parseLocationDraft(queryValue, countryCode);
+		if (!parsedQuery.rawQuery) return [];
 
-		if (isCapQuery(query)) {
-			return getCapSuggestions(normalizeCap(query, countryCode), linkedCity, countryCode);
+		if (parsedQuery.isCombined || parsedQuery.isCapOnly) {
+			return getCapSuggestions(
+				parsedQuery.normalizedCap,
+				parsedQuery.cityPart || linkedCity,
+				countryCode,
+			);
 		}
 
-		return getCitySuggestions(query, countryCode);
+		return getCitySuggestions(parsedQuery.queryForSearch, countryCode);
 	};
 
 	const findAutoResolvedLocation = (queryValue, suggestions = [], countryCode = "IT") => {
-		const query = String(queryValue || "").trim();
-		if (!query || !suggestions.length) return null;
+		const parsedQuery = parseLocationDraft(queryValue, countryCode);
+		if (!parsedQuery.rawQuery || !suggestions.length) return null;
 
-		if (isCapQuery(query)) {
-			const filteredCap = normalizeCap(query, countryCode);
-			return suggestions.find((location) => String(location.postal_code || "") === filteredCap) || null;
+		if (parsedQuery.isCombined) {
+			const normalizedCity = normalizeLocationText(parsedQuery.cityPart);
+			return suggestions.find((location) => (
+				String(location.postal_code || "") === parsedQuery.normalizedCap
+				&& normalizeLocationText(location.place_name) === normalizedCity
+			)) || null;
 		}
 
-		const normalizedQuery = normalizeLocationText(query);
+		if (parsedQuery.isCapOnly) {
+			return suggestions.find((location) => String(location.postal_code || "") === parsedQuery.normalizedCap) || null;
+		}
+
+		const normalizedQuery = normalizeLocationText(parsedQuery.queryForSearch);
 		const exactMatches = suggestions.filter(
 			(location) => normalizeLocationText(location.place_name) === normalizedQuery,
 		);
@@ -182,7 +256,7 @@ export const useQuickQuoteLocations = ({
 		shipmentDetails.origin_postal_code = location.postal_code;
 		shipmentDetails.origin_country_code = resolveCountryCode(location);
 		shipmentDetails.origin_country = resolveCountryName(location);
-		originQuery.value = formatLocationDisplay(location.place_name, location.postal_code);
+		originQuery.value = formatResolvedLocation(location.place_name, location.postal_code);
 		onCapInputSmart("origin_cap", shipmentDetails.origin_postal_code, shipmentDetails.origin_country_code);
 		smartValidation.clearError("origin_cap");
 		clearTimeout(originHideTimeout);
@@ -195,7 +269,7 @@ export const useQuickQuoteLocations = ({
 		shipmentDetails.destination_postal_code = location.postal_code;
 		shipmentDetails.destination_country_code = resolveCountryCode(location);
 		shipmentDetails.destination_country = resolveCountryName(location);
-		destQuery.value = formatLocationDisplay(location.place_name, location.postal_code);
+		destQuery.value = formatResolvedLocation(location.place_name, location.postal_code);
 		onCapInputSmart("dest_cap", shipmentDetails.destination_postal_code, shipmentDetails.destination_country_code);
 		smartValidation.clearError("dest_cap");
 		clearTimeout(destHideTimeout);

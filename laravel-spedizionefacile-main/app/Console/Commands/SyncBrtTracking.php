@@ -16,16 +16,15 @@
  * --dry-run  : Mostra cosa cambierebbe senza aggiornare il DB
  *
  * Collegamento con altri file:
- * - app/Services/BrtService.php: metodo getTrackingStatus() per interrogare BRT
+ * - app/Services/OrderBrtTrackingLifecycleService.php: owner canonico del tracking order-centric
  * - app/Models/Order.php: modello ordine con costanti di stato
  * - routes/console.php: scheduling automatico
  */
 
 namespace App\Console\Commands;
 
-use App\Events\ShipmentStatusChanged;
 use App\Models\Order;
-use App\Services\Brt\TrackingService;
+use App\Services\OrderBrtTrackingLifecycleService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
 
@@ -37,27 +36,21 @@ class SyncBrtTracking extends Command
 
     protected $description = 'Sincronizza lo stato degli ordini con il tracking BRT';
 
-    public function handle(TrackingService $brt): int
+    public function handle(OrderBrtTrackingLifecycleService $trackingLifecycle): int
     {
-        $dryRun = $this->option('dry-run');
+        $dryRun = (bool) $this->option('dry-run');
         $specificOrderId = $this->option('order');
 
-        // Recupera gli ordini da sincronizzare:
-        // - stati "attivi" che possono ancora cambiare stato
-        // - in_giacenza: puo' diventare delivered (nuovo tentativo), returned, o refused
-        // - returned/refused: vengono tracciati per max 7 giorni (conferma stato finale)
-        // - con un riferimento BRT (altrimenti non possiamo interrogare)
         $query = Order::whereIn('status', [
             Order::IN_TRANSIT,
             Order::PROCESSING,
             Order::LABEL_GENERATED,
             Order::OUT_FOR_DELIVERY,
             Order::IN_GIACENZA,
-        ])
-            ->where(function ($q) {
-                $q->whereNotNull('brt_numeric_sender_reference')
-                    ->orWhereNotNull('brt_parcel_id');
-            });
+        ])->where(function ($q) {
+            $q->whereNotNull('brt_numeric_sender_reference')
+                ->orWhereNotNull('brt_parcel_id');
+        });
 
         if ($specificOrderId) {
             $query->where('id', $specificOrderId);
@@ -76,52 +69,58 @@ class SyncBrtTracking extends Command
         $errors = 0;
 
         foreach ($orders as $order) {
-            $result = $brt->getTrackingStatus($order);
+            $result = $trackingLifecycle->syncOrderFromCarrier($order, $dryRun);
+            $outcome = $result['outcome'] ?? 'unknown';
+            $oldStatus = $result['old_status'] ?? $order->rawStatus();
+            $newStatus = $result['new_status'] ?? null;
+            $eventCode = $result['brt_event'] ?? null;
+            $description = $result['description'] ?? null;
 
-            if ($result['error']) {
+            if ($outcome === 'carrier_error') {
                 $this->warn("Ordine #{$order->id}: errore - {$result['error']}");
                 $errors++;
 
                 continue;
             }
 
-            if (! $result['status']) {
-                $this->line("Ordine #{$order->id}: nessun cambiamento di stato (evento: {$result['brt_event']})");
+            if ($outcome === 'unmapped') {
+                $this->line("Ordine #{$order->id}: nessun cambiamento di stato (evento: {$eventCode})");
 
                 continue;
             }
 
-            // Aggiorniamo solo se lo stato è diverso
-            if ($result['status'] === $order->status) {
-                $this->line("Ordine #{$order->id}: stato invariato ({$order->status})");
+            if ($outcome === 'unchanged') {
+                $this->line("Ordine #{$order->id}: stato invariato ({$oldStatus})");
 
                 continue;
             }
 
-            $oldStatus = $order->status;
-            $newStatus = $result['status'];
+            if ($outcome === 'blocked_final_state') {
+                $this->warn("Ordine #{$order->id}: transizione bloccata {$oldStatus} -> {$newStatus} (stato finale).");
 
-            if ($dryRun) {
-                $this->info("[DRY-RUN] Ordine #{$order->id}: {$oldStatus} → {$newStatus} ({$result['description']})");
-            } else {
-                $order->status = $newStatus;
-                $order->brt_last_tracking_check = now();
-                $order->save();
-
-                // Notifica l'utente del cambio stato via email
-                ShipmentStatusChanged::dispatch($order, $oldStatus, $newStatus);
-
-                Log::info('SyncBrtTracking: ordine aggiornato', [
-                    'order_id' => $order->id,
-                    'old_status' => $oldStatus,
-                    'new_status' => $newStatus,
-                    'brt_event' => $result['brt_event'],
-                ]);
-
-                $this->info("Ordine #{$order->id}: {$oldStatus} → {$newStatus} ({$result['description']})");
+                continue;
             }
 
-            $updated++;
+            if ($outcome === 'updated') {
+                if ($dryRun) {
+                    $this->info("[DRY-RUN] Ordine #{$order->id}: {$oldStatus} -> {$newStatus} ({$description})");
+                } else {
+                    Log::info('SyncBrtTracking: ordine aggiornato', [
+                        'order_id' => $order->id,
+                        'old_status' => $oldStatus,
+                        'new_status' => $newStatus,
+                        'brt_event' => $eventCode,
+                    ]);
+
+                    $this->info("Ordine #{$order->id}: {$oldStatus} -> {$newStatus} ({$description})");
+                }
+
+                $updated++;
+
+                continue;
+            }
+
+            $this->line("Ordine #{$order->id}: nessuna azione ({$outcome}).");
         }
 
         $this->newLine();

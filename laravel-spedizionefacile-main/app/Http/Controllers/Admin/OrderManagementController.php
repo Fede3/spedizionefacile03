@@ -5,36 +5,77 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Services\Brt\ShipmentService;
+use App\Services\OrderBrtFulfillmentService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Mail;
-use App\Mail\ShipmentLabelMail;
 
 class OrderManagementController extends Controller
 {
-    // Mostra la lista di tutti gli ordini con possibilita' di filtro e ricerca
-    // Supporta filtro per stato e ricerca per ID ordine o dati utente
+    public function __construct(
+        private readonly ShipmentService $shipment,
+        private readonly OrderBrtFulfillmentService $fulfillment,
+    ) {}
+
+    /**
+     * orders() — Lista ordini admin con filtri avanzati.
+     *
+     * Parametri GET supportati:
+     *   search       stringa  — cerca per ID, nome, cognome, email, brt_parcel_id
+     *   status       stringa  — singolo stato OPPURE lista separata da virgola (es. "pending,processing")
+     *   date_from    date     — filtra ordini creati dal giorno X (YYYY-MM-DD)
+     *   date_to      date     — filtra ordini creati fino al giorno X (YYYY-MM-DD)
+     *   amount_min   float    — importo minimo in euro (converte in cents: * 100)
+     *   amount_max   float    — importo massimo in euro (converte in cents: * 100)
+     *   services     stringa  — nomi servizi separati da virgola (filtra su packages.service.name)
+     *   sort_by      stringa  — campo di ordinamento: created_at | total | status (default: created_at)
+     *   sort_dir     stringa  — direzione: asc | desc (default: desc)
+     *   per_page     intero   — risultati per pagina: 25 | 50 | 100 (default: 25)
+     */
     public function orders(Request $request): JsonResponse
     {
+        // Ordinamento sicuro: whitelist campi consentiti
+        $allowedSortFields = ['created_at', 'total', 'status', 'id'];
+        $sortBy  = in_array($request->input('sort_by'), $allowedSortFields, true)
+            ? $request->input('sort_by')
+            : 'created_at';
+        $sortDir = $request->input('sort_dir') === 'asc' ? 'asc' : 'desc';
+
+        // Per_page: solo 25, 50, 100 per sicurezza
+        $perPage = in_array((int) $request->input('per_page'), [25, 50, 100], true)
+            ? (int) $request->input('per_page')
+            : 25;
+
         $query = Order::with([
             'user:id,name,surname,email,role,user_type',
             'packages.originAddress',
             'packages.destinationAddress',
             'packages.service',
             'transactions',
-        ])->orderByDesc('created_at');
+        ]);
 
-        // Filtro per stato (es. "completed", "pending", "in_transit")
-        if ($request->filled('status')) {
-            $query->where('status', $request->input('status'));
+        // Ordinamento per colonna (il campo "total" mappa su "subtotal" nel DB)
+        if ($sortBy === 'total') {
+            $query->orderBy('subtotal', $sortDir);
+        } else {
+            $query->orderBy($sortBy, $sortDir);
         }
 
-        // Ricerca per ID ordine, nome utente o email
+        // Filtro stato: singolo valore o lista separata da virgola
+        if ($request->filled('status')) {
+            $statuses = array_filter(array_map('trim', explode(',', $request->input('status'))));
+            if (count($statuses) === 1) {
+                $query->where('status', $statuses[0]);
+            } elseif (count($statuses) > 1) {
+                $query->whereIn('status', $statuses);
+            }
+        }
+
+        // Ricerca per ID ordine, nome/cognome/email utente o codice BRT
         if ($request->filled('search')) {
             $search = $request->input('search');
             $query->where(function ($q) use ($search) {
                 $q->where('id', $search)
+                  ->orWhere('brt_parcel_id', 'like', "%{$search}%")
                   ->orWhereHas('user', function ($uq) use ($search) {
                       $uq->where('name', 'like', "%{$search}%")
                          ->orWhere('surname', 'like', "%{$search}%")
@@ -43,8 +84,36 @@ class OrderManagementController extends Controller
             });
         }
 
-        // Risultati paginati (20 per pagina) per non caricare troppi dati
-        $orders = $query->paginate(20);
+        // Filtro date (created_at)
+        if ($request->filled('date_from')) {
+            $query->whereDate('created_at', '>=', $request->input('date_from'));
+        }
+        if ($request->filled('date_to')) {
+            $query->whereDate('created_at', '<=', $request->input('date_to'));
+        }
+
+        // Filtro importo (amount in euro, DB in cents via subtotal)
+        // subtotal e' un intero in centesimi (MyMoney convention)
+        if ($request->filled('amount_min')) {
+            $minCents = (int) round((float) $request->input('amount_min') * 100);
+            $query->where('subtotal', '>=', $minCents);
+        }
+        if ($request->filled('amount_max')) {
+            $maxCents = (int) round((float) $request->input('amount_max') * 100);
+            $query->where('subtotal', '<=', $maxCents);
+        }
+
+        // Filtro servizi (nomi separati da virgola, es. "Express,Internazionale")
+        if ($request->filled('services')) {
+            $serviceNames = array_filter(array_map('trim', explode(',', $request->input('services'))));
+            if (!empty($serviceNames)) {
+                $query->whereHas('packages.service', function ($sq) use ($serviceNames) {
+                    $sq->whereIn('name', $serviceNames);
+                });
+            }
+        }
+
+        $orders = $query->paginate($perPage);
 
         return response()->json($orders);
     }
@@ -53,7 +122,7 @@ class OrderManagementController extends Controller
     public function updateOrderStatus(Request $request, Order $order): JsonResponse
     {
         $data = $request->validate([
-            'status' => ['required', 'string', 'in:pending,processing,completed,payment_failed,cancelled,payed,in_transit,delivered,in_giacenza'],
+            'status' => ['required', 'string', 'in:pending,processing,completed,payment_failed,cancelled,payed,in_transit,delivered,in_giacenza,awaiting_bank_transfer'],
         ]);
 
         $oldStatus = $order->status;
@@ -77,7 +146,26 @@ class OrderManagementController extends Controller
     {
         // Escludiamo brt_label_base64 dalla query per performance (e' un campo molto grande)
         $query = Order::with('user:id,name,surname,email')
-            ->select(['id', 'user_id', 'status', 'subtotal', 'brt_parcel_id', 'brt_numeric_sender_reference', 'brt_tracking_url', 'brt_pudo_id', 'is_cod', 'cod_amount', 'created_at', 'updated_at'])
+            ->select([
+                'id',
+                'user_id',
+                'status',
+                'subtotal',
+                'brt_parcel_id',
+                'brt_numeric_sender_reference',
+                'brt_tracking_url',
+                'brt_pudo_id',
+                'brt_departure_depot',
+                'brt_arrival_depot',
+                'is_cod',
+                'cod_amount',
+                'pickup_status',
+                'bordero_status',
+                'documents_status',
+                'execution_error',
+                'created_at',
+                'updated_at',
+            ])
             ->whereNotNull('brt_parcel_id')
             ->orderByDesc('created_at');
 
@@ -144,40 +232,16 @@ class OrderManagementController extends Controller
             ], 422);
         }
 
-        $brt = app(ShipmentService::class);
-
-        $options = [];
-        if ($order->is_cod && $order->cod_amount) {
-            $options['is_cod'] = true;
-            $options['cod_amount'] = $order->cod_amount;
-            $options['cod_payment_type'] = $order->cod_payment_type ?? 'BM';
-        }
-        if ($order->brt_pudo_id) {
-            $options['pudo_id'] = $order->brt_pudo_id;
-        }
-
-        $result = $brt->createShipment($order, $options);
+        $result = $this->shipment->createShipment($order, $this->fulfillment->buildAutomaticShipmentOptions($order));
 
         if ($result['success']) {
-            $order->brt_parcel_id = $result['parcel_id'];
-            $order->brt_numeric_sender_reference = $result['numeric_sender_reference'];
-            $order->brt_tracking_url = $result['tracking_url'];
-            $order->brt_label_base64 = $result['label_base64'];
-            $order->status = 'in_transit';
-            $order->save();
-
-            // Invia l'email con l'etichetta
-            try {
-                $order->loadMissing('user');
-                if ($order->user && $order->user->email) {
-                    Mail::to($order->user->email)->send(new ShipmentLabelMail($order));
-                }
-            } catch (\Exception $e) {
-                Log::error('Failed to send BRT label email on regenerate', [
-                    'order_id' => $order->id,
-                    'error' => $e->getMessage(),
-                ]);
-            }
+            $order = $this->fulfillment->finalizeSuccessfulShipment(
+                $order,
+                $result,
+                [],
+                'Post-elaborazione documenti fallita dopo rigenerazione admin',
+                'Failed to complete shipment documents flow after admin label regeneration'
+            );
 
             return response()->json([
                 'success' => true,

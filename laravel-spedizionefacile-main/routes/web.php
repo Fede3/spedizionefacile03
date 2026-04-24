@@ -33,15 +33,26 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AppleController;
+use App\Http\Controllers\BrtWebhookController;
 use App\Http\Controllers\FacebookController;
 use App\Http\Controllers\GoogleController;
 use App\Http\Controllers\StripeWebhookController;
+use Laravel\Sanctum\Http\Controllers\CsrfCookieController;
 
 // Pagina principale del backend Laravel (non usata dal frontend Nuxt)
 // Mostra la pagina di benvenuto di default di Laravel
 Route::get('/', function () {
     return view('welcome');
 });
+
+// Rotta CSRF Sanctum ridefinita con rate limiting (throttle:30,1).
+// Sanctum l'avrebbe registrata automaticamente, ma in config/sanctum.php
+// abbiamo impostato 'routes' => false per avere controllo esplicito qui.
+// Il throttle evita che un client possa brute-forzare il cookie CSRF o
+// amplificare richieste verso servizi esterni.
+Route::middleware(['web', 'throttle:30,1'])
+    ->get('/sanctum/csrf-cookie', [CsrfCookieController::class, 'show'])
+    ->name('sanctum.csrf-cookie');
 
 // Rotta di login "fittizia" — Sanctum la usa come fallback
 // Quando un utente non autenticato tenta di accedere a una rotta protetta con auth:sanctum,
@@ -58,6 +69,14 @@ Route::get('/login', function () {
 // La verifica dell'autenticita' viene fatta dal StripeWebhookController tramite la firma.
 Route::post('/stripe/webhook', [StripeWebhookController::class, 'handle']);
 
+// Webhook BRT — riceve aggiornamenti tracking push da BRT
+// BRT invia qui un POST ogni volta che lo stato di una spedizione cambia.
+// E' pubblico (senza login) perche' BRT lo chiama direttamente dai suoi server.
+// La verifica dell'autenticita' avviene nel controller (HMAC o IP whitelist).
+// Rate limit: max 60 richieste al minuto per IP.
+Route::post('/webhooks/brt/tracking', [BrtWebhookController::class, 'handleTrackingUpdate'])
+    ->middleware(['throttle:60,1']);
+
 // Callback di Google OAuth — riceve il redirect dopo che l'utente si autentica con Google
 // Quando l'utente clicca "Accedi con Google", viene mandato su Google, e dopo
 // il login Google lo rimanda qui. Questa rotta e' in web.php (e NON in api.php)
@@ -66,3 +85,19 @@ Route::post('/stripe/webhook', [StripeWebhookController::class, 'handle']);
 Route::get('/auth/google/callback', [GoogleController::class, 'handleGoogleCallback']);
 Route::get('/auth/facebook/callback', [FacebookController::class, 'handleFacebookCallback']);
 Route::match(['GET', 'POST'], '/auth/apple/callback', [AppleController::class, 'handleAppleCallback']);
+
+// SENTRY-OBS-04: rotta di test per verificare integrazione Sentry.
+// Uso: dopo il deploy, visita /_test-sentry → verifica in Sentry dashboard
+// che l'evento arrivi con release tag, env tag, user context, PII sanitizzati.
+// Protetta da:
+//   - abort(404) in produzione (in genere; abilitabile temporaneamente via env)
+//   - throttle 1 richiesta al minuto per IP (anti-abuso)
+Route::get('/_test-sentry', function () {
+    // Blocco hard in produzione: questa rotta NON deve restare attiva.
+    // Per test post-deploy, abilitare temporaneamente SENTRY_TEST_ROUTE_ENABLED=true
+    // e rimuovere dopo la verifica.
+    if (app()->environment('production') && !env('SENTRY_TEST_ROUTE_ENABLED', false)) {
+        abort(404);
+    }
+    throw new \RuntimeException('Sentry test error — se lo vedi in dashboard, l\'integrazione funziona.');
+})->middleware('throttle:1,1')->name('sentry.test');

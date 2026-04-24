@@ -46,7 +46,9 @@ namespace App\Models;
 
 use App\Models\Order;
 use App\Models\Package;
+// -- ARCHIVIATO 2026-04-20 -- use App\Models\PushSubscription;
 use App\Models\UserAddress;
+use App\Models\UserNotificationPreference;
 use App\Models\WalletMovement;
 use App\Models\ReferralUsage;
 use App\Models\ProRequest;
@@ -73,21 +75,27 @@ class User extends Authenticatable
         'name',                          // Nome dell'utente
         'surname',                       // Cognome dell'utente
         'email',                         // Indirizzo email (usato anche per il login)
-        'telephone_number',              // Numero di telefono
+        'telephone_number',              // Numero di telefono libero (input italiano storico)
+        'phone_number',                  // F08 SMS: numero in formato E.164 (es. +393331234567)
+        'phone_number_verified_at',      // F08 SMS: timestamp verifica OTP (futuro)
         'password',                      // Password (viene salvata criptata)
-        'referral_code',                 // Codice referral personale (solo per utenti Pro)
-        'referred_by',                   // Codice referral di chi lo ha invitato
         'identifier',                    // Identificativo univoco dell'utente
         'email_verified_at',             // Data e ora in cui l'email e' stata verificata
         'verification_code',             // Codice di verifica temporaneo per il login
         'verification_code_expires_at',  // Scadenza del codice di verifica
         'user_type',                     // Tipo account: "privato" o "commerciante"
         'avatar',                        // URL dell'avatar (da Google)
+        'privacy_accepted_at',           // Data accettazione privacy (GDPR Art. 7)
         // SICUREZZA: i seguenti campi NON sono in $fillable (assegnare con $user->campo = valore):
         // - role: ruolo utente (User, Partner Pro, Admin)
         // - stripe_account_id: ID account Stripe
         // - customer_id: ID cliente Stripe
         // - google_id, facebook_id, apple_id: ID provider OAuth
+        // - referral_code: codice referral personale (generato solo per Partner Pro,
+        //   assegnazione esplicita dopo validazione per prevenire mass-assignment)
+        // - referred_by: codice referral di chi ha invitato l'utente; va assegnato
+        //   esplicitamente SOLO dopo aver validato che appartenga a un Partner Pro
+        //   reale (altrimenti un attaccante puo' falsificarsi l'attribuzione referral)
     ];
 
     /**
@@ -114,13 +122,38 @@ class User extends Authenticatable
      * Laravel converte automaticamente questi campi nel tipo giusto:
      * - Le date vengono trasformate in oggetti Carbon (per gestire facilmente le date)
      * - La password viene automaticamente criptata quando viene salvata
+     *
+     * SICUREZZA — ENCRYPTION AT REST (Sprint 6.1, BLOCKER GO-LIVE):
+     * I campi `stripe_account_id` e `customer_id` sono segreti Stripe Connect/Customer
+     * ad alto valore. Se il database dovesse essere esfiltrato (dump, backup rubato,
+     * SQL injection, ex-dipendente), un attaccante potrebbe mappare i nostri Partner
+     * Pro ai loro account Stripe reali e tentare attacchi mirati (phishing, social
+     * engineering verso Stripe support, correlazione con altri dati).
+     *
+     * Il cast 'encrypted' applica AES-256-CBC con IV random per record usando
+     * APP_KEY, cosicche' il valore sul disco non sia mai leggibile senza la chiave.
+     * Trasparente per il codice applicativo: $user->stripe_account_id restituisce
+     * il plaintext, $user->stripe_account_id = 'acct_...' lo cifra al save.
+     *
+     * ATTENZIONE — Query WHERE su colonne cifrate:
+     * Con cast 'encrypted' l'IV e' random ad ogni cifratura, quindi
+     * User::where('stripe_account_id', $id) NON funziona (ciphertexts diversi).
+     * Per lookup inverso (es. webhook Stripe `account.updated`) usare scan lato
+     * applicazione sugli utenti Pro, vedi StripeWebhookController::findUserByStripeAccountId().
+     *
+     * Rotazione APP_KEY: se APP_KEY cambia, ruotarla con `php artisan key:rotate`
+     * (Laravel 11+) o rigenerare i valori cifrati con lo script di backfill.
      */
     protected function casts(): array
     {
         return [
             'email_verified_at' => 'datetime',
             'verification_code_expires_at' => 'datetime',
+            'privacy_accepted_at' => 'datetime',
+            'phone_number_verified_at' => 'datetime',
             'password' => 'hashed',
+            'stripe_account_id' => 'encrypted',
+            'customer_id' => 'encrypted',
         ];
     }
 
@@ -215,6 +248,20 @@ class User extends Authenticatable
         return $this->hasMany(ProRequest::class);
     }
 
+    // -- ARCHIVIATO 2026-04-20 -- F09 PWA - subscription Web Push registrate dai device dell'utente.
+    // -- ARCHIVIATO 2026-04-20 -- public function pushSubscriptions(): HasMany
+    // -- ARCHIVIATO 2026-04-20 -- {
+    // -- ARCHIVIATO 2026-04-20 --     return $this->hasMany(PushSubscription::class);
+    // -- ARCHIVIATO 2026-04-20 -- }
+
+    /**
+     * F08/F09 - preferenze notifiche (relazione 1:1, creata on-demand).
+     */
+    public function notificationPreference()
+    {
+        return $this->hasOne(UserNotificationPreference::class);
+    }
+
     /**
      * Calcola il saldo del portafoglio dell'utente.
      * Prende tutti i movimenti confermati, somma le ricariche (credit)
@@ -224,10 +271,18 @@ class User extends Authenticatable
         $credits = $this->walletMovements()
             ->where('status', 'confirmed')
             ->where('type', 'credit')
+            ->where(function ($query) {
+                $query->whereNull('source')
+                    ->orWhereNotIn('source', ['commission', 'withdrawal']);
+            })
             ->sum('amount');
         $debits = $this->walletMovements()
             ->where('status', 'confirmed')
             ->where('type', 'debit')
+            ->where(function ($query) {
+                $query->whereNull('source')
+                    ->orWhereNotIn('source', ['commission', 'withdrawal']);
+            })
             ->sum('amount');
         return round($credits - $debits, 2);
     }

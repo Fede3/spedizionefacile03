@@ -1,11 +1,6 @@
 /* Navbar component styles — matched to prototype Navbar.tsx */
 
-/* ============================================================
-   DESKTOP NAV PILLS
-   Prototype: rounded-full, h-[42px] xl:h-[44px], text-[15px] xl:text-[16px]
-   Active: text-[#E44203] bg-[#E44203]/[0.07], font-weight 650
-   Inactive: text-[#666], font-weight 600
-   ============================================================ */
+/* ============================================================ */
 .navbar-link-pill {
   display: inline-flex;
   align-items: center;
@@ -20,43 +15,84 @@
   line-height: 1;
   letter-spacing: -0.3px;
   font-weight: 600;
-  transition: all 350ms cubic-bezier(0.22, 1, 0.36, 1);
+  transition: color var(--sf-t1) var(--sf-ease), background-color var(--sf-t1) var(--sf-ease), border-color var(--sf-t1) var(--sf-ease), box-shadow var(--sf-t1) var(--sf-ease), transform var(--sf-t1) var(--sf-ease);
 }
 
+/* Stato ATTIVO (pagina corrente): superficie marcata + bordo intenso + font più
+   pesante + micro-indicator arancione sotto, distinguibile INEQUIVOCABILMENTE
+   dall'hover. L'indicator è l'elemento che rende impossibile confondere i due stati. */
 .navbar-link-pill--active {
-  color: var(--color-brand-accent);
-  background: rgba(228, 66, 3, 0.07);
-  font-weight: 650;
+  position: relative;
+  color: var(--color-brand-primary);
+  background: var(--interaction-active-teal);
+  box-shadow: inset 0 0 0 1.5px var(--interaction-active-teal-border);
+  font-weight: 700;
+}
+.navbar-link-pill--active::after {
+  content: '';
+  position: absolute;
+  bottom: 4px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 18px;
+  height: 2px;
+  border-radius: 999px;
+  background: var(--color-brand-accent);
+  transition: width var(--sf-t1) var(--sf-ease);
 }
 
-.navbar-link-pill:hover:not(.navbar-link-pill--active),
+/* Stato HOVER (puntatore sopra): superficie delicata, senza bordo, senza
+   cambio di peso. Uniforme sitewide via token --interaction-hover-teal. */
+.navbar-link-pill:hover:not(.navbar-link-pill--active) {
+  color: var(--color-brand-primary);
+  background: var(--interaction-hover-teal);
+}
 .navbar-link-pill:focus-visible {
-  outline: none;
-  color: var(--color-brand-text);
-  background: rgba(0, 0, 0, 0.04);
+  outline: 3px solid rgba(9, 88, 102, 0.45);
+  outline-offset: 2px;
+}
+.navbar-link-pill:active:not(.navbar-link-pill--active) {
+  background: var(--interaction-press-teal);
 }
 
-/* ============================================================
-   LOGIN / ACCOUNT BUTTON — desktop
-   Prototype: rounded-full h-[42px], text-[#095866] bg-[#095866]/[0.06]
-   Hover: bg-[#095866]/[0.12], shadow
-   ============================================================ */
+/* ============================================================ */
 .navbar-login-btn {
   height: 42px;
   padding: 0 20px;
   border-radius: 9999px;
   color: var(--color-brand-primary);
-  background: rgba(9, 88, 102, 0.06);
+  background: var(--interaction-hover-teal-soft);
+  border: 1px solid transparent;
   font-size: 15px;
   letter-spacing: -0.2px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 350ms cubic-bezier(0.22, 1, 0.36, 1);
+  transition: color var(--sf-t1) var(--sf-ease), background-color var(--sf-t1) var(--sf-ease), border-color var(--sf-t1) var(--sf-ease), box-shadow var(--sf-t1) var(--sf-ease), transform var(--sf-t1) var(--sf-ease);
 }
 
 .navbar-login-btn:hover {
-  background: rgba(9, 88, 102, 0.12);
-  box-shadow: 0 2px 12px rgba(9, 88, 102, 0.08);
+  background: var(--interaction-hover-teal);
+  border: 1px solid rgba(9, 88, 102, 0.08);
+  box-shadow: 0 1px 3px rgba(9, 88, 102, 0.06);
+}
+.navbar-login-btn:active {
+  background: var(--interaction-active-teal);
+}
+
+/* Stato attivo/selezionato — quando l'utente è dentro l'area account/admin.
+   Bordo DELICATO coerente con box home (1px + light shadow), niente outline spesso. */
+.navbar-login-btn--active,
+.navbar-login-btn--active:hover {
+  background: var(--color-brand-primary, #095866);
+  color: #ffffff;
+  border: 1px solid rgba(9, 88, 102, 0.14);
+  box-shadow: 0 2px 8px rgba(9, 88, 102, 0.12);
+  outline: none;
+}
+
+.navbar-login-btn--active .navbar-avatar-circle {
+  background: rgba(255, 255, 255, 0.18);
+  border: 1px solid rgba(255, 255, 255, 0.35);
 }
 
 /* Avatar initials circle for logged-in state */
@@ -68,14 +104,10 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  background: linear-gradient(135deg, #095866, #0a7489);
+  background: linear-gradient(135deg, var(--color-brand-primary), var(--color-teal-400));
 }
 
-/* ============================================================
-   CART BUTTON
-   Prototype: gradient orange, rounded-full h-[42px] sm:h-[44px]
-   Active: ring-[2.5px] ring-[#E44203]/30, deeper shadow
-   ============================================================ */
+/* ============================================================ */
 .navbar-cart-btn {
   display: inline-flex;
   align-items: center;
@@ -89,9 +121,9 @@
   font-size: 15px;
   font-weight: 600;
   letter-spacing: -0.2px;
-  background: linear-gradient(135deg, #E44203 0%, #d63b00 100%);
+  background: linear-gradient(135deg, var(--color-brand-accent) 0%, var(--color-brand-accent-hover) 100%);
   cursor: pointer;
-  transition: all 350ms cubic-bezier(0.22, 1, 0.36, 1);
+  transition: color var(--sf-t2) var(--sf-ease), background-color var(--sf-t2) var(--sf-ease), border-color var(--sf-t2) var(--sf-ease), box-shadow var(--sf-t2) var(--sf-ease), transform var(--sf-t2) var(--sf-ease);
 }
 
 .navbar-cart-btn:hover {
@@ -99,29 +131,30 @@
 }
 
 .navbar-cart-btn--active {
-  box-shadow: 0 4px 16px rgba(228, 66, 3, 0.3);
-  outline: 2.5px solid rgba(228, 66, 3, 0.3);
-  outline-offset: 0;
+  border: 1px solid rgba(228, 66, 3, 0.18);
+  box-shadow: 0 2px 8px rgba(228, 66, 3, 0.18);
+  outline: none;
 }
 
 /* Cart badge */
 .navbar-cart-badge {
   display: inline-flex;
-  min-width: 20px;
-  height: 20px;
+  min-width: 18px;
+  height: 18px;
   align-items: center;
   justify-content: center;
   border-radius: 999px;
-  padding: 0 8px;
-  background: rgba(255, 255, 255, 0.2);
-  font-size: 12px;
+  padding: 0 6px;
+  background: #ffffff;
+  color: var(--color-brand-accent);
+  font-size: 10px;
   line-height: 1;
   font-weight: 700;
 }
 
 /* ============================================================
    HAMBURGER BUTTON — mobile
-   Prototype: w-[42px] h-[42px] rounded-full bg-[#095866]
+   Prototype: w-[42px] h-[42px] rounded-full bg-[var(--color-brand-primary)]
    ============================================================ */
 .navbar-hamburger-btn {
   width: 42px;
@@ -135,11 +168,11 @@
   background: var(--color-brand-primary);
   color: #fff;
   cursor: pointer;
-  transition: all 350ms cubic-bezier(0.22, 1, 0.36, 1);
+  transition: color var(--sf-t2) var(--sf-ease), background-color var(--sf-t2) var(--sf-ease), border-color var(--sf-t2) var(--sf-ease), box-shadow var(--sf-t2) var(--sf-ease), transform var(--sf-t2) var(--sf-ease);
 }
 
 .navbar-hamburger-btn:hover {
-  background: #0a6b7d;
+  background: var(--color-brand-primary-light);
   box-shadow: 0 4px 14px rgba(9, 88, 102, 0.2);
 }
 
@@ -164,9 +197,7 @@
   height: 2px;
   border-radius: 2px;
   background: currentColor;
-  transition:
-    transform 0.3s cubic-bezier(0.25, 1, 0.5, 1),
-    opacity 0.2s ease;
+  transition: transform var(--sf-t2) var(--sf-ease), opacity var(--sf-t1) var(--sf-ease);
 }
 
 .navbar-hamburger__line--1 {
@@ -205,21 +236,16 @@
   padding: 0 16px;
   border-radius: 9999px;
   color: #fff;
-  background: linear-gradient(135deg, #E44203 0%, #d63b00 100%);
+  background: linear-gradient(135deg, var(--color-brand-accent) 0%, var(--color-brand-accent-hover) 100%);
   font-size: 12.5px;
   line-height: 1;
   font-weight: 700;
   letter-spacing: -0.15px;
   white-space: nowrap;
-  transition: transform var(--sf-motion-base) var(--sf-ease-soft), filter var(--sf-motion-base) var(--sf-ease-soft);
+  transition: transform var(--sf-t1) var(--sf-ease), filter var(--sf-t1) var(--sf-ease);
 }
 
-/* ============================================================
-   MOBILE MENU: LINK NAVIGAZIONE
-   Prototype: flex items-center gap-[14px] px-[20px] py-[14px] text-[16px]
-   Active: text-[#095866] bg-[#095866]/[0.04], font-weight 650
-   Inactive: text-[#666], font-weight 600
-   ============================================================ */
+/* ============================================================ */
 .navbar-mobile-menu-link {
   display: flex;
   align-items: center;
@@ -229,20 +255,22 @@
   font-size: 16px;
   color: var(--color-brand-text-secondary);
   font-weight: 600;
-  transition:
-    background-color 150ms ease,
-    color 150ms ease;
+  transition: background-color var(--sf-t1) var(--sf-ease), color var(--sf-t1) var(--sf-ease);
 }
 
 .navbar-mobile-menu-link:hover {
-  background: #f7f7f7;
-  color: var(--color-brand-text);
+  background: var(--interaction-hover-teal);
+  color: var(--color-brand-primary);
+}
+.navbar-mobile-menu-link:active {
+  background: var(--interaction-press-teal);
 }
 
 .navbar-mobile-menu-link--active {
   color: var(--color-brand-primary);
-  background: rgba(9, 88, 102, 0.04);
-  font-weight: 650;
+  background: var(--interaction-active-teal);
+  box-shadow: inset 3px 0 0 var(--color-brand-primary);
+  font-weight: 700;
 }
 
 /* Icon box: w-[36px] h-[36px] rounded-[10px] */
@@ -254,9 +282,9 @@
   align-items: center;
   justify-content: center;
   flex: 0 0 36px;
-  background: #f3f4f6;
+  background: var(--color-brand-bg-alt);
   color: var(--color-brand-text-muted);
-  transition: background-color 150ms ease, color 150ms ease;
+  transition: background-color var(--sf-t1) var(--sf-ease), color var(--sf-t1) var(--sf-ease);
 }
 
 .navbar-mobile-menu-link__icon--active {
@@ -264,11 +292,7 @@
   color: var(--color-brand-primary);
 }
 
-/* ============================================================
-   MOBILE MENU: BACKDROP, PANEL
-   Prototype: backdrop bg-black/20 backdrop-blur-[2px]
-   Panel: rounded-[18px], mx-[12px], shadow
-   ============================================================ */
+/* ============================================================ */
 .navbar-mobile-backdrop {
   background: rgba(0, 0, 0, 0.2);
   backdrop-filter: blur(2px);
@@ -284,12 +308,12 @@
 
 .navbar-mobile-menu-separator {
   height: 1px;
-  background: #f0f0f0;
+  background: var(--surface-soft);
 }
 
 .navbar-mobile-menu-link__chevron {
   color: var(--color-brand-text-muted);
-  transition: color 150ms ease, transform 150ms ease;
+  transition: color var(--sf-t1) var(--sf-ease), transform var(--sf-t1) var(--sf-ease);
 }
 
 .navbar-mobile-menu-link:hover .navbar-mobile-menu-link__chevron {
@@ -299,7 +323,7 @@
 
 /* ============================================================
    MOBILE MENU: AUTH BUTTONS
-   Prototype: full-width h-[48px] bg-[#095866] rounded-full
+   Prototype: full-width h-[48px] bg-[var(--color-brand-primary)] rounded-full
    ============================================================ */
 .navbar-mobile-btn-login {
   display: flex;
@@ -315,11 +339,11 @@
   font-weight: 600;
   color: #fff;
   background-color: var(--color-brand-primary);
-  transition: all 200ms ease;
+  transition: color var(--sf-t1) var(--sf-ease), background-color var(--sf-t1) var(--sf-ease), border-color var(--sf-t1) var(--sf-ease), box-shadow var(--sf-t1) var(--sf-ease), transform var(--sf-t1) var(--sf-ease);
 }
 
 .navbar-mobile-btn-login:hover {
-  background-color: #0a6b7d;
+  background-color: var(--color-brand-primary-light);
 }
 
 /* Logout link in mobile menu */
@@ -336,11 +360,11 @@
   color: var(--color-brand-text-muted);
   font-size: 14px;
   font-weight: 500;
-  transition: color 150ms ease;
+  transition: color var(--sf-t1) var(--sf-ease);
 }
 
 .navbar-mobile-btn-logout:hover {
-  color: var(--color-brand-accent);
+  color: var(--color-brand-primary);
 }
 
 .navbar-mobile-btn-register {
@@ -357,7 +381,7 @@
   font-weight: 600;
   color: #fff;
   background-color: var(--color-brand-accent);
-  transition: all 200ms ease;
+  transition: color var(--sf-t1) var(--sf-ease), background-color var(--sf-t1) var(--sf-ease), border-color var(--sf-t1) var(--sf-ease), box-shadow var(--sf-t1) var(--sf-ease), transform var(--sf-t1) var(--sf-ease);
 }
 
 .navbar-mobile-btn-register:hover {
@@ -369,15 +393,11 @@
    Prototype: fade+slide, duration 0.25s, ease [0.25,1,0.5,1]
    ============================================================ */
 .mobile-slide-enter-active {
-  transition:
-    opacity 0.25s cubic-bezier(0.25, 1, 0.5, 1),
-    transform 0.25s cubic-bezier(0.25, 1, 0.5, 1);
+  transition: opacity var(--sf-t2) var(--sf-ease), transform var(--sf-t2) var(--sf-ease);
 }
 
 .mobile-slide-leave-active {
-  transition:
-    opacity 0.2s ease,
-    transform 0.2s ease;
+  transition: opacity var(--sf-t1) var(--sf-ease), transform var(--sf-t1) var(--sf-ease);
 }
 
 .mobile-slide-enter-from {
@@ -395,7 +415,7 @@
    ============================================================ */
 .backdrop-fade-enter-active,
 .backdrop-fade-leave-active {
-  transition: opacity 0.2s ease;
+  transition: opacity var(--sf-t1) var(--sf-ease);
 }
 
 .backdrop-fade-enter-from,

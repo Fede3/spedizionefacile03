@@ -1,23 +1,5 @@
-<!--
-	FILE PRINCIPALE DELL'APPLICAZIONE (app.vue)
-
-	Questo e' il punto di ingresso di TUTTO il sito.
-	E' il primo file che viene caricato quando un utente apre il sito.
-
-	Cosa fa:
-	1. Carica la sessione dal server (i dati temporanei del preventivo in corso)
-	2. Se nella sessione ci sono dati salvati (pacchi e dettagli spedizione),
-	   li ripristina nello store (la memoria condivisa del sito), cosi' l'utente
-	   non perde i dati se aggiorna la pagina o naviga tra le pagine
-	3. Mostra la struttura base del sito:
-	   - UApp: il contenitore principale della libreria Nuxt UI
-	   - NuxtLayout: il layout (cornice con header e footer)
-	   - NuxtPage: la pagina corrente che cambia a seconda dell'indirizzo
-
-	Il "watch" serve a gestire il caso in cui la sessione arriva dal server
-	dopo che la pagina e' gia' stata caricata (caricamento asincrono):
-	in quel caso ripristina i dati appena diventano disponibili.
--->
+<!-- app.vue — entry root. Ripristina sessione preventivo da /api/session nello
+     shipmentFlowStore (watch gestisce arrivo async post-mount) + SEO globali. -->
 <script setup>
 import {
 	buildPendingShipmentFromSession,
@@ -25,28 +7,82 @@ import {
 	getShipmentFlowStepNumber,
 	resolveShipmentFlowState,
 	toStepAddressState,
-} from '~/utils/shipmentFlowState';
+} from '~/utils/shipment';
 
-const userStore = useUserStore();
+const shipmentFlowStore = useShipmentFlowStore();
 const route = useRoute();
-const QUOTE_SESSION_ROUTE_PREFIXES = ['/preventivo', '/la-tua-spedizione', '/riepilogo', '/checkout', '/carrello'];
+
+// === SEO TECNICA GLOBALE ===
+// useHead + useSeoMeta forniscono i meta che devono valere su OGNI pagina.
+// I meta specifici (title/description per route) vengono sovrascritti dalle
+// singole pagine senza toccare questi default globali.
+useHead({
+	htmlAttrs: { lang: 'it' },
+	meta: [
+		{ name: 'theme-color', content: '#095866' },
+		{ name: 'viewport', content: 'width=device-width, initial-scale=1, viewport-fit=cover' },
+	],
+});
+
+// Canonical dinamico basato sull'URL effettivamente richiesto.
+// useRequestURL() funziona sia in SSR che client e restituisce origin+pathname reali.
+const requestUrl = useRequestURL();
+const runtimeConfig = useRuntimeConfig();
+const siteOrigin = String(runtimeConfig.public?.siteUrl || requestUrl.origin || 'https://spediamofacile.it').replace(/\/+$/, '');
+const canonicalHref = computed(() => `${siteOrigin}${route.path === '/' ? '' : route.path}`);
+
+// OG image di default: le singole pagine possono sovrascrivere con useSeoMeta({ ogImage }).
+// Il fallback qui evita che preview "nudi" vengano mostrati quando una pagina
+// dimentica di specificare l'immagine (es. 404, preview dinamici).
+const defaultOgImage = `${siteOrigin}/og/default.png`;
+useSeoMeta({
+	ogSiteName: 'SpedizioneFacile',
+	ogLocale: 'it_IT',
+	ogType: 'website',
+	twitterCard: 'summary_large_image',
+	ogUrl: () => canonicalHref.value,
+	ogImage: defaultOgImage,
+	ogImageWidth: 1200,
+	ogImageHeight: 630,
+	ogImageType: 'image/png',
+	ogImageAlt: 'SpediamoFacile — Spedizioni BRT al miglior prezzo',
+	twitterImage: defaultOgImage,
+	twitterImageAlt: 'SpediamoFacile — Spedizioni BRT al miglior prezzo',
+});
+
+useHead({
+	link: [
+		{ rel: 'canonical', href: () => canonicalHref.value, key: 'canonical-global' },
+	],
+});
+
+// Schema.org globali (Organization + WebSite con SearchAction).
+useSiteSchema();
+const QUOTE_SESSION_ROUTE_PREFIXES = ['/carrello'];
 const quoteTransitionLock = useState('shipment-flow-quote-transition-lock', () => false);
 const restoredQuoteSession = useState('shipment-flow-quote-restored', () => false);
 
+// Root restore: usato solo come fallback su /carrello.
+// Home e funnel hanno una propria orchestrazione di bootstrap e ripristinare qui
+// lo shipmentFlowStore dopo il mount crea collisioni tardive con i loro watcher
+// e componenti client-side.
 const shouldRestoreQuoteSession = computed(() =>
-	route.path === '/'
-	|| route.path === '/preview/home-hero'
-	|| QUOTE_SESSION_ROUTE_PREFIXES.some((prefix) => route.path.startsWith(prefix))
+	QUOTE_SESSION_ROUTE_PREFIXES.some((prefix) => route.path.startsWith(prefix))
 );
+const appToaster = computed(() => ({
+	position: 'bottom-right',
+	duration: QUOTE_SESSION_ROUTE_PREFIXES.some((prefix) => route.path.startsWith(prefix)) ? 3800 : 4500,
+	max: 4,
+}));
 const { session, status } = useSession();
 const restoredQuoteRoute = useState('shipment-flow-quote-restored-route', () => '');
 
 const hasLocalQuoteState = () => {
-	const details = userStore.shipmentDetails || {};
-	return Boolean(userStore.pendingShipment)
-		|| Boolean(userStore.pickupDate)
-		|| Boolean(userStore.contentDescription?.trim?.())
-		|| (Array.isArray(userStore.packages) && userStore.packages.length > 0)
+	const details = shipmentFlowStore.shipmentDetails || {};
+	return Boolean(shipmentFlowStore.pendingShipment)
+		|| Boolean(shipmentFlowStore.pickupDate)
+		|| Boolean(shipmentFlowStore.contentDescription?.trim?.())
+		|| (Array.isArray(shipmentFlowStore.packages) && shipmentFlowStore.packages.length > 0)
 		|| ['origin_city', 'origin_postal_code', 'destination_city', 'destination_postal_code', 'date']
 			.some((key) => String(details?.[key] || '').trim());
 };
@@ -55,7 +91,7 @@ const restoreSession = (data) => {
 	if (!data?.shipment_details && !data?.packages?.length) return;
 	const flowState = resolveShipmentFlowState(data);
 
-	const currentDetails = userStore.shipmentDetails || {};
+	const currentDetails = shipmentFlowStore.shipmentDetails || {};
 	const remoteDetails = data?.shipment_details || {};
 	const pickDetail = (key, fallback = '') => {
 		const localValue = String(currentDetails?.[key] || '').trim();
@@ -74,33 +110,33 @@ const restoreSession = (data) => {
 		date: pickDetail('date'),
 	};
 
-	Object.assign(userStore.shipmentDetails, mergedDetails);
+	Object.assign(shipmentFlowStore.shipmentDetails, mergedDetails);
 
-	if ((!Array.isArray(userStore.packages) || userStore.packages.length === 0) && Array.isArray(data?.packages) && data.packages.length > 0) {
-		userStore.packages = [...data.packages];
+	if ((!Array.isArray(shipmentFlowStore.packages) || shipmentFlowStore.packages.length === 0) && Array.isArray(data?.packages) && data.packages.length > 0) {
+		shipmentFlowStore.packages = [...data.packages];
 	}
 
-	if (!userStore.totalPrice && Number(data?.total_price || 0) > 0) {
-		userStore.totalPrice = Number(data.total_price);
+	if (!shipmentFlowStore.totalPrice && Number(data?.total_price || 0) > 0) {
+		shipmentFlowStore.totalPrice = Number(data.total_price);
 	}
 
-	if (!userStore.isQuoteStarted && flowState.quote_ready) {
-		userStore.isQuoteStarted = true;
+	if (!shipmentFlowStore.isQuoteStarted && flowState.quote_ready) {
+		shipmentFlowStore.isQuoteStarted = true;
 	}
 
-	if (!userStore.servicesArray.length) {
+	if (!shipmentFlowStore.servicesArray.length) {
 		const services = extractShipmentServicesArray(data);
 		if (services.length) {
-			userStore.servicesArray = [...services];
+			shipmentFlowStore.servicesArray = [...services];
 		}
 	}
 
-	if (!userStore.contentDescription && String(data?.content_description || '').trim()) {
-		userStore.contentDescription = String(data.content_description).trim();
+	if (!shipmentFlowStore.contentDescription && String(data?.content_description || '').trim()) {
+		shipmentFlowStore.contentDescription = String(data.content_description).trim();
 	}
 
-	if (!userStore.pickupDate && String(data?.pickup_date || data?.services?.date || '').trim()) {
-		userStore.pickupDate = String(data.pickup_date || data?.services?.date || '').trim();
+	if (!shipmentFlowStore.pickupDate && String(data?.pickup_date || data?.services?.date || '').trim()) {
+		shipmentFlowStore.pickupDate = String(data.pickup_date || data?.services?.date || '').trim();
 	}
 
 	const remoteSmsNotification = Boolean(
@@ -109,42 +145,42 @@ const restoreSession = (data) => {
 		?? data?.service_data?.sms_email_notification
 	);
 
-	if (!userStore.smsEmailNotification && remoteSmsNotification) {
-		userStore.smsEmailNotification = true;
+	if (!shipmentFlowStore.smsEmailNotification && remoteSmsNotification) {
+		shipmentFlowStore.smsEmailNotification = true;
 	}
 
-	if (!Object.keys(userStore.serviceData || {}).length) {
+	if (!Object.keys(shipmentFlowStore.serviceData || {}).length) {
 		const remoteServiceData = data?.service_data || data?.services?.serviceData || null;
 		if (remoteServiceData && typeof remoteServiceData === 'object') {
-			userStore.serviceData = { ...remoteServiceData };
+			shipmentFlowStore.serviceData = { ...remoteServiceData };
 		}
 	}
 
-	if (!userStore.originAddressData && data?.origin_address) {
-		userStore.originAddressData = toStepAddressState(data.origin_address);
+	if (!shipmentFlowStore.originAddressData && data?.origin_address) {
+		shipmentFlowStore.originAddressData = toStepAddressState(data.origin_address);
 	}
 
-	if (!userStore.destinationAddressData && data?.destination_address) {
-		userStore.destinationAddressData = toStepAddressState(data.destination_address);
+	if (!shipmentFlowStore.destinationAddressData && data?.destination_address) {
+		shipmentFlowStore.destinationAddressData = toStepAddressState(data.destination_address);
 	}
 
-	if (userStore.deliveryMode === 'home' && String(data?.delivery_mode || '').trim() === 'pudo') {
-		userStore.deliveryMode = 'pudo';
+	if (shipmentFlowStore.deliveryMode === 'home' && String(data?.delivery_mode || '').trim() === 'pudo') {
+		shipmentFlowStore.deliveryMode = 'pudo';
 	}
 
-	if (!userStore.selectedPudo && data?.selected_pudo) {
-		userStore.selectedPudo = data.selected_pudo;
+	if (!shipmentFlowStore.selectedPudo && data?.selected_pudo) {
+		shipmentFlowStore.selectedPudo = data.selected_pudo;
 	}
 
-	if (!userStore.pendingShipment) {
+	if (!shipmentFlowStore.pendingShipment) {
 		const pendingShipment = buildPendingShipmentFromSession(data);
 		if (pendingShipment) {
-			userStore.pendingShipment = pendingShipment;
+			shipmentFlowStore.pendingShipment = pendingShipment;
 		}
 	}
 
-	if (!userStore.stepNumber) {
-		userStore.stepNumber = getShipmentFlowStepNumber(flowState);
+	if (!shipmentFlowStore.stepNumber) {
+		shipmentFlowStore.stepNumber = getShipmentFlowStepNumber(flowState);
 	}
 };
 
@@ -216,10 +252,12 @@ if (process.client) {
 </script>
 
 <template>
-	<UApp>
+	<UApp :toaster="appToaster">
 		<NuxtLayout>
 			<NuxtPage />
 		</NuxtLayout>
 		<ShipmentFlowAdminGateModal />
+		<!-- Singleton globale del dialog di conferma pilotato da useConfirmDialog() -->
+		<SfConfirmDialog />
 	</UApp>
 </template>

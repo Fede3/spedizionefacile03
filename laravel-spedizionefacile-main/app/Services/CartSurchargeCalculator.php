@@ -28,7 +28,7 @@ class CartSurchargeCalculator
             $service = $package->service;
             if (! $service) continue;
 
-            $serviceSignature = CartService::buildServiceSignatureFromService($service);
+            $serviceSignature = app(CartService::class)->buildServiceSignatureFromService($service);
             $groupKey = self::buildAddressKeyForServices($package, $serviceSignature);
 
             if (! isset($groups[$groupKey])) {
@@ -86,7 +86,7 @@ class CartSurchargeCalculator
                 . ($package['origin_address']['postal_code'] ?? '') . '|'
                 . ($package['destination_address']['city'] ?? '') . '|'
                 . ($package['destination_address']['postal_code'] ?? '') . '|'
-                . CartService::buildServiceSignatureFromGuest($services)
+                . app(CartService::class)->buildServiceSignatureFromGuest($services)
             );
 
             if (! isset($groups[$groupKey])) {

@@ -1,6 +1,13 @@
 # Services/Brt - Leggere Qui
 
-Questa cartella contiene tutti i servizi che comunicano con le API del corriere **BRT (Bartolini)**. Nessun controller parla direttamente con BRT: passa sempre da questi servizi.
+Questa cartella contiene i servizi adapter che comunicano con le API del corriere **BRT (Bartolini)**.
+
+Importante: l'orchestrazione order-centric del fulfillment non vive qui. Il boundary canonico e':
+
+- `app/Services/OrderBrtFulfillmentService.php` -> decide come un ordine persistito diventa una spedizione BRT
+- `app/Services/ShipmentExecutionService.php` -> completa pickup, bordero e documenti dopo la label
+
+I file in `Services/Brt/` restano carrier-specific adapters: nessun controller dovrebbe ricostruire qui il business dell'ordine.
 
 ## File principali
 

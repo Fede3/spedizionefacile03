@@ -163,6 +163,7 @@ class SessionDataController extends Controller
     public function secondStep(Request $request)
     {
         $validated = $request->validate([
+            'client_submission_id' => ['nullable', 'string', 'max:255'],
             'services' => ['nullable', 'array'],
             'services.service_type' => ['nullable', 'string'],
             'services.date' => ['nullable', 'string'],
@@ -172,6 +173,13 @@ class SessionDataController extends Controller
             'content_description' => ['required', 'string'],
             'pickup_date' => ['required', 'string'],
             'sms_email_notification' => ['nullable', 'boolean'],
+            'packages' => ['nullable', 'array', 'min:1'],
+            'packages.*.package_type' => ['required_with:packages', 'string'],
+            'packages.*.quantity' => ['required_with:packages', 'integer', 'min:1'],
+            'packages.*.weight' => ['required_with:packages'],
+            'packages.*.first_size' => ['required_with:packages'],
+            'packages.*.second_size' => ['required_with:packages'],
+            'packages.*.third_size' => ['required_with:packages'],
             'origin_address' => ['nullable', 'array'],
             'origin_address.type' => ['nullable', 'string'],
             'origin_address.name' => ['nullable', 'string'],
@@ -212,6 +220,7 @@ class SessionDataController extends Controller
         $destinationAddress = $this->normalizeAddressPayload($validated['destination_address'] ?? null);
         $deliveryMode = (string) ($validated['delivery_mode'] ?? 'home');
         $selectedPudo = Arr::wrap($validated['selected_pudo'] ?? null);
+        $clientSubmissionId = trim((string) ($validated['client_submission_id'] ?? ''));
         $pickupRequest = $this->normalizePickupRequest(
             Arr::wrap($serviceData['pickup_request'] ?? []),
             $pickupDate,
@@ -237,6 +246,13 @@ class SessionDataController extends Controller
         session()->put('service_data', $services['serviceData']);
         session()->put('delivery_mode', $deliveryMode);
         session()->put('selected_pudo', $selectedPudo ?: null);
+        if ($clientSubmissionId !== '') {
+            session()->put('client_submission_id', $clientSubmissionId);
+        }
+
+        if (array_key_exists('packages', $validated)) {
+            session()->put('packages', $this->normalizePackagesPayload($validated['packages']));
+        }
 
         if ($originAddress !== null) {
             session()->put('origin_address', $originAddress);
@@ -277,6 +293,24 @@ class SessionDataController extends Controller
         ];
     }
 
+    private function normalizePackagesPayload(array $packages): array
+    {
+        return collect($packages)
+            ->map(function (array $package): array {
+                return [
+                    ...$package,
+                    'package_type' => trim((string) ($package['package_type'] ?? '')),
+                    'quantity' => (int) ($package['quantity'] ?? 0),
+                    'weight' => trim((string) ($package['weight'] ?? '')),
+                    'first_size' => trim((string) ($package['first_size'] ?? '')),
+                    'second_size' => trim((string) ($package['second_size'] ?? '')),
+                    'third_size' => trim((string) ($package['third_size'] ?? '')),
+                ];
+            })
+            ->values()
+            ->all();
+    }
+
     private function normalizePickupRequest(array $pickupRequest, string $pickupDate, string $pickupTime): array
     {
         $resolvedDate = trim((string) ($pickupRequest['date'] ?? $pickupDate));
@@ -311,6 +345,10 @@ class SessionDataController extends Controller
     private function forgetDownstreamFlowState(): void
     {
         session()->forget([
+            'client_submission_id',
+            'pricing_signature',
+            'pricing_snapshot_version',
+            'pricing_snapshot',
             'services',
             'content_description',
             'pickup_date',

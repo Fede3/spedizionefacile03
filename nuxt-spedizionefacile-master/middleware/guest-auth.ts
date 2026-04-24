@@ -1,4 +1,4 @@
-import { runAuthBootstrap } from '~/utils/authBootstrap'
+import { isAuthenticatedSnapshotValue, runAuthBootstrap } from '~/utils/auth'
 
 const getGuestRedirectTarget = (query: Record<string, unknown>) => {
 	const redirectValue = Array.isArray(query.redirect) ? query.redirect[0] : query.redirect
@@ -10,9 +10,13 @@ export default defineNuxtRouteMiddleware(async (to) => {
 		return
 	}
 
-	const { authCookie, clearSnapshot } = useAuthUiSnapshotPersistence()
+	const { authCookie, clearSnapshot, initialSnapshot, storedSnapshot } = useAuthUiSnapshotPersistence()
 	const { isAuthenticated } = useSanctumAuth()
-	const hasAuthenticatedSnapshot = Boolean(authCookie.value?.authenticated)
+	const hasAuthenticatedSnapshot = Boolean(
+		isAuthenticatedSnapshotValue(authCookie.value)
+		|| initialSnapshot.value.authenticated
+		|| storedSnapshot.value.authenticated,
+	)
 
 	await runAuthBootstrap({
 		force: true,

@@ -47,22 +47,40 @@ class ImportLocations extends Command
             $this->info('Table truncated.');
         }
 
-        // Se nessun paese specificato, importa tutti i file .txt nella directory database/
+        // Directory dei file GeoNames: spostata fuori dal repo per non gonfiare il codice
+        // (era database/, ora _data/geonames-postalcodes/ a livello repository root).
+        // Fallback a database/ per retrocompatibilita'.
+        $dataDirs = [
+            base_path('../_data/geonames-postalcodes'),
+            database_path(),
+        ];
+        $resolveFile = function (string $code) use ($dataDirs): ?string {
+            foreach ($dataDirs as $dir) {
+                $file = rtrim($dir, '/\\') . DIRECTORY_SEPARATOR . "{$code}.txt";
+                if (file_exists($file)) return $file;
+            }
+            return null;
+        };
+
         if (empty($normalizedCountries)) {
-            $files = glob(database_path('*.txt'));
-            $files = array_filter($files, function ($f) {
-                $basename = basename($f, '.txt');
-                // Solo file con nome di 2 lettere maiuscole (codici paese ISO)
-                return preg_match('/^[A-Z]{2}$/', $basename);
-            });
+            $files = [];
+            foreach ($dataDirs as $dir) {
+                foreach (glob(rtrim($dir, '/\\') . DIRECTORY_SEPARATOR . '*.txt') ?: [] as $f) {
+                    $basename = basename($f, '.txt');
+                    if (preg_match('/^[A-Z]{2}$/', $basename)) {
+                        $files[] = $f;
+                    }
+                }
+            }
+            $files = array_values(array_unique($files));
         } else {
             $files = [];
             foreach ($normalizedCountries as $code) {
-                $file = database_path("{$code}.txt");
-                if (file_exists($file)) {
+                $file = $resolveFile($code);
+                if ($file) {
                     $files[] = $file;
                 } else {
-                    $this->warn("File not found: {$file} — skipping {$code}");
+                    $this->warn("File not found for {$code} — skipping");
                 }
             }
         }

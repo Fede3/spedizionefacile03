@@ -8,6 +8,11 @@ use Illuminate\Support\Facades\DB;
 
 class OrderCreationService
 {
+    public function countPackageGroups($packages): int
+    {
+        return count($this->groupPackagesByAddress($packages));
+    }
+
     public function createOrdersFromPackages($packages, int $userId, ?array $billingData = null, array $submissionContext = []): array
     {
         $groups = $this->groupPackagesByAddress($packages);
@@ -36,8 +41,17 @@ class OrderCreationService
                     'requires_manual_quote' => (bool) ($serviceData['requires_manual_quote'] ?? false),
                 ]);
 
-                $isCod = in_array('contrassegno', $servicePricing->normalizeSelectedServices($serviceType), true);
+                $selectedServices = $servicePricing->normalizeSelectedServices($serviceType);
+                $isCod = in_array('contrassegno', $selectedServices, true);
                 $codAmount = $isCod ? $servicePricing->extractContrassegnoAmount($serviceData) : null;
+                // Audit F01: persiste modalita' rimborso BRT (BM|CC|AS) e modalita' incasso (contanti|assegno)
+                $codPaymentType = $isCod ? $servicePricing->extractCodPaymentType($serviceData) : null;
+                $codIncassoType = $isCod ? $servicePricing->extractCodIncassoType($serviceData) : null;
+                // Audit F02: persiste valore dichiarato assicurazione in centesimi
+                $hasInsurance = in_array('assicurazione', $selectedServices, true);
+                $insuranceAmountCents = $hasInsurance
+                    ? (int) round($servicePricing->extractAssicurazioneAmount($serviceData) * 100)
+                    : null;
 
                 $pudoId = null;
                 foreach ($groupPackages as $pkg) {
@@ -53,7 +67,10 @@ class OrderCreationService
                     'subtotal' => $subtotal,
                     'status' => Order::PENDING,
                     'is_cod' => $isCod,
-                    'cod_amount' => $codAmount > 0 ? $codAmount : null,
+                    'cod_amount' => $codAmount > 0 ? (int) round($codAmount * 100) : null,
+                    'cod_payment_type' => $codPaymentType,
+                    'cod_incasso_type' => $codIncassoType,
+                    'insurance_amount_cents' => ($insuranceAmountCents && $insuranceAmountCents > 0) ? $insuranceAmountCents : null,
                     'brt_pudo_id' => $pudoId,
                     'billing_data' => $billingData,
                     'client_submission_id' => $this->resolveGroupSubmissionId($baseSubmissionId, $group['key'], $index),

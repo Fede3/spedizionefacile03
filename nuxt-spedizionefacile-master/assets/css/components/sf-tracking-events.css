@@ -1,0 +1,47 @@
+/*
+ * sf-tracking-events.css — Timeline eventi tracking
+ *
+ * Estratto da components/tracking/TrackingEventsTimeline.vue.
+ * Badge icona + linea verticale tra item. Il primo item usa tone teal solido.
+ */
+
+.event-icon {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 36px;
+	height: 36px;
+	border-radius: 999px;
+	flex-shrink: 0;
+	transition:
+		color var(--sf-t1) var(--sf-ease),
+		background-color var(--sf-t1) var(--sf-ease),
+		border-color var(--sf-t1) var(--sf-ease),
+		box-shadow var(--sf-t1) var(--sf-ease),
+		transform var(--sf-t1) var(--sf-ease);
+}
+
+.event-icon-latest {
+	background: #095866;
+	color: #ffffff;
+	box-shadow: 0 2px 6px rgba(9, 88, 102, 0.25);
+}
+
+.event-icon-past {
+	background: #ffffff;
+	color: #095866;
+	box-shadow: 0 0 0 1.5px rgba(9, 88, 102, 0.35) inset;
+}
+
+.event-line {
+	width: 2px;
+	flex: 1 1 auto;
+	min-height: 20px;
+	background: #DFE2E7;
+	border-radius: 1px;
+	margin-top: 4px;
+}
+
+.event-item:first-child .event-line {
+	background: rgba(9, 88, 102, 0.45);
+}

@@ -3,21 +3,12 @@ import { test, expect } from '@playwright/test';
 test.describe('Referral & Wallet', () => {
 	test('Wallet richiede autenticazione', async ({ page }) => {
 		await page.goto('/account/portafoglio');
-		await expect(page).toHaveURL(/autenticazione/);
-	});
-
-	test('Bonus/referral richiede autenticazione', async ({ page }) => {
-		await page.goto('/account/bonus');
-		await expect(page).toHaveURL(/autenticazione/);
-	});
-
-	test('Prelievi richiede autenticazione', async ({ page }) => {
-		await page.goto('/account/prelievi');
-		await expect(page).toHaveURL(/autenticazione/);
+		await expect(page).toHaveURL(/auth_modal=login/);
 	});
 
 	test('Registrazione con parametro ref preserva codice', async ({ page }) => {
-		await page.goto('/autenticazione?ref=TESTCODE123');
+		// The auth modal now opens on the homepage with query params
+		await page.goto('/?auth_modal=login&ref=TESTCODE123');
 		await page.waitForLoadState('networkidle');
 		const registerTab = page.getByRole('tab', { name: /registrati/i });
 		await expect(registerTab).toBeVisible();

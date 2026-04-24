@@ -15,6 +15,30 @@ use Illuminate\Support\Facades\Log;
 
 class TrackingService
 {
+    private const DIRECT_STATUS_MAP = [
+        'DELIVERED' => Order::DELIVERED,
+        'CONSEGNATO' => Order::DELIVERED,
+        'RETURNED' => Order::RETURNED,
+        'RESO' => Order::RETURNED,
+        'REFUSED' => Order::REFUSED,
+        'RIFIUTATO' => Order::REFUSED,
+        'IN_STORAGE' => Order::IN_GIACENZA,
+        'GIACENZA' => Order::IN_GIACENZA,
+        'DELIVERY_FAILED' => Order::IN_GIACENZA,
+        'MANCATA_CONSEGNA' => Order::IN_GIACENZA,
+        'OUT_FOR_DELIVERY' => Order::OUT_FOR_DELIVERY,
+        'IN_CONSEGNA' => Order::OUT_FOR_DELIVERY,
+        'IN_DISTRIBUZIONE' => Order::OUT_FOR_DELIVERY,
+        'IN_TRANSIT' => Order::IN_TRANSIT,
+        'IN_TRANSITO' => Order::IN_TRANSIT,
+        'PICKED_UP' => Order::IN_TRANSIT,
+        'RITIRATO' => Order::IN_TRANSIT,
+        'SHIPMENT_CREATED' => Order::IN_TRANSIT,
+        'SPEDIZIONE_CREATA' => Order::IN_TRANSIT,
+        'LABEL_GENERATED' => Order::LABEL_GENERATED,
+        'ETICHETTA_GENERATA' => Order::LABEL_GENERATED,
+    ];
+
     public function __construct(
         private readonly BrtConfig $config,
     ) {}
@@ -108,7 +132,7 @@ class TrackingService
             $eventCode = $lastEvent['eventCode'] ?? $lastEvent['id'] ?? '';
             $eventDesc = $lastEvent['eventDescription'] ?? $lastEvent['description'] ?? '';
 
-            $newStatus = $this->mapEventToStatus($eventCode, $eventDesc);
+            $newStatus = $this->mapCarrierStatus($eventCode, $eventDesc);
 
             return [
                 'status' => $newStatus,
@@ -138,9 +162,14 @@ class TrackingService
      * 5. In consegna — ultimo miglio, PRIMA di in_transit per evitare falso in_transit
      * 6. In transito — stato generico di movimento
      */
-    private function mapEventToStatus(string $eventCode, string $eventDesc): ?string
+    public function mapCarrierStatus(string $eventCode, string $eventDesc = ''): ?string
     {
-        $combined = strtoupper($eventCode . ' ' . $eventDesc);
+        $normalizedCode = strtoupper(trim($eventCode));
+        if ($normalizedCode !== '' && isset(self::DIRECT_STATUS_MAP[$normalizedCode])) {
+            return self::DIRECT_STATUS_MAP[$normalizedCode];
+        }
+
+        $combined = strtoupper(trim($eventCode . ' ' . $eventDesc));
 
         // Consegnato (stato finale)
         $deliveredKeywords = ['DELIVERED', 'CONSEGNAT', 'CONSEGNA EFFETTUATA', 'RECAPITATO'];

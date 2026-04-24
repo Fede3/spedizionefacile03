@@ -70,7 +70,11 @@ class SocialAuthTest extends TestCase
         $this->assertStringContainsString('client_id=com.example.web', $location);
         $this->assertStringContainsString('response_mode=form_post', $location);
         $this->assertStringContainsString('scope=name+email', $location);
-        $this->assertNotNull($this->findCookie($response, 'frontend_social_state'));
+        // Sprint 6.3: state e nonce ora in sessione (non cookie).
+        $this->assertNotEmpty(session('oauth_state_apple'));
+        $this->assertNotEmpty(session('oauth_nonce_apple'));
+        $this->assertStringContainsString('state=' . session('oauth_state_apple'), $location);
+        $this->assertStringContainsString('nonce=' . session('oauth_nonce_apple'), $location);
         $this->assertNotNull($this->findCookie($response, 'frontend_redirect'));
         $this->assertNotNull($this->findCookie($response, 'frontend_redirect_path'));
     }
@@ -100,13 +104,18 @@ class SocialAuthTest extends TestCase
             ], 200),
         ]);
 
+        // Sprint 6.3: state e nonce in sessione, non piu' in cookie.
         $response = $this
             ->withCookie('frontend_redirect', 'http://localhost:3000')
             ->withCookie('frontend_redirect_path', '/account')
             ->withCookie('frontend_social_intent', 'register')
             ->withCookie('frontend_social_referral', '')
             ->withCookie('frontend_social_user_type', 'privato')
-            ->withCookie('frontend_social_state', 'state-123')
+            ->withSession([
+                'oauth_state_apple' => 'state-123',
+                'oauth_state_apple_created_at' => now()->timestamp,
+                'oauth_nonce_apple' => 'nonce-123',
+            ])
             ->post('/auth/apple/callback', [
                 'state' => 'state-123',
                 'code' => 'valid-auth-code',

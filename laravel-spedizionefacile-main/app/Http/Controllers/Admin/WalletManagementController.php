@@ -90,6 +90,11 @@ class WalletManagementController extends Controller
             'reference' => 'withdrawal_' . $withdrawal->id,
         ]);
 
+        \App\Services\AuditLogService::log('admin.withdrawal.approve', $withdrawal, [
+            'user_id' => $withdrawal->user_id,
+            'amount' => (float) $withdrawal->amount,
+        ]);
+
         return response()->json([
             'success' => true,
             'data' => $withdrawal->fresh(),
@@ -108,6 +113,12 @@ class WalletManagementController extends Controller
             'reviewed_at' => now(),
             'reviewed_by' => auth()->id(),
             'admin_notes' => $request->input('notes', 'Richiesta rifiutata'),
+        ]);
+
+        \App\Services\AuditLogService::log('admin.withdrawal.reject', $withdrawal, [
+            'user_id' => $withdrawal->user_id,
+            'amount' => (float) $withdrawal->amount,
+            'reason' => $request->input('notes'),
         ]);
 
         return response()->json([

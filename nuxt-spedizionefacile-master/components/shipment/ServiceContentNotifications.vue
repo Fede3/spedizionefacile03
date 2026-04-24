@@ -37,26 +37,29 @@ defineEmits(['update:content-description', 'update:content-error', 'update:sms-e
 					class="text-[#777] text-[12px] uppercase tracking-[0.4px] mb-[6px] block font-[700]">
 					Contenuto pacco
 				</label>
-				<input
-					type="text"
-					id="content_description"
-					:value="contentDescription"
-					@input="
-						$emit('update:content-description', $event.target.value);
-						$emit('update:content-error', null);
-					"
-					placeholder="Abbigliamento, documenti..."
-					maxlength="255"
-					required
-					:class="[
-						'h-[48px] sm:h-[50px] w-full rounded-[12px] px-[14px] bg-white outline-none text-[#1d2738] text-[14px] transition-all duration-[250ms] placeholder:text-[#b0b5be]',
-						contentError
-							? 'ring-[2px] ring-[#ef4444]'
-							: 'ring-[1.5px] ring-[#DFE2E7] focus:ring-[3px] focus:ring-[#095866]/60'
-					]" />
-				<p v-if="contentError" class="text-[12px] text-[#ef4444] mt-[4px] font-[500]">
-					{{ contentFieldHint }}
-				</p>
+				<div class="service-content-field__control">
+					<input
+						type="text"
+						id="content_description"
+						:value="contentDescription"
+						@input="
+							$emit('update:content-description', $event.target.value);
+							$emit('update:content-error', null);
+						"
+						placeholder="Abbigliamento, documenti..."
+						maxlength="255"
+						:class="[
+							'h-[48px] sm:h-[50px] w-full rounded-[16px] px-[14px] bg-white outline-none text-[#1d2738] text-[14px] transition-all duration-[250ms] placeholder:text-[#b0b5be]',
+							contentError
+								? 'ring-[2px] ring-[#ef4444]'
+								: 'ring-[1.5px] ring-[#DFE2E7] focus:ring-[3px] focus:ring-[#095866]/60'
+						]" />
+				</div>
+				<div class="service-content-field__feedback">
+					<p v-if="contentError" class="text-[0.8125rem] font-[600] text-[#c85a1a]">
+						{{ contentFieldHint }}
+					</p>
+				</div>
 			</div>
 
 			<!-- SMS / Email notification toggle -->
@@ -66,10 +69,10 @@ defineEmits(['update:content-description', 'update:content-error', 'update:sms-e
 				</label>
 				<button
 					type="button"
-					class="w-full h-[48px] sm:h-[50px] rounded-[14px] px-[14px] flex items-center gap-[10px] text-left transition-all duration-[350ms] cursor-pointer bg-white"
+					class="w-full h-[48px] sm:h-[50px] rounded-[16px] px-[14px] flex items-center gap-[10px] text-left transition-all duration-[350ms] cursor-pointer bg-white"
 					:class="smsEmailNotification
 						? 'ring-[2.5px] ring-[#095866] shadow-[0_2px_10px_rgba(9,88,102,0.1)]'
-						: 'ring-[1.5px] ring-[#DFE2E7] hover:ring-[2px] hover:ring-[#095866]/50 hover:bg-[#FAFBFC]'"
+						: 'ring-[1.5px] ring-[#DFE2E7] hover:ring-[2px] hover:ring-[#095866]/50 hover:bg-[rgba(9,88,102,0.03)]'"
 					:aria-label="smsEmailNotification ? 'Rimuovi notifiche spedizione' : 'Attiva notifiche spedizione'"
 					:aria-pressed="smsEmailNotification ? 'true' : 'false'"
 					@click="$emit('update:sms-email-notification', !smsEmailNotification)">
@@ -84,7 +87,7 @@ defineEmits(['update:content-description', 'update:content-error', 'update:sms-e
 						stroke-width="2"
 						stroke-linecap="round"
 						stroke-linejoin="round"
-						:class="smsEmailNotification ? 'text-[#095866]' : 'text-[#999]'"
+						:class="smsEmailNotification ? 'text-[#095866]' : 'text-[var(--color-brand-text-muted)]'"
 						aria-hidden="true">
 						<path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
 						<path d="M13.73 21a2 2 0 0 1-3.46 0"/>
@@ -119,3 +122,16 @@ defineEmits(['update:content-description', 'update:content-error', 'update:sms-e
 		</div>
 	</section>
 </template>
+
+<style scoped>
+.service-content-field__control {
+	min-width: 0;
+}
+
+.service-content-field__feedback {
+	min-height: 1.75rem;
+	display: flex;
+	align-items: flex-start;
+	padding-top: 0.4rem;
+}
+</style>

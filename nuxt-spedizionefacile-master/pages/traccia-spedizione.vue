@@ -1,12 +1,3 @@
-<!--
-  FILE: pages/traccia-spedizione.vue
-  SCOPO: Tracking spedizione — ricerca per codice BRT/ordine/riferimento, timeline stato.
-  Design allineato al Prototipo: icon badge header, accent bar card, grey block per input.
-
-  API: GET /api/tracking/search?code=XXX
-  ROUTE: /traccia-spedizione (pubblica).
-  DATI IN INGRESSO: ?code=XXX (query param per precompilare e cercare automaticamente).
--->
 <script setup>
 useSeoMeta({
 	title: 'Traccia Spedizione | SpediamoFacile',
@@ -14,6 +5,12 @@ useSeoMeta({
 	description: 'Traccia la tua spedizione in tempo reale con SpediamoFacile.',
 	ogDescription: 'Traccia la tua spedizione in tempo reale con SpediamoFacile.',
 });
+
+// Breadcrumb: Home › Traccia
+useBreadcrumbSchema([
+	{ name: 'Home', url: '/' },
+	{ name: 'Traccia spedizione' },
+]);
 
 const config = useRuntimeConfig();
 const route = useRoute();
@@ -23,15 +20,64 @@ const trackingResult = ref(null);
 const trackingError = ref(null);
 const isLoading = ref(false);
 
+// -- ARCHIVIATO 2026-04-20: Scanner QR (_archive/2026-04-20-features-rimosse/scanner-qr) --
+// ─── Scanner QR/Barcode (mobile) ─────────────────────────────
+// Mostrato solo se il browser espone BarcodeDetector nativo E siamo su mobile.
+// Evitiamo caricamenti di librerie pesanti (linea guida progetto).
+// const qrScannerOpen = ref(false);
+// const qrScannerSupported = ref(false);
+// const isMobileViewport = ref(false);
+//
+// const showQrScannerButton = computed(() => qrScannerSupported.value && isMobileViewport.value);
+//
+// const openQrScanner = () => {
+// 	qrScannerOpen.value = true;
+// };
+// const closeQrScanner = () => {
+// 	qrScannerOpen.value = false;
+// };
+// const onQrDetected = (code) => {
+// 	qrScannerOpen.value = false;
+// 	if (!code) return;
+// 	trackingCode.value = String(code).trim();
+// 	trackShipment();
+// };
+// -- END ARCHIVIATO --
+const trackingTips = [
+	'Usa il codice ordine SF o il Parcel ID BRT piu recente.',
+	'Se la spedizione e appena stata creata, attendi qualche minuto prima di riprovare.',
+	'Per anomalie o giacenze, spesso il dettaglio finale e disponibile anche sul portale BRT.',
+];
+
 const statusTimeline = [
 	{ key: 'processing', label: 'Pagamento ricevuto', icon: 'card' },
-	{ key: 'completed', label: 'Pronto per la spedizione', icon: 'check' },
+	{ key: 'label_generated', label: 'Etichetta generata', icon: 'label' },
 	{ key: 'in_transit', label: 'In transito', icon: 'truck' },
+	{ key: 'out_for_delivery', label: 'In consegna', icon: 'delivery' },
 	{ key: 'delivered', label: 'Consegnato', icon: 'flag' },
 ];
 
+const alternateEndStates = ['returned', 'refused', 'cancelled'];
+
+const isAlternateEndState = computed(() => {
+	if (!trackingResult.value) return false;
+	return alternateEndStates.includes(trackingResult.value.raw_status);
+});
+
+const alternateEndLabel = computed(() => {
+	if (!trackingResult.value) return '';
+	const map = { returned: 'Reso al mittente', refused: 'Rifiutato dal destinatario', cancelled: 'Annullato' };
+	return map[trackingResult.value.raw_status] || '';
+});
+
 const currentStepIndex = computed(() => {
 	if (!trackingResult.value) return -1;
+	if (isAlternateEndState.value) {
+		// For alternate end states, show progress up to the last known step before the end
+		const raw = trackingResult.value.raw_status;
+		if (raw === 'returned' || raw === 'refused') return statusTimeline.findIndex(s => s.key === 'in_transit');
+		return 0; // cancelled = only first step
+	}
 	return statusTimeline.findIndex(s => s.key === trackingResult.value.raw_status);
 });
 
@@ -40,12 +86,18 @@ const statusColorClass = computed(() => {
 	const map = {
 		pending: 'bg-yellow-50 text-yellow-700 border border-yellow-200',
 		processing: 'bg-[#eef7f8] text-[#095866] border border-[#bdd5da]',
+		label_generated: 'bg-[#eef7f8] text-[#095866] border border-[#bdd5da]',
 		completed: 'bg-[#f0fdf4] text-[#0a8a7a] border border-[#d1fae5]',
+		payed: 'bg-[#f0fdf4] text-[#0a8a7a] border border-[#d1fae5]',
 		in_transit: 'bg-[#eef7f8] text-[#095866] border border-[#bdd5da]',
+		out_for_delivery: 'bg-[#dff0f3] text-[#074a56] border border-[#b0d8df]',
 		delivered: 'bg-[#f0fdf4] text-[#0a8a7a] border border-[#d1fae5]',
 		in_giacenza: 'bg-orange-50 text-orange-700 border border-orange-200',
 		payment_failed: 'bg-red-50 text-red-700 border border-red-200',
 		cancelled: 'bg-gray-50 text-[var(--color-brand-text-secondary)] border border-gray-200',
+		refunded: 'bg-orange-50 text-orange-700 border border-orange-200',
+		returned: 'bg-[#eef7f8] text-[#095866] border border-[#bdd5da]',
+		refused: 'bg-red-50 text-red-700 border border-red-200',
 	};
 	return map[trackingResult.value.raw_status] || 'bg-gray-50 text-[var(--color-brand-text-secondary)] border border-gray-200';
 });
@@ -79,41 +131,46 @@ const trackShipment = async () => {
 
 onMounted(() => {
 	if (trackingCode.value) trackShipment();
+
+	// -- ARCHIVIATO 2026-04-20: Scanner QR (_archive/.../scanner-qr) --
+	// Feature detect: BarcodeDetector + mobile UA. No polyfill pesanti.
+	// if (typeof window !== 'undefined') {
+	// 	qrScannerSupported.value = 'BarcodeDetector' in window && Boolean(navigator.mediaDevices?.getUserMedia);
+	// 	isMobileViewport.value = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent) || window.matchMedia('(max-width: 768px)').matches;
+	// }
+	// -- END ARCHIVIATO --
 });
 </script>
 
 <template>
-	<div class="py-[32px] sm:py-[48px]" style="background: linear-gradient(180deg, #F8F9FB 0%, #EEF0F3 100%); min-height: 100vh">
-		<div class="my-container" style="max-width: 680px">
+	<div style="background: var(--gradient-page-surface); min-height: 100vh">
+		<PublicPageHeader
+			:crumbs="[{ label: 'Home', to: '/' }, { label: 'Traccia' }]"
+			eyebrow="Tracking spedizioni"
+			title="Traccia spedizione"
+			description="Inserisci il codice e controlla lo stato della spedizione in una vista piu chiara, compatta e leggibile.">
+			<template #icon>
+				<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+					<path d="M9.5,3A6.5,6.5 0 0,1 16,9.5C16,11.11 15.41,12.59 14.44,13.73L14.71,14H15.5L20.5,19L19,20.5L14,15.5V14.71L13.73,14.44C12.59,15.41 11.11,16 9.5,16A6.5,6.5 0 0,1 3,9.5A6.5,6.5 0 0,1 9.5,3M9.5,5C7,5 5,7 5,9.5C5,12 7,14 9.5,14C12,14 14,12 14,9.5C14,7 12,5 9.5,5Z" />
+				</svg>
+			</template>
+		</PublicPageHeader>
 
-			<!-- Header centrato -->
-			<div class="text-center mb-[28px]">
-				<div class="w-[48px] h-[48px] rounded-full flex items-center justify-center mx-auto mb-[14px]"
-					style="background: linear-gradient(135deg, #095866, #0a7489); box-shadow: 0 4px 14px rgba(9,88,102,0.2)">
-					<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="white">
-						<path d="M9.5,3A6.5,6.5 0 0,1 16,9.5C16,11.11 15.41,12.59 14.44,13.73L14.71,14H15.5L20.5,19L19,20.5L14,15.5V14.71L13.73,14.44C12.59,15.41 11.11,16 9.5,16A6.5,6.5 0 0,1 3,9.5A6.5,6.5 0 0,1 9.5,3M9.5,5C7,5 5,7 5,9.5C5,12 7,14 9.5,14C12,14 14,12 14,9.5C14,7 12,5 9.5,5Z" />
-					</svg>
-				</div>
-				<h1 class="text-[#1d2738] text-[28px] sm:text-[36px] tracking-[-0.8px] font-montserrat" style="font-weight:800">
-					Traccia spedizione
-				</h1>
-				<p class="text-[#777] text-[15px] mt-[6px]">
-					Inserisci il codice di tracciamento per seguire il tuo pacco in tempo reale.
-				</p>
-			</div>
+		<div class="py-[20px] sm:py-[24px]">
+			<div class="my-container" style="max-width: 680px">
 
 			<!-- Card di ricerca con accent bar -->
-			<div class="rounded-[22px] overflow-hidden mb-[20px]"
-				style="box-shadow: 0 0 0 1px rgba(9,88,102,0.05), 0 4px 20px rgba(9,88,102,0.06), 0 16px 48px rgba(9,88,102,0.04)">
+			<div class="rounded-[16px] overflow-hidden mb-[18px]"
+				data-shadow="soft">
 				<!-- Accent bar teal -->
-				<div class="h-[4px]" style="background: linear-gradient(90deg, #095866 0%, #0b9ab3 50%, #095866 100%)" />
-				<div class="p-[20px] sm:p-[24px]" style="background: linear-gradient(180deg, #F8F9FB 0%, #EEF0F3 100%)">
+				<div class="h-[4px]" data-accent="bar" />
+				<div class="p-[18px] sm:p-[22px]" style="background: var(--gradient-page-surface)">
 					<label class="text-[#777] text-[11px] uppercase tracking-[0.4px] mb-[8px] block" style="font-weight:700">
 						Codice tracking
 					</label>
 					<!-- Grey block per l'input -->
-					<div class="rounded-[14px] p-[12px]"
-						style="background: #E6E9EE; box-shadow: inset 0 1px 2px rgba(0,0,0,0.04)">
+					<div class="rounded-[16px] p-[12px]"
+						data-surface="grey-inset">
 						<div class="flex gap-[10px]">
 							<div class="relative flex-1">
 								<svg class="absolute left-[14px] top-1/2 -translate-y-1/2 text-[#C0C5CC] pointer-events-none"
@@ -124,7 +181,7 @@ onMounted(() => {
 									v-model="trackingCode"
 									type="text"
 									placeholder="es. BRT-2026032801234, SF-000042..."
-									class="w-full h-[48px] sm:h-[50px] rounded-[12px] pl-[42px] pr-[14px] text-[15px] text-[#1d2738] bg-white ring-[1.5px] ring-[#DFE2E7] focus:ring-[3px] focus:ring-[#095866]/60 placeholder:text-[#999] outline-none transition-all duration-200"
+									class="w-full h-[48px] sm:h-[50px] rounded-[12px] pl-[42px] pr-[14px] text-[15px] text-[#1d2738] bg-white ring-[1.5px] ring-[#DFE2E7] focus:ring-[3px] focus:ring-[#095866]/60 placeholder:text-[var(--color-brand-text-muted)] outline-none transition-all duration-200"
 									style="font-weight:600"
 									@keyup.enter="trackShipment"
 								/>
@@ -132,8 +189,7 @@ onMounted(() => {
 							<button
 								type="button"
 								:disabled="isLoading || !trackingCode.trim()"
-								class="h-[48px] sm:h-[50px] px-[22px] rounded-full text-white text-[14px] flex items-center gap-[6px] cursor-pointer shrink-0 transition-all duration-[350ms] hover:shadow-[0_8px_24px_rgba(228,66,3,0.3)] hover:-translate-y-[1px] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0"
-								style="font-weight:700; background: linear-gradient(135deg, #E44203, #c73600); box-shadow: 0 4px 14px rgba(228,66,3,0.22)"
+								class="btn btn-cta btn-lg shrink-0"
 								@click="trackShipment"
 							>
 								<svg v-if="isLoading" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="animate-spin"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
@@ -143,6 +199,27 @@ onMounted(() => {
 								{{ isLoading ? 'Ricerca...' : 'Cerca' }}
 							</button>
 						</div>
+						<!-- -- ARCHIVIATO 2026-04-20: Scanner QR (_archive/2026-04-20-features-rimosse/scanner-qr) --
+						<button
+							v-if="showQrScannerButton"
+							type="button"
+							class="qr-scan-btn mt-[12px]"
+							aria-label="Scansiona codice QR o barcode della spedizione"
+							@click="openQrScanner"
+						>
+							<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+								<rect x="3" y="3" width="7" height="7" rx="1" />
+								<rect x="14" y="3" width="7" height="7" rx="1" />
+								<rect x="3" y="14" width="7" height="7" rx="1" />
+								<path d="M14 14h3" />
+								<path d="M14 18h2" />
+								<path d="M20 14h1" />
+								<path d="M18 21v-3" />
+								<path d="M21 18v3" />
+							</svg>
+							<span>Scansiona codice QR</span>
+						</button>
+						-- END ARCHIVIATO -->
 					</div>
 					<p v-if="trackingError" class="text-[#E44203] text-[0.8125rem] mt-[10px]">{{ trackingError }}</p>
 				</div>
@@ -150,15 +227,15 @@ onMounted(() => {
 
 			<!-- Risultato: spedizione trovata -->
 			<div v-if="trackingResult && trackingResult.found"
-				class="rounded-[22px] overflow-hidden"
-				style="box-shadow: 0 0 0 1px rgba(9,88,102,0.05), 0 4px 20px rgba(9,88,102,0.06), 0 16px 48px rgba(9,88,102,0.04)">
+				class="rounded-[16px] overflow-hidden"
+				data-shadow="soft">
 				<!-- Accent bar -->
-				<div class="h-[4px]" style="background: linear-gradient(90deg, #095866 0%, #0b9ab3 50%, #095866 100%)" />
-				<div class="p-[22px] sm:p-[28px]" style="background: linear-gradient(180deg, #F8F9FB 0%, #EEF0F3 100%)">
+				<div class="h-[4px]" data-accent="bar" />
+				<div class="p-[20px] sm:p-[24px]" style="background: var(--gradient-page-surface)">
 					<!-- Header risultato -->
-					<div class="flex items-center justify-between mb-[20px] pb-[16px] border-b border-[#DFE2E7] flex-wrap gap-[10px]">
+					<div class="flex items-center justify-between mb-[18px] pb-[14px] border-b border-[#DFE2E7] flex-wrap gap-[10px]">
 						<div>
-							<span class="text-[#999] text-[11px] uppercase tracking-[0.4px] block" style="font-weight:600">Spedizione trovata</span>
+							<span class="text-[var(--color-brand-text-muted)] text-[11px] uppercase tracking-[0.4px] block" style="font-weight:600">Spedizione trovata</span>
 							<span class="text-[#1d2738] text-[16px]" style="font-weight:700">#{{ trackingResult.order_id }}</span>
 						</div>
 						<span :class="statusColorClass" class="px-[12px] py-[4px] rounded-full text-[0.8125rem]" style="font-weight:700">
@@ -167,8 +244,8 @@ onMounted(() => {
 					</div>
 
 					<!-- Info ordine — grey block -->
-					<div class="rounded-[14px] p-[14px] sm:p-[16px] mb-[18px]"
-						style="background: #E6E9EE; box-shadow: inset 0 1px 2px rgba(0,0,0,0.04)">
+					<div class="rounded-[16px] p-[14px] sm:p-[16px] mb-[16px]"
+						data-surface="grey-inset">
 						<div class="grid grid-cols-1 tablet:grid-cols-2 gap-[10px]">
 							<div>
 								<p class="text-[11px] uppercase tracking-[0.06em] text-[#777] mb-[2px]" style="font-weight:700">Numero Ordine</p>
@@ -190,12 +267,12 @@ onMounted(() => {
 					</div>
 
 					<!-- Timeline in grey block -->
-					<div v-if="currentStepIndex >= 0" class="mb-[18px]">
+					<div v-if="currentStepIndex >= 0" class="mb-[16px]">
 						<h3 class="font-montserrat text-[0.8125rem] text-[#1d2738] uppercase tracking-[0.06em] mb-[14px]" style="font-weight:800">
 							Avanzamento spedizione
 						</h3>
 						<div class="rounded-[16px] p-[16px] sm:p-[20px]"
-							style="background: #E6E9EE; box-shadow: inset 0 1px 2px rgba(0,0,0,0.04)">
+							data-surface="grey-inset">
 							<div class="flex flex-col gap-0">
 								<div
 									v-for="(step, idx) in statusTimeline"
@@ -219,18 +296,47 @@ onMounted(() => {
 											:class="idx < currentStepIndex ? 'bg-[#095866]/30' : 'bg-[#D5D9E0]'"
 										/>
 									</div>
-									<div class="pb-[16px]" :class="{ 'pb-0': idx === statusTimeline.length - 1 }">
+									<div class="pb-[16px]" :class="{ 'pb-0': idx === statusTimeline.length - 1 && !isAlternateEndState }">
 										<span
 											class="text-[14px] block"
-											:class="idx <= currentStepIndex ? 'text-[#1d2738]' : 'text-[#999]'"
+											:class="idx <= currentStepIndex ? 'text-[#1d2738]' : 'text-[var(--color-brand-text-muted)]'"
 											style="font-weight:600">
 											{{ step.label }}
 										</span>
-										<span v-if="idx === currentStepIndex" class="text-[#095866] text-[12px]" style="font-weight:600">
+										<span v-if="idx === currentStepIndex && !isAlternateEndState" class="text-[#095866] text-[12px]" style="font-weight:600">
 											Stato attuale
 										</span>
-										<span v-else-if="idx < currentStepIndex" class="text-[#999] text-[12px]">
+										<span v-else-if="idx < currentStepIndex" class="text-[var(--color-brand-text-muted)] text-[12px]">
 											Completato
+										</span>
+									</div>
+								</div>
+
+								<!-- Alternate end state (returned / refused / cancelled) -->
+								<div v-if="isAlternateEndState" class="flex gap-[14px]">
+									<div class="flex flex-col items-center">
+										<div class="w-[2px] min-h-[12px] rounded-[1px] bg-[#D5D9E0]" />
+										<div
+											class="w-[32px] h-[32px] rounded-full flex items-center justify-center shrink-0"
+											:class="trackingResult.raw_status === 'refused' ? 'bg-red-600' : 'bg-[#E44203]'"
+										>
+											<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+												<line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+											</svg>
+										</div>
+									</div>
+									<div class="pt-[12px]">
+										<span
+											class="text-[14px] block"
+											:class="trackingResult.raw_status === 'refused' ? 'text-red-700' : 'text-[#E44203]'"
+											style="font-weight:700">
+											{{ alternateEndLabel }}
+										</span>
+										<span
+											class="text-[12px]"
+											:class="trackingResult.raw_status === 'refused' ? 'text-red-600' : 'text-[#E44203]'"
+											style="font-weight:600">
+											Stato finale
 										</span>
 									</div>
 								</div>
@@ -239,7 +345,7 @@ onMounted(() => {
 					</div>
 
 					<!-- Link BRT -->
-					<div v-if="trackingResult.brt_tracking_url" class="border-t border-[#DFE2E7] pt-[18px]">
+					<div v-if="trackingResult.brt_tracking_url" class="border-t border-[#DFE2E7] pt-[16px]">
 						<a
 							:href="trackingResult.brt_tracking_url"
 							target="_blank"
@@ -253,49 +359,175 @@ onMounted(() => {
 				</div>
 			</div>
 
-			<!-- Risultato: non trovato -->
+			<!-- Risultato: non trovato — helpful, with suggestions -->
 			<div v-else-if="trackingResult && !trackingResult.found"
-				class="rounded-[22px] overflow-hidden text-center"
-				style="box-shadow: 0 0 0 1px rgba(9,88,102,0.05), 0 4px 20px rgba(9,88,102,0.06), 0 16px 48px rgba(9,88,102,0.04)">
-				<div class="h-[4px]" style="background: linear-gradient(90deg, #095866 0%, #0b9ab3 50%, #095866 100%)" />
-				<div class="p-[32px] sm:p-[40px]" style="background: linear-gradient(180deg, #F8F9FB 0%, #EEF0F3 100%)">
-					<div class="w-[64px] h-[64px] rounded-full flex items-center justify-center mx-auto mb-[16px]"
-						style="background: #E6E9EE">
-						<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="#C0C5CC">
+				class="rounded-[16px] overflow-hidden text-center"
+				data-shadow="soft">
+				<div class="h-[4px]" data-accent="bar" />
+				<div class="p-[22px] sm:p-[28px]" style="background: var(--gradient-page-surface)">
+					<div class="w-[60px] h-[60px] rounded-full flex items-center justify-center mx-auto mb-[14px]"
+						style="background: rgba(9, 88, 102, 0.08)">
+						<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="#095866" style="opacity:0.7">
 							<path d="M9.5,3A6.5,6.5 0 0,1 16,9.5C16,11.11 15.41,12.59 14.44,13.73L14.71,14H15.5L20.5,19L19,20.5L14,15.5V14.71L13.73,14.44C12.59,15.41 11.11,16 9.5,16A6.5,6.5 0 0,1 3,9.5A6.5,6.5 0 0,1 9.5,3M9.5,5C7,5 5,7 5,9.5C5,12 7,14 9.5,14C12,14 14,12 14,9.5C14,7 12,5 9.5,5Z" />
 						</svg>
 					</div>
 					<p class="text-[1rem] text-[#1d2738] mb-[6px]" style="font-weight:700">Spedizione non trovata</p>
-					<p class="text-[0.875rem] text-[#777] mb-[20px] max-w-[44ch] mx-auto">
-						Il codice inserito non corrisponde a nessuna spedizione nel nostro archivio. Se hai un codice BRT, prova direttamente sul sito del corriere.
+					<p class="text-[0.875rem] text-[#777] mb-[16px] max-w-[44ch] mx-auto">
+						Il codice inserito non corrisponde a nessuna spedizione nel nostro archivio.
 					</p>
-					<a
-						v-if="trackingResult.brt_tracking_url"
-						:href="trackingResult.brt_tracking_url"
-						target="_blank"
-						rel="noopener noreferrer"
-						class="btn-secondary inline-flex items-center gap-[8px] px-[20px] py-[11px] text-[0.875rem]">
-						<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
-						Cerca su BRT
-					</a>
+
+					<!-- Suggerimenti utili -->
+					<div class="rounded-[12px] p-[14px] text-left mb-[16px] max-w-[400px] mx-auto"
+						data-surface="grey-inset">
+						<p class="text-[12px] text-[#1d2738] mb-[8px]" style="font-weight:700">Suggerimenti:</p>
+						<ul class="text-[12px] text-[#5A6474] leading-[1.8] list-none m-0 p-0">
+							<li class="flex items-start gap-[6px]">
+								<span class="text-[#095866] mt-[2px] shrink-0" style="font-weight:800">-</span>
+								Verifica di aver inserito il codice correttamente
+							</li>
+							<li class="flex items-start gap-[6px]">
+								<span class="text-[#095866] mt-[2px] shrink-0" style="font-weight:800">-</span>
+								Il tracking potrebbe non essere ancora attivo (attendi 1-2 ore)
+							</li>
+							<li class="flex items-start gap-[6px]">
+								<span class="text-[#095866] mt-[2px] shrink-0" style="font-weight:800">-</span>
+								Se hai un codice BRT, prova direttamente sul sito del corriere
+							</li>
+						</ul>
+					</div>
+
+					<div class="flex flex-wrap justify-center gap-[10px]">
+						<a
+							v-if="trackingResult.brt_tracking_url"
+							:href="trackingResult.brt_tracking_url"
+							target="_blank"
+							rel="noopener noreferrer"
+							class="btn-secondary inline-flex items-center gap-[8px] px-[20px] py-[11px] text-[0.875rem]">
+							<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+							Cerca su BRT
+						</a>
+						<NuxtLink to="/contatti"
+							class="btn-secondary inline-flex items-center gap-[8px] px-[20px] py-[11px] text-[0.875rem]">
+							<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+								<path d="M20,2H4A2,2 0 0,0 2,4V22L6,18H20A2,2 0 0,0 22,16V4A2,2 0 0,0 20,2M20,16H6L4,18V4H20V16Z" />
+							</svg>
+							Contatta l'assistenza
+						</NuxtLink>
+					</div>
 				</div>
 			</div>
 
-			<!-- Idle hint (prima della ricerca) -->
-			<div v-else-if="!trackingResult && !trackingError && !isLoading"
-				class="flex flex-col items-center py-[32px] opacity-60">
-				<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#C0C5CC" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-					<circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
-				</svg>
-				<p class="text-[0.875rem] text-[#777] mt-[8px]">Inserisci un codice per avviare la ricerca</p>
+			<!-- Idle hint (prima della ricerca) — helpful, not empty -->
+			<div v-else-if="!trackingResult && !trackingError && !isLoading">
+				<div class="rounded-[16px] overflow-hidden mb-[18px]"
+					data-shadow="soft">
+					<div class="h-[3px]" data-accent="bar" />
+					<div class="p-[18px] sm:p-[22px]" style="background: var(--gradient-page-surface)">
+						<div class="grid gap-[14px]">
+							<div class="grid gap-[6px]">
+								<h3 class="text-[#1d2738] text-[15px]" style="font-weight:700; font-family: var(--font-montserrat, Montserrat, sans-serif)">
+									Prima della ricerca
+								</h3>
+								<p class="text-[#5A6474] text-[13px] leading-[1.6]">
+									Questa pagina serve solo a trovare in fretta lo stato corretto: niente box dimostrativi inutili, solo i controlli minimi davvero utili.
+								</p>
+							</div>
+							<div class="rounded-[12px] p-[14px] sm:p-[16px]"
+								data-surface="grey-inset">
+								<ul class="grid gap-[10px] m-0 p-0 list-none">
+									<li
+										v-for="tip in trackingTips"
+										:key="tip"
+										class="flex items-start gap-[8px] text-[13px] leading-[1.55] text-[#5A6474]">
+										<span class="mt-[6px] h-[6px] w-[6px] rounded-full bg-[#095866] shrink-0" aria-hidden="true"></span>
+										<span>{{ tip }}</span>
+									</li>
+								</ul>
+							</div>
+						</div>
+						<p class="text-center mt-[14px]">
+							<NuxtLink to="/guide" class="text-[#095866] text-[13px] hover:opacity-80 inline-flex items-center gap-[4px]" style="font-weight:600">
+								Leggi la guida dettagliata
+								<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+							</NuxtLink>
+						</p>
+					</div>
+				</div>
+				<div
+					class="rounded-[16px] overflow-hidden"
+					data-shadow="medium">
+					<div class="p-[16px] sm:p-[18px]" style="background: rgba(255,255,255,0.72)">
+						<div class="flex flex-col gap-[12px] sm:flex-row sm:items-center sm:justify-between">
+							<div class="grid gap-[4px]">
+								<p class="text-[#1d2738] text-[14px]" style="font-weight:700">
+									Hai bisogno di un altro percorso?
+								</p>
+								<p class="text-[#5A6474] text-[13px] leading-[1.55]">
+									Se il codice non è ancora pronto, puoi passare dalla tua area spedizioni o aprire un contatto rapido.
+								</p>
+							</div>
+							<div class="flex flex-col gap-[8px] sm:flex-row sm:items-center sm:justify-end">
+								<NuxtLink
+									to="/account/spedizioni"
+									class="btn-secondary inline-flex items-center justify-center gap-[8px] px-[18px] py-[10px] text-[0.875rem]">
+									Le tue spedizioni
+								</NuxtLink>
+								<NuxtLink
+									to="/contatti"
+									class="btn-secondary inline-flex items-center justify-center gap-[8px] px-[18px] py-[10px] text-[0.875rem]">
+									Contatta assistenza
+								</NuxtLink>
+							</div>
+						</div>
+					</div>
+				</div>
 			</div>
 
 			<!-- Link area personale -->
 			<p class="text-[#777] text-[0.8125rem] text-center mt-[24px]">
 				Puoi anche tracciare le tue spedizioni dall'area
-				<NuxtLink to="/account/spedizioni" class="text-[#095866] font-semibold hover:underline">Le tue spedizioni</NuxtLink>.
+				<NuxtLink to="/account/spedizioni" class="text-[#095866] font-semibold hover:opacity-80">Le tue spedizioni</NuxtLink>.
 			</p>
 
+			</div>
 		</div>
+
+		<!-- -- ARCHIVIATO 2026-04-20: Scanner QR (_archive/2026-04-20-features-rimosse/scanner-qr) --
+		<ClientOnly>
+			<TrackingQrScanner
+				v-if="showQrScannerButton"
+				:open="qrScannerOpen"
+				@close="closeQrScanner"
+				@detected="onQrDetected" />
+		</ClientOnly>
+		-- END ARCHIVIATO -->
 	</div>
 </template>
+
+<style scoped>
+/* -- ARCHIVIATO 2026-04-20: Scanner QR (_archive/2026-04-20-features-rimosse/scanner-qr) --
+.qr-scan-btn {
+	width: 100%;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 8px;
+	height: 42px;
+	border-radius: 999px;
+	background: rgba(9, 88, 102, 0.06);
+	border: 1px dashed rgba(9, 88, 102, 0.4);
+	color: #095866;
+	font-size: 0.875rem;
+	font-weight: 700;
+	cursor: pointer;
+	transition: background 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+}
+.qr-scan-btn:hover {
+	background: rgba(9, 88, 102, 0.1);
+	border-color: rgba(9, 88, 102, 0.65);
+}
+.qr-scan-btn:active {
+	transform: scale(0.98);
+}
+-- END ARCHIVIATO -- */
+</style>

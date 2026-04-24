@@ -1,164 +1,57 @@
-# REGOLE OBBLIGATORIE PER CLAUDE
+# CLAUDE.md — Istruzioni per Claude Code in questo repo
 
-## ⚠️ TESTING OBBLIGATORIO - PRIORITÀ ASSOLUTA
+> Questo file viene letto automaticamente da Claude Code (versione CLI/SDK)
+> all'apertura del progetto. Contiene convenzioni che valgono per TUTTE le
+> sessioni AI sulla repo.
 
-**PRIMA DI DIRE "FATTO" O "PRONTO", ESEGUIRE SEMPRE QUESTI TEST:**
+## Stack
+- Frontend: `nuxt-spedizionefacile-master/` (Nuxt 3 + Vue 3 + Pinia + Tailwind + Nuxt UI)
+- Backend: `laravel-spedizionefacile-main/` (Laravel 12 + Sanctum + Stripe + BRT)
+- Docs essenziali: `docs/` (22 docs + 3 ADR + ARCHITECTURE_MAP.md per overview visiva)
 
-### 1. VERIFICA COMPONENTI ICON (ERRORE COMUNE)
-```bash
-# Cerca tutti i componenti <Icon> che causano errori
-grep -rn "<Icon" nuxt-spedizionefacile-master/pages/
-grep -rn "<Icon" nuxt-spedizionefacile-master/components/
+## Quickstart
+- Setup completo: `docs/QUICKSTART.md` (15 min)
+- Onboarding dev: `docs/ONBOARDING.md` (30 min)
+- Mappa visuale: `docs/ARCHITECTURE_MAP.md`
 
-# SE TROVI <Icon> → SOSTITUISCI CON SVG INLINE
-# Il progetto NON ha @iconify installato!
-```
+## Convenzioni codice
+- **Prezzi**: backend in cents (`MyMoney` / moneyphp). Frontend usa `formatPrice()` che divide per 100.
+- **Auth**: Sanctum SPA cookie + CSRF. Usa `useSanctumClient()` per chiamate API, NON $fetch raw.
+- **Routes API**: `/api/*` prefix automatico per `routes/api/*.php`. Webhooks BRT su `/webhooks/brt/tracking` (web.php, NO `/api`).
+- **Componenti**: configurato `pathPrefix: false` — componenti accessibili col loro nome file (es. `<ServizioGrid>`, non `<ServiziServizioGrid>`).
+- **Palette**: teal `#095866` + arancione `#E44203` + neutri. **Mai blu** (no `blue-*`, `indigo-*`, `sky-*`, `slate-*` Tailwind).
+- **Tokens CSS**: in `assets/css/main.css` (vedi `--color-brand-*`). Preferire `var(--token, #fallback)` a hex hardcoded.
 
-### 2. VERIFICA IMPORT MANCANTI
-```bash
-# Cerca import di librerie non installate
-grep -rn "import.*from.*@iconify" nuxt-spedizionefacile-master/
-grep -rn "import.*Icon" nuxt-spedizionefacile-master/
+## CSS architecture (importante — evita bug visivi)
+Alcuni CSS sono caricati SOLO da pagine/componenti specifici (code-splitting route-specific):
+- `shipment-step.css` → solo `pages/la-tua-spedizione/[step].vue`
+- `preventivo.css` → solo `components/Preventivo.vue`
+- `autenticazione.css` → solo `components/auth/AuthOverlayModal.vue` + pages auth (`login`, `registrazione`, `recupera-password`, `aggiorna-password`, `verifica-email`)
+- `contatti.css`, `servizi.css`, `homepage-servizi.css` → solo pagine/componenti corrispondenti
 
-# SE TROVI IMPORT DI ICON → RIMUOVI
-```
+**REGOLA**: se scrivi una classe CSS **condivisa** tra componenti che possono vivere su pagine diverse (es. pill button, segmented control, form field), NON metterla in un CSS route-specific. Mettila in:
+- `assets/css/components/sf-segment.css` (segmented + flow CTA + btn-compact già qui)
+- `assets/css/main.css` (tokens globali)
+- un nuovo file in `assets/css/components/` importato da `main.css`
 
-### 3. VERIFICA SINTASSI VUE
-```bash
-# Controlla che non ci siano tag non chiusi o errori sintattici
-cd nuxt-spedizionefacile-master
-npm run lint 2>&1 | head -50
-```
+Esempio vissuto: `.sf-shared-segment*` era solo in `shipment-step.css` → il segmented "Pacco/Pallet/Valigia" nell'homepage era senza stile. Spostato in `components/sf-segment.css` ora funziona ovunque.
 
-### 4. VERIFICA BUILD (se possibile)
-```bash
-# Testa che il progetto compili senza errori
-cd nuxt-spedizionefacile-master
-npm run build 2>&1 | grep -i "error" | head -20
-```
+**Come capire se una classe va globale**: grep il nome della classe fuori dal suo CSS di definizione. Se è usata in `components/` NON del dominio del CSS (es. classe in `shipment-step.css` usata da `auth/`), va spostata in globale.
 
-### 5. VERIFICA CONSOLE ERRORS
-```bash
-# Cerca console.error, console.warn nel codice
-grep -rn "console.error\|console.warn" nuxt-spedizionefacile-master/pages/la-tua-spedizione/
-```
+## Test
+- Frontend: `npx playwright test tests/e2e/*.spec.ts` (28 specs)
+- Backend: `php artisan test` (52 test files)
+- Build: `npm run build` deve essere verde
 
----
+## Regole AI
+- Mai `git commit` senza permesso esplicito utente
+- Italiano per tutto (commenti, doc, output)
+- Verifica con preview MCP dopo ogni modifica visibile
+- Max 3 agent paralleli
+- Riferimento standard UX: Awwwards / Baymard / NN Group
 
-## 📋 CHECKLIST PRE-COMPLETAMENTO
-
-Prima di dire all'utente che il lavoro è completato:
-
-- [ ] ✅ Nessun componente `<Icon>` nel codice
-- [ ] ✅ Nessun import di librerie non installate
-- [ ] ✅ Sintassi Vue corretta (lint passa)
-- [ ] ✅ Build funziona (se testabile)
-- [ ] ✅ Nessun console.error prevedibile
-- [ ] ✅ File modificati verificati con grep
-
----
-
-## 🚫 ERRORI DA EVITARE SEMPRE
-
-### 1. Componente `<Icon>`
-**SITUAZIONE**:
-- Il componente `<Icon>` È disponibile (da @nuxt/ui)
-- SOLO icon set `mdi:*` è installato (@iconify-json/mdi)
-- Altri set come `eos-icons:*` NON sono disponibili
-
-**SOLUZIONE**: Usare SEMPRE SVG inline per performance e indipendenza
-
-❌ **SBAGLIATO** (causa errore):
-```vue
-<Icon name="eos-icons:bubble-loading" />
-```
-
-⚠️ **FUNZIONA MA SCONSIGLIATO**:
-```vue
-<Icon name="mdi:arrow-left" />
-```
-
-✅ **CORRETTO** (preferito):
-```vue
-<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-  <path d="M19 12H5M12 19l-7-7 7-7"/>
-</svg>
-```
-
-**PERCHÉ SVG INLINE È MEGLIO:**
-- ✅ Nessuna dipendenza da icon set esterni
-- ✅ Più veloce (no runtime lookup)
-- ✅ Più esplicito e manutenibile
-- ✅ Funziona sempre, zero errori
-
-### 2. Import mancanti
-**PROBLEMA**: Import di librerie non presenti in package.json
-**SOLUZIONE**: Verificare package.json PRIMA di usare import
-
-### 3. Variabili undefined
-**PROBLEMA**: Usare variabili non dichiarate in script setup
-**SOLUZIONE**: Verificare che tutte le variabili siano dichiarate con ref/reactive
-
----
-
-## 🔧 COMANDI UTILI
-
-### Verifica rapida file modificato
-```bash
-# Dopo aver modificato un file Vue
-FILE="pages/la-tua-spedizione/[step].vue"
-
-# 1. Cerca Icon
-grep -n "<Icon" $FILE
-
-# 2. Cerca import problematici
-grep -n "import.*Icon\|import.*@iconify" $FILE
-
-# 3. Conta modifiche
-git diff --stat $FILE
-
-# 4. Verifica sintassi
-npm run lint $FILE 2>&1 | head -20
-```
-
-### Installare dipendenze mancanti (se necessario)
-```bash
-cd nuxt-spedizionefacile-master
-
-# Verifica cosa è installato
-npm list | grep -i icon
-
-# Se serve installare qualcosa (CHIEDERE PRIMA ALL'UTENTE)
-# npm install @iconify-json/mdi
-```
-
----
-
-## 📝 PROCESSO STANDARD
-
-1. **MODIFICA** il codice
-2. **VERIFICA** con grep/lint (OBBLIGATORIO)
-3. **TESTA** build se possibile
-4. **DOCUMENTA** le modifiche
-5. **SOLO DOPO** dire all'utente "FATTO"
-
----
-
-## ⚡ REGOLA D'ORO
-
-**NON DIRE MAI "È PRONTO" SENZA AVER ESEGUITO I TEST**
-
-Se trovi errori durante i test:
-1. Correggili IMMEDIATAMENTE
-2. Ri-testa
-3. Solo dopo comunica all'utente
-
----
-
-## 🎯 OBIETTIVO
-
-**ZERO ERRORI NEL TERMINALE**
-**ZERO ERRORI IN CONSOLE BROWSER**
-**ZERO IMPORT MANCANTI**
-
-Questo documento è la BIBBIA del testing. Seguirlo SEMPRE.
+## Riferimenti
+- `docs/README.md` — indice navigabile completo
+- `docs/SECURITY.md` — baseline OWASP
+- `docs/GOLIVE_CHECKLIST.md` — checklist deploy
+- `docs/GDPR_COMPLETO.md` — compliance GDPR

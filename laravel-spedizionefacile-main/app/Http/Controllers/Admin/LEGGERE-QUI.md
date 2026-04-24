@@ -1,28 +1,25 @@
-# Controllers/Admin - Leggere Qui
+# Controllers/Admin - Puntatore Locale
 
-Questa cartella contiene i controller del **pannello di amministrazione**. Tutte le rotte qui richiedono autenticazione + ruolo Admin (middleware `auth:sanctum` + `CheckAdmin`).
+Questa guida locale non e' piu' autorevole: i controller admin vanno letti come
+boundary HTTP di superfici gia' mappate nelle docs canoniche.
 
-## File principali
+Per orientarti bene:
 
-1. **OrderManagementController.php** - Lista ordini, cambio stato, lista spedizioni BRT, rigenerazione etichette, gestione PUDO.
-2. **DashboardController.php** - Statistiche della dashboard admin (ordini, utenti, fatturato).
-3. **UserManagementController.php** - Lista utenti, approvazione, cambio ruolo, cambio tipo utente, eliminazione.
-4. **WalletManagementController.php** - Panoramica portafogli, movimenti utente, approvazione/rifiuto prelievi.
-5. **ContentController.php** - Messaggi di contatto ricevuti, impostazioni generali del sito.
-6. **CouponController.php** - CRUD coupon sconto (creazione, modifica, eliminazione).
-7. **HomepageImageController.php** - Upload e recupero immagine homepage.
-8. **ReferralStatsController.php** - Statistiche sul sistema referral.
+- [../../../../../docs/BACKEND_STRUCTURE.md](../../../../../docs/BACKEND_STRUCTURE.md)
+- [../../../../../docs/FEATURE_BOUNDARIES.md](../../../../../docs/FEATURE_BOUNDARIES.md)
+- [../../routes/api/README.md](../../routes/api/README.md)
 
-## Come si usa
+Entry point locali consigliati:
 
-Tutti questi controller sono chiamati dal frontend Nuxt (pagine `/admin/*`). Le rotte sono definite in `routes/api.php` sotto il gruppo `prefix('admin')`.
+1. `OrderManagementController.php`
+2. `DashboardController.php`
+3. `UserManagementController.php`
 
-## Quale file modificare per...
+Regola pratica:
 
-| Esigenza | File |
-|----------|------|
-| Aggiungere filtri alla lista ordini | `OrderManagementController.php` metodo `orders()` |
-| Aggiungere statistiche alla dashboard | `DashboardController.php` |
-| Cambiare la gestione utenti | `UserManagementController.php` |
-| Gestire i prelievi commissioni | `WalletManagementController.php` |
-| Gestire i contenuti del sito | `ContentController.php` |
+- controller admin = boundary HTTP operativo
+- service = business logic vera
+- docs canoniche = `docs/`
+
+Se trovi informazioni in conflitto tra questo file e `docs/`, vale sempre
+`docs/`.

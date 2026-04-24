@@ -1,0 +1,29 @@
+#!/usr/bin/env sh
+
+# Pre-push: gate più pesante. Lanciato solo una volta per push, non per commit.
+# Obiettivo: impedire che arrivi su remote codice che non typechecka o con unit
+# test rotti. E2E/integration restano a CI.
+
+ROOT="$(git rev-parse --show-toplevel)"
+
+# --- Nuxt: vue-tsc typecheck ---
+echo "[husky] pre-push: Nuxt typecheck"
+cd "$ROOT/nuxt-spedizionefacile-master" || exit 1
+npm run typecheck || {
+	echo "[husky] typecheck fallito — fixa i type error prima del push."
+	exit 1
+}
+
+# --- Laravel: unit test suite veloce ---
+cd "$ROOT/laravel-spedizionefacile-main" || exit 1
+if [ -f artisan ] && [ -x vendor/bin/phpunit ]; then
+	echo "[husky] pre-push: php artisan test --testsuite=Unit"
+	php artisan test --testsuite=Unit --stop-on-failure || {
+		echo "[husky] unit test falliti — fixa prima del push."
+		exit 1
+	}
+else
+	echo "[husky] Laravel non installato (vendor mancante) — skip unit test."
+fi
+
+exit 0

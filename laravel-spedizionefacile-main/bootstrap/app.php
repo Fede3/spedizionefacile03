@@ -20,9 +20,15 @@
  */
 
 use Illuminate\Foundation\Application;
+use Illuminate\Foundation\Configuration\Exceptions;
+use Illuminate\Auth\AuthenticationException;
 use Illuminate\Http\Exceptions\ThrottleRequestsException;
 use Illuminate\Routing\Exceptions\InvalidSignatureException;
+// -- ARCHIVIATO 2026-04-20 -- use App\Http\Middleware\AuthenticateProApiKey;
 use App\Http\Middleware\CheckAdmin;
+use App\Http\Middleware\HydrateSanctumFrontendHeaders;
+use App\Http\Middleware\SentryContext;
+use App\Support\AuthUiCookie;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -36,6 +42,12 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function ($middleware) {
+        // Se il browser o il proxy non inviano Origin/Referer sulle chiamate API
+        // stateful, Sanctum puo' trattarle come stateless e perdere la sessione.
+        // Questo middleware ricostruisce gli header trusted prima che entri in gioco
+        // la pipeline statefulApi.
+        $middleware->prepend(HydrateSanctumFrontendHeaders::class);
+
         // Abilita l'autenticazione "stateful" per le API (Sanctum SPA).
         // Senza questo, Sanctum non userebbe i cookie di sessione per le API,
         // e l'autenticazione SPA (Single Page Application) non funzionerebbe.
@@ -64,14 +76,35 @@ return Application::configure(basePath: dirname(__DIR__))
         // il token XSRF-TOKEN del browser.
         $middleware->validateCsrfTokens(except: [
             'stripe/webhook',
+            'webhooks/brt/tracking',
             'auth/apple/callback',
         ]);
 
         // Aggiunge le intestazioni di sicurezza a TUTTE le risposte
         // (vedi app/Http/Middleware/SecurityHeaders.php per i dettagli)
         $middleware->append(\App\Http\Middleware\SecurityHeaders::class);
+
+        // SENTRY-OBS-01: contesto Sentry (user id + ruolo, ip hash, route name).
+        // Eseguito DOPO trustProxies cosi' $request->ip() e' quello vero.
+        // NON contiene PII: conforme GDPR. Vedi app/Http/Middleware/SentryContext.php.
+        $middleware->append(SentryContext::class);
+
+        // -- ARCHIVIATO 2026-04-20 --
+        // PRO-API: alias middleware per autenticazione via X-Pro-Api-Key.
+        // Uso: Route::middleware('pro.api')->... oppure 'pro.api:shipments:read'
+        // $middleware->alias([
+        //     'pro.api' => AuthenticateProApiKey::class,
+        // ]);
     })
-    ->withExceptions(function ($exceptions) {
+    ->withExceptions(function (Exceptions $exceptions) {
+        $exceptions->render(function (AuthenticationException $e, $request) {
+            if ($request->is('api/*') || $request->expectsJson()) {
+                return response()->json([
+                    'message' => 'Unauthenticated.',
+                ], 401)->cookie(AuthUiCookie::forget());
+            }
+        });
+
         // Se un link di verifica email ha la firma scaduta o non valida,
         // reindirizza al frontend con un messaggio chiaro invece di mostrare
         // la pagina di errore generica di Laravel (errore 403 brutto)
@@ -85,5 +118,17 @@ return Application::configure(basePath: dirname(__DIR__))
             return response()->json([
                 'message' => 'Hai superato il numero massimo di tentativi. Riprova tra ' . ($e->getHeaders()['Retry-After'] ?? 60) . ' secondi.'
             ], 429);
+        });
+
+        // SENTRY-OBS-02: invio a Sentry di TUTTE le eccezioni non gestite.
+        // Laravel 11 pattern: $exceptions->report() hooka il reporter SENZA
+        // sostituirlo — l'exception continua a fluire per altri handler
+        // (es. log stack) e la gestione di rendering resta invariata.
+        // Il filtro ignore_exceptions e' applicato da sentry.php#before_send
+        // implicitamente via Integration helper.
+        $exceptions->report(function (\Throwable $e) {
+            if (class_exists(\Sentry\Laravel\Integration::class) && app()->bound('sentry')) {
+                \Sentry\Laravel\Integration::captureUnhandledException($e);
+            }
         });
     })->create();

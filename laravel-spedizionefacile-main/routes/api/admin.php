@@ -16,8 +16,11 @@ use App\Http\Controllers\Admin\ContentController as AdminContentController;
 use App\Http\Controllers\Admin\HomepageImageController;
 use App\Http\Controllers\Admin\CouponController as AdminCouponController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
+use App\Http\Controllers\Admin\AdminBankTransferController;
+use App\Http\Controllers\Admin\AuditLogController as AdminAuditLogController;
 use App\Http\Controllers\Admin\OrderManagementController;
 use App\Http\Controllers\Admin\ReferralStatsController;
+// -- ARCHIVIATO 2026-04-20 -- use App\Http\Controllers\Admin\SdiInvoiceController;
 use App\Http\Controllers\Admin\UserManagementController;
 use App\Http\Controllers\Admin\WalletManagementController;
 use App\Http\Middleware\CheckAdmin;
@@ -33,6 +36,10 @@ Route::middleware(['auth:sanctum', CheckAdmin::class])->prefix('admin')->group(f
     Route::get('/shipments', [OrderManagementController::class, 'shipments']);
     Route::patch('/orders/{order}/pudo', [OrderManagementController::class, 'updateOrderPudo']);
     Route::post('/orders/{order}/regenerate-label', [OrderManagementController::class, 'regenerateLabel']);
+
+    // F05 — Bonifici in attesa (audit BRT 2026-04-18)
+    Route::get('/orders/awaiting-bank-transfer', [AdminBankTransferController::class, 'pending']);
+    Route::post('/orders/{order}/confirm-bank-transfer', [AdminBankTransferController::class, 'confirm']);
 
     // --- Portafoglio e Prelievi ---
     Route::get('/wallet/overview', [WalletManagementController::class, 'walletOverview']);
@@ -62,13 +69,15 @@ Route::middleware(['auth:sanctum', CheckAdmin::class])->prefix('admin')->group(f
     Route::get('/settings', [AdminContentController::class, 'settings']);
     Route::post('/settings', [AdminContentController::class, 'updateSettings']);
 
-    // --- Articoli (blog, guide, servizi) ---
+    // --- Articoli (guide, servizi) ---
     Route::get('/articles', [ArticleController::class, 'index']);
     Route::post('/articles', [ArticleController::class, 'store']);
     Route::get('/articles/{article}', [ArticleController::class, 'show']);
     Route::put('/articles/{article}', [ArticleController::class, 'update']);
     Route::delete('/articles/{article}', [ArticleController::class, 'destroy']);
-    Route::post('/articles/{article}/upload-image', [ArticleController::class, 'uploadImage']);
+    // Sprint 6.7: throttle upload admin (30 req/min = margine per bulk uploads)
+    Route::post('/articles/{article}/upload-image', [ArticleController::class, 'uploadImage'])
+        ->middleware('throttle:30,1');
 
     // --- Fasce di prezzo ---
     Route::get('/price-bands', [PriceBandController::class, 'index']);
@@ -78,10 +87,12 @@ Route::middleware(['auth:sanctum', CheckAdmin::class])->prefix('admin')->group(f
     // --- Promozioni ---
     Route::get('/promo-settings', [PriceBandController::class, 'getPromoSettings']);
     Route::post('/promo-settings', [PriceBandController::class, 'savePromoSettings']);
-    Route::post('/promo-settings/upload-image', [PriceBandController::class, 'uploadPromoImage']);
+    Route::post('/promo-settings/upload-image', [PriceBandController::class, 'uploadPromoImage'])
+        ->middleware('throttle:30,1');
 
     // --- Homepage ---
-    Route::post('/homepage-image', [HomepageImageController::class, 'uploadHomepageImage']);
+    Route::post('/homepage-image', [HomepageImageController::class, 'uploadHomepageImage'])
+        ->middleware('throttle:30,1');
     Route::get('/homepage-image', [HomepageImageController::class, 'getHomepageImage']);
 
     // --- Coupon ---
@@ -89,4 +100,19 @@ Route::middleware(['auth:sanctum', CheckAdmin::class])->prefix('admin')->group(f
     Route::post('/coupons', [AdminCouponController::class, 'storeCoupon']);
     Route::put('/coupons/{coupon}', [AdminCouponController::class, 'updateCoupon']);
     Route::delete('/coupons/{coupon}', [AdminCouponController::class, 'deleteCoupon']);
+
+    // --- Audit log (F14 audit BRT 2026-04-18) ---
+    // Lettura registro attivita' utenti/admin + export CSV.
+    Route::get('/audit-logs', [AdminAuditLogController::class, 'index']);
+    Route::get('/audit-logs/actions', [AdminAuditLogController::class, 'actions']);
+    Route::get('/audit-logs/export', [AdminAuditLogController::class, 'export'])
+        ->middleware('throttle:5,1');
+    Route::get('/audit-logs/{auditLog}', [AdminAuditLogController::class, 'show']);
+
+    // -- ARCHIVIATO 2026-04-20 -- Fatturazione elettronica SDI (F06 audit BRT)
+    // -- ARCHIVIATO 2026-04-20 -- Modulo archiviato in _archive/2026-04-20-features-rimosse/sdi-fatturazione/
+    // -- ARCHIVIATO 2026-04-20 -- Route::get('/sdi/invoices', [SdiInvoiceController::class, 'index']);
+    // -- ARCHIVIATO 2026-04-20 -- Route::middleware(['throttle:10,1'])->post('/sdi/invoices/{order}/generate', [SdiInvoiceController::class, 'generate']);
+    // -- ARCHIVIATO 2026-04-20 -- Route::get('/sdi/invoices/{order}/download', [SdiInvoiceController::class, 'download']);
+    // -- ARCHIVIATO 2026-04-20 -- Route::get('/sdi/invoices/{order}/status', [SdiInvoiceController::class, 'status']);
 });

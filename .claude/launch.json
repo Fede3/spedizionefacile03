@@ -2,11 +2,30 @@
   "version": "0.0.1",
   "configurations": [
     {
-      "name": "spedizionefacile",
-      "runtimeExecutable": "node",
-      "runtimeArgs": [".claude/preview-proxy.js"],
-      "port": 8790,
-      "autoPort": true
+      "name": "caddy-proxy",
+      "runtimeExecutable": "caddy",
+      "runtimeArgs": ["run", "--config", "Caddyfile"],
+      "port": 8787,
+      "autoPort": false,
+      "env": {
+        "SF_FRONTEND_PROXY_TARGET": "127.0.0.1:3000"
+      }
+    },
+    {
+      "name": "nuxt-dev",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["nuxi", "dev", "--host", "127.0.0.1", "--port", "8787"],
+      "port": 8787,
+      "cwd": "nuxt-spedizionefacile-master",
+      "autoPort": false
+    },
+    {
+      "name": "nuxt-preview-mcp",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["nuxi", "dev", "--host", "127.0.0.1", "--port", "3002"],
+      "port": 3002,
+      "cwd": "nuxt-spedizionefacile-master",
+      "autoPort": false
     }
   ]
 }

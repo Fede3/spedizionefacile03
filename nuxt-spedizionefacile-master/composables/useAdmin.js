@@ -1,28 +1,10 @@
 /**
- * COMPOSABLE: useAdmin (useAdmin.js)
- * SCOPO: Funzioni di utilita' condivise per tutte le pagine del pannello amministrazione.
- *
- * DOVE SI USA: pages/account/amministrazione/*.vue (ordini, utenti, spedizioni, prezzi, ecc.)
- *
- * COSA RESTITUISCE:
- *   - actionLoading: ref con l'ID dell'azione in corso (per spinner)
- *   - actionMessage: ref con il messaggio di feedback ({type, text})
- *   - showSuccess(text): mostra un messaggio verde per 5 secondi
- *   - showError(e, fallback): mostra un messaggio rosso per 5 secondi
- *   - formatCurrency(val): formatta un valore come valuta italiana (es. "12,50")
- *   - formatCents(val): converte centesimi in euro formattati (es. 1250 → "12,50")
- *   - formatDate(dateStr): formatta una data nel formato italiano con ora
- *   - orderStatusConfig: colori/icone/etichette per ogni stato ordine
- *   - withdrawalStatusConfig: colori/etichette per stati prelievo
- *   - referralStatusConfig: colori/etichette per stati referral
- *   - proRequestStatusConfig: colori/etichette per richieste account Pro
- *   - downloadLabel(order): scarica l'etichetta BRT come PDF
- * ESEMPIO D'USO: const { showSuccess, formatCurrency, orderStatusConfig } = useAdmin()
- *
- * VINCOLI: formatCurrency gestisce 3 formati diversi (oggetto MyMoney, stringa, numero)
- * ERRORI TIPICI: confondere centesimi e euro — usare formatCents per valori dal DB
- * COLLEGAMENTI: laravel-spedizionefacile-main/app/Http/Controllers/BrtController.php (etichette)
+ * useAdmin — utility condivise pannello admin: loading/messaggi, format currency/date,
+ * status-config (ordini/withdrawal/referral/proRequest), download etichette BRT.
+ * ATTENZIONE cents vs euro: usa formatCents per valori dal DB (che sono in cents).
+ * formatCurrency gestisce 3 formati (MyMoney object, stringa, numero).
  */
+import { formatDateTimeIt } from '~/utils/date.js'
 import { formatEuro } from '~/utils/price.js'
 
 export const useAdmin = () => {
@@ -73,24 +55,25 @@ export const useAdmin = () => {
 	const formatCents = (val) => formatEuro(Number(val || 0) / 100);
 
 	/* Formatta una data nel formato italiano con ora */
-	const formatDate = (dateStr) => {
-		if (!dateStr) return "\u2014";
-		return new Date(dateStr).toLocaleDateString("it-IT", {
-			day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit",
-		});
-	};
+	const formatDate = (dateStr) => formatDateTimeIt(dateStr, "\u2014");
 
 	/* Configurazione colori, icone e etichette per ogni stato ordine */
 	const orderStatusConfig = {
 		pending: { label: "In attesa", bg: "bg-amber-50", text: "text-amber-700", icon: "mdi:clock-outline" },
+		awaiting_bank_transfer: { label: "In attesa di bonifico", bg: "bg-amber-50", text: "text-amber-700", icon: "mdi:bank-transfer-in" },
 		processing: { label: "In lavorazione", bg: "bg-[#eef8fa]", text: "text-[#095866]", icon: "mdi:cog-outline" },
+		label_generated: { label: "Etichetta generata", bg: "bg-[#eef8fa]", text: "text-[#095866]", icon: "mdi:label-outline" },
 		completed: { label: "Completato", bg: "bg-[#f0fdf4]", text: "text-[#0a8a7a]", icon: "mdi:check-circle-outline" },
 		payed: { label: "Pagato", bg: "bg-[#f0fdf4]", text: "text-[#0a8a7a]", icon: "mdi:credit-card-check-outline" },
 		payment_failed: { label: "Pagamento fallito", bg: "bg-red-50", text: "text-red-700", icon: "mdi:credit-card-off-outline" },
 		cancelled: { label: "Annullato", bg: "bg-gray-100", text: "text-gray-600", icon: "mdi:close-circle-outline" },
 		in_transit: { label: "In transito", bg: "bg-[#eef8fa]", text: "text-[#095866]", icon: "mdi:truck-delivery-outline" },
+		out_for_delivery: { label: "In consegna", bg: "bg-[#eef8fa]", text: "text-[#095866]", icon: "mdi:truck-fast-outline" },
 		delivered: { label: "Consegnato", bg: "bg-[#eef8fa]", text: "text-[#095866]", icon: "mdi:package-variant-closed-check" },
 		in_giacenza: { label: "In giacenza", bg: "bg-orange-50", text: "text-orange-700", icon: "mdi:package-variant" },
+		returned: { label: "Reso", bg: "bg-gray-100", text: "text-gray-600", icon: "mdi:package-variant-remove" },
+		refused: { label: "Rifiutato", bg: "bg-red-50", text: "text-red-700", icon: "mdi:close-octagon-outline" },
+		refunded: { label: "Rimborsato", bg: "bg-gray-100", text: "text-gray-600", icon: "mdi:cash-refund" },
 	};
 
 	const withdrawalStatusConfig = {

@@ -1,9 +1,4 @@
-<!--
-  FILE: pages/account/carte.vue
-  SCOPO: Gestione carte Stripe — orchestratore con sotto-componenti AccountCarteList e AccountCarteForm.
-  La logica Stripe (loadStripe, setup-intent, confirm) resta qui perche' dipende dal ciclo di vita della pagina.
--->
-<script setup>
+﻿<script setup>
 // account-carte styles are in checkout.css (loaded globally via main.css)
 
 useHead({
@@ -20,6 +15,7 @@ useSeoMeta({
 	ogTitle: 'Carte account | SpediamoFacile',
 	description: 'Gestisci carte salvate e metodo di pagamento predefinito dal tuo account SpediamoFacile.',
 	ogDescription: 'Carte salvate e metodi di pagamento dell account SpediamoFacile.',
+	robots: 'noindex, nofollow',
 });
 
 const { refreshIdentity, user } = useSanctumAuth();
@@ -75,6 +71,33 @@ const textMessageType = ref('info');
 const deleteConfirmId = ref(null);
 
 const { data: payments, status, refresh } = useSanctumFetch('/api/stripe/payment-methods', { lazy: true });
+const paymentItems = computed(() => (Array.isArray(payments.value?.data) ? payments.value.data : []));
+const cardsStats = computed(() => ({
+	total: paymentItems.value.length,
+	defaults: paymentItems.value.filter((payment) => payment?.default).length,
+}));
+const getBrandLabel = (brand) => {
+	const map = { visa: 'Visa', mastercard: 'Mastercard', amex: 'Amex', discover: 'Discover' };
+	return map[String(brand || '').toLowerCase()] || brand || 'Carta';
+};
+const defaultPaymentLabel = computed(() => {
+	const defaultPayment = paymentItems.value.find((payment) => payment?.default);
+	return defaultPayment
+		? `${getBrandLabel(defaultPayment.brand)} •••• ${defaultPayment.last4}`
+		: 'Nessuna ancora';
+});
+const cardsHeader = computed(() => {
+	if (showFormPayments.value) {
+		return {
+			title: 'Aggiungi carta',
+			description: 'Salva un metodo di pagamento in modo sicuro per checkout, wallet e prossime spedizioni.',
+		};
+	}
+	return {
+		title: 'Carte e pagamenti',
+		description: 'Gestisci metodi salvati e wallet senza uscire dalla tua area account.',
+	};
+});
 
 const getStripeErrorMessage = (error) => {
 	const errorMap = {
@@ -243,79 +266,75 @@ const togglePaymentForm = async () => {
 </script>
 
 <template>
-	<section class="min-h-[600px] py-[28px] desktop:py-[56px] bg-white">
+	<section class="sf-account-shell min-h-[600px] py-[20px] tablet:py-[24px] desktop:py-[28px]">
 		<div class="my-container">
 			<AccountPageHeader
-				:title="showFormPayments ? 'Aggiungi carta' : 'Carte e pagamenti'"
-				description="Carte e pagamenti salvati."
-				:crumbs="
-					showFormPayments
-						? [{ label: 'Account', to: '/account' }, { label: 'Carte e pagamenti', to: '/account/carte' }, { label: 'Aggiungi carta' }]
-						: [{ label: 'Account', to: '/account' }, { label: 'Carte e pagamenti' }]
-				">
-				<template v-if="!showFormPayments" #actions>
-					<div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-[8px]">
+				class="sf-account-shell-hero--compact"
+				:title="cardsHeader.title"
+				:description="cardsHeader.description"
+				current="Carte">
+				<template #actions>
+					<div class="flex flex-wrap items-center gap-[8px]">
+						<span class="sf-section-chip">{{ cardsStats.total }} salvate</span>
+						<span class="sf-section-chip">{{ cardsStats.defaults }} predefinita</span>
 						<button
-							v-if="isAdmin"
-							type="button"
-							@click="openAdminStripeSettings"
-							class="btn-cta btn-compact w-full sm:w-auto"
-							title="Gestisci la configurazione globale di Stripe">
-							<svg
-								width="15"
-								height="15"
-								viewBox="0 0 24 24"
-								fill="none"
-								stroke="currentColor"
-								stroke-width="2"
-								stroke-linecap="round"
-								stroke-linejoin="round"
-								class="align-middle mr-[4px] inline">
-								<circle cx="12" cy="12" r="3" />
-								<path
-									d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
-							</svg>
-							Impostazioni Stripe
-						</button>
-						<button
-							v-if="cardsFeatureAvailable"
+							v-if="!showFormPayments && cardsFeatureAvailable"
 							type="button"
 							@click="togglePaymentForm"
-							class="btn-cta btn-compact w-full sm:w-auto inline-flex items-center justify-center gap-[6px]">
-							<svg
-								width="17"
-								height="17"
-								viewBox="0 0 24 24"
-								fill="none"
-								stroke="currentColor"
-								stroke-width="2.5"
-								stroke-linecap="round"
-								stroke-linejoin="round">
+							class="btn-primary btn-compact inline-flex min-h-[42px] items-center justify-center gap-[6px] px-[16px] text-[0.8125rem]">
+							<svg aria-hidden="true" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
 								<line x1="12" y1="5" x2="12" y2="19" />
 								<line x1="5" y1="12" x2="19" y2="12" />
 							</svg>
 							Aggiungi carta
 						</button>
+						<button
+							v-else-if="!showFormPayments && isAdmin"
+							type="button"
+							@click="openAdminStripeSettings"
+							class="btn-secondary btn-compact inline-flex min-h-[42px] items-center justify-center gap-[6px] px-[16px] text-[0.8125rem]"
+							title="Gestisci la configurazione globale di Stripe">
+							<svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+								<circle cx="12" cy="12" r="3" />
+								<path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+							</svg>
+							Impostazioni Stripe
+						</button>
 					</div>
 				</template>
 			</AccountPageHeader>
 
-			<!-- Wallet link bar -->
 			<div
 				v-if="!showFormPayments"
-				class="mb-[16px] rounded-[12px] border border-[var(--color-brand-border)] bg-white px-[16px] py-[14px] shadow-sm desktop:px-[18px]">
-				<div class="flex flex-col gap-[10px] tablet:flex-row tablet:items-center tablet:justify-between">
-					<div>
-						<p class="text-[0.75rem] font-semibold uppercase tracking-[0.08em] text-[var(--color-brand-primary)]">Metodi salvati</p>
-						<p class="mt-[3px] text-[0.875rem] leading-[1.5] text-[#667281]">
-							{{ payments?.data?.length ? `${payments.data.length} carte salvate.` : 'Carte pronte per checkout e wallet.' }}
-						</p>
+				class="mb-[20px] grid gap-[14px] desktop:grid-cols-[minmax(0,1.35fr)_minmax(260px,0.65fr)]">
+				<div class="rounded-[16px] bg-white px-[16px] py-[14px]" style="box-shadow: 0 2px 8px rgba(9,88,102,0.06), 0 0 0 1px rgba(9,88,102,0.04);">
+					<p class="text-[0.7rem] font-semibold uppercase tracking-[1px] text-[var(--color-brand-primary)]">Pagamenti pronti</p>
+					<h2 class="mt-[4px] font-montserrat text-[1rem] font-[800] text-[var(--color-brand-text)]">Carte salvate e wallet nello stesso punto</h2>
+					<p class="mt-[4px] text-[0.8125rem] leading-[1.5] text-[var(--color-brand-text-secondary)]">
+						Conserva i metodi usati piu spesso per checkout e ricariche, con il predefinito sempre leggibile e accesso rapido al portafoglio.
+					</p>
+					<div class="mt-[10px] flex flex-wrap gap-[6px]">
+						<span class="inline-flex items-center gap-[5px] rounded-full bg-[#F0F6F7] px-[10px] py-[4px] text-[0.6875rem] font-semibold text-[var(--color-brand-primary)]">
+							{{ cardsStats.total }} carte salvate
+						</span>
+						<span class="inline-flex items-center gap-[5px] rounded-full bg-[rgba(9,88,102,0.06)] px-[10px] py-[4px] text-[0.6875rem] font-semibold text-[var(--color-brand-primary)]">
+							{{ cardsStats.defaults }} predefinita
+						</span>
 					</div>
-					<NuxtLink
-						to="/account/portafoglio"
-						class="btn-secondary btn-compact inline-flex min-h-[42px] items-center justify-center px-[14px] py-[8px] text-[0.8125rem] font-semibold">
-						Apri portafoglio
-					</NuxtLink>
+					<div class="mt-[12px]">
+						<NuxtLink
+							to="/account/portafoglio"
+							class="btn-secondary btn-compact inline-flex min-h-[38px] items-center justify-center gap-[6px] px-[12px] py-[6px] text-[12px] font-semibold">
+							Apri portafoglio
+						</NuxtLink>
+					</div>
+				</div>
+				<div class="rounded-[16px] bg-[#F8FCFD] px-[16px] py-[14px]" style="box-shadow: 0 1px 3px rgba(9,88,102,0.06);">
+					<p class="text-[0.7rem] font-semibold uppercase tracking-[1px] text-[var(--color-brand-primary)]">Metodo predefinito</p>
+					<p class="mt-[6px] text-[0.9375rem] font-bold text-[var(--color-brand-text)]">{{ defaultPaymentLabel }}</p>
+					<p class="mt-[4px] text-[0.8125rem] leading-[1.5] text-[var(--color-brand-text-secondary)]">
+						{{ cardsStats.defaults ? 'La carta principale resta in evidenza e puoi cambiarla in un tocco.' : 'Appena scegli una carta predefinita la vedrai qui, sempre pronta per checkout e wallet.' }}
+					</p>
 				</div>
 			</div>
 
@@ -327,8 +346,8 @@ const togglePaymentForm = async () => {
 					textMessageType === 'success'
 						? 'bg-[#f0fdf4] text-[#166534] ring-[1px] ring-[#166534]/10'
 						: textMessageType === 'error'
-							? 'bg-[#FFF5F2] text-[#E44203] ring-[1px] ring-[#E44203]/10'
-							: 'bg-[#eef7f8] text-[#095866] border border-[#B8DDE3]',
+							? 'bg-[#FEF2F2] text-[#B91C1C] ring-[1px] ring-[#B91C1C]/10'
+							: 'bg-[#eef7f8] text-[var(--color-brand-primary)]',
 				]">
 				{{ textMessage }}
 			</div>
@@ -336,10 +355,11 @@ const togglePaymentForm = async () => {
 			<!-- Stripe not configured banner -->
 			<div
 				v-if="!stripeConfigured && !configLoading && !showFormPayments"
-				class="mb-[20px] p-[16px] bg-amber-50 border border-amber-200 rounded-[12px]">
+				class="mb-[20px] p-[16px] bg-amber-50 rounded-[16px] sf-animate-in sf-animate-in-2"
+				style="box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
 				<div class="flex items-start gap-[12px]">
-					<div class="w-[40px] h-[40px] rounded-[50px] bg-amber-100 flex items-center justify-center shrink-0">
-						<svg
+					<div class="w-[36px] h-[36px] rounded-full bg-amber-100 flex items-center justify-center shrink-0">
+						<svg aria-hidden="true"
 							width="20"
 							height="20"
 							viewBox="0 0 24 24"
@@ -358,12 +378,12 @@ const togglePaymentForm = async () => {
 						<p class="text-[0.75rem] text-[var(--color-brand-text-secondary)] leading-[1.5] mb-[10px]">
 							<span v-if="isAdmin">Per abilitare carte, checkout e ricariche wallet configura Stripe dal pannello amministrazione.</span>
 							<span v-else>
-								I pagamenti con carta non sono ancora attivi su questo sito. Quando Stripe sarà configurato dall'amministratore potrai
+								I pagamenti con carta non sono ancora attivi su questo sito. Quando Stripe sarÁ  configurato dall'amministratore potrai
 								aggiungere qui le tue carte, usarle al checkout e ricaricare il wallet.
 							</span>
 						</p>
 						<button v-if="isAdmin" @click="openAdminStripeSettings" class="btn-secondary btn-compact inline-flex items-center gap-[6px]">
-							<svg
+							<svg aria-hidden="true"
 								width="15"
 								height="15"
 								viewBox="0 0 24 24"
@@ -407,3 +427,4 @@ const togglePaymentForm = async () => {
 		</div>
 	</section>
 </template>
+

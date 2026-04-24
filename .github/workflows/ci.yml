@@ -1,0 +1,293 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  # ─────────────────────────────────────────────────────────────
+  # Job 1: Laravel backend (PHP 8.3 + PostgreSQL 15)
+  # ─────────────────────────────────────────────────────────────
+  laravel:
+    name: Laravel (PHP ${{ matrix.php }} + PostgreSQL)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    strategy:
+      fail-fast: false
+      matrix:
+        php: ['8.3']
+
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_USER: laravel
+          POSTGRES_PASSWORD: laravel
+          POSTGRES_DB: laravel_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U laravel"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    defaults:
+      run:
+        working-directory: laravel-spedizionefacile-main
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP ${{ matrix.php }}
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: pdo, pdo_pgsql, gd, redis, intl, bcmath, mbstring, xml, zip, curl
+          coverage: xdebug
+          tools: composer:v2
+
+      - name: Validate composer.json
+        run: composer validate --strict
+
+      - name: Cache Composer dependencies
+        uses: actions/cache@v4
+        with:
+          path: laravel-spedizionefacile-main/vendor
+          key: ${{ runner.os }}-composer-${{ matrix.php }}-${{ hashFiles('laravel-spedizionefacile-main/composer.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-composer-${{ matrix.php }}-
+
+      - name: Install Composer dependencies
+        run: composer install --prefer-dist --no-progress --no-interaction
+
+      - name: Copy .env
+        run: |
+          cp .env.example .env 2>/dev/null || cat > .env <<'EOF'
+          APP_NAME=SpedizioneFacile
+          APP_ENV=testing
+          APP_DEBUG=true
+          APP_URL=http://localhost
+          DB_CONNECTION=pgsql
+          DB_HOST=127.0.0.1
+          DB_PORT=5432
+          DB_DATABASE=laravel_test
+          DB_USERNAME=laravel
+          DB_PASSWORD=laravel
+          REDIS_HOST=127.0.0.1
+          REDIS_PORT=6379
+          CACHE_DRIVER=array
+          QUEUE_CONNECTION=sync
+          SESSION_DRIVER=array
+          MAIL_MAILER=array
+          EOF
+
+      - name: Generate application key
+        run: php artisan key:generate
+
+      - name: Run database migrations
+        run: php artisan migrate --force
+
+      - name: Run Laravel Pint (code style)
+        run: composer lint
+        continue-on-error: true
+
+      - name: Run PHPStan (static analysis)
+        run: composer analyse
+        continue-on-error: true
+
+      - name: Run tests with coverage
+        run: php artisan test --parallel --coverage-clover coverage.xml
+        env:
+          DB_CONNECTION: pgsql
+          DB_HOST: 127.0.0.1
+          DB_PORT: 5432
+          DB_DATABASE: laravel_test
+          DB_USERNAME: laravel
+          DB_PASSWORD: laravel
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          files: laravel-spedizionefacile-main/coverage.xml
+          flags: backend
+          name: laravel-coverage
+          fail_ci_if_error: false
+          token: ${{ secrets.CODECOV_TOKEN }}
+
+  # ─────────────────────────────────────────────────────────────
+  # Job 2: Nuxt build + typecheck + lint
+  # ─────────────────────────────────────────────────────────────
+  nuxt-build:
+    name: Nuxt build (Node ${{ matrix.node }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    strategy:
+      fail-fast: false
+      matrix:
+        node: ['22']
+
+    defaults:
+      run:
+        working-directory: nuxt-spedizionefacile-master
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node ${{ matrix.node }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: 'npm'
+          cache-dependency-path: nuxt-spedizionefacile-master/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci --prefer-offline --no-audit
+
+      - name: Lint
+        run: npm run lint
+        continue-on-error: true
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Build
+        run: npm run build
+        env:
+          NODE_OPTIONS: --max-old-space-size=6144
+          NUXT_PUBLIC_API_BASE: http://localhost
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: nuxt-output
+          path: nuxt-spedizionefacile-master/.output
+          retention-days: 3
+
+  # ─────────────────────────────────────────────────────────────
+  # Job 3: Playwright E2E (depends on nuxt-build)
+  # ─────────────────────────────────────────────────────────────
+  playwright:
+    name: Playwright (${{ matrix.project }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    needs: nuxt-build
+
+    strategy:
+      fail-fast: false
+      matrix:
+        project: [chromium, mobile-chrome]
+
+    defaults:
+      run:
+        working-directory: nuxt-spedizionefacile-master
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: nuxt-spedizionefacile-master/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci --prefer-offline --no-audit
+
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ hashFiles('nuxt-spedizionefacile-master/package-lock.json') }}
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Download Nuxt build
+        uses: actions/download-artifact@v4
+        with:
+          name: nuxt-output
+          path: nuxt-spedizionefacile-master/.output
+
+      - name: Run Playwright tests
+        run: npx playwright test --project=${{ matrix.project }} --reporter=github,html
+        env:
+          CI: true
+
+      - name: Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-${{ matrix.project }}
+          path: nuxt-spedizionefacile-master/playwright-report
+          retention-days: 14
+
+      - name: Upload visual regression diffs
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: visual-regression-diffs-${{ matrix.project }}
+          path: |
+            nuxt-spedizionefacile-master/test-results/**/*-diff.png
+            nuxt-spedizionefacile-master/test-results/**/*-actual.png
+            nuxt-spedizionefacile-master/test-results/**/*-expected.png
+          retention-days: 14
+          if-no-files-found: ignore
+
+  # ─────────────────────────────────────────────────────────────
+  # Job 4: Security audit (composer + npm)
+  # ─────────────────────────────────────────────────────────────
+  security-audit:
+    name: Security audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP 8.3
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          tools: composer:v2
+
+      - name: Setup Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Composer audit
+        working-directory: laravel-spedizionefacile-main
+        run: composer audit --no-interaction --format=plain
+        continue-on-error: true
+
+      - name: npm audit
+        working-directory: nuxt-spedizionefacile-master
+        run: npm audit --audit-level=high
+        continue-on-error: true

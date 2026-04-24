@@ -57,7 +57,13 @@ class ShipmentDocumentDispatcher
             $errors[] = 'Email cliente non disponibile.';
         }
 
-        $adminEmail = Setting::get('support_email', config('mail.from.address'));
+        $adminEmail = trim((string) Setting::get('support_email', ''));
+        if ($adminEmail === '') {
+            $adminEmail = trim((string) Setting::get('admin_notification_email', ''));
+        }
+        if ($adminEmail === '') {
+            $adminEmail = trim((string) config('mail.from.address', ''));
+        }
         if (! empty($adminEmail)) {
             try {
                 Mail::to($adminEmail)->send(new ShipmentDocumentsMail($order));

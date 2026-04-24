@@ -46,9 +46,15 @@ class SecurityHeaders
         // Prima lascia che la richiesta venga processata normalmente
         $response = $next($request);
         $isDevelopment = app()->environment(['local', 'development']);
+
+        // Sprint 6.2 — BLOCKER GO-LIVE: RIMOSSO 'unsafe-inline' da script-src
+        // in production (XSS bypass CVSS 6.1). Laravel serve SOLO API/webhook JSON
+        // per un SPA Nuxt: nessun inline <script> server-side, CSP strict possibile.
+        // In dev: manteniamo 'unsafe-inline' 'unsafe-eval' per compatibilita tool
+        // locali (Telescope, Horizon, debugbar).
         $scriptSrc = $isDevelopment
-            ? "'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com"
-            : "'self' 'unsafe-inline' https://js.stripe.com";
+            ? "'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com https://m.stripe.network"
+            : "'self' https://js.stripe.com https://m.stripe.network";
 
         // --- INTESTAZIONI DI SICUREZZA ---
 
@@ -117,7 +123,15 @@ class SecurityHeaders
         //                                → iframe: solo Stripe (per il form di pagamento 3D Secure)
         //   object-src 'none'            → blocca tutti i plugin (Flash, Java, ecc.)
         //   base-uri 'self'              → impedisce di cambiare il base URL della pagina
-        $response->headers->set('Content-Security-Policy', "default-src 'self'; script-src {$scriptSrc}; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https://api.stripe.com https://nominatim.openstreetmap.org; frame-src https://js.stripe.com https://hooks.stripe.com; object-src 'none'; base-uri 'self'");
+        // Report-Only pre-cutover: setta CSP_REPORT_ONLY=true in .env per 48h
+        // monitoring senza bloccare richieste. Poi passa a enforce.
+        $cspHeader = env('CSP_REPORT_ONLY', false)
+            ? 'Content-Security-Policy-Report-Only'
+            : 'Content-Security-Policy';
+
+        // form-action + frame-ancestors aggiunti per OWASP best practice.
+        // Laravel serve JSON (API) → form-action 'self' blocca exfil via <form>.
+        $response->headers->set($cspHeader, "default-src 'self'; script-src {$scriptSrc}; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https://api.stripe.com https://m.stripe.network https://nominatim.openstreetmap.org; frame-src https://js.stripe.com https://hooks.stripe.com; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'");
 
         return $response;
     }

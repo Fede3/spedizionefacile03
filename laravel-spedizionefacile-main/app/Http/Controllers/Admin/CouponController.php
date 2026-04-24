@@ -23,12 +23,18 @@ class CouponController extends Controller
             'code' => 'required|string|max:50|unique:coupons,code',
             'percentage' => 'required|numeric|min:1|max:100',
             'active' => 'boolean',
+            'expires_at' => 'nullable|date|after:now',
+            'max_uses' => 'nullable|integer|min:1',
+            'max_uses_per_user' => 'nullable|integer|min:1',
         ]);
 
         $coupon = Coupon::create([
             'code' => strtoupper($data['code']),
             'percentage' => $data['percentage'],
             'active' => $data['active'] ?? true,
+            'expires_at' => $data['expires_at'] ?? null,
+            'max_uses' => $data['max_uses'] ?? null,
+            'max_uses_per_user' => $data['max_uses_per_user'] ?? null,
         ]);
 
         return response()->json(['success' => true, 'data' => $coupon], 201);
@@ -41,9 +47,14 @@ class CouponController extends Controller
             'code' => 'sometimes|string|max:50|unique:coupons,code,' . $coupon->id,
             'percentage' => 'sometimes|numeric|min:1|max:100',
             'active' => 'sometimes|boolean',
+            'expires_at' => 'nullable|date',
+            'max_uses' => 'nullable|integer|min:1',
+            'max_uses_per_user' => 'nullable|integer|min:1',
         ]);
 
-        if (isset($data['code'])) $data['code'] = strtoupper($data['code']);
+        if (isset($data['code'])) {
+            $data['code'] = strtoupper($data['code']);
+        }
         $coupon->update($data);
 
         return response()->json(['success' => true, 'data' => $coupon->fresh()]);

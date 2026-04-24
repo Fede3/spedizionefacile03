@@ -2,48 +2,42 @@
 
 /**
  * FILE: GoogleController.php
- * SCOPO: Gestisce login/registrazione tramite Google OAuth (Socialite).
+ * SCOPO: Gestisce login/registrazione tramite Google OAuth (Socialite) con
+ *        protezione CSRF (state parameter) e PKCE (RFC 7636).
+ *
+ * SICUREZZA (Sprint 6.3 — BLOCKER GO-LIVE):
+ *   - State parameter salvato in SESSIONE (non cookie) con bind al session id,
+ *     TTL 10 minuti, uso single-shot (pull elimina post-verifica). Fix per
+ *     CVSS 5.9: race condition replay del state cookie.
+ *   - PKCE S256: code_verifier (128 char) in sessione, code_challenge in URL,
+ *     code_verifier passato al token exchange. RFC 7636 + Google native-app
+ *     best practice (https://developers.google.com/identity/protocols/oauth2/native-app#pkce).
+ *   - Ogni mismatch/expired logga su channel "security" (IP, UA, timestamp).
  *
  * COSA ENTRA:
- *   - Query param "frontend" e "redirect" per redirectToGoogle (URL di ritorno)
- *   - Callback da Google con token OAuth in handleGoogleCallback
+ *   - Query param "frontend", "redirect", "intent", "ref", "user_type" (redirect)
+ *   - Callback: code, state (dal redirect Google)
  *
  * COSA ESCE:
- *   - Redirect a Google per autenticazione (redirectToGoogle)
- *   - Redirect al frontend con sessione autenticata (handleGoogleCallback)
- *   - Redirect con ?error=google_failed se l'autenticazione fallisce
+ *   - Redirect a Google con state + code_challenge (redirectToGoogle)
+ *   - Redirect frontend con sessione autenticata (handleGoogleCallback)
+ *   - Redirect con ?auth_error=google_invalid_state se state mismatch/expired
  *
  * CHIAMATO DA:
- *   - routes/web.php — GET /auth/google (redirect a Google)
- *   - routes/web.php — GET /auth/google/callback (callback da Google)
- *   - nuxt: pages/autenticazione.vue (bottone "Accedi con Google")
+ *   - routes/api/auth.php — GET /api/auth/google/redirect
+ *   - routes/web.php      — GET /auth/google/callback
  *
  * EFFETTI COLLATERALI:
- *   - Rete: chiamate OAuth a Google tramite Socialite
- *   - Database: crea utente se non esiste (ruolo "User", password casuale, email verificata)
- *   - Sessione: crea sessione autenticata (Auth::login)
- *   - Cookie: salva frontend_redirect e frontend_redirect_path (durata 15 min)
+ *   - Rete: chiamate OAuth a Google tramite Socialite (token + userinfo)
+ *   - Database: crea utente se non esiste (ruolo "User", password casuale)
+ *   - Sessione: scrive/legge chiavi oauth_state_google*, oauth_pkce_google_verifier
+ *   - Cookie: frontend_redirect*, frontend_social_intent/referral/user_type (10 min)
  *
  * VINCOLI:
- *   - Usa Socialite in modalita' stateless (non usa sessione per OAuth)
- *   - Il redirect_uri DEVE corrispondere a quello configurato nella Google Cloud Console
- *   - I cookie frontend_redirect durano 15 minuti (il tempo per completare il flusso Google)
- *   - Il campo "role" NON e' tra i $fillable (impostato manualmente a "User" per sicurezza)
- *   - Solo percorsi relativi (iniziano con /) sono accettati come redirect path
- *
- * ERRORI TIPICI:
- *   - Redirect con error=google_failed se Google restituisce errore
- *   - L'utente gia' registrato con email viene collegato automaticamente
- *
- * PUNTI DI MODIFICA SICURI:
- *   - Per aggiungere un provider OAuth: creare un controller simile con lo stesso pattern
- *   - Per cambiare la durata del cookie: modificare il valore 15 in withCookie()
- *   - Per richiedere scope aggiuntivi: aggiungerli nella chiamata Socialite::driver()
- *
- * COLLEGAMENTI:
- *   - config/services.php — google.client_id, google.client_secret, google.redirect
- *   - CustomLoginController.php — login alternativo con email/password
- *   - pages/autenticazione.vue — bottone "Accedi con Google"
+ *   - Usa Socialite stateless + stato/PKCE manuali (full control, testabile)
+ *   - Redirect_uri deve matchare Google Cloud Console
+ *   - State mismatch → 303 redirect al frontend con errore (NO 403 raw: il
+ *     browser ha appena fatto un redirect 302 cross-origin, 403 romperebbe UX)
  */
 
 namespace App\Http\Controllers;
@@ -51,13 +45,22 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use App\Support\AuthUiCookie;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Laravel\Socialite\Facades\Socialite;
 use Laravel\Socialite\Two\GoogleProvider;
 
 class GoogleController extends Controller
 {
+    /** TTL state/PKCE in minuti. RFC 6749 raccomanda breve durata. */
+    private const STATE_TTL_MINUTES = 10;
+
+    private const SESSION_STATE_KEY = 'oauth_state_google';
+    private const SESSION_STATE_CREATED_KEY = 'oauth_state_google_created_at';
+    private const SESSION_PKCE_VERIFIER_KEY = 'oauth_pkce_google_verifier';
+
     private function isGoogleConfigured(): bool
     {
         return filled(config('services.google.client_id'))
@@ -142,12 +145,43 @@ class GoogleController extends Controller
         ]));
     }
 
-    // Reindirizza l'utente alla pagina di accesso di Google
-    // L'utente scegliera' quale account Google usare
+    /**
+     * Genera un code_verifier PKCE (RFC 7636 §4.1): 43-128 char unreserved ASCII.
+     * Str::random usa alphanum (0-9A-Za-z), valido come subset di unreserved.
+     */
+    private function generatePkceVerifier(): string
+    {
+        return Str::random(128);
+    }
+
+    /**
+     * Calcola il code_challenge PKCE S256 (RFC 7636 §4.2): base64url(SHA256(verifier)),
+     * senza padding `=`. Google richiede "S256" method (plain è deprecato).
+     */
+    private function computePkceChallenge(string $verifier): string
+    {
+        return rtrim(
+            strtr(base64_encode(hash('sha256', $verifier, true)), '+/', '-_'),
+            '='
+        );
+    }
+
+    /**
+     * Logga un evento di sicurezza (state mismatch, expired, missing).
+     * Forward a Sentry previsto in Sprint W1.1.
+     */
+    private function logSecurityEvent(Request $request, string $reason, array $context = []): void
+    {
+        Log::channel('security')->warning('oauth.google.'.$reason, array_merge([
+            'ip' => $request->ip(),
+            'user_agent' => substr((string) $request->userAgent(), 0, 255),
+            'timestamp' => now()->toIso8601String(),
+        ], $context));
+    }
+
+    // Reindirizza l'utente alla pagina di accesso di Google.
     public function redirectToGoogle(Request $request)
     {
-        // Recuperiamo l'URL del frontend (il sito che l'utente sta usando)
-        // per sapere dove rimandarlo dopo l'accesso
         $frontend = $this->resolveAllowedFrontendUrl((string) $request->query('frontend', ''));
         $redirectPath = $this->normalizeRedirectPath((string) $request->query('redirect', '/'));
 
@@ -155,81 +189,141 @@ class GoogleController extends Controller
             return $this->redirectWithFrontendError($frontend, $redirectPath, 'google_unavailable');
         }
 
-        // Prepariamo il reindirizzamento verso Google
+        // Generiamo state CSRF + PKCE verifier/challenge PRIMA di costruire l'URL.
+        $state = Str::random(40);
+        $codeVerifier = $this->generatePkceVerifier();
+        $codeChallenge = $this->computePkceChallenge($codeVerifier);
+
+        // Salviamo state e verifier nella SESSIONE server-side. Il session id e'
+        // bound al cookie di sessione del browser → CSRF protection solida (RFC 6749).
+        $request->session()->put(self::SESSION_STATE_KEY, $state);
+        $request->session()->put(self::SESSION_STATE_CREATED_KEY, now()->timestamp);
+        $request->session()->put(self::SESSION_PKCE_VERIFIER_KEY, $codeVerifier);
+
         $redirectUri = config('services.google.redirect');
+
         /** @var GoogleProvider $google */
         $google = Socialite::driver('google');
+        // stateless(): bypass Socialite internal state (gestiamo noi). with(): param
+        // extra nell'authorize URL — inclusi code_challenge/method per PKCE e il
+        // nostro state manuale (Socialite stateless non aggiunge state da solo).
         $response = $google
             ->stateless()
             ->redirectUrl($redirectUri)
-            ->with(['prompt' => 'select_account consent']) // Chiede sempre di scegliere l'account
+            ->with([
+                'prompt' => 'select_account consent',
+                'state' => $state,
+                'code_challenge' => $codeChallenge,
+                'code_challenge_method' => 'S256',
+            ])
             ->redirect();
 
-        // Salviamo l'URL del frontend e la pagina di redirect in cookie
-        // per ricordare dove rimandare l'utente dopo che Google risponde
         $intent = trim((string) $request->query('intent', 'login'));
         $referral = trim((string) $request->query('ref', ''));
         $userType = trim((string) $request->query('user_type', ''));
 
+        // TTL cookie di contesto allineato allo state (10 min). Cambiato da 15.
         return $response
-            ->withCookie(cookie('frontend_redirect', $frontend, 15, '/', null, false, false))
-            ->withCookie(cookie('frontend_redirect_path', $redirectPath, 15, '/', null, false, false))
-            ->withCookie(cookie('frontend_social_intent', $intent === 'register' ? 'register' : 'login', 15, '/', null, false, false))
-            ->withCookie(cookie('frontend_social_referral', $referral !== '' ? strtoupper($referral) : '', 15, '/', null, false, false))
-            ->withCookie(cookie('frontend_social_user_type', in_array($userType, ['privato', 'commerciante'], true) ? $userType : 'privato', 15, '/', null, false, false));
+            ->withCookie(cookie('frontend_redirect', $frontend, self::STATE_TTL_MINUTES, '/', null, false, false))
+            ->withCookie(cookie('frontend_redirect_path', $redirectPath, self::STATE_TTL_MINUTES, '/', null, false, false))
+            ->withCookie(cookie('frontend_social_intent', $intent === 'register' ? 'register' : 'login', self::STATE_TTL_MINUTES, '/', null, false, false))
+            ->withCookie(cookie('frontend_social_referral', $referral !== '' ? strtoupper($referral) : '', self::STATE_TTL_MINUTES, '/', null, false, false))
+            ->withCookie(cookie('frontend_social_user_type', in_array($userType, ['privato', 'commerciante'], true) ? $userType : 'privato', self::STATE_TTL_MINUTES, '/', null, false, false));
     }
 
-    // Questa funzione viene chiamata quando Google rimanda l'utente al nostro sito
-    // Riceve i dati dell'utente da Google e gestisce la registrazione/accesso
     public function handleGoogleCallback(Request $request)
     {
-        // Recuperiamo l'URL del frontend dal cookie salvato prima
         $frontendUrl = $this->resolveAllowedFrontendUrl((string) ($request->cookie('frontend_redirect') ?: $this->fallbackFrontendUrl()));
         $redirectPath = $this->normalizeRedirectPath((string) ($request->cookie('frontend_redirect_path') ?: '/'));
 
         if (! $this->isGoogleConfigured()) {
-            return $this->redirectWithFrontendError($frontendUrl, $redirectPath, 'google_unavailable')
-                ->withoutCookie('frontend_redirect')
-                ->withoutCookie('frontend_redirect_path')
-                ->withoutCookie('frontend_social_intent')
-                ->withoutCookie('frontend_social_referral')
-                ->withoutCookie('frontend_social_user_type');
+            return $this->clearSocialState(
+                $this->redirectWithFrontendError($frontendUrl, $redirectPath, 'google_unavailable'),
+                $request
+            );
         }
 
+        // === STEP 1: Validazione state (CSRF) ===
+        // pull() legge e rimuove atomically → replay impossibile sullo stesso session id.
+        $expectedState = (string) $request->session()->pull(self::SESSION_STATE_KEY, '');
+        $stateCreatedAt = (int) $request->session()->pull(self::SESSION_STATE_CREATED_KEY, 0);
+        $codeVerifier = (string) $request->session()->pull(self::SESSION_PKCE_VERIFIER_KEY, '');
+        $receivedState = trim((string) $request->query('state', ''));
+
+        if ($expectedState === '' || $receivedState === '') {
+            $this->logSecurityEvent($request, 'state.missing', [
+                'expected_empty' => $expectedState === '',
+                'received_empty' => $receivedState === '',
+            ]);
+
+            return $this->clearSocialState(
+                $this->redirectWithFrontendError($frontendUrl, $redirectPath, 'google_invalid_state'),
+                $request
+            );
+        }
+
+        // Confronto timing-safe
+        if (! hash_equals($expectedState, $receivedState)) {
+            $this->logSecurityEvent($request, 'state.mismatch');
+
+            return $this->clearSocialState(
+                $this->redirectWithFrontendError($frontendUrl, $redirectPath, 'google_invalid_state'),
+                $request
+            );
+        }
+
+        // Scadenza state: previene replay a lungo termine
+        if ($stateCreatedAt <= 0 || Carbon::createFromTimestamp($stateCreatedAt)->addMinutes(self::STATE_TTL_MINUTES)->isPast()) {
+            $this->logSecurityEvent($request, 'state.expired', [
+                'age_seconds' => $stateCreatedAt > 0 ? now()->timestamp - $stateCreatedAt : null,
+            ]);
+
+            return $this->clearSocialState(
+                $this->redirectWithFrontendError($frontendUrl, $redirectPath, 'google_invalid_state'),
+                $request
+            );
+        }
+
+        if ($codeVerifier === '') {
+            // PKCE verifier mancante → richiesta non è stata originata dal nostro redirectToGoogle.
+            $this->logSecurityEvent($request, 'pkce.verifier_missing');
+
+            return $this->clearSocialState(
+                $this->redirectWithFrontendError($frontendUrl, $redirectPath, 'google_invalid_state'),
+                $request
+            );
+        }
+
+        // === STEP 2: Token exchange con PKCE ===
         try {
-            // Chiediamo a Google i dati dell'utente che ha fatto l'accesso
             $redirectUri = config('services.google.redirect');
             /** @var GoogleProvider $google */
             $google = Socialite::driver('google');
+            // code_verifier va inviato al token endpoint (RFC 7636 §4.5).
+            // Socialite::with() propaga param sia a authorize URL sia a token request.
             $googleUser = $google
                 ->stateless()
                 ->redirectUrl($redirectUri)
+                ->with(['code_verifier' => $codeVerifier])
                 ->user();
         } catch (\Exception $e) {
-            // Se qualcosa va storto con Google, rimandiamo l'utente alla pagina di login con un errore
-            return $this->redirectWithFrontendError($frontendUrl, $redirectPath, 'google_failed')
-                ->withoutCookie('frontend_redirect')
-                ->withoutCookie('frontend_redirect_path')
-                ->withoutCookie('frontend_social_intent')
-                ->withoutCookie('frontend_social_referral')
-                ->withoutCookie('frontend_social_user_type');
+            return $this->clearSocialState(
+                $this->redirectWithFrontendError($frontendUrl, $redirectPath, 'google_failed'),
+                $request
+            );
         }
 
         $googleEmail = $googleUser->getEmail();
         if (! $googleEmail) {
-            return $this->redirectWithFrontendError($frontendUrl, $redirectPath, 'google_email_missing')
-                ->withoutCookie('frontend_redirect')
-                ->withoutCookie('frontend_redirect_path')
-                ->withoutCookie('frontend_social_intent')
-                ->withoutCookie('frontend_social_referral')
-                ->withoutCookie('frontend_social_user_type');
+            return $this->clearSocialState(
+                $this->redirectWithFrontendError($frontendUrl, $redirectPath, 'google_email_missing'),
+                $request
+            );
         }
 
-        // Cerchiamo se esiste gia' un utente con questa email nel nostro database
         $user = User::where('email', $googleEmail)->first();
 
         if ($user) {
-            // Utente esistente - aggiorniamo google_id e avatar se non presenti
             $dirty = false;
             if (! $user->google_id) {
                 $user->google_id = $googleUser->getId();
@@ -258,33 +352,53 @@ class GoogleController extends Controller
                     ->value('referral_code');
             }
 
-            // Se l'utente non esiste, lo creiamo con i dati di Google
             $user = new User([
                 'email' => $googleEmail,
                 'name' => $googleUser->user['given_name'] ?? $googleUser->getName(),
                 'surname' => $googleUser->user['family_name'] ?? '',
                 'telephone_number' => '',
-                'email_verified_at' => now(), // L'email e' automaticamente verificata (Google l'ha gia' controllata)
-                'password' => Str::random(16), // Password casuale (l'utente usa Google per accedere)
+                'email_verified_at' => now(),
+                'password' => Str::random(16),
                 'avatar' => $googleUser->getAvatar(),
-                'referred_by' => $validatedReferral,
                 'user_type' => in_array($userType, ['privato', 'commerciante'], true) ? $userType : 'privato',
             ]);
-            // Campi non in $fillable: vanno assegnati direttamente per sicurezza
             $user->role = 'User';
             $user->google_id = $googleUser->getId();
+            if ($validatedReferral !== null) {
+                $user->referred_by = $validatedReferral;
+            }
             $user->save();
         }
 
-        // Facciamo il login automatico dell'utente nel sistema
         Auth::login($user, true);
         if ($request->hasSession()) {
             $request->session()->regenerate();
         }
 
-        // Reindirizziamo l'utente alla pagina dove si trovava prima del login
         return redirect($frontendUrl.$redirectPath)
             ->withCookie(AuthUiCookie::issueForUser($user, true))
+            ->withoutCookie('frontend_redirect')
+            ->withoutCookie('frontend_redirect_path')
+            ->withoutCookie('frontend_social_intent')
+            ->withoutCookie('frontend_social_referral')
+            ->withoutCookie('frontend_social_user_type');
+    }
+
+    /**
+     * Pulisce residui di stato OAuth in sessione (difesa in profondita') + cookie di contesto.
+     * Chiamato su ogni branch di errore per evitare stati "appesi".
+     */
+    private function clearSocialState($response, Request $request)
+    {
+        if ($request->hasSession()) {
+            $request->session()->forget([
+                self::SESSION_STATE_KEY,
+                self::SESSION_STATE_CREATED_KEY,
+                self::SESSION_PKCE_VERIFIER_KEY,
+            ]);
+        }
+
+        return $response
             ->withoutCookie('frontend_redirect')
             ->withoutCookie('frontend_redirect_path')
             ->withoutCookie('frontend_social_intent')

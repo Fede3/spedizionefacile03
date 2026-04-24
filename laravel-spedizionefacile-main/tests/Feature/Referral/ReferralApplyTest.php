@@ -43,6 +43,7 @@ class ReferralApplyTest extends TestCase
             'user_id'  => $user->id,
             'status'   => 'pending',
             'subtotal' => $subtotalCents,
+            'pricing_snapshot' => $this->referralPricingSnapshot($user, $subtotalCents),
         ]);
 
         $package = Package::factory()->create([
@@ -52,6 +53,29 @@ class ReferralApplyTest extends TestCase
         Order::attachPackage($order->id, $package->id, 1);
 
         return $order;
+    }
+
+    private function referralPricingSnapshot(User $user, int $subtotalCents): ?array
+    {
+        $code = strtoupper(trim((string) $user->referred_by));
+        if ($code === '') {
+            return null;
+        }
+
+        $subtotal = round($subtotalCents / 100, 2);
+        $discount = round($subtotal * 0.05, 2);
+
+        return [
+            'total_cents' => $subtotalCents,
+            'discount_context' => [
+                'type' => 'referral',
+                'code' => $code,
+                'discount_percent' => 5,
+                'discount_amount' => $discount,
+                'subtotal_raw' => $subtotal,
+                'final_total_raw' => max(0, round($subtotal - $discount, 2)),
+            ],
+        ];
     }
 
     private function createPaidOrder(User $user, int $subtotalCents = 1190): Order
@@ -100,7 +124,7 @@ class ReferralApplyTest extends TestCase
     public function test_apply_referral_uses_server_order_subtotal_and_ignores_client_amount(): void
     {
         $proUser = $this->createProUser('PROAPPLY');
-        $buyer   = User::factory()->create();
+        $buyer   = User::factory()->create(['referred_by' => 'PROAPPLY']);
         $order   = $this->createPaidOrder($buyer, 2000); // 20.00 EUR
 
         $response = $this->actingAs($buyer)
@@ -141,7 +165,7 @@ class ReferralApplyTest extends TestCase
     public function test_apply_referral_rejects_unpaid_orders(): void
     {
         $this->createProUser('PROUNPAI');
-        $buyer = User::factory()->create();
+        $buyer = User::factory()->create(['referred_by' => 'PROUNPAI']);
         $order = $this->createOrder($buyer, 2000);
 
         $this->actingAs($buyer)
@@ -160,7 +184,7 @@ class ReferralApplyTest extends TestCase
     public function test_apply_referral_rejects_orders_not_owned_by_buyer(): void
     {
         $this->createProUser('PROOWNED');
-        $buyer = User::factory()->create();
+        $buyer = User::factory()->create(['referred_by' => 'PROOWNED']);
         $otherUser = User::factory()->create();
         $order = $this->createPaidOrder($otherUser, 2000);
 
@@ -182,7 +206,7 @@ class ReferralApplyTest extends TestCase
         Mail::fake();
 
         $proUser = $this->createProUser('PROMSG01');
-        $buyer = User::factory()->create(['name' => 'Mario']);
+        $buyer = User::factory()->create(['name' => 'Mario', 'referred_by' => 'PROMSG01']);
         $order = $this->createPaidOrder($buyer, 2000);
 
         $this->actingAs($buyer)
@@ -220,7 +244,7 @@ class ReferralApplyTest extends TestCase
             'referral_sms_enabled' => false,
         ]);
 
-        $buyer = User::factory()->create();
+        $buyer = User::factory()->create(['referred_by' => 'PROEMAIL']);
         $order = $this->createPaidOrder($buyer, 2500);
 
         $this->actingAs($buyer)
@@ -273,7 +297,7 @@ class ReferralApplyTest extends TestCase
     public function test_apply_referral_atomicity(): void
     {
         $proUser = $this->createProUser('ATOMICCD');
-        $buyer   = User::factory()->create();
+        $buyer   = User::factory()->create(['referred_by' => 'ATOMICCD']);
         $order   = $this->createPaidOrder($buyer, 5000); // 50.00 EUR
 
         $this->actingAs($buyer)
@@ -297,7 +321,7 @@ class ReferralApplyTest extends TestCase
     public function test_apply_referral_rejects_already_referralized_orders(): void
     {
         $proUser = $this->createProUser('DUPLORD1');
-        $buyer = User::factory()->create();
+        $buyer = User::factory()->create(['referred_by' => 'DUPLORD1']);
         $order = $this->createPaidOrder($buyer, 5000);
 
         $this->actingAs($buyer)
@@ -411,5 +435,47 @@ class ReferralApplyTest extends TestCase
                 'total'  => 50.00,
             ])
             ->assertStatus(422);
+    }
+
+    public function test_apply_referral_rejects_code_not_matching_account_attribution(): void
+    {
+        $this->createProUser('MATCH001');
+        $buyer = User::factory()->create(['referred_by' => 'OTHER001']);
+        $order = $this->createPaidOrder($buyer, 2000);
+
+        $this->actingAs($buyer)
+            ->postJson('/api/referral/apply', [
+                'code' => 'MATCH001',
+                'order_id' => $order->id,
+                'order_amount' => 20.00,
+            ])
+            ->assertStatus(422)
+            ->assertJsonPath('message', 'Il referral attivo dell\'account non coincide con il codice inviato.');
+
+        $this->assertDatabaseCount('referral_usages', 0);
+        $this->assertDatabaseCount('wallet_movements', 0);
+    }
+
+    public function test_store_referral_rejects_overwrite_of_existing_code(): void
+    {
+        $firstPro = $this->createProUser('FIRST001');
+        $this->createProUser('SECOND01');
+        $buyer = User::factory()->create(['referred_by' => 'FIRST001']);
+
+        $this->actingAs($buyer)
+            ->postJson('/api/referral/store', ['code' => 'SECOND01'])
+            ->assertStatus(409)
+            ->assertJsonPath('message', 'Hai gia un codice referral associato e non puo essere sostituito.');
+
+        $this->assertDatabaseHas('users', [
+            'id' => $buyer->id,
+            'referred_by' => 'FIRST001',
+        ]);
+
+        $this->actingAs($buyer)
+            ->postJson('/api/referral/store', ['code' => 'FIRST001'])
+            ->assertSuccessful()
+            ->assertJsonPath('referred_by', 'FIRST001')
+            ->assertJsonPath('pro_name', $firstPro->name);
     }
 }

@@ -56,6 +56,10 @@ use App\Http\Requests\CartCreateRequest;
 use App\Http\Requests\GuestCartCreateRequest;
 class GuestCartController extends Controller
 {
+    public function __construct(
+        private readonly CartService $cartService,
+    ) {}
+
     // Mostra il contenuto del carrello dell'ospite
     // I pacchi sono salvati nella sessione con la chiave 'cart'
     public function index() {
@@ -70,7 +74,7 @@ class GuestCartController extends Controller
     // Calcola il subtotale del carrello sommando i prezzi di tutti i pacchi
     // Il prezzo di ogni pacco (single_price) e' gia' in centesimi e include la quantita'
     public function subtotal($packages) {
-        return CartService::subtotalFromArray($packages);
+        return $this->cartService->subtotalFromArray($packages);
     }
 
     // Prepara le informazioni aggiuntive (meta) per la risposta
@@ -105,7 +109,7 @@ class GuestCartController extends Controller
 
         // Per ogni pacco inviato dal frontend
         foreach ($request->packages as $pack) {
-            $pricedPack = CartService::pricePackageData(
+            $pricedPack = $this->cartService->pricePackageData(
                 $pack,
                 $request->origin_address ?? [],
                 $request->destination_address ?? [],
@@ -116,9 +120,9 @@ class GuestCartController extends Controller
             // Controlliamo se un pacco identico esiste gia' nel carrello
             // (stesse dimensioni, stesso peso, stessi indirizzi di partenza e destinazione)
             $duplicateIndex = null;
-            $newServiceSig = CartService::buildServiceSignatureFromGuest($request->services ?? []);
+            $newServiceSig = $this->cartService->buildServiceSignatureFromGuest($request->services ?? []);
             foreach ($cart as $idx => $existing) {
-                $existsAsDuplicate = CartService::isDuplicate(
+                $existsAsDuplicate = $this->cartService->isDuplicate(
                     $pricedPack,
                     $request->origin_address ?? [],
                     $request->destination_address ?? [],
@@ -126,7 +130,7 @@ class GuestCartController extends Controller
                     $existing,
                     $existing['origin_address'] ?? [],
                     $existing['destination_address'] ?? [],
-                    CartService::buildServiceSignatureFromGuest($existing['services'] ?? []),
+                    $this->cartService->buildServiceSignatureFromGuest($existing['services'] ?? []),
                 );
                 if ($existsAsDuplicate) {
                     $duplicateIndex = $idx;
@@ -136,7 +140,7 @@ class GuestCartController extends Controller
 
             if ($duplicateIndex !== null) {
                 // Se il pacco esiste gia', aumentiamo la quantita' e ricalcoliamo il prezzo
-                $merged = CartService::mergeQuantity(
+                $merged = $this->cartService->mergeQuantity(
                     (int) ($cart[$duplicateIndex]['single_price'] ?? 0),
                     (int) ($cart[$duplicateIndex]['quantity'] ?? 1),
                     $newQty,
@@ -186,12 +190,12 @@ class GuestCartController extends Controller
     // Delegato a CartService — mantenuti come wrapper per retrocompatibilita'
     private function calculateGroupedServiceSurchargeCents(array $packages): int
     {
-        return CartService::calculateGroupedSurchargeFromArray($packages);
+        return $this->cartService->calculateGroupedSurchargeFromArray($packages);
     }
 
     private function buildServiceSignatureFromGuest(array $services = []): string
     {
-        return CartService::buildServiceSignatureFromGuest($services);
+        return $this->cartService->buildServiceSignatureFromGuest($services);
     }
 
 }

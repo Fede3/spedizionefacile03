@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Models\WalletMovement;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Event;
 use Tests\TestCase;
 
 class WalletPaymentTest extends TestCase
@@ -56,6 +57,27 @@ class WalletPaymentTest extends TestCase
         return $order;
     }
 
+    private function createDiscountedPendingOrder(User $user, int $grossCents = 1190, int $payableCents = 1000): Order
+    {
+        $order = $this->createPendingOrder($user, $grossCents);
+        $discountCents = max(0, $grossCents - $payableCents);
+
+        $order->forceFill([
+            'pricing_snapshot' => [
+                'total_cents' => $grossCents,
+                'discount_context' => [
+                    'type' => 'coupon',
+                    'code' => 'SAVE',
+                    'discount_amount' => $discountCents / 100,
+                    'subtotal_raw' => $grossCents / 100,
+                    'final_total_raw' => $payableCents / 100,
+                ],
+            ],
+        ])->save();
+
+        return $order->fresh();
+    }
+
     /* ================================================================== */
     /*  T11.3.6: Wallet pay success                                        */
     /* ================================================================== */
@@ -70,7 +92,7 @@ class WalletPaymentTest extends TestCase
         $response = $this->actingAs($user)
             ->postJson('/api/wallet/pay', [
                 'amount'      => 11.90,
-                'reference'   => (string) $order->id,
+                'reference'   => 'order-' . $order->id,
                 'description' => 'Pagamento spedizione',
             ]);
 
@@ -105,7 +127,7 @@ class WalletPaymentTest extends TestCase
         $response = $this->actingAs($user)
             ->postJson('/api/wallet/pay', [
                 'amount'      => 50.00,
-                'reference'   => (string) $order->id,
+                'reference'   => 'order-' . $order->id,
                 'description' => 'Pagamento spedizione',
             ]);
 
@@ -154,7 +176,7 @@ class WalletPaymentTest extends TestCase
         $this->actingAs($user)
             ->postJson('/api/wallet/pay', [
                 'amount'      => 29.90,
-                'reference'   => (string) $order->id,
+                'reference'   => 'order-' . $order->id,
                 'description' => 'Test payment',
             ])
             ->assertStatus(201);
@@ -163,6 +185,165 @@ class WalletPaymentTest extends TestCase
         $this->assertEquals(2, WalletMovement::where('user_id', $user->id)->count());
 
         // Balance updated
+        $this->assertEquals(70.10, $user->walletBalance());
+    }
+
+    public function test_wallet_pay_normalizes_legacy_numeric_order_reference_and_allows_follow_up_completion(): void
+    {
+        Event::fake();
+
+        $user = User::factory()->create();
+        $this->fundWallet($user, 100.00);
+
+        $order = $this->createPendingOrder($user, 2990); // 29.90 EUR
+
+        $payment = $this->actingAs($user)
+            ->postJson('/api/wallet/pay', [
+                'amount' => 29.90,
+                'reference' => (string) $order->id,
+                'description' => 'Legacy wallet payment',
+            ])
+            ->assertStatus(201);
+
+        $movementId = $payment->json('data.id');
+        $this->assertNotEmpty($movementId);
+
+        $this->assertDatabaseHas('wallet_movements', [
+            'id' => $movementId,
+            'reference' => 'order-'.$order->id,
+            'source' => 'wallet',
+        ]);
+
+        $this->actingAs($user)
+            ->postJson('/api/stripe/mark-order-completed', [
+                'order_id' => $order->id,
+                'payment_type' => 'wallet',
+                'ext_id' => 'wallet-'.$movementId,
+            ])
+            ->assertOk()
+            ->assertJsonPath('success', true);
+
+        $order->refresh();
+
+        $this->assertSame(Order::COMPLETED, $order->status);
+        $this->assertSame('wallet', $order->payment_method);
+    }
+
+    public function test_wallet_pay_rejects_amount_mismatch_against_order_total(): void
+    {
+        $user = User::factory()->create();
+        $this->fundWallet($user, 100.00);
+
+        $order = $this->createPendingOrder($user, 2990); // 29.90 EUR
+
+        $this->actingAs($user)
+            ->postJson('/api/wallet/pay', [
+                'amount' => 19.90,
+                'reference' => 'order-' . $order->id,
+                'description' => 'Tampered wallet payment',
+            ])
+            ->assertStatus(422)
+            ->assertJsonFragment([
+                'message' => "L'importo non corrisponde al totale dell'ordine.",
+            ]);
+
+        $this->assertDatabaseMissing('wallet_movements', [
+            'user_id' => $user->id,
+            'type' => 'debit',
+            'reference' => 'order-' . $order->id,
+        ]);
+
+        $order->refresh();
+
+        $this->assertSame(Order::PENDING, $order->status);
+    }
+
+    public function test_wallet_pay_uses_discounted_payable_total(): void
+    {
+        $user = User::factory()->create();
+        $this->fundWallet($user, 100.00);
+
+        $order = $this->createDiscountedPendingOrder($user, 1190, 1000);
+
+        $this->actingAs($user)
+            ->postJson('/api/wallet/pay', [
+                'amount' => 10.00,
+                'reference' => 'order-'.$order->id,
+                'description' => 'Discounted wallet payment',
+            ])
+            ->assertStatus(201)
+            ->assertJsonPath('success', true);
+
+        $this->assertDatabaseHas('wallet_movements', [
+            'user_id' => $user->id,
+            'type' => 'debit',
+            'amount' => '10.00',
+            'reference' => 'order-'.$order->id,
+        ]);
+
+        $this->assertEquals(90.00, $user->walletBalance());
+    }
+
+    public function test_wallet_pay_rejects_gross_amount_when_discount_is_applied(): void
+    {
+        $user = User::factory()->create();
+        $this->fundWallet($user, 100.00);
+
+        $order = $this->createDiscountedPendingOrder($user, 1190, 1000);
+
+        $this->actingAs($user)
+            ->postJson('/api/wallet/pay', [
+                'amount' => 11.90,
+                'reference' => 'order-'.$order->id,
+                'description' => 'Gross wallet payment',
+            ])
+            ->assertStatus(422)
+            ->assertJsonFragment([
+                'message' => "L'importo non corrisponde al totale dell'ordine.",
+            ]);
+
+        $this->assertDatabaseMissing('wallet_movements', [
+            'user_id' => $user->id,
+            'type' => 'debit',
+            'reference' => 'order-'.$order->id,
+        ]);
+    }
+
+    public function test_wallet_pay_is_idempotent_for_retry_on_same_pending_order(): void
+    {
+        $user = User::factory()->create();
+        $this->fundWallet($user, 100.00);
+
+        $order = $this->createPendingOrder($user, 2990); // 29.90 EUR
+
+        $firstResponse = $this->actingAs($user)
+            ->postJson('/api/wallet/pay', [
+                'amount' => 29.90,
+                'reference' => 'order-' . $order->id,
+                'description' => 'Wallet retry test',
+            ])
+            ->assertStatus(201);
+
+        $movementId = $firstResponse->json('data.id');
+        $this->assertNotEmpty($movementId);
+
+        $this->actingAs($user)
+            ->postJson('/api/wallet/pay', [
+                'amount' => 29.90,
+                'reference' => 'order-' . $order->id,
+                'description' => 'Wallet retry test',
+            ])
+            ->assertStatus(200)
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('data.id', $movementId);
+
+        $this->assertSame(1, WalletMovement::query()
+            ->where('user_id', $user->id)
+            ->where('type', 'debit')
+            ->where('source', 'wallet')
+            ->where('reference', 'order-' . $order->id)
+            ->count());
+
         $this->assertEquals(70.10, $user->walletBalance());
     }
 

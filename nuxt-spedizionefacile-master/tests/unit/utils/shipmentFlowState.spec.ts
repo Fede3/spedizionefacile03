@@ -6,11 +6,18 @@ import {
   getShipmentFlowStage,
   canAccessShipmentFlowRoute,
   SHIPMENT_FLOW_ROUTES,
-} from '~/utils/shipmentFlowState'
+} from '~/utils/shipment'
 
 const makeQuoteData = () => ({
   shipment_details: { origin_city: 'Milano', destination_city: 'Roma' },
-  packages: [{ package_type: 'Pacco', weight: 5 }],
+  packages: [{
+    package_type: 'Pacco',
+    weight: 5,
+    quantity: 1,
+    first_size: 20,
+    second_size: 20,
+    third_size: 20,
+  }],
 })
 
 const makeServicesData = () => ({
@@ -42,7 +49,7 @@ describe('deriveShipmentFlowState', () => {
     expect(state.services_ready).toBe(false)
     expect(state.addresses_ready).toBe(false)
     expect(state.summary_ready).toBe(false)
-    expect(state.last_valid_route).toBe(SHIPMENT_FLOW_ROUTES.quote)
+    expect(state.last_valid_route).toBe(SHIPMENT_FLOW_ROUTES.packages)
   })
 
   it('preventivo completo → quote_ready', () => {
@@ -127,12 +134,16 @@ describe('getShipmentFlowStage', () => {
     expect(getShipmentFlowStage({ path: '/la-tua-spedizione/2', query: { step: 'ritiro' } })).toBe('addresses')
   })
 
-  it('riconosce la route riepilogo', () => {
-    expect(getShipmentFlowStage({ path: '/riepilogo', query: {} })).toBe('summary')
+  it('trampolino /riepilogo viene mappato sul payment step', () => {
+    expect(getShipmentFlowStage({ path: '/riepilogo', query: {} })).toBe('payment')
   })
 
-  it('riconosce la route checkout', () => {
-    expect(getShipmentFlowStage({ path: '/checkout', query: {} })).toBe('checkout')
+  it('alias storico step=conferma viene mappato su payment', () => {
+    expect(getShipmentFlowStage({ path: '/la-tua-spedizione/2', query: { step: 'conferma' } })).toBe('payment')
+  })
+
+  it('riconosce la route pagamento', () => {
+    expect(getShipmentFlowStage({ path: '/la-tua-spedizione/2', query: { step: 'pagamento' } })).toBe('payment')
   })
 })
 
@@ -152,8 +163,8 @@ describe('canAccessShipmentFlowRoute', () => {
     expect(canAccessShipmentFlowRoute({ path: '/la-tua-spedizione/2', query: {} }, quoteState)).toBe(true)
   })
 
-  it('con summary_ready puo accedere a riepilogo', () => {
+  it('con addresses_ready puo accedere al pagamento (ex summary)', () => {
     const fullState = deriveShipmentFlowState(makeAddressesData())
-    expect(canAccessShipmentFlowRoute({ path: '/riepilogo', query: {} }, fullState)).toBe(true)
+    expect(canAccessShipmentFlowRoute({ path: '/la-tua-spedizione/2', query: { step: 'pagamento' } }, fullState)).toBe(true)
   })
 })

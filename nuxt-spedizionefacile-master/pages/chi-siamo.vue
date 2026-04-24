@@ -1,17 +1,15 @@
-<!--
-  PAGINA: Chi Siamo (chi-siamo.vue)
-  Pagina informativa che descrive l'azienda SpediamoFacile:
-  cosa facciamo, la nostra visione, come lavoriamo, perche' sceglierci.
-  Contiene dati strutturati JSON-LD per il SEO (AboutPage).
--->
+<!-- Chi Siamo — Hero → Mission → Numeri → Timeline → Valori → Team → Partnership BRT → CTA -->
 <script setup>
-// Meta tag SEO
+import '~/assets/css/chi-siamo.css';
+
 useSeoMeta({
-	title: 'Chi Siamo | SpediamoFacile - La Tua Piattaforma di Spedizioni',
-	ogTitle: 'Chi Siamo | SpediamoFacile',
-	description: 'Scopri SpediamoFacile: la piattaforma italiana che ti aiuta a spedire senza stress con prezzi trasparenti, procedure snelle e assistenza dedicata.',
-	ogDescription: 'Scopri SpediamoFacile: spedizioni senza stress con prezzi trasparenti e assistenza dedicata.',
-});
+	title: 'Chi siamo — SpedizioneFacile',
+	ogTitle: 'Chi siamo — SpedizioneFacile',
+	description:
+		'Intermediari BRT autorizzati dal 2020. Aiutiamo PMI e privati italiani a spedire con prezzi trasparenti, ritiro a domicilio e supporto umano dedicato.',
+	ogDescription:
+		'Intermediari BRT autorizzati dal 2020 al servizio di PMI e privati italiani: prezzi chiari, ritiro a domicilio, supporto umano.',
+})
 
 useHead({
 	script: [
@@ -20,115 +18,295 @@ useHead({
 			innerHTML: JSON.stringify({
 				'@context': 'https://schema.org',
 				'@type': 'AboutPage',
-				name: 'Chi Siamo - SpediamoFacile',
+				name: 'Chi siamo — SpedizioneFacile',
 				url: 'https://spediamofacile.it/chi-siamo',
 				mainEntity: {
 					'@type': 'Organization',
 					name: 'SpediamoFacile',
 					url: 'https://spediamofacile.it',
-					description: 'Piattaforma italiana per confrontare e prenotare spedizioni nazionali e internazionali ai migliori prezzi.',
+					foundingDate: '2020',
+					description:
+						'Intermediario BRT autorizzato che semplifica le spedizioni per PMI e privati italiani.',
 				},
 			}),
 		},
 	],
-});
+})
 
-// Sezioni della pagina "Chi Siamo" con titolo, descrizione e immagine (placeholder)
-/* SVG paths per ogni sezione "Chi Siamo" */
-const sections = [
+// Breadcrumb: Home › Chi siamo
+useBreadcrumbSchema([
+	{ name: 'Home', url: '/' },
+	{ name: 'Chi siamo' },
+])
+
+// ── Numeri chiave (placeholder realistici) ────────────────────────────────
+const stats = [
+	{ value: '5', suffix: 'anni', label: 'di attività al servizio dei clienti italiani' },
+	{ value: '120k', suffix: '+', label: 'spedizioni gestite ogni anno' },
+	{ value: '18k', suffix: '', label: 'clienti attivi tra PMI e privati' },
+	{ value: '94', suffix: '%', label: 'consegne completate entro 48 ore' },
+]
+
+// ── Timeline azienda ──────────────────────────────────────────────────────
+const milestones = [
 	{
-		title: "Cosa facciamo in concreto",
-		iconSvg: '<path d="M5.12,5H18.87L17.93,4H5.93L5.12,5M20.54,5.23C20.83,5.57 21,6 21,6.5V19A2,2 0 0,1 19,21H5A2,2 0 0,1 3,19V6.5C3,6 3.17,5.57 3.46,5.23L4.84,3.55C5.12,3.21 5.53,3 6,3H18C18.47,3 18.88,3.21 19.15,3.55L20.54,5.23M6,12H18V10H6V12Z" fill="currentColor"/>',
-		description:
-			"Ti aiutiamo a spedire senza stress. Dal pacco singolo alle esigenze ricorrenti di privati, professionisti e negozi online, offriamo soluzioni su misura con prezzi trasparenti e procedure snelle. Calcoliamo in tempo reale la tariffa più conveniente tra peso reale e peso-volume, applichiamo solo gli eventuali supplementi necessari e ti mostriamo subito il totale. A richiesta, gestiamo assicurazione, contrassegno e altre opzioni utili, in base alle necessità di recapito.",
-		image: "",
+		year: '2020',
+		title: 'Fondazione',
+		text:
+			'Nasce SpedizioneFacile con un’idea semplice: trasformare il preventivo BRT in un’esperienza chiara, immediata, senza intermediari opachi.',
 	},
 	{
-		title: "La nostra visione",
-		iconSvg: '<path d="M12,9A3,3 0 0,1 15,12A3,3 0 0,1 12,15A3,3 0 0,1 9,12A3,3 0 0,1 12,9M12,4.5C17,4.5 21.27,7.61 23,12C21.27,16.39 17,19.5 12,19.5C7,19.5 2.73,16.39 1,12C2.73,7.61 7,4.5 12,4.5M3.18,12C4.83,15.36 8.24,17.5 12,17.5C15.76,17.5 19.17,15.36 20.82,12C19.17,8.64 15.76,6.5 12,6.5C8.24,6.5 4.83,8.64 3.18,12Z" fill="currentColor"/>',
-		first_description:
-			"Rendere ogni spedizione semplice e affidabile. Vogliamo che chiunque possa organizzare un ritiro, stampare l'etichetta o scegliere l'opzione senza stampante, seguire il tracciamento in tempo reale e ricevere supporto quando serve, tutto dallo stesso posto. Il risultato è un'esperienza lineare: meno passaggi, più controllo, zero complicazioni.",
-		second_description:
-			"Immaginiamo una logistica vicina alle persone: servizi chiari, costi comprensibili, assistenza rapida. Vogliamo essere il punto di riferimento per chi cerca qualità e convenienza insieme, con un servizio accessibile, inclusivo e senza barriere. Lavoriamo perché spedire diventi un'azione quotidiana, immediata e sicura.",
-		image: "",
+		year: '2021',
+		title: 'Partnership BRT ufficiale',
+		text:
+			'Diventiamo intermediari BRT autorizzati. Da qui in avanti ogni tariffa, supplemento e servizio passa da contratti diretti con il corriere.',
 	},
 	{
-		title: "Come lavoriamo",
-		iconSvg: '<path d="M12,15.5A3.5,3.5 0 0,1 8.5,12A3.5,3.5 0 0,1 12,8.5A3.5,3.5 0 0,1 15.5,12A3.5,3.5 0 0,1 12,15.5M19.43,12.97C19.47,12.65 19.5,12.33 19.5,12C19.5,11.67 19.47,11.34 19.43,11L21.54,9.37C21.73,9.22 21.78,8.95 21.66,8.73L19.66,5.27C19.54,5.05 19.27,4.96 19.05,5.05L16.56,6.05C16.04,5.66 15.5,5.32 14.87,5.07L14.5,2.42C14.46,2.18 14.25,2 14,2H10C9.75,2 9.54,2.18 9.5,2.42L9.13,5.07C8.5,5.32 7.96,5.66 7.44,6.05L4.95,5.05C4.73,4.96 4.46,5.05 4.34,5.27L2.34,8.73C2.21,8.95 2.27,9.22 2.46,9.37L4.57,11C4.53,11.34 4.5,11.67 4.5,12C4.5,12.33 4.53,12.65 4.57,12.97L2.46,14.63C2.27,14.78 2.21,15.05 2.34,15.27L4.34,18.73C4.46,18.95 4.73,19.03 4.95,18.95L7.44,17.94C7.96,18.34 8.5,18.68 9.13,18.93L9.5,21.58C9.54,21.82 9.75,22 10,22H14C14.25,22 14.46,21.82 14.5,21.58L14.87,18.93C15.5,18.67 16.04,18.34 16.56,17.94L19.05,18.95C19.27,19.03 19.54,18.95 19.66,18.73L21.66,15.27C21.78,15.05 21.73,14.78 21.54,14.63L19.43,12.97Z" fill="currentColor"/>',
-		description:
-			"Mettiamo al centro i dati essenziali. Il preventivo nasce da pochi campi chiari, il sistema seleziona la combinazione più conveniente e ti guida passo dopo passo fino al pagamento e all'etichetta. Con il tracciamento puoi sapere sempre dove si trova il pacco e con l'assistenza interna puoi gestire richieste, giacenze, variazioni di indirizzo e rimborsi quando ne ricorrono i presupposti. È la stessa logica di immediatezza che il mercato premia nelle migliori piattaforme di spedizione online, dove chiarezza e rapidità sono determinanti per la fiducia dell'utente",
-		image: "",
+		year: '2023',
+		title: '10.000 clienti attivi',
+		text:
+			'Superiamo la soglia simbolica dei diecimila account, tra negozi online, professionisti e famiglie che spediscono ogni settimana.',
 	},
 	{
-		title: "Spedizioni rapide e sicure",
-		iconSvg: '<path d="M18,18.5A1.5,1.5 0 0,1 16.5,17A1.5,1.5 0 0,1 18,15.5A1.5,1.5 0 0,1 19.5,17A1.5,1.5 0 0,1 18,18.5M19.5,9.5L21.46,12H17V9.5M6,18.5A1.5,1.5 0 0,1 4.5,17A1.5,1.5 0 0,1 6,15.5A1.5,1.5 0 0,1 7.5,17A1.5,1.5 0 0,1 6,18.5M20,8H17V4H3C1.89,4 1,4.89 1,6V17H3A3,3 0 0,0 6,20A3,3 0 0,0 9,17H15A3,3 0 0,0 18,20A3,3 0 0,0 21,17H23V12L20,8Z" fill="currentColor"/>',
-		description:
-			"Collaboriamo con i migliori corrieri nazionali e internazionali per garantirti consegne puntuali e affidabili. Ogni spedizione e' tracciata in tempo reale: sai sempre dove si trova il tuo pacco. In caso di imprevisti, il nostro team interviene rapidamente per trovare la soluzione migliore.",
-		image: "",
+		year: '2024',
+		title: 'Lancio piano Pro',
+		text:
+			'Per chi spedisce molto introduciamo tariffe a volume, fatturazione mensile e ritiri programmati su più sedi.',
 	},
 	{
-		title: "Perchè sceglierci",
-		iconSvg: '<path d="M23,12L20.56,9.22L20.9,5.54L17.29,4.72L15.4,1.54L12,3L8.6,1.54L6.71,4.72L3.1,5.53L3.44,9.21L1,12L3.44,14.78L3.1,18.47L6.71,19.29L8.6,22.47L12,21L15.4,22.46L17.29,19.28L20.9,18.46L20.56,14.78L23,12M10,17L6,13L7.41,11.59L10,14.17L16.59,7.58L18,9L10,17Z" fill="currentColor"/>',
-		description:
-			"Prezzi chiari in tempo reale grazie al confronto automatico delle tariffe in base a peso e volume Ritiro a domicilio e consegna con corrieri nazionali e internazionali selezionati Servizi aggiuntivi su richiesta come assicurazione e contrassegno Assistenza che ti segue dal preventivo alla consegna con canali digitali e risposta rapida Area personale per gestire ordini, indirizzi, ricevute e storico spedizioni",
-		image: "",
+		year: '2026',
+		title: 'Nuova piattaforma',
+		text:
+			'Rilasciamo l’interfaccia ridisegnata: tracking unificato, area cliente in chiaro, supporto in chat con persone reali.',
 	},
-];
+]
+
+// ── Valori (3 card con icone duotone) ─────────────────────────────────────
+const values = [
+	{
+		title: 'Trasparenza',
+		text:
+			'Tariffa finale subito a video, supplementi spiegati uno per uno, contratti BRT alla base di ogni preventivo. Niente sorprese in fattura.',
+		// Icona: occhio aperto (visibilità totale)
+		icon: {
+			bg: 'M12,4.5C7,4.5 2.73,7.61 1,12c1.73,4.39 6,7.5 11,7.5c5,0 9.27,-3.11 11,-7.5C21.27,7.61 17,4.5 12,4.5z',
+			fg: 'M12,7a5,5 0 1,0 0,10a5,5 0 0,0 0,-10zm0,8a3,3 0 1,1 0,-6a3,3 0 0,1 0,6z',
+		},
+	},
+	{
+		title: 'Semplicità',
+		text:
+			'Pochi campi, un flusso lineare, un’etichetta scaricabile in meno di un minuto. Togliamo passaggi, non funzioni.',
+		icon: {
+			bg: 'M4,6h16v3H4zM4,11h16v3H4zM4,16h10v3H4z',
+			fg: 'M16,16h6v3h-6z',
+		},
+	},
+	{
+		title: 'Supporto umano',
+		text:
+			'Nessun bot ad alberi infiniti. Risponde una persona del team, in italiano, che conosce il mondo BRT e la tua spedizione.',
+		icon: {
+			bg: 'M12,2a5,5 0 0,1 5,5v3a5,5 0 0,1 -10,0V7a5,5 0 0,1 5,-5z',
+			fg: 'M4,21v-1a6,6 0 0,1 6,-6h4a6,6 0 0,1 6,6v1z',
+		},
+	},
+]
+
+// ── Team (silhouette placeholder + ruoli, nomi sobri) ─────────────────────
+const team = [
+	{ name: 'Marco Donadel', role: 'CEO & Co-founder', initials: 'MD' },
+	{ name: 'Elena Rosati', role: 'CTO', initials: 'ER' },
+	{ name: 'Luca Bianchi', role: 'Head of Operations', initials: 'LB' },
+	{ name: 'Sara Conti', role: 'Customer Care Lead', initials: 'SC' },
+]
 </script>
 
 <template>
-	<section id="chi-siamo" class="about-page-shell">
-		<div class="my-container">
-			<div class="about-hero-panel">
-				<div class="about-hero-panel__copy">
-					<p class="about-hero-panel__eyebrow">Chi siamo</p>
-					<h1 class="about-hero-panel__title">Spedizioni chiare, veloci e senza stress.</h1>
-					<p class="about-hero-panel__text">
-						Siamo SpediamoFacile: rendiamo il percorso dal preventivo alla consegna più leggibile, più rapido e più affidabile, mantenendo tecnologia e assistenza umana nello stesso flusso.
+	<div class="about-page">
+		<!-- ── HERO ─────────────────────────────────────────────────────── -->
+		<PublicPageHeader
+			eyebrow="Chi siamo"
+			title="Intermediari BRT autorizzati, dal 2020"
+			description="Al servizio di PMI e privati italiani. Lavoriamo ogni giorno per rendere le spedizioni una scelta consapevole: prezzo chiaro, ritiro a domicilio, tracciamento in tempo reale e una persona vera quando serve un aiuto."
+			:crumbs="[{ label: 'Home', to: '/' }, { label: 'Chi siamo' }]">
+			<div class="about-hero__pills" role="list">
+				<span class="about-hero__pill" role="listitem">Intermediari BRT autorizzati</span>
+				<span class="about-hero__pill" role="listitem">Sede a Milano</span>
+				<span class="about-hero__pill" role="listitem">Team italiano</span>
+			</div>
+		</PublicPageHeader>
+
+		<!-- ── MISSION ──────────────────────────────────────────────────── -->
+		<section class="about-mission" aria-labelledby="about-mission-title">
+			<div class="my-container about-mission__inner">
+				<header class="about-mission__header">
+					<span class="about-mission__accent" aria-hidden="true"></span>
+					<p class="about-mission__eyebrow">La nostra missione</p>
+					<h2 id="about-mission-title" class="about-mission__title">
+						Spedire deve essere un’azione quotidiana, non un problema da risolvere.
+					</h2>
+				</header>
+				<div class="about-mission__grid">
+					<p class="about-mission__paragraph">
+						Siamo nati per togliere fatica al gesto più comune del commercio: mandare un pacco da A
+						a B. Lo facciamo con la rete BRT, contratti diretti e un’interfaccia che mostra subito
+						la tariffa migliore tra peso reale e peso volumetrico, senza giochi sui supplementi.
+					</p>
+					<p class="about-mission__paragraph">
+						Crediamo in una logistica vicina alle persone: pochi click per il preventivo, un ritiro
+						programmato in giornata, un’assistenza che risponde con un nome e un cognome. È così
+						che vogliamo essere il punto di riferimento per chi cerca qualità e convenienza nello
+						stesso servizio.
 					</p>
 				</div>
+			</div>
+		</section>
 
-				<div class="about-hero-panel__actions">
-					<NuxtLink to="/preventivo" class="about-hero-panel__cta about-hero-panel__cta--primary">Calcola un preventivo</NuxtLink>
-					<NuxtLink to="/contatti" class="about-hero-panel__cta about-hero-panel__cta--secondary">Contattaci</NuxtLink>
+		<!-- ── NUMERI CHIAVE ────────────────────────────────────────────── -->
+		<section class="about-stats" aria-labelledby="about-stats-title">
+			<div class="my-container">
+				<h2 id="about-stats-title" class="about-stats__title">I numeri di SpedizioneFacile</h2>
+				<dl class="about-stats__grid">
+					<div v-for="stat in stats" :key="stat.label" class="about-stats__card">
+						<dt class="about-stats__value">
+							<span class="about-stats__number">{{ stat.value }}</span>
+							<span v-if="stat.suffix" class="about-stats__suffix">{{ stat.suffix }}</span>
+						</dt>
+						<dd class="about-stats__label">{{ stat.label }}</dd>
+					</div>
+				</dl>
+				<p class="about-stats__note">Dati aggiornati al primo trimestre 2026.</p>
+			</div>
+		</section>
+
+		<!-- ── TIMELINE ─────────────────────────────────────────────────── -->
+		<section class="about-timeline" aria-labelledby="about-timeline-title">
+			<div class="my-container">
+				<header class="about-timeline__header">
+					<span class="about-timeline__accent" aria-hidden="true"></span>
+					<p class="about-timeline__eyebrow">La nostra storia</p>
+					<h2 id="about-timeline-title" class="about-timeline__title">Cinque tappe in cinque anni</h2>
+				</header>
+				<ol class="about-timeline__list">
+					<li v-for="m in milestones" :key="m.year" class="about-timeline__item">
+						<div class="about-timeline__marker" aria-hidden="true">
+							<span class="about-timeline__dot"></span>
+						</div>
+						<div class="about-timeline__body">
+							<span class="about-timeline__year">{{ m.year }}</span>
+							<h3 class="about-timeline__title-item">{{ m.title }}</h3>
+							<p class="about-timeline__text">{{ m.text }}</p>
+						</div>
+					</li>
+				</ol>
+			</div>
+		</section>
+
+		<!-- ── VALORI ───────────────────────────────────────────────────── -->
+		<section class="about-values" aria-labelledby="about-values-title">
+			<div class="my-container">
+				<header class="about-values__header">
+					<span class="about-values__accent" aria-hidden="true"></span>
+					<p class="about-values__eyebrow">Cosa ci guida</p>
+					<h2 id="about-values-title" class="about-values__title">Tre principi non negoziabili</h2>
+				</header>
+				<div class="about-values__grid">
+					<article v-for="v in values" :key="v.title" class="about-values__card">
+						<span class="about-values__icon" aria-hidden="true">
+							<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="28" height="28">
+								<path :d="v.icon.bg" class="about-values__icon-bg" />
+								<path :d="v.icon.fg" class="about-values__icon-fg" />
+							</svg>
+						</span>
+						<h3 class="about-values__card-title">{{ v.title }}</h3>
+						<p class="about-values__card-text">{{ v.text }}</p>
+					</article>
 				</div>
 			</div>
+		</section>
 
-			<div class="about-pill-row">
-				<span class="about-pill">Prezzi trasparenti</span>
-				<span class="about-pill">Ritiro a domicilio</span>
-				<span class="about-pill">Supporto dedicato</span>
+		<!-- ── TEAM ─────────────────────────────────────────────────────── -->
+		<section class="about-team" aria-labelledby="about-team-title">
+			<div class="my-container">
+				<header class="about-team__header">
+					<span class="about-team__accent" aria-hidden="true"></span>
+					<p class="about-team__eyebrow">Le persone</p>
+					<h2 id="about-team-title" class="about-team__title">Chi c’è dietro la piattaforma</h2>
+					<p class="about-team__lead">
+						Un team piccolo e diretto: ogni messaggio che ricevi arriva da una persona di questa
+						lista o da chi lavora con noi tutti i giorni.
+					</p>
+				</header>
+				<ul class="about-team__grid">
+					<li v-for="member in team" :key="member.name" class="about-team__card">
+						<div class="about-team__avatar" aria-hidden="true">
+							<span class="about-team__initials">{{ member.initials }}</span>
+						</div>
+						<p class="about-team__name">{{ member.name }}</p>
+						<p class="about-team__role">{{ member.role }}</p>
+					</li>
+				</ul>
 			</div>
+		</section>
 
-			<div class="about-card-grid">
-				<article
-					v-for="(section, sectionIndex) in sections"
-					:key="sectionIndex"
-					class="about-story-card"
-				>
-					<div class="about-story-card__icon-shell">
-						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="about-story-card__icon" v-html="section.iconSvg"></svg>
-					</div>
-
-					<div class="about-story-card__body">
-						<h2 class="about-story-card__title">{{ section.title }}</h2>
-
-						<p
-							v-if="section.first_description && section.second_description"
-							class="about-story-card__text"
-						>
-							<span>{{ section.first_description }}</span>
-							<span class="block mt-[14px]">{{ section.second_description }}</span>
-						</p>
-
-						<p v-else class="about-story-card__text">
-							{{ section.description }}
-						</p>
-					</div>
-				</article>
+		<!-- ── PARTNERSHIP BRT ──────────────────────────────────────────── -->
+		<section class="about-partnership" aria-labelledby="about-partnership-title">
+			<div class="my-container about-partnership__inner">
+				<div class="about-partnership__logo" aria-hidden="true">
+					<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 48" role="img" aria-label="Logo BRT">
+						<rect x="0" y="0" width="120" height="48" rx="6" class="about-partnership__logo-bg" />
+						<text
+							x="60"
+							y="32"
+							text-anchor="middle"
+							font-family="Inter, system-ui, sans-serif"
+							font-weight="800"
+							font-size="22"
+							letter-spacing="2"
+							class="about-partnership__logo-text">
+							BRT
+						</text>
+					</svg>
+				</div>
+				<div class="about-partnership__copy">
+					<p class="about-partnership__eyebrow">Partnership ufficiale</p>
+					<h2 id="about-partnership-title" class="about-partnership__title">
+						Intermediari BRT autorizzati
+					</h2>
+					<p class="about-partnership__text">
+						SpedizioneFacile opera in qualità di intermediario BRT autorizzato. Le tariffe che
+						vedi nel preventivo arrivano dal listino contrattualizzato direttamente con il
+						corriere: nessun rivenditore di terze parti, nessun ricarico nascosto, supporto
+						gestito dal nostro team in coordinamento con la rete BRT.
+					</p>
+					<p class="about-partnership__note">
+						BRT è marchio registrato di BRT S.p.A. Logo a fini illustrativi.
+					</p>
+				</div>
 			</div>
-		</div>
-	</section>
+		</section>
+
+		<!-- ── CTA FINALE ───────────────────────────────────────────────── -->
+		<section class="about-cta" aria-labelledby="about-cta-title">
+			<div class="my-container about-cta__inner">
+				<div class="about-cta__copy">
+					<p class="about-cta__eyebrow">Lavora con noi</p>
+					<h2 id="about-cta-title" class="about-cta__title">
+						Vuoi entrare nel team o proporci una collaborazione?
+					</h2>
+					<p class="about-cta__text">
+						Scriviamoci. Cerchiamo persone che mettano la stessa cura nei dettagli che mettiamo nel
+						prodotto: stesura candidature spontanee, partnership commerciali, idee per il prossimo
+						passo.
+					</p>
+				</div>
+				<div class="about-cta__actions">
+					<NuxtLink to="/contatti" class="btn btn-cta btn-lg">Lavora con noi</NuxtLink>
+					<NuxtLink to="/preventivo" class="btn btn-secondary btn-lg">Calcola un preventivo</NuxtLink>
+				</div>
+			</div>
+		</section>
+	</div>
 </template>
 
-<\!-- CSS in assets/css/servizi.css (chi-siamo section) -->

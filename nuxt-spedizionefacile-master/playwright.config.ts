@@ -52,6 +52,17 @@ export default defineConfig({
 	workers: process.env.CI ? 1 : undefined,
 	reporter: 'html',
 
+	// default snapshot tolerance per visual regression suite.
+	// Override per-test con maxDiffPixels/threshold se necessario.
+	expect: {
+		toHaveScreenshot: {
+			threshold: 0.001,
+			maxDiffPixels: 100,
+			animations: 'disabled',
+			caret: 'hide',
+		},
+	},
+
 	use: {
 		baseURL,
 		...(storageState ? { storageState } : {}),
@@ -62,16 +73,16 @@ export default defineConfig({
 	projects: [
 		{
 			name: 'chromium',
-			use: { ...devices['Desktop Chrome'] },
+			use: { ...devices['Desktop Chrome'], viewport: { width: 1440, height: 900 } },
 		},
 		{
 			name: 'mobile-chrome',
-			use: { ...devices['Pixel 5'] },
+			use: { ...devices['Pixel 5'], viewport: { width: 375, height: 812 } },
 		},
 		{
 			name: 'tablet',
 			use: {
-				viewport: { width: 720, height: 1024 },
+				viewport: { width: 768, height: 1024 },
 				userAgent: devices['Desktop Chrome'].userAgent,
 			},
 		},

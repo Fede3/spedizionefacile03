@@ -1,0 +1,63 @@
+# CODEOWNERS — SpedizioneFacile
+# Docs: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+#
+# L'ultimo match vince. Path-prefix = default owner.
+
+# ────────────────────────────────────────────────
+# Default fallback: tutto il repo
+# ────────────────────────────────────────────────
+*                                 @devops @tech-lead
+
+# ────────────────────────────────────────────────
+# Frontend (Nuxt 3 + Vue + Pinia + Tailwind)
+# ────────────────────────────────────────────────
+/nuxt-spedizionefacile-master/    @frontend-team
+/nuxt-spedizionefacile-master/components/   @frontend-team @design-team
+/nuxt-spedizionefacile-master/pages/        @frontend-team
+/nuxt-spedizionefacile-master/stores/       @frontend-team
+/nuxt-spedizionefacile-master/assets/       @frontend-team @design-team
+
+# ────────────────────────────────────────────────
+# Backend (Laravel 11 + Sanctum + Stripe)
+# ────────────────────────────────────────────────
+/laravel-spedizionefacile-main/             @backend-team
+/laravel-spedizionefacile-main/app/Http/    @backend-team
+/laravel-spedizionefacile-main/database/    @backend-team @dba
+/laravel-spedizionefacile-main/routes/      @backend-team
+
+# ────────────────────────────────────────────────
+# Pagamenti / Business critical
+# ────────────────────────────────────────────────
+/laravel-spedizionefacile-main/app/Services/Stripe/     @backend-team @tech-lead
+/laravel-spedizionefacile-main/app/Http/Controllers/Payment*  @backend-team @tech-lead
+/nuxt-spedizionefacile-master/components/Checkout*      @frontend-team @tech-lead
+
+# ────────────────────────────────────────────────
+# BRT integration
+# ────────────────────────────────────────────────
+/laravel-spedizionefacile-main/app/Services/Brt/        @backend-team @brt-specialist
+/BrtRestApi-PUDO-EN/                                    @backend-team @brt-specialist
+
+# ────────────────────────────────────────────────
+# Infra / DevOps / CI
+# ────────────────────────────────────────────────
+/.github/                         @devops
+/.github/workflows/               @devops @tech-lead
+/Caddyfile*                       @devops
+/render.yaml                      @devops
+/scripts/                         @devops
+
+# ────────────────────────────────────────────────
+# Docs
+# ────────────────────────────────────────────────
+/docs/                            @tech-writer
+*.md                              @tech-writer
+/AGENTS.md                        @tech-lead
+/README.md                        @tech-writer @tech-lead
+
+# ────────────────────────────────────────────────
+# Security-sensitive (require sign-off)
+# ────────────────────────────────────────────────
+/.env*                            @devops @security
+/laravel-spedizionefacile-main/config/auth.php   @backend-team @security
+/laravel-spedizionefacile-main/app/Http/Middleware/              @backend-team @security

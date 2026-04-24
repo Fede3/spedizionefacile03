@@ -25,9 +25,12 @@ class StripePaymentService
 {
     private StripeConfigService $configService;
 
-    public function __construct(StripeConfigService $configService)
+    private StripeClient $stripe;
+
+    public function __construct(StripeConfigService $configService, StripeClient $stripe)
     {
         $this->configService = $configService;
+        $this->stripe = $stripe;
     }
 
     public function getStripeSecret(): ?string
@@ -42,7 +45,7 @@ class StripePaymentService
 
     private function client(): StripeClient
     {
-        return new StripeClient($this->getStripeSecret());
+        return $this->stripe;
     }
 
     // ── Customer management ──────────────────────────────────────
@@ -91,7 +94,7 @@ class StripePaymentService
         $stripe = $this->client();
         $customerId = $this->createOrGetCustomer($user);
 
-        $amount = (int) $order->subtotal->amount();
+        $amount = $order->payableTotalCents();
 
         $paymentIntent = $stripe->paymentIntents->create([
             'amount' => $amount,
@@ -125,7 +128,7 @@ class StripePaymentService
         }
 
         $paymentIntent = $stripe->paymentIntents->create([
-            'amount' => $order->subtotal->amount(),
+            'amount' => $order->payableTotalCents(),
             'currency' => (string) $currency,
             'customer' => (string) $customerId,
             'payment_method' => (string) $paymentMethodId,
@@ -213,7 +216,7 @@ class StripePaymentService
         }
 
         // Verifica che l'importo corrisponda
-        if ((int) $intent->amount !== (int) $order->subtotal->amount()) {
+        if ((int) $intent->amount !== $order->payableTotalCents()) {
             throw new \RuntimeException('Importo non corrisponde.');
         }
 
@@ -442,6 +445,9 @@ class StripePaymentService
     {
         $metadata = [
             'order_id' => (string) $order->id,
+            'gross_subtotal_cents' => (string) $order->grossSubtotalCents(),
+            'discount_amount_cents' => (string) $order->discountAmountCents(),
+            'payable_total_cents' => (string) $order->payableTotalCents(),
         ];
 
         foreach (['client_submission_id', 'pricing_signature', 'pricing_snapshot_version'] as $field) {

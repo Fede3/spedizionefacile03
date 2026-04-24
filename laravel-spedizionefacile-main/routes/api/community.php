@@ -28,7 +28,8 @@ Route::middleware(['auth:sanctum', 'throttle:10,1'])
 
 Route::middleware('auth:sanctum')->prefix('referral')->group(function () {
     Route::get('/my-code', [ReferralCodeController::class, 'myCode']);
-    Route::post('/validate', [ReferralCodeController::class, 'validate']);
+    // Rate limit (10/min) su validate: previene enumeration codici referral.
+    Route::middleware(['throttle:10,1'])->post('/validate', [ReferralCodeController::class, 'validate']);
     Route::middleware(['throttle:5,1'])->post('/apply', [ReferralRewardController::class, 'apply']);
     Route::middleware(['throttle:5,1'])->post('/store', [ReferralCodeController::class, 'storeReferral']);
     Route::get('/my-discount', [ReferralCodeController::class, 'myDiscount']);
@@ -44,7 +45,13 @@ Route::middleware('auth:sanctum')->prefix('notifications')->group(function () {
     Route::patch('/read-all', [NotificationController::class, 'markAllRead']);
     Route::get('/preferences', [NotificationController::class, 'preferences']);
     Route::put('/preferences', [NotificationController::class, 'updatePreferences']);
+    // F08/F09 — alias PATCH richiesto dal frontend (`fetch('/api/notification-preferences', PATCH)`).
+    Route::patch('/preferences', [NotificationController::class, 'updatePreferences']);
 });
+
+// F08/F09 - alias top-level (PATCH /api/notification-preferences) per UI semplificata.
+Route::middleware('auth:sanctum')
+    ->patch('/notification-preferences', [NotificationController::class, 'updatePreferences']);
 
 /* ===== PRELIEVI COMMISSIONI ===== */
 
@@ -56,6 +63,7 @@ Route::middleware('auth:sanctum')->prefix('withdrawals')->group(function () {
 /* ===== RICHIESTA PARTNER PRO ===== */
 
 Route::middleware('auth:sanctum')->prefix('pro-request')->group(function () {
-    Route::post('/', [ProRequestController::class, 'store']);
+    // Rate limit (5/min) su invio richiesta Partner Pro: evita spam.
+    Route::middleware(['throttle:5,1'])->post('/', [ProRequestController::class, 'store']);
     Route::get('/status', [ProRequestController::class, 'status']);
 });

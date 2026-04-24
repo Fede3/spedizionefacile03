@@ -7,6 +7,9 @@ use App\Services\ShipmentExecutionService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 
 class ShipmentExecutionController extends Controller
 {
@@ -16,9 +19,7 @@ class ShipmentExecutionController extends Controller
 
     public function show(Order $order): JsonResponse
     {
-        if ($order->user_id !== auth()->id() && ! auth()->user()->isAdmin()) {
-            return response()->json(['message' => 'Non autorizzato.'], 403);
-        }
+        Gate::authorize('manageShipment', $order);
 
         return response()->json([
             'data' => $this->execution->getExecutionPayload($order),
@@ -27,9 +28,7 @@ class ShipmentExecutionController extends Controller
 
     public function requestPickup(Request $request, Order $order): JsonResponse
     {
-        if ($order->user_id !== auth()->id() && ! auth()->user()->isAdmin()) {
-            return response()->json(['message' => 'Non autorizzato.'], 403);
-        }
+        Gate::authorize('manageShipment', $order);
 
         $pickupTimeSlots = ['09:00-12:00', '09:00-18:00', '14:00-18:00'];
         $payload = $request->validate([
@@ -93,11 +92,143 @@ class ShipmentExecutionController extends Controller
         ], ($result['success'] ?? false) ? 200 : 422);
     }
 
+    /**
+     * Aggiorna la data di ritiro programmata (F04 — audit BRT 2026-04-18).
+     *
+     * Consentito solo se l'ordine NON è ancora stato ritirato/in transito/consegnato.
+     * Range date: da +1 giorno lavorativo a +10 giorni lavorativi dalla data odierna.
+     * Chiama BRT PickupService::requestPickup per ripianificare (BRT non ha endpoint
+     * "reschedule" dedicato: ri-aprire la richiesta con nuova data è la strategia
+     * consigliata). Se BRT fallisce, salviamo comunque la nuova data e logghiamo
+     * per follow-up admin.
+     */
+    public function reschedulePickup(Request $request, Order $order): JsonResponse
+    {
+        Gate::authorize('manageShipment', $order);
+
+        $blockedStatuses = [
+            Order::IN_TRANSIT,
+            Order::OUT_FOR_DELIVERY,
+            Order::DELIVERED,
+            Order::IN_GIACENZA,
+            Order::RETURNED,
+            Order::REFUSED,
+            Order::CANCELLED,
+            Order::REFUNDED,
+        ];
+
+        $rawStatus = $order->getRawOriginal('status');
+        if (in_array($rawStatus, $blockedStatuses, true)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Non è possibile modificare la data di ritiro: spedizione già in corso o conclusa.',
+            ], 422);
+        }
+
+        // Anche se il ritiro è stato già segnato come "completato" (pickup_status=done)
+        // non permettiamo il cambio.
+        if (($order->pickup_status ?? '') === 'done') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Il ritiro risulta già completato.',
+            ], 422);
+        }
+
+        $validated = $request->validate([
+            'pickup_date' => ['required', 'string'],
+            'pickup_time_slot' => ['nullable', 'string', 'max:50'],
+            'pickup_notes' => ['nullable', 'string', 'max:255'],
+        ]);
+
+        $newDate = $this->normalizePickupDateInput($validated['pickup_date']);
+        if (! $newDate) {
+            return response()->json([
+                'success' => false,
+                'message' => 'La data ritiro non è valida.',
+            ], 422);
+        }
+
+        [$minDate, $maxDate] = $this->allowedReschedulingRange();
+        if ($newDate->lt($minDate) || $newDate->gt($maxDate)) {
+            return response()->json([
+                'success' => false,
+                'message' => "La data deve essere compresa tra {$minDate->format('d/m/Y')} e {$maxDate->format('d/m/Y')} (giorni lavorativi).",
+            ], 422);
+        }
+
+        $pickupTimeSlots = ['09:00-12:00', '09:00-18:00', '14:00-18:00'];
+        $timeSlot = $validated['pickup_time_slot'] ?? null;
+        if ($timeSlot !== null && $timeSlot !== '' && ! in_array($timeSlot, $pickupTimeSlots, true)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Fascia oraria non valida.',
+            ], 422);
+        }
+
+        $result = $this->execution->reschedulePickup($order, [
+            'pickup_date' => $newDate->toDateString(),
+            'pickup_time_slot' => $timeSlot,
+            'pickup_notes' => $validated['pickup_notes'] ?? null,
+        ]);
+        $brtResult = is_array($result['brt_result'] ?? null) ? $result['brt_result'] : null;
+
+        // Mail conferma al cliente (best-effort).
+        try {
+            $user = $order->user;
+            if ($user?->email) {
+                Mail::raw(
+                    "Ciao {$user->name},\n\nLa data di ritiro dell'ordine #{$order->id} è stata aggiornata a {$newDate->format('d/m/Y')}"
+                    .($timeSlot ? " (fascia {$timeSlot})" : '')
+                    .".\n\nSe non hai richiesto questa modifica contattaci subito.\n\nSpediamoFacile",
+                    function ($message) use ($user, $order) {
+                        $message->to($user->email)
+                            ->subject('Data di ritiro aggiornata - Ordine #'.$order->id);
+                    }
+                );
+            }
+        } catch (\Throwable $e) {
+            Log::warning('reschedulePickup mail failed', [
+                'order_id' => $order->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
+
+        Log::info('Pickup rescheduled', [
+            'order_id' => $order->id,
+            'old_date' => $result['old_date'] ?? null,
+            'new_date' => $newDate->format('Y-m-d'),
+            'time_slot' => $timeSlot,
+            'brt_success' => $brtResult['success'] ?? null,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'data' => $this->execution->getExecutionPayload($order->fresh()),
+            'message' => 'Data di ritiro aggiornata.'
+                .(($brtResult && ! ($brtResult['success'] ?? false))
+                    ? ' Sincronizzazione con il corriere in corso, un operatore prenderà in carico la richiesta.'
+                    : ''),
+        ]);
+    }
+
+    /**
+     * Calcola range minimo/massimo consentito per la ripianificazione
+     * (+1 giorno lavorativo fino a +10 giorni lavorativi).
+     */
+    private function allowedReschedulingRange(): array
+    {
+        $min = now()->startOfDay()->addWeekday();
+        $max = $min->copy();
+        for ($i = 1; $i < 10; $i++) {
+            $max->addWeekday();
+        }
+
+        return [$min, $max];
+    }
+
     public function createBordero(Order $order): JsonResponse
     {
-        if ($order->user_id !== auth()->id() && ! auth()->user()->isAdmin()) {
-            return response()->json(['message' => 'Non autorizzato.'], 403);
-        }
+        Gate::authorize('manageShipment', $order);
 
         $result = $this->execution->createBordero($order);
 
@@ -111,9 +242,7 @@ class ShipmentExecutionController extends Controller
 
     public function downloadBordero(Request $request, Order $order)
     {
-        if ($order->user_id !== auth()->id() && ! auth()->user()->isAdmin()) {
-            return response()->json(['message' => 'Non autorizzato.'], 403);
-        }
+        Gate::authorize('manageShipment', $order);
 
         if (empty($order->bordero_document_base64)) {
             return response()->json(['message' => 'Bordero non disponibile.'], 404);
@@ -137,9 +266,7 @@ class ShipmentExecutionController extends Controller
 
     public function sendDocuments(Order $order): JsonResponse
     {
-        if ($order->user_id !== auth()->id() && ! auth()->user()->isAdmin()) {
-            return response()->json(['message' => 'Non autorizzato.'], 403);
-        }
+        Gate::authorize('manageShipment', $order);
 
         $result = $this->execution->sendDocuments($order);
 

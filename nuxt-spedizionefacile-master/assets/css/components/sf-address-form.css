@@ -1,0 +1,262 @@
+/* sf-address-form.css — stili componente AddressFormModal (form indirizzo in modale). Global non-scoped. */
+
+.sf-addr-form {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+	font-family: var(--font-inter, 'Inter', sans-serif);
+}
+
+.sf-addr-fieldset {
+	border: none;
+	margin: 0;
+	padding: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+.sf-addr-legend {
+	font-size: 0.75rem;
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: 0.6px;
+	color: #095866;
+	padding: 0;
+}
+
+.sf-addr-radio-group {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 10px;
+}
+
+.sf-addr-radio-group--compact {
+	grid-template-columns: repeat(2, minmax(0, max-content));
+}
+
+.sf-addr-radio {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	padding: 12px 14px;
+	border: 1.5px solid rgba(9, 88, 102, 0.14);
+	border-radius: 12px;
+	cursor: pointer;
+	background: #ffffff;
+	transition: color var(--sf-t1) var(--sf-ease), background-color var(--sf-t1) var(--sf-ease), border-color var(--sf-t1) var(--sf-ease), box-shadow var(--sf-t1) var(--sf-ease), transform var(--sf-t1) var(--sf-ease);
+}
+
+.sf-addr-radio input[type='radio'] {
+	position: absolute;
+	opacity: 0;
+	pointer-events: none;
+}
+
+.sf-addr-radio:hover {
+	border-color: rgba(9, 88, 102, 0.32);
+	background: #FBFCFD;
+}
+
+.sf-addr-radio--active {
+	border-color: #095866;
+	background: rgba(9, 88, 102, 0.05);
+	box-shadow: 0 0 0 3px rgba(9, 88, 102, 0.12);
+}
+
+.sf-addr-radio--origin.sf-addr-radio--active {
+	border-color: #095866;
+}
+
+.sf-addr-radio--dest.sf-addr-radio--active {
+	border-color: #E44203;
+	background: rgba(228, 66, 3, 0.05);
+	box-shadow: 0 0 0 3px rgba(228, 66, 3, 0.12);
+}
+
+.sf-addr-radio__icon {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 32px;
+	height: 32px;
+	border-radius: 10px;
+	background: rgba(9, 88, 102, 0.08);
+	color: #095866;
+	flex-shrink: 0;
+}
+
+.sf-addr-radio--dest .sf-addr-radio__icon { background: rgba(228, 66, 3, 0.1); color: #E44203; }
+
+.sf-addr-radio strong {
+	display: block;
+	font-size: 0.875rem;
+	font-weight: 700;
+	color: #1A2429;
+	line-height: 1.2;
+}
+
+.sf-addr-radio small {
+	display: block;
+	margin-top: 2px;
+	font-size: 0.75rem;
+	color: #5A656C;
+}
+
+.sf-addr-radio--mini {
+	padding: 8px 14px;
+	gap: 6px;
+	font-size: 0.875rem;
+	font-weight: 600;
+	color: #2E3940;
+}
+
+.sf-addr-row {
+	display: grid;
+	grid-template-columns: 1fr;
+	gap: 12px;
+}
+
+.sf-addr-row--double { grid-template-columns: 1fr 1fr; }
+.sf-addr-row--triple { grid-template-columns: 1fr 1fr 1fr; }
+.sf-addr-row--street { grid-template-columns: 1fr 110px; }
+
+@media (max-width: 640px) {
+	.sf-addr-row--double,
+	.sf-addr-row--triple,
+	.sf-addr-row--street { grid-template-columns: 1fr; }
+}
+
+.sf-addr-field {
+	display: flex;
+	flex-direction: column;
+	gap: 5px;
+}
+
+.sf-addr-field__label {
+	font-size: 0.75rem;
+	font-weight: 700;
+	color: #2E3940;
+	text-transform: uppercase;
+	letter-spacing: 0.5px;
+}
+
+.sf-addr-field__label small {
+	display: inline;
+	font-size: 0.6875rem;
+	font-weight: 500;
+	text-transform: none;
+	letter-spacing: 0;
+	color: #95A0AB;
+	margin-left: 4px;
+}
+
+.sf-addr-input {
+	width: 100%;
+	padding: 10px 12px;
+	font-size: 0.9375rem;
+	color: #1A2429;
+	background: #ffffff;
+	border: 1.5px solid rgba(9, 88, 102, 0.14);
+	border-radius: 10px;
+	transition: border-color var(--sf-t1) var(--sf-ease), box-shadow var(--sf-t1) var(--sf-ease);
+	font-family: inherit;
+}
+
+.sf-addr-input:focus {
+	outline: none;
+	border-color: #095866;
+	box-shadow: 0 0 0 3px rgba(9, 88, 102, 0.15);
+}
+
+.sf-addr-input--select {
+	background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%23095866' d='M6 8 0 0h12z'/%3E%3C/svg%3E");
+	background-repeat: no-repeat;
+	background-position: right 12px center;
+	appearance: none;
+	padding-right: 32px;
+	cursor: pointer;
+}
+
+.sf-addr-input[aria-invalid='true'] { border-color: #B91C1C; }
+
+.sf-addr-error {
+	font-size: 0.75rem;
+	color: #B91C1C;
+	font-weight: 500;
+	margin-top: 2px;
+}
+
+.sf-addr-checkbox {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	font-size: 0.875rem;
+	color: #2E3940;
+	cursor: pointer;
+	padding: 4px 0;
+}
+
+.sf-addr-checkbox input[type='checkbox'] {
+	width: 18px;
+	height: 18px;
+	accent-color: #095866;
+	cursor: pointer;
+}
+
+.sf-addr-server-error {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 10px 12px;
+	background: rgba(185, 28, 28, 0.08);
+	border: 1px solid rgba(185, 28, 28, 0.20);
+	border-radius: 10px;
+	color: #991717;
+	font-size: 0.875rem;
+	font-weight: 500;
+}
+
+.sf-addr-btn {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	padding: 10px 18px;
+	font-size: 0.9375rem;
+	font-weight: 700;
+	border-radius: 10px;
+	border: 1.5px solid transparent;
+	cursor: pointer;
+	transition: color var(--sf-t1) var(--sf-ease), background-color var(--sf-t1) var(--sf-ease), border-color var(--sf-t1) var(--sf-ease), box-shadow var(--sf-t1) var(--sf-ease), transform var(--sf-t1) var(--sf-ease);
+	font-family: inherit;
+}
+
+.sf-addr-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.sf-addr-btn--ghost {
+	background: transparent;
+	border-color: rgba(9, 88, 102, 0.18);
+	color: #475259;
+}
+.sf-addr-btn--ghost:hover:not(:disabled) {
+	background: #F1F4F6;
+	border-color: rgba(9, 88, 102, 0.32);
+}
+
+.sf-addr-btn--primary {
+	background: #E44203;
+	border-color: #E44203;
+	color: #ffffff;
+}
+.sf-addr-btn--primary:hover:not(:disabled) {
+	background: #C2380B;
+	border-color: #C2380B;
+}
+
+.sf-addr-spin {
+	animation: sf-addr-spin 0.8s linear infinite;
+}
+
+@keyframes sf-addr-spin {
+	to { transform: rotate(360deg); }
+}

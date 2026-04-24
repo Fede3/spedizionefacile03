@@ -1,10 +1,3 @@
-<!--
-  COMPONENTE: AdminPrezziNazionale.vue
-  SCOPO: Sezione "Nazionale" del pannello admin prezzi — tabelle fasce peso/volume,
-         regole oltre 7a fascia, supplementi CAP.
-  PROPS: Riceve tutto lo stato dal composable useAdminPrezzi via props.
-  EMITS: Nessuno — modifica direttamente i ref reattivi passati dal parent.
--->
 <script setup>
 const props = defineProps({
 	weightBands: { type: Array, required: true },
@@ -108,13 +101,16 @@ const bandTableShared = computed(() => ({
 	</AdminBandTable>
 
 	<!-- Regole oltre 7a fascia -->
-	<div class="bg-white rounded-[12px] p-[16px] tablet:p-[20px] desktop:p-[28px] shadow-sm border border-[#E9EBEC] overflow-hidden">
+	<div class="rounded-[12px] p-[16px] tablet:p-[20px] desktop:p-[28px] border border-[#E9EBEC] overflow-hidden">
 		<div class="flex flex-wrap items-center justify-between gap-[12px] mb-[16px]">
 			<div>
 				<h2 class="text-[1.125rem] font-bold text-[#252B42] mb-[4px]">Regole oltre 7ª fascia</h2>
 				<p class="text-[0.75rem] text-[#737373]">Configurazione scaglioni dinamici (es. 101-150, 151-200 e 0,401-0,600, 0,601-0,800).</p>
 			</div>
 			<button type="button" @click="extraRules.enabled = !extraRules.enabled"
+				role="switch"
+				:aria-checked="extraRules.enabled ? 'true' : 'false'"
+				aria-label="Attiva regole oltre 7ª fascia"
 				:class="extraRules.enabled ? 'bg-[#095866]' : 'bg-[#C8CCD0]'"
 				class="relative inline-flex h-[32px] w-[56px] items-center rounded-full transition-colors cursor-pointer">
 				<span :class="extraRules.enabled ? 'translate-x-[28px]' : 'translate-x-[2px]'" class="inline-block h-[26px] w-[26px] transform rounded-full bg-white transition-transform shadow-sm" />
@@ -182,7 +178,7 @@ const bandTableShared = computed(() => ({
 
 			<div class="p-[14px] rounded-[12px] border border-[#D8E9F0] bg-[#F4FAFC]">
 				<h3 class="text-[0.875rem] font-semibold text-[#095866] mb-[10px]">Casi rapidi</h3>
-				<div class="overflow-x-auto">
+				<div class="overflow-hidden">
 					<table class="w-full min-w-[450px] text-[0.75rem]">
 						<thead>
 							<tr class="text-left text-[#67778E] border-b border-[#D8E9F0]">
@@ -211,7 +207,7 @@ const bandTableShared = computed(() => ({
 	</div>
 
 	<!-- Supplementi CAP -->
-	<div class="bg-white rounded-[12px] p-[20px] tablet:p-[24px] desktop:p-[32px] shadow-sm border border-[#E9EBEC]">
+	<div class="rounded-[12px] p-[20px] tablet:p-[24px] desktop:p-[32px] border border-[#E9EBEC]">
 		<div class="flex flex-wrap items-center justify-between gap-[12px] mb-[16px]">
 			<div>
 				<h2 class="text-[1.125rem] font-bold text-[#252B42] mb-[4px]">Supplementi CAP</h2>

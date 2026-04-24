@@ -21,6 +21,8 @@ class BrtConfig
     public readonly string $pudoToken;
     public readonly int $departureDepot;
     public readonly bool $verifySsl;
+    public readonly bool $pickupEnabled;
+    public readonly ?string $pickupEndpoint;
 
     public function __construct()
     {
@@ -31,6 +33,9 @@ class BrtConfig
         $this->pudoToken = config('services.brt.pudo_token', '');
         $this->departureDepot = (int) config('services.brt.departure_depot', 0);
         $this->verifySsl = (bool) config('services.brt.verify_ssl', true);
+        $this->pickupEnabled = (bool) config('services.brt.pickup_enabled', false);
+        $pickupEndpoint = trim((string) config('services.brt.pickup_endpoint', ''));
+        $this->pickupEndpoint = $pickupEndpoint !== '' ? $pickupEndpoint : null;
 
         if ($this->departureDepot === 0) {
             Log::warning('BRT departure depot not configured, using fallback 0');

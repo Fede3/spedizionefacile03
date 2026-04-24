@@ -18,6 +18,7 @@ class OrderPolicy
 
     /**
      * Determine whether the user can view the model.
+     * Admins can view any order; regular users can only view their own.
      */
     public function view(User $user, Order $order): bool
     {
@@ -37,7 +38,36 @@ class OrderPolicy
      */
     public function update(User $user, Order $order): bool
     {
-        return false;
+        return $user->isAdmin() || $order->user_id === $user->id;
+    }
+
+    /**
+     * Determine whether the user can cancel the order and request a refund.
+     * Only the order owner can cancel (admins use a separate admin flow).
+     */
+    public function cancel(User $user, Order $order): bool
+    {
+        return $order->user_id === $user->id;
+    }
+
+    /**
+     * Determine whether the user can add packages to the order.
+     * Only the order owner can add packages (order must still be in a
+     * payable state, but that is a business rule enforced in the controller).
+     */
+    public function addPackage(User $user, Order $order): bool
+    {
+        return $order->user_id === $user->id;
+    }
+
+    /**
+     * Determine whether the user can manage the shipment (create BRT shipment,
+     * confirm, download label, view tracking, request pickup, bordero, etc.).
+     * Both the order owner and admins are allowed.
+     */
+    public function manageShipment(User $user, Order $order): bool
+    {
+        return $user->isAdmin() || $order->user_id === $user->id;
     }
 
     /**

@@ -1,37 +1,7 @@
 /**
- * COMPOSABLE: useSmartValidation (useSmartValidation.js)
- * SCOPO: Validazione reattiva dei campi form con regole specifiche per l'Italia.
- *
- * DOVE SI USA: components/Preventivo.vue (peso, dimensioni, CAP),
- *              pages/la-tua-spedizione/[step].vue (telefono, email, indirizzo, provincia),
- *              pages/checkout.vue (campi di fatturazione)
- *
- * COSA RESTITUISCE:
- *   - validateTelefono(key, value): valida telefono italiano (6-10 cifre, prefisso +39)
- *   - validateCAP(key, value): valida CAP italiano (5 cifre, range 00010-98168)
- *   - validateEmail(key, value): valida email (opzionale)
- *   - validatePeso(key, value): valida peso (positivo, max 1000 kg)
- *   - validateDimensione(key, value, label): valida dimensione (positiva, max 300 cm)
- *   - validateNomeCognome(key, value): valida nome (no numeri)
- *   - validateProvincia(key, value): valida sigla provincia (2 lettere, elenco ufficiale)
- *   - filterCAP(value): rimuove caratteri non numerici, limita a 5 cifre
- *   - filterProvincia(value): rimuove non-lettere, limita a 2 maiuscole
- *   - autoCapitalize(value): capitalizza prima lettera di ogni parola
- *   - getProvinceSuggestions(input): suggerimenti provincia (max 5)
- *   - getError(key), hasError(key), errorClass(key, baseClass)
- *   - onBlur(key, fn), onInput(key, fn), markTouched(key), isTouched(key)
- *   - resetAll(): resetta tutti gli errori e lo stato toccato
- * ESEMPIO D'USO: const sv = useSmartValidation()
- *                sv.onBlur('telefono', () => sv.validateTelefono('telefono', value))
- *
- * VINCOLI: la strategia "tocca prima, valida dopo" e' fondamentale per la UX —
- *          non mostrare errori su campi mai toccati dall'utente
- * ERRORI TIPICI: chiamare getError() senza aver prima chiamato onBlur() → ritorna sempre null
- * COLLEGAMENTI: docs/guide/AGGIUNGERE-CAMPO.md
- *
- * PATTERN DI VALIDAZIONE:
- * - "on blur" (uscita dal campo): segna come "toccato" + prima validazione
- * - "on input" (digitazione): ri-valida SOLO se gia' toccato
+ * useSmartValidation — validatori form per regole italiane (telefono, CAP, provincia, peso, etc).
+ * Pattern "touch-first": `onBlur` segna toccato + prima validazione; `onInput` ri-valida solo se toccato.
+ * `getError(key)` ritorna null finché il campo non è stato toccato (UX: no errori prematuri).
  */
 
 // Lista completa delle sigle delle province italiane (usata per la validazione della provincia)

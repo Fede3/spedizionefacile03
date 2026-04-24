@@ -3,7 +3,9 @@
   All Stripe card-element logic lives in the parent composable; we just get refs/props.
 -->
 <script setup>
-defineProps({
+import '~/assets/css/components/sf-payment-methods.css';
+
+const props = defineProps({
 	paymentMethod: { type: String, required: true },
 	paymentMethodOptions: { type: Array, required: true },
 	cardPaymentsUnavailable: { type: Boolean, default: false },
@@ -18,13 +20,67 @@ defineProps({
 	saveCardForFuture: { type: Boolean, default: false },
 	/* Function ref callback — parent passes (el) => { composableRef.value = el } */
 	cardRefCallback: { type: Function, default: null },
-	/* wallet */
+	/* wallet saldo prepagato */
 	walletFormatted: { type: String, default: '' },
 	walletLoaded: { type: Boolean, default: false },
 	walletSufficient: { type: Boolean, default: false },
+	/* wallet express: Apple Pay / Google Pay (Stripe PaymentRequestButton) */
+	canMakePayment: { type: Boolean, default: false },
+	isAppleAvailable: { type: Boolean, default: false },
+	isGoogleAvailable: { type: Boolean, default: false },
+	paymentRequestError: { type: String, default: '' },
+	/* Function ref callback per il container del Stripe PaymentRequestButton */
+	paymentRequestRefCallback: { type: Function, default: null },
+	/* Callback chiamata dopo mount del DOM container, per montare il bottone Stripe */
+	onPaymentRequestReady: { type: Function, default: null },
 });
 
 const emit = defineEmits(['select-payment-method', 'update:useNewCard', 'update:saveCardForFuture']);
+
+// Flag per prevenire click spammabili sui pulsanti "Carta salvata / Usa nuova carta":
+// durante la Transition payment-panel (fade 160ms) i click ripetuti causerebbero
+// animazioni a raffica. Con questo guard, il pulsante e' inerte finche' la transizione
+// non completa, poi torna attivo.
+const isCardFormTransitioning = ref(false);
+const onCardFormBeforeEnter = () => { isCardFormTransitioning.value = true; };
+const onCardFormAfterEnter = () => { isCardFormTransitioning.value = false; };
+const onCardFormBeforeLeave = () => { isCardFormTransitioning.value = true; };
+const onCardFormAfterLeave = () => { isCardFormTransitioning.value = false; };
+
+const handleUseNewCard = (value) => {
+	if (isCardFormTransitioning.value) return;
+	if (props.useNewCard === value) return;
+	emit('update:useNewCard', value);
+};
+
+// Checkbox "Salva carta per pagamenti futuri":
+// uso un ref locale sincronizzato bidirezionalmente con la prop saveCardForFuture.
+// Motivo: il vecchio binding :checked + @change non propagava affidabilmente lo
+// stato al parent (probabilmente a causa del re-render dentro la Transition).
+// Con v-model + ref locale + watch l'aggiornamento e' reattivo e stabile.
+const localSaveCard = ref(!!props.saveCardForFuture);
+watch(() => props.saveCardForFuture, (v) => {
+	if (localSaveCard.value !== v) localSaveCard.value = !!v;
+});
+watch(localSaveCard, (v) => {
+	if (v !== props.saveCardForFuture) emit('update:saveCardForFuture', v);
+});
+
+// Mount del Stripe PaymentRequestButton dopo che container e' in DOM.
+// Il parent gestisce il ref via callback; qui chiediamo solo a parent di montare.
+watchEffect(async () => {
+	if (props.canMakePayment && typeof props.onPaymentRequestReady === 'function') {
+		await nextTick();
+		await props.onPaymentRequestReady();
+	}
+});
+
+const walletQuickLabel = computed(() => {
+	if (props.isAppleAvailable && props.isGoogleAvailable) return 'Apple Pay e Google Pay disponibili';
+	if (props.isAppleAvailable) return 'Apple Pay disponibile';
+	if (props.isGoogleAvailable) return 'Google Pay disponibile';
+	return '';
+});
 </script>
 
 <template>
@@ -50,12 +106,32 @@ const emit = defineEmits(['select-payment-method', 'update:useNewCard', 'update:
 			</div>
 		</div>
 
-		<div class="checkout-payment-options-grid">
+		<!-- Wallet rapido: Apple Pay / Google Pay (Stripe PaymentRequestButton).
+		     Mostrato SOLO se almeno un provider wallet express è effettivamente
+		     disponibile; evita il box vuoto "oppure scegli un altro metodo". -->
+		<div v-if="canMakePayment && (isAppleAvailable || isGoogleAvailable)" class="payment-wallet-section">
+			<div class="payment-wallet-section__label">
+				<span>Pagamento rapido</span>
+				<small>{{ walletQuickLabel }}</small>
+			</div>
+			<div
+				:ref="paymentRequestRefCallback"
+				class="payment-wallet-section__button"></div>
+			<p v-if="paymentRequestError" class="payment-wallet-section__error">{{ paymentRequestError }}</p>
+			<div class="payment-wallet-section__divider">
+				<span>oppure scegli un altro metodo</span>
+			</div>
+		</div>
+
+		<div class="checkout-payment-options-grid checkout-payment-options-grid--final" role="tablist" aria-label="Metodo di pagamento">
 			<button
 				v-for="option in paymentMethodOptions"
 				:key="option.key"
 				type="button"
 				@click="emit('select-payment-method', option.key)"
+				role="tab"
+				:aria-pressed="paymentMethod === option.key"
+				:aria-selected="paymentMethod === option.key"
 				:disabled="option.key === 'carta' && cardPaymentsUnavailable"
 				:class="[
 					'checkout-payment-option',
@@ -63,34 +139,36 @@ const emit = defineEmits(['select-payment-method', 'update:useNewCard', 'update:
 					option.key === 'carta' && cardPaymentsUnavailable ? 'checkout-payment-option--disabled' : '',
 				]">
 				<span v-if="option.badge" class="checkout-payment-option__badge">{{ option.badge }}</span>
-				<span class="checkout-payment-option__icon-shell">
-					<svg v-if="option.key === 'carta'" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-						<rect x="1" y="4" width="22" height="16" rx="2" ry="2" />
-						<line x1="1" y1="10" x2="23" y2="10" />
-					</svg>
-					<svg
-						v-else-if="option.key === 'bonifico'"
-						width="20"
-						height="20"
-						viewBox="0 0 24 24"
-						fill="none"
-						stroke="currentColor"
-						stroke-width="2">
-						<path d="M3 10h18" />
-						<path d="M5 10V7a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v3" />
-						<rect x="4" y="10" width="16" height="9" rx="2" />
-						<path d="M8 14h2" />
-						<path d="M14 14h2" />
-					</svg>
-					<svg v-else width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-						<path d="M21 12V7H5a2 2 0 0 1 0-4h14v4" />
-						<path d="M3 5v14a2 2 0 0 0 2 2h16v-5" />
-						<path d="M18 12a2 2 0 0 0 0 4h4v-4Z" />
-					</svg>
-				</span>
-				<span class="checkout-payment-option__copy">
-					<span class="checkout-payment-option__title">{{ option.title }}</span>
-					<span class="checkout-payment-option__text">{{ option.description }}</span>
+				<span class="checkout-payment-option__main">
+					<span class="checkout-payment-option__icon-shell">
+						<svg v-if="option.key === 'carta'" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+							<rect x="1" y="4" width="22" height="16" rx="2" ry="2" />
+							<line x1="1" y1="10" x2="23" y2="10" />
+						</svg>
+						<svg
+							v-else-if="option.key === 'bonifico'"
+							width="20"
+							height="20"
+							viewBox="0 0 24 24"
+							fill="none"
+							stroke="currentColor"
+							stroke-width="2">
+							<path d="M3 10h18" />
+							<path d="M5 10V7a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v3" />
+							<rect x="4" y="10" width="16" height="9" rx="2" />
+							<path d="M8 14h2" />
+							<path d="M14 14h2" />
+						</svg>
+						<svg v-else width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+							<path d="M21 12V7H5a2 2 0 0 1 0-4h14v4" />
+							<path d="M3 5v14a2 2 0 0 0 2 2h16v-5" />
+							<path d="M18 12a2 2 0 0 0 0 4h4v-4Z" />
+						</svg>
+					</span>
+					<span class="checkout-payment-option__copy">
+						<span class="checkout-payment-option__title">{{ option.title }}</span>
+						<span class="checkout-payment-option__text">{{ option.description }}</span>
+					</span>
 				</span>
 			</button>
 		</div>
@@ -109,7 +187,8 @@ const emit = defineEmits(['select-payment-method', 'update:useNewCard', 'update:
 					<button
 						v-if="hasSavedCard"
 						type="button"
-						@click="emit('update:useNewCard', false)"
+						@click="handleUseNewCard(false)"
+						:disabled="isCardFormTransitioning"
 						:class="[
 							'checkout-payment-choice',
 							!useNewCard ? 'checkout-payment-choice--selected' : 'checkout-payment-choice--idle',
@@ -118,7 +197,7 @@ const emit = defineEmits(['select-payment-method', 'update:useNewCard', 'update:
 						<div class="checkout-payment-choice__copy">
 							<p class="checkout-payment-choice__eyebrow">Carta salvata</p>
 							<p class="checkout-payment-choice__title">
-								&bull;&bull;&bull;&bull; &bull;&bull;&bull;&bull; &bull;&bull;&bull;&bull; {{ defaultPayment.card.last4 }}
+								•••• •••• •••• {{ defaultPayment.card.last4 }}
 							</p>
 							<p class="checkout-payment-choice__text">Scade {{ defaultPayment.card.exp_month }}/{{ defaultPayment.card.exp_year }}</p>
 						</div>
@@ -127,13 +206,15 @@ const emit = defineEmits(['select-payment-method', 'update:useNewCard', 'update:
 
 					<div
 						role="button"
-						tabindex="0"
-						@click="emit('update:useNewCard', true)"
-						@keydown.enter.prevent="emit('update:useNewCard', true)"
-						@keydown.space.prevent="emit('update:useNewCard', true)"
+						:tabindex="isCardFormTransitioning ? -1 : 0"
+						:aria-disabled="isCardFormTransitioning"
+						@click="handleUseNewCard(true)"
+						@keydown.enter.prevent="handleUseNewCard(true)"
+						@keydown.space.prevent="handleUseNewCard(true)"
 						:class="[
 							'checkout-payment-choice checkout-payment-choice--expandable',
 							!hasSavedCard || useNewCard ? 'checkout-payment-choice--selected' : 'checkout-payment-choice--idle',
+							isCardFormTransitioning ? 'is-transitioning' : '',
 						]">
 						<div class="checkout-payment-choice__header">
 							<span class="checkout-payment-choice__icon-shell">
@@ -153,8 +234,9 @@ const emit = defineEmits(['select-payment-method', 'update:useNewCard', 'update:
 								]"></span>
 						</div>
 
-						<Transition name="payment-panel">
-							<div v-if="shouldShowCardForm" class="checkout-payment-card-form checkout-payment-card-form--embedded">
+						<!-- Transition rimossa: l'utente trovava fastidioso il fade ad ogni click.
+						     Il form appare/scompare istantaneo. -->
+						<div v-if="shouldShowCardForm" class="checkout-payment-card-form checkout-payment-card-form--embedded">
 								<div class="checkout-payment-card-form__head">
 									<div class="checkout-payment-card-form__intro">
 										<p class="checkout-payment-card-form__text">Inserisci la carta qui.</p>
@@ -166,16 +248,17 @@ const emit = defineEmits(['select-payment-method', 'update:useNewCard', 'update:
 									Preparazione del modulo carta in corso...
 								</p>
 								<p v-if="cardError" class="checkout-payment-card-form__error">{{ cardError }}</p>
+								<!-- Checkbox "Salva carta": label che wrappa tutto così click OVUNQUE
+								     (quadrato + testo) triggera il toggle nativo dell'input.
+								     @click.stop sul label blocca il bubbling al div[role=button] genitore. -->
 								<label class="checkout-payment-card-form__save" @click.stop>
 									<input
 										type="checkbox"
-										:checked="saveCardForFuture"
-										@change="emit('update:saveCardForFuture', $event.target.checked)"
+										v-model="localSaveCard"
 										class="checkout-payment-card-form__checkbox" />
-									<span>Salva per i prossimi pagamenti</span>
+									<span>Salva carta per pagamenti futuri (puoi revocare in qualsiasi momento dal tuo account)</span>
 								</label>
 							</div>
-						</Transition>
 					</div>
 				</div>
 			</div>
@@ -205,3 +288,4 @@ const emit = defineEmits(['select-payment-method', 'update:useNewCard', 'update:
 		</div>
 	</div>
 </template>
+

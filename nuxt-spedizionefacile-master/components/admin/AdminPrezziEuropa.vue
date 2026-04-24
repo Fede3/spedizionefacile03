@@ -1,9 +1,3 @@
-<!--
-  COMPONENTE: AdminPrezziEuropa.vue
-  SCOPO: Sezione "Europa monocollo" del pannello admin prezzi — listino paese per fascia,
-         vista tabella e vista compatta con filtri.
-  PROPS: Riceve stato e funzioni dal composable useAdminPrezzi via props.
--->
 <script setup>
 const props = defineProps({
 	europePricing: { type: Object, required: true },
@@ -17,7 +11,7 @@ const props = defineProps({
 </script>
 
 <template>
-	<div class="bg-white rounded-[14px] p-[20px] tablet:p-[24px] desktop:p-[32px] shadow-sm border border-[var(--color-brand-border)]">
+	<div class="rounded-[16px] p-[20px] tablet:p-[24px] desktop:p-[32px] border border-[var(--color-brand-border)]">
 		<div class="flex flex-wrap items-start justify-between gap-[16px] mb-[16px]">
 			<div class="space-y-[4px]">
 				<h2 class="text-[1.125rem] font-bold text-[var(--color-brand-text)]">Europa monocollo</h2>
@@ -31,7 +25,7 @@ const props = defineProps({
 		</div>
 
 		<div class="space-y-[16px]">
-			<div v-if="!filteredEuropeBands.length" class="p-[16px] rounded-[14px] border border-dashed border-[var(--color-brand-border)] text-[var(--color-brand-text-secondary)] text-[0.8125rem]">
+			<div v-if="!filteredEuropeBands.length" class="p-[16px] rounded-[16px] border border-dashed border-[var(--color-brand-border)] text-[var(--color-brand-text-secondary)] text-[0.8125rem]">
 				Nessun paese trovato con i filtri attuali.
 			</div>
 			<div
@@ -63,7 +57,7 @@ const props = defineProps({
 					<div
 						v-for="rate in band.rates"
 						:key="`${band.id}-${rate.country_code}-compact`"
-						class="rounded-[14px] border border-[#E6EDF1] bg-white px-[14px] py-[12px]">
+						class="rounded-[16px] border border-[#E6EDF1] bg-white px-[14px] py-[12px]">
 						<div class="flex items-start justify-between gap-[10px] mb-[8px]">
 							<div>
 								<p class="text-[0.875rem] font-semibold text-[var(--color-brand-text)]">{{ rate.country_name }}</p>
@@ -84,7 +78,7 @@ const props = defineProps({
 				</div>
 
 				<!-- Vista tabella -->
-				<div v-else class="overflow-x-auto">
+				<div v-else class="overflow-hidden">
 					<table class="w-full min-w-[760px] text-[0.8125rem]">
 						<thead>
 							<tr class="text-left text-[var(--color-brand-text-secondary)] border-b border-[var(--color-brand-border)] bg-white">

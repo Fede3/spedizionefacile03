@@ -276,14 +276,15 @@ class PriceBandController extends Controller
         ]);
     }
 
-    // Upload immagine promozionale
-    public function uploadPromoImage(Request $request): JsonResponse
+    // Upload immagine promozionale.
+    // Sprint 6.7 security hardening: PromoImageUploadRequest + ImageSanitizer.
+    public function uploadPromoImage(\App\Http\Requests\PromoImageUploadRequest $request, \App\Services\Security\ImageSanitizer $sanitizer): JsonResponse
     {
-        $request->validate([
-            'image' => 'required|image|max:2048',
-        ]);
-
-        $path = $request->file('image')->store('promo', 'public');
+        $path = $sanitizer->sanitizeAndStore(
+            $request->file('image'),
+            'promo',
+            'public'
+        );
         Setting::set('promo_label_image', '/storage/' . $path);
 
         // Invalida cache pubblica

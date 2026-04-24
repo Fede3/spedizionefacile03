@@ -87,7 +87,7 @@ class StripeHardeningTest extends TestCase
             'data' => (object) [
                 'object' => (object) [
                     'id' => $paymentIntentId,
-                    'amount' => $amount ?? (int) $order->subtotal->amount(),
+                    'amount' => $amount ?? $order->payableTotalCents(),
                     'status' => 'succeeded',
                     'payment_method_types' => ['card'],
                     'metadata' => (object) [
@@ -268,6 +268,51 @@ class StripeHardeningTest extends TestCase
             ->assertJsonPath('error', 'Contesto preventivo non coerente con l\'ordine.');
     }
 
+    public function test_payment_intent_rejects_mismatched_discount_context(): void
+    {
+        $user = User::factory()->create([
+            'email_verified_at' => now(),
+        ]);
+        $order = Order::factory()->create([
+            'user_id' => $user->id,
+            'status' => Order::PENDING,
+            'subtotal' => 890,
+            'client_submission_id' => 'submission-discount-match',
+            'pricing_signature' => 'signature-discount-match',
+            'pricing_snapshot_version' => 1,
+            'pricing_snapshot' => [
+                'discount_context' => [
+                    'code' => 'SAVE5',
+                    'discount_amount' => 0.45,
+                    'discount_percent' => 5.0,
+                    'final_total_raw' => 8.45,
+                    'subtotal_raw' => 8.9,
+                    'type' => 'coupon',
+                ],
+                'total_cents' => 890,
+            ],
+        ]);
+
+        Sanctum::actingAs($user);
+
+        $mock = Mockery::mock(StripePaymentService::class);
+        $mock->shouldReceive('isConfigured')->never();
+        app()->instance(StripePaymentService::class, $mock);
+
+        $this->postJson('/api/stripe/existing-order-payment-intent', [
+            'order_id' => $order->id,
+            'discount_context' => [
+                'type' => 'coupon',
+                'code' => 'SAVE10',
+                'discount_percent' => 10,
+                'discount_amount' => 0.89,
+                'subtotal_raw' => 8.9,
+                'final_total_raw' => 8.01,
+            ],
+        ])->assertStatus(422)
+            ->assertJsonPath('error', 'Contesto preventivo non coerente con l\'ordine.');
+    }
+
     public function test_mark_order_completed_rejects_mismatched_client_submission_id(): void
     {
         $user = User::factory()->create([
@@ -338,10 +383,51 @@ class StripeHardeningTest extends TestCase
         ]);
     }
 
+    public function test_mark_order_completed_records_discounted_payable_total_for_bank_transfer(): void
+    {
+        $user = User::factory()->create([
+            'email_verified_at' => now(),
+        ]);
+        $order = Order::factory()->create([
+            'user_id' => $user->id,
+            'status' => Order::PENDING,
+            'subtotal' => 1190,
+            'pricing_snapshot' => [
+                'total_cents' => 1190,
+                'discount_context' => [
+                    'type' => 'coupon',
+                    'code' => 'SAVE190',
+                    'discount_amount' => 1.90,
+                    'subtotal_raw' => 11.90,
+                    'final_total_raw' => 10.00,
+                ],
+            ],
+        ]);
+
+        Sanctum::actingAs($user);
+
+        $this->postJson('/api/stripe/mark-order-completed', [
+            'order_id' => $order->id,
+            'payment_type' => 'bonifico',
+            'ext_id' => 'bank-transfer-discounted',
+        ])->assertOk()
+            ->assertJsonPath('success', true);
+
+        $this->assertDatabaseHas('transactions', [
+            'order_id' => $order->id,
+            'ext_id' => 'bank-transfer-discounted',
+            'type' => 'bonifico',
+            'status' => 'pending',
+            'provider_status' => 'pending',
+            'total' => 1000,
+        ]);
+    }
+
     public function test_stripe_service_scopes_idempotency_key_per_order(): void
     {
         $config = Mockery::mock(StripeConfigService::class);
-        $service = new StripePaymentService($config);
+        $stripe = Mockery::mock(\Stripe\StripeClient::class);
+        $service = new StripePaymentService($config, $stripe);
         $order = Order::factory()->make([
             'id' => 42,
             'client_submission_id' => 'submission-xyz',
@@ -474,6 +560,43 @@ class StripeHardeningTest extends TestCase
         $this->assertSame(1, $order->pricing_snapshot_version);
         $this->assertSame((int) $order->subtotal->amount(), data_get($order->pricing_snapshot, 'total_cents'));
         $this->assertSame('ricevuta', data_get($order->pricing_snapshot, 'billing_type'));
+    }
+
+    public function test_create_order_persists_discount_context_inside_pricing_snapshot(): void
+    {
+        $user = User::factory()->create([
+            'email_verified_at' => now(),
+        ]);
+        User::factory()->partnerPro()->create([
+            'name' => 'Partner Roma',
+            'referral_code' => 'PRO-ROMA',
+        ]);
+
+        $this->seedCartForUser($user, 1190);
+
+        Sanctum::actingAs($user);
+
+        $this->postJson('/api/stripe/create-order', [
+            'client_submission_id' => 'submission-discount-context-001',
+            'discount_context' => [
+                'type' => 'referral',
+                'code' => 'PRO-ROMA',
+                'discount_percent' => 5,
+                'discount_amount' => 0.6,
+                'subtotal_raw' => 11.9,
+                'final_total_raw' => 11.3,
+                'pro_name' => 'Partner Roma',
+            ],
+        ])->assertOk();
+
+        $order = Order::query()
+            ->where('user_id', $user->id)
+            ->where('client_submission_id', 'submission-discount-context-001')
+            ->firstOrFail();
+
+        $this->assertSame('PRO-ROMA', data_get($order->pricing_snapshot, 'discount_context.code'));
+        $this->assertSame('referral', data_get($order->pricing_snapshot, 'discount_context.type'));
+        $this->assertEquals(5.0, data_get($order->pricing_snapshot, 'discount_context.discount_percent'));
     }
 
     public function test_orders_table_rejects_duplicate_submission_ids_for_the_same_user(): void
@@ -761,6 +884,63 @@ class StripeHardeningTest extends TestCase
             })
             ->count());
         $this->assertNotEmpty($firstResponse->json('order_ids'));
+    }
+
+    public function test_create_order_single_order_only_rejects_multiple_groups_before_creating_orders(): void
+    {
+        $user = User::factory()->create([
+            'email_verified_at' => now(),
+        ]);
+
+        $origin = PackageAddress::factory()->create();
+        $destinationOne = PackageAddress::factory()->create();
+        $destinationTwo = PackageAddress::factory()->create();
+        $service = Service::create([
+            'service_type' => 'Nessuno',
+            'date' => '',
+            'time' => '',
+        ]);
+
+        foreach ([$destinationOne, $destinationTwo] as $destination) {
+            $package = Package::create([
+                'package_type' => 'Pacco',
+                'quantity' => 1,
+                'weight' => 5,
+                'first_size' => 30,
+                'second_size' => 20,
+                'third_size' => 15,
+                'single_price' => 1190,
+                'origin_address_id' => $origin->id,
+                'destination_address_id' => $destination->id,
+                'service_id' => $service->id,
+                'user_id' => $user->id,
+            ]);
+
+            DB::table('cart_user')->insert([
+                'user_id' => $user->id,
+                'package_id' => $package->id,
+            ]);
+        }
+
+        Sanctum::actingAs($user);
+
+        $this->postJson('/api/stripe/create-order', [
+            'client_submission_id' => 'submission-single-order-only',
+            'single_order_only' => true,
+            'billing_data' => [
+                'type' => 'ricevuta',
+            ],
+        ])
+            ->assertStatus(422)
+            ->assertJsonPath('error', 'Questo checkout contiene più spedizioni separate. Completa un pagamento per volta.');
+
+        $this->assertSame(0, Order::query()
+            ->where('user_id', $user->id)
+            ->where(function ($query) {
+                $query->where('client_submission_id', 'submission-single-order-only')
+                    ->orWhere('client_submission_id', 'like', 'submission-single-order-only|%');
+            })
+            ->count());
     }
 
     public function test_existing_order_payment_intent_syncs_missing_submission_context_from_request(): void
@@ -1237,7 +1417,7 @@ class StripeHardeningTest extends TestCase
         ]);
 
         $order->refresh();
-        $this->assertSame(Order::PENDING, $order->rawStatus());
+        $this->assertSame(Order::AWAITING_BANK_TRANSFER, $order->rawStatus());
         $this->assertSame('bonifico', $order->payment_method);
     }
 
@@ -1295,5 +1475,159 @@ class StripeHardeningTest extends TestCase
 
         // Verifica che l'evento OrderPaid sia stato emesso
         Event::assertDispatched(\App\Events\OrderPaid::class);
+    }
+
+    public function test_mark_order_completed_dispatches_order_paid_when_reusing_existing_wallet_transaction_on_pending_order(): void
+    {
+        Event::fake();
+
+        $user = User::factory()->create([
+            'email_verified_at' => now(),
+        ]);
+
+        $order = Order::factory()->create([
+            'user_id' => $user->id,
+            'status' => Order::PENDING,
+            'subtotal' => 890,
+        ]);
+
+        $movement = WalletMovement::create([
+            'user_id' => $user->id,
+            'type' => 'debit',
+            'amount' => 8.90,
+            'currency' => 'EUR',
+            'status' => 'confirmed',
+            'idempotency_key' => 'pay_'.$user->id.'_wallet-existing-pending',
+            'reference' => 'order-'.$order->id,
+            'description' => 'Pagamento ordine #'.$order->id,
+            'source' => 'wallet',
+        ]);
+
+        Transaction::create([
+            'order_id' => $order->id,
+            'ext_id' => 'wallet-'.$movement->id,
+            'type' => 'wallet',
+            'status' => 'succeeded',
+            'provider_status' => 'succeeded',
+            'total' => $order->subtotal->amount(),
+        ]);
+
+        Sanctum::actingAs($user);
+
+        $this->postJson('/api/stripe/mark-order-completed', [
+            'order_id' => $order->id,
+            'payment_type' => 'wallet',
+            'ext_id' => 'wallet-'.$movement->id,
+        ])->assertOk()
+            ->assertJsonPath('success', true);
+
+        $order->refresh();
+
+        $this->assertSame(Order::COMPLETED, $order->rawStatus());
+        Event::assertDispatched(\App\Events\OrderPaid::class);
+    }
+
+    public function test_mark_order_completed_dispatches_order_paid_when_retrying_completed_wallet_order_with_existing_transaction(): void
+    {
+        Event::fake();
+
+        $user = User::factory()->create([
+            'email_verified_at' => now(),
+        ]);
+
+        $order = Order::factory()->create([
+            'user_id' => $user->id,
+            'status' => Order::COMPLETED,
+            'payment_method' => 'wallet',
+            'subtotal' => 890,
+        ]);
+
+        $movement = WalletMovement::create([
+            'user_id' => $user->id,
+            'type' => 'debit',
+            'amount' => 8.90,
+            'currency' => 'EUR',
+            'status' => 'confirmed',
+            'idempotency_key' => 'pay_'.$user->id.'_wallet-existing-completed',
+            'reference' => 'order-'.$order->id,
+            'description' => 'Pagamento ordine #'.$order->id,
+            'source' => 'wallet',
+        ]);
+
+        Transaction::create([
+            'order_id' => $order->id,
+            'ext_id' => 'wallet-'.$movement->id,
+            'type' => 'wallet',
+            'status' => 'succeeded',
+            'provider_status' => 'succeeded',
+            'total' => $order->subtotal->amount(),
+        ]);
+
+        Sanctum::actingAs($user);
+
+        $this->postJson('/api/stripe/mark-order-completed', [
+            'order_id' => $order->id,
+            'payment_type' => 'wallet',
+            'ext_id' => 'wallet-'.$movement->id,
+        ])->assertOk()
+            ->assertJsonPath('success', true);
+
+        $order->refresh();
+
+        $this->assertSame(Order::COMPLETED, $order->rawStatus());
+        Event::assertDispatched(\App\Events\OrderPaid::class);
+        $this->assertSame(1, Transaction::query()->where('ext_id', 'wallet-'.$movement->id)->count());
+    }
+
+    public function test_mark_order_completed_does_not_dispatch_order_paid_twice_after_order_has_already_advanced(): void
+    {
+        Event::fake();
+
+        $user = User::factory()->create([
+            'email_verified_at' => now(),
+        ]);
+
+        $order = Order::factory()->create([
+            'user_id' => $user->id,
+            'status' => Order::PROCESSING,
+            'payment_method' => 'wallet',
+            'subtotal' => 890,
+        ]);
+
+        $movement = WalletMovement::create([
+            'user_id' => $user->id,
+            'type' => 'debit',
+            'amount' => 8.90,
+            'currency' => 'EUR',
+            'status' => 'confirmed',
+            'idempotency_key' => 'pay_'.$user->id.'_wallet-existing-processing',
+            'reference' => 'order-'.$order->id,
+            'description' => 'Pagamento ordine #'.$order->id,
+            'source' => 'wallet',
+        ]);
+
+        Transaction::create([
+            'order_id' => $order->id,
+            'ext_id' => 'wallet-'.$movement->id,
+            'type' => 'wallet',
+            'status' => 'succeeded',
+            'provider_status' => 'succeeded',
+            'total' => $order->subtotal->amount(),
+        ]);
+
+        Sanctum::actingAs($user);
+
+        $this->postJson('/api/stripe/mark-order-completed', [
+            'order_id' => $order->id,
+            'payment_type' => 'wallet',
+            'ext_id' => 'wallet-'.$movement->id,
+        ])->assertOk()
+            ->assertJsonPath('success', true);
+
+        $order->refresh();
+
+        $this->assertSame(Order::PROCESSING, $order->rawStatus());
+        Event::assertNotDispatched(\App\Events\OrderPaid::class);
+        $this->assertSame(1, Transaction::query()->where('ext_id', 'wallet-'.$movement->id)->count());
     }
 }

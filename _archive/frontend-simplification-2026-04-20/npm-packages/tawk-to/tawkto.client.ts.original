@@ -1,0 +1,104 @@
+/**
+ * Tawk.to live chat widget — plugin client-only.
+ *
+ * Attivazione:
+ *   - Solo in produzione (process.env.NODE_ENV === 'production').
+ *   - Richiede `NUXT_PUBLIC_TAWKTO_ID` (property_id Tawk.to). Senza la var
+ *     il plugin e' un no-op completo (nessun script injected, nessun network).
+ *   - `NUXT_PUBLIC_TAWKTO_WIDGET_ID` opzionale (default: "default").
+ *
+ * Routing:
+ *   - Il widget NON si carica su /account/amministrazione/** (backoffice pulito,
+ *     chat riservata ai clienti finali).
+ *   - Si nasconde con Tawk_API.hideWidget() quando si naviga dentro admin
+ *     dopo l'injection iniziale, e si riattiva con showWidget() uscendo.
+ *
+ * Branding:
+ *   - Il colore bubble/button si configura lato dashboard Tawk.to
+ *     (Administration → Widget Appearance). Override runtime non supportato
+ *     dal loader pubblico.
+ */
+
+declare global {
+	interface Window {
+		Tawk_API?: {
+			onLoad?: () => void
+			hideWidget?: () => void
+			showWidget?: () => void
+			setAttributes?: (attrs: Record<string, string>, cb?: (err?: Error) => void) => void
+		}
+		Tawk_LoadStart?: Date
+	}
+}
+
+const isAdminRoute = (path: string): boolean => /^\/account\/amministrazione/.test(path)
+
+export default defineNuxtPlugin((nuxtApp) => {
+	// 1) SSR/build: skip
+	if (typeof document === 'undefined') return
+
+	// 2) Dev: skip — niente chat in locale (rumore + rate limit)
+	if (import.meta.dev) return
+
+	const config = useRuntimeConfig()
+	const tawkId = String(config.public.tawktoId || '').trim()
+	const widgetId = String(config.public.tawktoWidgetId || 'default').trim()
+	if (!tawkId) return
+
+	// 3) Evita doppio inject (es. HMR su preview prod)
+	if (document.querySelector('script[data-tawkto-injected]')) return
+
+	// 4) Route corrente: non iniettare in pannello admin
+	const route = nuxtApp.$router?.currentRoute?.value
+	const initialPath = route?.fullPath || window.location.pathname
+	if (isAdminRoute(initialPath)) {
+		// Registriamo solo il watcher per attivare quando si esce dall'admin
+		watchAdminExit(tawkId, widgetId)
+		return
+	}
+
+	injectTawk(tawkId, widgetId)
+	wireRouteVisibility()
+})
+
+const injectTawk = (tawkId: string, widgetId: string): void => {
+	window.Tawk_API = window.Tawk_API || {}
+	window.Tawk_LoadStart = new Date()
+
+	const script = document.createElement('script')
+	script.async = true
+	script.src = `https://embed.tawk.to/${encodeURIComponent(tawkId)}/${encodeURIComponent(widgetId)}`
+	script.charset = 'UTF-8'
+	script.setAttribute('crossorigin', '*')
+	script.setAttribute('data-tawkto-injected', 'true')
+	document.head.appendChild(script)
+}
+
+const wireRouteVisibility = (): void => {
+	// Nasconde/mostra il widget in base al percorso (admin pulito).
+	const router = useRouter()
+	router.afterEach((to) => {
+		const api = window.Tawk_API
+		if (!api) return
+		if (isAdminRoute(to.fullPath)) {
+			try { api.hideWidget?.() } catch { /* no-op */ }
+		} else {
+			try { api.showWidget?.() } catch { /* no-op */ }
+		}
+	})
+}
+
+const watchAdminExit = (tawkId: string, widgetId: string): void => {
+	const router = useRouter()
+	const stop = router.afterEach((to) => {
+		if (isAdminRoute(to.fullPath)) return
+		if (document.querySelector('script[data-tawkto-injected]')) {
+			// gia' caricato — solo show
+			try { window.Tawk_API?.showWidget?.() } catch { /* no-op */ }
+			return
+		}
+		injectTawk(tawkId, widgetId)
+		stop()
+		wireRouteVisibility()
+	})
+}

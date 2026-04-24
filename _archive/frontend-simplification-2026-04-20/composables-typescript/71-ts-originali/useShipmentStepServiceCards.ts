@@ -1,0 +1,330 @@
+/**
+ * useShipmentStepServiceCards — Service card UI logic for step 1.
+ *
+ * Handles: contrassegno/assicurazione inline validation, service state labels,
+ * toggle/activate/expand interactions, currency input normalization.
+ */
+export function useShipmentStepServiceCards({
+	editablePackages,
+	ensureServiceSelected,
+	expandedServiceKey,
+	featuredService,
+	chooseService,
+	removeService,
+	resetServicesState,
+	serviceData,
+	servicesList,
+	smsEmailNotification,
+	submitError,
+	toggleServiceDetails,
+	toggleServiceSelection,
+	shipmentFlowStore,
+}) {
+	const CONFIGURABLE_SERVICE_KEYS = new Set(["contrassegno", "assicurazione"]);
+
+	// --- ERRORS ---
+	const serviceCardErrors = reactive({
+		contrassegnoImporto: "",
+		contrassegnoIncasso: "",
+		contrassegnoRimborso: "",
+		contrassegnoDettaglio: "",
+		assicurazione: {},
+	});
+
+	const clearServiceCardErrors = () => {
+		serviceCardErrors.contrassegnoImporto = "";
+		serviceCardErrors.contrassegnoIncasso = "";
+		serviceCardErrors.contrassegnoRimborso = "";
+		serviceCardErrors.contrassegnoDettaglio = "";
+		serviceCardErrors.assicurazione = {};
+	};
+
+	// --- CURRENCY HELPERS ---
+	const normalizeCurrencyInput = (value) => {
+		const sanitized = String(value || "")
+			.replace(/[^\d,.\s]/g, "")
+			.replace(/\s+/g, "")
+			.replace(/\./g, ",");
+
+		const [integerRaw = "", ...decimalParts] = sanitized.split(",");
+		const integer = integerRaw.replace(/^0+(?=\d)/, "");
+		const decimals = decimalParts.join("").slice(0, 2);
+
+		if (!integer && !decimals) return "";
+		if (!decimalParts.length) return integer || "0";
+
+		return `${integer || "0"},${decimals}`;
+	};
+
+	const parseCurrencyValue = (value) => {
+		const normalized = normalizeCurrencyInput(value);
+		if (!normalized) return 0;
+		return Number(normalized.replace(",", ".")) || 0;
+	};
+
+	// --- INSURANCE PACKAGES ---
+	const insurancePackages = computed(() => {
+		if (Array.isArray(editablePackages.value) && editablePackages.value.length > 0) {
+			return editablePackages.value;
+		}
+		return [{ package_type: "pacco", weight: "", first_size: "", second_size: "", third_size: "" }];
+	});
+
+	// --- CONTRASSEGNO/ASSICURAZIONE OPTIONS ---
+	const contrassegnoIncassoOptions = [
+		{ value: "contanti", label: "Contanti" },
+		{ value: "assegno", label: "Assegno" },
+	];
+	const contrassegnoRimborsoOptions = [
+		{ value: "bonifico", label: "Bonifico" },
+		{ value: "assegno", label: "Assegno" },
+		{ value: "assegno_circolare", label: "Assegno circolare" },
+	];
+
+	const requiresContrassegnoDettaglio = computed(() => (
+		serviceData.value.contrassegno.modalita_rimborso === "bonifico"
+	));
+
+	/**
+	 * Guard difensivo: se per qualsiasi motivo (ripristino sessione, reset esterno,
+	 * toggle servizio) l'incasso torna a valore diverso da 'assegno' (con riserva),
+	 * azzera il canale di rimborso e il suo dettaglio per evitare dati fantasma.
+	 * Il dropdown UI viene nascosto via v-if in ServiceConfigPanel.vue.
+	 */
+	watch(
+		() => serviceData.value?.contrassegno?.modalita_incasso,
+		(next) => {
+			if (next !== "assegno") {
+				if (serviceData.value.contrassegno.modalita_rimborso) {
+					serviceData.value.contrassegno.modalita_rimborso = "";
+				}
+				if (serviceData.value.contrassegno.dettaglio_rimborso) {
+					serviceData.value.contrassegno.dettaglio_rimborso = "";
+				}
+			}
+		},
+	);
+
+	const clearInlineState = () => {
+		clearServiceCardErrors();
+		submitError.value = null;
+	};
+
+	// Audit F01/F02: limiti business per input servizi monetari
+	const COD_MIN_EUR = 0.01;
+	const COD_MAX_EUR = 10000;
+	const INSURANCE_MIN_EUR = 1;
+	const INSURANCE_MAX_EUR = 10000;
+
+	// --- VALIDATION ---
+	const validateContrassegnoInline = (force = false) => {
+		clearServiceCardErrors();
+		let isValid = true;
+
+		if (!force && !isServiceSelected("contrassegno")) return true;
+
+		const importo = parseCurrencyValue(serviceData.value.contrassegno.importo);
+		if (importo <= 0) {
+			serviceCardErrors.contrassegnoImporto = "Inserisci un importo valido.";
+			isValid = false;
+		} else if (importo < COD_MIN_EUR) {
+			serviceCardErrors.contrassegnoImporto = `Importo minimo ${COD_MIN_EUR.toLocaleString("it-IT", { minimumFractionDigits: 2 })} €.`;
+			isValid = false;
+		} else if (importo > COD_MAX_EUR) {
+			serviceCardErrors.contrassegnoImporto = `Importo massimo ${COD_MAX_EUR.toLocaleString("it-IT")} €.`;
+			isValid = false;
+		}
+		if (!serviceData.value.contrassegno.modalita_incasso) {
+			serviceCardErrors.contrassegnoIncasso = "Seleziona l'incasso.";
+			isValid = false;
+		}
+		// Il rimborso e' obbligatorio SOLO quando l'incasso e' 'assegno' (con riserva):
+		// con 'contanti' il denaro e' consegnato al corriere e il campo non e' visibile.
+		const requiresRimborso = serviceData.value.contrassegno.modalita_incasso === "assegno";
+		if (requiresRimborso && !serviceData.value.contrassegno.modalita_rimborso) {
+			serviceCardErrors.contrassegnoRimborso = "Seleziona il rimborso.";
+			isValid = false;
+		}
+		if (requiresContrassegnoDettaglio.value && !String(serviceData.value.contrassegno.dettaglio_rimborso || "").trim()) {
+			serviceCardErrors.contrassegnoDettaglio = "Inserisci l'IBAN.";
+			isValid = false;
+		}
+
+		return isValid;
+	};
+
+	const validateAssicurazioneInline = (force = false) => {
+		let isValid = true;
+		if (!force && !isServiceSelected("assicurazione")) return true;
+
+		const nextErrors = {};
+		insurancePackages.value.forEach((_, index) => {
+			const valore = parseCurrencyValue(serviceData.value.assicurazione[index]);
+			if (valore <= 0) {
+				nextErrors[index] = "Inserisci un valore.";
+				isValid = false;
+			} else if (valore < INSURANCE_MIN_EUR) {
+				nextErrors[index] = `Valore minimo ${INSURANCE_MIN_EUR} €.`;
+				isValid = false;
+			} else if (valore > INSURANCE_MAX_EUR) {
+				nextErrors[index] = `Valore massimo ${INSURANCE_MAX_EUR.toLocaleString("it-IT")} €.`;
+				isValid = false;
+			}
+		});
+
+		serviceCardErrors.assicurazione = nextErrors;
+		return isValid;
+	};
+
+	const validateInlineServiceDetails = () => {
+		const contrassegnoValid = validateContrassegnoInline();
+		if (!contrassegnoValid) {
+			expandedServiceKey.value = "contrassegno";
+			submitError.value = "Completa i dettagli del contrassegno.";
+			return false;
+		}
+
+		const assicurazioneValid = validateAssicurazioneInline();
+		if (!assicurazioneValid) {
+			expandedServiceKey.value = "assicurazione";
+			submitError.value = "Completa i dettagli dell'assicurazione.";
+			return false;
+		}
+
+		submitError.value = null;
+		return true;
+	};
+
+	// --- SERVICE STATE HELPERS ---
+	const isServiceExpanded = (serviceKey) => expandedServiceKey.value === serviceKey;
+	const getServiceIndex = (service) => servicesList.value.findIndex((item) => item.key === service.key);
+	const isServiceSelected = (serviceKey) => {
+		const service = servicesList.value.find((item) => item.key === serviceKey);
+		return service ? shipmentFlowStore.servicesArray.includes(service.name) : false;
+	};
+	const featuredServiceIndex = computed(() => servicesList.value.findIndex((item) => item.featured));
+	const canConfigureService = (service) => CONFIGURABLE_SERVICE_KEYS.has(service?.key);
+
+	const getServiceConfigureLabel = (service) => (
+		service.isSelected ? "Modifica" : "Configura"
+	);
+
+	const focusInvalidServiceField = (serviceKey) => {
+		nextTick(() => {
+			const panel = document.getElementById(`service-inline-panel-${serviceKey}`);
+			if (!panel) return;
+
+			let focusTarget = null;
+			if (serviceKey === "contrassegno") {
+				if (serviceCardErrors.contrassegnoImporto) {
+					focusTarget = panel.querySelector(".service-inline-field__input");
+				} else if (serviceCardErrors.contrassegnoDettaglio) {
+					focusTarget = panel.querySelectorAll(".service-inline-field__input")[1] || panel.querySelector(".service-inline-field__input");
+				} else if (serviceCardErrors.contrassegnoIncasso) {
+					focusTarget = panel.querySelector('[aria-label="Modalita incasso contrassegno"] .service-inline-choice');
+				} else if (serviceCardErrors.contrassegnoRimborso) {
+					focusTarget = panel.querySelector('[aria-label="Modalita rimborso contrassegno"] .service-inline-choice');
+				}
+			}
+
+			if (serviceKey === "assicurazione") {
+				focusTarget = panel.querySelector(".service-inline-field__input");
+			}
+
+			(focusTarget || panel.querySelector(".service-inline-panel__submit"))?.focus?.({ preventScroll: true });
+		});
+	};
+
+	// --- INTERACTIONS ---
+	const activateConfiguredService = (service) => {
+		if (!canConfigureService(service)) return;
+		clearInlineState();
+
+		let isValid = true;
+		if (service.key === "contrassegno") {
+			isValid = validateContrassegnoInline(true);
+			if (!isValid) submitError.value = "Completa i dettagli del contrassegno.";
+		}
+		if (service.key === "assicurazione") {
+			isValid = validateAssicurazioneInline(true);
+			if (!isValid) submitError.value = "Completa i dettagli dell'assicurazione.";
+		}
+
+		if (!isValid) {
+			expandedServiceKey.value = service.key;
+			focusInvalidServiceField(service.key);
+			return;
+		}
+
+		if (!service.isSelected) {
+			const serviceIndex = getServiceIndex(service);
+			if (serviceIndex === -1) return;
+			ensureServiceSelected(service, serviceIndex);
+		}
+		expandedServiceKey.value = "";
+	};
+
+	const handleServicePrimaryAction = (service) => {
+		if (!canConfigureService(service)) {
+			toggleRegularService(service);
+			return;
+		}
+		toggleServiceAccordion(service);
+	};
+
+	const removeConfiguredService = (service) => {
+		if (!canConfigureService(service) || !service.isSelected) return;
+		clearInlineState();
+		removeService(service);
+	};
+
+	const toggleRegularService = (service) => {
+		const serviceIndex = getServiceIndex(service);
+		if (serviceIndex === -1) return;
+		clearInlineState();
+		toggleServiceSelection(service, serviceIndex);
+	};
+
+	const toggleServiceAccordion = (service) => {
+		const serviceIndex = getServiceIndex(service);
+		if (serviceIndex === -1) return;
+		clearInlineState();
+		toggleServiceDetails(service, serviceIndex);
+	};
+
+	const toggleFeaturedService = () => {
+		if (!featuredService.value || featuredServiceIndex.value === -1) return;
+		clearInlineState();
+		chooseService(featuredService.value, featuredServiceIndex.value);
+	};
+
+	return {
+		// errors
+		serviceCardErrors,
+		clearServiceCardErrors,
+		// currency
+		normalizeCurrencyInput,
+		parseCurrencyValue,
+		// options
+		contrassegnoIncassoOptions,
+		contrassegnoRimborsoOptions,
+		requiresContrassegnoDettaglio,
+		insurancePackages,
+		// validation
+		validateContrassegnoInline,
+		validateAssicurazioneInline,
+		validateInlineServiceDetails,
+		// state helpers
+		isServiceExpanded,
+		featuredServiceIndex,
+		canConfigureService,
+		getServiceConfigureLabel,
+		// interactions
+		activateConfiguredService,
+		handleServicePrimaryAction,
+		removeConfiguredService,
+		toggleRegularService,
+		toggleServiceAccordion,
+		toggleFeaturedService,
+	};
+}

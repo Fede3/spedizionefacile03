@@ -1,0 +1,12 @@
+/**
+ * Boot Web Vitals listeners al primo mount client.
+ *
+ * `trackWebVitals` è idempotente: registrarlo nel plugin garantisce che
+ * i listener siano attivi per l'intera sessione (web-vitals emette il valore
+ * finale al page unload / visibility change, quindi va agganciato subito).
+ */
+export default defineNuxtPlugin(() => {
+  const { trackWebVitals } = useWebVitals()
+  // Non await: le metriche sono asincrone per natura, non bloccare hydration.
+  trackWebVitals()
+})

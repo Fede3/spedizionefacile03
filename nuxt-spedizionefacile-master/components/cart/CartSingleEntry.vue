@@ -1,10 +1,6 @@
-<!--
-  FILE: components/cart/CartSingleEntry.vue
-  SCOPO: Riga carrello per collo singolo, desktop + mobile.
-  PROPS: entry (type='single'), formatPrice, unitPrice, getPackageIcon, quantityButtonCompactClass, quantityButtonMobileClass
-  EMITS: update-quantity(id, qty), delete(id)
--->
 <script setup>
+import { buildShipmentFlowEditLocation } from '~/utils/shipment'
+
 defineProps({
   entry: { type: Object, required: true },
   formatPrice: { type: Function, required: true },
@@ -15,6 +11,8 @@ defineProps({
 })
 
 const emit = defineEmits(['update-quantity', 'delete'])
+
+const toEditLocation = (itemId) => buildShipmentFlowEditLocation(itemId)
 </script>
 
 <template>
@@ -22,12 +20,12 @@ const emit = defineEmits(['update-quantity', 'delete'])
     <!-- Desktop layout -->
     <div class="hidden desktop:flex items-center gap-[16px] p-[16px_20px]">
       <div class="w-[44px] h-[44px] rounded-[12px] bg-white ring-[1.5px] ring-[#DFE2E7] flex items-center justify-center shrink-0">
-        <NuxtImg :src="getPackageIcon(entry.item)" alt="" width="28" height="28" loading="lazy" decoding="async" />
+        <NuxtImg :src="getPackageIcon(entry.item)" :alt="entry.item.package_type || 'Tipo collo'" width="28" height="28" loading="lazy" decoding="async" />
       </div>
       <div class="flex-1 min-w-0">
         <div class="flex items-center gap-[8px]">
           <span class="text-[0.9375rem] font-semibold text-[var(--color-brand-text)]">{{ entry.item.origin_address?.city || 'Partenza' }}</span>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--color-brand-accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="shrink-0"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--color-brand-primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="shrink-0"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
           <span class="text-[0.9375rem] font-semibold text-[var(--color-brand-text)]">{{ entry.item.destination_address?.city || 'Destinazione' }}</span>
         </div>
         <p class="text-[0.8125rem] text-[var(--color-brand-text-muted)] mt-[2px]">
@@ -39,7 +37,7 @@ const emit = defineEmits(['update-quantity', 'delete'])
       <span class="text-[0.75rem] text-[var(--color-brand-text-secondary)] bg-white px-[8px] py-[3px] rounded-[8px] ring-[1px] ring-[#DFE2E7] shrink-0" style="font-weight:600">{{ entry.item.services?.service_type?.split(',')[0]?.trim() || 'BRT' }}</span>
       <div class="text-[0.75rem] text-[var(--color-brand-text-secondary)] shrink-0 max-w-[200px]">
         <div class="flex items-center gap-[4px]">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--color-brand-accent)" stroke-width="2" class="shrink-0"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--color-brand-primary)" stroke-width="2" class="shrink-0"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
           <span class="truncate">{{ entry.item.origin_address?.name?.split(' ')[0] || '' }} - {{ entry.item.origin_address?.city || '' }}</span>
         </div>
         <div class="flex items-center gap-[4px] mt-[2px]">
@@ -57,10 +55,10 @@ const emit = defineEmits(['update-quantity', 'delete'])
         <span class="text-[0.9375rem] font-bold text-[var(--color-brand-text)]">{{ formatPrice(entry.item.single_price) }}</span>
       </div>
       <div class="flex items-center gap-[8px] shrink-0">
-        <NuxtLink :to="`/riepilogo?edit=${entry.item.id}`" class="text-[var(--color-brand-primary)] hover:text-[var(--color-brand-primary-hover)] cursor-pointer" title="Modifica" aria-label="Modifica spedizione">
+        <NuxtLink :to="toEditLocation(entry.item.id)" class="text-[var(--color-brand-primary)] hover:text-[var(--color-brand-primary-hover)] cursor-pointer" title="Modifica" aria-label="Modifica spedizione">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
         </NuxtLink>
-        <button type="button" @click="emit('delete', entry.item.id)" class="text-[var(--color-brand-accent)] hover:text-[var(--color-brand-accent-hover)] cursor-pointer" title="Elimina" aria-label="Elimina spedizione">
+        <button type="button" @click="emit('delete', entry.item.id)" class="text-red-500 hover:text-red-600 cursor-pointer" title="Elimina" aria-label="Elimina spedizione">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
         </button>
       </div>
@@ -85,11 +83,11 @@ const emit = defineEmits(['update-quantity', 'delete'])
           <button type="button" @click="emit('update-quantity', entry.item.id, (entry.item.quantity || 1) + 1)" :disabled="(entry.item.quantity || 1) >= 100" :class="quantityButtonMobileClass">+</button>
         </div>
         <div class="flex items-center gap-[12px]">
-          <NuxtLink :to="`/riepilogo?edit=${entry.item.id}`" class="inline-flex items-center gap-[4px] text-[0.8125rem] text-[var(--color-brand-primary)] font-semibold hover:underline cursor-pointer min-h-[44px] px-[4px]">
+          <NuxtLink :to="toEditLocation(entry.item.id)" class="inline-flex items-center gap-[4px] text-[0.8125rem] text-[var(--color-brand-primary)] font-semibold hover:opacity-80 cursor-pointer min-h-[44px] px-[4px]">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
             Modifica
           </NuxtLink>
-          <button type="button" @click="emit('delete', entry.item.id)" class="text-[0.8125rem] text-[var(--color-brand-accent)] font-semibold hover:underline cursor-pointer min-h-[44px] px-[4px]">Elimina</button>
+          <button type="button" @click="emit('delete', entry.item.id)" class="text-[0.8125rem] text-red-500 font-semibold hover:opacity-80 cursor-pointer min-h-[44px] px-[4px]">Elimina</button>
         </div>
       </div>
     </div>

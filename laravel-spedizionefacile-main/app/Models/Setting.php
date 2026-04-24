@@ -37,6 +37,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Crypt;
 
 class Setting extends Model
 {
@@ -46,8 +47,22 @@ class Setting extends Model
     protected $fillable = ['key', 'value'];
 
     /**
+     * Chiavi che contengono segreti e devono essere cifrate in DB.
+     * Qualsiasi chiave in questa lista viene salvata con Crypt::encryptString()
+     * e letta con Crypt::decryptString(), con fallback su plaintext per
+     * backward-compatibility con valori inseriti prima della cifratura.
+     */
+    private static array $encryptedKeys = [
+        'stripe_secret',
+        'stripe_secret_key',
+        'stripe_webhook_secret',
+        'brt_password',
+    ];
+
+    /**
      * Legge il valore di un'impostazione dal database.
      * Se l'impostazione non esiste, restituisce il valore predefinito.
+     * Per le chiavi in $encryptedKeys, decifra automaticamente con fallback su plaintext.
      *
      * Esempio: Setting::get('stripe_test_mode', 'false')
      */
@@ -55,17 +70,38 @@ class Setting extends Model
     {
         $setting = static::where('key', $key)->first();
 
-        return $setting ? $setting->value : $default;
+        if (! $setting) {
+            return $default;
+        }
+
+        if (in_array($key, static::$encryptedKeys, true) && $setting->value) {
+            try {
+                return Crypt::decryptString($setting->value);
+            } catch (\Illuminate\Contracts\Encryption\DecryptException $e) {
+                // Fallback: valore ancora in plaintext (pre-cifratura).
+                // Verra' cifrato al prossimo set().
+                return $setting->value;
+            }
+        }
+
+        return $setting->value;
     }
 
     /**
      * Salva o aggiorna un'impostazione nel database.
      * Se la chiave esiste gia', aggiorna il valore. Altrimenti la crea.
+     * Per le chiavi in $encryptedKeys, cifra automaticamente il valore.
      *
      * Esempio: Setting::set('stripe_test_mode', 'true')
      */
     public static function set(string $key, ?string $value): void
     {
-        static::updateOrCreate(['key' => $key], ['value' => $value]);
+        $storeValue = $value;
+
+        if (in_array($key, static::$encryptedKeys, true) && $value) {
+            $storeValue = Crypt::encryptString($value);
+        }
+
+        static::updateOrCreate(['key' => $key], ['value' => $storeValue]);
     }
 }

@@ -1,12 +1,6 @@
 /**
- * useContenutoHeader
- *
- * Composable che gestisce tutta la logica dello header/hero di ContenutoHeader.vue:
- * - Configurazione hero homepage (immagine, viewport, zoom)
- * - Polling e refresh immagine hero admin
- * - Preview hero (postMessage + localStorage draft)
- * - Calcolo stili immagine (transform, objectFit)
- * - Prezzo minimo formattato per il badge hero
+ * useContenutoHeader — logica hero di ContenutoHeader.vue: config homepage,
+ * polling admin, preview (postMessage + localStorage), stili, badge prezzo.
  */
 export default function useContenutoHeader() {
 	const route = useRoute();

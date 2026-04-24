@@ -47,12 +47,25 @@ use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Symfony\Component\HttpFoundation\Response;
 class PasswordResetRequestController extends Controller
 {
-    // Funzione principale che riceve l'email dell'utente e avvia il processo di recupero password
+    /**
+     * sendEmail -- Anti-enumerazione email (Sprint 6.4, OWASP Auth Cheatsheet).
+     *
+     * Risponde SEMPRE 200 con messaggio generico identico, indipendentemente
+     * dall'esistenza dell'email. Normalizza il tempo di risposta con un jitter
+     * casuale (100-300 ms) per prevenire timing attack: senza il jitter il
+     * ramo "utente esiste" impiega ~80-200 ms in piu' a causa di Hash::make,
+     * query DB ed invio mail, permettendo all'attaccante di distinguere.
+     *
+     * Ref: https://cheatsheetseries.owasp.org/cheatsheets/Authentication_Cheat_Sheet.html#authentication-responses
+     */
     public function sendEmail(Request $request) {
+        $startedAt = microtime(true);
+
         // Verifichiamo che l'email sia stata inserita e che sia un formato valido
         $request->validate([
             'email' => ['required', 'email'],
@@ -62,9 +75,39 @@ class PasswordResetRequestController extends Controller
         // l'email solo se l'account esiste davvero.
         if ($this->validateEmail($request->email)) {
             $this->send($request->email);
+
+            // Log di audit: registriamo SOLO gli invii reali (email esistenti),
+            // mai i tentativi verso email non registrate (evita di creare un
+            // oracolo via log e rispetta la minimizzazione GDPR).
+            Log::info('Password reset email dispatched.', [
+                'email' => $request->email,
+                'ip' => $request->ip(),
+            ]);
         }
 
+        // Normalizzazione del tempo di risposta: attendiamo che siano passati
+        // almeno ~200-300 ms dall'inizio della richiesta. Cosi' sia il ramo
+        // "utente esiste" che il ramo "utente non esiste" terminano nello
+        // stesso range temporale (diff target < 50 ms).
+        $this->normalizeResponseTime($startedAt);
+
         return $this->successResponse();
+    }
+
+    /**
+     * Livella la durata della richiesta al bucket di jitter 200-300 ms.
+     * Usa usleep() perche' gli sleep Laravel (sleep()) operano a granularita'
+     * secondo. random_int garantisce entropia criptograficamente sicura.
+     */
+    private function normalizeResponseTime(float $startedAt): void
+    {
+        $targetMicroseconds = random_int(200_000, 300_000); // 200-300 ms
+        $elapsedMicroseconds = (int) ((microtime(true) - $startedAt) * 1_000_000);
+        $remaining = $targetMicroseconds - $elapsedMicroseconds;
+
+        if ($remaining > 0) {
+            usleep($remaining);
+        }
     }
 
     // Genera il token e invia l'email di recupero password all'utente
@@ -129,10 +172,12 @@ class PasswordResetRequestController extends Controller
 
     // Risposta di successo quando l'email di recupero e' stata inviata correttamente
     // NOTA: la risposta e' volutamente generica per non rivelare se l'email esiste.
+    // Il messaggio usa la forma condizionale "Se l'email e' registrata..." come da
+    // raccomandazione OWASP Auth Cheatsheet e pattern Stripe/Auth0/Google.
     public function successResponse() {
         return response()->json([
             'success' => true,
-            'message' => 'Ti è stata inviata un\'email per il recupero della password. Controlla la tua casella di posta.',
+            'message' => 'Se l\'email è registrata riceverai un link di reset entro pochi minuti.',
         ], Response::HTTP_OK);
     }
 }

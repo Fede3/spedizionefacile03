@@ -32,3 +32,7 @@ Schedule::command('orders:sync-tracking')->hourly();
 Schedule::call(function () {
     \App\Models\StripeWebhookEvent::pruneOlderThan(7);
 })->dailyAt('04:00');
+
+// F15 — Email abbandono carrello: ogni 6 ore seleziona utenti con carrello
+// abbandonato da almeno 24h e invia reminder con link di ripresa.
+Schedule::command('carts:send-abandoned-reminders')->everySixHours();

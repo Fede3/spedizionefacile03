@@ -1,4 +1,4 @@
-import { DEFAULT_PICKUP_TIME_SLOT, normalizePickupRequestDate } from '~/composables/useShipmentStepSessionPersistence';
+import { DEFAULT_PICKUP_TIME_SLOT, normalizePickupRequestDate } from '~/composables/useShipmentStepDraftPayload';
 
 const DEFAULT_SHIPMENT_SERVICES = [
 	{
@@ -110,7 +110,7 @@ const formatPercentageLabel = (value) => {
 	return Number.isInteger(number) ? String(number) : number.toLocaleString('it-IT');
 };
 
-export const useShipmentStepServices = ({ userStore, dateError }) => {
+export const useShipmentStepServices = ({ shipmentFlowStore, dateError }) => {
 	const pickupCalendarAnchor = useState('shipment-pickup-calendar-anchor', () => new Date().toISOString().slice(0, 10));
 	const { priceBands, loadPriceBands } = usePriceBands();
 	const services = ref({
@@ -121,7 +121,7 @@ export const useShipmentStepServices = ({ userStore, dateError }) => {
 
 	const servicesList = ref(DEFAULT_SHIPMENT_SERVICES.map((service) => ({ ...service })));
 	const expandedServiceKey = ref('');
-	const serviceData = ref(createMergedServiceData(userStore.serviceData || {}));
+	const serviceData = ref(createMergedServiceData(shipmentFlowStore.serviceData || {}));
 	const smsEmailNotification = ref(false);
 
 	const servicePricing = computed(() => priceBands.value?.service_pricing || {});
@@ -155,14 +155,14 @@ export const useShipmentStepServices = ({ userStore, dateError }) => {
 
 	const syncSelectedServicesVisual = () => {
 		servicesList.value.forEach((service) => {
-			service.isSelected = userStore.servicesArray.includes(service.name);
+			service.isSelected = shipmentFlowStore.servicesArray.includes(service.name);
 		});
 	};
 
 	const removeService = (service) => {
-		const index = userStore.servicesArray.indexOf(service.name);
+		const index = shipmentFlowStore.servicesArray.indexOf(service.name);
 		if (index !== -1) {
-			userStore.servicesArray.splice(index, 1);
+			shipmentFlowStore.servicesArray.splice(index, 1);
 		}
 
 		const visual = findServiceByKey(service.key);
@@ -174,7 +174,7 @@ export const useShipmentStepServices = ({ userStore, dateError }) => {
 			expandedServiceKey.value = '';
 		}
 
-		services.value.service_type = userStore.servicesArray.join(', ');
+		services.value.service_type = shipmentFlowStore.servicesArray.join(', ');
 	};
 
 	const ensureServiceSelected = (service, serviceIndex) => {
@@ -183,11 +183,11 @@ export const useShipmentStepServices = ({ userStore, dateError }) => {
 			visual.isSelected = true;
 		}
 
-		if (!userStore.servicesArray.includes(service.name)) {
-			userStore.servicesArray.push(service.name);
+		if (!shipmentFlowStore.servicesArray.includes(service.name)) {
+			shipmentFlowStore.servicesArray.push(service.name);
 		}
 
-		services.value.service_type = userStore.servicesArray.join(', ');
+		services.value.service_type = shipmentFlowStore.servicesArray.join(', ');
 	};
 
 	const chooseService = (service, serviceIndex) => {
@@ -198,25 +198,25 @@ export const useShipmentStepServices = ({ userStore, dateError }) => {
 		visual.isSelected = !isCurrentlySelected;
 
 		if (!isCurrentlySelected) {
-			if (!userStore.servicesArray.includes(service.name)) {
-				userStore.servicesArray.push(service.name);
+			if (!shipmentFlowStore.servicesArray.includes(service.name)) {
+				shipmentFlowStore.servicesArray.push(service.name);
 			}
 
 			if (service.key === 'sponda_idraulica') {
-				userStore.serviceData = userStore.serviceData || {};
-				userStore.serviceData.sponda_idraulica = { ...serviceData.value.sponda_idraulica };
+				shipmentFlowStore.serviceData = shipmentFlowStore.serviceData || {};
+				shipmentFlowStore.serviceData.sponda_idraulica = { ...serviceData.value.sponda_idraulica };
 			}
 		} else {
-			const index = userStore.servicesArray.indexOf(service.name);
+			const index = shipmentFlowStore.servicesArray.indexOf(service.name);
 			if (index !== -1) {
-				userStore.servicesArray.splice(index, 1);
+				shipmentFlowStore.servicesArray.splice(index, 1);
 			}
 			if (expandedServiceKey.value === service.key) {
 				expandedServiceKey.value = '';
 			}
 		}
 
-		services.value.service_type = userStore.servicesArray.join(', ');
+		services.value.service_type = shipmentFlowStore.servicesArray.join(', ');
 	};
 
 	const toggleServiceDetails = (service) => {
@@ -309,30 +309,30 @@ export const useShipmentStepServices = ({ userStore, dateError }) => {
 	);
 
 	const resetServicesState = () => {
-		userStore.servicesArray = [];
+		shipmentFlowStore.servicesArray = [];
 		services.value.service_type = '';
 		smsEmailNotification.value = false;
 		serviceData.value = createMergedServiceData();
-		userStore.serviceData = createMergedServiceData();
+		shipmentFlowStore.serviceData = createMergedServiceData();
 		expandedServiceKey.value = '';
 		syncSelectedServicesVisual();
 	};
 
-	if (userStore.pickupDate) {
-		services.value.date = userStore.pickupDate;
+	if (shipmentFlowStore.pickupDate) {
+		services.value.date = shipmentFlowStore.pickupDate;
 	}
 
-	if (!services.value.time && userStore.serviceData?.pickup_request?.time_slot) {
-		services.value.time = userStore.serviceData.pickup_request.time_slot;
+	if (!services.value.time && shipmentFlowStore.serviceData?.pickup_request?.time_slot) {
+		services.value.time = shipmentFlowStore.serviceData.pickup_request.time_slot;
 	}
 
-	if (userStore.servicesArray.length > 0) {
-		services.value.service_type = userStore.servicesArray.join(', ');
+	if (shipmentFlowStore.servicesArray.length > 0) {
+		services.value.service_type = shipmentFlowStore.servicesArray.join(', ');
 		syncSelectedServicesVisual();
 	}
 
-	if (userStore.smsEmailNotification !== undefined) {
-		smsEmailNotification.value = userStore.smsEmailNotification;
+	if (shipmentFlowStore.smsEmailNotification !== undefined) {
+		smsEmailNotification.value = shipmentFlowStore.smsEmailNotification;
 	}
 
 	watch(
@@ -355,7 +355,7 @@ export const useShipmentStepServices = ({ userStore, dateError }) => {
 	});
 
 	const syncPickupRequestState = () => {
-		const pickupRequestDate = normalizePickupRequestDate(services.value.date || userStore.pickupDate || '');
+		const pickupRequestDate = normalizePickupRequestDate(services.value.date || shipmentFlowStore.pickupDate || '');
 		const pickupTimeSlot =
 			String(services.value.time || serviceData.value?.pickup_request?.time_slot || DEFAULT_PICKUP_TIME_SLOT).trim() ||
 			DEFAULT_PICKUP_TIME_SLOT;
@@ -385,13 +385,13 @@ export const useShipmentStepServices = ({ userStore, dateError }) => {
 		() => [services.value.date, services.value.time],
 		([newDate]) => {
 			const selectedDate = newDate || '';
-			if (userStore.pickupDate !== selectedDate) {
-				userStore.pickupDate = selectedDate;
+			if (shipmentFlowStore.pickupDate !== selectedDate) {
+				shipmentFlowStore.pickupDate = selectedDate;
 			}
 
-			const currentDetails = userStore.shipmentDetails || {};
+			const currentDetails = shipmentFlowStore.shipmentDetails || {};
 			if ((currentDetails.date || '') !== selectedDate) {
-				userStore.shipmentDetails = {
+				shipmentFlowStore.shipmentDetails = {
 					...currentDetails,
 					date: selectedDate,
 				};
@@ -405,7 +405,7 @@ export const useShipmentStepServices = ({ userStore, dateError }) => {
 	watch(
 		smsEmailNotification,
 		(enabled) => {
-			userStore.smsEmailNotification = Boolean(enabled);
+			shipmentFlowStore.smsEmailNotification = Boolean(enabled);
 		},
 		{ immediate: true },
 	);
@@ -413,7 +413,7 @@ export const useShipmentStepServices = ({ userStore, dateError }) => {
 	watch(
 		serviceData,
 		(nextValue) => {
-			userStore.serviceData = {
+			shipmentFlowStore.serviceData = {
 				contrassegno: { ...(nextValue?.contrassegno || {}) },
 				assicurazione: { ...(nextValue?.assicurazione || {}) },
 				sponda_idraulica: { ...(nextValue?.sponda_idraulica || {}) },
@@ -425,10 +425,10 @@ export const useShipmentStepServices = ({ userStore, dateError }) => {
 	);
 
 	watch(
-		() => [...userStore.servicesArray],
+		() => [...shipmentFlowStore.servicesArray],
 		() => {
 			syncSelectedServicesVisual();
-			services.value.service_type = userStore.servicesArray.join(', ');
+			services.value.service_type = shipmentFlowStore.servicesArray.join(', ');
 			if (!expandedServiceKey.value) return;
 			const expandedService = findServiceByKey(expandedServiceKey.value);
 			if (!expandedService) {
@@ -459,3 +459,296 @@ export const useShipmentStepServices = ({ userStore, dateError }) => {
 		toggleServiceSelection,
 	};
 };
+
+// === ServiceCards ===
+// Merged from useShipmentStepServiceCards.js (2026-04-20 consolidamento composables).
+// Gestisce UI card servizi step 2: validazione inline contrassegno/assicurazione,
+// state labels, toggle/activate/expand interactions, normalizzazione input currency.
+// Exposed as a separate auto-imported composable — consumer (pages/la-tua-spedizione/[step].vue)
+// lo usa distintamente da useShipmentStepServices.
+
+export function useShipmentStepServiceCards({
+	editablePackages,
+	ensureServiceSelected,
+	expandedServiceKey,
+	featuredService,
+	chooseService,
+	removeService,
+	resetServicesState,
+	serviceData,
+	servicesList,
+	smsEmailNotification,
+	submitError,
+	toggleServiceDetails,
+	toggleServiceSelection,
+	shipmentFlowStore,
+}) {
+	const CONFIGURABLE_SERVICE_KEYS = new Set(["contrassegno", "assicurazione"]);
+
+	// --- ERRORS ---
+	const serviceCardErrors = reactive({
+		contrassegnoImporto: "",
+		contrassegnoIncasso: "",
+		contrassegnoRimborso: "",
+		contrassegnoDettaglio: "",
+		assicurazione: {},
+	});
+
+	const clearServiceCardErrors = () => {
+		serviceCardErrors.contrassegnoImporto = "";
+		serviceCardErrors.contrassegnoIncasso = "";
+		serviceCardErrors.contrassegnoRimborso = "";
+		serviceCardErrors.contrassegnoDettaglio = "";
+		serviceCardErrors.assicurazione = {};
+	};
+
+	// --- CURRENCY HELPERS ---
+	const normalizeCurrencyInput = (value) => {
+		const sanitized = String(value || "")
+			.replace(/[^\d,.\s]/g, "")
+			.replace(/\s+/g, "")
+			.replace(/\./g, ",");
+
+		const [integerRaw = "", ...decimalParts] = sanitized.split(",");
+		const integer = integerRaw.replace(/^0+(?=\d)/, "");
+		const decimals = decimalParts.join("").slice(0, 2);
+
+		if (!integer && !decimals) return "";
+		if (!decimalParts.length) return integer || "0";
+
+		return `${integer || "0"},${decimals}`;
+	};
+
+	const parseCurrencyValue = (value) => {
+		const normalized = normalizeCurrencyInput(value);
+		if (!normalized) return 0;
+		return Number(normalized.replace(",", ".")) || 0;
+	};
+
+	// --- INSURANCE PACKAGES ---
+	const insurancePackages = computed(() => {
+		if (Array.isArray(editablePackages.value) && editablePackages.value.length > 0) {
+			return editablePackages.value;
+		}
+		return [{ package_type: "pacco", weight: "", first_size: "", second_size: "", third_size: "" }];
+	});
+
+	// --- CONTRASSEGNO/ASSICURAZIONE OPTIONS ---
+	const contrassegnoIncassoOptions = [
+		{ value: "contanti", label: "Contanti" },
+		{ value: "assegno", label: "Assegno" },
+	];
+	const contrassegnoRimborsoOptions = [
+		{ value: "bonifico", label: "Bonifico" },
+		{ value: "assegno", label: "Assegno" },
+		{ value: "assegno_circolare", label: "Assegno circolare" },
+	];
+
+	const requiresContrassegnoDettaglio = computed(() => (
+		serviceData.value.contrassegno.modalita_rimborso === "bonifico"
+	));
+
+	const clearInlineState = () => {
+		clearServiceCardErrors();
+		submitError.value = null;
+	};
+
+	// --- VALIDATION ---
+	const validateContrassegnoInline = (force = false) => {
+		clearServiceCardErrors();
+		let isValid = true;
+
+		if (!force && !isServiceSelected("contrassegno")) return true;
+
+		if (parseCurrencyValue(serviceData.value.contrassegno.importo) <= 0) {
+			serviceCardErrors.contrassegnoImporto = "Inserisci un importo valido.";
+			isValid = false;
+		}
+		if (!serviceData.value.contrassegno.modalita_incasso) {
+			serviceCardErrors.contrassegnoIncasso = "Seleziona l'incasso.";
+			isValid = false;
+		}
+		if (!serviceData.value.contrassegno.modalita_rimborso) {
+			serviceCardErrors.contrassegnoRimborso = "Seleziona il rimborso.";
+			isValid = false;
+		}
+		if (requiresContrassegnoDettaglio.value && !String(serviceData.value.contrassegno.dettaglio_rimborso || "").trim()) {
+			serviceCardErrors.contrassegnoDettaglio = "Inserisci l'IBAN.";
+			isValid = false;
+		}
+
+		return isValid;
+	};
+
+	const validateAssicurazioneInline = (force = false) => {
+		let isValid = true;
+		if (!force && !isServiceSelected("assicurazione")) return true;
+
+		const nextErrors = {};
+		insurancePackages.value.forEach((_, index) => {
+			if (parseCurrencyValue(serviceData.value.assicurazione[index]) <= 0) {
+				nextErrors[index] = "Inserisci un valore.";
+				isValid = false;
+			}
+		});
+
+		serviceCardErrors.assicurazione = nextErrors;
+		return isValid;
+	};
+
+	const validateInlineServiceDetails = () => {
+		const contrassegnoValid = validateContrassegnoInline();
+		if (!contrassegnoValid) {
+			expandedServiceKey.value = "contrassegno";
+			submitError.value = "Completa i dettagli del contrassegno.";
+			return false;
+		}
+
+		const assicurazioneValid = validateAssicurazioneInline();
+		if (!assicurazioneValid) {
+			expandedServiceKey.value = "assicurazione";
+			submitError.value = "Completa i dettagli dell'assicurazione.";
+			return false;
+		}
+
+		submitError.value = null;
+		return true;
+	};
+
+	// --- SERVICE STATE HELPERS ---
+	const isServiceExpanded = (serviceKey) => expandedServiceKey.value === serviceKey;
+	const getServiceIndex = (service) => servicesList.value.findIndex((item) => item.key === service.key);
+	const isServiceSelected = (serviceKey) => {
+		const service = servicesList.value.find((item) => item.key === serviceKey);
+		return service ? shipmentFlowStore.servicesArray.includes(service.name) : false;
+	};
+	const featuredServiceIndex = computed(() => servicesList.value.findIndex((item) => item.featured));
+	const canConfigureService = (service) => CONFIGURABLE_SERVICE_KEYS.has(service?.key);
+
+	const getServiceConfigureLabel = (service) => (
+		service.isSelected ? "Modifica" : "Configura"
+	);
+
+	const focusInvalidServiceField = (serviceKey) => {
+		nextTick(() => {
+			const expandedCard = document.querySelector(".service-surface--expanded");
+			const panel =
+				document.getElementById(`service-inline-panel-${serviceKey}`) ||
+				expandedCard?.querySelector(".service-panel");
+			if (!panel) return;
+
+			let focusTarget = null;
+			if (serviceKey === "contrassegno") {
+				const inputs = panel.querySelectorAll(".service-panel__input");
+				if (serviceCardErrors.contrassegnoImporto) {
+					focusTarget = inputs[0] || panel.querySelector(".service-panel__input");
+				} else if (serviceCardErrors.contrassegnoDettaglio) {
+					focusTarget = inputs[1] || panel.querySelector(".service-panel__input");
+				} else if (serviceCardErrors.contrassegnoIncasso) {
+					focusTarget = panel.querySelector('[aria-label="Modalita incasso contrassegno"] .sf-shared-segment');
+				} else if (serviceCardErrors.contrassegnoRimborso) {
+					focusTarget = panel.querySelector('[aria-label="Modalita accredito contrassegno"] .sf-shared-segment');
+				}
+			}
+
+			if (serviceKey === "assicurazione") {
+				focusTarget = panel.querySelector(".service-panel__input");
+			}
+
+			(focusTarget || panel.querySelector(".service-panel__footer .btn-primary"))?.focus?.({ preventScroll: true });
+		});
+	};
+
+	// --- INTERACTIONS ---
+	const activateConfiguredService = (service) => {
+		if (!canConfigureService(service)) return;
+		clearInlineState();
+
+		let isValid = true;
+		if (service.key === "contrassegno") {
+			isValid = validateContrassegnoInline(true);
+			if (!isValid) submitError.value = "Completa i dettagli del contrassegno.";
+		}
+		if (service.key === "assicurazione") {
+			isValid = validateAssicurazioneInline(true);
+			if (!isValid) submitError.value = "Completa i dettagli dell'assicurazione.";
+		}
+
+		if (!isValid) {
+			expandedServiceKey.value = service.key;
+			focusInvalidServiceField(service.key);
+			return;
+		}
+
+		if (!service.isSelected) {
+			const serviceIndex = getServiceIndex(service);
+			if (serviceIndex === -1) return;
+			ensureServiceSelected(service, serviceIndex);
+		}
+		expandedServiceKey.value = "";
+	};
+
+	const handleServicePrimaryAction = (service) => {
+		if (!canConfigureService(service)) {
+			toggleRegularService(service);
+			return;
+		}
+		toggleServiceAccordion(service);
+	};
+
+	const removeConfiguredService = (service) => {
+		if (!canConfigureService(service) || !service.isSelected) return;
+		clearInlineState();
+		removeService(service);
+	};
+
+	const toggleRegularService = (service) => {
+		const serviceIndex = getServiceIndex(service);
+		if (serviceIndex === -1) return;
+		clearInlineState();
+		toggleServiceSelection(service, serviceIndex);
+	};
+
+	const toggleServiceAccordion = (service) => {
+		const serviceIndex = getServiceIndex(service);
+		if (serviceIndex === -1) return;
+		clearInlineState();
+		toggleServiceDetails(service, serviceIndex);
+	};
+
+	const toggleFeaturedService = () => {
+		if (!featuredService.value || featuredServiceIndex.value === -1) return;
+		clearInlineState();
+		chooseService(featuredService.value, featuredServiceIndex.value);
+	};
+
+	return {
+		// errors
+		serviceCardErrors,
+		clearServiceCardErrors,
+		// currency
+		normalizeCurrencyInput,
+		parseCurrencyValue,
+		// options
+		contrassegnoIncassoOptions,
+		contrassegnoRimborsoOptions,
+		requiresContrassegnoDettaglio,
+		insurancePackages,
+		// validation
+		validateContrassegnoInline,
+		validateAssicurazioneInline,
+		validateInlineServiceDetails,
+		// state helpers
+		isServiceExpanded,
+		featuredServiceIndex,
+		canConfigureService,
+		getServiceConfigureLabel,
+		// interactions
+		activateConfiguredService,
+		handleServicePrimaryAction,
+		removeConfiguredService,
+		toggleRegularService,
+		toggleServiceAccordion,
+		toggleFeaturedService,
+	};
+}

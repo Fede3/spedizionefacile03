@@ -166,9 +166,15 @@ class ProRequestController extends Controller
         // e generiamo un codice referral se non ne ha gia' uno
         /** @var User $user */
         $user = $proRequest->user;
-        $user->update([
-            'role' => 'Partner Pro',
-            'referral_code' => $user->referral_code ?: strtoupper(Str::random(8)),
+        // role e referral_code NON sono in $fillable (mass assignment risk):
+        // assegnazione esplicita tramite property + save() invece di update(array).
+        $user->role = 'Partner Pro';
+        $user->referral_code = $user->referral_code ?: strtoupper(Str::random(8));
+        $user->save();
+
+        \App\Services\AuditLogService::log('admin.pro_request.approve', $proRequest, [
+            'user_id' => $user->id,
+            'email' => $user->email,
         ]);
 
         return response()->json([
@@ -192,6 +198,10 @@ class ProRequestController extends Controller
         $proRequest->update([
             'status' => 'rejected',
             'reviewed_at' => now(),
+        ]);
+
+        \App\Services\AuditLogService::log('admin.pro_request.reject', $proRequest, [
+            'user_id' => $proRequest->user_id,
         ]);
 
         return response()->json([

@@ -1,121 +1,89 @@
-<script setup>
-const props = defineProps({
-	credentials: { type: Object, required: true },
-	isLoading: { type: Boolean, default: false },
-	showLoginPassword: { type: Boolean, default: false },
-	messageError: { type: Object, default: null },
-	messageLoading: { type: String, default: null },
-	showResendVerification: { type: Boolean, default: false },
-	resendLoading: { type: Boolean, default: false },
-	resendMessage: { type: Object, default: null },
-	submitHandler: { type: Function, default: null },
+<script setup lang="ts">
+// Form di login (email + password + link "password dimenticata").
+// La logica di handleLogin vive in useAuthOverlay — qui solo presentazione.
+
+defineProps({
+  form: { type: Object, required: true },
+  isLoading: { type: Boolean, default: false },
+  showPassword: { type: Boolean, default: false },
 })
 
-const emit = defineEmits([
-	'update:showLoginPassword',
-	'resend-verification',
-])
+const emit = defineEmits<{
+  (e: 'submit'): void
+  (e: 'enter-forgot'): void
+  (e: 'toggle-password'): void
+}>()
 
-const submitLogin = () => {
-	props.submitHandler?.()
-}
+const INPUT_CLS = 'w-full h-[46px] rounded-[12px] px-[14px] text-[14px] font-medium text-[#1d2738] bg-white ring-[1.5px] ring-[#DFE2E7] focus:ring-[2.5px] focus:ring-[#095866]/50 placeholder:text-[#aaa] outline-none transition-all duration-200'
+const LABEL_CLS = 'text-[#777] text-[11px] uppercase tracking-[0.4px] font-bold block'
+const CTA_CLS = 'btn-cta-filled w-full h-[50px] rounded-full text-[14px] flex items-center justify-center gap-[10px] mt-[4px] cursor-pointer active:scale-[0.985] focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-[#E44203]/25 disabled:cursor-wait'
 </script>
 
 <template>
-	<div>
-		<div v-if="showResendVerification" class="auth-feedback auth-feedback--muted">
-			<p class="auth-panel-copy auth-login-resend__copy">Email non confermata. Ti reinviamo subito una nuova email di verifica.</p>
-			<button
-				type="button"
-				@click="emit('resend-verification')"
-				:disabled="resendLoading"
-				class="btn-secondary btn-compact inline-flex items-center justify-center">
-				{{ resendLoading ? 'Invio in corso...' : 'Invia nuova email di conferma' }}
-			</button>
-			<p v-if="resendMessage" class="auth-feedback" :class="resendMessage.type === 'success' ? 'auth-feedback--success' : 'auth-feedback--error'">
-				{{ resendMessage.text }}
-			</p>
-		</div>
+  <form
+    class="flex flex-col gap-[8px]"
+    action="javascript:void(0)"
+    method="post"
+    @submit.capture.prevent.stop="emit('submit')"
+  >
+    <div class="flex flex-col gap-[5px]">
+      <label :class="LABEL_CLS" for="auth-modal-email">Email</label>
+      <input
+        id="auth-modal-email"
+        v-model="form.email"
+        :class="INPUT_CLS"
+        type="email"
+        autocomplete="username"
+        placeholder="nome@email.com"
+      />
+    </div>
 
-		<form
-			method="post"
-			@submit.prevent="submitLogin"
-			class="auth-overlay-form auth-page-form">
-			<div class="auth-field-group">
-				<label for="login_email" class="auth-field-label">Email</label>
-				<div class="auth-input-wrap">
-					<span class="auth-input-icon" aria-hidden="true">
-						<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
-							<rect x="3" y="5" width="18" height="14" rx="2"/>
-							<path d="m4 7 8 6 8-6"/>
-						</svg>
-					</span>
-					<input
-						type="email"
-						id="login_email"
-						name="email"
-						v-model="credentials.email"
-						placeholder="nome@email.com"
-						autocomplete="username"
-						class="form-input auth-field-input--with-icon"
-						required />
-				</div>
-			</div>
+    <div class="flex flex-col gap-[5px]">
+      <div class="flex items-center justify-between">
+        <label :class="LABEL_CLS" for="auth-modal-password">Password</label>
+        <button
+          type="button"
+          class="border-0 bg-transparent p-0 text-[13px] font-medium text-[#095866] hover:opacity-80 focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-[#095866]/20 cursor-pointer transition-colors"
+          @click="emit('enter-forgot')"
+        >
+          Password dimenticata?
+        </button>
+      </div>
+      <div class="relative">
+        <input
+          id="auth-modal-password"
+          v-model="form.password"
+          :class="[INPUT_CLS, 'pr-[44px]']"
+          :type="showPassword ? 'text' : 'password'"
+          autocomplete="current-password"
+          placeholder="&#9679;&#9679;&#9679;&#9679;&#9679;&#9679;&#9679;&#9679;"
+        />
+        <button
+          type="button"
+          class="absolute right-[14px] top-1/2 -translate-y-1/2 text-[#C0C5CC] hover:text-[#777] cursor-pointer transition-colors bg-transparent border-0 p-0"
+          tabindex="-1"
+          :aria-label="showPassword ? 'Nascondi password' : 'Mostra password'"
+          @click="emit('toggle-password')"
+        >
+          <svg v-if="showPassword" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-4 h-4" fill="currentColor"><path d="M2,5.27L3.28,4L20,20.72L18.73,22L15.65,18.92C14.5,19.3 13.28,19.5 12,19.5C7,19.5 2.73,16.39 1,12C1.69,10.24 2.79,8.69 4.19,7.46L2,5.27M12,9A3,3 0 0,1 15,12C15,12.35 14.94,12.69 14.83,13L11,9.17C11.31,9.06 11.65,9 12,9M12,4.5C17,4.5 21.27,7.61 23,12C22.18,14.08 20.79,15.88 19,17.19L17.58,15.76C18.94,14.82 20.06,13.54 20.82,12C19.17,8.64 15.76,6.5 12,6.5C10.91,6.5 9.84,6.68 8.84,7.03L7.31,5.5C8.77,4.85 10.36,4.5 12,4.5M3.18,12C4.83,15.36 8.24,17.5 12,17.5C12.69,17.5 13.37,17.43 14,17.29L11.72,15C10.29,14.85 9.15,13.71 9,12.28L5.6,8.87C4.61,9.72 3.78,10.78 3.18,12Z" /></svg>
+          <svg v-else xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-4 h-4" fill="currentColor"><path d="M12,9A3,3 0 0,1 15,12A3,3 0 0,1 12,15A3,3 0 0,1 9,12A3,3 0 0,1 12,9M12,4.5C17,4.5 21.27,7.61 23,12C21.27,16.39 17,19.5 12,19.5C7,19.5 2.73,16.39 1,12C2.73,7.61 7,4.5 12,4.5M3.18,12C4.83,15.36 8.24,17.5 12,17.5C15.76,17.5 19.17,15.36 20.82,12C19.17,8.64 15.76,6.5 12,6.5C8.24,6.5 4.83,8.64 3.18,12Z" /></svg>
+        </button>
+      </div>
+    </div>
 
-			<div class="auth-field-group">
-				<label for="login_password" class="auth-field-label">Password</label>
-				<div class="auth-password-wrap auth-input-wrap">
-					<span class="auth-input-icon" aria-hidden="true">
-						<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
-							<rect x="4" y="11" width="16" height="9" rx="2"/>
-							<path d="M8 11V8a4 4 0 1 1 8 0v3"/>
-						</svg>
-					</span>
-					<input
-						:type="showLoginPassword ? 'text' : 'password'"
-						id="login_password"
-						name="password"
-						v-model="credentials.password"
-						placeholder="••••••••"
-						autocomplete="current-password"
-						class="form-input auth-field-input--password auth-field-input--with-icon"
-						required />
-					<button type="button" @click="emit('update:showLoginPassword', !showLoginPassword)" class="auth-password-toggle" tabindex="-1" :aria-label="showLoginPassword ? 'Nascondi password' : 'Mostra password'">
-						<svg v-if="!showLoginPassword" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-						<svg v-else width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
-					</button>
-				</div>
-			</div>
-
-			<p v-if="messageError?.email" role="alert" class="auth-feedback auth-feedback--error">
-				{{ Array.isArray(messageError.email) ? messageError.email[0] : messageError.email }}
-			</p>
-
-			<p v-if="messageError?.message" role="alert" class="auth-feedback auth-feedback--error">
-				{{ messageError.message }}
-			</p>
-
-			<div class="auth-login-actions">
-				<NuxtLink to="/recupera-password" class="auth-text-link">Password dimenticata?</NuxtLink>
-			</div>
-
-			<button
-				type="submit"
-				:disabled="isLoading"
-				class="btn-cta w-full inline-flex items-center justify-center gap-[8px]">
-				<span v-if="isLoading">Accesso in corso...</span>
-				<span v-else class="inline-flex items-center justify-center gap-[8px]">
-					<span>Accedi</span>
-					<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
-						<path d="M5 12h14"/>
-						<path d="m13 5 7 7-7 7"/>
-					</svg>
-				</span>
-			</button>
-
-			<p v-if="messageLoading" class="auth-login-status">
-				{{ messageLoading }}
-			</p>
-		</form>
-	</div>
+    <button
+      type="button"
+      :class="CTA_CLS"
+      :disabled="isLoading"
+      @click="emit('submit')"
+    >
+      <template v-if="isLoading">
+        <svg class="animate-spin w-[18px] h-[18px]" viewBox="0 0 24 24" fill="none"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" /><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>
+      </template>
+      <template v-else>
+        Accedi
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" /></svg>
+      </template>
+    </button>
+  </form>
 </template>

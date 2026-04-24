@@ -56,8 +56,8 @@ class ShipmentExecutionService
         $result = $this->brt->requestHomePickup($order, $pickupRequest);
 
         if (! ($result['success'] ?? false)) {
-            $order->pickup_status = 'failed';
-            $order->execution_error = $result['error'] ?? 'Errore richiesta ritiro';
+            $order->pickup_status = $result['status'] ?? 'failed';
+            $order->execution_error = $this->appendExecutionError($order, $result['error'] ?? 'Errore richiesta ritiro');
             $order->save();
 
             return $result;
@@ -71,6 +71,56 @@ class ShipmentExecutionService
         $order->save();
 
         return $result;
+    }
+
+    public function reschedulePickup(Order $order, array $payload): array
+    {
+        $pickupDate = trim((string) ($payload['pickup_date'] ?? ''));
+        $pickupTimeSlot = trim((string) ($payload['pickup_time_slot'] ?? ''));
+        $pickupNotes = array_key_exists('pickup_notes', $payload)
+            ? trim((string) ($payload['pickup_notes'] ?? ''))
+            : null;
+
+        $pickupRequest = [
+            'enabled' => true,
+            'date' => $pickupDate,
+            'time_slot' => $pickupTimeSlot !== '' ? $pickupTimeSlot : ($order->pickup_time_slot ?: '09:00-18:00'),
+            'notes' => $pickupNotes ?? ($order->pickup_notes ?? ''),
+        ];
+
+        $this->persistPickupRequestOnServices($order, $this->normalizePickupRequest($pickupRequest));
+
+        $oldDate = $order->pickup_date;
+        $order->pickup_date = $pickupDate;
+        if ($pickupTimeSlot !== '') {
+            $order->pickup_time_slot = $pickupTimeSlot;
+        }
+        if ($pickupNotes !== null) {
+            $order->pickup_notes = $pickupNotes;
+        }
+        $order->save();
+
+        $brtResult = null;
+        if (filled($order->brt_parcel_id)) {
+            $brtResult = $this->brt->requestHomePickup($order, $pickupRequest);
+
+            if (($brtResult['success'] ?? false) === true) {
+                $order->pickup_status = $brtResult['status'] ?? 'requested';
+                $order->pickup_reference = $brtResult['pickup_reference'] ?? $order->pickup_reference;
+                $order->pickup_requested_at = now();
+                $order->save();
+            }
+        }
+
+        return [
+            'success' => true,
+            'old_date' => $oldDate?->format('Y-m-d'),
+            'pickup_date' => $pickupDate,
+            'pickup_time_slot' => $pickupTimeSlot !== '' ? $pickupTimeSlot : ($order->pickup_time_slot ?: null),
+            'pickup_notes' => $pickupNotes ?? $order->pickup_notes,
+            'brt_result' => $brtResult,
+            'brt_synced' => (bool) ($brtResult['success'] ?? false),
+        ];
     }
 
     public function createBordero(Order $order): array
@@ -140,7 +190,7 @@ class ShipmentExecutionService
             }
 
             $hasPickupService = $order->packages->contains(fn ($pkg) =>
-                $pkg->service && str_contains(mb_strtolower($pkg->service->service_type ?? '', 'UTF-8'), 'ritiro')
+                $pkg->service && $this->isPickupServiceToken($pkg->service->service_type ?? '')
             );
             if ($hasPickupService) {
                 $pickup['enabled'] = true;
@@ -148,6 +198,24 @@ class ShipmentExecutionService
         }
 
         return $pickup;
+    }
+
+    private function isPickupServiceToken(string $serviceType): bool
+    {
+        $tokens = collect(preg_split('/[,;|]+/', mb_strtolower($serviceType, 'UTF-8')) ?: [])
+            ->map(fn ($token) => preg_replace('/\s+/', ' ', trim($token)))
+            ->filter();
+
+        return $tokens->contains(fn ($token) => in_array($token, [
+            'ritiro',
+            'ritiro a domicilio',
+            'ritiro_a_domicilio',
+            'pickup',
+            'pickup a domicilio',
+            'pickup_a_domicilio',
+            'home pickup',
+            'home_pickup',
+        ], true));
     }
 
     private function persistPickupRequestOnServices(Order $order, array $pickupRequest): void
@@ -203,5 +271,19 @@ class ShipmentExecutionService
         }
 
         return $pickupDate;
+    }
+
+    private function appendExecutionError(Order $order, string $message): string
+    {
+        $current = trim((string) $order->execution_error);
+        if ($current === '') {
+            return $message;
+        }
+
+        if (str_contains($current, $message)) {
+            return $current;
+        }
+
+        return $current.' | '.$message;
     }
 }

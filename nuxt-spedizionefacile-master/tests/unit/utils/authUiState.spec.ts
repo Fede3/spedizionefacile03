@@ -5,7 +5,7 @@ import {
 	extractCookieValue,
 	hasAuthSessionCookie,
 	readAuthUiSnapshotFromCookieHeader,
-} from '~/utils/authUiState';
+} from '~/utils/auth';
 
 describe('authUiState cookie helpers', () => {
 	it('legge lo snapshot auth dal cookie header', () => {

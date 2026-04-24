@@ -5,6 +5,8 @@
  * Gestisce: fetch ordine, formattazione dati, etichette BRT, annullamento/rimborso,
  * aggiunta collo, label download/rigenerazione.
  */
+import { formatDateTimeIt } from '~/utils/date.js';
+
 export default function useOrderDetail(orderId) {
 	const sanctum = useSanctumClient();
 
@@ -71,9 +73,9 @@ export default function useOrderDetail(orderId) {
 	const executionData = computed(() => execution.value?.data || execution.value || null);
 
 	const orderSubtotalLabel = computed(() => {
-		const subtotal = orderData.value?.subtotal;
-		if (typeof subtotal === 'string' && subtotal.trim()) return subtotal.replace(/\s*EUR$/i, '€');
-		return formatPrice(orderData.value?.subtotal_cents || 0);
+		const payable = orderData.value?.payable_total;
+		if (typeof payable === 'string' && payable.trim()) return payable.replace(/\s*EUR$/i, '€');
+		return formatPrice(orderData.value?.payable_total_cents ?? orderData.value?.subtotal_cents ?? 0);
 	});
 
 	const orderRouteLabel = computed(() => {
@@ -331,7 +333,7 @@ export default function useOrderDetail(orderId) {
 		isCancellable,
 		isCancelledOrRefunded,
 		// Formatters
-		formatDate,
+		formatDate: (dateStr) => formatDateTimeIt(dateStr, '\u2014'),
 		statusColor,
 		formatPrice,
 		paymentMethodLabel,

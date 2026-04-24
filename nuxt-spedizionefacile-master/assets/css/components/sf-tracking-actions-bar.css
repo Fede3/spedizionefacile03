@@ -1,0 +1,69 @@
+/* sf-tracking-actions-bar.css — Bottoni azioni rapide in barra tracking (primary/secondary/warn). */
+
+.action-btn {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	padding: 10px 16px;
+	border-radius: 12px;
+	font-size: 13px;
+	font-weight: 600;
+	line-height: 1;
+	transition: transform var(--sf-t1) var(--sf-ease), box-shadow var(--sf-t1) var(--sf-ease), background-color var(--sf-t1) var(--sf-ease), border-color var(--sf-t1) var(--sf-ease);
+	text-decoration: none;
+	cursor: pointer;
+	border: 1.5px solid transparent;
+	white-space: nowrap;
+}
+
+.action-btn:hover {
+	transform: translateY(-1px);
+}
+
+.action-btn:active {
+	transform: translateY(0);
+}
+
+.action-btn:focus-visible {
+	outline: 2px solid #095866;
+	outline-offset: 2px;
+}
+
+.action-primary {
+	background: #095866;
+	color: #ffffff;
+	box-shadow: 0 4px 10px rgba(9, 88, 102, 0.18);
+}
+.action-primary:hover {
+	background: #074a56;
+	box-shadow: 0 6px 14px rgba(9, 88, 102, 0.24);
+}
+
+.action-secondary {
+	background: #ffffff;
+	color: #1d2738;
+	border-color: #DFE2E7;
+}
+.action-secondary:hover {
+	border-color: #095866;
+	color: #095866;
+}
+
+.action-warn {
+	background: #ffffff;
+	color: #E44203;
+	border-color: #f5c8b1;
+}
+.action-warn:hover {
+	background: #fff5ef;
+	border-color: #E44203;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.action-btn {
+		transition: none;
+	}
+	.action-btn:hover {
+		transform: none;
+	}
+}

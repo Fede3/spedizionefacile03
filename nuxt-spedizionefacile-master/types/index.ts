@@ -11,7 +11,7 @@
  *
  * DOVE SI USANO:
  *   - composables/ — hint di tipo per le strutture dati ritornate dalle API
- *   - stores/userStore.js — tipi di packages, shipmentDetails, pendingShipment
+ *   - stores/shipmentFlowStore.js — tipi di packages, shipmentDetails, pendingShipment
  *   - pages/ e components/ — accesso tipizzato ai dati di ordini, carrello, utente
  */
 
@@ -130,7 +130,7 @@ export interface PudoPoint {
 // ---------------------------------------------------------------------------
 
 /**
- * Singolo collo nel flusso preventivo (userStore.packages[]).
+ * Singolo collo nel flusso preventivo (shipmentFlowStore.packages[]).
  * I prezzi sono in euro (float) durante il calcolo lato client,
  * poi convertiti in centesimi prima di inviare al backend.
  */
@@ -152,7 +152,7 @@ export interface Package {
   volume_price?: number | null
   /**
    * Prezzo unitario del collo.
-   * - In userStore / flusso nuovo: euro (es. 15.50).
+   * - In shipmentFlowStore / flusso nuovo: euro (es. 15.50).
    * - In CartItem da DB / edit: centesimi (es. 1550).
    * Usare isEditFromCart per distinguere.
    */
@@ -166,7 +166,7 @@ export interface Package {
 
 /**
  * Dettagli geografici della spedizione (step 1 — preventivo).
- * Corrisponde a userStore.shipmentDetails.
+ * Corrisponde a shipmentFlowStore.shipmentDetails.
  */
 export interface ShipmentDetails {
   origin_city: string
@@ -183,7 +183,7 @@ export interface ShipmentDetails {
 
 /**
  * Spedizione completa pronta per il riepilogo/checkout.
- * Corrisponde a userStore.pendingShipment.
+ * Corrisponde a shipmentFlowStore.pendingShipment.
  */
 export interface PendingShipment {
   packages: Package[]
@@ -280,14 +280,18 @@ export interface AddressGroup {
 export type OrderStatus =
   | 'In attesa'
   | 'In lavorazione'
+  | 'Etichetta generata'
   | 'Completato'
   | 'Fallito'
   | 'Pagato'
   | 'Annullato'
   | 'Rimborsato'
   | 'In transito'
+  | 'In consegna'
   | 'Consegnato'
   | 'In giacenza'
+  | 'Reso'
+  | 'Rifiutato'
 
 /**
  * Stato ordine raw (slug inglese, usato internamente).
@@ -295,14 +299,18 @@ export type OrderStatus =
 export type OrderStatusRaw =
   | 'pending'
   | 'processing'
+  | 'label_generated'
   | 'completed'
   | 'payment_failed'
   | 'payed'
   | 'cancelled'
   | 'refunded'
   | 'in_transit'
+  | 'out_for_delivery'
   | 'delivered'
   | 'in_giacenza'
+  | 'returned'
+  | 'refused'
 
 /**
  * Metodo di pagamento.
@@ -363,42 +371,118 @@ export interface BillingData {
 }
 
 // ---------------------------------------------------------------------------
-// SPEDIZIONE CONFIGURATA (Saved Shipment)
+// LOCATION SEARCH — risultati API /api/locations/*
 // ---------------------------------------------------------------------------
 
 /**
- * Spedizione salvata dall'utente per uso ripetuto.
- * Restituita da /api/saved-shipments.
+ * Risultato di una ricerca località (backend /api/locations/*).
  */
-export interface SavedShipment {
-  id: number
-  user_id?: number
-  package_type: string
-  quantity: number
-  weight: number
-  first_size: number
-  second_size: number
-  third_size: number
-  /** Prezzo in euro (float, non centesimi) */
-  single_price?: number
-  weight_price?: number
-  volume_price?: number
-  origin_address: Address
-  destination_address: Address
-  services?: PackageServices
-  created_at?: string
-  updated_at?: string
+export interface LocationSearchResult {
+  place_name: string
+  postal_code: string
+  country_code?: string
+  country_name?: string
+  province_code?: string
+  province_name?: string
+  latitude?: number
+  longitude?: number
 }
 
 // ---------------------------------------------------------------------------
-// PINIA STORE — userStore
+// NOMINATIM — OpenStreetMap API (https://nominatim.openstreetmap.org)
+// ---------------------------------------------------------------------------
+
+/** Risposta search Nominatim (format=jsonv2). */
+export interface NominatimSearchResult {
+  lat: string
+  lon: string
+  display_name?: string
+  place_id?: number
+  osm_id?: number
+  osm_type?: string
+  class?: string
+  type?: string
+  importance?: number
+}
+
+/** Sezione address di una risposta reverse Nominatim. */
+export interface NominatimAddress {
+  road?: string
+  pedestrian?: string
+  path?: string
+  house_number?: string
+  city?: string
+  town?: string
+  village?: string
+  municipality?: string
+  postcode?: string
+  country?: string
+  country_code?: string
+}
+
+/** Risposta reverse Nominatim (format=jsonv2&addressdetails=1). */
+export interface NominatimReverseResult {
+  display_name?: string
+  address?: NominatimAddress
+}
+
+// ---------------------------------------------------------------------------
+// BRT PUDO — Punti di ritiro BRT (wrapper del nostro backend)
+// ---------------------------------------------------------------------------
+
+/** Punto PUDO normalizzato dal composable. */
+export interface BrtPudoNormalized {
+  pudo_id: string
+  carrier_pudo_id: string
+  ui_key: string
+  provider: string
+  name: string
+  address: string
+  city: string
+  zip_code: string
+  province: string
+  country: string
+  latitude: number | null
+  longitude: number | null
+  distance_meters: number | null
+  enabled: boolean
+  opening_hours: string | null
+  localization_hint: string
+}
+
+/** Metadati restituiti dalle API di ricerca BRT. */
+export interface BrtPudoMeta {
+  strategy_used?: string[]
+  returned_count?: number
+  requested_count?: number
+  provider?: string
+  fallback?: boolean
+}
+
+/**
+ * Risposta generica delle API BRT PUDO.
+ * /api/brt/pudo/search, /api/brt/pudo/nearby, /api/brt/pudo/{id}.
+ */
+export interface BrtPudoResponse {
+  success?: boolean
+  error?: string
+  pudo?: unknown[]
+  data?: {
+    pudo?: unknown[]
+    meta?: BrtPudoMeta
+  }
+  meta?: BrtPudoMeta
+}
+
+// ---------------------------------------------------------------------------
+// PINIA STORE — shipmentFlowStore
 // ---------------------------------------------------------------------------
 
 /**
- * Forma dello stato del userStore (stores/userStore.js).
+ * Forma dello stato del shipmentFlowStore (stores/shipmentFlowStore.js).
  * Usato per riferimento e futuri refactor TypeScript.
  */
-export interface UserStoreState {
+export interface ShipmentFlowStoreState {
   stepNumber: number
   isQuoteStarted: boolean
   shipmentDetails: ShipmentDetails
@@ -418,3 +502,216 @@ export interface UserStoreState {
   smsEmailNotification: boolean
   serviceData: Record<string, unknown>
 }
+
+// ---------------------------------------------------------------------------
+// ADMIN — Pannello admin (tipi condivisi usati dai composable useAdmin*)
+// ---------------------------------------------------------------------------
+
+/** Messaggio di feedback mostrato dal pannello admin. */
+export interface AdminActionMessage {
+  type: 'success' | 'error'
+  text: string
+}
+
+/** Configurazione UI per un singolo stato (colori Tailwind + icona Iconify). */
+export interface AdminStatusConfigEntry {
+  label: string
+  bg: string
+  text: string
+  icon?: string
+}
+
+export type AdminStatusConfig = Record<string, AdminStatusConfigEntry>
+
+/** Risposta paginata generica delle API admin (list ordini/utenti/spedizioni). */
+export interface AdminPaginatedResponse<T = unknown> {
+  data: T[]
+  meta?: {
+    current_page?: number
+    last_page?: number
+    per_page?: number
+    total?: number
+  }
+}
+
+/** Opzione di stato selezionabile nei filtri admin (UI <select>). */
+export interface AdminStatusOption {
+  value: string
+  label: string
+}
+
+/** Dati payload per cambio ruolo utente dal pannello admin. */
+export interface AdminRoleChangeData {
+  user_id: number | string
+  role: string
+}
+
+// ---------------------------------------------------------------------------
+// AUTH — Form e stato auth (registrazione / login / password reset)
+// ---------------------------------------------------------------------------
+
+export interface AuthCredentials {
+  email: string
+  password: string
+  remember?: boolean
+}
+
+export interface AuthRegisterForm extends AuthCredentials {
+  name: string
+  surname: string
+  telephone_number?: string
+  prefix?: string
+  user_type?: 'privato' | 'azienda' | string
+  referred_by?: string | null
+}
+
+export interface AuthPasswordChecks {
+  length: boolean
+  uppercase: boolean
+  lowercase: boolean
+  number: boolean
+  special: boolean
+}
+
+export type AuthErrorDictionary = Record<string, string[] | string>
+
+export interface AuthResendMessage {
+  type: 'success' | 'error' | 'info'
+  text: string
+}
+
+export interface AuthTabItem {
+  key: string
+  label: string
+  to?: string
+}
+
+// ---------------------------------------------------------------------------
+// PRICE BANDS — Tipi condivisi con i composable admin/pubblici sui listini
+// ---------------------------------------------------------------------------
+
+/** Singola banda di prezzo (peso o volume). */
+export interface PriceBand {
+  id: string
+  type: 'weight' | 'volume'
+  min_value: number
+  max_value: number
+  base_price: number
+  discount_price: number | null
+  show_discount: boolean
+  sort_order: number
+}
+
+/** Riga di una "ladder" di incremento extra. */
+export interface LadderRow {
+  from_step: number
+  to_step: number | null
+  increment_cents: number
+}
+
+/** Regole extra oltre l'ultima banda (peso/volume). */
+export interface ExtraRules {
+  enabled: boolean
+  weight_start: number
+  weight_step: number
+  volume_start: number
+  volume_step: number
+  increment_cents: number
+  increment_mode: string
+  weight_increment_ladder: LadderRow[]
+  volume_increment_ladder: LadderRow[]
+  base_price_cents_mode: 'last_band_effective' | 'manual' | string
+  base_price_cents_manual: number | null
+  weight_resolution: number
+  volume_resolution: number
+}
+
+/** Regola supplemento CAP (origine/destinazione). */
+export interface SupplementRule {
+  id: string
+  prefix: string
+  amount_cents: number
+  apply_to: 'origin' | 'destination' | 'both' | string
+  enabled: boolean
+}
+
+/** Impostazioni promo sitewide. */
+export interface PromoSettings {
+  active: boolean
+  label_text: string
+  label_color: string
+  label_image: string | null
+  show_badges: boolean
+  description: string
+}
+
+/** Tariffa Europa per paese specifico. */
+export interface EuropeRate {
+  country_code: string
+  country_name: string
+  price_cents: number | null
+  quote_required: boolean
+}
+
+/** Banda peso per il pricing Europa. */
+export interface EuropePricingBand {
+  id: string
+  label: string
+  max_weight_kg: number
+  max_volume_m3: number
+  volumetric_factor: number
+  rates: EuropePricingRate[]
+}
+
+/** Alias storico per EuropeRate (retrocompat). */
+export type EuropePricingRate = EuropeRate
+
+/** Configurazione completa Europa. */
+export interface EuropePricing {
+  enabled: boolean
+  scope: string
+  origin_country_code: string
+  max_packages: number
+  max_quantity_per_package: number
+  supported_country_codes: string[]
+  bands: EuropePricingBand[]
+  version: string | null
+}
+
+/** Livello tariffa per regole a scaglioni di peso. */
+export interface PricingRuleTier {
+  up_to_kg: number | null
+  price_cents: number
+}
+
+/**
+ * Regola di pricing "keyed" (service_pricing, automatic_supplements, operational_fees).
+ * Tutti i campi sono opzionali perché lo schema varia per chiave specifica.
+ */
+export interface PricingRule {
+  label?: string
+  description?: string
+  pricing_type?: string
+  enabled?: boolean
+  application?: string
+  note?: string
+  price_cents?: number | null
+  min_fee_cents?: number | null
+  percentage_rate?: number | null
+  threshold_amount_eur?: number | null
+  max_weight_kg?: number | null
+  threshold_cm?: number | null
+  longest_side_threshold_cm?: number | null
+  girth_threshold_cm?: number | null
+  min_longest_side_cm?: number | null
+  max_secondary_side_cm?: number | null
+  province_codes?: string[]
+  country_codes?: string[]
+  keyword_list?: string[]
+  flag_keys?: string[]
+  delivery_modes?: string[]
+  tiers?: PricingRuleTier[]
+}
+
+/** Gruppo di regole keyed (es. { contrassegno: PricingRule, assicurazione: PricingRule }). */
+export type PricingRuleGroup = Record<string, PricingRule>

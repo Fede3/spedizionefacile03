@@ -116,7 +116,6 @@ return [
 
     'limiters' => [
         'login' => 'login',
-        'two-factor' => 'two-factor',
     ],
 
     /*
@@ -149,11 +148,7 @@ return [
         // Features::emailVerification(),
         /* Features::updateProfileInformation(), */
         Features::updatePasswords(),
-        Features::twoFactorAuthentication([
-            'confirm' => true,
-            'confirmPassword' => true,
-            // 'window' => 0,
-        ]),
+        // F10 — 2FA TOTP rimosso (2026-04-20): non necessario per intermediario BRT.
     ],
 
 ];

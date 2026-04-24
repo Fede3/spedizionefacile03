@@ -1,284 +1,307 @@
-<!--
-  PAGINA: Contatti (contatti.vue)
-  Design allineato al Prototipo: icon badge header, due colonne [1fr_1.2fr],
-  contact info cards (NO accent bar), form card CON accent bar (azione primaria).
-  Form inline, grey block per i campi, button orange rounded-full.
-
-  API: POST /api/contact
--->
 <script setup>
+// Pagina Contatti — redesign editoriale (hero + strip canali + form centrato + FAQ grid + quick next)
+import '~/assets/css/contatti.css'
+
 useSeoMeta({
 	title: 'Contatti | SpediamoFacile - Assistenza e Supporto',
 	ogTitle: 'Contatti | SpediamoFacile',
 	description: 'Hai bisogno di aiuto? Contatta il team di SpediamoFacile per assistenza sulle tue spedizioni, preventivi personalizzati o informazioni sui nostri servizi.',
 	ogDescription: 'Contatta SpediamoFacile per assistenza e supporto sulle tue spedizioni.',
-});
+})
 
 useHead({
 	script: [{
 		type: 'application/ld+json',
 		innerHTML: JSON.stringify({
-			'@context': 'https://schema.org', '@type': 'ContactPage',
-			name: 'Contatti SpediamoFacile', url: 'https://spediamofacile.it/contatti',
+			'@context': 'https://schema.org',
+			'@type': 'ContactPage',
+			name: 'Contatti SpediamoFacile',
+			url: 'https://spediamofacile.it/contatti',
 			mainEntity: {
-				'@type': 'Organization', name: 'SpediamoFacile', url: 'https://spediamofacile.it',
-				contactPoint: { '@type': 'ContactPoint', contactType: 'customer service', availableLanguage: 'Italian' },
+				'@type': 'Organization',
+				name: 'SpediamoFacile',
+				url: 'https://spediamofacile.it',
+				contactPoint: {
+					'@type': 'ContactPoint',
+					contactType: 'customer service',
+					availableLanguage: 'Italian',
+				},
 			},
 		}),
 	}],
-});
+})
 
-const sanctum = useSanctumClient();
+// Breadcrumb: Home › Contatti
+useBreadcrumbSchema([
+	{ name: 'Home', url: '/' },
+	{ name: 'Contatti' },
+])
+
+const sanctum = useSanctumClient()
 
 const contactForm = ref({
-	name: '', surname: '', email: '', telephone_number: '', message: '',
-});
+	name: '',
+	surname: '',
+	email: '',
+	telephone_number: '',
+	message: '',
+})
 
-const isSubmitting = ref(false);
-const submitSuccess = ref(false);
-const submitError = ref(null);
+const isSubmitting = ref(false)
+const submitSuccess = ref(false)
+const submitError = ref(null)
+
+// Cloudflare Turnstile (CAPTCHA) — gate frontend anti-bot.
+const turnstile = useTurnstile()
 
 const resetForm = () => {
-	contactForm.value = { name: '', surname: '', email: '', telephone_number: '', message: '' };
-};
+	contactForm.value = {
+		name: '',
+		surname: '',
+		email: '',
+		telephone_number: '',
+		message: '',
+	}
+	turnstile.reset()
+}
 
 const handleSubmit = async () => {
-	submitError.value = null;
-	isSubmitting.value = true;
-	try {
-		await sanctum('/sanctum/csrf-cookie');
-		await sanctum('/api/contact', { method: 'POST', body: contactForm.value });
-		submitSuccess.value = true;
-		resetForm();
-	} catch (error) {
-		const data = error?.response?._data || error?.data;
-		if (data?.errors) {
-			const firstError = Object.values(data.errors)[0];
-			submitError.value = Array.isArray(firstError) ? firstError[0] : firstError;
-		} else {
-			submitError.value = data?.message || "Errore durante l'invio. Riprova.";
-		}
-	} finally {
-		isSubmitting.value = false;
+	submitError.value = null
+	if (!turnstile.isReady.value) {
+		submitError.value = 'Conferma di non essere un bot per inviare il messaggio.'
+		return
 	}
-};
+	isSubmitting.value = true
 
-// Contatti di supporto per la colonna sinistra
-const contactItems = [
+	try {
+		await sanctum('/sanctum/csrf-cookie')
+		await sanctum('/api/contact', {
+			method: 'POST',
+			body: { ...contactForm.value, ...turnstile.payload() },
+		})
+		submitSuccess.value = true
+		resetForm()
+	} catch (error) {
+		const data = error?.response?._data || error?.data
+		if (data?.errors) {
+			const firstError = Object.values(data.errors)[0]
+			submitError.value = Array.isArray(firstError) ? firstError[0] : firstError
+		} else {
+			submitError.value = data?.message || "Errore durante l'invio. Riprova."
+		}
+		turnstile.reset()
+	} finally {
+		isSubmitting.value = false
+	}
+}
+
+// Strip canali: 4 tessere icona+label+valore (email, telefono, sede, orari)
+const channels = [
 	{
-		icon: 'M20,4H4A2,2 0 0,0 2,6V18A2,2 0 0,0 4,20H20A2,2 0 0,0 22,18V6A2,2 0 0,0 20,4M20,8L12,13L4,8V6L12,11L20,6V8Z',
 		label: 'Email',
 		value: 'info@spediamofacile.it',
 		href: 'mailto:info@spediamofacile.it',
+		icon: 'M20,4H4A2,2 0 0,0 2,6V18A2,2 0 0,0 4,20H20A2,2 0 0,0 22,18V6A2,2 0 0,0 20,4M20,8L12,13L4,8V6L12,11L20,6V8Z',
 	},
 	{
-		icon: 'M6.62,10.79C8.06,13.62 10.38,15.94 13.21,17.38L15.41,15.18C15.69,14.9 16.08,14.82 16.43,14.93C17.55,15.3 18.75,15.5 20,15.5A1,1 0 0,1 21,16.5V20A1,1 0 0,1 20,21A17,17 0 0,1 3,4A1,1 0 0,1 4,3H7.5A1,1 0 0,1 8.5,4C8.5,5.25 8.7,6.45 9.07,7.57C9.18,7.92 9.1,8.31 8.82,8.59L6.62,10.79Z',
 		label: 'Telefono',
-		value: '+39 02 1234 5678',
-		href: 'tel:+390212345678',
+		value: '+39 02 8295 4130',
+		href: 'tel:+390282954130',
+		icon: 'M6.62,10.79C8.06,13.62 10.38,15.94 13.21,17.38L15.41,15.18C15.69,14.9 16.08,14.82 16.43,14.93C17.55,15.3 18.75,15.5 20,15.5A1,1 0 0,1 21,16.5V20A1,1 0 0,1 20,21A17,17 0 0,1 3,4A1,1 0 0,1 4,3H7.5A1,1 0 0,1 8.5,4C8.5,5.25 8.7,6.45 9.07,7.57C9.18,7.92 9.1,8.31 8.82,8.59L6.62,10.79Z',
 	},
 	{
-		icon: 'M12,11.5A2.5,2.5 0 0,1 9.5,9A2.5,2.5 0 0,1 12,6.5A2.5,2.5 0 0,1 14.5,9A2.5,2.5 0 0,1 12,11.5M12,2A7,7 0 0,0 5,9C5,14.25 12,22 12,22C12,22 19,14.25 19,9A7,7 0 0,0 12,2Z',
 		label: 'Sede',
-		value: 'Via Esempio 42, 20100 Milano',
-		href: '#',
+		value: 'Via Torino 2, Milano (MI)',
+		href: 'https://maps.google.com/?q=Via+Torino+2,+Milano',
+		icon: 'M12,11.5A2.5,2.5 0 0,1 9.5,9A2.5,2.5 0 0,1 12,6.5A2.5,2.5 0 0,1 14.5,9A2.5,2.5 0 0,1 12,11.5M12,2A7,7 0 0,0 5,9C5,14.25 12,22 12,22C12,22 19,14.25 19,9A7,7 0 0,0 12,2Z',
 	},
 	{
-		icon: 'M12,20A8,8 0 0,0 20,12A8,8 0 0,0 12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22C6.47,22 2,17.5 2,12A10,10 0 0,1 12,2M12.5,7V12.25L17,14.92L16.25,16.15L11,13V7H12.5Z',
 		label: 'Orari',
-		value: 'Lun-Ven 9:00–18:00',
-		href: '#',
+		value: 'Lun-Ven 9:00-18:00',
+		href: null,
+		icon: 'M12,20A8,8 0 0,0 20,12A8,8 0 0,0 12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22C6.47,22 2,17.5 2,12A10,10 0 0,1 12,2M12.5,7V12.25L17,14.92L16.25,16.15L11,13V7H12.5Z',
 	},
-];
+]
+
+// Quick actions: 3 strip orizzontali (preventivo, tracking, guide) come CTA finali
+const quickActions = [
+	{
+		title: 'Calcola un preventivo',
+		text: 'Parti dal prezzo in 30 secondi, senza chiamare.',
+		href: '/preventivo',
+		icon: 'M20 8h-3V4H3c-1.1 0-2 .9-2 2v11h2a3 3 0 0 0 6 0h6a3 3 0 0 0 6 0h2v-5l-3-4Zm-2 9.5a1.5 1.5 0 1 1 .001-2.999A1.5 1.5 0 0 1 18 17.5Zm-12 0a1.5 1.5 0 1 1 .001-2.999A1.5 1.5 0 0 1 6 17.5ZM19.5 12H17V9.5h2.5L21 12h-1.5Z',
+	},
+	{
+		title: 'Traccia una spedizione',
+		text: 'Stato BRT in tempo reale con il numero.',
+		href: '/traccia-spedizione',
+		icon: 'M9.5,3A6.5,6.5 0 0,1 16,9.5C16,11.11 15.41,12.59 14.44,13.73L14.71,14H15.5L20.5,19L19,20.5L14,15.5V14.71L13.73,14.44C12.59,15.41 11.11,16 9.5,16A6.5,6.5 0 0,1 3,9.5A6.5,6.5 0 0,1 9.5,3Z',
+	},
+	{
+		title: 'Leggi le guide',
+		text: 'Imballaggio, documenti, normative: risposte veloci.',
+		href: '/guide',
+		icon: 'M19 3H5c-1.1 0-2 .9-2 2v14a2 2 0 0 0 2 2h11l5-5V5c0-1.1-.9-2-2-2Zm0 12h-4v4H5V5h14v10Z',
+	},
+]
 </script>
 
 <template>
-	<div class="py-[32px] sm:py-[48px]" style="background: linear-gradient(180deg, #F8F9FB 0%, #EEF0F3 100%); min-height: 100vh">
-		<div class="my-container">
-
-			<!-- Header centrato -->
-			<div class="text-center max-w-[540px] mx-auto mb-[32px] sm:mb-[40px]">
-				<div class="w-[48px] h-[48px] rounded-full flex items-center justify-center mx-auto mb-[14px]"
-					style="background: linear-gradient(135deg, #095866, #0a7489); box-shadow: 0 4px 14px rgba(9,88,102,0.2)">
-					<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="white">
-						<path d="M20,2H4A2,2 0 0,0 2,4V22L6,18H20A2,2 0 0,0 22,16V4A2,2 0 0,0 20,2M20,16H6L4,18V4H20V16Z" />
-					</svg>
-				</div>
-				<h1 class="text-[#1d2738] text-[28px] sm:text-[36px] tracking-[-0.8px] font-montserrat" style="font-weight:800">
-					Contattaci
-				</h1>
-				<p class="text-[#777] text-[15px] sm:text-[16px] mt-[8px] leading-[1.5]">
-					Hai domande o bisogno di assistenza? Siamo qui per aiutarti.
-				</p>
+	<div class="contatti-page">
+		<!-- ── HERO editoriale: accent bar + titolo + claim + pill canali rapidi ── -->
+		<PublicPageHeader
+			eyebrow="Assistenza e supporto"
+			title="Parla con noi"
+			description="Rispondiamo in giornata a email, telefono o messaggio. Nessun bot, solo persone che conoscono il mondo BRT."
+			:crumbs="[{ label: 'Home', to: '/' }, { label: 'Contatti' }]">
+			<div class="contatti-hero__pills">
+				<a href="mailto:info@spediamofacile.it" class="contatti-hero__pill">
+					<span class="contatti-hero__pill-label">Email</span>
+					<span class="contatti-hero__pill-arrow" aria-hidden="true">→</span>
+					<span class="contatti-hero__pill-value">info@spediamofacile.it</span>
+				</a>
+				<a href="tel:+390282954130" class="contatti-hero__pill">
+					<span class="contatti-hero__pill-label">Telefono</span>
+					<span class="contatti-hero__pill-arrow" aria-hidden="true">→</span>
+					<span class="contatti-hero__pill-value">+39 02 8295 4130</span>
+				</a>
+				<span class="contatti-hero__pill contatti-hero__pill--static">
+					<span class="contatti-hero__pill-label">Sede</span>
+					<span class="contatti-hero__pill-arrow" aria-hidden="true">→</span>
+					<span class="contatti-hero__pill-value">Milano (MI)</span>
+				</span>
 			</div>
+		</PublicPageHeader>
 
-			<!-- Successo invio -->
-			<div v-if="submitSuccess"
-				class="rounded-[22px] overflow-hidden mb-[24px] max-w-[680px] mx-auto"
-				style="box-shadow: 0 0 0 1px rgba(9,88,102,0.05), 0 4px 20px rgba(9,88,102,0.06), 0 16px 48px rgba(9,88,102,0.04)">
-				<div class="h-[4px]" style="background: linear-gradient(90deg, #095866 0%, #0b9ab3 50%, #095866 100%)" />
-				<div class="p-[24px] sm:p-[32px] flex flex-col sm:flex-row items-start sm:items-center gap-[16px]"
-					style="background: linear-gradient(180deg, #F8F9FB 0%, #EEF0F3 100%)">
-					<div class="w-[44px] h-[44px] rounded-[12px] bg-[#095866]/[0.08] flex items-center justify-center shrink-0">
-						<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="#095866">
+		<!-- ── STRIP canali: 4 card icona con valore ── -->
+		<section class="contact-strip" aria-label="Canali di contatto">
+			<div class="my-container">
+				<div class="contact-strip__grid">
+					<component
+						:is="channel.href ? 'a' : 'div'"
+						v-for="channel in channels"
+						:key="channel.label"
+						:href="channel.href || undefined"
+						:target="channel.href && channel.href.startsWith('http') ? '_blank' : undefined"
+						:rel="channel.href && channel.href.startsWith('http') ? 'noopener noreferrer' : undefined"
+						class="contact-strip__card">
+						<span class="contact-strip__icon" aria-hidden="true">
+							<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+								<path :d="channel.icon" />
+							</svg>
+						</span>
+						<span class="contact-strip__label">{{ channel.label }}</span>
+						<span class="contact-strip__value">{{ channel.value }}</span>
+					</component>
+				</div>
+			</div>
+		</section>
+
+		<!-- ── FORM centrato (max 640px) ── -->
+		<section class="contact-form-centered" aria-labelledby="contact-form-title">
+			<div class="my-container">
+				<div v-if="submitSuccess" class="contact-form-centered__success">
+					<div class="contact-form-centered__success-icon" aria-hidden="true">
+						<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
 							<path d="M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2M11,16.5L18,9.5L16.59,8.09L11,13.67L7.91,10.59L6.5,12L11,16.5Z" />
 						</svg>
 					</div>
-					<div class="flex-1">
-						<h2 class="text-[#1d2738] text-[17px]" style="font-weight:700">Messaggio inviato correttamente</h2>
-						<p class="text-[#777] text-[14px] mt-[4px]">Grazie! Abbiamo ricevuto la tua richiesta e ti risponderemo al più presto.</p>
-					</div>
-					<button type="button"
-						class="text-[#095866] text-[14px] shrink-0 hover:underline cursor-pointer"
-						style="font-weight:600"
-						@click="submitSuccess = false">
-						Invia un altro
+					<h2 class="contact-form-centered__title">Messaggio inviato</h2>
+					<p class="contact-form-centered__success-text">Ti risponderemo in giornata. Nel frattempo puoi tracciare una spedizione o calcolare un preventivo.</p>
+					<button type="button" class="btn btn-cta" @click="submitSuccess = false">
+						Invia un altro messaggio
 					</button>
 				</div>
-			</div>
 
-			<!-- Layout due colonne -->
-			<div v-else class="grid grid-cols-1 lg:grid-cols-[1fr_1.2fr] gap-[20px]">
+				<div v-else class="contact-form-centered__wrap">
+					<header class="contact-form-centered__header">
+						<span class="contact-form-centered__accent" aria-hidden="true"></span>
+						<h2 id="contact-form-title" class="contact-form-centered__title">Scrivici</h2>
+						<p class="contact-form-centered__lead">Descrivi la richiesta con peso, tratta e urgenza: piu contesto, risposta piu precisa.</p>
+					</header>
 
-				<!-- Colonna sinistra: info contatti (NO accent bar) -->
-				<div class="flex flex-col gap-[12px]">
-					<a
-						v-for="contact in contactItems"
-						:key="contact.label"
-						:href="contact.href"
-						class="rounded-[22px] p-[18px] flex items-center gap-[14px] no-underline transition-all duration-[350ms] hover:ring-[2px] hover:ring-[#095866]/50 hover:shadow-[0_4px_16px_rgba(9,88,102,0.06)]"
-						style="box-shadow: 0 0 0 1px rgba(9,88,102,0.05), 0 4px 20px rgba(9,88,102,0.06), 0 16px 48px rgba(9,88,102,0.04); background: linear-gradient(180deg, #F8F9FB 0%, #EEF0F3 100%)"
-					>
-						<div class="w-[44px] h-[44px] rounded-[12px] bg-[#095866]/[0.08] flex items-center justify-center shrink-0">
-							<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="#095866">
-								<path :d="contact.icon" />
-							</svg>
+					<form class="contact-form" novalidate @submit.prevent="handleSubmit">
+						<div class="contact-form__grid contact-form__grid--two">
+							<div class="contact-field">
+								<label for="cf-name" class="contact-field__label">Nome</label>
+								<input id="cf-name" v-model="contactForm.name" type="text" required autocomplete="given-name" class="contact-field__input" placeholder="Es. Mario" />
+							</div>
+							<div class="contact-field">
+								<label for="cf-surname" class="contact-field__label">Cognome</label>
+								<input id="cf-surname" v-model="contactForm.surname" type="text" required autocomplete="family-name" class="contact-field__input" placeholder="Es. Rossi" />
+							</div>
 						</div>
-						<div>
-							<span class="text-[#999] text-[11px] uppercase tracking-[0.4px] block" style="font-weight:600">{{ contact.label }}</span>
-							<span class="text-[#1d2738] text-[14px] sm:text-[15px]" style="font-weight:600">{{ contact.value }}</span>
-						</div>
-					</a>
 
-					<!-- Placeholder mappa -->
-					<div class="rounded-[22px] flex-1 min-h-[180px] flex items-center justify-center"
-						style="box-shadow: 0 0 0 1px rgba(9,88,102,0.05), 0 4px 20px rgba(9,88,102,0.06), 0 16px 48px rgba(9,88,102,0.04); background: linear-gradient(180deg, #F8F9FB 0%, #EEF0F3 100%)">
-						<div class="text-center">
-							<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="#095866" class="opacity-20 mx-auto mb-[6px]">
-								<path d="M12,11.5A2.5,2.5 0 0,1 9.5,9A2.5,2.5 0 0,1 12,6.5A2.5,2.5 0 0,1 14.5,9A2.5,2.5 0 0,1 12,11.5M12,2A7,7 0 0,0 5,9C5,14.25 12,22 12,22C12,22 19,14.25 19,9A7,7 0 0,0 12,2Z" />
-							</svg>
-							<span class="text-[#999] text-[13px]" style="font-weight:500">Milano, Italia</span>
+						<div class="contact-form__grid contact-form__grid--two">
+							<div class="contact-field">
+								<label for="cf-email" class="contact-field__label">Email</label>
+								<input id="cf-email" v-model="contactForm.email" type="email" required autocomplete="email" class="contact-field__input" placeholder="nome@email.it" />
+							</div>
+							<div class="contact-field">
+								<label for="cf-phone" class="contact-field__label">Telefono <span class="contact-field__hint">(opzionale)</span></label>
+								<input id="cf-phone" v-model="contactForm.telephone_number" type="tel" autocomplete="tel" class="contact-field__input" placeholder="+39 ..." />
+							</div>
 						</div>
-					</div>
+
+						<div class="contact-field">
+							<label for="cf-message" class="contact-field__label">Messaggio <span class="contact-field__hint">(per reclami: indica "Reclamo" e numero spedizione BRT)</span></label>
+							<textarea id="cf-message" v-model="contactForm.message" required rows="6" maxlength="1500" class="contact-field__textarea" placeholder="Racconta la richiesta con dettagli utili (tratta, peso, urgenza). Per un reclamo: inizia con &quot;Reclamo&quot; e allega numero spedizione."></textarea>
+						</div>
+
+						<div class="contact-form__turnstile" aria-label="Verifica anti-bot">
+							<NuxtTurnstile v-model="turnstile.token.value" @expired="turnstile.onExpire" @error="turnstile.onError" />
+						</div>
+
+						<p v-if="submitError" class="contact-form__error" role="alert">{{ submitError }}</p>
+
+						<button type="submit" :disabled="isSubmitting || !turnstile.isReady.value" class="btn btn-cta btn-lg contact-form__cta" :class="{ 'is-loading': isSubmitting }">
+							<span v-if="!isSubmitting">Invia richiesta</span>
+							<span v-else>Invio in corso...</span>
+						</button>
+					</form>
 				</div>
-
-				<!-- Colonna destra: form CON accent bar (azione primaria) -->
-				<div class="rounded-[22px] overflow-hidden"
-					style="box-shadow: 0 0 0 1px rgba(9,88,102,0.05), 0 4px 20px rgba(9,88,102,0.06), 0 16px 48px rgba(9,88,102,0.04)">
-					<!-- Accent bar teal -->
-					<div class="h-[4px]" style="background: linear-gradient(90deg, #095866 0%, #0b9ab3 50%, #095866 100%)" />
-
-					<div class="p-[24px] sm:p-[30px]" style="background: linear-gradient(180deg, #F8F9FB 0%, #EEF0F3 100%)">
-						<h2 class="text-[#1d2738] text-[18px] sm:text-[20px] tracking-[-0.3px] mb-[20px]" style="font-weight:700">
-							Inviaci un messaggio
-						</h2>
-
-						<!-- Grey block per i campi del form -->
-						<div class="rounded-[16px] p-[16px] sm:p-[20px]"
-							style="background: #E6E9EE; box-shadow: inset 0 1px 2px rgba(0,0,0,0.04)">
-							<form @submit.prevent="handleSubmit" class="flex flex-col gap-[12px]">
-								<!-- Nome + Cognome -->
-								<div class="grid grid-cols-1 sm:grid-cols-2 gap-[12px]">
-									<div>
-										<label class="text-[#777] text-[11px] uppercase tracking-[0.4px] mb-[6px] block" style="font-weight:700">Nome</label>
-										<input
-											v-model="contactForm.name"
-											type="text"
-											placeholder="Il tuo nome"
-											required
-											class="w-full h-[48px] sm:h-[50px] rounded-[12px] px-[14px] text-[15px] text-[#1d2738] bg-white ring-[1.5px] ring-[#DFE2E7] focus:ring-[3px] focus:ring-[#095866]/60 placeholder:text-[#999] outline-none transition-all duration-200"
-											style="font-weight:600"
-										/>
-									</div>
-									<div>
-										<label class="text-[#777] text-[11px] uppercase tracking-[0.4px] mb-[6px] block" style="font-weight:700">Cognome</label>
-										<input
-											v-model="contactForm.surname"
-											type="text"
-											placeholder="Il tuo cognome"
-											class="w-full h-[48px] sm:h-[50px] rounded-[12px] px-[14px] text-[15px] text-[#1d2738] bg-white ring-[1.5px] ring-[#DFE2E7] focus:ring-[3px] focus:ring-[#095866]/60 placeholder:text-[#999] outline-none transition-all duration-200"
-											style="font-weight:600"
-										/>
-									</div>
-								</div>
-								<!-- Email + Telefono -->
-								<div class="grid grid-cols-1 sm:grid-cols-2 gap-[12px]">
-									<div>
-										<label class="text-[#777] text-[11px] uppercase tracking-[0.4px] mb-[6px] block" style="font-weight:700">Email</label>
-										<input
-											v-model="contactForm.email"
-											type="email"
-											placeholder="nome@email.com"
-											required
-											class="w-full h-[48px] sm:h-[50px] rounded-[12px] px-[14px] text-[15px] text-[#1d2738] bg-white ring-[1.5px] ring-[#DFE2E7] focus:ring-[3px] focus:ring-[#095866]/60 placeholder:text-[#999] outline-none transition-all duration-200"
-											style="font-weight:600"
-										/>
-									</div>
-									<div>
-										<label class="text-[#777] text-[11px] uppercase tracking-[0.4px] mb-[6px] block" style="font-weight:700">Telefono</label>
-										<input
-											v-model="contactForm.telephone_number"
-											type="tel"
-											placeholder="+39 000 0000000"
-											class="w-full h-[48px] sm:h-[50px] rounded-[12px] px-[14px] text-[15px] text-[#1d2738] bg-white ring-[1.5px] ring-[#DFE2E7] focus:ring-[3px] focus:ring-[#095866]/60 placeholder:text-[#999] outline-none transition-all duration-200"
-											style="font-weight:600"
-										/>
-									</div>
-								</div>
-								<!-- Messaggio -->
-								<div>
-									<label class="text-[#777] text-[11px] uppercase tracking-[0.4px] mb-[6px] block" style="font-weight:700">Messaggio</label>
-									<textarea
-										v-model="contactForm.message"
-										rows="5"
-										placeholder="Scrivi il tuo messaggio..."
-										required
-										class="w-full rounded-[12px] px-[14px] py-[14px] text-[15px] text-[#1d2738] bg-white ring-[1.5px] ring-[#DFE2E7] focus:ring-[3px] focus:ring-[#095866]/60 placeholder:text-[#999] outline-none transition-all duration-200 resize-none"
-										style="font-weight:600"
-									></textarea>
-								</div>
-
-								<!-- Errore -->
-								<div v-if="submitError"
-									class="flex items-center gap-[8px] rounded-[10px] px-[12px] py-[10px] bg-[#FFF5F2] text-[#E44203] text-[13px]"
-									style="font-weight:600">
-									<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-										<path d="M11,15H13V17H11V15M11,7H13V13H11V7M12,2C6.47,2 2,6.5 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4A8,8 0 0,1 20,12A8,8 0 0,1 12,20Z" />
-									</svg>
-									{{ submitError }}
-								</div>
-
-								<!-- Bottone invio -->
-								<button
-									type="submit"
-									:disabled="isSubmitting"
-									class="w-full h-[52px] sm:h-[54px] rounded-full text-white text-[15px] flex items-center justify-center gap-[8px] cursor-pointer transition-all duration-[350ms] hover:-translate-y-[2px] hover:shadow-[0_10px_32px_rgba(228,66,3,0.28)] active:scale-[0.985] disabled:opacity-70 disabled:cursor-wait disabled:hover:translate-y-0"
-									:style="isSubmitting
-										? 'font-weight:700; background: linear-gradient(135deg, #095866, #0a7489); box-shadow: 0 4px 14px rgba(9,88,102,0.2)'
-										: 'font-weight:700; background: linear-gradient(135deg, #E44203, #c73600); box-shadow: 0 6px 24px rgba(228,66,3,0.22)'"
-								>
-									<svg v-if="isSubmitting" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="animate-spin"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
-									<svg v-else xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-										<line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
-									</svg>
-									{{ isSubmitting ? 'Invio in corso...' : 'Invia messaggio' }}
-								</button>
-							</form>
-						</div>
-					</div>
-				</div>
-
 			</div>
-		</div>
+		</section>
+
+		<!-- ── FAQ grid editoriale ── -->
+		<section class="contact-faq-grid" aria-labelledby="contact-faq-title">
+			<div class="my-container">
+				<header class="contact-faq-grid__header">
+					<span class="contact-faq-grid__accent" aria-hidden="true"></span>
+					<h2 id="contact-faq-title" class="contact-faq-grid__title">Domande frequenti</h2>
+					<p class="contact-faq-grid__lead">Prima di scriverci, dai un'occhiata: molte risposte sono qui.</p>
+				</header>
+				<ContactFAQ />
+			</div>
+		</section>
+
+		<!-- ── Quick next: 3 strip orizzontali per azione rapida ── -->
+		<section class="contact-quick-next" aria-label="Prossime azioni utili">
+			<div class="my-container">
+				<div class="contact-quick-next__grid">
+					<NuxtLink
+						v-for="action in quickActions"
+						:key="action.href"
+						:to="action.href"
+						class="contact-quick-next__strip">
+						<span class="contact-quick-next__icon" aria-hidden="true">
+							<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+								<path :d="action.icon" />
+							</svg>
+						</span>
+						<span class="contact-quick-next__body">
+							<span class="contact-quick-next__title">{{ action.title }}</span>
+							<span class="contact-quick-next__text">{{ action.text }}</span>
+						</span>
+						<span class="contact-quick-next__arrow" aria-hidden="true">
+							<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+								<path d="M5 12h14" />
+								<path d="m12 5 7 7-7 7" />
+							</svg>
+						</span>
+					</NuxtLink>
+				</div>
+			</div>
+		</section>
 	</div>
 </template>

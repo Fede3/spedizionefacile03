@@ -21,9 +21,39 @@ const dateTimeFormatter = createFormatter({
 	minute: '2-digit',
 });
 
+const parseItalianDateString = (value) => {
+	if (typeof value !== 'string') return null;
+	const raw = value.trim();
+	if (!raw) return null;
+
+	const match = raw.match(
+		/^(\d{1,2})\/(\d{1,2})\/(\d{4})(?:[,\s]+(\d{1,2}):(\d{2})(?::(\d{2}))?)?$/,
+	);
+	if (!match) return null;
+
+	const [, day, month, year, hours = '0', minutes = '0', seconds = '0'] = match;
+	const parsed = new Date(
+		Number(year),
+		Number(month) - 1,
+		Number(day),
+		Number(hours),
+		Number(minutes),
+		Number(seconds),
+	);
+
+	return Number.isNaN(parsed.getTime()) ? null : parsed;
+};
+
 const toValidDate = (value) => {
 	if (!value) return null;
-	const parsed = value instanceof Date ? value : new Date(value);
+	if (value instanceof Date) {
+		return Number.isNaN(value.getTime()) ? null : value;
+	}
+
+	const italianDate = parseItalianDateString(value);
+	if (italianDate) return italianDate;
+
+	const parsed = new Date(value);
 	return Number.isNaN(parsed.getTime()) ? null : parsed;
 };
 

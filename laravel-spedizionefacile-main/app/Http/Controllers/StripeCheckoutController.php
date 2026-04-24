@@ -3,24 +3,43 @@
 namespace App\Http\Controllers;
 
 use App\Events\OrderPaid;
+use App\Mail\OrderAwaitingBankTransferMail;
 use App\Models\Order;
 use App\Models\Package;
+use App\Models\Setting;
 use App\Models\Transaction;
-use App\Models\WalletMovement;
 use App\Services\CartService;
 use App\Services\CheckoutSubmissionContextService;
 use App\Services\OrderCreationService;
 use App\Services\StripePaymentService;
+use App\Services\WalletOrderLinkService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 
+/**
+ * StripeCheckoutController
+ *
+ * Boundary principale del checkout:
+ * - crea o recupera l'ordine pagabile;
+ * - prepara i flussi Stripe/bonifico;
+ * - finalizza gli ordini gia' verificati.
+ *
+ * Nota importante:
+ * il pagamento wallet non si chiude qui da solo e non si chiude in WalletController da solo.
+ * Il flusso reale e':
+ * 1. POST /api/wallet/pay -> crea il debit verificato
+ * 2. POST /api/stripe/mark-order-completed -> completa l'ordine usando quel movimento
+ */
 class StripeCheckoutController extends Controller
 {
     public function __construct(
         private readonly StripePaymentService $stripe,
         private readonly OrderCreationService $orderCreation,
         private readonly CheckoutSubmissionContextService $submissionContext,
+        private readonly CartService $cartService,
+        private readonly WalletOrderLinkService $walletOrderLink,
     ) {}
 
     /* ===================================================================
@@ -29,6 +48,12 @@ class StripeCheckoutController extends Controller
 
     public function markOrderCompleted(Request $request)
     {
+        // Questo endpoint e' il secondo step canonico per bonifico e wallet.
+        // Per wallet richiede un movimento gia' verificato, non addebita denaro da solo.
+        // Idempotenza: lo stesso ext_id deve riconciliare sempre lo stesso ordine
+        // e la stessa transazione. Se il primo tentativo ha gia' scritto ordine +
+        // transazione ma si e' fermato prima di dispatchare OrderPaid, un retry
+        // deve far ripartire i side-effect post-pagamento una sola volta.
         $request->validate([
             'order_id' => 'required|integer', 'payment_type' => 'required|string|in:wallet,bonifico',
             'ext_id' => 'nullable|string', 'is_existing_order' => 'nullable|boolean',
@@ -58,7 +83,7 @@ class StripeCheckoutController extends Controller
                 return;
             }
 
-            if ($paymentType === 'wallet' && ! $this->resolveVerifiedWalletMovement($lockedOrder, $externalId)) {
+            if ($paymentType === 'wallet' && ! $this->walletOrderLink->resolveVerifiedWalletMovement($lockedOrder, $externalId)) {
                 $errorResponse = response()->json(['error' => 'Pagamento wallet non verificato per questo ordine.'], 422);
 
                 return;
@@ -78,13 +103,23 @@ class StripeCheckoutController extends Controller
                 ($paymentType === 'bonifico' && $existingTransaction->status === 'pending')
                 || ($paymentType !== 'bonifico' && $existingTransaction->status === 'succeeded')
             )) {
+                $shouldDispatchExistingPaidOrder = $this->shouldDispatchExistingPaidOrder(
+                    $lockedOrder,
+                    $paymentType
+                );
+
                 if ($paymentType !== 'bonifico' && $lockedOrder->isAwaitingPayment()) {
                     $lockedOrder->status = Order::COMPLETED;
                 }
 
                 $lockedOrder->payment_method = $paymentType;
                 $lockedOrder->save();
+                if ($paymentType === 'bonifico') {
+                    $existingTransaction->total = $lockedOrder->payableTotalCents();
+                    $existingTransaction->save();
+                }
                 $transaction = $existingTransaction;
+                $dispatchOrderPaid = $shouldDispatchExistingPaidOrder;
 
                 return;
             }
@@ -95,7 +130,11 @@ class StripeCheckoutController extends Controller
                 return;
             }
 
-            $lockedOrder->status = $paymentType === 'bonifico' ? Order::PENDING : Order::COMPLETED;
+            // F05 — Bonifico: ordine resta in stato dedicato "awaiting_bank_transfer"
+            // fino a conferma manuale da parte dell'admin (vedi AdminBankTransferController).
+            $lockedOrder->status = $paymentType === 'bonifico'
+                ? Order::AWAITING_BANK_TRANSFER
+                : Order::COMPLETED;
             $lockedOrder->payment_method = $paymentType;
             $lockedOrder->save();
 
@@ -106,7 +145,7 @@ class StripeCheckoutController extends Controller
                 'type' => $paymentType,
                 'status' => $paymentType === 'bonifico' ? 'pending' : 'succeeded',
                 'provider_status' => $paymentType === 'bonifico' ? 'pending' : 'succeeded',
-                'total' => $lockedOrder->subtotal->amount(),
+                'total' => $lockedOrder->payableTotalCents(),
             ]);
 
             $dispatchOrderPaid = $paymentType !== 'bonifico';
@@ -127,7 +166,61 @@ class StripeCheckoutController extends Controller
             $this->clearCartPackagesForOrder($freshOrder);
         }
 
+        // F05 — per bonifico: svuota carrello immediatamente e invia email istruzioni
+        // anche se il pagamento non è ancora "effettivo". L'ordine è bloccato in
+        // awaiting_bank_transfer e non può essere ri-pagato con altri metodi.
+        if ($transaction && $paymentType === 'bonifico') {
+            $freshOrder = $order->fresh();
+            $this->clearCartPackagesForOrder($freshOrder);
+
+            try {
+                if ($freshOrder->user?->email) {
+                    Mail::to($freshOrder->user->email)->queue(new OrderAwaitingBankTransferMail($freshOrder));
+                }
+
+                $adminEmail = trim((string) Setting::get('admin_notification_email', ''))
+                    ?: (string) config('mail.from.address');
+                if ($adminEmail) {
+                    $amount = number_format($freshOrder->payableTotalCents() / 100, 2, ',', '.');
+                    Mail::raw(
+                        "Nuovo ordine #{$freshOrder->id} in attesa di bonifico.\n"
+                        ."Importo: {$amount} EUR\n"
+                        ."Cliente: ".($freshOrder->user?->email ?: '—')."\n"
+                        ."Causale attesa: Ordine #{$freshOrder->id}\n"
+                        ."Gestisci: ".rtrim((string) config('app.frontend_url'), '/')."/account/amministrazione/ordini?filter=awaiting_bank_transfer",
+                        function ($message) use ($adminEmail, $freshOrder) {
+                            $message->to($adminEmail)
+                                ->subject('[Admin] Bonifico in attesa - Ordine #'.$freshOrder->id);
+                        }
+                    );
+                }
+            } catch (\Throwable $e) {
+                Log::warning('Bank transfer mails failed', [
+                    'order_id' => $freshOrder->id,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        }
+
         return response()->json(['success' => true]);
+    }
+
+    private function shouldDispatchExistingPaidOrder(Order $order, string $paymentType): bool
+    {
+        if ($paymentType === 'bonifico') {
+            return false;
+        }
+
+        if ($order->isAwaitingPayment()) {
+            return true;
+        }
+
+        // If a succeeded wallet/card transaction already exists but the order is
+        // still stuck in the controller-level "completed" state, the first
+        // completion attempt most likely committed the order + transaction and
+        // failed before dispatching OrderPaid. Retrying must restart the
+        // downstream post-payment flow exactly once.
+        return $order->rawStatus() === Order::COMPLETED;
     }
 
     public function createOrder(Request $request)
@@ -136,6 +229,7 @@ class StripeCheckoutController extends Controller
             'subtotal' => 'nullable|numeric', 'package_ids' => 'nullable|array',
             'package_ids.*' => 'integer', 'billing_data' => 'nullable|array',
             'client_submission_id' => 'nullable|string|max:255',
+            'single_order_only' => 'nullable|boolean',
         ]);
 
         $userId = auth()->id();
@@ -164,10 +258,16 @@ class StripeCheckoutController extends Controller
                 return response()->json(['error' => 'Nessun pacco trovato.'], 422);
             }
 
-            CartService::normalizePackagePricing($packages);
+            $this->cartService->normalizePackagePricing($packages);
             $packages = Package::with(['originAddress', 'destinationAddress', 'service'])
                 ->whereIn('id', $packages->pluck('id'))
                 ->get();
+
+            if ($request->boolean('single_order_only') && $this->orderCreation->countPackageGroups($packages) > 1) {
+                return response()->json([
+                    'error' => 'Questo checkout contiene più spedizioni separate. Completa un pagamento per volta.',
+                ], 422);
+            }
 
             $submissionContext = $this->submissionContext->enrich(
                 $submissionContext,
@@ -267,7 +367,7 @@ class StripeCheckoutController extends Controller
         if ($notPayable = $this->ensureOrderPayable($order)) return $notPayable;
         if (!$this->stripe->isConfigured()) return response()->json(['error' => 'Stripe non configurato.'], 503);
 
-        $amount = (int) $order->subtotal->amount();
+        $amount = $order->payableTotalCents();
         if ($amount < 50) return response()->json(['error' => 'Importo troppo basso per il pagamento.'], 422);
 
         try {
@@ -276,6 +376,22 @@ class StripeCheckoutController extends Controller
                 $user,
                 $this->resolveStripeIdempotencyKey($order, $request),
             ));
+        } catch (\Illuminate\Contracts\Encryption\DecryptException $e) {
+            // customer_id corrotto nel DB (APP_KEY ruotata): reset e riprova una volta.
+            if ($user && $user->customer_id !== null) {
+                Log::warning('customer_id decrypt failed during PaymentIntent, resetting', ['user_id' => $user->id]);
+                $user->forceFill(['customer_id' => null])->saveQuietly();
+                try {
+                    return response()->json($this->stripe->createPaymentIntent(
+                        $order,
+                        $user->refresh(),
+                        $this->resolveStripeIdempotencyKey($order, $request),
+                    ));
+                } catch (\Throwable $retryError) {
+                    Log::error('PaymentIntent retry after decrypt reset failed', ['error' => $retryError->getMessage()]);
+                }
+            }
+            return response()->json(['error' => 'Errore durante la creazione del pagamento. Riprova.'], 500);
         } catch (\Exception $e) {
             Log::error('PaymentIntent creation error', ['error' => $e->getMessage()]);
             return response()->json(['error' => 'Errore durante la creazione del pagamento. Riprova.'], 500);
@@ -384,7 +500,10 @@ class StripeCheckoutController extends Controller
 
     private function submissionContextFromRequest(Request $request): array
     {
-        return $this->submissionContext->fromRequestArray($request->only(['client_submission_id']));
+        return $this->submissionContext->fromRequestArray($request->only([
+            'client_submission_id',
+            'discount_context',
+        ]));
     }
 
     private function syncSubmissionContextOnOrder(Order $order, array $context): ?\Illuminate\Http\JsonResponse
@@ -402,6 +521,9 @@ class StripeCheckoutController extends Controller
                 $preferredSubmissionId = trim((string) ($order->client_submission_id ?: ($context['client_submission_id'] ?? '')));
                 if ($preferredSubmissionId !== '') {
                     $seedContext['client_submission_id'] = $preferredSubmissionId;
+                }
+                if (array_key_exists('discount_context', $context)) {
+                    $seedContext['discount_context'] = $context['discount_context'];
                 }
 
                 $hydratedContext = $this->submissionContext->enrich(
@@ -471,15 +593,33 @@ class StripeCheckoutController extends Controller
         }
 
         if (array_key_exists('pricing_snapshot', $context)) {
-            $incomingSnapshot = $context['pricing_snapshot'];
-            $currentSnapshot = $order->getAttribute('pricing_snapshot');
+            $incomingSnapshot = $this->snapshotWithoutDiscountContext($context['pricing_snapshot'] ?? null);
+            $currentSnapshot = $this->snapshotWithoutDiscountContext($order->getAttribute('pricing_snapshot'));
 
-            if ($currentSnapshot !== null && $currentSnapshot !== $incomingSnapshot) {
+            if ($currentSnapshot !== null && $incomingSnapshot !== null && $currentSnapshot !== $incomingSnapshot) {
                 return response()->json(['error' => 'Contesto preventivo non coerente con l\'ordine.'], 422);
             }
 
-            if ($currentSnapshot === null) {
-                $updates['pricing_snapshot'] = $incomingSnapshot;
+            if ($order->getAttribute('pricing_snapshot') === null) {
+                $updates['pricing_snapshot'] = $context['pricing_snapshot'];
+            }
+        }
+
+        if (array_key_exists('discount_context', $context)) {
+            $incomingDiscountContext = $this->normalizeDiscountContextValue($context['discount_context'] ?? null);
+            $resolvedSnapshot = array_key_exists('pricing_snapshot', $updates)
+                ? $updates['pricing_snapshot']
+                : $order->getAttribute('pricing_snapshot');
+            $currentSnapshot = is_array($resolvedSnapshot) ? $resolvedSnapshot : [];
+            $currentDiscountContext = $this->normalizeDiscountContextValue($currentSnapshot['discount_context'] ?? null);
+
+            if ($incomingDiscountContext !== null && $currentDiscountContext !== null && $currentDiscountContext !== $incomingDiscountContext) {
+                return response()->json(['error' => 'Contesto preventivo non coerente con l\'ordine.'], 422);
+            }
+
+            if ($incomingDiscountContext !== null && $currentDiscountContext === null) {
+                $currentSnapshot['discount_context'] = $incomingDiscountContext;
+                $updates['pricing_snapshot'] = $currentSnapshot;
             }
         }
 
@@ -488,6 +628,28 @@ class StripeCheckoutController extends Controller
         }
 
         return null;
+    }
+
+    private function normalizeDiscountContextValue(mixed $value): ?array
+    {
+        $normalized = $this->submissionContext->fromRequestArray([
+            'discount_context' => $value,
+        ]);
+
+        return is_array($normalized['discount_context'] ?? null)
+            ? $normalized['discount_context']
+            : null;
+    }
+
+    private function snapshotWithoutDiscountContext(mixed $snapshot): ?array
+    {
+        if (! is_array($snapshot)) {
+            return null;
+        }
+
+        unset($snapshot['discount_context']);
+
+        return $snapshot;
     }
 
     private function resolveStripeIdempotencyKey(Order $order, Request $request): ?string
@@ -620,27 +782,4 @@ class StripeCheckoutController extends Controller
             ->values();
     }
 
-    private function resolveVerifiedWalletMovement(Order $order, string $externalId): ?WalletMovement
-    {
-        if (! preg_match('/^wallet-(\d+)$/', $externalId, $matches)) {
-            return null;
-        }
-
-        $movementId = (int) ($matches[1] ?? 0);
-        if ($movementId <= 0) {
-            return null;
-        }
-
-        $expectedAmount = number_format(((int) $order->subtotal->amount()) / 100, 2, '.', '');
-
-        return WalletMovement::query()
-            ->whereKey($movementId)
-            ->where('user_id', $order->user_id)
-            ->where('type', 'debit')
-            ->where('status', 'confirmed')
-            ->where('source', 'wallet')
-            ->where('reference', 'order-'.$order->id)
-            ->where('amount', $expectedAmount)
-            ->first();
-    }
 }
