@@ -159,6 +159,10 @@ input[type="number"] {
 		--sf-space-section: clamp(24px, 3vw, 36px);
 		--sf-space-block: 18px;
 		--sf-space-control-gap: 8px;
+		/* Spaziatura verticale canonica pagine pubbliche. Uso: hero+footer delle pagine.
+		   Sostituiscono padding-top/padding-bottom hardcoded sitewide. */
+		--sf-space-page-top: clamp(32px, 5vw, 72px);
+		--sf-space-page-bottom: clamp(48px, 7vw, 96px);
 		--sf-border-soft: 1.5px solid #c8d8de;
 		--sf-border-strong: 1.5px solid var(--color-brand-primary-light);
 		--sf-shadow-soft: 0 2px 8px rgba(9,88,102,0.06), 0 8px 24px rgba(9,88,102,0.03), 0 0 0 1px rgba(9,88,102,0.04);

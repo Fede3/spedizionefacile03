@@ -8,14 +8,15 @@
       "port": 8787,
       "autoPort": false,
       "env": {
-        "SF_FRONTEND_PROXY_TARGET": "127.0.0.1:3000"
+        "SF_FRONTEND_PROXY_TARGET": "127.0.0.1:3001",
+        "SF_BACKEND_PROXY_TARGET": "127.0.0.1:8000"
       }
     },
     {
       "name": "nuxt-dev",
       "runtimeExecutable": "npx",
-      "runtimeArgs": ["nuxi", "dev", "--host", "127.0.0.1", "--port", "8787"],
-      "port": 8787,
+      "runtimeArgs": ["nuxi", "dev", "--host", "127.0.0.1", "--port", "3001"],
+      "port": 3001,
       "cwd": "nuxt-spedizionefacile-master",
       "autoPort": false
     },
@@ -25,6 +26,14 @@
       "runtimeArgs": ["nuxi", "dev", "--host", "127.0.0.1", "--port", "3002"],
       "port": 3002,
       "cwd": "nuxt-spedizionefacile-master",
+      "autoPort": false
+    },
+    {
+      "name": "laravel-backend",
+      "runtimeExecutable": "php",
+      "runtimeArgs": ["artisan", "serve", "--host=127.0.0.1", "--port=8000"],
+      "port": 8000,
+      "cwd": "laravel-spedizionefacile-main",
       "autoPort": false
     }
   ]
