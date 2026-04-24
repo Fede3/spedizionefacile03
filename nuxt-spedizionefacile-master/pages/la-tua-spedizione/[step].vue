@@ -1004,6 +1004,8 @@ const {
 			eyebrow="Preventivo"
 			variant="compact"
 			:crumbs="[{ label: 'Home', to: '/' }, { label: 'Preventivo' }]" />
+		<!-- P8 Progress bar 4 step (Baymard pattern checkout) -->
+		<ShipmentStepProgress :current-step="currentStep" />
 		<div class="w-full max-w-[1280px] mx-auto px-[14px] sm:px-[40px]">
 			<form ref="formRef" class="preventivo-form" novalidate @submit.prevent="continueToCart">
 				<div
