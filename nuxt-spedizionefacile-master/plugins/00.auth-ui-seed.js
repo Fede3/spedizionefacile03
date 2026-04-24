@@ -1,18 +1,21 @@
 import {
 	AUTH_UI_COOKIE,
 	AUTH_UI_STORAGE,
-	type AuthUiSnapshot,
 	createEmptySnapshot,
 	parseStoredSnapshot,
 } from '~/utils/auth'
 
+/**
+ * @typedef {import('~/types').AuthUiSnapshot} AuthUiSnapshot
+ */
+
 export default defineNuxtPlugin(() => {
-	const authCookie = useCookie<AuthUiSnapshot | undefined>(AUTH_UI_COOKIE, {
+	const authCookie = useCookie(AUTH_UI_COOKIE, {
 		sameSite: 'lax',
 		path: '/',
 	})
-	const initialSnapshot = useState<AuthUiSnapshot>('auth-ui-initial-snapshot', createEmptySnapshot)
-	const storedSnapshot = useState<AuthUiSnapshot>('auth-ui-stored-snapshot', createEmptySnapshot)
+	const initialSnapshot = useState('auth-ui-initial-snapshot', createEmptySnapshot)
+	const storedSnapshot = useState('auth-ui-stored-snapshot', createEmptySnapshot)
 
 	const cookieSnapshot = typeof authCookie.value === 'string'
 		? parseStoredSnapshot(authCookie.value)
@@ -24,7 +27,7 @@ export default defineNuxtPlugin(() => {
 
 	if (import.meta.client) {
 		const rawStoredSnapshot = window.localStorage.getItem(AUTH_UI_STORAGE)
-		let parsedStoredSnapshot: AuthUiSnapshot | null = null
+		let parsedStoredSnapshot = null
 
 		if (rawStoredSnapshot) {
 			try {

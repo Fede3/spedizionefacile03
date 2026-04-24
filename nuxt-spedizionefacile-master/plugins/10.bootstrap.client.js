@@ -24,8 +24,8 @@ import { isAuthenticatedSnapshotValue, runAuthBootstrap, useAuthBootstrapState }
  *   3. auth bootstrap → dopo che sanctum e' pronto, chiama /api/user se serve.
  *   4. shipment hydrate → hook app:mounted, indipendente dagli altri.
  *
- * Non tocca il plugin universale `00.auth-ui-seed.ts` (che gira anche lato
- * server) ne' `20.plausible.client.ts` (analytics, puo' caricare dopo).
+ * Non tocca il plugin universale `00.auth-ui-seed.js` (che gira anche lato
+ * server).
  */
 export default defineNuxtPlugin({
 	name: 'sf-bootstrap-client',
