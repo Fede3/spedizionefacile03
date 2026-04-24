@@ -144,26 +144,8 @@ const activityItems = computed(() =>
 	})),
 );
 
-const statusBadgeStyle = (status) => {
-	const map = {
-		pending: { color: '#b45309', bg: 'rgba(180,83,9,0.08)' },
-		processing: { color: '#095866', bg: 'rgba(9,88,102,0.08)' },
-		label_generated: { color: '#095866', bg: 'rgba(9,88,102,0.08)' },
-		completed: { color: '#059669', bg: 'rgba(5,150,105,0.08)' },
-		payed: { color: '#059669', bg: 'rgba(5,150,105,0.08)' },
-		payment_failed: { color: '#dc2626', bg: 'rgba(220,38,38,0.08)' },
-		cancelled: { color: '#475569', bg: 'rgba(71,85,105,0.08)' },
-		refunded: { color: '#E44203', bg: 'rgba(228,66,3,0.08)' },
-		in_transit: { color: '#095866', bg: 'rgba(9,88,102,0.08)' },
-		out_for_delivery: { color: '#0a9396', bg: 'rgba(10,147,150,0.08)' },
-		delivered: { color: '#059669', bg: 'rgba(5,150,105,0.08)' },
-		in_giacenza: { color: '#E44203', bg: 'rgba(228,66,3,0.08)' },
-		returned: { color: '#E44203', bg: 'rgba(228,66,3,0.08)' },
-		refused: { color: '#dc2626', bg: 'rgba(220,38,38,0.08)' },
-	};
-
-	return map[status] || { color: '#475569', bg: 'rgba(71,85,105,0.08)' };
-};
+// Palette unificata via useStatusBadge composable (P5 design system)
+const statusBadgeStyle = (status) => useStatusBadgeStyle(status);
 </script>
 
 <template>
@@ -284,7 +266,7 @@ const statusBadgeStyle = (status) => {
 											</div>
 										<span
 											class="inline-flex shrink-0 items-center rounded-full px-[10px] py-[5px] text-[0.72rem] font-[800]"
-											:style="{ color: statusBadgeStyle(item.statusKey).color, background: statusBadgeStyle(item.statusKey).bg }">
+											:style="statusBadgeStyle(item.statusKey)">
 											{{ item.status }}
 										</span>
 									</div>

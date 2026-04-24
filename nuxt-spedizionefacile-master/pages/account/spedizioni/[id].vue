@@ -75,29 +75,13 @@ const onPickupRescheduled = async () => {
 	}
 };
 
+// Palette unificata via useStatusBadge composable (P5 design system).
+// Convertiamo il { color, background } al formato Vue style { backgroundColor, color }.
 const orderMetaPillStyle = (kind, status = '') => {
-	const palette = {
-		status: {
-			'In attesa': { backgroundColor: '#FFFBEB', color: '#B45309' },
-			'In lavorazione': { backgroundColor: '#eef7f8', color: '#095866' },
-			'Etichetta generata': { backgroundColor: '#eef7f8', color: '#095866' },
-			Completato: { backgroundColor: '#ECFDF3', color: '#047857' },
-			Fallito: { backgroundColor: '#FEF2F2', color: '#B91C1C' },
-			Pagato: { backgroundColor: '#ECFDF3', color: '#047857' },
-			Annullato: { backgroundColor: 'var(--color-brand-bg-alt)', color: '#4B5563' },
-			Rimborsato: { backgroundColor: '#FFF7ED', color: '#C2410C' },
-			'In transito': { backgroundColor: '#eef7f8', color: '#095866' },
-			'In consegna': { backgroundColor: '#dff0f3', color: '#074a56' },
-			Consegnato: { backgroundColor: '#ECFDF3', color: '#047857' },
-			'In giacenza': { backgroundColor: '#FFF7ED', color: '#C2410C' },
-			Reso: { backgroundColor: '#FFF7ED', color: '#C2410C' },
-			Rifiutato: { backgroundColor: '#FEF2F2', color: '#B91C1C' },
-		},
-		packages: { backgroundColor: '#F0F6F7', color: 'var(--color-brand-primary)' },
-		total: { backgroundColor: 'rgba(9,88,102,0.06)', color: 'var(--color-brand-primary)' },
-	};
-
-	return palette[kind]?.[status] || palette[kind] || {};
+	if (kind === 'packages') return { backgroundColor: '#F0F6F7', color: 'var(--color-brand-primary)' };
+	if (kind === 'total') return { backgroundColor: 'rgba(9,88,102,0.06)', color: 'var(--color-brand-primary)' };
+	const s = useStatusBadgeStyle(status);
+	return { backgroundColor: s.background, color: s.color };
 };
 </script>
 
