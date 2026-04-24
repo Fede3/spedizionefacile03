@@ -20,29 +20,6 @@ const trackingResult = ref(null);
 const trackingError = ref(null);
 const isLoading = ref(false);
 
-// -- ARCHIVIATO 2026-04-20: Scanner QR (_archive/2026-04-20-features-rimosse/scanner-qr) --
-// ─── Scanner QR/Barcode (mobile) ─────────────────────────────
-// Mostrato solo se il browser espone BarcodeDetector nativo E siamo su mobile.
-// Evitiamo caricamenti di librerie pesanti (linea guida progetto).
-// const qrScannerOpen = ref(false);
-// const qrScannerSupported = ref(false);
-// const isMobileViewport = ref(false);
-//
-// const showQrScannerButton = computed(() => qrScannerSupported.value && isMobileViewport.value);
-//
-// const openQrScanner = () => {
-// 	qrScannerOpen.value = true;
-// };
-// const closeQrScanner = () => {
-// 	qrScannerOpen.value = false;
-// };
-// const onQrDetected = (code) => {
-// 	qrScannerOpen.value = false;
-// 	if (!code) return;
-// 	trackingCode.value = String(code).trim();
-// 	trackShipment();
-// };
-// -- END ARCHIVIATO --
 const trackingTips = [
 	'Usa il codice ordine SF o il Parcel ID BRT piu recente.',
 	'Se la spedizione e appena stata creata, attendi qualche minuto prima di riprovare.',
@@ -131,14 +108,6 @@ const trackShipment = async () => {
 
 onMounted(() => {
 	if (trackingCode.value) trackShipment();
-
-	// -- ARCHIVIATO 2026-04-20: Scanner QR (_archive/.../scanner-qr) --
-	// Feature detect: BarcodeDetector + mobile UA. No polyfill pesanti.
-	// if (typeof window !== 'undefined') {
-	// 	qrScannerSupported.value = 'BarcodeDetector' in window && Boolean(navigator.mediaDevices?.getUserMedia);
-	// 	isMobileViewport.value = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent) || window.matchMedia('(max-width: 768px)').matches;
-	// }
-	// -- END ARCHIVIATO --
 });
 </script>
 
@@ -199,27 +168,6 @@ onMounted(() => {
 								{{ isLoading ? 'Ricerca...' : 'Cerca' }}
 							</button>
 						</div>
-						<!-- -- ARCHIVIATO 2026-04-20: Scanner QR (_archive/2026-04-20-features-rimosse/scanner-qr) --
-						<button
-							v-if="showQrScannerButton"
-							type="button"
-							class="qr-scan-btn mt-[12px]"
-							aria-label="Scansiona codice QR o barcode della spedizione"
-							@click="openQrScanner"
-						>
-							<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-								<rect x="3" y="3" width="7" height="7" rx="1" />
-								<rect x="14" y="3" width="7" height="7" rx="1" />
-								<rect x="3" y="14" width="7" height="7" rx="1" />
-								<path d="M14 14h3" />
-								<path d="M14 18h2" />
-								<path d="M20 14h1" />
-								<path d="M18 21v-3" />
-								<path d="M21 18v3" />
-							</svg>
-							<span>Scansiona codice QR</span>
-						</button>
-						-- END ARCHIVIATO -->
 					</div>
 					<p v-if="trackingError" class="text-[#E44203] text-[0.8125rem] mt-[10px]">{{ trackingError }}</p>
 				</div>
@@ -492,42 +440,5 @@ onMounted(() => {
 			</div>
 		</div>
 
-		<!-- -- ARCHIVIATO 2026-04-20: Scanner QR (_archive/2026-04-20-features-rimosse/scanner-qr) --
-		<ClientOnly>
-			<TrackingQrScanner
-				v-if="showQrScannerButton"
-				:open="qrScannerOpen"
-				@close="closeQrScanner"
-				@detected="onQrDetected" />
-		</ClientOnly>
-		-- END ARCHIVIATO -->
 	</div>
 </template>
-
-<style scoped>
-/* -- ARCHIVIATO 2026-04-20: Scanner QR (_archive/2026-04-20-features-rimosse/scanner-qr) --
-.qr-scan-btn {
-	width: 100%;
-	display: inline-flex;
-	align-items: center;
-	justify-content: center;
-	gap: 8px;
-	height: 42px;
-	border-radius: 999px;
-	background: rgba(9, 88, 102, 0.06);
-	border: 1px dashed rgba(9, 88, 102, 0.4);
-	color: #095866;
-	font-size: 0.875rem;
-	font-weight: 700;
-	cursor: pointer;
-	transition: background 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
-}
-.qr-scan-btn:hover {
-	background: rgba(9, 88, 102, 0.1);
-	border-color: rgba(9, 88, 102, 0.65);
-}
-.qr-scan-btn:active {
-	transform: scale(0.98);
-}
--- END ARCHIVIATO -- */
-</style>
