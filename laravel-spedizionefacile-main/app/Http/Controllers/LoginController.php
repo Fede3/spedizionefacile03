@@ -146,12 +146,8 @@ class LoginController extends Controller
     /**
      * Conferma la password dell'admin (fuori flusso standard).
      */
-    public function confirmPassword(Request $request)
+    public function confirmPassword(\App\Http\Requests\ConfirmPasswordRequest $request)
     {
-        $request->validate([
-            'password' => 'required|string',
-        ]);
-
         $user = $request->user();
 
         if (! $user?->isAdmin()) {

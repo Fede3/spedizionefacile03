@@ -35,9 +35,8 @@ class StripeCustomerController extends Controller
         return response()->json($this->stripe->listPaymentMethods($user));
     }
 
-    public function setDefaultPaymentMethod(Request $request)
+    public function setDefaultPaymentMethod(\App\Http\Requests\StripePaymentMethodRequest $request)
     {
-        $request->validate(['payment_method' => 'required|string']);
         $user = $request->user();
         if (!$user->customer_id) return response()->json(['error' => 'No Stripe customer'], 400);
         try { return response()->json($this->stripe->setDefaultPaymentMethod($user, $request->payment_method)); }
@@ -47,9 +46,8 @@ class StripeCustomerController extends Controller
         }
     }
 
-    public function changeDefaultPaymentMethod(Request $request)
+    public function changeDefaultPaymentMethod(\App\Http\Requests\StripePaymentMethodRequest $request)
     {
-        $request->validate(['payment_method_id' => 'required|string']);
         $user = $request->user();
         if (!$user->customer_id) return response()->json(['error' => 'No Stripe customer'], 400);
         try { return response()->json($this->stripe->changeDefaultPaymentMethod($user, $request->payment_method_id)); }
@@ -59,9 +57,8 @@ class StripeCustomerController extends Controller
         }
     }
 
-    public function deleteCard(Request $request)
+    public function deleteCard(\App\Http\Requests\StripePaymentMethodRequest $request)
     {
-        $request->validate(['payment_method_id' => 'required|string']);
         $user = $request->user();
         if (!$user->customer_id) return response()->json(['error' => 'Nessun profilo Stripe associato.'], 400);
         try {

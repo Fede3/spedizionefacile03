@@ -55,11 +55,9 @@ class ReferralCodeController extends Controller
      * Verifica se un codice referral e' valido.
      * Usato dal frontend per mostrare un messaggio di conferma prima di procedere al pagamento.
      */
-    public function validate(Request $request, DiscountPreviewService $discountPreviewService): JsonResponse
+    public function validate(\App\Http\Requests\ReferralCodeRequest $request, DiscountPreviewService $discountPreviewService): JsonResponse
     {
-        $data = $request->validate([
-            'code' => ['required', 'string', 'size:8'],
-        ]);
+        $data = $request->validated();
 
         $proUser = $discountPreviewService->resolveReferralPartner($data['code']);
 
@@ -83,11 +81,9 @@ class ReferralCodeController extends Controller
      * Chiamato quando un utente si registra tramite un link referral (es. ?ref=ABC12345)
      * o quando inserisce manualmente un codice referral.
      */
-    public function storeReferral(Request $request, DiscountPreviewService $discountPreviewService): JsonResponse
+    public function storeReferral(\App\Http\Requests\ReferralCodeRequest $request, DiscountPreviewService $discountPreviewService): JsonResponse
     {
-        $data = $request->validate([
-            'code' => ['required', 'string', 'size:8'],
-        ]);
+        $data = $request->validated();
 
         $code = strtoupper($data['code']);
 

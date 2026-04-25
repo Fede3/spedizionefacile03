@@ -31,11 +31,9 @@ class RefundController extends Controller
      * locking, eligibility re-check, BRT cancellation, refund routing and
      * order status update inside a single DB transaction.
      */
-    public function requestCancellation(Request $request, Order $order): JsonResponse
+    public function requestCancellation(\App\Http\Requests\CancelOrderRequest $request, Order $order): JsonResponse
     {
         Gate::authorize('cancel', $order);
-
-        $request->validate(['reason' => 'nullable|string|max:500']);
 
         // Quick pre-check outside the transaction for a fast 422 response.
         $preCheck = $this->refundService->calculateEligibility($order);

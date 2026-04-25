@@ -50,11 +50,9 @@ class AdminBankTransferController extends Controller
     /**
      * Conferma la ricezione del bonifico e sblocca il flusso spedizione.
      */
-    public function confirm(Request $request, Order $order): JsonResponse
+    public function confirm(\App\Http\Requests\ConfirmBankTransferRequest $request, Order $order): JsonResponse
     {
-        $data = $request->validate([
-            'bank_transfer_reference' => ['nullable', 'string', 'max:128'],
-        ]);
+        $data = $request->validated();
 
         if ($order->getRawOriginal('status') !== Order::AWAITING_BANK_TRANSFER) {
             return response()->json([

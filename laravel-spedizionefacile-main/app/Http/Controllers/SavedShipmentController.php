@@ -98,7 +98,7 @@ class SavedShipmentController extends Controller
         return PackageResource::collection($outPackages);
     }
 
-    public function update(Request $request, $id)
+    public function update(\App\Http\Requests\UpdateSavedShipmentRequest $request, $id)
     {
         $userId = auth()->id();
 
@@ -116,27 +116,7 @@ class SavedShipmentController extends Controller
 
         $package = Package::where('id', $id)->where('user_id', $userId)->firstOrFail();
 
-        $data = $request->validate([
-            'origin_address' => 'sometimes|array',
-            'origin_address.name' => 'nullable|string', 'origin_address.address' => 'nullable|string',
-            'origin_address.address_number' => 'nullable|string', 'origin_address.city' => 'nullable|string',
-            'origin_address.postal_code' => 'nullable|string', 'origin_address.province' => 'nullable|string',
-            'origin_address.telephone_number' => 'nullable|string', 'origin_address.email' => 'nullable|string',
-            'origin_address.country' => 'nullable|string', 'origin_address.additional_information' => 'nullable|string',
-            'origin_address.intercom_code' => 'nullable|string',
-            'destination_address' => 'sometimes|array',
-            'destination_address.name' => 'nullable|string', 'destination_address.address' => 'nullable|string',
-            'destination_address.address_number' => 'nullable|string', 'destination_address.city' => 'nullable|string',
-            'destination_address.postal_code' => 'nullable|string', 'destination_address.province' => 'nullable|string',
-            'destination_address.telephone_number' => 'nullable|string', 'destination_address.email' => 'nullable|string',
-            'destination_address.country' => 'nullable|string', 'destination_address.additional_information' => 'nullable|string',
-            'destination_address.intercom_code' => 'nullable|string',
-            'package_type' => 'nullable|string', 'quantity' => 'nullable|integer',
-            'weight' => 'nullable|string', 'first_size' => 'nullable|string',
-            'second_size' => 'nullable|string', 'third_size' => 'nullable|string',
-            'services' => 'sometimes|array',
-            'services.service_type' => 'nullable|string', 'services.date' => 'nullable|string', 'services.time' => 'nullable|string',
-        ]);
+        $data = $request->validated();
 
         DB::transaction(function () use ($package, $data) {
             if (isset($data['origin_address']) && $package->originAddress) $package->originAddress->update($data['origin_address']);
@@ -196,9 +176,8 @@ class SavedShipmentController extends Controller
         return response()->json(['message' => 'Spedizione rimossa']);
     }
 
-    public function addToCart(Request $request)
+    public function addToCart(\App\Http\Requests\AddSavedShipmentToCartRequest $request)
     {
-        $request->validate(['package_ids' => 'required|array|min:1', 'package_ids.*' => 'integer']);
         $userId = auth()->id();
 
         $validIds = DB::table('saved_shipments')->where('user_id', $userId)

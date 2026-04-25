@@ -17,16 +17,9 @@ class CouponController extends Controller
     }
 
     // Crea un nuovo coupon
-    public function store(Request $request): JsonResponse
+    public function store(\App\Http\Requests\StoreCouponRequest $request): JsonResponse
     {
-        $data = $request->validate([
-            'code' => 'required|string|max:50|unique:coupons,code',
-            'percentage' => 'required|numeric|min:1|max:100',
-            'active' => 'boolean',
-            'expires_at' => 'nullable|date|after:now',
-            'max_uses' => 'nullable|integer|min:1',
-            'max_uses_per_user' => 'nullable|integer|min:1',
-        ]);
+        $data = $request->validated();
 
         $coupon = Coupon::create([
             'code' => strtoupper($data['code']),
@@ -41,16 +34,9 @@ class CouponController extends Controller
     }
 
     // Aggiorna un coupon
-    public function update(Request $request, Coupon $coupon): JsonResponse
+    public function update(\App\Http\Requests\UpdateCouponRequest $request, Coupon $coupon): JsonResponse
     {
-        $data = $request->validate([
-            'code' => 'sometimes|string|max:50|unique:coupons,code,' . $coupon->id,
-            'percentage' => 'sometimes|numeric|min:1|max:100',
-            'active' => 'sometimes|boolean',
-            'expires_at' => 'nullable|date',
-            'max_uses' => 'nullable|integer|min:1',
-            'max_uses_per_user' => 'nullable|integer|min:1',
-        ]);
+        $data = $request->validated();
 
         if (isset($data['code'])) {
             $data['code'] = strtoupper($data['code']);

@@ -31,13 +31,9 @@ class ReferralRewardController extends Controller
      * Applica il codice referral a un ordine specifico.
      * Registra l'utilizzo del codice, calcola lo sconto e accredita la commissione al Partner Pro.
      */
-    public function apply(Request $request, ReferralAccountingService $referralAccountingService): JsonResponse
+    public function apply(\App\Http\Requests\ApplyReferralRewardRequest $request, ReferralAccountingService $referralAccountingService): JsonResponse
     {
-        $data = $request->validate([
-            'code' => ['required', 'string', 'size:8'],
-            'order_id' => ['required', 'integer'],
-            'order_amount' => ['nullable', 'numeric', 'min:0.01'],
-        ]);
+        $data = $request->validated();
 
         $buyer = auth()->user();
         $proUser = $referralAccountingService->resolveReferralPartner($data['code']);

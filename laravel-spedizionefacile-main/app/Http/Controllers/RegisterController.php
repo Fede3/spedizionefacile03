@@ -15,7 +15,6 @@ use App\Services\GuestCartMergeService;
 use App\Support\AuthUiCookie;
 use App\Utils\CustomResponse;
 use Carbon\Carbon;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Hash;
@@ -128,12 +127,8 @@ class RegisterController extends Controller
      * Reinvia il codice di verifica via email.
      * Usato quando l'utente non ha ricevuto il codice o quando e' scaduto.
      */
-    public function resendVerificationEmail(Request $request)
+    public function resendVerificationEmail(\App\Http\Requests\ResendVerificationEmailRequest $request)
     {
-        $request->validate([
-            'email' => 'required|email',
-        ]);
-
         $user = User::where('email', $request->email)->first();
 
         // Per sicurezza, non riveliamo se l'email esiste o meno nel database

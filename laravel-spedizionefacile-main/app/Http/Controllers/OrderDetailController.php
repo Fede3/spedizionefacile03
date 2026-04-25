@@ -233,11 +233,9 @@ class OrderDetailController extends Controller
      * Calls RefundService directly (not RefundController) to avoid bypassing
      * middleware. Authorization is handled via OrderPolicy::cancel().
      */
-    public function cancel(Request $request, Order $order)
+    public function cancel(\App\Http\Requests\CancelOrderRequest $request, Order $order)
     {
         Gate::authorize('cancel', $order);
-
-        $request->validate(['reason' => 'nullable|string|max:500']);
 
         // Quick pre-check outside the transaction for a fast 422 response.
         $refundService = app(RefundService::class);
@@ -319,23 +317,13 @@ class OrderDetailController extends Controller
      *
      * Il prezzo viene ricalcolato lato server e il subtotale dell'ordine aggiornato.
      */
-    public function addPackage(Request $request, Order $order)
+    public function addPackage(\App\Http\Requests\AddOrderPackageRequest $request, Order $order)
     {
         Gate::authorize('addPackage', $order);
 
         if (! in_array($order->status, [Order::PENDING, Order::PAYMENT_FAILED])) {
             return response()->json(['error' => 'Si possono aggiungere colli solo agli ordini in attesa di pagamento.'], 422);
         }
-
-        $request->validate([
-            'package_type' => 'required|string|max:50',
-            'quantity' => 'required|integer|min:1|max:999',
-            'weight' => 'required|numeric|min:0.1|max:9999',
-            'first_size' => 'required|numeric|min:1|max:9999',
-            'second_size' => 'required|numeric|min:1|max:9999',
-            'third_size' => 'required|numeric|min:1|max:9999',
-            'content_description' => 'nullable|string|max:255',
-        ]);
 
         DB::transaction(function () use ($request, $order) {
             $lockedOrder = Order::query()->lockForUpdate()->findOrFail($order->id);

@@ -144,18 +144,9 @@ class NotificationController extends Controller
      *
      * GDPR: registra timestamp opt-in al passaggio false->true per ogni canale.
      */
-    public function updatePreferences(Request $request): JsonResponse
+    public function updatePreferences(\App\Http\Requests\UpdateNotificationPreferencesRequest $request): JsonResponse
     {
-        $data = $request->validate([
-            'referral_site_enabled' => 'sometimes|boolean',
-            'referral_email_enabled' => 'sometimes|boolean',
-            'referral_sms_enabled' => 'sometimes|boolean',
-            'sms_order_updates' => 'sometimes|boolean',
-            'sms_marketing' => 'sometimes|boolean',
-            'push_order_updates' => 'sometimes|boolean',
-            'push_marketing' => 'sometimes|boolean',
-            'phone_number' => 'sometimes|nullable|string|max:32',
-        ]);
+        $data = $request->validated();
 
         $user = $request->user();
         $prefs = UserNotificationPreference::firstOrCreate(

@@ -20,17 +20,10 @@ class BrtController extends Controller
         private readonly OrderBrtTrackingReadService $trackingRead,
     ) {}
 
-    public function createShipment(Request $request)
+    public function createShipment(\App\Http\Requests\BrtCreateLabelRequest $request)
     {
         // Endpoint admin/manuale: gli override qui sono eccezioni controllate.
         // Il flusso automatico BRT deve leggere dall'ordine persistito canonico.
-        $request->validate([
-            'order_id' => 'required|integer',
-            'is_cod' => 'nullable|boolean',
-            'cod_amount' => 'nullable|integer|min:0',
-            'pudo_id' => 'nullable|string',
-            'notes' => 'nullable|string|max:255',
-        ]);
 
         if ($request->boolean('is_cod') && (int) $request->cod_amount <= 0) {
             return response()->json(['error' => 'L\'importo del contrassegno deve essere maggiore di zero.'], 422);
@@ -101,9 +94,8 @@ class BrtController extends Controller
         ]);
     }
 
-    public function confirmShipment(Request $request)
+    public function confirmShipment(\App\Http\Requests\BrtOrderActionRequest $request)
     {
-        $request->validate(['order_id' => 'required|integer']);
         $order = Order::findOrFail($request->order_id);
 
         Gate::authorize('manageShipment', $order);
@@ -120,9 +112,8 @@ class BrtController extends Controller
         return response()->json(['success' => true]);
     }
 
-    public function deleteShipment(Request $request)
+    public function deleteShipment(\App\Http\Requests\BrtOrderActionRequest $request)
     {
-        $request->validate(['order_id' => 'required|integer']);
         $order = Order::findOrFail($request->order_id);
 
         if (! auth()->user()->isAdmin()) {
@@ -166,24 +157,16 @@ class BrtController extends Controller
         return response()->json($this->trackingRead->buildOrderTrackingPayload($order));
     }
 
-    public function publicTracking(Request $request)
+    public function publicTracking(\App\Http\Requests\BrtPublicTrackingRequest $request)
     {
-        $request->validate(['code' => 'required|string|max:100']);
-
         return response()->json(
             $this->trackingRead->buildPublicTrackingPayload((string) $request->code)
         );
     }
 
-    public function pudoSearch(Request $request)
+    public function pudoSearch(\App\Http\Requests\BrtPudoSearchRequest $request)
     {
-        $data = $request->validate([
-            'address' => 'nullable|string',
-            'zip_code' => 'nullable|string|required_without:city',
-            'city' => 'nullable|string|required_without:zip_code',
-            'country' => 'nullable|string',
-            'max_results' => 'nullable|integer|min:1|max:50',
-        ]);
+        $data = $request->validated();
 
         $zipCode = preg_replace('/\D/', '', (string) ($data['zip_code'] ?? ''));
         $city = trim((string) ($data['city'] ?? ''));
@@ -203,13 +186,8 @@ class BrtController extends Controller
         return response()->json($result);
     }
 
-    public function pudoNearby(Request $request)
+    public function pudoNearby(\App\Http\Requests\BrtPudoNearbyRequest $request)
     {
-        $request->validate([
-            'latitude' => 'required|numeric',
-            'longitude' => 'required|numeric',
-            'max_results' => 'nullable|integer|min:1|max:50',
-        ]);
 
         $result = $this->pudo->getPudoByCoordinates(
             (float) $request->latitude,

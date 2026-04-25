@@ -41,13 +41,9 @@ class OrderExportController extends Controller
      * Esporta gli ordini in CSV.
      * Ritorna StreamedResponse col Content-Type text/csv.
      */
-    public function exportCsv(Request $request): StreamedResponse
+    public function exportCsv(\App\Http\Requests\ExportOrdersCsvRequest $request): StreamedResponse
     {
-        $data = $request->validate([
-            'from'   => 'nullable|date',
-            'to'     => 'nullable|date|after_or_equal:from',
-            'status' => 'nullable|string|max:40',
-        ]);
+        $data = $request->validated();
 
         $user = $request->user();
         abort_if($user === null, 401, 'Non autenticato.');

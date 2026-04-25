@@ -64,25 +64,9 @@ class ArticleController extends Controller
     }
 
     // Crea un nuovo articolo
-    public function store(Request $request): JsonResponse
+    public function store(\App\Http\Requests\StoreArticleRequest $request): JsonResponse
     {
-        $data = $request->validate([
-            'title' => 'required|string|max:255',
-            'slug' => 'nullable|string|max:255|unique:articles,slug',
-            'type' => 'required|in:' . self::ALLOWED_TYPES,
-            'meta_description' => 'nullable|string',
-            'intro' => 'nullable|string',
-            'sections' => 'nullable|array',
-            'sections.*.heading' => 'required_with:sections|string',
-            'sections.*.text' => 'required_with:sections|string',
-            'faqs' => 'nullable|array',
-            'faqs.*.title' => 'required_with:faqs|string',
-            'faqs.*.text' => 'required_with:faqs|string',
-            'featured_image' => 'nullable|string',
-            'icon' => 'nullable|string',
-            'is_published' => 'boolean',
-            'sort_order' => 'integer',
-        ]);
+        $data = $request->validated();
 
         if (empty($data['slug'])) {
             $data['slug'] = Str::slug($data['title']);
@@ -103,25 +87,9 @@ class ArticleController extends Controller
     }
 
     // Aggiorna un articolo esistente
-    public function update(Request $request, Article $article): JsonResponse
+    public function update(\App\Http\Requests\UpdateArticleRequest $request, Article $article): JsonResponse
     {
-        $data = $request->validate([
-            'title' => 'sometimes|required|string|max:255',
-            'slug' => 'sometimes|required|string|max:255|unique:articles,slug,' . $article->id,
-            'type' => 'sometimes|required|in:' . self::ALLOWED_TYPES,
-            'meta_description' => 'nullable|string',
-            'intro' => 'nullable|string',
-            'sections' => 'nullable|array',
-            'sections.*.heading' => 'required_with:sections|string',
-            'sections.*.text' => 'required_with:sections|string',
-            'faqs' => 'nullable|array',
-            'faqs.*.title' => 'required_with:faqs|string',
-            'faqs.*.text' => 'required_with:faqs|string',
-            'featured_image' => 'nullable|string',
-            'icon' => 'nullable|string',
-            'is_published' => 'boolean',
-            'sort_order' => 'integer',
-        ]);
+        $data = $request->validated();
 
         $article->update($data);
 

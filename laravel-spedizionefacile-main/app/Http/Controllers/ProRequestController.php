@@ -58,7 +58,7 @@ class ProRequestController extends Controller
      * Invia una nuova richiesta per diventare Partner Pro.
      * L'utente non deve gia' essere Pro e non deve avere una richiesta in attesa.
      */
-    public function store(Request $request): JsonResponse
+    public function store(\App\Http\Requests\StoreProRequestRequest $request): JsonResponse
     {
         $user = auth()->user();
 
@@ -80,12 +80,7 @@ class ProRequestController extends Controller
             ], 422);
         }
 
-        // Validiamo i dati dell'azienda
-        $data = $request->validate([
-            'company_name' => 'nullable|string|max:255',
-            'vat_number' => 'nullable|string|max:20',
-            'message' => 'nullable|string|max:1000',
-        ]);
+        $data = $request->validated();
 
         // Creiamo la richiesta con i dati dell'azienda
         $proRequest = ProRequest::create([

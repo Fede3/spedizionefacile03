@@ -102,7 +102,7 @@ class ShipmentExecutionController extends Controller
      * consigliata). Se BRT fallisce, salviamo comunque la nuova data e logghiamo
      * per follow-up admin.
      */
-    public function reschedulePickup(Request $request, Order $order): JsonResponse
+    public function reschedulePickup(\App\Http\Requests\ReschedulePickupRequest $request, Order $order): JsonResponse
     {
         Gate::authorize('manageShipment', $order);
 
@@ -134,11 +134,7 @@ class ShipmentExecutionController extends Controller
             ], 422);
         }
 
-        $validated = $request->validate([
-            'pickup_date' => ['required', 'string'],
-            'pickup_time_slot' => ['nullable', 'string', 'max:50'],
-            'pickup_notes' => ['nullable', 'string', 'max:255'],
-        ]);
+        $validated = $request->validated();
 
         $newDate = $this->normalizePickupDateInput($validated['pickup_date']);
         if (! $newDate) {

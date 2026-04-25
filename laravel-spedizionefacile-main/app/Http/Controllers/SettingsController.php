@@ -58,26 +58,8 @@ class SettingsController extends Controller
      * Solo l'amministratore puo' fare questa operazione.
      * Verifica che le chiavi abbiano il formato corretto (pk_ e sk_).
      */
-    public function saveStripeConfig(Request $request)
+    public function saveStripeConfig(\App\Http\Requests\UpdateStripeKeysRequest $request)
     {
-        // Controllo di sicurezza: solo l'admin puo' cambiare le chiavi Stripe
-        if (! $request->user()) {
-            return response()->json(['message' => 'Unauthenticated.'], 401);
-        }
-
-        if (! $request->user()->isAdmin()) {
-            return response()->json(['error' => 'Non autorizzato.'], 403);
-        }
-
-        // Verifichiamo che le chiavi abbiano il formato corretto
-        $request->validate([
-            'publishable_key' => 'required|string|starts_with:pk_',
-            'secret_key' => 'required|string|starts_with:sk_',
-        ], [
-            'publishable_key.starts_with' => 'La Publishable Key deve iniziare con pk_',
-            'secret_key.starts_with' => 'La Secret Key deve iniziare con sk_',
-        ]);
-
         // Ripulisce eventuali spazi/newline da copia-incolla
         $publishable = preg_replace('/\s+/', '', (string) $request->publishable_key);
         $secret = preg_replace('/\s+/', '', (string) $request->secret_key);

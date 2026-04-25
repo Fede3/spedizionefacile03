@@ -34,26 +34,9 @@ class SessionDataController extends Controller
         return app(PriceEngineService::class)->calculateCapSupplementCents($originCap, $destinationCap);
     }
 
-    public function firstStep(Request $request)
+    public function firstStep(\App\Http\Requests\StoreSessionFirstStepRequest $request)
     {
-        $validated = $request->validate([
-            'shipment_details.origin_city' => ['required', 'string'],
-            'shipment_details.origin_postal_code' => ['nullable', 'string'],
-            'shipment_details.origin_country_code' => ['nullable', 'string', 'size:2'],
-            'shipment_details.origin_country' => ['nullable', 'string'],
-            'shipment_details.destination_city' => ['required', 'string'],
-            'shipment_details.destination_postal_code' => ['nullable', 'string'],
-            'shipment_details.destination_country_code' => ['nullable', 'string', 'size:2'],
-            'shipment_details.destination_country' => ['nullable', 'string'],
-            'shipment_details.date' => ['nullable', 'string'],
-            'packages' => ['required', 'array', 'min:1'],
-            'packages.*.package_type' => ['required', 'string'],
-            'packages.*.quantity' => ['required', 'integer', 'min:1'],
-            'packages.*.weight' => ['required'],
-            'packages.*.first_size' => ['required'],
-            'packages.*.second_size' => ['required'],
-            'packages.*.third_size' => ['required'],
-        ]);
+        $validated = $request->validated();
 
         $shipmentDetails = $validated['shipment_details'];
         $shipmentDetails['origin_country_code'] = strtoupper(trim((string) ($shipmentDetails['origin_country_code'] ?? 'IT')));
@@ -160,57 +143,9 @@ class SessionDataController extends Controller
         ]);
     }
 
-    public function secondStep(Request $request)
+    public function secondStep(\App\Http\Requests\StoreSessionSecondStepRequest $request)
     {
-        $validated = $request->validate([
-            'client_submission_id' => ['nullable', 'string', 'max:255'],
-            'services' => ['nullable', 'array'],
-            'services.service_type' => ['nullable', 'string'],
-            'services.date' => ['nullable', 'string'],
-            'services.time' => ['nullable', 'string'],
-            'services.serviceData' => ['nullable', 'array'],
-            'services.sms_email_notification' => ['nullable', 'boolean'],
-            'content_description' => ['required', 'string'],
-            'pickup_date' => ['required', 'string'],
-            'sms_email_notification' => ['nullable', 'boolean'],
-            'packages' => ['nullable', 'array', 'min:1'],
-            'packages.*.package_type' => ['required_with:packages', 'string'],
-            'packages.*.quantity' => ['required_with:packages', 'integer', 'min:1'],
-            'packages.*.weight' => ['required_with:packages'],
-            'packages.*.first_size' => ['required_with:packages'],
-            'packages.*.second_size' => ['required_with:packages'],
-            'packages.*.third_size' => ['required_with:packages'],
-            'origin_address' => ['nullable', 'array'],
-            'origin_address.type' => ['nullable', 'string'],
-            'origin_address.name' => ['nullable', 'string'],
-            'origin_address.additional_information' => ['nullable', 'string'],
-            'origin_address.address' => ['nullable', 'string'],
-            'origin_address.number_type' => ['nullable', 'string'],
-            'origin_address.address_number' => ['nullable', 'string'],
-            'origin_address.intercom_code' => ['nullable', 'string'],
-            'origin_address.country' => ['nullable', 'string'],
-            'origin_address.city' => ['nullable', 'string'],
-            'origin_address.postal_code' => ['nullable', 'string'],
-            'origin_address.province' => ['nullable', 'string'],
-            'origin_address.telephone_number' => ['nullable', 'string'],
-            'origin_address.email' => ['nullable', 'string'],
-            'destination_address' => ['nullable', 'array'],
-            'destination_address.type' => ['nullable', 'string'],
-            'destination_address.name' => ['nullable', 'string'],
-            'destination_address.additional_information' => ['nullable', 'string'],
-            'destination_address.address' => ['nullable', 'string'],
-            'destination_address.number_type' => ['nullable', 'string'],
-            'destination_address.address_number' => ['nullable', 'string'],
-            'destination_address.intercom_code' => ['nullable', 'string'],
-            'destination_address.country' => ['nullable', 'string'],
-            'destination_address.city' => ['nullable', 'string'],
-            'destination_address.postal_code' => ['nullable', 'string'],
-            'destination_address.province' => ['nullable', 'string'],
-            'destination_address.telephone_number' => ['nullable', 'string'],
-            'destination_address.email' => ['nullable', 'string'],
-            'delivery_mode' => ['nullable', 'string', 'in:home,pudo'],
-            'selected_pudo' => ['nullable', 'array'],
-        ]);
+        $validated = $request->validated();
 
         $contentDescription = trim((string) ($validated['content_description'] ?? ''));
         $pickupDate = trim((string) ($validated['pickup_date'] ?? ''));

@@ -119,11 +119,9 @@ class OrderManagementController extends Controller
     }
 
     // Cambia lo stato di un ordine (es. da "pending" a "completed")
-    public function updateOrderStatus(Request $request, Order $order): JsonResponse
+    public function updateOrderStatus(\App\Http\Requests\UpdateOrderStatusRequest $request, Order $order): JsonResponse
     {
-        $data = $request->validate([
-            'status' => ['required', 'string', 'in:pending,processing,completed,payment_failed,cancelled,payed,in_transit,delivered,in_giacenza,awaiting_bank_transfer'],
-        ]);
+        $data = $request->validated();
 
         $oldStatus = $order->status;
         $order->update(['status' => $data['status']]);
@@ -192,15 +190,9 @@ class OrderManagementController extends Controller
     }
 
     // Aggiorna o rimuove il punto PUDO associato a un ordine
-    public function updateOrderPudo(Request $request, Order $order): JsonResponse
+    public function updateOrderPudo(\App\Http\Requests\UpdateOrderPudoRequest $request, Order $order): JsonResponse
     {
-        $data = $request->validate([
-            'pudo_id' => 'nullable|string|max:100',
-            'pudo_name' => 'nullable|string|max:300',
-            'pudo_address' => 'nullable|string|max:300',
-            'pudo_city' => 'nullable|string|max:200',
-            'pudo_zip' => 'nullable|string|max:10',
-        ]);
+        $data = $request->validated();
 
         $order->update(['brt_pudo_id' => $data['pudo_id']]);
 

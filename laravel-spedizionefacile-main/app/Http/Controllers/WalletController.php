@@ -99,13 +99,9 @@ class WalletController extends Controller
 
     // Ricarica il portafoglio usando una carta di credito salvata
     // Crea un pagamento su Stripe e, se va a buon fine, aggiunge i soldi al portafoglio
-    public function topUp(Request $request): JsonResponse
+    public function topUp(\App\Http\Requests\WalletTopUpRequest $request): JsonResponse
     {
-        $data = $request->validate([
-            'amount' => ['required', 'numeric', 'min:1'],
-            'payment_method_id' => ['required', 'string'],
-            'idempotency_key' => ['nullable', 'string', 'max:255'],
-        ]);
+        $data = $request->validated();
 
         $user = $request->user();
         $amountCents = (int) round($data['amount'] * 100);
@@ -218,13 +214,9 @@ class WalletController extends Controller
     // Questo endpoint crea SOLO il movimento debit verificato.
     // La completion dell'ordine vive nel secondo step
     // StripeCheckoutController::markOrderCompleted().
-    public function payWithWallet(Request $request): JsonResponse
+    public function payWithWallet(\App\Http\Requests\WalletPayRequest $request): JsonResponse
     {
-        $data = $request->validate([
-            'amount' => ['required', 'numeric', 'min:0.01'],
-            'reference' => ['required', 'string', 'max:64'],
-            'description' => ['nullable', 'string', 'max:255'],
-        ]);
+        $data = $request->validated();
 
         $user = $request->user();
 
