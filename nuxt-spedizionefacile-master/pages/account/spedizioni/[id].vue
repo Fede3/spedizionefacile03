@@ -208,26 +208,27 @@ const orderMetaPillStyle = (kind, status = '') => {
 					</div>
 				</div>
 
-				<!-- Status & Summary -->
-				<div class="mb-[16px] rounded-[16px] border border-[var(--color-brand-border)] bg-white p-[18px] tablet:p-[20px]">
-					<div class="grid grid-cols-1 gap-[12px] tablet:grid-cols-2 desktop:grid-cols-4">
-						<div class="rounded-[16px] border border-[#E9EEF2] bg-[#FBFCFD] px-[14px] py-[12px]">
-							<p class="mb-[4px] text-[0.6875rem] font-bold uppercase tracking-[0.14em] text-[var(--color-brand-text-muted)]">Tratta</p>
-							<p class="text-[0.9375rem] font-semibold leading-[1.35] text-[var(--color-brand-text)]">{{ orderRouteLabel }}</p>
+				<!-- P14: Status & Summary - matryoshka rimossa (era card-in-card-in-card).
+				     Ora unica card con 4 colonne dl flat senza border interno. -->
+				<div class="mb-[16px] rounded-[16px] border border-[var(--color-brand-border)] bg-white p-[16px] tablet:p-[18px]">
+					<dl class="grid grid-cols-2 gap-x-[16px] gap-y-[10px] tablet:grid-cols-4">
+						<div>
+							<dt class="text-[0.6875rem] font-bold uppercase tracking-[0.06em] text-[var(--color-brand-text-muted)]">Tratta</dt>
+							<dd class="mt-[2px] text-[0.875rem] font-semibold leading-[1.3] text-[var(--color-brand-text)]">{{ orderRouteLabel }}</dd>
 						</div>
-						<div class="rounded-[16px] border border-[#E9EEF2] bg-white px-[14px] py-[12px]">
-							<p class="mb-[4px] text-[0.6875rem] font-bold uppercase tracking-[0.14em] text-[var(--color-brand-text-muted)]">Creato il</p>
-							<p class="text-[0.9375rem] font-semibold leading-[1.35] text-[var(--color-brand-text)]">{{ formatDateTimeIt(orderData.created_at, '—') }}</p>
+						<div>
+							<dt class="text-[0.6875rem] font-bold uppercase tracking-[0.06em] text-[var(--color-brand-text-muted)]">Creato</dt>
+							<dd class="mt-[2px] text-[0.875rem] font-semibold leading-[1.3] text-[var(--color-brand-text)]">{{ formatDateTimeIt(orderData.created_at, '—') }}</dd>
 						</div>
-						<div class="rounded-[16px] border border-[#E9EEF2] bg-white px-[14px] py-[12px]">
-							<p class="mb-[4px] text-[0.6875rem] font-bold uppercase tracking-[0.14em] text-[var(--color-brand-text-muted)]">Totale</p>
-							<p class="text-[1rem] font-bold leading-[1.2] text-[var(--color-brand-primary)]">{{ orderSubtotalLabel }}</p>
+						<div>
+							<dt class="text-[0.6875rem] font-bold uppercase tracking-[0.06em] text-[var(--color-brand-text-muted)]">Totale</dt>
+							<dd class="mt-[2px] text-[0.9375rem] font-bold leading-[1.2] text-[var(--color-brand-primary)]">{{ orderSubtotalLabel }}</dd>
 						</div>
-						<div class="rounded-[16px] border border-[#E9EEF2] bg-white px-[14px] py-[12px]">
-							<p class="mb-[4px] text-[0.6875rem] font-bold uppercase tracking-[0.14em] text-[var(--color-brand-text-muted)]">Pagamento</p>
-							<p class="text-[0.9375rem] font-semibold leading-[1.35] text-[var(--color-brand-text)]">{{ paymentMethodLabel(orderData.payment_method) }}</p>
+						<div>
+							<dt class="text-[0.6875rem] font-bold uppercase tracking-[0.06em] text-[var(--color-brand-text-muted)]">Pagamento</dt>
+							<dd class="mt-[2px] text-[0.875rem] font-semibold leading-[1.3] text-[var(--color-brand-text)]">{{ paymentMethodLabel(orderData.payment_method) }}</dd>
 						</div>
-					</div>
+					</dl>
 					<div
 						v-if="isCancellable && !isCancelledOrRefunded"
 						class="mt-[16px] flex flex-col gap-[10px] border-t border-[var(--color-brand-border)] pt-[16px] desktop:flex-row desktop:items-center desktop:justify-between">

@@ -157,21 +157,22 @@ const trackingHref = (shipment) => getBrtTrackingUrl(shipment);
 					</div>
 				</td>
 				<td class="admin-spedizioni-td">
-					<div class="flex flex-col gap-[8px]">
+					<!-- P14: solo status principale + chip errore se presente. Sub-badges (Bordero ok,
+					     Documenti inviati ecc.) in tooltip al hover invece di accatastati. -->
+					<div class="flex flex-col gap-[4px]">
 						<AdminStatusBadge :status="item.status" type="order" />
-						<div v-if="buildExecutionBadges(item).length" class="flex flex-wrap gap-[6px]">
-							<span
-								v-for="badge in buildExecutionBadges(item)"
-								:key="`${item.id}-${badge.label}`"
-								:class="['admin-status-badge', `admin-status-badge--${badge.tone}`]">
-								{{ badge.label }}
-							</span>
-						</div>
-						<p
+						<span
+							v-if="buildExecutionBadges(item).length"
+							:title="buildExecutionBadges(item).map(b => b.label).join(' · ')"
+							class="text-[10px] text-[var(--color-brand-text-muted)] cursor-help">
+							+{{ buildExecutionBadges(item).length }} dettagli
+						</span>
+						<span
 							v-if="executionErrorLabel(item)"
-							class="max-w-[220px] text-[11px] leading-[1.45] text-[var(--admin-status-danger-text)]">
-							{{ executionErrorLabel(item) }}
-						</p>
+							:title="executionErrorLabel(item)"
+							class="inline-flex max-w-fit items-center rounded-full bg-[#FEF2F2] px-[6px] py-[1px] text-[10px] font-semibold text-[#B91C1C] cursor-help">
+							⚠ Errore
+						</span>
 					</div>
 				</td>
 				<td class="admin-spedizioni-td">

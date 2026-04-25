@@ -14,13 +14,13 @@ const props = defineProps({
 const emit = defineEmits(['view', 'edit', 'impersonate']);
 
 const columns = [
-	{ key: 'user', label: 'Utente', width: '28%' },
-	{ key: 'type', label: 'Tipo', width: '11%' },
-	{ key: 'role', label: 'Ruolo', width: '13%' },
+	{ key: 'user', label: 'Utente', width: '30%' },
+	{ key: 'type', label: 'Tipo', width: '10%' },
+	{ key: 'role', label: 'Ruolo', width: '12%' },
 	{ key: 'orders', label: 'Ordini', width: '8%' },
-	{ key: 'last', label: 'Ultimo accesso', width: '14%' },
-	{ key: 'status', label: 'Stato', width: '12%' },
-	{ key: 'actions', label: 'Azioni', width: '14%' },
+	{ key: 'last', label: 'Ultimo', width: '12%' },
+	{ key: 'status', label: 'Stato', width: '10%' },
+	{ key: 'actions', label: 'Azioni', width: '18%' },
 ];
 
 const initials = (user) => {
