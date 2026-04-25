@@ -6,12 +6,27 @@
  * evita finestre di conferma sovrapposte (anti-pattern UX).
  *
  * Sostituisce useState() di useConfirmDialog.js con store ispezionabile in DevTools.
- *
- * @typedef {{ title: string, message?: string, confirmText?: string, cancelText?: string, tone?: 'default' | 'danger' }} ConfirmOptions
  */
 import { defineStore } from 'pinia'
 
-const defaultState = {
+export interface ConfirmOptions {
+	title: string
+	message?: string
+	confirmText?: string
+	cancelText?: string
+	tone?: 'default' | 'danger'
+}
+
+interface ConfirmDialogState {
+	open: boolean
+	title: string
+	message: string
+	confirmText: string
+	cancelText: string
+	tone: 'default' | 'danger'
+}
+
+const defaultState: ConfirmDialogState = {
 	open: false,
 	title: '',
 	message: '',
@@ -22,25 +37,23 @@ const defaultState = {
 
 // Resolver vivo a livello modulo (fuori dalla store factory perché Pinia
 // non vuole valori non-serializzabili come functions nello state).
-let pendingResolve = null
+let pendingResolve: ((value: boolean) => void) | null = null
 
 export const useConfirmDialogStore = defineStore('confirmDialog', () => {
-	const state = ref({ ...defaultState })
+	const state = ref<ConfirmDialogState>({ ...defaultState })
 
 	const isOpen = computed(() => state.value.open)
 
 	/**
 	 * Apre il dialog e restituisce una Promise che si risolve true (confirm)
 	 * o false (cancel). Eventuale dialog precedente viene annullato.
-	 * @param {ConfirmOptions} opts
-	 * @returns {Promise<boolean>}
 	 */
-	function confirm(opts) {
+	function confirm(opts: ConfirmOptions): Promise<boolean> {
 		if (pendingResolve) {
 			pendingResolve(false)
 			pendingResolve = null
 		}
-		return new Promise((resolve) => {
+		return new Promise<boolean>((resolve) => {
 			pendingResolve = resolve
 			state.value = {
 				open: true,
@@ -54,7 +67,7 @@ export const useConfirmDialogStore = defineStore('confirmDialog', () => {
 	}
 
 	/** Helper interno usato dal componente <SfConfirmDialog/> al click conferma/annulla. */
-	function resolveDialog(value) {
+	function resolveDialog(value: boolean): void {
 		if (pendingResolve) {
 			pendingResolve(value)
 			pendingResolve = null

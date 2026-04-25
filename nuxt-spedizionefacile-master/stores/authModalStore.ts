@@ -7,30 +7,39 @@
  */
 import { defineStore } from 'pinia'
 
-const normalizeAuthRedirect = (redirect) => {
+export type AuthModalTab = 'login' | 'register'
+export type AuthEntryMode = 'forgot' | null
+
+export interface AuthModalOpenOptions {
+	tab?: AuthModalTab
+	redirect?: string
+	entryMode?: AuthEntryMode
+}
+
+const normalizeAuthRedirect = (redirect?: string): string => {
 	if (!redirect || typeof redirect !== 'string') return '/'
 	return redirect.startsWith('/') ? redirect : '/'
 }
 
 export const useAuthModalStore = defineStore('authModal', () => {
 	const isOpen = ref(false)
-	const selectedTab = ref('login') // 'login' | 'register'
+	const selectedTab = ref<AuthModalTab>('login')
 	const redirectPath = ref('/')
-	const entryMode = ref(null) // 'forgot' | null
+	const entryMode = ref<AuthEntryMode>(null)
 
-	function open(options = {}) {
+	function open(options: AuthModalOpenOptions = {}): void {
 		selectedTab.value = options.tab ?? 'login'
 		redirectPath.value = normalizeAuthRedirect(options.redirect)
 		entryMode.value = options.entryMode ?? null
 		isOpen.value = true
 	}
 
-	function close() {
+	function close(): void {
 		isOpen.value = false
 		entryMode.value = null
 	}
 
-	function clearEntryMode() {
+	function clearEntryMode(): void {
 		entryMode.value = null
 	}
 

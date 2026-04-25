@@ -7,23 +7,29 @@
  */
 import { defineStore } from 'pinia'
 
-const defaultProviders = () => ({
+export interface AuthProviders {
+	google: boolean
+	facebook: boolean
+	apple: boolean
+}
+
+const defaultProviders = (): AuthProviders => ({
 	google: false,
 	facebook: false,
 	apple: false,
 })
 
 export const useAuthProvidersStore = defineStore('authProviders', () => {
-	const providers = ref(defaultProviders())
+	const providers = ref<AuthProviders>(defaultProviders())
 	const loaded = ref(false)
 	const loading = ref(false)
 
-	async function refresh() {
+	async function refresh(): Promise<AuthProviders> {
 		if (loading.value) return providers.value
 
 		loading.value = true
 		try {
-			const response = await $fetch('/api/auth/providers')
+			const response = await $fetch<Partial<AuthProviders>>('/api/auth/providers')
 			providers.value = {
 				...defaultProviders(),
 				...response,
