@@ -79,8 +79,7 @@
 }
 
 .sf-account-root__order-title,
-.sf-account-root__orders-empty-title,
-.sf-account-root__bonus-title {
+.sf-account-root__orders-empty-title {
 	font-size: 0.95rem;
 	line-height: 1.28;
 	font-weight: 800;
@@ -88,8 +87,7 @@
 }
 
 .sf-account-root__order-meta,
-.sf-account-root__orders-empty-meta,
-.sf-account-root__bonus-meta {
+.sf-account-root__orders-empty-meta {
 	margin-top: 5px;
 	font-size: 0.83rem;
 	line-height: 1.5;
@@ -120,55 +118,6 @@
 
 .sf-account-root__orders-empty--hero {
 	justify-content: space-between;
-}
-
-.sf-account-root__bonus-cta {
-	display: flex;
-	align-items: center;
-	gap: 16px;
-	padding: 18px 20px;
-	border-radius: 18px;
-	background: linear-gradient(135deg, var(--color-brand-primary, #095866) 0%, #0B7489 100%);
-	box-shadow: 0 10px 24px rgba(9, 88, 102, 0.16);
-	color: #ffffff;
-	transition: transform var(--sf-t1) var(--sf-ease), box-shadow var(--sf-t1) var(--sf-ease);
-}
-
-.sf-account-root__bonus-cta:hover,
-.sf-account-root__bonus-cta:focus-visible {
-	transform: translateY(-2px);
-	box-shadow: 0 14px 28px rgba(9, 88, 102, 0.2);
-	outline: none;
-}
-
-.sf-account-root__bonus-icon {
-	display: inline-flex;
-	align-items: center;
-	justify-content: center;
-	width: 42px;
-	height: 42px;
-	flex-shrink: 0;
-	border-radius: 14px;
-	background: rgba(255, 255, 255, 0.14);
-	color: #ffffff;
-}
-
-.sf-account-root__bonus-title {
-	color: #ffffff;
-}
-
-.sf-account-root__bonus-meta {
-	color: rgba(255, 255, 255, 0.78);
-}
-
-.sf-account-root__bonus-link {
-	display: inline-flex;
-	align-items: center;
-	gap: 8px;
-	flex-shrink: 0;
-	font-size: 0.84rem;
-	font-weight: 700;
-	color: #ffffff;
 }
 
 @media (max-width: 767px) {
