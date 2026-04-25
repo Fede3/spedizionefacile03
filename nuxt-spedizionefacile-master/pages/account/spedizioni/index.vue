@@ -2,9 +2,9 @@
 definePageMeta({ middleware: ["app-auth"] });
 
 useSeoMeta({
-	title: 'Le tue Spedizioni â€” Il tuo Account | SpedizioneFacile',
+	title: 'Le tue spedizioni',
 	description: 'Consulta lo storico delle tue spedizioni, controlla lo stato degli ordini e gestisci le spedizioni configurate.',
-	ogTitle: 'Le tue Spedizioni â€” Il tuo Account | SpedizioneFacile',
+	ogTitle: 'Le tue spedizioni',
 	ogDescription: 'Consulta lo storico delle tue spedizioni, controlla lo stato degli ordini e gestisci le spedizioni configurate.',
 	robots: 'noindex, nofollow',
 });

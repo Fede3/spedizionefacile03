@@ -36,14 +36,14 @@ onMounted(() => { fetchShipments(); });
 		<div class="my-container">
 			<AccountPageHeader
 				eyebrow="Area amministrazione"
-				title="Spedizioni"
-				description="Tracking, etichette e stati in una vista allineata agli ordini."
+				title="Coda BRT"
+				description="Tracking, etichette e stati delle spedizioni in lavorazione."
 				back-to="/account/amministrazione"
 				back-label="Torna al pannello admin"
 				:crumbs="[
 					{ label: 'Account', to: '/account' },
 					{ label: 'Amministrazione', to: '/account/amministrazione' },
-					{ label: 'Spedizioni' },
+					{ label: 'Coda BRT' },
 				]" />
 
 			<AdminOrdersViewTabs />

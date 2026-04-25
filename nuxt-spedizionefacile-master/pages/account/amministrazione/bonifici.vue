@@ -175,41 +175,32 @@ const summaryItems = computed(() => {
 						</p>
 					</div>
 
-					<div v-else class="space-y-[8px]">
+					<!-- P14: card bonifico compatta — da 180px a ~64px ognuna.
+					     1 riga: #ID + cliente + prezzo + causale + bottoni. -->
+					<div v-else class="divide-y divide-[rgba(9,88,102,0.08)] rounded-[12px] border border-[rgba(9,88,102,0.08)] bg-white">
 						<article
 							v-for="order in orders"
 							:key="order.id"
-							class="rounded-[16px] border border-[rgba(9,88,102,0.08)] bg-white px-[16px] py-[14px] transition-all hover:bg-[#FBFCFD]">
-							<div class="flex flex-col gap-[10px] desktop:flex-row desktop:items-center desktop:justify-between">
-								<div class="min-w-0 space-y-[6px]">
-									<div class="flex flex-wrap items-center gap-[6px]">
-										<span class="inline-flex items-center rounded-full bg-[#FFF1E8] px-[10px] py-[3px] text-[0.6875rem] font-semibold text-[#B45309] border border-[rgba(228,66,3,0.3)]">
-											In attesa bonifico
-										</span>
-										<span class="sf-account-meta-pill sf-account-meta-pill--muted">Ordine #{{ order.id }}</span>
-										<span class="sf-account-meta-pill sf-account-meta-pill--muted font-mono">Causale: ORD-{{ order.id }}</span>
-									</div>
-									<h3 class="font-montserrat text-[0.9375rem] font-[800] text-[var(--color-brand-text)]">
-										{{ formatAmount(order.payable_total_cents ?? order.subtotal_cents ?? (order.subtotal?.amount ? Number(order.subtotal.amount) * 100 : null)) }}
-									</h3>
-									<div class="text-[0.75rem] text-[var(--color-brand-text-secondary)]">
-										<span v-if="order.user">{{ order.user.name }} {{ order.user.surname }} · {{ order.user.email }}</span>
-										<span v-else>Cliente —</span>
-									</div>
-									<div class="text-[0.6875rem] text-[var(--color-brand-text-muted)]">
-										Creato il {{ formatDate(order.created_at) }}
-									</div>
-								</div>
-								<div class="shrink-0 flex gap-[8px]">
-									<NuxtLink
-										:to="`/account/amministrazione/ordini?search=${order.id}`"
-										class="btn-secondary btn-compact">
-										Vedi ordine
-									</NuxtLink>
-									<button type="button" class="btn-cta btn-compact" @click="openConfirm(order)">
-										Conferma ricezione
-									</button>
-								</div>
+							class="flex flex-col gap-[10px] px-[14px] py-[12px] transition-colors hover:bg-[#FBFCFD] tablet:flex-row tablet:items-center tablet:gap-[16px]">
+							<div class="min-w-0 flex-1 flex flex-wrap items-center gap-x-[12px] gap-y-[4px]">
+								<span class="font-mono text-[0.8125rem] font-bold text-[var(--color-brand-text)]">#{{ order.id }}</span>
+								<span class="text-[0.875rem] text-[var(--color-brand-text)] truncate">
+									<template v-if="order.user">{{ order.user.name }} {{ order.user.surname }}</template>
+									<template v-else>—</template>
+								</span>
+								<span class="text-[0.875rem] font-bold text-[var(--color-brand-primary)]">{{ formatAmount(order.payable_total_cents ?? order.subtotal_cents ?? (order.subtotal?.amount ? Number(order.subtotal.amount) * 100 : null)) }}</span>
+								<span class="font-mono text-[0.6875rem] text-[var(--color-brand-text-muted)]">ORD-{{ order.id }}</span>
+								<span class="text-[0.6875rem] text-[var(--color-brand-text-muted)]">{{ formatDate(order.created_at) }}</span>
+							</div>
+							<div class="shrink-0 flex gap-[8px]">
+								<NuxtLink
+									:to="`/account/amministrazione/ordini?search=${order.id}`"
+									class="btn-secondary btn-compact text-[0.75rem]">
+									Apri
+								</NuxtLink>
+								<button type="button" class="btn-cta btn-compact text-[0.75rem]" @click="openConfirm(order)">
+									Conferma
+								</button>
 							</div>
 						</article>
 					</div>

@@ -59,12 +59,12 @@ const trackingHref = (shipment) => getBrtTrackingUrl(shipment);
 		:items="shipments"
 		:columns="[
 			{ key: 'id', label: 'Spedizione', width: '6%' },
-			{ key: 'user', label: 'Utente', width: '20%' },
-			{ key: 'tratta', label: 'Tratta', width: '10%' },
-			{ key: 'parcel', label: 'Parcel ID BRT', width: '16%' },
-			{ key: 'status', label: 'Stato', width: '18%' },
-			{ key: 'created_at', label: 'Data', width: '10%' },
-			{ key: 'actions', label: 'Azioni', width: '20%' },
+			{ key: 'user', label: 'Utente', width: '18%' },
+			{ key: 'tratta', label: 'Tratta', width: '9%' },
+			{ key: 'parcel', label: 'Parcel ID BRT', width: '14%' },
+			{ key: 'status', label: 'Stato', width: '20%' },
+			{ key: 'created_at', label: 'Data', width: '9%' },
+			{ key: 'actions', label: 'Azioni', width: '24%' },
 		]">
 		<template #mobile-card="{ item }">
 			<article class="admin-card admin-spedizioni-card">

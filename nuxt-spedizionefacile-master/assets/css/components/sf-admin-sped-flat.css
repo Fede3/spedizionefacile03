@@ -154,11 +154,18 @@
 
 .admin-spedizioni-td-actions > .admin-spedizioni-select {
 	flex: 0 0 auto;
-	min-width: 90px;
-	max-width: 110px;
+	min-width: 84px;
+	max-width: 100px;
 	width: auto;
-	font-size: 0.75rem;
-	padding: 6px 10px;
+	font-size: 0.7rem;
+	padding: 6px 8px;
+}
+
+/* P14: bottoni Track+Etichetta più compatti per stare in riga su 24% width */
+.admin-spedizioni-td-actions > .admin-spedizioni-btn--compact {
+	min-height: 32px;
+	padding: 0 10px;
+	font-size: 0.7rem;
 }
 
 /* Larghezze tabella fluide: forziamo table-layout fixed cosi' le percentuali

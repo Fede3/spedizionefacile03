@@ -328,7 +328,8 @@ export const adminNavGroups = [
 		tone: 'admin',
 		items: [
 			{ label: 'Ordini', to: '/account/amministrazione/ordini', iconKey: 'clipboard-list' },
-			{ label: 'Spedizioni', to: '/account/amministrazione/spedizioni', iconKey: 'truck-delivery' },
+			// "Coda BRT" invece di "Spedizioni" per evitare confusione con "Le mie spedizioni" sotto.
+			{ label: 'Coda BRT', to: '/account/amministrazione/spedizioni', iconKey: 'truck-delivery' },
 			{ label: 'Bonifici', to: '/account/amministrazione/bonifici', iconKey: 'bank-transfer' },
 		],
 	},
@@ -369,10 +370,10 @@ export const adminNavGroups = [
 		title: 'Il tuo account',
 		tone: 'admin',
 		items: [
-			// L'admin è anche un utente: deve poter usare il suo account privato.
-			// Aggiunte Spedizioni + Fatture (mancavano, l'admin non poteva vederle dal pannello).
-			{ label: 'Spedizioni', to: '/account/spedizioni', iconKey: 'truck-fast' },
-			{ label: 'Fatture', to: '/account/fatture', iconKey: 'clipboard-list' },
+			// L'admin è anche un utente: vede il SUO account privato qui.
+			// "Le mie ..." per distinguere chiaramente da "Coda BRT" / "Ordini" admin.
+			{ label: 'Le mie spedizioni', to: '/account/spedizioni', iconKey: 'truck-fast' },
+			{ label: 'Le mie fatture', to: '/account/fatture', iconKey: 'clipboard-list' },
 			{ label: 'Profilo', to: '/account/profilo', iconKey: 'account' },
 			{ label: 'Indirizzi', to: '/account/indirizzi', iconKey: 'map-marker' },
 			{ label: 'Portafoglio', to: '/account/portafoglio', iconKey: 'wallet' },
