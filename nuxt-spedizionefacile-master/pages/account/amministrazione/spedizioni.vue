@@ -58,25 +58,22 @@ onMounted(() => { fetchShipments(); });
 						<p class="admin-spedizioni-toolbar__text">Filtra tracking, etichette e stati usando la stessa grammatica degli ordini.</p>
 					</div>
 					<div class="admin-spedizioni-toolbar__actions">
-						<button
-							type="button"
-							@click="shipmentsPage = 1; fetchShipments();"
-							class="btn-secondary btn-compact inline-flex items-center justify-center gap-[6px]">
-							<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="h-[16px] w-[16px]" fill="currentColor">
-								<path d="M12,6V9L16,5L12,1V4C7.58,4 4,7.58 4,12C4,13.57 4.46,15.03 5.24,16.26L6.7,14.8C6.25,13.96 6,13 6,12A6,6 0 0,1 12,6M18.76,7.74L17.3,9.2C17.75,10.04 18,11 18,12A6,6 0 0,1 12,18V15L8,19L12,23V20C16.42,20 20,16.42 20,12C20,10.43 19.54,8.97 18.76,7.74Z" />
-							</svg>
+						<SfButton variant="secondary" size="sm" @click="shipmentsPage = 1; fetchShipments();">
+							<template #leading>
+								<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="h-[16px] w-[16px]" fill="currentColor">
+									<path d="M12,6V9L16,5L12,1V4C7.58,4 4,7.58 4,12C4,13.57 4.46,15.03 5.24,16.26L6.7,14.8C6.25,13.96 6,13 6,12A6,6 0 0,1 12,6M18.76,7.74L17.3,9.2C17.75,10.04 18,11 18,12A6,6 0 0,1 12,18V15L8,19L12,23V20C16.42,20 20,16.42 20,12C20,10.43 19.54,8.97 18.76,7.74Z" />
+								</svg>
+							</template>
 							Aggiorna
-						</button>
-						<button
-							type="button"
-							@click="resetFilters"
-							:disabled="!hasActiveFilters"
-							class="btn-secondary btn-compact inline-flex items-center justify-center gap-[6px] disabled:cursor-not-allowed disabled:opacity-45">
-							<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="h-[16px] w-[16px]" fill="currentColor">
-								<path d="M13.39,8.23L15.5,10.34L20.43,5.41L19,4L15.5,7.5L14.8,6.8C13.76,5.76 12.33,5.11 10.76,5.02C7.06,4.8 4,7.84 4,11.54C4,13.37 4.73,15.03 5.91,16.22L4.5,17.63C2.95,16.08 2,13.93 2,11.54C2,6.56 6.11,2.5 11.09,2.54C13.42,2.56 15.53,3.5 17.06,5L20.41,1.65L21.82,3.06L16.89,7.99L19,10.1H13.39V8.23M10.61,15.77L8.5,13.66L3.57,18.59L5,20L8.5,16.5L9.2,17.2C10.24,18.24 11.67,18.89 13.24,18.98C16.94,19.2 20,16.16 20,12.46C20,10.63 19.27,8.97 18.09,7.78L19.5,6.37C21.05,7.92 22,10.07 22,12.46C22,17.44 17.89,21.5 12.91,21.46C10.58,21.44 8.47,20.5 6.94,19L3.59,22.35L2.18,20.94L7.11,16.01L5,13.9H10.61V15.77Z" />
-							</svg>
+						</SfButton>
+						<SfButton variant="secondary" size="sm" :disabled="!hasActiveFilters" @click="resetFilters">
+							<template #leading>
+								<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="h-[16px] w-[16px]" fill="currentColor">
+									<path d="M13.39,8.23L15.5,10.34L20.43,5.41L19,4L15.5,7.5L14.8,6.8C13.76,5.76 12.33,5.11 10.76,5.02C7.06,4.8 4,7.84 4,11.54C4,13.37 4.73,15.03 5.91,16.22L4.5,17.63C2.95,16.08 2,13.93 2,11.54C2,6.56 6.11,2.5 11.09,2.54C13.42,2.56 15.53,3.5 17.06,5L20.41,1.65L21.82,3.06L16.89,7.99L19,10.1H13.39V8.23M10.61,15.77L8.5,13.66L3.57,18.59L5,20L8.5,16.5L9.2,17.2C10.24,18.24 11.67,18.89 13.24,18.98C16.94,19.2 20,16.16 20,12.46C20,10.63 19.27,8.97 18.09,7.78L19.5,6.37C21.05,7.92 22,10.07 22,12.46C22,17.44 17.89,21.5 12.91,21.46C10.58,21.44 8.47,20.5 6.94,19L3.59,22.35L2.18,20.94L7.11,16.01L5,13.9H10.61V15.77Z" />
+								</svg>
+							</template>
 							Reset
-						</button>
+						</SfButton>
 					</div>
 				</div>
 

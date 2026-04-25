@@ -37,12 +37,12 @@ defineProps({
 		<h2 v-if="title" class="sf-state-view__title">{{ title }}</h2>
 		<p v-if="message" class="sf-state-view__message">{{ message }}</p>
 
-		<NuxtLink v-if="action && action.to" :to="action.to" class="sf-state-view__action btn-cta">
+		<SfButton v-if="action && action.to" :to="action.to" variant="primary" class="sf-state-view__action">
 			{{ action.label }}
-		</NuxtLink>
-		<button v-else-if="action && action.onClick" type="button" class="sf-state-view__action btn-cta" @click="action.onClick">
+		</SfButton>
+		<SfButton v-else-if="action && action.onClick" variant="primary" class="sf-state-view__action" @click="action.onClick">
 			{{ action.label }}
-		</button>
+		</SfButton>
 	</div>
 </template>
 

@@ -293,14 +293,12 @@ onMounted(() => {
 
 					<!-- Link BRT -->
 					<div v-if="trackingResult.brt_tracking_url" class="border-t border-[#DFE2E7] pt-[16px]">
-						<a
-							:href="trackingResult.brt_tracking_url"
-							target="_blank"
-							rel="noopener noreferrer"
-							class="btn-secondary inline-flex items-center gap-[8px] px-[20px] py-[11px] text-[0.875rem]">
-							<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+						<SfButton :href="trackingResult.brt_tracking_url" variant="secondary">
+							<template #leading>
+								<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+							</template>
 							Dettaglio su BRT
-						</a>
+						</SfButton>
 						<p class="text-[0.8125rem] text-[#777] mt-[8px]">Aggiornamenti in tempo reale sul sito ufficiale BRT.</p>
 					</div>
 				</div>
@@ -344,22 +342,20 @@ onMounted(() => {
 					</div>
 
 					<div class="flex flex-wrap justify-center gap-[10px]">
-						<a
-							v-if="trackingResult.brt_tracking_url"
-							:href="trackingResult.brt_tracking_url"
-							target="_blank"
-							rel="noopener noreferrer"
-							class="btn-secondary inline-flex items-center gap-[8px] px-[20px] py-[11px] text-[0.875rem]">
-							<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+						<SfButton v-if="trackingResult.brt_tracking_url" :href="trackingResult.brt_tracking_url" variant="secondary">
+							<template #leading>
+								<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+							</template>
 							Cerca su BRT
-						</a>
-						<NuxtLink to="/contatti"
-							class="btn-secondary inline-flex items-center gap-[8px] px-[20px] py-[11px] text-[0.875rem]">
-							<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-								<path d="M20,2H4A2,2 0 0,0 2,4V22L6,18H20A2,2 0 0,0 22,16V4A2,2 0 0,0 20,2M20,16H6L4,18V4H20V16Z" />
-							</svg>
+						</SfButton>
+						<SfButton to="/contatti" variant="secondary">
+							<template #leading>
+								<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+									<path d="M20,2H4A2,2 0 0,0 2,4V22L6,18H20A2,2 0 0,0 22,16V4A2,2 0 0,0 20,2M20,16H6L4,18V4H20V16Z" />
+								</svg>
+							</template>
 							Contatta l'assistenza
-						</NuxtLink>
+						</SfButton>
 					</div>
 				</div>
 			</div>
@@ -414,16 +410,8 @@ onMounted(() => {
 								</p>
 							</div>
 							<div class="flex flex-col gap-[8px] sm:flex-row sm:items-center sm:justify-end">
-								<NuxtLink
-									to="/account/spedizioni"
-									class="btn-secondary inline-flex items-center justify-center gap-[8px] px-[18px] py-[10px] text-[0.875rem]">
-									Le tue spedizioni
-								</NuxtLink>
-								<NuxtLink
-									to="/contatti"
-									class="btn-secondary inline-flex items-center justify-center gap-[8px] px-[18px] py-[10px] text-[0.875rem]">
-									Contatta assistenza
-								</NuxtLink>
+								<SfButton to="/account/spedizioni" variant="secondary">Le tue spedizioni</SfButton>
+								<SfButton to="/contatti" variant="secondary">Contatta assistenza</SfButton>
 							</div>
 						</div>
 					</div>

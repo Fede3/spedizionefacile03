@@ -150,12 +150,14 @@ const summaryItems = computed(() => {
 							La causale del cliente è sempre <strong>ORD-{ID}</strong>. Verifica in banca e conferma per sbloccare la spedizione.
 						</p>
 					</div>
-					<button type="button" class="btn-secondary btn-compact inline-flex items-center justify-center gap-[6px]" @click="fetchPending">
-						<svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="h-[16px] w-[16px]" fill="currentColor">
-							<path d="M17.65,6.35C16.2,4.9 14.21,4 12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20C15.73,20 18.84,17.45 19.73,14H17.65C16.83,16.33 14.57,18 12,18A6,6 0 0,1 6,12A6,6 0 0,1 12,6C13.66,6 15.14,6.69 16.22,7.78L13,11H20V4L17.65,6.35Z" />
-						</svg>
+					<SfButton variant="secondary" size="sm" @click="fetchPending">
+						<template #leading>
+							<svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="h-[16px] w-[16px]" fill="currentColor">
+								<path d="M17.65,6.35C16.2,4.9 14.21,4 12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20C15.73,20 18.84,17.45 19.73,14H17.65C16.83,16.33 14.57,18 12,18A6,6 0 0,1 6,12A6,6 0 0,1 12,6C13.66,6 15.14,6.69 16.22,7.78L13,11H20V4L17.65,6.35Z" />
+							</svg>
+						</template>
 						Aggiorna
-					</button>
+					</SfButton>
 				</div>
 
 				<div class="sf-account-section__body">

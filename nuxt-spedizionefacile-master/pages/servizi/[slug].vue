@@ -216,10 +216,8 @@ useHead(() => {
 								</div>
 							</div>
 							<div class="mt-[14px] flex flex-wrap gap-[8px]">
-								<NuxtLink to="/preventivo" class="btn-cta btn-compact">
-									Calcola il preventivo
-								</NuxtLink>
-								<NuxtLink to="/contatti" class="btn-secondary btn-compact">Parla con noi</NuxtLink>
+								<SfButton to="/preventivo" variant="primary" size="sm">Calcola il preventivo</SfButton>
+								<SfButton to="/contatti" variant="secondary" size="sm">Parla con noi</SfButton>
 							</div>
 						</div>
 					</div>
@@ -312,12 +310,8 @@ useHead(() => {
 						</p>
 					</div>
 					<div class="services-bottom-cta__actions">
-						<NuxtLink to="/preventivo" class="btn-cta btn-compact">
-							Calcola il preventivo
-						</NuxtLink>
-						<NuxtLink to="/servizi" class="btn-secondary btn-compact">
-							Esplora altri servizi
-						</NuxtLink>
+						<SfButton to="/preventivo" variant="primary" size="sm">Calcola il preventivo</SfButton>
+						<SfButton to="/servizi" variant="secondary" size="sm">Esplora altri servizi</SfButton>
 					</div>
 				</div>
 			</div>

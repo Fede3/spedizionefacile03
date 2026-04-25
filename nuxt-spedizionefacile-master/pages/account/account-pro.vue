@@ -237,7 +237,7 @@ const shareWhatsApp = () => {
 				<div class="flex min-w-0 flex-1 flex-col gap-[4px]">
 					<p class="ux-alert__title">{{ pageError }}</p>
 				</div>
-				<button type="button" class="btn-secondary btn-compact" @click="retryPartnerArea">Riprova</button>
+				<SfButton variant="secondary" size="sm" @click="retryPartnerArea">Riprova</SfButton>
 			</div>
 
 			<AccountProRequestForm
