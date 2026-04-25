@@ -256,14 +256,9 @@ class GdprController extends Controller
      *
      * Il consenso viene salvato nella tabella cookie_consents per audit trail.
      */
-    public function cookieConsent(Request $request): JsonResponse
+    public function cookieConsent(\App\Http\Requests\CookieConsentRequest $request): JsonResponse
     {
-        $data = $request->validate([
-            'type'       => ['nullable', 'string', 'in:all,necessary'],
-            'analytics'  => ['nullable', 'boolean'],
-            'marketing'  => ['nullable', 'boolean'],
-            'functional' => ['nullable', 'boolean'],
-        ]);
+        $data = $request->validated();
 
         // Supporto formato legacy: type=all abilita tutto, type=necessary disabilita tutto
         if (isset($data['type'])) {
