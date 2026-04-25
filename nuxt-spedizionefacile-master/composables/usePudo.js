@@ -5,7 +5,7 @@
  *   usePudoSearchApi(props, emit) → accesso API grezzo (fetch, geocoding, distanze)
  *   usePudoMap(deps, emit)        → helper mappa (selezione, dettagli, orari, stato)
  *
- * @typedef {Object} PudoFilters
+ * @typedef {object} PudoFilters
  * @property {boolean} openNow
  * @property {boolean} ritiro
  * @property {boolean} consegna
@@ -26,7 +26,7 @@ import { computed, ref, watch } from 'vue'
  *   - gestione reference point (fields | geo | manual | results)
  * ============================================================================ */
 
-/** @returns {Object} composable PUDO search API — state + azioni API grezze. */
+/** @returns {object} composable PUDO search API — state + azioni API grezze. */
 export function usePudoSearchApi(props, emit) {
 	const config = useRuntimeConfig()
 	const apiBase = config.public?.apiBase || ''
@@ -572,6 +572,9 @@ export function usePudoMap(deps, emit) {
 	const startNowTimer = () => { nowTimer = window.setInterval(() => { nowTick.value = Date.now() }, 60000) }
 	const stopNowTimer = () => { if (nowTimer) { window.clearInterval(nowTimer); nowTimer = null } }
 
+	// Safety net: se il caller scorda stopNowTimer, evitiamo il leak su unmount/HMR.
+	onScopeDispose(stopNowTimer)
+
 	const selectPudo = (pudo) => {
 		if (selectedPudoKey.value === pudo.ui_key) { selectedPudoKey.value = null; emit('deselect'); return }
 		selectedPudoKey.value = pudo.ui_key || null
@@ -599,7 +602,7 @@ export function usePudoMap(deps, emit) {
 		if (!rawHours) return []
 		if (Array.isArray(rawHours)) return rawHours.map((i) => String(i || '').trim()).filter(Boolean)
 		if (typeof rawHours === 'object') return Object.entries(rawHours).map(([k, v]) => `${k}: ${v}`).filter(Boolean)
-		return String(rawHours).split(/\n|\||;/g).map((i) => i.trim()).filter(Boolean)
+		return String(rawHours).split(/[\n|;]/).map((i) => i.trim()).filter(Boolean)
 	}
 
 	const dayTokenMap = {
@@ -784,7 +787,7 @@ function buildPageApi() {
 			return true
 		}
 		// Indirizzo con civico o parola chiave via/viale/corso/piazza
-		if (/\d/.test(q) || /^(via|viale|corso|piazza|piazzale|largo|vicolo|strada)\b/i.test(q)) {
+		if (/\d/.test(q) || /^(?:via|viale|corso|piazza|piazzale|largo|vicolo|strada)\b/i.test(q)) {
 			api.searchAddress.value = q
 			// Estrai eventuale CAP a 5 cifre embedded
 			if (onlyDigits.length >= 5) api.searchZip.value = onlyDigits.slice(0, 5)
@@ -839,7 +842,7 @@ function buildPageApi() {
 		}
 		if (filters.value.sabato) {
 			const hours = String(p.opening_hours || '').toLowerCase()
-			if (!/(sab|sabato|sat)/.test(hours)) return false
+			if (!/sab|sat/.test(hours)) return false
 		}
 		// ritiro/consegna: pass-through (la BRT li supporta in genere entrambi)
 		return true

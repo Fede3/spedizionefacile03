@@ -268,25 +268,16 @@ function scrollToTop() {
 
 						<!-- CTA gestione preferenze nella sezione "gestione" -->
 						<div v-if="s.id === 'gestione'" class="lp-section__cta">
-							<button
-								type="button"
-								class="btn btn-primary"
-								@click="openCookieBanner"
-							>
+							<SfButton @click="openCookieBanner">
 								Gestisci preferenze cookie
-							</button>
+							</SfButton>
 						</div>
 					</article>
 
 					<div class="lp-backtop">
-						<button
-							type="button"
-							class="btn btn-secondary"
-							@click="scrollToTop"
-							aria-label="Torna all\'inizio della pagina"
-						>
+						<SfButton variant="secondary" aria-label="Torna all'inizio della pagina" @click="scrollToTop">
 							Torna in alto
-						</button>
+						</SfButton>
 					</div>
 				</main>
 			</div>

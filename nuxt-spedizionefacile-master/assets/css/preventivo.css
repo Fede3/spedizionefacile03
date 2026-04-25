@@ -118,12 +118,6 @@
 	border-color: rgba(9, 88, 102, 0.25);
 }
 
-.preventivo-steps-strip {
-	margin: 0;
-	padding: 0;
-	background: transparent;
-}
-
 .preventivo-layout {
 	display: grid;
 	gap: 28px;
@@ -154,14 +148,6 @@
 	}
 }
 
-.preventivo-section__lead {
-	margin: 4px 0 0;
-	font-size: 0.875rem;
-	line-height: 1.45;
-	font-weight: 500;
-	color: var(--color-brand-text-secondary);
-	text-align: center;
-}
 
 /* ── Route composer ─────────────────────────────────────────── */
 
@@ -965,28 +951,18 @@
 }
 
 /* ── Transition overrides (instant, no flicker) ─────────────── */
+/* Cleanup 2026-04-25: rimossi selettori .package-selector-* e .add-package-btn-fade-*
+   (transition Vue mai usate). Mantenuti solo .dimensions-section-* (transition viva). */
 
-.package-selector-enter-active,
-.package-selector-leave-active,
 .dimensions-section-enter-active,
-.dimensions-section-leave-active,
-.add-package-btn-fade-enter-active,
-.add-package-btn-fade-leave-active {
+.dimensions-section-leave-active {
 	transition: none;
 }
 
-.package-selector-enter-from,
-.package-selector-enter-to,
-.package-selector-leave-from,
-.package-selector-leave-to,
 .dimensions-section-enter-from,
 .dimensions-section-enter-to,
 .dimensions-section-leave-from,
-.dimensions-section-leave-to,
-.add-package-btn-fade-enter-from,
-.add-package-btn-fade-enter-to,
-.add-package-btn-fade-leave-from,
-.add-package-btn-fade-leave-to {
+.dimensions-section-leave-to {
 	opacity: 1;
 }
 

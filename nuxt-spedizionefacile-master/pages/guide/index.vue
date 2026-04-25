@@ -120,7 +120,10 @@ onMounted(async () => {
 		const res = await sanctum('/api/public/guides');
 		const data = res?.data || res;
 		if (Array.isArray(data) && data.length > 0) guides.value = data;
-	} catch {}
+	} catch (e) {
+		// Guide opzionali: se l'endpoint fallisce restano i fallback statici. Log solo dev.
+		if (import.meta.dev) console.warn('[guide] fetch /api/public/guides fallita', e);
+	}
 });
 
 const allCategories = computed(() => {

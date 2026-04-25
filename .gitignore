@@ -169,3 +169,11 @@ UsersFederAppData*
 !docs/**/support_bundle_*.zip.allowed
 _data/
 laravel-spedizionefacile-main/storage/logs/*.log
+
+# Archivi locali (cleanup features storiche - mantenute solo in git history)
+_archive/
+nuxt-spedizionefacile-master/_archive/
+laravel-spedizionefacile-main/_archive/
+
+# Docs storici (analisi, log AI/team, checkpoints, percorsi didattici legacy)
+docs/archive/

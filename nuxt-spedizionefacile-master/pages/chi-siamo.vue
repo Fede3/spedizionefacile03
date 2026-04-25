@@ -302,8 +302,8 @@ const team = [
 					</p>
 				</div>
 				<div class="about-cta__actions">
-					<NuxtLink to="/contatti" class="btn btn-cta btn-lg">Lavora con noi</NuxtLink>
-					<NuxtLink to="/preventivo" class="btn btn-secondary btn-lg">Calcola un preventivo</NuxtLink>
+					<SfButton to="/contatti" size="lg">Lavora con noi</SfButton>
+					<SfButton to="/preventivo" variant="secondary" size="lg">Calcola un preventivo</SfButton>
 				</div>
 			</div>
 		</section>

@@ -48,7 +48,10 @@ class ShipmentDocumentDispatcher
 
         if (! empty($order->user->email)) {
             try {
-                Mail::to($order->user->email)->send(new ShipmentDocumentsMail($order));
+                // Async via queue: il webhook BRT non aspetta più l'invio mail
+                // (decine di secondi se SMTP lento). In dev con QUEUE_CONNECTION=sync
+                // si comporta come prima.
+                Mail::to($order->user->email)->queue(new ShipmentDocumentsMail($order));
                 $customerSentAt = now();
             } catch (\Throwable $e) {
                 $errors[] = 'Invio cliente fallito: '.$e->getMessage();
@@ -66,7 +69,8 @@ class ShipmentDocumentDispatcher
         }
         if (! empty($adminEmail)) {
             try {
-                Mail::to($adminEmail)->send(new ShipmentDocumentsMail($order));
+                // Async via queue (vedi sopra).
+                Mail::to($adminEmail)->queue(new ShipmentDocumentsMail($order));
                 $adminSentAt = now();
             } catch (\Throwable $e) {
                 $errors[] = 'Invio admin fallito: '.$e->getMessage();

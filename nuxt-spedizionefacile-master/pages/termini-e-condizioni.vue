@@ -199,14 +199,9 @@ function scrollToTop() {
 					</article>
 
 					<div class="lp-backtop">
-						<button
-							type="button"
-							class="btn btn-secondary"
-							@click="scrollToTop"
-							aria-label="Torna all\'inizio della pagina"
-						>
+						<SfButton variant="secondary" aria-label="Torna all'inizio della pagina" @click="scrollToTop">
 							Torna in alto
-						</button>
+						</SfButton>
 					</div>
 				</main>
 			</div>

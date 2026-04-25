@@ -60,6 +60,8 @@ export const useAdminOrdini = () => {
 		clearTimeout(ordersSearchTimeout);
 		ordersSearchTimeout = setTimeout(() => { ordersPage.value = 1; fetchOrders(); }, 400);
 	};
+	// Cleanup: evita fetchOrders() su scope smontata (navigazione via durante debounce 400ms).
+	onScopeDispose(() => { if (ordersSearchTimeout) clearTimeout(ordersSearchTimeout); });
 
 	const validTransitions = {
 		'pending': ['processing', 'cancelled'],
@@ -296,6 +298,7 @@ export const useAdminSpedizioni = () => {
 			fetchShipments();
 		}, 400);
 	};
+	onScopeDispose(() => { if (shipmentsSearchTimeout) clearTimeout(shipmentsSearchTimeout); });
 
 	const setActiveFilter = async (key) => {
 		activeFilter.value = key;

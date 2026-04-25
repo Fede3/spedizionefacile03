@@ -87,14 +87,23 @@ const filteredAddresses = computed(() => {
 const reachedLimit = computed(() => stats.value.total >= stats.value.max);
 
 // ─────────── Flash ───────────
+// Timer tracker centralizzato: previene accumulo + leak su navigazione mid-flash.
+let flashSuccessTimer = null;
+let flashErrorTimer = null;
 const showFlashSuccess = (msg) => {
 	flashSuccess.value = msg;
-	setTimeout(() => { flashSuccess.value = null; }, 4000);
+	if (flashSuccessTimer) clearTimeout(flashSuccessTimer);
+	flashSuccessTimer = setTimeout(() => { flashSuccess.value = null; flashSuccessTimer = null; }, 4000);
 };
 const showFlashError = (msg) => {
 	flashError.value = msg;
-	setTimeout(() => { flashError.value = null; }, 5000);
+	if (flashErrorTimer) clearTimeout(flashErrorTimer);
+	flashErrorTimer = setTimeout(() => { flashError.value = null; flashErrorTimer = null; }, 5000);
 };
+onBeforeUnmount(() => {
+	if (flashSuccessTimer) clearTimeout(flashSuccessTimer);
+	if (flashErrorTimer) clearTimeout(flashErrorTimer);
+});
 
 // ─────────── Apertura modale ───────────
 const openCreate = () => {
@@ -261,7 +270,7 @@ const tabs = computed(() => [
 			<!-- ERROR LOAD -->
 			<div v-else-if="loadError" class="sf-addr-empty sf-addr-empty--error">
 				<p>{{ loadError }}</p>
-				<button type="button" class="btn btn-cta" @click="fetchAddresses">Riprova</button>
+				<SfButton @click="fetchAddresses">Riprova</SfButton>
 			</div>
 
 			<!-- EMPTY -->
@@ -276,12 +285,12 @@ const tabs = computed(() => [
 				</div>
 				<h2 class="sf-addr-empty__title">La tua rubrica è ancora vuota</h2>
 				<p class="sf-addr-empty__text">Salva i tuoi indirizzi più usati per spedire più velocemente. Puoi aggiungerne fino a {{ stats.max }}.</p>
-				<button type="button" class="btn btn-cta" @click="openCreate">
+				<SfButton @click="openCreate">
 					<svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
 						<path d="M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z" />
 					</svg>
 					Aggiungi il primo indirizzo
-				</button>
+				</SfButton>
 			</div>
 
 			<!-- EMPTY filtri -->

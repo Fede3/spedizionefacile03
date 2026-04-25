@@ -208,9 +208,9 @@ const quickActions = [
 					</div>
 					<h2 class="contact-form-centered__title">Messaggio inviato</h2>
 					<p class="contact-form-centered__success-text">Ti risponderemo in giornata. Nel frattempo puoi tracciare una spedizione o calcolare un preventivo.</p>
-					<button type="button" class="btn btn-cta" @click="submitSuccess = false">
+					<SfButton @click="submitSuccess = false">
 						Invia un altro messaggio
-					</button>
+					</SfButton>
 				</div>
 
 				<div v-else class="contact-form-centered__wrap">

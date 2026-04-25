@@ -177,6 +177,14 @@ export function useAddressAutocomplete({
   // --- DEBOUNCE/SEQUENCING STATE ---
   const citySearchTimeout = { origin: null, dest: null };
   const capSearchTimeout = { origin: null, dest: null };
+
+  // Cleanup debounce: evita fetch su scope smontata se utente naviga via durante typing.
+  onScopeDispose(() => {
+    if (citySearchTimeout.origin) clearTimeout(citySearchTimeout.origin);
+    if (citySearchTimeout.dest) clearTimeout(citySearchTimeout.dest);
+    if (capSearchTimeout.origin) clearTimeout(capSearchTimeout.origin);
+    if (capSearchTimeout.dest) clearTimeout(capSearchTimeout.dest);
+  });
   const citySearchSeq = reactive({ origin: 0, dest: 0 });
   const capSearchSeq = reactive({ origin: 0, dest: 0 });
   const locationLinkHints = reactive({ origin: [], dest: [] });
@@ -185,7 +193,7 @@ export function useAddressAutocomplete({
   const normalizeLocationText = (value = "") =>
     String(value)
       .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[\u0300-\u036F]/g, "")
       .toLowerCase()
       .trim();
 
@@ -680,7 +688,7 @@ export function useAddressPudo({
   const normalizeLocationText = (value = "") =>
     String(value)
       .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[\u0300-\u036F]/g, "")
       .toLowerCase()
       .trim();
 

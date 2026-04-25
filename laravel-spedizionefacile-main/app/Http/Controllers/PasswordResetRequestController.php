@@ -115,8 +115,10 @@ class PasswordResetRequestController extends Controller
         // Creiamo un codice segreto (token) per questo reset
         $token = $this->createToken($email);
 
-        // Inviamo l'email con il token all'utente
-        Mail::to($email)->send(new ResetPasswordEmail($token, $email));
+        // Inviamo l'email con il token all'utente.
+        // Async via queue: la response 200 all'utente parte subito (no enumerazione
+        // basata su latenza SMTP) e l'invio viene gestito dal worker.
+        Mail::to($email)->queue(new ResetPasswordEmail($token, $email));
     }
 
     // Crea un nuovo token segreto per il reset della password

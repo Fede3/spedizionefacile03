@@ -223,7 +223,9 @@ export default function useOrdersList() {
 	const savedShipmentsList = ref([]);
 
 	const loadSavedShipments = async () => {
-		try { savedShipmentsList.value = (await sanctum("/api/saved-shipments"))?.data || []; } catch {}
+		// Endpoint opzionale: se fallisce non vogliamo bloccare l'elenco ordini.
+		try { savedShipmentsList.value = (await sanctum("/api/saved-shipments"))?.data || []; }
+		catch (e) { if (import.meta.dev) console.warn('[useOrdersList] saved-shipments non disponibile', e); }
 	};
 	onMounted(() => {
 		void refresh();

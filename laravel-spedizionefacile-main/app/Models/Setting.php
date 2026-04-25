@@ -37,6 +37,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Crypt;
 
 class Setting extends Model
@@ -68,23 +69,33 @@ class Setting extends Model
      */
     public static function get(string $key, $default = null): ?string
     {
-        $setting = static::where('key', $key)->first();
+        // Cache 1h: Setting::get() era chiamato N volte per request (Stripe, BRT, mail config).
+        // Cache key namespace "setting:" per evitare collisioni con altre chiavi.
+        $cacheKey = 'setting:'.$key;
 
-        if (! $setting) {
+        $cached = Cache::remember($cacheKey, 3600, function () use ($key) {
+            $setting = static::where('key', $key)->first();
+            if (! $setting) {
+                return null;
+            }
+            return ['value' => $setting->value, 'encrypted' => in_array($key, static::$encryptedKeys, true)];
+        });
+
+        if ($cached === null) {
             return $default;
         }
 
-        if (in_array($key, static::$encryptedKeys, true) && $setting->value) {
+        if ($cached['encrypted'] && $cached['value']) {
             try {
-                return Crypt::decryptString($setting->value);
+                return Crypt::decryptString($cached['value']);
             } catch (\Illuminate\Contracts\Encryption\DecryptException $e) {
                 // Fallback: valore ancora in plaintext (pre-cifratura).
                 // Verra' cifrato al prossimo set().
-                return $setting->value;
+                return $cached['value'];
             }
         }
 
-        return $setting->value;
+        return $cached['value'];
     }
 
     /**
@@ -103,5 +114,8 @@ class Setting extends Model
         }
 
         static::updateOrCreate(['key' => $key], ['value' => $storeValue]);
+
+        // Invalida cache: il prossimo Setting::get() rileggerà dal DB.
+        Cache::forget('setting:'.$key);
     }
 }

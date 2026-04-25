@@ -39,28 +39,18 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StoreContactMessageRequest;
+use App\Http\Requests\StoreSupportTicketRequest;
 use App\Models\ContactMessage;
 use Illuminate\Http\Request;
 
 class ContactController extends Controller
 {
-    // Salva un nuovo messaggio di contatto nel database
-    // I dati vengono prima controllati (validati) per sicurezza
-    public function store(Request $request)
+    // Salva un nuovo messaggio di contatto nel database.
+    // Validazione delegata a StoreContactMessageRequest (testabile + riusabile).
+    public function store(StoreContactMessageRequest $request)
     {
-        // Verifichiamo che i dati inviati siano validi
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'surname' => 'required|string|max:255',
-            'email' => 'required|email|max:255',
-            'subject' => 'nullable|string|max:255',
-            'telephone_number' => 'nullable|string|max:255',
-            'address' => 'nullable|string|max:255',
-            'message' => 'required|string|max:5000',
-        ]);
-
-        // Salviamo il messaggio nel database
-        $contactMessage = ContactMessage::create($validated);
+        $contactMessage = ContactMessage::create($request->validated());
 
         return response()->json([
             'message' => 'Messaggio inviato con successo.',
@@ -68,14 +58,11 @@ class ContactController extends Controller
         ], 201);
     }
 
-    // Salva una richiesta di supporto aperta da un utente autenticato nell'area account
-    public function storeSupportTicket(Request $request)
+    // Salva una richiesta di supporto aperta da un utente autenticato nell'area account.
+    // Validazione delegata a StoreSupportTicketRequest (testabile + auth check uniforme).
+    public function storeSupportTicket(StoreSupportTicketRequest $request)
     {
-        $validated = $request->validate([
-            'subject' => 'required|string|max:255',
-            'message' => 'required|string|max:5000',
-        ]);
-
+        $validated = $request->validated();
         $user = $request->user();
 
         $contactMessage = ContactMessage::create([

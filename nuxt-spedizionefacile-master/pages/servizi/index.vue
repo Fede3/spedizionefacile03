@@ -113,7 +113,10 @@ onMounted(async () => {
 		const res = await sanctum('/api/public/services');
 		const data = res?.data || res;
 		if (Array.isArray(data) && data.length > 0) services.value = data;
-	} catch {}
+	} catch (e) {
+		// Servizi opzionali: se l'endpoint fallisce restano i fallback statici. Log solo dev.
+		if (import.meta.dev) console.warn('[servizi] fetch /api/public/services fallita', e);
+	}
 });
 
 const getServiceMeta = (service) => serviceMeta[service.slug] || defaultMeta;

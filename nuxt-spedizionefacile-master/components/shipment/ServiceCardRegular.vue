@@ -114,13 +114,13 @@ const handleSurfaceKeydown = (event) => {
 			</div>
 
 			<div class="service-surface__aside">
-				<button
-					type="button"
-					class="btn btn-secondary btn-compact"
+				<SfButton
+					variant="secondary"
+					size="sm"
 					:disabled="isInteractionLocked"
 					@click.stop="emit('primary-action', service)">
 					{{ collapsedPrimaryLabel }}
-				</button>
+				</SfButton>
 			</div>
 		</div>
 

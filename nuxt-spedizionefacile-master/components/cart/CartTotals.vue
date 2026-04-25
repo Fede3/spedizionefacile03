@@ -88,11 +88,7 @@ const emit = defineEmits(['toggle-coupon', 'apply-coupon', 'remove-coupon', 'upd
             class="cart-totals-card__coupon-input"
             aria-label="Codice sconto"
           />
-          <button
-            type="button"
-            @click="emit('apply-coupon')"
-            class="btn btn-cta btn-compact cart-totals-card__coupon-apply"
-          >Applica</button>
+          <SfButton size="sm" class="cart-totals-card__coupon-apply" @click="emit('apply-coupon')">Applica</SfButton>
         </template>
       </div>
       <!-- Coupon feedback message -->

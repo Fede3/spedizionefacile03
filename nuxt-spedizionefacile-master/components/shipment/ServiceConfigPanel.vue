@@ -161,21 +161,18 @@ const showContrassegnoRimborso = computed(() => props.serviceData?.contrassegno?
 		</div>
 
 		<div class="service-panel__footer">
-			<button
+			<SfButton
 				v-if="service.isSelected"
-				type="button"
-				class="btn btn-secondary"
+				variant="secondary"
 				:disabled="removeLocked"
 				@click.stop.prevent="emit('remove', service)">
 				Rimuovi
-			</button>
-			<button
-				type="button"
-				class="btn btn-primary"
+			</SfButton>
+			<SfButton
 				:disabled="activateLocked"
 				@click.stop.prevent="emit('activate', service)">
 				Salva e attiva
-			</button>
+			</SfButton>
 		</div>
 	</div>
 </template>

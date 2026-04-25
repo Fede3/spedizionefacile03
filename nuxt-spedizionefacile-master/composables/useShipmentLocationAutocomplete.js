@@ -7,7 +7,7 @@
  *
  * Usato da: useShipmentStepValidation (facade)
  *
- * @returns {Object} composable autocomplete location step spedizione
+ * @returns {object} composable autocomplete location step spedizione
  */
 export const useShipmentLocationAutocomplete = ({
 	deliveryMode,
@@ -39,11 +39,19 @@ export const useShipmentLocationAutocomplete = ({
 	const capSearchTimeout = { origin: null, dest: null }
 	const citySearchSeq = reactive({ origin: 0, dest: 0 })
 	const capSearchSeq = reactive({ origin: 0, dest: 0 })
+
+	// Cleanup debounce: evita fetch su scope smontata se utente naviga via durante typing.
+	onScopeDispose(() => {
+		if (citySearchTimeout.origin) clearTimeout(citySearchTimeout.origin)
+		if (citySearchTimeout.dest) clearTimeout(citySearchTimeout.dest)
+		if (capSearchTimeout.origin) clearTimeout(capSearchTimeout.origin)
+		if (capSearchTimeout.dest) clearTimeout(capSearchTimeout.dest)
+	})
 	const locationLinkHints = reactive({ origin: [], dest: [] })
 	const sanitizeFullNameValue = (value) => (
 		sv.autoCapitalize(
 			String(value || '')
-				.replace(/[0-9]/g, '')
+				.replace(/\d/g, '')
 				.replace(/[^A-Za-zÀ-ÖØ-öø-ÿ'’`.\-\s]/g, ' ')
 				.replace(/\s+/g, ' ')
 				.trim(),

@@ -1972,10 +1972,17 @@ input[type="number"] {
 	}
 
 	.input-preventivo-rapido {
-		@apply bg-white text-[var(--color-brand-text)] text-[1rem] tablet:text-[0.9375rem] font-medium w-full h-[50px] leading-[50px] px-[16px] placeholder:text-[var(--color-text-ghost)] block mt-[8px] tracking-[-0.01em];
+		@apply bg-white text-[var(--color-brand-text)] text-[1rem] font-medium w-full h-[50px] leading-[50px] px-[16px] placeholder:text-[var(--color-text-ghost)] block mt-[8px] tracking-[-0.01em];
 		border-radius: var(--sf-radius-control);
 		border: 1.5px solid var(--color-border-strong);
 		transition: border-color var(--sf-motion-base) var(--sf-ease-soft), box-shadow var(--sf-motion-base) var(--sf-ease-soft), background-color var(--sf-motion-base) var(--sf-ease-soft);
+	}
+	/* Tablet override estratto: in Tailwind v4 il variant tablet: dentro @apply
+	   genera "Cannot apply utility class" a runtime. Media query nativa risolve. */
+	@media (min-width: 45rem) {
+		.input-preventivo-rapido {
+			font-size: 0.9375rem;
+		}
 	}
 	.input-preventivo-rapido:focus {
 		background-color: #fff;

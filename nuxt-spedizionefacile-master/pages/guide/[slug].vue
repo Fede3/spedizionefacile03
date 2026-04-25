@@ -263,11 +263,9 @@ useHead(() => {
 					</div>
 
 					<div class="flex flex-wrap gap-[10px]">
-						<NuxtLink
-							to="/preventivo"
-							class="btn btn-cta">
+						<SfButton to="/preventivo">
 							Calcola il preventivo
-						</NuxtLink>
+						</SfButton>
 						<NuxtLink
 							to="/guide"
 							class="inline-flex h-[40px] items-center justify-center rounded-full border border-white/35 px-[18px] text-[0.875rem] font-[700] text-white transition-colors duration-200 hover:bg-white/10 hover:border-white/60">

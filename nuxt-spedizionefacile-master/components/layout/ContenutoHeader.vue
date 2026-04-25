@@ -116,15 +116,15 @@ function scrollToPreventivo() {
 					</div>
 
 					<!-- CTA -->
-					<a
-						href="#preventivo"
-						class="btn btn-cta btn-lg w-full sm:w-auto"
-						@click.prevent="scrollToPreventivo">
+					<SfButton
+						size="lg"
+						class="w-full sm:w-auto"
+						@click="scrollToPreventivo">
 						Calcola preventivo
 						<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="shrink-0">
 							<path d="M12 5v14M19 12l-7 7-7-7"/>
 						</svg>
-					</a>
+					</SfButton>
 				</div>
 
 				<!-- Trust signals row -->

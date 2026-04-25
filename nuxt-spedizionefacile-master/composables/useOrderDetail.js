@@ -151,16 +151,22 @@ export default function useOrderDetail(orderId) {
 	const regenerating = ref(false);
 	const regenerateError = ref(null);
 	const regenerateSuccess = ref(false);
+	/* Errore download visibile all'utente: prima un catch silenzioso lasciava il click "morto". */
+	const downloadError = ref(null);
 
 	const downloadLabel = async () => {
 		if (!orderData.value?.id) return;
+		downloadError.value = null;
 		try {
 			const blob = await sanctum(`/api/brt/label/${orderData.value.id}`, {
 				method: 'GET',
 				responseType: 'blob',
 			});
 			downloadFile(blob, `etichetta-brt-${orderData.value.id}.pdf`);
-		} catch {}
+		} catch (e) {
+			const data = e?.response?._data || e?.data;
+			downloadError.value = data?.error || data?.message || 'Download etichetta non riuscito. Riprova.';
+		}
 	};
 
 	const regenerateLabel = async () => {
@@ -348,6 +354,7 @@ export default function useOrderDetail(orderId) {
 		regenerating,
 		regenerateError,
 		regenerateSuccess,
+		downloadError,
 		downloadLabel,
 		regenerateLabel,
 		// Cancellation

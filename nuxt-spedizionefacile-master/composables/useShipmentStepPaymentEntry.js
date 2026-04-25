@@ -18,6 +18,27 @@ const resolvePaymentEntryErrorMessage = (err, fallback) => {
 	return typeof raw === 'string' && raw.trim() ? raw : fallback;
 };
 
+// Differenzia messaggi per stato HTTP così l'utente sa cosa fare invece di vedere un generico "Riprova".
+const buildPaymentEntryUserError = (err, fallback) => {
+	const status = Number(err?.response?.status || err?.status || err?.statusCode || 0);
+	if (status === 422) {
+		const errors = err?.data?.errors || err?.response?._data?.errors;
+		if (errors && typeof errors === 'object') {
+			const firstField = Object.values(errors)[0];
+			const firstMsg = Array.isArray(firstField) ? firstField[0] : firstField;
+			if (firstMsg) return { kind: 'validation', message: String(firstMsg) };
+		}
+		return { kind: 'validation', message: resolvePaymentEntryErrorMessage(err, 'Dati non validi. Controlla i campi e riprova.') };
+	}
+	if (status === 401 || status === 419) {
+		return { kind: 'auth', message: 'Sessione scaduta. Effettua di nuovo l\'accesso per continuare.' };
+	}
+	if (status >= 500) {
+		return { kind: 'server', message: 'Errore temporaneo del server. Riprova tra qualche secondo.' };
+	}
+	return { kind: 'generic', message: resolvePaymentEntryErrorMessage(err, fallback) };
+};
+
 export function useShipmentStepPaymentEntry(deps) {
 	const route = useRoute();
 	const router = useRouter();
@@ -27,7 +48,6 @@ export function useShipmentStepPaymentEntry(deps) {
 		sanctumClient,
 		uiFeedback,
 		funnelAnalytics,
-		ecommerceAnalytics,
 		isAuthenticated,
 		showAddressFields,
 		submitError,
@@ -182,11 +202,17 @@ export function useShipmentStepPaymentEntry(deps) {
 			}
 			const amountCents = Number(result?.amount_cents || result?.data?.amount_cents || 0);
 			funnelAnalytics.trackPaymentInit(amountCents);
-			try { ecommerceAnalytics?.beginCheckout?.({ totalCents: amountCents }); } catch { /* no-op */ }
 			uiFeedback.success('Ordine creato', 'Apro il pagamento nello stesso ventaglio...', { timeout: 1800 });
 			await openPaymentAccordion(orderId || null);
 		} catch (error) {
-			submitError.value = resolvePaymentEntryErrorMessage(error, 'Errore durante l\'apertura del pagamento. Riprova.');
+			const userError = buildPaymentEntryUserError(error, 'Errore durante l\'apertura del pagamento. Riprova.');
+			submitError.value = userError.message;
+			// 401/419: sessione persa lato server, riapri overlay login per continuare senza perdere il contesto.
+			if (userError.kind === 'auth') {
+				try { await openPaymentStage(); } catch { /* noop */ }
+				await syncPaymentRouteContext(null);
+				openShipmentAuthModal('login');
+			}
 		} finally {
 			isProceedingToPayment.value = false;
 		}

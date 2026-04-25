@@ -18,40 +18,6 @@
 	background: var(--color-brand-page-gradient, linear-gradient(180deg, #f8f9fb 0%, #eef0f3 100%));
 	border-bottom: 1px solid var(--color-brand-border, #e9ebec);
 }
-.about-hero__inner {
-	max-width: 920px;
-}
-.about-hero__accent {
-	display: block;
-	width: 56px;
-	height: 4px;
-	background: var(--color-brand-accent, #e44203);
-	border-radius: 2px;
-	margin-bottom: 24px;
-}
-.about-hero__eyebrow {
-	font-size: 13px;
-	font-weight: 600;
-	letter-spacing: 0.12em;
-	text-transform: uppercase;
-	color: var(--color-brand-primary, #095866);
-	margin: 0 0 16px;
-}
-.about-hero__title {
-	font-size: clamp(36px, 5vw, 56px);
-	font-weight: 800;
-	line-height: 1.1;
-	letter-spacing: -0.02em;
-	color: var(--color-brand-text, #1d2738);
-	margin: 0 0 24px;
-}
-.about-hero__lead {
-	font-size: clamp(17px, 1.6vw, 20px);
-	line-height: 1.6;
-	color: var(--color-brand-text-secondary, #5a6474);
-	max-width: 720px;
-	margin: 0 0 32px;
-}
 .about-hero__pills {
 	display: flex;
 	flex-wrap: wrap;

@@ -142,15 +142,10 @@ const {
           />
 
           <!-- CTA: Checkout -->
-          <button
-            type="button"
-            @click="openCheckoutWithAuthGate"
-            aria-label="Procedi al checkout"
-            class="btn btn-cta btn-lg w-full"
-          >
+          <SfButton size="lg" block aria-label="Procedi al checkout" @click="openCheckoutWithAuthGate">
             Procedi al checkout
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
-          </button>
+          </SfButton>
 
           <!-- Info sicurezza sotto il CTA -->
           <p class="flex items-center justify-center gap-[6px] text-[12px] text-[var(--color-brand-text-secondary)]" style="font-weight: 500">
@@ -160,19 +155,14 @@ const {
 
           <!-- Bottom actions -->
           <div class="flex gap-[8px]">
-            <NuxtLink to="/la-tua-spedizione/2?step=colli" class="btn btn-secondary btn-compact flex-1" aria-label="Continua a configurare colli">
+            <SfButton variant="secondary" size="sm" to="/la-tua-spedizione/2?step=colli" class="flex-1" aria-label="Continua a configurare colli">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
               Aggiungi spedizione
-            </NuxtLink>
-            <button
-              type="button"
-              @click="showEmptyConfirm = true"
-              class="btn btn-ghost btn-compact"
-              aria-label="Svuota carrello"
-            >
+            </SfButton>
+            <SfButton variant="ghost" size="sm" aria-label="Svuota carrello" @click="showEmptyConfirm = true">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
               Svuota
-            </button>
+            </SfButton>
           </div>
 
           <!-- Salva carrello (solo guest): invito a creare account per persistere -->

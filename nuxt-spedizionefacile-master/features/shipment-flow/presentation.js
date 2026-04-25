@@ -18,7 +18,7 @@ export const formatTrattaLabel = (originCity, destinationCity) =>
 
 export const formatPackageAccordionSummary = (packageLabel, dimensionsLabel) => {
 	const parts = [packageLabel, dimensionsLabel].filter(Boolean);
-	return parts.length ? parts.join(" \u00b7 ") : "Tipo, quantit\u00e0 e misure";
+	return parts.length ? parts.join(" \u00B7 ") : "Tipo, quantit\u00E0 e misure";
 };
 
 export const collectSelectedServiceItems = ({
@@ -68,7 +68,7 @@ export const formatServicesAccordionSummary = ({
 	if (pickupDate) parts.push(`Ritiro ${pickupDate}`);
 	if (selectedServiceSummary) parts.push(selectedServiceSummary);
 	if (!parts.length && resolvedContentDescription) parts.push("Contenuto inserito");
-	return parts.length ? parts.slice(0, 2).join(" \u00b7 ") : "Ritiro, extra e contenuto";
+	return parts.length ? parts.slice(0, 2).join(" \u00B7 ") : "Ritiro, extra e contenuto";
 };
 
 export const formatAddressAccordionSummary = ({
@@ -78,12 +78,12 @@ export const formatAddressAccordionSummary = ({
 	pudoName,
 }) => {
 	if (deliveryMode === "pudo") {
-		if (summaryOriginCity && pudoName) return `${summaryOriginCity} \u00b7 ${pudoName}`;
-		if (summaryOriginCity) return `${summaryOriginCity} \u00b7 Punto BRT`;
+		if (summaryOriginCity && pudoName) return `${summaryOriginCity} \u00B7 ${pudoName}`;
+		if (summaryOriginCity) return `${summaryOriginCity} \u00B7 Punto BRT`;
 		return "Mittente e punto BRT";
 	}
 	if (summaryOriginCity && summaryDestinationCity) return `${summaryOriginCity} -> ${summaryDestinationCity}`;
-	if (summaryOriginCity) return `${summaryOriginCity} \u00b7 Destinazione da completare`;
+	if (summaryOriginCity) return `${summaryOriginCity} \u00B7 Destinazione da completare`;
 	return "Mittente e destinatario";
 };
 
@@ -96,8 +96,8 @@ export const formatPaymentSummaryServicesLabel = (selectedServiceItems) => {
 	const list = selectedServiceItems?.length ? selectedServiceItems : [{ label: "Nessun extra selezionato", price: "" }];
 	const labels = list.map((item) => String(item?.label || "").trim()).filter(Boolean);
 	if (!labels.length) return "Nessun extra selezionato";
-	if (labels.length <= 2) return labels.join(" \u00b7 ");
-	return `${labels.slice(0, 2).join(" \u00b7 ")} +${labels.length - 2}`;
+	if (labels.length <= 2) return labels.join(" \u00B7 ");
+	return `${labels.slice(0, 2).join(" \u00B7 ")} +${labels.length - 2}`;
 };
 
 export const formatPaymentMethodLabel = (paymentMethod) =>
@@ -105,12 +105,3 @@ export const formatPaymentMethodLabel = (paymentMethod) =>
 
 export const formatPaymentDeliveryLabel = (deliveryMode) =>
 	deliveryMode === "pudo" ? "Consegna in Punto BRT" : "Consegna a domicilio";
-
-export const buildPaymentInfoAnalyticsPayload = (paymentMethod, summaryTotalPrice) => {
-	if (!paymentMethod) return null;
-	const euros = Number(String(summaryTotalPrice ?? "0").replace(/[^\d.,-]/g, "").replace(",", ".")) || 0;
-	return {
-		paymentType: String(paymentMethod),
-		totalCents: Math.round(euros * 100),
-	};
-};

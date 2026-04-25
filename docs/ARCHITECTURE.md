@@ -8,19 +8,19 @@ Panoramica ad alto livello del sistema: tech stack, flussi dati, autenticazione,
 
 **Frontend** (`nuxt-spedizionefacile-master/`)
 - Nuxt 4.1 (Vue 3.5) SPA + SSR ibrido
-- Pinia 3 (store `userStore` singleton)
+- Pinia 3 — store unico attivo `shipmentFlowStore` (state funnel preventivo). Altri composables di stato (`useAuth`, `useCart`, `usePayment`, `useFunnel`, ecc.) sono in fase di migrazione progressiva a store Pinia dedicati.
 - Nuxt UI 4 (componenti), Tailwind CSS 4, CSS route-specific in `assets/css/`
 - `nuxt-auth-sanctum` per cookie-based auth
-- Sentry browser SDK, Plausible analytics, web-vitals
+- Plugin `20.auth-401-handler.client.js` riapre l'overlay login automaticamente su 401/419
 
 **Backend** (`laravel-spedizionefacile-main/`)
 - Laravel 11 (PHP 8.3+)
-- Sanctum (SPA cookie-auth + API tokens)
+- Sanctum 4 (SPA cookie-auth + API tokens)
 - PostgreSQL 15 (Eloquent ORM)
 - Redis 7 (cache, queue, session)
-- Stripe SDK PHP 14, moneyphp/money per prezzi
+- Stripe SDK PHP 18, moneyphp/money per prezzi
 - Queue worker standard (`php artisan queue:work --queue=default,emails,webhooks`). Horizon **NON e' installato** (composer.json non lo include): per dashboard monitoring code in produzione si valuta `composer require laravel/horizon` come item di backlog post-MVP.
-- Sentry PHP SDK
+- Sentry PHP SDK supportato via `class_exists` guard in `AppServiceProvider` (DSN da configurare prima del go-live)
 
 **Infra**
 - Caddy (reverse proxy + HTTPS automatico)
@@ -62,10 +62,10 @@ Panoramica ad alto livello del sistema: tech stack, flussi dati, autenticazione,
 3. Form login `POST /api/custom-login` con email/password e header `X-XSRF-TOKEN`.
 4. Laravel valida, avvia sessione, setta cookie `spediamofacile_session` (SameSite=Lax, HttpOnly, Secure in prod).
 5. Richieste successive protette (`middleware('auth:sanctum')`) leggono il cookie -> `$request->user()`.
-6. `userStore.hydrate()` chiama `GET /api/user` al boot -> popola stato globale Pinia.
+6. Il composable `useSanctumAuth().user` chiama `GET /api/user` al boot -> popola stato auth. Il cookie UI `sf_auth_ui` (SSR-friendly snapshot) è gestito da `composables/useAuth.js` + `plugins/00.auth-ui-seed.js`.
 7. Logout: `POST /api/logout` -> revoca token, invalida sessione, pulisce cookie UI.
 
-OAuth social (Google/Facebook/Apple): redirect -> provider callback -> `GET /api/auth/{provider}/callback` -> crea/aggiorna user -> stessa sessione Sanctum.
+OAuth social (solo Google attivo, Facebook/Apple archiviati 2026-04): redirect -> provider callback -> `GET /api/auth/google/callback` -> crea/aggiorna user -> stessa sessione Sanctum.
 
 ## Flusso preventivo -> pagamento -> BRT
 

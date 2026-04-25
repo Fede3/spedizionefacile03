@@ -405,10 +405,10 @@ function onFieldBlur(pack, packIndex, field) {
 										</li>
 									</ul>
 									<div v-if="!isEuropeMonocollo" class="add-package-button-wrapper">
-										<button type="button" @click="addPackageInline()" class="btn btn-secondary btn-compact add-package-btn">
+										<SfButton variant="secondary" size="sm" class="add-package-btn" @click="addPackageInline()">
 											<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
 											Aggiungi collo
-										</button>
+										</SfButton>
 									</div>
 									<div v-if="messageError?.packages && shipmentFlowStore.packages.length > 0" class="packages-feedback-slot">
 										<p class="preventivo-inline-error" role="alert">{{ messageError.packages[0] }}</p>

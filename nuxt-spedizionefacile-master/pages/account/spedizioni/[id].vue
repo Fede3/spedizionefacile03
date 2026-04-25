@@ -341,22 +341,13 @@ const orderMetaPillStyle = (kind, status = '') => {
 
 				<!-- Back -->
 				<div class="mt-[24px]">
-					<NuxtLink to="/account/spedizioni" class="btn btn-secondary btn-sm inline-flex items-center gap-[6px]">
-						<svg aria-hidden="true"
-							xmlns="http://www.w3.org/2000/svg"
-							width="18"
-							height="18"
-							viewBox="0 0 24 24"
-							fill="none"
-							stroke="currentColor"
-							stroke-width="2"
-							stroke-linecap="round"
-							stroke-linejoin="round">
+					<SfButton variant="secondary" size="sm" to="/account/spedizioni">
+						<svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
 							<line x1="19" y1="12" x2="5" y2="12" />
 							<polyline points="12 19 5 12 12 5" />
 						</svg>
 						Torna alle spedizioni
-					</NuxtLink>
+					</SfButton>
 				</div>
 			</template>
 

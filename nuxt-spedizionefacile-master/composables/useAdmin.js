@@ -12,11 +12,25 @@ export const useAdmin = () => {
 	const actionLoading = ref(null);
 	/* Messaggio di feedback dopo un'azione admin (successo o errore) */
 	const actionMessage = ref(null);
+	/* Tracciamo il timer per evitare accumulo: click rapidi senza track lasciavano N timer pendenti */
+	let clearMessageTimer = null;
 
 	/* Nasconde il messaggio dopo 5 secondi */
 	const clearMessage = () => {
-		setTimeout(() => { actionMessage.value = null; }, 5000);
+		if (clearMessageTimer) clearTimeout(clearMessageTimer);
+		clearMessageTimer = setTimeout(() => {
+			actionMessage.value = null;
+			clearMessageTimer = null;
+		}, 5000);
 	};
+
+	/* Cleanup su unmount/HMR per evitare leak: timer pendente referenziava actionMessage di scope morta */
+	onScopeDispose(() => {
+		if (clearMessageTimer) {
+			clearTimeout(clearMessageTimer);
+			clearMessageTimer = null;
+		}
+	});
 
 	/* Mostra un messaggio verde di successo */
 	const showSuccess = (text) => {
@@ -40,14 +54,16 @@ export const useAdmin = () => {
 			return formatEuro(Number(val.amount) / 100);
 		}
 		// Se e' una stringa formattata (es. "12,50 EUR" o "12,50")
+		// Nota: \s in regex JavaScript include \u00A0 (non-breaking space) per spec ECMAScript,
+		// quindi non serve aggiungerlo esplicitamente nella character class.
 		if (typeof val === 'string') {
-			const cleaned = val.replace(/[€\s\u00A0EUR]/gi, '').replace(/\./g, '').replace(',', '.');
+			const cleaned = val.replace(/[€\sEUR]/gi, '').replace(/\./g, '').replace(',', '.');
 			const num = Number(cleaned);
-			return isNaN(num) ? '0,00' : formatEuro(num);
+			return Number.isNaN(num) ? '0,00' : formatEuro(num);
 		}
 		// Numero semplice: in euro (wallet, commissioni, prelievi, referral, COD)
 		const num = Number(val);
-		return isNaN(num) ? '0,00' : formatEuro(num);
+		return Number.isNaN(num) ? '0,00' : formatEuro(num);
 	};
 
 	/* Formatta centesimi (da Transaction::sum('total') che restituisce centesimi dal DB).

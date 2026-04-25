@@ -2,10 +2,26 @@
 
 namespace App\Providers;
 
+use App\Models\BillingAddress;
+use App\Models\Coupon;
+use App\Models\InvoiceArchive;
 use App\Models\Order;
+use App\Models\ProRequest;
+use App\Models\Service;
+use App\Models\User;
 use App\Models\UserAddress;
+use App\Models\WalletMovement;
+use App\Models\WithdrawalRequest;
+use App\Policies\BillingAddressPolicy;
+use App\Policies\CouponPolicy;
+use App\Policies\InvoiceArchivePolicy;
 use App\Policies\OrderPolicy;
+use App\Policies\ProRequestPolicy;
+use App\Policies\ServicePolicy;
 use App\Policies\UserAddressPolicy;
+use App\Policies\UserPolicy;
+use App\Policies\WalletMovementPolicy;
+use App\Policies\WithdrawalRequestPolicy;
 use App\Services\CartService;
 // -- ARCHIVIATO 2026-04-20 -- use App\Services\Sdi\FattureInCloudProvider;
 // -- ARCHIVIATO 2026-04-20 -- use App\Services\Sdi\NullSdiProvider;
@@ -81,6 +97,14 @@ class AppServiceProvider extends ServiceProvider
         // che Gate::authorize/authorizeResource risolvano correttamente i modelli.
         Gate::policy(Order::class, OrderPolicy::class);
         Gate::policy(UserAddress::class, UserAddressPolicy::class);
+        Gate::policy(BillingAddress::class, BillingAddressPolicy::class);
+        Gate::policy(WalletMovement::class, WalletMovementPolicy::class);
+        Gate::policy(WithdrawalRequest::class, WithdrawalRequestPolicy::class);
+        Gate::policy(Coupon::class, CouponPolicy::class);
+        Gate::policy(Service::class, ServicePolicy::class);
+        Gate::policy(ProRequest::class, ProRequestPolicy::class);
+        Gate::policy(InvoiceArchive::class, InvoiceArchivePolicy::class);
+        Gate::policy(User::class, UserPolicy::class);
 
         // SENTRY-OBS-03: invio a Sentry dei job falliti.
         // I job (es. email di conferma ordine, sync BRT) girano in background:

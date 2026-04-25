@@ -68,6 +68,13 @@ const cardHolderName = ref('');
 const showFormPayments = ref(false);
 const textMessage = ref('');
 const textMessageType = ref('info');
+// Auto-dismiss centralizzato: previene accumulo timer + leak su navigazione mid-message.
+let textMessageTimer = null;
+const dismissTextMessageAfter = (ms = 3000) => {
+	if (textMessageTimer) clearTimeout(textMessageTimer);
+	textMessageTimer = setTimeout(() => { textMessage.value = ''; textMessageTimer = null; }, ms);
+};
+onBeforeUnmount(() => { if (textMessageTimer) clearTimeout(textMessageTimer); });
 const deleteConfirmId = ref(null);
 
 const { data: payments, status, refresh } = useSanctumFetch('/api/stripe/payment-methods', { lazy: true });
@@ -158,9 +165,7 @@ const handleAddCard = async () => {
 		textMessage.value = 'Carta aggiunta con successo!';
 		textMessageType.value = 'success';
 		showFormPayments.value = false;
-		setTimeout(() => {
-			textMessage.value = '';
-		}, 3000);
+		dismissTextMessageAfter(3000);
 	} catch (err) {
 		errorMessage.value = 'Errore imprevisto. Riprova.';
 	}
@@ -175,9 +180,7 @@ const setDefault = async (pmId) => {
 			textMessage.value = 'Carta predefinita aggiornata.';
 			textMessageType.value = 'success';
 			await refresh();
-			setTimeout(() => {
-				textMessage.value = '';
-			}, 3000);
+			dismissTextMessageAfter(3000);
 		}
 	} catch (e) {
 		textMessage.value = 'Errore durante la modifica.';
@@ -195,9 +198,7 @@ const deleteCard = async (pmId) => {
 			deleteConfirmId.value = null;
 			textMessage.value = 'Carta eliminata.';
 			textMessageType.value = 'success';
-			setTimeout(() => {
-				textMessage.value = '';
-			}, 3000);
+			dismissTextMessageAfter(3000);
 		}
 	} catch (error) {
 		textMessage.value = "Errore durante l'eliminazione.";

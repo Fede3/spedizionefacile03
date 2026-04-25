@@ -87,6 +87,14 @@ watch(
 
 const sanctum = useSanctumClient();
 
+// Auto-dismiss centralizzato per il flash di successo: previene leak su navigazione mid-message.
+let messageSuccessTimer = null;
+const dismissMessageSuccessAfter = (ms = 4000) => {
+	if (messageSuccessTimer) clearTimeout(messageSuccessTimer);
+	messageSuccessTimer = setTimeout(() => { messageSuccess.value = null; messageSuccessTimer = null; }, ms);
+};
+onBeforeUnmount(() => { if (messageSuccessTimer) clearTimeout(messageSuccessTimer); });
+
 const updateInfo = async () => {
 	messageError.value = null;
 	messageSuccess.value = null;
@@ -95,9 +103,7 @@ const updateInfo = async () => {
 		await sanctum(`/api/users/${user.value.id}`, { method: 'PATCH', body: userInfo.value });
 		await refreshIdentity();
 		messageSuccess.value = 'Dati aggiornati con successo!';
-		setTimeout(() => {
-			messageSuccess.value = null;
-		}, 4000);
+		dismissMessageSuccessAfter(4000);
 	} catch (error) {
 		if (error?.statusCode === 401) {
 			clearSnapshot();

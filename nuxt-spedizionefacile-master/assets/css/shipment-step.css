@@ -116,50 +116,10 @@
 
 /* Fix 9 — Spring-back sobrio su click: previene rimbalzo elastico */
 .service-card,
-.pickup-date-card,
-.colli-card {
+.pickup-date-card {
 	transition: transform var(--sf-t1) var(--sf-ease);
 }
 /* .btn-compact definito in assets/css/components/sf-segment.css (globale) */
-
-.step-secondary-action {
-	transition: background-color var(--sf-t1) var(--sf-ease), border-color var(--sf-t1) var(--sf-ease), color var(--sf-t1) var(--sf-ease), box-shadow var(--sf-t1) var(--sf-ease);
-	cursor: pointer;
-}
-
-.step-secondary-action:hover,
-.step-secondary-action:focus-visible {
-	border-color: var(--color-brand-primary);
-	color: var(--color-brand-primary);
-}
-.step-secondary-action:focus-visible {
-	outline: 3px solid rgba(9, 88, 102, 0.45);
-	outline-offset: 2px;
-}
-
-.shipment-step-readiness-note {
-	display: inline-flex;
-	align-items: center;
-	gap: 8px;
-	font-size: 0.875rem;
-	line-height: 1.45;
-	font-weight: 600;
-}
-
-.shipment-step-readiness-note::before {
-	content: '';
-	width: 7px;
-	height: 7px;
-	flex: 0 0 7px;
-	border-radius: 999px;
-	background: currentColor;
-	opacity: 0.38;
-}
-
-.shipment-flow-accordion {
-	display: grid;
-	gap: 8px;
-}
 
 /* ==========================================================
    Shared stage card (used to realign ventaglio with quote DS)
@@ -292,98 +252,6 @@
 	display: grid;
 	grid-template-columns: minmax(0, 1fr);
 	gap: 10px;
-}
-
-/* ==========================================================
-   Flow section shell / header
-   ========================================================== */
-.flow-section-shell {
-	width: 100%;
-	min-width: 0;
-	border-radius: 0;
-}
-
-.flow-section-header {
-	display: grid;
-	justify-items: center;
-	gap: 4px;
-	padding: 0;
-	border: none;
-	background: transparent;
-	box-shadow: none;
-}
-
-.flow-section-header__copy {
-	display: grid;
-	gap: 4px;
-	min-width: 0;
-}
-
-.flow-section-header__eyebrow {
-	color: var(--color-brand-primary);
-}
-
-.flow-section-header__title {
-	margin: 0 0 8px;
-	display: block;
-	font-family: var(--font-montserrat, 'Montserrat', sans-serif);
-	color: var(--color-brand-primary);
-	font-size: 15px;
-	line-height: 1.2;
-	letter-spacing: -0.2px;
-	font-weight: 700;
-	text-align: center;
-}
-
-/* DS: feedback containers hidden when empty */
-.flow-section-header__title:empty {
-	display: none;
-}
-
-.flow-section-header__title::before {
-	display: none;
-}
-
-.flow-section-header__chip {
-	flex: 0 0 auto;
-	min-width: 88px;
-	height: 34px;
-	padding: 0 16px;
-	font-size: 0.875rem;
-}
-
-.flow-section-header__meta {
-	flex: 0 0 auto;
-	font-size: 0.75rem;
-	font-weight: 700;
-	letter-spacing: 0.05em;
-	text-transform: uppercase;
-	color: var(--color-brand-text-muted);
-}
-
-.flow-section-header--services {
-	margin-top: 0;
-	margin-bottom: 8px;
-}
-
-.services-stage-block {
-	display: flex;
-	flex-direction: column;
-	gap: 8px;
-	width: 100%;
-	min-width: 0;
-}
-
-.services-stage-block__details {
-	display: flex;
-	flex-direction: column;
-	gap: 16px;
-	width: 100%;
-	min-width: 0;
-}
-
-.services-stage-block--collapsed {
-	gap: 0;
 }
 
 /* ==========================================================
@@ -1116,44 +984,6 @@
 	box-shadow: none;
 }
 
-/* Accordion animation */
-.services-stage-shell {
-	position: relative;
-	width: 100%;
-	max-width: 100%;
-	min-width: 0;
-	padding: 0;
-	border-radius: 0;
-	background: transparent;
-	box-shadow: none;
-	overflow: hidden;
-}
-
-.services-stage-shell::before {
-	display: none;
-}
-
-.services-stage-shell .ux-alert {
-	border-radius: 16px;
-	border-color: var(--color-border-teal-faint);
-	background: var(--color-brand-card);
-	box-shadow: none;
-}
-
-.flow-section-header--services {
-	padding: 0 0 8px;
-}
-
-.services-stage-shell__content {
-	display: grid;
-	gap: 24px;
-	padding: 16px 0 0;
-	width: 100%;
-	max-width: 100%;
-	min-width: 0;
-	overflow: hidden;
-}
-
 .service-group-shell {
 	display: grid;
 	gap: 8px;
@@ -1551,34 +1381,6 @@
 		padding-bottom: 108px;
 	}
 
-	.shipment-flow-stage__toggle {
-		padding: 16px;
-		gap: 8px;
-		align-items: flex-start;
-	}
-
-	.shipment-flow-stage__body {
-		padding: 16px;
-	}
-
-	.shipment-flow-stage__footer {
-		align-items: stretch;
-	}
-
-	.shipment-flow-stage__advance {
-		width: 100%;
-		justify-content: center;
-	}
-
-	.shipment-flow-accordion__summary {
-		flex-direction: column;
-		align-items: stretch;
-	}
-
-	.shipment-flow-accordion__action {
-		width: 100%;
-	}
-
 	.pickup-date-card {
 		padding-inline: 0;
 	}
@@ -1794,13 +1596,6 @@
    Helpers: service option structure (unique to this section)
    ========================================================== */
 
-.services-stage-shell__content {
-	gap: 24px; /* DS: section spacing on 8px grid */
-	max-width: 100%;
-	min-width: 0;
-	overflow: hidden;
-}
-
 .service-group-shell__eyebrow {
 	font-size: 0.75rem; /* 12px DS */
 	font-weight: 700;
@@ -1950,12 +1745,6 @@
 /* ==========================================================
    Unique helpers (support panels, address cards)
    ========================================================== */
-
-.flow-section-header--services .flow-section-header__text,
-.address-stage-shell__header .flow-section-header__text {
-	max-width: 40rem;
-	color: var(--color-brand-text-secondary);
-}
 
 .service-group-shell__header {
 	display: none;
@@ -2238,12 +2027,9 @@
    Accessibility: reduced motion
    ========================================================== */
 @media (prefers-reduced-motion: reduce) {
-	.shipment-flow-stage,
 	.service-option,
 	.service-option__status-dot,
 	.service-support-panel__checkbox,
-	.shipment-flow-stage__badge,
-	.shipment-flow-stage__indicator,
 	.service-card-tile__icon-shell,
 	.service-inline-field__input {
 		transition-duration: 0.01ms !important;
@@ -2312,24 +2098,6 @@
 		min-height: 44px;
 	}
 
-	/* Service cards: full width stacking */
-	.services-stage-block {
-		min-width: 0;
-		max-width: 100%;
-	}
-
-	/* Mobile actionbar: proper touch targets */
-	.shipment-mobile-actionbar__primary,
-	.shipment-mobile-actionbar__secondary {
-		min-height: 44px;
-		font-size: 0.875rem;
-	}
-
-	/* Flow stage body: proper padding */
-	.shipment-flow-stage .shipment-flow-stage__body {
-		padding: 16px 16px 20px;
-	}
-
 	/* Ensure address entry cards have adequate padding */
 	.address-entry-card {
 		padding: 16px;
@@ -2345,85 +2113,8 @@
 	}
 }
 
-/* Extra-small (375px): tighter adjustments */
-@media (max-width: 23.4375rem) {
-	.shipment-flow-stage .shipment-flow-stage__toggle {
-		padding: 16px;
-		gap: 8px;
-	}
-
-	.shipment-flow-stage__badge {
-		width: 30px;
-		height: 30px;
-		flex: 0 0 30px;
-		font-size: 0.875rem;
-	}
-
-	.shipment-flow-stage .shipment-flow-stage__title {
-		font-size: 15px;
-	}
-
-	.shipment-flow-stage .shipment-flow-stage__body {
-		padding: 16px;
-		gap: 16px;
-	}
-
-	.pickup-date-option {
-		flex: 0 0 62px;
-		width: 62px;
-		min-height: 76px;
-	}
-
-	.pickup-date-option__day {
-		font-size: 1rem;
-	}
-
-	.shipment-mobile-actionbar__shell {
-		padding: 8px;
-	}
-
-	.shipment-mobile-actionbar__actions {
-		grid-template-columns: minmax(0, 90px) minmax(0, 1fr);
-		gap: 8px;
-	}
-}
-
-/* ==========================================================
-   2026-04-16 Preventivo ventaglio vs quote rapido alignment
-   ========================================================== */
-
-.shipment-flow-stage {
-	border-radius: 16px;
-	background: var(--color-brand-card);
-	box-shadow: 0 0 0 1px var(--color-border);
-}
-
-.shipment-flow-stage--open {
-	box-shadow:
-		0 0 0 1.5px rgba(9, 88, 102, 0.18),
-		0 12px 28px rgba(20, 37, 48, 0.05);
-}
-
-.shipment-flow-stage .shipment-flow-stage__toggle {
-	min-height: 72px;
-	padding: 16px 20px 12px;
-}
-
-.shipment-flow-stage--open .shipment-flow-stage__toggle,
-.shipment-flow-stage .shipment-flow-stage__toggle:hover,
-.shipment-flow-stage .shipment-flow-stage__toggle:focus-visible {
-	background: transparent;
-}
-
-.shipment-flow-stage .shipment-flow-stage__body {
-	gap: 16px;
-	padding: 8px 20px 20px;
-	background: transparent;
-}
-
 .packages-stage-shell,
-.address-stage-shell__content,
-.services-stage-shell__content {
+.address-stage-shell__content {
 	gap: 16px;
 }
 
@@ -3072,14 +2763,6 @@
 }
 
 @media (max-width: 639px) {
-	.shipment-flow-stage .shipment-flow-stage__toggle {
-		padding: 16px 16px 10px;
-	}
-
-	.shipment-flow-stage .shipment-flow-stage__body {
-		padding: 8px 16px 20px;
-	}
-
 	.package-field-card__feedback,
 	.packages-stage-feedback,
 	.address-form-field__feedback {
@@ -3509,20 +3192,6 @@
 
 /* ============================================================ */
 @media (max-width: 768px) {
-  /* Toggle accordion stage indicator — riga di clic principale stage */
-  .shipment-flow-stage .shipment-flow-stage__indicator,
-  .shipment-flow-stage__indicator {
-    width: 44px;
-    height: 44px;
-    flex: 0 0 44px;
-  }
-
-  /* Chip header sezione (es. "Modifica") */
-  .flow-section-header__chip {
-    min-height: 44px;
-    height: auto;
-  }
-
   /* Address delivery choice card */
   .address-delivery-choice {
     min-height: 56px;

@@ -42,6 +42,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\CalculateCouponRequest;
 use App\Models\Coupon;
 use Illuminate\Http\Request;
 use App\Services\DiscountPreviewService;
@@ -55,13 +56,11 @@ class CouponController extends Controller
      * - per la parte economica post-ordine vedere ReferralRewardController.
      */
 
-    // Calcola lo sconto da applicare in base al codice inserito dall'utente
-    public function calculateCoupon(Request $request, DiscountPreviewService $discountPreviewService)
+    // Calcola lo sconto da applicare in base al codice inserito dall'utente.
+    // Validazione delegata a CalculateCouponRequest (testabile + riusabile).
+    public function calculateCoupon(CalculateCouponRequest $request, DiscountPreviewService $discountPreviewService)
     {
-        $data = $request->validate([
-            'coupon' => 'required|string|max:50',
-            'total' => 'required|numeric|min:0',
-        ]);
+        $data = $request->validated();
 
         $couponCode = strtoupper(trim($data['coupon']));   // Il codice inserito dall'utente
         $total = $data['total'];          // Il totale del carrello in euro

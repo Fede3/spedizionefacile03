@@ -209,14 +209,12 @@ const summaryItems = computed(() => {
 									</div>
 									<!-- Bottoni inline -->
 									<div class="shrink-0 flex flex-wrap gap-[6px]">
-										<NuxtLink
-											:to="`/account/amministrazione/ordini?search=${order.id}`"
-											class="btn btn-secondary btn-compact text-[0.75rem]">
+										<SfButton variant="secondary" size="sm" class="text-[0.75rem]" :to="`/account/amministrazione/ordini?search=${order.id}`">
 											Apri
-										</NuxtLink>
-										<button type="button" class="btn btn-cta btn-compact text-[0.75rem]" @click="openConfirm(order)">
+										</SfButton>
+										<SfButton size="sm" class="text-[0.75rem]" @click="openConfirm(order)">
 											Conferma
-										</button>
+										</SfButton>
 									</div>
 								</div>
 							</div>

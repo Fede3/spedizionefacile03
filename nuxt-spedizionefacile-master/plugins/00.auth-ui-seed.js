@@ -13,6 +13,8 @@ export default defineNuxtPlugin(() => {
 	const authCookie = useCookie(AUTH_UI_COOKIE, {
 		sameSite: 'lax',
 		path: '/',
+		// HTTPS-only in produzione (in dev http://localhost va in chiaro per non rompere il login).
+		secure: !import.meta.dev,
 	})
 	const initialSnapshot = useState('auth-ui-initial-snapshot', createEmptySnapshot)
 	const storedSnapshot = useState('auth-ui-stored-snapshot', createEmptySnapshot)

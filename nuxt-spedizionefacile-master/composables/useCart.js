@@ -156,7 +156,7 @@ export function useCart() {
 	/**
 	 * Formatter "0,00 â‚¬". Accetta euro-float (es. 20 â†’ "20,00 â‚¬").
 	 * Per centesimi usa `formatPrice` da utils/price (quello importato qui formatta cents).
-	 * Questa versione lavora in EURO per i totali giÃ  decimali del cart.
+	 * Questa versione lavora in EURO per i totali già decimali del cart.
 	 * @param {number|string} num
 	 * @returns {string}
 	 */
@@ -299,7 +299,7 @@ export function useCart() {
 	const walletBalance = ref(0)
 	const walletLoadedRef = ref(false)
 
-	/** Carica saldo wallet (idempotente: non re-fetcha se giÃ  caricato). */
+	/** Carica saldo wallet (idempotente: non re-fetcha se già caricato). */
 	async function loadWalletBalance() {
 		if (walletLoadedRef.value) return
 		try {
@@ -625,7 +625,7 @@ export function useCarrello() {
 			clearNuxtData('cart')
 			await refreshNuxtData('cart')
 		} catch (e) {
-			uiFeedback.error('Errore nell\'aggiornamento della quantit\u00e0', 'Riprova.')
+			uiFeedback.error('Errore nell\'aggiornamento della quantit\u00E0', 'Riprova.')
 		} finally {
 			quantityUpdating.value = null
 		}
@@ -658,6 +658,9 @@ export function useCarrello() {
 			try {
 				expandedGroups.value = JSON.parse(saved)
 			} catch (e) {
+				// sessionStorage corrotto: ripartiamo dal default. Log solo in dev per diagnosi.
+				if (import.meta.dev) console.warn('[useCart] cart_expanded_groups JSON malformato, reset al default', e)
+				sessionStorage.removeItem('cart_expanded_groups')
 			}
 		}
 	})

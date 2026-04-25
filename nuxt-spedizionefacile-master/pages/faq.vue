@@ -191,12 +191,12 @@ useHead({
 							chiave o resetta i filtri.
 						</p>
 						<div class="faq-empty__actions">
-							<button type="button" class="btn btn-secondary" @click="resetFilters">
+							<SfButton variant="secondary" @click="resetFilters">
 								Resetta filtri
-							</button>
-							<NuxtLink to="/contatti" class="btn btn-primary">
+							</SfButton>
+							<SfButton to="/contatti">
 								Contatta un operatore
-							</NuxtLink>
+							</SfButton>
 						</div>
 					</div>
 
@@ -263,12 +263,12 @@ useHead({
 							</p>
 						</div>
 						<div class="faq-bottom-cta__actions">
-							<NuxtLink to="/contatti" class="btn btn-primary">
+							<SfButton to="/contatti">
 								Vai ai contatti
-							</NuxtLink>
-							<NuxtLink to="/account/supporto" class="btn btn-secondary">
+							</SfButton>
+							<SfButton variant="secondary" to="/account/supporto">
 								Apri ticket supporto
-							</NuxtLink>
+							</SfButton>
 						</div>
 					</aside>
 				</div>
@@ -320,16 +320,12 @@ useHead({
 						</dl>
 
 						<div class="faq-side__actions">
-							<NuxtLink to="/contatti" class="btn btn-primary faq-side__cta">
+							<SfButton to="/contatti" class="faq-side__cta">
 								Contattaci ora
-							</NuxtLink>
-							<button
-								type="button"
-								class="btn btn-secondary faq-side__cta"
-								@click="focusSearch"
-							>
+							</SfButton>
+							<SfButton variant="secondary" class="faq-side__cta" @click="focusSearch">
 								Cerca un'altra domanda
-							</button>
+							</SfButton>
 						</div>
 					</div>
 				</aside>

@@ -347,8 +347,8 @@ onBeforeUnmount(() => observer?.disconnect());
 					<div class="faq__aside-meta" data-reveal>
 						<p class="faq__aside-hint">Non trovi la risposta? Scrivici o guarda le guide complete.</p>
 						<div class="faq__aside-actions">
-							<NuxtLink to="/faq" class="btn btn-cta">Vai a tutte le FAQ</NuxtLink>
-							<NuxtLink to="/contatti" class="btn btn-secondary">Contatta l'assistenza</NuxtLink>
+							<SfButton to="/faq">Vai a tutte le FAQ</SfButton>
+							<SfButton variant="secondary" to="/contatti">Contatta l'assistenza</SfButton>
 						</div>
 					</div>
 				</aside>
@@ -402,9 +402,9 @@ onBeforeUnmount(() => observer?.disconnect());
 						Tariffe trasparenti, nessun costo nascosto, nessuna registrazione obbligatoria.
 					</p>
 				</div>
-				<NuxtLink to="/preventivo" class="btn btn-cta btn-lg">
+				<SfButton to="/preventivo" size="lg">
 					Inizia ora
-				</NuxtLink>
+				</SfButton>
 			</div>
 		</section>
 	</div>

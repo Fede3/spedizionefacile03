@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\UpdateUserRequest;
 use App\Models\Order;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -21,63 +22,14 @@ use Symfony\Component\HttpFoundation\Response;
  */
 class UserController extends Controller
 {
-    // Questa funzione permette all'utente di aggiornare i propri dati personali
-    // Controlla che l'utente stia modificando SOLO il proprio profilo (non quello di un altro)
-    public function update(Request $request, User $user)
+    // Permette all'utente di aggiornare i propri dati personali (partial update).
+    // Auth + validation centralizzate in UpdateUserRequest (UserPolicy.update).
+    // Il cast 'hashed' su User::password si occupa di hashare automaticamente — niente bcrypt esplicito.
+    public function update(UpdateUserRequest $request, User $user)
     {
-
-        // Controllo di sicurezza: solo l'utente stesso puo' modificare i propri dati
-        if ($user->id !== auth()->user()->id) {
-            abort(403, 'Non sei autorizzato a modificare questo utente.');
-        }
-
-        // Prepariamo le regole di validazione solo per i campi che l'utente vuole modificare
-        // Questo approccio permette di aggiornare anche solo un campo alla volta
-        $rules = [];
-
-        // Se l'utente vuole cambiare il nome, verifichiamo che sia una stringa valida
-        if ($request->name) {
-            $rules['name'] = 'nullable|string';
-        }
-
-        // Se l'utente vuole cambiare l'email, verifichiamo che sia un'email valida
-        // e che non sia gia' usata da un altro utente (unique)
-        if ($request->email) {
-            $rules['email'] = 'required|string|email|unique:users,email,' . $user->id;
-        }
-
-        // Se l'utente vuole cambiare il numero di telefono (e il nuovo e' diverso dal vecchio)
-        if ($request->telephone_number && $request->telephone_number !== $user->telephone_number) {
-            $rules['telephone_number'] = 'nullable|string';
-        }
-
-        // Se l'utente vuole cambiare la password, deve essere lunga almeno 8 caratteri
-        // e deve essere confermata (cioe' scritta due volte uguale)
-        if ($request->password) {
-            $rules['password'] = [
-                'string',
-                'min:8',
-                'confirmed',
-                'regex:/[a-z]/',
-                'regex:/[A-Z]/',
-                'regex:/[0-9]/',
-                'regex:/[^a-zA-Z0-9\s]/',
-            ];
-        }
-
-        // Controlliamo che i dati inviati rispettino le regole che abbiamo definito sopra
-        $validated = $request->validate($rules);
-
-        // Se la password e' stata cambiata, la criptiamo prima di salvarla
-        // (le password non si salvano MAI in chiaro nel database per motivi di sicurezza)
-        // Il cast 'hashed' sul modello User si occupa automaticamente di hashare la password.
-        // Non serve bcrypt() esplicito (causerebbe double-hashing).
-
-        // Aggiorniamo i dati dell'utente nel database
-        $user->update($validated);
+        $user->update($request->validated());
 
         return CustomResponse::setSuccessResponse('Modifica effettuata con successo', Response::HTTP_OK);
-
     }
 
     /**

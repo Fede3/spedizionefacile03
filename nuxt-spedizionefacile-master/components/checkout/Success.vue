@@ -84,13 +84,13 @@ const isBankTransfer = computed(() => props.paymentMethod === 'bonifico')
 
     <!-- CTA: traccia + torna account -->
     <div class="checkout-success__actions">
-      <NuxtLink to="/account/spedizioni" class="btn btn-cta btn-lg">
+      <SfButton to="/account/spedizioni" size="lg">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
         Traccia spedizione
-      </NuxtLink>
-      <NuxtLink to="/account" class="btn btn-secondary btn-lg">
+      </SfButton>
+      <SfButton to="/account" variant="secondary" size="lg">
         Vai al tuo account
-      </NuxtLink>
+      </SfButton>
     </div>
   </div>
 </template>

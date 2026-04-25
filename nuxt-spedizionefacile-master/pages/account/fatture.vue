@@ -171,20 +171,20 @@ const empty = computed(() => !loading.value && !loadError.value && orders.value.
 									<span class="sf-fatture__status" :data-tone="sdiBadge(o).tone">{{ sdiBadge(o).label }}</span>
 								</td>
 								<td class="sf-fatture__actions-cell">
-									<!-- P14: btn-compact rounded teal coerente con sito pubblico (era sf-btn quadrato grigio) -->
-									<button
-										type="button"
-										class="btn btn-secondary btn-compact inline-flex items-center gap-[6px] text-[0.75rem]"
-										:disabled="downloadingId === o.id"
+									<SfButton
+										variant="secondary"
+										size="sm"
+										class="text-[0.75rem]"
+										:loading="downloadingId === o.id"
 										@click="downloadInvoice(o)">
-										<svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+										<svg v-if="downloadingId !== o.id" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
 											<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
 											<polyline points="7 10 12 15 17 10" />
 											<line x1="12" y1="15" x2="12" y2="3" />
 										</svg>
 										<span v-if="downloadingId === o.id">Invio...</span>
 										<span v-else>Scarica PDF</span>
-									</button>
+									</SfButton>
 								</td>
 							</tr>
 						</tbody>

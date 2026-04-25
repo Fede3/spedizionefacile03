@@ -11,7 +11,6 @@ import { computed, onMounted, watch } from 'vue';
 import { buildSecondStepPayload } from '~/composables/useShipmentStepDraftPayload';
 import { useShipmentStepPaymentEntry } from '~/composables/useShipmentStepPaymentEntry';
 import {
-	buildPaymentInfoAnalyticsPayload,
 	collectSelectedServiceItems,
 	formatAddressAccordionSummary,
 	formatColloLabel,
@@ -44,7 +43,6 @@ export function useShipmentStepPageOrchestration(deps) {
 	const sanctumClient = useSanctumClient();
 	const uiFeedback = useUiFeedback();
 	const funnelAnalytics = useFunnelAnalytics();
-	const ecommerceAnalytics = useEcommerceAnalytics();
 
 	const {
 		isAuthenticated,
@@ -234,7 +232,6 @@ export function useShipmentStepPageOrchestration(deps) {
 			sanctumClient,
 			uiFeedback,
 			funnelAnalytics,
-			ecommerceAnalytics,
 			isAuthenticated,
 			showAddressFields,
 			submitError,
@@ -272,19 +269,6 @@ export function useShipmentStepPageOrchestration(deps) {
 			if (auth && activeAccordionStep.value === 'payment') await ensurePaymentStageReady();
 		},
 		{ flush: 'post', immediate: true },
-	);
-
-	watch(
-		() => paymentMethod.value,
-		(method, previousMethod) => {
-			if (!method || method === previousMethod) return;
-			try {
-				const payload = buildPaymentInfoAnalyticsPayload(method, summaryTotalPrice?.value);
-				if (payload) ecommerceAnalytics?.addPaymentInfo?.(payload);
-			} catch {
-				// no-op
-			}
-		},
 	);
 
 	onMounted(async () => {

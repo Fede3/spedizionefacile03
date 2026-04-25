@@ -741,7 +741,6 @@ const uiFeedback = useUiFeedback();
 // Funnel analytics: 5 step principali del preventivo.
 const funnelAnalytics = useFunnelAnalytics();
 // GA4 e-commerce: add_to_cart / begin_checkout / add_payment_info
-const ecommerceAnalytics = useEcommerceAnalytics();
 debugCheckpoint('analytics ready');
 const { continueToCart: persistAndContinueToCart, isSubmitting } = useShipmentStepSubmit({
 	destinationAddress,
@@ -823,31 +822,6 @@ const continueToCart = async () => {
 	}
 	if (smsEmailNotification.value) selectedServiceNames.push('sms_email');
 	funnelAnalytics.trackServicesSelected(selectedServiceNames);
-
-	// GA4 e-commerce: add_to_cart con i servizi selezionati al submit step 2.
-	try {
-		const ecomServices = [];
-		if (featuredService.value?.isSelected) {
-			ecomServices.push({
-				id: featuredService.value.id,
-				name: String(featuredService.value.name || 'featured'),
-				priceCents: Number(featuredService.value.price_cents || featuredService.value.priceCents || 0),
-			});
-		}
-		for (const s of regularServices.value || []) {
-			if (s?.isSelected) {
-				ecomServices.push({
-					id: s.id,
-					name: String(s.name || 'service'),
-					priceCents: Number(s.price_cents || s.priceCents || 0),
-				});
-			}
-		}
-		if (smsEmailNotification.value) ecomServices.push({ id: 'sms-email', name: 'SMS + Email', priceCents: 0 });
-		if (ecomServices.length) ecommerceAnalytics.addToCart({ services: ecomServices });
-	} catch {
-		// no-op: analytics non deve bloccare il flusso.
-	}
 
 	await openPaymentAccordion();
 	return true;

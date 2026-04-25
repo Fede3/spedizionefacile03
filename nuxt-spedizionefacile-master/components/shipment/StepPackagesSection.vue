@@ -173,9 +173,10 @@ const metrics = [
 		</ul>
 
 		<div class="add-package-button-wrapper">
-			<button
-				type="button"
-				class="btn btn-secondary btn-compact add-package-btn"
+			<SfButton
+				variant="secondary"
+				size="sm"
+				class="add-package-btn"
 				:disabled="isEuropeMonocollo"
 				@click="onAddPackage()">
 				<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -183,7 +184,7 @@ const metrics = [
 					<path d="M5 12h14" />
 				</svg>
 				Aggiungi collo
-			</button>
+			</SfButton>
 		</div>
 
 		<div v-if="packagesError" class="packages-stage-shell__feedback-slot">

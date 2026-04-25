@@ -34,12 +34,16 @@ export default defineEventHandler((event) => {
       "frame-src 'self' https://js.stripe.com https://hooks.stripe.com",
       "object-src 'none'",
       "base-uri 'self'",
+      "form-action 'self'", // form solo verso il proprio dominio (anti-phishing)
+      "frame-ancestors 'self'", // moderno equivalente di X-Frame-Options (browser nuovi)
+      "upgrade-insecure-requests", // forza HTTPS su risorse miste in produzione
     ].join('; ')
   )
 
   // HSTS solo su connessioni HTTPS (in produzione dietro Cloudflare/proxy)
+  // preload: requisito per essere inclusi nella HSTS preload list dei browser
   const proto = event.node.req.headers['x-forwarded-proto']
   if (proto === 'https') {
-    headers.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains')
+    headers.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload')
   }
 })
