@@ -14,8 +14,8 @@ Monorepo della piattaforma **SpediamoFacile**: intermediazione spedizioni BRT co
 
 ```
 .
-├── nuxt-spedizionefacile-master/   Frontend Nuxt 3
-├── laravel-spedizionefacile-main/  Backend Laravel 12
+├── nuxt-spedizionefacile-master/   Frontend Nuxt 4.1
+├── laravel-spedizionefacile-main/  Backend Laravel 11
 ├── docs/                           Documentazione canonica
 ├── infra/                          Configurazioni infrastruttura
 ├── scripts/                        Tooling locale

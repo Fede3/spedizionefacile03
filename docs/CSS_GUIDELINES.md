@@ -1,6 +1,6 @@
 # CSS Guidelines — Quando creare un file CSS vs Tailwind utility
 
-Repo Nuxt 3 + Tailwind CSS 4 + Nuxt UI 4. Convivono 3 strategie CSS:
+Repo Nuxt 4.1 + Tailwind CSS 4 + Nuxt UI 4. Convivono 3 strategie CSS:
 1. **Tailwind utility-first** (raccomandato per la maggior parte dei casi)
 2. **CSS custom in `assets/css/`** (per pattern ricorrenti specifici del brand)
 3. **`@apply` Tailwind in CSS custom** (ponte fra i due, da limitare)

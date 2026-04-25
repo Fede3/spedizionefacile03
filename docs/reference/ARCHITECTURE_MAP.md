@@ -1,6 +1,6 @@
 # Architecture Map — SpediamoFacile
 
-> Mappa architetturale completa del progetto SpediamoFacile (Nuxt 3 + Laravel 11).
+> Mappa architetturale completa del progetto SpediamoFacile (Nuxt 4.1 + Laravel 11).
 > Target: dev junior che vuole orientarsi in 30 minuti sul sistema end-to-end.
 > Ultima revisione: 2026-04-18.
 

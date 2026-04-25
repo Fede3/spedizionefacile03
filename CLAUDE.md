@@ -5,8 +5,8 @@
 > sessioni AI sulla repo.
 
 ## Stack
-- Frontend: `nuxt-spedizionefacile-master/` (Nuxt 3 + Vue 3 + Pinia + Tailwind + Nuxt UI)
-- Backend: `laravel-spedizionefacile-main/` (Laravel 12 + Sanctum + Stripe + BRT)
+- Frontend: `nuxt-spedizionefacile-master/` (Nuxt 4.1 + Vue 3.5 + Pinia 3 + Tailwind 4 + Nuxt UI 4)
+- Backend: `laravel-spedizionefacile-main/` (Laravel 11 + Sanctum 4 + Stripe 18 + BRT REST 3.x)
 - Docs essenziali: `docs/` (22 docs + 3 ADR + ARCHITECTURE_MAP.md per overview visiva)
 
 ## Quickstart

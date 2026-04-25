@@ -103,10 +103,10 @@ export default createConfigForNuxt({
 		'no-var': 'error',
 		'prefer-const': ['warn', { destructuring: 'all' }],
 		// Quality gate: warn su file troppo grandi (god-files anti-pattern).
-		// 500 LOC è la soglia industry per refactor in store/sub-composable.
+		// 400 LOC e' la soglia per refactor in store/sub-composable.
 		// Solo warn, non error: i file legacy (es. usePreventivo, useAdminPrezzi)
 		// vanno migrati progressivamente, non bloccati subito.
-		'max-lines': ['warn', { max: 500, skipBlankLines: true, skipComments: true }],
+		'max-lines': ['warn', { max: 400, skipBlankLines: true, skipComments: true }],
 		'max-lines-per-function': ['warn', { max: 100, skipBlankLines: true, skipComments: true, IIFEs: true }],
 	},
 });
