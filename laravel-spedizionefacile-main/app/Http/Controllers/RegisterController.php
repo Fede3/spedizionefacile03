@@ -32,15 +32,8 @@ class RegisterController extends Controller
      * Verifica il codice a 6 cifre e attiva l'account.
      * Chiamata quando l'utente inserisce il codice ricevuto via email.
      */
-    public function verifyCode(Request $request)
+    public function verifyCode(\App\Http\Requests\VerifyCodeRequest $request)
     {
-        $request->validate([
-            'email' => 'required|email',
-            'code' => 'required|string|size:6',
-            'password' => 'required',
-            'remember' => 'nullable|boolean',
-        ]);
-
         $user = User::where('email', $request->email)->first();
         $guestCart = $request->hasSession() ? $request->session()->get('cart', []) : [];
 
