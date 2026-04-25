@@ -175,32 +175,50 @@ const summaryItems = computed(() => {
 						</p>
 					</div>
 
-					<!-- P14: card bonifico compatta — da 180px a ~64px ognuna.
-					     1 riga: #ID + cliente + prezzo + causale + bottoni. -->
-					<div v-else class="divide-y divide-[rgba(9,88,102,0.08)] rounded-[12px] border border-[rgba(9,88,102,0.08)] bg-white">
+					<!-- P14: card lista coerente con pattern /account/spedizioni (sf-order-card)
+					     stesso radius/border/padding/spacing per uniformità sitewide. -->
+					<div v-else class="space-y-[10px]">
 						<article
 							v-for="order in orders"
 							:key="order.id"
-							class="flex flex-col gap-[10px] px-[14px] py-[12px] transition-colors hover:bg-[#FBFCFD] tablet:flex-row tablet:items-center tablet:gap-[16px]">
-							<div class="min-w-0 flex-1 flex flex-wrap items-center gap-x-[12px] gap-y-[4px]">
-								<span class="font-mono text-[0.8125rem] font-bold text-[var(--color-brand-text)]">#{{ order.id }}</span>
-								<span class="text-[0.875rem] text-[var(--color-brand-text)] truncate">
-									<template v-if="order.user">{{ order.user.name }} {{ order.user.surname }}</template>
-									<template v-else>—</template>
-								</span>
-								<span class="text-[0.875rem] font-bold text-[var(--color-brand-primary)]">{{ formatAmount(order.payable_total_cents ?? order.subtotal_cents ?? (order.subtotal?.amount ? Number(order.subtotal.amount) * 100 : null)) }}</span>
-								<span class="font-mono text-[0.6875rem] text-[var(--color-brand-text-muted)]">ORD-{{ order.id }}</span>
-								<span class="text-[0.6875rem] text-[var(--color-brand-text-muted)]">{{ formatDate(order.created_at) }}</span>
-							</div>
-							<div class="shrink-0 flex gap-[8px]">
-								<NuxtLink
-									:to="`/account/amministrazione/ordini?search=${order.id}`"
-									class="btn-secondary btn-compact text-[0.75rem]">
-									Apri
-								</NuxtLink>
-								<button type="button" class="btn-cta btn-compact text-[0.75rem]" @click="openConfirm(order)">
-									Conferma
-								</button>
+							class="overflow-hidden rounded-[12px] border border-[#E2E8EE] bg-white transition-colors duration-150 hover:bg-[#FBFCFD]">
+							<div class="px-[14px] py-[12px] tablet:px-[16px] tablet:py-[14px]">
+								<div class="flex flex-col gap-[10px] tablet:flex-row tablet:items-center tablet:justify-between">
+									<div class="min-w-0 flex-1">
+										<!-- Riga 1: #ID + prezzo + status -->
+										<div class="flex flex-wrap items-center gap-[8px]">
+											<span class="font-mono text-[0.875rem] font-bold text-[var(--color-brand-text)]">#{{ order.id }}</span>
+											<span class="text-[0.875rem] font-bold text-[var(--color-brand-primary)]">
+												{{ formatAmount(order.payable_total_cents ?? order.subtotal_cents ?? (order.subtotal?.amount ? Number(order.subtotal.amount) * 100 : null)) }}
+											</span>
+											<span class="inline-flex items-center rounded-full bg-[#FFF1E8] px-[8px] py-[2px] text-[0.6875rem] font-[700] text-[#B45309]">
+												In attesa bonifico
+											</span>
+										</div>
+										<!-- Riga 2: cliente -->
+										<p class="mt-[4px] text-[0.8125rem] font-semibold text-[var(--color-brand-text)]">
+											<template v-if="order.user">{{ order.user.name }} {{ order.user.surname }}</template>
+											<template v-else>—</template>
+										</p>
+										<!-- Riga 3: meta -->
+										<div class="mt-[2px] flex flex-wrap items-center gap-x-[8px] text-[0.6875rem] text-[var(--color-brand-text-muted)]">
+											<span class="font-mono">Causale: ORD-{{ order.id }}</span>
+											<span aria-hidden="true">·</span>
+											<span>{{ formatDate(order.created_at) }}</span>
+										</div>
+									</div>
+									<!-- Bottoni inline -->
+									<div class="shrink-0 flex flex-wrap gap-[6px]">
+										<NuxtLink
+											:to="`/account/amministrazione/ordini?search=${order.id}`"
+											class="btn btn-secondary btn-compact text-[0.75rem]">
+											Apri
+										</NuxtLink>
+										<button type="button" class="btn btn-cta btn-compact text-[0.75rem]" @click="openConfirm(order)">
+											Conferma
+										</button>
+									</div>
+								</div>
 							</div>
 						</article>
 					</div>

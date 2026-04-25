@@ -139,7 +139,7 @@ const hasRevenueData = computed(() => revenueBars.value.length > 0);
 		<svg
 			:viewBox="`0 0 ${chartGeometry.width} ${chartGeometry.height}`"
 			class="admin-console-analytics__svg"
-			preserveAspectRatio="xMidYMid meet"
+			preserveAspectRatio="none"
 			role="img"
 			aria-label="Grafico ricavi ultimi 30 giorni">
 			<title>Grafico ricavi ultimi 30 giorni</title>

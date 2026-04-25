@@ -171,9 +171,10 @@ const empty = computed(() => !loading.value && !loadError.value && orders.value.
 									<span class="sf-fatture__status" :data-tone="sdiBadge(o).tone">{{ sdiBadge(o).label }}</span>
 								</td>
 								<td class="sf-fatture__actions-cell">
+									<!-- P14: btn-compact rounded teal coerente con sito pubblico (era sf-btn quadrato grigio) -->
 									<button
 										type="button"
-										class="sf-btn sf-btn--secondary sf-btn--sm"
+										class="btn btn-secondary btn-compact inline-flex items-center gap-[6px] text-[0.75rem]"
 										:disabled="downloadingId === o.id"
 										@click="downloadInvoice(o)">
 										<svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">

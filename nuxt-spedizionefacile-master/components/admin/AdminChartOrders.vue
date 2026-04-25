@@ -167,7 +167,7 @@ const hasData = computed(() => primaryPoints.value.length > 0);
 		<svg
 			:viewBox="`0 0 ${chartGeometry.width} ${chartGeometry.height}`"
 			class="admin-console-analytics__svg"
-			preserveAspectRatio="xMidYMid meet"
+			preserveAspectRatio="none"
 			role="img"
 			aria-label="Grafico ordini ultimi 30 giorni">
 			<title>Grafico ordini ultimi 30 giorni</title>

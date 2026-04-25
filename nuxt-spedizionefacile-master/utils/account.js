@@ -315,13 +315,7 @@ export const createAccountSections = (
 
 /** @type {AccountNavGroup[]} */
 export const adminNavGroups = [
-	{
-		key: 'dashboard',
-		tone: 'admin',
-		items: [
-			{ label: 'Dashboard', to: '/account', iconKey: 'chart-box', exact: true },
-		],
-	},
+	// Voce "Dashboard" rimossa: era doppione del bottone "Console" sopra (entrambi → /account/amministrazione).
 	{
 		key: 'operativo',
 		title: 'Operativo',
@@ -355,6 +349,8 @@ export const adminNavGroups = [
 		tone: 'admin',
 		items: [
 			{ label: 'Servizi', to: '/account/amministrazione/servizi', iconKey: 'services-cog' },
+			// Guide nel menu sidebar admin: stesso modello di Servizi (CMS articoli pubblici).
+			{ label: 'Guide', to: '/guide', iconKey: 'clipboard-list' },
 		],
 	},
 	{
