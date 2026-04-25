@@ -159,11 +159,16 @@ function normalize(r) {
 }
 
 // ---- Polling ----
+// Polling 60s ma SOLO se la tab e' visibile: evita fetch inutili quando
+// l'utente ha la pagina in background (risparmio bandwidth + battery).
 let pollHandle = null;
 function startPolling() {
 	stopPolling();
 	if (import.meta.server) return;
 	pollHandle = window.setInterval(() => {
+		if (typeof document !== 'undefined' && document.visibilityState === 'hidden') {
+			return;
+		}
 		if (!isDelivered.value && !errorState.value) {
 			fetchTracking({ silent: true });
 		} else {
@@ -178,12 +183,28 @@ function stopPolling() {
 	}
 }
 
+// Quando la tab torna visibile dopo essere stata in background, fetch immediato
+// invece di aspettare il prossimo tick (UX: utente vede subito stato aggiornato).
+function handleVisibilityChange() {
+	if (document.visibilityState === 'visible' && !isDelivered.value && !errorState.value) {
+		fetchTracking({ silent: true });
+	}
+}
+
 onMounted(async () => {
 	await fetchTracking();
 	if (data.value && !isDelivered.value) startPolling();
+	if (typeof document !== 'undefined') {
+		document.addEventListener('visibilitychange', handleVisibilityChange);
+	}
 });
 
-onBeforeUnmount(() => stopPolling());
+onBeforeUnmount(() => {
+	stopPolling();
+	if (typeof document !== 'undefined') {
+		document.removeEventListener('visibilitychange', handleVisibilityChange);
+	}
+});
 
 // Re-fetch se cambia il param di route
 watch(() => route.params.tracking, async (v, old) => {
