@@ -19,20 +19,7 @@ export default function useOrderDetail(orderId) {
 	} = useSanctumFetch(`/api/orders/${orderId}/execution`, { lazy: true });
 
 	/* --- Helpers di formattazione --- */
-	const formatDate = (dateStr) => {
-		if (!dateStr) return '—';
-		try {
-			return new Date(dateStr).toLocaleDateString('it-IT', {
-				day: '2-digit',
-				month: '2-digit',
-				year: 'numeric',
-				hour: '2-digit',
-				minute: '2-digit',
-			});
-		} catch {
-			return dateStr;
-		}
-	};
+	const formatDate = (dateStr) => formatDateTimeIt(dateStr, '—');
 
 	const statusColor = (status) => {
 		const map = {

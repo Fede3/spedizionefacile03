@@ -1,5 +1,7 @@
 <!-- Alla conferma bonifico l'ordine passa a completed e l'evento OrderPaid scatena la generazione etichetta BRT automatica. -->
 <script setup>
+import { formatDateTimeIt } from '~/utils/date.js';
+
 definePageMeta({
 	middleware: ['app-auth', 'admin'],
 });
@@ -36,18 +38,7 @@ const fetchPending = async () => {
 
 onMounted(fetchPending);
 
-const formatDate = (value) => {
-	if (!value) return '—';
-	const parsed = new Date(value);
-	if (Number.isNaN(parsed.getTime())) return '—';
-	return new Intl.DateTimeFormat('it-IT', {
-		day: '2-digit',
-		month: 'short',
-		year: 'numeric',
-		hour: '2-digit',
-		minute: '2-digit',
-	}).format(parsed);
-};
+const formatDate = (value) => formatDateTimeIt(value, '—');
 
 const formatAmount = (cents) => {
 	if (cents === null || cents === undefined) return '—';

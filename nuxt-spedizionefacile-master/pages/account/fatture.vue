@@ -3,6 +3,7 @@
 import '~/assets/css/account-shell.css';
 import '~/assets/css/components/sf-fatture.css';
 import { formatPriceSafe as formatPrice } from '~/utils/price.js';
+import { formatDateIt } from '~/utils/date.js';
 
 definePageMeta({ middleware: ['app-auth'] });
 
@@ -74,19 +75,8 @@ const downloadInvoice = async (order) => {
 // --- Helpers format ---
 const orderCode = (id) => `SF-${String(id).padStart(6, '0')}`;
 
-const formatDate = (raw) => {
-	if (!raw) return '—';
-	let d;
-	if (typeof raw === 'string' && /^\d{2}\/\d{2}\/\d{4}/.test(raw)) {
-		const [datePart, timePart] = raw.split(' ');
-		const [day, month, year] = datePart.split('/');
-		d = new Date(`${year}-${month}-${day}T${timePart || '00:00'}:00`);
-	} else {
-		d = new Date(raw);
-	}
-	if (Number.isNaN(d.getTime())) return raw;
-	return d.toLocaleDateString('it-IT', { day: '2-digit', month: 'short', year: 'numeric' });
-};
+// formatDateIt gestisce sia string ISO che string italiano "DD/MM/YYYY HH:mm"
+const formatDate = (raw) => formatDateIt(raw, '—');
 
 // Stato SDI: inferito da campi backend sdi_status / sdi_sent_at. Fallback: "n/d" se mancanti.
 const sdiBadge = (order) => {
