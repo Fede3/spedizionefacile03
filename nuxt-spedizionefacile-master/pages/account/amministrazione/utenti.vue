@@ -8,8 +8,8 @@ definePageMeta({
 });
 
 useSeoMeta({
-	title: 'Utenti admin | SpediamoFacile',
-	ogTitle: 'Utenti admin | SpediamoFacile',
+	title: 'Utenti admin',
+	ogTitle: 'Utenti admin',
 	description: 'Console di gestione utenti del pannello amministrativo SpediamoFacile.',
 	ogDescription: 'Gestione utenti, ruoli, stati e azioni amministrative.',
 	robots: 'noindex, nofollow',

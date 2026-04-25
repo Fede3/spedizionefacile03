@@ -8,20 +8,25 @@
  * identico.
  */
 .account-route-shell__frame {
-	/* Area account: piu' larga delle pagine pubbliche (sidebar + tabelle dense).
-	   Pattern tipico intermediari (Shopify admin, SpedirePro, PaccoFacile):
-	   sidebar fissa + content che respira fino a ~1560px.
-	   padding-top 40px per respiro dopo la navbar (evita l'effetto "appiccicato"). */
+	/* P14 RIDISEGNO: container 1280px allineato a sito pubblico (era 1560px = 22% più largo).
+	   Sidebar 204px + content ~990px = comfortable per tabelle admin senza sproporzione. */
 	width: 100%;
-	max-width: 1560px;
+	max-width: 1280px;
 	margin-left: auto;
 	margin-right: auto;
 	margin-top: 0;
-	padding-left: 20px;
-	padding-right: 20px;
-	padding-top: 40px;
-	padding-bottom: 48px;
+	padding-left: 14px;
+	padding-right: 14px;
+	padding-top: 28px;
+	padding-bottom: 40px;
 	overflow-x: hidden;
+}
+
+@media (min-width: 720px) {
+	.account-route-shell__frame {
+		padding-left: 24px;
+		padding-right: 24px;
+	}
 }
 
 .account-route-shell__mobile-drawer::-webkit-scrollbar {

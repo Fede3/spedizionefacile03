@@ -2,8 +2,8 @@
 definePageMeta({ middleware: ['app-auth'] });
 
 useSeoMeta({
-	title: 'Area Partner Pro | SpediamoFacile',
-	ogTitle: 'Area Partner Pro | SpediamoFacile',
+	title: 'Area Partner Pro',
+	ogTitle: 'Area Partner Pro',
 	description: 'Gestisci richiesta Partner Pro, link invito, commissioni e saldo dalla tua area account SpediamoFacile.',
 	ogDescription: 'Area Partner Pro con richiesta accesso, link invito, commissioni e saldo su SpediamoFacile.',
 	robots: 'noindex, nofollow',

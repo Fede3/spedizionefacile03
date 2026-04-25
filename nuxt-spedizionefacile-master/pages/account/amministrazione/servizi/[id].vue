@@ -5,7 +5,7 @@ definePageMeta({
 });
 
 useSeoMeta({
-	title: 'Admin - Modifica Servizio | SpediamoFacile',
+	title: 'Admin - Modifica Servizio',
 	robots: 'noindex, nofollow',
 });
 

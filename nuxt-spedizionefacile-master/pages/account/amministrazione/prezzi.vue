@@ -7,8 +7,8 @@ definePageMeta({
 });
 
 useSeoMeta({
-	title: 'Prezzi admin | SpediamoFacile',
-	ogTitle: 'Prezzi admin | SpediamoFacile',
+	title: 'Prezzi admin',
+	ogTitle: 'Prezzi admin',
 	description: 'Configura tariffe, supplementi e regole di pricing dal pannello admin SpediamoFacile.',
 	ogDescription: 'Pannello admin prezzi con tariffe, supplementi e regole commerciali di SpediamoFacile.',
 	robots: 'noindex, nofollow',

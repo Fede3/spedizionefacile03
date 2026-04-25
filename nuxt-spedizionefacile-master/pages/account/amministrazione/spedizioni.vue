@@ -7,15 +7,15 @@ definePageMeta({
 });
 
 useSeoMeta({
-	title: 'Spedizioni admin | SpediamoFacile',
-	ogTitle: 'Spedizioni admin | SpediamoFacile',
+	title: 'Spedizioni admin',
+	ogTitle: 'Spedizioni admin',
 	description: 'Controlla tracking, etichette e stati delle spedizioni dal pannello admin SpediamoFacile.',
 	ogDescription: 'Lista spedizioni BRT con tracking, etichette e gestione stati nel pannello admin SpediamoFacile.',
 	robots: 'noindex, nofollow',
 });
 
 useHead({
-	title: 'Spedizioni admin | SpediamoFacile',
+	title: 'Spedizioni admin',
 });
 
 const {

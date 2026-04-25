@@ -5,7 +5,7 @@ definePageMeta({
 });
 
 useSeoMeta({
-	title: 'Admin - Bonifici in attesa | SpediamoFacile',
+	title: 'Admin - Bonifici in attesa',
 	robots: 'noindex, nofollow',
 });
 

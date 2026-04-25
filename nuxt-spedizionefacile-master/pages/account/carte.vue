@@ -11,8 +11,8 @@ useHead({
 definePageMeta({ middleware: ['app-auth'] });
 
 useSeoMeta({
-	title: 'Carte account | SpediamoFacile',
-	ogTitle: 'Carte account | SpediamoFacile',
+	title: 'Carte account',
+	ogTitle: 'Carte account',
 	description: 'Gestisci carte salvate e metodo di pagamento predefinito dal tuo account SpediamoFacile.',
 	ogDescription: 'Carte salvate e metodi di pagamento dell account SpediamoFacile.',
 	robots: 'noindex, nofollow',

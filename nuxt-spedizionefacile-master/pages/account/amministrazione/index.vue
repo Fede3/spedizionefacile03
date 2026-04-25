@@ -5,8 +5,8 @@ definePageMeta({
 });
 
 useSeoMeta({
-	title: 'Console amministrazione | SpediamoFacile',
-	ogTitle: 'Console amministrazione | SpediamoFacile',
+	title: 'Console amministrazione',
+	ogTitle: 'Console amministrazione',
 	description: 'Priorita operative, KPI essenziali, andamento ordini e attivita recente in una console amministrativa piu ordinata.',
 	ogDescription: 'Console amministrazione SpediamoFacile con priorita operative, KPI essenziali, andamento ordini e attivita recente.',
 	robots: 'noindex, nofollow',

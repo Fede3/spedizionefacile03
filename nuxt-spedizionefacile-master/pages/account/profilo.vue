@@ -4,8 +4,8 @@ import { useAuthUiSnapshotPersistence } from '~/composables/useAuth';
 definePageMeta({ middleware: ['app-auth'] });
 
 useSeoMeta({
-	title: 'Profilo account | SpediamoFacile',
-	ogTitle: 'Profilo account | SpediamoFacile',
+	title: 'Profilo account',
+	ogTitle: 'Profilo account',
 		description: 'Aggiorna dati personali, sicurezza e fatturazione dalla tua area account SpediamoFacile.',
 	ogDescription: 'Profilo personale e dati account su SpediamoFacile.',
 	robots: 'noindex, nofollow',

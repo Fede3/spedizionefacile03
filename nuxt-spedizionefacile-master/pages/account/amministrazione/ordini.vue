@@ -7,7 +7,7 @@ definePageMeta({
 });
 
 useSeoMeta({
-	title: 'Admin · Ordini | SpediamoFacile',
+	title: 'Admin · Ordini',
 	robots: 'noindex, nofollow',
 });
 

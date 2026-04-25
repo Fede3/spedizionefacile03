@@ -5,15 +5,15 @@ definePageMeta({
 });
 
 useSeoMeta({
-	title: 'Impostazioni admin | SpediamoFacile',
-	ogTitle: 'Impostazioni admin | SpediamoFacile',
+	title: 'Impostazioni admin',
+	ogTitle: 'Impostazioni admin',
 	description: 'Gestisci configurazione Stripe, BRT e parametri generali dal pannello admin SpediamoFacile.',
 	ogDescription: 'Configurazione tecnica di Stripe, BRT e impostazioni generali nel pannello admin SpediamoFacile.',
 	robots: 'noindex, nofollow',
 });
 
 useHead({
-	title: 'Impostazioni admin | SpediamoFacile',
+	title: 'Impostazioni admin',
 });
 
 const sanctum = useSanctumClient();

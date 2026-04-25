@@ -7,8 +7,8 @@ definePageMeta({
 });
 
 useSeoMeta({
-	title: 'Assistenza account | SpediamoFacile',
-	ogTitle: 'Assistenza account | SpediamoFacile',
+	title: 'Assistenza account',
+	ogTitle: 'Assistenza account',
 	description: 'Apri e consulta richieste di supporto dalla tua area account SpediamoFacile.',
 	ogDescription: 'Centro assistenza account con richieste e supporto dedicato su SpediamoFacile.',
 	robots: 'noindex, nofollow',

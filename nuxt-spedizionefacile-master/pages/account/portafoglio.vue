@@ -13,8 +13,8 @@ useHead({
 definePageMeta({ middleware: ['app-auth'] });
 
 useSeoMeta({
-	title: 'Portafoglio account | SpediamoFacile',
-	ogTitle: 'Portafoglio account | SpediamoFacile',
+	title: 'Portafoglio account',
+	ogTitle: 'Portafoglio account',
 	description: 'Controlla saldo, ricariche e movimenti del portafoglio dal tuo account SpediamoFacile.',
 	ogDescription: 'Saldo, ricariche e storico movimenti del portafoglio SpediamoFacile.',
 	robots: 'noindex, nofollow',
@@ -278,17 +278,6 @@ onMounted(() => {
 								Carte
 							</NuxtLink>
 							<!-- -- ARCHIVIATO 2026-04-20: CTA Prelievi (_archive/frontend-simplification-2026-04-20/features/prelievi-dedicati) -- -->
-						</div>
-					</div>
-
-					<div class="grid grid-cols-1 gap-[10px] tablet:grid-cols-3">
-						<div
-							v-for="item in walletHeroHighlights"
-							:key="item.label"
-							class="rounded-[16px] border border-[rgba(9,88,102,0.08)] bg-white/70 px-[14px] py-[13px]">
-							<p class="text-[0.6875rem] font-[700] uppercase tracking-[0.12em] text-[var(--color-brand-text-muted)]">{{ item.label }}</p>
-							<p class="mt-[6px] text-[0.9375rem] font-[800] leading-[1.25] text-[var(--color-brand-text)]">{{ item.value }}</p>
-							<p class="mt-[5px] text-[0.75rem] leading-[1.45] text-[var(--color-brand-text-secondary)]">{{ item.description }}</p>
 						</div>
 					</div>
 				</div>

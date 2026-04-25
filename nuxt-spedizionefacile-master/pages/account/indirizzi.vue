@@ -4,8 +4,8 @@ import '~/assets/css/pages/account-indirizzi.css';
 definePageMeta({ middleware: ['app-auth'] });
 
 useSeoMeta({
-	title: 'I tuoi indirizzi | SpediamoFacile',
-	ogTitle: 'I tuoi indirizzi | SpediamoFacile',
+	title: 'I tuoi indirizzi',
+	ogTitle: 'I tuoi indirizzi',
 	description: 'Gestisci la rubrica indirizzi di partenza e destinazione dal tuo account SpediamoFacile.',
 	robots: 'noindex, nofollow',
 });

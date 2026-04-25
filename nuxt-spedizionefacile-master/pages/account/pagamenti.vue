@@ -16,7 +16,7 @@ definePageMeta({
 });
 
 useSeoMeta({
-	title: 'Pagamenti | SpediamoFacile',
+	title: 'Pagamenti',
 	description: 'Portafoglio, carte e fatture in un unico spazio: gestisci i tuoi pagamenti su SpediamoFacile.',
 	robots: 'noindex, nofollow',
 });

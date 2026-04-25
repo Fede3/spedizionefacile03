@@ -7,7 +7,7 @@ definePageMeta({
 });
 
 useSeoMeta({
-	title: 'Admin - Nuovo Servizio | SpediamoFacile',
+	title: 'Admin - Nuovo Servizio',
 	robots: 'noindex, nofollow',
 });
 

@@ -183,23 +183,8 @@ const chartDescription = computed(() => {
 			{{ chartDescription }}
 		</p>
 
-		<div class="admin-console-analytics__summary">
-			<div
-				v-for="(item, index) in summaryCards"
-				:key="item.key"
-				class="admin-console-analytics__metric"
-				:style="{ '--metric-delay': `${index * 60}ms` }">
-				<span class="admin-console-analytics__metric-label">
-					<span
-						v-if="item.dotColor"
-						class="admin-console-analytics__metric-dot"
-						:style="{ background: item.dotColor }"></span>
-					{{ item.label }}
-				</span>
-				<strong class="admin-console-analytics__metric-value">{{ item.value }}</strong>
-				<span v-if="item.hint" class="admin-console-analytics__metric-hint">{{ item.hint }}</span>
-			</div>
-		</div>
+		<!-- Summary cards rimosse (P14): duplicavano i 4 stat-card sopra (Oggi/7gg/30gg vs Ordini attivi/Ricavi mese).
+		     Il grafico parla da solo. Risparmio 80px verticali. -->
 
 		<Transition name="chart-fade" mode="out-in">
 			<AdminChartOrders
