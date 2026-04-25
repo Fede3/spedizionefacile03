@@ -154,24 +154,23 @@
 	color: var(--color-brand-text-secondary);
 }
 
-/* ---- Chart area compact (P14: era enorme rispetto al resto pagina) ---- */
+/* ---- P14: Chart area ulteriormente compatta + svg max 160px ---- */
 .admin-console-analytics__chart-area {
 	position: relative;
 	width: 100%;
-	min-height: 160px;
-	padding: 12px;
-	border-radius: 14px;
+	min-height: 120px;
+	padding: 10px;
+	border-radius: 12px;
 	border: 1px solid rgba(9, 88, 102, 0.08);
 	background: #ffffff;
-	box-shadow: 0 1px 3px rgba(20, 37, 48, 0.04);
 }
 
 .admin-console-analytics__svg {
 	display: block;
 	width: 100%;
 	height: auto;
-	min-height: 140px;
-	max-height: 200px;
+	min-height: 100px;
+	max-height: 160px;
 }
 
 /* ---- Grid ---- */
