@@ -106,14 +106,14 @@ const showDestActions = computed(() => props.deliveryMode !== 'pudo' && (canUseD
 								@click.stop="openAddressBook('origin')">
 								Rubrica
 							</button>
-							<button
+							<SfButton
 								v-if="props.canSaveOriginAddress"
-								type="button"
-								class="btn btn-primary btn-compact address-entry-card__link-action"
-								:disabled="savingOriginAddress"
+								size="sm"
+								class="address-entry-card__link-action"
+								:loading="savingOriginAddress"
 								@click.stop="$emit('save-address', 'origin')">
 								<span>{{ savingOriginAddress ? 'Salvataggio...' : 'Salva mittente' }}</span>
-							</button>
+							</SfButton>
 						</div>
 
 						<div v-if="showOriginAddressSelector && isAuthenticated" class="address-stage-menu address-stage-menu--card address-entry-card__header-menu">
@@ -177,14 +177,14 @@ const showDestActions = computed(() => props.deliveryMode !== 'pudo' && (canUseD
 								@click.stop="openAddressBook('dest')">
 								Rubrica
 							</button>
-							<button
+							<SfButton
 								v-if="props.canSaveDestAddress"
-								type="button"
-								class="btn btn-primary btn-compact address-entry-card__link-action"
-								:disabled="savingDestAddress"
+								size="sm"
+								class="address-entry-card__link-action"
+								:loading="savingDestAddress"
 								@click.stop="$emit('save-address', 'dest')">
 								<span>{{ savingDestAddress ? 'Salvataggio...' : 'Salva destinatario' }}</span>
-							</button>
+							</SfButton>
 						</div>
 
 						<div v-if="showDestAddressSelector && isAuthenticated" class="address-stage-menu address-stage-menu--card address-entry-card__header-menu">

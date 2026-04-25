@@ -73,23 +73,27 @@ const props = defineProps({
 
 				<!-- Bottoni inline a destra -->
 				<div class="shrink-0 flex flex-wrap gap-[6px]">
-					<NuxtLink
+					<SfButton
 						v-if="isPendingPayment(order)"
-						:to="{ path: '/la-tua-spedizione/2', query: { step: 'pagamento', order_id: order.id } }"
-						class="btn btn-cta btn-compact text-[0.75rem]">
+						size="sm"
+						class="text-[0.75rem]"
+						:to="{ path: '/la-tua-spedizione/2', query: { step: 'pagamento', order_id: order.id } }">
 						Paga
-					</NuxtLink>
-					<NuxtLink
+					</SfButton>
+					<SfButton
 						v-if="getTrackingLabel(order)"
-						:to="`/traccia/${encodeURIComponent(getTrackingLabel(order))}`"
-						class="btn btn-primary btn-compact text-[0.75rem]">
+						size="sm"
+						class="text-[0.75rem]"
+						:to="`/traccia/${encodeURIComponent(getTrackingLabel(order))}`">
 						Traccia
-					</NuxtLink>
-					<NuxtLink
-						:to="`/account/spedizioni/${order.id}`"
-						class="btn btn-secondary btn-compact text-[0.75rem]">
+					</SfButton>
+					<SfButton
+						variant="secondary"
+						size="sm"
+						class="text-[0.75rem]"
+						:to="`/account/spedizioni/${order.id}`">
 						Dettagli
-					</NuxtLink>
+					</SfButton>
 				</div>
 			</div>
 		</div>
