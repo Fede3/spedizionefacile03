@@ -5,13 +5,18 @@
  * Questo composable mantiene l'API legacy (isOpen, selectedTab, redirectPath,
  * entryMode, openAuthModal, closeAuthModal, clearEntryMode) per non rompere
  * gli 8 caller esistenti durante la migrazione progressiva a Pinia.
- *
- * @typedef {'login' | 'register'} AuthModalTab
- * @typedef {'forgot' | null} AuthEntryMode
- * @typedef {{ redirect?: string, tab?: AuthModalTab, entryMode?: AuthEntryMode }} OpenAuthModalOptions
  */
 import { storeToRefs } from 'pinia'
 import { useAuthModalStore } from '~/stores/authModalStore'
+
+export type AuthModalTab = 'login' | 'register'
+export type AuthEntryMode = 'forgot' | null
+
+export interface OpenAuthModalOptions {
+	redirect?: string
+	tab?: AuthModalTab
+	entryMode?: AuthEntryMode
+}
 
 export const useAuthModal = () => {
 	const store = useAuthModalStore()
@@ -22,7 +27,7 @@ export const useAuthModal = () => {
 		selectedTab,
 		redirectPath,
 		entryMode,
-		openAuthModal: store.open,
+		openAuthModal: store.open as (opts?: OpenAuthModalOptions) => void,
 		closeAuthModal: store.close,
 		clearEntryMode: store.clearEntryMode,
 	}
