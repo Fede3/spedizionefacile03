@@ -32,6 +32,8 @@ const props = defineProps({
 		validator: (v) => ['sm', 'md', 'lg'].includes(v),
 	},
 	loading: { type: Boolean, default: false },
+	/** Testo opzionale mostrato durante loading (sostituisce slot default). */
+	loadingText: { type: String, default: '' },
 	disabled: { type: Boolean, default: false },
 	to: { type: [String, Object], default: null },
 	href: { type: String, default: null },
@@ -71,7 +73,9 @@ const isDisabled = computed(() => props.disabled || props.loading);
 		:aria-disabled="isDisabled || null"
 		:tabindex="isDisabled ? -1 : null">
 		<span v-if="loading" class="sf-btn-spinner" aria-hidden="true"></span>
-		<slot />
+		<slot v-else-if="$slots.leading" name="leading" />
+		<span v-if="loading && loadingText">{{ loadingText }}</span>
+		<slot v-else />
 	</NuxtLink>
 
 	<a
@@ -80,6 +84,7 @@ const isDisabled = computed(() => props.disabled || props.loading);
 		target="_blank"
 		rel="noopener noreferrer"
 		:class="buttonClasses">
+		<slot v-if="$slots.leading" name="leading" />
 		<slot />
 	</a>
 
@@ -89,7 +94,9 @@ const isDisabled = computed(() => props.disabled || props.loading);
 		:disabled="isDisabled"
 		:class="buttonClasses">
 		<span v-if="loading" class="sf-btn-spinner" aria-hidden="true"></span>
-		<slot />
+		<slot v-else-if="$slots.leading" name="leading" />
+		<span v-if="loading && loadingText">{{ loadingText }}</span>
+		<slot v-else />
 	</button>
 </template>
 

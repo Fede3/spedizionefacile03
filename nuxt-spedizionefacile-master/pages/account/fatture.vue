@@ -125,7 +125,7 @@ const empty = computed(() => !loading.value && !loadError.value && orders.value.
 					<line x1="12" y1="16" x2="12.01" y2="16" />
 				</svg>
 				<p>{{ loadError }}</p>
-				<button type="button" class="sf-btn sf-btn--secondary" @click="loadInvoices">Riprova</button>
+				<SfButton variant="secondary" @click="loadInvoices">Riprova</SfButton>
 			</div>
 
 			<!-- EMPTY -->
@@ -141,7 +141,7 @@ const empty = computed(() => !loading.value && !loadError.value && orders.value.
 				</div>
 				<h2 class="sf-fatture__empty-title">Nessuna fattura ancora</h2>
 				<p class="sf-fatture__empty-text">Le fatture vengono emesse automaticamente dopo il pagamento di un ordine. Effettua la tua prima spedizione per vederle qui.</p>
-				<NuxtLink to="/preventivo" class="sf-btn sf-btn--accent">Calcola un preventivo</NuxtLink>
+				<SfButton to="/preventivo" variant="primary">Calcola un preventivo</SfButton>
 			</div>
 
 			<!-- LISTA -->
@@ -208,19 +208,21 @@ const empty = computed(() => !loading.value && !loadError.value && orders.value.
 								<dd class="sf-fatture__amount">{{ formatPrice(o.payable_total_cents ?? o.subtotal_cents ?? 0) }}</dd>
 							</div>
 						</dl>
-						<button
-							type="button"
-							class="sf-btn sf-btn--accent sf-btn--full"
-							:disabled="downloadingId === o.id"
+						<SfButton
+							variant="primary"
+							block
+							:loading="downloadingId === o.id"
+							loading-text="Invio in corso..."
 							@click="downloadInvoice(o)">
-							<svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-								<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-								<polyline points="7 10 12 15 17 10" />
-								<line x1="12" y1="15" x2="12" y2="3" />
-							</svg>
-							<span v-if="downloadingId === o.id">Invio in corso...</span>
-							<span v-else>Scarica fattura PDF</span>
-						</button>
+							<template #leading>
+								<svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+									<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+									<polyline points="7 10 12 15 17 10" />
+									<line x1="12" y1="15" x2="12" y2="3" />
+								</svg>
+							</template>
+							Scarica fattura PDF
+						</SfButton>
 					</article>
 				</div>
 			</div>
