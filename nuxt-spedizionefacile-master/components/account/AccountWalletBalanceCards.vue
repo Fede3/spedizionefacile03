@@ -101,12 +101,7 @@ const quickLinks = computed(() => {
 						: 'Non sono riuscito ad aggiornare il saldo in tempo reale. Ti mostro l ultimo valore disponibile.'
 				}}
 			</p>
-			<button
-				type="button"
-				@click="emit('retry-balance')"
-				class="btn-secondary btn-compact inline-flex items-center justify-center whitespace-nowrap">
-				Riprova saldo
-			</button>
+			<SfButton variant="secondary" size="sm" @click="emit('retry-balance')">Riprova saldo</SfButton>
 		</div>
 
 		<!-- P15: "Panoramica rapida" + 2 sub-card overview RIMOSSE.

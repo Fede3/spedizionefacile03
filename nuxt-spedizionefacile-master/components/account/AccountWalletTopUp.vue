@@ -103,13 +103,15 @@ const {
 					</p>
 				</div>
 				<div v-if="stripeConfigured" class="flex flex-wrap items-center gap-[8px]">
-					<button type="button" @click="openNewCardForm" class="btn-secondary btn-compact inline-flex items-center gap-[6px]">
-						<svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-							<line x1="12" y1="5" x2="12" y2="19" />
-							<line x1="5" y1="12" x2="19" y2="12" />
-						</svg>
+					<SfButton variant="secondary" size="sm" @click="openNewCardForm">
+						<template #leading>
+							<svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+								<line x1="12" y1="5" x2="12" y2="19" />
+								<line x1="5" y1="12" x2="19" y2="12" />
+							</svg>
+						</template>
 						Aggiungi carta
-					</button>
+					</SfButton>
 					<NuxtLink to="/account/carte" class="text-[0.8125rem] font-semibold text-amber-900 underline">Gestisci carte e pagamenti</NuxtLink>
 				</div>
 			</div>

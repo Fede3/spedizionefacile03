@@ -44,15 +44,14 @@ useSeoMeta({
         </p>
 
         <!-- Link homepage -->
-        <NuxtLink
-          to="/"
-          class="btn-cta inline-flex items-center gap-[8px] text-[0.9375rem]"
-        >
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M19 12H5M12 19l-7-7 7-7"/>
-          </svg>
+        <SfButton to="/" variant="primary">
+          <template #leading>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M19 12H5M12 19l-7-7 7-7"/>
+            </svg>
+          </template>
           Torna alla homepage
-        </NuxtLink>
+        </SfButton>
 
         <!-- Link secondario -->
         <p class="text-[var(--color-brand-text-muted)] text-[0.8125rem] mt-[16px]">

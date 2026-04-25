@@ -107,12 +107,7 @@ const getMovementSvg = (mov) => {
 			v-if="movementsError && hasMovements"
 			class="mb-[16px] flex flex-col gap-[10px] rounded-[16px] border border-[#F3D1A7] bg-[#FFF7E8] px-[12px] py-[11px] text-[0.8125rem] text-[#B45309] tablet:flex-row tablet:items-center tablet:justify-between">
 			<p class="leading-[1.5]">Non sono riuscito ad aggiornare tutto lo storico in tempo reale. Ti mostro l ultimo elenco disponibile.</p>
-			<button
-				type="button"
-				@click="emit('retry-movements')"
-				class="btn-secondary btn-compact inline-flex items-center justify-center whitespace-nowrap">
-				Riprova storico
-			</button>
+			<SfButton variant="secondary" size="sm" @click="emit('retry-movements')">Riprova storico</SfButton>
 		</div>
 
 		<div v-if="isLoadingMovements && !hasMovements" class="space-y-[10px] py-[4px]">
@@ -149,23 +144,19 @@ const getMovementSvg = (mov) => {
 			<p class="mx-auto mt-[6px] max-w-[420px] text-[0.8125rem] leading-[1.55] text-[var(--color-brand-text-secondary)]">
 				{{ movementsError }}
 			</p>
-			<button type="button" @click="emit('retry-movements')" class="btn-secondary btn-compact mt-[16px] inline-flex items-center gap-[6px]">
-				<svg aria-hidden="true"
-					width="16"
-					height="16"
-					viewBox="0 0 24 24"
-					fill="none"
-					stroke="currentColor"
-					stroke-width="2"
-					stroke-linecap="round"
-					stroke-linejoin="round">
-					<path d="M21 2v6h-6" />
-					<path d="M3 12a9 9 0 0 1 15-6.7L21 8" />
-					<path d="M3 22v-6h6" />
-					<path d="M21 12a9 9 0 0 1-15 6.7L3 16" />
-				</svg>
-				Riprova storico
-			</button>
+			<div class="mt-[16px] inline-flex">
+				<SfButton variant="secondary" size="sm" @click="emit('retry-movements')">
+					<template #leading>
+						<svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+							<path d="M21 2v6h-6" />
+							<path d="M3 12a9 9 0 0 1 15-6.7L21 8" />
+							<path d="M3 22v-6h6" />
+							<path d="M21 12a9 9 0 0 1-15 6.7L3 16" />
+						</svg>
+					</template>
+					Riprova storico
+				</SfButton>
+			</div>
 		</div>
 
 		<div v-else-if="!hasMovements" class="py-[32px] text-center">

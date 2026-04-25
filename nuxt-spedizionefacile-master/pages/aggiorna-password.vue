@@ -148,9 +148,7 @@ const updatePassword = async () => {
 						<p class="auth-shell-message__title">Password aggiornata</p>
 						<p class="auth-shell-message__copy">{{ messageSuccess }}</p>
 					</div>
-					<NuxtLink :to="loginOverlayLocation" class="btn-cta w-full inline-flex items-center justify-center gap-[8px] auth-shell-message__action">
-						Torna al login
-					</NuxtLink>
+					<SfButton :to="loginOverlayLocation" variant="primary" block class="auth-shell-message__action">Torna al login</SfButton>
 				</div>
 
 				<form v-else @submit.prevent="updatePassword" class="auth-page-body auth-page-stack">
@@ -261,9 +259,7 @@ const updatePassword = async () => {
 					<p v-if="messageError" class="auth-feedback auth-feedback--error">{{ messageError }}</p>
 					<p v-if="messageSuccess" class="auth-feedback auth-feedback--success">{{ messageSuccess }}</p>
 
-					<button type="submit" :disabled="isLoading" class="btn-cta w-full inline-flex items-center justify-center gap-[8px]">
-						{{ isLoading ? 'Salvataggio...' : 'Aggiorna password' }}
-					</button>
+					<SfButton type="submit" variant="primary" block :loading="isLoading" loading-text="Salvataggio...">Aggiorna password</SfButton>
 				</form>
 			</div>
 		</div>

@@ -102,9 +102,7 @@ if (!statusState.value) {
 					<div class="auth-feedback" :class="statusState?.tone === 'error' ? 'auth-feedback--error' : 'auth-feedback--success'">
 						{{ statusState?.copy }}
 					</div>
-					<NuxtLink :to="loginOverlayLocation" class="btn-cta w-full inline-flex items-center justify-center gap-[8px]">
-						Vai al login
-					</NuxtLink>
+					<SfButton :to="loginOverlayLocation" variant="primary" block>Vai al login</SfButton>
 				</div>
 			</div>
 		</div>
