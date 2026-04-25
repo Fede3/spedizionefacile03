@@ -63,7 +63,7 @@ class SendOrderConfirmation implements ShouldQueue
 
             if ($event->order->user && $event->order->user->email) {
                 Mail::to($event->order->user->email)
-                    ->send(new OrderConfirmationMail($event->order));
+                    ->queue(new OrderConfirmationMail($event->order));
 
                 Log::info('Order confirmation email sent', [
                     'order_id' => $event->order->id,

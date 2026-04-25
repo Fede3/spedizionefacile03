@@ -77,7 +77,7 @@ class SendShipmentStatusEmail
 
             if ($event->order->user && $event->order->user->email) {
                 Mail::to($event->order->user->email)
-                    ->send(new ShipmentStatusUpdateMail(
+                    ->queue(new ShipmentStatusUpdateMail(
                         $event->order,
                         $event->oldStatus,
                         $event->newStatus
