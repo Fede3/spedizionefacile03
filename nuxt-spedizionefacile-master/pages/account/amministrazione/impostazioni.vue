@@ -87,16 +87,12 @@ onMounted(() => {
 						</p>
 					</div>
 
-					<div class="mb-[18px] rounded-[16px] bg-[#F8FBFC] border border-[#DFE8EC] px-[16px] py-[14px] text-[0.875rem] text-[#4F5C6C] leading-[1.65]">
-						<p class="font-semibold text-[#1d2738] mb-[6px]">Controlli rapidi</p>
-						<ul class="space-y-[6px]">
-							<li>Wallet, carte e checkout leggono questa configurazione.</li>
-							<li>Il webhook Stripe deve puntare a questo endpoint.</li>
-						</ul>
-						<div class="mt-[10px] inline-flex items-center px-[10px] py-[6px] rounded-[12px] bg-white border border-[#E5EAF0] text-[0.75rem] font-medium text-[#526071] break-all">
-							{{ stripeWebhookUrl }}
-						</div>
-					</div>
+					<!-- P14: explainer "Controlli rapidi" rimosso (era matryoshka).
+					     Webhook URL spostato come hint inline nel form sotto. -->
+					<p class="mb-[14px] text-[0.75rem] text-[var(--color-brand-text-muted)] leading-[1.5]">
+						Webhook Stripe da configurare:
+						<code class="font-mono text-[0.6875rem] bg-[#F5F8FA] px-[6px] py-[2px] rounded-[4px] break-all">{{ stripeWebhookUrl }}</code>
+					</p>
 
 					<div class="space-y-[14px] max-w-[640px]">
 						<div>
@@ -143,13 +139,10 @@ onMounted(() => {
 						</p>
 					</div>
 
-					<div class="mb-[18px] rounded-[16px] bg-[#FBFCFD] border border-[#E5EAF0] px-[16px] py-[14px] text-[0.875rem] text-[#4F5C6C] leading-[1.65]">
-						<p class="font-semibold text-[#1d2738] mb-[6px]">Prima di salvare</p>
-						<ul class="space-y-[6px]">
-							<li>Verifica customer ID, username e password.</li>
-							<li>Queste credenziali impattano creazione spedizioni, tracking ed etichette.</li>
-						</ul>
-					</div>
+					<!-- P14: explainer "Prima di salvare" rimosso (era matryoshka). -->
+					<p class="mb-[14px] text-[0.75rem] text-[var(--color-brand-text-muted)] leading-[1.5]">
+						Queste credenziali impattano creazione spedizioni, tracking ed etichette.
+					</p>
 
 					<div class="space-y-[14px] max-w-[640px]">
 						<div>

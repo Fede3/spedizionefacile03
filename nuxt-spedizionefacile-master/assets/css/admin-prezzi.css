@@ -111,35 +111,36 @@
 	gap: 16px;
 }
 
+/* P14: card overview compatte (era 18px padding + 1.5rem value, troppo grande) */
 .admin-prezzi-overview-card {
 	border: 1px solid var(--color-border-teal-faint);
-	border-radius: 16px;
+	border-radius: 12px;
 	background: #ffffff;
-	padding: 18px;
-	box-shadow: 0 2px 10px rgba(9, 88, 102, 0.05);
+	padding: 10px 12px;
+	box-shadow: 0 1px 3px rgba(9, 88, 102, 0.04);
 }
 
 .admin-prezzi-overview-card__eyebrow {
-	margin-bottom: 8px;
-	font-size: 0.75rem;
+	margin-bottom: 4px;
+	font-size: 0.6875rem;
 	font-weight: 700;
-	letter-spacing: 0.08em;
+	letter-spacing: 0.05em;
 	text-transform: uppercase;
-	color: var(--color-brand-text-secondary);
+	color: var(--color-brand-text-muted);
 }
 
 .admin-prezzi-overview-card__value {
-	font-size: 1.5rem;
+	font-size: 1.125rem;
 	font-weight: 800;
 	line-height: 1.1;
 	color: var(--color-brand-text);
 }
 
 .admin-prezzi-overview-card__meta {
-	margin-top: 8px;
-	font-size: 0.8125rem;
-	line-height: 1.5;
-	color: var(--color-brand-text-secondary);
+	margin-top: 4px;
+	font-size: 0.6875rem;
+	line-height: 1.35;
+	color: var(--color-brand-text-muted);
 }
 
 .admin-prezzi-context-row {

@@ -7,7 +7,7 @@ import { formatPriceSafe as formatPrice } from '~/utils/price.js';
 definePageMeta({ middleware: ['app-auth'] });
 
 useSeoMeta({
-	title: 'Le tue fatture | SpedizioneFacile',
+	title: 'Le tue fatture',
 	description: 'Storico fatture emesse per i tuoi ordini. Scarica il PDF e controlla lo stato SDI.',
 	robots: 'noindex, nofollow',
 });

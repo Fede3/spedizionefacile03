@@ -62,7 +62,7 @@ const personalLabel = computed(() => props.address?.label || (isOrigin.value ? '
 			</div>
 		</header>
 
-		<h3 class="sf-address-card__label">{{ personalLabel }}</h3>
+		<!-- P14: titolo "Indirizzo di destinazione" rimosso (era ridondante col chip MITTENTE/DESTINAZIONE sopra) -->
 
 		<p class="sf-address-card__recipient">
 			<svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
