@@ -149,9 +149,9 @@ export const buildSecondStepPayload = ({
 		sms_email_notification: Boolean(smsEmailNotification.value),
 		origin_address: includeAddresses ? toStepAddressPayload(originAddress.value) : null,
 		destination_address: includeAddresses ? toStepAddressPayload(destinationAddress.value) : null,
-		delivery_mode: shipmentFlowStore.deliveryMode,
-		selected_pudo: shipmentFlowStore.deliveryMode === 'pudo' ? shipmentFlowStore.selectedPudo : null,
-		client_submission_id: shipmentFlowStore.pendingShipment?.client_submission_id || undefined,
+		delivery_mode: shipmentFlowStore?.deliveryMode,
+		selected_pudo: shipmentFlowStore?.deliveryMode === 'pudo' ? shipmentFlowStore?.selectedPudo : null,
+		client_submission_id: shipmentFlowStore?.pendingShipment?.client_submission_id || undefined,
 	};
 };
 
