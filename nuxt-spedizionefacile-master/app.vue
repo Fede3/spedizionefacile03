@@ -234,7 +234,7 @@ onMounted(() => {
 });
 
 // Failsafe: evita lock scroll globale se una route preview lascia classi/stili sul body.
-if (process.client) {
+if (import.meta.client) {
 	const unlockGlobalScroll = () => {
 		const isPreviewRoute = route.path.startsWith('/preview/home-hero');
 		if (isPreviewRoute) return;
