@@ -61,8 +61,8 @@ export const useShipmentLocationAutocomplete = ({
 	const getSectionAddress = (section) => (section === 'origin' ? originAddress.value : destinationAddress.value)
 	const getSectionCountryCode = (section) => (
 		section === 'origin'
-			? String(shipmentFlowStore.shipmentDetails.origin_country_code || 'IT').trim().toUpperCase()
-			: String(shipmentFlowStore.shipmentDetails.destination_country_code || 'IT').trim().toUpperCase()
+			? String(shipmentFlowStore?.shipmentDetails.origin_country_code || 'IT').trim().toUpperCase()
+			: String(shipmentFlowStore?.shipmentDetails.destination_country_code || 'IT').trim().toUpperCase()
 	)
 	const isItalianSection = (section) => getSectionCountryCode(section) === 'IT'
 

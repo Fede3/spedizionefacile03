@@ -49,14 +49,14 @@ export const useShipmentStepSubmit = ({
 				return;
 			}
 
-			if (shipmentFlowStore.deliveryMode === "pudo" && !shipmentFlowStore.selectedPudo) {
+			if (shipmentFlowStore?.deliveryMode === "pudo" && !shipmentFlowStore?.selectedPudo) {
 				submitError.value = "Seleziona un Punto BRT per la consegna prima di procedere.";
 				return;
 			}
 
-			if (shipmentFlowStore.deliveryMode === "pudo" && shipmentFlowStore.selectedPudo) {
+			if (shipmentFlowStore?.deliveryMode === "pudo" && shipmentFlowStore?.selectedPudo) {
 				const recipientNameNorm = normalizeLocationText(destinationAddress.value.full_name || "");
-				const pudoNameNorm = normalizeLocationText(shipmentFlowStore.selectedPudo?.name || "");
+				const pudoNameNorm = normalizeLocationText(shipmentFlowStore?.selectedPudo?.name || "");
 				if (recipientNameNorm && pudoNameNorm && recipientNameNorm === pudoNameNorm) {
 					submitError.value = "Nel campo Nome e Cognome inserisci il destinatario (persona), non il nome del Punto BRT.";
 					nextTick(() => {
@@ -69,7 +69,7 @@ export const useShipmentStepSubmit = ({
 			if (routeConsistencyState.value.blocking) {
 				submitError.value = routeConsistencyState.value.message;
 				nextTick(() => {
-					const focusId = shipmentFlowStore.deliveryMode === "pudo" ? "dest_name" : "dest_address";
+					const focusId = shipmentFlowStore?.deliveryMode === "pudo" ? "dest_name" : "dest_address";
 					document.getElementById(focusId)?.focus();
 				});
 				return;
@@ -94,14 +94,14 @@ export const useShipmentStepSubmit = ({
 				}
 			}
 
-			shipmentFlowStore.pendingShipment = payload;
-			shipmentFlowStore.originAddressData = { ...originAddress.value };
-			shipmentFlowStore.destinationAddressData = { ...destinationAddress.value };
-			shipmentFlowStore.pickupDate = services.value.date || "";
-			shipmentFlowStore.smsEmailNotification = smsEmailNotification.value;
+			shipmentFlowStore?.pendingShipment = payload;
+			shipmentFlowStore?.originAddressData = { ...originAddress.value };
+			shipmentFlowStore?.destinationAddressData = { ...destinationAddress.value };
+			shipmentFlowStore?.pickupDate = services.value.date || "";
+			shipmentFlowStore?.smsEmailNotification = smsEmailNotification.value;
 
 			if (editCartId) {
-				shipmentFlowStore.editingCartItemId = editCartId;
+				shipmentFlowStore?.editingCartItemId = editCartId;
 			}
 
 			uiFeedback.success("Dati salvati", "Apertura del riepilogo...", { timeout: 1800 });

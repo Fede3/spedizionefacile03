@@ -33,24 +33,24 @@ export const useShipmentStepPageState = ({
 		const persistedPackages = Array.isArray(sessionData.packages)
 			? sessionData.packages.map((pack) => ({ ...pack }))
 			: [];
-		if (!shipmentFlowStore.packages?.length && persistedPackages.length) {
-			shipmentFlowStore.packages = persistedPackages;
+		if (!shipmentFlowStore?.packages?.length && persistedPackages.length) {
+			shipmentFlowStore?.packages = persistedPackages;
 			ensurePackagesIdentity?.();
 		}
 
 		const persistedServices = parsePersistedServices(sessionData.services?.service_type);
-		if (!shipmentFlowStore.servicesArray.length && persistedServices.length) {
-			shipmentFlowStore.servicesArray = [...persistedServices];
+		if (!shipmentFlowStore?.servicesArray.length && persistedServices.length) {
+			shipmentFlowStore?.servicesArray = [...persistedServices];
 		}
 
 		const persistedContent = String(sessionData.content_description || "").trim();
-		if (!String(shipmentFlowStore.contentDescription || "").trim() && persistedContent) {
-			shipmentFlowStore.contentDescription = persistedContent;
+		if (!String(shipmentFlowStore?.contentDescription || "").trim() && persistedContent) {
+			shipmentFlowStore?.contentDescription = persistedContent;
 		}
 
 		const persistedPickupDate = String(sessionData.pickup_date || sessionData.services?.date || "").trim();
-		if (!String(shipmentFlowStore.pickupDate || "").trim() && persistedPickupDate) {
-			shipmentFlowStore.pickupDate = persistedPickupDate;
+		if (!String(shipmentFlowStore?.pickupDate || "").trim() && persistedPickupDate) {
+			shipmentFlowStore?.pickupDate = persistedPickupDate;
 		}
 		if (!String(services.value?.date || "").trim() && persistedPickupDate) {
 			services.value.date = persistedPickupDate;
@@ -77,17 +77,17 @@ export const useShipmentStepPageState = ({
 		}
 
 		const persistedServiceData = sessionData.service_data || sessionData.services?.serviceData || {};
-		if (persistedServiceData && typeof persistedServiceData === "object" && !Object.keys(shipmentFlowStore.serviceData || {}).length) {
-			shipmentFlowStore.serviceData = { ...persistedServiceData };
+		if (persistedServiceData && typeof persistedServiceData === "object" && !Object.keys(shipmentFlowStore?.serviceData || {}).length) {
+			shipmentFlowStore?.serviceData = { ...persistedServiceData };
 		}
 
 		const persistedDeliveryMode = String(sessionData.delivery_mode || "").trim();
-		if (persistedDeliveryMode && shipmentFlowStore.deliveryMode !== persistedDeliveryMode) {
-			shipmentFlowStore.deliveryMode = persistedDeliveryMode;
+		if (persistedDeliveryMode && shipmentFlowStore?.deliveryMode !== persistedDeliveryMode) {
+			shipmentFlowStore?.deliveryMode = persistedDeliveryMode;
 		}
 
-		if (!shipmentFlowStore.selectedPudo && sessionData.selected_pudo) {
-			shipmentFlowStore.selectedPudo = sessionData.selected_pudo;
+		if (!shipmentFlowStore?.selectedPudo && sessionData.selected_pudo) {
+			shipmentFlowStore?.selectedPudo = sessionData.selected_pudo;
 		}
 	};
 
@@ -102,13 +102,13 @@ export const useShipmentStepPageState = ({
 	const showInitialStepLoading = computed(() => loadingEditData.value);
 
 	watch(
-		() => [currentStep.value, status.value, shipmentFlowStore.editingCartItemId, hasPersistedServiceSelection.value],
+		() => [currentStep.value, status.value, shipmentFlowStore?.editingCartItemId, hasPersistedServiceSelection.value],
 		([step, sessionStatus, editingCartItemId, persistedSelection]) => {
 			if (step !== 2) return;
 			if (sessionStatus === "pending") return;
 			if (editingCartItemId) return;
 			if (persistedSelection) return;
-			if (!shipmentFlowStore.servicesArray.length && !smsEmailNotification.value) return;
+			if (!shipmentFlowStore?.servicesArray.length && !smsEmailNotification.value) return;
 
 			resetServicesState();
 		},
@@ -129,7 +129,7 @@ export const useShipmentStepPageState = ({
 		const hasSessionSnapshot =
 			Boolean(session.value?.data?.shipment_details) ||
 			(Array.isArray(session.value?.data?.packages) && session.value.data.packages.length > 0);
-		const hasLocalSnapshot = Boolean(shipmentFlowStore.pendingShipment) || (Array.isArray(shipmentFlowStore.packages) && shipmentFlowStore.packages.length > 0);
+		const hasLocalSnapshot = Boolean(shipmentFlowStore?.pendingShipment) || (Array.isArray(shipmentFlowStore?.packages) && shipmentFlowStore?.packages.length > 0);
 
 		if (status.value === "idle" && !quoteTransitionLock.value && !hasSessionSnapshot && !hasLocalSnapshot) {
 			refresh().catch(() => {});

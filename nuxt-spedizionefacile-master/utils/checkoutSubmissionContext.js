@@ -38,8 +38,8 @@ import {
  * @returns {MaybeRecord}
  */
 export const readPendingShipmentDraft = (shipmentFlowStore) => (
-	shipmentFlowStore?.pendingShipment && typeof shipmentFlowStore.pendingShipment === 'object'
-		? shipmentFlowStore.pendingShipment
+	shipmentFlowStore?.pendingShipment && typeof shipmentFlowStore?.pendingShipment === 'object'
+		? shipmentFlowStore?.pendingShipment
 		: null
 )
 
@@ -55,7 +55,7 @@ export const syncPendingShipmentSubmissionId = (shipmentFlowStore, submissionId)
 	if (!pendingShipment) return
 	if (pendingShipment.client_submission_id === normalized) return
 
-	shipmentFlowStore.pendingShipment = {
+	shipmentFlowStore?.pendingShipment = {
 		...pendingShipment,
 		client_submission_id: normalized,
 	}

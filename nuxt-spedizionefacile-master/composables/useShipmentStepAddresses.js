@@ -115,8 +115,8 @@ export const useShipmentStepAddresses = ({
 	deliveryMode,
 	submitError,
 }) => {
-	const storedOrigin = shipmentFlowStore.originAddressData;
-	const storedDest = shipmentFlowStore.destinationAddressData;
+	const storedOrigin = shipmentFlowStore?.originAddressData;
+	const storedDest = shipmentFlowStore?.destinationAddressData;
 	const sessionDetails = session.value?.data?.shipment_details;
 	const sessionOriginAddress = session.value?.data?.origin_address;
 	const sessionDestinationAddress = session.value?.data?.destination_address;
@@ -381,7 +381,7 @@ export const useShipmentStepAddresses = ({
 		destinationAddress.value = fromSessionAddress(address, "Destinazione");
 	}, { immediate: true });
 
-	watch(() => shipmentFlowStore.shipmentDetails, (shipmentDetails) => {
+	watch(() => shipmentFlowStore?.shipmentDetails, (shipmentDetails) => {
 		if (!shipmentDetails) return;
 		if (shipmentDetails.origin_city && !originAddress.value.city) originAddress.value.city = shipmentDetails.origin_city;
 		if (shipmentDetails.origin_postal_code && !originAddress.value.postal_code) originAddress.value.postal_code = shipmentDetails.origin_postal_code;

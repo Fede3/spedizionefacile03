@@ -167,18 +167,18 @@ export function useShipmentStepPaymentEntry(deps) {
 			}
 
 			const payload = buildCurrentShipmentPayload();
-			const previousPayload = shipmentFlowStore.pendingShipment || null;
+			const previousPayload = shipmentFlowStore?.pendingShipment || null;
 			const samePayloadAsPrevious =
 				normalizeShipmentPayloadForComparison(previousPayload) === normalizeShipmentPayloadForComparison(payload);
 			const clientSubmissionId = samePayloadAsPrevious && previousPayload?.client_submission_id
 				? previousPayload.client_submission_id
 				: `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
 			const payloadWithSubmission = { ...payload, client_submission_id: clientSubmissionId };
-			shipmentFlowStore.pendingShipment = payloadWithSubmission;
+			shipmentFlowStore?.pendingShipment = payloadWithSubmission;
 
 			if (editCartId) {
 				await sanctumClient(`/api/cart/${editCartId}`, { method: 'PUT', body: payloadWithSubmission });
-				shipmentFlowStore.editingCartItemId = editCartId;
+				shipmentFlowStore?.editingCartItemId = editCartId;
 				uiFeedback.success('Indirizzi salvati', 'Apro il pagamento nello stesso ventaglio...', { timeout: 1800 });
 				await openPaymentAccordion();
 				return;
@@ -194,9 +194,9 @@ export function useShipmentStepPaymentEntry(deps) {
 				result?.client_submission_id
 				|| result?.data?.client_submission_id
 				|| null;
-			if (canonicalSubmissionId && shipmentFlowStore.pendingShipment) {
-				shipmentFlowStore.pendingShipment = {
-					...shipmentFlowStore.pendingShipment,
+			if (canonicalSubmissionId && shipmentFlowStore?.pendingShipment) {
+				shipmentFlowStore?.pendingShipment = {
+					...shipmentFlowStore?.pendingShipment,
 					client_submission_id: canonicalSubmissionId,
 				};
 			}
@@ -239,7 +239,7 @@ export function useShipmentStepPaymentEntry(deps) {
 		if (paymentBootstrapPending.value || checkoutPageReady.value || paymentSuccess.value || isProceedingToPayment.value) return;
 		const resolvedOrderId = resolveRouteOrderId() || existingOrderId.value || null;
 		if (!resolvedOrderId && !editCartId) {
-			if (!shipmentFlowStore.pendingShipment) return;
+			if (!shipmentFlowStore?.pendingShipment) return;
 			await proceedToPaymentFromConfirm();
 			return;
 		}

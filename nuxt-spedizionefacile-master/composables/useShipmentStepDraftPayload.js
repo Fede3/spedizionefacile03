@@ -107,8 +107,8 @@ export const buildSecondStepPayload = ({
 			.filter(Boolean),
 	);
 
-	const rawServiceData = shipmentFlowStore?.serviceData && typeof shipmentFlowStore.serviceData === 'object'
-		? shipmentFlowStore.serviceData
+	const rawServiceData = shipmentFlowStore?.serviceData && typeof shipmentFlowStore?.serviceData === 'object'
+		? shipmentFlowStore?.serviceData
 		: {};
 	const pickupRequest = buildPickupRequestPayload({
 		shipmentFlowStore,
@@ -117,9 +117,9 @@ export const buildSecondStepPayload = ({
 	const normalizedServiceData = {
 		pickup_request: pickupRequest,
 		sms_email_notification: Boolean(smsEmailNotification.value),
-		delivery_mode: shipmentFlowStore.deliveryMode,
-		...(shipmentFlowStore.deliveryMode === 'pudo' && shipmentFlowStore.selectedPudo
-			? { pudo: shipmentFlowStore.selectedPudo }
+		delivery_mode: shipmentFlowStore?.deliveryMode,
+		...(shipmentFlowStore?.deliveryMode === 'pudo' && shipmentFlowStore?.selectedPudo
+			? { pudo: shipmentFlowStore?.selectedPudo }
 			: {}),
 		...(rawServiceData.requires_manual_quote ? { requires_manual_quote: true } : {}),
 		...(rawServiceData.telefono_notifica
@@ -138,13 +138,13 @@ export const buildSecondStepPayload = ({
 
 	return {
 		services: {
-			service_type: shipmentFlowStore.servicesArray.join(', '),
+			service_type: shipmentFlowStore?.servicesArray.join(', '),
 			date: services.value.date || '',
 			time: pickupRequest.time_slot,
 			serviceData: normalizedServiceData,
 			sms_email_notification: Boolean(smsEmailNotification.value),
 		},
-		content_description: shipmentFlowStore.contentDescription || '',
+		content_description: shipmentFlowStore?.contentDescription || '',
 		pickup_date: services.value.date || '',
 		sms_email_notification: Boolean(smsEmailNotification.value),
 		origin_address: includeAddresses ? toStepAddressPayload(originAddress.value) : null,

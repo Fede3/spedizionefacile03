@@ -121,7 +121,7 @@ export const useShipmentStepServices = ({ shipmentFlowStore, dateError }) => {
 
 	const servicesList = ref(DEFAULT_SHIPMENT_SERVICES.map((service) => ({ ...service })));
 	const expandedServiceKey = ref('');
-	const serviceData = ref(createMergedServiceData(shipmentFlowStore.serviceData || {}));
+	const serviceData = ref(createMergedServiceData(shipmentFlowStore?.serviceData || {}));
 	const smsEmailNotification = ref(false);
 
 	const servicePricing = computed(() => priceBands.value?.service_pricing || {});
@@ -155,14 +155,14 @@ export const useShipmentStepServices = ({ shipmentFlowStore, dateError }) => {
 
 	const syncSelectedServicesVisual = () => {
 		servicesList.value.forEach((service) => {
-			service.isSelected = shipmentFlowStore.servicesArray.includes(service.name);
+			service.isSelected = shipmentFlowStore?.servicesArray.includes(service.name);
 		});
 	};
 
 	const removeService = (service) => {
-		const index = shipmentFlowStore.servicesArray.indexOf(service.name);
+		const index = shipmentFlowStore?.servicesArray.indexOf(service.name);
 		if (index !== -1) {
-			shipmentFlowStore.servicesArray.splice(index, 1);
+			shipmentFlowStore?.servicesArray.splice(index, 1);
 		}
 
 		const visual = findServiceByKey(service.key);
@@ -174,7 +174,7 @@ export const useShipmentStepServices = ({ shipmentFlowStore, dateError }) => {
 			expandedServiceKey.value = '';
 		}
 
-		services.value.service_type = shipmentFlowStore.servicesArray.join(', ');
+		services.value.service_type = shipmentFlowStore?.servicesArray.join(', ');
 	};
 
 	const ensureServiceSelected = (service, serviceIndex) => {
@@ -183,11 +183,11 @@ export const useShipmentStepServices = ({ shipmentFlowStore, dateError }) => {
 			visual.isSelected = true;
 		}
 
-		if (!shipmentFlowStore.servicesArray.includes(service.name)) {
-			shipmentFlowStore.servicesArray.push(service.name);
+		if (!shipmentFlowStore?.servicesArray.includes(service.name)) {
+			shipmentFlowStore?.servicesArray.push(service.name);
 		}
 
-		services.value.service_type = shipmentFlowStore.servicesArray.join(', ');
+		services.value.service_type = shipmentFlowStore?.servicesArray.join(', ');
 	};
 
 	const chooseService = (service, serviceIndex) => {
@@ -198,25 +198,25 @@ export const useShipmentStepServices = ({ shipmentFlowStore, dateError }) => {
 		visual.isSelected = !isCurrentlySelected;
 
 		if (!isCurrentlySelected) {
-			if (!shipmentFlowStore.servicesArray.includes(service.name)) {
-				shipmentFlowStore.servicesArray.push(service.name);
+			if (!shipmentFlowStore?.servicesArray.includes(service.name)) {
+				shipmentFlowStore?.servicesArray.push(service.name);
 			}
 
 			if (service.key === 'sponda_idraulica') {
-				shipmentFlowStore.serviceData = shipmentFlowStore.serviceData || {};
-				shipmentFlowStore.serviceData.sponda_idraulica = { ...serviceData.value.sponda_idraulica };
+				shipmentFlowStore?.serviceData = shipmentFlowStore?.serviceData || {};
+				shipmentFlowStore?.serviceData.sponda_idraulica = { ...serviceData.value.sponda_idraulica };
 			}
 		} else {
-			const index = shipmentFlowStore.servicesArray.indexOf(service.name);
+			const index = shipmentFlowStore?.servicesArray.indexOf(service.name);
 			if (index !== -1) {
-				shipmentFlowStore.servicesArray.splice(index, 1);
+				shipmentFlowStore?.servicesArray.splice(index, 1);
 			}
 			if (expandedServiceKey.value === service.key) {
 				expandedServiceKey.value = '';
 			}
 		}
 
-		services.value.service_type = shipmentFlowStore.servicesArray.join(', ');
+		services.value.service_type = shipmentFlowStore?.servicesArray.join(', ');
 	};
 
 	const toggleServiceDetails = (service) => {
@@ -309,30 +309,30 @@ export const useShipmentStepServices = ({ shipmentFlowStore, dateError }) => {
 	);
 
 	const resetServicesState = () => {
-		shipmentFlowStore.servicesArray = [];
+		shipmentFlowStore?.servicesArray = [];
 		services.value.service_type = '';
 		smsEmailNotification.value = false;
 		serviceData.value = createMergedServiceData();
-		shipmentFlowStore.serviceData = createMergedServiceData();
+		shipmentFlowStore?.serviceData = createMergedServiceData();
 		expandedServiceKey.value = '';
 		syncSelectedServicesVisual();
 	};
 
-	if (shipmentFlowStore.pickupDate) {
-		services.value.date = shipmentFlowStore.pickupDate;
+	if (shipmentFlowStore?.pickupDate) {
+		services.value.date = shipmentFlowStore?.pickupDate;
 	}
 
-	if (!services.value.time && shipmentFlowStore.serviceData?.pickup_request?.time_slot) {
-		services.value.time = shipmentFlowStore.serviceData.pickup_request.time_slot;
+	if (!services.value.time && shipmentFlowStore?.serviceData?.pickup_request?.time_slot) {
+		services.value.time = shipmentFlowStore?.serviceData.pickup_request.time_slot;
 	}
 
-	if (shipmentFlowStore.servicesArray.length > 0) {
-		services.value.service_type = shipmentFlowStore.servicesArray.join(', ');
+	if (shipmentFlowStore?.servicesArray.length > 0) {
+		services.value.service_type = shipmentFlowStore?.servicesArray.join(', ');
 		syncSelectedServicesVisual();
 	}
 
-	if (shipmentFlowStore.smsEmailNotification !== undefined) {
-		smsEmailNotification.value = shipmentFlowStore.smsEmailNotification;
+	if (shipmentFlowStore?.smsEmailNotification !== undefined) {
+		smsEmailNotification.value = shipmentFlowStore?.smsEmailNotification;
 	}
 
 	watch(
@@ -355,7 +355,7 @@ export const useShipmentStepServices = ({ shipmentFlowStore, dateError }) => {
 	});
 
 	const syncPickupRequestState = () => {
-		const pickupRequestDate = normalizePickupRequestDate(services.value.date || shipmentFlowStore.pickupDate || '');
+		const pickupRequestDate = normalizePickupRequestDate(services.value.date || shipmentFlowStore?.pickupDate || '');
 		const pickupTimeSlot =
 			String(services.value.time || serviceData.value?.pickup_request?.time_slot || DEFAULT_PICKUP_TIME_SLOT).trim() ||
 			DEFAULT_PICKUP_TIME_SLOT;
@@ -385,13 +385,13 @@ export const useShipmentStepServices = ({ shipmentFlowStore, dateError }) => {
 		() => [services.value.date, services.value.time],
 		([newDate]) => {
 			const selectedDate = newDate || '';
-			if (shipmentFlowStore.pickupDate !== selectedDate) {
-				shipmentFlowStore.pickupDate = selectedDate;
+			if (shipmentFlowStore?.pickupDate !== selectedDate) {
+				shipmentFlowStore?.pickupDate = selectedDate;
 			}
 
-			const currentDetails = shipmentFlowStore.shipmentDetails || {};
+			const currentDetails = shipmentFlowStore?.shipmentDetails || {};
 			if ((currentDetails.date || '') !== selectedDate) {
-				shipmentFlowStore.shipmentDetails = {
+				shipmentFlowStore?.shipmentDetails = {
 					...currentDetails,
 					date: selectedDate,
 				};
@@ -405,7 +405,7 @@ export const useShipmentStepServices = ({ shipmentFlowStore, dateError }) => {
 	watch(
 		smsEmailNotification,
 		(enabled) => {
-			shipmentFlowStore.smsEmailNotification = Boolean(enabled);
+			shipmentFlowStore?.smsEmailNotification = Boolean(enabled);
 		},
 		{ immediate: true },
 	);
@@ -413,7 +413,7 @@ export const useShipmentStepServices = ({ shipmentFlowStore, dateError }) => {
 	watch(
 		serviceData,
 		(nextValue) => {
-			shipmentFlowStore.serviceData = {
+			shipmentFlowStore?.serviceData = {
 				contrassegno: { ...(nextValue?.contrassegno || {}) },
 				assicurazione: { ...(nextValue?.assicurazione || {}) },
 				sponda_idraulica: { ...(nextValue?.sponda_idraulica || {}) },
@@ -425,10 +425,10 @@ export const useShipmentStepServices = ({ shipmentFlowStore, dateError }) => {
 	);
 
 	watch(
-		() => [...shipmentFlowStore.servicesArray],
+		() => [...shipmentFlowStore?.servicesArray],
 		() => {
 			syncSelectedServicesVisual();
-			services.value.service_type = shipmentFlowStore.servicesArray.join(', ');
+			services.value.service_type = shipmentFlowStore?.servicesArray.join(', ');
 			if (!expandedServiceKey.value) return;
 			const expandedService = findServiceByKey(expandedServiceKey.value);
 			if (!expandedService) {
@@ -620,7 +620,7 @@ export function useShipmentStepServiceCards({
 	const getServiceIndex = (service) => servicesList.value.findIndex((item) => item.key === service.key);
 	const isServiceSelected = (serviceKey) => {
 		const service = servicesList.value.find((item) => item.key === serviceKey);
-		return service ? shipmentFlowStore.servicesArray.includes(service.name) : false;
+		return service ? shipmentFlowStore?.servicesArray.includes(service.name) : false;
 	};
 	const featuredServiceIndex = computed(() => servicesList.value.findIndex((item) => item.featured));
 	const canConfigureService = (service) => CONFIGURABLE_SERVICE_KEYS.has(service?.key);

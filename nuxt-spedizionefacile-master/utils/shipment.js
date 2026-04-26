@@ -490,7 +490,7 @@ export const buildPendingShipmentFromSession = (data = {}) => {
  */
 export const deriveShipmentFlowStateFromUserStore = (shipmentFlowStore = {}) => {
 	const shipmentDetails = shipmentFlowStore?.shipmentDetails || {}
-	const packages = Array.isArray(shipmentFlowStore?.packages) ? shipmentFlowStore.packages : []
+	const packages = Array.isArray(shipmentFlowStore?.packages) ? shipmentFlowStore?.packages : []
 	const pendingShipment = shipmentFlowStore?.pendingShipment || {}
 	const pendingPackages = Array.isArray(pendingShipment?.packages) ? pendingShipment.packages : []
 	const deliveryMode = shipmentFlowStore?.deliveryMode || pendingShipment?.delivery_mode || 'home'
@@ -567,30 +567,30 @@ export const trimUserStoreToFlowState = (shipmentFlowStore, flowState) => {
 	if (!shipmentFlowStore || !flowState) return
 
 	if (!flowState.summary_ready) {
-		shipmentFlowStore.pendingShipment = null
+		shipmentFlowStore?.pendingShipment = null
 	}
 
 	if (!flowState.addresses_ready) {
-		shipmentFlowStore.originAddressData = null
-		shipmentFlowStore.destinationAddressData = null
-		shipmentFlowStore.selectedPudo = null
+		shipmentFlowStore?.originAddressData = null
+		shipmentFlowStore?.destinationAddressData = null
+		shipmentFlowStore?.selectedPudo = null
 	}
 
 	if (!flowState.services_ready) {
-		shipmentFlowStore.servicesArray = []
-		shipmentFlowStore.contentDescription = ''
-		shipmentFlowStore.pickupDate = ''
-		shipmentFlowStore.smsEmailNotification = false
-		shipmentFlowStore.serviceData = {}
+		shipmentFlowStore?.servicesArray = []
+		shipmentFlowStore?.contentDescription = ''
+		shipmentFlowStore?.pickupDate = ''
+		shipmentFlowStore?.smsEmailNotification = false
+		shipmentFlowStore?.serviceData = {}
 	}
 
 	if (!flowState.quote_ready) {
-		shipmentFlowStore.packages = []
-		shipmentFlowStore.totalPrice = 0
-		shipmentFlowStore.isQuoteStarted = false
+		shipmentFlowStore?.packages = []
+		shipmentFlowStore?.totalPrice = 0
+		shipmentFlowStore?.isQuoteStarted = false
 	}
 
-	shipmentFlowStore.stepNumber = getShipmentFlowStepNumber(flowState)
+	shipmentFlowStore?.stepNumber = getShipmentFlowStepNumber(flowState)
 }
 
 // ─────────────────────────────────────────────────────────────────

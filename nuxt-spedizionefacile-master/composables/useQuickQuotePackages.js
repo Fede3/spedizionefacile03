@@ -112,13 +112,13 @@ export const useQuickQuotePackages = ({
 	priceBands,
 }) => {
 	const ensurePackagesIdentity = () => {
-		syncQuickQuotePackageCounter(shipmentFlowStore.packages);
-		shipmentFlowStore.packages.forEach((pack) => ensurePackageDraftIdentity(pack));
+		syncQuickQuotePackageCounter(shipmentFlowStore?.packages);
+		shipmentFlowStore?.packages.forEach((pack) => ensurePackageDraftIdentity(pack));
 	};
 	const isEuropeMonocollo = computed(() => {
 		const europePricing = priceBands.value?.europe;
 		if (!europePricing?.enabled) return false;
-		const destinationCountryCode = String(shipmentFlowStore.shipmentDetails.destination_country_code || "").trim().toUpperCase();
+		const destinationCountryCode = String(shipmentFlowStore?.shipmentDetails.destination_country_code || "").trim().toUpperCase();
 		return !!destinationCountryCode && destinationCountryCode !== "IT" && (europePricing.supported_country_codes || []).includes(destinationCountryCode);
 	});
 
@@ -130,10 +130,10 @@ export const useQuickQuotePackages = ({
 
 	const enforceEuropeMonocollo = () => {
 		if (!isEuropeMonocollo.value) return;
-		if (shipmentFlowStore.packages.length > 1) {
-			shipmentFlowStore.packages.splice(1);
+		if (shipmentFlowStore?.packages.length > 1) {
+			shipmentFlowStore?.packages.splice(1);
 		}
-		const firstPack = shipmentFlowStore.packages[0];
+		const firstPack = shipmentFlowStore?.packages[0];
 		if (firstPack) {
 			firstPack.quantity = 1;
 		}
@@ -153,7 +153,7 @@ export const useQuickQuotePackages = ({
 	};
 
 	const recalculatePackagesTotal = () => {
-		shipmentFlowStore.totalPrice = shipmentFlowStore.packages.reduce(
+		shipmentFlowStore?.totalPrice = shipmentFlowStore?.packages.reduce(
 			(total, pack) => total + (Number(pack?.single_price) || 0),
 			0,
 		);
@@ -206,7 +206,7 @@ export const useQuickQuotePackages = ({
 			}
 
 			const volume = Number((((firstSize / 100) * (secondSize / 100) * (thirdSize / 100))).toFixed(6));
-			const quote = getEuropeQuote(shipmentFlowStore.shipmentDetails.destination_country_code, weight, volume);
+			const quote = getEuropeQuote(shipmentFlowStore?.shipmentDetails.destination_country_code, weight, volume);
 			pack.europe_quote = quote;
 
 			if (quote?.status === "priced") {
@@ -243,8 +243,8 @@ export const useQuickQuotePackages = ({
 
 		if (basePrice == null || basePrice <= 0) return;
 
-		const originCap = shipmentFlowStore.shipmentDetails.origin_postal_code || "";
-		const destCap = shipmentFlowStore.shipmentDetails.destination_postal_code || "";
+		const originCap = shipmentFlowStore?.shipmentDetails.origin_postal_code || "";
+		const destCap = shipmentFlowStore?.shipmentDetails.destination_postal_code || "";
 		const supplement = Number(getCapSupplement(originCap, destCap) || 0);
 
 		pack.single_price = Number((basePrice + supplement).toFixed(2));
@@ -295,10 +295,10 @@ export const useQuickQuotePackages = ({
 	};
 
 	const selectPackageType = (packageType) => {
-		if (isEuropeMonocollo.value && shipmentFlowStore.packages.length > 0) {
+		if (isEuropeMonocollo.value && shipmentFlowStore?.packages.length > 0) {
 			return;
 		}
-		shipmentFlowStore.packages.push(buildPackageDraft(packageType));
+		shipmentFlowStore?.packages.push(buildPackageDraft(packageType));
 	};
 
 	const addPackageInline = (packageType) => {
@@ -306,8 +306,8 @@ export const useQuickQuotePackages = ({
 			enforceEuropeMonocollo();
 			return;
 		}
-		const lastPackageType = shipmentFlowStore.packages.at(-1)?.package_type;
-		shipmentFlowStore.packages.push(buildPackageDraft(packageType || lastPackageType));
+		const lastPackageType = shipmentFlowStore?.packages.at(-1)?.package_type;
+		shipmentFlowStore?.packages.push(buildPackageDraft(packageType || lastPackageType));
 	};
 
 	const updatePackageType = (pack, packageType) => {
@@ -317,12 +317,12 @@ export const useQuickQuotePackages = ({
 	const deletePack = async (targetPackId) => {
 		const index = typeof targetPackId === "number"
 			? targetPackId
-			: shipmentFlowStore.packages.findIndex((pack) => pack._qid === targetPackId);
+			: shipmentFlowStore?.packages.findIndex((pack) => pack._qid === targetPackId);
 		if (index < 0) return;
-		shipmentFlowStore.packages.splice(index, 1);
+		shipmentFlowStore?.packages.splice(index, 1);
 
-		if (shipmentFlowStore.packages.length === 0) {
-			shipmentFlowStore.packages.push(buildPackageDraft(QUICK_QUOTE_PACKAGE_TYPES[0]));
+		if (shipmentFlowStore?.packages.length === 0) {
+			shipmentFlowStore?.packages.push(buildPackageDraft(QUICK_QUOTE_PACKAGE_TYPES[0]));
 		}
 
 		recalculatePackagesTotal();
@@ -333,13 +333,13 @@ export const useQuickQuotePackages = ({
 		(isEurope) => {
 			if (!isEurope) return;
 			enforceEuropeMonocollo();
-			shipmentFlowStore.packages.forEach((pack) => checkPrices(pack));
+			shipmentFlowStore?.packages.forEach((pack) => checkPrices(pack));
 		},
 		{ immediate: true },
 	);
 
 	watch(
-		() => shipmentFlowStore.packages,
+		() => shipmentFlowStore?.packages,
 		() => {
 			ensurePackagesIdentity();
 		},

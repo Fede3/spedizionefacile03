@@ -186,8 +186,8 @@ export const useShipmentStepSummary = ({
 		if (liveCity) return liveCity;
 		if (showAddressFields.value) return '—';
 		return (
-			shipmentFlowStore.originAddressData?.city
-			|| shipmentFlowStore.shipmentDetails?.origin_city
+			shipmentFlowStore?.originAddressData?.city
+			|| shipmentFlowStore?.shipmentDetails?.origin_city
 			|| session.value?.data?.shipment_details?.origin_city
 			|| '—'
 		);
@@ -197,15 +197,15 @@ export const useShipmentStepSummary = ({
 		if (!clientDraftSummaryReady.value) {
 			return session.value?.data?.shipment_details?.destination_city || 'â€”';
 		}
-		const pudoCity = String(shipmentFlowStore.selectedPudo?.city || '').trim();
+		const pudoCity = String(shipmentFlowStore?.selectedPudo?.city || '').trim();
 		if (pudoCity) return pudoCity;
 
 		const liveCity = String(destinationAddress.value?.city || '').trim();
 		if (liveCity) return liveCity;
 		if (showAddressFields.value) return '—';
 		return (
-			shipmentFlowStore.destinationAddressData?.city
-			|| shipmentFlowStore.shipmentDetails?.destination_city
+			shipmentFlowStore?.destinationAddressData?.city
+			|| shipmentFlowStore?.shipmentDetails?.destination_city
 			|| session.value?.data?.shipment_details?.destination_city
 			|| '—'
 		);
@@ -215,10 +215,10 @@ export const useShipmentStepSummary = ({
 	const resolvedSummaryOriginCity = computed(() => (
 		firstMeaningfulValue(
 			originAddress.value?.city,
-			shipmentFlowStore.originAddressData?.city,
-			shipmentFlowStore.pendingShipment?.origin_address?.city,
+			shipmentFlowStore?.originAddressData?.city,
+			shipmentFlowStore?.pendingShipment?.origin_address?.city,
 			session.value?.data?.origin_address?.city,
-			shipmentFlowStore.shipmentDetails?.origin_city,
+			shipmentFlowStore?.shipmentDetails?.origin_city,
 			session.value?.data?.shipment_details?.origin_city,
 			summaryOriginCity.value,
 		) || '—'
@@ -226,14 +226,14 @@ export const useShipmentStepSummary = ({
 
 	const resolvedSummaryDestinationCity = computed(() => (
 		firstMeaningfulValue(
-			shipmentFlowStore.selectedPudo?.city,
-			shipmentFlowStore.pendingShipment?.selected_pudo?.city,
+			shipmentFlowStore?.selectedPudo?.city,
+			shipmentFlowStore?.pendingShipment?.selected_pudo?.city,
 			session.value?.data?.selected_pudo?.city,
 			destinationAddress.value?.city,
-			shipmentFlowStore.destinationAddressData?.city,
-			shipmentFlowStore.pendingShipment?.destination_address?.city,
+			shipmentFlowStore?.destinationAddressData?.city,
+			shipmentFlowStore?.pendingShipment?.destination_address?.city,
 			session.value?.data?.destination_address?.city,
-			shipmentFlowStore.shipmentDetails?.destination_city,
+			shipmentFlowStore?.shipmentDetails?.destination_city,
 			session.value?.data?.shipment_details?.destination_city,
 			summaryDestinationCity.value,
 		) || '—'
@@ -245,9 +245,9 @@ export const useShipmentStepSummary = ({
 	const routeConsistencyState = computed(() => {
 		const originCity = normalizeRouteText(originAddress.value?.city);
 		const destinationCity = normalizeRouteText(
-			shipmentFlowStore.selectedPudo?.city
+			shipmentFlowStore?.selectedPudo?.city
 			|| destinationAddress.value?.city
-			|| shipmentFlowStore.shipmentDetails?.destination_city
+			|| shipmentFlowStore?.shipmentDetails?.destination_city
 		);
 		if (!originCity || !destinationCity) {
 			return { blocking: false, warning: false, message: '' };
@@ -255,9 +255,9 @@ export const useShipmentStepSummary = ({
 
 		const originCap = String(originAddress.value?.postal_code || '').trim();
 		const destinationCap = String(
-			shipmentFlowStore.selectedPudo?.zip_code
+			shipmentFlowStore?.selectedPudo?.zip_code
 			|| destinationAddress.value?.postal_code
-			|| shipmentFlowStore.shipmentDetails?.destination_postal_code
+			|| shipmentFlowStore?.shipmentDetails?.destination_postal_code
 			|| ''
 		).trim();
 		const sameCity = originCity === destinationCity;
@@ -265,12 +265,12 @@ export const useShipmentStepSummary = ({
 
 		const originStreet = normalizeRouteText(originAddress.value?.address);
 		const destinationStreet = normalizeRouteText(
-			shipmentFlowStore.selectedPudo?.address
+			shipmentFlowStore?.selectedPudo?.address
 			|| destinationAddress.value?.address
 		);
 		const originNumber = normalizeRouteNumber(originAddress.value?.address_number);
 		const destinationNumber = normalizeRouteNumber(
-			shipmentFlowStore.selectedPudo ? 'SNC' : destinationAddress.value?.address_number
+			shipmentFlowStore?.selectedPudo ? 'SNC' : destinationAddress.value?.address_number
 		);
 		const sameAddress =
 			sameCity
@@ -305,11 +305,11 @@ export const useShipmentStepSummary = ({
 		routeConsistencyState.value.warning ? routeConsistencyState.value.message : ''
 	));
 	const selectedServicesFromState = computed(() => {
-		const local = Array.isArray(shipmentFlowStore.servicesArray) ? shipmentFlowStore.servicesArray.filter(Boolean) : [];
+		const local = Array.isArray(shipmentFlowStore?.servicesArray) ? shipmentFlowStore?.servicesArray.filter(Boolean) : [];
 		if (local.length) return local;
 
 		const persisted = String(
-			shipmentFlowStore.pendingShipment?.services?.service_type
+			shipmentFlowStore?.pendingShipment?.services?.service_type
 			|| session.value?.data?.services?.service_type
 			|| "",
 		)
@@ -398,8 +398,8 @@ export const useShipmentStepSummary = ({
 
 	const summaryTotalPrice = computed(() => {
 		const sessionPackagesAmount = getPackagesTotal(session.value?.data?.packages);
-		const storePackagesAmount = getPackagesTotal(shipmentFlowStore.packages?.value || shipmentFlowStore.packages);
-		const pendingAmount = getPackagesTotal(shipmentFlowStore.pendingShipment?.packages);
+		const storePackagesAmount = getPackagesTotal(shipmentFlowStore?.packages?.value || shipmentFlowStore?.packages);
+		const pendingAmount = getPackagesTotal(shipmentFlowStore?.pendingShipment?.packages);
 		const editableAmount = getPackagesTotal(editablePackages.value);
 
 		const baseAmount = pickBestPriceAmount([
@@ -407,20 +407,20 @@ export const useShipmentStepSummary = ({
 			editableAmount,
 			sessionPackagesAmount,
 			storePackagesAmount,
-			parsePriceAmount(shipmentFlowStore.totalPrice),
+			parsePriceAmount(shipmentFlowStore?.totalPrice),
 			parsePriceAmount(session.value?.data?.total_price),
 		]);
 
-		const pendingServices = shipmentFlowStore.pendingShipment?.services || {};
+		const pendingServices = shipmentFlowStore?.pendingShipment?.services || {};
 		const sessionServices = session.value?.data?.services || {};
-		const selectedServices = Array.isArray(shipmentFlowStore.servicesArray) && shipmentFlowStore.servicesArray.length
-			? shipmentFlowStore.servicesArray
+		const selectedServices = Array.isArray(shipmentFlowStore?.servicesArray) && shipmentFlowStore?.servicesArray.length
+			? shipmentFlowStore?.servicesArray
 			: (pendingServices.service_type || sessionServices.service_type || "");
-		const selectedServiceData = Object.keys(shipmentFlowStore.serviceData || {}).length
-			? shipmentFlowStore.serviceData
+		const selectedServiceData = Object.keys(shipmentFlowStore?.serviceData || {}).length
+			? shipmentFlowStore?.serviceData
 			: (pendingServices.serviceData || sessionServices.serviceData || {});
 		const notificationsEnabled = Boolean(
-			shipmentFlowStore.smsEmailNotification
+			shipmentFlowStore?.smsEmailNotification
 			|| pendingServices.sms_email_notification
 			|| pendingServices.serviceData?.sms_email_notification
 			|| session.value?.data?.sms_email_notification
@@ -435,11 +435,11 @@ export const useShipmentStepSummary = ({
 			pricingConfig: priceBands.value,
 			packages: editablePackages.value?.length
 				? editablePackages.value
-				: (shipmentFlowStore.pendingShipment?.packages || session.value?.data?.packages || []),
-			originAddress: originAddress.value || shipmentFlowStore.originAddressData || session.value?.data?.origin_address || {},
-			destinationAddress: destinationAddress.value || shipmentFlowStore.destinationAddressData || session.value?.data?.destination_address || {},
-			deliveryMode: shipmentFlowStore.deliveryMode || shipmentFlowStore.pendingShipment?.delivery_mode || session.value?.data?.delivery_mode || "home",
-			selectedPudo: shipmentFlowStore.selectedPudo || shipmentFlowStore.pendingShipment?.selected_pudo || session.value?.data?.selected_pudo || null,
+				: (shipmentFlowStore?.pendingShipment?.packages || session.value?.data?.packages || []),
+			originAddress: originAddress.value || shipmentFlowStore?.originAddressData || session.value?.data?.origin_address || {},
+			destinationAddress: destinationAddress.value || shipmentFlowStore?.destinationAddressData || session.value?.data?.destination_address || {},
+			deliveryMode: shipmentFlowStore?.deliveryMode || shipmentFlowStore?.pendingShipment?.delivery_mode || session.value?.data?.delivery_mode || "home",
+			selectedPudo: shipmentFlowStore?.selectedPudo || shipmentFlowStore?.pendingShipment?.selected_pudo || session.value?.data?.selected_pudo || null,
 		}).total;
 
 		return formatPriceAmount(baseAmount + serviceSurcharge);

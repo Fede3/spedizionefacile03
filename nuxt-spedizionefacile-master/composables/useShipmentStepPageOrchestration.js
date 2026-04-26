@@ -123,7 +123,7 @@ export function useShipmentStepPageOrchestration(deps) {
 	const quoteHeroDescription = computed(() => getShipmentFlowHeroDescription());
 
 	const resolvedContentDescription = computed(() =>
-		String(shipmentFlowStore.contentDescription || session.value?.data?.content_description || '').trim(),
+		String(shipmentFlowStore?.contentDescription || session.value?.data?.content_description || '').trim(),
 	);
 
 	const packageItems = computed(() =>
@@ -157,7 +157,7 @@ export function useShipmentStepPageOrchestration(deps) {
 			deliveryMode: deliveryMode.value,
 			summaryOriginCity: summaryOriginCity.value,
 			summaryDestinationCity: summaryDestinationCity.value,
-			pudoName: String(shipmentFlowStore.selectedPudo?.name || '').trim(),
+			pudoName: String(shipmentFlowStore?.selectedPudo?.name || '').trim(),
 		}),
 	);
 
@@ -165,7 +165,7 @@ export function useShipmentStepPageOrchestration(deps) {
 	const confirmationOriginContact = computed(() => formatConfirmationContact(originAddress.value?.full_name, 'Mittente da completare'));
 	const confirmationDestinationContact = computed(() => {
 		if (deliveryMode.value === 'pudo') {
-			return formatConfirmationContact(shipmentFlowStore.selectedPudo?.name, 'Punto BRT da selezionare');
+			return formatConfirmationContact(shipmentFlowStore?.selectedPudo?.name, 'Punto BRT da selezionare');
 		}
 		return formatConfirmationContact(destinationAddress.value?.full_name, 'Destinatario da completare');
 	});
@@ -281,7 +281,7 @@ export function useShipmentStepPageOrchestration(deps) {
 		if (activeAccordionStep.value === 'payment') {
 			await ensurePaymentStageReady();
 		}
-		if (!Array.isArray(shipmentFlowStore.packages) || shipmentFlowStore.packages.length === 0) {
+		if (!Array.isArray(shipmentFlowStore?.packages) || shipmentFlowStore?.packages.length === 0) {
 			addPackageInline();
 			ensurePackagesIdentity();
 		}
