@@ -5,8 +5,8 @@ import '~/assets/css/autenticazione.css';
 import { buildAuthOverlayLocation } from '~/utils/auth';
 
 useSeoMeta({
-	title: 'Verifica Email | SpediamoFacile',
-	ogTitle: 'Verifica Email | SpediamoFacile',
+	title: 'Verifica Email',
+	ogTitle: 'Verifica Email',
 	description: 'Conferma la tua email e completa l\'attivazione dell\'account SpediamoFacile.',
 	ogDescription: 'Verifica la tua email su SpediamoFacile.',
 });

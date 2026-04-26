@@ -55,7 +55,7 @@ function focusSearch() {
 
 // ── SEO ──────────────────────────────────────────────────────
 useSeoMeta({
-	title: 'FAQ — Domande frequenti SpedizioneFacile',
+	title: 'FAQ — Domande frequenti',
 	ogTitle: 'FAQ — Domande frequenti SpedizioneFacile',
 	description:
 		'Tutte le risposte su spedizioni, preventivi, pagamenti, tracking, reclami, account e profilo Pro. Cerca subito la tua domanda o contatta un operatore.',

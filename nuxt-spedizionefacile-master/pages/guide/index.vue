@@ -6,8 +6,8 @@
 -->
 <script setup>
 useSeoMeta({
-	title: 'Guide alle Spedizioni | SpediamoFacile',
-	ogTitle: 'Guide alle Spedizioni | SpediamoFacile',
+	title: 'Guide alle Spedizioni',
+	ogTitle: 'Guide alle Spedizioni',
 	description: 'Consulta le nostre guide pratiche su come preparare pacchi, scegliere il corriere giusto, risparmiare sulle spedizioni e molto altro.',
 	ogDescription: 'Guide pratiche per spedire in modo semplice e conveniente con SpediamoFacile.',
 });

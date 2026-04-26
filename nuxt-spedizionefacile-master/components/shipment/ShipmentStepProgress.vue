@@ -19,9 +19,13 @@ const steps = [
 	{ n: 4, label: 'Pagamento' },
 ];
 
+// Percentuale coerente con "Step X di 4": ogni step copre 25%
+// (step 1 -> 25%, step 2 -> 50%, step 3 -> 75%, step 4 -> 100%).
+// Prima usavo (step-1)/3 che dava 33% allo step 2, confondente per l'utente
+// che leggeva "Step 2 di 4 · 33%" pensando di essere meno avanti del reale.
 const progressPct = computed(() => {
 	const safe = Math.max(1, Math.min(4, Number(props.currentStep) || 1));
-	return Math.round(((safe - 1) / 3) * 100);
+	return Math.round((safe / 4) * 100);
 });
 
 const stateOf = (n) => {

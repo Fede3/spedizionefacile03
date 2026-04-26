@@ -29,7 +29,7 @@ const DEBUG_ONLY_PACKAGES = false;
 const DEBUG_DISABLE_QUICK_QUOTE_PACKAGES = false;
 
 useSeoMeta({
-	title: 'Preventivo - SpedizioneFacile',
+	title: 'Preventivo',
 	description: 'Configura colli, servizi, indirizzi e pagamento in un flusso unico, chiaro e modificabile.',
 	ogTitle: 'Preventivo - SpedizioneFacile',
 	ogDescription: 'Configura colli, servizi, indirizzi e pagamento in un flusso unico, chiaro e modificabile.',

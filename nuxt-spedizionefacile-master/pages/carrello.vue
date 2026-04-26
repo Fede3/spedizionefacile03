@@ -1,7 +1,7 @@
 <script setup>
 useSeoMeta({
-  title: 'Carrello | SpediamoFacile',
-  ogTitle: 'Carrello | SpediamoFacile',
+  title: 'Carrello',
+  ogTitle: 'Carrello',
   description: 'Rivedi le tue spedizioni nel carrello, modifica quantità e procedi al checkout su SpediamoFacile.',
   ogDescription: 'Rivedi le tue spedizioni nel carrello, modifica quantità e procedi al checkout su SpediamoFacile.',
 });

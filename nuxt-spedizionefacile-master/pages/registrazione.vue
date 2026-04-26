@@ -10,7 +10,7 @@ definePageMeta({
 const route = useRoute();
 
 useSeoMeta({
-	title: 'Registrati | SpediamoFacile',
+	title: 'Registrati',
 	description: 'Crea il tuo account SpediamoFacile e inizia a spedire con BRT a prezzi vantaggiosi.',
 });
 

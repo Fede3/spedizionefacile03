@@ -9,8 +9,8 @@
 import '~/assets/css/servizi.css';
 
 useSeoMeta({
-	title: 'Servizi di Spedizione | SpediamoFacile',
-	ogTitle: 'Servizi di Spedizione | SpediamoFacile',
+	title: 'Servizi di Spedizione',
+	ogTitle: 'Servizi di Spedizione',
 	description: 'Scopri i servizi di spedizione SpediamoFacile: ritiro a domicilio, senza etichetta, contrassegno, assicurazione e supporto rapido.',
 	ogDescription: 'Servizi chiari, attivabili in pochi secondi e pensati per spedire meglio senza complicazioni.',
 });

@@ -1,6 +1,6 @@
 <script setup>
 useSeoMeta({
-	title: 'Cookie Policy | SpedizioneFacile',
+	title: 'Cookie Policy',
 	ogTitle: 'Cookie Policy | SpedizioneFacile',
 	description:
 		'Cookie Policy di SpedizioneFacile: tipologie, finalità, durata e modalità di gestione delle preferenze. Conforme al Provvedimento Garante 10/06/2021.',

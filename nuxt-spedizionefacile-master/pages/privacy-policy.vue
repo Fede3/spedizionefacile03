@@ -1,7 +1,7 @@
 <!-- Privacy Policy — GDPR (Reg. UE 2016/679) + CCPA. Hero + TOC sticky desktop + 10 sezioni. -->
 <script setup>
 useSeoMeta({
-	title: 'Privacy Policy | SpedizioneFacile',
+	title: 'Privacy Policy',
 	ogTitle: 'Privacy Policy | SpedizioneFacile',
 	description:
 		'Informativa privacy SpedizioneFacile ai sensi del GDPR (Reg. UE 2016/679) e CCPA. Trattamento dati per servizi di intermediazione spedizioni con corriere BRT.',

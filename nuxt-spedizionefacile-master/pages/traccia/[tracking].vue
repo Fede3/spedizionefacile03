@@ -254,7 +254,7 @@ const etaFormatted = computed(() => formatEta(data.value?.estimated_delivery_at)
 
 // ---- SEO (noindex) ----
 useSeoMeta({
-	title: () => `Tracking ${trackingCode.value || ''} — SpedizioneFacile`,
+	title: () => `Tracking ${trackingCode.value || 'spedizione'}`,
 	robots: 'noindex, nofollow',
 	description: 'Dettaglio tracking spedizione personale.',
 });

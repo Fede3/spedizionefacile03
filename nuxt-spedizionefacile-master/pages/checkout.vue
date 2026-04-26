@@ -4,7 +4,7 @@ import { buildShipmentFlowLocation } from '~/utils/shipment';
 const route = useRoute();
 
 useSeoMeta({
-	title: 'Checkout Spedizione BRT | SpediamoFacile',
+	title: 'Checkout Spedizione BRT',
 	description: 'Completa il pagamento della tua spedizione BRT in sicurezza.',
 	robots: 'noindex, nofollow',
 });

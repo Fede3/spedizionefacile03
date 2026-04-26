@@ -8,7 +8,7 @@ definePageMeta({
 });
 
 useSeoMeta({
-	title: 'Recupera password | SpediamoFacile',
+	title: 'Recupera password',
 	robots: 'noindex, nofollow',
 });
 

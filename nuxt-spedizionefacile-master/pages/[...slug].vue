@@ -2,7 +2,7 @@
 definePageMeta({ layout: 'default' });
 
 useSeoMeta({
-  title: 'Pagina non trovata | SpediamoFacile',
+  title: 'Pagina non trovata',
   description: 'La pagina che stai cercando non esiste o è stata spostata.',
 });
 </script>

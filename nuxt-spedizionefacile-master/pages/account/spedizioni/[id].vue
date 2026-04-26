@@ -54,8 +54,8 @@ const {
 } = useOrderDetail(orderId);
 
 useSeoMeta({
-	title: () => (orderData.value?.id ? `Ordine #${orderData.value.id} | SpediamoFacile` : 'Dettaglio spedizione'),
-	ogTitle: () => (orderData.value?.id ? `Ordine #${orderData.value.id} | SpediamoFacile` : 'Dettaglio spedizione'),
+	title: () => (orderData.value?.id ? `Ordine #${orderData.value.id}` : 'Dettaglio spedizione'),
+	ogTitle: () => (orderData.value?.id ? `Ordine #${orderData.value.id}` : 'Dettaglio spedizione'),
 	description: 'Consulta stato, colli, tracking e documenti della tua spedizione su SpediamoFacile.',
 	ogDescription: 'Dettaglio ordine con stato, colli, tracking e documenti su SpediamoFacile.',
 	robots: 'noindex, nofollow',

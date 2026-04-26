@@ -10,7 +10,7 @@ definePageMeta({
 const route = useRoute();
 
 useSeoMeta({
-	title: 'Accedi | SpediamoFacile',
+	title: 'Accedi',
 	description: 'Accedi al tuo account SpediamoFacile per gestire spedizioni, portafoglio e ordini.',
 });
 

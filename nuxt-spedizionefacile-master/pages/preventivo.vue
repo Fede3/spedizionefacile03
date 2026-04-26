@@ -4,7 +4,7 @@ import { buildShipmentFlowLocation } from '~/utils/shipment';
 const route = useRoute();
 
 useSeoMeta({
-	title: 'Preventivo - SpedizioneFacile',
+	title: 'Preventivo',
 	description: 'Configura colli, servizi, indirizzi e pagamento in un flusso unico, chiaro e modificabile.',
 });
 

@@ -1,7 +1,7 @@
 <script setup>
 useSeoMeta({
-	title: 'Traccia Spedizione | SpediamoFacile',
-	ogTitle: 'Traccia Spedizione | SpediamoFacile',
+	title: 'Traccia Spedizione',
+	ogTitle: 'Traccia Spedizione',
 	description: 'Traccia la tua spedizione in tempo reale con SpediamoFacile.',
 	ogDescription: 'Traccia la tua spedizione in tempo reale con SpediamoFacile.',
 });

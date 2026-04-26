@@ -6,7 +6,7 @@ definePageMeta({
 });
 
 useSeoMeta({
-  title: 'Account | SpediamoFacile',
+  title: 'Account',
   robots: 'noindex, nofollow',
 });
 </script>

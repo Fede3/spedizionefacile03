@@ -93,8 +93,8 @@ const supportChecklist = computed(() => {
 });
 
 useSeoMeta({
-	title: () => (service.value?.title ? `${service.value.title} | SpediamoFacile` : 'Servizio | SpediamoFacile'),
-	ogTitle: () => (service.value?.title ? `${service.value.title} | SpediamoFacile` : 'Servizio | SpediamoFacile'),
+	title: () => (service.value?.title ?? 'Servizio'),
+	ogTitle: () => (service.value?.title ?? 'Servizio'),
 	description: () => serviceMetaDescription.value,
 	ogDescription: () => serviceMetaDescription.value,
 	ogImage: () => service.value?.featured_image || 'https://spediamofacile.it/og/default.png',

@@ -5,8 +5,8 @@ import '~/assets/css/autenticazione.css';
 import { buildAuthOverlayLocation } from '~/utils/auth';
 
 useSeoMeta({
-	title: 'Aggiorna Password | SpediamoFacile',
-	ogTitle: 'Aggiorna Password | SpediamoFacile',
+	title: 'Aggiorna Password',
+	ogTitle: 'Aggiorna Password',
 	description: 'Imposta una nuova password per completare il recupero del tuo account SpediamoFacile.',
 	ogDescription: 'Aggiorna la password del tuo account SpediamoFacile.',
 });

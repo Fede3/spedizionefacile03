@@ -2,7 +2,7 @@
      CMR internazionale, Dir. UE 2011/83. Hero + TOC sticky + 12 sezioni. -->
 <script setup>
 useSeoMeta({
-	title: 'Termini e Condizioni | SpedizioneFacile',
+	title: 'Termini e Condizioni',
 	ogTitle: 'Termini e Condizioni | SpedizioneFacile',
 	description:
 		'Condizioni generali di servizio di SpedizioneFacile: intermediazione spedizioni con corriere BRT, prezzi, recesso, assicurazione, foro competente.',

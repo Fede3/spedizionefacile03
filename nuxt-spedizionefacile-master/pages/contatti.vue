@@ -3,8 +3,8 @@
 import '~/assets/css/contatti.css'
 
 useSeoMeta({
-	title: 'Contatti | SpediamoFacile - Assistenza e Supporto',
-	ogTitle: 'Contatti | SpediamoFacile',
+	title: 'Contatti - Assistenza e Supporto',
+	ogTitle: 'Contatti',
 	description: 'Hai bisogno di aiuto? Contatta il team di SpediamoFacile per assistenza sulle tue spedizioni, preventivi personalizzati o informazioni sui nostri servizi.',
 	ogDescription: 'Contatta SpediamoFacile per assistenza e supporto sulle tue spedizioni.',
 })

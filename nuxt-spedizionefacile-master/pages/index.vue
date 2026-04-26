@@ -5,7 +5,7 @@ import Preventivo from '~/components/shipment/Preventivo.vue';
 
 // ───────────────────────── SEO ─────────────────────────
 useSeoMeta({
-	title: 'SpediamoFacile — Spedizioni BRT al miglior prezzo',
+	title: 'Spedizioni BRT al miglior prezzo',
 	ogTitle: 'SpediamoFacile — Spedizioni BRT al miglior prezzo',
 	description:
 		'Spedisci pacchi in Italia ed Europa con BRT alle migliori tariffe. Preventivo in 30 secondi, ritiro a domicilio, tracking in tempo reale.',

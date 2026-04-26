@@ -83,8 +83,8 @@ const firstSections = computed(() => guideSections.value.slice(0, 2));
 const remainingSections = computed(() => guideSections.value.slice(2));
 
 useSeoMeta({
-	title: () => (guide.value?.title ? `${guide.value.title} | SpediamoFacile` : 'Guida | SpediamoFacile'),
-	ogTitle: () => (guide.value?.title ? `${guide.value.title} | SpediamoFacile` : 'Guida | SpediamoFacile'),
+	title: () => (guide.value?.title ?? 'Guida'),
+	ogTitle: () => (guide.value?.title ?? 'Guida'),
 	description: () => guideMetaDescription.value,
 	ogDescription: () => guideMetaDescription.value,
 	ogType: 'article',

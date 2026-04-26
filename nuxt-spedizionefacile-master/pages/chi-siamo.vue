@@ -3,8 +3,8 @@
 import '~/assets/css/chi-siamo.css';
 
 useSeoMeta({
-	title: 'Chi siamo — SpedizioneFacile',
-	ogTitle: 'Chi siamo — SpedizioneFacile',
+	title: 'Chi siamo',
+	ogTitle: 'Chi siamo',
 	description:
 		'Intermediari BRT autorizzati dal 2020. Aiutiamo PMI e privati italiani a spedire con prezzi trasparenti, ritiro a domicilio e supporto umano dedicato.',
 	ogDescription:

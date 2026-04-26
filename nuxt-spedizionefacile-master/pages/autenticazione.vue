@@ -7,7 +7,7 @@ definePageMeta({
 });
 
 useSeoMeta({
-	title: 'Accesso | SpediamoFacile',
+	title: 'Accesso',
 	robots: 'noindex, nofollow',
 });
 
