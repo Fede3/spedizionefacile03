@@ -4184,14 +4184,22 @@
 }
 
 .service-stage-shell--funnel-standard .service-surface__media {
-	background: var(--surface-page);
-	outline: 1px solid var(--color-border);
-	outline-offset: -1px;
+	background: rgba(9, 88, 102, 0.08);
+	outline: none;
+	color: var(--color-brand-primary);
 	box-shadow: none;
-	color: var(--color-brand-text-muted);
 }
 
-.service-stage-shell--funnel-standard .service-surface__media--active {
+.service-stage-shell--funnel-standard .service-surface--featured .service-surface__media {
+	background: var(--color-brand-primary);
+	color: #ffffff;
+	box-shadow: 0 4px 12px rgba(9, 88, 102, 0.18);
+}
+
+.service-stage-shell--funnel-standard .service-surface__media--active,
+.service-stage-shell--funnel-standard .service-surface--selected .service-surface__media,
+.service-stage-shell--funnel-standard .service-surface--active .service-surface__media,
+.service-stage-shell--funnel-standard .service-surface--expanded .service-surface__media {
 	background: var(--color-brand-primary);
 	outline-color: transparent;
 	color: #ffffff;
