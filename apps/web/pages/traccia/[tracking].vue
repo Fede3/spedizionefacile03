@@ -3,193 +3,36 @@ import '~/assets/css/tracking.css';
 import TrackingStepper from '~/components/tracking/TrackingStepper.vue';
 import TrackingEventsTimeline from '~/components/tracking/TrackingEventsTimeline.vue';
 import TrackingActionsBar from '~/components/tracking/TrackingActionsBar.vue';
+import { useTrackingDetail } from '~/composables/useTrackingDetail';
 
 definePageMeta({
 	// Pagina pubblica: il codice tracking è già di per sé credenziale di accesso minima.
-	// In futuro si potrà richiedere mail destinatario per validare.
 });
 
 const route = useRoute();
 const router = useRouter();
-const sanctum = useSanctumClient();
 
 const trackingCode = computed(() => String(route.params.tracking || '').trim());
-
-const data = ref(null);
-const isLoading = ref(true);
-const isRefreshing = ref(false);
-const errorState = ref(null); // 'not_found' | 'network' | null
 const newSearchInput = ref('');
-const copyOk = ref(false);
 
-// ---- Step canonici (5) ----
-const STEPS = [
-	{ key: 'received', label: 'Ricevuto' },
-	{ key: 'processing', label: 'In lavorazione' },
-	{ key: 'in_transit', label: 'In transito' },
-	{ key: 'out_for_delivery', label: 'In consegna' },
-	{ key: 'delivered', label: 'Consegnato' },
-];
-
-// Mapping da raw_status backend → step canonico
-const RAW_TO_STEP = {
-	pending: 0,
-	paid: 0,
-	completed: 0,
-	processing: 1,
-	label_generated: 1,
-	in_transit: 2,
-	in_giacenza: 2,
-	out_for_delivery: 3,
-	delivered: 4,
-};
-
-const ALT_END = ['returned', 'refused', 'cancelled', 'refunded', 'payment_failed'];
-const ALT_LABELS = {
-	returned: 'Reso al mittente',
-	refused: 'Rifiutato dal destinatario',
-	cancelled: 'Spedizione annullata',
-	refunded: 'Spedizione rimborsata',
-	payment_failed: 'Pagamento fallito',
-};
-
-const currentStepIndex = computed(() => {
-	if (!data.value) return -1;
-	if (typeof data.value.current_step === 'number') return data.value.current_step;
-	const raw = data.value.raw_status;
-	return RAW_TO_STEP[raw] ?? -1;
-});
-
-const alternateEnd = computed(() => {
-	if (!data.value) return null;
-	const raw = data.value.raw_status;
-	if (!ALT_END.includes(raw)) return null;
-	return {
-		type: raw === 'refused' ? 'refused' : 'returned',
-		label: ALT_LABELS[raw] || 'Stato finale',
-	};
-});
-
-const isDelivered = computed(() => data.value?.raw_status === 'delivered');
-
-const statusChipClass = computed(() => {
-	const raw = data.value?.raw_status;
-	if (raw === 'delivered') return 'chip-success';
-	if (ALT_END.includes(raw)) return raw === 'refused' || raw === 'payment_failed' ? 'chip-danger' : 'chip-warn';
-	if (raw === 'in_giacenza') return 'chip-warn';
-	return 'chip-progress';
-});
-
-// ---- Fetch ----
-async function fetchTracking({ silent = false } = {}) {
-	if (!trackingCode.value) return;
-	if (!silent) {
-		isLoading.value = true;
-		errorState.value = null;
-	} else {
-		isRefreshing.value = true;
-	}
-	try {
-		// Tentativo: endpoint atteso REST /api/tracking/{code} (futuro)
-		// Fallback: /api/tracking/search?code=XXX (esistente)
-		let resp = null;
-		try {
-			resp = await sanctum(`/api/tracking/${encodeURIComponent(trackingCode.value)}`);
-		} catch (e) {
-			if (e?.statusCode === 404) {
-				// è effettivamente 404 dell'endpoint nuovo → segnale not found vero
-				resp = null;
-			}
-			// fallback all'endpoint esistente
-			try {
-				resp = await sanctum('/api/tracking/search', {
-					params: { code: trackingCode.value },
-				});
-			} catch (err2) {
-				if (!silent) errorState.value = 'network';
-				return;
-			}
-		}
-
-		if (!resp || resp.found === false) {
-			if (!silent) {
-				errorState.value = 'not_found';
-				data.value = null;
-			}
-			// Salva URL BRT esterno per fallback CTA anche in 404
-			if (resp?.brt_tracking_url) {
-				data.value = { brt_tracking_url: resp.brt_tracking_url, raw_status: 'unknown' };
-			}
-			return;
-		}
-
-		// Normalizza risposta (compatibile sia con endpoint nuovo sia con quello search esistente)
-		data.value = normalize(resp);
-		errorState.value = null;
-	} finally {
-		isLoading.value = false;
-		isRefreshing.value = false;
-	}
-}
-
-function normalize(r) {
-	// Se l'endpoint nuovo restituisce già il formato spec, passa diretto
-	const evRaw = Array.isArray(r.events) ? r.events : [];
-	return {
-		code: r.code || r.brt_parcel_id || r.brt_tracking_number || trackingCode.value,
-		order_id: r.order_id ?? r.id ?? null,
-		raw_status: r.raw_status || r.status_raw || r.status || 'pending',
-		status_label: r.status || r.status_label || 'Stato sconosciuto',
-		status_description: r.status_description || '',
-		current_step: typeof r.current_step === 'number' ? r.current_step : undefined,
-		estimated_delivery_at: r.estimated_delivery_at || null,
-		created_at: r.created_at || null,
-		origin: r.origin || null,
-		destination: r.destination || null,
-		recipient_name: r.recipient_name || null,
-		package: r.package || null,
-		brt_parcel_id: r.brt_parcel_id || null,
-		brt_tracking_number: r.brt_tracking_number || null,
-		brt_tracking_url: r.brt_tracking_url || null,
-		invoice_url: r.invoice_url || null,
-		can_reschedule: !!r.can_reschedule,
-		can_change_address: !!r.can_change_address,
-		events: evRaw,
-	};
-}
-
-// ---- Polling ----
-// Polling 60s ma SOLO se la tab e' visibile: evita fetch inutili quando
-// l'utente ha la pagina in background (risparmio bandwidth + battery).
-let pollHandle = null;
-function startPolling() {
-	stopPolling();
-	if (import.meta.server) return;
-	pollHandle = window.setInterval(() => {
-		if (typeof document !== 'undefined' && document.visibilityState === 'hidden') {
-			return;
-		}
-		if (!isDelivered.value && !errorState.value) {
-			fetchTracking({ silent: true });
-		} else {
-			stopPolling();
-		}
-	}, 60000);
-}
-function stopPolling() {
-	if (pollHandle) {
-		clearInterval(pollHandle);
-		pollHandle = null;
-	}
-}
-
-// Quando la tab torna visibile dopo essere stata in background, fetch immediato
-// invece di aspettare il prossimo tick (UX: utente vede subito stato aggiornato).
-function handleVisibilityChange() {
-	if (document.visibilityState === 'visible' && !isDelivered.value && !errorState.value) {
-		fetchTracking({ silent: true });
-	}
-}
+const {
+	data,
+	isLoading,
+	isRefreshing,
+	errorState,
+	copyOk,
+	currentStepIndex,
+	alternateEnd,
+	isDelivered,
+	statusChipClass,
+	etaFormatted,
+	STEPS,
+	fetchTracking,
+	startPolling,
+	stopPolling,
+	handleVisibilityChange,
+	copyCode,
+} = useTrackingDetail(trackingCode);
 
 onMounted(async () => {
 	await fetchTracking();
@@ -206,7 +49,6 @@ onBeforeUnmount(() => {
 	}
 });
 
-// Re-fetch se cambia il param di route
 watch(() => route.params.tracking, async (v, old) => {
 	if (v && v !== old) {
 		stopPolling();
@@ -216,43 +58,12 @@ watch(() => route.params.tracking, async (v, old) => {
 	}
 });
 
-// ---- Azioni UI ----
-async function copyCode() {
-	if (!trackingCode.value) return;
-	try {
-		await navigator.clipboard.writeText(trackingCode.value);
-		copyOk.value = true;
-		setTimeout(() => (copyOk.value = false), 1800);
-	} catch {
-		// silently fail
-	}
-}
-
 function submitNewSearch() {
 	const v = newSearchInput.value?.trim();
 	if (!v) return;
 	router.push(`/traccia/${encodeURIComponent(v)}`);
 }
 
-function formatEta(iso) {
-	if (!iso) return null;
-	try {
-		const d = new Date(iso);
-		return d.toLocaleDateString('it-IT', {
-			weekday: 'long',
-			day: '2-digit',
-			month: 'long',
-			year: 'numeric',
-			timeZone: 'Europe/Rome',
-		});
-	} catch {
-		return null;
-	}
-}
-
-const etaFormatted = computed(() => formatEta(data.value?.estimated_delivery_at));
-
-// ---- SEO (noindex) ----
 useSeoMeta({
 	title: () => `Tracking ${trackingCode.value || 'spedizione'}`,
 	robots: 'noindex, nofollow',
