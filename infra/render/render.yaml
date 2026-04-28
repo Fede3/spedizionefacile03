@@ -18,7 +18,7 @@ services:
     env: docker
     plan: starter  # upgrade da free — evita auto-suspend e cold start
     region: frankfurt  # vicino utenti IT, latenza <50ms
-    rootDir: laravel-spedizionefacile-main
+    rootDir: apps/api
     dockerfilePath: ./Dockerfile
     autoDeploy: true
 
@@ -28,7 +28,7 @@ services:
 
     buildFilter:
       paths:
-        - laravel-spedizionefacile-main/**
+        - apps/api/**
 
     envVars:
       # ---- Applicazione -----------------------------------------------------
@@ -165,14 +165,14 @@ services:
     env: node
     plan: starter
     region: frankfurt
-    rootDir: nuxt-spedizionefacile-master
+    rootDir: apps/web
     buildCommand: npm ci && npm run build
     startCommand: node .output/server/index.mjs
     autoDeploy: true
     healthCheckPath: /
     buildFilter:
       paths:
-        - nuxt-spedizionefacile-master/**
+        - apps/web/**
     envVars:
       - key: NODE_ENV
         value: production
@@ -192,12 +192,12 @@ services:
     env: docker
     plan: starter
     region: frankfurt
-    rootDir: laravel-spedizionefacile-main
+    rootDir: apps/api
     dockerfilePath: ./Dockerfile
     autoDeploy: true
     buildFilter:
       paths:
-        - laravel-spedizionefacile-main/**
+        - apps/api/**
     # --tries=3: retry max 3 volte prima di marcare failed
     # --timeout=60: SIGTERM dopo 60s (job in loop -> killati)
     # --max-jobs=1000: riavvio worker dopo 1000 job (protezione memory leak)
@@ -280,7 +280,7 @@ services:
     plan: starter
     region: frankfurt
     schedule: "0 3 * * *"  # 03:00 UTC daily
-    rootDir: laravel-spedizionefacile-main
+    rootDir: apps/api
     dockerfilePath: ./Dockerfile
     dockerCommand: bash /var/www/html/scripts/backup-daily.sh
     envVars:

@@ -20,7 +20,7 @@ services:
     env: docker
     plan: starter  # starter minimo per evitare cold start, risparmio vs prod
     region: frankfurt
-    rootDir: laravel-spedizionefacile-main
+    rootDir: apps/api
     dockerfilePath: ./Dockerfile
     autoDeploy: true
     branch: staging  # deploy solo da branch staging
@@ -29,7 +29,7 @@ services:
 
     buildFilter:
       paths:
-        - laravel-spedizionefacile-main/**
+        - apps/api/**
 
     envVars:
       # ---- Applicazione -----------------------------------------------------
@@ -151,7 +151,7 @@ services:
     env: node
     plan: starter
     region: frankfurt
-    rootDir: nuxt-spedizionefacile-master
+    rootDir: apps/web
     buildCommand: npm ci && npm run build
     startCommand: node .output/server/index.mjs
     autoDeploy: true
@@ -159,7 +159,7 @@ services:
     healthCheckPath: /
     buildFilter:
       paths:
-        - nuxt-spedizionefacile-master/**
+        - apps/web/**
     envVars:
       - key: NODE_ENV
         value: production  # build ottimizzata, ma NUXT_PUBLIC_ENV=staging

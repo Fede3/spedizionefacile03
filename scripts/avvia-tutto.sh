@@ -21,8 +21,8 @@ resolve_project_dir() {
   echo ""
 }
 
-LARAVEL_DIR="$(resolve_project_dir "laravel-spedizionefacile-main" "artisan")"
-NUXT_DIR="$(resolve_project_dir "nuxt-spedizionefacile-master" "nuxt.config.ts")"
+LARAVEL_DIR="$(resolve_project_dir "apps/api" "artisan")"
+NUXT_DIR="$(resolve_project_dir "apps/web" "nuxt.config.ts")"
 
 if [[ -z "$LARAVEL_DIR" ]]; then
   echo "Cartella Laravel non trovata (marker artisan)."

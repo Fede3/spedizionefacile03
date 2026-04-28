@@ -2,8 +2,8 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-LARAVEL_DIR="${ROOT_DIR}/laravel-spedizionefacile-main"
-NUXT_DIR="${ROOT_DIR}/nuxt-spedizionefacile-master"
+LARAVEL_DIR="${ROOT_DIR}/apps/api"
+NUXT_DIR="${ROOT_DIR}/apps/web"
 
 LARAVEL_PORT="${LARAVEL_PORT:-8000}"
 NUXT_PORT="${NUXT_PORT:-3001}"

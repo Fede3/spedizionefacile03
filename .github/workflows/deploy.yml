@@ -50,7 +50,7 @@ jobs:
         with:
           node-version: '22'
           cache: 'npm'
-          cache-dependency-path: nuxt-spedizionefacile-master/package-lock.json
+          cache-dependency-path: apps/web/package-lock.json
 
       - name: Setup PHP 8.3
         uses: shivammathur/setup-php@v2
@@ -60,15 +60,15 @@ jobs:
           tools: composer:v2
 
       - name: Build Laravel (composer install no-dev)
-        working-directory: laravel-spedizionefacile-main
+        working-directory: apps/api
         run: composer install --no-dev --prefer-dist --optimize-autoloader --no-progress --no-interaction
 
       - name: Install Nuxt deps
-        working-directory: nuxt-spedizionefacile-master
+        working-directory: apps/web
         run: npm ci --prefer-offline --no-audit
 
       - name: Build Nuxt .output/
-        working-directory: nuxt-spedizionefacile-master
+        working-directory: apps/web
         run: npm run build
         env:
           NODE_OPTIONS: --max-old-space-size=6144
@@ -76,7 +76,7 @@ jobs:
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
 
       - name: Build Laravel Docker image
-        run: docker build -f laravel-spedizionefacile-main/Dockerfile -t spedizionefacile-api:staging-${{ github.sha }} laravel-spedizionefacile-main
+        run: docker build -f apps/api/Dockerfile -t spedizionefacile-api:staging-${{ github.sha }} apps/api
         continue-on-error: true
 
       - name: Trigger Render deploy (Laravel API)
@@ -91,7 +91,7 @@ jobs:
 
       - name: Upload Nuxt sourcemaps to Sentry
         if: secrets.SENTRY_AUTH_TOKEN != ''
-        working-directory: nuxt-spedizionefacile-master
+        working-directory: apps/web
         run: |
           npx @sentry/cli releases new "${{ github.sha }}"
           npx @sentry/cli releases files "${{ github.sha }}" upload-sourcemaps .output/public --url-prefix "~/"
@@ -135,7 +135,7 @@ jobs:
         with:
           node-version: '22'
           cache: 'npm'
-          cache-dependency-path: nuxt-spedizionefacile-master/package-lock.json
+          cache-dependency-path: apps/web/package-lock.json
 
       - name: Setup PHP 8.3
         uses: shivammathur/setup-php@v2
@@ -145,15 +145,15 @@ jobs:
           tools: composer:v2
 
       - name: Build Laravel (production)
-        working-directory: laravel-spedizionefacile-main
+        working-directory: apps/api
         run: composer install --no-dev --prefer-dist --optimize-autoloader --no-progress --no-interaction
 
       - name: Install Nuxt deps
-        working-directory: nuxt-spedizionefacile-master
+        working-directory: apps/web
         run: npm ci --prefer-offline --no-audit
 
       - name: Build Nuxt production bundle
-        working-directory: nuxt-spedizionefacile-master
+        working-directory: apps/web
         run: npm run build
         env:
           NODE_OPTIONS: --max-old-space-size=6144
@@ -169,7 +169,7 @@ jobs:
           curl -fsSL -X POST "${{ secrets.RENDER_DEPLOY_HOOK_NUXT_PROD }}"
 
       - name: Upload sourcemaps to Sentry (prod)
-        working-directory: nuxt-spedizionefacile-master
+        working-directory: apps/web
         run: |
           npx @sentry/cli releases new "${{ github.sha }}"
           npx @sentry/cli releases files "${{ github.sha }}" upload-sourcemaps .output/public --url-prefix "~/"
