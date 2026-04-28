@@ -53,18 +53,18 @@
  *  Section common (mission, stats, team, timeline, values, partnership, cta)
  * ============================================================ */
 
-[class$="__inner"],
-.about-stats > .my-container,
-.about-team > .my-container,
-.about-timeline > .my-container,
-.about-values > .my-container {
+.about-page [class$="__inner"],
+.about-page .about-stats > .my-container,
+.about-page .about-team > .my-container,
+.about-page .about-timeline > .my-container,
+.about-page .about-values > .my-container {
 	max-width: 1200px;
 	margin: 0 auto;
 	padding-left: 24px;
 	padding-right: 24px;
 }
 
-[class$="__header"] {
+.about-page [class$="__header"] {
 	display: flex;
 	flex-direction: column;
 	align-items: center;
@@ -73,7 +73,7 @@
 	margin-bottom: 40px;
 }
 
-[class$="__eyebrow"] {
+.about-page [class$="__eyebrow"] {
 	display: inline-block;
 	font-size: 0.75rem;
 	font-weight: 700;
@@ -82,7 +82,7 @@
 	text-transform: uppercase;
 }
 
-[class$="__title"]:not([class*="card-title"]):not([class*="title-item"]):not(.about-stats__title):not(.about-team__name):not(.about-partnership__title) {
+.about-page [class$="__title"]:not([class*="card-title"]):not([class*="title-item"]):not(.about-stats__title):not(.about-team__name):not(.about-partnership__title) {
 	font-size: clamp(1.75rem, 3vw, 2.25rem);
 	font-weight: 700;
 	color: var(--color-brand-text);
