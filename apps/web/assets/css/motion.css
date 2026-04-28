@@ -54,23 +54,7 @@ html:not(.is-hydrated) *::after {
  * Entrata di modal, toast, popover, tooltip.
  * Fade + traslazione morbida 6px.
  * ──────────────────────────────────────────────────────── */
-@keyframes sf-reveal {
-	from {
-		opacity: 0;
-		transform: translateY(6px);
-	}
-	to {
-		opacity: 1;
-		transform: none;
-	}
-}
-
 /* ────────────────────────────────────────────────────────
  * PRIMITIVA 3 — sf-spin
  * UNICA animazione infinita del sito. Solo per loader/spinner.
  * ──────────────────────────────────────────────────────── */
-@keyframes sf-spin {
-	to {
-		transform: rotate(360deg);
-	}
-}

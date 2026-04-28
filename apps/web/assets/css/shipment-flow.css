@@ -3489,11 +3489,7 @@
 		padding-inline: 2px;
 		gap: 8px;
 	}
-.pickup-date-option__month {
-		font-size: 0.75rem;
-	}
-
-	/* Address form: stack fields properly on mobile */
+/* Address form: stack fields properly on mobile */
 	.address-form-street-grid {
 		grid-template-columns: 1fr;
 		gap: 8px;

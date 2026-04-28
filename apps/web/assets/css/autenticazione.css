@@ -406,15 +406,7 @@
 	.auth-shell-message__action {
 		width: 100%;
 	}
-.auth-register-segmented--role {
-		max-width: 100%;
-	}
-
-	.auth-choice-radio-row {
-		gap: 8px;
-	}
-
-	.auth-choice-radio {
+.auth-choice-radio {
 		min-height: 36px;
 	}
 }
