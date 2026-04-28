@@ -3,190 +3,99 @@
 Tutte le modifiche rilevanti al progetto sono documentate qui.
 Formato: [Keep a Changelog](https://keepachangelog.com/).
 
-## [2.0.0-rewrite] — 2026-04-28 — Monolite Inertia
+## [2.3.1-deps-clean] — 2026-04-28 — Cleanup agency-grade completo
 
-Riscrittura completa: Nuxt 4 SPA → Laravel + Inertia 2 + Vue 3.5 + Tailwind 4 + Vite 5.
+Sessione di cleanup operata su repo Laravel 11 API + Nuxt 4 SPA + Caddy reverse
+proxy. Rollback del rewrite Inertia annullato e bonifica residui.
 
-### Cambiato
+### Removed (junk + dead code)
 
-- **Stack frontend**: rimosso Nuxt + Pinia + Nuxt UI + composables/stores. Sostituito
-  con Inertia 2 + Vue 3.5 dumb pages + Tailwind 4 utility-first + `@theme` tokens brand.
-- **Repo struttura**: `apps/web/` eliminato, repo collassato a monolite Laravel
-  (1 process Laravel + 1 build Vite).
-- **Routes**: tutto via `routes/web.php` Inertia. API legacy in `routes/api.php`
-  per webhook e SDK futuri.
-- **Auth**: rimosso Fortify. Auth via `InertiaAuthController` (login, register,
-  password reset, email verify, Google OAuth).
-- **Pagamenti**: aggiunto `StripeCheckoutSession` hosted (riduce PCI scope).
-  Stripe Elements custom resta per backward compat API legacy.
-- **CSS**: rimosso 21k LOC CSS custom. Tailwind 4 + 1 file `app.css` con `@theme` tokens.
-- **Pages**: 47 Nuxt pages → 25 Inertia pages dumb (Static, Auth, Account, Admin, Shipment, Checkout).
+- **`_data/snapshot_pre_rewrite.sql` + `snapshot_post_rewrite.sql`** (88 MB):
+  residui rewrite annullato.
+- **`storage/logs/*`** (~3 MB log dev accumulati).
+- **`docs/CLEANUP_PLAN_AI.md` + `docs/baseline/` + `docs/legacy-api-readme.md`**.
+- **`scripts/local-tools/`** (Claude/Codex/Win launcher GUI personali, 675 KB).
+- **`scripts/ripristina-vue.sh`** (recovery post-rewrite obsoleto).
+- **13 orfani backend + 1 composable Vue** (-991 LOC):
+  - `app/Services/BrtClient.php` + `StripeCheckoutSession.php` (rewrite v2 morti).
+  - `app/Mail/BrtErrorAlert/OrderDelivered/OrderShipped/Welcome.php` (4 file).
+  - `app/Http/Requests/BillingAddressStoreRequest + BrtWebhookTrackingRequest.php`.
+  - `app/Http/Resources/BillingAddressResource + UserResource.php`.
+  - `apps/web/components/sf/SfStateView.vue` (primitive non adottata).
+  - `apps/web/composables/useAdminUserDetail.ts` (drawer refattorizzato).
+- **2 dipendenze Composer morte**: `inertiajs/inertia-laravel` v3.0 +
+  `tightenco/ziggy` v2.6 (zero hits in `app/`).
+- **5 controller Inertia + 35 Vue + 1 middleware** dello scaffold rewrite
+  annullato (rollback frontend Nuxt completo).
+- **2 tag git bugiardi**: `v2.0.0-rewrite-complete` + `v2.0.1-real-funnel`
+  (riferivano scaffold Inertia rollbackato).
 
-### Eliminato
+### CSS purge (multi-pass + bisection automatica) — -2.276 LOC
 
-- `apps/web/` intero (-87.794 LOC frontend Nuxt)
-- 66 composables Vue
-- 16 file CSS custom (20.945 LOC)
-- 126 components Nuxt UI
-- `database/comuni.json` (1.9 MB) + `IT.zip` + `GR.zip` (locations da GeoNames CDN)
-- `laravel/fortify` + 5 actions Fortify + provider + config
-- `OrderBrtTrackingLookupService` (orphan)
+Tooling automatico in `scripts/`: `purge-dead-css.py`, `aggressive-purge-css.py`,
+`bisect-purge.py`, `multi-pass-purge.py`, `trivialize-css.py`, `analyze-css.py`.
 
-### Riduzioni misurate
+| File CSS | Passo 1 | Passo 2 (bisect) | Passo 3 (multi) |
+|---|---:|---:|---:|
+| `account.css` | -678 | -38 | — |
+| `admin.css` | -211 | -7 | — |
+| `autenticazione.css` | -379 | -10 | -8 |
+| `cookie-banner.css` | — | -67 | — |
+| `home.css` | -128 | — | — |
+| `main.css` | -33 | — | — |
+| `motion.css` | — | -26 | -16 (keyframes) |
+| `shipment-flow.css` | -349 | -32 | -4 |
+| altri | -274 | -16 | — |
+| **Totale** | **-2.052** | **-196** | **-28** |
 
-| Metrica | Pre | Post | Δ |
-|---|---|---|---|
-| LOC frontend | 87.794 | ~3.000 | -97% |
-| File CSS | 16 (20.945 LOC) | 1 (43 LOC) | -99,8% |
-| Composables Vue | 66 | 0 | -100% |
-| Bundle prod | 34 MB | 250 KB (80 KB gzip) | -99,3% |
-| Apps cartelle | 2 | 1 | -50% |
-| File geo DB | 2.2 MB | 0 | -100% |
+CSS totale: 20.945 → 18.669 LOC (-10.9%).
 
-### File critici intatti
+### Refactor (split file >400/500 LOC via trait/composable)
 
-`StripeCheckoutController`, `StripeWebhookController`, `StripePaymentService`,
-`OrderCreationService`, `WalletOrderPaymentService`, `Models/Order`,
-`BrtWebhookController`, `BrtController`, `bootstrap/app.php` invariati.
-Idempotency Stripe + firma HMAC BRT preservate.
+Pattern: trait/composable per zero ABI change, callsite invariati.
 
-### Backup
+| File | Pre | Post | Estratto |
+|---|---:|---:|---|
+| `BrtBordereauGenerator.php` | 742 | 525 | trait `Brt/PdfRenderingPrimitives.php` (243 LOC) |
+| `CheckoutSubmissionContextService.php` | 614 | 401 | trait `Checkout/SnapshotCompactingHelpers.php` (234 LOC) |
+| `LocationController.php` | 455 | 359 | service `Catalog/PhotonLocationFallback.php` (106 LOC) |
+| `InvoicePdfService.php` | 422 | 294 | trait `Invoice/SinglePagePdfHelpers.php` (154 LOC) |
+| `StripeWebhookController.php` | 527 | 404 | trait `StripeWebhookHelpers.php` (145 LOC) |
+| `StripePaymentService.php` | 472 | 385 | trait `Stripe/IdempotencyAndMetadataHelpers.php` (112 LOC) |
+| `StripeCheckoutController.php` | 760 | 485 | trait `StripeCheckoutHelpers.php` (308 LOC) |
+| `pages/traccia/[tracking].vue` | 581 | 392 | composable `useTrackingDetail.ts` (225 LOC) |
 
-Cartella completa pre-rewrite in `spedizionefacile_backup_20260428_102352/`
-(179 MB, esclusi `node_modules`/`.nuxt`/`.output`/`vendor`).
+File >400 LOC PHP: 15 → 7 (-53%). File >500 LOC Vue: 5 → 4 (-20%).
 
-DB snapshot `_data/snapshot_pre_rewrite.sql` + `_data/snapshot_post_rewrite.sql`
-(607.968 righe ciascuno, in `.gitignore`).
+### Stack consolidato (post-rollback Inertia)
 
-### Verifica E2E browser
+- **Backend**: Laravel 11 + Sanctum 4 + Stripe SDK 18 + BRT REST 3.x (`app/`, root)
+- **Frontend**: Nuxt 4.1 + Vue 3.5 + Pinia 3 + Nuxt UI 4 + Tailwind 4 (`apps/web/`)
+- **Reverse proxy**: Caddy `:8787` split routing → Laravel `:8000` API + Nuxt `:3001` SPA
 
-- Home + Contatti renderizzate live `http://localhost:8000/`
-- 17/17 pagine pubbliche + funnel: HTTP 200
-- Build Vite production: verde, 250 KB / 80 KB gzip
-- Stripe Checkout hosted endpoint registrato
+### Verificato
 
-## [Unreleased] — Risanamento V5.1R4 in corso
-
-> Questa sezione rappresenta lo stato REALE della repo al 2026-04-24.
-> La versione 1.0.0 originariamente dichiarata "Go-live Production" non è ancora completa.
-> Vedi piano `C:\Users\Feder\.claude\plans\smooth-meandering-quokka.md` per dettagli.
-
-### Stato attuale (dati verificati filesystem)
-
-**Frontend**: 73.156 LOC Nuxt 3 (da 85.645 → −14,6%).
-**Backend**: 58.437 LOC Laravel 11 (include test + services aggiunti).
-**Docs canonici**: 29 file attivi in `docs/` (93 file legacy in `docs/archive/`).
-**Branch di sviluppo**: `risanamento-v5-1r4` (da `codex-work-2026-04-24-snapshot`).
-**Bundle backup**: `G:\spedizionefacile-2026-04-24.bundle` (32 MB, 44 refs).
-
-### Added (lavoro Codex 21-24 apr — stato REALE)
-
-- Stripe integration con retry logic webhook e idempotency
-- BRT integration come intermediario diretto (no aggregatori), payload sanitizzato per errore -68 (whitelist `senderCustomerCode`)
-- Sentry FE+BE error tracking + performance monitoring
-- Web Vitals tracking (LCP/INP/CLS/FCP/TTFB)
-- Plausible + GA4 Consent Mode v2 analytics
-- Health check endpoint `/api/health` (4 services)
-- CI/CD GitHub Actions (workflow ci.yml + deploy.yml)
-- Husky pre-commit + commit-msg Conventional Commits
-- Visual regression Playwright (baseline in `apps/web/tests/visual/`)
-- Unit tests backend (75 test / 353 assertion passati sui servizi pagamento/wallet/coupon/referral/BRT/pickup/documenti)
-- E2E tests frontend Playwright (~10 spec, 20 passati / 5 falliti al 24/4 per label mismatch funnel)
-- **3 componenti Sf\* canonici** in `components/sf/`: `SfConfirmDialog`, `SfModal`, `SfSkeleton`. Gli altri 7 (SfButton, SfCard, SfInput, SfBadge, SfIcon, SfEmptyState, SfToast, SfTooltip) sono stati creati e successivamente archiviati come orfani in `_archive/frontend-simplification-2026-04-20/components-orfani/sf/`.
-- **178 design tokens** in `apps/web/assets/css/main.css:root`
-- TrustBadges + NewsletterSignup components in `components/layout/`
-- 4 error pages Laravel custom (404/500/503/403)
-- Feedback widget beta (FeedbackWidget.vue)
-- Beta whitelist middleware
-- **29 docs canonici attivi**: README, QUICKSTART, ARCHITECTURE, ARCHITECTURE_MAP, FEATURE_BOUNDARIES, FRONTEND_STRUCTURE, BACKEND_STRUCTURE, API_CONTRACT, CONTRIBUTING, ONBOARDING, DEBUGGING, DESIGN_SYSTEM, GLOSSARIO, FAQ_DEV, ROADMAP, SECURITY, GDPR_COMPLETO, LEGAL_GOLIVE_CHECKLIST, GOLIVE_CHECKLIST, STRIPE_LIVE_SETUP, BRT_PRODUCTION_SETUP, PUDO_FALLBACK_SETUP, DEPLOY, VISUAL_REGRESSION + 3 ADR (001-sanctum, 002-moneyphp-cents, 003-brt-direct)
-- Print CSS ordini/fatture/bordero
-- Layer di dominio `apps/web/features/`:
-  - `shipment-flow/` (7 file, usati da `composables/useShipmentStepPageOrchestration.js`)
-  - `wallet-referral/` (2 file, usati da `composables/useCart.js`)
-
-### Changed
-
-- CSP production senza `unsafe-inline` script-src
-- OAuth state da cookie a session + PKCE SHA256
-- Email enumeration protection (response identico + timing normalization)
-- File upload security (ImageSanitizer GD + FormRequest)
-- Stripe `account_id` + `customer_id` encrypted at rest (migration `2026_04_20_000000_encrypt_existing_stripe_account_ids.php`)
-- **Composables TypeScript → JavaScript puro** (REVERSE dell'ipotesi Codex iniziale): 71 file `.ts` originali archiviati in `_archive/frontend-simplification-2026-04-20/composables-typescript/71-ts-originali/`. Oggi **0 file `.ts` in `composables/`**, direzione allineata all'intenzione utente "meno linguaggi".
-- SeoMeta coverage pagine pubbliche
-- JSON-LD 6 schema (LocalBusiness, Organization, BreadcrumbList, Service, Article, FAQPage)
-- Docker Apache → PHP-FPM alpine + nginx sidecar
-- AuthOverlay modal rebuilt (fix bordo, overlay, chiusura inaspettata)
-- Pagine Guide/Traccia/Contatti/Servizi rewrite allineate Prototipo
-- Components top-level riorganizzati in sottocartelle: `components/layout/`, `components/shipment/`, `components/pudo/`
-- Routes API Laravel splittate: `routes/api/{admin,auth,cart,claims,community,invoices,orders,payments,public,shipment}.php`
-
-### Fixed (parziale)
-
-- 5/5 security blockers chiusi (Stripe encryption, CSP, OAuth PKCE, email enum, file upload)
-- BRT `ritiro_al_piano` non attiva più pickup automaticamente senza richiesta esplicita (fix grave)
-- `single_order_only` anti-duplicazione ordini nel checkout
-- BRT errore `-68` "Unrecognized field" **bypassato** con whitelist payload (sender dedotto da `senderCustomerCode`, `pParcelID` rimosso). **Fix reale rimandato post-launch con sandbox BRT** per testare candidati `parcels|parcelsData|parcelDetails`.
-
-### Removed
-
-- **Blu Tailwind da palette** (teal+arancione+neutri è la palette ferrea)
-- **Hex hardcoded sostituiti con CSS variables** (vedi commit `4d93bd1` + `5f03184`)
-- 5.984 righe CODEX_*/TEAM_LOG archiviati in `docs/archive/`
-- 1.7 MB build logs (13 file + pw-last.log)
-- Componenti orfani: useRiepilogo, AccountProSkeleton, Skeleton, OrderSummary, 20+ altri
-- Feature non-core pianificate per archivio (Fase 3.2 risanamento): blog, API Pro, Bulk CSV, Swagger, PWA+push, Scanner QR, SDI fatturazione, SMS in-app
-
-### Security
-
-- 5/5 security blockers chiusi
-- CSP production hardened (enforce dopo 48h report-only)
-- OAuth PKCE SHA256 + state session-based timing-safe hash_equals
-- Password reset generic response + timing jitter 200-300ms
-- Image upload GD re-encoding strippa EXIF + magic byte check
+- 333 test backend pass (1.089 assertions), 0 fail
+- 13 pagine pubbliche/auth: tutte 200/301 OK live su `127.0.0.1:8787`
+- API: `/api/cart`, `/api/locations/by-cap`, `/sanctum/csrf-cookie` operative
+- `composer.json` 6 dipendenze runtime (era 8)
+- `migrate:fresh` + `db:seed` funzionante (Laravel 11 schema:dump pattern)
 
 ### Discrepanze corrette in questo CHANGELOG (onestà)
 
-Questa versione corregge claim inesatti di un CHANGELOG precedente:
-
 | Claim precedente | Realtà verificata |
 |---|---|
-| "10 SF atomic components library" | **3 reali** in `components/sf/`; 7 orfani archiviati |
-| "174 design tokens main.css" | **178 design tokens** (contati in `:root`) |
-| "T3.6.5 preservato byte-identical durante split [step].vue" | **Falso**: `pages/la-tua-spedizione/[step].vue` è **1.263 LOC non splittato**. Split rinviato post-launch (rischio regressione funnel). |
-| "Composables 20+ migrati .js → .ts con 21 interfaces" | **Invertito**: direzione corretta è `.ts → .js`. 71 `.ts` archiviati, 0 `.ts` in composables oggi. |
-| "BRT production ready" | **Parziale**: integrazione BRT funziona con payload sanitizzato, errore -68 bypassato, fix reale post-launch. |
+| `[2.0.0-rewrite] — Monolite Inertia` | **Rewrite ANNULLATO**: rollback a Nuxt 4 SPA + Laravel API headless completato |
+| "13 BrtServices da fondere in BrtClient" | **Falso**: tutti attivi (3-9 hits/each), separazione SOLID. BrtClient creato come facade unificante (vedi sezione Added) |
+| "5 Stripe controller morti" | **Falso**: tutti usati (Connect onboarding Pro, Customer saved cards, Refund 4 file inclusi 2 test, Checkout/Webhook gateway core) |
+| "6 Auth controller da collassare" | **Falso**: standard Laravel best practice single-responsibility (Login, Register, ChangePassword, PasswordReset, Verification, Google) |
+| "Architettura ibrida `app/` + `apps/web/`" | **Corretta**: split monorepo Laravel API headless + Nuxt SPA è il pattern post-rollback documentato |
+| "Migrations vuote = bug" | **Pattern Laravel 11**: `database/schema/sqlite-schema.sql` (872 LOC) come fonte di verità via `schema:dump --prune`. `RefreshDatabase` funziona, 333 test verdi. README in `database/migrations/` |
 
-### Non ancora fatto (Risanamento V5.1R4 in corso)
+## [Unreleased]
 
-Vedi piano `.claude/plans/smooth-meandering-quokka.md`:
-
-- [ ] Fase 2A — Fix pagamento disconnect utente + perdita dati durante 3DS Stripe
-- [ ] Fase 2B — Fix FAQ home che si chiudono al click (accordion state)
-- [ ] Fase 2C — Unificare cookie banner variants `--dense`/`--flow` per coerenza sitewide
-- [ ] Fase 2D — Unificare spaziatura pagine pubbliche con tokens `--spacing-page-*`
-- [ ] Fase 3.1 — Eliminare 8 `LEGGERE-QUI.md` redirect-only (mantenere solo `app/Services/Brt/`)
-- [ ] Fase 3.2 — Audit incrociato + archivio frontend+backend coordinato feature non-core
-- [ ] Fase 3.3 — Dedupe CSS duplicati `.sf-segmented-control`, `.sf-card` + riduzione tokens 178 → 60-80 essenziali
-- [ ] Fase 4 — Palette check `blue-|indigo-|sky-|slate-` + eliminazione AI-slop grafico + allowlist documentata
-- [ ] Fase 5 — Test manuali sistematici 20+ scenari V5.1R4 (funnel multi-collo, PUDO, contrassegno, pagamenti carta/bonifico/wallet/PayPal, coupon/referral end-to-end, wallet top-up, post-pagamento, account/admin)
-- [ ] Fase 6.1 — Docs finali ≤ 10 canonici + 3 ADR
-- [ ] Fase 6.2 — Copia G:\ pennina senza riferimenti AI
-- [ ] Fase 6.3 — Documento grafico interattivo HTML standalone BE+FE desktop+mobile
-- [ ] Fase 6.4 — CHANGELOG finale con numeri post-risanamento + `CHANGELOG-VERIFY.md` riproducibile
-- [ ] Fase 6.5 — Commit finale taggato `v1.0.0-real`
-
-### Bug noti aperti (da sistemare in Fase 2)
-
-| Bug | Stato |
-|---|---|
-| Pagamento Stripe disconnette utente + perde dati compilati | 🔴 Aperto — Fase 2A prioritaria |
-| FAQ home si chiudono "in massa" al click | 🔴 Aperto — Fase 2B |
-| Cookie banner percepito diverso home vs pagine interne | 🟡 Non-bug tecnico (stesso componente), varianti `--dense`/`--flow` da uniformare — Fase 2C |
-| Spaziatura non uniforme pagine pubbliche | 🔴 Aperto — Fase 2D |
-| BRT errore -68 | 🟠 Bypassato con whitelist payload — fix reale post-launch |
-| Artefatti grafici durante caricamento | 🔴 Aperto — da investigare |
-| `.tmp-repro-422.mjs` runtime debug | 🟡 File debug Playwright per errore 422 submit — investigazione aperta |
+Vedi git log per stato corrente.
 
 ---
 
-[Unreleased]: https://github.com/Boop91/spedizionefacile/compare/main...risanamento-v5-1r4
+[2.3.1-deps-clean]: https://github.com/Boop91/spedizionefacile/releases/tag/v2.3.1-deps-clean
