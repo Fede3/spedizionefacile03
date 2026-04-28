@@ -25,9 +25,26 @@ class OrderBrtTrackingReadService
     ];
 
     public function __construct(
-        private readonly OrderBrtTrackingLookupService $lookup,
         private readonly TrackingService $tracking,
     ) {}
+
+    /** Lookup pubblico per tracking: accetta SF-123, #123, brt_parcel_id, brt_tracking_number. */
+    private function findPublicTrackingOrder(string $code): ?Order
+    {
+        $normalized = trim($code);
+        if ($normalized === '') return null;
+
+        $byRef = Order::where('brt_parcel_id', $normalized)->first()
+            ?? Order::where('brt_tracking_number', $normalized)->first()
+            ?? Order::where('brt_numeric_sender_reference', $normalized)->first();
+        if ($byRef) return $byRef;
+
+        $cleanCode = preg_replace('/^(SF-|#|sf-)/i', '', $normalized);
+        if (is_numeric($cleanCode)) {
+            return Order::where('id', (int) $cleanCode)->whereNotNull('brt_parcel_id')->first();
+        }
+        return null;
+    }
 
     public function buildOrderTrackingPayload(Order $order): array
     {
@@ -45,7 +62,7 @@ class OrderBrtTrackingReadService
     public function buildPublicTrackingPayload(string $code): array
     {
         $normalizedCode = trim($code);
-        $order = $this->lookup->findPublicTrackingOrder($normalizedCode);
+        $order = $this->findPublicTrackingOrder($normalizedCode);
 
         if (! $order) {
             return [

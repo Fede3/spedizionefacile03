@@ -10,8 +10,18 @@ class OrderBrtTrackingLifecycleService
 {
     public function __construct(
         private readonly TrackingService $tracking,
-        private readonly OrderBrtTrackingLookupService $lookup,
     ) {}
+
+    /** Lookup ordine via riferimento BRT (parcel_id, tracking, sender_reference). */
+    private function findOrderByTrackingReference(string $reference): ?Order
+    {
+        $normalized = trim($reference);
+        if ($normalized === '') return null;
+
+        return Order::where('brt_parcel_id', $normalized)->first()
+            ?? Order::where('brt_tracking_number', $normalized)->first()
+            ?? Order::where('brt_numeric_sender_reference', $normalized)->first();
+    }
 
     /**
      * Owns the status transition from external BRT tracking data to Order.
@@ -140,11 +150,6 @@ class OrderBrtTrackingLifecycleService
             'description' => $description,
             'error' => null,
         ];
-    }
-
-    public function findOrderByTrackingReference(string $reference): ?Order
-    {
-        return $this->lookup->findOrderByTrackingReference($reference);
     }
 
     public function isFinalStatus(?string $status): bool

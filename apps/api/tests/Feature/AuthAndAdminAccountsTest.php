@@ -46,9 +46,12 @@ class AuthAndAdminAccountsTest extends TestCase
     {
         $user = User::factory()->unverified()->create();
 
-        $url = URL::temporarySignedRoute('verification.verify', now()->addMinutes(60), ['id' => $user->id]);
+        $url = URL::temporarySignedRoute('verification.verify', now()->addMinutes(60), [
+            'id' => $user->id,
+            'hash' => sha1($user->email),
+        ]);
 
-        $response = $this->get($url);
+        $response = $this->actingAs($user)->get($url);
 
         $response->assertRedirect();
         $this->assertNotNull($user->fresh()->email_verified_at);
