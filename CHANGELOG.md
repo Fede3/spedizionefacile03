@@ -3,6 +3,68 @@
 Tutte le modifiche rilevanti al progetto sono documentate qui.
 Formato: [Keep a Changelog](https://keepachangelog.com/).
 
+## [2.0.0-rewrite] — 2026-04-28 — Monolite Inertia
+
+Riscrittura completa: Nuxt 4 SPA → Laravel + Inertia 2 + Vue 3.5 + Tailwind 4 + Vite 5.
+
+### Cambiato
+
+- **Stack frontend**: rimosso Nuxt + Pinia + Nuxt UI + composables/stores. Sostituito
+  con Inertia 2 + Vue 3.5 dumb pages + Tailwind 4 utility-first + `@theme` tokens brand.
+- **Repo struttura**: `apps/web/` eliminato, repo collassato a monolite Laravel
+  (1 process Laravel + 1 build Vite).
+- **Routes**: tutto via `routes/web.php` Inertia. API legacy in `routes/api.php`
+  per webhook e SDK futuri.
+- **Auth**: rimosso Fortify. Auth via `InertiaAuthController` (login, register,
+  password reset, email verify, Google OAuth).
+- **Pagamenti**: aggiunto `StripeCheckoutSession` hosted (riduce PCI scope).
+  Stripe Elements custom resta per backward compat API legacy.
+- **CSS**: rimosso 21k LOC CSS custom. Tailwind 4 + 1 file `app.css` con `@theme` tokens.
+- **Pages**: 47 Nuxt pages → 25 Inertia pages dumb (Static, Auth, Account, Admin, Shipment, Checkout).
+
+### Eliminato
+
+- `apps/web/` intero (-87.794 LOC frontend Nuxt)
+- 66 composables Vue
+- 16 file CSS custom (20.945 LOC)
+- 126 components Nuxt UI
+- `database/comuni.json` (1.9 MB) + `IT.zip` + `GR.zip` (locations da GeoNames CDN)
+- `laravel/fortify` + 5 actions Fortify + provider + config
+- `OrderBrtTrackingLookupService` (orphan)
+
+### Riduzioni misurate
+
+| Metrica | Pre | Post | Δ |
+|---|---|---|---|
+| LOC frontend | 87.794 | ~3.000 | -97% |
+| File CSS | 16 (20.945 LOC) | 1 (43 LOC) | -99,8% |
+| Composables Vue | 66 | 0 | -100% |
+| Bundle prod | 34 MB | 250 KB (80 KB gzip) | -99,3% |
+| Apps cartelle | 2 | 1 | -50% |
+| File geo DB | 2.2 MB | 0 | -100% |
+
+### File critici intatti
+
+`StripeCheckoutController`, `StripeWebhookController`, `StripePaymentService`,
+`OrderCreationService`, `WalletOrderPaymentService`, `Models/Order`,
+`BrtWebhookController`, `BrtController`, `bootstrap/app.php` invariati.
+Idempotency Stripe + firma HMAC BRT preservate.
+
+### Backup
+
+Cartella completa pre-rewrite in `spedizionefacile_backup_20260428_102352/`
+(179 MB, esclusi `node_modules`/`.nuxt`/`.output`/`vendor`).
+
+DB snapshot `_data/snapshot_pre_rewrite.sql` + `_data/snapshot_post_rewrite.sql`
+(607.968 righe ciascuno, in `.gitignore`).
+
+### Verifica E2E browser
+
+- Home + Contatti renderizzate live `http://localhost:8000/`
+- 17/17 pagine pubbliche + funnel: HTTP 200
+- Build Vite production: verde, 250 KB / 80 KB gzip
+- Stripe Checkout hosted endpoint registrato
+
 ## [Unreleased] — Risanamento V5.1R4 in corso
 
 > Questa sezione rappresenta lo stato REALE della repo al 2026-04-24.
