@@ -1,126 +1,124 @@
-# Onboarding — Primo giorno dev su SpediamoFacile
+# Onboarding — SpediamoFacile v2
 
-Checklist pensata per ~30 minuti totali. Segui l'ordine: ogni step assume i precedenti completati.
+Tempo stimato: **20 minuti** dal clone al primo render.
 
-> Se blocchi >15 min, chiedi al senior che ti ha onboardato invece di perdere mezza giornata.
+## Cosa fa il sito (1 min)
 
-## Mappa mentale del sito (1 min)
+Intermediario BRT per spedizioni Italia/EU. Utente fa preventivo (CAP partenza
++ destinazione + peso + dimensioni), aggiunge servizi extra, paga (Stripe /
+bonifico / wallet), BRT ritira a domicilio e consegna. Wallet, fatture,
+admin panel completo.
 
-SpediamoFacile è un **intermediario BRT** per spedizioni Italia/EU: l'utente
-calcola un preventivo, sceglie servizi extra, inserisce indirizzi, paga (Stripe
-o bonifico o wallet) e BRT ritira/consegna. Stack:
-
-```
-[Browser] -> Caddy :8787 -> {Nuxt :3001 (frontend), Laravel :8000 (api)}
-                              |                          |
-                              |                          +-> PostgreSQL/SQLite
-                              |                          +-> Stripe API
-                              |                          +-> BRT REST API 3.x
-                              |                          +-> Redis (cache+queue)
-                              |
-                              +-> useSanctumClient (cookie SPA)
-```
-
-Funnel preventivo (cuore del sito):
+## Stack (1 min)
 
 ```
-[Home/Preventivo]
-     |  (compila Pacco/Pallet/Valigia + tratta + peso/misure)
-     v
-[/la-tua-spedizione/2?step=colli]   <- Step 1
-     |
-     v
-[/la-tua-spedizione/2?step=servizi] <- Step 2: data ritiro + servizi extra
-     |
-     v
-[/la-tua-spedizione/2?step=indirizzi] <- Step 3: pickup + delivery + PUDO opzionale
-     |
-     v
-[/la-tua-spedizione/2?step=pagamento] <- Step 4: Stripe / bonifico / wallet
-     |
-     v
-[/checkout/success] <- BRT label generata + email + tracking
+Browser ─→ Laravel :8000 (root: resources/views/app.blade.php Inertia)
+              │
+              ├─→ Inertia 2 + Vue 3.5 + Tailwind 4 (resources/js/Pages/)
+              ├─→ SQLite dev / Postgres prod
+              ├─→ Stripe API (idempotency + 3DS)
+              └─→ BRT REST 3.x (PUDO + tracking + label)
 ```
 
-## I 5 file da leggere PRIMA di scrivere codice (10 min)
+Niente Nuxt, niente SSR esterno, niente monorepo: **1 process Laravel + 1 build Vite**.
 
-1. **`CLAUDE.md`** (root) — convenzioni, regole d'oro, file critici, eccezioni.
-2. **`docs/ARCHITECTURE.md`** — stack + boundary + flussi pagamento.
-3. **`apps/web/app.vue`** — entry point Nuxt, plugin order.
-4. **`apps/web/pages/la-tua-spedizione/[step].vue`** (HEADER) — non aprire tutto
-   (1239 LOC, file critico). Leggi solo le prime 50 righe per capire la struttura.
-5. **`apps/api/app/Http/Controllers/Checkout/StripeCheckoutController.php`**
-   (HEADER) — file critico Stripe + idempotency.
+## Setup (10 min)
 
-## Setup locale (~15 min)
+```bash
+git clone <repo> spediamofacile && cd spediamofacile
+cd apps/api
 
-- [ ] **Clone repo** — `git clone <url>` + `cd spedizionefacile`
-- [ ] **Prerequisiti** — PHP 8.3, Node 22, Composer 2, sqlite3 CLI
-- [ ] **Root** — `npm install` (registra hook Husky)
-- [ ] **Backend** —
-  - `cd apps/api && cp .env.example .env && php artisan key:generate`
-  - `composer install`
-  - `php artisan migrate:fresh --seed`
-  - `php artisan serve --port=8000` (lascia aperto)
-- [ ] **Frontend** —
-  - `cd apps/web && cp .env.example .env && npm ci`
-  - `npm run dev` (lascia aperto su porta 3001)
-- [ ] **Caddy proxy** (in altro terminale) — `caddy run --config infra/caddy/Caddyfile`
-- [ ] **Smoke** — apri http://localhost:8787 → home carica + console pulita.
+# Backend
+composer install
+cp .env.example .env
+php artisan key:generate
+php artisan migrate:fresh --seed
 
-## Convenzioni vitali (5 min, NON SCORRERE VELOCE)
+# Frontend (stesso project root!)
+npm install
+npm run build              # production build
+# OPPURE in dev:
+npm run dev &              # Vite HMR su :5173
+php artisan serve &        # Laravel su :8000
 
-- **TypeScript canonico**: composables/stores/utils/server in `.ts`. Vue components
-  ammettono `<script setup>` plain o `lang="ts"`.
-- **Prezzi**: backend in **cents** (MyMoney), frontend `formatPrice() / 100`.
-- **Auth**: SOLO `useSanctumClient()`, MAI `$fetch` raw.
-- **Routes API**: `/api/*` prefix automatico per `routes/api/*.php`.
-  Webhooks BRT su `/webhooks/brt/tracking` (web.php, NO `/api`).
-- **Palette**: teal `#095866` + arancione `#E44203` + neutri. **Mai blu**
-  (no `blue-*`, `indigo-*`, `sky-*`, `slate-*` Tailwind).
-- **Italiano** per stringhe utente, **English** per identifier.
-- **Limiti file**: ≤400 LOC runtime, ≤500 composable, ≤500 component, ≤400 page.
-  Le 4 eccezioni formali sono in `CLAUDE.md` "Eccezioni documentate".
+# Apri browser
+open http://localhost:8000
+```
 
-## I 5 errori che farai sicuramente
+## Flow del codice (5 min)
 
-1. **Dimenticare `/100` sui prezzi**: backend ritorna 1190, devi mostrare 11,90 €.
-2. **Mockare il database nei test**: la repo usa SQLite locale + `RefreshDatabase`.
-   Test che mockano migrations sono falliti in produzione (incident 2026-Q1).
-3. **`blue-*` Tailwind**: la palette brand è teal+arancione. Lint pre-commit
-   blocca, ma se aggiri il lint il QA ti rimanda indietro.
-4. **Toccare i 4 file critici** senza E2E gating Stripe: vedi CLAUDE.md
-   "Eccezioni documentate". Carta test `4242 4242 4242 4242 09/30 123`.
-5. **Splittare `[step].vue` "perché grande"**: 1239 LOC sono *intenzionali*.
-   Splittare senza E2E browser causa regressioni di pagamento.
+```
+1. Browser GET /preventivo
+2. Laravel routes/web.php → InertiaShipmentController@preventivo
+3. Inertia::render('Shipment/Preventivo', [...props])
+4. Inertia restituisce HTML iniziale + JSON props
+5. Vue mounta Pages/Shipment/Preventivo.vue con props
+6. Layout default: Layouts/AppLayout.vue (header/footer)
+7. Form usa useForm() Inertia → POST → controller → redirect
+```
 
-## Domande frequenti
+## I 5 errori che farai
 
-**Posso usare TypeScript nei composable?**
-Sì, è la convenzione canonica. Vedi CLAUDE.md sezione "Convenzioni codice".
+1. **Cercare composables/stores Pinia frontend**: non esistono più. Stato
+   passa via Inertia props o `useForm()`. Pagine sono "dumb".
+2. **`$fetch` o axios per dati pagina**: usa `Inertia::render(...)`. axios
+   solo per chiamate AJAX puntuali (es. calcolo prezzo).
+3. **Toccare i file critici Stripe** senza E2E gating con carta test
+   `4242 4242 4242 4242 09/30 123`. Vedi CLAUDE.md "File critici".
+4. **`blue-*` Tailwind**: la palette è teal `#095866` + arancione `#E44203`.
+5. **Dimenticare cents**: backend ritorna `payable_total_cents`, mostra
+   `(value/100).toFixed(2).replace('.', ',') + ' €'`.
 
-**Dove trovo le chiavi Stripe test?**
-`.env.example` ha `STRIPE_PUBLIC_KEY=pk_test_...` e `STRIPE_SECRET_KEY=sk_test_...`
-condivisi. Per webhook locale: `stripe listen --forward-to localhost:8000/api/stripe/webhook`.
+## Struttura cartelle
 
-**Posso usare AI sul codice?**
-Sì. NON incollare segreti (chiavi API, DB credentials, dati reali utenti).
+```
+apps/api/
+├── app/
+│   ├── Http/
+│   │   ├── Controllers/        ← Inertia + API legacy
+│   │   │   ├── Inertia*.php    ← Auth, Account, Admin, Checkout, Shipment
+│   │   │   ├── Pages/          ← static pages
+│   │   │   └── ...             ← domain controllers (Auth, Cart, Stripe...)
+│   │   ├── Middleware/HandleInertiaRequests.php  ← shared props
+│   │   └── Requests/           ← FormRequest validation
+│   ├── Models/                 ← Eloquent
+│   └── Services/               ← business logic (Stripe, BRT, Order)
+├── resources/
+│   ├── css/app.css             ← Tailwind 4 + tokens brand
+│   ├── js/
+│   │   ├── app.js              ← Inertia bootstrap
+│   │   ├── Layouts/AppLayout.vue
+│   │   ├── Pages/              ← una page per route
+│   │   │   ├── Home.vue
+│   │   │   ├── Auth/           ← Login, Register, ForgotPassword, ResetPassword, VerifyEmail
+│   │   │   ├── Account/        ← Dashboard, Spedizioni, Profilo, Indirizzi, Fatture, Portafoglio, Assistenza
+│   │   │   ├── Account/Admin/  ← Dashboard, Ordini, Utenti, Bonifici, Prezzi, Impostazioni
+│   │   │   ├── Shipment/       ← Preventivo, Funnel
+│   │   │   ├── Checkout/       ← Carrello, Success
+│   │   │   └── Static/         ← ChiSiamo, Contatti, Faq, Privacy, Cookie, Termini, Servizi, Traccia, Guide
+│   │   └── Components/         ← componenti riusabili
+│   └── views/app.blade.php     ← root Inertia
+└── routes/
+    ├── web.php                 ← rotte Inertia (tutto il sito)
+    └── api.php                 ← API legacy (webhook + integrazioni)
+```
 
-**Su quale branch lavorare?**
-`main`. Apri PR, mai commit diretti.
+## Comandi utili
 
-## Riferimenti
+```bash
+php artisan route:list           # tutte le rotte
+php artisan tinker               # REPL Eloquent
+php artisan test --filter=...    # test backend specifici
+npm run build                    # build production frontend
+composer dump-autoload           # ricarica classmap dopo nuovi file
+```
 
-| Ho bisogno di...        | Vai a                                                |
-|-------------------------|------------------------------------------------------|
-| Convenzioni AI + regole | [CLAUDE.md](../CLAUDE.md)                            |
-| Architettura sistema    | [ARCHITECTURE.md](./ARCHITECTURE.md)                 |
-| Endpoint API            | [reference/API_CONTRACT.md](./reference/API_CONTRACT.md) |
-| Deploy + Render         | [operations/DEPLOY.md](./operations/DEPLOY.md)       |
-| Checklist go-live       | [operations/GOLIVE_CHECKLIST.md](./operations/GOLIVE_CHECKLIST.md) |
-| GDPR                    | [legal/GDPR_COMPLETO.md](./legal/GDPR_COMPLETO.md)   |
-| Sicurezza OWASP         | [legal/SECURITY.md](./legal/SECURITY.md)             |
-| Decisioni tecniche      | [adr/](./adr/) (Sanctum, MyMoney, BRT direct)        |
-| Storia cleanup          | [CLEANUP_PLAN_AI.md](./CLEANUP_PLAN_AI.md)           |
+## File da leggere PRIMA di scrivere codice
 
-Benvenuto. Tempo totale stimato: **~30 minuti**. Se superi 1h senza aver fatto smoke, chiedi aiuto.
+1. `CLAUDE.md` — convenzioni
+2. `routes/web.php` — capire mapping route → controller → page
+3. `resources/js/Layouts/AppLayout.vue` — header/footer comuni
+4. `app/Http/Controllers/InertiaShipmentController.php` — esempio controller Inertia
+5. `resources/js/Pages/Shipment/Funnel.vue` — esempio page complessa con stepper
+
+Buon lavoro.

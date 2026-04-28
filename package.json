@@ -1,21 +1,19 @@
 {
-	"name": "spediamofacile-monorepo",
+	"name": "spediamofacile",
 	"private": true,
-	"version": "0.0.0",
-	"description": "Root workspace for SpediamoFacile (Nuxt frontend + Laravel backend). Hosts Husky hooks, commitlint and lint-staged for cross-project quality gates.",
+	"version": "2.0.0-rewrite",
+	"description": "SpediamoFacile - Inertia 2 monolite (Laravel 11 + Vue 3.5 + Tailwind 4)",
 	"engines": {
 		"node": ">=20",
 		"npm": ">=9"
 	},
-	"workspaces": [
-		"apps/web"
-	],
 	"scripts": {
 		"prepare": "husky",
 		"commitlint": "commitlint --edit",
-		"dev": "npm --workspace apps/web run dev",
-		"build": "npm --workspace apps/web run build",
-		"test": "npm --workspace apps/web run test"
+		"dev": "cd apps/api && npm run dev",
+		"build": "cd apps/api && npm run build",
+		"serve": "cd apps/api && php artisan serve",
+		"test": "cd apps/api && php artisan test"
 	},
 	"devDependencies": {
 		"@commitlint/cli": "^19.6.1",

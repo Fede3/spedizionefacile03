@@ -1,117 +1,84 @@
 # CLAUDE.md — Istruzioni per Claude Code in questo repo
 
-> Questo file viene letto automaticamente da Claude Code (versione CLI/SDK)
-> all'apertura del progetto. Contiene convenzioni che valgono per TUTTE le
-> sessioni AI sulla repo.
+> SpediamoFacile v2.0 — monolite Laravel 11 + Inertia 2 + Vue 3.5 + Tailwind 4.
+> Letto automaticamente da Claude Code all'apertura del progetto.
 
-## Stack
-- Frontend: `apps/web/` (Nuxt 4.1 + Vue 3.5 + Pinia 3 + Tailwind 4 + Nuxt UI 4)
-  - Linguaggio: **TypeScript** canonico per `composables/`, `stores/`, `utils/`, `server/`, configs. Vue components in `<script setup>` plain (JS+JSDoc) o `<script setup lang="ts">` indifferentemente — ambedue accettati. JSDoc resta valido come `@typedef` import-style.
-- Backend: `apps/api/` (Laravel 11 + Sanctum 4 + Stripe 18 + BRT REST 3.x)
-  - **Struttura standard Laravel**: controller raggruppati per dominio in `app/Http/Controllers/<Dominio>/` (Auth, Catalog, Cart, Checkout, Shipping, Account, Admin, Gdpr, Communication). Niente `app/Modules/`.
-  - Schema baseline in `database/schema/sqlite-schema.sql` (richiede sqlite3 CLI per `migrate:fresh`).
-- Docs essenziali: `docs/` (4 doc canonici + ADR + operations + reference + legal)
+## Stack (post rewrite 2026-04-28)
+
+- **Backend + Frontend in 1 repo**: `apps/api/` (Laravel 11 + Inertia 2 + Vue 3.5 + Tailwind 4)
+- **Auth**: Laravel Auth standard + Sanctum (carte salvate Stripe)
+- **DB**: SQLite dev / Postgres prod (parity via Eloquent)
+- **Build**: Vite 5 (1 bundle, no Nitro, no Nuxt)
+- **Pagamenti**: Stripe SDK 18 (Elements per Payment Intent + idempotency)
+- **Corriere**: BRT REST 3.x via `App\Services\Brt\*`
+- **Docs**: `docs/` (4 doc canonici + ADR + operations + reference + legal)
 
 ## Quickstart
-- Onboarding dev (~30 min): `docs/ONBOARDING.md`
-- Architettura: `docs/ARCHITECTURE.md`
+
+```bash
+cd apps/api
+composer install
+npm install
+cp .env.example .env && php artisan key:generate
+php artisan migrate:fresh --seed
+npm run dev          # terminale 1 (Vite HMR)
+php artisan serve    # terminale 2 (Laravel :8000)
+# apri http://localhost:8000
+```
+
+Onboarding completo: `docs/ONBOARDING.md` (~20 minuti).
 
 ## Convenzioni codice
-- **Prezzi**: backend in cents (`MyMoney` / moneyphp). Frontend usa `formatPrice()` che divide per 100.
-- **Auth**: Sanctum SPA cookie + CSRF. Usa `useSanctumClient()` per chiamate API, NON $fetch raw.
-- **Routes API**: `/api/*` prefix automatico per `routes/api/*.php`. Webhooks BRT su `/webhooks/brt/tracking` (web.php, NO `/api`).
-- **Componenti**: configurato `pathPrefix: false` — componenti accessibili col loro nome file (es. `<ServizioGrid>`, non `<ServiziServizioGrid>`).
-- **Palette**: teal `#095866` + arancione `#E44203` + neutri. **Mai blu** (no `blue-*`, `indigo-*`, `sky-*`, `slate-*` Tailwind).
-- **Tokens CSS**: in `assets/css/main.css` (vedi `--color-brand-*`). Preferire `var(--token, #fallback)` a hex hardcoded.
-- **TypeScript** lato frontend: composables/utils/stores/server/configs in `.ts`. Vue components in `<script setup>` plain (defineProps runtime) **oppure** `<script setup lang="ts">` (defineProps generico). JSDoc resta accettato come complemento.
-- **Backend domain grouping**: nuovi controller di dominio vanno in `app/Http/Controllers/<Dominio>/`, namespace `App\Http\Controllers\<Dominio>`.
 
-## CSS architecture (importante — evita bug visivi)
-Alcuni CSS sono caricati SOLO da pagine/componenti specifici (code-splitting route-specific):
-- `shipment-step.css` → solo `pages/la-tua-spedizione/[step].vue`
-- `preventivo.css` → solo `components/Preventivo.vue`
-- `autenticazione.css` → solo `components/auth/AuthOverlayModal.vue` + pages auth (`login`, `registrazione`, `recupera-password`, `aggiorna-password`, `verifica-email`)
-- `contatti.css`, `servizi.css`, `homepage-servizi.css` → solo pagine/componenti corrispondenti
+- **Prezzi**: backend in cents (`MyMoney` / moneyphp). Frontend mostra `(cents/100).toFixed(2) + ' €'`.
+- **Auth Inertia**: utente in `usePage().props.auth.user`. Niente `$fetch` raw, niente fetch axios per dati pagina (Inertia li passa via props).
+- **Form**: `useForm()` di `@inertiajs/vue3`, errori in `form.errors.<field>`.
+- **Routes**: tutte in `routes/web.php` (Inertia). API legacy in `routes/api.php` per webhook + integrazioni esterne.
+- **Components**: in `resources/js/Components/`, importati esplicitamente nei Pages (no auto-import magici).
+- **Pages**: in `resources/js/Pages/`, una per route, layout default `AppLayout.vue`.
+- **Palette**: teal `#095866` + arancione `#E44203` + neutri. **Mai blu** (no `blue-*`, `indigo-*`, `sky-*`, `slate-*`).
+- **CSS**: solo Tailwind 4 utility + tokens `@theme` in `resources/css/app.css`. No file CSS custom per pagina.
+- **Italiano** per stringhe utente (commenti, label, errori). **English** per identifier (variabili, funzioni, tabelle).
 
-**REGOLA**: se scrivi una classe CSS **condivisa** tra componenti che possono vivere su pagine diverse (es. pill button, segmented control, form field), NON metterla in un CSS route-specific. Mettila in:
-- `assets/css/components/sf-segment.css` (segmented + flow CTA + btn-compact già qui)
-- `assets/css/main.css` (tokens globali)
-- un nuovo file in `assets/css/components/` importato da `main.css`
+## File critici (idempotency / soldi reali)
 
-Esempio vissuto: `.sf-shared-segment*` era solo in `shipment-step.css` → il segmented "Pacco/Pallet/Valigia" nell'homepage era senza stile. Spostato in `components/sf-segment.css` ora funziona ovunque.
+Modificare solo con E2E gating Stripe (`4242 4242 4242 4242 09/30 123`):
 
-**Come capire se una classe va globale**: grep il nome della classe fuori dal suo CSS di definizione. Se è usata in `components/` NON del dominio del CSS (es. classe in `shipment-step.css` usata da `auth/`), va spostata in globale.
-
-## File critici (intoccabili senza test verdi)
-
-Questi file gestiscono **soldi reali, idempotency, integrazioni esterne**. Modificarli senza test verdi puo' causare doppi addebiti o ordini fantasma.
-
-- `apps/api/app/Http/Controllers/Checkout/StripeWebhookController.php` — verifica firma, idempotency
-- `apps/api/app/Http/Controllers/Checkout/StripeCheckoutController.php` — PaymentIntent
-- `apps/api/app/Services/StripePaymentService.php` — client Stripe + idempotency-key
-- `apps/api/app/Services/OrderCreationService.php` — Carrello → Order
-- `apps/api/app/Services/WalletOrderPaymentService.php` / `WalletOrderLinkService.php` — lock saldo wallet
-- `apps/api/app/Http/Controllers/Wallet/WalletController.php` — top-up + pagamento saldo
-- `apps/api/app/Models/Order.php` — `payableTotalCents()` autorita' fatturazione
-- `apps/api/app/Http/Controllers/Shipping/BrtWebhookController.php` — HMAC tracking
-- `apps/api/app/Http/Controllers/Shipping/BrtController.php` — etichette BRT pagate
-- `apps/api/bootstrap/app.php` — esclusioni CSRF webhook, trustProxies
+- `app/Http/Controllers/Checkout/StripeCheckoutController.php` — PaymentIntent + 3DS
+- `app/Http/Controllers/Checkout/StripeWebhookController.php` — firma + idempotency
+- `app/Services/StripePaymentService.php` — client Stripe + idempotency-key
+- `app/Services/OrderCreationService.php` — Carrello → Order
+- `app/Services/WalletOrderPaymentService.php` — lock saldo wallet
+- `app/Models/Order.php` — `payableTotalCents()` autorità fatturazione
+- `app/Http/Controllers/Shipping/BrtWebhookController.php` — HMAC tracking
+- `bootstrap/app.php` — esclusioni CSRF webhook, trustProxies
 
 ## Limiti dimensionali
 
-- File runtime ≤ 400 LOC (eccezione documentata in commento iniziale).
-- Composable ≤ 500 LOC (oltre, splitta o sposta utility puri in `~/utils/`).
-  Soglia ritoccata 2026-04-28: 300 era irrealistica per orchestratori reattivi.
-- Componente Vue ≤ 500 LOC (template + script).
-- Page Vue ≤ 400 LOC (orchestratore, non ospite di logica).
+- File runtime ≤ 400 LOC.
+- Componente Vue ≤ 500 LOC.
+- Page Vue ≤ 400 LOC.
+- Controller ≤ 200 LOC.
+- Service ≤ 400 LOC.
 
-## Eccezioni documentate (file ad alta densità logica)
+Eccezioni documentate inline con `// CRITICAL:` + motivazione.
 
-Questi 4 file superano i limiti per ragione tecnica esplicita. Splittarli senza
-E2E gating Stripe/funnel introduce regressioni di pagamento. Modificarli richiede:
-- browser MCP + carta test Stripe `4242 4242 4242 4242 09/30 123`
-- DB snapshot pre/post (orders + payments + brt_webhook_events)
-- rollback immediato se diff > 0 byte tra pre/post.
+## DB::table() autorizzati
 
-| File | LOC | Motivo |
-|---|---|---|
-| `apps/web/pages/la-tua-spedizione/[step].vue` | 1239 | Orchestratore funnel 5 step + Stripe entry point |
-| `apps/web/components/shipment/AddressFormFields.vue` | 737 | Form multi-zona (pickup/delivery/common) con validazione cross-field |
-| `apps/web/components/shipment/ShipmentStepPagamento.vue` | 716 | Selezione metodo pagamento (Stripe/wallet/bonifico) + 3DS |
-| `apps/api/app/Http/Controllers/Checkout/StripeCheckoutController.php` | 756 | Idempotency-key Stripe + PaymentIntent + 3DS confirm |
-
-## DB::table() autorizzati (pivot/bulk performance-critical)
-
-L'uso di `DB::table()` raw è **autorizzato** per:
-- **Pivot tables pure** (no Model wrapper richiesto):
-  - `cart_user` — pivot user ↔ package nel carrello
-  - `package_order` — pivot order ↔ package per ordine creato
-  - `saved_shipments` — pivot user ↔ package per spedizioni salvate
-- **Laravel internals**: `password_reset_tokens`, `sessions`, `cache`, `jobs`
-- **Bulk import performance**: `locations` (caricamento massivo GeoNames CAP)
-- **Lock esplicito** in transazioni Stripe: `DB::table('users')->lockForUpdate()`
-  dentro `StripeCheckoutController` (selezione riga lock-friendly).
-- **Lettura password hash** in `ChangePasswordController` (security-by-design:
-  evita Model boot/cast accidentali).
-
-Audit corrente: 17 occorrenze totali su 17 file giustificate. Eloquent overhead
-non giustificato in questi casi. Ogni nuova occorrenza fuori da queste categorie
-va valutata caso per caso.
+Pivot pure (`cart_user`, `package_order`, `saved_shipments`), Laravel internals
+(`password_reset_tokens`, `sessions`, `cache`, `jobs`), bulk import (`locations`),
+lock esplicito Stripe (`users` con `lockForUpdate`).
 
 ## Test
-- Frontend: `cd apps/web && npx playwright test` (E2E)
-- Backend: `cd apps/api && php artisan test` (Feature + Unit)
-- Build: `cd apps/web && npm run build` deve essere verde
+
+- Backend: `cd apps/api && php artisan test`
+- Frontend: build verifica via `npm run build`
+- E2E: Playwright in `apps/api/tests/e2e/` (in fase di port da Nuxt → Inertia)
 
 ## Regole AI
-- Mai `git commit` senza permesso esplicito utente
-- Italiano per tutto (commenti, doc, output)
-- Verifica con preview MCP dopo ogni modifica visibile
-- Max 3 agent paralleli
-- Riferimento standard UX: Awwwards / Baymard / NN Group
 
-## Riferimenti
-- `docs/README.md` — indice navigabile completo
-- `docs/legal/SECURITY.md` — baseline OWASP
-- `docs/operations/GOLIVE_CHECKLIST.md` — checklist deploy
-- `docs/legal/GDPR_COMPLETO.md` — compliance GDPR
+- **Mai `git commit` senza permesso esplicito utente** (eccezione: rewrite session 2026-04-28 con autorizzazione blanket).
+- **Italiano** per commenti, doc, output.
+- **Verifica con preview MCP** dopo ogni modifica visibile.
+- **Max 3 agent paralleli**.
+- **Standard UX**: Awwwards / Baymard / NN Group.
