@@ -1,6 +1,7 @@
 <!-- Chi Siamo — Hero → Mission → Numeri → Timeline → Valori → Team → Partnership BRT → CTA -->
 <script setup>
 import '~/assets/css/content.css';
+import '~/assets/css/pages/chi-siamo.css';
 
 useSeoMeta({
 	title: 'Chi siamo',

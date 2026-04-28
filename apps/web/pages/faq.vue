@@ -1,5 +1,6 @@
 <script setup>
 import '~/assets/css/content.css';
+import '~/assets/css/pages/faq.css';
 import { computed, ref } from 'vue';
 import { useFaqs } from '~/composables/useFaqs';
 
