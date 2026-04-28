@@ -9,9 +9,7 @@ Indice unico della documentazione attiva del monorepo.
 - `docs/reference/` — API contract, glossario, FAQ dev, roadmap
 - `docs/legal/` — security, GDPR
 - `docs/adr/` — Architecture Decision Records
-- `docs/archive/` — storico documentale e handoff superseded
-- `../_archive/` — snapshot tecnici e materiale repo archiviato
-- `../_LOG/` — evidenze locali, screenshot e probe
+- `docs/archive/` — storico documentale e handoff superseded (gitignored)
 
 ## Inizia qui
 
@@ -68,12 +66,18 @@ Indice unico della documentazione attiva del monorepo.
 - [002 — Prezzi in cents con moneyphp/money](adr/002-moneyphp-cents.md)
 - [003 — Integrazione BRT diretta (no aggregator)](adr/003-brt-direct-integration.md)
 
+## Audit & Refactor
+
+- [AUDIT_2026-04-26.md](AUDIT_2026-04-26.md) — diagnosi corrente: dove siamo e dove andare
+- [PIANO_2026-04-26.md](PIANO_2026-04-26.md) — piano operativo refactor
+
 ## Storico
 
 - [archive/](archive/) — documenti storici, snapshot, handoff non più canonici (non fonte di verità codice)
+- [_archive/](_archive/) — audit/piani superati (AUDIT_PROFONDO, PIANO_SEMPLIFICAZIONE)
 
 ## Note
 
 - `CLAUDE.md` (root) — configurazione operativa agenti AI; non fonte documentale prodotto
 - Per capire il prodotto attuale: parti da `docs/README.md` (questo file) + file in `docs/` root
-- Per recovery storico: `docs/archive/` o `../_archive/`
+- Per recovery storico: `docs/archive/` (locale, gitignored) oppure `git log` / commit history

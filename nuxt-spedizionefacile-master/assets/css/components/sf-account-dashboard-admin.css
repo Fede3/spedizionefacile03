@@ -1,7 +1,0 @@
-/* sf-account-dashboard-admin.css — Stack verticale dashboard admin. */
-
-.sf-account-admin-stack {
-	display: flex;
-	flex-direction: column;
-	gap: 24px;
-}

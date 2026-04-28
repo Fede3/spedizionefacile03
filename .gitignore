@@ -177,3 +177,9 @@ laravel-spedizionefacile-main/_archive/
 
 # Docs storici (analisi, log AI/team, checkpoints, percorsi didattici legacy)
 docs/archive/
+
+# Runtime state cartella separata (oltre output/runtime-state/)
+runtime-state/
+
+# Doc HTML BRT esterna (riferimento, non codice nostro)
+BrtRestApi-PUDO-EN/

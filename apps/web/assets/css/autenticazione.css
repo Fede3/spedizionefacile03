@@ -1,0 +1,98 @@
+/* ============================================================
+   Stili condivisi dal modal di autenticazione (AuthOverlayModal +
+   sub-componenti AuthRegisterForm). Le pagine /login, /registrazione,
+   /recupera-password, /aggiorna-password, /verifica-email NON usano
+   piu' questo file: la migrazione Tailwind utility-first le ha
+   rese autosufficienti.
+   ============================================================ */
+
+.auth-overlay-segment-strip {
+	width: 100%;
+	max-width: none;
+}
+
+.auth-overlay-segment-strip .auth-overlay-segment {
+	min-height: 44px;
+	padding-inline: 16px;
+}
+
+/* Tab Login/Registrati: quando attivo, pill pieno teal con testo bianco
+   per rendere immediatamente chiaro quale tab è selezionata (WCAG + UX). */
+.auth-overlay-segment-strip .auth-overlay-segment.sf-shared-segment--active {
+	background: var(--color-brand-primary, #095866);
+	border-color: var(--color-brand-primary, #095866);
+	color: #ffffff;
+	box-shadow: 0 6px 16px rgba(9, 88, 102, 0.22), inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+	font-weight: 700;
+}
+
+.auth-overlay-segment-strip .auth-overlay-segment.sf-shared-segment--active:hover {
+	color: #ffffff;
+}
+
+/* Radio inline Privato/Azienda — versione compatta (sostituisce segmented switch). */
+.auth-overlay-profile-radios {
+	display: flex;
+	gap: 18px;
+	padding: 0;
+	margin: 4px 0 2px;
+	border: 0;
+}
+
+.auth-overlay-profile-radio {
+	display: inline-flex;
+	align-items: center;
+	gap: 7px;
+	cursor: pointer;
+	font-size: 0.875rem;
+	font-weight: 600;
+	color: var(--color-brand-text-secondary, #5c6d7f);
+	user-select: none;
+}
+
+.auth-overlay-profile-radio__input {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	overflow: hidden;
+	clip: rect(0 0 0 0);
+	opacity: 0;
+}
+
+.auth-overlay-profile-radio__dot {
+	display: inline-block;
+	width: 16px;
+	height: 16px;
+	border-radius: 999px;
+	border: 2px solid var(--color-border, #C8CED6);
+	background: #ffffff;
+	transition: border-color var(--sf-t1) var(--sf-ease), box-shadow var(--sf-t1) var(--sf-ease);
+	flex-shrink: 0;
+	position: relative;
+}
+
+.auth-overlay-profile-radio__input:checked + .auth-overlay-profile-radio__dot {
+	border-color: var(--color-brand-primary, #095866);
+}
+
+.auth-overlay-profile-radio__input:checked + .auth-overlay-profile-radio__dot::after {
+	content: "";
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	width: 8px;
+	height: 8px;
+	border-radius: 999px;
+	background: var(--color-brand-primary, #095866);
+	transform: translate(-50%, -50%);
+}
+
+.auth-overlay-profile-radio__input:focus-visible + .auth-overlay-profile-radio__dot {
+	box-shadow: 0 0 0 3px rgba(9, 88, 102, 0.22);
+	outline: 2px solid var(--color-brand-primary, #095866);
+	outline-offset: 2px;
+}
+
+.auth-overlay-profile-radio:has(.auth-overlay-profile-radio__input:checked) .auth-overlay-profile-radio__label {
+	color: var(--color-brand-text, #1f2a3c);
+}
