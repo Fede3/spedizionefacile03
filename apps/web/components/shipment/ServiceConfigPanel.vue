@@ -130,33 +130,35 @@ const showContrassegnoRimborso = computed(() => props.serviceData?.contrassegno?
 			</p>
 		</div>
 
-		<div v-else-if="service.key === 'assicurazione'" class="service-panel__content service-panel__stack">
-			<div
-				v-for="(pack, indexPopup) in insurancePackages"
-				:key="`${service.name}-${indexPopup}`"
-				class="service-panel__field">
-				<div class="service-panel__row-meta">
-					<span class="service-panel__label">Valore collo {{ indexPopup + 1 }}</span>
-					<span class="service-panel__meta">
+		<div v-else-if="service.key === 'assicurazione'" class="service-panel__content">
+			<div class="service-panel__grid service-panel__grid--two">
+				<div
+					v-for="(pack, indexPopup) in insurancePackages"
+					:key="`${service.name}-${indexPopup}`"
+					class="service-panel__field">
+					<label :for="`assicurazione-${indexPopup}`" class="service-panel__label">
+						Valore collo {{ indexPopup + 1 }}
+					</label>
+					<div class="service-panel__input-wrap">
+						<input
+							:id="`assicurazione-${indexPopup}`"
+							v-model="serviceData.assicurazione[indexPopup]"
+							type="text"
+							inputmode="decimal"
+							autocomplete="off"
+							class="service-panel__input"
+							placeholder="Valore merce"
+							@input="
+								serviceData.assicurazione[indexPopup] = normalizeCurrencyInput($event.target.value);
+								serviceCardErrors.assicurazione[indexPopup] = '';
+							" />
+						<span class="service-panel__suffix">&euro;</span>
+					</div>
+					<p class="service-panel__meta">
 						{{ pack.weight || '0' }} kg / {{ pack.first_size || '0' }} x {{ pack.second_size || '0' }} x {{ pack.third_size || '0' }} cm
-					</span>
+					</p>
+					<p v-if="serviceCardErrors.assicurazione[indexPopup]" class="service-panel__error">{{ serviceCardErrors.assicurazione[indexPopup] }}</p>
 				</div>
-				<div class="service-panel__input-wrap">
-					<input
-						:id="`assicurazione-${indexPopup}`"
-						v-model="serviceData.assicurazione[indexPopup]"
-						type="text"
-						inputmode="decimal"
-						autocomplete="off"
-						class="service-panel__input"
-						placeholder="Valore merce"
-						@input="
-							serviceData.assicurazione[indexPopup] = normalizeCurrencyInput($event.target.value);
-							serviceCardErrors.assicurazione[indexPopup] = '';
-						" />
-					<span class="service-panel__suffix">&euro;</span>
-				</div>
-				<p v-if="serviceCardErrors.assicurazione[indexPopup]" class="service-panel__error">{{ serviceCardErrors.assicurazione[indexPopup] }}</p>
 			</div>
 		</div>
 

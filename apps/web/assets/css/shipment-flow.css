@@ -4234,17 +4234,30 @@
 	.service-panel__grid--two,
 	.service-panel__grid--contrassegno,
 	.service-panel__contrassegno-groups {
+		display: grid;
 		grid-template-columns: 1fr 1fr;
 		gap: 16px;
 	}
 }
 
 .service-panel__contrassegno-strip,
-.service-panel__contrassegno-groups,
 .service-panel__stack {
 	display: flex;
 	flex-direction: column;
 	gap: 12px;
+}
+
+.service-panel__contrassegno-groups {
+	display: grid;
+	grid-template-columns: 1fr;
+	gap: 12px;
+}
+
+@media (min-width: 600px) {
+	.service-panel__contrassegno-groups {
+		grid-template-columns: 1fr 1fr;
+		gap: 16px;
+	}
 }
 
 /* Allineato a pattern .contact-field (contatti.css) per coerenza sitewide:
@@ -4311,8 +4324,8 @@
 
 .service-panel__choice-shell,
 .service-panel__choice-shell--contrassegno {
-	display: inline-flex;
-	width: max-content;
+	display: flex;
+	width: 100%;
 }
 
 .service-panel__row-meta {
@@ -4440,28 +4453,26 @@
 }
 
 .service-stage-shell--funnel-standard .service-panel__field--choice {
-	align-items: start;
-	justify-items: start;
+	align-items: stretch;
+	justify-items: stretch;
 }
 
 .service-stage-shell--funnel-standard .service-panel__choice-shell--contrassegno {
-	display: inline-grid;
-	justify-self: start;
+	display: grid;
+	width: 100%;
 	align-items: start;
-	justify-items: start;
 	gap: 6px;
 	padding: 8px 10px;
 	border-radius: 16px;
 }
 
 .service-stage-shell--funnel-standard .service-panel__choice-shell--contrassegno .sf-shared-segment-strip {
-	width: auto;
+	width: 100%;
 	max-width: 100%;
-	justify-self: start;
 }
 
 .service-stage-shell--funnel-standard .service-panel__choice-shell--contrassegno .service-panel__meta {
-	max-width: 34ch;
+	max-width: none;
 }
 
 .address-stage-shell--funnel-standard .address-entry-card__mode-shell .sf-segmented-control--step {
