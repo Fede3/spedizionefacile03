@@ -38,7 +38,7 @@ const {
 
       <!-- Header -->
       <div class="mb-[20px]">
-        <h1 class="font-montserrat text-[var(--color-brand-text)] text-[16px] sm:text-[18px] tracking-[-0.3px]" style="font-weight: 800">Carrello</h1>
+        <h1 class="font-montserrat text-[var(--color-brand-text)] text-[24px] sm:text-[28px] tracking-[-0.5px]" style="font-weight: 800">Carrello</h1>
         <p class="text-[var(--color-brand-text-secondary)] text-[14px] mt-[4px]" style="font-weight: 400">
           {{ cart.data.length }} spedizion{{ cart.data.length === 1 ? 'e' : 'i' }} &middot; Totale {{ displayTotal }}
         </p>

@@ -82,7 +82,7 @@
 	text-transform: uppercase;
 }
 
-.about-page [class$="__title"]:not([class*="card-title"]):not([class*="title-item"]):not(.about-stats__title):not(.about-team__name):not(.about-partnership__title) {
+.about-page [class$="__title"]:not([class*="card-title"]):not([class*="title-item"]):not(.about-team__name):not(.about-partnership__title) {
 	font-size: clamp(1.75rem, 3vw, 2.25rem);
 	font-weight: 700;
 	color: var(--color-brand-text);
@@ -162,12 +162,8 @@
 	color: var(--color-brand-text);
 }
 
-.about-stats__title {
-	font-size: 1rem;
-	font-weight: 700;
-	color: var(--color-brand-text);
-	margin: 0;
-}
+/* .about-stats__title rimosso 16px override: ora segue regola section title
+   36px come le altre h2 (.about-mission__title, .about-team__title etc.) */
 
 .about-stats__note {
 	font-size: 0.8125rem;
