@@ -12,7 +12,7 @@ const props = defineProps({
 });
 
 const {
-	fieldClass, getFieldError, fieldErrorText, getFieldAssist, applyFieldAssist, smartBlur,
+	fieldClass, getFieldError, smartBlur,
 	onNameInput, onCityInput, onCityFocus, onProvinciaInput, onProvinceFocus,
 	onCapInput, onCapFocus, onTelefonoInput,
 	selectCity, sv,
@@ -105,10 +105,6 @@ const firstNamePlaceholder = computed(() => 'Nome');
 const lastNamePlaceholder = computed(() => 'Cognome');
 const detailsLabel = computed(() => (props.showBusinessFields ? 'Azienda / dettagli' : 'Presso / info aggiuntive'));
 const detailsPlaceholder = computed(() => (props.showBusinessFields ? 'Ragione sociale, c/o, piano...' : 'Presso, piano, interno...'));
-const fieldAssist = (field) => getFieldAssist(typeKey, field);
-const hasFieldFeedback = (field) => Boolean(getFieldError(typeKey, field) || fieldAssist(field));
-const applyAssist = (field) => applyFieldAssist(typeKey, field);
-
 // A11y helpers: errore ID coerente con aria-describedby
 const errorId = (field) => `${idPrefix}${field}_error`;
 const ariaInvalid = (field) => Boolean(getFieldError(typeKey, field));
@@ -216,22 +212,7 @@ watchEffect(() => {
 							:class="fieldClass(typeKey, 'full_name')"
 							@blur="smartBlur(typeKey, 'full_name')" />
 					</div>
-					<div v-if="hasFieldFeedback('full_name')" class="address-form-field__feedback">
-						<p
-							v-if="getFieldError(typeKey, 'full_name')"
-							:id="errorId('full_name')"
-							role="alert"
-							class="field-gentle-error">
-							{{ fieldErrorText(typeKey, 'full_name') }}
-						</p>
-						<button
-							v-if="fieldAssist('full_name')"
-							type="button"
-							class="field-assist-chip"
-							@click="applyAssist('full_name')">
-							{{ fieldAssist('full_name').label }}
-						</button>
-					</div>
+					<AddressFieldFeedback :type-key="typeKey" field="full_name" />
 				</div>
 
 				<div class="address-form-field address-form-layout-grid__last-name">
@@ -291,22 +272,7 @@ watchEffect(() => {
 							:readonly="readonly"
 							@blur="smartBlur(typeKey, 'address')" />
 					</div>
-					<div v-if="hasFieldFeedback('address')" class="address-form-field__feedback">
-						<p
-							v-if="getFieldError(typeKey, 'address')"
-							:id="errorId('address')"
-							role="alert"
-							class="field-gentle-error">
-							{{ fieldErrorText(typeKey, 'address') }}
-						</p>
-						<button
-							v-if="fieldAssist('address')"
-							type="button"
-							class="field-assist-chip"
-							@click="applyAssist('address')">
-							{{ fieldAssist('address').label }}
-						</button>
-					</div>
+					<AddressFieldFeedback :type-key="typeKey" field="address" />
 				</div>
 
 				<div class="address-form-field address-form-layout-grid__number">
@@ -329,22 +295,7 @@ watchEffect(() => {
 							:readonly="readonly"
 							@blur="smartBlur(typeKey, 'address_number')" />
 					</div>
-					<div v-if="hasFieldFeedback('address_number')" class="address-form-field__feedback">
-						<p
-							v-if="getFieldError(typeKey, 'address_number')"
-							:id="errorId('address_number')"
-							role="alert"
-							class="field-gentle-error">
-							{{ fieldErrorText(typeKey, 'address_number') }}
-						</p>
-						<button
-							v-if="fieldAssist('address_number')"
-							type="button"
-							class="field-assist-chip"
-							@click="applyAssist('address_number')">
-							{{ fieldAssist('address_number').label }}
-						</button>
-					</div>
+					<AddressFieldFeedback :type-key="typeKey" field="address_number" />
 				</div>
 
 				<div class="address-form-field address-form-layout-grid__intercom">
@@ -385,22 +336,7 @@ watchEffect(() => {
 							@focus="onCapFocus(typeKey)"
 							@blur="smartBlur(typeKey, 'postal_code')" />
 					</div>
-					<div v-if="hasFieldFeedback('postal_code')" class="address-form-field__feedback">
-						<p
-							v-if="getFieldError(typeKey, 'postal_code')"
-							:id="errorId('postal_code')"
-							role="alert"
-							class="field-gentle-error">
-							{{ fieldErrorText(typeKey, 'postal_code') }}
-						</p>
-						<button
-							v-if="fieldAssist('postal_code')"
-							type="button"
-							class="field-assist-chip"
-							@click="applyAssist('postal_code')">
-							{{ fieldAssist('postal_code').label }}
-						</button>
-					</div>
+					<AddressFieldFeedback :type-key="typeKey" field="postal_code" />
 				</div>
 
 				<div class="address-form-field address-form-layout-grid__city">
@@ -434,22 +370,7 @@ watchEffect(() => {
 							</li>
 						</ul>
 					</div>
-					<div v-if="hasFieldFeedback('city')" class="address-form-field__feedback">
-						<p
-							v-if="getFieldError(typeKey, 'city')"
-							:id="errorId('city')"
-							role="alert"
-							class="field-gentle-error">
-							{{ fieldErrorText(typeKey, 'city') }}
-						</p>
-						<button
-							v-if="fieldAssist('city')"
-							type="button"
-							class="field-assist-chip"
-							@click="applyAssist('city')">
-							{{ fieldAssist('city').label }}
-						</button>
-					</div>
+					<AddressFieldFeedback :type-key="typeKey" field="city" />
 				</div>
 
 				<div class="address-form-field address-form-layout-grid__province">
@@ -477,22 +398,7 @@ watchEffect(() => {
 							@focus="onProvinceFocus(typeKey)"
 							@blur="smartBlur(typeKey, 'province')" />
 					</div>
-					<div v-if="hasFieldFeedback('province')" class="address-form-field__feedback">
-						<p
-							v-if="getFieldError(typeKey, 'province')"
-							:id="errorId('province')"
-							role="alert"
-							class="field-gentle-error">
-							{{ fieldErrorText(typeKey, 'province') }}
-						</p>
-						<button
-							v-if="fieldAssist('province')"
-							type="button"
-							class="field-assist-chip"
-							@click="applyAssist('province')">
-							{{ fieldAssist('province').label }}
-						</button>
-					</div>
+					<AddressFieldFeedback :type-key="typeKey" field="province" />
 				</div>
 
 				<div class="address-form-field address-form-layout-grid__country">
@@ -524,22 +430,7 @@ watchEffect(() => {
 							:class="fieldClass(typeKey, 'telephone_number')"
 							@blur="smartBlur(typeKey, 'telephone_number')" />
 					</div>
-					<div v-if="hasFieldFeedback('telephone_number')" class="address-form-field__feedback">
-						<p
-							v-if="getFieldError(typeKey, 'telephone_number')"
-							:id="errorId('telephone_number')"
-							role="alert"
-							class="field-gentle-error">
-							{{ fieldErrorText(typeKey, 'telephone_number') }}
-						</p>
-						<button
-							v-if="fieldAssist('telephone_number')"
-							type="button"
-							class="field-assist-chip"
-							@click="applyAssist('telephone_number')">
-							{{ fieldAssist('telephone_number').label }}
-						</button>
-					</div>
+					<AddressFieldFeedback :type-key="typeKey" field="telephone_number" />
 				</div>
 
 				<div class="address-form-field address-form-layout-grid__email">
@@ -563,22 +454,7 @@ watchEffect(() => {
 							@blur="smartBlur(typeKey, 'email')"
 							@input="sv.onInput(`${typeKey}_email`, () => sv.validateEmail(`${typeKey}_email`, address.email))" />
 					</div>
-					<div v-if="hasFieldFeedback('email')" class="address-form-field__feedback">
-						<p
-							v-if="getFieldError(typeKey, 'email')"
-							:id="errorId('email')"
-							role="alert"
-							class="field-gentle-error">
-							{{ fieldErrorText(typeKey, 'email') }}
-						</p>
-						<button
-							v-if="fieldAssist('email')"
-							type="button"
-							class="field-assist-chip"
-							@click="applyAssist('email')">
-							{{ fieldAssist('email').label }}
-						</button>
-					</div>
+					<AddressFieldFeedback :type-key="typeKey" field="email" />
 				</div>
 			</div>
 			<p class="field-required-hint">
