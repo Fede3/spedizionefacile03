@@ -19,6 +19,8 @@ use Illuminate\Support\Facades\DB;
 class Order extends Model
 {
     use HasFactory, SoftDeletes;
+    use \App\Models\Concerns\OrderStatusHelpers;
+    use \App\Models\Concerns\OrderPayableTotal;
 
     /**
      * Campi compilabili dall'esterno.
@@ -158,61 +160,8 @@ class Order extends Model
 
     const AWAITING_BANK_TRANSFER = 'awaiting_bank_transfer'; // In attesa di bonifico bancario (F05)
 
-    /**
-     * Traduce lo stato dell'ordine dall'inglese all'italiano.
-     * Viene usato per mostrare lo stato in modo comprensibile all'utente.
-     */
-    public function getStatus(string $status): string
-    {
-        $data = [
-            'pending' => 'In attesa',
-            'processing' => 'In lavorazione',
-            'completed' => 'Completato',
-            'payment_failed' => 'Fallito',
-            'paid' => 'Pagato',
-            'cancelled' => 'Annullato',
-            'refunded' => 'Rimborsato',
-            'label_generated' => 'Etichetta generata',
-            'in_transit' => 'In transito',
-            'out_for_delivery' => 'In consegna',
-            'delivered' => 'Consegnato',
-            'in_giacenza' => 'In giacenza',
-            'returned' => 'Reso',
-            'refused' => 'Rifiutato',
-            'awaiting_bank_transfer' => 'In attesa di bonifico',
-        ];
-
-        return $data[$status] ?? $status;
-    }
-
-    public function rawStatus(): string
-    {
-        return (string) $this->getRawOriginal('status');
-    }
-
-    public function isAwaitingPayment(): bool
-    {
-        return in_array($this->rawStatus(), [
-            self::PENDING,
-            self::PAYMENT_FAILED,
-        ], true);
-    }
-
-    public function isPostPaymentState(): bool
-    {
-        return in_array($this->rawStatus(), [
-            self::PROCESSING,
-            self::COMPLETED,
-            self::LABEL_GENERATED,
-            self::IN_TRANSIT,
-            self::OUT_FOR_DELIVERY,
-            self::DELIVERED,
-            self::IN_GIACENZA,
-            self::RETURNED,
-            self::REFUSED,
-            self::REFUNDED,
-        ], true);
-    }
+    // getStatus() / rawStatus() / isAwaitingPayment() / isPostPaymentState():
+    // vedi Concerns/OrderStatusHelpers.php
 
     public function hasSuccessfulTransactionForExternalId(?string $externalId): bool
     {
@@ -239,50 +188,9 @@ class Order extends Model
         });
     }
 
-    /* ===== SCOPES — Query predefinite per stati comuni ===== */
-
-    public function scopePending($query)
-    {
-        return $query->where('status', self::PENDING);
-    }
-
-    public function scopeProcessing($query)
-    {
-        return $query->where('status', self::PROCESSING);
-    }
-
-    public function scopeInTransit($query)
-    {
-        return $query->where('status', self::IN_TRANSIT);
-    }
-
-    public function scopeDelivered($query)
-    {
-        return $query->where('status', self::DELIVERED);
-    }
-
-    public function scopeCancelled($query)
-    {
-        return $query->where('status', self::CANCELLED);
-    }
-
-    public function scopeRefunded($query)
-    {
-        return $query->where('status', self::REFUNDED);
-    }
-
-    public function scopeAwaitingPayment($query)
-    {
-        return $query->whereIn('status', [self::PENDING, self::PAYMENT_FAILED]);
-    }
-
-    public function scopeActive($query)
-    {
-        return $query->whereIn('status', [
-            self::PROCESSING, self::LABEL_GENERATED, self::IN_TRANSIT,
-            self::OUT_FOR_DELIVERY, self::IN_GIACENZA,
-        ]);
-    }
+    // SCOPES + status helpers: vedi Concerns/OrderStatusHelpers.php
+    // payableTotalCents / discountContext / grossSubtotalCents / discountAmountCents:
+    // vedi Concerns/OrderPayableTotal.php (CRITICAL Stripe-gated)
 
     /**
      * Quando leggi il subtotale dell'ordine, viene automaticamente
@@ -292,72 +200,6 @@ class Order extends Model
     public function getSubtotalAttribute($subtotal)
     {
         return new MyMoney($subtotal);
-    }
-
-    /**
-     * Contesto sconto persistito nello snapshot prezzi dell'ordine.
-     *
-     * Resta null quando l'ordine non ha coupon/referral applicati in modo canonico.
-     */
-    public function discountContext(): ?array
-    {
-        $snapshot = $this->getAttribute('pricing_snapshot');
-
-        if (! is_array($snapshot)) {
-            return null;
-        }
-
-        $discountContext = $snapshot['discount_context'] ?? null;
-
-        return is_array($discountContext) ? $discountContext : null;
-    }
-
-    public function grossSubtotalCents(): int
-    {
-        return (int) ($this->getRawOriginal('subtotal') ?? $this->getAttributes()['subtotal'] ?? 0);
-    }
-
-    public function discountAmountCents(): int
-    {
-        $discountAmount = $this->discountContext()['discount_amount'] ?? null;
-
-        if (! is_numeric($discountAmount)) {
-            return 0;
-        }
-
-        return max(0, (int) round(((float) $discountAmount) * 100));
-    }
-
-    public function payableTotalCents(): int
-    {
-        $grossSubtotal = $this->grossSubtotalCents();
-        $discountAmount = $this->discountAmountCents();
-        $candidate = $this->discountContext()['final_total_raw'] ?? null;
-
-        if (! is_numeric($candidate)) {
-            return max(0, $grossSubtotal - $discountAmount);
-        }
-
-        $candidateCents = max(0, (int) round(((float) $candidate) * 100));
-
-        if ($candidateCents === 0 && $discountAmount > 0 && $discountAmount < $grossSubtotal) {
-            return $grossSubtotal - $discountAmount;
-        }
-
-        if ($candidateCents === 0 && $discountAmount === 0) {
-            return $grossSubtotal;
-        }
-
-        if ($candidateCents > $grossSubtotal) {
-            return $grossSubtotal;
-        }
-
-        return $candidateCents;
-    }
-
-    public function payableTotal(): MyMoney
-    {
-        return new MyMoney($this->payableTotalCents());
     }
 
     // Relazione: ogni ordine appartiene a UN utente
