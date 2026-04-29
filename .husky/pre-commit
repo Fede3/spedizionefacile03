@@ -19,13 +19,14 @@ if [ -n "$NUXT_STAGED" ]; then
 fi
 
 # --- Laravel: Pint in dirty mode (formatta solo i file staged) ---
-LARAVEL_STAGED=$(git diff --cached --name-only --diff-filter=ACMR | grep -E '^apps/api/.*\.php$' || true)
+# Backend Laravel sta alla ROOT del repo (non più apps/api).
+LARAVEL_STAGED=$(git diff --cached --name-only --diff-filter=ACMR | grep -E '^(app|routes|database|tests|config|bootstrap)/.*\.php$' || true)
 if [ -n "$LARAVEL_STAGED" ]; then
 	echo "[husky] pre-commit: Laravel Pint (--dirty)"
-	cd "$ROOT/apps/api" || exit 1
+	cd "$ROOT" || exit 1
 	if [ -x vendor/bin/pint ]; then
 		vendor/bin/pint --dirty --test || {
-			echo "[husky] Pint ha trovato file PHP non formattati. Esegui: cd apps/api && vendor/bin/pint --dirty"
+			echo "[husky] Pint ha trovato file PHP non formattati. Esegui: vendor/bin/pint --dirty"
 			exit 1
 		}
 	else

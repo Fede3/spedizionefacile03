@@ -1,47 +1,87 @@
 # SpediamoFacile
 
-Intermediazione spedizioni BRT: preventivo, funnel ordine, wallet, account cliente, admin console.
+Intermediario BRT: preventivo, funnel spedizione, carrello, pagamento, account cliente, admin, wallet, coupon/referral, PUDO, tracking, documenti/etichette/fatture.
 
-## Stack (v2.0 monolite)
+## Stack reale
 
-- **Backend + frontend**: Laravel 11 + Inertia 2 + Vue 3.5 + Tailwind 4 + Vite 5
+- **Backend**: Laravel 11 alla **root** del repo (Sanctum 4 + Stripe SDK 18 + BRT REST 3.x)
+- **Frontend**: Nuxt 4 SPA in **`apps/web/`** (Vue 3.5 + Pinia + Nuxt UI 4 + Tailwind 4)
+- **Reverse proxy**: Caddy `:8787` → Laravel `:8000` API + Nuxt `:3001` SPA
 - **DB**: SQLite (dev) / Postgres (prod)
-- **Pagamenti**: Stripe Checkout hosted + Bonifico + Wallet
-- **Corriere**: BRT REST 3.x (etichette, tracking, PUDO)
-- **Test**: PHPUnit (backend) + Playwright (E2E)
+- **Pagamenti**: Stripe + Bonifico + Wallet interno
+- **Test**: PHPUnit backend (333 test) + Playwright E2E + Vitest unit
 
-## Setup (~10 minuti)
+## Quickstart
 
 ```bash
 git clone <repo>
-cd spedizionefacile/apps/api
+cd spedizionefacile
+
+# Backend
 composer install
-npm install
 cp .env.example .env && php artisan key:generate
 php artisan migrate:fresh --seed
-npm run build              # production
-# OPPURE per dev:
-npm run dev &              # Vite HMR
-php artisan serve          # Laravel :8000
+
+# Frontend
+cd apps/web && npm install && cd ..
+
+# 3 processi paralleli (vedi .claude/launch.json):
+#   php artisan serve --port=8000           # Laravel API
+#   npm run dev --prefix apps/web           # Nuxt :3001
+#   caddy run --config infra/caddy/Caddyfile # Caddy :8787
+
+# Apri http://127.0.0.1:8787
 ```
 
-Apri http://localhost:8000.
+## Routing
+
+- **API JSON** modulari: `routes/api/*.php` (auth, cart, orders, payments, shipment, admin, ...)
+- **Webhook esterni**: `routes/web.php` (Stripe `/stripe/webhook`, BRT `/webhooks/brt/tracking`)
+- **Sanctum CSRF**: `/sanctum/csrf-cookie`
+
+## Convenzioni codice
+
+- **Prezzi backend in cents** (`MyMoney` / moneyphp). Frontend mostra `(cents/100).toFixed(2) + ' €'`.
+- **Auth Nuxt**: `useSanctumClient()` per chiamate API stateful.
+- **Italiano** per stringhe utente (commenti, label, errori). **English** per identifier.
+- **Palette**: teal `#095866` (primary) + arancione `#E44203` (cta) + neutri. **Mai blu**.
+
+## Test
+
+- Backend: `php artisan test`
+- Frontend type-check: `cd apps/web && npm run typecheck`
+- Frontend lint: `cd apps/web && npm run lint`
+- Frontend unit: `cd apps/web && npm run test:unit`
+- Frontend build: `cd apps/web && npm run build`
+- E2E: `cd apps/web && npx playwright test`
+
+## Account demo (seeder)
+
+| Email | Password | Ruolo |
+|---|---|---|
+| `admin@spediamofacile.it` | `password` | Admin |
+| `cliente@spediamofacile.it` | `password` | Cliente |
+| `pro@spediamofacile.it` | `password` | Partner Pro |
 
 ## Documentazione
 
-- [`CLAUDE.md`](CLAUDE.md) — convenzioni + regole AI
-- [`docs/ONBOARDING.md`](docs/ONBOARDING.md) — primo giorno dev (~20 min)
-- [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — panoramica + diagrammi
-- [`docs/operations/DEPLOY.md`](docs/operations/DEPLOY.md) — pipeline produzione
-- [`docs/legal/SECURITY.md`](docs/legal/SECURITY.md) — baseline OWASP
-- [`docs/legal/GDPR_COMPLETO.md`](docs/legal/GDPR_COMPLETO.md) — compliance
+- [`CLAUDE.md`](CLAUDE.md) — istruzioni AI + convenzioni
+- [`docs/ONBOARDING.md`](docs/ONBOARDING.md) — setup completo nuovo dev
+- [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — overview backend + frontend
+- [`docs/reference/AUDIT_V5_1R4_*.md`](docs/reference/) — audit qualità repo
 
-## Convenzioni
+## File critici (idempotency / soldi reali)
 
-- **Italiano** per stringhe utente, **English** per identifier
-- **Palette**: teal `#095866` + arancione `#E44203` (mai blu)
-- **Prezzi**: backend in cents, frontend mostra `(cents/100).toFixed(2) + ' €'`
-- **Auth**: sessione Laravel + Inertia shared props (zero composable FE)
+Modificare solo con E2E gating Stripe (carta `4242 4242 4242 4242 09/30 123`):
+
+- `app/Http/Controllers/Checkout/StripeCheckoutController.php`
+- `app/Http/Controllers/Checkout/StripeWebhookController.php`
+- `app/Services/StripePaymentService.php`
+- `app/Services/OrderCreationService.php`
+- `app/Services/WalletOrderPaymentService.php`
+- `app/Models/Order.php`
+- `app/Http/Controllers/Shipping/BrtWebhookController.php`
+- `bootstrap/app.php`
 
 ## License
 

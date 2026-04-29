@@ -72,23 +72,22 @@ export const usePudoStore = defineStore('pudo', () => {
     }
     function inferReferenceFromResults(points = []) {
         const coords = points
-            .map((p) => ({ latitude: parseCoordinate(p?.latitude), longitude: parseCoordinate(p?.longitude) }))
-            .filter((c) => { latitude: number, longitude; number; });
+            .map((p) => ({
+                latitude: parseCoordinate(p?.latitude),
+                longitude: parseCoordinate(p?.longitude),
+            }))
+            .filter((c) => Number.isFinite(c.latitude) && Number.isFinite(c.longitude));
+        if (!coords.length) return null;
+        return {
+            latitude: coords.reduce((s, c) => s + c.latitude, 0) / coords.length,
+            longitude: coords.reduce((s, c) => s + c.longitude, 0) / coords.length,
+            source: 'results',
+            address: searchAddress.value || '',
+            city: searchCity.value || '',
+            zip_code: searchZip.value || '',
+            label: [searchCity.value, searchZip.value].filter(Boolean).join(' ').trim() || 'Area selezionata',
+        };
     }
-});
-Number.isFinite(c.latitude) && Number.isFinite(c.longitude),
-;
-if (!coords.length)
-    return null;
-return {
-    latitude: coords.reduce((s, c) => s + c.latitude, 0) / coords.length,
-    longitude: coords.reduce((s, c) => s + c.longitude, 0) / coords.length,
-    source: 'results',
-    address: searchAddress.value || '',
-    city: searchCity.value || '',
-    zip_code: searchZip.value || '',
-    label: [searchCity.value, searchZip.value].filter(Boolean).join(' ').trim() || 'Area selezionata',
-};
 /** Applica risultati ricalcolando distanze. @returns true se la selezione corrente e' stata invalidata. */
 function applyResults(rawPoints) {
     const normalized = (rawPoints || []).map(normalizePudoPoint);
@@ -359,3 +358,4 @@ return {
     setReferencePoint, applyResults,
     searchPudo, useCurrentLocation, onMapReferenceClick, fetchPudoDetails,
 };
+});

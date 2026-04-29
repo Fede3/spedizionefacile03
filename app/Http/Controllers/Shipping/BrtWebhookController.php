@@ -157,7 +157,9 @@ class BrtWebhookController extends Controller
      * Strategia a due livelli:
      * 1. Se BRT_WEBHOOK_SECRET e' configurato → verifica firma HMAC-SHA256
      * 2. Se BRT_WEBHOOK_ALLOWED_IPS e' configurato → verifica IP sorgente
-     * 3. Se nessuno dei due → accetta (solo per sviluppo locale)
+     * 3. Se nessuno dei due:
+     *    - In produzione → FAIL-CLOSED (blocca + log error)
+     *    - Solo in dev/staging → fail-open con warning
      *
      * @return string|null Messaggio di errore, o null se la verifica e' ok
      */
@@ -193,10 +195,15 @@ class BrtWebhookController extends Controller
             return null;
         }
 
+        // FAIL-CLOSED in produzione: nessuna protezione configurata = rifiuto.
+        // Evita che webhook non firmati vengano accettati.
         if (app()->isProduction()) {
-            Log::warning('BRT webhook: nessuna protezione configurata in produzione. Configurare BRT_WEBHOOK_SECRET o BRT_WEBHOOK_ALLOWED_IPS.');
+            Log::error('BRT webhook RIFIUTATO: nessuna protezione configurata. Configurare BRT_WEBHOOK_SECRET o BRT_WEBHOOK_ALLOWED_IPS.');
+            return 'Webhook non autenticato: nessun secret HMAC né IP whitelist configurato.';
         }
 
+        // In dev/staging: log warning ma accetta (utile per testing locale).
+        Log::warning('BRT webhook: nessuna protezione configurata (env=' . app()->environment() . '). In produzione verrà rifiutato.');
         return null;
     }
 }

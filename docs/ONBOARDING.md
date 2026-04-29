@@ -1,4 +1,4 @@
-# Onboarding — SpediamoFacile v2
+# Onboarding — SpediamoFacile
 
 Tempo stimato: **20 minuti** dal clone al primo render.
 
@@ -9,24 +9,29 @@ Intermediario BRT per spedizioni Italia/EU. Utente fa preventivo (CAP partenza
 bonifico / wallet), BRT ritira a domicilio e consegna. Wallet, fatture,
 admin panel completo.
 
-## Stack (1 min)
+## Stack reale (1 min)
 
 ```
-Browser ─→ Laravel :8000 (root: resources/views/app.blade.php Inertia)
+Browser ─→ Caddy :8787 (single origin)
               │
-              ├─→ Inertia 2 + Vue 3.5 + Tailwind 4 (resources/js/Pages/)
-              ├─→ SQLite dev / Postgres prod
-              ├─→ Stripe API (idempotency + 3DS)
-              └─→ BRT REST 3.x (PUDO + tracking + label)
+              ├─→ /api/* /sanctum/* /storage/* /auth/* /webhooks/* /stripe/*
+              │     → Laravel :8000 (root repo, Sanctum SPA)
+              │
+              └─→ tutto il resto (HTML + asset)
+                    → Nuxt :3001 (apps/web/, Vue 3.5 + Pinia + Tailwind 4)
+
+Laravel
+  ├─→ SQLite dev / Postgres prod
+  ├─→ Stripe API (idempotency + 3DS)
+  └─→ BRT REST 3.x (PUDO + tracking + label)
 ```
 
-Niente Nuxt, niente SSR esterno, niente monorepo: **1 process Laravel + 1 build Vite**.
+**Backend Laravel alla root**, **frontend Nuxt in `apps/web/`**, **Caddy** reverse proxy split-routing.
 
 ## Setup (10 min)
 
 ```bash
 git clone <repo> spediamofacile && cd spediamofacile
-cd apps/api
 
 # Backend
 composer install
@@ -34,91 +39,111 @@ cp .env.example .env
 php artisan key:generate
 php artisan migrate:fresh --seed
 
-# Frontend (stesso project root!)
-npm install
-npm run build              # production build
-# OPPURE in dev:
-npm run dev &              # Vite HMR su :5173
-php artisan serve &        # Laravel su :8000
+# Frontend
+cd apps/web && npm install && cd ..
+
+# 3 processi paralleli (vedi .claude/launch.json):
+php artisan serve --port=8000 &           # Laravel
+npm run dev --prefix apps/web &           # Nuxt :3001
+caddy run --config infra/caddy/Caddyfile  # Caddy :8787
 
 # Apri browser
-open http://localhost:8000
+open http://127.0.0.1:8787
 ```
 
 ## Flow del codice (5 min)
 
 ```
 1. Browser GET /preventivo
-2. Laravel routes/web.php → InertiaShipmentController@preventivo
-3. Inertia::render('Shipment/Preventivo', [...props])
-4. Inertia restituisce HTML iniziale + JSON props
-5. Vue mounta Pages/Shipment/Preventivo.vue con props
-6. Layout default: Layouts/AppLayout.vue (header/footer)
-7. Form usa useForm() Inertia → POST → controller → redirect
+2. Caddy :8787 inoltra a Nuxt :3001 (HTML pagina)
+3. Nuxt page apps/web/pages/preventivo.vue render
+4. JS chiama API: POST /api/preventivo/calcola
+5. Caddy inoltra a Laravel :8000
+6. routes/api.php → routes/api/shipment.php → Controller → Service
+7. JSON response → Nuxt aggiorna stato → render risultato
 ```
 
 ## I 5 errori che farai
 
-1. **Cercare composables/stores Pinia frontend**: non esistono più. Stato
-   passa via Inertia props o `useForm()`. Pagine sono "dumb".
-2. **`$fetch` o axios per dati pagina**: usa `Inertia::render(...)`. axios
-   solo per chiamate AJAX puntuali (es. calcolo prezzo).
+1. **Cercare frontend dentro Laravel** (`resources/js/`): non c'è. Frontend è in **`apps/web/`** Nuxt.
+2. **Aspettarsi Inertia**: rimosso. Il sito è Nuxt SPA + Laravel API headless.
 3. **Toccare i file critici Stripe** senza E2E gating con carta test
    `4242 4242 4242 4242 09/30 123`. Vedi CLAUDE.md "File critici".
 4. **`blue-*` Tailwind**: la palette è teal `#095866` + arancione `#E44203`.
-5. **Dimenticare cents**: backend ritorna `payable_total_cents`, mostra
+5. **Dimenticare cents**: backend ritorna `payable_total_cents`, frontend mostra
    `(value/100).toFixed(2).replace('.', ',') + ' €'`.
 
 ## Struttura cartelle
 
 ```
-apps/api/
+spedizionefacile/                  ← root Laravel
 ├── app/
-│   ├── Http/
-│   │   ├── Controllers/        ← Inertia + API legacy
-│   │   │   ├── Inertia*.php    ← Auth, Account, Admin, Checkout, Shipment
-│   │   │   ├── Pages/          ← static pages
-│   │   │   └── ...             ← domain controllers (Auth, Cart, Stripe...)
-│   │   ├── Middleware/HandleInertiaRequests.php  ← shared props
-│   │   └── Requests/           ← FormRequest validation
-│   ├── Models/                 ← Eloquent
-│   └── Services/               ← business logic (Stripe, BRT, Order)
-├── resources/
-│   ├── css/app.css             ← Tailwind 4 + tokens brand
-│   ├── js/
-│   │   ├── app.js              ← Inertia bootstrap
-│   │   ├── Layouts/AppLayout.vue
-│   │   ├── Pages/              ← una page per route
-│   │   │   ├── Home.vue
-│   │   │   ├── Auth/           ← Login, Register, ForgotPassword, ResetPassword, VerifyEmail
-│   │   │   ├── Account/        ← Dashboard, Spedizioni, Profilo, Indirizzi, Fatture, Portafoglio, Assistenza
-│   │   │   ├── Account/Admin/  ← Dashboard, Ordini, Utenti, Bonifici, Prezzi, Impostazioni
-│   │   │   ├── Shipment/       ← Preventivo, Funnel
-│   │   │   ├── Checkout/       ← Carrello, Success
-│   │   │   └── Static/         ← ChiSiamo, Contatti, Faq, Privacy, Cookie, Termini, Servizi, Traccia, Guide
-│   │   └── Components/         ← componenti riusabili
-│   └── views/app.blade.php     ← root Inertia
-└── routes/
-    ├── web.php                 ← rotte Inertia (tutto il sito)
-    └── api.php                 ← API legacy (webhook + integrazioni)
+│   ├── Http/Controllers/          ← organizzati per dominio
+│   │   ├── Auth/                  ← Login, Register, Password, Verify, Google
+│   │   ├── Account/               ← profilo, indirizzi, ProRequest, ReferralCode
+│   │   ├── Admin/                 ← Dashboard, OrderManagement, Users, Wallet
+│   │   ├── Catalog/               ← Article, Coupon, Location, PackageController
+│   │   ├── Cart/                  ← CartItem, GuestCart, CartTotal
+│   │   ├── Checkout/              ← StripeCheckout, StripeWebhook, Refund
+│   │   ├── Order/                 ← OrderList, OrderDetail
+│   │   ├── Shipping/              ← BrtController, BrtWebhook, ShipmentExecution
+│   │   └── Wallet/                ← Wallet, Withdrawal
+│   ├── Models/                    ← Eloquent (Order, User, Package, Coupon...)
+│   └── Services/                  ← business logic
+│       ├── Brt/                   ← 11 sub-service BRT REST 3.x
+│       ├── Pricing/               ← supplementi automatici
+│       ├── Invoice/               ← PDF helpers
+│       ├── BrtClient.php          ← facade unificata BRT
+│       └── StripePaymentService.php, OrderCreationService.php, ...
+├── routes/
+│   ├── web.php                    ← webhook + Sanctum CSRF + Google OAuth
+│   ├── api.php                    ← loader API
+│   └── api/                       ← API JSON modulari
+│       ├── auth.php cart.php orders.php payments.php
+│       ├── community.php admin.php public.php invoices.php
+│       └── shipment.php
+├── database/
+│   ├── migrations/                ← (vuoto: schema dump-based)
+│   ├── schema/sqlite-schema.sql   ← fonte di verità schema
+│   └── seeders/
+├── apps/
+│   └── web/                       ← Nuxt 4 SPA
+│       ├── pages/                 ← una page per route
+│       ├── components/            ← UI riusabili
+│       ├── composables/           ← logic riusabili
+│       ├── stores/                ← Pinia store
+│       ├── utils/                 ← helper puri
+│       └── assets/css/            ← Tailwind 4 + custom
+├── infra/caddy/Caddyfile          ← reverse proxy split routing
+├── tests/                         ← PHPUnit backend
+└── docs/                          ← documentazione
 ```
 
 ## Comandi utili
 
 ```bash
-php artisan route:list           # tutte le rotte
-php artisan tinker               # REPL Eloquent
-php artisan test --filter=...    # test backend specifici
-npm run build                    # build production frontend
-composer dump-autoload           # ricarica classmap dopo nuovi file
+# Backend
+php artisan route:list             # tutte le rotte
+php artisan tinker                 # REPL Eloquent
+php artisan test                   # PHPUnit (333 test)
+php artisan test --filter=...      # test specifico
+composer dump-autoload             # ricarica classmap
+
+# Frontend (cd apps/web)
+npm run dev                        # Nuxt dev server :3001
+npm run build                      # build production
+npm run typecheck                  # vue-tsc
+npm run lint                       # ESLint
+npm run test:unit                  # Vitest
+npx playwright test                # E2E
 ```
 
 ## File da leggere PRIMA di scrivere codice
 
-1. `CLAUDE.md` — convenzioni
-2. `routes/web.php` — capire mapping route → controller → page
-3. `resources/js/Layouts/AppLayout.vue` — header/footer comuni
-4. `app/Http/Controllers/InertiaShipmentController.php` — esempio controller Inertia
-5. `resources/js/Pages/Shipment/Funnel.vue` — esempio page complessa con stepper
+1. `CLAUDE.md` — convenzioni progetto
+2. `routes/api.php` + `routes/api/*.php` — capire mapping API
+3. `apps/web/pages/preventivo.vue` — page con widget quick quote
+4. `apps/web/pages/la-tua-spedizione/[step].vue` — funnel orchestrator
+5. `app/Http/Controllers/Checkout/StripeCheckoutController.php` — esempio controller con CRITICAL gating
 
 Buon lavoro.

@@ -52,9 +52,7 @@ jobs:
           --health-timeout 5s
           --health-retries 5
 
-    defaults:
-      run:
-        working-directory: apps/api
+    # Backend Laravel sta alla ROOT del repo (non più apps/api).
 
     steps:
       - name: Checkout
@@ -74,8 +72,8 @@ jobs:
       - name: Cache Composer dependencies
         uses: actions/cache@v4
         with:
-          path: apps/api/vendor
-          key: ${{ runner.os }}-composer-${{ matrix.php }}-${{ hashFiles('apps/api/composer.lock') }}
+          path: vendor
+          key: ${{ runner.os }}-composer-${{ matrix.php }}-${{ hashFiles('composer.lock') }}
           restore-keys: |
             ${{ runner.os }}-composer-${{ matrix.php }}-
 
@@ -129,7 +127,7 @@ jobs:
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
         with:
-          files: apps/api/coverage.xml
+          files: coverage.xml
           flags: backend
           name: laravel-coverage
           fail_ci_if_error: false
@@ -281,7 +279,6 @@ jobs:
           node-version: '22'
 
       - name: Composer audit
-        working-directory: apps/api
         run: composer audit --no-interaction --format=plain
         continue-on-error: true
 

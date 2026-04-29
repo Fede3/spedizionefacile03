@@ -14,7 +14,7 @@
  */
 import { defineStore } from 'pinia';
 import { adminCentsToEuro, adminEuroToCents, adminNormalizeEuropePricing, ADMIN_DEFAULT_EUROPE_PRICING, ADMIN_DEFAULT_EXTRA_RULES, ADMIN_DEFAULT_WEIGHT_BANDS, ADMIN_DEFAULT_VOLUME_BANDS, calculateBandPriceCents, cloneForSnapshot, discountInfo, effectivePrice, normalizeLadderForPayload, } from '~/utils/adminPrezziHelpers';
-const DEFAULT_INCREMENT_LADDER = [{ from_step: 1, to_step, increment_cents: 500 }];
+const DEFAULT_INCREMENT_LADDER = [{ from_step: 1, to_step: null, increment_cents: 500 }];
 export const useAdminPricingBandsStore = defineStore('admin-pricing-bands', () => {
     // ---------- STATE ----------
     const weightBands = ref([]);
@@ -55,9 +55,9 @@ export const useAdminPricingBandsStore = defineStore('admin-pricing-bands', () =
             id: `${type}-new-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
             type,
             min_value: Number(min.toFixed(3)),
-            max_value,
+            max_value: max,
             base_price: last ? Number(last.base_price || 0) : 0,
-            discount_price,
+            discount_price: null,
             show_discount: true,
             sort_order: bands.length + 1,
         });
@@ -140,13 +140,13 @@ export const useAdminPricingBandsStore = defineStore('admin-pricing-bands', () =
         const payloadRows = normalizeLadderForPayload(rows, extraRules.value.increment_cents);
         const last = payloadRows[payloadRows.length - 1] ?? {
             from_step: 1,
-            to_step,
+            to_step: null,
             increment_cents: Number(extraRules.value.increment_cents || 0),
         };
         const fromStep = last.to_step == null ? (last.from_step + 1) : (last.to_step + 1);
         rows.push({
             from_step: fromStep,
-            to_step,
+            to_step: null,
             increment_cents: Number(last.increment_cents || extraRules.value.increment_cents || 0),
         });
     };
@@ -165,15 +165,12 @@ export const useAdminPricingBandsStore = defineStore('admin-pricing-bands', () =
             const prev = normalized[idx - 1];
             return {
                 from_step: idx === 0 || !prev ? 1 : (prev.to_step ?? prev.from_step) + 1,
-                to_step
-            } === normalized.length - 1 ? null : (row.to_step ?? row.from_step),
-                increment_cents;
-            row.increment_cents,
-            ;
+                to_step: idx === normalized.length - 1 ? null : (row.to_step ?? row.from_step),
+                increment_cents: row.increment_cents,
+            };
         });
+        setLadderRows(kind, rebuilt);
     };
-});
-setLadderRows(kind, rebuilt);
 // ---------- EUROPA ----------
 const updateEuropeRateAmountFromEuro = (rate, rawValue) => {
     const cents = adminEuroToCents(rawValue);
@@ -444,3 +441,4 @@ return {
     buildEuropePayload,
     calcLocalPrice,
 };
+});

@@ -967,7 +967,6 @@ const {
 </script>
 
 <style src="~/assets/css/shipment-flow.css"></style>
-<style src="~/assets/css/shipment-flow.css"></style>
 
 <template>
 	<section class="pb-[64px] md:pb-[88px]" style="background: var(--gradient-page-surface)">

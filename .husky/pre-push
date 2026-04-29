@@ -14,7 +14,8 @@ npm run build || {
 }
 
 # --- Backend: unit test ---
-cd "$ROOT/apps/api" || exit 1
+# Backend Laravel sta alla ROOT del repo (non più apps/api).
+cd "$ROOT" || exit 1
 if [ -f artisan ]; then
 	echo "[husky] pre-push: php artisan test --testsuite=Unit"
 	php artisan test --testsuite=Unit --stop-on-failure || {

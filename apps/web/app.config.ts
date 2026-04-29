@@ -15,7 +15,7 @@
  *   e un pulsante X per chiuderla
  *
  * - tabs: le linguette per cambiare tra diverse viste (es. nelle pagine account)
- *   con colore primario teal (#005961)
+ *   con colore primario teal (#095866)
  *
  * - breadcrumb: il percorso di navigazione (es. Home > Servizi > Pagamento)
  *   con link neri e pagina attiva in teal
@@ -261,7 +261,7 @@ export default defineAppConfig({
 					color: "primary",
 					variant: "pill",
 					class: {
-						indicator: "bg-[#005961]",
+						indicator: "bg-[#095866]",
 						trigger: "data-[state=active]:text-inverted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary",
 					},
 				},
@@ -312,7 +312,7 @@ export default defineAppConfig({
 			variants: {
 				active: {
 					true: {
-						link: "text-[#005961] font-bold",
+						link: "text-[#095866] font-bold",
 					},
 					false: {
 						link: "text-black font-normal hover:text-[var(--color-brand-primary)]",

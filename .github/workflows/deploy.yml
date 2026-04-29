@@ -60,7 +60,6 @@ jobs:
           tools: composer:v2
 
       - name: Build Laravel (composer install no-dev)
-        working-directory: apps/api
         run: composer install --no-dev --prefer-dist --optimize-autoloader --no-progress --no-interaction
 
       - name: Install Nuxt deps
@@ -76,7 +75,7 @@ jobs:
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
 
       - name: Build Laravel Docker image
-        run: docker build -f apps/api/Dockerfile -t spedizionefacile-api:staging-${{ github.sha }} apps/api
+        run: docker build -f Dockerfile -t spedizionefacile-api:staging-${{ github.sha }} .
         continue-on-error: true
 
       - name: Trigger Render deploy (Laravel API)
@@ -145,7 +144,6 @@ jobs:
           tools: composer:v2
 
       - name: Build Laravel (production)
-        working-directory: apps/api
         run: composer install --no-dev --prefer-dist --optimize-autoloader --no-progress --no-interaction
 
       - name: Install Nuxt deps
