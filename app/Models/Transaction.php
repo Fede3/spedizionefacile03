@@ -17,7 +17,7 @@ class Transaction extends Model
         'order_id',         // ID dell'ordine a cui si riferisce questo pagamento
         'total',            // Importo totale del pagamento (in centesimi)
         'ext_id',           // ID esterno del pagamento su Stripe (per rintracciarlo)
-        'type',             // Metodo di pagamento usato (card, bank_transfer, paypal)
+        'type',             // Metodo di pagamento usato (card, bank_transfer, wallet)
         'status',           // Stato della transazione (es. "succeeded", "failed")
         'provider_status',  // Stato dettagliato dal provider di pagamento (Stripe)
         'failure_code',     // Codice errore se il pagamento e' fallito
@@ -32,7 +32,7 @@ class Transaction extends Model
         $methods = [
             'card' => 'Carta',
             'bank_transfer' => 'Bonifico',
-            'paypal' => 'PayPal',
+            'wallet' => 'Portafoglio',
         ];
 
         return $methods[$type] ?? $type;
