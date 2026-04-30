@@ -2,16 +2,58 @@
  * @file useShipmentStepServices — orchestratore step "Servizi" del funnel.
  * Helpers in utils/shipmentServiceData.js. Cards in useShipmentStepServiceCards.
  */
-import { ref, computed, watch } from 'vue';
+import { ref, computed, watch, type Ref } from 'vue';
+import type { PricingRuleGroup } from '~/types/pricing';
 import {
   DEFAULT_SHIPMENT_SERVICES,
-  createDefaultServiceData,
   createMergedServiceData,
   formatCurrencyCents,
   formatPercentageLabel,
 } from '~/utils/shipmentServiceData';
 
-export const useShipmentStepServices = ({ shipmentFlowStore, dateError }) => {
+type ShipmentService = (typeof DEFAULT_SHIPMENT_SERVICES)[number] & {
+	currentPriceLabel?: string;
+	priceLabel?: string;
+	isSelected?: boolean;
+};
+
+type PickupRequestData = {
+	enabled?: boolean;
+	date?: string;
+	time_slot?: string;
+	notes?: string;
+};
+
+type ShipmentServiceData = {
+	contrassegno: Record<string, unknown>;
+	assicurazione: Record<string, unknown>;
+	sponda_idraulica: Record<string, unknown>;
+	pickup_request: PickupRequestData;
+	telefono_notifica?: string;
+};
+
+type ShipmentStepServicesStore = {
+	serviceData: ShipmentServiceData;
+	servicesArray: string[];
+	pickupDate?: string;
+	smsEmailNotification?: boolean;
+	shipmentDetails: Record<string, unknown>;
+};
+
+type PickupDay = {
+	date: Date;
+	weekday: string;
+	dayNumber: number;
+	monthAbbr: string;
+	formattedDate: string;
+};
+
+type UseShipmentStepServicesArgs = {
+	shipmentFlowStore: ShipmentStepServicesStore;
+	dateError: Ref<string | null>;
+};
+
+export const useShipmentStepServices = ({ shipmentFlowStore, dateError }: UseShipmentStepServicesArgs) => {
 	const pickupCalendarAnchor = useState('shipment-pickup-calendar-anchor', () => new Date().toISOString().slice(0, 10));
 	const { priceBands, loadPriceBands } = usePriceBands();
 	const services = ref({
@@ -20,12 +62,12 @@ export const useShipmentStepServices = ({ shipmentFlowStore, dateError }) => {
 		time: '',
 	});
 
-	const servicesList = ref(DEFAULT_SHIPMENT_SERVICES.map((service) => ({ ...service })));
+	const servicesList = ref<ShipmentService[]>(DEFAULT_SHIPMENT_SERVICES.map((service) => ({ ...service })));
 	const expandedServiceKey = ref('');
-	const serviceData = ref(createMergedServiceData(shipmentFlowStore?.serviceData || {}));
+	const serviceData = ref<ShipmentServiceData>(createMergedServiceData(shipmentFlowStore.serviceData || {}) as ShipmentServiceData);
 	const smsEmailNotification = ref(false);
 
-	const servicePricing = computed(() => priceBands.value?.service_pricing || {});
+	const servicePricing = computed<PricingRuleGroup>(() => priceBands.value?.service_pricing || {});
 
 	const featuredCurrentPriceCents = computed(() => {
 		return Math.max(0, Math.round(Number(servicePricing.value?.senza_etichetta?.price_cents ?? 99)));
@@ -37,14 +79,14 @@ export const useShipmentStepServices = ({ shipmentFlowStore, dateError }) => {
 		return formatCurrencyCents(servicePricing.value?.notifications?.price_cents ?? 50, { withPlus: true });
 	});
 
-	const getServicePriceLabel = (service) => {
+	const getServicePriceLabel = (service: ShipmentService) => {
 		if (service?.key === 'contrassegno') {
-			const rule = servicePricing.value?.contrassegno || {};
-			return `da ${formatCurrencyCents(rule.min_fee_cents ?? 700)} + ${formatPercentageLabel(rule.percentage_rate ?? 2)}%`;
+			const rule = servicePricing.value.contrassegno;
+			return `da ${formatCurrencyCents(rule?.min_fee_cents ?? 700)} + ${formatPercentageLabel(rule?.percentage_rate ?? 2)}%`;
 		}
 		if (service?.key === 'assicurazione') {
-			const rule = servicePricing.value?.assicurazione || {};
-			return `da ${formatCurrencyCents(rule.min_fee_cents ?? 700)} + ${formatPercentageLabel(rule.percentage_rate ?? 2)}%`;
+			const rule = servicePricing.value.assicurazione;
+			return `da ${formatCurrencyCents(rule?.min_fee_cents ?? 700)} + ${formatPercentageLabel(rule?.percentage_rate ?? 2)}%`;
 		}
 		if (service?.key === 'sponda_idraulica') {
 			return formatCurrencyCents(servicePricing.value?.sponda_idraulica?.price_cents ?? 1500, { withPlus: true });
@@ -52,7 +94,7 @@ export const useShipmentStepServices = ({ shipmentFlowStore, dateError }) => {
 		return service.priceLabel || '';
 	};
 
-	const findServiceByKey = (serviceKey) => servicesList.value.find((service) => service.key === serviceKey) || null;
+	const findServiceByKey = (serviceKey: string) => servicesList.value.find((service) => service.key === serviceKey) || null;
 
 	const syncSelectedServicesVisual = () => {
 		servicesList.value.forEach((service) => {
@@ -60,7 +102,7 @@ export const useShipmentStepServices = ({ shipmentFlowStore, dateError }) => {
 		});
 	};
 
-	const removeService = (service) => {
+	const removeService = (service: ShipmentService) => {
 		const index = shipmentFlowStore?.servicesArray.indexOf(service.name);
 		if (index !== -1) {
 			shipmentFlowStore?.servicesArray.splice(index, 1);
@@ -78,7 +120,7 @@ export const useShipmentStepServices = ({ shipmentFlowStore, dateError }) => {
 		services.value.service_type = shipmentFlowStore?.servicesArray.join(', ');
 	};
 
-	const ensureServiceSelected = (service, serviceIndex) => {
+	const ensureServiceSelected = (service: ShipmentService, serviceIndex: number) => {
 		const visual = servicesList.value[serviceIndex];
 		if (visual) {
 			visual.isSelected = true;
@@ -91,7 +133,7 @@ export const useShipmentStepServices = ({ shipmentFlowStore, dateError }) => {
 		services.value.service_type = shipmentFlowStore?.servicesArray.join(', ');
 	};
 
-	const chooseService = (service, serviceIndex) => {
+	const chooseService = (service: ShipmentService, serviceIndex: number) => {
 		const visual = servicesList.value[serviceIndex];
 		if (!visual) return;
 
@@ -120,12 +162,12 @@ export const useShipmentStepServices = ({ shipmentFlowStore, dateError }) => {
 		services.value.service_type = shipmentFlowStore?.servicesArray.join(', ');
 	};
 
-	const toggleServiceDetails = (service) => {
+	const toggleServiceDetails = (service: ShipmentService) => {
 		if (!service?.hasDetails) return;
 		expandedServiceKey.value = expandedServiceKey.value === service.key ? '' : service.key;
 	};
 
-	const toggleServiceSelection = (service, serviceIndex) => {
+	const toggleServiceSelection = (service: ShipmentService, serviceIndex: number) => {
 		const visual = servicesList.value[serviceIndex];
 		const isSelected = Boolean(visual?.isSelected);
 		const shouldToggleDirectly = service.featured || !service.hasDetails;
@@ -146,20 +188,20 @@ export const useShipmentStepServices = ({ shipmentFlowStore, dateError }) => {
 		}
 	};
 
-	const chooseDate = (day) => {
+	const chooseDate = (day: PickupDay) => {
 		const nextDate = day.formattedDate || day.date.toLocaleDateString('it-IT');
 		services.value.date = nextDate;
 		dateError.value = null;
 	};
 
 	const daysInMonth = computed(() => {
-		const result = [];
+		const result: PickupDay[] = [];
 		const today = new Date(`${pickupCalendarAnchor.value}T12:00:00`);
 		const year = today.getFullYear();
 		const month = today.getMonth();
 		const day = today.getDate() + 1;
 
-		const appendWorkingDays = (targetYear, targetMonth, startDay, endDay) => {
+		const appendWorkingDays = (targetYear: number, targetMonth: number, startDay: number, endDay: number) => {
 			for (let index = startDay; index <= endDay; index++) {
 				const date = new Date(targetYear, targetMonth, index);
 				const weekdayIndex = date.getDay();
@@ -244,7 +286,8 @@ export const useShipmentStepServices = ({ shipmentFlowStore, dateError }) => {
 			const hasSelectedDay = availableDays.some((day) => day.formattedDate === services.value.date);
 			if (hasSelectedDay) return;
 
-			chooseDate(availableDays[0]);
+			const firstAvailableDay = availableDays[0];
+			if (firstAvailableDay) chooseDate(firstAvailableDay);
 		},
 		{ immediate: true },
 	);
@@ -326,7 +369,7 @@ export const useShipmentStepServices = ({ shipmentFlowStore, dateError }) => {
 	);
 
 	watch(
-		() => [...shipmentFlowStore?.servicesArray],
+		() => [...(shipmentFlowStore?.servicesArray || [])],
 		() => {
 			syncSelectedServicesVisual();
 			services.value.service_type = shipmentFlowStore?.servicesArray.join(', ');

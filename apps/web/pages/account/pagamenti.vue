@@ -21,9 +21,6 @@ useSeoMeta({
 	robots: 'noindex, nofollow',
 });
 
-const route = useRoute();
-const initialTab = computed(() => route.query.tab || 'portafoglio');
-
 const tabs = [
 	{ key: 'portafoglio', label: 'Portafoglio', to: '/account/portafoglio', icon: 'wallet', desc: 'Saldo, ricariche e movimenti' },
 	{ key: 'carte', label: 'Carte', to: '/account/carte', icon: 'card', desc: 'Metodi di pagamento salvati' },

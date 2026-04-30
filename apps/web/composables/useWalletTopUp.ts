@@ -6,7 +6,37 @@
  * - questo file ricarica il saldo prepagato;
  * - il pagamento di un ordine con wallet vive in usePayment -> /api/wallet/pay.
  */
-export function useWalletTopUp(props, emit) {
+import type {
+	Stripe,
+	StripeCardCvcElement,
+	StripeCardExpiryElement,
+	StripeCardNumberElement,
+	StripeElements,
+	StripeError,
+} from '@stripe/stripe-js';
+
+type WalletTopUpProps = {
+	stripeConfigured: boolean;
+	defaultPaymentMethod?: { card?: { id?: string } } | null;
+};
+type WalletTopUpEmit = (event: 'paymentMethodUpdated' | 'topUpSuccess') => void;
+type StripeSettingsResponse = { publishable_key?: string };
+type SetupIntentResponse = { client_secret?: string; error?: string };
+type SavePaymentMethodResponse = { error?: string };
+type WalletTopUpResponse = { success?: boolean; message?: string };
+type UserProfile = { name?: string; surname?: string };
+
+const asRecord = (value: unknown): Record<string, unknown> =>
+	value && typeof value === 'object' ? value as Record<string, unknown> : {};
+const errorMessage = (error: unknown): string => {
+	const e = asRecord(error);
+	const response = asRecord(e.response);
+	const responseData = asRecord(response._data);
+	const data = asRecord(e.data);
+	return String(responseData.message || data.message || e.message || '');
+};
+
+export function useWalletTopUp(props: WalletTopUpProps, emit: WalletTopUpEmit) {
 	const { user, refreshIdentity } = useSanctumAuth();
 	const sanctum = useSanctumClient();
 	const runtimeConfig = useRuntimeConfig();
@@ -15,18 +45,18 @@ export function useWalletTopUp(props, emit) {
 	const stripePublishableKey = ref('');
 	const stripeReady = ref(false);
 	const stripeLoading = ref(false);
-	let stripe = null;
+	let stripe: Stripe | null = null;
 
-	const isValidKey = (v) => {
+	const isValidKey = (v: unknown): boolean => {
 		const k = String(v || '').trim();
 		return k.startsWith('pk_') && !k.includes('placeholder');
 	};
 
 	/* ── Top-up state ── */
-	const topUpAmount = ref('');
+	const topUpAmount = ref<string | number>('');
 	const isLoading = ref(false);
-	const message = ref(null);
-	const messageType = ref('success');
+	const message = ref<string | null>(null);
+	const messageType = ref<'success' | 'error'>('success');
 	const topUpAttemptKey = ref('');
 	const topUpAttemptSignature = ref('');
 	const presetAmounts = [5, 10, 20, 50];
@@ -35,12 +65,12 @@ export function useWalletTopUp(props, emit) {
 	const showNewCardForm = ref(false);
 	const isPreparingNewCardForm = ref(false);
 	const cardHolderName = ref('');
-	const setupClientSecret = ref(null);
-	const elements = ref(null);
-	const cardNumber = ref(null);
-	const cardExpiry = ref(null);
-	const cardCvc = ref(null);
-	const cardError = ref(null);
+	const setupClientSecret = ref<string | null>(null);
+	const elements = ref<StripeElements | null>(null);
+	const cardNumber = ref<StripeCardNumberElement | null>(null);
+	const cardExpiry = ref<StripeCardExpiryElement | null>(null);
+	const cardCvc = ref<StripeCardCvcElement | null>(null);
+	const cardError = ref<string | null>(null);
 
 	/* ── Stripe error i18n map ── */
 	const STRIPE_ERRORS = {
@@ -61,11 +91,14 @@ export function useWalletTopUp(props, emit) {
 		stolen_card: 'Carta segnalata come rubata. Contatta la tua banca.',
 	};
 
-	const stripeErrorMsg = (err) => STRIPE_ERRORS[err?.code] || err?.message || 'Errore durante il salvataggio della carta. Riprova.';
+	const stripeErrorMsg = (err: StripeError | null | undefined) => {
+		const code = String(err?.code || '');
+		return STRIPE_ERRORS[code as keyof typeof STRIPE_ERRORS] || err?.message || 'Errore durante il salvataggio della carta. Riprova.';
+	};
 
 	/* ── Helpers ── */
 
-	const setFeedback = (msg, type = 'error') => {
+	const setFeedback = (msg: string, type: 'success' | 'error' = 'error') => {
 		message.value = msg;
 		messageType.value = type;
 		setTimeout(() => {
@@ -78,7 +111,7 @@ export function useWalletTopUp(props, emit) {
 		return `wallet-topup-${suffix}`;
 	};
 
-	const resolveTopUpAttemptKey = (amount, paymentMethodId) => {
+	const resolveTopUpAttemptKey = (amount: unknown, paymentMethodId: unknown) => {
 		const signature = `${Number(amount).toFixed(2)}:${String(paymentMethodId || '')}`;
 		if (!topUpAttemptKey.value || topUpAttemptSignature.value !== signature) {
 			topUpAttemptSignature.value = signature;
@@ -120,7 +153,7 @@ export function useWalletTopUp(props, emit) {
 			const { loadStripe } = await import('@stripe/stripe-js');
 			if (!stripePublishableKey.value) {
 				try {
-					const cfg = await sanctum('/api/settings/stripe');
+					const cfg = await sanctum('/api/settings/stripe') as StripeSettingsResponse;
 					const k = String(cfg?.publishable_key || '').trim();
 					stripePublishableKey.value = isValidKey(k) ? k : '';
 				} catch {
@@ -153,7 +186,8 @@ export function useWalletTopUp(props, emit) {
 	const mountNewCardFields = async () => {
 		if (!stripe || !showNewCardForm.value) return;
 		await nextTick();
-		elements.value = stripe.elements();
+		const stripeElements = stripe.elements();
+		elements.value = stripeElements;
 		const style = {
 			base: {
 				color: '#252B42',
@@ -164,12 +198,15 @@ export function useWalletTopUp(props, emit) {
 			},
 			invalid: { color: '#dc2626' },
 		};
-		cardNumber.value = elements.value.create('cardNumber', { style, placeholder: '1234 5678 9012 3456' });
-		cardNumber.value.mount('#wallet-card-number');
-		cardExpiry.value = elements.value.create('cardExpiry', { style });
-		cardExpiry.value.mount('#wallet-card-expiry');
-		cardCvc.value = elements.value.create('cardCvc', { style, placeholder: '123' });
-		cardCvc.value.mount('#wallet-card-cvc');
+		const numberElement = stripeElements.create('cardNumber', { style, placeholder: '1234 5678 9012 3456' });
+		const expiryElement = stripeElements.create('cardExpiry', { style });
+		const cvcElement = stripeElements.create('cardCvc', { style, placeholder: '123' });
+		cardNumber.value = numberElement;
+		cardExpiry.value = expiryElement;
+		cardCvc.value = cvcElement;
+		numberElement.mount('#wallet-card-number');
+		expiryElement.mount('#wallet-card-expiry');
+		cvcElement.mount('#wallet-card-cvc');
 	};
 
 	/* ── Open / close card form ── */
@@ -184,7 +221,8 @@ export function useWalletTopUp(props, emit) {
 		showNewCardForm.value = true;
 		isPreparingNewCardForm.value = true;
 		clearNewCardForm();
-		cardHolderName.value = [user.value?.name, user.value?.surname].filter(Boolean).join(' ').trim();
+		const currentUser = (user.value || {}) as UserProfile;
+		cardHolderName.value = [currentUser.name, currentUser.surname].filter(Boolean).join(' ').trim();
 
 		if (!(await ensureStripeLoaded())) {
 			isPreparingNewCardForm.value = false;
@@ -192,7 +230,7 @@ export function useWalletTopUp(props, emit) {
 		}
 
 		try {
-			const res = await sanctum('/api/stripe/create-setup-intent', { method: 'POST' });
+			const res = await sanctum('/api/stripe/create-setup-intent', { method: 'POST' }) as SetupIntentResponse;
 			if (!res?.client_secret) {
 				cardError.value = res?.error || 'Impossibile inizializzare il modulo carta. Riprova.';
 				return;
@@ -200,7 +238,7 @@ export function useWalletTopUp(props, emit) {
 			setupClientSecret.value = res.client_secret;
 			await mountNewCardFields();
 		} catch (err) {
-			cardError.value = err?.data?.error || err?.data?.message || err?.message || 'Errore di connessione al sistema di pagamento.';
+			cardError.value = errorMessage(err) || 'Errore di connessione al sistema di pagamento.';
 		} finally {
 			isPreparingNewCardForm.value = false;
 		}
@@ -213,7 +251,7 @@ export function useWalletTopUp(props, emit) {
 
 	/* ── Save new card ── */
 
-	const saveNewCardAndGetPaymentMethodId = async () => {
+	const saveNewCardAndGetPaymentMethodId = async (): Promise<string | null> => {
 		if (!setupClientSecret.value) {
 			cardError.value = 'Impossibile inizializzare il modulo carta. Riprova.';
 			return null;
@@ -226,9 +264,14 @@ export function useWalletTopUp(props, emit) {
 			cardError.value = 'Stripe non disponibile. Ricarica la pagina e riprova.';
 			return null;
 		}
+		const card = cardNumber.value;
+		if (!card) {
+			cardError.value = 'Campo carta non pronto. Riprova.';
+			return null;
+		}
 
 		const { setupIntent, error } = await stripe.confirmCardSetup(setupClientSecret.value, {
-			payment_method: { card: cardNumber.value, billing_details: { name: cardHolderName.value.trim() } },
+			payment_method: { card, billing_details: { name: cardHolderName.value.trim() } },
 		});
 		if (error) {
 			cardError.value = stripeErrorMsg(error);
@@ -239,10 +282,14 @@ export function useWalletTopUp(props, emit) {
 			return null;
 		}
 
+		const paymentMethodId = typeof setupIntent.payment_method === 'string'
+			? setupIntent.payment_method
+			: setupIntent.payment_method.id;
+
 		const srv = await sanctum('/api/stripe/set-default-payment-method', {
 			method: 'POST',
-			body: { payment_method: setupIntent.payment_method },
-		});
+			body: { payment_method: paymentMethodId },
+		}) as SavePaymentMethodResponse;
 		if (srv?.error) {
 			cardError.value = srv.error || 'Errore durante il salvataggio della carta.';
 			return null;
@@ -251,7 +298,7 @@ export function useWalletTopUp(props, emit) {
 		await refreshIdentity();
 		emit('paymentMethodUpdated');
 		closeNewCardForm();
-		return setupIntent.payment_method;
+		return paymentMethodId;
 	};
 
 	/* ── Computed ── */
@@ -274,7 +321,7 @@ export function useWalletTopUp(props, emit) {
 	/* ── Top-up handler ── */
 
 	const handleTopUp = async () => {
-		if (!topUpAmount.value || topUpAmount.value < 1) {
+		if (!topUpAmount.value || Number(topUpAmount.value) < 1) {
 			setFeedback('Inserisci un importo minimo di 1,00 EUR');
 			return;
 		}
@@ -303,7 +350,7 @@ export function useWalletTopUp(props, emit) {
 					payment_method_id: pmId,
 					idempotency_key: idempotencyKey,
 				},
-			});
+			}) as WalletTopUpResponse;
 
 			if (result?.success) {
 				setFeedback(`Ricarica di \u20AC${Number(topUpAmount.value).toFixed(2)} completata!`, 'success');
@@ -314,13 +361,13 @@ export function useWalletTopUp(props, emit) {
 				setFeedback(result?.message || 'Errore durante la ricarica.');
 			}
 		} catch (e) {
-			setFeedback(e?.response?._data?.message || e?.data?.message || 'Errore imprevisto. Riprova.');
+			setFeedback(errorMessage(e) || 'Errore imprevisto. Riprova.');
 		} finally {
 			isLoading.value = false;
 		}
 	};
 
-	const selectPreset = (amount) => {
+	const selectPreset = (amount: number) => {
 		topUpAmount.value = amount;
 	};
 

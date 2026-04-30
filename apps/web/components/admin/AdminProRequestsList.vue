@@ -2,7 +2,7 @@
   Lista richieste Partner Pro per la pagina admin utenti.
 -->
 <script setup>
-const props = defineProps({
+defineProps({
 	requests: { type: Array, default: () => [] },
 	proRequestStatusConfig: { type: Object, default: () => ({}) },
 	actionLoading: { type: [String, Number, null], default: null },

@@ -1,78 +1,32 @@
-/**
- * paymentStore — stato canonico checkout pagamento (metodo, Stripe, terms, status).
- *
- * Lo store contiene SOLO state e azioni neutre rispetto al ciclo Vue.
- * Logica Stripe (init, confirmCardPayment, 3DS), API sanctum (auth retry, mark paid),
- * router/redirect/analytics e i computed cart-aware vivono nel wrapper `usePayment(cart)`.
- *
- * Helper di recovery localStorage (`loadPendingPayment`, `clearPendingPayment`)
- * sono esportati per uso esterno (es. pagina recupero ordine post-3DS).
- */
 import { defineStore } from 'pinia'
+import {
+	PENDING_PAYMENT_KEY,
+	PENDING_PAYMENT_TTL_MS,
+	type PendingPaymentDraft,
+	safeLocalSet,
+} from '~/utils/pendingPayment'
 
-// Chiave localStorage per draft pagamento in corso. Permette recovery dopo
-// redirect 3DS o sessione Sanctum scaduta durante challenge.
-const PENDING_PAYMENT_KEY = 'sf_pending_payment'
-const PENDING_PAYMENT_TTL_MS = 24 * 60 * 60 * 1000
-
-function safeLocalGet<T = unknown>(key) {
-	if (typeof window === 'undefined') return null
-	try {
-		const raw = window.localStorage.getItem(key)
-		return raw ? JSON.parse(raw)  : null
-	} catch {
-		return null
-	}
-}
-
-function safeLocalSet(key, value) {
-	if (typeof window === 'undefined') return
-	try { window.localStorage.setItem(key, JSON.stringify(value)) } catch { /* storage pieno */ }
-}
-
-function safeLocalRemove(key) {
-	if (typeof window === 'undefined') return
-	try { window.localStorage.removeItem(key) } catch { /* storage disabilitato */ }
-}
-
-/** Legge draft pagamento in sospeso. Ritorna null se scaduto o assente. */
-export function loadPendingPayment() {
-	const data = safeLocalGet(PENDING_PAYMENT_KEY)
-	if (!data) return null
-	if (data.expiresAt && data.expiresAt < Date.now()) {
-		safeLocalRemove(PENDING_PAYMENT_KEY)
-		return null
-	}
-	return data
-}
-
-export function clearPendingPayment() {
-	safeLocalRemove(PENDING_PAYMENT_KEY)
-}
+type PaymentMethodKey = 'carta' | 'wallet' | 'bonifico'
 
 export const PAYMENT_METHOD_OPTIONS = [
-	{ key: 'carta', title: 'Carta', description: 'Visa, Mastercard, Amex', badge: 'Più usato' },
+	{ key: 'carta', title: 'Carta', description: 'Visa, Mastercard, Amex', badge: 'Piu usato' },
 	{ key: 'bonifico', title: 'Bonifico', description: '1-2 giorni lavorativi' },
 	{ key: 'wallet', title: 'Wallet', description: 'Saldo prepagato' },
-]
+] as const
 
 export const usePaymentStore = defineStore('payment', () => {
-	// ---------- METODO + UI ----------
-	const paymentMethod = ref('carta')
+	const paymentMethod = ref<PaymentMethodKey>('carta')
 	const termsAccepted = ref(false)
 	const showConfirmModal = ref(false)
 	const isProcessing = ref(false)
 	const paymentStep = ref('')
 	const paymentError = ref('')
 	const paymentSuccess = ref(false)
-	const successOrderId = ref(null)
+	const successOrderId = ref<string | number | null>(null)
 
-	// ---------- STRIPE LIFECYCLE ----------
-	// stripe/cardElement sono istanze SDK (non reattive a livello fine): le wrappiamo
-	// in shallowRef per evitare overhead di reactive proxy su oggetti opachi.
-	const stripe = shallowRef(null)
-	const cardElement = shallowRef(null)
-	const cardElementContainer = ref(null)
+	const stripe = shallowRef<unknown>(null)
+	const cardElement = shallowRef<unknown>(null)
+	const cardElementContainer = ref<HTMLElement | null>(null)
 	const cardMounted = ref(false)
 	const cardComplete = ref(false)
 	const cardError = ref('')
@@ -84,25 +38,21 @@ export const usePaymentStore = defineStore('payment', () => {
 	const saveCardForFuture = ref(false)
 	const useNewCard = ref(false)
 	const hasSavedCard = ref(false)
-	const defaultPayment = ref(null)
+	const defaultPayment = ref<Record<string, unknown> | null>(null)
 
-	// ---------- APPLE/GOOGLE PAY (ARCHIVIATO 2026-04-20) ----------
-	// Wallet express disattivati. Fallback inerti per compatibilita' template.
 	const canMakePayment = ref(false)
 	const isAppleAvailable = computed(() => false)
 	const isGoogleAvailable = computed(() => false)
-	const paymentRequestContainer = ref(null)
+	const paymentRequestContainer = ref<HTMLElement | null>(null)
 	const paymentRequestError = ref('')
 
-	// ---------- AZIONI ----------
-	function selectPaymentMethod(key: 'carta' | 'wallet' | 'bonifico') {
+	function selectPaymentMethod(key: PaymentMethodKey) {
 		paymentMethod.value = key
 		paymentError.value = ''
 	}
 
-	/** Salva draft pagamento (prima di 3DS). Recovery se sessione scade durante challenge. */
-	function persistPaymentDraft(draft) {
-		if (!draft?.orderId) return
+	function persistPaymentDraft(draft: PendingPaymentDraft) {
+		if (!draft.orderId) return
 		safeLocalSet(PENDING_PAYMENT_KEY, {
 			...draft,
 			createdAt: Date.now(),
@@ -115,12 +65,11 @@ export const usePaymentStore = defineStore('payment', () => {
 		cardPaymentsNotice.value = notice
 	}
 
-	function markPaymentSuccess(orderId) {
+	function markPaymentSuccess(orderId: string | number | null) {
 		paymentSuccess.value = true
 		successOrderId.value = orderId
 	}
 
-	/** Reset completo dello store (post pagamento riuscito o cambio carrello). */
 	function resetPayment() {
 		paymentMethod.value = 'carta'
 		termsAccepted.value = false
@@ -148,16 +97,12 @@ export const usePaymentStore = defineStore('payment', () => {
 	}
 
 	return {
-		// metodo + ui
 		paymentMethod, termsAccepted, showConfirmModal, isProcessing,
 		paymentStep, paymentError, paymentSuccess, successOrderId,
-		// stripe lifecycle
 		stripe, cardElement, cardElementContainer, cardMounted, cardComplete, cardError,
 		stripeLoading, stripeReady, stripeConfigured, cardPaymentsUnavailable, cardPaymentsNotice,
 		saveCardForFuture, useNewCard, hasSavedCard, defaultPayment,
-		// apple/google pay (inerti)
 		canMakePayment, isAppleAvailable, isGoogleAvailable, paymentRequestContainer, paymentRequestError,
-		// actions
 		selectPaymentMethod, persistPaymentDraft, setStripeUnavailable, markPaymentSuccess, resetPayment,
 	}
 })

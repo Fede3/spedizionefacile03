@@ -2,10 +2,10 @@
 const props = defineProps({
   items: { type: Array, required: true },
   loading: { type: Boolean, default: false },
-  selectedKey: { default: null },
+  selectedKey: { type: [String, Number, null], default: null },
   hasReference: { type: Boolean, default: false },
 });
-const emit = defineEmits();
+const emit = defineEmits(['select']);
 const isSelected = (p) => props.selectedKey != null && String(props.selectedKey) === String(p.ui_key);
 const formatDistance = (meters) => {
     const v = Number(meters);
@@ -17,7 +17,7 @@ const todayHoursPreview = (raw) => {
     if (!raw)
         return '';
     if (typeof raw === 'string')
-        return raw.split(/\n|\||;/g)[0]?.trim() || '';
+        return raw.split(/[\n|;]/g)[0]?.trim() || '';
     if (Array.isArray(raw))
         return String(raw[0] || '').trim();
     if (typeof raw === 'object') {

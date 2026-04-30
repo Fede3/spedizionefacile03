@@ -8,7 +8,7 @@ defineProps({
     error: { type: String, default: '' },
     success: { type: String, default: '' },
 });
-const emit = defineEmits();
+const emit = defineEmits(['input', 'keydown', 'submit', 'resend', 'back']);
 const CTA_CLS = 'btn-cta-filled w-full h-[50px] rounded-full text-[14px] flex items-center justify-center gap-[10px] mt-[4px] cursor-pointer active:scale-[0.985] focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-[#E44203]/25 disabled:cursor-wait';
 </script>
 

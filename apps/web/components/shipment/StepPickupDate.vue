@@ -93,7 +93,7 @@ const scrollTrack = (direction) => {
 				aria-label="Giorni disponibili per il ritiro">
 
 				<button
-					v-for="(day, dayIndex) in props.daysInMonth"
+					v-for="day in props.daysInMonth"
 					:key="day.date.toISOString()"
 					type="button"
 					:id="`date-${day.formattedDate}`"

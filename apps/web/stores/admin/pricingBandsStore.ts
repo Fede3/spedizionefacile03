@@ -13,22 +13,25 @@
  * useAdminPricing() che orchestra anche supplementsStore + servicesStore.
  */
 import { defineStore } from 'pinia';
-import { adminCentsToEuro, adminEuroToCents, adminNormalizeEuropePricing, ADMIN_DEFAULT_EUROPE_PRICING, ADMIN_DEFAULT_EXTRA_RULES, ADMIN_DEFAULT_WEIGHT_BANDS, ADMIN_DEFAULT_VOLUME_BANDS, calculateBandPriceCents, cloneForSnapshot, discountInfo, effectivePrice, normalizeLadderForPayload, } from '~/utils/adminPrezziHelpers';
+import { adminCentsToEuro, adminEuroToCents, adminIncrementCentsToEuro, adminNormalizeEuropePricing, ADMIN_DEFAULT_EUROPE_PRICING, ADMIN_DEFAULT_EXTRA_RULES, ADMIN_DEFAULT_WEIGHT_BANDS, ADMIN_DEFAULT_VOLUME_BANDS, calculateBandPriceCents, cloneForSnapshot, discountInfo, effectivePrice, normalizeLadderForPayload, } from '~/utils/adminPrezziHelpers';
+import type { BandType, EuropePricing, EuropeRate, ExtraRules, IncrementLadderRow, PriceBand, PriceBandsState } from '~/types/pricing';
 const DEFAULT_INCREMENT_LADDER = [{ from_step: 1, to_step: null, increment_cents: 500 }];
+type PricingBandsPayload = Partial<Pick<PriceBandsState, 'weight' | 'volume' | 'extra_rules' | 'europe' | 'version'>>;
+const cloneBands = (bands: PriceBand[] | undefined): PriceBand[] => (Array.isArray(bands) ? bands.map((band) => ({ ...band })) : []);
 export const useAdminPricingBandsStore = defineStore('admin-pricing-bands', () => {
     // ---------- STATE ----------
-    const weightBands = ref([]);
-    const volumeBands = ref([]);
-    const originalWeightBands = ref([]);
-    const originalVolumeBands = ref([]);
+    const weightBands = ref<PriceBand[]>([]);
+    const volumeBands = ref<PriceBand[]>([]);
+    const originalWeightBands = ref<PriceBand[]>([]);
+    const originalVolumeBands = ref<PriceBand[]>([]);
     const bandsFromDb = ref(false);
-    const extraRules = ref({ ...ADMIN_DEFAULT_EXTRA_RULES });
-    const originalExtraRules = ref(null);
-    const europePricing = ref({ ...ADMIN_DEFAULT_EUROPE_PRICING });
-    const originalEuropePricing = ref(null);
-    const pricingVersion = ref(null);
+    const extraRules = ref<ExtraRules>({ ...ADMIN_DEFAULT_EXTRA_RULES });
+    const originalExtraRules = ref<ExtraRules | null>(null);
+    const europePricing = ref<EuropePricing>({ ...ADMIN_DEFAULT_EUROPE_PRICING });
+    const originalEuropePricing = ref<EuropePricing | null>(null);
+    const pricingVersion = ref<string | number | null>(null);
     // Editing inline cella (es. "weight-3-base_price")
-    const editingCell = ref(null);
+    const editingCell = ref<string | null>(null);
     const editValue = ref('');
     // ---------- UI STATE EUROPA ----------
     const compactEuropeView = ref(false);
@@ -37,16 +40,16 @@ export const useAdminPricingBandsStore = defineStore('admin-pricing-bands', () =
     const europeBandFilter = ref('all');
     const europeSort = ref('country_asc');
     // ---------- HELPERS INTERNI ----------
-    const bandsFor = (type) => (type === 'weight' ? weightBands.value : volumeBands.value);
-    const ladderRowsFor = (kind) => (kind === 'weight' ? extraRules.value.weight_increment_ladder : extraRules.value.volume_increment_ladder);
-    const setLadderRows = (kind, rows) => {
+    const bandsFor = (type: BandType) => (type === 'weight' ? weightBands.value : volumeBands.value);
+    const ladderRowsFor = (kind: BandType) => (kind === 'weight' ? extraRules.value.weight_increment_ladder : extraRules.value.volume_increment_ladder);
+    const setLadderRows = (kind: BandType, rows: IncrementLadderRow[]) => {
         if (kind === 'weight')
             extraRules.value.weight_increment_ladder = rows;
         else
             extraRules.value.volume_increment_ladder = rows;
     };
     // ---------- BANDA: CRUD ----------
-    const addBand = (type) => {
+    const addBand = (type: BandType) => {
         const bands = bandsFor(type);
         const last = bands[bands.length - 1];
         const min = last ? Number(last.max_value) : 0;
@@ -62,7 +65,7 @@ export const useAdminPricingBandsStore = defineStore('admin-pricing-bands', () =
             sort_order: bands.length + 1,
         });
     };
-    const removeBand = (type, idx, onError) => {
+    const removeBand = (type: BandType, idx: number, onError?: (message: string) => void) => {
         const bands = bandsFor(type);
         if (bands.length <= 1) {
             onError?.('Deve rimanere almeno una fascia.');
@@ -70,7 +73,7 @@ export const useAdminPricingBandsStore = defineStore('admin-pricing-bands', () =
         }
         bands.splice(idx, 1);
     };
-    const moveBand = (type, idx, direction) => {
+    const moveBand = (type: BandType, idx: number, direction: number) => {
         const bands = bandsFor(type);
         const target = idx + direction;
         if (target < 0 || target >= bands.length)
@@ -81,7 +84,7 @@ export const useAdminPricingBandsStore = defineStore('admin-pricing-bands', () =
             return;
         [bands[idx], bands[target]] = [b, a];
     };
-    const toggleShowDiscount = (type, idx) => {
+    const toggleShowDiscount = (type: BandType, idx: number) => {
         const bands = bandsFor(type);
         const band = bands[idx];
         if (!band)
@@ -89,7 +92,7 @@ export const useAdminPricingBandsStore = defineStore('admin-pricing-bands', () =
         band.show_discount = !band.show_discount;
     };
     // ---------- BANDA: EDIT INLINE ----------
-    const startEdit = (type, idx, field) => {
+    const startEdit = (type: BandType, idx: number, field: 'base_price' | 'discount_price') => {
         const key = `${type}-${idx}-${field}`;
         editingCell.value = key;
         const bands = bandsFor(type);
@@ -99,7 +102,7 @@ export const useAdminPricingBandsStore = defineStore('admin-pricing-bands', () =
         const cents = band[field];
         editValue.value = cents != null ? (Number(cents) / 100).toFixed(2).replace('.', ',') : '';
         nextTick(() => {
-            const input = document.getElementById(`edit-${key}`);
+            const input = document.getElementById(`edit-${key}`) as HTMLInputElement | null;
             if (input) {
                 ;
                 (input).focus();
@@ -107,7 +110,7 @@ export const useAdminPricingBandsStore = defineStore('admin-pricing-bands', () =
             }
         });
     };
-    const confirmEdit = (type, idx, field, onError) => {
+    const confirmEdit = (type: BandType, idx: number, field: 'base_price' | 'discount_price', onError?: (message: string) => void) => {
         const key = `${type}-${idx}-${field}`;
         if (editingCell.value !== key)
             return;
@@ -131,11 +134,11 @@ export const useAdminPricingBandsStore = defineStore('admin-pricing-bands', () =
         editValue.value = '';
     };
     // ---------- LADDER ----------
-    const updateLadderIncrementFromEuro = (row, rawValue) => {
+    const updateLadderIncrementFromEuro = (row: IncrementLadderRow, rawValue: number | string) => {
         const cents = adminEuroToCents(rawValue);
         row.increment_cents = Math.max(0, cents ?? 0);
     };
-    const addLadderRow = (kind) => {
+    const addLadderRow = (kind: BandType) => {
         const rows = ladderRowsFor(kind);
         const payloadRows = normalizeLadderForPayload(rows, extraRules.value.increment_cents);
         const last = payloadRows[payloadRows.length - 1] ?? {
@@ -150,7 +153,7 @@ export const useAdminPricingBandsStore = defineStore('admin-pricing-bands', () =
             increment_cents: Number(last.increment_cents || extraRules.value.increment_cents || 0),
         });
     };
-    const removeLadderRow = (kind, idx, onError) => {
+    const removeLadderRow = (kind: BandType, idx: number, onError?: (message: string) => void) => {
         const rows = ladderRowsFor(kind);
         if (rows.length <= 1) {
             onError?.('Deve rimanere almeno uno scaglione incremento.');
@@ -158,7 +161,7 @@ export const useAdminPricingBandsStore = defineStore('admin-pricing-bands', () =
         }
         rows.splice(idx, 1);
     };
-    const ensureLadderContinuity = (kind) => {
+    const ensureLadderContinuity = (kind: BandType) => {
         const rows = ladderRowsFor(kind);
         const normalized = normalizeLadderForPayload(rows, extraRules.value.increment_cents);
         const rebuilt = normalized.map((row, idx) => {
@@ -172,11 +175,11 @@ export const useAdminPricingBandsStore = defineStore('admin-pricing-bands', () =
         setLadderRows(kind, rebuilt);
     };
 // ---------- EUROPA ----------
-const updateEuropeRateAmountFromEuro = (rate, rawValue) => {
+const updateEuropeRateAmountFromEuro = (rate: EuropeRate, rawValue: number | string) => {
     const cents = adminEuroToCents(rawValue);
     rate.price_cents = cents == null ? null : Math.max(0, cents);
 };
-const toggleEuropeRateQuote = (rate) => {
+const toggleEuropeRateQuote = (rate: EuropeRate) => {
     rate.quote_required = !rate.quote_required;
     if (rate.quote_required) {
         rate.price_cents = null;
@@ -192,7 +195,7 @@ const filteredEuropeBands = computed(() => {
     const status = europeStatusFilter.value;
     const sortMode = europeSort.value;
     const selectedBand = europeBandFilter.value;
-    const sortRates = (rates) => [...rates].sort((left, right) => {
+    const sortRates = (rates: EuropeRate[]) => [...rates].sort((left, right) => {
         if (sortMode === 'price_asc') {
             return (left.price_cents ?? Number.POSITIVE_INFINITY) - (right.price_cents ?? Number.POSITIVE_INFINITY);
         }
@@ -224,7 +227,11 @@ const filteredEuropeBands = computed(() => {
         .filter((band) => band.rates.length > 0);
 });
 // ---------- ANTEPRIMA PREZZI ----------
-const calcLocalPrice = (type, rawValue) => calculateBandPriceCents(type, rawValue, extraRules.value, weightBands.value, volumeBands.value);
+const calcLocalPrice = (type: BandType, rawValue: number) => calculateBandPriceCents(type, rawValue, {
+    weight: weightBands.value,
+    volume: volumeBands.value,
+    extra_rules: extraRules.value,
+});
 const extraRuleExamples = computed(() => {
     const r = extraRules.value;
     const firstWeightFrom = Number(r.weight_start || 101);
@@ -252,15 +259,15 @@ const pricingPreviewCases = computed(() => {
     const secondExtraWeightStart = Number((weightStart + weightStep).toFixed(4));
     const secondExtraVolumeStart = Number((volumeStart + volumeStep).toFixed(4));
     const rows = [
-        { id: 'standard', label: 'Ultima fascia standard', weight, volume: standardVolume },
-        { id: 'extra1w', label: 'Primo extra (inizio)', weight, volume: volumeStart },
-        { id: 'extra1max', label: 'Primo extra (limite)', weight, volume: firstExtraVolumeMax },
-        { id: 'extra2', label: 'Secondo extra', weight, volume: secondExtraVolumeStart },
+        { id: 'standard', label: 'Ultima fascia standard', weight: standardWeight, volume: standardVolume },
+        { id: 'extra1w', label: 'Primo extra (inizio)', weight: weightStart, volume: volumeStart },
+        { id: 'extra1max', label: 'Primo extra (limite)', weight: firstExtraWeightMax, volume: firstExtraVolumeMax },
+        { id: 'extra2', label: 'Secondo extra', weight: secondExtraWeightStart, volume: secondExtraVolumeStart },
     ];
     return rows.map((row) => {
         const weightPriceCents = calcLocalPrice('weight', row.weight);
         const volumePriceCents = calcLocalPrice('volume', row.volume);
-        const totalCents = Math.max(weightPriceCents, volumePriceCents);
+        const totalCents = Math.max(weightPriceCents ?? 0, volumePriceCents ?? 0);
         return {
             ...row,
             weightPriceLabel: adminCentsToEuro(weightPriceCents),
@@ -287,13 +294,13 @@ const applyDefaults = () => {
     pricingVersion.value = null;
     bandsFromDb.value = false;
 };
-const hydrateFromApi = (data) => {
-    const w = (data.weight) || [];
-    const v = (data.volume) || [];
-    weightBands.value = w.map((b) => ({ ...b }));
-    volumeBands.value = v.map((b) => ({ ...b }));
-    originalWeightBands.value = w.map((b) => ({ ...b }));
-    originalVolumeBands.value = v.map((b) => ({ ...b }));
+const hydrateFromApi = (data: PricingBandsPayload) => {
+    const w = cloneBands(data.weight);
+    const v = cloneBands(data.volume);
+    weightBands.value = cloneBands(w);
+    volumeBands.value = cloneBands(v);
+    originalWeightBands.value = cloneBands(w);
+    originalVolumeBands.value = cloneBands(v);
     extraRules.value = {
         ...ADMIN_DEFAULT_EXTRA_RULES,
         ...((data.extra_rules) || {}),
@@ -302,18 +309,18 @@ const hydrateFromApi = (data) => {
     extraRules.value.weight_increment_ladder = normalizeLadderForPayload(extraRules.value.weight_increment_ladder, extraRules.value.increment_cents);
     extraRules.value.volume_increment_ladder = normalizeLadderForPayload(extraRules.value.volume_increment_ladder, extraRules.value.increment_cents);
     originalExtraRules.value = cloneForSnapshot(extraRules.value);
-    europePricing.value = adminNormalizeEuropePricing((data.europe < typeof adminNormalizeEuropePricing > [0]) || ADMIN_DEFAULT_EUROPE_PRICING);
+    europePricing.value = adminNormalizeEuropePricing(data.europe || ADMIN_DEFAULT_EUROPE_PRICING);
     originalEuropePricing.value = cloneForSnapshot(europePricing.value);
     pricingVersion.value = (data.version) || null;
     bandsFromDb.value = true;
 };
-const persistApiResponse = (data, fallbackPayload) => {
+const persistApiResponse = (data: PricingBandsPayload, fallbackPayload: PricingBandsPayload) => {
     bandsFromDb.value = true;
-    originalWeightBands.value = ((data.weight) || (fallbackPayload.weight)).map((b) => ({ ...b }));
-    originalVolumeBands.value = ((data.volume) || (fallbackPayload.volume)).map((b) => ({ ...b }));
-    originalExtraRules.value = cloneForSnapshot((data.extra_rules) || (fallbackPayload.extra_rules));
-    europePricing.value = adminNormalizeEuropePricing((data.europe < typeof adminNormalizeEuropePricing > [0])
-        || (fallbackPayload.europe < typeof adminNormalizeEuropePricing > [0])
+    originalWeightBands.value = cloneBands(data.weight || fallbackPayload.weight);
+    originalVolumeBands.value = cloneBands(data.volume || fallbackPayload.volume);
+    originalExtraRules.value = cloneForSnapshot(data.extra_rules || fallbackPayload.extra_rules || extraRules.value);
+    europePricing.value = adminNormalizeEuropePricing(data.europe
+        || fallbackPayload.europe
         || ADMIN_DEFAULT_EUROPE_PRICING);
     originalEuropePricing.value = cloneForSnapshot(europePricing.value);
     pricingVersion.value = (data.version) || pricingVersion.value;
@@ -325,7 +332,7 @@ const buildBandsPayload = () => ({
         min_value: Number(band.min_value),
         max_value: Number(band.max_value),
         base_price: Number(band.base_price || 0),
-        discount_price: band.discount_price === null || band.discount_price === ''
+        discount_price: band.discount_price === null || band.discount_price === undefined
             ? null
             : Number(band.discount_price),
         show_discount: band.show_discount !== false,
@@ -336,7 +343,7 @@ const buildBandsPayload = () => ({
         min_value: Number(band.min_value),
         max_value: Number(band.max_value),
         base_price: Number(band.base_price || 0),
-        discount_price: band.discount_price === null || band.discount_price === ''
+        discount_price: band.discount_price === null || band.discount_price === undefined
             ? null
             : Number(band.discount_price),
         show_discount: band.show_discount !== false,
@@ -350,8 +357,8 @@ const buildBandsPayload = () => ({
         volume_step: Number(extraRules.value.volume_step),
         increment_cents: Number(extraRules.value.increment_cents || 0),
         increment_mode: 'flat',
-        weight_increment_ladder: normalizeLadderForPayload([{ from_step: 1, to_step, increment_cents: Number(extraRules.value.increment_cents || 0) }], Number(extraRules.value.increment_cents || 0)),
-        volume_increment_ladder: normalizeLadderForPayload([{ from_step: 1, to_step, increment_cents: Number(extraRules.value.increment_cents || 0) }], Number(extraRules.value.increment_cents || 0)),
+        weight_increment_ladder: normalizeLadderForPayload([{ from_step: 1, to_step: null, increment_cents: Number(extraRules.value.increment_cents || 0) }], Number(extraRules.value.increment_cents || 0)),
+        volume_increment_ladder: normalizeLadderForPayload([{ from_step: 1, to_step: null, increment_cents: Number(extraRules.value.increment_cents || 0) }], Number(extraRules.value.increment_cents || 0)),
         base_price_cents_mode: extraRules.value.base_price_cents_mode === 'manual' ? 'manual' : 'last_band_effective',
         base_price_cents_manual: extraRules.value.base_price_cents_mode === 'manual'
             ? Number(extraRules.value.base_price_cents_manual || 0)
@@ -376,7 +383,7 @@ const buildEuropePayload = () => {
             rates: band.rates.map((rate) => ({
                 country_code: String(rate.country_code || '').trim().toUpperCase(),
                 country_name: String(rate.country_name || '').trim(),
-                price_cents: rate.quote_required || rate.price_cents === null || rate.price_cents === '' || rate.price_cents === undefined
+                price_cents: rate.quote_required || rate.price_cents === null || rate.price_cents === undefined
                     ? null
                     : Number(rate.price_cents || 0),
                 quote_required: rate.quote_required === true,
@@ -412,10 +419,10 @@ return {
     pricingPreviewCases,
     // helpers puri (re-export per la pagina)
     centsToEuro: adminCentsToEuro,
-    euroToCents,
+    euroToCents: adminEuroToCents,
     effectivePrice,
     discountInfo,
-    incrementCentsToEuro,
+    incrementCentsToEuro: adminIncrementCentsToEuro,
     // band actions
     addBand,
     removeBand,

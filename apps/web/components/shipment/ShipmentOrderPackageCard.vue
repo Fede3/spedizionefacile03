@@ -4,7 +4,7 @@
   indirizzi mittente/destinatario, eventuale punto BRT, e servizio.
 -->
 <script setup>
-const props = defineProps({
+defineProps({
 	pkg: { type: Object, required: true },
 	index: { type: Number, required: true },
 	hasPudo: { type: Boolean, default: false },

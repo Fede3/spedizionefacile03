@@ -9,17 +9,28 @@
  */
 import { defineStore } from 'pinia'
 import {
-	buildPricingRulesPayload,
 	cloneForSnapshot,
 	ADMIN_DEFAULT_SERVICE_PRICING,
 	normalizePricingGroup,
 } from '~/utils/adminPrezziHelpers'
+import { buildPricingRulesPayload } from '~/utils/adminPricingNormalize'
 import { useAdminSupplementsStore } from '~/stores/admin/supplementsStore'
+
+type PricingRule = {
+	label?: string
+	description?: string
+	note?: string
+	[key: string]: unknown
+}
+type ServicePricingPayload = {
+	service_pricing?: Record<string, PricingRule>
+}
+type PricingRuleGroup = ReturnType<typeof normalizePricingGroup>
 
 export const useAdminServicesStore = defineStore('admin-services', () => {
 	// ---------- STATE ----------
-	const servicePricing = ref({})
-	const originalServicePricing = ref({})
+	const servicePricing = ref<PricingRuleGroup>(normalizePricingGroup({}, ADMIN_DEFAULT_SERVICE_PRICING))
+	const originalServicePricing = ref<PricingRuleGroup>(cloneForSnapshot(servicePricing.value))
 
 	// ---------- UI STATE ----------
 	const adminView = ref('nazionale')
@@ -45,7 +56,7 @@ export const useAdminServicesStore = defineStore('admin-services', () => {
 			...(activeFilter === 'all' || activeFilter === 'operational_fees' ? supplements.operationalFeeEntries : []),
 		].filter(({ rule }) => {
 			if (!search) return true
-			const r = rule as { label, description, note?: string }
+			const r = rule as PricingRule
 			return `${r.label ?? ''} ${r.description ?? ''} ${r.note ?? ''}`.toLowerCase().includes(search)
 		})
 	})
@@ -56,17 +67,17 @@ export const useAdminServicesStore = defineStore('admin-services', () => {
 		originalServicePricing.value = cloneForSnapshot(servicePricing.value)
 	}
 
-	const hydrateFromApi = (data) => {
+	const hydrateFromApi = (data: ServicePricingPayload) => {
 		servicePricing.value = normalizePricingGroup(
-			(data.service_pricing ) || {},
+			data.service_pricing || {},
 			ADMIN_DEFAULT_SERVICE_PRICING,
 		)
 		originalServicePricing.value = cloneForSnapshot(servicePricing.value)
 	}
 
-	const persistApiResponse = (data, fallbackPayload) => {
+	const persistApiResponse = (data: ServicePricingPayload, fallbackPayload: ServicePricingPayload = {}) => {
 		servicePricing.value = normalizePricingGroup(
-			(data.service_pricing ) || (fallbackPayload.service_pricing ) || {},
+			data.service_pricing || fallbackPayload.service_pricing || {},
 			ADMIN_DEFAULT_SERVICE_PRICING,
 		)
 		originalServicePricing.value = cloneForSnapshot(servicePricing.value)

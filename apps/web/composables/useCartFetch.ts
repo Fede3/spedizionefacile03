@@ -20,7 +20,7 @@ export const useCartFetch = () => {
             return true;
         return liveCartPrefixes.some((prefix) => route.path.startsWith(prefix));
     });
-    const auth = shallowRef(null);
+    const auth = shallowRef<ReturnType<typeof useSanctumAuth> | null>(null);
     if (import.meta.client) {
         watchEffect(() => {
             if (!auth.value && shouldAttachLiveCartAuth.value) {
@@ -33,7 +33,7 @@ export const useCartFetch = () => {
     // - Utente loggato → usa /api/cart (dati salvati nel DB, legati all'utente)
     // - Ospite → usa /api/guest-cart (dati salvati nella sessione del browser)
     const endpoint = computed(() => (isAuthenticated.value ? '/api/cart' : '/api/guest-cart'));
-    const { data: cart, refresh, status, error, } = useSanctumFetch(endpoint, {
+    const cartFetchOptions = {
         method: 'GET',
         key: 'cart',
         // Il carrello dipende da sessione/cookie utente e non va caricato
@@ -42,6 +42,7 @@ export const useCartFetch = () => {
         lazy: true,
         dedupe: 'defer',
         watch: [endpoint],
-    });
+    } as unknown as Parameters<typeof useSanctumFetch>[1];
+    const { data: cart, refresh, status, error, } = useSanctumFetch(endpoint, cartFetchOptions);
     return { endpoint, cart, refresh, status, error };
 };

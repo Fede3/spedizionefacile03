@@ -1,5 +1,5 @@
 <script setup>
-const props = defineProps({
+defineProps({
 	open: { type: Boolean, default: false },
 	fullName: { type: String, default: '' },
 	saving: { type: Boolean, default: false },

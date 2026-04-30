@@ -16,18 +16,16 @@ import {
 	DEFAULT_AUTOMATIC_SUPPLEMENTS,
 	DEFAULT_OPERATIONAL_FEES,
 	toInt,
-	toNumber,
-	normalizeDecimal,
 } from '~/utils/priceBandsConstants'
 
 import {
 	effectivePriceCents,
 	getBandPriceCents,
-	normalizeBandArray,
 	normalizeEuropePricing,
 	normalizeKeyedPricingGroup,
 	normalizeIncrementLadder,
 } from '~/utils/priceBandsCalc'
+import type { EuropePricing, ExtraRules, IncrementLadderRow, PriceBand } from '~/types/pricing'
 
 // TYPES (interfacce TypeScript per pagina admin Prezzi)
 
@@ -46,14 +44,14 @@ export const ADMIN_DEFAULT_OPERATIONAL_FEES = DEFAULT_OPERATIONAL_FEES
 // CONVERSIONE CENTS / EURO (admin-specifici)
 
 /** Converte centesimi (number/string) in euro stringa con 2 decimali. */
-export const adminCentsToEuro = (cents) => {
+export const adminCentsToEuro = (cents: unknown): string => {
 	const n = Number(cents)
 	if (!Number.isFinite(n)) return '0.00'
 	return (n / 100).toFixed(2)
 }
 
 /** Converte euro (number/string) in centesimi (integer). */
-export const adminEuroToCents = (euros) => {
+export const adminEuroToCents = (euros: unknown): number => {
 	if (euros === null || euros === undefined || euros === '') return 0
 	const cleaned = String(euros).replace(',', '.').replace(/[^\d.-]/g, '')
 	const n = Number.parseFloat(cleaned)
@@ -61,7 +59,7 @@ export const adminEuroToCents = (euros) => {
 }
 
 /** Variante per increment_cents (sempre >= 0, no decimal). */
-export const adminIncrementCentsToEuro = (cents) => {
+export const adminIncrementCentsToEuro = (cents: unknown): string => {
 	const n = Math.max(0, toInt(cents, 0))
 	return (n / 100).toFixed(2)
 }
@@ -69,19 +67,23 @@ export const adminIncrementCentsToEuro = (cents) => {
 // CALCOLI PREZZO (delega a priceBandsCalc)
 
 /** Prezzo effettivo (discount se presente, altrimenti base). */
-export const effectivePrice = (band) => effectivePriceCents(band)
+export const effectivePrice = (band: Partial<PriceBand> | null | undefined) => effectivePriceCents(band)
 
 /** Calcolo prezzo per peso/volume con bands + extra rules. */
 export const calculateBandPriceCents = (
 	type: 'weight' | 'volume',
-	rawValue,
+	rawValue: number | string,
 	priceBandsValue: { weight?: PriceBand[]; volume?: PriceBand[]; extra_rules?: ExtraRules },
-) => getBandPriceCents(type, rawValue, priceBandsValue as never)
+) => getBandPriceCents(type, rawValue, {
+	weight: priceBandsValue.weight || [],
+	volume: priceBandsValue.volume || [],
+	extra_rules: priceBandsValue.extra_rules || ADMIN_DEFAULT_EXTRA_RULES,
+})
 
 /**
  * Info discount per visualizzazione cella tabella admin.
  */
-export const discountInfo = (band): { percentage: number | null; hasDiscount: boolean } => {
+export const discountInfo = (band: Partial<PriceBand>): { percentage: number | null; hasDiscount: boolean } => {
 	const base = toInt(band.base_price, 0)
 	const discount = band.discount_price !== null && band.discount_price !== undefined ? toInt(band.discount_price, 0) : null
 	if (discount === null || discount >= base || base <= 0) {
@@ -89,14 +91,14 @@ export const discountInfo = (band): { percentage: number | null; hasDiscount: bo
 	}
 	return {
 		percentage: Math.round((1 - discount / base) * 100),
-		hasDiscount,
+		hasDiscount: true,
 	}
 }
 
 // SNAPSHOT / CLONE (per dirty-tracking admin)
 
 /** Deep clone JSON-safe per snapshot stato originale. */
-export const cloneForSnapshot = (value) => {
+export const cloneForSnapshot = <T>(value: T): T => {
 	if (value === null || value === undefined) return value
 	return JSON.parse(JSON.stringify(value))
 }
@@ -104,34 +106,21 @@ export const cloneForSnapshot = (value) => {
 // NORMALIZZAZIONE PAYLOAD (admin-specific wrappers)
 
 /** Wrapper su normalizeEuropePricing del modulo public. */
-export const adminNormalizeEuropePricing = (config = {}) =>
+export const adminNormalizeEuropePricing = (config: Partial<EuropePricing> = {}) =>
 	normalizeEuropePricing(config) 
 
 /** Normalizza ladder per payload API admin. */
-export const normalizeLadderForPayload = (ladder, fallbackIncrementCents) =>
+export const normalizeLadderForPayload = (ladder: unknown, fallbackIncrementCents: unknown): IncrementLadderRow[] =>
 	normalizeIncrementLadder(ladder, fallbackIncrementCents) 
 
 /** Re-export per il flusso admin servizi. */
 export const normalizePricingGroup = normalizeKeyedPricingGroup
 
 /**
- * Costruisce payload API per regole pricing.
- * Mantiene struttura backend, copia shallow di ogni rule.
- */
-export const buildPricingRulesPayload = (group: Record<string, unknown>): Record<string, unknown> => {
-	const result: Record<string, unknown> = {}
-	for (const [key, rule] of Object.entries(group || {})) {
-		if (!rule || typeof rule !== 'object') continue
-		result[key] = { ...(rule as Record<string, unknown>) }
-	}
-	return result
-}
-
-/**
  * Sanitizza input array virgola-separato (province, country, keyword, flag).
  */
 export const normalizeArrayFieldInput = (
-	input,
+	input: unknown,
 	{ uppercase = false }: { uppercase?: boolean } = {},
 ) => {
 	if (Array.isArray(input)) {
@@ -147,7 +136,7 @@ export const normalizeArrayFieldInput = (
 
 // LABEL MAPPING (per visualizzazione UI admin)
 
-const APPLICATION_LABELS = {
+const APPLICATION_LABELS: Record<string, string> = {
 	per_spedizione: 'Per spedizione',
 	per_collo: 'Per collo',
 	automatic_destination: 'Automatico destinazione',
@@ -159,10 +148,9 @@ const APPLICATION_LABELS = {
 }
 
 /** Traduce application key tecnica in label UI italiana. */
-export const formatApplicationLabel = (application) => {
+export const formatApplicationLabel = (application: unknown): string => {
 	const key = String(application ?? '').trim().toLowerCase()
 	return APPLICATION_LABELS[key] || key
 }
 
 // Helpers re-export per backward compat caller
-export { toInt, toNumber, normalizeDecimal, normalizeBandArray }

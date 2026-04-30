@@ -45,11 +45,11 @@ const getBrandIcon = (brand) => {
       <p class="text-[var(--color-brand-text-secondary)] text-[0.875rem] max-w-[460px] mx-auto mb-[20px] leading-[1.55]">
         <span v-if="cardsFeatureAvailable">Aggiungi una carta per pagare più in fretta.</span>
         <span v-else-if="isAdmin">Configura Stripe per attivare carte e wallet.</span>
-        <span v-else>Le carte saranno disponibili appena Stripe sarÁ  attivo.</span>
+        <span v-else>Le carte saranno disponibili appena Stripe sara' attivo.</span>
       </p>
       <button v-if="cardsFeatureAvailable" @click="emit('toggle-form')" class="btn-primary btn-compact font-semibold text-[0.875rem]">Aggiungi la tua prima carta</button>
       <button v-else-if="isAdmin" @click="emit('open-admin-settings')" class="btn-primary btn-compact font-semibold text-[0.875rem]">Apri impostazioni Stripe</button>
-      <p v-else class="text-[var(--color-brand-text-secondary)] text-[0.875rem] font-medium">Quando Stripe sarÁ  attivo, qui comparirÁ  il pulsante per aggiungere la tua prima carta.</p>
+      <p v-else class="text-[var(--color-brand-text-secondary)] text-[0.875rem] font-medium">Quando Stripe sara' attivo, qui comparira' il pulsante per aggiungere la tua prima carta.</p>
     </div>
 
     <!-- Card items -->
@@ -119,4 +119,3 @@ const getBrandIcon = (brand) => {
     </p>
   </div>
 </template>
-

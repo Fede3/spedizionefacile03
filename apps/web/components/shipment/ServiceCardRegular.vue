@@ -22,6 +22,10 @@ const props = defineProps({
 	// Panel props
 	serviceData: { type: Object, required: true },
 	serviceCardErrors: { type: Object, required: true },
+	updateContrassegnoField: { type: Function, required: true },
+	updateAssicurazioneValue: { type: Function, required: true },
+	clearContrassegnoError: { type: Function, required: true },
+	clearAssicurazioneError: { type: Function, required: true },
 	contrassegnoIncassoOptions: { type: Array, required: true },
 	contrassegnoRimborsoOptions: { type: Array, required: true },
 	requiresContrassegnoDettaglio: { type: Boolean, default: false },
@@ -137,6 +141,10 @@ const handleSurfaceKeydown = (event) => {
 			:normalize-currency-input="normalizeCurrencyInput"
 			:remove-locked="removeLocked"
 			:activate-locked="activateLocked"
+			:update-contrassegno-field="updateContrassegnoField"
+			:update-assicurazione-value="updateAssicurazioneValue"
+			:clear-contrassegno-error="clearContrassegnoError"
+			:clear-assicurazione-error="clearAssicurazioneError"
 			@remove="emit('remove', $event)"
 			@activate="emit('activate', $event)" />
 	</article>

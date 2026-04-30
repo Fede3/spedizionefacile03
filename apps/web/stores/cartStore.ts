@@ -6,8 +6,33 @@
  * I watcher legati a route/setup vivono nel composable wrapper `useCart()`.
  */
 import { defineStore } from 'pinia';
+import type { Address, AddressGroup, CartItem, CartResponse, Order } from '~/types';
 import { centsToEuro, formatEuroAmount } from '~/utils/cartHelpers';
-const EMPTY_FATTURA = Object.freeze({
+
+type CheckoutOrder = Omit<Order, 'packages'> & {
+    packages?: CartItem[];
+    gross_subtotal_cents?: number | null;
+    payable_total_cents?: number | null;
+    discount_amount_cents?: number | null;
+    payable_total?: string | null;
+    discount_context?: Record<string, unknown> | null;
+};
+type FatturazioneType = 'ricevuta' | 'fattura';
+type InvoiceSubjectType = 'azienda' | 'privato';
+type FatturaForm = {
+    nome_completo: string;
+    ragione_sociale: string;
+    p_iva: string;
+    codice_fiscale: string;
+    indirizzo: string;
+    city: string;
+    province: string;
+    postal_code: string;
+    pec: string;
+    codice_sdi: string;
+};
+
+const EMPTY_FATTURA: FatturaForm = {
     nome_completo: '',
     ragione_sociale: '',
     p_iva: '',
@@ -18,26 +43,29 @@ const EMPTY_FATTURA = Object.freeze({
     postal_code: '',
     pec: '',
     codice_sdi: '',
+};
+
+const createEmptyCart = (): CartResponse => ({
+    data: [],
+    meta: { total: '0,00€', address_groups: [] },
 });
+
 export const useCartStore = defineStore('cart', () => {
     // ---------- STATO CART ----------
-    const cart = ref({
-        data: [],
-        meta: { total: '0,00\u20AC', address_groups: [] },
-    });
+    const cart = ref<CartResponse>(createEmptyCart());
     const pageReady = ref(false);
-    const existingOrder = ref(null);
+    const existingOrder = ref<CheckoutOrder | null>(null);
     // ---------- BILLING ----------
-    const fatturazioneType = ref('ricevuta');
-    const invoiceSubjectType = ref('azienda');
-    const fatturaData = ref({ ...EMPTY_FATTURA });
+    const fatturazioneType = ref<FatturazioneType>('ricevuta');
+    const invoiceSubjectType = ref<InvoiceSubjectType>('azienda');
+    const fatturaData = ref<FatturaForm>({ ...EMPTY_FATTURA });
     // ---------- WALLET ----------
     const walletBalance = ref(0);
     const walletLoadedRef = ref(false);
     // ---------- UI CARRELLO (gruppi expanded persistenti) ----------
-    const expandedGroups = ref({});
+    const expandedGroups = ref<Record<number, boolean>>({});
     // ---------- COMPUTED CART ----------
-    const displayPackages = computed(() => {
+    const displayPackages = computed<CartItem[]>(() => {
         if (existingOrder.value)
             return existingOrder.value.packages || [];
         return cart.value?.data || [];
@@ -62,17 +90,17 @@ export const useCartStore = defineStore('cart', () => {
             return existingOrderGrossTotal.value;
         return cart.value?.meta?.total || '0,00\u20AC';
     });
-    const totalPackages = computed(() => displayPackages.value.reduce((sum, item) => sum + (Number(item.quantity) || 1), 0));
+    const totalPackages = computed(() => displayPackages.value.reduce((sum: number, item: CartItem) => sum + (Number(item.quantity) || 1), 0));
     const contentDescription = computed(() => {
         if (!displayPackages.value.length)
             return '';
         const types = displayPackages.value
-            .map((item) => item.package_type || 'Pacco')
+            .map((item: CartItem) => item.package_type || 'Pacco')
             .filter(Boolean);
         return [...new Set(types)].join(', ');
     });
-    const addressGroups = computed(() => cart.value?.meta?.address_groups || []);
-    const hasMultipleGroups = computed(() => addressGroups.value.filter((g) => Number(g?.count ?? 0) >= 1).length > 1);
+    const addressGroups = computed<AddressGroup[]>(() => cart.value?.meta?.address_groups || []);
+    const hasMultipleGroups = computed(() => addressGroups.value.filter((g: AddressGroup) => Number(g?.count ?? 0) >= 1).length > 1);
     const mergeGroupsCount = computed(() => addressGroups.value.length);
     // ---------- COMPUTED EXISTING ORDER ----------
     const existingOrderDiscountPreview = computed(() => {
@@ -106,7 +134,7 @@ export const useCartStore = defineStore('cart', () => {
         return ['pending', 'payment_failed'].includes(status);
     });
     // ---------- COMPUTED BILLING ----------
-    const billingShippingSource = computed(() => {
+    const billingShippingSource = computed<Address | null>(() => {
         const pkg = displayPackages.value?.[0];
         return (pkg?.origin_address || pkg?.destination_address || null);
     });
@@ -164,21 +192,21 @@ export const useCartStore = defineStore('cart', () => {
     const walletFormatted = computed(() => walletBalance.value.toFixed(2).replace('.', ',') + '\u00A0\u20AC');
     const walletLoaded = computed(() => walletLoadedRef.value);
     // ---------- AZIONI ----------
-    function setCart(payload) {
+    function setCart(payload: Partial<CartResponse> | null | undefined) {
         if (!payload)
             return;
         cart.value = {
             data: Array.isArray(payload.data) ? payload.data : [],
-            meta: payload.meta || {},
+            meta: payload.meta || cart.value.meta,
         };
     }
-    function setExistingOrder(order) {
+    function setExistingOrder(order: CheckoutOrder | null) {
         existingOrder.value = order;
     }
-    function setPageReady(ready) {
+    function setPageReady(ready: boolean) {
         pageReady.value = ready;
     }
-    function setWalletBalance(value, loaded = true) {
+    function setWalletBalance(value: unknown, loaded = true) {
         walletBalance.value = Number.isFinite(Number(value)) ? Number(value) : 0;
         walletLoadedRef.value = loaded;
     }
@@ -209,7 +237,7 @@ export const useCartStore = defineStore('cart', () => {
      * Reset completo dello store (post pagamento riuscito).
      */
     function resetCart() {
-        cart.value = { data: [], meta: { total: '0,00\u20AC', address_groups: [] } };
+        cart.value = createEmptyCart();
         pageReady.value = false;
         existingOrder.value = null;
         fatturazioneType.value = 'ricevuta';

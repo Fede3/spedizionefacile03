@@ -14,43 +14,56 @@ import {
 	DEFAULT_SUPPLEMENTS,
 	DEFAULT_EUROPE_PRICING,
 } from '~/utils/priceBandsConstants';
+import type {
+	BandType,
+	EuropeBand,
+	EuropePricing,
+	ExtraRules,
+	IncrementLadderRow,
+	PriceBand,
+	PriceBandsState,
+	PricingRule,
+	PricingRuleGroup,
+	SupplementRule,
+} from '~/types/pricing'
 
 // ---- Normalization helpers ----
 
-export function normalizeIncrementLadder(ladder, fallbackIncrementCents) {
+export function normalizeIncrementLadder(ladder: unknown, fallbackIncrementCents: unknown): IncrementLadderRow[] {
 	const fallbackIncrement = Math.max(0, toInt(fallbackIncrementCents, DEFAULT_EXTRA_RULES.increment_cents));
-	const source = Array.isArray(ladder) ? ladder : [];
+	const source = Array.isArray(ladder) ? ladder as Array<Partial<IncrementLadderRow>> : [];
 	const rows = source
 		.map((row, idx) => {
 			const fromStep = Math.max(1, toInt(row?.from_step, idx + 1));
 			const rawTo = row?.to_step;
-			const toStep = rawTo === null || rawTo === "" || rawTo === undefined ? null : Math.max(fromStep, toInt(rawTo, fromStep));
+			const toStep = rawTo === null || rawTo === undefined ? null : Math.max(fromStep, toInt(rawTo, fromStep));
 			const increment = Math.max(0, toInt(row?.increment_cents, fallbackIncrement));
-			return { from_step: fromStep, to_step, increment_cents: increment };
+			return { from_step: fromStep, to_step: toStep, increment_cents: increment };
 		})
 		.sort((a, b) => a.from_step - b.from_step);
 
 	if (!rows.length) {
-		return [{ from_step: 1, to_step, increment_cents: fallbackIncrement }];
+		return [{ from_step: 1, to_step: null, increment_cents: fallbackIncrement }];
 	}
 
-	rows[rows.length - 1].to_step = null;
+	const last = rows[rows.length - 1];
+	if (last) last.to_step = null;
 	return rows;
 }
 
-export const normalizeBandArray = (bands = [], type) => {
+export const normalizeBandArray = (bands: unknown = [], type: BandType): PriceBand[] => {
 	if (!Array.isArray(bands) || bands.length === 0) {
 		return type === "weight" ? [...FALLBACK_WEIGHT_BANDS] : [...FALLBACK_VOLUME_BANDS];
 	}
 
-	return [...bands]
+	return [...(bands as Array<Partial<PriceBand>>)]
 		.map((band, idx) => ({
 			id: String(band?.id ?? `${type}-${idx + 1}`),
 			type,
 			min_value: normalizeDecimal(band?.min_value ?? 0),
 			max_value: normalizeDecimal(band?.max_value ?? 0),
 			base_price: Math.max(0, toInt(band?.base_price, 0)),
-			discount_price: band?.discount_price === null || band?.discount_price === "" || band?.discount_price === undefined
+			discount_price: band?.discount_price === null || band?.discount_price === undefined
 				? null
 				: Math.max(0, toInt(band.discount_price, 0)),
 			show_discount: band?.show_discount !== false,
@@ -62,7 +75,7 @@ export const normalizeBandArray = (bands = [], type) => {
 		});
 };
 
-export const normalizeExtraRules = (rules = {}) => ({
+export const normalizeExtraRules = (rules: Partial<ExtraRules> = {}): ExtraRules => ({
 	enabled: rules?.enabled !== false,
 	weight_start: normalizeDecimal(rules?.weight_start ?? DEFAULT_EXTRA_RULES.weight_start),
 	weight_step: normalizeDecimal(rules?.weight_step ?? DEFAULT_EXTRA_RULES.weight_step),
@@ -73,14 +86,14 @@ export const normalizeExtraRules = (rules = {}) => ({
 	weight_increment_ladder: normalizeIncrementLadder(rules?.weight_increment_ladder, toInt(rules?.increment_cents ?? DEFAULT_EXTRA_RULES.increment_cents, DEFAULT_EXTRA_RULES.increment_cents)),
 	volume_increment_ladder: normalizeIncrementLadder(rules?.volume_increment_ladder, toInt(rules?.increment_cents ?? DEFAULT_EXTRA_RULES.increment_cents, DEFAULT_EXTRA_RULES.increment_cents)),
 	base_price_cents_mode: rules?.base_price_cents_mode === "manual" ? "manual" : "last_band_effective",
-	base_price_cents_manual: rules?.base_price_cents_manual === null || rules?.base_price_cents_manual === "" || rules?.base_price_cents_manual === undefined
+	base_price_cents_manual: rules?.base_price_cents_manual === null || rules?.base_price_cents_manual === undefined
 		? null
 		: Math.max(0, toInt(rules.base_price_cents_manual, 0)),
 	weight_resolution: normalizeDecimal(rules?.weight_resolution ?? DEFAULT_EXTRA_RULES.weight_resolution),
 	volume_resolution: normalizeDecimal(rules?.volume_resolution ?? DEFAULT_EXTRA_RULES.volume_resolution),
 });
 
-export const normalizeSupplements = (rules = []) => {
+export const normalizeSupplements = (rules: unknown = []): SupplementRule[] => {
 	if (!Array.isArray(rules)) {
 		return [...DEFAULT_SUPPLEMENTS];
 	}
@@ -88,20 +101,23 @@ export const normalizeSupplements = (rules = []) => {
 		return [];
 	}
 
-	return rules
-		.map((rule, idx) => ({
-			id: String(rule?.id ?? `supplement-${idx + 1}`),
-			prefix: String(rule?.prefix ?? "").replace(/\D+/g, ""),
-			amount_cents: Math.max(0, toInt(rule?.amount_cents ?? 0, 0)),
-			apply_to: ["origin", "destination", "both"].includes(rule?.apply_to) ? rule.apply_to : "both",
-			enabled: rule?.enabled !== false,
-		}))
+	return (rules as Array<Partial<SupplementRule>>)
+		.map((rule, idx) => {
+			const applyTo = String(rule?.apply_to || "both");
+			return {
+				id: String(rule?.id ?? `supplement-${idx + 1}`),
+				prefix: String(rule?.prefix ?? "").replace(/\D+/g, ""),
+				amount_cents: Math.max(0, toInt(rule?.amount_cents ?? 0, 0)),
+				apply_to: ["origin", "destination", "both"].includes(applyTo) ? applyTo : "both",
+				enabled: rule?.enabled !== false,
+			};
+		})
 		.filter((rule) => rule.prefix.length > 0);
 };
 
-export const normalizeEuropePricing = (config = {}) => {
+export const normalizeEuropePricing = (config: Partial<EuropePricing> = {}): EuropePricing => {
 	const bands = Array.isArray(config?.bands)
-		? [...config.bands]
+		? [...config.bands as Array<Partial<EuropeBand>>]
 			.map((band, idx) => ({
 				id: String(band?.id ?? `eu-band-${idx + 1}`),
 				label: String(band?.label ?? "").trim(),
@@ -109,11 +125,11 @@ export const normalizeEuropePricing = (config = {}) => {
 				max_volume_m3: Number(toNumber(band?.max_volume_m3 ?? 0, 0).toFixed(6)),
 				volumetric_factor: Math.max(1, toInt(band?.volumetric_factor ?? 250, 250)),
 				rates: Array.isArray(band?.rates)
-					? band.rates
+					? (band.rates as Array<Partial<EuropeBand['rates'][number]>>)
 						.map((rate) => ({
 							country_code: String(rate?.country_code ?? "").trim().toUpperCase(),
 							country_name: String(rate?.country_name ?? "").trim(),
-							price_cents: rate?.price_cents === null || rate?.price_cents === undefined || rate?.price_cents === ""
+							price_cents: rate?.price_cents === null || rate?.price_cents === undefined
 								? null
 								: Math.max(0, toInt(rate.price_cents, 0)),
 							quote_required: rate?.quote_required === true,
@@ -135,13 +151,16 @@ export const normalizeEuropePricing = (config = {}) => {
 		origin_country_code: String(config?.origin_country_code ?? "IT").trim().toUpperCase() || "IT",
 		max_packages: Math.max(1, toInt(config?.max_packages ?? 1, 1)),
 		max_quantity_per_package: Math.max(1, toInt(config?.max_quantity_per_package ?? 1, 1)),
-		supported_country_codes,
+		supported_country_codes: supportedCountryCodes,
 		bands,
 		version: config?.version || null,
 	};
 };
 
-export const normalizeKeyedPricingGroup = (config = {}, defaults = {}) => {
+export const normalizeKeyedPricingGroup = (
+	config: Record<string, Partial<PricingRule>> = {},
+	defaults: PricingRuleGroup = {},
+): PricingRuleGroup => {
 	return Object.fromEntries(
 		Object.entries(defaults).map(([key, fallback]) => {
 			const source = config?.[key] && typeof config[key] === "object" ? config[key] : {};
@@ -186,7 +205,7 @@ export const normalizeKeyedPricingGroup = (config = {}, defaults = {}) => {
 				delivery_modes: Array.isArray(source?.delivery_modes) ? source.delivery_modes.map((item) => String(item).trim().toLowerCase()).filter(Boolean) : [...(fallback?.delivery_modes || [])],
 				tiers: Array.isArray(source?.tiers)
 					? source.tiers.map((tier) => ({
-						up_to_kg: tier?.up_to_kg === null || tier?.up_to_kg === undefined || tier?.up_to_kg === "" ? null : toNumber(tier.up_to_kg, 0),
+						up_to_kg: tier?.up_to_kg === null || tier?.up_to_kg === undefined ? null : toNumber(tier.up_to_kg, 0),
 						price_cents: Math.max(0, toInt(tier?.price_cents, 0)),
 					}))
 					: [...(fallback?.tiers || [])],
@@ -197,7 +216,7 @@ export const normalizeKeyedPricingGroup = (config = {}, defaults = {}) => {
 
 // ---- Pure pricing helpers ----
 
-export const effectivePriceCents = (band) => {
+export const effectivePriceCents = (band?: Partial<PriceBand> | null): number => {
 	const discount = band?.discount_price;
 	if (discount !== null && discount !== undefined) {
 		return toInt(discount, 0);
@@ -205,17 +224,18 @@ export const effectivePriceCents = (band) => {
 	return toInt(band?.base_price, 0);
 };
 
-export const ceilByResolution = (value, resolution) => {
+export const ceilByResolution = (value: number, resolution: number): number => {
 	const safeResolution = resolution > 0 ? resolution : 1;
 	const multiplier = 1 / safeResolution;
 	return normalizeDecimal(Math.ceil((value * multiplier) - EPSILON) / multiplier, value);
 };
 
-export const findBand = (bands, value) => {
+export const findBand = (bands: PriceBand[] | undefined, value: number): PriceBand | null => {
 	if (!Array.isArray(bands) || bands.length === 0 || !Number.isFinite(value) || value <= 0) return null;
 
 	for (let idx = 0; idx < bands.length; idx += 1) {
 		const band = bands[idx];
+		if (!band) continue;
 		const min = Number(band.min_value);
 		const max = Number(band.max_value);
 		const lowerOk = idx === 0 ? value >= (min - EPSILON) : value > (min + EPSILON);
@@ -225,7 +245,12 @@ export const findBand = (bands, value) => {
 	return null;
 };
 
-export const computeExtraPriceCents = (type, rawValue, bands, extraRules) => {
+export const computeExtraPriceCents = (
+	type: BandType,
+	rawValue: number,
+	bands: PriceBand[] | undefined,
+	extraRules: ExtraRules,
+): number | null => {
 	if (!extraRules?.enabled) return null;
 	if (!Number.isFinite(rawValue) || rawValue <= 0) return null;
 
@@ -256,7 +281,7 @@ export const computeExtraPriceCents = (type, rawValue, bands, extraRules) => {
 	return baseCents + (bandNumber * increment);
 };
 
-export const getBandPriceCents = (type, rawValue, priceBandsValue) => {
+export const getBandPriceCents = (type: BandType, rawValue: number | string, priceBandsValue: Pick<PriceBandsState, 'weight' | 'volume' | 'extra_rules'>): number | null => {
 	const value = Number(rawValue);
 	if (!Number.isFinite(value) || value <= 0) return null;
 
@@ -275,7 +300,7 @@ export const getBandPriceCents = (type, rawValue, priceBandsValue) => {
 	return effectivePriceCents(fallback[fallback.length - 1]);
 };
 
-export const getBandInfo = (band) => {
+export const getBandInfo = (band?: PriceBand | null) => {
 	if (!band) return null;
 	const basePriceCents = toInt(band.base_price, 0);
 	const discountPriceCents = band.discount_price !== null && band.discount_price !== undefined ? toInt(band.discount_price, 0) : null;
@@ -290,20 +315,20 @@ export const getBandInfo = (band) => {
 		discountPercent,
 		showDiscount: band.show_discount !== false,
 		hasDiscount: discountPercent !== null && discountPercent > 0,
-		isExtra,
+		isExtra: false,
 	};
 };
 
-export const getExtraBandInfo = (cents) => ({
+export const getExtraBandInfo = (cents: number) => ({
 	effectivePrice: cents / 100,
 	basePrice: cents / 100,
-	discountPercent,
+	discountPercent: null,
 	showDiscount: false,
-	hasDiscount,
+	hasDiscount: false,
 	isExtra: true,
 });
 
-export const calcCapSupplementCents = (originCap, destinationCap, supplements) => {
+export const calcCapSupplementCents = (originCap: number | string, destinationCap: number | string, supplements?: SupplementRule[]): number => {
 	const rules = supplements || [];
 	const origin = String(originCap || "").replace(/\D+/g, "");
 	const destination = String(destinationCap || "").replace(/\D+/g, "");
@@ -323,7 +348,12 @@ export const calcCapSupplementCents = (originCap, destinationCap, supplements) =
 	return total;
 };
 
-export const calcEuropeQuote = (destinationCountryCode, weightKg, volumeM3, europePricing) => {
+export const calcEuropeQuote = (
+	destinationCountryCode: string,
+	weightKg: number | string,
+	volumeM3: number | string,
+	europePricing?: EuropePricing,
+) => {
 	const pricing = europePricing || DEFAULT_EUROPE_PRICING;
 	const countryCode = String(destinationCountryCode || "").trim().toUpperCase();
 	if (!pricing.enabled || !countryCode || countryCode === "IT") {
@@ -341,7 +371,7 @@ export const calcEuropeQuote = (destinationCountryCode, weightKg, volumeM3, euro
 	}
 
 	const findEuropeBand = () => {
-		const bandByRange = (matcher) => pricing.bands.find((entry) => matcher(entry) && volume <= entry.max_volume_m3);
+		const bandByRange = (matcher: (entry: EuropeBand) => boolean) => pricing.bands.find((entry) => matcher(entry) && volume <= entry.max_volume_m3);
 		return (
 			bandByRange((entry) => weight <= 10 && entry.max_weight_kg <= 10 + EPSILON)
 			|| bandByRange((entry) => weight > 10 + EPSILON && weight < 25 && entry.max_weight_kg > 10 && entry.max_weight_kg <= 30 + EPSILON)

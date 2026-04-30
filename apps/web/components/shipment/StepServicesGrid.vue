@@ -16,6 +16,10 @@ const props = defineProps({
 	regularServices: { type: Array, required: true },
 	serviceData: { type: Object, required: true },
 	serviceCardErrors: { type: Object, required: true },
+	updateContrassegnoField: { type: Function, required: true },
+	updateAssicurazioneValue: { type: Function, required: true },
+	clearContrassegnoError: { type: Function, required: true },
+	clearAssicurazioneError: { type: Function, required: true },
 	isServiceExpanded: { type: Function, required: true },
 	canConfigureService: { type: Function, required: true },
 	getServiceConfigureLabel: { type: Function, required: true },
@@ -137,6 +141,10 @@ const isServiceInteractionLocked = (serviceKey) =>
 					:service-icon-filter-active="serviceIconFilterActive"
 					:service-data="serviceData"
 					:service-card-errors="serviceCardErrors"
+					:update-contrassegno-field="updateContrassegnoField"
+					:update-assicurazione-value="updateAssicurazioneValue"
+					:clear-contrassegno-error="clearContrassegnoError"
+					:clear-assicurazione-error="clearAssicurazioneError"
 					:contrassegno-incasso-options="contrassegnoIncassoOptions"
 					:contrassegno-rimborso-options="contrassegnoRimborsoOptions"
 					:requires-contrassegno-dettaglio="requiresContrassegnoDettaglio"

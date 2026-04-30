@@ -2,9 +2,8 @@
  * usePriceBands.js
  *
  * Thin orchestrator that composes sub-composables and exposes the exact
- * same public API as before.  All constants/normalisation live in
- * usePriceBandsDefaults.js and all pure calculation logic lives in
- * usePriceBandsCalc.js.
+ * same public API as before. Constants, normalization and pure calculations
+ * live in utils/priceBands*, the canonical pricing boundary.
  */
 import {
 	FALLBACK_WEIGHT_BANDS,
@@ -16,25 +15,40 @@ import {
 	DEFAULT_SERVICE_PRICING,
 	DEFAULT_AUTOMATIC_SUPPLEMENTS,
 	DEFAULT_OPERATIONAL_FEES,
+} from "~/utils/priceBandsConstants";
+
+import {
 	normalizeBandArray,
 	normalizeExtraRules,
 	normalizeSupplements,
 	normalizeEuropePricing,
 	normalizeKeyedPricingGroup,
-} from "./usePriceBandsDefaults";
-
-import {
 	findBand,
 	getBandPriceCents,
 	getBandInfo,
 	getExtraBandInfo,
 	calcCapSupplementCents,
 	calcEuropeQuote,
-} from "./usePriceBandsCalc";
+} from "~/utils/priceBandsCalc";
+import type { PriceBandsState, PricingRule, PromoSettings } from "~/types/pricing";
+
+type PriceBandsApiPayload = {
+	data?: Record<string, unknown>
+	version?: string | number | null
+	promo?: Partial<PromoSettings>
+} & Record<string, unknown>
+
+const asPricingGroupInput = (value: unknown): Record<string, Partial<PricingRule>> =>
+	value && typeof value === 'object' && !Array.isArray(value)
+		? value as Record<string, Partial<PricingRule>>
+		: {}
+
+const asVersion = (value: unknown): string | number | null =>
+	typeof value === 'string' || typeof value === 'number' ? value : null
 
 // ---- Shared singleton state (module-level, same lifetime as before) ----
 
-const priceBands = ref({
+const priceBands = ref<PriceBandsState>({
 	weight: FALLBACK_WEIGHT_BANDS,
 	volume: FALLBACK_VOLUME_BANDS,
 	extra_rules: DEFAULT_EXTRA_RULES,
@@ -46,12 +60,12 @@ const priceBands = ref({
 	version: null,
 });
 
-const promoSettings = ref(DEFAULT_PROMO);
+const promoSettings = ref<PromoSettings>({ ...DEFAULT_PROMO });
 const loading = ref(false);
 const loaded = ref(false);
 let lastFetchTime = 0;
 const TTL_MS = 5 * 60 * 1000;
-let pendingFetchPromise = null;
+let pendingFetchPromise: Promise<void> | null = null;
 
 // ---- Composable ----
 
@@ -59,9 +73,9 @@ export const usePriceBands = () => {
 	const runtimeConfig = useRuntimeConfig();
 	const apiBase = String(runtimeConfig.public?.apiBase || "http://127.0.0.1:8787").replace(/\/$/, "");
 
-	const publicApiFetch = async (path, options = {}) => {
+	const publicApiFetch = async <T = Record<string, unknown>>(path: string, options: Record<string, unknown> = {}): Promise<T> => {
 		const url = path.startsWith("http") ? path : `${apiBase}${path}`;
-		return await $fetch(url, {
+		return await $fetch<T>(url, {
 			credentials: "include",
 			...options,
 		});
@@ -94,16 +108,16 @@ export const usePriceBands = () => {
 	const fetchFromApi = async () => {
 		loading.value = true;
 		try {
-			const res = await publicApiFetch("/api/public/price-bands");
-			const payload = res?.data || res || {};
-			const data = payload?.data || payload || {};
+			const res = await publicApiFetch<PriceBandsApiPayload>("/api/public/price-bands");
+			const payload: PriceBandsApiPayload = (res?.data && typeof res.data === 'object' ? res.data : res) as PriceBandsApiPayload;
+			const data: Record<string, unknown> = (payload?.data && typeof payload.data === 'object' ? payload.data : payload) as Record<string, unknown>;
 
 			const weight = normalizeBandArray(data?.weight, "weight");
 			const volume = normalizeBandArray(data?.volume, "volume");
 			const extraRules = normalizeExtraRules(data?.extra_rules || DEFAULT_EXTRA_RULES);
 			const supplements = normalizeSupplements(data?.supplements || DEFAULT_SUPPLEMENTS);
 			const europe = normalizeEuropePricing(data?.europe || DEFAULT_EUROPE_PRICING);
-			const version = data?.version || payload?.version || String(Date.now());
+			const version = asVersion(data?.version) || asVersion(payload?.version) || String(Date.now());
 
 			priceBands.value = {
 				weight,
@@ -111,9 +125,9 @@ export const usePriceBands = () => {
 				extra_rules: extraRules,
 				supplements: supplements,
 				europe,
-				service_pricing: normalizeKeyedPricingGroup(data?.service_pricing || {}, DEFAULT_SERVICE_PRICING),
-				automatic_supplements: normalizeKeyedPricingGroup(data?.automatic_supplements || {}, DEFAULT_AUTOMATIC_SUPPLEMENTS),
-				operational_fees: normalizeKeyedPricingGroup(data?.operational_fees || {}, DEFAULT_OPERATIONAL_FEES),
+				service_pricing: normalizeKeyedPricingGroup(asPricingGroupInput(data?.service_pricing), DEFAULT_SERVICE_PRICING),
+				automatic_supplements: normalizeKeyedPricingGroup(asPricingGroupInput(data?.automatic_supplements), DEFAULT_AUTOMATIC_SUPPLEMENTS),
+				operational_fees: normalizeKeyedPricingGroup(asPricingGroupInput(data?.operational_fees), DEFAULT_OPERATIONAL_FEES),
 				version,
 			};
 
@@ -123,7 +137,7 @@ export const usePriceBands = () => {
 
 			loaded.value = true;
 			lastFetchTime = Date.now();
-		} catch (e) {
+		} catch {
 			priceBands.value = {
 				weight: [...FALLBACK_WEIGHT_BANDS],
 				volume: [...FALLBACK_VOLUME_BANDS],
@@ -159,19 +173,19 @@ export const usePriceBands = () => {
 		await fetchFromApi();
 	};
 
-	// ---- Public getters (delegate to usePriceBandsCalc) ----
+	// ---- Public getters (delegate to utils/priceBandsCalc) ----
 
-	const getWeightPrice = (weightKg) => {
+	const getWeightPrice = (weightKg: number | string) => {
 		const cents = getBandPriceCents("weight", weightKg, priceBands.value);
 		return cents == null ? null : cents / 100;
 	};
 
-	const getVolumePrice = (volumeM3) => {
+	const getVolumePrice = (volumeM3: number | string) => {
 		const cents = getBandPriceCents("volume", volumeM3, priceBands.value);
 		return cents == null ? null : cents / 100;
 	};
 
-	const getWeightBandInfo = (weightKg) => {
+	const getWeightBandInfo = (weightKg: number | string) => {
 		const value = Number(weightKg);
 		if (!Number.isFinite(value) || value <= 0) return null;
 		const band = findBand(priceBands.value.weight, value);
@@ -180,7 +194,7 @@ export const usePriceBands = () => {
 		return cents == null ? null : getExtraBandInfo(cents);
 	};
 
-	const getVolumeBandInfo = (volumeM3) => {
+	const getVolumeBandInfo = (volumeM3: number | string) => {
 		const value = Number(volumeM3);
 		if (!Number.isFinite(value) || value <= 0) return null;
 		const band = findBand(priceBands.value.volume, value);
@@ -189,13 +203,13 @@ export const usePriceBands = () => {
 		return cents == null ? null : getExtraBandInfo(cents);
 	};
 
-	const getCapSupplementCents = (originCap, destinationCap) => {
+	const getCapSupplementCents = (originCap: number | string, destinationCap: number | string) => {
 		return calcCapSupplementCents(originCap, destinationCap, priceBands.value.supplements || []);
 	};
 
-	const getCapSupplement = (originCap, destinationCap) => getCapSupplementCents(originCap, destinationCap) / 100;
+	const getCapSupplement = (originCap: number | string, destinationCap: number | string) => getCapSupplementCents(originCap, destinationCap) / 100;
 
-	const getEuropeQuote = (destinationCountryCode, weightKg, volumeM3) => {
+	const getEuropeQuote = (destinationCountryCode: string, weightKg: number | string, volumeM3: number | string) => {
 		return calcEuropeQuote(destinationCountryCode, weightKg, volumeM3, priceBands.value.europe || DEFAULT_EUROPE_PRICING);
 	};
 

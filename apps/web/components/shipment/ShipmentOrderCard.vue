@@ -5,7 +5,7 @@
   priorita a riferimento, tratta, tracking e azioni davvero utili.
 -->
 <script setup>
-const props = defineProps({
+defineProps({
 	order: { type: Object, required: true },
 	statusColor: { type: Function, required: true },
 	statusRaw: { type: Function, required: true },

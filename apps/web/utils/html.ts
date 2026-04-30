@@ -8,7 +8,7 @@
  * Escapa caratteri HTML pericolosi (&, <, >, ", ').
  * Idempotente sui valori falsy → restituisce stringa vuota.
  */
-export const escapeHtml = (value) => String(value ?? '')
+export const escapeHtml = (value: unknown) => String(value ?? '')
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')

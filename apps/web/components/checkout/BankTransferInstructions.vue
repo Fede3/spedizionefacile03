@@ -5,8 +5,6 @@
   Usato in Success.vue dopo checkout con paymentMethod === 'bonifico'.
 -->
 <script setup>
-import '~/assets/css/shipment-flow.css';
-
 const props = defineProps({
 	orderId: { type: [String, Number], required: true },
 	amount: { type: String, default: '' }, // formattato es. "24,50 EUR"
@@ -29,7 +27,7 @@ const copy = async (value, key) => {
 		await navigator.clipboard.writeText(value);
 		copied.value = key;
 		setTimeout(() => { if (copied.value === key) copied.value = ''; }, 1800);
-	} catch (_) {
+	} catch {
 		// fallback — nessun-op, l'utente puo' selezionare manualmente
 	}
 };
@@ -102,4 +100,3 @@ const copy = async (value, key) => {
 		</div>
 	</div>
 </template>
-

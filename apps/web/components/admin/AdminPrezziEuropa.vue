@@ -1,5 +1,5 @@
 <script setup>
-const props = defineProps({
+defineProps({
 	europePricing: { type: Object, required: true },
 	filteredEuropeBands: { type: Array, required: true },
 	compactEuropeView: { type: Boolean, required: true },

@@ -3,15 +3,12 @@
   Props: successOrderId, paymentMethod.
 -->
 <script setup>
-import '~/assets/css/shipment-flow.css';
-
 const props = defineProps({
   successOrderId: { type: [String, Number], required: true },
   paymentMethod: { type: String, default: '' },
   totalAmount: { type: String, default: '' },
 })
 
-const isMultiOrder = computed(() => String(props.successOrderId || '').includes(','))
 const isBankTransfer = computed(() => props.paymentMethod === 'bonifico')
 </script>
 
@@ -94,4 +91,3 @@ const isBankTransfer = computed(() => props.paymentMethod === 'bonifico')
     </div>
   </div>
 </template>
-

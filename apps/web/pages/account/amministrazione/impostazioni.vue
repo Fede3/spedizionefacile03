@@ -28,7 +28,7 @@ const fetchSettings = async () => {
 	try {
 		const res = await sanctum('/api/admin/settings');
 		settingsData.value = res?.data || res || {};
-	} catch (e) {
+	} catch {
 		settingsData.value = {};
 	}
 };

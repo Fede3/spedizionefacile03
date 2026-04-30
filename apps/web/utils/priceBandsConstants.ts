@@ -3,27 +3,36 @@
  * Pure data, nessun side-effect.
  */
 
+import type {
+	EuropePricing,
+	ExtraRules,
+	PriceBand,
+	PricingRuleGroup,
+	PromoSettings,
+	SupplementRule,
+} from '~/types/pricing'
+
 // ---- Numeric helpers ----
 
 export const EPSILON = 0.0000001;
 
-export const toNumber = (value, fallback = 0) => {
+export const toNumber = (value: unknown, fallback = 0): number => {
 	const n = Number(value);
 	return Number.isFinite(n) ? n : fallback;
 };
 
-export const toInt = (value, fallback = 0) => {
-	const n = Number.parseInt(value, 10);
+export const toInt = (value: unknown, fallback = 0): number => {
+	const n = Number.parseInt(String(value), 10);
 	return Number.isFinite(n) ? n : fallback;
 };
 
-export const normalizeDecimal = (value, fallback = 0) => {
+export const normalizeDecimal = (value: unknown, fallback = 0): number => {
 	return Number(toNumber(value, fallback).toFixed(4));
 };
 
 // ---- Fallback band arrays ----
 
-export const FALLBACK_WEIGHT_BANDS = [
+export const FALLBACK_WEIGHT_BANDS: PriceBand[] = [
 	{ id: "weight-1", type: "weight", min_value: 0, max_value: 2, base_price: 890, discount_price: null, show_discount: true, sort_order: 1 },
 	{ id: "weight-2", type: "weight", min_value: 2, max_value: 5, base_price: 1190, discount_price: null, show_discount: true, sort_order: 2 },
 	{ id: "weight-3", type: "weight", min_value: 5, max_value: 10, base_price: 1490, discount_price: null, show_discount: true, sort_order: 3 },
@@ -33,7 +42,7 @@ export const FALLBACK_WEIGHT_BANDS = [
 	{ id: "weight-7", type: "weight", min_value: 75, max_value: 100, base_price: 4990, discount_price: null, show_discount: true, sort_order: 7 },
 ];
 
-export const FALLBACK_VOLUME_BANDS = [
+export const FALLBACK_VOLUME_BANDS: PriceBand[] = [
 	{ id: "volume-1", type: "volume", min_value: 0, max_value: 0.010, base_price: 890, discount_price: null, show_discount: true, sort_order: 1 },
 	{ id: "volume-2", type: "volume", min_value: 0.010, max_value: 0.020, base_price: 1190, discount_price: null, show_discount: true, sort_order: 2 },
 	{ id: "volume-3", type: "volume", min_value: 0.020, max_value: 0.040, base_price: 1490, discount_price: null, show_discount: true, sort_order: 3 },
@@ -45,7 +54,7 @@ export const FALLBACK_VOLUME_BANDS = [
 
 // ---- Default config objects ----
 
-export const DEFAULT_EXTRA_RULES = {
+export const DEFAULT_EXTRA_RULES: ExtraRules = {
 	enabled: true,
 	weight_start: 101,
 	weight_step: 50,
@@ -61,11 +70,11 @@ export const DEFAULT_EXTRA_RULES = {
 	volume_resolution: 0.001,
 };
 
-export const DEFAULT_SUPPLEMENTS = [
+export const DEFAULT_SUPPLEMENTS: SupplementRule[] = [
 	{ id: "supplement-1", prefix: "90", amount_cents: 250, apply_to: "both", enabled: true },
 ];
 
-export const DEFAULT_PROMO = {
+export const DEFAULT_PROMO: PromoSettings = {
 	active: false,
 	label_text: "",
 	label_color: "#E44203",
@@ -74,7 +83,7 @@ export const DEFAULT_PROMO = {
 	description: "",
 };
 
-export const DEFAULT_EUROPE_PRICING = {
+export const DEFAULT_EUROPE_PRICING: EuropePricing = {
 	enabled: false,
 	scope: "europe_monocollo",
 	origin_country_code: "IT",
@@ -85,7 +94,7 @@ export const DEFAULT_EUROPE_PRICING = {
 	version: 1,
 };
 
-export const DEFAULT_SERVICE_PRICING = {
+export const DEFAULT_SERVICE_PRICING: PricingRuleGroup = {
 	senza_etichetta: {
 		label: "Senza etichetta",
 		description: "Il corriere stampa e applica l'etichetta al ritiro.",
@@ -137,7 +146,7 @@ export const DEFAULT_SERVICE_PRICING = {
 	},
 };
 
-export const DEFAULT_AUTOMATIC_SUPPLEMENTS = {
+export const DEFAULT_AUTOMATIC_SUPPLEMENTS: PricingRuleGroup = {
 	calabria_sardegna_sicilia: {
 		label: "Calabria / Sardegna / Sicilia",
 		description: "Supplemento automatico destinazione per collo.",
@@ -236,7 +245,7 @@ export const DEFAULT_AUTOMATIC_SUPPLEMENTS = {
 	},
 };
 
-export const DEFAULT_OPERATIONAL_FEES = {
+export const DEFAULT_OPERATIONAL_FEES: PricingRuleGroup = {
 	giacenza: {
 		label: "Giacenza",
 		description: "Costo operativo per gestione giacenza.",

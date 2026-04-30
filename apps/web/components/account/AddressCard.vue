@@ -31,7 +31,6 @@ const recipientName = computed(() => {
 	return props.address?.name || 'Senza nome';
 });
 
-const personalLabel = computed(() => props.address?.label || (isOrigin.value ? 'Indirizzo di partenza' : 'Indirizzo di destinazione'));
 </script>
 
 <template>

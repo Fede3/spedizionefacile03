@@ -5,7 +5,7 @@
   API esterna invariata: props { open, detailItem, formatPrice } / emit 'update:open'.
 -->
 <script setup>
-const props = defineProps({
+defineProps({
 	open: { type: Boolean, required: true },
 	detailItem: { type: Object, default: null },
 	formatPrice: { type: Function, required: true },

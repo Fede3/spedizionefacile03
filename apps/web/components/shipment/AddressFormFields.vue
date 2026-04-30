@@ -15,6 +15,7 @@ const {
 	fieldClass, getFieldError, smartBlur,
 	onNameInput, onCityInput, onCityFocus, onProvinciaInput, onProvinceFocus,
 	onCapInput, onCapFocus, onTelefonoInput,
+	updateAddressField,
 	selectCity, sv,
 	formatCitySuggestionLabel,
 } = inject('shipmentFormHandlers');
@@ -25,6 +26,8 @@ const inputNamePrefix = computed(() => (typeKey === 'origin' ? 'shipment-origin'
 const countryLabel = computed(() => String(props.address.country || 'Italia').trim() || 'Italia');
 const autocompleteSection = computed(() => (typeKey === 'origin' ? 'section-origin' : 'section-destination'));
 const getAutocomplete = (purpose) => `${autocompleteSection.value} shipping ${purpose}`;
+const addressField = (field) => props.address?.[field] || '';
+const setAddressField = (field, value) => updateAddressField(typeKey, field, value);
 const sharedInputAttrs = {
 	autocapitalize: 'off',
 	autocorrect: 'off',
@@ -42,7 +45,7 @@ const readonlyClass = computed(() => (
 
 const sanitizeContactValue = (value) => (
 	String(value || '')
-		.replace(/[0-9]/g, '')
+		.replace(/\d/g, '')
 		.replace(/[^\p{L}'`.\-\s]/gu, ' ')
 		.replace(/\s+/g, ' ')
 		.trimStart()
@@ -122,13 +125,12 @@ const forceProvinceUpper = (event) => {
 		target.value = upper;
 		try { target.setSelectionRange(start, end); } catch { /* no-op su input non testuali */ }
 	}
-	props.address.province = upper;
 	onProvinciaInput(typeKey, upper);
 };
 
 watchEffect(() => {
 	if (!String(props.address.country || '').trim()) {
-		props.address.country = 'Italia';
+		setAddressField('country', 'Italia');
 	}
 });
 </script>
@@ -144,11 +146,12 @@ watchEffect(() => {
 					</label>
 					<input
 						:id="`${idPrefix}company_name`"
-						v-model="address.company_name"
+						:value="addressField('company_name')"
 						type="text"
 						required
 						:aria-required="true"
-						v-bind="sharedInputAttrs" />
+						v-bind="sharedInputAttrs"
+						@input="setAddressField('company_name', $event.target.value)" />
 				</div>
 				<div class="address-form-fields__field">
 					<label :for="`${idPrefix}vat_number`">
@@ -156,13 +159,14 @@ watchEffect(() => {
 					</label>
 					<input
 						:id="`${idPrefix}vat_number`"
-						v-model="address.vat_number"
+						:value="addressField('vat_number')"
 						type="text"
-						pattern="[0-9]{11}"
+						pattern="\d{11}"
 						maxlength="11"
 						required
 						:aria-required="true"
-						v-bind="sharedInputAttrs" />
+						v-bind="sharedInputAttrs"
+						@input="setAddressField('vat_number', $event.target.value)" />
 				</div>
 			</div>
 			<div class="address-form-fields__row">
@@ -170,20 +174,22 @@ watchEffect(() => {
 					<label :for="`${idPrefix}sdi_code`">Codice destinatario SDI</label>
 					<input
 						:id="`${idPrefix}sdi_code`"
-						v-model="address.sdi_code"
+						:value="addressField('sdi_code')"
 						type="text"
 						maxlength="7"
 						placeholder="Es. M5UXCR1"
-						v-bind="sharedInputAttrs" />
+						v-bind="sharedInputAttrs"
+						@input="setAddressField('sdi_code', $event.target.value)" />
 				</div>
 				<div class="address-form-fields__field">
 					<label :for="`${idPrefix}pec_email`">PEC</label>
 					<input
 						:id="`${idPrefix}pec_email`"
-						v-model="address.pec_email"
+						:value="addressField('pec_email')"
 						type="email"
 						placeholder="esempio@pec.it"
-						v-bind="sharedInputAttrs" />
+						v-bind="sharedInputAttrs"
+						@input="setAddressField('pec_email', $event.target.value)" />
 				</div>
 			</div>
 			<p class="address-form-fields__business-hint">
@@ -242,13 +248,14 @@ watchEffect(() => {
 					<div class="address-form-field__control">
 						<input
 							:id="`${idPrefix}additional_info`"
-							v-model="address.additional_information"
+							:value="addressField('additional_information')"
 							type="text"
 							:placeholder="detailsPlaceholder"
 							:name="`${inputNamePrefix}-additional-info`"
 							:autocomplete="getAutocomplete('address-line2')"
 							v-bind="sharedInputAttrs"
-							class="input-preventivo-step-2" />
+							class="input-preventivo-step-2"
+							@input="setAddressField('additional_information', $event.target.value)" />
 					</div>
 				</div>
 
@@ -259,7 +266,7 @@ watchEffect(() => {
 					<div class="address-form-field__control">
 						<input
 							:id="`${idPrefix}address`"
-							v-model="address.address"
+							:value="addressField('address')"
 							type="text"
 							:name="`${inputNamePrefix}-address`"
 							:autocomplete="getAutocomplete('address-line1')"
@@ -270,6 +277,7 @@ watchEffect(() => {
 							:aria-describedby="ariaDescribedBy('address')"
 							:class="[fieldClass(typeKey, 'address'), readonlyClass]"
 							:readonly="readonly"
+							@input="setAddressField('address', $event.target.value)"
 							@blur="smartBlur(typeKey, 'address')" />
 					</div>
 					<AddressFieldFeedback :type-key="typeKey" field="address" />
@@ -282,7 +290,7 @@ watchEffect(() => {
 					<div class="address-form-field__control">
 						<input
 							:id="`${idPrefix}address_number`"
-							v-model="address.address_number"
+							:value="addressField('address_number')"
 							type="text"
 							:name="`${inputNamePrefix}-address-number`"
 							autocomplete="off"
@@ -293,6 +301,7 @@ watchEffect(() => {
 							:aria-describedby="ariaDescribedBy('address_number')"
 							:class="[fieldClass(typeKey, 'address_number'), readonlyClass]"
 							:readonly="readonly"
+							@input="setAddressField('address_number', $event.target.value)"
 							@blur="smartBlur(typeKey, 'address_number')" />
 					</div>
 					<AddressFieldFeedback :type-key="typeKey" field="address_number" />
@@ -303,13 +312,14 @@ watchEffect(() => {
 					<div class="address-form-field__control">
 						<input
 							:id="`${idPrefix}intercom`"
-							v-model="address.intercom_code"
+							:value="addressField('intercom_code')"
 							type="text"
 							placeholder="Scala A, int. 4"
 							:name="`${inputNamePrefix}-intercom`"
 							autocomplete="off"
 							v-bind="sharedInputAttrs"
-							class="input-preventivo-step-2" />
+							class="input-preventivo-step-2"
+							@input="setAddressField('intercom_code', $event.target.value)" />
 					</div>
 				</div>
 
@@ -320,7 +330,7 @@ watchEffect(() => {
 					<div class="address-form-field__control">
 						<input
 							:id="`${idPrefix}postal_code`"
-							v-model="address.postal_code"
+							:value="addressField('postal_code')"
 							type="text"
 							:name="`${inputNamePrefix}-postal-code`"
 							:autocomplete="getAutocomplete('postal-code')"
@@ -346,7 +356,7 @@ watchEffect(() => {
 					<div class="address-form-field__control address-form-field__control--menu">
 						<input
 							:id="`${idPrefix}city`"
-							v-model="address.city"
+							:value="addressField('city')"
 							type="text"
 							:name="`${inputNamePrefix}-city`"
 							:autocomplete="getAutocomplete('address-level2')"
@@ -380,7 +390,7 @@ watchEffect(() => {
 					<div class="address-form-field__control">
 						<input
 							:id="`${idPrefix}province`"
-							v-model="address.province"
+							:value="addressField('province')"
 							type="text"
 							:name="`${inputNamePrefix}-province`"
 							:autocomplete="getAutocomplete('address-level1')"
@@ -440,7 +450,7 @@ watchEffect(() => {
 					<div class="address-form-field__control">
 						<input
 							:id="`${idPrefix}email`"
-							v-model="address.email"
+							:value="addressField('email')"
 							type="email"
 							placeholder="nome@email.com"
 							:name="`${inputNamePrefix}-email`"
@@ -452,7 +462,10 @@ watchEffect(() => {
 							:aria-describedby="ariaDescribedBy('email')"
 							:class="fieldClass(typeKey, 'email')"
 							@blur="smartBlur(typeKey, 'email')"
-							@input="sv.onInput(`${typeKey}_email`, () => sv.validateEmail(`${typeKey}_email`, address.email))" />
+							@input="
+								setAddressField('email', $event.target.value);
+								sv.onInput(`${typeKey}_email`, () => sv.validateEmail(`${typeKey}_email`, $event.target.value));
+							" />
 					</div>
 					<AddressFieldFeedback :type-key="typeKey" field="email" />
 				</div>

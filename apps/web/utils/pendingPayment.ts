@@ -1,56 +1,55 @@
-/**
- * @file pendingPayment — storage localStorage per pagamenti in attesa.
- * Estratto da composables/usePayment.js. Wrapper safe (try/catch su SSR).
- *
- * IMPORTANTE: file critico — gestisce identifiers ordini in attesa.
- * Non modificare la logica TTL senza test pagamento E2E verdi.
- */
+export const PENDING_PAYMENT_KEY = 'sf_pending_payment'
+export const PENDING_PAYMENT_TTL_MS = 24 * 60 * 60 * 1000
 
-export const PENDING_PAYMENT_KEY = 'sf_pending_payment';
-export const PENDING_PAYMENT_TTL_MS = 24 * 60 * 60 * 1000; // 24 ore
+export type PendingPaymentDraft = {
+	orderId: string | number
+	paymentMethod?: string
+	submissionId?: string
+	isExisting?: boolean
+	amount?: number
+	createdAt?: number
+	expiresAt?: number
+	[key: string]: unknown
+}
 
-export function safeLocalGet(key) {
-	if (typeof window === 'undefined') return null;
+export function safeLocalGet<T = unknown>(key: string): T | null {
+	if (typeof window === 'undefined') return null
 	try {
-		const raw = window.localStorage.getItem(key);
-		return raw ? JSON.parse(raw) : null;
+		const raw = window.localStorage.getItem(key)
+		return raw ? JSON.parse(raw) as T : null
 	} catch {
-		return null;
+		return null
 	}
 }
 
-export function safeLocalSet(key, value) {
-	if (typeof window === 'undefined') return;
+export function safeLocalSet(key: string, value: unknown) {
+	if (typeof window === 'undefined') return
 	try {
-		window.localStorage.setItem(key, JSON.stringify(value));
+		window.localStorage.setItem(key, JSON.stringify(value))
 	} catch {
-		/* storage pieno o disabilitato */
+		/* storage full or disabled */
 	}
 }
 
-export function safeLocalRemove(key) {
-	if (typeof window === 'undefined') return;
+export function safeLocalRemove(key: string) {
+	if (typeof window === 'undefined') return
 	try {
-		window.localStorage.removeItem(key);
+		window.localStorage.removeItem(key)
 	} catch {
-		/* storage disabilitato */
+		/* storage disabled */
 	}
 }
 
-/**
- * Legge un eventuale pagamento in sospeso (non completato) dal localStorage.
- * Ritorna null se scaduto o assente.
- */
-export function loadPendingPayment() {
-	const data = safeLocalGet(PENDING_PAYMENT_KEY);
-	if (!data) return null;
+export function loadPendingPayment(): PendingPaymentDraft | null {
+	const data = safeLocalGet<PendingPaymentDraft>(PENDING_PAYMENT_KEY)
+	if (!data) return null
 	if (data.expiresAt && data.expiresAt < Date.now()) {
-		safeLocalRemove(PENDING_PAYMENT_KEY);
-		return null;
+		safeLocalRemove(PENDING_PAYMENT_KEY)
+		return null
 	}
-	return data;
+	return data
 }
 
 export function clearPendingPayment() {
-	safeLocalRemove(PENDING_PAYMENT_KEY);
+	safeLocalRemove(PENDING_PAYMENT_KEY)
 }

@@ -1,63 +1,56 @@
-/**
- * useAuth.js — Aggregatore auth: snapshot+persistence, UI state, social providers, overlay form.
- * NOTA: lo stato del modal auth vive in `useAuthModalStore` (Pinia).
- */
-
+import type { Ref } from 'vue'
+import type { User } from '~/types'
 import {
 	AUTH_UI_COOKIE,
 	AUTH_UI_STORAGE,
+	type AuthUiSnapshot,
 	createEmptySnapshot,
-	humanizeSocialAuthError,
 	parseStoredSnapshot,
-	sanitizeAuthRedirect,
 	snapshotFromUser,
 	useAuthBootstrapState,
-	waitForPostAuthSync,
 } from '~/utils/auth'
 
-// ─────────────────────────────────────────────────────────────────────────────
-// SEZIONE 1: Snapshot Persistence (ex useAuthUiSnapshotPersistence)
-// Persistenza snapshot auth UI su cookie + localStorage, con useState per reattività SSR-safe.
-// ─────────────────────────────────────────────────────────────────────────────
+type AuthCookieRuntimeValue = AuthUiSnapshot | string | undefined
+type SnapshotUser = Parameters<typeof snapshotFromUser>[0]
+type LiveSanctumAuth = {
+	isAuthenticated: Ref<boolean>
+	user: Ref<User | SnapshotUser | null>
+	init?: () => Promise<unknown>
+}
 
-/**
- * @typedef {import('~/utils/authUiState').AuthUiSnapshot} AuthUiSnapshot
- * @typedef {import('~/utils/authUiState').AuthUiUser} AuthUiUser
- */
+const normalizeCookieSnapshot = (cookie: Ref<AuthCookieRuntimeValue>): AuthUiSnapshot => {
+	const value = cookie.value
+	return typeof value === 'string' ? parseStoredSnapshot(value) : value ?? createEmptySnapshot()
+}
 
-/** Persistenza snapshot auth UI su cookie + localStorage, con useState per reattività SSR-safe. */
 export const useAuthUiSnapshotPersistence = () => {
-	const authCookie = useCookie(AUTH_UI_COOKIE, {
+	const authCookie = useCookie<AuthUiSnapshot | undefined>(AUTH_UI_COOKIE, {
 		sameSite: 'lax',
 		path: '/',
-		// HTTPS-only in produzione (in dev http://localhost va in chiaro per non rompere il login).
 		secure: !import.meta.dev,
 	})
-	const initialSnapshot = useState('auth-ui-initial-snapshot', createEmptySnapshot)
-	const storedSnapshot = useState('auth-ui-stored-snapshot', createEmptySnapshot)
+	const runtimeCookie = authCookie as Ref<AuthCookieRuntimeValue>
+	const initialSnapshot = useState<AuthUiSnapshot>('auth-ui-initial-snapshot', createEmptySnapshot)
+	const storedSnapshot = useState<AuthUiSnapshot>('auth-ui-stored-snapshot', createEmptySnapshot)
 
-	// In alcuni bootstrap/client restore il cookie arriva come stringa JSON url-encoded
-	// invece che come oggetto gia' deserializzato. Normalizziamo subito per evitare
-	// che middleware e plugin leggano `authenticated` come undefined.
-	if (typeof authCookie.value === 'string') {
-		authCookie.value = parseStoredSnapshot(authCookie.value)
+	if (typeof runtimeCookie.value === 'string') {
+		authCookie.value = parseStoredSnapshot(runtimeCookie.value)
 	}
 
-	const persistSnapshot = (snapshot) => {
+	const persistSnapshot = (snapshot: AuthUiSnapshot) => {
 		authCookie.value = snapshot
 		initialSnapshot.value = snapshot
 		storedSnapshot.value = snapshot
+
 		if (import.meta.client) {
 			window.localStorage.setItem(AUTH_UI_STORAGE, JSON.stringify(snapshot))
 		}
 	}
 
-	const persistSnapshotFromUser = (user) => {
-		if (!user) {
-			return
+	const persistSnapshotFromUser = (user: User | SnapshotUser | null | undefined) => {
+		if (user) {
+			persistSnapshot(snapshotFromUser(user))
 		}
-
-		persistSnapshot(snapshotFromUser(user))
 	}
 
 	const clearSnapshot = () => {
@@ -65,6 +58,7 @@ export const useAuthUiSnapshotPersistence = () => {
 		authCookie.value = undefined
 		initialSnapshot.value = snapshot
 		storedSnapshot.value = snapshot
+
 		if (import.meta.client) {
 			window.localStorage.removeItem(AUTH_UI_STORAGE)
 		}
@@ -80,53 +74,40 @@ export const useAuthUiSnapshotPersistence = () => {
 	}
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// SEZIONE 2: UI State (ex useAuthUiState)
-// Stato UI auth: snapshot SSR-safe + sync opzionale con Sanctum live (guest-only blacklist).
-// ─────────────────────────────────────────────────────────────────────────────
-
-/**
- * @typedef {import('~/utils/authUiState').AuthUiUser} AuthUiUser
- */
-
-/** Stato UI auth: snapshot SSR-safe + sync opzionale con Sanctum live (guest-only blacklist). */
 export const useAuthUiState = () => {
 	const { bootstrapReady, bootstrapStatus } = useAuthBootstrapState()
 	const { authCookie, clearSnapshot, initialSnapshot, persistSnapshotFromUser } =
 		useAuthUiSnapshotPersistence()
 	const route = useRoute()
+	const auth = shallowRef<LiveSanctumAuth | null>(null)
+	const liveAuthInitPending = ref(false)
+	const authenticatedState = ref<boolean | null>(null)
 	const guestOnlyPrefixes = ['/autenticazione', '/login', '/registrazione', '/recupera-password', '/aggiorna-password']
-	const hasAuthenticatedSnapshot = computed(() => Boolean(authCookie.value?.authenticated))
-	// BLACKLIST: Sanctum si attacca ovunque TRANNE sulle pagine guest-only.
-	// Evita di tenere disattivo il live auth su pagine pubbliche dove l'utente
-	// potrebbe gia' essere autenticato (es. homepage, servizi, contatti).
+
+	const cookieSnapshot = computed(() => normalizeCookieSnapshot(authCookie as Ref<AuthCookieRuntimeValue>))
+	const hasAuthenticatedSnapshot = computed(() => cookieSnapshot.value.authenticated)
 	const shouldAttachLiveAuth = computed(() => {
 		if (!import.meta.client) return false
-		if (guestOnlyPrefixes.some((prefix) => route.path.startsWith(prefix))) return false
-		return true
+		return !guestOnlyPrefixes.some((prefix) => route.path.startsWith(prefix))
 	})
-	const auth = shallowRef(null)
-	const liveAuthInitPending = ref(false)
 
 	if (import.meta.client) {
 		watchEffect(() => {
 			if (!auth.value && shouldAttachLiveAuth.value) {
-				auth.value = useSanctumAuth()
+				auth.value = useSanctumAuth() as unknown as LiveSanctumAuth
 			}
 		})
 
 		watch(
-			() => [shouldAttachLiveAuth.value, hasAuthenticatedSnapshot.value, Boolean(auth.value?.isAuthenticated?.value)],
-			async ([shouldAttach, hasAuthenticatedSnapshot, alreadyAuthenticated]) => {
-				if (!shouldAttach || !hasAuthenticatedSnapshot || alreadyAuthenticated || !auth.value || liveAuthInitPending.value) {
+			() => [shouldAttachLiveAuth.value, hasAuthenticatedSnapshot.value, Boolean(auth.value?.isAuthenticated.value)],
+			async ([shouldAttach, hasSnapshot, alreadyAuthenticated]) => {
+				if (!shouldAttach || !hasSnapshot || alreadyAuthenticated || !auth.value || liveAuthInitPending.value) {
 					return
 				}
 
 				liveAuthInitPending.value = true
 				try {
 					await auth.value.init?.()
-				} catch {
-					// Se il cookie snapshot e' stantio lasciamo il composable degradare sulla snapshot stessa.
 				} finally {
 					liveAuthInitPending.value = false
 				}
@@ -135,11 +116,8 @@ export const useAuthUiState = () => {
 		)
 	}
 
-	const liveAuthenticated = computed(() => Boolean(auth.value?.isAuthenticated?.value))
-	const liveUser = computed(() => {
-		const user = auth.value?.user?.value
-		return user ?? null
-	})
+	const liveAuthenticated = computed(() => Boolean(auth.value?.isAuthenticated.value))
+	const liveUser = computed(() => auth.value?.user.value ?? null)
 
 	if (import.meta.client) {
 		watch(
@@ -154,46 +132,13 @@ export const useAuthUiState = () => {
 					return
 				}
 
-				if (ready && status === 'resolved') {
-					// Guard anti-logout spurio: se il cookie snapshot SSR-safe e' ancora
-					// valido (authenticated=true), NON cancellare. Il backend e' fonte di
-					// verita' finale ma il cookie preserva la UI finche' non c'e'
-					// evidenza opposta (401 esplicito dal backend).
-					if (authCookie.value?.authenticated) {
-						return
-					}
+				if (ready && status === 'resolved' && !cookieSnapshot.value.authenticated) {
 					clearSnapshot()
 				}
 			},
 			{ immediate: true },
 		)
-	}
 
-	const uiSnapshot = computed(() => {
-		if (liveAuthenticated.value && liveUser.value) {
-			return snapshotFromUser(liveUser.value)
-		}
-
-		// Su pagine pubbliche non agganciamo live auth per evitare fetch inutili,
-		// ma dopo un login da modale il cookie SSR-safe deve aggiornare subito navbar e CTA.
-		if (authCookie.value?.authenticated) {
-			return authCookie.value
-		}
-
-		if (bootstrapStatus.value !== 'resolved') {
-			if (initialSnapshot.value.authenticated) {
-				return initialSnapshot.value
-			}
-		}
-
-		return createEmptySnapshot()
-	})
-
-	// Stato stabile per evitare flicker: aggiorna solo quando abbiamo evidenza
-	// forte (true=auth confermato, false=resolved senza auth). Negli stati
-	// intermedi (pending, init) mantiene il valore precedente.
-	const authenticatedState = ref(null)
-	if (import.meta.client) {
 		watch(
 			[liveAuthenticated, bootstrapStatus, hasAuthenticatedSnapshot],
 			([authenticated, status, snapshotAuth]) => {
@@ -201,29 +146,39 @@ export const useAuthUiState = () => {
 					authenticatedState.value = true
 					return
 				}
-				if (status === 'resolved' && !authenticated && !snapshotAuth) {
+
+				if (status === 'resolved') {
 					authenticatedState.value = false
-					return
 				}
-				// altrimenti mantieni il valore precedente (no flicker)
 			},
 			{ immediate: true },
 		)
 	}
 
-	const isAuthenticatedForUi = computed(() => {
-		if (authenticatedState.value !== null) return authenticatedState.value
-		return uiSnapshot.value.authenticated
+	const uiSnapshot = computed<AuthUiSnapshot>(() => {
+		if (liveAuthenticated.value && liveUser.value) {
+			return snapshotFromUser(liveUser.value)
+		}
+
+		if (cookieSnapshot.value.authenticated) {
+			return cookieSnapshot.value
+		}
+
+		if (bootstrapStatus.value !== 'resolved' && initialSnapshot.value.authenticated) {
+			return initialSnapshot.value
+		}
+
+		return createEmptySnapshot()
 	})
 
-	// Pending UI: true finche' non abbiamo una risposta stabile sull'auth
-	// (bootstrap non risolto E nessuno snapshot cookie autoritativo).
+	const isAuthenticatedForUi = computed(() => authenticatedState.value ?? uiSnapshot.value.authenticated)
 	const isAuthUiPending = computed(() => {
-		if (authenticatedState.value !== null) return false
-		if (authCookie.value?.authenticated) return false
+		if (authenticatedState.value !== null || cookieSnapshot.value.authenticated) {
+			return false
+		}
+
 		return bootstrapStatus.value !== 'resolved'
 	})
-
 	const accountLabel = computed(() => {
 		if (!uiSnapshot.value.authenticated) return 'Accedi'
 		if (uiSnapshot.value.role === 'Admin') return 'Area Admin'
@@ -248,25 +203,6 @@ export const useAuthUiState = () => {
 	}
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// SEZIONE 3: Providers Config (ex useAuthProviders)
-// Tiene traccia della disponibilità dei provider social (Google/Facebook/Apple).
-// ─────────────────────────────────────────────────────────────────────────────
-
-/**
- * @typedef {{ google: boolean, facebook: boolean, apple: boolean }} AuthProvidersAvailability
- */
-
-const defaultProviders = () => ({
-	google: false,
-	facebook: false,
-	apple: false,
-})
-
-/**
- * Composable che tiene traccia della disponibilità dei provider social (Google/Facebook/Apple).
- * Thin wrapper retro-compat sullo store Pinia `authProvidersStore` (Vue DevTools-friendly).
- */
 export const useAuthProviders = () => {
 	const store = useAuthProvidersStore()
 	const { providers, loaded, loading } = storeToRefs(store)
@@ -278,7 +214,3 @@ export const useAuthProviders = () => {
 		refreshAuthProviders: store.refresh,
 	}
 }
-
-// ─────────────────────────────────────────────────────────────────────────────
-// SEZIONE 4: Overlay Logic (ex useAuthOverlay)
-// useAuthOverlay estratto in composables/useAuthOverlay.js

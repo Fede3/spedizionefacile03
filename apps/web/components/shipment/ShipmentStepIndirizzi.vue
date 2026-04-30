@@ -58,7 +58,7 @@ const inlineVisibleSubmitError = computed(() => {
 
 	if (!message) return '';
 
-	return /numero massimo di tentativi|hai superato|riprova tra|attendi(?: ancora)?|\d+\s*(second|minut)|too many (attempts|requests)|rate limit/i.test(message)
+	return /numero massimo di tentativi|hai superato|riprova tra|attendi(?: ancora)?|\d+\s*(?:second|minut)|too many (?:attempts|requests)|rate limit/i.test(message)
 		? ''
 		: message;
 });

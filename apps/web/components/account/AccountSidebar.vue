@@ -7,7 +7,7 @@
  */
 import { accountCardIcons } from '~/utils/account';
 
-const props = defineProps({
+defineProps({
 	fullName: { type: String, required: true },
 	initials: { type: String, required: true },
 	roleLabel: { type: String, required: true },

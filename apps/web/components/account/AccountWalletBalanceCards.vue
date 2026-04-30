@@ -22,40 +22,6 @@ const statusLabel = computed(() => {
 	return 'Aggiornato';
 });
 
-const overviewCards = computed(() => {
-	const cards = [
-		{
-			label: 'Saldo disponibile',
-			value: props.isLoadingBalance && !hasBalanceData.value ? 'Caricamento' : `EUR ${formatEuro(props.balance?.balance || 0)}`,
-			description: 'Usabile subito per pagamenti e spedizioni.',
-			tone: 'bg-[#F3FAFB] border-[#D8EBEF] text-[var(--color-brand-primary)]',
-		},
-		{
-			label: 'Carta predefinita',
-			value: props.defaultPaymentMethodLabel,
-			description: props.stripeConfigured ? 'Pronta per le prossime ricariche.' : 'Attiva una carta per ricaricare.',
-			tone: 'bg-[#FFFFFF] border-[#E6EDF0] text-[var(--color-brand-text)]',
-		},
-		{
-			label: 'Storico',
-			value: props.movementCountLabel,
-			description: 'Movimenti e rimborsi sempre nello stesso flusso.',
-			tone: 'bg-[#F8FAFB] border-[#E8EEF1] text-[var(--color-brand-text)]',
-		},
-	];
-
-	if (props.isPro) {
-		cards.push({
-			label: 'Commissioni Pro',
-			value: props.isLoadingBalance && !hasBalanceData.value ? 'Caricamento' : `EUR ${formatEuro(props.balance?.commission_balance || 0)}`,
-			description: 'Restano separate dal saldo wallet.',
-			tone: 'bg-[#F4FBF6] border-[#DCEFE2] text-[#15803D]',
-		});
-	}
-
-	return cards;
-});
-
 const quickLinks = computed(() => {
 	const links = [
 		{

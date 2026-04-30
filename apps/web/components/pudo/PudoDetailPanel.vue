@@ -1,9 +1,9 @@
 <script setup>import { computed } from 'vue';
 const props = defineProps({
-  pudo: {  },
+  pudo: { type: Object, default: null },
   open: { type: Boolean, default: false },
 });
-const emit = defineEmits();
+const emit = defineEmits(['close', 'pudo-selected']);
 // ── Helpers orari ──
 const dayNames = [
     { key: 'mon', label: 'Lunedi', tokens: ['lun', 'lunedi', 'mon'] },
@@ -21,7 +21,7 @@ const splitHoursParts = (raw) => {
         return raw.map((s) => String(s || '').trim()).filter(Boolean);
     if (typeof raw === 'object')
         return Object.entries(raw).map(([k, v]) => `${k}: ${v}`);
-    return String(raw).split(/\n|\||;/g).map((s) => s.trim()).filter(Boolean);
+    return String(raw).split(/[\n|;]/g).map((s) => s.trim()).filter(Boolean);
 };
 const weekHours = computed(() => {
     const parts = splitHoursParts(props.pudo?.opening_hours);

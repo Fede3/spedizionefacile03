@@ -1,7 +1,6 @@
 <!-- PAGINA: /account/fatture — storico fatture PDF per l'utente loggato -->
 <script setup>
 import '~/assets/css/account.css';
-import '~/assets/css/account.css';
 import { formatPriceSafe as formatPrice } from '~/utils/price.js';
 import { formatDateIt } from '~/utils/date.js';
 

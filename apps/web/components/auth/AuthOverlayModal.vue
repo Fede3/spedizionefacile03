@@ -24,6 +24,15 @@ const handleRegisterWithCaptcha = () => {
     registerForm.value.cf_turnstile_token = registerTurnstile.token.value;
     handleRegister();
 };
+const updateRegisterForm = (nextForm) => {
+    registerForm.value = nextForm;
+};
+const updateLoginForm = (nextForm) => {
+    loginForm.value = nextForm;
+};
+const updateRegisterTurnstileToken = (token) => {
+    registerTurnstile.token.value = token;
+};
 const modalDescription = computed(() => {
     if (forgotMode.value) {
         return 'Inserisci la tua email e ti invieremo il link per reimpostare la password.';
@@ -301,6 +310,7 @@ const modalUi = {
             @submit="handleLogin"
             @enter-forgot="enterForgotMode"
             @toggle-password="showLoginPassword = !showLoginPassword"
+            @update:form="updateLoginForm"
           />
 
           <!-- ================= REGISTER FORM ================= -->
@@ -311,6 +321,8 @@ const modalUi = {
             :show-password="showRegisterPassword"
             :show-password-confirm="showRegisterPasswordConfirm"
             :turnstile="registerTurnstile"
+            @update:form="updateRegisterForm"
+            @update:turnstile-token="updateRegisterTurnstileToken"
             @submit="handleRegisterWithCaptcha"
             @toggle-password="showRegisterPassword = !showRegisterPassword"
             @toggle-password-confirm="showRegisterPasswordConfirm = !showRegisterPasswordConfirm"

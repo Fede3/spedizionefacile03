@@ -8,7 +8,7 @@ defineProps({
 		required: true,
 	},
 });
-const emit = defineEmits();
+const emit = defineEmits(['social-auth']);
 </script>
 
 <template>

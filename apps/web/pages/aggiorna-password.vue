@@ -41,8 +41,8 @@ const passwordChecks = computed(() => {
 		minLength: pwd.length >= 8,
 		hasLower: /[a-z]/.test(pwd),
 		hasUpper: /[A-Z]/.test(pwd),
-		hasNumber: /[0-9]/.test(pwd),
-		hasSymbol: /[^a-zA-Z0-9\s]/.test(pwd),
+		hasNumber: /\d/.test(pwd),
+		hasSymbol: /[^a-z0-9\s]/i.test(pwd),
 	};
 });
 

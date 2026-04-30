@@ -1,42 +1,42 @@
-/**
- * authModalStore — Pinia store per overlay autenticazione (login/register/forgot).
- * Stato unico ispezionabile in Vue DevTools.
- */
-import { defineStore } from 'pinia';
+import { defineStore } from 'pinia'
 
-const normalizeAuthRedirect = (redirect) => {
-    if (!redirect || typeof redirect !== 'string')
-        return '/';
-    return redirect.startsWith('/') ? redirect : '/';
-};
+export type AuthModalTab = 'login' | 'register' | 'forgot'
+type AuthModalOptions = {
+	tab?: AuthModalTab
+	redirect?: string
+	entryMode?: string | null
+}
+
+const normalizeAuthRedirect = (redirect?: string) =>
+	redirect && redirect.startsWith('/') ? redirect : '/'
 
 export const useAuthModalStore = defineStore('authModal', () => {
-    const isOpen = ref(false);
-    const selectedTab = ref('login');
-    const redirectPath = ref('/');
-    const entryMode = ref(null);
+	const isOpen = ref(false)
+	const selectedTab = ref<AuthModalTab>('login')
+	const redirectPath = ref('/')
+	const entryMode = ref<string | null>(null)
 
-    function openAuthModal(options = {}) {
-        selectedTab.value = options.tab ?? 'login';
-        redirectPath.value = normalizeAuthRedirect(options.redirect);
-        entryMode.value = options.entryMode ?? null;
-        isOpen.value = true;
-    }
-    function closeAuthModal() {
-        isOpen.value = false;
-        entryMode.value = null;
-    }
-    function clearEntryMode() {
-        entryMode.value = null;
-    }
+	function openAuthModal(options: AuthModalOptions = {}) {
+		selectedTab.value = options.tab ?? 'login'
+		redirectPath.value = normalizeAuthRedirect(options.redirect)
+		entryMode.value = options.entryMode ?? null
+		isOpen.value = true
+	}
+	function closeAuthModal() {
+		isOpen.value = false
+		entryMode.value = null
+	}
+	function clearEntryMode() {
+		entryMode.value = null
+	}
 
-    return {
-        isOpen,
-        selectedTab,
-        redirectPath,
-        entryMode,
-        openAuthModal,
-        closeAuthModal,
-        clearEntryMode,
-    };
-});
+	return {
+		isOpen,
+		selectedTab,
+		redirectPath,
+		entryMode,
+		openAuthModal,
+		closeAuthModal,
+		clearEntryMode,
+	}
+})

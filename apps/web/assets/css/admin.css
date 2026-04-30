@@ -3119,11 +3119,11 @@
  * per dominio, no clash garantito.
  */
 
-:deep(.sf-admin-console-header .sf-account-page-header__surface) {
+.sf-admin-console-header .sf-account-page-header__surface {
 	padding-bottom: 16px;
 }
 
-:deep(.sf-admin-console-header .sf-account-page-header__body) {
+.sf-admin-console-header .sf-account-page-header__body {
 	gap: 6px;
 }
 .sf-admin-console-notice {
@@ -3243,22 +3243,23 @@
 }
 
 @media (min-width: 768px) {
-	:deep(.sf-admin-console-header .sf-account-page-header__surface) {
+	.sf-admin-console-header .sf-account-page-header__surface {
 		padding-bottom: 18px;
 	}
-.sf-admin-console-notice {
+
+	.sf-admin-console-notice {
 		padding: 16px 18px;
 	}
 }
 
 @media (min-width: 1280px) {
-	:deep(.sf-admin-console-header .sf-account-page-header__body) {
+	.sf-admin-console-header .sf-account-page-header__body {
 		align-items: start;
 	}
 }
 
 @media (max-width: 767px) {
-.sf-admin-console-notice__actions {
+	.sf-admin-console-notice__actions {
 		width: 100%;
 	}
 }

@@ -12,7 +12,7 @@
  *   4. List section: view state, filtri Europa/servizi, computed entries
  *   5. Facade: compone le sezioni e restituisce API pubblica unificata (backward compatible)
  *
- * Le costanti DEFAULT_* sono in `~/utils/adminPricingDefaults.js`.
+ * Le costanti DEFAULT_* sono in `~/utils/priceBandsConstants`.
  */
 
 import {
@@ -21,17 +21,12 @@ import {
 	DEFAULT_EXTRA_RULES,
 	DEFAULT_OPERATIONAL_FEES,
 	DEFAULT_SERVICE_PRICING,
-	DEFAULT_SUPPLEMENTS,
-	DEFAULT_VOLUME_BANDS,
-	DEFAULT_WEIGHT_BANDS,
-} from '~/utils/adminPricingDefaults';
+} from '~/utils/priceBandsConstants';
 import {
-	buildPricingRulesPayload,
 	normalizeEuropePricingForAdmin,
 	normalizePricingGroupForAdmin,
-	normalizeStringListForAdmin,
-	normalizeTiersForAdmin,
 } from '~/utils/adminPricingNormalize';
+import type { EuropePricing, ExtraRules, PriceBand, PricingRuleGroup, SupplementRule } from '~/types/pricing';
 
 // Normalizzatori puri estratti in `~/utils/adminPricingNormalize.js`.
 
@@ -50,26 +45,26 @@ export const useAdminPricing = () => {
 	const { actionMessage, showSuccess, showError } = useAdmin();
 
 	// ── Shared reactive state (owned here, passed to sections) ──
-	const weightBands = ref([]);
-	const volumeBands = ref([]);
+	const weightBands = ref<PriceBand[]>([]);
+	const volumeBands = ref<PriceBand[]>([]);
 	const bandsFromDb = ref(false);
-	const originalWeightBands = ref([]);
-	const originalVolumeBands = ref([]);
-	const extraRules = ref({});
-	const supplementRules = ref([
+	const originalWeightBands = ref<PriceBand[]>([]);
+	const originalVolumeBands = ref<PriceBand[]>([]);
+	const extraRules = ref<ExtraRules>({ ...DEFAULT_EXTRA_RULES } as ExtraRules);
+	const supplementRules = ref<SupplementRule[]>([
 		{ id: 'supplement-1', prefix: '90', amount_cents: 250, apply_to: 'both', enabled: true },
 	]);
-	const originalExtraRules = ref(null);
-	const originalSupplementRules = ref([]);
-	const pricingVersion = ref(null);
-	const europePricing = ref({});
-	const originalEuropePricing = ref(null);
-	const servicePricing = ref({});
-	const automaticSupplements = ref({});
-	const operationalFees = ref({});
-	const originalServicePricing = ref({});
-	const originalAutomaticSupplements = ref({});
-	const originalOperationalFees = ref({});
+	const originalExtraRules = ref<ExtraRules | null>(null);
+	const originalSupplementRules = ref<SupplementRule[]>([]);
+	const pricingVersion = ref<string | number | null>(null);
+	const europePricing = ref<EuropePricing>(normalizeEuropePricingForAdmin(DEFAULT_EUROPE_PRICING));
+	const originalEuropePricing = ref<EuropePricing | null>(null);
+	const servicePricing = ref<PricingRuleGroup>(normalizePricingGroupForAdmin({}, DEFAULT_SERVICE_PRICING));
+	const automaticSupplements = ref<PricingRuleGroup>(normalizePricingGroupForAdmin({}, DEFAULT_AUTOMATIC_SUPPLEMENTS));
+	const operationalFees = ref<PricingRuleGroup>(normalizePricingGroupForAdmin({}, DEFAULT_OPERATIONAL_FEES));
+	const originalServicePricing = ref<PricingRuleGroup>({});
+	const originalAutomaticSupplements = ref<PricingRuleGroup>({});
+	const originalOperationalFees = ref<PricingRuleGroup>({});
 
 	// ── Form section (editing, CRUD, utility) ────────
 	const form = createFormSection({

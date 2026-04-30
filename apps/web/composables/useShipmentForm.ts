@@ -9,7 +9,7 @@
 //  - useShipmentFormFieldAssist.js  (243 LOC) → SEZIONE 2
 // API pubblica identica: 3 export con nomi invariati + helper riesportati.
 
-import { dedupeLocations, getProvinceLabel } from "~/utils/location";
+import type { Ref } from "vue";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // SEZIONE 1: Error Summary
@@ -25,21 +25,78 @@ import {
   FIELD_ERROR_LABELS,
   FIELD_ERROR_IDS,
   softenErrorMessage,
-  normalizeSimpleText,
-  buildEmailSuggestion,
-  extractAddressAndNumber,
 } from '~/utils/shipmentFormHelpers';
+
+type AddressSection = 'origin' | 'dest';
+type AddressDraft = {
+	full_name?: string;
+	address?: string;
+	address_number?: string;
+	city?: string;
+	province?: string;
+	postal_code?: string;
+	telephone_number?: string;
+	email?: string;
+	[key: string]: string | undefined;
+};
+type FormErrorItem = {
+	key: string;
+	message: string;
+	label: string;
+	targetId: string;
+};
+type GroupedFormErrors = Record<AddressSection | 'generic', FormErrorItem[]>;
+type SmartValidationApi = {
+	errors: Ref<Record<string, string | undefined>>;
+	autoCapitalize: (value: string) => string;
+	clearError: (key: string) => void;
+	getError: (key: string) => string | null;
+	hasError: (key: string) => boolean;
+	markTouched: (key: string) => void;
+	setError: (key: string, message: string) => void;
+	validateCAP: (key: string, value: unknown, options?: { countryCode?: string }) => boolean;
+	validateEmail: (key: string, value: unknown) => boolean;
+	validateNomeCognome: (key: string, value: unknown) => boolean;
+	validateTelefono: (key: string, value: unknown) => boolean;
+};
+type ShipmentFormErrorSummaryArgs = {
+	sv: SmartValidationApi;
+	contentError: Ref<string | null>;
+};
+type ShipmentFormValidationArgs = {
+	contentError: Ref<string | null>;
+	dateError: Ref<string | null>;
+	deliveryMode: Ref<string>;
+	destinationAddress: Ref<AddressDraft>;
+	originAddress: Ref<AddressDraft>;
+	services: Ref<{ date?: unknown }>;
+	sv: SmartValidationApi;
+	shipmentFlowStore: { contentDescription?: string };
+	applyLocationToSection: (...args: unknown[]) => unknown;
+	getSectionAddress: (section: AddressSection) => AddressDraft;
+	getSectionCountryCode: (section: AddressSection) => string;
+	locationLinkHints: Partial<Record<AddressSection, import("~/utils/location").LocationRecord[]>>;
+	normalizeLocationText: (value: unknown) => string;
+	validateAddressLocationLink: (section: AddressSection) => Promise<boolean>;
+	validateProvinceField: (section: AddressSection, value: unknown) => boolean;
+	originCitySuggestions: Ref<import("~/utils/location").LocationRecord[]>;
+	originCapSuggestions: Ref<import("~/utils/location").LocationRecord[]>;
+	destCitySuggestions: Ref<import("~/utils/location").LocationRecord[]>;
+	destCapSuggestions: Ref<import("~/utils/location").LocationRecord[]>;
+};
+const FIELD_LABEL_MAP = FIELD_ERROR_LABELS as Record<string, string>;
+const FIELD_ID_MAP = FIELD_ERROR_IDS as Record<string, string>;
 
 // Re-export rimosso: i caller importano direttamente da utils/shipmentFormHelpers.
 // Nuxt auto-import preferisce comunque la versione utils/.
 
 /** Crea i computed di sintesi / raggruppamento / section hints da `sv.errors`. */
-export const useShipmentFormErrorSummary = ({ sv, contentError }) => {
-	const formErrorSummary = computed(() => {
+export const useShipmentFormErrorSummary = ({ sv, contentError }: ShipmentFormErrorSummaryArgs) => {
+	const formErrorSummary = computed<FormErrorItem[]>(() => {
 		const errors = sv.errors?.value || {};
 		const keys = Object.keys(errors || {}).sort((a, b) => {
-			const aIndex = FIELD_ERROR_ORDER.indexOf(a);
-			const bIndex = FIELD_ERROR_ORDER.indexOf(b);
+			const aIndex = FIELD_ERROR_ORDER.indexOf(a as (typeof FIELD_ERROR_ORDER)[number]);
+			const bIndex = FIELD_ERROR_ORDER.indexOf(b as (typeof FIELD_ERROR_ORDER)[number]);
 			return (aIndex === -1 ? 999 : aIndex) - (bIndex === -1 ? 999 : bIndex);
 		});
 
@@ -48,13 +105,13 @@ export const useShipmentFormErrorSummary = ({ sv, contentError }) => {
 			.map((key) => ({
 				key,
 				message: softenErrorMessage(errors[key]),
-				label: FIELD_ERROR_LABELS[key] || key,
-				targetId: FIELD_ERROR_IDS[key] || '',
+				label: FIELD_LABEL_MAP[key] || key,
+				targetId: FIELD_ID_MAP[key] || '',
 			}));
 	});
 
-	const groupedFormErrors = computed(() => {
-		const groups = { origin: [], dest: [], generic: [] };
+	const groupedFormErrors = computed<GroupedFormErrors>(() => {
+		const groups: GroupedFormErrors = { origin: [], dest: [], generic: [] };
 		for (const item of formErrorSummary.value) {
 			if (item.key.startsWith('origin_')) groups.origin.push(item);
 			else if (item.key.startsWith('dest_')) groups.dest.push(item);
@@ -76,14 +133,16 @@ export const useShipmentFormErrorSummary = ({ sv, contentError }) => {
 	const originSectionHint = computed(() => {
 		const errors = groupedFormErrors.value.origin;
 		if (!errors.length) return '';
-		if (errors.length === 1) return `${errors[0].label}: ${errors[0].message}`;
+		const firstError = errors[0];
+		if (errors.length === 1 && firstError) return `${firstError.label}: ${firstError.message}`;
 		return `Controlla ${errors.length} campi nella sezione Partenza.`;
 	});
 
 	const destinationSectionHint = computed(() => {
 		const errors = groupedFormErrors.value.dest;
 		if (!errors.length) return '';
-		if (errors.length === 1) return `${errors[0].label}: ${errors[0].message}`;
+		const firstError = errors[0];
+		if (errors.length === 1 && firstError) return `${firstError.label}: ${firstError.message}`;
 		return `Controlla ${errors.length} campi nella sezione Destinazione.`;
 	});
 
@@ -140,7 +199,7 @@ export const useShipmentFormValidation = ({
 	originCapSuggestions,
 	destCitySuggestions,
 	destCapSuggestions,
-}) => {
+}: ShipmentFormValidationArgs) => {
 	const showValidation = ref(false);
 
 	// --- Form validation ---
@@ -163,7 +222,7 @@ export const useShipmentFormValidation = ({
 			contentError.value = null;
 		}
 
-		const validateRequiredField = (key, value, message) => {
+		const validateRequiredField = (key: string, value: unknown, message: string) => {
 			if (!value || !String(value).trim()) {
 				sv.setError(key, message);
 				return false;
@@ -172,7 +231,7 @@ export const useShipmentFormValidation = ({
 			return true;
 		};
 
-		const validateAddr = (section, addr) => {
+		const validateAddr = (section: AddressSection, addr: AddressDraft) => {
 			const isDestPudoContactOnly = section === 'dest' && deliveryMode.value === 'pudo';
 			const commonFields = [
 				['full_name', addr.full_name, () => sv.validateNomeCognome(`${section}_full_name`, addr.full_name)],
@@ -185,7 +244,7 @@ export const useShipmentFormValidation = ({
 				['province', addr.province, () => validateProvinceField(section, addr.province)],
 				['postal_code', addr.postal_code, () => sv.validateCAP(`${section}_postal_code`, addr.postal_code, { countryCode: getSectionCountryCode(section) })],
 			];
-			const fields = isDestPudoContactOnly ? commonFields : [...commonFields, ...fullAddressFields];
+			const fields = (isDestPudoContactOnly ? commonFields : [...commonFields, ...fullAddressFields]) as Array<[string, unknown, () => boolean]>;
 
 			for (const [field, , validateFn] of fields) {
 				sv.markTouched(`${section}_${field}`);
@@ -225,19 +284,19 @@ export const useShipmentFormValidation = ({
 	} = useShipmentFormErrorSummary({ sv, contentError });
 
 	// --- Field error display helpers ---
-	const getFieldError = (section, field) => sv.getError(`${section}_${field}`);
+	const getFieldError = (section: AddressSection, field: string) => sv.getError(`${section}_${field}`);
 
-	const fieldClass = (section, field) => {
+	const fieldClass = (section: AddressSection, field: string) => {
 		const key = `${section}_${field}`;
 		return sv.hasError(key)
 			? 'input-preventivo-step-2 input-preventivo-step-2--warning'
 			: 'input-preventivo-step-2';
 	};
 
-	const fieldErrorText = (section, field) => softenErrorMessage(getFieldError(section, field));
+	const fieldErrorText = (section: AddressSection, field: string) => softenErrorMessage(getFieldError(section, field));
 
 	// --- Focus helpers ---
-	const focusFormError = (errorItem) => {
+	const focusFormError = (errorItem: FormErrorItem) => {
 		const targetId = errorItem?.targetId;
 		if (!targetId) return;
 		const field = document.getElementById(targetId);

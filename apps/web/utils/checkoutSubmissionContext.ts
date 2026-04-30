@@ -1,6 +1,3 @@
-/**
- * @file checkoutSubmissionContext — Utility checkoutSubmissionContext.
- */
 import {
 	createClientSubmissionId,
 	ensureClientSubmissionId,
@@ -8,55 +5,58 @@ import {
 	readNestedClientSubmissionId,
 } from '~/utils/shipment'
 
-/**
- * @typedef {Record<string, unknown> | null | undefined} MaybeRecord
- */
+type SubmissionSource = {
+	id?: string | number | null
+	client_submission_id?: unknown
+	pendingShipment?: SubmissionSource | null
+	data?: SubmissionSource | null
+	[key: string]: unknown
+}
+type ShipmentFlowWithPending = {
+	pendingShipment?: unknown
+	[key: string]: unknown
+}
+type CheckoutCachedContext = {
+	signature?: string | null
+	client_submission_id?: string | null
+}
+type BuildSignatureInput = {
+	existingOrderId?: string | number | null
+	total?: number
+	billingPayload?: SubmissionSource | null
+}
+type BuildContextInput = BuildSignatureInput & {
+	preferExisting?: boolean
+	generate?: boolean
+	existingOrder?: SubmissionSource | null
+	pendingShipment?: SubmissionSource | null
+	sessionData?: SubmissionSource | null
+	cachedContext?: CheckoutCachedContext | null
+	localSubmissionId?: string | null
+}
+type SubmissionContextResult = {
+	clientSubmissionId: string
+	context: {
+		signature: string
+		client_submission_id: string
+	}
+}
 
-/**
- * @typedef {Object} BuildContextInput
- * @property {boolean} [preferExisting]
- * @property {boolean} [generate]
- * @property {MaybeRecord} [existingOrder]
- * @property {string|number|null} [existingOrderId]
- * @property {MaybeRecord} [pendingShipment]
- * @property {MaybeRecord} [sessionData]
- * @property {MaybeRecord} [cachedContext]
- * @property {string|null} [localSubmissionId]
- * @property {number} [total]
- * @property {MaybeRecord} [billingPayload]
- */
+const asSubmissionSource = (value: unknown): SubmissionSource | null =>
+	value && typeof value === 'object' ? value as SubmissionSource : null
 
-/**
- * @typedef {Object} SubmissionContextResult
- * @property {string} clientSubmissionId
- * @property {{ signature: string, client_submission_id: string }} context
- */
+export const readPendingShipmentDraft = (shipmentFlowStore: ShipmentFlowWithPending | null | undefined): SubmissionSource | null =>
+	asSubmissionSource(shipmentFlowStore?.pendingShipment)
 
-// Boundary canonico del contesto checkout lato frontend.
-// Qui vive solo la logica di deduplicazione / riuso del client_submission_id
-// e la signature del payload pagabile; il pagamento reale resta in usePayment.
-
-/**
- * @param {MaybeRecord} shipmentFlowStore
- * @returns {MaybeRecord}
- */
-export const readPendingShipmentDraft = (shipmentFlowStore) => (
-	shipmentFlowStore?.pendingShipment && typeof shipmentFlowStore?.pendingShipment === 'object'
-		? shipmentFlowStore?.pendingShipment
-		: null
-)
-
-/**
- * @param {MaybeRecord} shipmentFlowStore
- * @param {unknown} submissionId
- */
-export const syncPendingShipmentSubmissionId = (shipmentFlowStore, submissionId) => {
+export const syncPendingShipmentSubmissionId = (
+	shipmentFlowStore: ShipmentFlowWithPending | null | undefined,
+	submissionId: unknown,
+) => {
 	const normalized = typeof submissionId === 'string' ? submissionId.trim() : ''
 	if (!normalized) return
 
 	const pendingShipment = readPendingShipmentDraft(shipmentFlowStore)
-	if (!pendingShipment) return
-	if (pendingShipment.client_submission_id === normalized) return
+	if (!pendingShipment || pendingShipment.client_submission_id === normalized || !shipmentFlowStore) return
 
 	shipmentFlowStore.pendingShipment = {
 		...pendingShipment,
@@ -64,32 +64,19 @@ export const syncPendingShipmentSubmissionId = (shipmentFlowStore, submissionId)
 	}
 }
 
-/**
- * @param {MaybeRecord} existingOrder
- * @returns {string|null}
- */
-export const readExistingOrderSubmissionId = (existingOrder) => (
+export const readExistingOrderSubmissionId = (existingOrder: SubmissionSource | null | undefined): string | null =>
 	readClientSubmissionId(existingOrder)
-)
 
-/**
- * @param {{ existingOrderId?: string|number|null, total?: number, billingPayload?: MaybeRecord }} params
- * @returns {string}
- */
 export const buildCheckoutSubmissionSignature = ({
 	existingOrderId,
 	total = 0,
 	billingPayload = null,
-}) => JSON.stringify({
+}: BuildSignatureInput): string => JSON.stringify({
 	existingOrderId: existingOrderId ?? null,
 	total: Number(total || 0),
 	billingPayload: billingPayload || null,
 })
 
-/**
- * @param {BuildContextInput} input
- * @returns {SubmissionContextResult}
- */
 export const buildCheckoutSubmissionContext = ({
 	preferExisting = true,
 	generate = true,
@@ -101,66 +88,42 @@ export const buildCheckoutSubmissionContext = ({
 	localSubmissionId = null,
 	total = 0,
 	billingPayload = null,
-}) => {
+}: BuildContextInput): SubmissionContextResult => {
 	const signature = buildCheckoutSubmissionSignature({
 		existingOrderId: existingOrderId || existingOrder?.id || null,
 		total,
 		billingPayload,
 	})
-
-	const existingOrderSubmissionId = preferExisting
-		? readExistingOrderSubmissionId(existingOrder)
-		: null
+	const existingOrderSubmissionId = preferExisting ? readExistingOrderSubmissionId(existingOrder) : null
 
 	if (existingOrderSubmissionId) {
 		return {
 			clientSubmissionId: existingOrderSubmissionId,
-			context: {
-				signature,
-				client_submission_id: existingOrderSubmissionId,
-			},
+			context: { signature, client_submission_id: existingOrderSubmissionId },
 		}
 	}
 
-	if (
-		cachedContext?.signature === signature
-		&& typeof cachedContext?.client_submission_id === 'string'
-		&& cachedContext.client_submission_id.trim() !== ''
-	) {
-		const cachedSubmissionId = cachedContext.client_submission_id.trim()
+	const cachedSubmissionId = typeof cachedContext?.client_submission_id === 'string'
+		? cachedContext.client_submission_id.trim()
+		: ''
+	if (cachedContext?.signature === signature && cachedSubmissionId) {
 		return {
 			clientSubmissionId: cachedSubmissionId,
-			context: {
-				signature,
-				client_submission_id: cachedSubmissionId,
-			},
+			context: { signature, client_submission_id: cachedSubmissionId },
 		}
 	}
 
+	const localSubmissionSource = localSubmissionId ? { client_submission_id: localSubmissionId } : null
 	const nestedKnownSubmissionId = preferExisting
-		? readNestedClientSubmissionId(
-			existingOrder,
-			pendingShipment,
-			sessionData?.pendingShipment || null,
-			sessionData,
-			localSubmissionId ? { client_submission_id: localSubmissionId } : null,
-		)
-		: readNestedClientSubmissionId(
-			pendingShipment,
-			sessionData?.pendingShipment || null,
-			sessionData,
-		)
+		? readNestedClientSubmissionId(existingOrder, pendingShipment, sessionData?.pendingShipment || null, sessionData, localSubmissionSource)
+		: readNestedClientSubmissionId(pendingShipment, sessionData?.pendingShipment || null, sessionData)
 
 	let submissionId = nestedKnownSubmissionId
-
 	if (!submissionId && pendingShipment) {
 		submissionId = ensureClientSubmissionId(pendingShipment)
 	}
-
 	if (!submissionId && generate) {
-		submissionId = typeof localSubmissionId === 'string' && localSubmissionId.trim() !== ''
-			? localSubmissionId.trim()
-			: createClientSubmissionId()
+		submissionId = localSubmissionId?.trim() || createClientSubmissionId()
 	}
 
 	return {

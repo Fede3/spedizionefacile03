@@ -15,7 +15,7 @@
  * In pratica: la pagina di reset password funziona solo se si arriva
  * dal link nell'email, che contiene il token di sicurezza.
  */
-export default defineNuxtRouteMiddleware((to, from) => {
+export default defineNuxtRouteMiddleware((to, _from) => {
 	if (!to.query.token || String(to.query.token).trim() === "") {
 		return navigateTo("/");
 	}

@@ -1,7 +1,7 @@
 <script setup>
 import '~/assets/css/content.css';
 
-const props = defineProps({
+defineProps({
 	items: { type: Array, default: () => [] },
 });
 

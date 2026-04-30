@@ -38,7 +38,7 @@ try {
 	const key = String(config?.publishable_key || '').trim();
 	stripePublishableKey.value = key;
 	stripeConfigured.value = Boolean(config?.configured) && isValidStripePublishableKey(key);
-} catch (e) {
+} catch {
 	const fallbackKey = String(runtimeConfig.public.stripeKey || '').trim();
 	stripePublishableKey.value = isValidStripePublishableKey(fallbackKey) ? fallbackKey : '';
 	stripeConfigured.value = isValidStripePublishableKey(fallbackKey);
@@ -52,7 +52,7 @@ if (isValidStripePublishableKey(stripePublishableKey.value)) {
 	try {
 		const { loadStripe } = await import('@stripe/stripe-js');
 		stripe = await loadStripe(stripePublishableKey.value);
-	} catch (e) {
+	} catch {
 		/* stripe non caricabile */
 	}
 }
@@ -166,7 +166,7 @@ const handleAddCard = async () => {
 		textMessageType.value = 'success';
 		showFormPayments.value = false;
 		dismissTextMessageAfter(3000);
-	} catch (err) {
+	} catch {
 		errorMessage.value = 'Errore imprevisto. Riprova.';
 	}
 };
@@ -182,7 +182,7 @@ const setDefault = async (pmId) => {
 			await refresh();
 			dismissTextMessageAfter(3000);
 		}
-	} catch (e) {
+	} catch {
 		textMessage.value = 'Errore durante la modifica.';
 		textMessageType.value = 'error';
 	}
@@ -200,7 +200,7 @@ const deleteCard = async (pmId) => {
 			textMessageType.value = 'success';
 			dismissTextMessageAfter(3000);
 		}
-	} catch (error) {
+	} catch {
 		textMessage.value = "Errore durante l'eliminazione.";
 		textMessageType.value = 'error';
 	}
@@ -357,7 +357,7 @@ const togglePaymentForm = async () => {
 						<p class="text-[0.75rem] text-[var(--color-brand-text-secondary)] leading-[1.5] mb-[10px]">
 							<span v-if="isAdmin">Per abilitare carte, checkout e ricariche wallet configura Stripe dal pannello amministrazione.</span>
 							<span v-else>
-								I pagamenti con carta non sono ancora attivi su questo sito. Quando Stripe sarÁ  configurato dall'amministratore potrai
+				I pagamenti con carta non sono ancora attivi su questo sito. Quando Stripe sara' configurato dall'amministratore potrai
 								aggiungere qui le tue carte, usarle al checkout e ricaricare il wallet.
 							</span>
 						</p>
@@ -406,4 +406,3 @@ const togglePaymentForm = async () => {
 		</div>
 	</section>
 </template>
-

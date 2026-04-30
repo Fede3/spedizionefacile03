@@ -1,6 +1,28 @@
-/**
- * @file useShipmentStepValidation — Composable useShipmentStepValidation.
- */
+import type { Ref } from 'vue'
+
+type StepValidationOptions = {
+	contentError: Ref<string | null>
+	dateError: Ref<string | null>
+	deliveryMode: Ref<string>
+	destinationAddress: Ref<StepAddress>
+	originAddress: Ref<StepAddress>
+	sanctumClient: (...args: unknown[]) => Promise<unknown>
+	services: Ref<Record<string, unknown>>
+	shipmentFlowStore: Record<string, unknown>
+}
+type StepAddress = {
+	full_name?: string
+	address?: string
+	address_number?: string
+	city?: string
+	postal_code?: string
+	country?: string
+	province?: string
+	telephone_number?: string
+	email?: string
+	[key: string]: string | undefined
+}
+
 export const useShipmentStepValidation = ({
 	contentError,
 	dateError,
@@ -10,27 +32,26 @@ export const useShipmentStepValidation = ({
 	sanctumClient,
 	services,
 	shipmentFlowStore,
-}) => {
-	const debugValidationLog = (label, payload = "") => {
-		if (!import.meta.client) return;
-		if (localStorage.getItem('sf_debug_shipment') !== '1') return;
-		console.info(`[shipment-validation-debug] ${label}`, payload);
-	};
-	const debugValidationError = (label, error) => {
-		if (!import.meta.client) return;
-		console.error(`[shipment-validation-debug] ${label}`, error);
-	};
-
-	let sv;
-	try {
-		sv = useSmartValidation();
-		debugValidationLog("smart validation ready");
-	} catch (error) {
-		debugValidationError("smart validation failed", error);
-		throw error;
+}: StepValidationOptions) => {
+	const debugValidationLog = (label: string, payload: unknown = '') => {
+		if (!import.meta.client) return
+		if (localStorage.getItem('sf_debug_shipment') !== '1') return
+		console.info(`[shipment-validation-debug] ${label}`, payload)
+	}
+	const debugValidationError = (label: string, error: unknown) => {
+		if (import.meta.client) console.error(`[shipment-validation-debug] ${label}`, error)
 	}
 
-	let autocomplete;
+	let sv
+	try {
+		sv = useSmartValidation()
+		debugValidationLog('smart validation ready')
+	} catch (error) {
+		debugValidationError('smart validation failed', error)
+		throw error
+	}
+
+	let autocomplete
 	try {
 		autocomplete = useShipmentLocationAutocomplete({
 			deliveryMode,
@@ -39,14 +60,14 @@ export const useShipmentStepValidation = ({
 			sanctumClient,
 			sv,
 			shipmentFlowStore,
-		});
-		debugValidationLog("location autocomplete ready");
+		})
+		debugValidationLog('location autocomplete ready')
 	} catch (error) {
-		debugValidationError("location autocomplete failed", error);
-		throw error;
+		debugValidationError('location autocomplete failed', error)
+		throw error
 	}
 
-	let formValidation;
+	let formValidation
 	try {
 		formValidation = useShipmentFormValidation({
 			contentError,
@@ -57,7 +78,7 @@ export const useShipmentStepValidation = ({
 			services,
 			sv,
 			shipmentFlowStore,
-			applyLocationToSection: autocomplete.applyLocationToSection,
+			applyLocationToSection: autocomplete.applyLocationToSection as (...args: unknown[]) => unknown,
 			getSectionAddress: autocomplete.getSectionAddress,
 			getSectionCountryCode: autocomplete.getSectionCountryCode,
 			locationLinkHints: autocomplete.locationLinkHints,
@@ -68,11 +89,11 @@ export const useShipmentStepValidation = ({
 			originCapSuggestions: autocomplete.originCapSuggestions,
 			destCitySuggestions: autocomplete.destCitySuggestions,
 			destCapSuggestions: autocomplete.destCapSuggestions,
-		});
-		debugValidationLog("form validation ready");
+		})
+		debugValidationLog('form validation ready')
 	} catch (error) {
-		debugValidationError("form validation failed", error);
-		throw error;
+		debugValidationError('form validation failed', error)
+		throw error
 	}
 
 	return {
@@ -113,5 +134,5 @@ export const useShipmentStepValidation = ({
 		selectProvincia: autocomplete.selectProvincia,
 		smartBlur: autocomplete.smartBlur,
 		sv,
-	};
-};
+	}
+}

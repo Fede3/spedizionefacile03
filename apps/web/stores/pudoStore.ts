@@ -7,12 +7,61 @@
  */
 import { defineStore } from 'pinia';
 import { dedupePudoPoints, distanceInMeters, geocodeNominatim, getPudoErrorMessage, getPudoErrorStatus, isFiniteCoordinate, normalizePudoPoint, parseCoordinate, reverseGeocodeNominatim, sortPudoByDistance, STRATEGY_LABELS, } from '~/utils/pudoHelpers';
+import type { CoordinatePoint, PudoNormalized } from '~/utils/pudoHelpers';
+
+type PudoReferenceSource = 'fields' | 'results' | 'manual' | 'geo';
+type PudoReferencePoint = CoordinatePoint & {
+    source: PudoReferenceSource;
+    address: string;
+    city: string;
+    zip_code: string;
+    label: string;
+};
+type PudoReferenceExtra = Partial<Pick<PudoReferencePoint, 'address' | 'city' | 'zip_code' | 'label'>>;
+type PudoSearchMeta = {
+    strategy_used?: string[] | string;
+    returned_count?: number;
+    requested_count?: number;
+    provider?: string;
+    fallback?: boolean;
+    [key: string]: unknown;
+};
+type PudoApiResponse = {
+    success?: boolean;
+    error?: string;
+    pudo?: unknown;
+    data?: unknown;
+    meta?: PudoSearchMeta;
+};
+type PudoDetails = {
+    opening_hours: unknown;
+    localization_hint: string;
+    enabled: boolean;
+};
+type MapReferencePayload = {
+    latitude?: unknown;
+    longitude?: unknown;
+};
+
+const strategyLabels: Record<string, string> = STRATEGY_LABELS;
+const asRecord = (value: unknown): Record<string, unknown> =>
+    value && typeof value === 'object' ? value as Record<string, unknown> : {};
+const extractPudoList = (response: PudoApiResponse): unknown[] => {
+    const data = asRecord(response.data);
+    if (Array.isArray(response.pudo)) return response.pudo;
+    if (Array.isArray(data.pudo)) return data.pudo;
+    return [];
+};
+const extractMeta = (response: PudoApiResponse): PudoSearchMeta => {
+    const data = asRecord(response.data);
+    return asRecord(response.meta ?? data.meta) as PudoSearchMeta;
+};
 export const usePudoStore = defineStore('pudo', () => {
     const config = useRuntimeConfig();
     const apiBase = config.public?.apiBase || '';
-    const publicApiFetch = async (path) => {
+    const publicApiFetch = async <T = unknown>(path: string): Promise<T> => {
         const url = path.startsWith('http') ? path : `${apiBase}${path}`;
-        return await $fetch(url, { method: 'GET', credentials: 'include', timeout: 15000 });
+        return await $fetch<T>(url, { method: 'GET', credentials: 'include', timeout: 15000 });
     };
     // ── State ──
     const searchAddress = ref('');
@@ -21,17 +70,17 @@ export const usePudoStore = defineStore('pudo', () => {
     const loading = ref(false);
     const geolocating = ref(false);
     const searched = ref(false);
-    const searchError = ref(null);
-    const searchMeta = ref(null);
+    const searchError = ref<string | null>(null);
+    const searchMeta = ref<PudoSearchMeta | null>(null);
     const referenceUpdateMessage = ref('');
-    const pudoResults = ref([]);
-    const selectedPudoKey = ref(null);
-    const expandedPudoKey = ref(null);
-    const loadingDetailsKey = ref(null);
-    const pudoDetails = ref({});
-    const detailsErrors = ref({});
+    const pudoResults = ref<PudoNormalized[]>([]);
+    const selectedPudoKey = ref<string | null>(null);
+    const expandedPudoKey = ref<string | null>(null);
+    const loadingDetailsKey = ref<string | null>(null);
+    const pudoDetails = ref<Record<string, PudoDetails>>({});
+    const detailsErrors = ref<Record<string, string | null>>({});
     const mapClickLoading = ref(false);
-    const referencePoint = ref(null);
+    const referencePoint = ref<PudoReferencePoint | null>(null);
     // ── Computed ──
     const hasSearchInput = computed(() => Boolean(searchCity.value?.trim() || searchZip.value?.trim()));
     const mapPoints = computed(() => pudoResults.value.filter((p) => isFiniteCoordinate(p.latitude) && isFiniteCoordinate(p.longitude)));
@@ -51,17 +100,17 @@ export const usePudoStore = defineStore('pudo', () => {
         const strategies = Array.isArray(searchMeta.value?.strategy_used) ? searchMeta.value.strategy_used : [];
         if (!strategies.length)
             return '';
-        return strategies.map((item) => STRATEGY_LABELS[item] || item).join(' \u2022 ');
+        return strategies.map((item) => strategyLabels[item] || item).join(' \u2022 ');
     });
     // ── Reference point ──
-    function setReferencePoint(latitude, longitude, source = 'fields', extra = {}) {
+    function setReferencePoint(latitude: unknown, longitude: unknown, source: PudoReferenceSource = 'fields', extra: PudoReferenceExtra = {}) {
         const lat = parseCoordinate(latitude);
         const lng = parseCoordinate(longitude);
-        if (!Number.isFinite(lat) || !Number.isFinite(lng))
+        if (lat === null || lng === null || !Number.isFinite(lat) || !Number.isFinite(lng))
             return false;
         referencePoint.value = {
             latitude: lat,
-            longitude,
+            longitude: lng,
             source,
             address: extra.address || searchAddress.value || '',
             city: extra.city || searchCity.value || '',
@@ -70,13 +119,13 @@ export const usePudoStore = defineStore('pudo', () => {
         };
         return true;
     }
-    function inferReferenceFromResults(points = []) {
+    function inferReferenceFromResults(points: PudoNormalized[] = []): PudoReferencePoint | null {
         const coords = points
             .map((p) => ({
                 latitude: parseCoordinate(p?.latitude),
                 longitude: parseCoordinate(p?.longitude),
             }))
-            .filter((c) => Number.isFinite(c.latitude) && Number.isFinite(c.longitude));
+            .filter((c): c is CoordinatePoint => c.latitude !== null && c.longitude !== null && Number.isFinite(c.latitude) && Number.isFinite(c.longitude));
         if (!coords.length) return null;
         return {
             latitude: coords.reduce((s, c) => s + c.latitude, 0) / coords.length,
@@ -89,7 +138,7 @@ export const usePudoStore = defineStore('pudo', () => {
         };
     }
 /** Applica risultati ricalcolando distanze. @returns true se la selezione corrente e' stata invalidata. */
-function applyResults(rawPoints) {
+function applyResults(rawPoints: unknown[]) {
     const normalized = (rawPoints || []).map(normalizePudoPoint);
     let distRef = referencePoint.value;
     const allZero = normalized.length > 0 && normalized.every((p) => Number.isFinite(Number(p.distance_meters)) && Number(p.distance_meters) === 0);
@@ -103,12 +152,12 @@ function applyResults(rawPoints) {
     const withDist = normalized.map((point) => {
         const apiD = Number(point.distance_meters);
         const hasApi = Number.isFinite(apiD);
-        if (distRef && Number.isFinite(point.latitude) && Number.isFinite(point.longitude)) {
+        if (distRef && point.latitude !== null && point.longitude !== null && Number.isFinite(point.latitude) && Number.isFinite(point.longitude)) {
             const computedDist = distanceInMeters(distRef, { latitude: point.latitude, longitude: point.longitude });
             const shouldReplace = !hasApi || apiD <= 0 || allZero;
-            if (shouldReplace && Number.isFinite(computedDist))
+            if (computedDist !== null && shouldReplace)
                 return { ...point, distance_meters: computedDist };
-            if (hasApi && apiD > 0 && Number.isFinite(computedDist) && Math.abs(apiD - computedDist) > 200000)
+            if (computedDist !== null && hasApi && apiD > 0 && Math.abs(apiD - computedDist) > 200000)
                 return { ...point, distance_meters: computedDist };
             return { ...point, distance_meters: hasApi ? apiD : computedDist ?? null };
         }
@@ -128,12 +177,12 @@ function applyResults(rawPoints) {
 }
 const geocodeFromSearchFields = () => geocodeNominatim([searchAddress.value, searchZip.value, searchCity.value, 'Italia']);
 // ── PUDO API calls ──
-async function fetchNearbyPudo(latitude, longitude, maxResults = 50) {
+async function fetchNearbyPudo(latitude: unknown, longitude: unknown, maxResults = 50): Promise<unknown[]> {
     const params = new URLSearchParams({ latitude: String(latitude), longitude: String(longitude), max_results: String(maxResults) });
-    const result = await publicApiFetch(`/api/brt/pudo/nearby?${params.toString()}`);
-    return result?.pudo || result?.data?.pudo || [];
+    const result = await publicApiFetch<PudoApiResponse>(`/api/brt/pudo/nearby?${params.toString()}`);
+    return extractPudoList(result);
 }
-function setSearchError(error) {
+function setSearchError(error: unknown) {
     const status = getPudoErrorStatus(error);
     const backendMessage = getPudoErrorMessage(error);
     if (status === 401 || status === 403)
@@ -146,7 +195,7 @@ function setSearchError(error) {
         searchError.value = backendMessage ? `Errore: ${backendMessage}` : 'Errore durante la ricerca. Riprova.';
 }
 /** @returns true se la selezione corrente e' stata invalidata. */
-async function searchPudo() {
+async function searchPudo(): Promise<boolean> {
     if (!hasSearchInput.value)
         return false;
     loading.value = true;
@@ -165,13 +214,13 @@ async function searchPudo() {
             params.set('zip_code', searchZip.value.trim());
         params.set('country', 'ITA');
         params.set('max_results', '50');
-        const result = await publicApiFetch(`/api/brt/pudo/search?${params.toString()}`);
+        const result = await publicApiFetch<PudoApiResponse>(`/api/brt/pudo/search?${params.toString()}`);
         if (result?.success === false) {
             searchError.value = result?.error || 'Errore durante la ricerca dei punti di ritiro.';
             return false;
         }
-        let points = result?.pudo || result?.data?.pudo || [];
-        const apiMeta = result?.meta || result?.data?.meta || {};
+        let points = extractPudoList(result);
+        const apiMeta = extractMeta(result);
         let strategyUsed = Array.isArray(apiMeta.strategy_used) ? [...apiMeta.strategy_used] : [];
         if (!referencePoint.value || referencePoint.value.source !== 'manual') {
             try {
@@ -209,7 +258,7 @@ async function searchPudo() {
     return invalidated;
 }
 /** @returns true se la selezione corrente e' stata invalidata. */
-async function useCurrentLocation() {
+async function useCurrentLocation(): Promise<boolean> {
     if (!navigator?.geolocation) {
         searchError.value = 'Geolocalizzazione non supportata dal browser.';
         return false;
@@ -219,7 +268,7 @@ async function useCurrentLocation() {
     referenceUpdateMessage.value = '';
     let invalidated = false;
     try {
-        const position = await new Promise((resolve, reject) => {
+        const position = await new Promise<GeolocationPosition>((resolve, reject) => {
             navigator.geolocation.getCurrentPosition(resolve, reject, { enableHighAccuracy: true, timeout: 10000, maximumAge: 30000 });
         });
         const lat = position?.coords?.latitude;
@@ -251,7 +300,7 @@ async function useCurrentLocation() {
     }
     catch (error) {
         const status = getPudoErrorStatus(error);
-        const geoCode = Number(error?.code || 0);
+        const geoCode = Number(asRecord(error).code || 0);
         if (status >= 500)
             searchError.value = 'Servizio geolocalizzazione temporaneamente non disponibile.';
         else if (geoCode === 1)
@@ -270,7 +319,7 @@ async function useCurrentLocation() {
     return invalidated;
 }
 /** @returns true se la selezione corrente e' stata invalidata. */
-async function onMapReferenceClick(payload) {
+async function onMapReferenceClick(payload: MapReferencePayload): Promise<boolean> {
     const lat = parseCoordinate(payload?.latitude);
     const lng = parseCoordinate(payload?.longitude);
     if (!Number.isFinite(lat) || !Number.isFinite(lng))
@@ -312,7 +361,7 @@ async function onMapReferenceClick(payload) {
     }
     return invalidated;
 }
-async function fetchPudoDetails(pudo, detailKey) {
+async function fetchPudoDetails(pudo: PudoNormalized, detailKey: string): Promise<void> {
     detailsErrors.value[detailKey] = null;
     if (!pudo?.pudo_id) {
         detailsErrors.value[detailKey] = 'Dettagli non disponibili per questo punto.';
@@ -320,13 +369,9 @@ async function fetchPudoDetails(pudo, detailKey) {
     }
     loadingDetailsKey.value = detailKey;
     try {
-        const result = await publicApiFetch(`/api/brt/pudo/${pudo.pudo_id}`);
-        const pudoField = result?.pudo;
-        const dataField = result?.data;
-        const dataPudo = dataField?.pudo;
-        const p = ((pudoField && typeof pudoField === 'object' ? pudoField : undefined)
-            || (dataPudo && typeof dataPudo === 'object' ? dataPudo : undefined)
-            || dataField || result || {});
+        const result = await publicApiFetch<PudoApiResponse>(`/api/brt/pudo/${pudo.pudo_id}`);
+        const dataField = asRecord(result.data);
+        const p = asRecord(result.pudo ?? dataField.pudo ?? dataField ?? result);
         pudoDetails.value[detailKey] = {
             opening_hours: ((p.opening_hours ?? p.hours ?? pudo.opening_hours ?? '') || null),
             localization_hint: String((p.localization_hint ?? p.localizationHint ?? pudo.localization_hint) ?? ''),

@@ -2,6 +2,47 @@
  * @file useQuickQuoteLocations — Composable useQuickQuoteLocations.
  */
 import { formatResolvedLocation } from "~/utils/quickQuoteContract";
+import type { Ref } from "vue";
+import type { LocationRecord } from "~/utils/location";
+
+type QuickQuoteLocation = LocationRecord;
+type ShipmentDetails = Record<string, string | undefined>;
+type SmartValidationLike = {
+	clearError: (fieldKey: string) => void;
+	filterCAP: (value: string, options?: { countryCode?: string }) => string;
+};
+type LocationSearchApi = {
+	cityMatchesQuery: (cityValue: unknown, rawQuery: unknown) => boolean;
+	clearLocationSearchError?: () => void;
+	getProvinceLabel: (location: LocationRecord | null | undefined) => string;
+	locationKey: (location: LocationRecord | null | undefined) => string;
+	normalizeLocationText: (value: unknown) => string;
+	searchLocations: (query: unknown, limit?: number, countryCode?: string) => Promise<QuickQuoteLocation[]>;
+	searchLocationsByCap: (cap: unknown, countryCode?: string) => Promise<QuickQuoteLocation[]>;
+	searchLocationsByCity: (city: unknown, limit?: number, countryCode?: string) => Promise<QuickQuoteLocation[]>;
+	sortCitySuggestionsByRelevance: (locations: QuickQuoteLocation[], query: unknown) => QuickQuoteLocation[];
+	sortLocations: (a: QuickQuoteLocation, b: QuickQuoteLocation) => number;
+};
+type UseQuickQuoteLocationsArgs = {
+	shipmentDetails: ShipmentDetails;
+	search: LocationSearchApi;
+	smartValidation: SmartValidationLike;
+	onCapInputSmart: (fieldKey: string, cap: string, countryCode: string) => void;
+	debounceMs?: number;
+};
+type TimeoutHandle = ReturnType<typeof setTimeout> | null;
+type ParsedLocationDraft = {
+	rawQuery: string;
+	cityPart: string;
+	normalizedCap: string;
+	queryForSearch: string;
+	isCombined: boolean;
+	isCapOnly: boolean;
+};
+
+const clearQuickQuoteTimeout = (timer: TimeoutHandle) => {
+	if (timer) clearTimeout(timer);
+};
 
 export const useQuickQuoteLocations = ({
 	shipmentDetails,
@@ -9,7 +50,7 @@ export const useQuickQuoteLocations = ({
 	smartValidation,
 	onCapInputSmart,
 	debounceMs = 180,
-}) => {
+}: UseQuickQuoteLocationsArgs) => {
 	const {
 		cityMatchesQuery,
 		clearLocationSearchError,
@@ -23,25 +64,48 @@ export const useQuickQuoteLocations = ({
 		sortLocations,
 	} = search;
 
-	const originSuggestions = ref([]);
-	const destSuggestions = ref([]);
+	const originSuggestions = ref<QuickQuoteLocation[]>([]);
+	const destSuggestions = ref<QuickQuoteLocation[]>([]);
 	const showOriginSuggestions = ref(false);
 	const showDestSuggestions = ref(false);
 	const originQuery = ref("");
 	const destQuery = ref("");
 
-	let originHideTimeout = null;
-	let destHideTimeout = null;
-	let originSearchTimeout = null;
-	let destSearchTimeout = null;
+	let originHideTimeout: TimeoutHandle = null;
+	let destHideTimeout: TimeoutHandle = null;
+	let originSearchTimeout: TimeoutHandle = null;
+	let destSearchTimeout: TimeoutHandle = null;
 	let originSearchSeq = 0;
 	let destSearchSeq = 0;
 
-	const isCapQuery = (value = "") => /^\d+$/.test(String(value).trim());
-	const normalizeCap = (value = "", countryCode = "IT") => smartValidation.filterCAP(String(value).trim(), { countryCode });
-	const resolveCountryCode = (location) => String(location?.country_code || "IT").trim().toUpperCase() || "IT";
-	const resolveCountryName = (location) => String(location?.country_name || (resolveCountryCode(location) === "IT" ? "Italia" : resolveCountryCode(location))).trim();
-	const parseLocationDraft = (value = "", countryCode = "IT") => {
+	const isCapQuery = (value: unknown = ""): boolean => /^\d+$/.test(String(value).trim());
+	const normalizeCap = (value: unknown = "", countryCode = "IT"): string => smartValidation.filterCAP(String(value).trim(), { countryCode });
+	const resolveCountryCode = (location: LocationRecord): string => String(location?.country_code || "IT").trim().toUpperCase() || "IT";
+	const resolveCountryName = (location: LocationRecord): string => String(location?.country_name || (resolveCountryCode(location) === "IT" ? "Italia" : resolveCountryCode(location))).trim();
+	const stripTrailingLocationSeparator = (value: string): string => {
+		const trimmed = value.trim();
+		if (!trimmed) return "";
+		const lastChar = trimmed.at(-1);
+		return ["/", ",", ";", "-", "·", "•"].includes(lastChar || "")
+			? trimmed.slice(0, -1).trim()
+			: trimmed;
+	};
+	const splitTrailingCap = (value: string): { cityPart: string; capPart: string } | null => {
+		const capMatch = value.match(/\d{3,5}$/u);
+		if (!capMatch) return null;
+
+		const capPart = capMatch[0];
+		const cityPart = stripTrailingLocationSeparator(value.slice(0, capMatch.index).trim());
+		return cityPart ? { cityPart, capPart } : null;
+	};
+	const findLocationSeparatorIndex = (value: string): number => {
+		const middleDotIndex = value.indexOf("·");
+		const bulletIndex = value.indexOf("•");
+		if (middleDotIndex === -1) return bulletIndex;
+		if (bulletIndex === -1) return middleDotIndex;
+		return Math.min(middleDotIndex, bulletIndex);
+	};
+	const parseLocationDraft = (value: unknown = "", countryCode = "IT"): ParsedLocationDraft => {
 		const rawQuery = String(value || "").trim();
 		if (!rawQuery) {
 			return {
@@ -54,16 +118,15 @@ export const useQuickQuoteLocations = ({
 			};
 		}
 
-		const combinedMatch = rawQuery.match(/^(.+?)(?:\s*[\/,;-]\s*|\s+[·•]?\s*)(\d{3,5})$/u);
-		if (combinedMatch) {
-			const cityPart = combinedMatch[1].trim();
-			const normalizedCap = normalizeCap(combinedMatch[2], countryCode);
+		const combinedLocation = splitTrailingCap(rawQuery);
+		if (combinedLocation) {
+			const normalizedCap = normalizeCap(combinedLocation.capPart, countryCode);
 			return {
 				rawQuery,
-				cityPart,
+				cityPart: combinedLocation.cityPart,
 				normalizedCap,
-				queryForSearch: normalizedCap || cityPart,
-				isCombined: Boolean(cityPart && normalizedCap),
+				queryForSearch: normalizedCap || combinedLocation.cityPart,
+				isCombined: Boolean(combinedLocation.cityPart && normalizedCap),
 				isCapOnly: false,
 			};
 		}
@@ -90,14 +153,14 @@ export const useQuickQuoteLocations = ({
 		};
 	};
 
-	const formatLocationDisplay = (city = "", cap = "") => {
+	const formatLocationDisplay = (city: unknown = "", cap: unknown = ""): string => {
 		const trimmedCity = String(city || "").trim();
 		const trimmedCap = String(cap || "").trim();
 		if (trimmedCity && trimmedCap) return `${trimmedCity} · ${trimmedCap}`;
 		return trimmedCity || trimmedCap || "";
 	};
 
-	const applyQueryDraftToShipment = (queryRef, cityKey, capKey, fieldKey, countryCodeKey, countryNameKey) => {
+	const applyQueryDraftToShipment = (queryRef: Ref<string>, cityKey: string, capKey: string, fieldKey: string, countryCodeKey: string, countryNameKey: string): string => {
 		const currentCountryCode = String(shipmentDetails[countryCodeKey] || "IT").trim().toUpperCase() || "IT";
 		const currentCountryName = String(
 			shipmentDetails[countryNameKey]
@@ -119,10 +182,10 @@ export const useQuickQuoteLocations = ({
 		// Gestisci il formato combinato "Città · CAP" (es. "Roma · 00118")
 		// Quando l'utente edita il campo dopo una selezione, il valore contiene " · ".
 		// Estraiamo la parte che l'utente sta modificando per la ricerca.
-		const separatorMatch = rawQuery.match(/^(.+?)\s*[·•]\s*(.*)$/);
-		if (separatorMatch) {
-			const cityPart = separatorMatch[1].trim();
-			const capPart = separatorMatch[2].trim();
+		const separatorIndex = findLocationSeparatorIndex(rawQuery);
+		if (separatorIndex > -1) {
+			const cityPart = rawQuery.slice(0, separatorIndex).trim();
+			const capPart = rawQuery.slice(separatorIndex + 1).trim();
 			clearLocationSearchError?.();
 			shipmentDetails[cityKey] = cityPart;
 			shipmentDetails[capKey] = capPart;
@@ -166,7 +229,7 @@ export const useQuickQuoteLocations = ({
 		return rawQuery;
 	};
 
-	const getCitySuggestions = async (query, countryCode = "IT") => {
+	const getCitySuggestions = async (query: string, countryCode = "IT"): Promise<QuickQuoteLocation[]> => {
 		if (!query || query.length < 2) return [];
 
 		let results = await searchLocationsByCity(query, 200, countryCode);
@@ -182,10 +245,10 @@ export const useQuickQuoteLocations = ({
 		);
 	};
 
-	const getCapSuggestions = async (capQuery, linkedCityQuery = "", countryCode = "IT") => {
+	const getCapSuggestions = async (capQuery: string, linkedCityQuery = "", countryCode = "IT"): Promise<QuickQuoteLocation[]> => {
 		if (!capQuery || capQuery.length < 3) return [];
 
-		let results = [];
+		let results: QuickQuoteLocation[] = [];
 		if (capQuery.length === 5) {
 			results = await searchLocationsByCap(capQuery, countryCode);
 		} else {
@@ -198,7 +261,7 @@ export const useQuickQuoteLocations = ({
 			.sort(sortLocations);
 	};
 
-	const getSuggestionsForQuery = async (queryValue, linkedCity = "", countryCode = "IT") => {
+	const getSuggestionsForQuery = async (queryValue: string, linkedCity = "", countryCode = "IT"): Promise<QuickQuoteLocation[]> => {
 		const parsedQuery = parseLocationDraft(queryValue, countryCode);
 		if (!parsedQuery.rawQuery) return [];
 
@@ -213,7 +276,7 @@ export const useQuickQuoteLocations = ({
 		return getCitySuggestions(parsedQuery.queryForSearch, countryCode);
 	};
 
-	const findAutoResolvedLocation = (queryValue, suggestions = [], countryCode = "IT") => {
+	const findAutoResolvedLocation = (queryValue: string, suggestions: QuickQuoteLocation[] = [], countryCode = "IT"): QuickQuoteLocation | null => {
 		const parsedQuery = parseLocationDraft(queryValue, countryCode);
 		if (!parsedQuery.rawQuery || !suggestions.length) return null;
 
@@ -234,11 +297,11 @@ export const useQuickQuoteLocations = ({
 			(location) => normalizeLocationText(location.place_name) === normalizedQuery,
 		);
 
-		return exactMatches.length === 1 ? exactMatches[0] : null;
+		return exactMatches.length === 1 ? exactMatches[0] ?? null : null;
 	};
 
 	const hideOriginSuggestions = () => {
-		clearTimeout(originHideTimeout);
+		clearQuickQuoteTimeout(originHideTimeout);
 		originHideTimeout = setTimeout(() => {
 			showOriginSuggestions.value = false;
 			originHideTimeout = null;
@@ -246,17 +309,17 @@ export const useQuickQuoteLocations = ({
 	};
 
 	const hideDestSuggestions = () => {
-		clearTimeout(destHideTimeout);
+		clearQuickQuoteTimeout(destHideTimeout);
 		destHideTimeout = setTimeout(() => {
 			showDestSuggestions.value = false;
 			destHideTimeout = null;
 		}, 200);
 	};
 
-	const selectOriginLocation = (location) => {
+	const selectOriginLocation = (location: QuickQuoteLocation) => {
 		clearLocationSearchError?.();
-		shipmentDetails.origin_city = location.place_name;
-		shipmentDetails.origin_postal_code = location.postal_code;
+		shipmentDetails.origin_city = String(location.place_name || "");
+		shipmentDetails.origin_postal_code = String(location.postal_code || "");
 		// L'API /api/locations/search ritorna anche `province` (es. "MI"); salviamola
 		// per evitare che lo step Indirizzi chieda di reinserirla manualmente.
 		shipmentDetails.origin_province = String(location.province || "").trim().toUpperCase();
@@ -265,21 +328,21 @@ export const useQuickQuoteLocations = ({
 		originQuery.value = formatResolvedLocation(location.place_name, location.postal_code);
 		onCapInputSmart("origin_cap", shipmentDetails.origin_postal_code, shipmentDetails.origin_country_code);
 		smartValidation.clearError("origin_cap");
-		clearTimeout(originHideTimeout);
+		clearQuickQuoteTimeout(originHideTimeout);
 		showOriginSuggestions.value = false;
 	};
 
-	const selectDestLocation = (location) => {
+	const selectDestLocation = (location: QuickQuoteLocation) => {
 		clearLocationSearchError?.();
-		shipmentDetails.destination_city = location.place_name;
-		shipmentDetails.destination_postal_code = location.postal_code;
+		shipmentDetails.destination_city = String(location.place_name || "");
+		shipmentDetails.destination_postal_code = String(location.postal_code || "");
 		shipmentDetails.destination_province = String(location.province || "").trim().toUpperCase();
 		shipmentDetails.destination_country_code = resolveCountryCode(location);
 		shipmentDetails.destination_country = resolveCountryName(location);
 		destQuery.value = formatResolvedLocation(location.place_name, location.postal_code);
 		onCapInputSmart("dest_cap", shipmentDetails.destination_postal_code, shipmentDetails.destination_country_code);
 		smartValidation.clearError("dest_cap");
-		clearTimeout(destHideTimeout);
+		clearQuickQuoteTimeout(destHideTimeout);
 		showDestSuggestions.value = false;
 	};
 
@@ -325,21 +388,21 @@ export const useQuickQuoteLocations = ({
 
 	const onOriginQueryInput = () => {
 		clearLocationSearchError?.();
-		clearTimeout(originSearchTimeout);
-		clearTimeout(originHideTimeout);
+		clearQuickQuoteTimeout(originSearchTimeout);
+		clearQuickQuoteTimeout(originHideTimeout);
 		originSearchTimeout = setTimeout(updateOriginSuggestions, debounceMs);
 	};
 
 	const onDestQueryInput = () => {
 		clearLocationSearchError?.();
-		clearTimeout(destSearchTimeout);
-		clearTimeout(destHideTimeout);
+		clearQuickQuoteTimeout(destSearchTimeout);
+		clearQuickQuoteTimeout(destHideTimeout);
 		destSearchTimeout = setTimeout(updateDestSuggestions, debounceMs);
 	};
 
 	const onOriginQueryFocus = async () => {
 		clearLocationSearchError?.();
-		clearTimeout(originHideTimeout);
+		clearQuickQuoteTimeout(originHideTimeout);
 		const seq = ++originSearchSeq;
 		const query = String(originQuery.value || "").trim()
 			|| formatLocationDisplay(shipmentDetails.origin_city, shipmentDetails.origin_postal_code);
@@ -360,7 +423,7 @@ export const useQuickQuoteLocations = ({
 
 	const onDestQueryFocus = async () => {
 		clearLocationSearchError?.();
-		clearTimeout(destHideTimeout);
+		clearQuickQuoteTimeout(destHideTimeout);
 		const seq = ++destSearchSeq;
 		const query = String(destQuery.value || "").trim()
 			|| formatLocationDisplay(shipmentDetails.destination_city, shipmentDetails.destination_postal_code);
@@ -452,10 +515,10 @@ export const useQuickQuoteLocations = ({
 	);
 
 	onBeforeUnmount(() => {
-		clearTimeout(originSearchTimeout);
-		clearTimeout(destSearchTimeout);
-		clearTimeout(originHideTimeout);
-		clearTimeout(destHideTimeout);
+		clearQuickQuoteTimeout(originSearchTimeout);
+		clearQuickQuoteTimeout(destSearchTimeout);
+		clearQuickQuoteTimeout(originHideTimeout);
+		clearQuickQuoteTimeout(destHideTimeout);
 	});
 
 	return {

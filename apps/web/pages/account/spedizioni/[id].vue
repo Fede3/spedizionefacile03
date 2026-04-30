@@ -1,7 +1,8 @@
 <!-- FILE: pages/account/spedizioni/[id].vue -->
 <script setup>
-definePageMeta({ middleware: ['app-auth'] });
 import { formatDateTimeIt } from '~/utils/date.js';
+
+definePageMeta({ middleware: ['app-auth'] });
 
 const route = useRoute();
 const orderId = route.params.id;
@@ -71,7 +72,7 @@ const canRescheduleFinal = computed(() => {
 const onPickupRescheduled = async () => {
 	// Ricarica i dati ordine dopo riprogrammazione
 	if (order?.refresh) {
-		try { await order.refresh(); } catch (_) { /* ignore */ }
+		try { await order.refresh(); } catch { /* ignore */ }
 	}
 };
 
@@ -310,6 +311,7 @@ const orderMetaPillStyle = (kind, status = '') => {
 						showAddPackageForm = $event;
 						if ($event) addPackageSuccess = false;
 					"
+					@update:new-package="newPackage = $event"
 					@submit="submitAddPackage" />
 
 				<!-- BRT Section -->

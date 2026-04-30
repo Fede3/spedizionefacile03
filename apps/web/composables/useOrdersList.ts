@@ -9,27 +9,75 @@ import { computed, onMounted, ref } from 'vue';
 import { formatDateIt } from '~/utils/date.js';
 import { getBrtTrackingReference } from '~/utils/brtTracking';
 
+type OrderAddress = {
+	name?: string;
+	city?: string;
+	province?: string;
+	address?: string;
+	postal_code?: string;
+	additional_information?: string;
+	number_type?: string;
+	address_number?: string;
+	intercom_code?: string;
+	country?: string;
+	telephone_number?: string;
+	email?: string;
+};
+type OrderPackage = {
+	package_type?: string;
+	quantity?: number | string;
+	weight?: number | string;
+	first_size?: number | string;
+	second_size?: number | string;
+	third_size?: number | string;
+	single_price?: number | string;
+	weight_price?: number | string;
+	volume_price?: number | string;
+	origin_address?: OrderAddress;
+	destination_address?: OrderAddress;
+	services?: { service_type?: string; date?: string; time?: string };
+	service?: { service_type?: string; date?: string; time?: string };
+};
+type OrderItem = {
+	id: number | string;
+	status: string;
+	cancellable?: boolean;
+	packages?: OrderPackage[];
+	payable_total?: string;
+	payable_total_cents?: number;
+	subtotal_cents?: number;
+	created_at?: string;
+	reference?: string;
+	order_number?: string;
+	tracking_number?: string;
+};
+type OrdersResponse = { data?: OrderItem[] };
+type SavedShipment = OrderPackage;
+type ApiError = { response?: { _data?: { error?: string; message?: string } }; data?: { error?: string; message?: string } };
+const orderKey = (order: Pick<OrderItem, 'id'>): string => String(order.id);
+
 export default function useOrdersList() {
 	const sanctum = useSanctumClient();
 
 	/* --- Filtri stato --- */
-	const filters = ref(["Tutti", "Aperti", "Chiusi", "Annullati", "In giacenza"]);
+	const filters = ref<string[]>(["Tutti", "Aperti", "Chiusi", "Annullati", "In giacenza"]);
 	const activeFilter = ref("Tutti");
 	const textFilter = ref("Tutti");
 	const searchQuery = ref("");
 
-	const changeFilter = (filter, filterIndex = null) => {
-		const nextFilter = typeof filter === 'string' && filter ? filter : filters.value[filterIndex] || 'Tutti';
+	const changeFilter = (filter: string | null, filterIndex: number | null = null) => {
+		const indexedFilter = filterIndex !== null ? filters.value[filterIndex] : undefined;
+		const nextFilter = typeof filter === 'string' && filter ? filter : indexedFilter || 'Tutti';
 		activeFilter.value = nextFilter;
 		textFilter.value = nextFilter;
 	};
 
 	/* --- Fetch ordini --- */
-	const { data: orders, refresh, status: ordersStatus } = useSanctumFetch("/api/orders", { method: "GET", lazy: true });
+	const { data: orders, refresh, status: ordersStatus } = useLazySanctumFetch<OrdersResponse>("/api/orders", { method: "GET" });
 
 	/* --- Helpers stato --- */
-	const statusRaw = (status) => {
-		const map = {
+	const statusRaw = (status: string): string => {
+		const map: Record<string, string> = {
 			'In attesa': 'pending', 'In lavorazione': 'processing', 'Completato': 'completed',
 			'Fallito': 'payment_failed', 'Pagato': 'paid', 'Annullato': 'cancelled',
 			'Rimborsato': 'refunded', 'In transito': 'in_transit', 'Consegnato': 'delivered',
@@ -40,9 +88,9 @@ export default function useOrdersList() {
 		return map[status] || status;
 	};
 
-	const statusColor = (status) => {
+	const statusColor = (status: string): string => {
 		const raw = statusRaw(status);
-		const map = {
+		const map: Record<string, string> = {
 			pending: 'bg-yellow-100 text-yellow-700', processing: 'bg-[#eef8fa] text-[#095866]',
 			completed: 'bg-[#f0fdf4] text-[#0a8a7a]', payment_failed: 'bg-red-100 text-red-700',
 			paid: 'bg-[#f0fdf4] text-[#0a8a7a]', cancelled: 'bg-gray-200 text-gray-600',
@@ -57,12 +105,12 @@ export default function useOrdersList() {
 
 	/* --- Filtro ordini --- */
 	const filteredOrders = computed(() => {
-		const list = orders.value?.data || [];
+		const list: OrderItem[] = orders.value?.data || [];
 		const normalizedSearch = searchQuery.value.trim().toLowerCase();
 		const baseList = textFilter.value === 'Tutti'
 			? list
 			: (() => {
-				const filterMap = {
+				const filterMap: Record<string, string[]> = {
 					'Aperti': ['In attesa', 'In lavorazione', 'In transito', 'Pagato', 'Etichetta generata', 'In consegna', 'In attesa di bonifico'],
 					'Chiusi': ['Completato', 'Consegnato'],
 					'Annullati': ['Annullato', 'Rimborsato', 'Fallito', 'Reso', 'Rifiutato'],
@@ -90,31 +138,33 @@ export default function useOrdersList() {
 	});
 
 	/* --- Formattazione --- */
-	const formatDate = (dateStr) => formatDateIt(dateStr, '\u2014');
+	const formatDate = (dateStr?: string) => formatDateIt(dateStr, '\u2014');
 
 	// formatPrice auto-importato da utils/price.js
 
-	const getPackageIcon = (item) => {
+	const getPackageIcon = (item: Partial<OrderPackage>) => {
 		const type = item?.package_type?.toLowerCase() || '';
 		if (type.includes('pallet')) return '/img/quote/first-step/pallet.png';
 		if (type.includes('busta')) return '/img/quote/first-step/envelope.png';
 		return '/img/quote/first-step/pack.png';
 	};
 
-	const getRouteLabel = (order) => {
+	const getRouteLabel = (order: OrderItem): string => {
 		if (!order.packages?.length) return '\u2014';
 		const pkg = order.packages[0];
+		if (!pkg) return '\u2014';
 		const oc = pkg.origin_address?.city || ''; const op = pkg.origin_address?.province || '';
 		const dc = pkg.destination_address?.city || ''; const dp = pkg.destination_address?.province || '';
 		return `${oc}${op ? '(' + op + ')' : ''} \u2192 ${dc}${dp ? '(' + dp + ')' : ''}`;
 	};
 
-	const getServiceLabel = (order) => {
+	const getServiceLabel = (order: OrderItem): string => {
 		if (!order.packages?.length) return '\u2014';
-		return order.packages[0].services?.service_type?.split(',')[0]?.trim() || 'Espresso Nazionale';
+		const pkg = order.packages[0];
+		return pkg?.services?.service_type?.split(',')[0]?.trim() || 'Espresso Nazionale';
 	};
 
-	const resolveContactLabel = (address) => {
+	const resolveContactLabel = (address?: OrderAddress): string => {
 		if (!address) return '\u2014';
 		const name = String(address.name || '').trim();
 		if (name && name.toUpperCase() !== 'N/D') return name;
@@ -126,39 +176,39 @@ export default function useOrdersList() {
 		return street || '\u2014';
 	};
 
-	const getSenderName = (order) => resolveContactLabel(order.packages?.[0]?.origin_address);
-	const getRecipientName = (order) => resolveContactLabel(order.packages?.[0]?.destination_address);
+	const getSenderName = (order: OrderItem) => resolveContactLabel(order.packages?.[0]?.origin_address);
+	const getRecipientName = (order: OrderItem) => resolveContactLabel(order.packages?.[0]?.destination_address);
 
-	const getOrderSubtotalLabel = (order) => {
+	const getOrderSubtotalLabel = (order: OrderItem) => {
 		if (typeof order?.payable_total === 'string' && order.payable_total.trim()) return order.payable_total.replace(/\s*EUR$/i, '\u20AC');
 		return formatPrice(order?.payable_total_cents ?? order?.subtotal_cents ?? 0);
 	};
 
-	const getOrderDateLabel = (order) => formatDate(order?.created_at);
+	const getOrderDateLabel = (order: OrderItem) => formatDate(order?.created_at);
 
-	const getOrderReferenceLabel = (order) => {
+	const getOrderReferenceLabel = (order: OrderItem): string => {
 		const ref = order?.reference || order?.order_number || order?.tracking_number;
 		if (ref) return String(ref);
 		return order?.id ? `#${order.id}` : '\u2014';
 	};
 
-	const getTrackingLabel = (order) => {
+	const getTrackingLabel = (order: OrderItem): string => {
 		return getBrtTrackingReference(order) || '';
 	};
 
-	const getOrderPackageLabel = (order) => {
+	const getOrderPackageLabel = (order: OrderItem): string => {
 		const count = Number(order?.packages?.length || 0);
 		if (!count) return 'Nessun collo';
 		return count === 1 ? '1 collo' : `${count} colli`;
 	};
 
 	/* --- Pagamento in sospeso --- */
-	const isPendingPayment = (order) => {
+	const isPendingPayment = (order: OrderItem): boolean => {
 		const raw = statusRaw(order.status);
 		return raw === 'pending' || raw === 'payment_failed';
 	};
 
-	const getPendingReason = (order) => {
+	const getPendingReason = (order: OrderItem): string => {
 		const raw = statusRaw(order.status);
 		if (raw === 'payment_failed') return 'Pagamento non riuscito. Riprova il pagamento per completare l\'ordine.';
 		if (raw === 'pending') return 'In attesa di pagamento. Completa il pagamento per procedere con la spedizione.';
@@ -167,7 +217,7 @@ export default function useOrdersList() {
 
 	/* --- Statistiche --- */
 	const orderStats = computed(() => {
-		const list = orders.value?.data || [];
+		const list: OrderItem[] = orders.value?.data || [];
 		const openStatuses = ['In attesa', 'In lavorazione', 'In transito', 'Pagato', 'Etichetta generata', 'In consegna', 'In attesa di bonifico'];
 		const pendingStatuses = ['In attesa', 'Fallito', 'Pagato', 'In attesa di bonifico'];
 		return {
@@ -178,8 +228,8 @@ export default function useOrdersList() {
 	});
 
 	const filterPills = computed(() => {
-		const list = orders.value?.data || [];
-		const countByStatus = (statuses) => list.filter((order) => statuses.includes(order.status)).length;
+		const list: OrderItem[] = orders.value?.data || [];
+		const countByStatus = (statuses: string[]) => list.filter((order) => statuses.includes(order.status)).length;
 		return [
 			{ id: 'Tutti', label: 'Tutti', count: list.length },
 			{ id: 'Aperti', label: 'Aperti', count: countByStatus(['In attesa', 'In lavorazione', 'In transito', 'Pagato', 'Etichetta generata', 'In consegna', 'In attesa di bonifico']) },
@@ -191,40 +241,41 @@ export default function useOrdersList() {
 
 	/* --- Modale dettaglio --- */
 	const showDetail = ref(false);
-	const detailItem = ref(null);
+	const detailItem = ref<OrderItem | null>(null);
 
 	/* --- Annullamento --- */
-	const cancellingOrder = ref({});
-	const saveError = ref({});
+	const cancellingOrder = ref<Record<string, boolean>>({});
+	const saveError = ref<Record<string, string | null>>({});
 
-	const isCancellable = (order) => order.cancellable === true;
+	const isCancellable = (order: OrderItem) => order.cancellable === true;
 
-	const cancelOrder = async (order) => {
+	const cancelOrder = async (order: OrderItem) => {
 		const raw = statusRaw(order.status);
 		const isPaid = ['completed', 'processing', 'in_transit'].includes(raw);
 		const message = isPaid
 			? 'Sei sicuro di voler annullare questa spedizione? Verra\' applicata una commissione di annullamento di 2,00 EUR. Il rimborso verra\' accreditato sul metodo di pagamento originale.'
 			: 'Sei sicuro di voler annullare questo ordine?';
 		if (!confirm(message)) return;
-		cancellingOrder.value[order.id] = true;
+		cancellingOrder.value[orderKey(order)] = true;
 		try {
-			const result = await sanctum(`/api/orders/${order.id}/cancel`, { method: 'POST' });
-			if (result?.refund_amount && result.refund_amount !== '0,00') saveError.value[order.id] = null;
+			const result = await sanctum(`/api/orders/${order.id}/cancel`, { method: 'POST' }) as { refund_amount?: string };
+			if (result?.refund_amount && result.refund_amount !== '0,00') saveError.value[orderKey(order)] = null;
 			await refresh();
 		} catch (e) {
-			const data = e?.response?._data || e?.data;
-			saveError.value[order.id] = data?.error || data?.message || 'Errore durante l\'annullamento.';
-		} finally { cancellingOrder.value[order.id] = false; }
+			const error = e as ApiError;
+			const data = error?.response?._data || error?.data;
+			saveError.value[orderKey(order)] = data?.error || data?.message || 'Errore durante l\'annullamento.';
+		} finally { cancellingOrder.value[orderKey(order)] = false; }
 	};
 
 	/* --- Salva come configurata --- */
-	const savingToConfigured = ref({});
-	const savedToConfigured = ref({});
-	const savedShipmentsList = ref([]);
+	const savingToConfigured = ref<Record<string, boolean>>({});
+	const savedToConfigured = ref<Record<string, boolean>>({});
+	const savedShipmentsList = ref<SavedShipment[]>([]);
 
 	const loadSavedShipments = async () => {
 		// Endpoint opzionale: se fallisce non vogliamo bloccare l'elenco ordini.
-		try { savedShipmentsList.value = (await sanctum("/api/saved-shipments"))?.data || []; }
+		try { savedShipmentsList.value = ((await sanctum("/api/saved-shipments")) as { data?: SavedShipment[] })?.data || []; }
 		catch (e) { if (import.meta.dev) console.warn('[useOrdersList] saved-shipments non disponibile', e); }
 	};
 	onMounted(() => {
@@ -232,10 +283,11 @@ export default function useOrdersList() {
 		void loadSavedShipments();
 	});
 
-	const isAlreadySaved = (order) => {
-		if (savedToConfigured.value[order.id]) return true;
+	const isAlreadySaved = (order: OrderItem): boolean => {
+		if (savedToConfigured.value[orderKey(order)]) return true;
 		if (!order.packages?.length || !savedShipmentsList.value.length) return false;
 		const pkg = order.packages[0];
+		if (!pkg) return false;
 		return savedShipmentsList.value.some(saved =>
 			saved.package_type === pkg.package_type
 			&& String(saved.weight) === String(pkg.weight)
@@ -251,13 +303,14 @@ export default function useOrdersList() {
 		);
 	};
 
-	const saveToConfigured = async (order) => {
-		if (!order.packages?.length) { saveError.value[order.id] = "Nessun collo presente in questo ordine."; return; }
-		if (isAlreadySaved(order)) { saveError.value[order.id] = "Questa spedizione \u00E8 gi\u00E0 stata salvata nelle spedizioni configurate."; return; }
-		savingToConfigured.value[order.id] = true;
-		saveError.value[order.id] = null;
+	const saveToConfigured = async (order: OrderItem) => {
+		if (!order.packages?.length) { saveError.value[orderKey(order)] = "Nessun collo presente in questo ordine."; return; }
+		if (isAlreadySaved(order)) { saveError.value[orderKey(order)] = "Questa spedizione \u00E8 gi\u00E0 stata salvata nelle spedizioni configurate."; return; }
+		savingToConfigured.value[orderKey(order)] = true;
+		saveError.value[orderKey(order)] = null;
 		try {
 			const pkg = order.packages[0];
+			if (!pkg) { saveError.value[orderKey(order)] = "Nessun collo presente in questo ordine."; return; }
 			const svc = pkg.services || pkg.service || {};
 			await sanctum("/api/saved-shipments", {
 				method: "POST",
@@ -291,7 +344,7 @@ export default function useOrdersList() {
 						email: pkg.destination_address?.email || "",
 					},
 					services: { service_type: svc.service_type || "Nessuno", date: svc.date || "", time: svc.time || "" },
-					packages: order.packages.map(p => ({
+					packages: order.packages.map((p) => ({
 						package_type: p.package_type || "Pacco", quantity: p.quantity || 1,
 						weight: p.weight || 1, first_size: p.first_size || 10,
 						second_size: p.second_size || 10, third_size: p.third_size || 10,
@@ -300,13 +353,14 @@ export default function useOrdersList() {
 					})),
 				},
 			});
-			savedToConfigured.value[order.id] = true;
-			saveError.value[order.id] = null;
+			savedToConfigured.value[orderKey(order)] = true;
+			saveError.value[orderKey(order)] = null;
 			await loadSavedShipments();
 		} catch (e) {
-			const errorData = e?.response?._data || e?.data;
-			saveError.value[order.id] = errorData?.message || "Errore durante il salvataggio. Riprova.";
-		} finally { savingToConfigured.value[order.id] = false; }
+			const error = e as ApiError;
+			const errorData = error?.response?._data || error?.data;
+			saveError.value[orderKey(order)] = errorData?.message || "Errore durante il salvataggio. Riprova.";
+		} finally { savingToConfigured.value[orderKey(order)] = false; }
 	};
 
 	return {

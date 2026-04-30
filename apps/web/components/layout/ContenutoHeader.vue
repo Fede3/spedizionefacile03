@@ -1,9 +1,10 @@
 <script setup>
 import '~/assets/css/layout.css';
+import { formatEuro } from '~/utils/price.js';
 
 const route = useRoute();
 
-const props = defineProps({
+defineProps({
 	title: String,
 	description: String,
 	button: String,
@@ -16,7 +17,6 @@ const { isHomepageHeroRoute, heroImageUrl, heroImageStyle, prefetchHero } = useC
 
 // Fasce prezzo per badge hero
 const { loadPriceBands, getMinPrice, promoSettings } = usePriceBands();
-import { formatEuro } from '~/utils/price.js';
 
 // Caricamento NON bloccante: il hero si renderizza subito con fallback,
 // poi si aggiorna quando i dati arrivano

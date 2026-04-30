@@ -1,5 +1,5 @@
 <script setup>
-const { isAccountRoute, isAuthMinimalShellRoute, isAuthPageRoute, isHomepageLikeRoute, isPreventivoRoute, isStandaloneMarketingHeroRoute } =
+const { isAccountRoute, isAuthMinimalShellRoute, isAuthPageRoute, isHomepageLikeRoute } =
 	useShellRouteState();
 
 const headerSticky = ref(false);

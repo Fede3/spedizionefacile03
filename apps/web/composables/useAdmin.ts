@@ -6,13 +6,26 @@
  */
 import { formatDateTimeIt } from '~/utils/date.js';
 import { formatEuro } from '~/utils/price.js';
+
+type AdminMessage = { type: 'success' | 'error'; text: string } | null
+type AdminError = {
+    response?: { _data?: { message?: string } }
+    data?: { message?: string }
+    message?: string
+}
+type LabelOrder = {
+    id: string | number
+    brt_parcel_id?: unknown
+    brt_label_base64?: string | null
+}
+
 export const useAdmin = () => {
     /* Stato delle azioni admin (approvazione, eliminazione, ecc.) */
-    const actionLoading = ref(null);
+    const actionLoading = ref<string | number | null>(null);
     /* Messaggio di feedback dopo un'azione admin (successo o errore) */
-    const actionMessage = ref(null);
+    const actionMessage = ref<AdminMessage>(null);
     /* Tracciamo il timer per evitare accumulo: click rapidi senza track lasciavano N timer pendenti */
-    let clearMessageTimer = null;
+    let clearMessageTimer: ReturnType<typeof setTimeout> | null = null;
     /* Nasconde il messaggio dopo 5 secondi */
     const clearMessage = () => {
         if (clearMessageTimer)
@@ -30,23 +43,23 @@ export const useAdmin = () => {
         }
     });
     /* Mostra un messaggio verde di successo */
-    const showSuccess = (text) => {
+    const showSuccess = (text: string) => {
         actionMessage.value = { type: 'success', text };
         clearMessage();
     };
     /* Mostra un messaggio rosso di errore */
-    const showError = (e, fallback) => {
-        const errObj = e;
+    const showError = (e: unknown, fallback: string) => {
+        const errObj = e as AdminError;
         actionMessage.value = {
             type: 'error',
-            text: errObj?.response?._data?.message || errObj?.data?.message || fallback,
+            text: errObj.response?._data?.message || errObj.data?.message || errObj.message || fallback,
         };
         clearMessage();
     };
     /* Formatta un valore come valuta con 2 decimali.
        Gestisce: oggetto MyMoney {amount (centesimi), formatted}, stringa formattata, numero in euro.
        Delega a formatEuro (~/utils/price.js) dove possibile. */
-    const formatCurrency = (val) => {
+    const formatCurrency = (val: unknown) => {
         if (val == null)
             return '0,00';
         // Se e' un oggetto MyMoney serializzato {amount: 1250, formatted: "12,50 EUR"}
@@ -67,9 +80,9 @@ export const useAdmin = () => {
     };
     /* Formatta centesimi (da Transaction::sum('total') che restituisce centesimi dal DB).
        Delega a formatEuro (~/utils/price.js) per la formattazione. */
-    const formatCents = (val) => formatEuro(Number(val || 0) / 100);
+    const formatCents = (val: unknown) => formatEuro(Number(val || 0) / 100);
     /* Formatta una data nel formato italiano con ora */
-    const formatDate = (dateStr) => formatDateTimeIt(dateStr, '\u2014');
+    const formatDate = (dateStr: string | number | Date | null | undefined) => formatDateTimeIt(dateStr, '\u2014');
     /* Configurazione colori, icone e etichette per ogni stato ordine */
     const orderStatusConfig = {
         pending: { label: 'In attesa', bg: 'bg-amber-50', text: 'text-amber-700', icon: 'mdi:clock-outline' },
@@ -104,8 +117,7 @@ export const useAdmin = () => {
         rejected: { label: 'Rifiutata', bg: 'bg-red-50', text: 'text-red-700', icon: 'mdi:close-circle-outline' },
     };
     /* Scarica l'etichetta BRT di un ordine come file PDF */
-    const downloadLabel = async (order) => {
-        const sanctum = useSanctumClient();
+    const downloadLabel = async (order: LabelOrder) => {
         if (!order.brt_parcel_id && !order.brt_label_base64)
             return;
         try {
@@ -116,9 +128,10 @@ export const useAdmin = () => {
                 link.click();
                 return;
             }
-            const blob = await sanctum(`/api/brt/label/${order.id}`, {
+            const blob = await $fetch<Blob>(`/api/brt/label/${order.id}`, {
                 method: 'GET',
                 responseType: 'blob',
+                credentials: 'include',
             });
             const url = window.URL.createObjectURL(blob);
             const link = document.createElement('a');

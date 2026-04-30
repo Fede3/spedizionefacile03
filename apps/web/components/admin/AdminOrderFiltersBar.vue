@@ -1,7 +1,7 @@
 <!-- COMPONENTE: AdminOrderFiltersBar.vue -->
 <script setup>
 import '~/assets/css/admin.css';
-import { ref, computed, watch } from 'vue';
+import { ref, computed } from 'vue';
 
 const props = defineProps({
 	/* Stato filtri controllato dal parent (v-model:filters) */

@@ -1,5 +1,5 @@
 <script setup>
-const props = defineProps({
+defineProps({
 	bands: { type: Array, required: true },
 	bandType: { type: String, required: true }, // 'weight' | 'volume'
 	title: { type: String, required: true },

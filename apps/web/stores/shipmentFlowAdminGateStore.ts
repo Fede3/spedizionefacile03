@@ -1,24 +1,28 @@
-/**
- * shipmentFlowAdminGateStore — challenge admin per accessi fuori flusso.
- * Mostra modal "verifica" quando un admin tenta di entrare nel funnel
- * spedizione da una rotta non canonica (vedi middleware/shipment-validation).
- */
-import { defineStore } from 'pinia';
+import { defineStore } from 'pinia'
+
+type AdminGatePayload = {
+	targetPath?: string
+	lastValidRoute?: string
+	reason?: string
+}
+type AdminGateChallenge = Required<AdminGatePayload> & {
+	createdAt: number
+}
 
 export const useShipmentFlowAdminGateStore = defineStore('shipmentFlowAdminGate', () => {
-    const challenge = ref(null);
+	const challenge = ref<AdminGateChallenge | null>(null)
 
-    function openGate(payload = {}) {
-        challenge.value = {
-            targetPath: payload?.targetPath || '/',
-            lastValidRoute: payload?.lastValidRoute || '/preventivo',
-            reason: payload?.reason || 'accesso fuori flusso',
-            createdAt: Date.now(),
-        };
-    }
-    function closeGate() {
-        challenge.value = null;
-    }
+	function openGate(payload: AdminGatePayload = {}) {
+		challenge.value = {
+			targetPath: payload.targetPath || '/',
+			lastValidRoute: payload.lastValidRoute || '/preventivo',
+			reason: payload.reason || 'accesso fuori flusso',
+			createdAt: Date.now(),
+		}
+	}
+	function closeGate() {
+		challenge.value = null
+	}
 
-    return { challenge, openGate, closeGate };
-});
+	return { challenge, openGate, closeGate }
+})

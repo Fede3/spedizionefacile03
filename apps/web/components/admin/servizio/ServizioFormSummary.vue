@@ -4,7 +4,7 @@
   saving: { type: Boolean, default: false },
   submitLabel: { type: String, default: '' },
 });
-const emit = defineEmits();
+const emit = defineEmits(['save']);
 </script>
 
 <template>

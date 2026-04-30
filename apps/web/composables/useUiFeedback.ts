@@ -1,29 +1,36 @@
-/**
- * @file useUiFeedback — Composable useUiFeedback.
- */
+type FeedbackType = 'success' | 'info' | 'warning' | 'error'
+type FeedbackOptions = {
+	color?: string
+	icon?: string | boolean
+	timeout?: number
+}
+
 export const useUiFeedback = () => {
-    const toast = useToast();
-    const push = (type, title, description = '', options = {}) => {
-        const map = {
-            success: { color: 'success' },
-            info: { color: 'info' },
-            warning: { color: 'warning' },
-            error: { color: 'error' },
-        };
-        const preset = map[type] || map.warning;
-        toast.add({
-            title,
-            description: description || undefined,
-            color: options.color || preset.color,
-            icon: options.icon ?? false,
-            timeout: options.timeout ?? 4500,
-        });
-    };
-    return {
-        success: (title, description = '', options = {}) => push('success', title, description, options),
-        info: (title, description = '', options = {}) => push('info', title, description, options),
-        warn: (title, description = '', options = {}) => push('warning', title, description, options),
-        error: (title, description = '', options = {}) => push('error', title, description, options),
-        critical: (title, description = '', options = {}) => push('error', title, description, options),
-    };
-};
+	const toast = useToast()
+	const typeDefaults: Record<FeedbackType, { color: string }> = {
+		success: { color: 'success' },
+		info: { color: 'info' },
+		warning: { color: 'warning' },
+		error: { color: 'error' },
+	}
+	const push = (type: FeedbackType, title: string, description = '', options: FeedbackOptions = {}) => {
+		const preset = typeDefaults[type]
+		const payload = {
+			title,
+			description: description || undefined,
+			color: options.color || preset.color,
+			icon: options.icon ?? false,
+			timeout: options.timeout ?? 4500,
+		} as Parameters<typeof toast.add>[0] & { timeout?: number }
+
+		toast.add(payload)
+	}
+
+	return {
+		success: (title: string, description = '', options: FeedbackOptions = {}) => push('success', title, description, options),
+		info: (title: string, description = '', options: FeedbackOptions = {}) => push('info', title, description, options),
+		warn: (title: string, description = '', options: FeedbackOptions = {}) => push('warning', title, description, options),
+		error: (title: string, description = '', options: FeedbackOptions = {}) => push('error', title, description, options),
+		critical: (title: string, description = '', options: FeedbackOptions = {}) => push('error', title, description, options),
+	}
+}

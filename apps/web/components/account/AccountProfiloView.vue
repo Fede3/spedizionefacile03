@@ -63,12 +63,6 @@ const getTelephoneNumber = (tel) => {
 	return tel;
 };
 
-const getRoleBadge = (role) => {
-	if (role === 'Partner Pro') return { label: 'Partner Pro', class: 'sf-account-meta-pill' };
-	if (role === 'Admin') return { label: 'Admin', class: 'sf-account-meta-pill sf-account-meta-pill--admin' };
-	return { label: 'Cliente', class: 'sf-account-meta-pill sf-account-meta-pill--muted' };
-};
-
 const userTypeLabel = computed(() => (props.user?.user_type || 'privato') === 'commerciante' ? 'Azienda' : 'Privato');
 
 const infoFields = computed(() => {

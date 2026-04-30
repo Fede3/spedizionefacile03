@@ -16,11 +16,21 @@ export const proRequestStatusConfig = {
 	rejected: { label: 'Rifiutata', tone: 'danger' },
 };
 
+type ProRequestStatus = keyof typeof proRequestStatusConfig
+type ProRequest = {
+	id?: string | number
+	status?: ProRequestStatus | string
+	[key: string]: unknown
+}
+type ApiListResponse<T> = { data?: T[] }
+const unwrapList = <T>(response: ApiListResponse<T> | T[]): T[] =>
+	Array.isArray(response) ? response : Array.isArray(response.data) ? response.data : []
+
 export function useAdminUtenti() {
 	const sanctum = useSanctumClient();
 	// Default tab "users" deve combaciare col v-if del template (non "utenti").
 	const activeSubTab = ref('users');
-	const proRequests = ref([]);
+	const proRequests = ref<ProRequest[]>([]);
 
 	const pendingProRequestsCount = computed(
 		() => proRequests.value.filter((r) => (r?.status || 'pending') === 'pending').length,
@@ -28,15 +38,13 @@ export function useAdminUtenti() {
 
 	const fetchProRequests = async () => {
 		try {
-			const res = await sanctum('/api/admin/pro-requests');
-			const list = Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : [];
-			proRequests.value = list;
+			proRequests.value = unwrapList(await sanctum<ApiListResponse<ProRequest> | ProRequest[]>('/api/admin/pro-requests'));
 		} catch {
 			proRequests.value = [];
 		}
 	};
 
-	const approveProRequest = async (id) => {
+	const approveProRequest = async (id: string | number | null | undefined) => {
 		if (!id) return false;
 		try {
 			await sanctum(`/api/admin/pro-requests/${id}/approve`, { method: 'PATCH' });
@@ -47,7 +55,7 @@ export function useAdminUtenti() {
 		}
 	};
 
-	const rejectProRequest = async (id, reason = '') => {
+	const rejectProRequest = async (id: string | number | null | undefined, reason = '') => {
 		if (!id) return false;
 		try {
 			await sanctum(`/api/admin/pro-requests/${id}/reject`, {

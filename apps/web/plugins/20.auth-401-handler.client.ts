@@ -10,12 +10,18 @@
  * di nuxt-auth-sanctum quando disponibile.
  */
 export default defineNuxtPlugin((nuxtApp) => {
-	const handle401 = (error) => {
+	const asApiError = (error: unknown) => (
+		error && typeof error === 'object'
+			? error as { response?: { status?: number }; statusCode?: number; status?: number; data?: { statusCode?: number } }
+			: {}
+	)
+	const handle401 = (error: unknown) => {
+		const apiError = asApiError(error)
 		const status = Number(
-			error?.response?.status
-				?? error?.statusCode
-				?? error?.status
-				?? error?.data?.statusCode
+			apiError.response?.status
+				?? apiError.statusCode
+				?? apiError.status
+				?? apiError.data?.statusCode
 				?? 0,
 		)
 		if (status !== 401 && status !== 419) return
@@ -35,6 +41,6 @@ export default defineNuxtPlugin((nuxtApp) => {
 	nuxtApp.hook('app:error', handle401)
 	// Hook specifico nuxt-auth-sanctum se disponibile.
 	if (typeof nuxtApp.hook === 'function') {
-		nuxtApp.hook('sanctum:error', handle401)
+		;(nuxtApp.hook as (name: string, callback: (error: unknown) => void) => void)('sanctum:error', handle401)
 	}
 })

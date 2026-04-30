@@ -268,7 +268,7 @@ const exportCsv = async () => {
 			link.remove();
 			showSuccess('Export CSV scaricato.');
 			return;
-		} catch (errBackend) {
+		} catch {
 			// silenzioso: passa a fallback client
 		}
 
@@ -488,4 +488,3 @@ onMounted(async () => {
 		</div>
 	</section>
 </template>
-

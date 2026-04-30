@@ -20,12 +20,63 @@ const QUICK_QUOTE_PACKAGE_TYPES = [
 		width: 30,
 		height: 52,
 	},
-];
+] as const;
+
+type QuickQuotePackageType = typeof QUICK_QUOTE_PACKAGE_TYPES[number];
+type EuropeQuote = {
+	status?: string;
+	price?: number | string;
+	message?: string;
+	price_cents?: number | null;
+	[key: string]: unknown;
+};
+type QuickQuotePackageDraft = {
+	_qid?: string;
+	package_type?: string;
+	quantity?: number | string;
+	img?: string;
+	width?: number;
+	height?: number;
+	weight?: string | number | null;
+	first_size?: string | number | null;
+	second_size?: string | number | null;
+	third_size?: string | number | null;
+	weight_price?: number | null;
+	volume_price?: number | null;
+	single_price?: number | null;
+	single_priceOrig?: number | null;
+	europe_quote?: EuropeQuote | null;
+};
+type QuickQuoteShipmentFlowStore = {
+	packages: QuickQuotePackageDraft[];
+	totalPrice: number;
+	shipmentDetails: {
+		origin_postal_code?: string;
+		destination_postal_code?: string;
+		destination_country_code?: string;
+	};
+};
+type QuickQuotePriceBands = {
+	europe?: {
+		enabled?: boolean;
+		supported_country_codes?: string[];
+	};
+};
+type UseQuickQuotePackagesArgs = {
+	shipmentFlowStore: QuickQuoteShipmentFlowStore;
+	getWeightPrice: (weight: number) => number | null;
+	getVolumePrice: (volume: number) => number | null;
+	getCapSupplement: (originCap: string, destCap: string) => number | string | null;
+	getEuropeQuote: (countryCode: string, weight: number | string, volume: number | string) => EuropeQuote | null;
+	priceBands: { value: QuickQuotePriceBands | null | undefined };
+};
+
+const DEFAULT_PACKAGE_TYPE: QuickQuotePackageType = QUICK_QUOTE_PACKAGE_TYPES[0];
 
 let quickQuotePackageCounter = 0;
 const QUICK_QUOTE_PACKAGE_ID_PREFIX = "qqp_";
 
-const parseQuickQuotePackageId = (value) => {
+const parseQuickQuotePackageId = (value: unknown): number => {
 	const normalized = String(value || "").trim();
 
 	if (!normalized.startsWith(QUICK_QUOTE_PACKAGE_ID_PREFIX)) {
@@ -38,7 +89,7 @@ const parseQuickQuotePackageId = (value) => {
 	return Number.isFinite(parsedIndex) && parsedIndex > 0 ? parsedIndex : 0;
 };
 
-const syncQuickQuotePackageCounter = (packages = []) => {
+const syncQuickQuotePackageCounter = (packages: QuickQuotePackageDraft[] = []) => {
 	const highestKnownId = packages.reduce((maxValue, pack) => (
 		Math.max(maxValue, parseQuickQuotePackageId(pack?._qid))
 	), 0);
@@ -48,28 +99,31 @@ const syncQuickQuotePackageCounter = (packages = []) => {
 	}
 };
 
-const createQuickQuotePackageId = () => {
+const createQuickQuotePackageId = (): string => {
 	quickQuotePackageCounter += 1;
 	return `${QUICK_QUOTE_PACKAGE_ID_PREFIX}${quickQuotePackageCounter.toString(36)}`;
 };
 
-const normalizePackageType = (value) =>
+const normalizePackageType = (value: unknown): string =>
 	String(value || "")
 		.toLowerCase()
 		.replace(/\s*#\d+\s*$/u, "")
 		.trim();
 
-const findPackageTypeConfig = (packageType) => {
+const findPackageTypeConfig = (packageType: unknown): QuickQuotePackageType => {
+	const typeText = packageType && typeof packageType === "object" && "text" in packageType
+		? (packageType as { text?: unknown }).text
+		: packageType;
 	const normalized = normalizePackageType(
-		typeof packageType === "string" ? packageType : packageType?.text,
+		typeText,
 	);
 
 	return QUICK_QUOTE_PACKAGE_TYPES.find(
 		(item) => normalizePackageType(item.text) === normalized,
-	) || QUICK_QUOTE_PACKAGE_TYPES[0];
+	) || DEFAULT_PACKAGE_TYPE;
 };
 
-const ensurePackageDraftIdentity = (pack = {}, fallbackType = null) => {
+const ensurePackageDraftIdentity = (pack: QuickQuotePackageDraft = {}, fallbackType: unknown = null): QuickQuotePackageDraft => {
 	const config = findPackageTypeConfig(fallbackType || pack?.package_type);
 
 	if (!pack._qid) {
@@ -84,7 +138,7 @@ const ensurePackageDraftIdentity = (pack = {}, fallbackType = null) => {
 	return pack;
 };
 
-const buildPackageDraft = (packageType) => {
+const buildPackageDraft = (packageType: unknown): QuickQuotePackageDraft => {
 	const config = findPackageTypeConfig(packageType);
 
 	return ensurePackageDraftIdentity({
@@ -96,7 +150,7 @@ const buildPackageDraft = (packageType) => {
 	});
 };
 
-const sanitizeQuantity = (value) => {
+const sanitizeQuantity = (value: unknown): number => {
 	const parsedValue = Number.parseInt(String(value ?? ""), 10);
 
 	if (!Number.isFinite(parsedValue) || parsedValue < 1) {
@@ -113,7 +167,7 @@ export const useQuickQuotePackages = ({
 	getCapSupplement,
 	getEuropeQuote,
 	priceBands,
-}) => {
+}: UseQuickQuotePackagesArgs) => {
 	const ensurePackagesIdentity = () => {
 		syncQuickQuotePackageCounter(shipmentFlowStore?.packages);
 		shipmentFlowStore?.packages.forEach((pack) => ensurePackageDraftIdentity(pack));
@@ -142,8 +196,8 @@ export const useQuickQuotePackages = ({
 		}
 	};
 
-	const getPackVisual = (pack) => {
-		const fallback = QUICK_QUOTE_PACKAGE_TYPES[0];
+	const getPackVisual = (pack: QuickQuotePackageDraft) => {
+		const fallback = DEFAULT_PACKAGE_TYPE;
 		const byType = QUICK_QUOTE_PACKAGE_TYPES.find(
 			(item) => normalizePackageType(item.text) === normalizePackageType(pack?.package_type),
 		);
@@ -157,12 +211,12 @@ export const useQuickQuotePackages = ({
 
 	const recalculatePackagesTotal = () => {
 		shipmentFlowStore.totalPrice = shipmentFlowStore?.packages.reduce(
-			(total, pack) => total + (Number(pack?.single_price) || 0),
+			(total: number, pack: QuickQuotePackageDraft) => total + (Number(pack?.single_price) || 0),
 			0,
 		);
 	};
 
-	const calcQuantity = (pack) => {
+	const calcQuantity = (pack: QuickQuotePackageDraft) => {
 		if (isEuropeMonocollo.value) {
 			pack.quantity = 1;
 			recalculatePackagesTotal();
@@ -176,7 +230,7 @@ export const useQuickQuotePackages = ({
 		recalculatePackagesTotal();
 	};
 
-	const incrementQuantity = (pack) => {
+	const incrementQuantity = (pack: QuickQuotePackageDraft) => {
 		if (isEuropeMonocollo.value) {
 			pack.quantity = 1;
 			return;
@@ -185,7 +239,7 @@ export const useQuickQuotePackages = ({
 		calcQuantity(pack);
 	};
 
-	const decrementQuantity = (pack) => {
+	const decrementQuantity = (pack: QuickQuotePackageDraft) => {
 		if (isEuropeMonocollo.value) {
 			pack.quantity = 1;
 			return;
@@ -194,7 +248,7 @@ export const useQuickQuotePackages = ({
 		calcQuantity(pack);
 	};
 
-	const checkPrices = (pack) => {
+	const checkPrices = (pack: QuickQuotePackageDraft) => {
 		if (isEuropeMonocollo.value) {
 			const weight = Number(pack.weight);
 			const firstSize = Number(pack.first_size);
@@ -209,7 +263,7 @@ export const useQuickQuotePackages = ({
 			}
 
 			const volume = Number((((firstSize / 100) * (secondSize / 100) * (thirdSize / 100))).toFixed(6));
-			const quote = getEuropeQuote(shipmentFlowStore?.shipmentDetails.destination_country_code, weight, volume);
+			const quote = getEuropeQuote(String(shipmentFlowStore?.shipmentDetails.destination_country_code || "IT"), weight, volume);
 			pack.europe_quote = quote;
 
 			if (quote?.status === "priced") {
@@ -255,9 +309,9 @@ export const useQuickQuotePackages = ({
 		calcQuantity(pack);
 	};
 
-	const calcPriceWithWeight = (pack) => {
+	const calcPriceWithWeight = (pack: QuickQuotePackageDraft) => {
 		if (pack.weight != null) {
-			pack.weight = String(pack.weight).replace(/[a-zA-Z]/g, "");
+			pack.weight = String(pack.weight).replace(/[a-z]/gi, "");
 		}
 
 		const weight = Number(pack.weight);
@@ -270,15 +324,15 @@ export const useQuickQuotePackages = ({
 		checkPrices(pack);
 	};
 
-	const calcPriceWithVolume = (pack) => {
+	const calcPriceWithVolume = (pack: QuickQuotePackageDraft) => {
 		if (pack.first_size) {
-			pack.first_size = String(pack.first_size).replace(/[^0-9]/g, "");
+			pack.first_size = String(pack.first_size).replace(/\D/g, "");
 		}
 		if (pack.second_size) {
-			pack.second_size = String(pack.second_size).replace(/[^0-9]/g, "");
+			pack.second_size = String(pack.second_size).replace(/\D/g, "");
 		}
 		if (pack.third_size) {
-			pack.third_size = String(pack.third_size).replace(/[^0-9]/g, "");
+			pack.third_size = String(pack.third_size).replace(/\D/g, "");
 		}
 
 		if (!pack.first_size || !pack.second_size || !pack.third_size) return;
@@ -297,14 +351,14 @@ export const useQuickQuotePackages = ({
 		checkPrices(pack);
 	};
 
-	const selectPackageType = (packageType) => {
+	const selectPackageType = (packageType: unknown) => {
 		if (isEuropeMonocollo.value && shipmentFlowStore?.packages.length > 0) {
 			return;
 		}
 		shipmentFlowStore?.packages.push(buildPackageDraft(packageType));
 	};
 
-	const addPackageInline = (packageType) => {
+	const addPackageInline = (packageType?: unknown) => {
 		if (isEuropeMonocollo.value) {
 			enforceEuropeMonocollo();
 			return;
@@ -313,11 +367,11 @@ export const useQuickQuotePackages = ({
 		shipmentFlowStore?.packages.push(buildPackageDraft(packageType || lastPackageType));
 	};
 
-	const updatePackageType = (pack, packageType) => {
+	const updatePackageType = (pack: QuickQuotePackageDraft, packageType: unknown) => {
 		ensurePackageDraftIdentity(pack, packageType);
 	};
 
-	const deletePack = async (targetPackId) => {
+	const deletePack = async (targetPackId: number | string) => {
 		const index = typeof targetPackId === "number"
 			? targetPackId
 			: shipmentFlowStore?.packages.findIndex((pack) => pack._qid === targetPackId);
@@ -362,7 +416,7 @@ export const useQuickQuotePackages = ({
 		incrementQuantity,
 		isEuropeMonocollo,
 		europeRestrictionMessage,
-		packageTypeList: QUICK_QUOTE_PACKAGE_TYPES,
+		packageTypeList: [...QUICK_QUOTE_PACKAGE_TYPES],
 		recalculatePackagesTotal,
 		selectPackageType,
 		updatePackageType,

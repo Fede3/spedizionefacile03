@@ -6,7 +6,6 @@ import ShipmentStepServizi from '~/components/shipment/ShipmentStepServizi.vue';
 import ShipmentStepIndirizzi from '~/components/shipment/ShipmentStepIndirizzi.vue';
 import ShipmentStepPagamento from '~/components/shipment/ShipmentStepPagamento.vue';
 import PublicPageHeader from '~/components/layout/PublicPageHeader.vue';
-import { buildSecondStepPayload } from '~/composables/useShipmentStepDraftPayload';
 import {
 	buildEmptyPaymentAddress,
 	cleanPaymentSummaryText,
@@ -32,7 +31,6 @@ onMounted(() => {
 
 const shipmentFlowStore = useShipmentFlowStore();
 const route = useRoute();
-const router = useRouter();
 const { openAuthModal } = useAuthModalStore();
 const authUi = useAuthUiState();
 const isAuthenticated = authUi.isAuthenticatedForUi;
@@ -54,8 +52,6 @@ debugCheckpoint('core deps ready');
 const {
 	scrollAccordionStageIntoView,
 	focusPickupDateSection: focusPickupDateSectionHelper,
-	dismissActiveFieldFocusImmediately,
-	dismissActiveFieldFocus,
 	onAccordionPanelBeforeEnter,
 	onAccordionPanelEnter,
 	onAccordionPanelAfterEnter,
@@ -95,7 +91,6 @@ const { formRef, stepsRef, pickupDateSectionRef, packagesStageRef, servicesStage
 	funnelState.templateRefs;
 const { paymentBootstrapPending, paymentSummaryExpanded, isProceedingToPayment } = funnelState.ui;
 const { SERVICE_ICON_FILTER_IDLE, SERVICE_ICON_FILTER_ACTIVE } = funnelState.iconFilters;
-const { resolveFunnelErrorMessage, isThrottleLikeFunnelError, stripFunnelThrottleMessage } = funnelState.helpers;
 const visibleSubmitError = funnelState.visibleSubmitError;
 const visiblePaymentBootstrapError = funnelState.visiblePaymentBootstrapError;
 debugCheckpoint('funnel state ready');
@@ -145,6 +140,10 @@ debugCheckpoint('cart edit ready');
 const {
 	serviceCardErrors,
 	clearServiceCardErrors,
+	updateContrassegnoField,
+	updateAssicurazioneValue,
+	clearContrassegnoError,
+	clearAssicurazioneError,
 	normalizeCurrencyInput,
 	contrassegnoIncassoOptions,
 	contrassegnoRimborsoOptions,
@@ -377,7 +376,6 @@ const { currentStep, initOnMounted, showInitialStepLoading } = useShipmentStepPa
 debugCheckpoint('page state ready');
 
 const {
-	currentShipmentStep,
 	routeConsistencyState,
 	summaryDimensionsLabel,
 	summaryDestinationCity,
@@ -671,6 +669,12 @@ const onFatturazioneType = (v) => {
 const onInvoiceSubjectType = (v) => {
 	invoiceSubjectType.value = v;
 };
+const onFatturaData = (v) => {
+	fatturaData.value = {
+		...fatturaData.value,
+		...v,
+	};
+};
 const onCheckoutTermsAccepted = (v) => {
 	checkoutTermsAccepted.value = v;
 };
@@ -696,6 +700,15 @@ const uiFeedback = useUiFeedback();
 const funnelAnalytics = useFunnelAnalytics();
 // GA4 e-commerce: add_to_cart / begin_checkout / add_payment_info
 debugCheckpoint('analytics ready');
+
+const updateAddressField = (type, field, value) => {
+	const target = type === 'origin' ? originAddress : destinationAddress;
+	target.value = {
+		...target.value,
+		[field]: value,
+	};
+};
+
 const { continueToCart: persistAndContinueToCart, isSubmitting } = useShipmentStepSubmit({
 	destinationAddress,
 	editablePackages,
@@ -725,6 +738,7 @@ provide('shipmentFormHandlers', {
 	fieldErrorText,
 	getFieldAssist,
 	applyFieldAssist,
+	updateAddressField,
 	smartBlur,
 	onNameInput,
 	onCityInput,
@@ -916,8 +930,6 @@ const {
 });
 </script>
 
-<style src="~/assets/css/shipment-flow.css"></style>
-
 <template>
 	<section class="pb-[64px] md:pb-[88px]" style="background: var(--gradient-page-surface)">
 		<div v-if="false" class="w-full max-w-[1280px] mx-auto px-[14px] sm:px-[40px] py-[40px]">
@@ -1018,6 +1030,10 @@ const {
 						:regular-services="regularServices"
 						:service-data="serviceData"
 						:service-card-errors="serviceCardErrors"
+						:update-contrassegno-field="updateContrassegnoField"
+						:update-assicurazione-value="updateAssicurazioneValue"
+						:clear-contrassegno-error="clearContrassegnoError"
+						:clear-assicurazione-error="clearAssicurazioneError"
 						:is-service-expanded="isServiceExpanded"
 						:can-configure-service="canConfigureService"
 						:get-service-configure-label="getServiceConfigureLabel"
@@ -1181,6 +1197,7 @@ const {
 						@update:save-card-for-future="onSaveCardForFuture"
 						@update:fatturazione-type="onFatturazioneType"
 						@update:invoice-subject-type="onInvoiceSubjectType"
+						@update:fattura-data="onFatturaData"
 						@update:checkout-terms-accepted="onCheckoutTermsAccepted"
 						@update:show-confirm-modal="onShowConfirmModal" />
 				</div>

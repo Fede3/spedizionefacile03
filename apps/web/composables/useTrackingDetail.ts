@@ -41,25 +41,36 @@ const ALT_LABELS: Record<string, string> = {
 	payment_failed: 'Pagamento fallito',
 };
 
-function normalizeTrackingResponse(r: any, fallbackCode: string) {
+type TrackingApiResponse = Record<string, unknown> & {
+	events?: unknown;
+	found?: boolean;
+	brt_tracking_url?: string;
+};
+
+const stringField = (source: TrackingApiResponse, key: string, fallback = ''): string => {
+	const value = source[key];
+	return typeof value === 'string' && value ? value : fallback;
+};
+
+function normalizeTrackingResponse(r: TrackingApiResponse, fallbackCode: string) {
 	const evRaw = Array.isArray(r.events) ? r.events : [];
 	return {
-		code: r.code || r.brt_parcel_id || r.brt_tracking_number || fallbackCode,
+		code: stringField(r, 'code', stringField(r, 'brt_parcel_id', stringField(r, 'brt_tracking_number', fallbackCode))),
 		order_id: r.order_id ?? r.id ?? null,
-		raw_status: r.raw_status || r.status_raw || r.status || 'pending',
-		status_label: r.status || r.status_label || 'Stato sconosciuto',
-		status_description: r.status_description || '',
+		raw_status: stringField(r, 'raw_status', stringField(r, 'status_raw', stringField(r, 'status', 'pending'))),
+		status_label: stringField(r, 'status', stringField(r, 'status_label', 'Stato sconosciuto')),
+		status_description: stringField(r, 'status_description'),
 		current_step: typeof r.current_step === 'number' ? r.current_step : undefined,
-		estimated_delivery_at: r.estimated_delivery_at || null,
-		created_at: r.created_at || null,
+		estimated_delivery_at: stringField(r, 'estimated_delivery_at') || null,
+		created_at: stringField(r, 'created_at') || null,
 		origin: r.origin || null,
 		destination: r.destination || null,
-		recipient_name: r.recipient_name || null,
+		recipient_name: stringField(r, 'recipient_name') || null,
 		package: r.package || null,
-		brt_parcel_id: r.brt_parcel_id || null,
-		brt_tracking_number: r.brt_tracking_number || null,
-		brt_tracking_url: r.brt_tracking_url || null,
-		invoice_url: r.invoice_url || null,
+		brt_parcel_id: stringField(r, 'brt_parcel_id') || null,
+		brt_tracking_number: stringField(r, 'brt_tracking_number') || null,
+		brt_tracking_url: stringField(r, 'brt_tracking_url') || null,
+		invoice_url: stringField(r, 'invoice_url') || null,
 		can_reschedule: !!r.can_reschedule,
 		can_change_address: !!r.can_change_address,
 		events: evRaw,
@@ -85,7 +96,7 @@ function formatEtaIso(iso: string | null) {
 export function useTrackingDetail(trackingCode: ComputedRef<string>) {
 	const sanctum = useSanctumClient();
 
-	const data = ref<any>(null);
+	const data = ref<ReturnType<typeof normalizeTrackingResponse> | null>(null);
 	const isLoading = ref(true);
 	const isRefreshing = ref(false);
 	const errorState = ref<string | null>(null);
@@ -111,14 +122,14 @@ export function useTrackingDetail(trackingCode: ComputedRef<string>) {
 	const isDelivered = computed(() => data.value?.raw_status === 'delivered');
 
 	const statusChipClass = computed(() => {
-		const raw = data.value?.raw_status;
+		const raw = data.value?.raw_status || '';
 		if (raw === 'delivered') return 'chip-success';
 		if (ALT_END.includes(raw)) return raw === 'refused' || raw === 'payment_failed' ? 'chip-danger' : 'chip-warn';
 		if (raw === 'in_giacenza') return 'chip-warn';
 		return 'chip-progress';
 	});
 
-	const etaFormatted = computed(() => formatEtaIso(data.value?.estimated_delivery_at));
+	const etaFormatted = computed(() => formatEtaIso(data.value?.estimated_delivery_at || null));
 
 	async function fetchTracking({ silent = false } = {}) {
 		if (!trackingCode.value) return;
@@ -129,18 +140,21 @@ export function useTrackingDetail(trackingCode: ComputedRef<string>) {
 			isRefreshing.value = true;
 		}
 		try {
-			let resp: any = null;
+			let resp: TrackingApiResponse | null = null;
 			try {
 				resp = await sanctum(`/api/tracking/${encodeURIComponent(trackingCode.value)}`);
-			} catch (e: any) {
-				if (e?.statusCode === 404) {
+			} catch (error) {
+				const statusCode = typeof error === 'object' && error && 'statusCode' in error
+					? Number((error as { statusCode?: unknown }).statusCode)
+					: null;
+				if (statusCode === 404) {
 					resp = null;
 				}
 				try {
 					resp = await sanctum('/api/tracking/search', {
 						params: { code: trackingCode.value },
 					});
-				} catch (err2) {
+				} catch {
 					if (!silent) errorState.value = 'network';
 					return;
 				}
@@ -152,7 +166,7 @@ export function useTrackingDetail(trackingCode: ComputedRef<string>) {
 					data.value = null;
 				}
 				if (resp?.brt_tracking_url) {
-					data.value = { brt_tracking_url: resp.brt_tracking_url, raw_status: 'unknown' };
+					data.value = normalizeTrackingResponse(resp, trackingCode.value);
 				}
 				return;
 			}

@@ -29,7 +29,25 @@ const props = defineProps({
 	updateSupplementAmountFromEuro: { type: Function, required: true },
 });
 
-const emit = defineEmits(['update:editValue']);
+const emit = defineEmits(['update:editValue', 'update:extraRules', 'update:supplementRules']);
+
+const extraRuleValue = (field) => props.extraRules?.[field];
+const updateExtraRule = (field, value) => {
+	emit('update:extraRules', {
+		...props.extraRules,
+		[field]: value,
+	});
+};
+const updateExtraRuleNumber = (field, rawValue) => {
+	const numeric = Number(rawValue);
+	updateExtraRule(field, Number.isFinite(numeric) ? numeric : 0);
+};
+const updateExtraRuleCents = (field, rawValue, fallback = null) => {
+	updateExtraRule(field, props.euroToCents(rawValue) ?? fallback);
+};
+const updateSupplementRule = (index, nextRule) => {
+	emit('update:supplementRules', props.supplementRules.map((rule, ruleIndex) => (ruleIndex === index ? nextRule : rule)));
+};
 
 /** Shared band-table props (everything except bands/bandType/title/subtitle/addLabel) */
 const bandTableShared = computed(() => ({
@@ -107,13 +125,13 @@ const bandTableShared = computed(() => ({
 				<h2 class="text-[1.125rem] font-bold text-[#252B42] mb-[4px]">Regole oltre 7ª fascia</h2>
 				<p class="text-[0.75rem] text-[#737373]">Configurazione scaglioni dinamici (es. 101-150, 151-200 e 0,401-0,600, 0,601-0,800).</p>
 			</div>
-			<button type="button" @click="extraRules.enabled = !extraRules.enabled"
+			<button type="button" @click="updateExtraRule('enabled', !extraRuleValue('enabled'))"
 				role="switch"
-				:aria-checked="extraRules.enabled ? 'true' : 'false'"
+				:aria-checked="extraRuleValue('enabled') ? 'true' : 'false'"
 				aria-label="Attiva regole oltre 7ª fascia"
-				:class="extraRules.enabled ? 'bg-[#095866]' : 'bg-[#C8CCD0]'"
+				:class="extraRuleValue('enabled') ? 'bg-[#095866]' : 'bg-[#C8CCD0]'"
 				class="relative inline-flex h-[32px] w-[56px] items-center rounded-full transition-colors cursor-pointer">
-				<span :class="extraRules.enabled ? 'translate-x-[28px]' : 'translate-x-[2px]'" class="inline-block h-[26px] w-[26px] transform rounded-full bg-white transition-transform shadow-sm" />
+				<span :class="extraRuleValue('enabled') ? 'translate-x-[28px]' : 'translate-x-[2px]'" class="inline-block h-[26px] w-[26px] transform rounded-full bg-white transition-transform shadow-sm" />
 			</button>
 		</div>
 
@@ -122,13 +140,13 @@ const bandTableShared = computed(() => ({
 				<h3 class="text-[0.875rem] font-semibold text-[#252B42]">Scaglioni Peso</h3>
 				<div class="grid grid-cols-3 gap-[10px]">
 					<label class="text-[0.75rem] text-[#737373]">Start
-						<input v-model.number="extraRules.weight_start" type="number" min="0" step="1" class="mt-[4px] w-full h-[38px] px-[10px] rounded-[12px] border border-[#E9EBEC] bg-white text-[0.8125rem]">
+						<input :value="extraRuleValue('weight_start')" type="number" min="0" step="1" class="mt-[4px] w-full h-[38px] px-[10px] rounded-[12px] border border-[#E9EBEC] bg-white text-[0.8125rem]" @input="updateExtraRuleNumber('weight_start', $event.target.value)">
 					</label>
 					<label class="text-[0.75rem] text-[#737373]">Step
-						<input v-model.number="extraRules.weight_step" type="number" min="0.0001" step="1" class="mt-[4px] w-full h-[38px] px-[10px] rounded-[12px] border border-[#E9EBEC] bg-white text-[0.8125rem]">
+						<input :value="extraRuleValue('weight_step')" type="number" min="0.0001" step="1" class="mt-[4px] w-full h-[38px] px-[10px] rounded-[12px] border border-[#E9EBEC] bg-white text-[0.8125rem]" @input="updateExtraRuleNumber('weight_step', $event.target.value)">
 					</label>
 					<label class="text-[0.75rem] text-[#737373]">Risoluzione
-						<input v-model.number="extraRules.weight_resolution" type="number" min="0.0001" step="1" class="mt-[4px] w-full h-[38px] px-[10px] rounded-[12px] border border-[#E9EBEC] bg-white text-[0.8125rem]">
+						<input :value="extraRuleValue('weight_resolution')" type="number" min="0.0001" step="1" class="mt-[4px] w-full h-[38px] px-[10px] rounded-[12px] border border-[#E9EBEC] bg-white text-[0.8125rem]" @input="updateExtraRuleNumber('weight_resolution', $event.target.value)">
 					</label>
 				</div>
 				<p class="text-[0.75rem] text-[#4F5D75]">Preview: {{ extraRuleExamples.firstWeightFrom }}-{{ extraRuleExamples.firstWeightTo }} / {{ extraRuleExamples.secondWeightFrom }}-{{ extraRuleExamples.secondWeightTo }}</p>
@@ -138,13 +156,13 @@ const bandTableShared = computed(() => ({
 				<h3 class="text-[0.875rem] font-semibold text-[#252B42]">Scaglioni Volume (m&sup3;)</h3>
 				<div class="grid grid-cols-3 gap-[10px]">
 					<label class="text-[0.75rem] text-[#737373]">Start
-						<input v-model.number="extraRules.volume_start" type="number" min="0" step="0.001" class="mt-[4px] w-full h-[38px] px-[10px] rounded-[12px] border border-[#E9EBEC] bg-white text-[0.8125rem]">
+						<input :value="extraRuleValue('volume_start')" type="number" min="0" step="0.001" class="mt-[4px] w-full h-[38px] px-[10px] rounded-[12px] border border-[#E9EBEC] bg-white text-[0.8125rem]" @input="updateExtraRuleNumber('volume_start', $event.target.value)">
 					</label>
 					<label class="text-[0.75rem] text-[#737373]">Step
-						<input v-model.number="extraRules.volume_step" type="number" min="0.0001" step="0.001" class="mt-[4px] w-full h-[38px] px-[10px] rounded-[12px] border border-[#E9EBEC] bg-white text-[0.8125rem]">
+						<input :value="extraRuleValue('volume_step')" type="number" min="0.0001" step="0.001" class="mt-[4px] w-full h-[38px] px-[10px] rounded-[12px] border border-[#E9EBEC] bg-white text-[0.8125rem]" @input="updateExtraRuleNumber('volume_step', $event.target.value)">
 					</label>
 					<label class="text-[0.75rem] text-[#737373]">Risoluzione
-						<input v-model.number="extraRules.volume_resolution" type="number" min="0.0001" step="0.001" class="mt-[4px] w-full h-[38px] px-[10px] rounded-[12px] border border-[#E9EBEC] bg-white text-[0.8125rem]">
+						<input :value="extraRuleValue('volume_resolution')" type="number" min="0.0001" step="0.001" class="mt-[4px] w-full h-[38px] px-[10px] rounded-[12px] border border-[#E9EBEC] bg-white text-[0.8125rem]" @input="updateExtraRuleNumber('volume_resolution', $event.target.value)">
 					</label>
 				</div>
 				<p class="text-[0.75rem] text-[#4F5D75]">Preview: {{ extraRuleExamples.firstVolumeFrom.toFixed(3) }}-{{ extraRuleExamples.firstVolumeTo.toFixed(3) }} / {{ extraRuleExamples.secondVolumeFrom.toFixed(3) }}-{{ extraRuleExamples.secondVolumeTo.toFixed(3) }}</p>
@@ -154,7 +172,7 @@ const bandTableShared = computed(() => ({
 				<h3 class="text-[0.875rem] font-semibold text-[#252B42]">Incrementi oltre 7ª fascia</h3>
 				<div class="grid grid-cols-1 tablet:grid-cols-2 gap-[10px]">
 					<label class="text-[0.75rem] text-[#737373]">Base prezzo extra
-						<select v-model="extraRules.base_price_cents_mode" class="mt-[4px] w-full h-[38px] px-[10px] rounded-[12px] border border-[#E9EBEC] bg-white text-[0.8125rem]">
+						<select :value="extraRuleValue('base_price_cents_mode')" class="mt-[4px] w-full h-[38px] px-[10px] rounded-[12px] border border-[#E9EBEC] bg-white text-[0.8125rem]" @change="updateExtraRule('base_price_cents_mode', $event.target.value)">
 							<option value="last_band_effective">Ultima fascia effettiva</option>
 							<option value="manual">Manuale</option>
 						</select>
@@ -162,15 +180,15 @@ const bandTableShared = computed(() => ({
 					<label class="text-[0.75rem] text-[#737373]">Incremento fisso per ogni fascia extra (&euro;)
 						<input
 							:value="(Number(extraRules.increment_cents || 0) / 100).toFixed(2).replace('.', ',')"
-							@input="extraRules.increment_cents = Math.max(0, euroToCents($event.target.value) ?? 0)"
+							@input="updateExtraRule('increment_cents', Math.max(0, euroToCents($event.target.value) ?? 0))"
 							type="text"
 							class="mt-[4px] w-full h-[38px] px-[10px] rounded-[12px] border border-[#E9EBEC] bg-white text-[0.8125rem]">
 					</label>
 				</div>
-				<label v-if="extraRules.base_price_cents_mode === 'manual'" class="text-[0.75rem] text-[#737373]">Prezzo base extra manuale (&euro;)
+				<label v-if="extraRuleValue('base_price_cents_mode') === 'manual'" class="text-[0.75rem] text-[#737373]">Prezzo base extra manuale (&euro;)
 					<input
 						:value="extraRules.base_price_cents_manual == null ? '' : (Number(extraRules.base_price_cents_manual || 0) / 100).toFixed(2).replace('.', ',')"
-						@input="extraRules.base_price_cents_manual = euroToCents($event.target.value)"
+						@input="updateExtraRuleCents('base_price_cents_manual', $event.target.value)"
 						type="text"
 						class="mt-[4px] w-full h-[38px] px-[10px] rounded-[12px] border border-[#E9EBEC] bg-white text-[0.8125rem]">
 				</label>
@@ -229,6 +247,7 @@ const bandTableShared = computed(() => ({
 				:rule="rule"
 				:supplement-amount-to-euro="supplementAmountToEuro"
 				:update-supplement-amount-from-euro="updateSupplementAmountFromEuro"
+				@update:rule="updateSupplementRule(idx, $event)"
 				@remove="removeSupplement(idx)" />
 		</div>
 	</div>

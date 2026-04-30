@@ -139,7 +139,7 @@ const stats = computed(() => {
 	const newWeek = list.filter(u => {
 		if (!u.created_at) return false;
 		const ts = new Date(u.created_at).getTime();
-		return !isNaN(ts) && (now - ts) <= sevenDays;
+		return !Number.isNaN(ts) && (now - ts) <= sevenDays;
 	}).length;
 	return {
 		total: total.value || list.length,
@@ -223,7 +223,7 @@ const exportCsv = () => {
 		];
 		lines.push(row.join(';'));
 	}
-	const blob = new Blob(['\ufeff' + lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
+	const blob = new Blob(['\uFEFF' + lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
 	const url = URL.createObjectURL(blob);
 	const a = document.createElement('a');
 	a.href = url;
@@ -419,4 +419,3 @@ onMounted(() => {
 			@impersonate="handleImpersonate" />
 	</section>
 </template>
-

@@ -1,7 +1,6 @@
 <!-- COMPONENTE: AdminOrderTable.vue -->
 <script setup>
 import '~/assets/css/admin.css';
-import { computed } from 'vue';
 import { getBrtTrackingLabel, getBrtTrackingUrl } from '~/utils/brtTracking';
 
 const props = defineProps({
@@ -36,7 +35,7 @@ const orderTotalCents = (order) => {
 };
 
 /* Helper: stringa origine→destinazione abbreviata */
-const orderRoute = (order) => {
+const _orderRoute = (order) => {
 	const pkg = order?.packages?.[0];
 	const origin = pkg?.originAddress?.city || pkg?.origin_city || '—';
 	const dest = pkg?.destinationAddress?.city || pkg?.destination_city || '—';

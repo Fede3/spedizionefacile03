@@ -1,5 +1,5 @@
 <script setup>
-const props = defineProps({
+defineProps({
 	packages: { type: Array, required: true },
 	packageTypeList: { type: Array, default: () => [] },
 	isEuropeMonocollo: { type: Boolean, default: false },

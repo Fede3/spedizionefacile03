@@ -5,7 +5,7 @@ const props = defineProps({
   selectedKey: { default: null },
   referencePoint: { default: null },
 });
-const emit = defineEmits();
+const emit = defineEmits(['select']);
 const mapEl = ref(null);
 const ready = ref(false);
 const tileError = ref(false);

@@ -4,7 +4,7 @@ import '~/assets/css/admin.css';
 import AdminTableLayout from './AdminTableLayout.vue';
 import AdminStatusBadge from './AdminStatusBadge.vue';
 
-const props = defineProps({
+defineProps({
 	users: { type: Array, default: () => [] },
 	actionLoading: { type: [String, Number, null], default: null },
 	canImpersonate: { type: Boolean, default: false },

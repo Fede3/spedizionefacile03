@@ -16,55 +16,61 @@ const ITALIAN_PROVINCES = [
 	'VI','VR','VT','VV',
 ];
 
+type ValidationErrors = Record<string, string>;
+type ValidationTouched = Record<string, boolean>;
+type CountryValidationOptions = { countryCode?: string };
+type ValidationCallback = () => unknown;
+
 export function useSmartValidation() {
 	// Oggetto reattivo che contiene gli errori di validazione per ogni campo
 	// La chiave e' il nome del campo, il valore e' il messaggio di errore
-	const errors = ref({});
+	const errors = ref<ValidationErrors>({});
 
 	// Oggetto reattivo che tiene traccia di quali campi sono stati "toccati" (interagiti) dall'utente
 	// Un campo e' "toccato" quando l'utente ci clicca sopra e poi esce (blur)
-	const touched = ref({});
+	const touched = ref<ValidationTouched>({});
 
 	// Segna un campo come "toccato" - da questo momento in poi mostra gli errori
-	const markTouched = (key) => {
+	const markTouched = (key: string) => {
 		touched.value[key] = true;
 	};
 
 	// Controlla se un campo e' stato gia' toccato dall'utente
-	const isTouched = (key) => !!touched.value[key];
+	const isTouched = (key: string): boolean => !!touched.value[key];
 
 	// Rimuove l'errore da un campo (usato quando il valore diventa valido)
-	const clearError = (key) => {
-		delete errors.value[key];
+	const clearError = (key: string) => {
+		const { [key]: _removed, ...rest } = errors.value;
+		errors.value = rest;
 	};
 
 	// Imposta un messaggio di errore per un campo specifico
-	const setError = (key, msg) => {
+	const setError = (key: string, msg: string) => {
 		errors.value[key] = msg;
 	};
 
 	// Restituisce il messaggio di errore per un campo, ma SOLO se il campo e' stato toccato
 	// (non mostra errori su campi che l'utente non ha ancora interagito)
-	const getError = (key) => {
+	const getError = (key: string): string | null => {
 		return touched.value[key] ? (errors.value[key] || null) : null;
 	};
 
 	// Controlla se un campo ha un errore E e' stato toccato
-	const hasError = (key) => {
-		return touched.value[key] && !!errors.value[key];
+	const hasError = (key: string): boolean => {
+		return Boolean(touched.value[key] && errors.value[key]);
 	};
 
 	// --- REGOLE DI VALIDAZIONE ---
 
 	// Valida un numero di telefono italiano
 	// Accetta: numeri con prefisso +39, tra 6 e 10 cifre (senza prefisso)
-	const validateTelefono = (key, value) => {
+	const validateTelefono = (key: string, value: unknown): boolean => {
 		if (!value || !String(value).trim()) {
 			setError(key, 'Telefono è obbligatorio');
 			return false;
 		}
 		// Rimuoviamo spazi, trattini e parentesi per ottenere solo il numero
-		const cleaned = String(value).replace(/[\s\-\(\)]/g, '');
+		const cleaned = String(value).replace(/[\s()-]/g, '');
 		if (!/^\+?\d+$/.test(cleaned)) {
 			setError(key, 'Solo numeri consentiti');
 			return false;
@@ -86,15 +92,15 @@ export function useSmartValidation() {
 
 	// Formatta il numero di telefono rimuovendo tutti i caratteri non numerici
 	// (tranne il "+" iniziale per il prefisso internazionale)
-	const formatTelefono = (value) => {
-		if (!value) return value;
-		let cleaned = String(value).replace(/[^\d+]/g, '');
+	const formatTelefono = (value: unknown): string => {
+		if (!value) return '';
+		const cleaned = String(value).replace(/[^\d+]/g, '');
 		return cleaned;
 	};
 
 	// Valida un Codice di Avviamento Postale (CAP) italiano
 	// Deve essere esattamente 5 cifre e nel range valido (00010-98168)
-	const validateCAP = (key, value, options = {}) => {
+	const validateCAP = (key: string, value: unknown, options: CountryValidationOptions = {}): boolean => {
 		const countryCode = String(options?.countryCode || 'IT').trim().toUpperCase() || 'IT';
 		if (!value || !String(value).trim()) {
 			setError(key, 'CAP è obbligatorio');
@@ -109,13 +115,13 @@ export function useSmartValidation() {
 			clearError(key);
 			return true;
 		}
-		const cleaned = String(value).replace(/[^0-9]/g, '');
+		const cleaned = String(value).replace(/\D/g, '');
 		if (cleaned.length !== 5) {
 			setError(key, 'Il CAP deve essere di 5 cifre');
 			return false;
 		}
 		// Verifica che il CAP sia nel range valido per l'Italia (da 00010 a 98168)
-		const capNum = parseInt(cleaned, 10);
+		const capNum = Number.parseInt(cleaned, 10);
 		if (capNum < 10 || capNum > 98168) {
 			setError(key, 'CAP non valido');
 			return false;
@@ -125,24 +131,27 @@ export function useSmartValidation() {
 	};
 
 	// Filtra l'input del CAP: rimuove caratteri non numerici e limita a 5 cifre
-	const filterCAP = (value, options = {}) => {
+	const filterCAP = (value: unknown, options: CountryValidationOptions = {}): string => {
 		const countryCode = String(options?.countryCode || 'IT').trim().toUpperCase() || 'IT';
-		if (!value) return value;
+		if (!value) return '';
 		if (countryCode !== 'IT') {
 			return String(value).toUpperCase().replace(/[^A-Z0-9-\s]/g, '').slice(0, 12);
 		}
-		return String(value).replace(/[^0-9]/g, '').slice(0, 5);
+		return String(value).replace(/\D/g, '').slice(0, 5);
 	};
 
 	// Valida un indirizzo email con espressione regolare
 	// Il campo email e' opzionale: se vuoto, non viene segnalato come errore
-	const validateEmail = (key, value) => {
+	const validateEmail = (key: string, value: unknown): boolean => {
 		if (!value || !String(value).trim()) {
 			clearError(key);
 			return true; // optional
 		}
-		const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-		if (!emailRegex.test(String(value).trim())) {
+		const email = String(value).trim();
+		const [localPart, domainPart, extraPart] = email.split('@');
+		const domainLabels = String(domainPart || '').split('.');
+		const hasValidDomain = domainLabels.length >= 2 && domainLabels.every(Boolean);
+		if (!localPart || !domainPart || extraPart !== undefined || !hasValidDomain) {
 			setError(key, 'Inserisci un indirizzo email valido');
 			return false;
 		}
@@ -151,13 +160,13 @@ export function useSmartValidation() {
 	};
 
 	// Valida il peso del pacco: deve essere un numero positivo, massimo 1000 kg
-	const validatePeso = (key, value) => {
+	const validatePeso = (key: string, value: unknown): boolean => {
 		if (!value && value !== 0) {
 			setError(key, 'Peso è obbligatorio');
 			return false;
 		}
 		const num = Number(String(value).replace(/[^0-9.]/g, ''));
-		if (isNaN(num) || num <= 0) {
+		if (Number.isNaN(num) || num <= 0) {
 			setError(key, 'Inserisci un peso positivo');
 			return false;
 		}
@@ -172,13 +181,13 @@ export function useSmartValidation() {
 	// Valida una dimensione del pacco (lunghezza, larghezza, altezza)
 	// Deve essere un numero positivo, massimo 300 cm
 	// Il parametro "label" e' il nome del campo (es. "Lunghezza") per i messaggi di errore
-	const validateDimensione = (key, value, label) => {
+	const validateDimensione = (key: string, value: unknown, label: string): boolean => {
 		if (!value && value !== 0) {
 			setError(key, `${label} è obbligatorio`);
 			return false;
 		}
 		const num = Number(String(value).replace(/[^0-9.]/g, ''));
-		if (isNaN(num) || num <= 0) {
+		if (Number.isNaN(num) || num <= 0) {
 			setError(key, 'Inserisci un valore positivo');
 			return false;
 		}
@@ -191,12 +200,12 @@ export function useSmartValidation() {
 	};
 
 	// Valida il campo Nome e Cognome: obbligatorio e non puo' contenere numeri
-	const validateNomeCognome = (key, value) => {
+	const validateNomeCognome = (key: string, value: unknown): boolean => {
 		if (!value || !String(value).trim()) {
 			setError(key, 'Nome e Cognome è obbligatorio');
 			return false;
 		}
-		if (/\d/.test(value)) {
+		if (/\d/.test(String(value))) {
 			setError(key, 'Il nome non può contenere numeri');
 			return false;
 		}
@@ -206,14 +215,14 @@ export function useSmartValidation() {
 
 	// Capitalizza automaticamente la prima lettera di ogni parola
 	// Esempio: "mario rossi" diventa "Mario Rossi"
-	const autoCapitalize = (value) => {
-		if (!value) return value;
+	const autoCapitalize = (value: unknown): string => {
+		if (!value) return '';
 		return String(value).replace(/\b\w/g, c => c.toUpperCase());
 	};
 
 	// Valida la sigla della provincia italiana (es. "MI" per Milano, "RM" per Roma)
 	// Deve essere esattamente 2 lettere maiuscole e deve essere nell'elenco ufficiale
-	const validateProvincia = (key, value) => {
+	const validateProvincia = (key: string, value: unknown): boolean => {
 		if (!value || !String(value).trim()) {
 			setError(key, 'Provincia è obbligatoria');
 			return false;
@@ -233,14 +242,14 @@ export function useSmartValidation() {
 
 	// Filtra l'input della provincia: rimuove caratteri non alfabetici,
 	// limita a 2 caratteri e converte in maiuscolo
-	const filterProvincia = (value) => {
-		if (!value) return value;
-		return String(value).replace(/[^a-zA-Z]/g, '').slice(0, 2).toUpperCase();
+	const filterProvincia = (value: unknown): string => {
+		if (!value) return '';
+		return String(value).replace(/[^a-z]/gi, '').slice(0, 2).toUpperCase();
 	};
 
 	// Restituisce suggerimenti per la provincia in base a cio' che l'utente ha digitato
 	// Esempio: se l'utente digita "M", suggerisce MI, MN, MO, MS, MT (massimo 5)
-	const getProvinceSuggestions = (input) => {
+	const getProvinceSuggestions = (input: unknown): string[] => {
 		if (!input || String(input).length < 1) return [];
 		const upper = String(input).toUpperCase();
 		return ITALIAN_PROVINCES.filter(p => p.startsWith(upper)).slice(0, 5);
@@ -248,14 +257,14 @@ export function useSmartValidation() {
 
 	// Gestore dell'evento "blur" (quando l'utente esce dal campo):
 	// segna il campo come toccato e lancia la validazione
-	const onBlur = (key, validateFn) => {
+	const onBlur = (key: string, validateFn: ValidationCallback) => {
 		markTouched(key);
 		validateFn();
 	};
 
 	// Gestore dell'evento "input" (quando l'utente digita):
 	// ri-valida il campo SOLO se e' gia' stato toccato (per non mostrare errori troppo presto)
-	const onInput = (key, validateFn) => {
+	const onInput = (key: string, validateFn: ValidationCallback) => {
 		if (isTouched(key)) {
 			validateFn();
 		}
@@ -263,7 +272,7 @@ export function useSmartValidation() {
 
 	// Restituisce le classi CSS per mostrare un bordo rosso e sfondo rosso chiaro
 	// quando un campo ha un errore di validazione (stile visivo per l'utente)
-	const errorClass = (key, baseClass = '') => {
+	const errorClass = (key: string, baseClass = ''): string => {
 		if (hasError(key)) {
 			return `${baseClass} !border-red-400 !bg-red-50/30`;
 		}

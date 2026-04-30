@@ -101,7 +101,7 @@ const walletHeaderStats = computed(() => [
 	{ label: 'Carta', value: defaultPaymentMethodLabel.value },
 ]);
 
-const walletHeroHighlights = computed(() => {
+const _walletHeroHighlights = computed(() => {
 	const items = [
 		{
 			label: 'Carta predefinita',

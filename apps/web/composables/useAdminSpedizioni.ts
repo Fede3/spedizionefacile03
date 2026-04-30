@@ -17,9 +17,20 @@ const STATUS_FILTERS = [
 	{ id: 'in_transit', label: 'In transito' },
 	{ id: 'delivered', label: 'Consegnati' },
 	{ id: 'cancelled', label: 'Annullati' },
-];
+ ] as const;
 
-const ALLOWED_NEXT_STATUS = {
+type StatusFilterId = typeof STATUS_FILTERS[number]['id']
+type OrderStatus = Exclude<StatusFilterId, 'all'>
+type AdminShipment = {
+	id?: string | number
+	status?: string
+	[key: string]: unknown
+}
+type ApiListResponse<T> = { data?: T[] }
+const unwrapList = <T>(response: ApiListResponse<T> | T[]): T[] =>
+	Array.isArray(response) ? response : Array.isArray(response.data) ? response.data : []
+
+const ALLOWED_NEXT_STATUS: Record<OrderStatus, OrderStatus[]> = {
 	pending: ['paid', 'cancelled'],
 	paid: ['label_generated', 'cancelled'],
 	label_generated: ['in_transit', 'cancelled'],
@@ -28,13 +39,16 @@ const ALLOWED_NEXT_STATUS = {
 	cancelled: [],
 };
 
+const getErrorMessage = (error: unknown, fallback: string): string =>
+	error && typeof error === 'object' && 'message' in error ? String(error.message) : fallback;
+
 export function useAdminSpedizioni() {
 	const sanctum = useSanctumClient();
 
-	const shipmentsData = ref([]);
+	const shipmentsData = ref<AdminShipment[]>([]);
 	const shipmentsPage = ref(1);
 	const shipmentsSearch = ref('');
-	const activeFilter = ref('all');
+	const activeFilter = ref<StatusFilterId>('all');
 	const tabLoading = ref(false);
 	const fetchError = ref('');
 	const actionMessage = ref('');
@@ -55,25 +69,23 @@ export function useAdminSpedizioni() {
 			if (shipmentsSearch.value) params.set('search', shipmentsSearch.value);
 			if (activeFilter.value && activeFilter.value !== 'all') params.set('status', activeFilter.value);
 			params.set('page', String(shipmentsPage.value));
-			const res = await sanctum(`/api/admin/orders?${params.toString()}`);
-			const list = Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : [];
-			shipmentsData.value = list;
+			shipmentsData.value = unwrapList(await sanctum<ApiListResponse<AdminShipment> | AdminShipment[]>(`/api/admin/orders?${params.toString()}`));
 		} catch (e) {
-			fetchError.value = e?.message || 'Errore caricamento spedizioni';
+			fetchError.value = getErrorMessage(e, 'Errore caricamento spedizioni');
 			shipmentsData.value = [];
 		} finally {
 			tabLoading.value = false;
 		}
 	};
 
-	const onShipmentsSearch = (value) => {
+	const onShipmentsSearch = (value: unknown) => {
 		shipmentsSearch.value = String(value || '');
 		shipmentsPage.value = 1;
 		return fetchShipments();
 	};
 
-	const setActiveFilter = (filterId) => {
-		activeFilter.value = filterId || 'all';
+	const setActiveFilter = (filterId: StatusFilterId | string) => {
+		activeFilter.value = STATUS_FILTERS.some((filter) => filter.id === filterId) ? filterId as StatusFilterId : 'all';
 		shipmentsPage.value = 1;
 		return fetchShipments();
 	};
@@ -85,12 +97,12 @@ export function useAdminSpedizioni() {
 		return fetchShipments();
 	};
 
-	const getAvailableStatuses = (currentStatus) => {
-		const next = ALLOWED_NEXT_STATUS[currentStatus] || [];
-		return STATUS_FILTERS.filter((s) => next.includes(s.id));
+	const getAvailableStatuses = (currentStatus: string) => {
+		const next = ALLOWED_NEXT_STATUS[currentStatus as OrderStatus] || [];
+		return STATUS_FILTERS.filter((s) => s.id !== 'all' && next.includes(s.id));
 	};
 
-	const changeOrderStatus = async (orderId, newStatus) => {
+	const changeOrderStatus = async (orderId: string | number | null | undefined, newStatus: OrderStatus | string | null | undefined) => {
 		if (!orderId || !newStatus) return false;
 		try {
 			await sanctum(`/api/admin/orders/${orderId}/status`, {
@@ -101,12 +113,12 @@ export function useAdminSpedizioni() {
 			await fetchShipments();
 			return true;
 		} catch (e) {
-			actionMessage.value = e?.message || 'Errore aggiornamento stato.';
+			actionMessage.value = getErrorMessage(e, 'Errore aggiornamento stato.');
 			return false;
 		}
 	};
 
-	const downloadLabel = async (orderId) => {
+	const downloadLabel = async (orderId: string | number | null | undefined) => {
 		if (!orderId) return false;
 		try {
 			const res = await sanctum(`/api/admin/orders/${orderId}/label`, { responseType: 'blob' });
@@ -124,7 +136,7 @@ export function useAdminSpedizioni() {
 		}
 	};
 
-	const formatDate = (value) => {
+	const formatDate = (value: string | number | Date | null | undefined) => {
 		if (!value) return '';
 		const d = new Date(value);
 		if (Number.isNaN(d.getTime())) return String(value);

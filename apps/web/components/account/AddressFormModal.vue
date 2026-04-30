@@ -78,7 +78,7 @@ const validate = () => {
 	if (isCompany.value) {
 		if (!f.company_name?.trim()) err.company_name = 'Inserisci la ragione sociale';
 		if (!f.vat_number?.trim()) err.vat_number = 'Inserisci la Partita IVA';
-		else if (!/^[A-Z]{0,2}[0-9]{11}$/i.test(f.vat_number.replace(/\s/g, ''))) err.vat_number = 'Partita IVA non valida (11 cifre)';
+		else if (!/^[A-Z]{0,2}\d{11}$/i.test(f.vat_number.replace(/\s/g, ''))) err.vat_number = 'Partita IVA non valida (11 cifre)';
 	} else {
 		if (!f.first_name?.trim()) err.first_name = 'Inserisci il nome';
 		if (!f.last_name?.trim()) err.last_name = 'Inserisci il cognome';
@@ -96,7 +96,7 @@ const validate = () => {
 	if (!f.telephone_number?.trim()) err.telephone_number = 'Inserisci un numero di telefono';
 	else if (!/^[+\d\s().-]{6,}$/.test(f.telephone_number)) err.telephone_number = 'Numero di telefono non valido';
 
-	if (f.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(f.email)) err.email = 'Email non valida';
+	if (f.email && !/^[^\s@]{1,64}@[^\s@.]{1,253}(?:\.[^\s@.]{1,63})+$/.test(f.email)) err.email = 'Email non valida';
 
 	errors.value = err;
 	return Object.keys(err).length === 0;

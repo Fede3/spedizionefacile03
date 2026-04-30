@@ -289,6 +289,8 @@ onMounted(() => {
 						:remove-supplement="removeSupplement"
 						:supplement-amount-to-euro="supplementAmountToEuro"
 						:update-supplement-amount-from-euro="updateSupplementAmountFromEuro"
+						@update:extra-rules="extraRules = $event"
+						@update:supplement-rules="supplementRules = $event"
 					/>
 
 					<AdminPrezziEuropa
@@ -354,6 +356,7 @@ onMounted(() => {
 						:promo-image-uploading="promoImageUploading"
 						:save-promo="savePromo"
 						:upload-promo-image="uploadPromoImage"
+						@update:promo="promo = $event"
 					/>
 				</div>
 			</template>

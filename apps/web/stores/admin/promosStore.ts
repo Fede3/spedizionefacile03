@@ -11,9 +11,24 @@ import { defineStore } from 'pinia';
 import { ADMIN_DEFAULT_PROMO } from '~/utils/adminPrezziHelpers';
 const VALID_IMAGE_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
 const MAX_IMAGE_SIZE_BYTES = 2 * 1024 * 1024;
+type PromoSettings = typeof ADMIN_DEFAULT_PROMO;
+type PromoApiPayload = Partial<{
+    promo_active: boolean | string;
+    promo_label_text: string;
+    promo_label_color: string;
+    promo_label_image: string | null;
+    promo_show_badges: boolean | string;
+    promo_description: string;
+}>;
+type PromoApiResponse = PromoApiPayload & { data?: PromoApiPayload; image_url?: string };
+type AdminPricingHandlers = {
+    showSuccess: (message: string) => void;
+    showError: (error: unknown, fallback: string) => void;
+    reloadPublicPriceBands: () => Promise<void>;
+};
 export const useAdminPromosStore = defineStore('admin-promos', () => {
     // ---------- STATE ----------
-    const promo = ref({ ...ADMIN_DEFAULT_PROMO });
+    const promo = ref<PromoSettings>({ ...ADMIN_DEFAULT_PROMO });
     const promoLoading = ref(false);
     const promoSaving = ref(false);
     const promoImageUploading = ref(false);
@@ -22,9 +37,8 @@ export const useAdminPromosStore = defineStore('admin-promos', () => {
         const sanctum = useSanctumClient();
         promoLoading.value = true;
         try {
-            const res = await sanctum('/api/admin/promo-settings') | null;
-            const payload = res?.data ?? res ?? {};
-            const data = (payload);
+            const res = await sanctum('/api/admin/promo-settings') as PromoApiResponse | null;
+            const data: PromoApiPayload = res?.data || res || {};
             promo.value = {
                 active: data.promo_active === 'true' || data.promo_active === true,
                 label_text: data.promo_label_text || '',
@@ -41,7 +55,7 @@ export const useAdminPromosStore = defineStore('admin-promos', () => {
             promoLoading.value = false;
         }
     };
-    const savePromo = async (handlers) => {
+    const savePromo = async (handlers: AdminPricingHandlers) => {
         const sanctum = useSanctumClient();
         promoSaving.value = true;
         try {
@@ -65,8 +79,10 @@ export const useAdminPromosStore = defineStore('admin-promos', () => {
             promoSaving.value = false;
         }
     };
-    const uploadPromoImage = async (event, handlers) => {
-        const input = event.target;
+    const uploadPromoImage = async (event: Event, handlers: AdminPricingHandlers) => {
+        const input = event.target as HTMLInputElement | null;
+        if (!input)
+            return;
         const file = input.files?.[0];
         if (!file)
             return;
@@ -87,8 +103,8 @@ export const useAdminPromosStore = defineStore('admin-promos', () => {
             formData.append('image', file);
             const res = await sanctum('/api/admin/promo-settings/upload-image', {
                 method: 'POST',
-                body,
-            });
+                body: formData,
+            }) as PromoApiResponse;
             promo.value.label_image = res?.image_url || null;
             handlers.showSuccess('Immagine promo caricata.');
         }

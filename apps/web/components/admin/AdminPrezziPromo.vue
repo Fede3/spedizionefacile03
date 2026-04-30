@@ -8,6 +8,17 @@ const props = defineProps({
 	savePromo: { type: Function, required: true },
 	uploadPromoImage: { type: Function, required: true },
 });
+
+const emit = defineEmits(['update:promo']);
+
+const promoValue = (field) => props.promo?.[field] ?? '';
+const updatePromo = (field, value) => {
+	emit('update:promo', {
+		...props.promo,
+		[field]: value,
+	});
+};
+const togglePromo = (field) => updatePromo(field, !promoValue(field));
 </script>
 
 <template>
@@ -31,13 +42,13 @@ const props = defineProps({
 				</div>
 				<button type="button"
 					role="switch"
-					:aria-checked="promo.active ? 'true' : 'false'"
+					:aria-checked="promoValue('active') ? 'true' : 'false'"
 					aria-label="Attiva promozione"
-					@click="promo.active = !promo.active"
-					:class="promo.active ? 'bg-[#095866]' : 'bg-[#C8CCD0]'"
+					@click="togglePromo('active')"
+					:class="promoValue('active') ? 'bg-[#095866]' : 'bg-[#C8CCD0]'"
 					class="relative inline-flex h-[36px] w-[60px] tablet:h-[28px] tablet:w-[52px] items-center rounded-full transition-colors cursor-pointer">
 					<span
-						:class="promo.active ? 'translate-x-[28px] tablet:translate-x-[26px]' : 'translate-x-[2px]'"
+						:class="promoValue('active') ? 'translate-x-[28px] tablet:translate-x-[26px]' : 'translate-x-[2px]'"
 						class="inline-block h-[30px] w-[30px] tablet:h-[24px] tablet:w-[24px] transform rounded-full bg-white transition-transform shadow-sm" />
 				</button>
 			</div>
@@ -47,21 +58,23 @@ const props = defineProps({
 				<label class="block text-[0.8125rem] font-medium text-[#252B42] mb-[6px]">Testo etichetta</label>
 				<input
 					type="text"
-					v-model="promo.label_text"
+					:value="promoValue('label_text')"
 					placeholder="es. OFFERTA LANCIO"
 					maxlength="100"
-					class="w-full max-w-[400px] bg-[#FAFBFC] border border-[#E9EBEC] rounded-[50px] h-[48px] tablet:h-[44px] px-[16px] text-[1rem] tablet:text-[0.875rem] text-[#252B42] placeholder:text-[#A0A5AB] focus:border-[#095866] focus:outline-none" />
+					class="w-full max-w-[400px] bg-[#FAFBFC] border border-[#E9EBEC] rounded-[50px] h-[48px] tablet:h-[44px] px-[16px] text-[1rem] tablet:text-[0.875rem] text-[#252B42] placeholder:text-[#A0A5AB] focus:border-[#095866] focus:outline-none"
+					@input="updatePromo('label_text', $event.target.value)" />
 			</div>
 
 			<!-- Descrizione sconto -->
 			<div>
 				<label class="block text-[0.8125rem] font-medium text-[#252B42] mb-[6px]">Descrizione sconto (mostrata nell'header)</label>
 				<textarea
-					v-model="promo.description"
+					:value="promoValue('description')"
 					placeholder="es. Sconto del 20% su tutte le spedizioni nazionali! Valido fino al 31 marzo."
 					maxlength="300"
 					rows="3"
-					class="w-full max-w-[500px] bg-[#FAFBFC] border border-[#E9EBEC] rounded-[16px] px-[16px] py-[12px] text-[0.875rem] text-[#252B42] placeholder:text-[#A0A5AB] focus:border-[#095866] focus:outline-none resize-y"></textarea>
+					class="w-full max-w-[500px] bg-[#FAFBFC] border border-[#E9EBEC] rounded-[16px] px-[16px] py-[12px] text-[0.875rem] text-[#252B42] placeholder:text-[#A0A5AB] focus:border-[#095866] focus:outline-none resize-y"
+					@input="updatePromo('description', $event.target.value)"></textarea>
 				<p class="text-[0.6875rem] text-[var(--color-brand-text-muted)] mt-[4px]">Massimo 300 caratteri. Questo testo appare sotto il prezzo nella homepage.</p>
 			</div>
 
@@ -71,14 +84,16 @@ const props = defineProps({
 				<div class="flex flex-wrap items-center gap-[12px]">
 					<input
 						type="color"
-						v-model="promo.label_color"
-						class="w-[44px] h-[44px] rounded-[12px] border border-[#E9EBEC] cursor-pointer" />
+						:value="promoValue('label_color')"
+						class="w-[44px] h-[44px] rounded-[12px] border border-[#E9EBEC] cursor-pointer"
+						@input="updatePromo('label_color', $event.target.value)" />
 					<input
 						type="text"
-						v-model="promo.label_color"
+						:value="promoValue('label_color')"
 						placeholder="#095866"
 						maxlength="20"
-						class="w-[140px] bg-[#FAFBFC] border border-[#E9EBEC] rounded-[50px] h-[44px] px-[16px] text-[0.875rem] text-[#252B42] font-mono focus:border-[#095866] focus:outline-none" />
+						class="w-[140px] bg-[#FAFBFC] border border-[#E9EBEC] rounded-[50px] h-[44px] px-[16px] text-[0.875rem] text-[#252B42] font-mono focus:border-[#095866] focus:outline-none"
+						@input="updatePromo('label_color', $event.target.value)" />
 					<span
 						v-if="promo.label_text"
 						:style="{ backgroundColor: promo.label_color }"
@@ -99,7 +114,7 @@ const props = defineProps({
 					</label>
 					<div v-if="promo.label_image" class="flex items-center gap-[8px]">
 						<img :src="promo.label_image" alt="Promo" loading="lazy" decoding="async" width="80" height="40" class="h-[40px] w-auto rounded-[6px] border border-[#E9EBEC]" />
-						<button type="button" @click="promo.label_image = null" class="text-red-500 text-[0.75rem] hover:opacity-80 cursor-pointer">Rimuovi</button>
+						<button type="button" @click="updatePromo('label_image', null)" class="text-red-500 text-[0.75rem] hover:opacity-80 cursor-pointer">Rimuovi</button>
 					</div>
 				</div>
 			</div>
@@ -112,13 +127,13 @@ const props = defineProps({
 				</div>
 				<button type="button"
 					role="switch"
-					:aria-checked="promo.show_badges ? 'true' : 'false'"
+					:aria-checked="promoValue('show_badges') ? 'true' : 'false'"
 					aria-label="Mostra badge sconto percentuale"
-					@click="promo.show_badges = !promo.show_badges"
-					:class="promo.show_badges ? 'bg-[#095866]' : 'bg-[#C8CCD0]'"
+					@click="togglePromo('show_badges')"
+					:class="promoValue('show_badges') ? 'bg-[#095866]' : 'bg-[#C8CCD0]'"
 					class="relative inline-flex h-[36px] w-[60px] tablet:h-[28px] tablet:w-[52px] items-center rounded-full transition-colors cursor-pointer">
 					<span
-						:class="promo.show_badges ? 'translate-x-[28px] tablet:translate-x-[26px]' : 'translate-x-[2px]'"
+						:class="promoValue('show_badges') ? 'translate-x-[28px] tablet:translate-x-[26px]' : 'translate-x-[2px]'"
 						class="inline-block h-[30px] w-[30px] tablet:h-[24px] tablet:w-[24px] transform rounded-full bg-white transition-transform shadow-sm" />
 				</button>
 			</div>

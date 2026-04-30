@@ -1,5 +1,6 @@
 <!-- Privacy Policy — GDPR (Reg. UE 2016/679) + CCPA. Hero + TOC sticky desktop + 10 sezioni. -->
 <script setup>
+/* eslint-disable no-useless-escape */
 useSeoMeta({
 	title: 'Privacy Policy',
 	ogTitle: 'Privacy Policy | SpedizioneFacile',

@@ -1,5 +1,5 @@
 <script setup>
-const props = defineProps({
+defineProps({
 	servicePricingEntries: { type: Array, required: true },
 	automaticSupplementEntries: { type: Array, required: true },
 	operationalFeeEntries: { type: Array, required: true },

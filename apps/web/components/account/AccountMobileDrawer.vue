@@ -6,7 +6,7 @@
  */
 import { accountCardIcons } from '~/utils/account';
 
-const props = defineProps({
+defineProps({
 	mobileOpen: { type: Boolean, default: false },
 	fullName: { type: String, required: true },
 	initials: { type: String, required: true },

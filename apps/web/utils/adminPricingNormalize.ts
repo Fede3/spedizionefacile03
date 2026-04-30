@@ -5,9 +5,22 @@
  * normalizeStringList, normalizeTiers, normalizePricingGroup, normalizeEuropePricing,
  * buildPricingRulesPayload.
  */
-import { DEFAULT_EUROPE_PRICING } from './adminPricingDefaults';
+import { DEFAULT_EUROPE_PRICING } from '~/utils/priceBandsConstants';
+import type { EuropeBand, EuropePricing, EuropeRate, PricingRule, PricingRuleGroup } from '~/types/pricing';
 
-export const normalizeStringListForAdmin = (values = [], { uppercase = false } = {}) => {
+type UnknownRecord = Record<string, unknown>;
+type AdminTier = { up_to_kg: number | null; price_cents: number };
+
+const isRecord = (value: unknown): value is UnknownRecord => value !== null && typeof value === 'object' && !Array.isArray(value);
+
+const numberOrNull = (value: unknown, fallback: number | null = null): number | null => {
+	if (value === null || value === undefined || value === '') return fallback;
+	return Number(value || 0);
+};
+
+const arrayFrom = (value: unknown): unknown[] => Array.isArray(value) ? value : [];
+
+export const normalizeStringListForAdmin = (values: unknown[] = [], { uppercase = false }: { uppercase?: boolean } = {}): string[] => {
 	if (!Array.isArray(values)) return [];
 	return [...new Set(values
 		.map((value) => String(value || '').trim())
@@ -15,14 +28,14 @@ export const normalizeStringListForAdmin = (values = [], { uppercase = false } =
 		.map((value) => uppercase ? value.toUpperCase() : value.toLowerCase()))];
 };
 
-export const normalizeTiersForAdmin = (tiers = []) => {
+export const normalizeTiersForAdmin = (tiers: unknown[] = []): AdminTier[] => {
 	if (!Array.isArray(tiers)) return [];
 	return [...tiers]
 		.map((tier) => ({
-			up_to_kg: tier?.up_to_kg === null || tier?.up_to_kg === undefined || tier?.up_to_kg === ''
+			up_to_kg: isRecord(tier) && (tier.up_to_kg === null || tier.up_to_kg === undefined || tier.up_to_kg === '')
 				? null
-				: Number(tier.up_to_kg),
-			price_cents: Number(tier?.price_cents || 0),
+				: Number(isRecord(tier) ? tier.up_to_kg : 0),
+			price_cents: Number(isRecord(tier) ? tier.price_cents || 0 : 0),
 		}))
 		.sort((a, b) => {
 			const left = a.up_to_kg ?? Number.POSITIVE_INFINITY;
@@ -31,98 +44,90 @@ export const normalizeTiersForAdmin = (tiers = []) => {
 		});
 };
 
-export const normalizePricingGroupForAdmin = (config = {}, defaults = {}) => Object.fromEntries(
+export const normalizePricingGroupForAdmin = (
+	config: Record<string, unknown> = {},
+	defaults: PricingRuleGroup = {},
+): PricingRuleGroup => Object.fromEntries(
 	Object.entries(defaults).map(([key, fallback]) => {
-		const source = config?.[key] && typeof config[key] === 'object' ? config[key] : {};
+		const fallbackRule = fallback;
+		const source = isRecord(config[key]) ? config[key] : {};
 		return [key, {
-			...fallback,
+			...fallbackRule,
 			...source,
-			enabled: source?.enabled !== false && fallback?.enabled !== false,
-			price_cents: source?.price_cents === null || source?.price_cents === undefined
-				? fallback?.price_cents ?? null
-				: Number(source.price_cents || 0),
-			min_fee_cents: source?.min_fee_cents === null || source?.min_fee_cents === undefined
-				? fallback?.min_fee_cents ?? null
-				: Number(source.min_fee_cents || 0),
-			percentage_rate: source?.percentage_rate === null || source?.percentage_rate === undefined
-				? fallback?.percentage_rate ?? null
-				: Number(source.percentage_rate || 0),
-			threshold_amount_eur: source?.threshold_amount_eur === null || source?.threshold_amount_eur === undefined
-				? fallback?.threshold_amount_eur ?? null
-				: Number(source.threshold_amount_eur || 0),
-			max_weight_kg: source?.max_weight_kg === null || source?.max_weight_kg === undefined
-				? fallback?.max_weight_kg ?? null
-				: Number(source.max_weight_kg || 0),
-			threshold_cm: source?.threshold_cm === null || source?.threshold_cm === undefined
-				? fallback?.threshold_cm ?? null
-				: Number(source.threshold_cm || 0),
-			longest_side_threshold_cm: source?.longest_side_threshold_cm === null || source?.longest_side_threshold_cm === undefined
-				? fallback?.longest_side_threshold_cm ?? null
-				: Number(source.longest_side_threshold_cm || 0),
-			girth_threshold_cm: source?.girth_threshold_cm === null || source?.girth_threshold_cm === undefined
-				? fallback?.girth_threshold_cm ?? null
-				: Number(source.girth_threshold_cm || 0),
-			min_longest_side_cm: source?.min_longest_side_cm === null || source?.min_longest_side_cm === undefined
-				? fallback?.min_longest_side_cm ?? null
-				: Number(source.min_longest_side_cm || 0),
-			max_secondary_side_cm: source?.max_secondary_side_cm === null || source?.max_secondary_side_cm === undefined
-				? fallback?.max_secondary_side_cm ?? null
-				: Number(source.max_secondary_side_cm || 0),
+			enabled: source.enabled !== false && fallbackRule.enabled !== false,
+			price_cents: numberOrNull(source.price_cents, fallbackRule.price_cents ?? null),
+			min_fee_cents: numberOrNull(source.min_fee_cents, fallbackRule.min_fee_cents ?? null),
+			percentage_rate: numberOrNull(source.percentage_rate, fallbackRule.percentage_rate ?? null),
+			threshold_amount_eur: numberOrNull(source.threshold_amount_eur, fallbackRule.threshold_amount_eur ?? null),
+			max_weight_kg: numberOrNull(source.max_weight_kg, fallbackRule.max_weight_kg ?? null),
+			threshold_cm: numberOrNull(source.threshold_cm, fallbackRule.threshold_cm ?? null),
+			longest_side_threshold_cm: numberOrNull(source.longest_side_threshold_cm, fallbackRule.longest_side_threshold_cm ?? null),
+			girth_threshold_cm: numberOrNull(source.girth_threshold_cm, fallbackRule.girth_threshold_cm ?? null),
+			min_longest_side_cm: numberOrNull(source.min_longest_side_cm, fallbackRule.min_longest_side_cm ?? null),
+			max_secondary_side_cm: numberOrNull(source.max_secondary_side_cm, fallbackRule.max_secondary_side_cm ?? null),
 			province_codes: Array.isArray(source?.province_codes)
-				? normalizeStringListForAdmin(source.province_codes, { uppercase: true })
-				: [...(fallback?.province_codes || [])],
+				? normalizeStringListForAdmin(arrayFrom(source.province_codes), { uppercase: true })
+				: [...(fallbackRule.province_codes || [])],
 			country_codes: Array.isArray(source?.country_codes)
-				? normalizeStringListForAdmin(source.country_codes, { uppercase: true })
-				: [...(fallback?.country_codes || [])],
+				? normalizeStringListForAdmin(arrayFrom(source.country_codes), { uppercase: true })
+				: [...(fallbackRule.country_codes || [])],
 			keyword_list: Array.isArray(source?.keyword_list)
-				? normalizeStringListForAdmin(source.keyword_list)
-				: [...(fallback?.keyword_list || [])],
+				? normalizeStringListForAdmin(arrayFrom(source.keyword_list))
+				: [...(fallbackRule.keyword_list || [])],
 			flag_keys: Array.isArray(source?.flag_keys)
-				? normalizeStringListForAdmin(source.flag_keys)
-				: [...(fallback?.flag_keys || [])],
+				? normalizeStringListForAdmin(arrayFrom(source.flag_keys))
+				: [...(fallbackRule.flag_keys || [])],
 			delivery_modes: Array.isArray(source?.delivery_modes)
-				? normalizeStringListForAdmin(source.delivery_modes)
-				: [...(fallback?.delivery_modes || [])],
+				? normalizeStringListForAdmin(arrayFrom(source.delivery_modes))
+				: [...(fallbackRule.delivery_modes || [])],
 			tiers: Array.isArray(source?.tiers)
-				? normalizeTiersForAdmin(source.tiers)
-				: normalizeTiersForAdmin(fallback?.tiers || []),
-		}];
+				? normalizeTiersForAdmin(arrayFrom(source.tiers))
+				: normalizeTiersForAdmin(fallbackRule.tiers || []),
+		} satisfies PricingRule];
 	}),
 );
 
-export const normalizeEuropePricingForAdmin = (config = {}) => {
-	const bands = Array.isArray(config?.bands)
-		? config.bands.map((band, bandIndex) => ({
-			id: String(band?.id ?? `eu-band-${bandIndex + 1}`),
-			label: String(band?.label ?? '').trim(),
-			max_weight_kg: Number(band?.max_weight_kg ?? 0),
-			max_volume_m3: Number(band?.max_volume_m3 ?? 0),
-			volumetric_factor: Number(band?.volumetric_factor ?? 250),
-			rates: Array.isArray(band?.rates)
-				? band.rates.map((rate) => ({
-					country_code: String(rate?.country_code ?? '').trim().toUpperCase(),
-					country_name: String(rate?.country_name ?? '').trim(),
-					price_cents: rate?.price_cents === null || rate?.price_cents === '' || rate?.price_cents === undefined
+export const normalizeEuropePricingForAdmin = (config: Partial<EuropePricing> | UnknownRecord = {}): EuropePricing => {
+	const source = isRecord(config) ? config : {};
+	const bands: EuropeBand[] = Array.isArray(source.bands)
+		? source.bands.map((rawBand, bandIndex) => {
+			const band = isRecord(rawBand) ? rawBand : {};
+			return {
+				id: String(band.id ?? `eu-band-${bandIndex + 1}`),
+				label: String(band.label ?? '').trim(),
+				max_weight_kg: Number(band.max_weight_kg ?? 0),
+				max_volume_m3: Number(band.max_volume_m3 ?? 0),
+				volumetric_factor: Number(band.volumetric_factor ?? 250),
+				rates: Array.isArray(band.rates)
+					? band.rates.map((rawRate): EuropeRate => {
+						const rate = isRecord(rawRate) ? rawRate : {};
+						return {
+							country_code: String(rate.country_code ?? '').trim().toUpperCase(),
+							country_name: String(rate.country_name ?? '').trim(),
+							price_cents: rate.price_cents === null || rate.price_cents === '' || rate.price_cents === undefined
 						? null
 						: Number(rate.price_cents),
-					quote_required: rate?.quote_required === true,
-				}))
-				: [],
-		}))
+							quote_required: rate.quote_required === true,
+						};
+					})
+					: [],
+			};
+		})
 		: [];
 
 	return {
 		...DEFAULT_EUROPE_PRICING,
-		enabled: config?.enabled !== false,
-		origin_country_code: String(config?.origin_country_code ?? 'IT').trim().toUpperCase() || 'IT',
+		enabled: source.enabled !== false,
+		origin_country_code: String(source.origin_country_code ?? 'IT').trim().toUpperCase() || 'IT',
 		max_packages: 1,
 		max_quantity_per_package: 1,
 		bands,
-		supported_country_codes: Array.isArray(config?.supported_country_codes)
-			? [...config.supported_country_codes]
+		supported_country_codes: Array.isArray(source.supported_country_codes)
+			? source.supported_country_codes.map((code) => String(code).trim().toUpperCase()).filter(Boolean)
 			: [...new Set(bands.flatMap((band) => band.rates.map((rate) => rate.country_code)))].sort(),
-		version: config?.version || null,
+		version: typeof source.version === 'string' || typeof source.version === 'number' ? source.version : null,
 	};
 };
 
-export const buildPricingRulesPayload = (group = {}) => JSON.parse(JSON.stringify(group));
+export const buildPricingRulesPayload = <T extends Record<string, unknown>>(group: T = {} as T): T =>
+	JSON.parse(JSON.stringify(group)) as T;

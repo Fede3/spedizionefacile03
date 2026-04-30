@@ -76,7 +76,6 @@ const {
 	searchImmediate,
 	useCurrentLocation,
 	selectPudo,
-	clearSelection,
 	resetFilters,
 	startNowTimer,
 	stopNowTimer,

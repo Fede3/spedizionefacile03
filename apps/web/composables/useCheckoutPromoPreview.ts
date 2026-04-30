@@ -1,101 +1,105 @@
-/**
- * @file useCheckoutPromoPreview — Composable useCheckoutPromoPreview.
- */
-import { computed, ref } from "vue";
+import { computed, ref } from 'vue'
 
-import { buildDiscountPreviewState } from "~/utils/discountPreview";
+import { buildDiscountPreviewState } from '~/utils/discountPreview'
 
-/**
- * Boundary canonico della preview coupon/referral nel checkout.
- *
- * Dove entra:
- * - `useCart()` nello step pagamento
- *
- * Cosa decide:
- * - validazione codice promo nel checkout
- * - autoload del referral attivo dell'utente
- * - shape UI canonica della preview sconto
- *
- * Cosa NON decide:
- * - pricing finale persistito dell'ordine
- * - accredito commissione referral
- * - reward/wallet post-ordine
- */
-export function useCheckoutPromoPreview({ sanctum, total }) {
-	const couponCode = ref("");
-	const couponLoading = ref(false);
-	const couponError = ref("");
-	const couponApplied = ref(null);
-	const couponPanelOpen = ref(false);
-	const referralAutoloadTried = ref(false);
+type ValueRef<T> = { value: T }
+type PromoResponse = {
+	success?: boolean
+	has_discount?: boolean
+	referral_code?: string
+	error?: string
+	message?: string
+	response?: { _data?: { error?: string; message?: string } }
+	data?: { error?: string; message?: string }
+	[key: string]: unknown
+}
+type PromoPreview = ReturnType<typeof buildDiscountPreviewState>
+type UseCheckoutPromoPreviewOptions = {
+	sanctum: <T = PromoResponse>(url: string, options?: Record<string, unknown>) => Promise<T>
+	total?: ValueRef<unknown>
+}
 
-	const discountedTotal = computed(() => {
-		if (couponApplied.value && Number.isFinite(Number(couponApplied.value.new_total_raw))) {
-			return Number(couponApplied.value.new_total_raw);
-		}
+const getPromoError = (error: unknown): string => {
+	if (!error || typeof error !== 'object') return 'Codice non valido.'
+	const source = error as PromoResponse
+	return source.response?._data?.error
+		|| source.response?._data?.message
+		|| source.data?.error
+		|| source.data?.message
+		|| source.error
+		|| source.message
+		|| 'Codice non valido.'
+}
 
-		return Number(total?.value || 0);
-	});
+export function useCheckoutPromoPreview({ sanctum, total }: UseCheckoutPromoPreviewOptions) {
+	const couponCode = ref('')
+	const couponLoading = ref(false)
+	const couponError = ref('')
+	const couponApplied = ref<PromoPreview | null>(null)
+	const couponPanelOpen = ref(false)
+	const referralAutoloadTried = ref(false)
+
+	const currentTotal = () => Number(total?.value || 0)
+	const discountedTotal = computed(() => couponApplied.value?.new_total_raw ?? currentTotal())
 
 	const validateCoupon = async () => {
-		const code = couponCode.value?.trim().toUpperCase();
-		if (!code || code.length < 2) return;
+		const code = couponCode.value.trim().toUpperCase()
+		if (!code || code.length < 2) return
 
-		couponLoading.value = true;
-		couponError.value = "";
-		couponApplied.value = null;
+		couponLoading.value = true
+		couponError.value = ''
+		couponApplied.value = null
 
 		try {
-			const result = await sanctum("/api/calculate-coupon", {
-				method: "POST",
-				body: { coupon: code, total: Number(total?.value || 0) },
-			});
+			const result = await sanctum<PromoResponse>('/api/calculate-coupon', {
+				method: 'POST',
+				body: { coupon: code, total: currentTotal() },
+			})
 
-			if (result?.success) {
+			if (result.success) {
 				couponApplied.value = buildDiscountPreviewState({
 					result,
-					total: Number(total?.value || 0),
+					total: currentTotal(),
 					codeFallback: code,
-					typeFallback: "coupon",
-				});
-				couponPanelOpen.value = true;
+					typeFallback: 'coupon',
+				})
+				couponPanelOpen.value = true
 			}
 		} catch (e) {
-			const data = e?.response?._data || e?.data;
-			couponError.value = data?.error || data?.message || "Codice non valido.";
-			couponPanelOpen.value = true;
+			couponError.value = getPromoError(e)
+			couponPanelOpen.value = true
 		} finally {
-			couponLoading.value = false;
+			couponLoading.value = false
 		}
-	};
+	}
 
 	const autoApplyReferral = async () => {
-		if (couponApplied.value || referralAutoloadTried.value) return;
+		if (couponApplied.value || referralAutoloadTried.value) return
 
-		referralAutoloadTried.value = true;
+		referralAutoloadTried.value = true
 
 		try {
-			const result = await sanctum("/api/referral/my-discount");
-			if (result?.has_discount && result?.referral_code) {
-				couponCode.value = result.referral_code;
+			const result = await sanctum<PromoResponse>('/api/referral/my-discount')
+			if (result.has_discount && result.referral_code) {
+				couponCode.value = result.referral_code
 				couponApplied.value = buildDiscountPreviewState({
 					result,
-					total: Number(total?.value || 0),
+					total: currentTotal(),
 					codeFallback: result.referral_code,
-					typeFallback: "referral",
-				});
+					typeFallback: 'referral',
+				})
 			}
 		} catch {
-			// Silent: il referral attivo e' opzionale.
+			// Referral autoload is optional.
 		}
-	};
+	}
 
 	const removeCoupon = () => {
-		couponApplied.value = null;
-		couponCode.value = "";
-		couponError.value = "";
-		couponPanelOpen.value = false;
-	};
+		couponApplied.value = null
+		couponCode.value = ''
+		couponError.value = ''
+		couponPanelOpen.value = false
+	}
 
 	return {
 		autoApplyReferral,
@@ -107,5 +111,5 @@ export function useCheckoutPromoPreview({ sanctum, total }) {
 		discountedTotal,
 		removeCoupon,
 		validateCoupon,
-	};
+	}
 }

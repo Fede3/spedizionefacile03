@@ -7,14 +7,14 @@ useSeoMeta({
 });
 
 const {
-  cart, refresh, status, isAuthenticated,
+  cart, status, isAuthenticated,
   promoSettings,
-  filterProvenienza, filterRiferimento, filteredCartItems, uniqueCities,
+  filterProvenienza, filterRiferimento, uniqueCities,
   showDeleteConfirm, deleteLoading, askDelete, confirmDelete,
   showEmptyConfirm, emptyCartLoading, emptyCart,
-  formatPrice, unitPrice, formatDate, getPackageIcon,
-  quantityUpdating, updateQuantity, quantityButtonClass, quantityButtonCompactClass, quantityButtonMobileClass,
-  addressGroups, groupColors, expandedGroups, toggleGroup, isGroupExpanded, displayEntries,
+  formatPrice, unitPrice, getPackageIcon,
+  updateQuantity, quantityButtonClass, quantityButtonCompactClass, quantityButtonMobileClass,
+  toggleGroup, isGroupExpanded, displayEntries,
   couponCode, couponMessage, couponApplied, couponDiscount, appliedTotal,
   showCouponField, showCouponPanel, applyCoupon, removeCoupon, displayTotal,
   openCheckoutWithAuthGate,

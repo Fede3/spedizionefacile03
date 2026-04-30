@@ -7,7 +7,7 @@
   isPublished: { type: Boolean, default: false },
   publishStateHint: { type: String, required: true },
 });
-const emit = defineEmits();
+const emit = defineEmits(['update:title', 'slug-from-title', 'update:slug', 'update:metaDescription', 'update:intro', 'update:isPublished']);
 const onTitleInput = (event) => {
     const value = event.target.value;
     emit('update:title', value);

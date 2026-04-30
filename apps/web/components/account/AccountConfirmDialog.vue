@@ -16,14 +16,6 @@ const close = () => {
   emit('cancel');
 };
 
-const toneClasses = computed(() => {
-  if (props.tone === 'primary') {
-    return 'btn-primary btn-compact';
-  }
-
-  return 'btn-danger btn-compact';
-});
-
 const modalDescription = computed(() => props.description || `Conferma richiesta: ${props.title}.`);
 
 const modalUi = {
@@ -86,4 +78,3 @@ const modalUi = {
     </template>
   </UModal>
 </template>
-

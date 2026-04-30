@@ -7,7 +7,7 @@ const props = defineProps({
   persistent: { type: Boolean, default: false },
   hideClose: { type: Boolean, default: false },
 });
-const emit = defineEmits();
+const emit = defineEmits(['update:modelValue', 'close']);
 const titleId = `sf-modal-title-${useId()}`;
 const dialogRef = ref(null);
 let previousActive = null;

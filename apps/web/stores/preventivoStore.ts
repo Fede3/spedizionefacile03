@@ -2,9 +2,39 @@
  * @file preventivoStore — Pinia store preventivoStore.
  */
 import { defineStore } from 'pinia';
+import type { Ref } from 'vue';
 import { buildQuotePayloadSnapshotFor } from '~/utils/preventivoHelpers';
 import { buildQuoteComparableSignature, extractSessionComparablePayload, formatResolvedLocation } from '~/utils/quickQuoteContract';
 import { buildShipmentFlowLocation } from '~/utils/shipment';
+
+type QuotePackage = Record<string, unknown>;
+type QuoteShipmentDetails = Record<string, string | number | null | undefined>;
+type QuoteSessionData = {
+	shipment_details?: QuoteShipmentDetails;
+	packages?: QuotePackage[];
+	total_price?: number | string;
+	step?: number | string;
+	[key: string]: unknown;
+};
+type QuoteSyncOptions = {
+	sourceSignature?: string;
+};
+type ShipmentFlowStoreLike = {
+	shipmentDetails: QuoteShipmentDetails;
+	packages: QuotePackage[];
+	totalPrice: number;
+	stepNumber: number;
+	isQuoteStarted: boolean;
+};
+type ContinueToNextStepDeps = {
+	shipmentFlowStore: ShipmentFlowStoreLike;
+	flushLocationDraftsForSubmit: (formatter: (city?: string, cap?: string) => string) => Promise<unknown>;
+	calculateRate: (options: { silent: boolean; payload: QuoteSessionData }) => Promise<boolean>;
+	ensurePackagesIdentity: () => void;
+	ensurePrimaryPackage: () => void;
+	session: Ref<QuoteSessionData | { data?: QuoteSessionData } | null | undefined>;
+	refresh: () => Promise<QuoteSessionData | { data?: QuoteSessionData } | null | undefined>;
+};
 
 /**
  * preventivoStore — sorgente di verita' condivisa per il modulo Preventivo Rapido.
@@ -16,14 +46,14 @@ import { buildShipmentFlowLocation } from '~/utils/shipment';
  * orchestrano le sezioni (calcolo tariffa + navigazione step).
  */
 export const usePreventivoStore = defineStore('preventivo', () => {
-	const messageError = ref(null);
+	const messageError = ref<string | null>(null);
 	const isCalculating = ref(false);
 	const isSyncingQuote = ref(false);
 	const isAdvancingToServices = ref(false);
 	const lastQuotedSignature = ref('');
 
 	let autoQuoteTimer: ReturnType<typeof setTimeout> | null = null;
-	let pendingQuotePromise: Promise<unknown> | null = null;
+	let pendingQuotePromise: Promise<boolean> | null = null;
 	let pendingQuoteSignature = '';
 	let pendingQuoteSilent = false;
 	let pendingQuoteRequestId = 0;
@@ -43,7 +73,7 @@ export const usePreventivoStore = defineStore('preventivo', () => {
 	const getPendingQuotePromise = () => pendingQuotePromise;
 	const getPendingQuoteSignature = () => pendingQuoteSignature;
 	const setPending = (
-		promise: Promise<unknown> | null,
+		promise: Promise<boolean> | null,
 		signature: string,
 		silent: boolean,
 		requestId: number,
@@ -76,11 +106,11 @@ export const usePreventivoStore = defineStore('preventivo', () => {
 	 * sync degli shipmentDetails/packages viene saltato.
 	 */
 	const syncQuoteStateFromSession = (
-		shipmentFlowStore,
-		ensurePackagesIdentity,
-		ensurePrimaryPackage,
-		sessionData = {},
-		options = {},
+		shipmentFlowStore: ShipmentFlowStoreLike,
+		ensurePackagesIdentity: () => void,
+		ensurePrimaryPackage: () => void,
+		sessionData: QuoteSessionData = {},
+		options: QuoteSyncOptions = {},
 	) => {
 		const sourceSignature = String(options?.sourceSignature || '');
 		const sessionSignature = buildQuoteComparableSignature(extractSessionComparablePayload(sessionData));
@@ -95,7 +125,7 @@ export const usePreventivoStore = defineStore('preventivo', () => {
 		}
 		const shipmentDetails = sessionData?.shipment_details || {};
 		for (const [key, value] of Object.entries(shipmentDetails)) {
-			if (key in shipmentFlowStore?.shipmentDetails) {
+			if (key in shipmentFlowStore.shipmentDetails) {
 				shipmentFlowStore.shipmentDetails[key] = value ?? '';
 			}
 		}
@@ -131,7 +161,7 @@ export const usePreventivoStore = defineStore('preventivo', () => {
 	 * lo store e naviga a `/la-tua-spedizione/servizi`. Il lock di transizione
 	 * dura al massimo 8s per evitare deadlock in caso di race condition.
 	 */
-	const continueToNextStep = async (deps) => {
+	const continueToNextStep = async (deps: ContinueToNextStepDeps) => {
 		const {
 			shipmentFlowStore,
 			flushLocationDraftsForSubmit,
@@ -151,13 +181,12 @@ export const usePreventivoStore = defineStore('preventivo', () => {
 		}, 8000);
 		try {
 			await flushLocationDraftsForSubmit(formatResolvedLocation);
-			const payloadSnapshot = buildQuotePayloadSnapshotFor(shipmentFlowStore);
+			const payloadSnapshot = buildQuotePayloadSnapshotFor(shipmentFlowStore) as QuoteSessionData;
 			const payloadSignature = buildQuoteComparableSignature(payloadSnapshot);
 			const pendingPromise = getPendingQuotePromise();
 			const pendingSig = getPendingQuoteSignature();
-			const hasPendingSameQuote = Boolean(pendingPromise && pendingSig === payloadSignature);
 			let isValid = false;
-			if (hasPendingSameQuote) {
+			if (pendingPromise && pendingSig === payloadSignature) {
 				isValid = await pendingPromise;
 				if (!isValid) {
 					isValid = await calculateRate({ silent: false, payload: payloadSnapshot });
@@ -167,7 +196,7 @@ export const usePreventivoStore = defineStore('preventivo', () => {
 			}
 			if (!isValid) return;
 			const refreshedSession = await refresh().catch(() => session.value);
-			const refreshedData = refreshedSession?.data || refreshedSession || null;
+			const refreshedData = (refreshedSession && 'data' in refreshedSession ? refreshedSession.data : refreshedSession) as QuoteSessionData | null;
 			if (refreshedData) {
 				syncQuoteStateFromSession(
 					shipmentFlowStore,

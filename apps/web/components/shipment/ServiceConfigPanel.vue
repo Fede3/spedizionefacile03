@@ -10,6 +10,10 @@ const props = defineProps({
 	serviceIndex: { type: Number, required: true },
 	serviceData: { type: Object, required: true },
 	serviceCardErrors: { type: Object, required: true },
+	updateContrassegnoField: { type: Function, required: true },
+	updateAssicurazioneValue: { type: Function, required: true },
+	clearContrassegnoError: { type: Function, required: true },
+	clearAssicurazioneError: { type: Function, required: true },
 	contrassegnoIncassoOptions: { type: Array, required: true },
 	contrassegnoRimborsoOptions: { type: Array, required: true },
 	requiresContrassegnoDettaglio: { type: Boolean, default: false },
@@ -22,6 +26,32 @@ const props = defineProps({
 const emit = defineEmits(['remove', 'activate']);
 
 const showContrassegnoRimborso = computed(() => props.serviceData?.contrassegno?.modalita_incasso === 'assegno');
+
+const contrassegnoValue = (field) => props.serviceData?.contrassegno?.[field] || '';
+const assicurazioneValue = (index) => props.serviceData?.assicurazione?.[index] || '';
+
+const updateContrassegnoInput = (field, value, errorKey) => {
+	props.updateContrassegnoField(field, value);
+	props.clearContrassegnoError(errorKey);
+};
+
+const updateContrassegnoCurrency = (field, rawValue, errorKey) => {
+	updateContrassegnoInput(field, props.normalizeCurrencyInput(rawValue), errorKey);
+};
+
+const selectContrassegnoIncasso = (value) => {
+	updateContrassegnoInput('modalita_incasso', value, 'contrassegnoIncasso');
+	if (value === 'assegno') return;
+	props.updateContrassegnoField('modalita_rimborso', '');
+	props.updateContrassegnoField('dettaglio_rimborso', '');
+	props.clearContrassegnoError('contrassegnoRimborso');
+	props.clearContrassegnoError('contrassegnoDettaglio');
+};
+
+const updateAssicurazioneCurrency = (index, rawValue) => {
+	props.updateAssicurazioneValue(index, props.normalizeCurrencyInput(rawValue));
+	props.clearAssicurazioneError(index);
+};
 </script>
 
 <template>
@@ -35,16 +65,13 @@ const showContrassegnoRimborso = computed(() => props.serviceData?.contrassegno?
 					<div class="service-panel__input-wrap">
 						<input
 							:id="`contrassegno-importo-${serviceIndex}`"
-							v-model="serviceData.contrassegno.importo"
+							:value="contrassegnoValue('importo')"
 							type="text"
 							inputmode="decimal"
 							autocomplete="off"
 							class="service-panel__input"
 							placeholder="0,00"
-							@input="
-								serviceData.contrassegno.importo = normalizeCurrencyInput($event.target.value);
-								serviceCardErrors.contrassegnoImporto = '';
-							" />
+							@input="updateContrassegnoCurrency('importo', $event.target.value, 'contrassegnoImporto')" />
 						<span class="service-panel__suffix">&euro;</span>
 					</div>
 					<p v-if="serviceCardErrors.contrassegnoImporto" class="service-panel__error">{{ serviceCardErrors.contrassegnoImporto }}</p>
@@ -54,11 +81,11 @@ const showContrassegnoRimborso = computed(() => props.serviceData?.contrassegno?
 					<label :for="`contrassegno-iban-${serviceIndex}`" class="service-panel__label">IBAN rimborso</label>
 					<input
 						:id="`contrassegno-iban-${serviceIndex}`"
-						v-model="serviceData.contrassegno.dettaglio_rimborso"
+						:value="contrassegnoValue('dettaglio_rimborso')"
 						type="text"
 						class="service-panel__input"
 						placeholder="IT60X054281110..."
-						@input="serviceCardErrors.contrassegnoDettaglio = ''" />
+						@input="updateContrassegnoInput('dettaglio_rimborso', $event.target.value, 'contrassegnoDettaglio')" />
 					<p v-if="serviceCardErrors.contrassegnoDettaglio" class="service-panel__error">{{ serviceCardErrors.contrassegnoDettaglio }}</p>
 					<p class="service-panel__meta">Conto su cui accreditiamo l'importo incassato se scegli rimborso tramite bonifico.</p>
 				</div>
@@ -78,16 +105,7 @@ const showContrassegnoRimborso = computed(() => props.serviceData?.contrassegno?
 								type="button"
 								class="sf-shared-segment sf-shared-segment--compact"
 								:class="{ 'sf-shared-segment--active': serviceData.contrassegno.modalita_incasso === option.value }"
-								@click="
-									serviceData.contrassegno.modalita_incasso = option.value;
-									serviceCardErrors.contrassegnoIncasso = '';
-									if (option.value !== 'assegno') {
-										serviceData.contrassegno.modalita_rimborso = '';
-										serviceData.contrassegno.dettaglio_rimborso = '';
-										serviceCardErrors.contrassegnoRimborso = '';
-										serviceCardErrors.contrassegnoDettaglio = '';
-									}
-								">
+								@click="selectContrassegnoIncasso(option.value)">
 								{{ option.label }}
 							</button>
 						</div>
@@ -111,10 +129,7 @@ const showContrassegnoRimborso = computed(() => props.serviceData?.contrassegno?
 								type="button"
 								class="sf-shared-segment sf-shared-segment--compact"
 								:class="{ 'sf-shared-segment--active': serviceData.contrassegno.modalita_rimborso === option.value }"
-								@click="
-									serviceData.contrassegno.modalita_rimborso = option.value;
-									serviceCardErrors.contrassegnoRimborso = '';
-								">
+								@click="updateContrassegnoInput('modalita_rimborso', option.value, 'contrassegnoRimborso')">
 								{{ option.label }}
 							</button>
 						</div>
@@ -142,16 +157,13 @@ const showContrassegnoRimborso = computed(() => props.serviceData?.contrassegno?
 					<div class="service-panel__input-wrap">
 						<input
 							:id="`assicurazione-${indexPopup}`"
-							v-model="serviceData.assicurazione[indexPopup]"
+							:value="assicurazioneValue(indexPopup)"
 							type="text"
 							inputmode="decimal"
 							autocomplete="off"
 							class="service-panel__input"
 							placeholder="Valore merce"
-							@input="
-								serviceData.assicurazione[indexPopup] = normalizeCurrencyInput($event.target.value);
-								serviceCardErrors.assicurazione[indexPopup] = '';
-							" />
+							@input="updateAssicurazioneCurrency(indexPopup, $event.target.value)" />
 						<span class="service-panel__suffix">&euro;</span>
 					</div>
 					<p class="service-panel__meta">

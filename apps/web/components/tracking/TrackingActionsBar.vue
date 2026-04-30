@@ -2,7 +2,7 @@
 <script setup>
 import '~/assets/css/tracking.css';
 
-const props = defineProps({
+defineProps({
 	orderId: {
 		type: [String, Number],
 		default: null,
@@ -116,4 +116,3 @@ const emit = defineEmits(['reschedule', 'change-address']);
 		</div>
 	</div>
 </template>
-

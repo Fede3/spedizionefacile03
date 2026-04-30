@@ -10,7 +10,7 @@
   iconPath: { type: String, required: true },
   fieldKey: { type: String, required: true },
 });
-const emit = defineEmits();
+const emit = defineEmits(['update:items', 'add', 'remove']);
 const onHeadingInput = (index, event) => {
     const value = event.target.value;
     const next = [...props.items];

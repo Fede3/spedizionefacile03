@@ -5,14 +5,37 @@
  *   useAddressPudo         → selezione punto PUDO BRT
  * ARCHIVIATO: _archive/cleanup-features-2026-04-20/composables-consolidati-location-address/
  */
-import { ref, reactive, watch } from "vue";
+import { ref, watch } from "vue";
+import type { Ref } from "vue";
 import { dedupeLocations, getProvinceLabel, locationKey, normalizeLocationText } from "~/utils/location";
+import type { LocationRecord } from "~/utils/location";
+
+type LocationClient = (url: string) => Promise<unknown>;
+type PudoPoint = {
+	name?: string;
+	address?: string;
+	city?: string;
+	zip_code?: string;
+	province?: string;
+};
+type AddressPudoArgs = {
+	destinationAddress: Ref<Record<string, string>>;
+	deliveryMode: Ref<string>;
+	session: Ref<{ data?: { shipment_details?: Record<string, string> } } | null>;
+	userStore: {
+		selectedPudo?: PudoPoint | null;
+		shipmentDetails?: Record<string, string>;
+	};
+	sv: {
+		clearError: (field: string) => void;
+	};
+};
 
 // ─────────────────────────────────────────────────────────────────────────────
 // SEZIONE 1: LocationSearch (ex useLocationSearch)
 // Ricerca città/CAP generica via API pubblica /api/locations/*
 // ─────────────────────────────────────────────────────────────────────────────
-export const useLocationSearch = (client) => {
+export const useLocationSearch = (client?: LocationClient) => {
 	const locationSearchError = ref("");
 
 	const setLocationSearchError = () => {
@@ -23,31 +46,31 @@ export const useLocationSearch = (client) => {
 		locationSearchError.value = "";
 	};
 
-	const normalizeCountryCode = (value = "") => {
+	const normalizeCountryCode = (value: unknown = ""): string => {
 		const normalized = String(value || "").trim().toUpperCase();
 		return normalized.length === 2 ? normalized : "";
 	};
 
-	const buildCountryQuery = (countryCode) => {
+	const buildCountryQuery = (countryCode: unknown): string => {
 		const normalized = normalizeCountryCode(countryCode);
 		return normalized ? `&country=${encodeURIComponent(normalized)}` : "";
 	};
 
-	const cityMatchesQuery = (cityValue, rawQuery) => {
+	const cityMatchesQuery = (cityValue: unknown, rawQuery: unknown): boolean => {
 		const city = normalizeLocationText(cityValue);
 		const query = normalizeLocationText(rawQuery);
 		if (!query) return true;
 		return city.startsWith(query);
 	};
 
-	const sortLocations = (a, b) => {
+	const sortLocations = (a: LocationRecord, b: LocationRecord): number => {
 		const aName = normalizeLocationText(a?.place_name || "");
 		const bName = normalizeLocationText(b?.place_name || "");
 		if (aName !== bName) return aName.localeCompare(bName);
 		return String(a?.postal_code || "").localeCompare(String(b?.postal_code || ""));
 	};
 
-	const cityRelevanceScore = (location, rawQuery) => {
+	const cityRelevanceScore = (location: LocationRecord, rawQuery: unknown): number => {
 		const query = normalizeLocationText(rawQuery);
 		const city = normalizeLocationText(location?.place_name || "");
 		if (!query) return 99;
@@ -58,7 +81,7 @@ export const useLocationSearch = (client) => {
 		return 99;
 	};
 
-	const sortCitySuggestionsByRelevance = (locations, query) => {
+	const sortCitySuggestionsByRelevance = (locations: LocationRecord[], query: unknown): LocationRecord[] => {
 		return [...locations].sort((a, b) => {
 			const scoreA = cityRelevanceScore(a, query);
 			const scoreB = cityRelevanceScore(b, query);
@@ -73,27 +96,29 @@ export const useLocationSearch = (client) => {
 		});
 	};
 
-	const requestLocations = async (url) => {
-		let primaryError = null;
+	const requestLocations = async (url: string): Promise<unknown[]> => {
+		let primaryError: unknown = null;
 
 		if (typeof client === "function") {
 			try {
-				return await client(url);
+				const payload = await client(url);
+				return Array.isArray(payload) ? payload : [];
 			} catch (error) {
 				primaryError = error;
 			}
 		}
 
 		try {
-			return await $fetch(url, {
+			const payload = await $fetch(url, {
 				credentials: "include",
 			});
+			return Array.isArray(payload) ? payload : [];
 		} catch (fallbackError) {
 			throw primaryError || fallbackError;
 		}
 	};
 
-	const searchLocations = async (query, limit = 200, countryCode = "") => {
+	const searchLocations = async (query: unknown, limit = 200, countryCode = ""): Promise<LocationRecord[]> => {
 		if (!query || String(query).trim().length < 2) return [];
 		try {
 			const q = encodeURIComponent(String(query).trim());
@@ -106,7 +131,7 @@ export const useLocationSearch = (client) => {
 		}
 	};
 
-	const searchLocationsByCap = async (cap, countryCode = "") => {
+	const searchLocationsByCap = async (cap: unknown, countryCode = ""): Promise<LocationRecord[]> => {
 		if (!cap) return [];
 		try {
 			const q = encodeURIComponent(String(cap).trim());
@@ -119,7 +144,7 @@ export const useLocationSearch = (client) => {
 		}
 	};
 
-	const searchLocationsByCity = async (city, limit = 200, countryCode = "") => {
+	const searchLocationsByCity = async (city: unknown, limit = 200, countryCode = ""): Promise<LocationRecord[]> => {
 		if (!city || String(city).trim().length < 2) return [];
 		try {
 			const q = encodeURIComponent(String(city).trim());
@@ -181,9 +206,9 @@ export function useAddressPudo({
   session,
   userStore,
   sv,
-}) {
+}: AddressPudoArgs) {
   // --- NORMALIZE HELPER (local, no external dep needed) ---
-  const normalizeLocationText = (value = "") =>
+  const normalizeText = (value: unknown = ""): string =>
     String(value)
       .normalize("NFD")
       .replace(/[\u0300-\u036F]/g, "")
@@ -191,15 +216,15 @@ export function useAddressPudo({
       .trim();
 
   // --- PUDO SELECT/DESELECT ---
-  const onPudoSelected = (pudo) => {
+  const onPudoSelected = (pudo: PudoPoint) => {
     userStore.selectedPudo = pudo;
     destinationAddress.value.address = pudo.address || "";
     destinationAddress.value.address_number = "SNC";
     destinationAddress.value.city = pudo.city || "";
     destinationAddress.value.postal_code = pudo.zip_code || "";
     destinationAddress.value.province = pudo.province || "ND";
-    const selectedPudoName = normalizeLocationText(pudo?.name || "");
-    const currentDestName = normalizeLocationText(destinationAddress.value.full_name || "");
+    const selectedPudoName = normalizeText(pudo?.name || "");
+    const currentDestName = normalizeText(destinationAddress.value.full_name || "");
     if (selectedPudoName && currentDestName && selectedPudoName === currentDestName) {
       destinationAddress.value.full_name = "";
     }

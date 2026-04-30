@@ -1,4 +1,5 @@
 <script setup>
+/* eslint-disable no-useless-escape */
 useSeoMeta({
 	title: 'Cookie Policy',
 	ogTitle: 'Cookie Policy | SpedizioneFacile',

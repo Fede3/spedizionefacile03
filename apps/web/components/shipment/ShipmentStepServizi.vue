@@ -19,6 +19,10 @@ defineProps({
 	regularServices: { type: Array, default: () => [] },
 	serviceData: { type: Object, default: () => ({}) },
 	serviceCardErrors: { type: Object, default: () => ({}) },
+	updateContrassegnoField: { type: Function, required: true },
+	updateAssicurazioneValue: { type: Function, required: true },
+	clearContrassegnoError: { type: Function, required: true },
+	clearAssicurazioneError: { type: Function, required: true },
 	isServiceExpanded: { type: Function, required: true },
 	canConfigureService: { type: Function, required: true },
 	getServiceConfigureLabel: { type: Function, required: true },
@@ -109,6 +113,10 @@ onMounted(() => { mounted.value = true; });
 						:regular-services="regularServices"
 						:service-data="serviceData"
 						:service-card-errors="serviceCardErrors"
+						:update-contrassegno-field="updateContrassegnoField"
+						:update-assicurazione-value="updateAssicurazioneValue"
+						:clear-contrassegno-error="clearContrassegnoError"
+						:clear-assicurazione-error="clearAssicurazioneError"
 						:is-service-expanded="isServiceExpanded"
 						:can-configure-service="canConfigureService"
 						:get-service-configure-label="getServiceConfigureLabel"

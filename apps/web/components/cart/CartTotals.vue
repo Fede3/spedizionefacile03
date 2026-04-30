@@ -1,6 +1,4 @@
 <script setup>
-import '~/assets/css/shipment-flow.css';
-
 defineProps({
   cartMeta: { type: Object, default: () => ({}) },
   couponApplied: { type: Boolean, default: false },
