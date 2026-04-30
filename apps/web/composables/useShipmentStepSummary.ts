@@ -1,13 +1,21 @@
 /**
- * @file useShipmentStepSummary — Composable useShipmentStepSummary.
+ * useShipmentStepSummary — orchestra le ~30 computed del riepilogo funnel
+ * (cart, session, store, props).
  *
- * Eccezione formale (~628 LOC): orchestra ~30 computed che derivano da 8
- * sorgenti dati (cart, session, store, props). Pure helpers (parse/format
- * prezzo, getPackageLineAmount, cleanDisplayText) sono disponibili in
- * utils/summaryHelpers.ts per evoluzioni future. Splittare la reattivita'
- * computed-by-computed peggiora la leggibilita' senza ridurre LOC totali.
+ * Helper puri (parse/format prezzo, cleanDisplayText, ecc.) sono in
+ * utils/shipmentSummaryHelpers.ts per testabilita' isolata.
  */
 import { calculateShipmentServiceSurcharge } from "~/utils/shipmentServicePricing";
+import {
+	cleanDisplayText as cleanDisplayTextHelper,
+	firstMeaningfulValue as firstMeaningfulValueHelper,
+	parsePriceAmount,
+	formatPriceAmount,
+	pickBestPriceAmount,
+	normalizePackagePrice,
+	getPackageLineAmount,
+	getPackagesTotal,
+} from "~/utils/shipmentSummaryHelpers";
 import type { Ref } from 'vue';
 
 type SummaryAddress = {
@@ -142,105 +150,11 @@ export const useShipmentStepSummary = ({
 		});
 	});
 
-	const cleanDisplayText = (value: unknown): string => {
-		const raw = String(value ?? '').trim();
-		if (!raw) return '';
-
-		const normalized = typeof normalizeLocationText === 'function'
-			? normalizeLocationText(raw)
-			: raw.replace(/\s+/g, ' ').trim();
-		const lowered = normalized.toLowerCase();
-
-		if (
-			!normalized
-			|| lowered === 'n/d'
-			|| lowered === 'nd'
-			|| lowered === '—'
-			|| lowered === '-'
-			|| lowered === 'null'
-			|| lowered === 'undefined'
-		) {
-			return '';
-		}
-
-		return normalized;
-	};
-
-	const firstMeaningfulValue = (...candidates: unknown[]): string => {
-		for (const candidate of candidates) {
-			const normalized = cleanDisplayText(candidate);
-			if (normalized) return normalized;
-		}
-		return '';
-	};
-
-	const parsePriceAmount = (value: unknown): number | null => {
-		if (value === null || value === undefined) return null;
-		if (typeof value === 'number') {
-			return Number.isFinite(value) ? value : null;
-		}
-
-		const raw = String(value).trim();
-		if (!raw) return null;
-
-		let normalized = raw.replace(/[€\s]/g, '');
-		if (normalized.includes(',') && normalized.includes('.')) {
-			if (normalized.lastIndexOf(',') > normalized.lastIndexOf('.')) {
-				normalized = normalized.replace(/\./g, '').replace(',', '.');
-			} else {
-				normalized = normalized.replace(/,/g, '');
-			}
-		} else if (normalized.includes(',')) {
-			normalized = normalized.replace(',', '.');
-		}
-
-		const parsed = Number(normalized);
-		return Number.isFinite(parsed) ? parsed : null;
-	};
-
-	// Restituisce "11,90 €" con NBSP. Prima usavamo formatEuro (senza simbolo)
-	// che lasciava il summary step-pagamento con "11,90" senza € quando il
-	// fallback summaryTotalPrice subentrava al posto di finalTotalFormatted.
-	const formatPriceAmount = (amount: unknown): string => {
-		const n = Number(amount);
-		if (!Number.isFinite(n)) return `0,00\u00A0\u20AC`;
-		return n.toFixed(2).replace('.', ',') + '\u00A0\u20AC';
-	};
-
-	const pickBestPriceAmount = (candidates: Array<number | null>): number => {
-		const valid = candidates.filter((value): value is number => value !== null && Number.isFinite(value));
-		const positive = valid.find((value) => value > 0);
-		if (positive !== undefined) return positive;
-		return valid[0] ?? 0;
-	};
-
-	const normalizePackagePrice = (rawAmount: unknown): number => {
-		const amount = Number(rawAmount) || 0;
-		if (!amount) return 0;
-		return amount > 1000 ? amount / 100 : amount;
-	};
-
-	const getPackageLineAmount = (pack: SummaryPackage): number => {
-		const single = parsePriceAmount(pack?.single_price);
-		if (single !== null && single > 0) return normalizePackagePrice(single);
-
-		const singleOrig = parsePriceAmount(pack?.single_priceOrig);
-		if (singleOrig !== null && singleOrig > 0) return normalizePackagePrice(singleOrig);
-
-		const weightPrice = parsePriceAmount(pack?.weight_price) || 0;
-		const volumePrice = parsePriceAmount(pack?.volume_price) || 0;
-		const base = Math.max(weightPrice, volumePrice);
-		if (base <= 0) return 0;
-
-		const qty = Number(pack?.quantity) || 1;
-		return base * qty;
-	};
-
-	const getPackagesTotal = (packages?: SummaryPackage[] | null): number | null => {
-		if (!Array.isArray(packages) || !packages.length) return null;
-		const total = packages.reduce((sum, pack) => sum + getPackageLineAmount(pack), 0);
-		return total > 0 ? total : null;
-	};
+	// Wrapper locali iniettano normalizeLocationText (dipendenza ref) negli helper puri.
+	const cleanDisplayText = (value: unknown): string => cleanDisplayTextHelper(value, normalizeLocationText);
+	const firstMeaningfulValue = (...candidates: unknown[]): string => firstMeaningfulValueHelper(candidates, normalizeLocationText);
+	// parsePriceAmount, formatPriceAmount, pickBestPriceAmount, normalizePackagePrice,
+	// getPackageLineAmount, getPackagesTotal: importati da utils/shipmentSummaryHelpers.
 
 	const summaryPackagesSource = computed(() => {
 		if (clientDraftSummaryReady.value) {
