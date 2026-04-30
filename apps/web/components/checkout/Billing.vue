@@ -11,7 +11,7 @@ const props = defineProps({
 	destinationAddress: { type: Object, default: () => ({}) },
 });
 
-const emit = defineEmits(['update:fatturazioneType', 'update:invoiceSubjectType']);
+const emit = defineEmits(['update:fatturazioneType', 'update:invoiceSubjectType', 'update:fatturaData']);
 
 // Toggle "Usa lo stesso indirizzo della spedizione" per i campi indirizzo/città/prov/CAP
 // della fatturazione. Quando attivo copia i valori da `destinationAddress` e disabilita
@@ -27,12 +27,27 @@ const buildAddressLine = (address) => {
 // Snapshot dei valori precedenti per ripristino quando l'utente disattiva il toggle.
 const previousBillingSnapshot = ref(null);
 
+const updateFatturaData = (patch) => {
+	emit('update:fatturaData', {
+		...props.fatturaData,
+		...patch,
+	});
+};
+
+const fatturaField = (field) => props.fatturaData?.[field] || '';
+
+const setFatturaField = (field, value) => {
+	updateFatturaData({ [field]: value });
+};
+
 const applyShippingToBillingFields = () => {
 	const dest = props.destinationAddress || {};
-	props.fatturaData.indirizzo = buildAddressLine(dest);
-	props.fatturaData.city = dest.city || '';
-	props.fatturaData.province = dest.province || '';
-	props.fatturaData.postal_code = dest.postal_code || '';
+	updateFatturaData({
+		indirizzo: buildAddressLine(dest),
+		city: dest.city || '',
+		province: dest.province || '',
+		postal_code: dest.postal_code || '',
+	});
 };
 
 watch(useShippingAsBilling, (active) => {
@@ -47,10 +62,7 @@ watch(useShippingAsBilling, (active) => {
 		applyShippingToBillingFields();
 	} else if (previousBillingSnapshot.value) {
 		// Ripristina i valori precedenti al toggle (preserva eventuale compilazione manuale).
-		props.fatturaData.indirizzo = previousBillingSnapshot.value.indirizzo;
-		props.fatturaData.city = previousBillingSnapshot.value.city;
-		props.fatturaData.province = previousBillingSnapshot.value.province;
-		props.fatturaData.postal_code = previousBillingSnapshot.value.postal_code;
+		updateFatturaData(previousBillingSnapshot.value);
 		previousBillingSnapshot.value = null;
 	}
 });
@@ -90,8 +102,8 @@ watch(
 				</svg>
 			</span>
 			<div class="checkout-panel-head__copy">
-				<p class="checkout-panel-head__title">Documento fiscale</p>
-				<p class="checkout-panel-head__text">Ricevuta o fattura, senza uscire dal flusso.</p>
+				<p class="checkout-panel-head__eyebrow">DOCUMENTO FISCALE</p>
+				<p class="checkout-panel-head__title">Ricevuta o fattura</p>
 			</div>
 		</div>
 
@@ -174,20 +186,29 @@ watch(
 					<div>
 						<label class="checkout-billing-label">Ragione Sociale *</label>
 						<input
-							v-model="fatturaData.ragione_sociale"
+							:value="fatturaField('ragione_sociale')"
+							@input="setFatturaField('ragione_sociale', $event.target.value)"
 							type="text"
 							placeholder="SpediamoFacile S.r.l."
-								required
+							required
 							class="checkout-billing-input" />
 					</div>
 					<div>
 						<label class="checkout-billing-label">Partita IVA *</label>
-						<input v-model="fatturaData.p_iva" type="text" maxlength="13" placeholder="IT 01234567890" required class="checkout-billing-input" />
+						<input
+							:value="fatturaField('p_iva')"
+							@input="setFatturaField('p_iva', $event.target.value)"
+							type="text"
+							maxlength="13"
+							placeholder="IT 01234567890"
+							required
+							class="checkout-billing-input" />
 					</div>
 					<div>
 						<label class="checkout-billing-label">Codice Fiscale</label>
 						<input
-							v-model="fatturaData.codice_fiscale"
+							:value="fatturaField('codice_fiscale')"
+							@input="setFatturaField('codice_fiscale', $event.target.value)"
 							type="text"
 							placeholder="01234567890"
 							class="checkout-billing-input" />
@@ -198,7 +219,8 @@ watch(
 					<div>
 						<label class="checkout-billing-label">Codice SDI</label>
 						<input
-							v-model="fatturaData.codice_sdi"
+							:value="fatturaField('codice_sdi')"
+							@input="setFatturaField('codice_sdi', $event.target.value)"
 							type="text"
 							maxlength="7"
 							placeholder="XXXXXXX"
@@ -207,7 +229,8 @@ watch(
 					<div>
 						<label class="checkout-billing-label">PEC (alternativa)</label>
 						<input
-							v-model="fatturaData.pec"
+							:value="fatturaField('pec')"
+							@input="setFatturaField('pec', $event.target.value)"
 							type="email"
 							placeholder="fattura@pec.azienda.it (almeno una tra SDI e PEC)"
 							class="checkout-billing-input" />
@@ -234,7 +257,8 @@ watch(
 					<div>
 						<label class="checkout-billing-label">Indirizzo</label>
 						<input
-							v-model="fatturaData.indirizzo"
+							:value="fatturaField('indirizzo')"
+							@input="setFatturaField('indirizzo', $event.target.value)"
 							type="text"
 							placeholder="Indirizzo"
 							class="checkout-billing-input"
@@ -244,7 +268,8 @@ watch(
 					<div>
 						<label class="checkout-billing-label">Città</label>
 						<input
-							v-model="fatturaData.city"
+							:value="fatturaField('city')"
+							@input="setFatturaField('city', $event.target.value)"
 							type="text"
 							placeholder="Città"
 							class="checkout-billing-input"
@@ -254,7 +279,8 @@ watch(
 					<div>
 						<label class="checkout-billing-label">Prov.</label>
 						<input
-							v-model="fatturaData.province"
+							:value="fatturaField('province')"
+							@input="setFatturaField('province', $event.target.value)"
 							type="text"
 							maxlength="2"
 							placeholder="Prov."
@@ -265,7 +291,8 @@ watch(
 					<div>
 						<label class="checkout-billing-label">CAP</label>
 						<input
-							v-model="fatturaData.postal_code"
+							:value="fatturaField('postal_code')"
+							@input="setFatturaField('postal_code', $event.target.value)"
 							type="text"
 							maxlength="10"
 							placeholder="CAP"
@@ -281,16 +308,18 @@ watch(
 					<div>
 						<label class="checkout-billing-label">Nome completo *</label>
 						<input
-							v-model="fatturaData.nome_completo"
+							:value="fatturaField('nome_completo')"
+							@input="setFatturaField('nome_completo', $event.target.value)"
 							type="text"
 							placeholder="Nome e Cognome"
-								required
+							required
 							class="checkout-billing-input" />
 					</div>
 					<div>
 						<label class="checkout-billing-label">Codice Fiscale *</label>
 						<input
-							v-model="fatturaData.codice_fiscale"
+							:value="fatturaField('codice_fiscale')"
+							@input="setFatturaField('codice_fiscale', $event.target.value)"
 							type="text"
 							placeholder="RSSMRA80A01H501U"
 							maxlength="16"
@@ -315,7 +344,8 @@ watch(
 					<div>
 						<label class="checkout-billing-label">Indirizzo</label>
 						<input
-							v-model="fatturaData.indirizzo"
+							:value="fatturaField('indirizzo')"
+							@input="setFatturaField('indirizzo', $event.target.value)"
 							type="text"
 							placeholder="Indirizzo"
 							class="checkout-billing-input"
@@ -325,7 +355,8 @@ watch(
 					<div>
 						<label class="checkout-billing-label">Città</label>
 						<input
-							v-model="fatturaData.city"
+							:value="fatturaField('city')"
+							@input="setFatturaField('city', $event.target.value)"
 							type="text"
 							placeholder="Città"
 							class="checkout-billing-input"
@@ -335,7 +366,8 @@ watch(
 					<div>
 						<label class="checkout-billing-label">Prov.</label>
 						<input
-							v-model="fatturaData.province"
+							:value="fatturaField('province')"
+							@input="setFatturaField('province', $event.target.value)"
 							type="text"
 							maxlength="2"
 							placeholder="Prov."
@@ -346,7 +378,8 @@ watch(
 					<div>
 						<label class="checkout-billing-label">CAP</label>
 						<input
-							v-model="fatturaData.postal_code"
+							:value="fatturaField('postal_code')"
+							@input="setFatturaField('postal_code', $event.target.value)"
 							type="text"
 							maxlength="10"
 							placeholder="CAP"

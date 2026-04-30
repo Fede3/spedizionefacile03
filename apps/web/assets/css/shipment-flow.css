@@ -1489,6 +1489,15 @@
   flex-shrink: 0;
 }
 .checkout-panel-head__copy { min-width: 0; }
+.checkout-panel-head__eyebrow {
+  font-size: 0.6875rem; /* 11px */
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: #7C8594;
+  font-weight: 800;
+  margin: 0 0 4px;
+  line-height: 1.2;
+}
 .checkout-panel-head__title {
   font-size: 1.125rem; /* 18px — gerarchia allineata con resto del sito */
   font-weight: 700;
@@ -1809,6 +1818,28 @@
   border-radius: 0;
   background: transparent;
   box-shadow: none;
+}
+/* CASO A — form inline (no carta salvata): NON wrappato dentro la card "Usa nuova carta",
+   appare direttamente sotto la selezione del metodo. Padding/radius coerenti con surface
+   del sito, niente cornice teal duplicata. */
+.checkout-payment-card-form--inline {
+  margin-top: 0;
+  padding: 18px 20px;
+  border-radius: 16px;
+  background: #ffffff;
+  outline: 1.5px solid var(--color-border, #DFE2E7);
+  outline-offset: -1.5px;
+  border: none;
+  box-shadow: 0 8px 26px rgba(15, 23, 42, 0.04);
+}
+.checkout-payment-card-form__eyebrow {
+  font-size: 0.6875rem; /* 11px */
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: #7C8594;
+  font-weight: 800;
+  margin: 0 0 12px;
+  line-height: 1.2;
 }
 .checkout-payment-card-form__head {
   display: flex;

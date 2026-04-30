@@ -102,6 +102,7 @@ defineEmits([
 	'update:saveCardForFuture',
 	'update:fatturazioneType',
 	'update:invoiceSubjectType',
+	'update:fatturaData',
 	'update:checkoutTermsAccepted',
 	'update:showConfirmModal',
 ]);
@@ -127,15 +128,16 @@ const discountFormatted = computed(() => {
 // mojibake sequences from older persisted snapshots. We normalize only the
 // visible checkout strings here so the payment step stays clean while we keep
 // simplifying the upstream order context.
-const repairVisibleText = (value) => String(value ?? '')
-	.replace(/â‚¬/g, '\u20AC')
-	.replace(/Â·/g, '\u00B7')
-	.replace(/Ã¨/g, 'è')
-	.replace(/Ã /g, 'à')
-	.replace(/Ã²/g, 'ò')
-	.replace(/â€”/g, '\u2014');
+const repairVisibleText = (value) => [
+	['â‚¬', '\u20AC'],
+	['Â·', '\u00B7'],
+	['Ã¨', '\u00E8'],
+	['\u00C3\u00A0', '\u00E0'],
+	['Ã²', '\u00F2'],
+	['â€”', '\u2014'],
+].reduce((text, [search, replacement]) => text.replaceAll(search, replacement), String(value ?? ''));
 
-// Estrae l'importo numerico da una stringa formato "11,90 €" / "0,00 €" / "0,00  €"
+// Estrae l'importo numerico da una stringa formato "11,90 EUR" / "0,00 EUR".
 // per decidere se ci si puo' fidare di `finalTotalFormatted` (carrello/ordine reale)
 // oppure occorre fallback su `summaryTotalPrice` (preventivo in corso, mai aggiunto al carrello).
 const parseFormattedAmount = (raw) => {
@@ -276,15 +278,9 @@ const resolvedTrattaLabel = computed(() => {
 });
 
 const resolvedOriginStreetLine = computed(() => buildAddressStreetLine(props.originAddress, 'Indirizzo da completare'));
-const resolvedOriginLocalityLine = computed(() => buildAddressLocalityLine(props.originAddress, 'Località da completare'));
-
 const resolvedDestinationStreetLine = computed(() => buildAddressStreetLine(
 	props.destinationAddress,
 	props.deliveryMode === 'pudo' ? 'Consegna presso punto BRT' : 'Indirizzo da completare',
-));
-const resolvedDestinationLocalityLine = computed(() => buildAddressLocalityLine(
-	props.destinationAddress,
-	props.deliveryMode === 'pudo' ? 'Punto BRT da selezionare' : 'Località da completare',
 ));
 
 const resolvedPaymentSummaryServicesLabel = computed(() => (
@@ -419,9 +415,6 @@ const resolvedBillingShippingFullAddress = computed(() => {
 							</div>
 
 							<div class="flex items-center gap-[10px] lg:justify-end">
-								<span class="inline-flex items-center gap-[6px] rounded-full border border-[#D7E4E7] bg-[#F3FAFB] px-[10px] py-[6px] text-[11px] text-[#095866]" style="font-weight:800">
-									{{ paymentMethodLabel }}
-								</span>
 								<p
 									class="leading-none text-[#1d2738]"
 									style="font-weight:800; font-size: clamp(28px, 4vw, 36px); letter-spacing: -0.02em;">
@@ -645,7 +638,7 @@ const resolvedBillingShippingFullAddress = computed(() => {
 											type="text"
 											placeholder="Inserisci il codice"
 											class="flex-1 h-[46px] rounded-[16px] border border-[#D9E1EA] bg-[#F8F9FB] px-[16px] text-[15px] text-[#1d2738] outline-none focus:border-[#0b7d92] focus:ring-[3px] focus:ring-[rgba(11,125,146,0.12)]"
-											@input="$emit('update:couponCode', ($event.target).value)" />
+											@input="$emit('update:couponCode', ($event.target).value)">
 										<SfButton
 											v-if="!couponApplied"
 											size="lg"
@@ -703,7 +696,8 @@ const resolvedBillingShippingFullAddress = computed(() => {
 								:billing-shipping-full-address="resolvedBillingShippingFullAddress"
 								:destination-address="destinationAddress"
 								@update:fatturazione-type="$emit('update:fatturazioneType', $event)"
-								@update:invoice-subject-type="$emit('update:invoiceSubjectType', $event)" />
+								@update:invoice-subject-type="$emit('update:invoiceSubjectType', $event)"
+								@update:fattura-data="$emit('update:fatturaData', $event)" />
 
 							<CheckoutPaymentFooter
 								:final-total-formatted="finalTotalFormatted"

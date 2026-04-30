@@ -3,8 +3,6 @@
   All Stripe card-element logic lives in the parent composable; we just get refs/props.
 -->
 <script setup>
-import '~/assets/css/shipment-flow.css';
-
 const props = defineProps({
 	paymentMethod: { type: String, required: true },
 	paymentMethodOptions: { type: Array, required: true },
@@ -37,27 +35,13 @@ const props = defineProps({
 
 const emit = defineEmits(['select-payment-method', 'update:useNewCard', 'update:saveCardForFuture']);
 
-// Flag per prevenire click spammabili sui pulsanti "Carta salvata / Usa nuova carta":
-// durante la Transition payment-panel (fade 160ms) i click ripetuti causerebbero
-// animazioni a raffica. Con questo guard, il pulsante e' inerte finche' la transizione
-// non completa, poi torna attivo.
-const isCardFormTransitioning = ref(false);
-const onCardFormBeforeEnter = () => { isCardFormTransitioning.value = true; };
-const onCardFormAfterEnter = () => { isCardFormTransitioning.value = false; };
-const onCardFormBeforeLeave = () => { isCardFormTransitioning.value = true; };
-const onCardFormAfterLeave = () => { isCardFormTransitioning.value = false; };
-
 const handleUseNewCard = (value) => {
-	if (isCardFormTransitioning.value) return;
 	if (props.useNewCard === value) return;
 	emit('update:useNewCard', value);
 };
 
 // Checkbox "Salva carta per pagamenti futuri":
 // uso un ref locale sincronizzato bidirezionalmente con la prop saveCardForFuture.
-// Motivo: il vecchio binding :checked + @change non propagava affidabilmente lo
-// stato al parent (probabilmente a causa del re-render dentro la Transition).
-// Con v-model + ref locale + watch l'aggiornamento e' reattivo e stabile.
 const localSaveCard = ref(!!props.saveCardForFuture);
 watch(() => props.saveCardForFuture, (v) => {
 	if (localSaveCard.value !== v) localSaveCard.value = !!v;
@@ -67,7 +51,6 @@ watch(localSaveCard, (v) => {
 });
 
 // Mount del Stripe PaymentRequestButton dopo che container e' in DOM.
-// Il parent gestisce il ref via callback; qui chiediamo solo a parent di montare.
 watchEffect(async () => {
 	if (props.canMakePayment && typeof props.onPaymentRequestReady === 'function') {
 		await nextTick();
@@ -101,14 +84,12 @@ const walletQuickLabel = computed(() => {
 				</svg>
 			</span>
 			<div class="checkout-panel-head__copy">
-				<p class="checkout-panel-head__title">Metodo di pagamento</p>
-				<p class="checkout-panel-head__text">Scegli come pagare.</p>
+				<p class="checkout-panel-head__eyebrow">METODO DI PAGAMENTO</p>
+				<p class="checkout-panel-head__title">Scegli come pagare</p>
 			</div>
 		</div>
 
-		<!-- Wallet rapido: Apple Pay / Google Pay (Stripe PaymentRequestButton).
-		     Mostrato SOLO se almeno un provider wallet express è effettivamente
-		     disponibile; evita il box vuoto "oppure scegli un altro metodo". -->
+		<!-- Wallet rapido: Apple Pay / Google Pay (Stripe PaymentRequestButton). -->
 		<div v-if="canMakePayment && (isAppleAvailable || isGoogleAvailable)" class="payment-wallet-section">
 			<div class="payment-wallet-section__label">
 				<span>Pagamento rapido</span>
@@ -181,14 +162,33 @@ const walletQuickLabel = computed(() => {
 		</div>
 
 		<div class="payment-panel-shell checkout-payment-panel" :data-payment-method="paymentMethod">
-			<!-- Card panel -->
+			<!-- Card panel
+			     CASO A (hasSavedCard=false): form Stripe inline a larghezza piena,
+			       senza wrapper "Usa una nuova carta" duplicato della card "Carta" sopra.
+			     CASO B (hasSavedCard=true): scelta tra carta salvata e nuova carta. -->
 			<div v-if="paymentMethod === 'carta' && !cardPaymentsUnavailable" class="space-y-[14px]">
-				<div class="checkout-payment-choice-stack">
+				<!-- CASO A: nessuna carta salvata, form diretto -->
+				<div v-if="!hasSavedCard && shouldShowCardForm" class="checkout-payment-card-form checkout-payment-card-form--inline">
+					<p class="checkout-payment-card-form__eyebrow">Inserisci la carta</p>
+					<div id="card-element" :ref="cardRefCallback" class="checkout-payment-card-form__element"></div>
+					<p v-if="stripeLoading" class="checkout-payment-card-form__helper">
+						Preparazione del modulo carta in corso...
+					</p>
+					<p v-if="cardError" class="checkout-payment-card-form__error">{{ cardError }}</p>
+					<label class="checkout-payment-card-form__save">
+						<input
+							type="checkbox"
+							v-model="localSaveCard"
+							class="checkout-payment-card-form__checkbox" />
+						<span>Salva carta per pagamenti futuri (puoi revocare in qualsiasi momento dal tuo account)</span>
+					</label>
+				</div>
+
+				<!-- CASO B: carta salvata + opzione nuova carta -->
+				<div v-else-if="hasSavedCard" class="checkout-payment-choice-stack">
 					<button
-						v-if="hasSavedCard"
 						type="button"
 						@click="handleUseNewCard(false)"
-						:disabled="isCardFormTransitioning"
 						:class="[
 							'checkout-payment-choice',
 							!useNewCard ? 'checkout-payment-choice--selected' : 'checkout-payment-choice--idle',
@@ -206,15 +206,13 @@ const walletQuickLabel = computed(() => {
 
 					<div
 						role="button"
-						:tabindex="isCardFormTransitioning ? -1 : 0"
-						:aria-disabled="isCardFormTransitioning"
+						tabindex="0"
 						@click="handleUseNewCard(true)"
 						@keydown.enter.prevent="handleUseNewCard(true)"
 						@keydown.space.prevent="handleUseNewCard(true)"
 						:class="[
 							'checkout-payment-choice checkout-payment-choice--expandable',
-							!hasSavedCard || useNewCard ? 'checkout-payment-choice--selected' : 'checkout-payment-choice--idle',
-							isCardFormTransitioning ? 'is-transitioning' : '',
+							useNewCard ? 'checkout-payment-choice--selected' : 'checkout-payment-choice--idle',
 						]">
 						<div class="checkout-payment-choice__header">
 							<span class="checkout-payment-choice__icon-shell">
@@ -227,38 +225,24 @@ const walletQuickLabel = computed(() => {
 								<p class="checkout-payment-choice__title">Usa una nuova carta</p>
 								<p class="checkout-payment-choice__text">Inserisci una carta diversa per questo pagamento.</p>
 							</div>
-							<span
-								:class="[
-									'checkout-payment-choice__radio',
-									!hasSavedCard || useNewCard ? 'checkout-payment-choice__radio--selected' : '',
-								]"></span>
+							<span :class="['checkout-payment-choice__radio', useNewCard ? 'checkout-payment-choice__radio--selected' : '']"></span>
 						</div>
 
-						<!-- Transition rimossa: l'utente trovava fastidioso il fade ad ogni click.
-						     Il form appare/scompare istantaneo. -->
 						<div v-if="shouldShowCardForm" class="checkout-payment-card-form checkout-payment-card-form--embedded">
-								<div class="checkout-payment-card-form__head">
-									<div class="checkout-payment-card-form__intro">
-										<p class="checkout-payment-card-form__text">Inserisci la carta qui.</p>
-									</div>
-								</div>
-
-								<div id="card-element" :ref="cardRefCallback" class="checkout-payment-card-form__element"></div>
-								<p v-if="stripeLoading" class="checkout-payment-card-form__helper">
-									Preparazione del modulo carta in corso...
-								</p>
-								<p v-if="cardError" class="checkout-payment-card-form__error">{{ cardError }}</p>
-								<!-- Checkbox "Salva carta": label che wrappa tutto così click OVUNQUE
-								     (quadrato + testo) triggera il toggle nativo dell'input.
-								     @click.stop sul label blocca il bubbling al div[role=button] genitore. -->
-								<label class="checkout-payment-card-form__save" @click.stop>
-									<input
-										type="checkbox"
-										v-model="localSaveCard"
-										class="checkout-payment-card-form__checkbox" />
-									<span>Salva carta per pagamenti futuri (puoi revocare in qualsiasi momento dal tuo account)</span>
-								</label>
-							</div>
+							<p class="checkout-payment-card-form__eyebrow">Inserisci la carta</p>
+							<div id="card-element" :ref="cardRefCallback" class="checkout-payment-card-form__element"></div>
+							<p v-if="stripeLoading" class="checkout-payment-card-form__helper">
+								Preparazione del modulo carta in corso...
+							</p>
+							<p v-if="cardError" class="checkout-payment-card-form__error">{{ cardError }}</p>
+							<label class="checkout-payment-card-form__save" @click.stop>
+								<input
+									type="checkbox"
+									v-model="localSaveCard"
+									class="checkout-payment-card-form__checkbox" />
+								<span>Salva carta per pagamenti futuri (puoi revocare in qualsiasi momento dal tuo account)</span>
+							</label>
+						</div>
 					</div>
 				</div>
 			</div>
@@ -288,4 +272,3 @@ const walletQuickLabel = computed(() => {
 		</div>
 	</div>
 </template>
-
