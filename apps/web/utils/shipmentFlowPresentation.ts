@@ -1,27 +1,49 @@
 /**
- * @file presentation — Utility presentation.
+ * @file presentation - pure UI copy helpers for the shipment funnel.
  */
-export const getShipmentFlowHeroTitle = () => "Preventivo";
 
-export const getShipmentFlowHeroDescription = () =>
+type PackageLike = Record<string, unknown>;
+type ServiceItem = {
+	label: string;
+	price: string;
+};
+type ServiceCardLike = {
+	isSelected?: boolean;
+	name?: string;
+	price?: string;
+};
+type VisiblePackageArgs = {
+	editablePackages?: PackageLike[] | null;
+	sessionPackages?: PackageLike[] | null;
+};
+type SelectedServiceArgs = {
+	featuredService?: ServiceCardLike | null;
+	regularServices?: ServiceCardLike[] | null;
+	smsEmailNotification?: boolean;
+	notificationPriceLabel?: string;
+};
+
+export const getShipmentFlowHeroTitle = (): string => "Preventivo";
+
+export const getShipmentFlowHeroDescription = (): string =>
 	"Colli, servizi, indirizzi e pagamento restano nello stesso flusso, con passaggi chiari e modificabili senza perdere il contesto.";
 
-export const getVisiblePackageItems = ({ editablePackages, sessionPackages }) => {
+export const getVisiblePackageItems = ({ editablePackages, sessionPackages }: VisiblePackageArgs): PackageLike[] => {
 	if (Array.isArray(editablePackages) && editablePackages.length > 0) return editablePackages;
 	return Array.isArray(sessionPackages) ? sessionPackages : [];
 };
 
-export const formatColloLabel = (packageItems) => {
+export const formatColloLabel = (packageItems?: PackageLike[] | null): string => {
 	const count = Array.isArray(packageItems) && packageItems.length > 0 ? packageItems.length : 1;
 	return `${count} coll${count === 1 ? "o" : "i"}`;
 };
 
-export const formatTrattaLabel = (originCity, destinationCity) =>
+export const formatTrattaLabel = (originCity?: string | null, destinationCity?: string | null): string =>
 	`${originCity || "Da definire"} -> ${destinationCity || "Da definire"}`;
 
-export const formatPackageAccordionSummary = (packageLabel, dimensionsLabel) => {
+export const formatPackageAccordionSummary = (packageLabel?: string | null, dimensionsLabel?: string | null): string => {
 	const parts = [packageLabel, dimensionsLabel].filter(Boolean);
-	return parts.length ? parts.join(" \u00B7 ") : "Tipo, quantit\u00E0 e misure";
+	return parts.length ? parts.join(" \u00B7 ") : "Tipo, quantita e misure";
 };
 
 export const collectSelectedServiceItems = ({
@@ -29,8 +51,8 @@ export const collectSelectedServiceItems = ({
 	regularServices,
 	smsEmailNotification,
 	notificationPriceLabel,
-}) => {
-	const items = [];
+}: SelectedServiceArgs): ServiceItem[] => {
+	const items: ServiceItem[] = [];
 	if (featuredService?.isSelected) {
 		items.push({
 			label: featuredService.name || "Senza Etichetta",
@@ -54,8 +76,8 @@ export const collectSelectedServiceItems = ({
 	return items;
 };
 
-export const formatSelectedServiceSummary = (selectedServiceItems) => {
-	const labels = [...new Set((selectedServiceItems || []).map((item) => String(item?.label || "").trim()).filter(Boolean))];
+export const formatSelectedServiceSummary = (selectedServiceItems?: ServiceItem[] | null): string => {
+	const labels = [...new Set((selectedServiceItems || []).map((item) => String(item.label || "").trim()).filter(Boolean))];
 	if (!labels.length) return "";
 	const visible = labels.slice(0, 2);
 	const remaining = labels.length - visible.length;
@@ -66,8 +88,12 @@ export const formatServicesAccordionSummary = ({
 	pickupDate,
 	selectedServiceSummary,
 	resolvedContentDescription,
-}) => {
-	const parts = [];
+}: {
+	pickupDate?: string | null;
+	selectedServiceSummary?: string | null;
+	resolvedContentDescription?: string | null;
+}): string => {
+	const parts: string[] = [];
 	if (pickupDate) parts.push(`Ritiro ${pickupDate}`);
 	if (selectedServiceSummary) parts.push(selectedServiceSummary);
 	if (!parts.length && resolvedContentDescription) parts.push("Contenuto inserito");
@@ -79,7 +105,12 @@ export const formatAddressAccordionSummary = ({
 	summaryOriginCity,
 	summaryDestinationCity,
 	pudoName,
-}) => {
+}: {
+	deliveryMode?: string | null;
+	summaryOriginCity?: string | null;
+	summaryDestinationCity?: string | null;
+	pudoName?: string | null;
+}): string => {
 	if (deliveryMode === "pudo") {
 		if (summaryOriginCity && pudoName) return `${summaryOriginCity} \u00B7 ${pudoName}`;
 		if (summaryOriginCity) return `${summaryOriginCity} \u00B7 Punto BRT`;
@@ -90,21 +121,21 @@ export const formatAddressAccordionSummary = ({
 	return "Mittente e destinatario";
 };
 
-export const formatPickupDate = (pickupDate) => String(pickupDate || "").trim() || "Da definire";
+export const formatPickupDate = (pickupDate?: string | null): string => String(pickupDate || "").trim() || "Da definire";
 
-export const formatConfirmationContact = (contactName, fallbackLabel) =>
+export const formatConfirmationContact = (contactName: unknown, fallbackLabel: string): string =>
 	String(contactName || "").trim() || fallbackLabel;
 
-export const formatPaymentSummaryServicesLabel = (selectedServiceItems) => {
+export const formatPaymentSummaryServicesLabel = (selectedServiceItems?: ServiceItem[] | null): string => {
 	const list = selectedServiceItems?.length ? selectedServiceItems : [{ label: "Nessun extra selezionato", price: "" }];
-	const labels = list.map((item) => String(item?.label || "").trim()).filter(Boolean);
+	const labels = list.map((item) => String(item.label || "").trim()).filter(Boolean);
 	if (!labels.length) return "Nessun extra selezionato";
 	if (labels.length <= 2) return labels.join(" \u00B7 ");
 	return `${labels.slice(0, 2).join(" \u00B7 ")} +${labels.length - 2}`;
 };
 
-export const formatPaymentMethodLabel = (paymentMethod) =>
+export const formatPaymentMethodLabel = (paymentMethod?: string | null): string =>
 	paymentMethod === "bonifico" ? "Bonifico" : paymentMethod === "wallet" ? "Wallet" : "Carta";
 
-export const formatPaymentDeliveryLabel = (deliveryMode) =>
+export const formatPaymentDeliveryLabel = (deliveryMode?: string | null): string =>
 	deliveryMode === "pudo" ? "Consegna in Punto BRT" : "Consegna a domicilio";

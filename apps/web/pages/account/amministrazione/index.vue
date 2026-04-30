@@ -29,15 +29,17 @@ const fetchDashboard = async () => {
 	}
 };
 
-onMounted(async () => {
+const reloadDashboard = async () => {
+	isLoading.value = true;
 	await fetchDashboard();
 	isLoading.value = false;
-});
+};
+
+onMounted(reloadDashboard);
 
 const pendingOrders = computed(() => dashboardData.value?.orders?.pending ?? 0);
 const failedPayments = computed(() => dashboardData.value?.orders?.payment_failed ?? 0);
 const inTransitShipments = computed(() => dashboardData.value?.shipments?.in_transit ?? 0);
-const deliveredShipments = computed(() => dashboardData.value?.shipments?.delivered ?? 0);
 const shipmentsWithoutLabel = computed(() => dashboardData.value?.shipments?.without_label ?? 0);
 const monthOrders = computed(() => dashboardData.value?.orders?.month ?? 0);
 const todayOrders = computed(() => dashboardData.value?.orders?.today ?? 0);
@@ -47,7 +49,6 @@ const proUsers = computed(() => dashboardData.value?.users?.pro ?? 0);
 const revenueMonth = computed(() => dashboardData.value?.revenue_month ?? 0);
 const recentOrders = computed(() => dashboardData.value?.recent_orders || []);
 const dailyOrders = computed(() => dashboardData.value?.daily_orders || []);
-const unreadMessages = computed(() => dashboardData.value?.unread_messages ?? 0);
 const pendingWithdrawals = computed(() => dashboardData.value?.pending_withdrawals ?? 0);
 const pendingProRequests = computed(() => dashboardData.value?.pending_pro_requests ?? 0);
 
@@ -269,7 +270,7 @@ const statusBadgeStyle = (status) => useStatusBadgeStyle(status);
 							<button
 								type="button"
 								class="sf-admin-btn-secondary"
-								@click="isLoading = true; fetchDashboard().then(() => { isLoading = false; })"
+								@click="reloadDashboard"
 							>
 								Riprova
 							</button>
@@ -280,4 +281,3 @@ const statusBadgeStyle = (status) => useStatusBadgeStyle(status);
 		</div>
 	</section>
 </template>
-

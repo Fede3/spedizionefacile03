@@ -14,7 +14,56 @@
  * country selection, postal code changes).
  * Interna all'orchestratore — non esportata pubblicamente.
  */
-export const useQuoteResultsInternal = (deps) => {
+import type { Ref } from 'vue';
+
+type QuotePackage = {
+	weight?: string | number | null;
+	first_size?: string | number | null;
+	second_size?: string | number | null;
+	third_size?: string | number | null;
+	single_price?: number | null;
+	weight_price?: number | null;
+	volume_price?: number | null;
+	[key: string]: unknown;
+};
+type QuoteResultsDeps = {
+	shipmentFlowStore: {
+		shipmentDetails: Record<string, string | undefined>;
+		packages: QuotePackage[];
+		totalPrice: number;
+		stepNumber: number;
+		isQuoteStarted: boolean;
+	};
+	route: { path: string };
+	messageError: Ref<Record<string, string[]> | null>;
+	sv: { getError: (key: string) => string | null | undefined };
+	locationSearch: { locationSearchError: Ref<string> };
+	isOriginItaly: Ref<boolean>;
+	isDestinationItaly: Ref<boolean>;
+	isEuropeMonocollo: Ref<boolean>;
+	isCalculating: Ref<boolean>;
+	isAdvancingToServices: Ref<boolean>;
+	lastQuotedSignature: Ref<string>;
+	quoteSignature: Ref<string>;
+	autoQuoteTimerRef: {
+		(value?: ReturnType<typeof setTimeout> | null): ReturnType<typeof setTimeout> | null;
+	};
+	calculateRate: (options?: Record<string, unknown>) => Promise<boolean>;
+	getPendingQuotePromise: () => Promise<boolean> | null | undefined;
+	getPendingQuoteSignature: () => string | null | undefined;
+	flushLocationDraftsForSubmit: (formatter: (city: unknown, cap: unknown) => string) => Promise<unknown>;
+	buildQuotePayloadSnapshot: () => Record<string, unknown>;
+	syncQuoteStateFromSession: (payload?: Record<string, unknown>, options?: { sourceSignature?: string }) => unknown;
+	session: Ref<unknown>;
+	refresh: () => Promise<unknown>;
+	checkPrices: (pack: QuotePackage) => unknown;
+	ensurePrimaryPackage: () => unknown;
+	applyOriginCountrySelection: (resetFields?: boolean) => unknown;
+	applyDestinationCountrySelection: (resetFields?: boolean) => unknown;
+	resetQuoteState: () => unknown;
+};
+
+export const useQuoteResultsInternal = (deps: QuoteResultsDeps) => {
 	const {
 		shipmentFlowStore,
 		route,
@@ -97,7 +146,7 @@ export const useQuoteResultsInternal = (deps) => {
 	));
 
 	// --- COMPUTED: DISPLAY ---
-	const formatLivePrice = (amount) => (
+	const formatLivePrice = (amount: unknown) => (
 		new Intl.NumberFormat("it-IT", {
 			style: "currency",
 			currency: "EUR",
@@ -118,7 +167,7 @@ export const useQuoteResultsInternal = (deps) => {
 			: "Calcola il prezzo"
 	));
 
-	const preventivoSubtitle = computed(() => (
+	const quoteSubtitle = computed(() => (
 		isEuropeMonocollo.value
 			? "Europa monocollo · Ritiro a domicilio"
 			: "Prezzo immediato · IVA e ritiro inclusi"
@@ -159,7 +208,7 @@ export const useQuoteResultsInternal = (deps) => {
 			quoteTransitionLock.value = false;
 		}, 8000);
 		try {
-			await flushLocationDraftsForSubmit(formatResolvedLocation);
+			await flushLocationDraftsForSubmit(formatResolvedLocation as (city: unknown, cap: unknown) => string);
 			const payloadSnapshot = buildQuotePayloadSnapshot();
 			const payloadSignature = buildQuoteComparableSignature(payloadSnapshot);
 			const pendingPromise = getPendingQuotePromise();
@@ -171,7 +220,7 @@ export const useQuoteResultsInternal = (deps) => {
 			let isValid = false;
 
 			if (hasPendingSameQuote) {
-				isValid = await pendingPromise;
+				isValid = Boolean(await pendingPromise);
 				if (!isValid) {
 					isValid = await calculateRate({ silent: false, payload: payloadSnapshot });
 				}
@@ -182,10 +231,14 @@ export const useQuoteResultsInternal = (deps) => {
 			if (!isValid) return;
 
 			const refreshedSession = await refresh().catch(() => session.value);
-			const refreshedData = refreshedSession?.data || refreshedSession || null;
+			const refreshedData = (
+				refreshedSession && typeof refreshedSession === 'object' && 'data' in refreshedSession
+					? (refreshedSession as { data?: unknown }).data
+					: refreshedSession
+			) || null;
 
 			if (refreshedData) {
-				syncQuoteStateFromSession(refreshedData, { sourceSignature: payloadSignature });
+				syncQuoteStateFromSession(refreshedData as Record<string, unknown>, { sourceSignature: payloadSignature });
 			} else {
 				syncQuoteStateFromSession(payloadSnapshot, { sourceSignature: payloadSignature });
 			}
@@ -236,9 +289,9 @@ export const useQuoteResultsInternal = (deps) => {
 
 	// Cambio CAP -> rical prezzi per ogni package gia' con weight/volume price.
 	watch(
-		() => [shipmentFlowStore?.shipmentDetails.origin_postal_code, shipmentFlowStore?.shipmentDetails.destination_postal_code],
+		() => [shipmentFlowStore.shipmentDetails.origin_postal_code, shipmentFlowStore.shipmentDetails.destination_postal_code],
 		() => {
-			for (const pack of shipmentFlowStore?.packages) {
+			for (const pack of shipmentFlowStore.packages) {
 				if (pack.weight_price != null || pack.volume_price != null) {
 					checkPrices(pack);
 				}
@@ -250,7 +303,7 @@ export const useQuoteResultsInternal = (deps) => {
 	watch(
 		() => [quoteSignature.value, quoteReadyForRealtime.value],
 		() => {
-			let currentTimer = autoQuoteTimerRef();
+			const currentTimer = autoQuoteTimerRef();
 			if (currentTimer) {
 				clearTimeout(currentTimer);
 				autoQuoteTimerRef(null);
@@ -283,7 +336,7 @@ export const useQuoteResultsInternal = (deps) => {
 		destLocationError,
 		liveQuotePrice,
 		continueButtonLabel,
-		preventivoSubtitle,
+		quoteSubtitle,
 		packageCountLabel,
 		originPlaceholder,
 		destinationPlaceholder,

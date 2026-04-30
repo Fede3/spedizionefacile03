@@ -5,13 +5,18 @@
 //
 // Questo file espone:
 // - useShipmentStepPageOrchestration: orchestrazione UI del ventaglio
-// - re-export canoniche dei sub-boundary shipment-flow
 //
-// I subcomposable del funnel vivono in `features/shipment-flow/` per
-// mantenere l'API pubblica stabile e ridurre il monolite storico.
+// I subcomposable del funnel restano importabili dai propri file dedicati:
+// questo evita auto-import duplicati Nuxt e rende chiaro dove intervenire.
 
-import { computed, onMounted, watch } from 'vue';
-import { buildSecondStepPayload } from '~/composables/useShipmentStepDraftPayload';
+import { computed, onMounted, watch, type Ref } from 'vue';
+import type { AuthModalTab } from '~/stores/authModalStore';
+import {
+	buildSecondStepPayload,
+	type ServicesState,
+	type ShipmentDraftStore,
+	type StepAddressDraft,
+} from '~/composables/useShipmentStepDraftPayload';
 import { useShipmentStepPaymentEntry } from '~/composables/useShipmentStepPaymentEntry';
 import {
 	collectSelectedServiceItems,
@@ -29,18 +34,79 @@ import {
 	getShipmentFlowHeroDescription,
 	getShipmentFlowHeroTitle,
 	getVisiblePackageItems,
-} from '~/utils/shipmentFlow/presentation';
+} from '~/utils/shipmentFlowPresentation';
 
-const isThrottleLikeFunnelError = (message) =>
-	typeof message === 'string' && /throttl|rate[ -]?limit|troppo (rapido|veloce|frequente)/i.test(message);
-const stripFunnelThrottleMessage = (message) => (isThrottleLikeFunnelError(message) ? '' : message);
+type ServiceSummaryItem = { name?: string; isSelected?: boolean; [key: string]: unknown };
+type StepPageDeps = {
+	isAuthenticated: Ref<boolean>;
+	openAuthModal: (options: { redirect: string; tab: AuthModalTab }) => unknown;
+	isBusinessProfile: Ref<boolean>;
+	activeAccordionStep: Ref<string>;
+	showAddressFields: Ref<boolean>;
+	deliveryMode: Ref<string>;
+	submitError: Ref<string | null>;
+	dateError: Ref<string | null>;
+	contentError: Ref<string | null>;
+	paymentBootstrapError: Ref<string>;
+	paymentBootstrapPending: Ref<boolean>;
+	paymentSummaryExpanded: Ref<boolean>;
+	isProceedingToPayment: Ref<boolean>;
+	packagesStageRef: unknown;
+	servicesStageRef: unknown;
+	addressStageRef: unknown;
+	paymentStageRef: unknown;
+	scrollAccordionStageIntoView: (target: unknown, selector?: string) => unknown;
+	openPackagesStage: () => Promise<unknown>;
+	openPaymentStage: () => Promise<boolean | undefined> | boolean | undefined;
+	goBackToServices: () => Promise<boolean | undefined> | boolean | undefined;
+	goBackToAddresses: () => Promise<unknown>;
+	openAddressFields: () => Promise<boolean | undefined> | boolean | undefined;
+	validatePackagesStep: () => boolean;
+	validateInlineServiceDetails: () => boolean;
+	focusFirstInvalidServiceField: () => unknown;
+	clearServiceCardErrors: () => unknown;
+	expandedServiceKey: Ref<string>;
+	editablePackages: Ref<Record<string, unknown>[]>;
+	addPackageInline: () => unknown;
+	ensurePackagesIdentity: () => unknown;
+	loadQuickQuotePriceBands: () => Promise<unknown>;
+	initOnMounted: () => Promise<unknown>;
+	session: Ref<{ data?: { content_description?: string; packages?: Record<string, unknown>[]; pickup_date?: string } } | null | undefined>;
+	services: Ref<ServicesState>;
+	smsEmailNotification: Ref<boolean>;
+	featuredService: Ref<ServiceSummaryItem | null | undefined>;
+	regularServices: Ref<ServiceSummaryItem[]>;
+	notificationPriceLabel: Ref<string>;
+	addressReadinessItems: Ref<Array<{ done: boolean }>>;
+	summaryOriginCity: Ref<string>;
+	summaryDestinationCity: Ref<string>;
+	summaryPackageLabel: Ref<string>;
+	summaryDimensionsLabel: Ref<string>;
+	originAddress: Ref<StepAddressDraft>;
+	destinationAddress: Ref<StepAddressDraft>;
+	existingOrderId: Ref<string | number | null | undefined>;
+	editCartId?: string | number | null;
+	paymentSuccess: Ref<boolean>;
+	paymentError: Ref<string>;
+	paymentMethod: Ref<string>;
+	checkoutPageReady: Ref<boolean>;
+	initCheckoutPage: () => Promise<boolean> | boolean;
+	initStripe: () => Promise<unknown> | unknown;
+	loadPriceBands: () => unknown;
+	autoApplyReferral: () => Promise<unknown> | unknown;
+};
 
-export const resolveFunnelErrorMessage = (error, fallback) => {
-	const raw = error?.data?.message || error?.message || '';
+const isThrottleLikeFunnelError = (message: unknown) =>
+	typeof message === 'string' && /throttl|rate[ -]?limit|troppo (?:rapido|veloce|frequente)/i.test(message);
+const stripFunnelThrottleMessage = (message: string) => (isThrottleLikeFunnelError(message) ? '' : message);
+
+export const resolveFunnelErrorMessage = (error: unknown, fallback: string) => {
+	const source = error && typeof error === 'object' ? error as { data?: { message?: unknown }; message?: unknown } : {};
+	const raw = source.data?.message || source.message || '';
 	return typeof raw === 'string' && raw.trim() ? raw : fallback;
 };
 
-export function useShipmentStepPageOrchestration(deps) {
+export function useShipmentStepPageOrchestration(deps: StepPageDeps) {
 	const route = useRoute();
 	const shipmentFlowStore = useShipmentFlowStore();
 	const sanctumClient = useSanctumClient();
@@ -90,7 +156,6 @@ export function useShipmentStepPageOrchestration(deps) {
 		addressReadinessItems,
 		summaryOriginCity,
 		summaryDestinationCity,
-		summaryTotalPrice,
 		summaryPackageLabel,
 		summaryDimensionsLabel,
 		originAddress,
@@ -176,7 +241,7 @@ export function useShipmentStepPageOrchestration(deps) {
 	const paymentMethodLabel = computed(() => formatPaymentMethodLabel(paymentMethod.value));
 	const paymentDeliveryLabel = computed(() => formatPaymentDeliveryLabel(deliveryMode.value));
 
-	const openShipmentAuthModal = (tab = 'login') => openAuthModal({ redirect: route.fullPath, tab });
+	const openShipmentAuthModal = (tab: AuthModalTab = 'login') => openAuthModal({ redirect: route.fullPath, tab });
 
 	const openPackagesAccordion = async () => {
 		if (isPaymentAccordionOpen.value) await clearPaymentRouteContext();
@@ -219,7 +284,7 @@ export function useShipmentStepPageOrchestration(deps) {
 
 	const buildCurrentShipmentPayload = () => ({
 		...buildSecondStepPayload({
-			shipmentFlowStore,
+			shipmentFlowStore: shipmentFlowStore as ShipmentDraftStore,
 			services,
 			smsEmailNotification,
 			originAddress,
@@ -231,7 +296,7 @@ export function useShipmentStepPageOrchestration(deps) {
 
 	const { clearPaymentRouteContext, openPaymentAccordion, proceedToPaymentFromConfirm, ensurePaymentStageReady } =
 		useShipmentStepPaymentEntry({
-			shipmentFlowStore,
+			shipmentFlowStore: shipmentFlowStore as { pendingShipment?: object | null; editingCartItemId?: unknown },
 			sanctumClient,
 			uiFeedback,
 			funnelAnalytics,
@@ -326,10 +391,3 @@ export function useShipmentStepPageOrchestration(deps) {
 		openShipmentAuthModal,
 	};
 }
-
-export { useShipmentStepSessionPersistence } from '~/composables/useShipmentStepSessionPersistence';
-export { useShipmentStepFlow } from '~/composables/useShipmentStepFlow';
-export { useShipmentStepSubmit } from '~/composables/useShipmentStepSubmit';
-export { useShipmentStepPageState } from '~/composables/useShipmentStepPageState';
-export { useShipmentStepCartEdit } from '~/composables/useShipmentStepCartEdit';
-export { useShipmentStepValidation } from '~/composables/useShipmentStepValidation';

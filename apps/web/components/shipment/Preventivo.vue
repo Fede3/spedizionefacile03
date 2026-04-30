@@ -5,20 +5,16 @@
 	VINCOLO: la formula prezzo deve restare allineata con SessionController::firstStep.
 -->
 <script setup>
-// CSS split route-specific: preventivo.css viene caricato solo
-// nelle route che montano questo componente (homepage + /preventivo).
-import '~/assets/css/shipment-flow.css';
-
-const DEBUG_STATIC_PREVENTIVO = false;
-const preventivoDebugStore = useShipmentFlowStore();
-const preventivoApi = DEBUG_STATIC_PREVENTIVO
+const DEBUG_STATIC_QUOTE = false;
+const debugQuoteStore = useShipmentFlowStore();
+const quoteApi = DEBUG_STATIC_QUOTE
   ? {
     formRef: ref(null),
     messageError: ref(null),
     isCalculating: ref(false),
     isSyncingQuote: ref(false),
     isAdvancingToServices: ref(false),
-    shipmentFlowStore: preventivoDebugStore,
+    shipmentFlowStore: debugQuoteStore,
     isHomepageLikeRoute: computed(() => true),
     isDestinationItaly: computed(() => true),
     isOriginItaly: computed(() => true),
@@ -26,7 +22,7 @@ const preventivoApi = DEBUG_STATIC_PREVENTIVO
     destLocationError: ref(''),
     liveQuotePrice: computed(() => '0,00 €'),
     continueButtonLabel: computed(() => 'Continua'),
-    preventivoSubtitle: computed(() => 'Debug preventivo'),
+    quoteSubtitle: computed(() => 'Debug preventivo'),
     packageCountLabel: computed(() => '1 collo'),
     originPlaceholder: computed(() => ''),
     destinationPlaceholder: computed(() => ''),
@@ -78,11 +74,11 @@ const preventivoApi = DEBUG_STATIC_PREVENTIVO
   : useQuote();
 
 const {
-  formRef, messageError, isCalculating, isSyncingQuote, isAdvancingToServices,
+  formRef, messageError, isCalculating, isAdvancingToServices,
   shipmentFlowStore,
-  isHomepageLikeRoute, isDestinationItaly, isOriginItaly,
+  isHomepageLikeRoute, isDestinationItaly,
   originLocationError, destLocationError, liveQuotePrice,
-  continueButtonLabel, preventivoSubtitle, packageCountLabel,
+  continueButtonLabel, quoteSubtitle,
   originPlaceholder, destinationPlaceholder, isStandalonePreventivoRoute,
   europeCountryOptions, hasFormData, isEuropeMonocollo, europeRestrictionMessage,
   originQuery, originSuggestions, showOriginSuggestions,
@@ -92,16 +88,13 @@ const {
   settleOriginQuery, settleDestQuery,
   onOriginQueryFocus, onOriginQueryInput,
   onDestQueryFocus, onDestQueryInput,
-  hideOriginSuggestions, hideDestSuggestions,
-  onOriginManualInput, onOriginManualBlur,
-  onDestManualInput, onDestManualBlur,
   applyOriginCountrySelection, applyDestinationCountrySelection,
   packageTypeList, addPackageInline, deletePack, updatePackageType,
   calcQuantity, incrementQuantity, decrementQuantity,
   sv, onWeightInput, onWeightBlur, onDimInput, onDimBlur,
   promoSettings,
   continueToNextStep, resetForm,
-} = preventivoApi;
+} = quoteApi;
 
 /*
   Validazione peso client-side: il backend richiede packages.*.weight required|numeric|min:0.1.
@@ -153,8 +146,7 @@ function onFieldInput(pack, packIndex, field) {
   if (field.key === 'weight') {
     // resetta l'errore peso quando l'utente digita
     if (weightError.value[packIndex]) {
-      const next = { ...weightError.value };
-      delete next[packIndex];
+      const { [packIndex]: _removedWeightError, ...next } = weightError.value;
       weightError.value = next;
     }
     onWeightInput(pack, packIndex);
@@ -198,7 +190,7 @@ function onFieldBlur(pack, packIndex, field) {
 						</div>
 						<div class="preventivo-heading__text">
 							<h2 class="preventivo-heading__title">Preventivo Rapido</h2>
-							<p class="preventivo-heading__subtitle">{{ preventivoSubtitle }}</p>
+							<p class="preventivo-heading__subtitle">{{ quoteSubtitle }}</p>
 						</div>
 					</div>
 					<button v-if="hasFormData" type="button" @click="resetForm" aria-label="Azzera il modulo" class="preventivo-heading__reset flex items-center gap-[4px] cursor-pointer group">
@@ -459,4 +451,4 @@ function onFieldBlur(pack, packIndex, field) {
 		</div>
 	</section>
 </template>
-<!-- Styles in ~/assets/css/shipment-flow.css (lazy-loaded via <script setup> import — Sprint 5.3) -->
+    <!-- Styles in ~/assets/css/shipment-flow.css are loaded once from assets/css/main.css. -->

@@ -18,13 +18,14 @@
 
 import {
 	buildQuoteComparableSignature as buildQuoteComparableSignatureCanonical,
-	clonePackageForQuote as clonePackageForQuoteCanonical,
 	clonePackagesForQuote as clonePackagesForQuoteCanonical,
 	cloneShipmentDetailsForQuote as cloneShipmentDetailsForQuoteCanonical,
 	extractSessionComparablePayload as extractSessionComparablePayloadCanonical,
 	formatResolvedLocation as formatResolvedLocationCanonical,
 } from "~/utils/quickQuoteContract";
-import { buildShipmentFlowLocation } from "~/utils/shipment";
+
+type QuoteFlowStore = ReturnType<typeof useShipmentFlowStore>;
+type QuoteTimer = ReturnType<typeof setTimeout> | null;
 
 // =============================================================================
 // SEZIONE 1: QUOTE SNAPSHOT — helper puri + composable snapshot
@@ -33,9 +34,6 @@ import { buildShipmentFlowLocation } from "~/utils/shipment";
 
 /** Clona i campi rilevanti di `shipmentDetails` normalizzandoli per il quote payload. */
 const cloneShipmentDetailsForQuote = cloneShipmentDetailsForQuoteCanonical;
-
-/** Clona un singolo package con i campi necessari al preventivo. */
-const clonePackageForQuote = clonePackageForQuoteCanonical;
 
 /** Clona un array di pacchi usando clonePackageForQuote. */
 const clonePackagesForQuote = clonePackagesForQuoteCanonical;
@@ -62,7 +60,7 @@ const formatResolvedLocation = formatResolvedLocationCanonical;
  * computed sullo store passato. Mantenuto esportato per retrocompat nel caso
  * qualche consumer esterno lo importi direttamente.
  */
-export const useQuoteSnapshot = (shipmentFlowStore) => {
+export const useQuoteSnapshot = (shipmentFlowStore: QuoteFlowStore) => {
 	const buildQuotePayloadSnapshot = () => ({
 		shipment_details: cloneShipmentDetailsForQuote(shipmentFlowStore?.shipmentDetails),
 		packages: clonePackagesForQuote(shipmentFlowStore?.packages),
@@ -113,12 +111,14 @@ export const useQuote = () => {
 
 	// --- AUTO-QUOTE TIMER (shared mutable state across sections) ---
 	// Wrapper a oggetto per permettere alle sezioni di leggere/scrivere il timer.
-	const _timerBox = { value: null };
-	const autoQuoteTimerRef = (...args) => {
-		if (args.length === 0) return _timerBox.value;
-		_timerBox.value = args[0];
+	const _timerBox: { value: QuoteTimer } = { value: null };
+	function autoQuoteTimerRef(): QuoteTimer;
+	function autoQuoteTimerRef(value: QuoteTimer): QuoteTimer;
+	function autoQuoteTimerRef(value?: QuoteTimer) {
+		if (arguments.length === 0) return _timerBox.value;
+		_timerBox.value = value ?? null;
 		return _timerBox.value;
-	};
+	}
 
 	onBeforeUnmount(() => {
 		const timer = autoQuoteTimerRef();
@@ -134,7 +134,7 @@ export const useQuote = () => {
 	});
 
 	// --- LOCATION SEARCH ---
-	const publicApiFetchForLocation = async (path, options = {}) => {
+	const publicApiFetchForLocation = async (path: string, options: Record<string, unknown> = {}) => {
 		const url = path.startsWith("http") ? path : `${apiBase}${path}`;
 		return await $fetch(url, { credentials: "include", ...options });
 	};
@@ -157,7 +157,6 @@ export const useQuote = () => {
 		incrementQuantity,
 		isEuropeMonocollo,
 		packageTypeList,
-		recalculatePackagesTotal,
 		selectPackageType,
 		updatePackageType,
 	} = useQuickQuotePackages({
@@ -186,7 +185,7 @@ export const useQuote = () => {
 
 	// --- SMART VALIDATION (istanza condivisa tra le sezioni) ---
 	const sv = useSmartValidation();
-	const onCapInputSmartForLocations = (fieldKey, value, countryCode = "IT") => {
+	const onCapInputSmartForLocations = (fieldKey: string, value: string, countryCode = "IT") => {
 		if (sv.isTouched(fieldKey)) {
 			sv.validateCAP(fieldKey, value, { countryCode });
 		}
@@ -245,8 +244,6 @@ export const useQuote = () => {
 		priceBands,
 		packageTypeList,
 		selectPackageType,
-		ensurePackagesIdentity,
-		checkPrices,
 		calcPriceWithWeight,
 		calcPriceWithVolume,
 		originQuery,
@@ -255,18 +252,8 @@ export const useQuote = () => {
 		destQuery,
 		destSuggestions,
 		showDestSuggestions,
-		locationKey,
-		getProvinceLabel,
-		selectOriginLocation,
-		selectDestLocation,
 		settleOriginQuery,
 		settleDestQuery,
-		onOriginQueryFocus,
-		onOriginQueryInput,
-		onDestQueryFocus,
-		onDestQueryInput,
-		hideOriginSuggestions,
-		hideDestSuggestions,
 		isOriginItaly,
 		isDestinationItaly,
 		autoQuoteTimerRef,
@@ -316,7 +303,7 @@ export const useQuote = () => {
 		destLocationError,
 		liveQuotePrice,
 		continueButtonLabel,
-		preventivoSubtitle,
+		quoteSubtitle,
 		packageCountLabel,
 		originPlaceholder,
 		destinationPlaceholder,
@@ -380,7 +367,7 @@ export const useQuote = () => {
 		destLocationError,
 		liveQuotePrice,
 		continueButtonLabel,
-		preventivoSubtitle,
+		quoteSubtitle,
 		packageCountLabel,
 		originPlaceholder,
 		destinationPlaceholder,
