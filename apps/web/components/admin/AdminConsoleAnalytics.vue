@@ -2,7 +2,7 @@
 /** AdminConsoleAnalytics.vue (orchestrator) */
 import { computed, ref, onMounted } from 'vue';
 import {
-	toNumber,
+	chartToNumber,
 	formatCurrencyShort as formatEurShort,
 	formatPercentage as formatPercent,
 	formatInteger,
@@ -70,7 +70,7 @@ onMounted(() => {
 /* ---- Aggregates per summary (peak ordini + top status share) ---- */
 const peakValue = computed(() => {
 	const arr = Array.isArray(props.days) ? props.days : [];
-	return arr.reduce((peak, item) => Math.max(peak, toNumber(item?.count ?? item?.value ?? item?.orders)), 0);
+	return arr.reduce((peak, item) => Math.max(peak, chartToNumber(item?.count ?? item?.value ?? item?.orders)), 0);
 });
 
 // Palette per i dot della summary "stati": deve combaciare con i segmenti donut.

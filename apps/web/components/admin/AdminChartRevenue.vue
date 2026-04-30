@@ -2,7 +2,7 @@
 /** AdminChartRevenue.vue */
 import { computed, ref } from 'vue';
 import {
-	toNumber,
+	chartToNumber,
 	formatCurrency as formatEur,
 	formatDateShort as shortDate,
 	formatDate as fullDate,
@@ -39,7 +39,7 @@ const normalizedRevenue = computed(() =>
 			key: item?.date || `rev-${index}`,
 			label: shortDate(item?.date, index),
 			fullLabel: fullDate(item?.date, index),
-			value: toNumber(item?.amount ?? item?.revenue ?? item?.value ?? 0),
+			value: chartToNumber(item?.amount ?? item?.revenue ?? item?.value ?? 0),
 			date: item?.date || null,
 		})),
 );

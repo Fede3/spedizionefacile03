@@ -1,7 +1,7 @@
 <script setup>
 /** AdminChartOrders.vue */
 import { computed, ref } from 'vue';
-import { toNumber, formatInteger, formatDateShort as shortDate, formatDate as fullDate } from '~/utils/chart';
+import { chartToNumber, formatInteger, formatDateShort as shortDate, formatDate as fullDate } from '~/utils/chart';
 
 const props = defineProps({
 	ordersData: {
@@ -35,7 +35,7 @@ const normalizedDays = computed(() =>
 			key: item?.date || `day-${index}`,
 			label: shortDate(item?.date, index),
 			fullLabel: fullDate(item?.date, index),
-			value: toNumber(item?.count ?? item?.value ?? item?.orders),
+			value: chartToNumber(item?.count ?? item?.value ?? item?.orders),
 			date: item?.date || null,
 		})),
 );

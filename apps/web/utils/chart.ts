@@ -19,9 +19,6 @@ export const chartToNumber = (value: unknown): number => {
 	return Number.isFinite(n) ? n : 0
 }
 
-// Alias per retrocompat con composables/useChartLogic (deprecato).
-export const toNumber = chartToNumber
-
 export const formatCurrency = (cents: unknown): string => new Intl.NumberFormat('it-IT', {
 	style: 'currency',
 	currency: 'EUR',

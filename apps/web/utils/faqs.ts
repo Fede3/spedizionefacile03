@@ -270,6 +270,7 @@ export function highlightMatch(text: unknown, query: string) {
 }
 
 // Export diretti: dataset FAQ + helpers puri (no reattivita').
+// `escapeHtml` resta canonico in utils/html.ts: qui non lo riesportiamo per
+// evitare collisioni con auto-import Nuxt.
 export const faqs = FAQS;
 export const categories = FAQ_CATEGORIES;
-export { escapeFaqHtml as escapeHtml };

@@ -1,7 +1,7 @@
 <script setup>
 /** AdminChartStatus.vue */
 import { computed } from 'vue';
-import { toNumber, formatInteger, formatPercentage as formatPercent, computeSegments } from '~/utils/chart';
+import { chartToNumber, formatInteger, formatPercentage as formatPercent, computeSegments } from '~/utils/chart';
 
 const props = defineProps({
 	statusData: {
@@ -111,7 +111,7 @@ const normalizedStatuses = computed(() => {
 });
 
 const statusTotal = computed(() =>
-	normalizedStatuses.value.reduce((sum, item) => sum + toNumber(item.count), 0),
+	normalizedStatuses.value.reduce((sum, item) => sum + chartToNumber(item.count), 0),
 );
 
 /* ---- Donut geometry: arco sui 40px radius, stroke 12px ---- */

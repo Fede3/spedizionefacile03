@@ -62,3 +62,10 @@ scripts/local-tools/
 # Backup folder operativi (rinominati con timestamp)
 *-backup-*/
 *_backup_*/
+
+# QA screenshots / artifact AI tool (non parte della repo)
+apps/web/.local/
+docs/ai/
+
+# Helper locali Windows (avvio rapido dev, non parte della repo)
+AVVIA_LOCALE.cmd
