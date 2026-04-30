@@ -121,7 +121,9 @@ onBeforeUnmount(() => {
               :to="nav.to || nav.page"
               class="navbar-link-pill"
               :class="isNavActive(nav.page) ? 'navbar-link-pill--active' : ''"
-              :aria-current="isNavActive(nav.page) ? 'page' : undefined">
+              :aria-current="isNavActive(nav.page) ? 'page' : undefined"
+              active-class=""
+              exact-active-class="">
               {{ nav.text }}
             </NuxtLink>
           </li>
@@ -157,6 +159,8 @@ onBeforeUnmount(() => {
             class="hidden lg:inline-flex items-center gap-[6px] navbar-login-btn"
             :class="isAccountActive ? 'navbar-login-btn--active' : ''"
             :aria-current="isAccountActive ? 'page' : undefined"
+            active-class=""
+            exact-active-class=""
           >
             <!-- Avatar initials circle -->
             <div class="navbar-avatar-circle">

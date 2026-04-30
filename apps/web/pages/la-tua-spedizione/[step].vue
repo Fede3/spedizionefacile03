@@ -1,6 +1,15 @@
 <script setup>
-// CRITICAL: vedi CLAUDE.md "Eccezioni documentate" — non splittare senza E2E gating Stripe.
-// File 1239 LOC: orchestratore funnel 5 step + entry point Stripe checkout.
+// CRITICAL — Eccezione documentata 1207 LOC.
+// Orchestratore funnel 5 step + entry point Stripe checkout. Composto da:
+//   - Setup di 14 composable (services, addresses, validation, flow, summary, ecc.)
+//   - 35+ computed di summary derivati da multipla sorgenti (cart/session/store)
+//   - 3 provide() per dependency injection ai sub-componenti
+//   - Handler ventaglio finale (add-to-cart, save-configured)
+//   - Wrapper continueToCart con analytics
+// SPLITTING richiede E2E Stripe gating con carta `4242 4242 4242 4242 09/30 123`.
+// Le sezioni splittabili senza E2E (helper puri) sono GIA' state estratte in
+// utils/shipmentStepHelpers.ts (8 funzioni), utils/shipmentSummaryHelpers.ts (8
+// funzioni), utils/shipmentFlowPresentation.ts (formatting label).
 import ShipmentStepColli from '~/components/shipment/ShipmentStepColli.vue';
 import ShipmentStepServizi from '~/components/shipment/ShipmentStepServizi.vue';
 import ShipmentStepIndirizzi from '~/components/shipment/ShipmentStepIndirizzi.vue';
