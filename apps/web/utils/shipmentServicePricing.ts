@@ -1,14 +1,129 @@
-/**
- * @file shipmentServicePricing — Utility shipmentServicePricing.
- */
 // Vincolo cross-stack: le regole di pricing (DEFAULT_* e funzioni di calcolo) devono restare allineate al backend Laravel; prezzi in centesimi int per coerenza con MyMoney.
 
 // ---------------------------------------------------------------------------
 // TIPI
 // ---------------------------------------------------------------------------
+type PricingApplication = string
+type PricingType = string
+type PricingTier = {
+	up_to_kg: number | null
+	price_cents: number
+}
+type ServicePricingRule = {
+	label: string
+	description?: string
+	pricing_type: PricingType
+	enabled: boolean
+	application: PricingApplication
+	note?: string
+	price_cents?: number | null
+	min_fee_cents?: number | null
+	percentage_rate?: number | null
+	threshold_amount_eur?: number | null
+	max_weight_kg?: number | null
+	threshold_cm?: number | null
+	longest_side_threshold_cm?: number | null
+	girth_threshold_cm?: number | null
+	min_longest_side_cm?: number | null
+	max_secondary_side_cm?: number | null
+	province_codes?: string[]
+	country_codes?: string[]
+	keyword_list?: string[]
+	flag_keys?: string[]
+	delivery_modes?: string[]
+	tiers?: PricingTier[]
+}
+type PricingConfig = {
+	service_pricing: Record<string, ServicePricingRule>
+	automatic_supplements: Record<string, ServicePricingRule>
+}
+type PackageInput = {
+	package_type?: string | null
+	quantity?: number | string | null
+	weight?: number | string | null
+	first_size?: number | string | null
+	second_size?: number | string | null
+	third_size?: number | string | null
+	length?: number | string | null
+	width?: number | string | null
+	height?: number | string | null
+	[key: string]: unknown
+}
+type NormalizedPackage = {
+	package_type: string
+	weight_kg: number
+	quantity: number
+	first_size_cm: number
+	second_size_cm: number
+	third_size_cm: number
+	max_side_cm: number
+	secondary_side_sum_cm: number
+	raw: PackageInput
+}
+type AddressInput = {
+	country?: string | null
+	country_code?: string | null
+	province?: string | null
+	city?: string | null
+	address?: string | null
+	additional_information?: string | null
+	postal_code?: string | null
+	address_number?: string | null
+	pudo_id?: string | null
+	name?: string | null
+	latitude?: number | null
+	longitude?: number | null
+	[key: string]: unknown
+}
+type NormalizedAddress = {
+	country: string
+	province: string
+	city: string
+	address: string
+	additional_information: string
+}
+type SurchargeItem = {
+	key: string
+	label: string
+	type: 'service' | 'automatic_supplement'
+	automatic: boolean
+	application: string
+	amount_cents: number
+	amount: number
+}
+type SurchargeResult = {
+	total: number
+	total_cents: number
+	items: SurchargeItem[]
+}
+type CalculateShipmentSurchargeOptions = {
+	selectedServices?: string[] | string
+	serviceType?: string
+	serviceData?: Record<string, unknown>
+	smsEmailNotification?: boolean
+	pricingConfig?: Partial<PricingConfig> | null
+	packages?: PackageInput[]
+	originAddress?: AddressInput
+	destinationAddress?: AddressInput
+	deliveryMode?: string
+	selectedPudo?: AddressInput | null
+	requiresManualQuote?: boolean
+}
+type AutomaticSupplementsInput = {
+	automaticConfig: Record<string, ServicePricingRule>
+	serviceData: Record<string, unknown>
+	packages: NormalizedPackage[]
+	destinationAddress: AddressInput
+	deliveryMode: string
+	requiresManualQuote: boolean
+	originAddress?: AddressInput
+}
+const asRecord = (value: unknown): Record<string, unknown> =>
+	value && typeof value === 'object' ? value as Record<string, unknown> : {}
+const asPackageInput = (value: unknown): PackageInput | null =>
+	value && typeof value === 'object' ? value as PackageInput : null
 
 /**
- * @typedef {'per_spedizione'
  *   | 'automatic_destination'
  *   | 'automatic_destination_per_package'
  *   | 'automatic_package_shape'
@@ -18,141 +133,28 @@
  */
 
 /**
- * @typedef {'fixed'
  *   | 'threshold_percentage'
  *   | 'tiered_weight'
  *   | 'fixed_with_threshold'
  *   | string} PricingType
  */
 
-/**
- * @typedef {Object} PricingTier
- * @property {number | null} up_to_kg
- * @property {number} price_cents
- */
 
-/**
- * @typedef {Object} ServicePricingRule
- * @property {string} label
- * @property {string} [description]
- * @property {PricingType} pricing_type
- * @property {boolean} enabled
- * @property {PricingApplication} application
- * @property {string} [note]
- * @property {number | null} [price_cents]
- * @property {number | null} [min_fee_cents]
- * @property {number | null} [percentage_rate]
- * @property {number | null} [threshold_amount_eur]
- * @property {number | null} [max_weight_kg]
- * @property {number | null} [threshold_cm]
- * @property {number | null} [longest_side_threshold_cm]
- * @property {number | null} [girth_threshold_cm]
- * @property {number | null} [min_longest_side_cm]
- * @property {number | null} [max_secondary_side_cm]
- * @property {string[]} [province_codes]
- * @property {string[]} [country_codes]
- * @property {string[]} [keyword_list]
- * @property {string[]} [flag_keys]
- * @property {string[]} [delivery_modes]
- * @property {PricingTier[]} [tiers]
- */
 
-/**
- * @typedef {Object} PricingConfig
- * @property {Record<string, ServicePricingRule>} service_pricing
- * @property {Record<string, ServicePricingRule>} automatic_supplements
- */
 
-/**
- * @typedef {Object} PackageInput
- * @property {string | null} [package_type]
- * @property {number | string | null} [quantity]
- * @property {number | string | null} [weight]
- * @property {number | string | null} [first_size]
- * @property {number | string | null} [second_size]
- * @property {number | string | null} [third_size]
- * @property {number | string | null} [length]
- * @property {number | string | null} [width]
- * @property {number | string | null} [height]
- */
 
-/**
- * @typedef {Object} NormalizedPackage
- * @property {string} package_type
- * @property {number} weight_kg
- * @property {number} quantity
- * @property {number} first_size_cm
- * @property {number} second_size_cm
- * @property {number} third_size_cm
- * @property {number} max_side_cm
- * @property {number} secondary_side_sum_cm
- * @property {PackageInput} raw
- */
 
-/**
- * @typedef {Object} AddressInput
- * @property {string | null} [country]
- * @property {string | null} [country_code]
- * @property {string | null} [province]
- * @property {string | null} [city]
- * @property {string | null} [address]
- * @property {string | null} [additional_information]
- * @property {string | null} [postal_code]
- * @property {string | null} [address_number]
- * @property {string | null} [pudo_id]
- * @property {string | null} [name]
- * @property {number | null} [latitude]
- * @property {number | null} [longitude]
- */
 
-/**
- * @typedef {Object} NormalizedAddress
- * @property {string} country
- * @property {string} province
- * @property {string} city
- * @property {string} address
- * @property {string} additional_information
- */
 
-/**
- * @typedef {Object} SurchargeItem
- * @property {string} key
- * @property {string} label
- * @property {'service' | 'automatic_supplement'} type
- * @property {boolean} automatic
- * @property {string} application
- * @property {number} amount_cents
- * @property {number} amount
- */
 
-/**
- * @typedef {Object} SurchargeResult
- * @property {number} total
- * @property {number} total_cents
- * @property {SurchargeItem[]} items
- */
 
-/**
- * @typedef {Object} CalculateShipmentSurchargeOptions
- * @property {string[] | string} [selectedServices]
- * @property {string} [serviceType]
- * @property {Record<string, unknown>} [serviceData]
- * @property {boolean} [smsEmailNotification]
- * @property {Partial<PricingConfig> | null} [pricingConfig]
- * @property {PackageInput[]} [packages]
- * @property {AddressInput} [originAddress]
- * @property {AddressInput} [destinationAddress]
- * @property {string} [deliveryMode]
- * @property {AddressInput | null} [selectedPudo]
- * @property {boolean} [requiresManualQuote]
- */
 
 // ---------------------------------------------------------------------------
 // DEFAULTS
 // ---------------------------------------------------------------------------
 
 /** @type {Record<string, ServicePricingRule>} */
-const DEFAULT_SERVICE_PRICING = Object.freeze({
+const DEFAULT_SERVICE_PRICING: Readonly<Record<string, ServicePricingRule>> = Object.freeze({
 	senza_etichetta: {
 		label: 'Senza etichetta',
 		description: "Il corriere stampa e applica l'etichetta al ritiro.",
@@ -205,7 +207,7 @@ const DEFAULT_SERVICE_PRICING = Object.freeze({
 })
 
 /** @type {Record<string, ServicePricingRule>} */
-const DEFAULT_AUTOMATIC_SUPPLEMENTS = Object.freeze({
+const DEFAULT_AUTOMATIC_SUPPLEMENTS: Readonly<Record<string, ServicePricingRule>> = Object.freeze({
 	calabria_sardegna_sicilia: {
 		label: 'Calabria / Sardegna / Sicilia',
 		description: 'Supplemento automatico destinazione per collo.',
@@ -308,18 +310,12 @@ const DEFAULT_AUTOMATIC_SUPPLEMENTS = Object.freeze({
 // HELPERS
 // ---------------------------------------------------------------------------
 
-/**
- * @param {number | string | null | undefined} value
- * @returns {number}
- */
-const roundCurrency = (value) => Math.round((Number(value) || 0) * 100) / 100
+const roundCurrency = (value: number | string | null | undefined): number => Math.round((Number(value) || 0) * 100) / 100
 
 /**
  * Parsing tollerante: accetta "1.234,56", "1234.56", "€ 1,23", numero o null.
- * @param {unknown} value
- * @returns {number}
  */
-export const parseCurrencyAmount = (value) => {
+export const parseCurrencyAmount = (value: unknown): number => {
 	if (value === null || value === undefined) return 0
 	if (typeof value === 'number') return Number.isFinite(value) ? value : 0
 
@@ -333,26 +329,20 @@ export const parseCurrencyAmount = (value) => {
 	return Number.isFinite(parsed) ? parsed : 0
 }
 
-/**
- * @param {unknown} value
- * @returns {number}
- */
-const parseNumericValue = (value) => {
+const parseNumericValue = (value: unknown): number => {
 	const parsed = parseCurrencyAmount(value)
 	return parsed > 0 ? parsed : 0
 }
 
 /**
  * Normalizza la chiave di un servizio umano-readable in chiave canonica (es. "Senza etichetta" -> "senza_etichetta").
- * @param {unknown} value
- * @returns {string}
  */
-export const normalizeServiceKey = (value) => {
+export const normalizeServiceKey = (value: unknown): string => {
 	const raw = String(value || '')
 		.trim()
 		.toLowerCase()
 		.normalize('NFD')
-		.replace(/[\u0300-\u036f]/g, '')
+		.replace(/[\u0300-\u036F]/g, '')
 
 	if (!raw || raw === 'nessuno') return ''
 	if (raw.includes('senza') && raw.includes('etichetta')) return 'senza_etichetta'
@@ -365,10 +355,8 @@ export const normalizeServiceKey = (value) => {
 
 /**
  * Normalizza la selezione servizi (array/stringa csv) in lista di chiavi canoniche dedupplicate.
- * @param {string[] | string | null | undefined} serviceSelection
- * @returns {string[]}
  */
-export const normalizeSelectedServices = (serviceSelection) => {
+export const normalizeSelectedServices = (serviceSelection: string[] | string | null | undefined): string[] => {
 	if (Array.isArray(serviceSelection)) {
 		return [...new Set(serviceSelection.map(normalizeServiceKey).filter(Boolean))]
 	}
@@ -380,11 +368,8 @@ export const normalizeSelectedServices = (serviceSelection) => {
 
 /**
  * Primo valore non undefined fra i nomi chiave elencati.
- * @param {Record<string, unknown> | null | undefined} source
- * @param {string[]} [keys]
- * @returns {unknown | undefined}
  */
-const getNested = (source, keys = []) => {
+const getNested = (source: Record<string, unknown> | null | undefined, keys: string[] = []): unknown | undefined => {
 	if (!source || typeof source !== 'object') return undefined
 	for (const key of keys) {
 		if (key in source) return source[key]
@@ -392,35 +377,24 @@ const getNested = (source, keys = []) => {
 	return undefined
 }
 
-/**
- * @param {Record<string, unknown>} [serviceData]
- * @returns {number}
- */
-const getContrassegnoAmount = (serviceData = {}) => {
-	const contrassegno = getNested(serviceData, ['contrassegno', 'Contrassegno'])
+const getContrassegnoAmount = (serviceData: Record<string, unknown> = {}): number => {
+	const contrassegno = asRecord(getNested(serviceData, ['contrassegno', 'Contrassegno']))
 	return parseCurrencyAmount(contrassegno?.importo)
 }
 
-/**
- * @param {Record<string, unknown>} [serviceData]
- * @returns {number}
- */
-const getAssicurazioneAmount = (serviceData = {}) => {
+const getAssicurazioneAmount = (serviceData: Record<string, unknown> = {}): number => {
 	const assicurazione = getNested(serviceData, ['assicurazione', 'Assicurazione'])
 	if (!assicurazione || typeof assicurazione !== 'object') return 0
 
-	return Object.values(assicurazione)
+	return Object.values(asRecord(assicurazione))
 		.map(parseCurrencyAmount)
 		.reduce((sum, value) => sum + value, 0)
 }
 
 /**
  * Normalizza una lista di stringhe: trim, filtro vuoti, dedup e opzionale uppercase/lowercase.
- * @param {unknown} items
- * @param {{ uppercase?: boolean }} [options]
- * @returns {string[]}
  */
-const normalizeList = (items, { uppercase = false } = {}) => {
+const normalizeList = (items: unknown, { uppercase = false }: { uppercase?: boolean } = {}): string[] => {
 	if (!Array.isArray(items)) return []
 	return [...new Set(items
 		.map((item) => String(item || '').trim())
@@ -431,18 +405,19 @@ const normalizeList = (items, { uppercase = false } = {}) => {
 
 /**
  * Normalizza i tier di peso: up_to_kg numerico o null, ordinati per peso crescente.
- * @param {PricingTier[]} [tiers]
- * @returns {PricingTier[]}
  */
-const normalizeTiers = (tiers = []) => {
+const normalizeTiers = (tiers: unknown = []): PricingTier[] => {
 	if (!Array.isArray(tiers)) return []
 	return [...tiers]
-		.map((tier) => ({
-			up_to_kg: tier?.up_to_kg === null || tier?.up_to_kg === undefined || tier.up_to_kg === ''
+		.map((rawTier) => {
+			const tier = asRecord(rawTier)
+			return {
+			up_to_kg: tier.up_to_kg === null || tier.up_to_kg === undefined || tier.up_to_kg === ''
 				? null
 				: parseNumericValue(tier.up_to_kg),
 			price_cents: Math.max(0, Math.round(Number(tier?.price_cents || 0))),
-		}))
+		}
+		})
 		.sort((a, b) => {
 			const left = a.up_to_kg ?? Number.POSITIVE_INFINITY
 			const right = b.up_to_kg ?? Number.POSITIVE_INFINITY
@@ -452,31 +427,19 @@ const normalizeTiers = (tiers = []) => {
 
 /**
  * Normalizza un gruppo chiave->regola applicando fallback e coercizioni numeriche.
- * @param {Record<string, Partial<ServicePricingRule>>} [group]
- * @param {Record<string, ServicePricingRule>} [defaults]
- * @returns {Record<string, ServicePricingRule>}
  */
 const normalizeKeyedPricingGroup = (
-	group = {},
-	defaults = {},
-) => Object.fromEntries(
+	group: Record<string, Partial<ServicePricingRule>> = {},
+	defaults: Record<string, ServicePricingRule> = {},
+): Record<string, ServicePricingRule> => Object.fromEntries(
 	Object.entries(defaults).map(([key, fallback]) => {
-		const source = group?.[key] && typeof group[key] === 'object' ? group[key] : {}
-		/**
-		 * @param {unknown} srcVal
-		 * @param {number | null | undefined} fbVal
-		 * @returns {number | null}
-		 */
-		const numberOrFallback = (srcVal, fbVal) => {
+		const candidate = group?.[key]
+		const source: Partial<ServicePricingRule> = candidate && typeof candidate === 'object' ? candidate : {}
+		const numberOrFallback = (srcVal: unknown, fbVal?: number | null) => {
 			if (srcVal === null || srcVal === undefined) return fbVal ?? null
 			return Number(srcVal) || 0
 		}
-		/**
-		 * @param {unknown} srcVal
-		 * @param {number | null | undefined} fbVal
-		 * @returns {number | null}
-		 */
-		const centsOrFallback = (srcVal, fbVal) => {
+		const centsOrFallback = (srcVal: unknown, fbVal?: number | null) => {
 			if (srcVal === null || srcVal === undefined) return fbVal ?? null
 			return Math.max(0, Math.round(Number(srcVal || 0)))
 		}
@@ -512,28 +475,21 @@ const normalizeKeyedPricingGroup = (
 			tiers: Array.isArray(source?.tiers)
 				? normalizeTiers(source.tiers)
 				: normalizeTiers(fallback?.tiers || []),
-		}]
+		} as ServicePricingRule]
 	}),
 )
 
-/**
- * @param {Partial<PricingConfig>} [pricingConfig]
- * @returns {PricingConfig}
- */
-const normalizePricingConfig = (pricingConfig = {}) => ({
+const normalizePricingConfig = (pricingConfig: Partial<PricingConfig> = {}): PricingConfig => ({
 	service_pricing: normalizeKeyedPricingGroup(pricingConfig?.service_pricing || {}, DEFAULT_SERVICE_PRICING),
 	automatic_supplements: normalizeKeyedPricingGroup(pricingConfig?.automatic_supplements || {}, DEFAULT_AUTOMATIC_SUPPLEMENTS),
 })
 
-/**
- * @param {PackageInput[]} [packages]
- * @returns {NormalizedPackage[]}
- */
-const normalizePackages = (packages = []) => {
+const normalizePackages = (packages: unknown = []): NormalizedPackage[] => {
 	if (!Array.isArray(packages)) return []
 	return packages
-		.map((pkg) => {
-			if (!pkg || typeof pkg !== 'object') return null
+		.map((candidate) => {
+			const pkg = asPackageInput(candidate)
+			if (!pkg) return null
 			const first = parseNumericValue(pkg.first_size ?? pkg.length)
 			const second = parseNumericValue(pkg.second_size ?? pkg.width)
 			const third = parseNumericValue(pkg.third_size ?? pkg.height)
@@ -541,7 +497,7 @@ const normalizePackages = (packages = []) => {
 			return {
 				package_type: String(pkg.package_type || '').trim().toLowerCase(),
 				weight_kg: parseNumericValue(pkg.weight),
-				quantity: Math.max(1, parseInt(String(pkg.quantity ?? '1'), 10) || 1),
+				quantity: Math.max(1, Number.parseInt(String(pkg.quantity ?? '1'), 10) || 1),
 				first_size_cm: first,
 				second_size_cm: second,
 				third_size_cm: third,
@@ -550,14 +506,10 @@ const normalizePackages = (packages = []) => {
 				raw: pkg,
 			}
 		})
-		.filter((pkg) => pkg !== null)
+		.filter((pkg): pkg is NormalizedPackage => pkg !== null)
 }
 
-/**
- * @param {AddressInput} [address]
- * @returns {NormalizedAddress}
- */
-const normalizeAddress = (address = {}) => ({
+const normalizeAddress = (address: AddressInput = {}): NormalizedAddress => ({
 	country: String(address?.country || address?.country_code || 'IT').trim().toUpperCase(),
 	province: String(address?.province || '').trim().toUpperCase(),
 	city: String(address?.city || '').trim().toLowerCase(),
@@ -565,12 +517,7 @@ const normalizeAddress = (address = {}) => ({
 	additional_information: String(address?.additional_information || '').trim().toLowerCase(),
 })
 
-/**
- * @param {number} weightKg
- * @param {PricingTier[]} [tiers]
- * @returns {number}
- */
-const findTierPriceCents = (weightKg, tiers = []) => {
+const findTierPriceCents = (weightKg: number, tiers: PricingTier[] = []): number => {
 	for (const tier of tiers) {
 		if (tier?.up_to_kg === null || tier?.up_to_kg === undefined || weightKg <= Number(tier.up_to_kg || 0)) {
 			return Math.max(0, Math.round(Number(tier?.price_cents || 0)))
@@ -579,22 +526,12 @@ const findTierPriceCents = (weightKg, tiers = []) => {
 	return 0
 }
 
-/**
- * @param {NormalizedAddress} address
- * @param {string[]} [provinceCodes]
- * @returns {boolean}
- */
-const matchesProvince = (address, provinceCodes = []) => {
+const matchesProvince = (address: NormalizedAddress, provinceCodes: string[] = []): boolean => {
 	const province = String(address?.province || '').trim().toUpperCase()
 	return province !== '' && normalizeList(provinceCodes, { uppercase: true }).includes(province)
 }
 
-/**
- * @param {NormalizedAddress} address
- * @param {ServicePricingRule} rule
- * @returns {boolean}
- */
-const matchesMinorIsland = (address, rule) => {
+const matchesMinorIsland = (address: NormalizedAddress, rule: ServicePricingRule): boolean => {
 	const countryCodes = normalizeList(rule?.country_codes || [], { uppercase: true })
 	if (countryCodes.length && !countryCodes.includes(String(address?.country || '').trim().toUpperCase())) {
 		return false
@@ -609,24 +546,12 @@ const matchesMinorIsland = (address, rule) => {
 	return normalizeList(rule?.keyword_list || []).some((keyword) => keyword && haystack.includes(keyword))
 }
 
-/**
- * @param {Record<string, unknown>} [pkg]
- * @param {Record<string, unknown>} [serviceData]
- * @param {string[]} [flagKeys]
- * @returns {boolean}
- */
-const matchesAnyFlag = (pkg = {}, serviceData = {}, flagKeys = []) => normalizeList(flagKeys).some((flagKey) => {
+const matchesAnyFlag = (pkg: Record<string, unknown> = {}, serviceData: Record<string, unknown> = {}, flagKeys: string[] = []): boolean => normalizeList(flagKeys).some((flagKey) => {
 	if (!flagKey) return false
 	return Boolean(pkg?.[flagKey] || serviceData?.[flagKey])
 })
 
-/**
- * @param {NormalizedPackage} pkg
- * @param {Record<string, unknown>} serviceData
- * @param {ServicePricingRule} rule
- * @returns {boolean}
- */
-const matchesOutOfGauge = (pkg, serviceData, rule) => {
+const matchesOutOfGauge = (pkg: NormalizedPackage, serviceData: Record<string, unknown>, rule: ServicePricingRule): boolean => {
 	if (matchesAnyFlag(pkg.raw, serviceData, rule?.flag_keys || [])) return true
 	const longestThreshold = Number(rule?.longest_side_threshold_cm || 0)
 	const girthThreshold = Number(rule?.girth_threshold_cm || 0)
@@ -634,13 +559,7 @@ const matchesOutOfGauge = (pkg, serviceData, rule) => {
 		|| (girthThreshold > 0 && pkg.secondary_side_sum_cm > girthThreshold)
 }
 
-/**
- * @param {NormalizedPackage} pkg
- * @param {Record<string, unknown>} serviceData
- * @param {ServicePricingRule} rule
- * @returns {boolean}
- */
-const matchesRodsAndTubes = (pkg, serviceData, rule) => {
+const matchesRodsAndTubes = (pkg: NormalizedPackage, serviceData: Record<string, unknown>, rule: ServicePricingRule): boolean => {
 	if (matchesAnyFlag(pkg.raw, serviceData, rule?.flag_keys || [])) return true
 	const minLongest = Number(rule?.min_longest_side_cm || 0)
 	const maxSecondary = Number(rule?.max_secondary_side_cm || 0)
@@ -649,14 +568,7 @@ const matchesRodsAndTubes = (pkg, serviceData, rule) => {
 		&& pkg.secondary_side_sum_cm <= (maxSecondary * 2)
 }
 
-/**
- * @param {string} key
- * @param {ServicePricingRule | undefined} rule
- * @param {number | null | undefined} amountCents
- * @param {boolean} [automatic]
- * @returns {SurchargeItem}
- */
-const buildFixedItem = (key, rule, amountCents, automatic = false) => ({
+const buildFixedItem = (key: string, rule: ServicePricingRule | undefined, amountCents: number | null | undefined, automatic = false): SurchargeItem => ({
 	key,
 	label: String(rule?.label || key),
 	type: automatic ? 'automatic_supplement' : 'service',
@@ -668,11 +580,8 @@ const buildFixedItem = (key, rule, amountCents, automatic = false) => ({
 
 /**
  * Calcola la fee a soglia percentuale (contrassegno/assicurazione).
- * @param {unknown} amount
- * @param {ServicePricingRule} rule
- * @returns {number}
  */
-const calculateThresholdFeeCents = (amount, rule) => {
+const calculateThresholdFeeCents = (amount: unknown, rule: ServicePricingRule): number => {
 	const normalizedAmount = parseCurrencyAmount(amount)
 	if (normalizedAmount <= 0) return 0
 	const threshold = Number(rule?.threshold_amount_eur ?? 300)
@@ -682,21 +591,9 @@ const calculateThresholdFeeCents = (amount, rule) => {
 	return Math.round(normalizedAmount * 100 * (percentageRate / 100))
 }
 
-/**
- * @typedef {Object} AutomaticSupplementsInput
- * @property {Record<string, ServicePricingRule>} automaticConfig
- * @property {Record<string, unknown>} serviceData
- * @property {NormalizedPackage[]} packages
- * @property {AddressInput} destinationAddress
- * @property {string} deliveryMode
- * @property {boolean} requiresManualQuote
- * @property {AddressInput} [originAddress]
- */
 
 /**
  * Calcola la lista di supplementi automatici attivi per lo shipment corrente.
- * @param {AutomaticSupplementsInput} input
- * @returns {SurchargeItem[]}
  */
 const calculateAutomaticSupplementItems = ({
 	automaticConfig,
@@ -705,9 +602,8 @@ const calculateAutomaticSupplementItems = ({
 	destinationAddress,
 	deliveryMode,
 	requiresManualQuote,
-}) => {
-	/** @type {SurchargeItem[]} */
-	const items = []
+}: AutomaticSupplementsInput): SurchargeItem[] => {
+	const items: SurchargeItem[] = []
 
 	const destination = normalizeAddress(destinationAddress)
 
@@ -784,8 +680,6 @@ const calculateAutomaticSupplementItems = ({
 
 /**
  * Calcola il totale dei supplementi (servizi selezionati + supplementi automatici) per una spedizione.
- * @param {CalculateShipmentSurchargeOptions} [options]
- * @returns {SurchargeResult}
  */
 export const calculateShipmentServiceSurcharge = ({
 	selectedServices = [],
@@ -799,7 +693,7 @@ export const calculateShipmentServiceSurcharge = ({
 	deliveryMode = '',
 	selectedPudo = null,
 	requiresManualQuote = false,
-} = {}) => {
+}: CalculateShipmentSurchargeOptions = {}): SurchargeResult => {
 	const config = normalizePricingConfig(pricingConfig || {})
 	const servicePricing = config.service_pricing
 	const automaticConfig = config.automatic_supplements
@@ -817,8 +711,7 @@ export const calculateShipmentServiceSurcharge = ({
 	const effectiveDestination = effectiveDeliveryMode === 'pudo' && selectedPudo
 		? selectedPudo
 		: destinationAddress
-	/** @type {SurchargeItem[]} */
-	const items = []
+	const items: SurchargeItem[] = []
 
 	if (selected.has('senza_etichetta') && servicePricing.senza_etichetta?.enabled) {
 		items.push(buildFixedItem('senza_etichetta', servicePricing.senza_etichetta, servicePricing.senza_etichetta.price_cents))

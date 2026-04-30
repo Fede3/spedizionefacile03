@@ -3,11 +3,24 @@
  * Estratto da useCart.js. Logica filtri, raggruppamento, coupon UI.
  * Distinto da useCart (checkout) perche' la pagina ha contesto e API diverse.
  */
+import { computed, onMounted, ref, watch, type Ref } from 'vue';
+import type { AddressGroup, CartItem, CartResponse } from '~/types';
+import type { AuthModalTab } from '~/stores/authModalStore';
 import { formatPrice as formatPriceCents } from '~/utils/price';
 import { formatDateIt } from '~/utils/date';
-import { buildDiscountOrderContext, parseEuroAmount } from '~/utils/discountPreview';
 import { useCartPromoPreview } from '~/composables/useCartPromoPreview';
-import { useCheckoutPromoPreview } from '~/composables/useCheckoutPromoPreview';
+
+type SanctumClient = <T = unknown>(url: string, options?: { method?: string; body?: unknown }) => Promise<T>;
+type DisplayGroupEntry = {
+    type: 'group';
+    groupIndex: number;
+    group: AddressGroup;
+    items: CartItem[];
+    totalCents: number;
+    color: string;
+};
+type DisplaySingleEntry = { type: 'single'; groupIndex: number; item: CartItem };
+type DisplayEntry = DisplayGroupEntry | DisplaySingleEntry;
 
 // SEZIONE 3 â€” useCarrello(): logica pagina /carrello
 // ============================================================================
@@ -16,21 +29,13 @@ import { useCheckoutPromoPreview } from '~/composables/useCheckoutPromoPreview';
 //  - filtri indirizzi, raggruppamento, quantita' inline, auth gate guest
 //  - usa useCartFetch (reattivo a prerender/route) invece di fetch diretto
 // Tentare di unificare rompeva la retro-compat dei consumer in pages/carrello.vue.
-/**
- * @typedef {import('~/types').CartItem} CartItem
- * @typedef {import('~/types').AddressGroup} AddressGroup
- * @typedef {{ type: 'success' | 'error', text: string }} CouponMessage
- * @typedef {{ success?: boolean, percentage?: number, new_total?: number }} CouponResponse
- * @typedef {{ type: 'group', groupIndex: number, group: AddressGroup, items: CartItem[], totalCents: number, color: string }} DisplayGroupEntry
- * @typedef {{ type: 'single', groupIndex: number, item: CartItem }} DisplaySingleEntry
- * @typedef {DisplayGroupEntry | DisplaySingleEntry} DisplayEntry
- */
 /** Composable carrello: filtri, raggruppamento indirizzi, coupon, auth gate checkout per guest. */
 export function useCarrello() {
-    const { cart, refresh, status } = useCartFetch();
+    const { cart: rawCart, refresh, status } = useCartFetch();
+    const cart = rawCart as Ref<CartResponse | null | undefined>;
     const { isAuthenticated } = useSanctumAuth();
     const { openAuthModal } = useAuthModalStore();
-    const sanctum = useSanctumClient();
+    const sanctum = useSanctumClient() as SanctumClient;
     const route = useRoute();
     const uiFeedback = useUiFeedback();
     // Promo settings per banner e badge
@@ -44,7 +49,7 @@ export function useCarrello() {
     // Apertura modal auth unificato (AuthOverlayModal globale). Se gia' autenticato
     // naviga direttamente al checkout. Altrimenti apre il modal con tab richiesto
     // (default: login) e redirect post-auth = /checkout.
-    const openCheckoutWithAuthGate = (tab = 'login') => {
+    const openCheckoutWithAuthGate = (tab: AuthModalTab = 'login') => {
         if (isAuthenticated.value) {
             navigateTo(authCheckoutRedirect);
             return;
@@ -61,9 +66,9 @@ export function useCarrello() {
         }
         await refresh();
         if (cart.value?.meta?.address_groups) {
-            const mergedGroups = cart.value.meta.address_groups.filter((g) => g.package_ids?.length > 1);
+            const mergedGroups = cart.value.meta.address_groups.filter((g: AddressGroup) => g.package_ids?.length > 1);
             if (mergedGroups.length > 0) {
-                const totalMerged = mergedGroups.reduce((sum, g) => sum + g.package_ids.length, 0);
+                const totalMerged = mergedGroups.reduce((sum: number, g: AddressGroup) => sum + g.package_ids.length, 0);
                 uiFeedback.info(`${totalMerged} pacchi identici sono stati uniti automaticamente`, '', { timeout: 5000 });
             }
         }
@@ -74,12 +79,12 @@ export function useCarrello() {
     const filteredCartItems = computed(() => {
         if (!cart.value?.data)
             return [];
-        let items = [...cart.value.data];
+        let items: CartItem[] = [...cart.value.data];
         if (filterProvenienza.value) {
-            items = items.filter((item) => item.origin_address?.city?.toLowerCase().includes(filterProvenienza.value.toLowerCase()));
+            items = items.filter((item: CartItem) => item.origin_address?.city?.toLowerCase().includes(filterProvenienza.value.toLowerCase()));
         }
         if (filterRiferimento.value) {
-            items = items.filter((item) => String(item.id).includes(filterRiferimento.value) ||
+            items = items.filter((item: CartItem) => String(item.id).includes(filterRiferimento.value) ||
                 (item.origin_address?.name || '').toLowerCase().includes(filterRiferimento.value.toLowerCase()) ||
                 (item.destination_address?.name || '').toLowerCase().includes(filterRiferimento.value.toLowerCase()));
         }
@@ -88,14 +93,14 @@ export function useCarrello() {
     const uniqueCities = computed(() => {
         if (!cart.value?.data)
             return [];
-        const cities = cart.value.data.map((item) => item.origin_address?.city).filter(Boolean);
+        const cities = cart.value.data.map((item: CartItem) => item.origin_address?.city).filter(Boolean);
         return [...new Set(cities)];
     });
     // --- ELIMINAZIONE SINGOLA SPEDIZIONE ---
     const showDeleteConfirm = ref(false);
-    const deleteTargetId = ref(null);
+    const deleteTargetId = ref<number | string | null>(null);
     const deleteLoading = ref(false);
-    const askDelete = (id) => {
+    const askDelete = (id: number | string) => {
         deleteTargetId.value = id;
         showDeleteConfirm.value = true;
     };
@@ -107,7 +112,7 @@ export function useCarrello() {
             await refreshNuxtData('cart');
             uiFeedback.success('Spedizione rimossa dal carrello.');
         }
-        catch (e) {
+        catch {
             uiFeedback.error('Errore durante la rimozione', 'Riprova.');
         }
         finally {
@@ -128,7 +133,7 @@ export function useCarrello() {
             showEmptyConfirm.value = false;
             uiFeedback.success('Carrello svuotato.');
         }
-        catch (error) {
+        catch {
             uiFeedback.error('Errore durante lo svuotamento del carrello', 'Riprova.');
         }
         finally {
@@ -138,14 +143,14 @@ export function useCarrello() {
     // formatPrice: usa la utility centsâ†’â‚¬ da utils/price (import in cima al file).
     // Alias locale per non scontrarsi con la formatPrice(num: euro) definita in useCart().
     const formatPrice = formatPriceCents;
-    const unitPrice = (item) => {
+    const unitPrice = (item: CartItem) => {
         const total = Number(item.single_price) || 0;
         const qty = Math.max(1, Number(item.quantity) || 1);
         return total / qty;
     };
     // --- AGGIORNAMENTO QUANTITA' ---
-    const quantityUpdating = ref(null);
-    const updateQuantity = async (itemId, newQty) => {
+    const quantityUpdating = ref<number | string | null>(null);
+    const updateQuantity = async (itemId: number | string, newQty: number) => {
         if (newQty < 1)
             newQty = 1;
         if (newQty > 100)
@@ -159,20 +164,20 @@ export function useCarrello() {
             clearNuxtData('cart');
             await refreshNuxtData('cart');
         }
-        catch (e) {
+        catch {
             uiFeedback.error('Errore nell\'aggiornamento della quantit\u00E0', 'Riprova.');
         }
         finally {
             quantityUpdating.value = null;
         }
     };
-    const formatDate = (item) => {
+    const formatDate = (item: CartItem) => {
         if (item.created_at) {
             return formatDateIt(item.created_at, new Date().toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit', year: 'numeric' }));
         }
         return new Date().toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit', year: 'numeric' });
     };
-    const getPackageIcon = (item) => {
+    const getPackageIcon = (item: CartItem) => {
         const type = item.package_type?.toLowerCase() || '';
         if (type.includes('pallet'))
             return '/img/quote/first-step/pallet.png';
@@ -183,9 +188,10 @@ export function useCarrello() {
         return '/img/quote/first-step/pack.png';
     };
     // --- RAGGRUPPAMENTO PER INDIRIZZO ---
-    const addressGroups = computed(() => cart.value?.meta?.address_groups || []);
-    const groupColors = ['#095866', '#E44203', '#6B21A8', '#0369A1', '#B45309'];
-    const expandedGroups = ref({});
+    const addressGroups = computed<AddressGroup[]>(() => cart.value?.meta?.address_groups || []);
+    const defaultGroupColor = '#095866';
+    const groupColors = [defaultGroupColor, '#E44203', '#6B21A8', '#0369A1', '#B45309'];
+    const expandedGroups = ref<Record<number, boolean>>({});
     onMounted(() => {
         const saved = sessionStorage.getItem('cart_expanded_groups');
         if (saved) {
@@ -203,44 +209,47 @@ export function useCarrello() {
     watch(expandedGroups, (newVal) => {
         sessionStorage.setItem('cart_expanded_groups', JSON.stringify(newVal));
     }, { deep: true });
-    const toggleGroup = (groupIdx) => {
+    const toggleGroup = (groupIdx: number) => {
         expandedGroups.value[groupIdx] = !isGroupExpanded(groupIdx);
     };
-    const isGroupExpanded = (groupIdx) => {
+    const isGroupExpanded = (groupIdx: number) => {
         return expandedGroups.value[groupIdx] !== false;
     };
-    const displayEntries = computed(() => {
+    const displayEntries = computed<DisplayEntry[]>(() => {
         const items = filteredCartItems.value;
         if (!items.length)
             return [];
-        const filteredIds = new Set(items.map((i) => i.id));
-        const usedIds = new Set();
-        const entries = [];
+        const filteredIds = new Set(items.map((item: CartItem) => item.id));
+        const usedIds = new Set<number>();
+        const entries: DisplayEntry[] = [];
         for (let gIdx = 0; gIdx < addressGroups.value.length; gIdx++) {
             const group = addressGroups.value[gIdx];
+            if (!group) continue;
             const groupItems = (group.package_ids || [])
-                .filter((id) => filteredIds.has(id) && !usedIds.has(id))
-                .map((id) => items.find((i) => i.id === id))
-                .filter(Boolean);
+                .filter((id: number) => filteredIds.has(id) && !usedIds.has(id))
+                .map((id: number) => items.find((item: CartItem) => item.id === id))
+                .filter((item): item is CartItem => Boolean(item));
             if (groupItems.length === 0)
                 continue;
-            groupItems.forEach((i) => usedIds.add(i.id));
+            groupItems.forEach((item: CartItem) => usedIds.add(item.id));
             if (groupItems.length > 1) {
-                const groupTotal = groupItems.reduce((sum, i) => sum + (Number(i.single_price) || 0), 0);
+                const groupTotal = groupItems.reduce((sum: number, item: CartItem) => sum + (Number(item.single_price) || 0), 0);
                 entries.push({
                     type: 'group',
                     groupIndex: gIdx,
                     group,
                     items: groupItems,
                     totalCents: groupTotal,
-                    color: groupColors[gIdx % groupColors.length],
+                    color: groupColors[gIdx % groupColors.length] || defaultGroupColor,
                 });
             }
             else {
+                const firstItem = groupItems[0];
+                if (!firstItem) continue;
                 entries.push({
                     type: 'single',
                     groupIndex: gIdx,
-                    item: groupItems[0],
+                    item: firstItem,
                 });
             }
         }

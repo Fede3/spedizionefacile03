@@ -19,6 +19,41 @@
  */
 
 import { computed, nextTick, ref } from 'vue';
+import type { Ref } from 'vue';
+
+type FunnelPropValue = string | number | boolean | null | undefined;
+type FunnelProps = Record<string, FunnelPropValue>;
+type AuthMethod = 'email' | 'google' | 'apple' | 'facebook' | string;
+type StageHost = HTMLElement | { $el?: unknown } | null | undefined;
+type StageRef = Ref<StageHost> | { value?: StageHost } | null | undefined;
+type TransitionDone = () => void;
+type FunnelErrorLike = Record<string, unknown> & {
+	data?: Record<string, unknown>;
+	response?: {
+		status?: unknown;
+		statusCode?: unknown;
+		statusText?: unknown;
+		_data?: Record<string, unknown>;
+		data?: Record<string, unknown>;
+	};
+};
+
+const isScalarFunnelProp = (value: unknown): value is FunnelPropValue => (
+	value === null
+	|| value === undefined
+	|| ['string', 'number', 'boolean'].includes(typeof value)
+);
+
+const asFunnelErrorObject = (value: unknown): FunnelErrorLike | null => (
+	value !== null && typeof value === 'object' ? value as FunnelErrorLike : null
+);
+
+const hasComponentElement = (value: StageHost): value is { $el: HTMLElement } => (
+	value !== null
+	&& typeof value === 'object'
+	&& '$el' in value
+	&& (value as { $el?: unknown }).$el instanceof HTMLElement
+);
 
 // ============================================================================
 // SEZIONE 1 — Analytics (ex useFunnelAnalytics)
@@ -32,9 +67,6 @@ import { computed, nextTick, ref } from 'vue';
  * Failure mode: wrappato in try/catch — un analytics rotto non blocca il checkout.
  * Sampling 100% (eventi business rari, ~5-10/sessione).
  *
- * @typedef {Record<string, string|number|boolean|null|undefined>} FunnelProps
- * @typedef {'email'|'google'|'apple'|'facebook'} AuthMethod
- * @typedef {'nazionale'|'internazionale'|'pudo'|string} QuoteType
  */
 
 /** Composable analytics funnel verso Plausible. */
@@ -43,7 +75,7 @@ export const useFunnelAnalytics = () => {
 	 * Rimuove PII accidentali prima di inviare ai sink.
 	 * Whitelist approach: manteniamo solo chiavi "safe".
 	 */
-	const sanitizeProps = (props) => {
+	const sanitizeProps = (props?: Record<string, unknown> | null): FunnelProps | undefined => {
 		if (!props) return undefined
 		const PII_KEYS = new Set([
 			'email', 'email_confirmation', 'password', 'password_confirmation',
@@ -51,21 +83,24 @@ export const useFunnelAnalytics = () => {
 			'address', 'street', 'postal_code', 'city', 'country',
 			'iban', 'card_number', 'stripe_account_id', 'token', 'access_token',
 		])
-		const clean = {}
+		const clean: FunnelProps = {}
 		for (const [key, value] of Object.entries(props)) {
 			if (PII_KEYS.has(key.toLowerCase())) continue
 			if (value === undefined || value === null) continue
 			// Non lasciare passare oggetti/array — Plausible accetta solo scalari.
-			if (typeof value === 'object') continue
+			if (!isScalarFunnelProp(value) || typeof value === 'object') continue
 			clean[key] = value
 		}
 		return clean
 	}
 
-	const sendToPlausible = (event, props) => {
-		if (typeof window === 'undefined' || typeof window.plausible !== 'function') return
+	const sendToPlausible = (event: string, props?: FunnelProps) => {
+		const plausible = typeof window !== 'undefined' && typeof window.plausible === 'function'
+			? window.plausible as (event: string, options?: { props?: FunnelProps }) => void
+			: null
+		if (!plausible) return
 		try {
-			window.plausible(event, props ? { props } : undefined)
+			plausible(event, props ? { props } : undefined)
 		} catch {
 			// no-op: analytics non deve rompere la pagina.
 		}
@@ -74,7 +109,7 @@ export const useFunnelAnalytics = () => {
 	// GA4 archiviato — vedi _archive/frontend-simplification-2026-04-20/npm-packages/ga4-duplicato/
 	// Sentry archiviato — vedi _archive/frontend-simplification-2026-04-20/npm-packages/sentry-frontend/
 
-	const track = (event, rawProps) => {
+	const track = (event: string, rawProps?: Record<string, unknown> | null) => {
 		if (typeof window === 'undefined') return
 		const props = sanitizeProps(rawProps)
 		sendToPlausible(event, props)
@@ -88,11 +123,11 @@ export const useFunnelAnalytics = () => {
 	// Eventi funnel preventivo (step 1 → 5)
 	// ---------------------------------------------------------------------------
 
-	const trackPreventivoStart = (quoteType) => {
+	const trackPreventivoStart = (quoteType: unknown) => {
 		track('preventivo_start', { quote_type: String(quoteType || 'unknown') })
 	}
 
-	const trackServicesSelected = (services) => {
+	const trackServicesSelected = (services: unknown[] | null | undefined) => {
 		track('services_selected', {
 			count: Array.isArray(services) ? services.length : 0,
 			// Nomi servizi OK (non sono PII): sms_email, assicurazione, contrassegno, etc.
@@ -101,21 +136,21 @@ export const useFunnelAnalytics = () => {
 	}
 
 	const trackAddressesFilled = () => {
-		track('addresses_filled')
+		track('addresses_filled', {})
 	}
 
-	const trackPaymentInit = (amountCents) => {
+	const trackPaymentInit = (amountCents: unknown) => {
 		track('payment_init', { amount_cents: Math.round(Number(amountCents) || 0) })
 	}
 
-	const trackPaymentSuccess = (orderId, amountCents) => {
+	const trackPaymentSuccess = (orderId: unknown, amountCents: unknown) => {
 		track('payment_success', {
 			order_id: String(orderId || ''),
 			amount_cents: Math.round(Number(amountCents) || 0),
 		})
 	}
 
-	const trackPaymentFail = (reason) => {
+	const trackPaymentFail = (reason: unknown) => {
 		track('payment_fail', { reason: String(reason || 'unknown').slice(0, 80) })
 	}
 
@@ -123,11 +158,11 @@ export const useFunnelAnalytics = () => {
 	// Eventi auth
 	// ---------------------------------------------------------------------------
 
-	const trackAuthLogin = (method) => {
+	const trackAuthLogin = (method: AuthMethod) => {
 		track('auth_login', { method })
 	}
 
-	const trackAuthRegister = (method) => {
+	const trackAuthRegister = (method: AuthMethod) => {
 		track('auth_register', { method })
 	}
 
@@ -167,13 +202,15 @@ export const useFunnelAnalytics = () => {
 
 /** Composable helper navigazione/transizioni funnel spedizione. */
 export function useFunnelNavigation() {
-	const resolveStageElement = (stageRef) => {
+	const resolveStageElement = (stageRef: StageRef): HTMLElement | null => {
 		const rawRef = stageRef?.value;
 		if (!rawRef) return null;
-		return rawRef?.$el instanceof HTMLElement ? rawRef.$el : rawRef;
+		if (rawRef instanceof HTMLElement) return rawRef;
+		if (hasComponentElement(rawRef)) return rawRef.$el;
+		return null;
 	};
 
-	const scrollAccordionStageIntoView = (stageRef, focusSelector) => {
+	const scrollAccordionStageIntoView = (stageRef: StageRef, focusSelector?: string) => {
 		nextTick(() => {
 			const stageElement = resolveStageElement(stageRef);
 			if (!stageElement) return;
@@ -196,24 +233,25 @@ export function useFunnelNavigation() {
 
 				if (focusSelector) {
 					const focusTarget = stageElement.querySelector(focusSelector);
-					focusTarget?.focus?.({ preventScroll: true });
+					if (focusTarget instanceof HTMLElement) {
+						focusTarget.focus({ preventScroll: true });
+					}
 				}
 			}, 480);
 		});
 	};
 
-	const focusPickupDateSection = (pickupDateSectionRef) => {
+	const focusPickupDateSection = (pickupDateSectionRef: StageRef) => {
 		nextTick(() => {
-			const sectionRoot =
-				pickupDateSectionRef.value?.$el instanceof HTMLElement
-					? pickupDateSectionRef.value.$el
-					: pickupDateSectionRef.value;
+			const sectionRoot = resolveStageElement(pickupDateSectionRef);
 			const firstDateButton =
 				sectionRoot?.querySelector?.('[data-pickup-day]') ||
 				document.querySelector('[data-pickup-day], [id^="date-"]');
 
 			sectionRoot?.scrollIntoView?.({ block: 'center', behavior: 'smooth' });
-			firstDateButton?.focus?.({ preventScroll: true });
+			if (firstDateButton instanceof HTMLElement) {
+				firstDateButton.focus({ preventScroll: true });
+			}
 		});
 	};
 
@@ -232,7 +270,7 @@ export function useFunnelNavigation() {
 
 	/* -- Accordion-panel Transition hooks ------------------------------------ */
 
-	const clearAccordionPanelTransitionStyles = (el) => {
+	const clearAccordionPanelTransitionStyles = (el: HTMLElement) => {
 		el.style.height = '';
 		el.style.opacity = '';
 		el.style.transform = '';
@@ -241,8 +279,8 @@ export function useFunnelNavigation() {
 		el.style.willChange = '';
 	};
 
-	const bindAccordionPanelTransitionEnd = (el, done) => {
-		const onTransitionEnd = (event) => {
+	const bindAccordionPanelTransitionEnd = (el: HTMLElement, done: TransitionDone) => {
+		const onTransitionEnd = (event: TransitionEvent) => {
 			if (event.target !== el || event.propertyName !== 'height') return;
 			el.removeEventListener('transitionend', onTransitionEnd);
 			done();
@@ -251,8 +289,8 @@ export function useFunnelNavigation() {
 		el.addEventListener('transitionend', onTransitionEnd);
 	};
 
-	const onAccordionPanelBeforeEnter = (el) => {
-		const target = el;
+	const onAccordionPanelBeforeEnter = (el: Element) => {
+		const target = el as HTMLElement;
 		target.style.height = '0px';
 		target.style.opacity = '0';
 		target.style.transform = 'translateY(10px)';
@@ -260,8 +298,8 @@ export function useFunnelNavigation() {
 		target.style.willChange = 'height, opacity, transform';
 	};
 
-	const onAccordionPanelEnter = (el, done) => {
-		const target = el;
+	const onAccordionPanelEnter = (el: Element, done: TransitionDone) => {
+		const target = el as HTMLElement;
 		// UX Polish — apertura organica stile "easeOutExpo": la card si distende
 		// con decelerazione molto morbida, senza overshoot. Durata allungata per
 		// percepire il rilascio, non per rallentare l'interazione.
@@ -277,12 +315,12 @@ export function useFunnelNavigation() {
 		});
 	};
 
-	const onAccordionPanelAfterEnter = (el) => {
-		clearAccordionPanelTransitionStyles(el);
+	const onAccordionPanelAfterEnter = (el: Element) => {
+		clearAccordionPanelTransitionStyles(el as HTMLElement);
 	};
 
-	const onAccordionPanelBeforeLeave = (el) => {
-		const target = el;
+	const onAccordionPanelBeforeLeave = (el: Element) => {
+		const target = el as HTMLElement;
 		target.style.height = `${target.scrollHeight}px`;
 		target.style.opacity = '1';
 		target.style.transform = 'translateY(0)';
@@ -290,8 +328,8 @@ export function useFunnelNavigation() {
 		target.style.willChange = 'height, opacity, transform';
 	};
 
-	const onAccordionPanelLeave = (el, done) => {
-		const target = el;
+	const onAccordionPanelLeave = (el: Element, done: TransitionDone) => {
+		const target = el as HTMLElement;
 		target.style.height = `${target.scrollHeight}px`;
 		// Chiusura: ease-in leggero per dare direzionalità "che sparisce".
 		target.style.transition =
@@ -306,8 +344,8 @@ export function useFunnelNavigation() {
 		});
 	};
 
-	const onAccordionPanelAfterLeave = (el) => {
-		clearAccordionPanelTransitionStyles(el);
+	const onAccordionPanelAfterLeave = (el: Element) => {
+		clearAccordionPanelTransitionStyles(el as HTMLElement);
 	};
 
 	return {
@@ -344,11 +382,11 @@ export function useFunnelNavigation() {
  * ----------------------------------------------------------------------------
  */
 
-const THROTTLE_ERROR_PATTERN = /numero massimo di tentativi|hai superato|riprova tra|attendi(?: ancora)?|\d+\s*(second|minut)|too many (attempts|requests)|tentativi troppo frequenti|rate limit|429/i;
+const THROTTLE_ERROR_PATTERN = /numero massimo di tentativi|hai superato|riprova tra|attendi(?: ancora)?|\d+\s*(?:second|minut)|too many (?:attempts|requests)|tentativi troppo frequenti|rate limit|429/i;
 const THROTTLE_STATUS_PATTERN = /\b429\b|too[\s_-]*many[\s_-]*requests|throttled|rate[\s_-]*limited/i;
 
 const createFunnelErrorHelpers = () => {
-	const normalizeFunnelErrorMessage = (message) => {
+	const normalizeFunnelErrorMessage = (message: unknown): string => {
 		if (!message) return '';
 		if (typeof message === 'string') return message.trim();
 		if (Array.isArray(message)) {
@@ -357,8 +395,8 @@ const createFunnelErrorHelpers = () => {
 				.filter(Boolean)
 				.join(' ');
 		}
-		if (typeof message === 'object') {
-			const anyMsg = message;
+		const anyMsg = asFunnelErrorObject(message);
+		if (anyMsg) {
 			return [
 				anyMsg.message,
 				anyMsg.error,
@@ -382,13 +420,13 @@ const createFunnelErrorHelpers = () => {
 		return String(message).trim();
 	};
 
-	const resolveFunnelErrorMessage = (error, fallbackMessage = '') => (
+	const resolveFunnelErrorMessage = (error: unknown, fallbackMessage = ''): string => (
 		normalizeFunnelErrorMessage(error) || normalizeFunnelErrorMessage(fallbackMessage)
 	);
 
-	const normalizeFunnelErrorStatus = (message) => {
-		if (!message || typeof message !== 'object') return '';
-		const anyMsg = message;
+	const normalizeFunnelErrorStatus = (message: unknown): string => {
+		const anyMsg = asFunnelErrorObject(message);
+		if (!anyMsg) return '';
 
 		return [
 			anyMsg.status,
@@ -415,7 +453,7 @@ const createFunnelErrorHelpers = () => {
 			.find(Boolean) || '';
 	};
 
-	const isThrottleLikeFunnelError = (message) => {
+	const isThrottleLikeFunnelError = (message: unknown): boolean => {
 		const normalizedMessage = normalizeFunnelErrorMessage(message);
 		if (normalizedMessage && THROTTLE_ERROR_PATTERN.test(normalizedMessage)) return true;
 
@@ -423,7 +461,7 @@ const createFunnelErrorHelpers = () => {
 		return THROTTLE_STATUS_PATTERN.test(normalizedStatus);
 	};
 
-	const stripFunnelThrottleMessage = (message) => {
+	const stripFunnelThrottleMessage = (message: unknown): string => {
 		const normalized = normalizeFunnelErrorMessage(message);
 		if (isThrottleLikeFunnelError(message)) return '';
 		return normalized;

@@ -1,6 +1,5 @@
-/**
- * @file checkout — Utility checkout.
- */
+import type { LocationQuery } from 'vue-router'
+
 // === utils/checkout.js — Helper checkout / post-pagamento ===
 // Consolidamento di:
 //   - utils/checkoutSuccess.ts  (build/read/clear checkout success query, status)
@@ -20,7 +19,6 @@
  * `clearCheckoutSuccessQuery` removes those params once they've been consumed
  * to keep the URL clean.
  *
- * @typedef {import('vue-router').LocationQuery} LocationQuery
  */
 
 const QUERY_KEY_SUCCESS = 'checkout_success'
@@ -33,7 +31,6 @@ const QUERY_KEY_PAYMENT_METHOD = 'payment_method'
  * positive state.  "pending" is included because bonifico orders start in
  * pending and are still considered successful from the checkout perspective.
  *
- * @type {readonly string[]}
  */
 export const SUCCESSFUL_ORDER_STATUSES = Object.freeze([
   'paid',
@@ -51,11 +48,11 @@ export const SUCCESSFUL_ORDER_STATUSES = Object.freeze([
  * Merges checkout-success query params into an existing query object.
  * Returns a new LocationQuery that the caller can pass to `router.replace`.
  *
- * @param {LocationQuery} baseQuery
- * @param {{ orderIds: (string|number)[], paymentMethod: string }} opts
- * @returns {LocationQuery}
  */
-export function buildCheckoutSuccessQuery(baseQuery, { orderIds, paymentMethod }) {
+export function buildCheckoutSuccessQuery(
+  baseQuery: LocationQuery,
+  { orderIds, paymentMethod }: { orderIds: Array<string | number>; paymentMethod: string },
+): LocationQuery {
   return {
     ...baseQuery,
     [QUERY_KEY_SUCCESS]: '1',
@@ -67,10 +64,8 @@ export function buildCheckoutSuccessQuery(baseQuery, { orderIds, paymentMethod }
 /**
  * Reads the checkout-success state from the current route query.
  *
- * @param {LocationQuery} query
- * @returns {{ active: boolean, orderIds: string[], paymentMethod: string }}
  */
-export function readCheckoutSuccessState(query) {
+export function readCheckoutSuccessState(query: LocationQuery) {
   const active = query[QUERY_KEY_SUCCESS] === '1'
   if (!active) {
     return { active: false, orderIds: [], paymentMethod: '' }
@@ -95,14 +90,14 @@ export function readCheckoutSuccessState(query) {
  * Returns a new LocationQuery with checkout-success params stripped out.
  * The caller should pass this to `router.replace({ query })` to clean the URL.
  *
- * @param {LocationQuery} query
- * @returns {LocationQuery}
  */
-export function clearCheckoutSuccessQuery(query) {
-  const cleaned = { ...query }
-  delete cleaned[QUERY_KEY_SUCCESS]
-  delete cleaned[QUERY_KEY_ORDER_IDS]
-  delete cleaned[QUERY_KEY_PAYMENT_METHOD]
+export function clearCheckoutSuccessQuery(query: LocationQuery): LocationQuery {
+  const {
+    checkout_success: _checkoutSuccess,
+    order_ids: _orderIds,
+    payment_method: _paymentMethod,
+    ...cleaned
+  } = query
   return cleaned
 }
 
@@ -121,9 +116,8 @@ export function clearCheckoutSuccessQuery(query) {
  * (carta rifiutata). I codici non mappati ricadono sul message
  * originale (che può essere in EN).
  *
- * @type {Record<string, string>}
  */
-export const STRIPE_ERRORS_IT = {
+export const STRIPE_ERRORS_IT: Record<string, string> = {
 	card_declined: "Carta rifiutata. Verifica i dati o usa un'altra carta.",
 	insufficient_funds: 'Fondi insufficienti sulla carta.',
 	expired_card: 'Carta scaduta.',
@@ -150,19 +144,25 @@ export const STRIPE_ERRORS_IT = {
  * Traduce un errore Stripe nel messaggio italiano corrispondente.
  * Fallback sul message originale o generico se il codice non è mappato.
  *
- * @param {*} err
- * @param {string} [fallback='Errore durante il pagamento. Riprova.']
- * @returns {string}
  */
-export function translateStripeError(err, fallback = 'Errore durante il pagamento. Riprova.') {
+type StripeLikeError = {
+	code?: string
+	decline_code?: string
+	response?: { _data?: { error?: string; message?: string } }
+	data?: { error?: string }
+	message?: string
+}
+
+export function translateStripeError(err: unknown, fallback = 'Errore durante il pagamento. Riprova.') {
 	if (!err) return fallback;
-	const code = err?.code || err?.decline_code;
+	const source = err as StripeLikeError;
+	const code = source.code || source.decline_code;
 	if (code && STRIPE_ERRORS_IT[code]) return STRIPE_ERRORS_IT[code];
 	return (
-		err?.response?._data?.error ||
-		err?.response?._data?.message ||
-		err?.data?.error ||
-		err?.message ||
+		source.response?._data?.error ||
+		source.response?._data?.message ||
+		source.data?.error ||
+		source.message ||
 		fallback
 	);
 }

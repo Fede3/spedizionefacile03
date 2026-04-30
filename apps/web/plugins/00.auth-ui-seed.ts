@@ -1,16 +1,14 @@
 import {
 	AUTH_UI_COOKIE,
 	AUTH_UI_STORAGE,
+	type AuthUiSnapshot,
 	createEmptySnapshot,
 	parseStoredSnapshot,
 } from '~/utils/auth'
 
-/**
- * @typedef {import('~/types').AuthUiSnapshot} AuthUiSnapshot
- */
 
 export default defineNuxtPlugin(() => {
-	const authCookie = useCookie(AUTH_UI_COOKIE, {
+	const authCookie = useCookie<AuthUiSnapshot | string>(AUTH_UI_COOKIE, {
 		sameSite: 'lax',
 		path: '/',
 		// HTTPS-only in produzione (in dev http://localhost va in chiaro per non rompere il login).
@@ -29,7 +27,7 @@ export default defineNuxtPlugin(() => {
 
 	if (import.meta.client) {
 		const rawStoredSnapshot = window.localStorage.getItem(AUTH_UI_STORAGE)
-		let parsedStoredSnapshot = null
+		let parsedStoredSnapshot: AuthUiSnapshot | null = null
 
 		if (rawStoredSnapshot) {
 			try {

@@ -1,6 +1,3 @@
-/**
- * @file usePayment — Composable usePayment.
- */
 // composables/usePayment.js
 // Boundary frontend del pagamento checkout.
 //
@@ -28,30 +25,76 @@
 
 import { useCheckoutOrderContext } from '~/composables/useCheckoutOrderContext'
 import { buildCheckoutSuccessQuery, translateStripeError } from '~/utils/checkout'
+import type { Ref } from 'vue'
+import type {
+  Stripe,
+  StripeCardElement,
+  StripeCardElementChangeEvent,
+} from '@stripe/stripe-js'
 import {
   PENDING_PAYMENT_KEY,
   PENDING_PAYMENT_TTL_MS,
-  safeLocalGet,
   safeLocalSet,
-  safeLocalRemove,
-  loadPendingPayment,
   clearPendingPayment,
 } from '~/utils/pendingPayment'
 
-// Re-export per retrocompat: alcuni caller importano da usePayment.
-export { loadPendingPayment, clearPendingPayment }
+type PaymentMethodKey = 'carta' | 'bonifico' | 'wallet'
+type CartLike = {
+  finalTotal?: Ref<number>
+  finalTotalFormatted?: Ref<string>
+  billingPayload: Ref<Record<string, unknown> | null>
+  existingOrder?: Ref<unknown | null>
+  existingOrderId?: Ref<string | number | null>
+  walletSufficient?: Ref<boolean>
+  loadWalletBalance?: () => unknown
+}
+type StripeSettingsResponse = { publishable_key?: string }
+type DefaultPaymentResponse = { card?: { id?: string } }
+type StripePaymentResponse = {
+  payment_intent_id?: string | null
+  status?: string
+  client_secret?: string
+  error?: string
+}
+type PaymentIntentResponse = {
+  client_secret?: string
+  error?: string
+}
+type WalletPayResponse = {
+  success?: boolean
+  message?: string
+  error?: string
+  data?: { id?: string | number }
+}
+type PaymentDraft = {
+  orderId: string | number
+  paymentMethod: PaymentMethodKey
+  submissionId?: string
+  isExisting: boolean
+  amount: number
+}
+type AuthRetryOptions = { attempts?: number; label?: string }
+type UserProfile = { name?: string }
+
+const asRecord = (value: unknown): Record<string, unknown> =>
+  value && typeof value === 'object' ? value as Record<string, unknown> : {}
+const getErrorMessage = (error: unknown): string => String(asRecord(error).message || '')
+const getErrorStatus = (error: unknown): number => {
+  const e = asRecord(error)
+  const response = asRecord(e.response)
+  const data = asRecord(e.data)
+  return Number(response.status ?? e.statusCode ?? e.status ?? data.statusCode ?? 0)
+}
 
 /**
  * Composable principale di pagamento checkout.
  *
- * @param {object} cart - Oggetto ritornato da useCart() con almeno:
  *   finalTotal (Ref<number>), finalTotalFormatted (Ref<string>),
  *   getNumberTotal (Ref<number>), billingPayload (Ref<object>),
  *   existingOrder (Ref<object|null>), existingOrderId (Ref<string|number|null>),
  *   walletSufficient? (Ref<boolean>), loadWalletBalance? (Function).
- * @returns {object} API reattiva per la UI di pagamento.
  */
-export function usePayment(cart) {
+export function usePayment(cart: CartLike) {
   const route = useRoute()
   const router = useRouter()
   const sanctum = useSanctumClient()
@@ -68,19 +111,19 @@ export function usePayment(cart) {
   ]
 
   // ---------- STATO PAGAMENTO ----------
-  const paymentMethod = ref('carta')
+  const paymentMethod = ref<PaymentMethodKey>('carta')
   const termsAccepted = ref(false)
   const showConfirmModal = ref(false)
   const isProcessing = ref(false)
   const paymentStep = ref('')
   const paymentError = ref('')
   const paymentSuccess = ref(false)
-  const successOrderId = ref(null)
+  const successOrderId = ref<string | number | null>(null)
 
   // ---------- STATO STRIPE ----------
-  const stripe = ref(null)
-  const cardElement = ref(null)
-  const cardElementContainer = ref(null)
+  const stripe = ref<Stripe | null>(null)
+  const cardElement = ref<StripeCardElement | null>(null)
+  const cardElementContainer = ref<HTMLElement | null>(null)
   const cardMounted = ref(false)
   const cardComplete = ref(false)
   const cardError = ref('')
@@ -92,7 +135,7 @@ export function usePayment(cart) {
   const saveCardForFuture = ref(false)
   const useNewCard = ref(false)
   const hasSavedCard = ref(false)
-  const defaultPayment = ref(null)
+  const defaultPayment = ref<DefaultPaymentResponse | null>(null)
   const {
     buildSubmissionContext,
     resolvePayableOrderId,
@@ -105,13 +148,16 @@ export function usePayment(cart) {
   })
 
   async function ensurePaymentAuthContext({ force = false } = {}) {
-    const hasUiSnapshot = Boolean(authCookie.value?.authenticated)
+    const authSnapshot = authCookie.value && typeof authCookie.value === 'object'
+      ? authCookie.value as { authenticated?: boolean }
+      : null
+    const hasUiSnapshot = Boolean(authSnapshot?.authenticated)
 
     if (force || !isAuthenticated.value) {
       try {
         await runAuthBootstrap({ force: force || hasUiSnapshot })
       } catch (error) {
-        console.warn('[usePayment] auth bootstrap failed before payment:', error?.message || error)
+        console.warn('[usePayment] auth bootstrap failed before payment:', getErrorMessage(error) || error)
       }
     }
 
@@ -128,7 +174,7 @@ export function usePayment(cart) {
         credentials: 'include',
       })
     } catch (error) {
-      console.warn('[usePayment] csrf refresh failed before payment:', error?.message || error)
+      console.warn('[usePayment] csrf refresh failed before payment:', getErrorMessage(error) || error)
     }
   }
 
@@ -137,24 +183,21 @@ export function usePayment(cart) {
    * prova a rinnovare la sessione Sanctum e ritenta. Max 2 retry.
    * Se fallisce comunque, rilancia l'errore per mostrare messaggio chiaro all'utente.
    */
-  async function callWithAuthRetry(fn, { attempts = 2, label = 'payment call' } = {}) {
-    let lastError = null
+  async function callWithAuthRetry<T>(fn: () => Promise<T>, { attempts = 2, label = 'payment call' }: AuthRetryOptions = {}): Promise<T> {
+    let lastError: unknown = null
     for (let attempt = 0; attempt <= attempts; attempt++) {
       try {
         return await fn()
       } catch (error) {
         lastError = error
-        const status = error?.response?.status
-          ?? error?.statusCode
-          ?? error?.status
-          ?? (error?.data?.statusCode)
+        const status = getErrorStatus(error)
         const is401 = status === 401 || status === 419
         if (is401 && attempt < attempts) {
           console.warn(`[usePayment] ${label}: 401, tentativo re-auth #${attempt + 1}`)
           try {
             await ensurePaymentAuthContext({ force: true })
           } catch (authErr) {
-            console.warn('[usePayment] re-auth fallito:', authErr?.message || authErr)
+            console.warn('[usePayment] re-auth fallito:', getErrorMessage(authErr) || authErr)
           }
           continue
         }
@@ -168,7 +211,7 @@ export function usePayment(cart) {
    * Salva nel localStorage lo stato del pagamento in corso (prima di 3DS).
    * Permette di recuperare l'ordine dopo eventuale disconnessione durante la challenge.
    */
-  function persistPaymentDraft(draft) {
+  function persistPaymentDraft(draft: PaymentDraft) {
     if (!draft?.orderId) return
     safeLocalSet(PENDING_PAYMENT_KEY, {
       ...draft,
@@ -187,7 +230,7 @@ export function usePayment(cart) {
     if (stripeReady.value || stripeLoading.value) return
     stripeLoading.value = true
     try {
-      const settings = await sanctum('/api/settings/stripe')
+      const settings = await sanctum('/api/settings/stripe') as StripeSettingsResponse
       const publishableKey = settings?.publishable_key
       if (!publishableKey) throw new Error('Stripe publishable key mancante.')
       stripeConfigured.value = true
@@ -196,9 +239,10 @@ export function usePayment(cart) {
       stripe.value = await loadStripe(publishableKey)
       if (!stripe.value) throw new Error('Caricamento Stripe SDK fallito.')
 
-      const elements = stripe.value.elements({ locale: 'it' })
+      const stripeClient = stripe.value
+      const elements = stripeClient.elements({ locale: 'it' })
       cardElement.value = elements.create('card', { hidePostalCode: true })
-      cardElement.value.on('change', (e) => {
+      cardElement.value.on('change', (e: StripeCardElementChangeEvent) => {
         cardComplete.value = !!e.complete
         cardError.value = e.error?.message || ''
       })
@@ -230,7 +274,7 @@ export function usePayment(cart) {
 
       // Carica eventuale carta salvata (silenzioso se 404).
       try {
-        const saved = await sanctum('/api/stripe/default-payment-method')
+        const saved = await sanctum('/api/stripe/default-payment-method') as DefaultPaymentResponse
         if (saved?.card) {
           defaultPayment.value = saved
           hasSavedCard.value = true
@@ -244,7 +288,7 @@ export function usePayment(cart) {
       cardPaymentsUnavailable.value = true
       cardPaymentsNotice.value =
         'Pagamento con carta non disponibile al momento. Usa bonifico o wallet.'
-      console.warn('[usePayment] initStripe failed:', err?.message || err)
+      console.warn('[usePayment] initStripe failed:', getErrorMessage(err) || err)
     } finally {
       stripeLoading.value = false
     }
@@ -253,9 +297,8 @@ export function usePayment(cart) {
   // ---------- SELEZIONE METODO ----------
   /**
    * Cambia metodo di pagamento attivo. Se wallet, prova a refreshare il saldo.
-   * @param {string} key - 'carta' | 'bonifico' | 'wallet'
    */
-  function selectPaymentMethod(key) {
+  function selectPaymentMethod(key: PaymentMethodKey) {
     paymentMethod.value = key
     paymentError.value = ''
     if (key === 'wallet' && typeof cart.loadWalletBalance === 'function') {
@@ -335,7 +378,7 @@ export function usePayment(cart) {
       else throw new Error('Metodo di pagamento non supportato.')
     } catch (err) {
       paymentError.value =
-        translateStripeError(err) || err?.message || 'Pagamento fallito. Riprova.'
+        translateStripeError(err) || getErrorMessage(err) || 'Pagamento fallito. Riprova.'
       console.warn('[usePayment] proceedWithPayment failed:', err)
     } finally {
       isProcessing.value = false
@@ -346,7 +389,8 @@ export function usePayment(cart) {
   // ---------- CARTA (+ 3DS automatico) ----------
   /** Paga con carta. Gestisce sia carta nuova (confirmCardPayment) sia salvata (handleCardAction). */
   async function payWithCard() {
-    if (!stripe.value) throw new Error('Stripe non inizializzato.')
+    const stripeClient = stripe.value
+    if (!stripeClient) throw new Error('Stripe non inizializzato.')
     const orderId = await resolvePayableOrderId()
     const isExisting = Boolean(cart.existingOrder?.value || cart.existingOrderId?.value)
     const submissionContext = buildSubmissionContext({
@@ -381,13 +425,13 @@ export function usePayment(cart) {
           payment_method_id: defaultPayment.value?.card?.id,
           ...submissionContext,
         },
-      })
+      }) as StripePaymentResponse
 
       let finalIntentId = result?.payment_intent_id ?? null
 
       if (result?.status === 'requires_action' && result?.client_secret) {
         // 3DS challenge senza rimontare il Card Element.
-        const { paymentIntent, error } = await stripe.value.handleCardAction(
+        const { paymentIntent, error } = await stripeClient.handleCardAction(
           result.client_secret,
         )
         if (error) throw error
@@ -402,33 +446,34 @@ export function usePayment(cart) {
       await markOrderPaid(orderId, finalIntentId, isExisting, submissionId)
     } else {
       // ---- CARTA NUOVA ----
-      if (!cardElement.value) throw new Error('Campo carta non pronto.')
+      const card = cardElement.value
+      if (!card) throw new Error('Campo carta non pronto.')
       const intentEndpoint = isExisting
         ? '/api/stripe/existing-order-payment-intent'
         : '/api/stripe/create-payment-intent'
       const intent = await sanctum(intentEndpoint, {
         method: 'POST',
         body: { order_id: orderId, ...submissionContext },
-      })
+      }) as PaymentIntentResponse
       if (!intent?.client_secret) {
         throw new Error(intent?.error || 'PaymentIntent non creato.')
       }
 
       const billingName =
-        cart.billingPayload.value?.full_name ||
-        cart.billingPayload.value?.name ||
-        user.value?.name ||
+        String(cart.billingPayload.value?.full_name || '') ||
+        String(cart.billingPayload.value?.name || '') ||
+        String(((user.value || {}) as UserProfile).name || '') ||
         ''
 
       const confirmOpts = {
         payment_method: {
-          card: cardElement.value,
+          card,
           billing_details: { name: billingName },
         },
-      }
+      } as Parameters<Stripe['confirmCardPayment']>[1] & { setup_future_usage?: 'off_session' }
       if (saveCardForFuture.value) confirmOpts.setup_future_usage = 'off_session'
 
-      const { paymentIntent, error } = await stripe.value.confirmCardPayment(
+      const { paymentIntent, error } = await stripeClient.confirmCardPayment(
         intent.client_secret,
         confirmOpts,
       )
@@ -447,7 +492,7 @@ export function usePayment(cart) {
             body: { payment_method: paymentIntent.payment_method },
           })
         } catch (e) {
-          console.warn('[usePayment] save card failed (non bloccante):', e?.message || e)
+          console.warn('[usePayment] save card failed (non bloccante):', getErrorMessage(e) || e)
         }
       }
     }
@@ -461,7 +506,7 @@ export function usePayment(cart) {
    * Se anche dopo il retry fallisce, lancia errore ma il draft resta in localStorage
    * così l'utente può ritrovare il suo ordine dopo il re-login.
    */
-  async function markOrderPaid(orderId, extId, isExisting, submissionId) {
+  async function markOrderPaid(orderId: string | number, extId: string | null, isExisting: boolean, submissionId?: string) {
     paymentStep.value = 'Finalizzazione...'
     const endpoint = isExisting ? '/api/stripe/existing-order-paid' : '/api/stripe/order-paid'
     await callWithAuthRetry(
@@ -504,7 +549,7 @@ export function usePayment(cart) {
 
     paymentStep.value = 'Addebito saldo wallet...'
     const amountEur = Number(cart.finalTotal?.value ?? 0)
-    const res = await callWithAuthRetry(
+    const res = await callWithAuthRetry<WalletPayResponse>(
       () =>
         sanctum('/api/wallet/pay', {
           method: 'POST',
@@ -513,7 +558,7 @@ export function usePayment(cart) {
             reference: `order-${orderId}`,
             description: `Pagamento ordine #${orderId}`,
           },
-        }),
+        }) as Promise<WalletPayResponse>,
       { label: 'wallet pay' },
     )
     if (!res?.success || !res?.data?.id) {
@@ -521,12 +566,13 @@ export function usePayment(cart) {
       // da errore tecnico/rete per evitare false comunicazioni all'utente.
       const serverMessage = res?.message || res?.error
       const isInsufficientFunds = typeof serverMessage === 'string'
-        && /saldo|insufficien|insufficient/i.test(serverMessage)
+        && /saldo|insufficien/i.test(serverMessage)
       const fallback = isInsufficientFunds
         ? 'Saldo wallet insufficiente per completare il pagamento.'
         : 'Errore durante l\'addebito dal wallet. Riprova tra poco o contatta l\'assistenza.'
       throw new Error(serverMessage || fallback)
     }
+    const walletTransactionId = res.data.id
 
     paymentStep.value = 'Finalizzazione...'
     await callWithAuthRetry(
@@ -536,7 +582,7 @@ export function usePayment(cart) {
           body: {
             order_id: orderId,
             payment_type: 'wallet',
-            ext_id: `wallet-${res.data.id}`,
+            ext_id: `wallet-${walletTransactionId}`,
             is_existing_order: isExisting,
             ...submissionContext,
           },
@@ -592,7 +638,7 @@ export function usePayment(cart) {
    * Per tracking purchase usare `useFunnelAnalytics().trackPaymentSuccess()`
    * che invia a Plausible.
    */
-  async function onPaymentSuccess(orderId, method) {
+  async function onPaymentSuccess(orderId: string | number, method: PaymentMethodKey) {
     paymentSuccess.value = true
     successOrderId.value = orderId
 

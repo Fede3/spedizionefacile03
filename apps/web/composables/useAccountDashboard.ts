@@ -1,10 +1,30 @@
-/**
- * @file useAccountDashboard — Composable useAccountDashboard.
- */
 import { computed, onMounted, ref, watch } from 'vue';
 import { useAuthUiSnapshotPersistence } from '~/composables/useAuth';
 import useOrdersList from '~/composables/useOrdersList';
-import { createAccountSections } from '~/utils/account';
+
+type RoleKey = 'admin' | 'pro' | 'client';
+type StatusTone = { bg: string; color: string };
+type StatusConfigEntry = { label?: string };
+type AdminDashboardCounts = Record<string, number | undefined>;
+type AdminRecentOrder = {
+	id: number | string;
+	status?: string;
+	subtotal?: number | string | null;
+	created_at?: string | null;
+	user?: {
+		name?: string | null;
+		surname?: string | null;
+	} | null;
+};
+type AdminDashboardData = {
+	orders?: AdminDashboardCounts;
+	shipments?: AdminDashboardCounts;
+	users?: AdminDashboardCounts;
+	revenue?: number;
+	revenue_month?: number;
+	recent_orders?: AdminRecentOrder[];
+};
+type AuthRoleUser = { role?: unknown } | null | undefined;
 
 /**
  * Composable che aggrega la logica dashboard account:
@@ -13,7 +33,6 @@ import { createAccountSections } from '~/utils/account';
  * - Caricamento dashboard admin (/api/admin/dashboard)
  * - Computed per highlights cliente e KPI/alerts/recent admin
  * - handleLogout condiviso
- * @returns {object}
  */
 export function useAccountDashboard() {
 	const sanctum = useSanctumClient();
@@ -32,7 +51,10 @@ export function useAccountDashboard() {
 		getOrderReferenceLabel,
 	} = useOrdersList();
 
-	const resolveRoleKey = (...candidates) => {
+	const statusConfig = orderStatusConfig as Record<string, StatusConfigEntry>;
+	const getOrderStatusLabel = (status: unknown, fallback = 'Aggiornato') =>
+		statusConfig[String(status || '')]?.label || String(status || fallback);
+	const resolveRoleKey = (...candidates: unknown[]): RoleKey => {
 		for (const candidate of candidates) {
 			const normalized = String(candidate || '').trim().toLowerCase();
 			if (!normalized) continue;
@@ -46,7 +68,7 @@ export function useAccountDashboard() {
 
 	// La dashboard deve leggere prima l'utente live, non lo snapshot UI, per
 	// evitare drift SSR/client nelle superfici account/admin.
-	const roleKey = computed(() => resolveRoleKey(user.value?.role, uiSnapshot.value.role));
+	const roleKey = computed(() => resolveRoleKey((user.value as AuthRoleUser)?.role, uiSnapshot.value.role));
 	const effectiveRole = computed(() => {
 		if (roleKey.value === 'admin') return 'Admin';
 		if (roleKey.value === 'pro') return 'Partner Pro';
@@ -54,24 +76,6 @@ export function useAccountDashboard() {
 	});
 	const isAdmin = computed(() => roleKey.value === 'admin');
 	const isPro = computed(() => roleKey.value === 'pro');
-
-	const sections = computed(() =>
-		createAccountSections({
-			isAdmin: isAdmin.value,
-			isPro: isPro.value,
-		}),
-	);
-
-	const visibleSections = computed(() =>
-		sections.value
-			.map((section) => ({
-				...section,
-				pages: section.pages.filter((page) => page.visible),
-			}))
-			.filter((section) => section.pages.length > 0),
-	);
-
-	const allVisiblePages = computed(() => visibleSections.value.flatMap((section) => section.pages));
 
 	// -- ARCHIVIATO 2026-04-20: bonusPage (_archive/frontend-simplification-2026-04-20/features/bonus-fedelta) --
 	// const bonusPage = computed(() => allVisiblePages.value.find((page) => page.url === '/bonus') || null);
@@ -93,7 +97,7 @@ export function useAccountDashboard() {
 
 		return source.map((order) => {
 			const rawStatus = statusRaw(order?.status);
-			const statusLabel = (orderStatusConfig)[rawStatus]?.label || order?.status || 'Aggiornato';
+			const statusLabel = getOrderStatusLabel(rawStatus, order?.status || 'Aggiornato');
 			const tone = rawStatus === 'delivered' || rawStatus === 'completed'
 				? { bg: 'rgba(5, 150, 105, 0.1)', color: '#047857' }
 				: rawStatus === 'payment_failed' || rawStatus === 'cancelled' || rawStatus === 'refused'
@@ -154,7 +158,7 @@ export function useAccountDashboard() {
 	]);
 
 	/* ---------------------- ADMIN DASHBOARD ---------------------- */
-	const adminDashboardData = ref(null);
+	const adminDashboardData = ref<AdminDashboardData | null>(null);
 	const adminDashboardLoading = ref(false);
 	const adminDashboardError = ref('');
 
@@ -300,8 +304,8 @@ export function useAccountDashboard() {
 		];
 	});
 
-	const getStatusTone = (status) => {
-		switch (status) {
+	const getStatusTone = (status: unknown): StatusTone => {
+		switch (String(status || '')) {
 			case 'pending':
 				return { bg: 'rgba(228, 66, 3, 0.08)', color: '#E44203' };
 			case 'payment_failed':
@@ -333,9 +337,9 @@ export function useAccountDashboard() {
 			];
 		}
 
-		return recentOrders.slice(0, 6).map((order) => {
+		return recentOrders.slice(0, 6).map((order: AdminRecentOrder) => {
 			const customerName = [order.user?.name, order.user?.surname].filter(Boolean).join(' ').trim() || 'Cliente';
-			const statusLabel = (orderStatusConfig)[order.status]?.label || order.status || 'Aggiornato';
+			const statusLabel = getOrderStatusLabel(order.status);
 			const amountLabel = `EUR ${formatCents(order.subtotal)}`;
 			const timeLabel = formatDate(order.created_at);
 

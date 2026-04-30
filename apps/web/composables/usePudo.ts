@@ -5,15 +5,22 @@
  *   usePudoSearchApi(props, emit) → accesso API grezzo (fetch, geocoding, distanze)
  *   usePudoMap(deps, emit)        → helper mappa (selezione, dettagli, orari, stato)
  *
- * @typedef {object} PudoFilters
- * @property {boolean} openNow
- * @property {boolean} ritiro
- * @property {boolean} consegna
- * @property {boolean} sabato
  *
- * @typedef {{ label: string, className: string }} PudoStatus
  */
 import { computed, ref, watch } from 'vue'
+import type { PudoNormalized } from '~/utils/pudoHelpers'
+
+type PudoSearchProps = {
+	initialCity?: string
+	initialZip?: string
+}
+type PudoEmit = (event: string, ...payload: unknown[]) => void
+type PudoFilters = {
+	openNow: boolean
+	ritiro: boolean
+	consegna: boolean
+	sabato: boolean
+}
 
 /* ============================================================================
  * SEZIONE 1 — API FETCH, GEOCODING, NORMALIZZAZIONE, DISTANZE
@@ -31,7 +38,7 @@ import { computed, ref, watch } from 'vue'
 // usePudoSearchApi estratto in composables/usePudoSearchApi.js
 // usePudoMap estratto in composables/usePudoMap.js
 
-export function usePudoSearch(props, emit) {
+export function usePudoSearch(props?: PudoSearchProps | null, emit?: PudoEmit) {
 	if (props && emit) return buildLegacyApi(props, emit)
 	return buildPageApi()
 }
@@ -40,15 +47,13 @@ export function usePudoSearch(props, emit) {
 // Implementazione legacy (PudoSelector funnel) — invariata
 // ---------------------------------------------------------------------------
 
-function buildLegacyApi(props, emit) {
+function buildLegacyApi(props: PudoSearchProps, emit: PudoEmit) {
 	const api = usePudoSearchApi(props, emit)
 	const map = usePudoMap(
 		{
 			selectedPudoKey: api.selectedPudoKey,
 			expandedPudoKey: api.expandedPudoKey,
 			pudoDetails: api.pudoDetails,
-			detailsErrors: api.detailsErrors,
-			loadingDetailsKey: api.loadingDetailsKey,
 			fetchPudoDetails: api.fetchPudoDetails,
 		},
 		emit,
@@ -96,22 +101,20 @@ function buildLegacyApi(props, emit) {
 function buildPageApi() {
 	// Underlying API service (single shared instance per call site).
 	const props = { initialCity: '', initialZip: '' }
-	const noopEmit = () => {}
+	const noopEmit: PudoEmit = () => {}
 	const api = usePudoSearchApi(props, noopEmit)
 	const map = usePudoMap(
 		{
 			selectedPudoKey: api.selectedPudoKey,
 			expandedPudoKey: api.expandedPudoKey,
 			pudoDetails: api.pudoDetails,
-			detailsErrors: api.detailsErrors,
-			loadingDetailsKey: api.loadingDetailsKey,
 			fetchPudoDetails: api.fetchPudoDetails,
 		},
 		noopEmit,
 	)
 
 	const query = ref('')
-	const filters = ref({
+	const filters = ref<PudoFilters>({
 		openNow: false,
 		ritiro: false,
 		consegna: false,
@@ -121,7 +124,7 @@ function buildPageApi() {
 	// Routing della query: numeri solo => CAP; "via", "corso" o presenza spazi => indirizzo;
 	// stringa singola alfabetica => citta. Strategia tollerante: si imposta SEMPRE city
 	// e zip in base al pattern; il backend richiede city OR zip_code.
-	const applyQueryToFields = (raw) => {
+	const applyQueryToFields = (raw: unknown): boolean => {
 		const q = String(raw || '').trim()
 		api.searchAddress.value = ''
 		api.searchCity.value = ''
@@ -148,8 +151,8 @@ function buildPageApi() {
 		return true
 	}
 
-	let debounceTimer = null
-	const search = (q) => {
+	let debounceTimer: ReturnType<typeof setTimeout> | null = null
+	const search = (q?: string) => {
 		if (typeof q === 'string') query.value = q
 		if (debounceTimer) clearTimeout(debounceTimer)
 		debounceTimer = setTimeout(() => {
@@ -182,7 +185,7 @@ function buildPageApi() {
 	// Nota: backend BRT non sempre espone le capabilities ritiro/consegna sui PUDO
 	// (la maggior parte permette entrambi). I filtri ritiro/consegna sono pass-through
 	// se i metadata mancano. Vengono comunque mostrati per consistenza UX.
-	const matchesFilters = (p) => {
+	const matchesFilters = (p: PudoNormalized): boolean => {
 		if (filters.value.openNow) {
 			const status = map.getPudoStatus(p)
 			if (status.label !== 'Aperto ora') return false
@@ -204,7 +207,7 @@ function buildPageApi() {
 		return rawResults.value.find((p) => String(p.ui_key) === String(key)) || null
 	})
 
-	const selectPudo = (p) => {
+	const selectPudo = (p?: PudoNormalized | null) => {
 		if (!p) {
 			api.selectedPudoKey.value = null
 			return

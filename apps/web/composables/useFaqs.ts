@@ -1,13 +1,9 @@
+import { escapeHtml as escapeHtmlUtil } from '~/utils/html';
+
 /**
  * useFaqs — dataset statico FAQ + helpers highlight (no Fuse.js). Puro/serializzabile.
  *
- * @typedef {'Spedizione'|'Preventivi'|'Pagamenti'|'Tracking'|'Reclami'|'Account'|'Pro'} FaqCategory
  *
- * @typedef {Object} FaqItem
- * @property {string} id
- * @property {FaqCategory} category
- * @property {string} question
- * @property {string} answer
  */
 
 export const FAQ_CATEGORIES = [
@@ -261,12 +257,11 @@ const FAQS = [
 ];
 
 // escapeHtml centralizzato in utils/html.ts (re-export per retro-compat dei caller).
-import { escapeHtml as escapeHtmlUtil } from '~/utils/html';
-export const escapeHtml = (value) => escapeHtmlUtil(value);
+const escapeFaqHtml = (value: unknown) => escapeHtmlUtil(value);
 
 /** Evidenzia con tag <mark> le occorrenze case-insensitive della query. */
-export function highlightMatch(text, query) {
-	const safeText = escapeHtml(text);
+export function highlightMatch(text: unknown, query: string) {
+	const safeText = escapeFaqHtml(text);
 	const trimmed = query.trim();
 	if (!trimmed) return safeText;
 	const escapedQuery = trimmed.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -282,7 +277,7 @@ export function useFaqs() {
 	return {
 		faqs: FAQS,
 		categories: FAQ_CATEGORIES,
-		escapeHtml,
+		escapeHtml: escapeFaqHtml,
 		highlightMatch,
 	};
 }

@@ -1,16 +1,7 @@
-/**
- * @file shipmentFlowStore — Pinia store shipmentFlowStore.
- */
 import { defineStore } from 'pinia'
+import { ref, watch } from 'vue'
+import type { Address, Package, PendingShipment, PudoPoint, ShipmentDetails, ShipmentFlowStoreState } from '~/types'
 
-/**
- * @typedef {import('~/types').Address} Address
- * @typedef {import('~/types').Package} Package
- * @typedef {import('~/types').PendingShipment} PendingShipment
- * @typedef {import('~/types').PudoPoint} PudoPoint
- * @typedef {import('~/types').ShipmentDetails} ShipmentDetails
- * @typedef {import('~/types').ShipmentFlowStoreState} ShipmentFlowStoreState
- */
 
 // Chiave per sessionStorage
 const STORAGE_KEY = 'spedizionefacile_user_store'
@@ -32,22 +23,20 @@ const DEFAULT_SHIPMENT_DETAILS = {
 
 // Debounce: evita troppe scritture consecutive su sessionStorage.
 // Il deep watcher su 14 ref scatta spesso; con debounce scriviamo max 1 volta ogni 300ms.
-/** @type {ReturnType<typeof setTimeout> | null} */
-let debounceTimer = null
+let debounceTimer: ReturnType<typeof setTimeout> | null = null
 const DEBOUNCE_MS = 300
 
 /**
  * Carica lo stato salvato da sessionStorage con validazione leggera della forma (XSS mitigation)
- * @returns {Partial<ShipmentFlowStoreState> | null}
  */
-function loadFromSession() {
+function loadFromSession(): Partial<ShipmentFlowStoreState> | null {
 	if (!import.meta.client) return null
 	try {
 		const saved = sessionStorage.getItem(STORAGE_KEY)
 		if (!saved) return null
 		const parsed = JSON.parse(saved)
 		if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) return null
-		return parsed
+		return parsed as Partial<ShipmentFlowStoreState>
 	}
 	catch {
 		return null
@@ -56,10 +45,8 @@ function loadFromSession() {
 
 /**
  * Salva lo stato corrente in sessionStorage
- * @param {ShipmentFlowStoreState} state
- * @returns {void}
  */
-function saveToSession(state) {
+function saveToSession(state: ShipmentFlowStoreState) {
 	if (!import.meta.client) return
 	try {
 		sessionStorage.setItem(STORAGE_KEY, JSON.stringify(state))
@@ -81,7 +68,7 @@ export const useShipmentFlowStore = defineStore('shipmentFlow', () => {
 	// --- DETTAGLI SPEDIZIONE (Step 1 — Preventivo) ---
 
 	/** @type {import('vue').Ref<ShipmentDetails>} */
-	const shipmentDetails = ref({ ...DEFAULT_SHIPMENT_DETAILS })
+	const shipmentDetails = ref<ShipmentDetails>({ ...DEFAULT_SHIPMENT_DETAILS })
 
 	if (!shipmentDetails.value.origin_country_code) shipmentDetails.value.origin_country_code = 'IT'
 	if (!shipmentDetails.value.origin_country) shipmentDetails.value.origin_country = 'Italia'
@@ -93,12 +80,12 @@ export const useShipmentFlowStore = defineStore('shipmentFlow', () => {
 	const totalPrice = ref(0) // Prezzo totale in euro (somma di tutti i pacchi)
 
 	/** @type {import('vue').Ref<Package[]>} */
-	const packages = ref([]) // Array pacchi: [{package_type, weight, first_size, ...}]
+	const packages = ref<Package[]>([]) // Array pacchi: [{package_type, weight, first_size, ...}]
 
 	// --- SERVIZI E CONTENUTO (Step 2) ---
 
 	/** @type {import('vue').Ref<string[]>} */
-	const servicesArray = ref([]) // Servizi selezionati (es. ["contrassegno"])
+	const servicesArray = ref<string[]>([]) // Servizi selezionati (es. ["contrassegno"])
 
 	// Descrizione contenuto del pacco (es. "Elettronica", "Abbigliamento")
 	const contentDescription = ref('')
@@ -107,39 +94,37 @@ export const useShipmentFlowStore = defineStore('shipmentFlow', () => {
 
 	/** @type {import('vue').Ref<PendingShipment | null>} */
 	// Payload completo della spedizione (usato da /riepilogo per mostrare il riepilogo)
-	const pendingShipment = ref(null)
+	const pendingShipment = ref<PendingShipment | null>(null)
 
 	/** @type {import('vue').Ref<Partial<Address> | null>} */
 	// Dati indirizzo per pre-compilare i campi quando l'utente torna indietro
-	const originAddressData = ref(null)
+	const originAddressData = ref<Partial<Address> | null>(null)
 	/** @type {import('vue').Ref<Partial<Address> | null>} */
-	const destinationAddressData = ref(null)
+	const destinationAddressData = ref<Partial<Address> | null>(null)
 	const pickupDate = ref('')
 
 	// --- MODIFICA CARRELLO ---
 
 	/** @type {import('vue').Ref<number | string | null>} */
 	// ID del pacco nel carrello che si sta modificando (null = nuova spedizione)
-	const editingCartItemId = ref(null)
+	const editingCartItemId = ref<number | string | null>(null)
 
 	// --- PUDO (Consegna presso punto BRT) ---
 
 	/** @type {import('vue').Ref<'home' | 'pudo'>} */
 	// Modalita' di consegna: 'home = domicilio, 'pudo' = punto BRT
-	const deliveryMode = ref('home')
+	const deliveryMode = ref<'home' | 'pudo'>('home')
 	/** @type {import('vue').Ref<PudoPoint | null>} */
 	// Punto di ritiro selezionato (oggetto con pudo_id, name, address, ecc.)
-	const selectedPudo = ref(null)
+	const selectedPudo = ref<PudoPoint | null>(null)
 	const smsEmailNotification = ref(false)
 	/** @type {import('vue').Ref<Record<string, unknown>>} */
-	const serviceData = ref({})
+	const serviceData = ref<Record<string, unknown>>({})
 
 	/**
 	 * Applica lo stato persistito al reactive state del store.
-	 * @param {Partial<ShipmentFlowStoreState> | null} saved
-	 * @returns {void}
 	 */
-	function applyPersistedState(saved) {
+	function applyPersistedState(saved: Partial<ShipmentFlowStoreState> | null) {
 		if (!saved || typeof saved !== 'object') return
 
 		stepNumber.value = typeof saved.stepNumber === 'number' ? saved.stepNumber : 1
@@ -165,7 +150,6 @@ export const useShipmentFlowStore = defineStore('shipmentFlow', () => {
 
 	/**
 	 * Idrata lo store dai dati salvati in sessionStorage (solo client).
-	 * @returns {void}
 	 */
 	function hydrateFromSession() {
 		if (hasPersistedHydration.value) return
@@ -178,7 +162,6 @@ export const useShipmentFlowStore = defineStore('shipmentFlow', () => {
 	// per evitare scritture eccessive su sessionStorage durante input rapidi.
 	/**
 	 * Persiste lo stato corrente in sessionStorage con debounce.
-	 * @returns {void}
 	 */
 	function persist() {
 		if (!hasPersistedHydration.value) return

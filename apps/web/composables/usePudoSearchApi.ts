@@ -5,13 +5,7 @@
  *   usePudoSearchApi(props, emit) → accesso API grezzo (fetch, geocoding, distanze)
  *   usePudoMap(deps, emit)        → helper mappa (selezione, dettagli, orari, stato)
  *
- * @typedef {object} PudoFilters
- * @property {boolean} openNow
- * @property {boolean} ritiro
- * @property {boolean} consegna
- * @property {boolean} sabato
  *
- * @typedef {{ label: string, className: string }} PudoStatus
  */
 import { computed, ref, watch } from 'vue'
 import {
@@ -20,12 +14,58 @@ import {
 	extractLongitude,
 	parseDistanceMeters,
 	isFiniteCoordinate,
-} from '~/utils/pudoHelpers'
-import {
 	normalizeTextKey,
-	getErrorStatus,
-	getErrorMessage,
-} from '~/utils/pudoCoordinates'
+	getPudoErrorStatus as getErrorStatus,
+	getPudoErrorMessage as getErrorMessage,
+} from '~/utils/pudoHelpers'
+import type { CoordinatePoint, PudoNormalized, PudoRawPoint } from '~/utils/pudoHelpers'
+
+type PudoSearchProps = {
+	initialCity?: string
+	initialZip?: string
+}
+type PudoEmit = (event: string, ...payload: unknown[]) => void
+type SearchMeta = {
+	strategy_used?: string[]
+	returned_count?: number
+	requested_count?: number
+	provider?: string
+	fallback?: boolean
+	[key: string]: unknown
+}
+type ReferencePoint = CoordinatePoint & {
+	source: string
+	address: string
+	city: string
+	zip_code: string
+	label: string
+}
+type PudoDetail = {
+	opening_hours: unknown
+	localization_hint: string
+	enabled: boolean
+}
+type PudoApiResponse = {
+	success?: boolean
+	error?: string
+	pudo?: unknown[]
+	meta?: SearchMeta
+	data?: {
+		pudo?: unknown[]
+		meta?: SearchMeta
+		[key: string]: unknown
+	}
+	[key: string]: unknown
+}
+const asRecord = (value: unknown): Record<string, unknown> =>
+	value && typeof value === 'object' ? value as Record<string, unknown> : {}
+const asRawPoint = (value: unknown): PudoRawPoint =>
+	value && typeof value === 'object' ? value as PudoRawPoint : {}
+const getPudoList = (result: PudoApiResponse | null | undefined): unknown[] => {
+	const data = result?.data
+	return Array.isArray(result?.pudo) ? result.pudo : Array.isArray(data?.pudo) ? data.pudo : []
+}
+const getApiMeta = (result: PudoApiResponse | null | undefined): SearchMeta => result?.meta || result?.data?.meta || {}
 
 /* ============================================================================
  * SEZIONE 1 — API FETCH, GEOCODING, NORMALIZZAZIONE, DISTANZE
@@ -40,14 +80,14 @@ import {
 
 /** @returns {object} composable PUDO search API — state + azioni API grezze. */
 
-export function usePudoSearchApi(props, emit) {
+export function usePudoSearchApi(props: PudoSearchProps = {}, emit: PudoEmit = () => {}) {
 	const config = useRuntimeConfig()
 	const apiBase = config.public?.apiBase || ''
 
 	// ── API helpers ──
-	const publicApiFetch = async (path) => {
+	const publicApiFetch = async <T = PudoApiResponse>(path: string): Promise<T> => {
 		const url = path.startsWith('http') ? path : `${apiBase}${path}`
-		return await $fetch(url, { method: 'GET', credentials: 'include', timeout: 15000 })
+		return await $fetch<T>(url, { method: 'GET', credentials: 'include', timeout: 15000 })
 	}
 
 
@@ -58,19 +98,19 @@ export function usePudoSearchApi(props, emit) {
 	const loading = ref(false)
 	const geolocating = ref(false)
 	const searched = ref(false)
-	const searchError = ref(null)
-	const searchMeta = ref(null)
+	const searchError = ref<string | null>(null)
+	const searchMeta = ref<SearchMeta | null>(null)
 	const referenceUpdateMessage = ref('')
 
 	// ── Results state ──
-	const pudoResults = ref([])
-	const selectedPudoKey = ref(null)
-	const expandedPudoKey = ref(null)
-	const loadingDetailsKey = ref(null)
-	const pudoDetails = ref({})
-	const detailsErrors = ref({})
+	const pudoResults = ref<PudoNormalized[]>([])
+	const selectedPudoKey = ref<string | null>(null)
+	const expandedPudoKey = ref<string | null>(null)
+	const loadingDetailsKey = ref<string | null>(null)
+	const pudoDetails = ref<Record<string, PudoDetail>>({})
+	const detailsErrors = ref<Record<string, string | null>>({})
 	const mapClickLoading = ref(false)
-	const referencePoint = ref(null)
+	const referencePoint = ref<ReferencePoint | null>(null)
 
 	// ── Watchers for props ──
 	watch(() => props.initialCity, (v) => { if (v && !searchCity.value) searchCity.value = v })
@@ -97,7 +137,7 @@ export function usePudoSearchApi(props, emit) {
 	const strategyListLabel = computed(() => {
 		const strategies = Array.isArray(searchMeta.value?.strategy_used) ? searchMeta.value.strategy_used : []
 		if (!strategies.length) return ''
-		const labels = {
+		const labels: Record<string, string> = {
 			city_zip: 'citta + CAP',
 			city_only: 'solo citta',
 			city_alt_zip: 'citta con CAP alternativi',
@@ -112,8 +152,8 @@ export function usePudoSearchApi(props, emit) {
 	})
 
 	// ── PUDO key/normalization ──
-	const getPudoUiKey = (point) => {
-		const p = point || {}
+	const getPudoUiKey = (point: unknown): string => {
+		const p = asRawPoint(point)
 		const primary = String(p.pudo_id || p.carrier_pudo_id || p.id || '').trim()
 		if (primary) return primary
 		const lat = extractLatitude(p)
@@ -123,13 +163,13 @@ export function usePudoSearchApi(props, emit) {
 			normalizeTextKey(p.address),
 			normalizeTextKey(p.zip_code),
 			normalizeTextKey(p.city),
-			Number.isFinite(lat) ? lat.toFixed(6) : 'na',
-			Number.isFinite(lng) ? lng.toFixed(6) : 'na',
+			lat !== null ? lat.toFixed(6) : 'na',
+			lng !== null ? lng.toFixed(6) : 'na',
 		].join('|')
 	}
 
-	const normalizePudoPoint = (rawPoint) => {
-		const point = rawPoint || {}
+	const normalizePudoPoint = (rawPoint: unknown): PudoNormalized => {
+		const point = asRawPoint(rawPoint)
 		const id = point.pudo_id || point.carrier_pudo_id || point.id || ''
 		const latitude = extractLatitude(point)
 		const longitude = extractLongitude(point)
@@ -139,27 +179,28 @@ export function usePudoSearchApi(props, emit) {
 			carrier_pudo_id: String(point.carrier_pudo_id || id || ''),
 			ui_key: getPudoUiKey(point),
 			provider: String(point.provider || 'BRT'),
-			name: point.name || 'Punto di ritiro BRT',
-			address: point.address || '',
-			city: point.city || '',
-			zip_code: point.zip_code || '',
-			province: point.province || '',
-			country: point.country || 'ITA',
+			name: String(point.name || 'Punto di ritiro BRT'),
+			address: String(point.address || ''),
+			city: String(point.city || ''),
+			zip_code: String(point.zip_code || ''),
+			province: String(point.province || ''),
+			country: String(point.country || 'ITA'),
 			latitude,
 			longitude,
 			distance_meters: distance,
 			enabled: typeof point.enabled === 'boolean' ? point.enabled : true,
 			opening_hours: point.opening_hours ?? null,
-			localization_hint: point.localization_hint || '',
+			localization_hint: String(point.localization_hint || ''),
 		}
 	}
 
-	const dedupePudoPoints = (points) => {
-		const byKey = new Map()
+	const dedupePudoPoints = (points: PudoNormalized[]): PudoNormalized[] => {
+		const byKey = new Map<string, PudoNormalized>()
 		points.forEach((point) => {
 			const key = getPudoUiKey(point)
 			if (!byKey.has(key)) { byKey.set(key, point); return }
 			const current = byKey.get(key)
+			if (!current) { byKey.set(key, point); return }
 			const currentD = Number.isFinite(Number(current.distance_meters)) ? Number(current.distance_meters) : Number.POSITIVE_INFINITY
 			const incomingD = Number.isFinite(Number(point.distance_meters)) ? Number(point.distance_meters) : Number.POSITIVE_INFINITY
 			if (incomingD < currentD) byKey.set(key, point)
@@ -167,7 +208,7 @@ export function usePudoSearchApi(props, emit) {
 		return Array.from(byKey.values())
 	}
 
-	const sortByDistance = (points) =>
+	const sortByDistance = (points: PudoNormalized[]): PudoNormalized[] =>
 		[...points].sort((a, b) => {
 			const aD = Number.isFinite(Number(a.distance_meters)) ? Number(a.distance_meters) : Number.POSITIVE_INFINITY
 			const bD = Number.isFinite(Number(b.distance_meters)) ? Number(b.distance_meters) : Number.POSITIVE_INFINITY
@@ -177,14 +218,14 @@ export function usePudoSearchApi(props, emit) {
 
 	// ── Reference point ──
 	const setReferencePoint = (
-		latitude,
-		longitude,
+		latitude: unknown,
+		longitude: unknown,
 		source = 'fields',
-		extra = {},
+		extra: Partial<Omit<ReferencePoint, 'latitude' | 'longitude' | 'source'>> = {},
 	) => {
 		const lat = parseCoordinate(latitude)
 		const lng = parseCoordinate(longitude)
-		if (!Number.isFinite(lat) || !Number.isFinite(lng)) return false
+		if (lat === null || lng === null) return false
 		referencePoint.value = {
 			latitude: lat,
 			longitude: lng,
@@ -197,12 +238,15 @@ export function usePudoSearchApi(props, emit) {
 		return true
 	}
 
-	const inferReferenceFromResults = (points = []) => {
-		const coords = points.map((p) => ({
-			latitude: parseCoordinate(p?.latitude ?? p?.lat),
-			longitude: parseCoordinate(p?.longitude ?? p?.lng),
-		}))
-			.filter((c) => Number.isFinite(c.latitude) && Number.isFinite(c.longitude))
+	const inferReferenceFromResults = (points: Array<PudoNormalized | PudoRawPoint> = []): ReferencePoint | null => {
+		const coords = points.map((p) => {
+			const raw = asRawPoint(p)
+			return {
+				latitude: parseCoordinate(raw.latitude ?? raw.lat),
+				longitude: parseCoordinate(raw.longitude ?? raw.lng),
+			}
+		})
+			.filter((c): c is CoordinatePoint => c.latitude !== null && c.longitude !== null)
 		if (!coords.length) return null
 		return {
 			latitude: coords.reduce((s, c) => s + c.latitude, 0) / coords.length,
@@ -216,8 +260,8 @@ export function usePudoSearchApi(props, emit) {
 	}
 
 	// ── Distance calculation ──
-	const toRadians = (deg) => deg * (Math.PI / 180)
-	const distanceInMeters = (from, to) => {
+	const toRadians = (deg: number) => deg * (Math.PI / 180)
+	const distanceInMeters = (from: CoordinatePoint | null | undefined, to: CoordinatePoint | null | undefined): number | null => {
 		if (!from || !to) return null
 		const R = 6371000
 		const dLat = toRadians(to.latitude - from.latitude)
@@ -227,7 +271,7 @@ export function usePudoSearchApi(props, emit) {
 	}
 
 	// ── Apply results with distance recalculation ──
-	const applyResults = (rawPoints) => {
+	const applyResults = (rawPoints: unknown[]) => {
 		const normalized = (rawPoints || []).map(normalizePudoPoint)
 		let distRef = referencePoint.value
 		const allZero = normalized.length > 0 && normalized.every((p) => Number.isFinite(Number(p.distance_meters)) && Number(p.distance_meters) === 0)
@@ -240,11 +284,11 @@ export function usePudoSearchApi(props, emit) {
 		const withDist = normalized.map((point) => {
 			const apiD = Number(point.distance_meters)
 			const hasApi = Number.isFinite(apiD)
-			if (distRef && Number.isFinite(point.latitude) && Number.isFinite(point.longitude)) {
+			if (distRef && point.latitude !== null && point.longitude !== null) {
 				const computed = distanceInMeters(distRef, { latitude: point.latitude, longitude: point.longitude })
 				const shouldReplace = !hasApi || apiD <= 0 || allZero
-				if (shouldReplace && Number.isFinite(computed)) return { ...point, distance_meters: computed }
-				if (hasApi && apiD > 0 && Number.isFinite(computed) && Math.abs(apiD - computed) > 200000) return { ...point, distance_meters: computed }
+				if (shouldReplace && computed !== null) return { ...point, distance_meters: computed }
+				if (hasApi && apiD > 0 && computed !== null && Math.abs(apiD - computed) > 200000) return { ...point, distance_meters: computed }
 				return { ...point, distance_meters: hasApi ? apiD : computed ?? null }
 			}
 			if (allZero && Number(point.distance_meters) === 0) return { ...point, distance_meters: null }
@@ -260,7 +304,7 @@ export function usePudoSearchApi(props, emit) {
 	}
 
 	// ── Geocoding (Nominatim OpenStreetMap) ──
-	const fetchWithTimeout = async (url, options = {}, timeoutMs = 4500) => {
+	const fetchWithTimeout = async (url: string, options: RequestInit = {}, timeoutMs = 4500): Promise<Response> => {
 		const controller = new AbortController()
 		const timeoutId = window.setTimeout(() => controller.abort(), timeoutMs)
 		try {
@@ -277,34 +321,33 @@ export function usePudoSearchApi(props, emit) {
 		const response = await fetchWithTimeout(url, { method: 'GET', headers: { Accept: 'application/json' } }, 4000)
 		if (!response.ok) return null
 		const payload = await response.json()
-		const first = Array.isArray(payload) ? payload[0] : null
-		if (!first) return null
+		const first = asRawPoint(Array.isArray(payload) ? payload[0] : null)
 		const lat = parseCoordinate(first.lat)
 		const lng = parseCoordinate(first.lon)
-		if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null
-		return { latitude: lat, longitude: lng, label: first.display_name || '' }
+		if (lat === null || lng === null) return null
+		return { latitude: lat, longitude: lng, label: String(first.display_name || '') }
 	}
 
 	const reverseGeocodeFromCoordinates = async (
-		latitude,
-		longitude,
+		latitude: unknown,
+		longitude: unknown,
 	) => {
 		const lat = parseCoordinate(latitude)
 		const lng = parseCoordinate(longitude)
-		if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null
+		if (lat === null || lng === null) return null
 		try {
 			const params = new URLSearchParams({ format: 'jsonv2', lat: String(lat), lon: String(lng), addressdetails: '1' })
 			const response = await fetchWithTimeout(`https://nominatim.openstreetmap.org/reverse?${params.toString()}`, { method: 'GET', headers: { Accept: 'application/json' } }, 4000)
 			if (!response.ok) return null
-			const payload = await response.json()
-			const addr = payload?.address || {}
+			const payload = asRecord(await response.json())
+			const addr = asRecord(payload.address)
 			const street = addr.road || addr.pedestrian || addr.path || ''
 			const houseNumber = addr.house_number || ''
 			return {
 				address: [street, houseNumber].filter(Boolean).join(' ').trim(),
-				city: addr.city || addr.town || addr.village || addr.municipality || '',
+				city: String(addr.city || addr.town || addr.village || addr.municipality || ''),
 				zip_code: String(addr.postcode || '').replace(/\D/g, '').slice(0, 5),
-				label: payload?.display_name || '',
+				label: String(payload.display_name || ''),
 			}
 		} catch {
 			return null
@@ -312,13 +355,13 @@ export function usePudoSearchApi(props, emit) {
 	}
 
 	// ── PUDO API calls ──
-	const fetchNearbyPudo = async (latitude, longitude, maxResults = 50) => {
+	const fetchNearbyPudo = async (latitude: unknown, longitude: unknown, maxResults = 50): Promise<unknown[]> => {
 		const params = new URLSearchParams()
 		params.set('latitude', String(latitude))
 		params.set('longitude', String(longitude))
 		params.set('max_results', String(maxResults))
-		const result = await publicApiFetch(`/api/brt/pudo/nearby?${params.toString()}`)
-		return result?.pudo || result?.data?.pudo || []
+		const result = await publicApiFetch<PudoApiResponse>(`/api/brt/pudo/nearby?${params.toString()}`)
+		return getPudoList(result)
 	}
 
 	const searchPudo = async () => {
@@ -337,11 +380,11 @@ export function usePudoSearchApi(props, emit) {
 			params.set('country', 'ITA')
 			params.set('max_results', '50')
 
-			const result = await publicApiFetch(`/api/brt/pudo/search?${params.toString()}`)
+			const result = await publicApiFetch<PudoApiResponse>(`/api/brt/pudo/search?${params.toString()}`)
 			if (result?.success === false) { searchError.value = result?.error || 'Errore durante la ricerca dei punti di ritiro.'; return }
 
-			let points = result?.pudo || result?.data?.pudo || []
-			const apiMeta = result?.meta || result?.data?.meta || {}
+			let points = getPudoList(result)
+			const apiMeta = getApiMeta(result)
 			let strategyUsed = Array.isArray(apiMeta.strategy_used) ? [...apiMeta.strategy_used] : []
 
 			if (!referencePoint.value || referencePoint.value.source !== 'manual') {
@@ -387,7 +430,7 @@ export function usePudoSearchApi(props, emit) {
 		referenceUpdateMessage.value = ''
 
 		try {
-			const position = await new Promise((resolve, reject) => {
+			const position = await new Promise<GeolocationPosition>((resolve, reject) => {
 				navigator.geolocation.getCurrentPosition(resolve, reject, { enableHighAccuracy: true, timeout: 10000, maximumAge: 30000 })
 			})
 			const lat = position?.coords?.latitude
@@ -416,7 +459,7 @@ export function usePudoSearchApi(props, emit) {
 			searchMeta.value = { strategy_used: ['nearby_geo'], returned_count: pudoResults.value.length, requested_count: 50, provider: 'BRT', fallback: false }
 		} catch (error) {
 			const status = getErrorStatus(error)
-			const geoCode = Number(error?.code || 0)
+			const geoCode = Number(asRecord(error).code || 0)
 			if (status >= 500) searchError.value = 'Servizio geolocalizzazione temporaneamente non disponibile.'
 			else if (geoCode === 1) searchError.value = 'Permesso posizione negato. Attiva la geolocalizzazione per cercare i punti vicini.'
 			else if (geoCode === 3) searchError.value = 'Timeout posizione. Riprova oppure usa citta e CAP.'
@@ -430,7 +473,7 @@ export function usePudoSearchApi(props, emit) {
 	}
 
 	// ── Map click handler ──
-	const onMapReferenceClick = async (payload) => {
+	const onMapReferenceClick = async (payload: Partial<CoordinatePoint>) => {
 		const lat = parseCoordinate(payload?.latitude)
 		const lng = parseCoordinate(payload?.longitude)
 		if (!Number.isFinite(lat) || !Number.isFinite(lng)) return
@@ -467,22 +510,23 @@ export function usePudoSearchApi(props, emit) {
 	}
 
 	// ── PUDO detail fetch ──
-	const fetchPudoDetails = async (pudo, detailKey) => {
+	const fetchPudoDetails = async (pudo: PudoNormalized, detailKey: string) => {
 		detailsErrors.value[detailKey] = null
 		if (!pudo?.pudo_id) { detailsErrors.value[detailKey] = 'Dettagli non disponibili per questo punto.'; return }
 
 		loadingDetailsKey.value = detailKey
 		try {
-			const result = await publicApiFetch(`/api/brt/pudo/${pudo.pudo_id}`)
+			const result = await publicApiFetch<PudoApiResponse>(`/api/brt/pudo/${pudo.pudo_id}`)
 			const pudoField = result?.pudo
-			const dataField = result?.data
+			const dataField = asRecord(result?.data)
 			const dataPudo = dataField?.pudo
-			const p =
+			const p = asRawPoint(
 				((pudoField && typeof pudoField === 'object' ? pudoField : undefined)
 				|| (dataPudo && typeof dataPudo === 'object' ? dataPudo : undefined)
 				|| dataField
 				|| result
 				|| {})
+			)
 			pudoDetails.value[detailKey] = {
 				opening_hours: ((p.opening_hours ?? p.hours ?? pudo.opening_hours ?? '') || null),
 				localization_hint: String((p.localization_hint ?? p.localizationHint ?? pudo.localization_hint) ?? ''),

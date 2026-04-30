@@ -8,9 +8,6 @@
 /**
  * Costruisce la lista visibile di numeri pagina con ellipsis (es. `[1, '…', 4, 5, 6, '…', 12]`).
  *
- * @param current  pagina corrente (1-based)
- * @param total    totale pagine
- * @param max      massimo numeri visibili senza ellipsis (default 5)
  */
 export function buildPaginationItems(current: number, total: number, max = 5): Array<number | '…'> {
 	if (total <= 1) return [1];

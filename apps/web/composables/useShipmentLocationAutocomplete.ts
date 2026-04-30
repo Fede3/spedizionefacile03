@@ -11,7 +11,6 @@
  * con stato simmetrico ma indipendente. Splittare per sezione duplicherebbe
  * codice. Helpers puri sono in utils/locationMatch.ts.
  *
- * @returns {object} composable autocomplete location step spedizione
  */
 import {
 	sanitizeFullName,
@@ -20,6 +19,62 @@ import {
 	isLocationCoherent,
 	extractUniqueProvinces,
 } from '~/utils/locationMatch';
+import type { Ref } from 'vue';
+
+type AddressSection = 'origin' | 'dest';
+type AddressField = 'full_name' | 'city' | 'postal_code' | 'telephone_number' | 'email' | 'province' | string;
+type LocationSuggestion = {
+	place_name: string;
+	postal_code: string;
+	province?: string;
+	province_name?: string;
+	country_name?: string;
+	[key: string]: unknown;
+};
+type ShipmentAddress = {
+	full_name?: string;
+	city?: string;
+	postal_code?: string;
+	country?: string;
+	province?: string;
+	telephone_number?: string;
+	email?: string;
+	[key: string]: string | undefined;
+};
+type SectionMap<T> = Record<AddressSection, T>;
+type DebounceMap = SectionMap<ReturnType<typeof setTimeout> | null>;
+type InputOptions = { immediate?: boolean };
+type LocationClient = (url: string) => Promise<unknown>;
+type ShipmentFlowStoreLike = {
+	shipmentDetails?: {
+		origin_country_code?: string;
+		destination_country_code?: string;
+	};
+};
+type SmartValidationLike = {
+	autoCapitalize: (value: unknown) => string;
+	clearError: (key: string) => void;
+	filterCAP: (value: unknown, options?: { countryCode?: string }) => string;
+	filterProvincia: (value: unknown) => string;
+	formatTelefono: (value: unknown) => string;
+	getProvinceSuggestions: (value: string) => string[];
+	onBlur: (key: string, callback: () => unknown) => void;
+	onInput: (key: string, callback: () => unknown) => void;
+	setError: (key: string, message: string) => void;
+	validateCAP: (key: string, value: string, options?: { countryCode?: string }) => boolean;
+	validateEmail: (key: string, value: string) => boolean;
+	validateNomeCognome: (key: string, value: string) => boolean;
+	validateProvincia: (key: string, value: string) => boolean;
+	validateTelefono: (key: string, value: string) => boolean;
+};
+type UseShipmentLocationAutocompleteArgs = {
+	deliveryMode: Ref<string>;
+	destinationAddress: Ref<ShipmentAddress>;
+	originAddress: Ref<ShipmentAddress>;
+	sanctumClient?: LocationClient;
+	sv: SmartValidationLike;
+	shipmentFlowStore?: ShipmentFlowStoreLike;
+};
 
 export const useShipmentLocationAutocomplete = ({
 	deliveryMode,
@@ -28,7 +83,7 @@ export const useShipmentLocationAutocomplete = ({
 	sanctumClient,
 	sv,
 	shipmentFlowStore,
-}) => {
+}: UseShipmentLocationAutocompleteArgs) => {
 	const {
 		dedupeLocations,
 		getProvinceLabel,
@@ -36,21 +91,28 @@ export const useShipmentLocationAutocomplete = ({
 		searchLocations,
 		searchLocationsByCap,
 		searchLocationsByCity,
-	} = useLocationSearch(sanctumClient)
+	} = useLocationSearch(sanctumClient) as {
+		dedupeLocations: (locations: unknown[]) => LocationSuggestion[];
+		getProvinceLabel: (location: unknown) => string;
+		normalizeLocationText: (value: unknown) => string;
+		searchLocations: (query: unknown, limit?: number, countryCode?: string) => Promise<LocationSuggestion[]>;
+		searchLocationsByCap: (cap: unknown, countryCode?: string) => Promise<LocationSuggestion[]>;
+		searchLocationsByCity: (city: unknown, limit?: number, countryCode?: string) => Promise<LocationSuggestion[]>;
+	}
 
 	// Province autocomplete
-	const originProvinceSuggestions = ref([])
-	const destProvinceSuggestions = ref([])
+	const originProvinceSuggestions = ref<string[]>([])
+	const destProvinceSuggestions = ref<string[]>([])
 
 	// City/CAP autocomplete
-	const originCitySuggestions = ref([])
-	const destCitySuggestions = ref([])
-	const originCapSuggestions = ref([])
-	const destCapSuggestions = ref([])
-	const citySearchTimeout = { origin: null, dest: null }
-	const capSearchTimeout = { origin: null, dest: null }
-	const citySearchSeq = reactive({ origin: 0, dest: 0 })
-	const capSearchSeq = reactive({ origin: 0, dest: 0 })
+	const originCitySuggestions = ref<LocationSuggestion[]>([])
+	const destCitySuggestions = ref<LocationSuggestion[]>([])
+	const originCapSuggestions = ref<LocationSuggestion[]>([])
+	const destCapSuggestions = ref<LocationSuggestion[]>([])
+	const citySearchTimeout: DebounceMap = { origin: null, dest: null }
+	const capSearchTimeout: DebounceMap = { origin: null, dest: null }
+	const citySearchSeq = reactive<SectionMap<number>>({ origin: 0, dest: 0 })
+	const capSearchSeq = reactive<SectionMap<number>>({ origin: 0, dest: 0 })
 
 	// Cleanup debounce: evita fetch su scope smontata se utente naviga via durante typing.
 	onScopeDispose(() => {
@@ -59,37 +121,37 @@ export const useShipmentLocationAutocomplete = ({
 		if (capSearchTimeout.origin) clearTimeout(capSearchTimeout.origin)
 		if (capSearchTimeout.dest) clearTimeout(capSearchTimeout.dest)
 	})
-	const locationLinkHints = reactive({ origin: [], dest: [] })
-	const sanitizeFullNameValue = (value) => sanitizeFullName(value, sv.autoCapitalize);
+	const locationLinkHints = reactive<SectionMap<LocationSuggestion[]>>({ origin: [], dest: [] })
+	const sanitizeFullNameValue = (value: unknown) => sanitizeFullName(value, sv.autoCapitalize);
 
-	const getSectionAddress = (section) => (section === 'origin' ? originAddress.value : destinationAddress.value)
-	const getSectionCountryCode = (section) => (
+	const getSectionAddress = (section: AddressSection) => (section === 'origin' ? originAddress.value : destinationAddress.value)
+	const getSectionCountryCode = (section: AddressSection) => (
 		section === 'origin'
-			? String(shipmentFlowStore?.shipmentDetails.origin_country_code || 'IT').trim().toUpperCase()
-			: String(shipmentFlowStore?.shipmentDetails.destination_country_code || 'IT').trim().toUpperCase()
+			? String(shipmentFlowStore?.shipmentDetails?.origin_country_code || 'IT').trim().toUpperCase()
+			: String(shipmentFlowStore?.shipmentDetails?.destination_country_code || 'IT').trim().toUpperCase()
 	)
-	const isItalianSection = (section) => getSectionCountryCode(section) === 'IT'
+	const isItalianSection = (section: AddressSection) => getSectionCountryCode(section) === 'IT'
 
-	const setSectionCitySuggestions = (section, suggestions) => {
+	const setSectionCitySuggestions = (section: AddressSection, suggestions: LocationSuggestion[]) => {
 		if (section === 'origin') originCitySuggestions.value = suggestions
 		else destCitySuggestions.value = suggestions
 	}
 
-	const setSectionCapSuggestions = (section, suggestions) => {
+	const setSectionCapSuggestions = (section: AddressSection, suggestions: LocationSuggestion[]) => {
 		if (section === 'origin') originCapSuggestions.value = suggestions
 		else destCapSuggestions.value = suggestions
 	}
 
-	const setSectionProvinceSuggestions = (section, suggestions) => {
+	const setSectionProvinceSuggestions = (section: AddressSection, suggestions: string[]) => {
 		if (section === 'origin') originProvinceSuggestions.value = suggestions
 		else destProvinceSuggestions.value = suggestions
 	}
 
-	const setProvinceSuggestionsFromLocations = (section, locations) => {
+	const setProvinceSuggestionsFromLocations = (section: AddressSection, locations: LocationSuggestion[]) => {
 		setSectionProvinceSuggestions(section, extractUniqueProvinces(locations));
 	}
 
-	const validateProvinceField = (section, value) => {
+	const validateProvinceField = (section: AddressSection, value: unknown) => {
 		if (!isItalianSection(section)) {
 			if (!value || !String(value).trim()) {
 				sv.setError(`${section}_province`, 'Provincia/Stato è obbligatorio')
@@ -99,10 +161,10 @@ export const useShipmentLocationAutocomplete = ({
 			return true
 		}
 
-		return sv.validateProvincia(`${section}_province`, value || '')
+		return sv.validateProvincia(`${section}_province`, String(value || ''))
 	}
 
-	const applyLocationToSection = (section, location) => {
+	const applyLocationToSection = (section: AddressSection, location: LocationSuggestion) => {
 		const address = getSectionAddress(section)
 		address.city = location.place_name || address.city
 		address.postal_code = String(location.postal_code || address.postal_code || '')
@@ -118,7 +180,7 @@ export const useShipmentLocationAutocomplete = ({
 	}
 
 	// --- Validazione coerenza indirizzo-location ---
-	const validateAddressLocationLink = async (section) => {
+	const validateAddressLocationLink = async (section: AddressSection) => {
 		if (section === 'dest' && deliveryMode.value === 'pudo') return true
 		if (!isItalianSection(section)) return true
 
@@ -173,7 +235,7 @@ export const useShipmentLocationAutocomplete = ({
 	}
 
 	// --- Provincia handlers ---
-	const onProvinciaInput = (section, value) => {
+	const onProvinciaInput = (section: AddressSection, value: unknown) => {
 		if (!isItalianSection(section)) {
 			const cleaned = String(value || '').trimStart()
 			if (section === 'origin') {
@@ -211,7 +273,7 @@ export const useShipmentLocationAutocomplete = ({
 		sv.onInput(`${section}_province`, () => validateProvinceField(section, filtered))
 	}
 
-	const selectProvincia = (section, prov) => {
+	const selectProvincia = (section: AddressSection, prov: string) => {
 		if (section === 'origin') {
 			originAddress.value.province = prov
 			originProvinceSuggestions.value = []
@@ -224,7 +286,7 @@ export const useShipmentLocationAutocomplete = ({
 	}
 
 	// --- CAP helpers ---
-	const loadCapSuggestionsFromCity = async (section, cityValue) => {
+	const loadCapSuggestionsFromCity = async (section: AddressSection, cityValue: unknown) => {
 		const city = String(cityValue || '').trim()
 		if (city.length < 2) return
 		try {
@@ -243,14 +305,14 @@ export const useShipmentLocationAutocomplete = ({
 	}
 
 	// --- Focus handlers ---
-	const onCityFocus = (section) => {
+	const onCityFocus = (section: AddressSection) => {
 		const addr = getSectionAddress(section)
 		if (addr.city && String(addr.city).trim().length >= 2) {
 			void onCityInput(section, addr.city, { immediate: true })
 		}
 	}
 
-	const onCapFocus = (section) => {
+	const onCapFocus = (section: AddressSection) => {
 		const addr = getSectionAddress(section)
 		const cap = String(addr.postal_code || '')
 		if (cap.length >= 3) {
@@ -262,7 +324,7 @@ export const useShipmentLocationAutocomplete = ({
 		}
 	}
 
-	const onProvinceFocus = (section) => {
+	const onProvinceFocus = (section: AddressSection) => {
 		const addr = getSectionAddress(section)
 		const filtered = isItalianSection(section)
 			? sv.filterProvincia(addr.province || '')
@@ -277,7 +339,7 @@ export const useShipmentLocationAutocomplete = ({
 	}
 
 	// --- City autocomplete with API ---
-	const onCityInput = async (section, value, options = {}) => {
+	const onCityInput = async (section: AddressSection, value: string, options: InputOptions = {}) => {
 		if (citySearchTimeout[section]) clearTimeout(citySearchTimeout[section])
 
 		sv.onInput(`${section}_city`, () => {
@@ -352,16 +414,16 @@ export const useShipmentLocationAutocomplete = ({
 		}, delay)
 	}
 
-	const selectCity = (section, location) => {
+	const selectCity = (section: AddressSection, location: LocationSuggestion) => {
 		applyLocationToSection(section, location)
 	}
 
-	const selectCap = (section, location) => {
+	const selectCap = (section: AddressSection, location: LocationSuggestion) => {
 		applyLocationToSection(section, location)
 	}
 
 	// --- Name input ---
-	const onNameInput = (section, value) => {
+	const onNameInput = (section: AddressSection, value: unknown) => {
 		const capitalized = sanitizeFullNameValue(value)
 		if (section === 'origin') {
 			originAddress.value.full_name = capitalized
@@ -372,7 +434,7 @@ export const useShipmentLocationAutocomplete = ({
 	}
 
 	// --- CAP input ---
-	const onCapInput = async (section, value, options = {}) => {
+	const onCapInput = async (section: AddressSection, value: unknown, options: InputOptions = {}) => {
 		if (capSearchTimeout[section]) clearTimeout(capSearchTimeout[section])
 		const countryCode = getSectionCountryCode(section)
 		const filtered = sv.filterCAP(value, { countryCode })
@@ -396,7 +458,7 @@ export const useShipmentLocationAutocomplete = ({
 			const provinceNorm = normalizeLocationText(address.province || '')
 
 			try {
-				let results = []
+				let results: LocationSuggestion[] = []
 				if (countryCode === 'IT' && filtered.length === 5) {
 					results = await searchLocationsByCap(filtered, countryCode)
 				} else {
@@ -450,7 +512,7 @@ export const useShipmentLocationAutocomplete = ({
 	}
 
 	// --- Telefono input ---
-	const onTelefonoInput = (section, value) => {
+	const onTelefonoInput = (section: AddressSection, value: unknown) => {
 		const formatted = sv.formatTelefono(value)
 		if (section === 'origin') {
 			originAddress.value.telephone_number = formatted
@@ -461,7 +523,7 @@ export const useShipmentLocationAutocomplete = ({
 	}
 
 	// --- Smart blur ---
-	const smartBlur = (section, field) => {
+	const smartBlur = (section: AddressSection, field: AddressField) => {
 		const key = `${section}_${field}`
 		const addr = section === 'origin' ? originAddress.value : destinationAddress.value
 		const value = addr[field]
