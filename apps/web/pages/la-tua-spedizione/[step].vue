@@ -23,8 +23,8 @@ import {
 	getExistingOrderPackageQuantity,
 	getExistingOrderPackageType,
 	normalizeExistingOrderAddress,
-	resolveApiError,
 } from '~/utils/shipmentStepHelpers';
+// resolveApiError ora usato solo dentro useShipmentVentaglioActions.
 
 const debugCheckpoint = (label) => {
 	if (!import.meta.client) return;
@@ -804,49 +804,23 @@ const continueToCart = async () => {
 	return true;
 };
 
-/* ------------------------------------------------------------------
-   USCITE ALTERNATIVE DAL VENTAGLIO — "Aggiungi al carrello" e
-   "Aggiungi a spedizioni configurate" mostrate a fine step Indirizzi.
-   Persistono prima lo stato step-2 (via persistAndContinueToCart, che
-   popola shipmentFlowStore.pendingShipment), poi inviano il payload al relativo
-   endpoint. Nessun effetto se la validazione del form fallisce.
-------------------------------------------------------------------- */
-const isAddingToCartFromVentaglio = ref(false);
-// -- ARCHIVIATO 2026-04-20: isSavingConfiguredFromVentaglio (_archive/frontend-simplification-2026-04-20/features/spedizioni-configurate) --
-const isSavingConfiguredFromVentaglio = ref(false);
-
-const handleAddToCartFromVentaglio = async () => {
-	if (isAddingToCartFromVentaglio.value) return;
-	if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
-	await nextTick();
-
-	if (!validateInlineServiceDetails()) {
-		focusFirstInvalidServiceField();
-		return;
-	}
-
-	isAddingToCartFromVentaglio.value = true;
-	try {
-		const persisted = await persistAndContinueToCart();
-		if (persisted === false) return;
-		const payload = shipmentFlowStore.pendingShipment;
-		if (!payload) throw new Error('Dati spedizione non disponibili.');
-		const cartEndpoint = isAuthenticated.value ? '/api/cart' : '/api/guest-cart';
-		await sanctumClient(cartEndpoint, { method: 'POST', body: payload });
-		uiFeedback.success('Aggiunta al carrello', 'La spedizione e pronta nel tuo carrello.');
-		await navigateTo('/carrello');
-	} catch (err) {
-		uiFeedback.error('Aggiunta al carrello', resolveApiError(err, "Errore durante l'aggiunta al carrello. Riprova."));
-	} finally {
-		isAddingToCartFromVentaglio.value = false;
-	}
-};
-
-// -- ARCHIVIATO 2026-04-20: handleSaveConfiguredFromVentaglio (_archive/frontend-simplification-2026-04-20/features/spedizioni-configurate)
-// Snippet originale disponibile in _archive/.../features/spedizioni-configurate/call-sites-removed.patch.md
-const handleSaveConfiguredFromVentaglio = () => {
-	// no-op: feature archiviata. Il bottone "Salva spedizione" è stato rimosso dal template.
-};
+/* USCITE ALTERNATIVE DAL VENTAGLIO (step Indirizzi):
+   "Aggiungi al carrello" + handler archiviato "Salva configurata".
+   Logica spostata in useShipmentVentaglioActions per isolare il flusso. */
+const {
+	isAddingToCart: isAddingToCartFromVentaglio,
+	isSavingConfigured: isSavingConfiguredFromVentaglio,
+	handleAddToCart: handleAddToCartFromVentaglio,
+	handleSaveConfigured: handleSaveConfiguredFromVentaglio,
+} = useShipmentVentaglioActions({
+	sanctumClient,
+	uiFeedback,
+	isAuthenticated,
+	shipmentFlowStore,
+	validateInlineServiceDetails,
+	focusFirstInvalidServiceField,
+	persistAndContinueToCart,
+});
 
 // Orchestrazione UI (summary, accordion open/close, sticky bar,
 // payment bootstrap). Raggruppa le 35+ computed/funzioni che prima vivevano
