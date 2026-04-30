@@ -29,9 +29,10 @@ const {
 
       <!-- Promo banner -->
       <div v-if="promoSettings?.active && promoSettings?.label_text" class="flex justify-center mb-[16px]">
-        <span :style="{ backgroundColor: promoSettings.label_color || '#095866' }"
+        <span
+:style="{ backgroundColor: promoSettings.label_color || '#095866' }"
           class="inline-flex items-center gap-[6px] px-[16px] py-[8px] rounded-full text-white text-[14px] font-bold tracking-wide shadow-sm">
-          <img v-if="promoSettings.label_image" :src="promoSettings.label_image" alt="" loading="lazy" decoding="async" width="40" height="20" class="h-[20px] w-auto" />
+          <img v-if="promoSettings.label_image" :src="promoSettings.label_image" alt="" loading="lazy" decoding="async" width="40" height="20" class="h-[20px] w-auto" >
           {{ promoSettings.label_text }}
         </span>
       </div>
@@ -57,12 +58,12 @@ const {
             <!-- Search bar -->
             <div class="relative flex-1">
               <input
-                type="text"
                 v-model="filterRiferimento"
+                type="text"
                 placeholder="Cerca spedizione..."
                 class="w-full h-[40px] rounded-[12px] bg-white ring-[1.5px] ring-[#DFE2E7] focus:ring-[3px] focus:ring-[var(--color-brand-primary)]/60 pl-[34px] pr-[12px] text-[13px] text-[var(--color-brand-text)] placeholder:text-[var(--color-brand-text-muted)] outline-none transition-all"
                 style="font-weight: 500"
-              />
+              >
               <!-- Search icon -->
               <svg class="absolute left-[12px] top-1/2 -translate-y-1/2 text-[var(--color-brand-text-muted)]" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
             </div>
@@ -84,7 +85,8 @@ const {
 
           <!-- Cart entries -->
           <template v-for="(entry, eIdx) in displayEntries" :key="'e-'+eIdx">
-            <CartGroupEntry v-if="entry.type === 'group'"
+            <CartGroupEntry
+v-if="entry.type === 'group'"
               :entry="entry"
               :expanded="isGroupExpanded(entry.groupIndex)"
               :format-price="formatPrice"
@@ -95,7 +97,8 @@ const {
               @update-quantity="updateQuantity"
               @delete="askDelete"
             />
-            <CartSingleEntry v-else
+            <CartSingleEntry
+v-else
               :entry="entry"
               :format-price="formatPrice"
               :unit-price="unitPrice"
@@ -169,10 +172,10 @@ const {
           <button
             v-if="!isAuthenticated"
             type="button"
-            @click="openCheckoutWithAuthGate('register')"
             class="mt-[4px] inline-flex items-center justify-center gap-[6px] text-[12px] text-[var(--color-brand-primary)] hover:text-[var(--color-brand-primary-hover)] transition-colors"
             style="font-weight: 600"
             aria-label="Salva il carrello creando un account"
+            @click="openCheckoutWithAuthGate('register')"
           >
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
             Salva carrello: crea account
@@ -226,11 +229,13 @@ const {
     </div>
 
     <!-- Confirm dialogs -->
-    <AccountConfirmDialog v-model:open="showDeleteConfirm" title="Conferma eliminazione"
+    <AccountConfirmDialog
+v-model:open="showDeleteConfirm" title="Conferma eliminazione"
       description="Sei sicuro di voler rimuovere questa spedizione dal carrello? L'azione non può essere annullata."
       confirm-label="Elimina" :loading="deleteLoading" @confirm="confirmDelete" />
 
-    <AccountConfirmDialog v-model:open="showEmptyConfirm" title="Svuota carrello"
+    <AccountConfirmDialog
+v-model:open="showEmptyConfirm" title="Svuota carrello"
       description="Sei sicuro di voler svuotare tutto il carrello? Tutte le spedizioni verranno rimosse."
       confirm-label="Svuota tutto" :loading="emptyCartLoading" @confirm="emptyCart" />
 

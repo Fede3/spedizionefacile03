@@ -56,7 +56,7 @@ const updateAssicurazioneCurrency = (index, rawValue) => {
 
 <template>
 	<div class="service-panel">
-		<div class="service-panel__divider"></div>
+		<div class="service-panel__divider"/>
 
 		<div v-if="service.key === 'contrassegno'" class="service-panel__content service-panel__content--contrassegno">
 			<div class="service-panel__grid service-panel__grid--two service-panel__grid--contrassegno">
@@ -71,7 +71,7 @@ const updateAssicurazioneCurrency = (index, rawValue) => {
 							autocomplete="off"
 							class="service-panel__input"
 							placeholder="0,00"
-							@input="updateContrassegnoCurrency('importo', $event.target.value, 'contrassegnoImporto')" />
+							@input="updateContrassegnoCurrency('importo', $event.target.value, 'contrassegnoImporto')" >
 						<span class="service-panel__suffix">&euro;</span>
 					</div>
 					<p v-if="serviceCardErrors.contrassegnoImporto" class="service-panel__error">{{ serviceCardErrors.contrassegnoImporto }}</p>
@@ -85,7 +85,7 @@ const updateAssicurazioneCurrency = (index, rawValue) => {
 						type="text"
 						class="service-panel__input"
 						placeholder="IT60X054281110..."
-						@input="updateContrassegnoInput('dettaglio_rimborso', $event.target.value, 'contrassegnoDettaglio')" />
+						@input="updateContrassegnoInput('dettaglio_rimborso', $event.target.value, 'contrassegnoDettaglio')" >
 					<p v-if="serviceCardErrors.contrassegnoDettaglio" class="service-panel__error">{{ serviceCardErrors.contrassegnoDettaglio }}</p>
 					<p class="service-panel__meta">Conto su cui accreditiamo l'importo incassato se scegli rimborso tramite bonifico.</p>
 				</div>
@@ -163,7 +163,7 @@ const updateAssicurazioneCurrency = (index, rawValue) => {
 							autocomplete="off"
 							class="service-panel__input"
 							placeholder="Valore merce"
-							@input="updateAssicurazioneCurrency(indexPopup, $event.target.value)" />
+							@input="updateAssicurazioneCurrency(indexPopup, $event.target.value)" >
 						<span class="service-panel__suffix">&euro;</span>
 					</div>
 					<p class="service-panel__meta">

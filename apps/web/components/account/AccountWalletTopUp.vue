@@ -29,16 +29,17 @@ const {
 		</div>
 
 		<div class="mt-[16px] grid grid-cols-2 gap-[8px] sm:grid-cols-3 tablet:grid-cols-4 desktop:grid-cols-5">
-			<button type="button"
-				v-for="amount in presetAmounts"
+			<button
+v-for="amount in presetAmounts"
 				:key="amount"
-				@click="selectPreset(amount)"
+				type="button"
 				:class="[
 					'h-[38px] rounded-[12px] border-2 text-[13px] font-semibold cursor-pointer transition-all duration-[200ms]',
 					topUpAmount == amount
 						? 'border-[var(--color-brand-primary)] bg-[var(--color-brand-primary)] text-white shadow-[0_2px_8px_rgba(9,88,102,0.28)] scale-[1.03]'
 						: 'border-[#E9EBEC] bg-white text-[#252B42] hover:border-[var(--color-brand-primary)] hover:bg-[rgba(9,88,102,0.05)] hover:scale-[1.05] active:scale-[0.97]',
-				]">
+				]"
+				@click="selectPreset(amount)">
 				&euro;{{ amount }}
 			</button>
 		</div>
@@ -53,7 +54,7 @@ const {
 					min="1"
 					step="0.01"
 					placeholder="Inserisci importo"
-					class="w-full rounded-[12px] border border-[#E9EBEC] bg-[#F5F6F9] py-[12px] pl-[38px] pr-[16px] text-[0.9375rem] transition-all focus:border-[var(--color-brand-primary)] focus:bg-white focus:outline-none focus:shadow-[0_0_0_3px_rgba(9,88,102,0.1)]" />
+					class="w-full rounded-[12px] border border-[#E9EBEC] bg-[#F5F6F9] py-[12px] pl-[38px] pr-[16px] text-[0.9375rem] transition-all focus:border-[var(--color-brand-primary)] focus:bg-white focus:outline-none focus:shadow-[0_0_0_3px_rgba(9,88,102,0.1)]" >
 			</div>
 		</div>
 
@@ -70,7 +71,7 @@ const {
 				</div>
 				<div class="flex flex-wrap items-center gap-[8px]">
 					<NuxtLink to="/account/carte" class="text-[0.8125rem] font-medium text-[var(--color-brand-primary)] hover:opacity-80 transition-opacity">Cambia</NuxtLink>
-					<button type="button" @click="openNewCardForm" class="text-[0.8125rem] font-medium text-[var(--color-brand-primary)] hover:opacity-80 transition-opacity cursor-pointer">
+					<button type="button" class="text-[0.8125rem] font-medium text-[var(--color-brand-primary)] hover:opacity-80 transition-opacity cursor-pointer" @click="openNewCardForm">
 						Usa una nuova carta
 					</button>
 				</div>
@@ -78,8 +79,8 @@ const {
 
 			<AccountWalletNewCardForm
 				v-else-if="showNewCardForm"
-				:is-preparing-new-card-form="isPreparingNewCardForm"
 				v-model:card-holder-name="cardHolderName"
+				:is-preparing-new-card-form="isPreparingNewCardForm"
 				:card-error="cardError"
 				:has-saved-card="Boolean(defaultPaymentMethod?.card)"
 				@close="closeNewCardForm" />
@@ -128,14 +129,15 @@ const {
 				</p>
 			</div>
 
-			<button type="button"
-				@click="handleTopUp"
+			<button
+type="button"
 				:disabled="!canSubmitTopUp"
 				:class="[
 					'btn-primary flex min-h-[38px] w-full items-center justify-center gap-[8px] text-[13px]',
 					!canSubmitTopUp ? 'cursor-not-allowed bg-gray-200 text-gray-400' : 'cursor-pointer',
-				]">
-				<svg aria-hidden="true" v-if="!isLoading" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+				]"
+				@click="handleTopUp">
+				<svg v-if="!isLoading" aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
 					<path d="M21 18v1a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v1" />
 					<path d="M14 11h4m-2-2v4" />
 				</svg>
@@ -149,11 +151,11 @@ const {
 				'mt-[14px] flex items-center gap-[8px] rounded-[16px] px-[12px] py-[11px] text-[0.8125rem] font-medium',
 				messageType === 'success' ? 'bg-[#f0fdf4] text-[#166534]' : 'bg-[#FFF5F2] text-[var(--color-brand-accent)]',
 			]">
-			<svg aria-hidden="true" v-if="messageType === 'success'" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="shrink-0">
+			<svg v-if="messageType === 'success'" aria-hidden="true" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="shrink-0">
 				<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
 				<polyline points="22 4 12 14.01 9 11.01" />
 			</svg>
-			<svg aria-hidden="true" v-else width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="shrink-0">
+			<svg v-else aria-hidden="true" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="shrink-0">
 				<circle cx="12" cy="12" r="10" />
 				<line x1="12" y1="8" x2="12" y2="12" />
 				<line x1="12" y1="16" x2="12.01" y2="16" />

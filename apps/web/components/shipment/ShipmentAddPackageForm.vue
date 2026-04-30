@@ -31,8 +31,8 @@ const updatePackageField = (field, value) => {
 		<button
 			v-if="!showForm"
 			type="button"
-			@click="emit('update:showForm', true)"
-			class="inline-flex items-center gap-[6px] px-[16px] py-[10px] bg-[var(--color-brand-primary)] text-white rounded-[50px] text-[0.875rem] font-semibold hover:bg-[var(--color-brand-primary-hover)] transition cursor-pointer">
+			class="inline-flex items-center gap-[6px] px-[16px] py-[10px] bg-[var(--color-brand-primary)] text-white rounded-[50px] text-[0.875rem] font-semibold hover:bg-[var(--color-brand-primary-hover)] transition cursor-pointer"
+			@click="emit('update:showForm', true)">
 			<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
 			Aggiungi collo
 		</button>
@@ -79,13 +79,15 @@ const updatePackageField = (field, value) => {
 			</div>
 			<div v-if="addPackageError" class="mt-[10px] text-red-500 text-[0.8125rem]">{{ addPackageError }}</div>
 			<div class="mt-[16px] flex gap-[10px]">
-				<button type="button" @click="emit('submit')" :disabled="addingPackage"
-					class="inline-flex items-center gap-[6px] px-[16px] py-[10px] bg-[var(--color-brand-accent)] text-white rounded-[50px] text-[0.875rem] font-semibold hover:opacity-90 transition disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer">
+				<button
+type="button" :disabled="addingPackage" class="inline-flex items-center gap-[6px] px-[16px] py-[10px] bg-[var(--color-brand-accent)] text-white rounded-[50px] text-[0.875rem] font-semibold hover:opacity-90 transition disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
+					@click="emit('submit')">
 					<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
 					{{ addingPackage ? 'Aggiunta...' : 'Aggiungi' }}
 				</button>
-				<button type="button" @click="emit('update:showForm', false)"
-					class="inline-flex items-center gap-[6px] px-[16px] py-[10px] bg-[var(--color-brand-border)] text-[var(--color-brand-text)] rounded-[50px] text-[0.875rem] font-semibold hover:bg-[#D0D0D0] transition cursor-pointer">
+				<button
+type="button" class="inline-flex items-center gap-[6px] px-[16px] py-[10px] bg-[var(--color-brand-border)] text-[var(--color-brand-text)] rounded-[50px] text-[0.875rem] font-semibold hover:bg-[#D0D0D0] transition cursor-pointer"
+					@click="emit('update:showForm', false)">
 					<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
 					Annulla
 				</button>

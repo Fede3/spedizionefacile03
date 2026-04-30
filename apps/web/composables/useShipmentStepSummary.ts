@@ -7,13 +7,10 @@
  */
 import { calculateShipmentServiceSurcharge } from "~/utils/shipmentServicePricing";
 import {
-	cleanDisplayText as cleanDisplayTextHelper,
 	firstMeaningfulValue as firstMeaningfulValueHelper,
 	parsePriceAmount,
 	formatPriceAmount,
 	pickBestPriceAmount,
-	normalizePackagePrice,
-	getPackageLineAmount,
 	getPackagesTotal,
 } from "~/utils/shipmentSummaryHelpers";
 import type { Ref } from 'vue';
@@ -150,11 +147,10 @@ export const useShipmentStepSummary = ({
 		});
 	});
 
-	// Wrapper locali iniettano normalizeLocationText (dipendenza ref) negli helper puri.
-	const cleanDisplayText = (value: unknown): string => cleanDisplayTextHelper(value, normalizeLocationText);
+	// firstMeaningfulValue inietta normalizeLocationText (Ref) nell'helper puro.
+	// parsePriceAmount, formatPriceAmount, pickBestPriceAmount, getPackagesTotal:
+	// importati da utils/shipmentSummaryHelpers (puri, no dependency injection).
 	const firstMeaningfulValue = (...candidates: unknown[]): string => firstMeaningfulValueHelper(candidates, normalizeLocationText);
-	// parsePriceAmount, formatPriceAmount, pickBestPriceAmount, normalizePackagePrice,
-	// getPackageLineAmount, getPackagesTotal: importati da utils/shipmentSummaryHelpers.
 
 	const summaryPackagesSource = computed(() => {
 		if (clientDraftSummaryReady.value) {

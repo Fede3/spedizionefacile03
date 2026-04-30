@@ -60,7 +60,7 @@ const handleClose = () => emit('close');
 							type="text"
 							maxlength="128"
 							placeholder="Es. CRO bonifico o numero estratto conto"
-							class="w-full bg-[#F8F9FB] border border-[var(--color-brand-border)] rounded-[12px] px-[12px] py-[10px] text-[0.875rem] focus:border-[var(--color-brand-primary)] focus:outline-none" />
+							class="w-full bg-[#F8F9FB] border border-[var(--color-brand-border)] rounded-[12px] px-[12px] py-[10px] text-[0.875rem] focus:border-[var(--color-brand-primary)] focus:outline-none" >
 					</div>
 
 					<p class="text-[0.75rem] text-[var(--color-brand-text-muted)]">

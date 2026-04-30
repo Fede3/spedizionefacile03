@@ -247,8 +247,8 @@ const tabs = computed(() => [
 						placeholder="Cerca per etichetta, nome, città…"
 						class="sf-addr-search__input"
 						aria-label="Cerca indirizzo"
-					/>
-					<button v-if="searchQuery" type="button" class="sf-addr-search__clear" @click="searchQuery = ''" aria-label="Azzera ricerca">
+					>
+					<button v-if="searchQuery" type="button" class="sf-addr-search__clear" aria-label="Azzera ricerca" @click="searchQuery = ''">
 						<svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
 							<path d="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z" />
 						</svg>
@@ -259,10 +259,10 @@ const tabs = computed(() => [
 			<!-- LOADING -->
 			<div v-if="loading" class="sf-addr-grid">
 				<div v-for="n in 3" :key="n" class="sf-addr-skeleton">
-					<div class="sf-addr-skeleton__chip"></div>
-					<div class="sf-addr-skeleton__title"></div>
-					<div class="sf-addr-skeleton__line"></div>
-					<div class="sf-addr-skeleton__line sf-addr-skeleton__line--short"></div>
+					<div class="sf-addr-skeleton__chip"/>
+					<div class="sf-addr-skeleton__title"/>
+					<div class="sf-addr-skeleton__line"/>
+					<div class="sf-addr-skeleton__line sf-addr-skeleton__line--short"/>
 				</div>
 			</div>
 

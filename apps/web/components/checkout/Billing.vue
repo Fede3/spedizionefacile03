@@ -111,22 +111,22 @@ watch(
 			<div class="checkout-mini-switch checkout-mini-switch--billing checkout-mini-switch--shared" role="tablist" aria-label="Documento fiscale">
 				<button
 					type="button"
-					@click="emit('update:fatturazioneType', 'ricevuta')"
 					role="tab"
 					class="checkout-mini-switch__option"
 					:aria-pressed="fatturazioneType === 'ricevuta'"
 					:aria-selected="fatturazioneType === 'ricevuta'"
-					:class="{ 'checkout-mini-switch__option--active': fatturazioneType === 'ricevuta' }">
+					:class="{ 'checkout-mini-switch__option--active': fatturazioneType === 'ricevuta' }"
+					@click="emit('update:fatturazioneType', 'ricevuta')">
 					Ricevuta
 				</button>
 				<button
 					type="button"
-					@click="emit('update:fatturazioneType', 'fattura')"
 					role="tab"
 					class="checkout-mini-switch__option"
 					:aria-pressed="fatturazioneType === 'fattura'"
 					:aria-selected="fatturazioneType === 'fattura'"
-					:class="{ 'checkout-mini-switch__option--active': fatturazioneType === 'fattura' }">
+					:class="{ 'checkout-mini-switch__option--active': fatturazioneType === 'fattura' }"
+					@click="emit('update:fatturazioneType', 'fattura')">
 					Fattura
 				</button>
 			</div>
@@ -160,22 +160,22 @@ watch(
 					aria-label="Intestatario fattura">
 					<button
 						type="button"
-						@click="emit('update:invoiceSubjectType', 'azienda')"
 						role="tab"
 						class="checkout-mini-switch__option checkout-mini-switch__option--compact"
 						:aria-pressed="invoiceSubjectType === 'azienda'"
 						:aria-selected="invoiceSubjectType === 'azienda'"
-						:class="{ 'checkout-mini-switch__option--active': invoiceSubjectType === 'azienda' }">
+						:class="{ 'checkout-mini-switch__option--active': invoiceSubjectType === 'azienda' }"
+						@click="emit('update:invoiceSubjectType', 'azienda')">
 						Azienda
 					</button>
 					<button
 						type="button"
-						@click="emit('update:invoiceSubjectType', 'privato')"
 						role="tab"
 						class="checkout-mini-switch__option checkout-mini-switch__option--compact"
 						:aria-pressed="invoiceSubjectType === 'privato'"
 						:aria-selected="invoiceSubjectType === 'privato'"
-						:class="{ 'checkout-mini-switch__option--active': invoiceSubjectType === 'privato' }">
+						:class="{ 'checkout-mini-switch__option--active': invoiceSubjectType === 'privato' }"
+						@click="emit('update:invoiceSubjectType', 'privato')">
 						Privato
 					</button>
 				</div>
@@ -187,31 +187,31 @@ watch(
 						<label class="checkout-billing-label">Ragione Sociale *</label>
 						<input
 							:value="fatturaField('ragione_sociale')"
-							@input="setFatturaField('ragione_sociale', $event.target.value)"
 							type="text"
 							placeholder="SpediamoFacile S.r.l."
 							required
-							class="checkout-billing-input" />
+							class="checkout-billing-input"
+							@input="setFatturaField('ragione_sociale', $event.target.value)" >
 					</div>
 					<div>
 						<label class="checkout-billing-label">Partita IVA *</label>
 						<input
 							:value="fatturaField('p_iva')"
-							@input="setFatturaField('p_iva', $event.target.value)"
 							type="text"
 							maxlength="13"
 							placeholder="IT 01234567890"
 							required
-							class="checkout-billing-input" />
+							class="checkout-billing-input"
+							@input="setFatturaField('p_iva', $event.target.value)" >
 					</div>
 					<div>
 						<label class="checkout-billing-label">Codice Fiscale</label>
 						<input
 							:value="fatturaField('codice_fiscale')"
-							@input="setFatturaField('codice_fiscale', $event.target.value)"
 							type="text"
 							placeholder="01234567890"
-							class="checkout-billing-input" />
+							class="checkout-billing-input"
+							@input="setFatturaField('codice_fiscale', $event.target.value)" >
 					</div>
 				</div>
 
@@ -220,20 +220,20 @@ watch(
 						<label class="checkout-billing-label">Codice SDI</label>
 						<input
 							:value="fatturaField('codice_sdi')"
-							@input="setFatturaField('codice_sdi', $event.target.value)"
 							type="text"
 							maxlength="7"
 							placeholder="XXXXXXX"
-							class="checkout-billing-input" />
+							class="checkout-billing-input"
+							@input="setFatturaField('codice_sdi', $event.target.value)" >
 					</div>
 					<div>
 						<label class="checkout-billing-label">PEC (alternativa)</label>
 						<input
 							:value="fatturaField('pec')"
-							@input="setFatturaField('pec', $event.target.value)"
 							type="email"
 							placeholder="fattura@pec.azienda.it (almeno una tra SDI e PEC)"
-							class="checkout-billing-input" />
+							class="checkout-billing-input"
+							@input="setFatturaField('pec', $event.target.value)" >
 					</div>
 				</div>
 
@@ -242,7 +242,7 @@ watch(
 				</p>
 
 				<label class="billing-same-toggle">
-					<input type="checkbox" v-model="useShippingAsBilling" class="sr-only" />
+					<input v-model="useShippingAsBilling" type="checkbox" class="sr-only" >
 					<span class="billing-same-toggle__box" :class="{ 'billing-same-toggle__box--active': useShippingAsBilling }">
 						<svg v-if="useShippingAsBilling" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
 							<path d="M20 6L9 17l-5-5" />
@@ -258,47 +258,47 @@ watch(
 						<label class="checkout-billing-label">Indirizzo</label>
 						<input
 							:value="fatturaField('indirizzo')"
-							@input="setFatturaField('indirizzo', $event.target.value)"
 							type="text"
 							placeholder="Indirizzo"
 							class="checkout-billing-input"
 							:disabled="useShippingAsBilling"
-							:aria-disabled="useShippingAsBilling ? 'true' : 'false'" />
+							:aria-disabled="useShippingAsBilling ? 'true' : 'false'"
+							@input="setFatturaField('indirizzo', $event.target.value)" >
 					</div>
 					<div>
 						<label class="checkout-billing-label">Città</label>
 						<input
 							:value="fatturaField('city')"
-							@input="setFatturaField('city', $event.target.value)"
 							type="text"
 							placeholder="Città"
 							class="checkout-billing-input"
 							:disabled="useShippingAsBilling"
-							:aria-disabled="useShippingAsBilling ? 'true' : 'false'" />
+							:aria-disabled="useShippingAsBilling ? 'true' : 'false'"
+							@input="setFatturaField('city', $event.target.value)" >
 					</div>
 					<div>
 						<label class="checkout-billing-label">Prov.</label>
 						<input
 							:value="fatturaField('province')"
-							@input="setFatturaField('province', $event.target.value)"
 							type="text"
 							maxlength="2"
 							placeholder="Prov."
 							class="checkout-billing-input"
 							:disabled="useShippingAsBilling"
-							:aria-disabled="useShippingAsBilling ? 'true' : 'false'" />
+							:aria-disabled="useShippingAsBilling ? 'true' : 'false'"
+							@input="setFatturaField('province', $event.target.value)" >
 					</div>
 					<div>
 						<label class="checkout-billing-label">CAP</label>
 						<input
 							:value="fatturaField('postal_code')"
-							@input="setFatturaField('postal_code', $event.target.value)"
 							type="text"
 							maxlength="10"
 							placeholder="CAP"
 							class="checkout-billing-input"
 							:disabled="useShippingAsBilling"
-							:aria-disabled="useShippingAsBilling ? 'true' : 'false'" />
+							:aria-disabled="useShippingAsBilling ? 'true' : 'false'"
+							@input="setFatturaField('postal_code', $event.target.value)" >
 					</div>
 				</div>
 			</div>
@@ -309,27 +309,27 @@ watch(
 						<label class="checkout-billing-label">Nome completo *</label>
 						<input
 							:value="fatturaField('nome_completo')"
-							@input="setFatturaField('nome_completo', $event.target.value)"
 							type="text"
 							placeholder="Nome e Cognome"
 							required
-							class="checkout-billing-input" />
+							class="checkout-billing-input"
+							@input="setFatturaField('nome_completo', $event.target.value)" >
 					</div>
 					<div>
 						<label class="checkout-billing-label">Codice Fiscale *</label>
 						<input
 							:value="fatturaField('codice_fiscale')"
-							@input="setFatturaField('codice_fiscale', $event.target.value)"
 							type="text"
 							placeholder="RSSMRA80A01H501U"
 							maxlength="16"
 							required
-							class="checkout-billing-input" />
+							class="checkout-billing-input"
+							@input="setFatturaField('codice_fiscale', $event.target.value)" >
 					</div>
 				</div>
 
 				<label class="billing-same-toggle">
-					<input type="checkbox" v-model="useShippingAsBilling" class="sr-only" />
+					<input v-model="useShippingAsBilling" type="checkbox" class="sr-only" >
 					<span class="billing-same-toggle__box" :class="{ 'billing-same-toggle__box--active': useShippingAsBilling }">
 						<svg v-if="useShippingAsBilling" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
 							<path d="M20 6L9 17l-5-5" />
@@ -345,47 +345,47 @@ watch(
 						<label class="checkout-billing-label">Indirizzo</label>
 						<input
 							:value="fatturaField('indirizzo')"
-							@input="setFatturaField('indirizzo', $event.target.value)"
 							type="text"
 							placeholder="Indirizzo"
 							class="checkout-billing-input"
 							:disabled="useShippingAsBilling"
-							:aria-disabled="useShippingAsBilling ? 'true' : 'false'" />
+							:aria-disabled="useShippingAsBilling ? 'true' : 'false'"
+							@input="setFatturaField('indirizzo', $event.target.value)" >
 					</div>
 					<div>
 						<label class="checkout-billing-label">Città</label>
 						<input
 							:value="fatturaField('city')"
-							@input="setFatturaField('city', $event.target.value)"
 							type="text"
 							placeholder="Città"
 							class="checkout-billing-input"
 							:disabled="useShippingAsBilling"
-							:aria-disabled="useShippingAsBilling ? 'true' : 'false'" />
+							:aria-disabled="useShippingAsBilling ? 'true' : 'false'"
+							@input="setFatturaField('city', $event.target.value)" >
 					</div>
 					<div>
 						<label class="checkout-billing-label">Prov.</label>
 						<input
 							:value="fatturaField('province')"
-							@input="setFatturaField('province', $event.target.value)"
 							type="text"
 							maxlength="2"
 							placeholder="Prov."
 							class="checkout-billing-input"
 							:disabled="useShippingAsBilling"
-							:aria-disabled="useShippingAsBilling ? 'true' : 'false'" />
+							:aria-disabled="useShippingAsBilling ? 'true' : 'false'"
+							@input="setFatturaField('province', $event.target.value)" >
 					</div>
 					<div>
 						<label class="checkout-billing-label">CAP</label>
 						<input
 							:value="fatturaField('postal_code')"
-							@input="setFatturaField('postal_code', $event.target.value)"
 							type="text"
 							maxlength="10"
 							placeholder="CAP"
 							class="checkout-billing-input"
 							:disabled="useShippingAsBilling"
-							:aria-disabled="useShippingAsBilling ? 'true' : 'false'" />
+							:aria-disabled="useShippingAsBilling ? 'true' : 'false'"
+							@input="setFatturaField('postal_code', $event.target.value)" >
 					</div>
 				</div>
 			</div>

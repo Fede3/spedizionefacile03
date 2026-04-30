@@ -103,7 +103,7 @@ const empty = computed(() => !loading.value && !loadError.value && orders.value.
 
 			<!-- LOADING -->
 			<div v-if="loading" class="sf-fatture__skeleton" aria-busy="true">
-				<div v-for="n in 4" :key="n" class="sf-fatture__skel-row"></div>
+				<div v-for="n in 4" :key="n" class="sf-fatture__skel-row"/>
 			</div>
 
 			<!-- ERRORE -->

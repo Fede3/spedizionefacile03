@@ -111,7 +111,7 @@ const onReset = () => emit('reset');
 					placeholder="Cerca codice ordine, email o nome cliente"
 					class="m6-filters-bar__search-input"
 					autocomplete="off"
-					@input="onSearchInput" />
+					@input="onSearchInput" >
 				<button
 					v-if="filters.search"
 					type="button"
@@ -185,7 +185,7 @@ const onReset = () => emit('reset');
 							type="date"
 							class="m6-field__input"
 							:value="filters.date_from"
-							@change="setField('date_from', $event.target.value); onApply();" />
+							@change="setField('date_from', $event.target.value); onApply();" >
 					</div>
 
 					<div class="m6-field">
@@ -195,7 +195,7 @@ const onReset = () => emit('reset');
 							type="date"
 							class="m6-field__input"
 							:value="filters.date_to"
-							@change="setField('date_to', $event.target.value); onApply();" />
+							@change="setField('date_to', $event.target.value); onApply();" >
 					</div>
 
 					<!-- Amount min/max (in euro, lato BE convertire) -->
@@ -210,7 +210,7 @@ const onReset = () => emit('reset');
 							class="m6-field__input"
 							placeholder="0,00"
 							:value="filters.amount_min"
-							@change="setField('amount_min', $event.target.value); onApply();" />
+							@change="setField('amount_min', $event.target.value); onApply();" >
 					</div>
 
 					<div class="m6-field">
@@ -224,7 +224,7 @@ const onReset = () => emit('reset');
 							class="m6-field__input"
 							placeholder="999,00"
 							:value="filters.amount_max"
-							@change="setField('amount_max', $event.target.value); onApply();" />
+							@change="setField('amount_max', $event.target.value); onApply();" >
 					</div>
 				</div>
 

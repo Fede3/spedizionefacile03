@@ -49,14 +49,14 @@ const onTextInput = (index, event) => {
 					<button
 						v-if="items.length > 1"
 						type="button"
-						@click="emit('remove', idx)"
-						class="service-editor-remove">
+						class="service-editor-remove"
+						@click="emit('remove', idx)">
 						Rimuovi
 					</button>
 				</div>
 				<div class="service-editor-stack-card__body">
-					<input :value="item[fieldKey]" @input="onHeadingInput(idx, $event)" type="text" class="service-editor-input" :placeholder="headingPlaceholder" />
-					<textarea :value="item.text" @input="onTextInput(idx, $event)" :rows="textRows" class="service-editor-textarea" :placeholder="textPlaceholder"></textarea>
+					<input :value="item[fieldKey]" type="text" class="service-editor-input" :placeholder="headingPlaceholder" @input="onHeadingInput(idx, $event)" >
+					<textarea :value="item.text" :rows="textRows" class="service-editor-textarea" :placeholder="textPlaceholder" @input="onTextInput(idx, $event)"/>
 				</div>
 			</div>
 		</div>

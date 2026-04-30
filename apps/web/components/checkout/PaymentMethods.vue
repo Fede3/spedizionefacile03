@@ -97,7 +97,7 @@ const walletQuickLabel = computed(() => {
 			</div>
 			<div
 				:ref="paymentRequestRefCallback"
-				class="payment-wallet-section__button"></div>
+				class="payment-wallet-section__button"/>
 			<p v-if="paymentRequestError" class="payment-wallet-section__error">{{ paymentRequestError }}</p>
 			<div class="payment-wallet-section__divider">
 				<span>oppure scegli un altro metodo</span>
@@ -109,7 +109,6 @@ const walletQuickLabel = computed(() => {
 				v-for="option in paymentMethodOptions"
 				:key="option.key"
 				type="button"
-				@click="emit('select-payment-method', option.key)"
 				role="tab"
 				:aria-pressed="paymentMethod === option.key"
 				:aria-selected="paymentMethod === option.key"
@@ -118,7 +117,8 @@ const walletQuickLabel = computed(() => {
 					'checkout-payment-option',
 					paymentMethod === option.key ? 'checkout-payment-option--active' : 'checkout-payment-option--idle',
 					option.key === 'carta' && cardPaymentsUnavailable ? 'checkout-payment-option--disabled' : '',
-				]">
+				]"
+				@click="emit('select-payment-method', option.key)">
 				<span v-if="option.badge" class="checkout-payment-option__badge">{{ option.badge }}</span>
 				<span class="checkout-payment-option__main">
 					<span class="checkout-payment-option__icon-shell">
@@ -170,16 +170,16 @@ const walletQuickLabel = computed(() => {
 				<!-- CASO A: nessuna carta salvata, form diretto -->
 				<div v-if="!hasSavedCard && shouldShowCardForm" class="checkout-payment-card-form checkout-payment-card-form--inline">
 					<p class="checkout-payment-card-form__eyebrow">Inserisci la carta</p>
-					<div id="card-element" :ref="cardRefCallback" class="checkout-payment-card-form__element"></div>
+					<div id="card-element" :ref="cardRefCallback" class="checkout-payment-card-form__element"/>
 					<p v-if="stripeLoading" class="checkout-payment-card-form__helper">
 						Preparazione del modulo carta in corso...
 					</p>
 					<p v-if="cardError" class="checkout-payment-card-form__error">{{ cardError }}</p>
 					<label class="checkout-payment-card-form__save">
 						<input
-							type="checkbox"
 							v-model="localSaveCard"
-							class="checkout-payment-card-form__checkbox" />
+							type="checkbox"
+							class="checkout-payment-card-form__checkbox" >
 						<span>Salva carta per pagamenti futuri (puoi revocare in qualsiasi momento dal tuo account)</span>
 					</label>
 				</div>
@@ -188,11 +188,11 @@ const walletQuickLabel = computed(() => {
 				<div v-else-if="hasSavedCard" class="checkout-payment-choice-stack">
 					<button
 						type="button"
-						@click="handleUseNewCard(false)"
 						:class="[
 							'checkout-payment-choice',
 							!useNewCard ? 'checkout-payment-choice--selected' : 'checkout-payment-choice--idle',
-						]">
+						]"
+						@click="handleUseNewCard(false)">
 						<span class="checkout-payment-choice__brand">{{ defaultPayment.card.brand?.toUpperCase() }}</span>
 						<div class="checkout-payment-choice__copy">
 							<p class="checkout-payment-choice__eyebrow">Carta salvata</p>
@@ -201,19 +201,19 @@ const walletQuickLabel = computed(() => {
 							</p>
 							<p class="checkout-payment-choice__text">Scade {{ defaultPayment.card.exp_month }}/{{ defaultPayment.card.exp_year }}</p>
 						</div>
-						<span :class="['checkout-payment-choice__radio', !useNewCard ? 'checkout-payment-choice__radio--selected' : '']"></span>
+						<span :class="['checkout-payment-choice__radio', !useNewCard ? 'checkout-payment-choice__radio--selected' : '']"/>
 					</button>
 
 					<div
 						role="button"
 						tabindex="0"
-						@click="handleUseNewCard(true)"
-						@keydown.enter.prevent="handleUseNewCard(true)"
-						@keydown.space.prevent="handleUseNewCard(true)"
 						:class="[
 							'checkout-payment-choice checkout-payment-choice--expandable',
 							useNewCard ? 'checkout-payment-choice--selected' : 'checkout-payment-choice--idle',
-						]">
+						]"
+						@click="handleUseNewCard(true)"
+						@keydown.enter.prevent="handleUseNewCard(true)"
+						@keydown.space.prevent="handleUseNewCard(true)">
 						<div class="checkout-payment-choice__header">
 							<span class="checkout-payment-choice__icon-shell">
 								<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -225,21 +225,21 @@ const walletQuickLabel = computed(() => {
 								<p class="checkout-payment-choice__title">Usa una nuova carta</p>
 								<p class="checkout-payment-choice__text">Inserisci una carta diversa per questo pagamento.</p>
 							</div>
-							<span :class="['checkout-payment-choice__radio', useNewCard ? 'checkout-payment-choice__radio--selected' : '']"></span>
+							<span :class="['checkout-payment-choice__radio', useNewCard ? 'checkout-payment-choice__radio--selected' : '']"/>
 						</div>
 
 						<div v-if="shouldShowCardForm" class="checkout-payment-card-form checkout-payment-card-form--embedded">
 							<p class="checkout-payment-card-form__eyebrow">Inserisci la carta</p>
-							<div id="card-element" :ref="cardRefCallback" class="checkout-payment-card-form__element"></div>
+							<div id="card-element" :ref="cardRefCallback" class="checkout-payment-card-form__element"/>
 							<p v-if="stripeLoading" class="checkout-payment-card-form__helper">
 								Preparazione del modulo carta in corso...
 							</p>
 							<p v-if="cardError" class="checkout-payment-card-form__error">{{ cardError }}</p>
 							<label class="checkout-payment-card-form__save" @click.stop>
 								<input
-									type="checkbox"
 									v-model="localSaveCard"
-									class="checkout-payment-card-form__checkbox" />
+									type="checkbox"
+									class="checkout-payment-card-form__checkbox" >
 								<span>Salva carta per pagamenti futuri (puoi revocare in qualsiasi momento dal tuo account)</span>
 							</label>
 						</div>

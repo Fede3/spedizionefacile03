@@ -35,12 +35,12 @@ const CTA_CLS = 'btn-cta-filled w-full h-[50px] rounded-full text-[14px] flex it
     <!-- Tipo profilo: radio inline compatti -->
     <fieldset class="auth-overlay-profile-radios" aria-label="Tipo profilo">
       <label class="auth-overlay-profile-radio">
-        <input :checked="formValue('user_type') === 'privato'" type="radio" value="privato" class="auth-overlay-profile-radio__input" @change="updateFormField('user_type', 'privato')" />
+        <input :checked="formValue('user_type') === 'privato'" type="radio" value="privato" class="auth-overlay-profile-radio__input" @change="updateFormField('user_type', 'privato')" >
         <span class="auth-overlay-profile-radio__dot" aria-hidden="true" />
         <span class="auth-overlay-profile-radio__label">Privato</span>
       </label>
       <label class="auth-overlay-profile-radio">
-        <input :checked="formValue('user_type') === 'commerciante'" type="radio" value="commerciante" class="auth-overlay-profile-radio__input" @change="updateFormField('user_type', 'commerciante')" />
+        <input :checked="formValue('user_type') === 'commerciante'" type="radio" value="commerciante" class="auth-overlay-profile-radio__input" @change="updateFormField('user_type', 'commerciante')" >
         <span class="auth-overlay-profile-radio__dot" aria-hidden="true" />
         <span class="auth-overlay-profile-radio__label">Azienda</span>
       </label>
@@ -50,11 +50,11 @@ const CTA_CLS = 'btn-cta-filled w-full h-[50px] rounded-full text-[14px] flex it
     <div class="grid grid-cols-1 md:grid-cols-2 gap-[8px]">
       <div class="flex flex-col gap-[5px]">
         <label :class="LABEL_CLS" for="auth-reg-name">Nome</label>
-        <input id="auth-reg-name" :value="formValue('name')" :class="INPUT_CLS" type="text" autocomplete="given-name" placeholder="Mario" @input="updateFormField('name', $event.target.value)" />
+        <input id="auth-reg-name" :value="formValue('name')" :class="INPUT_CLS" type="text" autocomplete="given-name" placeholder="Mario" @input="updateFormField('name', $event.target.value)" >
       </div>
       <div class="flex flex-col gap-[5px]">
         <label :class="LABEL_CLS" for="auth-reg-surname">Cognome</label>
-        <input id="auth-reg-surname" :value="formValue('surname')" :class="INPUT_CLS" type="text" autocomplete="family-name" placeholder="Rossi" @input="updateFormField('surname', $event.target.value)" />
+        <input id="auth-reg-surname" :value="formValue('surname')" :class="INPUT_CLS" type="text" autocomplete="family-name" placeholder="Rossi" @input="updateFormField('surname', $event.target.value)" >
       </div>
     </div>
 
@@ -62,11 +62,11 @@ const CTA_CLS = 'btn-cta-filled w-full h-[50px] rounded-full text-[14px] flex it
     <div class="grid grid-cols-1 md:grid-cols-2 gap-[8px]">
       <div class="flex flex-col gap-[5px]">
         <label :class="LABEL_CLS" for="auth-reg-email">Email</label>
-        <input id="auth-reg-email" :value="formValue('email')" :class="INPUT_CLS" type="email" autocomplete="email" placeholder="nome@email.com" @input="updateFormField('email', $event.target.value)" />
+        <input id="auth-reg-email" :value="formValue('email')" :class="INPUT_CLS" type="email" autocomplete="email" placeholder="nome@email.com" @input="updateFormField('email', $event.target.value)" >
       </div>
       <div class="flex flex-col gap-[5px]">
         <label :class="LABEL_CLS" for="auth-reg-email-confirm">Conferma email</label>
-        <input id="auth-reg-email-confirm" :value="formValue('email_confirmation')" :class="INPUT_CLS" type="email" autocomplete="email" placeholder="Conferma email" @input="updateFormField('email_confirmation', $event.target.value)" />
+        <input id="auth-reg-email-confirm" :value="formValue('email_confirmation')" :class="INPUT_CLS" type="email" autocomplete="email" placeholder="Conferma email" @input="updateFormField('email_confirmation', $event.target.value)" >
       </div>
     </div>
 
@@ -81,7 +81,7 @@ const CTA_CLS = 'btn-cta-filled w-full h-[50px] rounded-full text-[14px] flex it
       </div>
       <div class="flex flex-col gap-[5px]">
         <label :class="LABEL_CLS" for="auth-reg-phone">Telefono</label>
-        <input id="auth-reg-phone" :value="formValue('telephone_number')" :class="INPUT_CLS" type="tel" autocomplete="tel" placeholder="Numero di telefono" @input="updateFormField('telephone_number', $event.target.value)" />
+        <input id="auth-reg-phone" :value="formValue('telephone_number')" :class="INPUT_CLS" type="tel" autocomplete="tel" placeholder="Numero di telefono" @input="updateFormField('telephone_number', $event.target.value)" >
       </div>
     </div>
 
@@ -98,7 +98,7 @@ const CTA_CLS = 'btn-cta-filled w-full h-[50px] rounded-full text-[14px] flex it
             autocomplete="new-password"
             placeholder="Min. 8 caratteri"
             @input="updateFormField('password', $event.target.value)"
-          />
+          >
           <button
             type="button"
             :aria-label="showPassword ? 'Nascondi password' : 'Mostra password'"
@@ -122,7 +122,7 @@ const CTA_CLS = 'btn-cta-filled w-full h-[50px] rounded-full text-[14px] flex it
             autocomplete="new-password"
             placeholder="Ripeti password"
             @input="updateFormField('password_confirmation', $event.target.value)"
-          />
+          >
           <button
             type="button"
             :aria-label="showPasswordConfirm ? 'Nascondi conferma password' : 'Mostra conferma password'"
@@ -146,7 +146,7 @@ const CTA_CLS = 'btn-cta-filled w-full h-[50px] rounded-full text-[14px] flex it
         type="checkbox"
         class="mt-[1px] h-[16px] w-[16px] shrink-0 accent-[#095866]"
         @change="updateBooleanField('privacy_accepted', $event.target.checked)"
-      />
+      >
       <span class="text-[11px] leading-[1.55] text-[#667085]">
         Accetto la
         <NuxtLink to="/privacy-policy" class="font-semibold text-[#095866] underline underline-offset-2 hover:text-[#0a7489]">

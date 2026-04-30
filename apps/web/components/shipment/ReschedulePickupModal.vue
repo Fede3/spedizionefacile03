@@ -146,7 +146,7 @@ const submit = async () => {
 <template>
 	<Teleport to="body">
 		<div v-if="show" class="fixed inset-0 z-[9999] flex items-center justify-center">
-			<div class="absolute inset-0 bg-black/50" @click="emit('update:show', false)"></div>
+			<div class="absolute inset-0 bg-black/50" @click="emit('update:show', false)"/>
 			<div
 				ref="dialogRef"
 				role="dialog"
@@ -176,7 +176,7 @@ const submit = async () => {
 							type="date"
 							:min="minDate"
 							:max="maxDate"
-							class="w-full bg-[#F8F9FB] border border-[var(--color-brand-border)] rounded-[12px] px-[12px] py-[10px] text-[0.875rem] focus:border-[var(--color-brand-primary)] focus:outline-none" />
+							class="w-full bg-[#F8F9FB] border border-[var(--color-brand-border)] rounded-[12px] px-[12px] py-[10px] text-[0.875rem] focus:border-[var(--color-brand-primary)] focus:outline-none" >
 						<p class="mt-[4px] text-[0.6875rem] text-[var(--color-brand-text-muted)]">
 							Range consentito: {{ minDate }} → {{ maxDate }} (solo giorni feriali).
 						</p>
@@ -206,7 +206,7 @@ const submit = async () => {
 							placeholder="Es. citofono interno, orari preferiti..."
 							maxlength="500"
 							rows="2"
-							class="w-full bg-[#F8F9FB] border border-[var(--color-brand-border)] rounded-[12px] px-[12px] py-[10px] text-[0.875rem] resize-none focus:border-[var(--color-brand-primary)] focus:outline-none"></textarea>
+							class="w-full bg-[#F8F9FB] border border-[var(--color-brand-border)] rounded-[12px] px-[12px] py-[10px] text-[0.875rem] resize-none focus:border-[var(--color-brand-primary)] focus:outline-none"/>
 					</div>
 
 					<div v-if="errorMsg" class="bg-red-50 border border-red-200 rounded-[12px] px-[14px] py-[10px] text-red-600 text-[0.8125rem]" role="alert">

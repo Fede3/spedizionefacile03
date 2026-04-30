@@ -147,7 +147,7 @@ useHead(() => {
 
 <template>
 	<section v-if="pending" class="flex min-h-[420px] items-center justify-center">
-		<div class="h-[40px] w-[40px] rounded-full border-3 border-[var(--color-brand-border)] border-t-[var(--color-brand-primary)] animate-spin"></div>
+		<div class="h-[40px] w-[40px] rounded-full border-3 border-[var(--color-brand-border)] border-t-[var(--color-brand-primary)] animate-spin"/>
 	</section>
 
 	<section v-else-if="guide" class="guide-detail-shell min-h-screen py-[20px] desktop:py-[24px]">

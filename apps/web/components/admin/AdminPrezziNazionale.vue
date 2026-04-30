@@ -74,10 +74,11 @@ const bandTableShared = computed(() => ({
 			<div>
 				<h3 class="text-[0.9375rem] font-bold text-amber-800 mb-[4px]">Fasce di prezzo non ancora nel database</h3>
 				<p class="text-[0.8125rem] text-amber-700 mb-[12px]">Stai vedendo i valori predefiniti del calcolatore. Premi il pulsante per salvarli nel database e poterli modificare.</p>
-				<button type="button"
-					@click="seedBands"
+				<button
+type="button"
 					:disabled="seeding"
-					class="inline-flex items-center gap-[8px] px-[20px] py-[10px] bg-amber-600 hover:bg-amber-700 text-white rounded-[50px] text-[0.875rem] font-medium transition-colors cursor-pointer disabled:opacity-50">
+					class="inline-flex items-center gap-[8px] px-[20px] py-[10px] bg-amber-600 hover:bg-amber-700 text-white rounded-[50px] text-[0.875rem] font-medium transition-colors cursor-pointer disabled:opacity-50"
+					@click="seedBands">
 					<svg v-if="seeding" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[18px] h-[18px] animate-spin" fill="currentColor"><path d="M12,4V2A10,10 0 0,0 2,12H4A8,8 0 0,1 12,4Z"/></svg>
 					<svg v-else xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[18px] h-[18px]" fill="currentColor"><path d="M17,13H13V17H11V13H7V11H11V7H13V11H17M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z"/></svg>
 					{{ seeding ? "Inizializzazione..." : "Inizializza fasce nel database" }}
@@ -125,12 +126,13 @@ const bandTableShared = computed(() => ({
 				<h2 class="text-[1.125rem] font-bold text-[#252B42] mb-[4px]">Regole oltre 7ª fascia</h2>
 				<p class="text-[0.75rem] text-[#737373]">Configurazione scaglioni dinamici (es. 101-150, 151-200 e 0,401-0,600, 0,601-0,800).</p>
 			</div>
-			<button type="button" @click="updateExtraRule('enabled', !extraRuleValue('enabled'))"
-				role="switch"
+			<button
+type="button" role="switch"
 				:aria-checked="extraRuleValue('enabled') ? 'true' : 'false'"
 				aria-label="Attiva regole oltre 7ª fascia"
 				:class="extraRuleValue('enabled') ? 'bg-[#095866]' : 'bg-[#C8CCD0]'"
-				class="relative inline-flex h-[32px] w-[56px] items-center rounded-full transition-colors cursor-pointer">
+				class="relative inline-flex h-[32px] w-[56px] items-center rounded-full transition-colors cursor-pointer"
+				@click="updateExtraRule('enabled', !extraRuleValue('enabled'))">
 				<span :class="extraRuleValue('enabled') ? 'translate-x-[28px]' : 'translate-x-[2px]'" class="inline-block h-[26px] w-[26px] transform rounded-full bg-white transition-transform shadow-sm" />
 			</button>
 		</div>
@@ -180,17 +182,17 @@ const bandTableShared = computed(() => ({
 					<label class="text-[0.75rem] text-[#737373]">Incremento fisso per ogni fascia extra (&euro;)
 						<input
 							:value="(Number(extraRules.increment_cents || 0) / 100).toFixed(2).replace('.', ',')"
-							@input="updateExtraRule('increment_cents', Math.max(0, euroToCents($event.target.value) ?? 0))"
 							type="text"
-							class="mt-[4px] w-full h-[38px] px-[10px] rounded-[12px] border border-[#E9EBEC] bg-white text-[0.8125rem]">
+							class="mt-[4px] w-full h-[38px] px-[10px] rounded-[12px] border border-[#E9EBEC] bg-white text-[0.8125rem]"
+							@input="updateExtraRule('increment_cents', Math.max(0, euroToCents($event.target.value) ?? 0))">
 					</label>
 				</div>
 				<label v-if="extraRuleValue('base_price_cents_mode') === 'manual'" class="text-[0.75rem] text-[#737373]">Prezzo base extra manuale (&euro;)
 					<input
 						:value="extraRules.base_price_cents_manual == null ? '' : (Number(extraRules.base_price_cents_manual || 0) / 100).toFixed(2).replace('.', ',')"
-						@input="updateExtraRuleCents('base_price_cents_manual', $event.target.value)"
 						type="text"
-						class="mt-[4px] w-full h-[38px] px-[10px] rounded-[12px] border border-[#E9EBEC] bg-white text-[0.8125rem]">
+						class="mt-[4px] w-full h-[38px] px-[10px] rounded-[12px] border border-[#E9EBEC] bg-white text-[0.8125rem]"
+						@input="updateExtraRuleCents('base_price_cents_manual', $event.target.value)">
 				</label>
 			</div>
 

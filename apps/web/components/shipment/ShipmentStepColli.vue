@@ -109,8 +109,8 @@ onMounted(() => { mounted.value = true; });
 							<button
 								type="button"
 								class="sf-flow-cta sf-flow-cta--primary"
-								@click="$emit('confirm')"
-								aria-label="Conferma colli e prosegui ai servizi">
+								aria-label="Conferma colli e prosegui ai servizi"
+								@click="$emit('confirm')">
 								<span>Conferma</span>
 								<span class="sf-flow-cta__arrow">
 									<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -133,8 +133,8 @@ onMounted(() => { mounted.value = true; });
 						<button
 							type="button"
 							class="shipment-stage-error__dismiss"
-							@click="$emit('dismiss-error')"
-							aria-label="Chiudi messaggio di errore">
+							aria-label="Chiudi messaggio di errore"
+							@click="$emit('dismiss-error')">
 							<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
 								<line x1="18" y1="6" x2="6" y2="18" />
 								<line x1="6" y1="6" x2="18" y2="18" />

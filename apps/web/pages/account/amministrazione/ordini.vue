@@ -88,7 +88,7 @@ const fetchKpi = async () => {
 	} catch (e) {
 		// silenzioso: i KPI sono "nice to have", non bloccare la pagina
 		// log lato console solo per diagnostica
-		// eslint-disable-next-line no-console
+		 
 		console.warn('[admin/ordini] KPI dashboard non disponibile:', e?.message || e);
 	} finally {
 		kpiLoading.value = false;
@@ -429,7 +429,7 @@ onMounted(async () => {
 			<!-- TABELLA / CARDS ----------------------------------------- -->
 			<div class="m6-results">
 				<div v-if="loading" class="m6-state m6-state--loading">
-					<div class="m6-spinner" aria-hidden="true"></div>
+					<div class="m6-spinner" aria-hidden="true"/>
 					<p>Caricamento ordini…</p>
 				</div>
 

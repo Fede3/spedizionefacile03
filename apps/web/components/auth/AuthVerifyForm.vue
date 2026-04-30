@@ -31,7 +31,7 @@ const CTA_CLS = 'btn-cta-filled w-full h-[50px] rounded-full text-[14px] flex it
         class="w-[40px] h-[46px] sm:w-[44px] sm:h-[48px] rounded-[12px] bg-[#F8F9FB] text-center text-[16px] font-bold ring-[1.5px] ring-[#DFE2E7] focus:ring-[3px] focus:ring-[#095866]/60 focus:bg-white outline-none transition-all duration-200"
         @input="emit('input', index, $event)"
         @keydown="emit('keydown', index, $event)"
-      />
+      >
     </div>
 
     <div v-if="error" class="flex items-center gap-[8px] bg-[#FFF5F2] ring-[1px] ring-[#E44203]/10 rounded-[12px] px-[14px] py-[11px]">

@@ -156,39 +156,39 @@ const acceptCustom = () => {
 				<div v-if="showPreferences" class="cookie-banner__preferences">
 					<p class="cookie-banner__panel-title">Preferenze cookie</p>
 					<label class="cookie-pref">
-						<input type="checkbox" checked disabled class="cookie-pref__check" />
+						<input type="checkbox" checked disabled class="cookie-pref__check" >
 						<span class="cookie-pref__label">Necessari <span class="cookie-pref__hint">(sempre attivi)</span></span>
 					</label>
 					<label class="cookie-pref">
-						<input v-model="preferences.functional" type="checkbox" class="cookie-pref__check" />
+						<input v-model="preferences.functional" type="checkbox" class="cookie-pref__check" >
 						<span class="cookie-pref__label">Funzionali</span>
 					</label>
 					<label class="cookie-pref">
-						<input v-model="preferences.analytics" type="checkbox" class="cookie-pref__check" />
+						<input v-model="preferences.analytics" type="checkbox" class="cookie-pref__check" >
 						<span class="cookie-pref__label">Analitici</span>
 					</label>
 					<label class="cookie-pref">
-						<input v-model="preferences.marketing" type="checkbox" class="cookie-pref__check" />
+						<input v-model="preferences.marketing" type="checkbox" class="cookie-pref__check" >
 						<span class="cookie-pref__label">Marketing</span>
 					</label>
 					<div class="cookie-banner__pref-actions">
 						<button
 							type="button"
-							@click="acceptCustom"
-							class="cookie-banner__btn-primary cookie-banner__btn-primary--full btn-cta">
+							class="cookie-banner__btn-primary cookie-banner__btn-primary--full btn-cta"
+							@click="acceptCustom">
 							Salva preferenze
 						</button>
 						<div class="cookie-banner__btns-row">
 							<button
 								type="button"
-								@click="showPreferences = false"
-								class="cookie-banner__btn-secondary btn-secondary">
+								class="cookie-banner__btn-secondary btn-secondary"
+								@click="showPreferences = false">
 								Indietro
 							</button>
 							<button
 								type="button"
-								@click="accept('essential')"
-								class="cookie-banner__btn-secondary btn-secondary">
+								class="cookie-banner__btn-secondary btn-secondary"
+								@click="accept('essential')">
 								Rifiuta tutti
 							</button>
 						</div>
@@ -198,14 +198,14 @@ const acceptCustom = () => {
 				<div v-else class="cookie-banner__actions">
 					<button
 						type="button"
-						@click="openPreferencesPanel"
-						class="cookie-banner__btn-secondary btn-secondary">
+						class="cookie-banner__btn-secondary btn-secondary"
+						@click="openPreferencesPanel">
 						Personalizza
 					</button>
 					<button
 						type="button"
-						@click="accept('all')"
-						class="cookie-banner__btn-primary btn-cta">
+						class="cookie-banner__btn-primary btn-cta"
+						@click="accept('all')">
 						Accetta tutti
 					</button>
 				</div>

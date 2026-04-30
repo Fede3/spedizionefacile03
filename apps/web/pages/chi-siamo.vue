@@ -142,7 +142,7 @@ const team = [
 		<section class="about-mission" aria-labelledby="about-mission-title">
 			<div class="my-container about-mission__inner">
 				<header class="about-mission__header">
-					<span class="about-mission__accent" aria-hidden="true"></span>
+					<span class="about-mission__accent" aria-hidden="true"/>
 					<p class="about-mission__eyebrow">La nostra missione</p>
 					<h2 id="about-mission-title" class="about-mission__title">
 						Spedire deve essere un’azione quotidiana, non un problema da risolvere.
@@ -185,14 +185,14 @@ const team = [
 		<section class="about-timeline" aria-labelledby="about-timeline-title">
 			<div class="my-container">
 				<header class="about-timeline__header">
-					<span class="about-timeline__accent" aria-hidden="true"></span>
+					<span class="about-timeline__accent" aria-hidden="true"/>
 					<p class="about-timeline__eyebrow">La nostra storia</p>
 					<h2 id="about-timeline-title" class="about-timeline__title">Cinque tappe in cinque anni</h2>
 				</header>
 				<ol class="about-timeline__list">
 					<li v-for="m in milestones" :key="m.year" class="about-timeline__item">
 						<div class="about-timeline__marker" aria-hidden="true">
-							<span class="about-timeline__dot"></span>
+							<span class="about-timeline__dot"/>
 						</div>
 						<div class="about-timeline__body">
 							<span class="about-timeline__year">{{ m.year }}</span>
@@ -208,7 +208,7 @@ const team = [
 		<section class="about-values" aria-labelledby="about-values-title">
 			<div class="my-container">
 				<header class="about-values__header">
-					<span class="about-values__accent" aria-hidden="true"></span>
+					<span class="about-values__accent" aria-hidden="true"/>
 					<p class="about-values__eyebrow">Cosa ci guida</p>
 					<h2 id="about-values-title" class="about-values__title">Tre principi non negoziabili</h2>
 				</header>
@@ -231,7 +231,7 @@ const team = [
 		<section class="about-team" aria-labelledby="about-team-title">
 			<div class="my-container">
 				<header class="about-team__header">
-					<span class="about-team__accent" aria-hidden="true"></span>
+					<span class="about-team__accent" aria-hidden="true"/>
 					<p class="about-team__eyebrow">Le persone</p>
 					<h2 id="about-team-title" class="about-team__title">Chi c’è dietro la piattaforma</h2>
 					<p class="about-team__lead">

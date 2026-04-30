@@ -170,7 +170,7 @@ onBeforeUnmount(() => {
           </NuxtLink>
 
         <!-- Cart — prototype: gradient orange, rounded-full -->
-        <NuxtLink to="/carrello" custom v-slot="{ href, navigate }">
+        <NuxtLink v-slot="{ href, navigate }" to="/carrello" custom>
           <a
             :href="href"
             class="navbar-cart-btn"
@@ -192,9 +192,9 @@ onBeforeUnmount(() => {
           @click="mobileMenuOpen = !mobileMenuOpen"
         >
           <div class="navbar-hamburger" :class="{ 'navbar-hamburger--open': mobileMenuOpen }">
-            <span class="navbar-hamburger__line navbar-hamburger__line--1"></span>
-            <span class="navbar-hamburger__line navbar-hamburger__line--2"></span>
-            <span class="navbar-hamburger__line navbar-hamburger__line--3"></span>
+            <span class="navbar-hamburger__line navbar-hamburger__line--1"/>
+            <span class="navbar-hamburger__line navbar-hamburger__line--2"/>
+            <span class="navbar-hamburger__line navbar-hamburger__line--3"/>
           </div>
         </button>
       </div>

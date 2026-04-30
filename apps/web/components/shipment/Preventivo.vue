@@ -169,7 +169,7 @@ function onFieldBlur(pack, packIndex, field) {
 			<p style="margin-top:12px;color:#5b6472">debug preventivo shell</p>
 		</div>
 	</div>
-	<section :class="isHomepageLikeRoute ? 'mt-[48px] tablet:mt-[64px] desktop:mt-[80px] relative z-10' : 'pt-[24px]'" id="preventivo">
+	<section id="preventivo" :class="isHomepageLikeRoute ? 'mt-[48px] tablet:mt-[64px] desktop:mt-[80px] relative z-10' : 'pt-[24px]'">
 		<div class="my-container">
 			<!--
 				Coerenza Preventivo homepage vs ventaglio funnel.
@@ -182,7 +182,7 @@ function onFieldBlur(pack, packIndex, field) {
 				:class="isHomepageLikeRoute
 					? 'shadow-[0_4px_20px_rgba(0,0,0,0.04),0_12px_40px_rgba(0,0,0,0.04)]'
 					: 'mt-[20px] shadow-[0_4px_20px_rgba(0,0,0,0.04),0_12px_40px_rgba(0,0,0,0.04)]'">
-				<div class="preventivo-shell__accent" aria-hidden="true"></div>
+				<div class="preventivo-shell__accent" aria-hidden="true"/>
 				<div class="preventivo-heading">
 					<div class="preventivo-heading__copy">
 						<div class="preventivo-heading__icon" aria-hidden="true">
@@ -193,7 +193,7 @@ function onFieldBlur(pack, packIndex, field) {
 							<p class="preventivo-heading__subtitle">{{ quoteSubtitle }}</p>
 						</div>
 					</div>
-					<button v-if="hasFormData" type="button" @click="resetForm" aria-label="Azzera il modulo" class="preventivo-heading__reset flex items-center gap-[4px] cursor-pointer group">
+					<button v-if="hasFormData" type="button" aria-label="Azzera il modulo" class="preventivo-heading__reset flex items-center gap-[4px] cursor-pointer group" @click="resetForm">
 						<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="group-hover:rotate-[-180deg] transition-transform duration-300"><path d="M2.5 2v6h6"/><path d="M2.66 15.57a10 10 0 1 0 .57-8.38L2.5 8"/></svg>
 						<span class="hidden tablet:inline">Azzera</span>
 					</button>
@@ -224,10 +224,10 @@ function onFieldBlur(pack, packIndex, field) {
 										<div class="route-card__field">
 											<label for="origin_city" class="sr-only">Città o CAP di ritiro</label>
 											<div class="route-card__input-wrap relative" :class="{ 'is-open': showOriginSuggestions && originSuggestions.length }">
-												<input id="origin_city" v-model="originQuery" type="text" autocomplete="off" spellcheck="false" :placeholder="originPlaceholder" class="input-preventivo-rapido input-preventivo-rapido--location" @focus="onOriginQueryFocus()" @input="onOriginQueryInput()" @blur="settleOriginQuery()" />
-												<input type="hidden" v-model="shipmentFlowStore.shipmentDetails.origin_postal_code" id="origin_postal_code" />
+												<input id="origin_city" v-model="originQuery" type="text" autocomplete="off" spellcheck="false" :placeholder="originPlaceholder" class="input-preventivo-rapido input-preventivo-rapido--location" @focus="onOriginQueryFocus()" @input="onOriginQueryInput()" @blur="settleOriginQuery()" >
+												<input id="origin_postal_code" v-model="shipmentFlowStore.shipmentDetails.origin_postal_code" type="hidden" >
 												<ul v-if="showOriginSuggestions && originSuggestions.length" role="listbox" class="location-suggestions-list">
-													<li v-for="loc in originSuggestions" :key="locationKey(loc)" role="option" aria-selected="false" @mousedown.prevent="selectOriginLocation(loc)" class="location-suggestion">
+													<li v-for="loc in originSuggestions" :key="locationKey(loc)" role="option" aria-selected="false" class="location-suggestion" @mousedown.prevent="selectOriginLocation(loc)">
 														<span class="location-suggestion__city">{{ loc.place_name }}</span>
 														<span class="location-suggestion__meta">{{ loc.postal_code }}<template v-if="getProvinceLabel(loc)"> · {{ getProvinceLabel(loc) }}</template></span>
 													</li>
@@ -261,10 +261,10 @@ function onFieldBlur(pack, packIndex, field) {
 										<div class="route-card__field route-card__field--destination">
 											<label for="destination_city" class="sr-only">Città o CAP di consegna</label>
 											<div class="route-card__input-wrap relative" :class="{ 'is-open': showDestSuggestions && destSuggestions.length }">
-												<input id="destination_city" v-model="destQuery" type="text" autocomplete="off" spellcheck="false" :placeholder="destinationPlaceholder" class="input-preventivo-rapido input-preventivo-rapido--location" @focus="onDestQueryFocus()" @input="onDestQueryInput()" @blur="settleDestQuery()" />
-												<input type="hidden" v-model="shipmentFlowStore.shipmentDetails.destination_postal_code" id="destination_postal_code" />
+												<input id="destination_city" v-model="destQuery" type="text" autocomplete="off" spellcheck="false" :placeholder="destinationPlaceholder" class="input-preventivo-rapido input-preventivo-rapido--location" @focus="onDestQueryFocus()" @input="onDestQueryInput()" @blur="settleDestQuery()" >
+												<input id="destination_postal_code" v-model="shipmentFlowStore.shipmentDetails.destination_postal_code" type="hidden" >
 												<ul v-if="showDestSuggestions && destSuggestions.length" role="listbox" class="location-suggestions-list">
-													<li v-for="loc in destSuggestions" :key="locationKey(loc)" role="option" aria-selected="false" @mousedown.prevent="selectDestLocation(loc)" class="location-suggestion">
+													<li v-for="loc in destSuggestions" :key="locationKey(loc)" role="option" aria-selected="false" class="location-suggestion" @mousedown.prevent="selectDestLocation(loc)">
 														<span class="location-suggestion__city">{{ loc.place_name }}</span>
 														<span class="location-suggestion__meta">{{ loc.postal_code }}<template v-if="getProvinceLabel(loc)"> · {{ getProvinceLabel(loc) }}</template></span>
 													</li>
@@ -298,7 +298,6 @@ function onFieldBlur(pack, packIndex, field) {
 														v-for="packageType in packageTypeList"
 														:key="packageType.text"
 														type="button"
-														@click="updatePackageType(pack, packageType.text)"
 														:aria-pressed="pack.package_type === packageType.text"
 														:class="[
 															'package-type-switcher__button',
@@ -306,14 +305,15 @@ function onFieldBlur(pack, packIndex, field) {
 															'sf-shared-segment--compact',
 															pack.package_type === packageType.text ? 'package-type-switcher__button--active sf-shared-segment--active' : ''
 														]"
+														@click="updatePackageType(pack, packageType.text)"
 													>
 														<span class="package-type-switcher__icon-wrap sf-shared-segment__icon" aria-hidden="true">
-															<img :src="`/img/quote/first-step/${packageType.img}`" :alt="packageType.text" :width="packageType.width" :height="packageType.height" class="package-type-switcher__icon-image" :loading="pack.package_type === packageType.text ? 'eager' : 'lazy'" decoding="async" draggable="false" />
+															<img :src="`/img/quote/first-step/${packageType.img}`" :alt="packageType.text" :width="packageType.width" :height="packageType.height" class="package-type-switcher__icon-image" :loading="pack.package_type === packageType.text ? 'eager' : 'lazy'" decoding="async" draggable="false" >
 														</span>
 														<span class="sf-shared-segment__title">{{ packageType.text }}</span>
 													</button>
 												</div>
-												<button v-if="shipmentFlowStore.packages.length > 1" type="button" class="package-entry__delete" @click="deletePack(pack._qid || packIndex)" :aria-label="'Elimina pacco ' + (packIndex + 1)">
+												<button v-if="shipmentFlowStore.packages.length > 1" type="button" class="package-entry__delete" :aria-label="'Elimina pacco ' + (packIndex + 1)" @click="deletePack(pack._qid || packIndex)">
 													<NuxtImg src="/img/quote/first-step/trash.png" alt="Elimina" width="18" height="22" class="package-entry__delete-icon" loading="lazy" decoding="async" />
 												</button>
 											</div>
@@ -323,7 +323,7 @@ function onFieldBlur(pack, packIndex, field) {
 													<label :for="'quantity_' + packIndex" class="package-field-card__label">Q.tà</label>
 													<div class="package-field-card__input-wrap package-field-card__input-wrap--stepper">
 														<div class="quantity-stepper quantity-stepper--embedded">
-															<button type="button" class="quantity-stepper__button" @click="decrementQuantity(pack)" :aria-label="`Riduci quantità collo ${packIndex + 1}`" :disabled="isEuropeMonocollo">
+															<button type="button" class="quantity-stepper__button" :aria-label="`Riduci quantità collo ${packIndex + 1}`" :disabled="isEuropeMonocollo" @click="decrementQuantity(pack)">
 																<span class="quantity-stepper__symbol" aria-hidden="true">−</span>
 															</button>
 														<input
@@ -346,8 +346,8 @@ function onFieldBlur(pack, packIndex, field) {
 															:aria-label="`Quantità collo ${packIndex + 1}`"
 															:readonly="isEuropeMonocollo"
 															@input="calcQuantity(pack)"
-															@blur="calcQuantity(pack)" />
-															<button type="button" class="quantity-stepper__button" @click="incrementQuantity(pack)" :aria-label="`Aumenta quantità collo ${packIndex + 1}`" :disabled="isEuropeMonocollo">
+															@blur="calcQuantity(pack)" >
+															<button type="button" class="quantity-stepper__button" :aria-label="`Aumenta quantità collo ${packIndex + 1}`" :disabled="isEuropeMonocollo" @click="incrementQuantity(pack)">
 																<span class="quantity-stepper__symbol" aria-hidden="true">+</span>
 															</button>
 														</div>
@@ -362,10 +362,10 @@ function onFieldBlur(pack, packIndex, field) {
 													<label :for="`${field.key}_${packIndex}`" class="package-field-card__label">{{ field.label }}</label>
 													<div class="package-field-card__input-wrap">
 														<input
+															:id="`${field.key}_${packIndex}`"
+															v-model="pack[field.key]"
 															:type="field.key === 'weight' ? 'number' : 'text'"
 															placeholder="0"
-															v-model="pack[field.key]"
-															:id="`${field.key}_${packIndex}`"
 															:name="`quick-quote-${field.key}-${pack._qid || packIndex}`"
 															autocomplete="new-password"
 															autocapitalize="off"
@@ -384,7 +384,7 @@ function onFieldBlur(pack, packIndex, field) {
 															:aria-describedby="field.key === 'weight' && weightError[packIndex] ? `weight_err_${packIndex}` : undefined"
 															:class="sv.errorClass(`${field.svKey}_${packIndex}`, 'package-metric-input')"
 															@input="onFieldInput(pack, packIndex, field)"
-															@blur="onFieldBlur(pack, packIndex, field)" />
+															@blur="onFieldBlur(pack, packIndex, field)" >
 														<span class="package-field-card__unit">{{ field.unit }}</span>
 													</div>
 													<div class="package-field-card__feedback">
@@ -412,13 +412,13 @@ function onFieldBlur(pack, packIndex, field) {
 					<!-- Promo banner -->
 					<div v-if="promoSettings?.active && promoSettings?.label_text" class="flex justify-center mt-[20px] desktop:mt-[16px]">
 						<span :style="{ backgroundColor: promoSettings.label_color || 'var(--color-brand-accent)' }" class="inline-flex items-center gap-[6px] px-[14px] py-[6px] rounded-[16px] text-white text-[0.875rem] font-bold tracking-wide shadow-sm">
-							<img v-if="promoSettings.label_image" :src="promoSettings.label_image" alt="" loading="lazy" decoding="async" width="40" height="18" class="h-[18px] w-auto" />
+							<img v-if="promoSettings.label_image" :src="promoSettings.label_image" alt="" loading="lazy" decoding="async" width="40" height="18" class="h-[18px] w-auto" >
 							{{ promoSettings.label_text }}
 						</span>
 					</div>
 					<!-- CTA continua -->
 					<div class="continue-button-wrapper w-full text-white overflow-hidden" :class="['h-[56px] tablet:h-[60px]', promoSettings?.active && promoSettings?.label_text ? 'mt-[12px]' : 'mt-[18px] desktop:mt-[20px]', isStandalonePreventivoRoute ? 'continue-button-wrapper--sticky' : '']">
-						<button v-if="!isCalculating" type="button" @click="guardPackagesWeightAndSubmit" :disabled="isCalculating || isAdvancingToServices" class="continue-cta-button w-full h-full cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed">
+						<button v-if="!isCalculating" type="button" :disabled="isCalculating || isAdvancingToServices" class="continue-cta-button w-full h-full cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed" @click="guardPackagesWeightAndSubmit">
 							<span class="continue-cta-button__label">{{ continueButtonLabel }}</span>
 							<span class="continue-cta-button__tail">
 								<span v-if="liveQuotePrice" class="continue-cta-button__price" aria-label="Prezzo aggiornato">{{ liveQuotePrice }}</span>

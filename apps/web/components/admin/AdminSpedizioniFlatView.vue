@@ -122,14 +122,14 @@ const trackingHref = (shipment) => getBrtTrackingUrl(shipment);
 					<button
 						v-if="item.brt_parcel_id"
 						type="button"
-						@click="downloadLabel(item)"
-						class="admin-spedizioni-btn">
+						class="admin-spedizioni-btn"
+						@click="downloadLabel(item)">
 						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="h-[13px] w-[13px]" fill="currentColor"><path d="M5,20H19V18H5M19,9H15V3H9V9H5L12,16L19,9Z" /></svg>
 						Etichetta
 					</button>
 					<select
-						@change="emit('change-status', item.id, $event.target.value); $event.target.value = ''"
-						class="admin-spedizioni-select">
+						class="admin-spedizioni-select"
+						@change="emit('change-status', item.id, $event.target.value); $event.target.value = ''">
 						<option value="" selected disabled>Cambia stato</option>
 						<option v-for="s in getAvailableStatuses(item.status)" :key="s.value" :value="s.value">{{ s.label }}</option>
 					</select>
@@ -193,16 +193,16 @@ const trackingHref = (shipment) => getBrtTrackingUrl(shipment);
 						<button
 							v-if="item.brt_parcel_id"
 							type="button"
-							@click="downloadLabel(item)"
 							class="admin-spedizioni-btn admin-spedizioni-btn--compact"
-							aria-label="Scarica etichetta">
+							aria-label="Scarica etichetta"
+							@click="downloadLabel(item)">
 							<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="h-[13px] w-[13px]" fill="currentColor"><path d="M5,20H19V18H5M19,9H15V3H9V9H5L12,16L19,9Z" /></svg>
 							Etichetta
 						</button>
 						<select
-							@change="emit('change-status', item.id, $event.target.value); $event.target.value = ''"
 							class="admin-spedizioni-select admin-spedizioni-select--compact"
-							aria-label="Cambia stato spedizione">
+							aria-label="Cambia stato spedizione"
+							@change="emit('change-status', item.id, $event.target.value); $event.target.value = ''">
 							<option value="" selected disabled>Stato</option>
 							<option v-for="s in getAvailableStatuses(item.status)" :key="s.value" :value="s.value">{{ s.label }}</option>
 						</select>

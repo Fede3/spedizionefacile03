@@ -87,7 +87,7 @@ const isFuture = (idx) => idx > props.currentIndex;
 							<span v-else class="step-num">{{ idx + 1 }}</span>
 
 							<!-- Pulse current -->
-							<span v-if="isCurrent(idx)" class="step-pulse" aria-hidden="true"></span>
+							<span v-if="isCurrent(idx)" class="step-pulse" aria-hidden="true"/>
 						</div>
 						<span
 							class="step-label mt-[8px] text-[11px] md:text-[12px] leading-[1.3]"

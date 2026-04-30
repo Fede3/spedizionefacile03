@@ -91,7 +91,8 @@ onBeforeUnmount(() => { lockScroll(false); });
         >
           <div :class="['sf-confirm__icon', isDanger ? 'sf-confirm__icon--danger' : 'sf-confirm__icon--default']" aria-hidden="true">
             <svg v-if="isDanger" width="28" height="28" viewBox="0 0 24 24" fill="none">
-              <path d="M12 9v4m0 4h.01M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"
+              <path
+d="M12 9v4m0 4h.01M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"
                 stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
             <svg v-else width="28" height="28" viewBox="0 0 24 24" fill="none">

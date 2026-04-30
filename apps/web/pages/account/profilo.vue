@@ -146,8 +146,7 @@ const handleLogout = async () => {
 				eyebrow="Profilo"
 				title="Il mio profilo"
 				description="Gestisci dati personali, sicurezza e fatturazione dell'account."
-				current="Profilo">
-			</AccountPageHeader>
+				current="Profilo"/>
 
 			<!-- Messaggi -->
 			<div v-if="messageLoading" class="mb-[10px] ux-alert ux-alert--info">
@@ -211,12 +210,12 @@ const handleLogout = async () => {
 	<section v-else class="sf-account-shell min-h-[600px] py-[20px] tablet:py-[24px] desktop:py-[28px]">
 		<div class="my-container max-w-[1280px] space-y-[8px]">
 			<div class="space-y-[8px] mb-[10px]">
-				<div class="h-[14px] w-[80px] rounded-full bg-[#EEF3F7] animate-pulse"></div>
+				<div class="h-[14px] w-[80px] rounded-full bg-[#EEF3F7] animate-pulse"/>
 				<div class="flex items-center gap-[12px]">
-					<div class="w-[44px] h-[44px] rounded-[14px] bg-[#EEF3F7] animate-pulse"></div>
+					<div class="w-[44px] h-[44px] rounded-[14px] bg-[#EEF3F7] animate-pulse"/>
 					<div class="space-y-[5px]">
-						<div class="h-[22px] w-[200px] rounded-[10px] bg-[#EEF3F7] animate-pulse"></div>
-						<div class="h-[13px] w-[260px] rounded-full bg-[#F2F5F8] animate-pulse"></div>
+						<div class="h-[22px] w-[200px] rounded-[10px] bg-[#EEF3F7] animate-pulse"/>
+						<div class="h-[13px] w-[260px] rounded-full bg-[#F2F5F8] animate-pulse"/>
 					</div>
 				</div>
 			</div>
@@ -225,7 +224,7 @@ const handleLogout = async () => {
 					<div
 						v-for="index in 6"
 						:key="`skel-${index}`"
-						class="h-[64px] rounded-[14px] bg-[#F5F6F9] animate-pulse"></div>
+						class="h-[64px] rounded-[14px] bg-[#F5F6F9] animate-pulse"/>
 				</div>
 			</div>
 		</div>

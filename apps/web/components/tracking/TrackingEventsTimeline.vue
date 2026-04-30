@@ -78,10 +78,10 @@ const iconForCode = (code) => {
 		<!-- Loading skeleton -->
 		<div v-if="loading" class="grid gap-[12px]" aria-busy="true" aria-live="polite">
 			<div v-for="i in 4" :key="i" class="flex gap-[14px] items-start animate-pulse">
-				<div class="w-[36px] h-[36px] rounded-full bg-[#E6E9EE] shrink-0"></div>
+				<div class="w-[36px] h-[36px] rounded-full bg-[#E6E9EE] shrink-0"/>
 				<div class="flex-1 grid gap-[6px]">
-					<div class="h-[14px] rounded bg-[#E6E9EE] w-[60%]"></div>
-					<div class="h-[10px] rounded bg-[#EEF1F5] w-[40%]"></div>
+					<div class="h-[14px] rounded bg-[#E6E9EE] w-[60%]"/>
+					<div class="h-[10px] rounded bg-[#EEF1F5] w-[40%]"/>
 				</div>
 			</div>
 		</div>

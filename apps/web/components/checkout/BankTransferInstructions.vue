@@ -54,7 +54,7 @@ const copy = async (value, key) => {
 				<div class="bti-field__label">IBAN</div>
 				<div class="bti-field__row">
 					<span class="bti-field__value bti-field__value--mono">{{ iban }}</span>
-					<button type="button" class="bti-copy" @click="copy(iban, 'iban')" :aria-label="`Copia IBAN`">
+					<button type="button" class="bti-copy" :aria-label="`Copia IBAN`" @click="copy(iban, 'iban')">
 						{{ copied === 'iban' ? 'Copiato' : 'Copia' }}
 					</button>
 				</div>
@@ -64,7 +64,7 @@ const copy = async (value, key) => {
 				<div class="bti-field__label">Causale (obbligatoria)</div>
 				<div class="bti-field__row">
 					<span class="bti-field__value bti-field__value--mono">{{ causale }}</span>
-					<button type="button" class="bti-copy bti-copy--primary" @click="copy(causale, 'causale')" :aria-label="`Copia causale`">
+					<button type="button" class="bti-copy bti-copy--primary" :aria-label="`Copia causale`" @click="copy(causale, 'causale')">
 						{{ copied === 'causale' ? 'Copiato' : 'Copia' }}
 					</button>
 				</div>
@@ -80,7 +80,7 @@ const copy = async (value, key) => {
 				<div class="bti-field__label">BIC / SWIFT</div>
 				<div class="bti-field__row">
 					<span class="bti-field__value bti-field__value--mono">{{ bic }}</span>
-					<button type="button" class="bti-copy" @click="copy(bic, 'bic')" :aria-label="`Copia BIC`">
+					<button type="button" class="bti-copy" :aria-label="`Copia BIC`" @click="copy(bic, 'bic')">
 						{{ copied === 'bic' ? 'Copiato' : 'Copia' }}
 					</button>
 				</div>

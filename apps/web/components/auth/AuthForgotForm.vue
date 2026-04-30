@@ -33,7 +33,7 @@ const CTA_CLS = 'btn-cta-filled w-full h-[50px] rounded-full text-[14px] flex it
         autocomplete="email"
         placeholder="nome@email.com"
         @input="emit('update:email', $event.target.value)"
-      />
+      >
     </div>
 
     <button

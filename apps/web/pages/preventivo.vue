@@ -15,5 +15,5 @@ await navigateTo(
 </script>
 
 <template>
-	<section class="min-h-[40vh]"></section>
+	<section class="min-h-[40vh]"/>
 </template>

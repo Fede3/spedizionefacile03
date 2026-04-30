@@ -48,7 +48,7 @@ onMounted(() => { mounted.value = true; });
 				:key="pack._qid || packIndex"
 				class="package-entry">
 				<div class="package-entry__header">
-					<span class="package-entry__header-balance" aria-hidden="true"></span>
+					<span class="package-entry__header-balance" aria-hidden="true"/>
 					<div class="package-entry__type-switcher-shell">
 						<div
 							class="package-type-switcher package-type-switcher--shared sf-shared-segment-strip sf-shared-segment-strip--compact"
@@ -75,7 +75,7 @@ onMounted(() => { mounted.value = true; });
 										class="package-type-switcher__icon-image"
 										loading="eager"
 										decoding="async"
-										draggable="false" />
+										draggable="false" >
 								</span>
 								<span class="sf-shared-segment__title">{{ option.text }}</span>
 							</button>
@@ -87,8 +87,8 @@ onMounted(() => { mounted.value = true; });
 							v-if="packages.length > 1"
 							type="button"
 							class="package-entry__delete"
-							@click="onDeletePack(pack._qid || packIndex)"
-							:aria-label="`Elimina collo ${packIndex + 1}`">
+							:aria-label="`Elimina collo ${packIndex + 1}`"
+							@click="onDeletePack(pack._qid || packIndex)">
 							<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
 								<path d="M3 6h18" />
 								<path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2" />
@@ -96,7 +96,7 @@ onMounted(() => { mounted.value = true; });
 								<path d="M10 11v6M14 11v6" />
 							</svg>
 						</button>
-						<span v-else class="package-entry__header-balance" aria-hidden="true"></span>
+						<span v-else class="package-entry__header-balance" aria-hidden="true"/>
 					</div>
 				</div>
 
@@ -109,8 +109,8 @@ onMounted(() => { mounted.value = true; });
 									type="button"
 									class="quantity-stepper__button"
 									:disabled="isEuropeMonocollo"
-									@click="onDecrementQuantity(pack)"
-									:aria-label="`Riduci quantita collo ${packIndex + 1}`">
+									:aria-label="`Riduci quantita collo ${packIndex + 1}`"
+									@click="onDecrementQuantity(pack)">
 									<span class="quantity-stepper__symbol" aria-hidden="true">-</span>
 								</button>
 								<input
@@ -130,13 +130,13 @@ onMounted(() => { mounted.value = true; });
 									data-form-type="other"
 									class="quantity-stepper__input"
 									:readonly="isEuropeMonocollo"
-									@input="onQuantityInput(pack)" />
+									@input="onQuantityInput(pack)" >
 								<button
 									type="button"
 									class="quantity-stepper__button"
 									:disabled="isEuropeMonocollo"
-									@click="onIncrementQuantity(pack)"
-									:aria-label="`Aumenta quantita collo ${packIndex + 1}`">
+									:aria-label="`Aumenta quantita collo ${packIndex + 1}`"
+									@click="onIncrementQuantity(pack)">
 									<span class="quantity-stepper__symbol" aria-hidden="true">+</span>
 								</button>
 							</div>
@@ -166,7 +166,7 @@ onMounted(() => { mounted.value = true; });
 								placeholder="0"
 								:class="getMetricInputClass(packIndex, metric.key)"
 								@input="metric.key === 'weight' ? onWeightInput(pack, packIndex) : onDimensionInput(pack, packIndex, metric.key)"
-								@blur="metric.key === 'weight' ? onWeightBlur(pack, packIndex) : onDimensionBlur(pack, packIndex, metric.key)" />
+								@blur="metric.key === 'weight' ? onWeightBlur(pack, packIndex) : onDimensionBlur(pack, packIndex, metric.key)" >
 							<span class="package-field-card__unit">{{ metric.unit }}</span>
 						</div>
 						<div v-if="getMetricError(packIndex, metric.key)" class="package-field-card__feedback packages-stage-feedback">

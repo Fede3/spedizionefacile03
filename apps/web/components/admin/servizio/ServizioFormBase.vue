@@ -29,20 +29,20 @@ const onTitleInput = (event) => {
 		<div class="service-editor-field-grid">
 			<div class="service-editor-field service-editor-field--half">
 				<label class="service-editor-label">Titolo</label>
-				<input :value="title" @input="onTitleInput" type="text" class="service-editor-input" placeholder="Titolo del servizio" />
+				<input :value="title" type="text" class="service-editor-input" placeholder="Titolo del servizio" @input="onTitleInput" >
 			</div>
 			<div class="service-editor-field service-editor-field--half">
 				<label class="service-editor-label">Slug (URL)</label>
-				<input :value="slug" @input="emit('update:slug', $event.target.value)" type="text" class="service-editor-input service-editor-input--mono" placeholder="titolo-del-servizio" />
+				<input :value="slug" type="text" class="service-editor-input service-editor-input--mono" placeholder="titolo-del-servizio" @input="emit('update:slug', $event.target.value)" >
 				<p class="service-editor-field__hint">Si aggiorna automaticamente dal titolo, ma puoi rifinirlo a mano.</p>
 			</div>
 			<div class="service-editor-field">
 				<label class="service-editor-label">Meta description</label>
-				<textarea :value="metaDescription" @input="emit('update:metaDescription', $event.target.value)" rows="2" class="service-editor-textarea" placeholder="Descrizione per i motori di ricerca"></textarea>
+				<textarea :value="metaDescription" rows="2" class="service-editor-textarea" placeholder="Descrizione per i motori di ricerca" @input="emit('update:metaDescription', $event.target.value)"/>
 			</div>
 			<div class="service-editor-field">
 				<label class="service-editor-label">Introduzione</label>
-				<textarea :value="intro" @input="emit('update:intro', $event.target.value)" rows="4" class="service-editor-textarea" placeholder="Paragrafo introduttivo del servizio"></textarea>
+				<textarea :value="intro" rows="4" class="service-editor-textarea" placeholder="Paragrafo introduttivo del servizio" @input="emit('update:intro', $event.target.value)"/>
 			</div>
 		</div>
 		<div class="service-editor-toggle-row">
@@ -56,9 +56,9 @@ const onTitleInput = (event) => {
 					aria-label="Attiva o disattiva pubblicazione"
 					role="switch"
 					:aria-checked="isPublished ? 'true' : 'false'"
-					@click="emit('update:isPublished', !isPublished)"
-					:class="['service-editor-toggle', isPublished ? 'service-editor-toggle--active' : '']">
-					<span :class="['service-editor-toggle__thumb', isPublished ? 'service-editor-toggle__thumb--active' : '']"></span>
+					:class="['service-editor-toggle', isPublished ? 'service-editor-toggle--active' : '']"
+					@click="emit('update:isPublished', !isPublished)">
+					<span :class="['service-editor-toggle__thumb', isPublished ? 'service-editor-toggle__thumb--active' : '']"/>
 				</button>
 				<span class="service-editor-state-pill" :class="isPublished ? 'service-editor-state-pill--active' : ''">
 					{{ isPublished ? 'Pubblicato' : 'Bozza' }}

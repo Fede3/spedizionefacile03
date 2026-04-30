@@ -51,7 +51,7 @@ onUnmounted(() => { document.removeEventListener('keydown', trapFocus) })
 <template>
 	<Teleport to="body">
 		<div v-if="show" class="fixed inset-0 z-[9999] flex items-center justify-center">
-			<div class="absolute inset-0 bg-black/50" @click="emit('update:show', false)"></div>
+			<div class="absolute inset-0 bg-black/50" @click="emit('update:show', false)"/>
 			<div ref="dialogRef" role="dialog" aria-modal="true" aria-labelledby="cancel-modal-title" class="relative bg-white rounded-[16px] shadow-lg max-w-[520px] w-full mx-[16px] p-[20px] z-[1]">
 				<!-- Header -->
 				<div class="flex items-center gap-[12px] mb-[20px]">
@@ -66,7 +66,7 @@ onUnmounted(() => { document.removeEventListener('keydown', trapFocus) })
 
 				<!-- Loading -->
 				<div v-if="loadingEligibility" class="py-[20px] text-center">
-					<div class="inline-block w-[24px] h-[24px] border-[3px] border-[var(--color-brand-primary)] border-t-transparent rounded-full animate-spin"></div>
+					<div class="inline-block w-[24px] h-[24px] border-[3px] border-[var(--color-brand-primary)] border-t-transparent rounded-full animate-spin"/>
 					<p class="mt-[10px] text-[0.8125rem] text-[var(--color-brand-text-secondary)]">Controllo in corso...</p>
 				</div>
 
@@ -104,9 +104,10 @@ onUnmounted(() => { document.removeEventListener('keydown', trapFocus) })
 						<!-- Motivo -->
 						<div class="mb-[16px]">
 							<label class="block text-[0.75rem] text-[var(--color-brand-text-secondary)] uppercase font-medium mb-[4px]">Motivo (opzionale)</label>
-							<textarea :value="cancelReason" @input="emit('update:cancelReason', $event.target.value)"
-								placeholder="Perché vuoi annullare questa spedizione?" maxlength="500" rows="2"
-								class="w-full bg-[#F8F9FB] border border-[var(--color-brand-border)] rounded-[16px] p-[10px] text-[0.875rem] resize-none"></textarea>
+							<textarea
+:value="cancelReason" placeholder="Perché vuoi annullare questa spedizione?"
+								maxlength="500" rows="2" class="w-full bg-[#F8F9FB] border border-[var(--color-brand-border)] rounded-[16px] p-[10px] text-[0.875rem] resize-none"
+								@input="emit('update:cancelReason', $event.target.value)"/>
 						</div>
 
 						<!-- Errore -->
@@ -114,13 +115,15 @@ onUnmounted(() => { document.removeEventListener('keydown', trapFocus) })
 
 						<!-- Azioni -->
 						<div class="flex gap-[10px]">
-							<button type="button" @click="emit('confirm')" :disabled="cancelling"
-								class="flex-1 inline-flex items-center justify-center gap-[6px] px-[16px] py-[12px] bg-red-600 text-white rounded-[50px] text-[0.875rem] font-semibold hover:bg-red-700 transition disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer">
+							<button
+type="button" :disabled="cancelling" class="flex-1 inline-flex items-center justify-center gap-[6px] px-[16px] py-[12px] bg-red-600 text-white rounded-[50px] text-[0.875rem] font-semibold hover:bg-red-700 transition disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
+								@click="emit('confirm')">
 								<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
 								{{ cancelling ? 'Blocco in corso...' : 'Conferma blocco pacco' }}
 							</button>
-							<button type="button" @click="emit('update:show', false)" :disabled="cancelling"
-								class="px-[20px] py-[12px] bg-[var(--color-brand-border)] text-[var(--color-brand-text)] rounded-[50px] text-[0.875rem] font-semibold hover:bg-[#D0D0D0] transition disabled:opacity-60 cursor-pointer">
+							<button
+type="button" :disabled="cancelling" class="px-[20px] py-[12px] bg-[var(--color-brand-border)] text-[var(--color-brand-text)] rounded-[50px] text-[0.875rem] font-semibold hover:bg-[#D0D0D0] transition disabled:opacity-60 cursor-pointer"
+								@click="emit('update:show', false)">
 								Indietro
 							</button>
 						</div>
@@ -130,8 +133,9 @@ onUnmounted(() => { document.removeEventListener('keydown', trapFocus) })
 				<!-- Error loading eligibility -->
 				<template v-else>
 					<div v-if="cancelError" class="bg-red-50 border border-red-200 rounded-[50px] px-[14px] py-[10px] text-red-600 text-[0.8125rem] mb-[12px]" role="alert">{{ cancelError }}</div>
-					<button type="button" @click="emit('update:show', false)"
-						class="w-full px-[16px] py-[12px] bg-[var(--color-brand-border)] text-[var(--color-brand-text)] rounded-[50px] text-[0.875rem] font-semibold hover:bg-[#D0D0D0] transition cursor-pointer">
+					<button
+type="button" class="w-full px-[16px] py-[12px] bg-[var(--color-brand-border)] text-[var(--color-brand-text)] rounded-[50px] text-[0.875rem] font-semibold hover:bg-[#D0D0D0] transition cursor-pointer"
+						@click="emit('update:show', false)">
 						Chiudi
 					</button>
 				</template>

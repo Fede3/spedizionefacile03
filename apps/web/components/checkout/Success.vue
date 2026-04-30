@@ -16,7 +16,7 @@ const isBankTransfer = computed(() => props.paymentMethod === 'bonifico')
   <div class="checkout-success">
     <!-- Icona circolare 64px teal con anello -->
     <div class="checkout-success__badge" aria-hidden="true">
-      <span class="checkout-success__badge-ring"></span>
+      <span class="checkout-success__badge-ring"/>
       <span class="checkout-success__badge-inner">
         <svg class="checkout-success__check" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
           <polyline points="20 6 9 17 4 12" />
@@ -26,7 +26,7 @@ const isBankTransfer = computed(() => props.paymentMethod === 'bonifico')
 
     <!-- Chip stato -->
     <span class="checkout-success__chip">
-      <span class="checkout-success__chip-dot" aria-hidden="true"></span>
+      <span class="checkout-success__chip-dot" aria-hidden="true"/>
       Ordine confermato
     </span>
 

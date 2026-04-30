@@ -198,7 +198,7 @@ const hasStatusData = computed(() => normalizedStatuses.value.length > 0 && stat
 				class="admin-console-analytics__legend-item">
 				<span
 					class="admin-console-analytics__legend-swatch"
-					:style="{ background: item.color }"></span>
+					:style="{ background: item.color }"/>
 				<span class="admin-console-analytics__legend-label">{{ item.label }}</span>
 				<strong class="admin-console-analytics__legend-count">{{ formatInteger(item.count) }}</strong>
 				<span class="admin-console-analytics__legend-share">{{ formatPercent(item.share) }}</span>
@@ -207,7 +207,7 @@ const hasStatusData = computed(() => normalizedStatuses.value.length > 0 && stat
 	</div>
 
 	<div v-else class="admin-console-analytics__empty">
-		<div class="admin-console-analytics__empty-dot"></div>
+		<div class="admin-console-analytics__empty-dot"/>
 		<p>Nessun dato stati disponibile.</p>
 	</div>
 </template>

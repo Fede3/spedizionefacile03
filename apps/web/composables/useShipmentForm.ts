@@ -177,7 +177,7 @@ export const useShipmentFormErrorSummary = ({ sv, contentError }: ShipmentFormEr
 // e field assist dalle sezioni 1 e 2.
 // ─────────────────────────────────────────────────────────────────────────────
 
-/** @returns {Object} composable form validation */
+/** @returns {object} composable form validation */
 export const useShipmentFormValidation = ({
 	contentError,
 	dateError,

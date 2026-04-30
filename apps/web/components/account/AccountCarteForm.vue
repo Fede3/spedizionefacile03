@@ -19,7 +19,7 @@ const emit = defineEmits(['update:cardHolderName', 'save', 'cancel'])
 
     <div class="mb-[16px]">
       <label class="block text-[0.75rem] font-semibold text-[var(--color-brand-text)] mb-[5px]">Numero carta</label>
-      <div class="account-carte-stripe-field" id="card-number"></div>
+      <div id="card-number" class="account-carte-stripe-field"/>
     </div>
 
     <div class="mb-[16px]">
@@ -27,20 +27,20 @@ const emit = defineEmits(['update:cardHolderName', 'save', 'cancel'])
       <input
         type="text"
         :value="cardHolderName"
-        @input="emit('update:cardHolderName', $event.target.value)"
         class="w-full px-[14px] py-[11px] bg-[#F5F6F9] border border-[var(--color-brand-border)] rounded-[16px] text-[0.875rem] text-[var(--color-brand-text)] placeholder:text-[var(--color-brand-text-muted)] focus:border-[var(--color-brand-primary)] focus:outline-none transition-colors"
         placeholder="Mario Rossi"
-        required />
+        required
+        @input="emit('update:cardHolderName', $event.target.value)" >
     </div>
 
     <div class="grid grid-cols-1 tablet:grid-cols-[minmax(0,1fr)_132px] gap-[12px] mb-[16px]">
       <div class="min-w-0">
         <label class="block text-[0.75rem] font-semibold text-[var(--color-brand-text)] mb-[5px]">Scadenza</label>
-        <div class="account-carte-stripe-field" id="card-expiry"></div>
+        <div id="card-expiry" class="account-carte-stripe-field"/>
       </div>
       <div class="min-w-0 tablet:w-[132px]">
         <label class="block text-[0.75rem] font-semibold text-[var(--color-brand-text)] mb-[5px]">CVC</label>
-        <div class="account-carte-stripe-field" id="card-cvc"></div>
+        <div id="card-cvc" class="account-carte-stripe-field"/>
       </div>
     </div>
 

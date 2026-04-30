@@ -155,7 +155,7 @@ const onUpdateModelValue = (value) => {
 						class="form-input"
 						autocomplete="current-password"
 						placeholder="Inserisci la password per continuare"
-						@keyup.enter="handleConfirm" />
+						@keyup.enter="handleConfirm" >
 					<p v-if="errorMessage" class="text-[0.8125rem] font-semibold text-[#b42318]">{{ errorMessage }}</p>
 				</div>
 			</div>

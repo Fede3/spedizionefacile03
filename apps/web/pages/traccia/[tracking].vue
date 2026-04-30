@@ -92,12 +92,12 @@ useSeoMeta({
 				<!-- Loading skeleton globale -->
 				<div v-if="isLoading" class="grid gap-[18px]" aria-busy="true">
 					<div class="rounded-[16px] p-[24px] animate-pulse" style="background:#fff; box-shadow: 0 2px 12px rgba(0,0,0,0.04)">
-						<div class="h-[20px] w-[40%] rounded bg-[#E6E9EE] mb-[12px]"></div>
-						<div class="h-[36px] w-[60%] rounded bg-[#E6E9EE] mb-[10px]"></div>
-						<div class="h-[14px] w-[30%] rounded bg-[#EEF1F5]"></div>
+						<div class="h-[20px] w-[40%] rounded bg-[#E6E9EE] mb-[12px]"/>
+						<div class="h-[36px] w-[60%] rounded bg-[#E6E9EE] mb-[10px]"/>
+						<div class="h-[14px] w-[30%] rounded bg-[#EEF1F5]"/>
 					</div>
 					<div class="rounded-[16px] p-[24px] animate-pulse" style="background:#fff">
-						<div class="h-[60px] rounded bg-[#EEF1F5]"></div>
+						<div class="h-[60px] rounded bg-[#EEF1F5]"/>
 					</div>
 				</div>
 
@@ -123,7 +123,7 @@ useSeoMeta({
 							placeholder="Inserisci un altro codice..."
 							class="flex-1 h-[46px] rounded-[12px] px-[14px] text-[14px] text-[#1d2738] bg-white ring-[1.5px] ring-[#DFE2E7] focus:ring-[3px] focus:ring-[#095866]/60 outline-none transition-all"
 							style="font-weight:600"
-						/>
+						>
 						<button
 							type="submit"
 							:disabled="!newSearchInput.trim()"
@@ -174,7 +174,7 @@ useSeoMeta({
 
 					<!-- HERO compatto -->
 					<section class="rounded-[16px] overflow-hidden" data-shadow="soft" aria-label="Riepilogo spedizione">
-						<div class="h-[4px]" data-accent="bar"></div>
+						<div class="h-[4px]" data-accent="bar"/>
 						<div class="p-[20px] sm:p-[24px]" style="background:#ffffff">
 							<div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-[16px]">
 								<!-- Codice + copia -->
@@ -210,7 +210,7 @@ useSeoMeta({
 								<!-- Stato + ETA -->
 								<div class="flex flex-col items-start lg:items-end gap-[8px]">
 									<span class="status-chip" :class="statusChipClass">
-										<span class="status-dot" aria-hidden="true"></span>
+										<span class="status-dot" aria-hidden="true"/>
 										{{ data.status_label }}
 									</span>
 									<div v-if="etaFormatted && !isDelivered" class="text-right">
@@ -238,7 +238,7 @@ useSeoMeta({
 
 					<!-- STEPPER -->
 					<section class="rounded-[16px] overflow-hidden" data-shadow="soft" aria-label="Avanzamento fasi">
-						<div class="h-[3px]" data-accent="bar"></div>
+						<div class="h-[3px]" data-accent="bar"/>
 						<div class="p-[20px] sm:p-[24px]" style="background:#ffffff">
 							<TrackingStepper
 								:steps="STEPS"
@@ -252,7 +252,7 @@ useSeoMeta({
 					<section class="grid gap-[18px] lg:grid-cols-3">
 						<!-- TIMELINE EVENTI -->
 						<div class="lg:col-span-2 rounded-[16px] overflow-hidden" data-shadow="soft">
-							<div class="h-[3px]" data-accent="bar"></div>
+							<div class="h-[3px]" data-accent="bar"/>
 							<div class="p-[20px] sm:p-[24px]" style="background:#ffffff">
 								<div class="flex items-center justify-between mb-[14px]">
 									<h2 class="text-[1rem] text-[#1d2738] m-0" style="font-weight:700">
@@ -279,7 +279,7 @@ useSeoMeta({
 
 						<!-- SIDEBAR DETTAGLI -->
 						<aside class="rounded-[16px] overflow-hidden" data-shadow="soft" aria-label="Dettagli spedizione">
-							<div class="h-[3px]" data-accent="bar"></div>
+							<div class="h-[3px]" data-accent="bar"/>
 							<div class="p-[20px] sm:p-[24px] grid gap-[16px]" style="background:#ffffff">
 								<!-- Origine → destinazione -->
 								<div>
@@ -302,7 +302,7 @@ useSeoMeta({
 												</p>
 											</div>
 										</div>
-										<div class="route-divider" aria-hidden="true"></div>
+										<div class="route-divider" aria-hidden="true"/>
 										<div class="flex items-start gap-[10px]">
 											<div class="route-icon route-icon-dest">
 												<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">

@@ -216,7 +216,7 @@ const quickActions = [
 
 				<div v-else class="contact-form-centered__wrap">
 					<header class="contact-form-centered__header">
-						<span class="contact-form-centered__accent" aria-hidden="true"></span>
+						<span class="contact-form-centered__accent" aria-hidden="true"/>
 						<h2 id="contact-form-title" class="contact-form-centered__title">Scrivici</h2>
 						<p class="contact-form-centered__lead">Descrivi la richiesta con peso, tratta e urgenza: piu contesto, risposta piu precisa.</p>
 					</header>
@@ -225,28 +225,28 @@ const quickActions = [
 						<div class="contact-form__grid contact-form__grid--two">
 							<div class="contact-field">
 								<label for="cf-name" class="contact-field__label">Nome</label>
-								<input id="cf-name" v-model="contactForm.name" type="text" required autocomplete="given-name" class="contact-field__input" placeholder="Es. Mario" />
+								<input id="cf-name" v-model="contactForm.name" type="text" required autocomplete="given-name" class="contact-field__input" placeholder="Es. Mario" >
 							</div>
 							<div class="contact-field">
 								<label for="cf-surname" class="contact-field__label">Cognome</label>
-								<input id="cf-surname" v-model="contactForm.surname" type="text" required autocomplete="family-name" class="contact-field__input" placeholder="Es. Rossi" />
+								<input id="cf-surname" v-model="contactForm.surname" type="text" required autocomplete="family-name" class="contact-field__input" placeholder="Es. Rossi" >
 							</div>
 						</div>
 
 						<div class="contact-form__grid contact-form__grid--two">
 							<div class="contact-field">
 								<label for="cf-email" class="contact-field__label">Email</label>
-								<input id="cf-email" v-model="contactForm.email" type="email" required autocomplete="email" class="contact-field__input" placeholder="nome@email.it" />
+								<input id="cf-email" v-model="contactForm.email" type="email" required autocomplete="email" class="contact-field__input" placeholder="nome@email.it" >
 							</div>
 							<div class="contact-field">
 								<label for="cf-phone" class="contact-field__label">Telefono <span class="contact-field__hint">(opzionale)</span></label>
-								<input id="cf-phone" v-model="contactForm.telephone_number" type="tel" autocomplete="tel" class="contact-field__input" placeholder="+39 ..." />
+								<input id="cf-phone" v-model="contactForm.telephone_number" type="tel" autocomplete="tel" class="contact-field__input" placeholder="+39 ..." >
 							</div>
 						</div>
 
 						<div class="contact-field">
 							<label for="cf-message" class="contact-field__label">Messaggio <span class="contact-field__hint">(per reclami: indica "Reclamo" e numero spedizione BRT)</span></label>
-							<textarea id="cf-message" v-model="contactForm.message" required rows="6" maxlength="1500" class="contact-field__textarea" placeholder="Racconta la richiesta con dettagli utili (tratta, peso, urgenza). Per un reclamo: inizia con &quot;Reclamo&quot; e allega numero spedizione."></textarea>
+							<textarea id="cf-message" v-model="contactForm.message" required rows="6" maxlength="1500" class="contact-field__textarea" placeholder="Racconta la richiesta con dettagli utili (tratta, peso, urgenza). Per un reclamo: inizia con &quot;Reclamo&quot; e allega numero spedizione."/>
 						</div>
 
 						<div class="contact-form__turnstile" aria-label="Verifica anti-bot">
@@ -268,7 +268,7 @@ const quickActions = [
 		<section class="contact-faq-grid" aria-labelledby="contact-faq-title">
 			<div class="my-container">
 				<header class="contact-faq-grid__header">
-					<span class="contact-faq-grid__accent" aria-hidden="true"></span>
+					<span class="contact-faq-grid__accent" aria-hidden="true"/>
 					<h2 id="contact-faq-title" class="contact-faq-grid__title">Domande frequenti</h2>
 					<p class="contact-faq-grid__lead">Prima di scriverci, dai un'occhiata: molte risposte sono qui.</p>
 				</header>

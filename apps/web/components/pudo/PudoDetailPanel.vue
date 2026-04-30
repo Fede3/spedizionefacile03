@@ -29,7 +29,7 @@ const weekHours = computed(() => {
         return [];
     return dayNames.map((d) => {
         const found = parts.find((p) => d.tokens.some((t) => p.toLowerCase().includes(t)));
-        return { label: d.label, value: found ? found.replace(/^[^:]+:\s*/i, '').trim() || found : 'Chiuso' };
+        return { label: d.label, value: found ? found.replace(/^[^:]+:\s*/, '').trim() || found : 'Chiuso' };
     });
 });
 const fullAddress = computed(() => {
@@ -101,10 +101,11 @@ const handleChoose = () => {
 								class="shrink-0 w-[32px] h-[32px] inline-flex items-center justify-center rounded-full text-[var(--color-brand-text-secondary,#4b5563)] hover:bg-[#F2F8F9] hover:text-[var(--color-brand-primary,#095866)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand-primary,#095866)] cursor-pointer"
 								aria-label="Chiudi dettagli"
 								@click="emit('close')">
-								<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+								<svg
+width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
 									stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-									<line x1="18" y1="6" x2="6" y2="18"></line>
-									<line x1="6" y1="6" x2="18" y2="18"></line>
+									<line x1="18" y1="6" x2="6" y2="18"/>
+									<line x1="6" y1="6" x2="18" y2="18"/>
 								</svg>
 							</button>
 						</div>
@@ -125,9 +126,10 @@ const handleChoose = () => {
 								target="_blank"
 								rel="noopener"
 								class="inline-flex items-center gap-[6px] mt-[10px] text-[0.875rem] font-semibold text-[var(--color-brand-primary,#095866)] hover:text-[var(--color-brand-primary-hover,#074a56)] underline-offset-2 hover:underline">
-								<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+								<svg
+width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
 									stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-									<polygon points="3 11 22 2 13 21 11 13 3 11"></polygon>
+									<polygon points="3 11 22 2 13 21 11 13 3 11"/>
 								</svg>
 								Indicazioni stradali
 							</a>
@@ -160,16 +162,18 @@ const handleChoose = () => {
 							</h3>
 							<div class="flex flex-wrap gap-[8px]">
 								<span class="inline-flex items-center gap-[6px] text-[0.8125rem] font-medium text-[var(--color-brand-text,#0f172a)] bg-[#F2F8F9] border border-[var(--color-brand-border,#E9EBEC)] rounded-full px-[10px] py-[5px]">
-									<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+									<svg
+width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor"
 										stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-										<polyline points="20 6 9 17 4 12"></polyline>
+										<polyline points="20 6 9 17 4 12"/>
 									</svg>
 									Ritiro pacchi
 								</span>
 								<span class="inline-flex items-center gap-[6px] text-[0.8125rem] font-medium text-[var(--color-brand-text,#0f172a)] bg-[#F2F8F9] border border-[var(--color-brand-border,#E9EBEC)] rounded-full px-[10px] py-[5px]">
-									<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+									<svg
+width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor"
 										stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-										<polyline points="20 6 9 17 4 12"></polyline>
+										<polyline points="20 6 9 17 4 12"/>
 									</svg>
 									Consegna pacchi
 								</span>
@@ -193,9 +197,10 @@ const handleChoose = () => {
 							type="button"
 							class="w-full inline-flex items-center justify-center gap-[8px] h-[46px] rounded-[14px] bg-[var(--color-brand-primary,#095866)] text-white text-[0.9375rem] font-semibold hover:bg-[var(--color-brand-primary-hover,#074a56)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#E44203] cursor-pointer transition-colors"
 							@click="handleChoose">
-							<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+							<svg
+width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
 								stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-								<polyline points="20 6 9 17 4 12"></polyline>
+								<polyline points="20 6 9 17 4 12"/>
 							</svg>
 							Scegli questo punto
 						</button>

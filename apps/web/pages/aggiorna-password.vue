@@ -151,7 +151,7 @@ const updatePassword = async () => {
 					<SfButton :to="loginOverlayLocation" variant="primary" block class="auth-shell-message__action">Torna al login</SfButton>
 				</div>
 
-				<form v-else @submit.prevent="updatePassword" class="auth-page-body auth-page-stack">
+				<form v-else class="auth-page-body auth-page-stack" @submit.prevent="updatePassword">
 					<div class="auth-field-group">
 						<label for="email" class="auth-field-label">Email</label>
 						<input
@@ -161,7 +161,7 @@ const updatePassword = async () => {
 							class="form-input"
 							required
 							autocomplete="email"
-						/>
+						>
 					</div>
 					<p v-if="fieldErrors.email" class="auth-feedback auth-feedback--error">
 						<span v-for="(error, index) in fieldErrors.email" :key="index" class="block">{{ error }}</span>
@@ -177,12 +177,12 @@ const updatePassword = async () => {
 								class="form-input auth-field-input--password"
 								required
 								autocomplete="new-password"
-							/>
+							>
 							<button
 								type="button"
 								class="auth-password-toggle"
-								@click="showPassword = !showPassword"
 								:aria-label="showPassword ? 'Nascondi password' : 'Mostra password'"
+								@click="showPassword = !showPassword"
 							>
 								<svg v-if="showPassword" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
 									<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
@@ -234,12 +234,12 @@ const updatePassword = async () => {
 								class="form-input auth-field-input--password"
 								required
 								autocomplete="new-password"
-							/>
+							>
 							<button
 								type="button"
 								class="auth-password-toggle"
-								@click="showPasswordConfirmation = !showPasswordConfirmation"
 								:aria-label="showPasswordConfirmation ? 'Nascondi conferma password' : 'Mostra conferma password'"
+								@click="showPasswordConfirmation = !showPasswordConfirmation"
 							>
 								<svg v-if="showPasswordConfirmation" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
 									<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />

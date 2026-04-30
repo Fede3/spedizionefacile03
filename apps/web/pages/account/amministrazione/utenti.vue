@@ -321,7 +321,7 @@ onMounted(() => {
 							v-model="search"
 							type="search"
 							placeholder="Cerca per nome o email..."
-							class="admin-utenti-search__input" />
+							class="admin-utenti-search__input" >
 					</label>
 
 					<select v-model="roleFilter" class="admin-utenti-select" aria-label="Filtra per ruolo">
@@ -340,7 +340,7 @@ onMounted(() => {
 					</select>
 
 					<label class="admin-utenti-toggle">
-						<input v-model="onlyVerified" type="checkbox" />
+						<input v-model="onlyVerified" type="checkbox" >
 						<span class="admin-utenti-toggle__track"><span class="admin-utenti-toggle__thumb" /></span>
 						<span class="admin-utenti-toggle__label">Solo verificati</span>
 					</label>

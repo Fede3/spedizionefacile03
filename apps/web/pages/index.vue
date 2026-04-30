@@ -104,7 +104,7 @@ onBeforeUnmount(() => observer?.disconnect());
 		<ClientOnly>
 			<Preventivo />
 			<template #fallback>
-				<div aria-hidden="true" style="min-height:460px"></div>
+				<div aria-hidden="true" style="min-height:460px"/>
 			</template>
 		</ClientOnly>
 
@@ -362,11 +362,11 @@ onBeforeUnmount(() => observer?.disconnect());
 						data-reveal
 					>
 						<button
+							:id="`faq-trigger-${i}`"
 							type="button"
 							class="faq__q"
 							:aria-expanded="isFaqOpen(i)"
 							:aria-controls="`faq-panel-${i}`"
-							:id="`faq-trigger-${i}`"
 							@click="toggleFaq(i)"
 						>
 							<span>{{ item.q }}</span>

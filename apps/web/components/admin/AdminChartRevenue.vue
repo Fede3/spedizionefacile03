@@ -180,7 +180,7 @@ const hasRevenueData = computed(() => revenueBars.value.length > 0);
 	</div>
 
 	<div v-else class="admin-console-analytics__empty">
-		<div class="admin-console-analytics__empty-dot"></div>
+		<div class="admin-console-analytics__empty-dot"/>
 		<p>Nessun dato ricavi disponibile per il periodo selezionato.</p>
 	</div>
 </template>

@@ -92,9 +92,9 @@ const orderMetaPillStyle = (kind, status = '') => {
 			<!-- Loading -->
 			<div v-if="orderStatus === 'pending'" class="space-y-[16px]">
 				<div class="bg-white rounded-[16px] p-[16px] border border-[var(--color-brand-border)] animate-pulse">
-					<div class="h-[24px] bg-gray-200 rounded w-[40%] mb-[16px]"></div>
-					<div class="h-[16px] bg-gray-200 rounded w-[60%] mb-[8px]"></div>
-					<div class="h-[16px] bg-gray-200 rounded w-[50%]"></div>
+					<div class="h-[24px] bg-gray-200 rounded w-[40%] mb-[16px]"/>
+					<div class="h-[16px] bg-gray-200 rounded w-[60%] mb-[8px]"/>
+					<div class="h-[16px] bg-gray-200 rounded w-[50%]"/>
 				</div>
 			</div>
 
@@ -125,7 +125,8 @@ const orderMetaPillStyle = (kind, status = '') => {
 				<div
 					v-if="cancelSuccess"
 					class="bg-[#f0fdf4] border border-[#d1fae5] rounded-[16px] px-[16px] py-[14px] flex items-start gap-[12px] mb-[16px]">
-					<svg aria-hidden="true"
+					<svg
+aria-hidden="true"
 						xmlns="http://www.w3.org/2000/svg"
 						width="22"
 						height="22"
@@ -144,7 +145,8 @@ const orderMetaPillStyle = (kind, status = '') => {
 				<div
 					v-if="cancelError && !showCancelModal"
 					class="bg-red-50 border border-red-200 rounded-[16px] px-[16px] py-[14px] flex items-start gap-[12px] mb-[16px]">
-					<svg aria-hidden="true"
+					<svg
+aria-hidden="true"
 						xmlns="http://www.w3.org/2000/svg"
 						width="22"
 						height="22"
@@ -167,7 +169,8 @@ const orderMetaPillStyle = (kind, status = '') => {
 					v-if="isCancelledOrRefunded && orderData.refund_status === 'completed'"
 					class="bg-orange-50 border border-orange-200 rounded-[16px] px-[16px] py-[14px] mb-[16px]">
 					<div class="flex items-start gap-[12px]">
-						<svg aria-hidden="true"
+						<svg
+aria-hidden="true"
 							xmlns="http://www.w3.org/2000/svg"
 							width="22"
 							height="22"
@@ -260,7 +263,7 @@ const orderMetaPillStyle = (kind, status = '') => {
 								</svg>
 								Assistenza
 							</NuxtLink>
-							<button type="button" @click="openCancelModal" class="btn btn-secondary btn-sm inline-flex items-center gap-[6px]" style="color:#B91C1C;border-color:rgba(185,28,28,0.22);">
+							<button type="button" class="btn btn-secondary btn-sm inline-flex items-center gap-[6px]" style="color:#B91C1C;border-color:rgba(185,28,28,0.22);" @click="openCancelModal">
 								<svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[14px] h-[14px]" fill="currentColor">
 									<path
 										d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,4A8,8 0 0,1 20,12A8,8 0 0,1 12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4M7,10L12,15L17,10H7Z" />
@@ -357,7 +360,8 @@ const orderMetaPillStyle = (kind, status = '') => {
 			<div v-else class="bg-white rounded-[16px] p-[20px] border border-[var(--color-brand-border)] text-center">
 				<p class="text-[1rem] text-[var(--color-brand-text-secondary)]">Ordine non trovato.</p>
 				<NuxtLink to="/account/spedizioni" class="btn btn-secondary btn-sm mt-[16px] inline-flex items-center gap-[6px]">
-					<svg aria-hidden="true"
+					<svg
+aria-hidden="true"
 						xmlns="http://www.w3.org/2000/svg"
 						width="18"
 						height="18"

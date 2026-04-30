@@ -151,7 +151,7 @@ watchEffect(() => {
 						required
 						:aria-required="true"
 						v-bind="sharedInputAttrs"
-						@input="setAddressField('company_name', $event.target.value)" />
+						@input="setAddressField('company_name', $event.target.value)" >
 				</div>
 				<div class="address-form-fields__field">
 					<label :for="`${idPrefix}vat_number`">
@@ -166,7 +166,7 @@ watchEffect(() => {
 						required
 						:aria-required="true"
 						v-bind="sharedInputAttrs"
-						@input="setAddressField('vat_number', $event.target.value)" />
+						@input="setAddressField('vat_number', $event.target.value)" >
 				</div>
 			</div>
 			<div class="address-form-fields__row">
@@ -179,7 +179,7 @@ watchEffect(() => {
 						maxlength="7"
 						placeholder="Es. M5UXCR1"
 						v-bind="sharedInputAttrs"
-						@input="setAddressField('sdi_code', $event.target.value)" />
+						@input="setAddressField('sdi_code', $event.target.value)" >
 				</div>
 				<div class="address-form-fields__field">
 					<label :for="`${idPrefix}pec_email`">PEC</label>
@@ -189,7 +189,7 @@ watchEffect(() => {
 						type="email"
 						placeholder="esempio@pec.it"
 						v-bind="sharedInputAttrs"
-						@input="setAddressField('pec_email', $event.target.value)" />
+						@input="setAddressField('pec_email', $event.target.value)" >
 				</div>
 			</div>
 			<p class="address-form-fields__business-hint">
@@ -216,7 +216,7 @@ watchEffect(() => {
 							:aria-invalid="ariaInvalid('full_name')"
 							:aria-describedby="ariaDescribedBy('full_name')"
 							:class="fieldClass(typeKey, 'full_name')"
-							@blur="smartBlur(typeKey, 'full_name')" />
+							@blur="smartBlur(typeKey, 'full_name')" >
 					</div>
 					<AddressFieldFeedback :type-key="typeKey" field="full_name" />
 				</div>
@@ -239,7 +239,7 @@ watchEffect(() => {
 							:aria-invalid="ariaInvalid('full_name')"
 							:aria-describedby="ariaDescribedBy('full_name')"
 							:class="fieldClass(typeKey, 'full_name')"
-							@blur="smartBlur(typeKey, 'full_name')" />
+							@blur="smartBlur(typeKey, 'full_name')" >
 					</div>
 				</div>
 
@@ -255,7 +255,7 @@ watchEffect(() => {
 							:autocomplete="getAutocomplete('address-line2')"
 							v-bind="sharedInputAttrs"
 							class="input-preventivo-step-2"
-							@input="setAddressField('additional_information', $event.target.value)" />
+							@input="setAddressField('additional_information', $event.target.value)" >
 					</div>
 				</div>
 
@@ -278,7 +278,7 @@ watchEffect(() => {
 							:class="[fieldClass(typeKey, 'address'), readonlyClass]"
 							:readonly="readonly"
 							@input="setAddressField('address', $event.target.value)"
-							@blur="smartBlur(typeKey, 'address')" />
+							@blur="smartBlur(typeKey, 'address')" >
 					</div>
 					<AddressFieldFeedback :type-key="typeKey" field="address" />
 				</div>
@@ -302,7 +302,7 @@ watchEffect(() => {
 							:class="[fieldClass(typeKey, 'address_number'), readonlyClass]"
 							:readonly="readonly"
 							@input="setAddressField('address_number', $event.target.value)"
-							@blur="smartBlur(typeKey, 'address_number')" />
+							@blur="smartBlur(typeKey, 'address_number')" >
 					</div>
 					<AddressFieldFeedback :type-key="typeKey" field="address_number" />
 				</div>
@@ -319,7 +319,7 @@ watchEffect(() => {
 							autocomplete="off"
 							v-bind="sharedInputAttrs"
 							class="input-preventivo-step-2"
-							@input="setAddressField('intercom_code', $event.target.value)" />
+							@input="setAddressField('intercom_code', $event.target.value)" >
 					</div>
 				</div>
 
@@ -344,7 +344,7 @@ watchEffect(() => {
 							maxlength="5"
 							@input="onCapInput(typeKey, $event.target.value)"
 							@focus="onCapFocus(typeKey)"
-							@blur="smartBlur(typeKey, 'postal_code')" />
+							@blur="smartBlur(typeKey, 'postal_code')" >
 					</div>
 					<AddressFieldFeedback :type-key="typeKey" field="postal_code" />
 				</div>
@@ -369,7 +369,7 @@ watchEffect(() => {
 							:readonly="readonly"
 							@input="onCityInput(typeKey, $event.target.value)"
 							@focus="onCityFocus(typeKey)"
-							@blur="smartBlur(typeKey, 'city')" />
+							@blur="smartBlur(typeKey, 'city')" >
 						<ul v-if="!readonly && citySuggestions.length > 0" class="address-field-menu">
 							<li
 								v-for="location in citySuggestions"
@@ -406,7 +406,7 @@ watchEffect(() => {
 							inputmode="text"
 							@input="forceProvinceUpper($event)"
 							@focus="onProvinceFocus(typeKey)"
-							@blur="smartBlur(typeKey, 'province')" />
+							@blur="smartBlur(typeKey, 'province')" >
 					</div>
 					<AddressFieldFeedback :type-key="typeKey" field="province" />
 				</div>
@@ -438,7 +438,7 @@ watchEffect(() => {
 							:aria-invalid="ariaInvalid('telephone_number')"
 							:aria-describedby="ariaDescribedBy('telephone_number')"
 							:class="fieldClass(typeKey, 'telephone_number')"
-							@blur="smartBlur(typeKey, 'telephone_number')" />
+							@blur="smartBlur(typeKey, 'telephone_number')" >
 					</div>
 					<AddressFieldFeedback :type-key="typeKey" field="telephone_number" />
 				</div>
@@ -465,7 +465,7 @@ watchEffect(() => {
 							@input="
 								setAddressField('email', $event.target.value);
 								sv.onInput(`${typeKey}_email`, () => sv.validateEmail(`${typeKey}_email`, $event.target.value));
-							" />
+							" >
 					</div>
 					<AddressFieldFeedback :type-key="typeKey" field="email" />
 				</div>

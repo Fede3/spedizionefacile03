@@ -162,7 +162,7 @@ useHead(() => {
 
 <template>
 	<section v-if="pending" class="flex min-h-[420px] items-center justify-center">
-		<div class="h-[40px] w-[40px] rounded-full border-3 border-[var(--color-brand-border)] border-t-[var(--color-brand-primary)] animate-spin"></div>
+		<div class="h-[40px] w-[40px] rounded-full border-3 border-[var(--color-brand-border)] border-t-[var(--color-brand-primary)] animate-spin"/>
 	</section>
 
 	<div v-else-if="service" class="service-detail-shell min-h-screen">

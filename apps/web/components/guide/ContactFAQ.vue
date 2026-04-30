@@ -63,7 +63,7 @@ const toggle = (i) => {
 					stroke-linecap="round"
 					stroke-linejoin="round"
 					class="contact-faq-chevron">
-					<polyline points="6 9 12 15 18 9"></polyline>
+					<polyline points="6 9 12 15 18 9"/>
 				</svg>
 			</button>
 			<div class="contact-faq-content">
