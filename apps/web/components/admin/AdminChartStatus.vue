@@ -1,7 +1,7 @@
 <script setup>
 /** AdminChartStatus.vue */
 import { computed } from 'vue';
-import { useChartLogic } from '~/composables/useChartLogic';
+import { toNumber, formatInteger, formatPercentage as formatPercent, computeSegments } from '~/utils/chart';
 
 const props = defineProps({
 	statusData: {
@@ -15,8 +15,6 @@ const props = defineProps({
 		validator: (v) => ['right', 'bottom'].includes(v),
 	},
 });
-
-const { toNumber, formatInteger, formatPercentage: formatPercent, computeSegments } = useChartLogic();
 
 /**
  * Palette status mappata sui token admin-theme.css.

@@ -1,14 +1,41 @@
-/**
- * @file shipmentServiceData — helpers puri per servizi shipment step.
- * Estratto da composables/useShipmentStepServices.js.
- */
+import { DEFAULT_PICKUP_TIME_SLOT } from '~/utils/shipmentDraftPayload'
 
-/**
- * @file useShipmentStepServices — Composable useShipmentStepServices.
- */
-import { DEFAULT_PICKUP_TIME_SLOT, normalizePickupRequestDate } from '~/composables/useShipmentStepDraftPayload';
+type PickupRequestData = {
+	enabled: boolean
+	date: string
+	time_slot: string
+	notes: string
+}
+type ServiceData = {
+	contrassegno: Record<string, unknown>
+	assicurazione: Record<string, unknown>
+	sponda_idraulica: Record<string, unknown>
+	pickup_request: PickupRequestData
+	telefono_notifica: string
+}
+type PartialServiceData = Partial<{
+	contrassegno: Record<string, unknown>
+	assicurazione: Record<string, unknown>
+	sponda_idraulica: Record<string, unknown>
+	pickup_request: Partial<PickupRequestData>
+	telefono_notifica: string
+}>
+export type ShipmentService = {
+	key: string
+	img: string
+	width: number
+	height: number
+	name: string
+	description: string
+	isSelected: boolean
+	featured?: boolean
+	hasDetails?: boolean
+	priceLabel?: string
+	statusLabel?: string
+	currentPriceLabel?: string
+}
 
-export const DEFAULT_SHIPMENT_SERVICES = [
+export const DEFAULT_SHIPMENT_SERVICES: ShipmentService[] = [
 	{
 		key: 'senza_etichetta',
 		img: 'no-label.png',
@@ -54,9 +81,9 @@ export const DEFAULT_SHIPMENT_SERVICES = [
 		statusLabel: 'Per colli pesanti',
 		isSelected: false,
 	},
-];
+]
 
-export const createDefaultServiceData = () => ({
+export const createDefaultServiceData = (): ServiceData => ({
 	contrassegno: {
 		importo: '',
 		modalita_incasso: '',
@@ -64,9 +91,7 @@ export const createDefaultServiceData = () => ({
 		dettaglio_rimborso: '',
 	},
 	assicurazione: {},
-	sponda_idraulica: {
-		note: '',
-	},
+	sponda_idraulica: { note: '' },
 	pickup_request: {
 		enabled: false,
 		date: '',
@@ -74,46 +99,33 @@ export const createDefaultServiceData = () => ({
 		notes: '',
 	},
 	telefono_notifica: '',
-});
+})
 
-export const createMergedServiceData = (storedData = {}) => {
-	const base = createDefaultServiceData();
-
+export const createMergedServiceData = (storedData: PartialServiceData = {}): ServiceData => {
+	const base = createDefaultServiceData()
 	return {
-		contrassegno: {
-			...base.contrassegno,
-			...(storedData.contrassegno || {}),
-		},
-		assicurazione: {
-			...base.assicurazione,
-			...(storedData.assicurazione || {}),
-		},
-		sponda_idraulica: {
-			...base.sponda_idraulica,
-			...(storedData.sponda_idraulica || {}),
-		},
-		pickup_request: {
-			...base.pickup_request,
-			...(storedData.pickup_request || {}),
-		},
+		contrassegno: { ...base.contrassegno, ...(storedData.contrassegno || {}) },
+		assicurazione: { ...base.assicurazione, ...(storedData.assicurazione || {}) },
+		sponda_idraulica: { ...base.sponda_idraulica, ...(storedData.sponda_idraulica || {}) },
+		pickup_request: { ...base.pickup_request, ...(storedData.pickup_request || {}) },
 		telefono_notifica: storedData.telefono_notifica || '',
-	};
-};
+	}
+}
 
 export const EURO_FORMATTER = new Intl.NumberFormat('it-IT', {
 	style: 'currency',
 	currency: 'EUR',
 	minimumFractionDigits: 2,
 	maximumFractionDigits: 2,
-});
+})
 
-export const formatCurrencyCents = (cents, { withPlus = false } = {}) => {
-	const normalizedCents = Math.max(0, Math.round(Number(cents || 0)));
-	const formatted = EURO_FORMATTER.format(normalizedCents / 100);
-	return withPlus ? `+${formatted}` : formatted;
-};
+export const formatCurrencyCents = (cents: unknown, { withPlus = false }: { withPlus?: boolean } = {}) => {
+	const normalizedCents = Math.max(0, Math.round(Number(cents || 0)))
+	const formatted = EURO_FORMATTER.format(normalizedCents / 100)
+	return withPlus ? `+${formatted}` : formatted
+}
 
-export const formatPercentageLabel = (value) => {
-	const number = Number(value || 0);
-	return Number.isInteger(number) ? String(number) : number.toLocaleString('it-IT');
-};
+export const formatPercentageLabel = (value: unknown) => {
+	const number = Number(value || 0)
+	return Number.isInteger(number) ? String(number) : number.toLocaleString('it-IT')
+}

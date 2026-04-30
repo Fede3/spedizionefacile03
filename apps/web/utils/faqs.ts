@@ -269,15 +269,7 @@ export function highlightMatch(text: unknown, query: string) {
 	return safeText.replace(re, '<mark class="faq-mark">$1</mark>');
 }
 
-/** Composable dataset FAQ statico. */
-export function useFaqs() {
-	// Array statici, esposti come riferimenti diretti.
-	// Sono di fatto immutabili (definiti come const a livello modulo)
-	// e vengono solo letti dalla pagina: niente mutazioni runtime.
-	return {
-		faqs: FAQS,
-		categories: FAQ_CATEGORIES,
-		escapeHtml: escapeFaqHtml,
-		highlightMatch,
-	};
-}
+// Export diretti: dataset FAQ + helpers puri (no reattivita').
+export const faqs = FAQS;
+export const categories = FAQ_CATEGORIES;
+export { escapeFaqHtml as escapeHtml };

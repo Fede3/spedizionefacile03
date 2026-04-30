@@ -1,19 +1,17 @@
 <script setup>
 /** AdminConsoleAnalytics.vue (orchestrator) */
 import { computed, ref, onMounted } from 'vue';
-import { useChartLogic } from '~/composables/useChartLogic';
+import {
+	toNumber,
+	formatCurrencyShort as formatEurShort,
+	formatPercentage as formatPercent,
+	formatInteger,
+	computeSegments,
+} from '~/utils/chart';
 import AdminChartOrders from '~/components/admin/AdminChartOrders.vue';
 import AdminChartRevenue from '~/components/admin/AdminChartRevenue.vue';
 import AdminChartStatus from '~/components/admin/AdminChartStatus.vue';
 import '~/assets/css/admin.css';
-
-const {
-	toNumber,
-	formatCurrencyShort: formatEurShort,
-	formatPercentage: formatPercent,
-	formatInteger,
-	computeSegments,
-} = useChartLogic();
 
 const props = defineProps({
 	days: {
@@ -116,7 +114,7 @@ const topStatusShares = computed(() => {
 });
 
 /* ---- Summary cards per tab attivo ---- */
-const summaryCards = computed(() => {
+const _summaryCards = computed(() => {
 	if (activeChart.value === 'ricavi') {
 		return [
 			{ key: 'rev-today', label: 'Oggi', value: formatEurShort(props.revenueToday) },

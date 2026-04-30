@@ -16,7 +16,7 @@ import {
 	type ServicesState,
 	type ShipmentDraftStore,
 	type StepAddressDraft,
-} from '~/composables/useShipmentStepDraftPayload';
+} from '~/utils/shipmentDraftPayload';
 import { useShipmentStepPaymentEntry } from '~/composables/useShipmentStepPaymentEntry';
 import {
 	collectSelectedServiceItems,

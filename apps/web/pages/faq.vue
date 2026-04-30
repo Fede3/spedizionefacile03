@@ -2,9 +2,8 @@
 import '~/assets/css/content.css';
 import '~/assets/css/pages/faq.css';
 import { computed, ref } from 'vue';
-import { useFaqs } from '~/composables/useFaqs';
+import { faqs, categories, highlightMatch } from '~/utils/faqs';
 
-const { faqs, categories, highlightMatch, escapeHtml } = useFaqs();
 const faqCategories = computed(() => categories);
 
 // ── Stato UI ─────────────────────────────────────────────────

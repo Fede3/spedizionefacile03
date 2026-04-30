@@ -1,7 +1,12 @@
 <script setup>
 /** AdminChartRevenue.vue */
 import { computed, ref } from 'vue';
-import { useChartLogic } from '~/composables/useChartLogic';
+import {
+	toNumber,
+	formatCurrency as formatEur,
+	formatDateShort as shortDate,
+	formatDate as fullDate,
+} from '~/utils/chart';
 
 const props = defineProps({
 	revenueData: {
@@ -14,13 +19,6 @@ const props = defineProps({
 		validator: (v) => ['7d', '30d', '90d'].includes(v),
 	},
 });
-
-const {
-	toNumber,
-	formatCurrency: formatEur,
-	formatDateShort: shortDate,
-	formatDate: fullDate,
-} = useChartLogic();
 
 const hoveredBarIndex = ref(-1);
 

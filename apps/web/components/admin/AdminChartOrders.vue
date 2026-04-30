@@ -1,7 +1,7 @@
 <script setup>
 /** AdminChartOrders.vue */
 import { computed, ref } from 'vue';
-import { useChartLogic } from '~/composables/useChartLogic';
+import { toNumber, formatInteger, formatDateShort as shortDate, formatDate as fullDate } from '~/utils/chart';
 
 const props = defineProps({
 	ordersData: {
@@ -15,8 +15,6 @@ const props = defineProps({
 		validator: (v) => ['7d', '30d', '90d'].includes(v),
 	},
 });
-
-const { toNumber, formatInteger, formatDateShort: shortDate, formatDate: fullDate } = useChartLogic();
 
 const hoveredIndex = ref(-1);
 
