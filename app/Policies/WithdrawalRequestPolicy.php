@@ -43,6 +43,7 @@ class WithdrawalRequestPolicy
         if ($user->isAdmin()) {
             return true;
         }
+
         return $request->user_id === $user->id && $request->status === WithdrawalRequest::STATUS_PENDING;
     }
 

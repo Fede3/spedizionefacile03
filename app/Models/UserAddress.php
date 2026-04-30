@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
@@ -24,7 +25,7 @@ class UserAddress extends Model
         'telephone_number',        // Telefono
         'email',                   // Email
         'default',                 // Se true, e' l'indirizzo predefinito dell'utente
-        'user_id'                  // ID dell'utente proprietario
+        'user_id',                  // ID dell'utente proprietario
     ];
 
     /**
@@ -32,11 +33,12 @@ class UserAddress extends Model
      * Questo codice viene eseguito ogni volta che un indirizzo viene
      * creato, modificato o cancellato.
      */
-    public static function boot() {
+    public static function boot()
+    {
         parent::boot();
 
         // Quando si CREA un nuovo indirizzo:
-        static::creating(function($address) {
+        static::creating(function ($address) {
 
             // Conta quanti indirizzi ha gia' l'utente
             $existingCount = $address->newQuery()
@@ -59,11 +61,11 @@ class UserAddress extends Model
 
         // Quando si MODIFICA un indirizzo:
         // Se viene impostato come predefinito, toglie il predefinito dagli altri
-        static::updating(function($address) {
+        static::updating(function ($address) {
             if ($address->default) {
                 $address->newQuery()->where('user_id', $address->user->id)
-                                    ->where('id', '!=', $address->id)
-                                    ->update(['default' => false]);
+                    ->where('id', '!=', $address->id)
+                    ->update(['default' => false]);
             }
         });
 
@@ -86,7 +88,8 @@ class UserAddress extends Model
     }
 
     // Relazione: ogni indirizzo appartiene a UN utente
-    public function user(): BelongsTo {
+    public function user(): BelongsTo
+    {
         return $this->belongsTo(User::class);
     }
 }

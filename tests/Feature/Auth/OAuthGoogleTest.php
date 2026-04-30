@@ -125,6 +125,7 @@ class OAuthGoogleTest extends TestCase
         $mock->shouldReceive('redirectUrl')->andReturnSelf();
         $mock->shouldReceive('with')->once()->andReturnUsing(function ($params) use (&$captured, $mock) {
             $captured = $params;
+
             return $mock;
         });
         $mock->shouldReceive('user')->andReturn(tap(new SocialiteUser, function ($u) {

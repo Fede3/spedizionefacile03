@@ -84,7 +84,7 @@ return [
         'key' => env('STRIPE_KEY'),                        // Chiave pubblica (visibile nel frontend)
         'secret' => env('STRIPE_SECRET'),                  // Chiave segreta (solo backend)
         'client_id' => env('STRIPE_CLIENT_ID'),            // ID client per Stripe Connect
-        'webhook_secret' => env('STRIPE_WEBHOOK_SECRET')   // Segreto per verificare i webhook
+        'webhook_secret' => env('STRIPE_WEBHOOK_SECRET'),   // Segreto per verificare i webhook
     ],
 
     // Referral / coupon preview - percentuale sconto usata dal boundary preview condiviso

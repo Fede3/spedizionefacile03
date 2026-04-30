@@ -7,7 +7,6 @@ use App\Models\PackageAddress;
 use App\Models\Service;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 
 /**
  * GuestCartMergeService - Transfers guest session cart into authenticated user's DB cart.

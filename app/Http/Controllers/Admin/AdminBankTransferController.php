@@ -1,9 +1,10 @@
 <?php
+
 namespace App\Http\Controllers\Admin;
 
-use App\Http\Controllers\Controller;
-
 use App\Events\OrderPaid;
+use App\Http\Controllers\Controller;
+use App\Http\Requests\ConfirmBankTransferRequest;
 use App\Models\Order;
 use App\Models\Transaction;
 use Illuminate\Http\JsonResponse;
@@ -30,7 +31,7 @@ class AdminBankTransferController extends Controller
     /**
      * Conferma la ricezione del bonifico e sblocca il flusso spedizione.
      */
-    public function confirm(\App\Http\Requests\ConfirmBankTransferRequest $request, Order $order): JsonResponse
+    public function confirm(ConfirmBankTransferRequest $request, Order $order): JsonResponse
     {
         $data = $request->validated();
 

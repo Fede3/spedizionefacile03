@@ -1,17 +1,11 @@
 <?php
+
 namespace App\Http\Controllers\Cart;
 
 use App\Http\Controllers\Controller;
-
-use App\Cart\MyMoney;
-use App\Cart\GuestCart;
-use App\Models\Package;
+use App\Http\Requests\StoreGuestCartRequest;
 use App\Services\CartService;
-use App\Services\ShipmentServicePricingService;
-use Illuminate\Http\Request;
-use App\Http\Resources\PackageResource;
-use App\Http\Requests\CartCreateRequest;
-use App\Http\Requests\GuestCartCreateRequest;
+
 class GuestCartController extends Controller
 {
     public function __construct(
@@ -20,7 +14,8 @@ class GuestCartController extends Controller
 
     // Mostra il contenuto del carrello dell'ospite
     // I pacchi sono salvati nella sessione con la chiave 'cart'
-    public function index() {
+    public function index()
+    {
         $packages = session()->get('cart', []);
 
         return response()->json([
@@ -31,24 +26,27 @@ class GuestCartController extends Controller
 
     // Calcola il subtotale del carrello sommando i prezzi di tutti i pacchi
     // Il prezzo di ogni pacco (single_price) e' gia' in centesimi e include la quantita'
-    public function subtotal($packages) {
+    public function subtotal($packages)
+    {
         return $this->cartService->subtotalFromArray($packages);
     }
 
     // Prepara le informazioni aggiuntive (meta) per la risposta
     // Include: se il carrello e' vuoto, il subtotale e il totale formattati (es. "9,00 EUR")
-    protected function meta($packages) {
+    protected function meta($packages)
+    {
         return [
             'empty' => count($packages) === 0,
             'subtotal' => $this->subtotal($packages)->formatted(),
-            'total' => $this->subtotal($packages)->formatted()
+            'total' => $this->subtotal($packages)->formatted(),
         ];
     }
 
     // Aggiunge uno o piu' pacchi al carrello dell'ospite
     // Se un pacco identico e' gia' nel carrello (stesse dimensioni, stesso percorso),
     // invece di crearne uno nuovo aumenta la quantita' di quello esistente
-    public function store(\App\Http\Requests\StoreGuestCartRequest $request) {
+    public function store(StoreGuestCartRequest $request)
+    {
         // Recuperiamo il carrello attuale dalla sessione (o un array vuoto se non esiste)
         $cart = session()->get('cart', []);
 
@@ -125,7 +123,8 @@ class GuestCartController extends Controller
     }
 
     // Svuota completamente il carrello dell'ospite
-    public function emptyCart() {
+    public function emptyCart()
+    {
 
         session()->put('cart', []);
 
@@ -142,5 +141,4 @@ class GuestCartController extends Controller
     {
         return $this->cartService->buildServiceSignatureFromGuest($services);
     }
-
 }

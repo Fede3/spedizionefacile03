@@ -70,7 +70,7 @@ class OrderBrtFulfillmentServiceTest extends TestCase
             ]
         );
 
-        $service = new OrderBrtFulfillmentService();
+        $service = new OrderBrtFulfillmentService;
 
         $options = $service->buildAutomaticShipmentOptions($order);
 
@@ -92,7 +92,7 @@ class OrderBrtFulfillmentServiceTest extends TestCase
             'cod_amount' => null,
         ]);
 
-        $service = new OrderBrtFulfillmentService();
+        $service = new OrderBrtFulfillmentService;
 
         $updated = $service->applyShipmentResult($order, [
             'parcel_id' => 'PARCEL-123',
@@ -152,7 +152,7 @@ class OrderBrtFulfillmentServiceTest extends TestCase
 
         app()->instance(ShipmentExecutionService::class, $execution);
 
-        $service = new OrderBrtFulfillmentService();
+        $service = new OrderBrtFulfillmentService;
 
         $updated = $service->runPostLabelFlow(
             $order,

@@ -10,12 +10,11 @@
 
 namespace App\Http\Resources;
 
+use App\Models\Package;
 use Illuminate\Http\Request;
-use App\Http\Resources\ServiceResource;
-use App\Http\Resources\PackageAddressResource;
 use Illuminate\Http\Resources\Json\JsonResource;
 
-/** @mixin \App\Models\Package */
+/** @mixin Package */
 class PackageResource extends JsonResource
 {
     /**

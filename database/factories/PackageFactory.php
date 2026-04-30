@@ -2,14 +2,18 @@
 
 namespace Database\Factories;
 
+use App\Models\Package;
+use App\Models\PackageAddress;
+use App\Models\Service;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Package>
+ * @extends Factory<Package>
  */
 class PackageFactory extends Factory
 {
-    protected $model = \App\Models\Package::class;
+    protected $model = Package::class;
 
     /**
      * Define the model's default state.
@@ -19,7 +23,7 @@ class PackageFactory extends Factory
     public function definition(): array
     {
         return [
-            'user_id' => \App\Models\User::factory(),
+            'user_id' => User::factory(),
             'package_type' => 'Pacco',
             'quantity' => 1,
             'weight' => fake()->randomFloat(1, 0.5, 50),
@@ -29,9 +33,9 @@ class PackageFactory extends Factory
             'weight_price' => fake()->randomFloat(2, 5, 100),
             'volume_price' => fake()->randomFloat(2, 5, 100),
             'single_price' => fake()->numberBetween(500, 10000),
-            'origin_address_id' => \App\Models\PackageAddress::factory()->state(['type' => 'Partenza']),
-            'destination_address_id' => \App\Models\PackageAddress::factory()->state(['type' => 'Destinazione']),
-            'service_id' => fn () => \App\Models\Service::create([
+            'origin_address_id' => PackageAddress::factory()->state(['type' => 'Partenza']),
+            'destination_address_id' => PackageAddress::factory()->state(['type' => 'Destinazione']),
+            'service_id' => fn () => Service::create([
                 'service_type' => 'Nessuno',
                 'date' => '',
                 'time' => '',

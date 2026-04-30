@@ -221,7 +221,7 @@ class InvoiceListControllerTest extends TestCase
         $this->assertSame('2026/00042', $item['invoice_number']);
         $this->assertSame(2000, (int) $item['amount_cents']);
         $this->assertStringContainsString('20,00', $item['amount_eur_formatted']);
-        $this->assertSame('/api/orders/' . $order->id . '/invoice.pdf', $item['download_url']);
+        $this->assertSame('/api/orders/'.$order->id.'/invoice.pdf', $item['download_url']);
     }
 
     /* ==========================================================

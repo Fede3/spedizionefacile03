@@ -71,7 +71,7 @@ class ShipmentServiceTest extends TestCase
 
     public function test_brt_payload_builder_sanitize_preserva_campi_permessi(): void
     {
-        $builder = new BrtPayloadBuilder();
+        $builder = new BrtPayloadBuilder;
 
         $sanitized = $builder->sanitizeCreateData([
             'senderCustomerCode' => 1020108,
@@ -140,9 +140,9 @@ class ShipmentServiceTest extends TestCase
     private function makeService(): ShipmentService
     {
         return new ShipmentService(
-            new BrtConfig(),
-            new AddressNormalizer(),
-            new ErrorTranslator(),
+            new BrtConfig,
+            new AddressNormalizer,
+            new ErrorTranslator,
         );
     }
 

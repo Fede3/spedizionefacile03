@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Characterization;
 
+use App\Http\Controllers\Checkout\RefundController;
 use App\Models\Order;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -44,7 +45,7 @@ class RimborsoTest extends TestCase
      */
     public function test_commissione_annullamento_e_200_centesimi(): void
     {
-        $this->assertEquals(200, \App\Http\Controllers\Checkout\RefundController::CANCELLATION_FEE_CENTS);
+        $this->assertEquals(200, RefundController::CANCELLATION_FEE_CENTS);
     }
 
     // ========================================================================

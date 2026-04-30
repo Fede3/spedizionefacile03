@@ -41,6 +41,7 @@ class ProRequestPolicy
         if ($user->isAdmin()) {
             return true;
         }
+
         // Owner può cancellare solo se ancora pending
         return $request->user_id === $user->id && $request->status === ProRequest::STATUS_PENDING;
     }

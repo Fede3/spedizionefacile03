@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Checkout;
 
 use App\Http\Controllers\Controller;
-
+use App\Http\Requests\CancelOrderRequest;
 use App\Models\Order;
 use App\Services\RefundService;
 use Illuminate\Http\JsonResponse;
@@ -33,7 +33,7 @@ class RefundController extends Controller
      * locking, eligibility re-check, BRT cancellation, refund routing and
      * order status update inside a single DB transaction.
      */
-    public function requestCancellation(\App\Http\Requests\CancelOrderRequest $request, Order $order): JsonResponse
+    public function requestCancellation(CancelOrderRequest $request, Order $order): JsonResponse
     {
         Gate::authorize('cancel', $order);
 
@@ -46,16 +46,16 @@ class RefundController extends Controller
         try {
             $result = $this->refundService->processCancellation($order, $request->reason);
 
-            $refundEur     = number_format($result['refund_amount_cents'] / 100, 2, ',', '.');
+            $refundEur = number_format($result['refund_amount_cents'] / 100, 2, ',', '.');
             $commissionEur = number_format($result['commission_cents'] / 100, 2, ',', '.');
 
             return response()->json([
-                'success'       => true,
-                'message'       => $result['refund_amount_cents'] > 0
+                'success' => true,
+                'message' => $result['refund_amount_cents'] > 0
                     ? "Ordine annullato. Rimborso di {$refundEur} EUR processato (commissione: {$commissionEur} EUR)."
                     : 'Ordine annullato con successo.',
                 'refund_amount' => $refundEur,
-                'commission'    => $commissionEur,
+                'commission' => $commissionEur,
                 'refund_method' => $result['refund_method'],
                 'brt_cancelled' => $result['brt_cancelled'],
             ]);
@@ -64,8 +64,8 @@ class RefundController extends Controller
         } catch (\Exception $e) {
             Log::error('Order cancellation failed', [
                 'order_id' => $order->id,
-                'error'    => $e->getMessage(),
-                'trace'    => $e->getTraceAsString(),
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
             ]);
 
             return response()->json([

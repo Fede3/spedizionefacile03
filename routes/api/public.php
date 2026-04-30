@@ -7,12 +7,12 @@
  * GDPR (cancellazione account, export dati, consenso cookie).
  */
 
-use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Admin\HomepageImageController;
 use App\Http\Controllers\Catalog\PublicArticleController;
 use App\Http\Controllers\Catalog\PublicPriceBandController;
-use App\Http\Controllers\Admin\HomepageImageController;
 use App\Http\Controllers\Gdpr\GdprController;
 use App\Http\Controllers\HealthController;
+use Illuminate\Support\Facades\Route;
 
 /* ===== HEALTH CHECK (Sprint 7.2) ===== */
 // Endpoint usati da Render, UptimeRobot, load balancer per verificare stato app.

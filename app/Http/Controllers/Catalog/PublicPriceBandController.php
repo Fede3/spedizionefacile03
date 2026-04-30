@@ -1,8 +1,8 @@
 <?php
+
 namespace App\Http\Controllers\Catalog;
 
 use App\Http\Controllers\Controller;
-
 use App\Models\Setting;
 use App\Services\EuropePriceEngineService;
 use App\Services\PriceEngineService;
@@ -16,9 +16,7 @@ class PublicPriceBandController extends Controller
         private readonly PriceEngineService $priceEngine,
         private readonly EuropePriceEngineService $europePriceEngine,
         private readonly ShipmentServicePricingService $shipmentServicePricing,
-    )
-    {
-    }
+    ) {}
 
     // Ritorna tutte le fasce di prezzo + promo, con cache di 60 minuti
     public function index(): JsonResponse

@@ -41,10 +41,10 @@ class AuditLogService
     /**
      * Scrive una riga di audit.
      *
-     * @param  string                 $action  slug breve, es. 'auth.login', 'order.create'
-     * @param  Model|null             $target  modello target (se applicabile)
-     * @param  array<string,mixed>    $context payload extra
-     * @param  array<string,mixed>    $opts    override avanzati: 'user_id', 'actor_type', 'ip', 'user_agent'
+     * @param  string  $action  slug breve, es. 'auth.login', 'order.create'
+     * @param  Model|null  $target  modello target (se applicabile)
+     * @param  array<string,mixed>  $context  payload extra
+     * @param  array<string,mixed>  $opts  override avanzati: 'user_id', 'actor_type', 'ip', 'user_agent'
      */
     public static function log(string $action, ?Model $target = null, array $context = [], array $opts = []): ?AuditLog
     {
@@ -75,6 +75,7 @@ class AuditLogService
                 'action' => $action,
                 'error' => $e->getMessage(),
             ]);
+
             return null;
         }
     }
@@ -87,6 +88,7 @@ class AuditLogService
         if (method_exists($user, 'isAdmin') && $user->isAdmin()) {
             return 'admin';
         }
+
         return 'user';
     }
 
@@ -108,12 +110,14 @@ class AuditLogService
                 $lc = is_string($key) ? mb_strtolower($key) : null;
                 if ($lc !== null && (in_array($lc, $sensitive, true) || preg_match('/(secret|token|password)$/i', $lc))) {
                     $value[$key] = '[REDACTED]';
+
                     continue;
                 }
                 if (is_array($v)) {
                     $value[$key] = $walk($v);
                 }
             }
+
             return $value;
         };
 

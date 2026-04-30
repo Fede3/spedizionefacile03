@@ -17,12 +17,11 @@
 
 namespace App\Http\Resources;
 
+use App\Models\Order;
 use Illuminate\Http\Request;
-use App\Http\Resources\PackageResource;
-use App\Http\Resources\TransactionResource;
 use Illuminate\Http\Resources\Json\JsonResource;
 
-/** @mixin \App\Models\Order */
+/** @mixin Order */
 class OrderResource extends JsonResource
 {
     /**
@@ -61,18 +60,18 @@ class OrderResource extends JsonResource
             'brt_pudo_id' => $this->brt_pudo_id,                         // ID punto ritiro BRT
             'is_cod' => (bool) $this->is_cod,                            // Se e' in contrassegno
             'cod_amount' => $this->cod_amount,                           // Importo contrassegno
-            'has_label' => !empty($this->brt_label_base64),              // Se ha l'etichetta BRT
+            'has_label' => ! empty($this->brt_label_base64),              // Se ha l'etichetta BRT
             'brt_error' => $this->brt_error,                             // Errore generazione etichetta BRT (null se tutto ok)
             'brt_service_type' => $this->brt_service_type,               // Tipo servizio BRT
             // Campi rimborso
             'cancellable' => $cancellable,                               // Se l'ordine puo' essere annullato
             'refund_status' => $this->refund_status,                     // Stato rimborso (pending, completed, failed, none)
-            'refund_amount' => $this->refund_amount ? number_format($this->refund_amount / 100, 2, ',', '.') . ' EUR' : null,
+            'refund_amount' => $this->refund_amount ? number_format($this->refund_amount / 100, 2, ',', '.').' EUR' : null,
             'refund_amount_cents' => $this->refund_amount,               // Importo rimborso in centesimi
             'refund_method' => $this->refund_method,                     // Metodo rimborso (stripe, wallet)
             'refund_reason' => $this->refund_reason,                     // Motivo del rimborso
             'refunded_at' => $this->refunded_at ? $this->refunded_at->setTimezone('Europe/Rome')->format('d/m/Y H:i') : null,
-            'cancellation_fee' => $this->cancellation_fee ? number_format($this->cancellation_fee / 100, 2, ',', '.') . ' EUR' : null,
+            'cancellation_fee' => $this->cancellation_fee ? number_format($this->cancellation_fee / 100, 2, ',', '.').' EUR' : null,
             'payment_method' => $this->payment_method,                   // Metodo di pagamento originale
             // F04 — data ritiro programmata (rieditabile finché non ritirato)
             'pickup_date' => $this->pickup_date?->format('Y-m-d'),

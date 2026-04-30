@@ -1,9 +1,10 @@
 <?php
+
 namespace App\Http\Controllers\Account;
 
 use App\Http\Controllers\Controller;
-
 use Illuminate\Http\Request;
+
 class AddressController extends Controller
 {
     // Restituisce la lista di tutti gli indirizzi (al momento ritorna una lista vuota)

@@ -23,6 +23,9 @@ class CreateOrderRequest extends FormRequest
             'package_ids.*' => ['integer'],
             'billing_data' => ['nullable', 'array'],
             'client_submission_id' => ['nullable', 'string', 'max:255'],
+            'discount_context' => ['nullable', 'array'],
+            'discount_context.type' => ['required_with:discount_context', 'string', 'in:coupon,referral'],
+            'discount_context.code' => ['required_with:discount_context', 'string', 'max:80'],
             'single_order_only' => ['nullable', 'boolean'],
         ];
     }

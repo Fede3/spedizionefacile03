@@ -16,7 +16,9 @@ class OrderBrtTrackingLifecycleService
     private function findOrderByTrackingReference(string $reference): ?Order
     {
         $normalized = trim($reference);
-        if ($normalized === '') return null;
+        if ($normalized === '') {
+            return null;
+        }
 
         return Order::where('brt_parcel_id', $normalized)->first()
             ?? Order::where('brt_tracking_number', $normalized)->first()

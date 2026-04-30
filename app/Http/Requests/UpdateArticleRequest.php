@@ -22,8 +22,8 @@ class UpdateArticleRequest extends FormRequest
 
         return [
             'title' => ['sometimes', 'required', 'string', 'max:255'],
-            'slug' => ['sometimes', 'required', 'string', 'max:255', 'unique:articles,slug,' . $articleId],
-            'type' => ['sometimes', 'required', 'in:' . ArticleController::ALLOWED_TYPES],
+            'slug' => ['sometimes', 'required', 'string', 'max:255', 'unique:articles,slug,'.$articleId],
+            'type' => ['sometimes', 'required', 'in:'.ArticleController::ALLOWED_TYPES],
             'meta_description' => ['nullable', 'string'],
             'intro' => ['nullable', 'string'],
             'sections' => ['nullable', 'array'],

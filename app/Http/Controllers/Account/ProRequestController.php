@@ -1,12 +1,13 @@
 <?php
+
 namespace App\Http\Controllers\Account;
 
 use App\Http\Controllers\Controller;
-
+use App\Http\Requests\StoreProRequestRequest;
 use App\Models\ProRequest;
 use App\Models\User;
+use App\Services\AuditLogService;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
 class ProRequestController extends Controller
@@ -15,7 +16,7 @@ class ProRequestController extends Controller
      * Invia una nuova richiesta per diventare Partner Pro.
      * L'utente non deve gia' essere Pro e non deve avere una richiesta in attesa.
      */
-    public function store(\App\Http\Requests\StoreProRequestRequest $request): JsonResponse
+    public function store(StoreProRequestRequest $request): JsonResponse
     {
         $user = auth()->user();
 
@@ -124,7 +125,7 @@ class ProRequestController extends Controller
         $user->referral_code = $user->referral_code ?: strtoupper(Str::random(8));
         $user->save();
 
-        \App\Services\AuditLogService::log('admin.pro_request.approve', $proRequest, [
+        AuditLogService::log('admin.pro_request.approve', $proRequest, [
             'user_id' => $user->id,
             'email' => $user->email,
         ]);
@@ -152,7 +153,7 @@ class ProRequestController extends Controller
             'reviewed_at' => now(),
         ]);
 
-        \App\Services\AuditLogService::log('admin.pro_request.reject', $proRequest, [
+        AuditLogService::log('admin.pro_request.reject', $proRequest, [
             'user_id' => $proRequest->user_id,
         ]);
 

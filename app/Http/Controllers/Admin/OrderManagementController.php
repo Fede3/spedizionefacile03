@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Events\ShipmentStatusChanged;
 use App\Http\Controllers\Controller;
-
+use App\Http\Requests\UpdateOrderPudoRequest;
+use App\Http\Requests\UpdateOrderStatusRequest;
 use App\Models\Order;
 use App\Services\Brt\ShipmentService;
 use App\Services\OrderBrtFulfillmentService;
@@ -36,7 +38,7 @@ class OrderManagementController extends Controller
     {
         // Ordinamento sicuro: whitelist campi consentiti
         $allowedSortFields = ['created_at', 'total', 'status', 'id'];
-        $sortBy  = in_array($request->input('sort_by'), $allowedSortFields, true)
+        $sortBy = in_array($request->input('sort_by'), $allowedSortFields, true)
             ? $request->input('sort_by')
             : 'created_at';
         $sortDir = $request->input('sort_dir') === 'asc' ? 'asc' : 'desc';
@@ -76,12 +78,12 @@ class OrderManagementController extends Controller
             $search = $request->input('search');
             $query->where(function ($q) use ($search) {
                 $q->where('id', $search)
-                  ->orWhere('brt_parcel_id', 'like', "%{$search}%")
-                  ->orWhereHas('user', function ($uq) use ($search) {
-                      $uq->where('name', 'like', "%{$search}%")
-                         ->orWhere('surname', 'like', "%{$search}%")
-                         ->orWhere('email', 'like', "%{$search}%");
-                  });
+                    ->orWhere('brt_parcel_id', 'like', "%{$search}%")
+                    ->orWhereHas('user', function ($uq) use ($search) {
+                        $uq->where('name', 'like', "%{$search}%")
+                            ->orWhere('surname', 'like', "%{$search}%")
+                            ->orWhere('email', 'like', "%{$search}%");
+                    });
             });
         }
 
@@ -107,7 +109,7 @@ class OrderManagementController extends Controller
         // Filtro servizi (nomi separati da virgola, es. "Express,Internazionale")
         if ($request->filled('services')) {
             $serviceNames = array_filter(array_map('trim', explode(',', $request->input('services'))));
-            if (!empty($serviceNames)) {
+            if (! empty($serviceNames)) {
                 $query->whereHas('packages.service', function ($sq) use ($serviceNames) {
                     $sq->whereIn('name', $serviceNames);
                 });
@@ -120,7 +122,7 @@ class OrderManagementController extends Controller
     }
 
     // Cambia lo stato di un ordine (es. da "pending" a "completed")
-    public function updateOrderStatus(\App\Http\Requests\UpdateOrderStatusRequest $request, Order $order): JsonResponse
+    public function updateOrderStatus(UpdateOrderStatusRequest $request, Order $order): JsonResponse
     {
         $data = $request->validated();
 
@@ -129,7 +131,7 @@ class OrderManagementController extends Controller
 
         // Invia notifica email all'utente sul cambio di stato
         if ($oldStatus !== $data['status']) {
-            event(new \App\Events\ShipmentStatusChanged($order, $oldStatus, $data['status']));
+            event(new ShipmentStatusChanged($order, $oldStatus, $data['status']));
         }
 
         return response()->json([
@@ -176,12 +178,12 @@ class OrderManagementController extends Controller
             $search = $request->input('search');
             $query->where(function ($q) use ($search) {
                 $q->where('brt_parcel_id', 'like', "%{$search}%")
-                  ->orWhere('brt_numeric_sender_reference', 'like', "%{$search}%")
-                  ->orWhereHas('user', function ($uq) use ($search) {
-                      $uq->where('name', 'like', "%{$search}%")
-                         ->orWhere('surname', 'like', "%{$search}%")
-                         ->orWhere('email', 'like', "%{$search}%");
-                  });
+                    ->orWhere('brt_numeric_sender_reference', 'like', "%{$search}%")
+                    ->orWhereHas('user', function ($uq) use ($search) {
+                        $uq->where('name', 'like', "%{$search}%")
+                            ->orWhere('surname', 'like', "%{$search}%")
+                            ->orWhere('email', 'like', "%{$search}%");
+                    });
             });
         }
 
@@ -191,7 +193,7 @@ class OrderManagementController extends Controller
     }
 
     // Aggiorna o rimuove il punto PUDO associato a un ordine
-    public function updateOrderPudo(\App\Http\Requests\UpdateOrderPudoRequest $request, Order $order): JsonResponse
+    public function updateOrderPudo(UpdateOrderPudoRequest $request, Order $order): JsonResponse
     {
         $data = $request->validated();
 
@@ -218,7 +220,7 @@ class OrderManagementController extends Controller
      */
     public function regenerateLabel(Order $order): JsonResponse
     {
-        if (!config('services.brt.client_id')) {
+        if (! config('services.brt.client_id')) {
             return response()->json([
                 'success' => false,
                 'message' => 'BRT non configurato. Verifica le credenziali nel file .env.',
@@ -248,7 +250,7 @@ class OrderManagementController extends Controller
 
         return response()->json([
             'success' => false,
-            'message' => 'Generazione etichetta BRT fallita: ' . ($result['error'] ?? 'Errore sconosciuto'),
+            'message' => 'Generazione etichetta BRT fallita: '.($result['error'] ?? 'Errore sconosciuto'),
         ], 422);
     }
 }

@@ -29,15 +29,14 @@
  *   e' condivisa. In precedenza login/registrazione erano in web.php con middleware
  *   "web" diverso, causando errori "Unauthenticated" perche' le sessioni non combaciavano.
  */
+$routeDir = __DIR__.'/api';
 
-$routeDir = __DIR__ . '/api';
-
-require $routeDir . '/auth.php';
-require $routeDir . '/shipment.php';
-require $routeDir . '/cart.php';
-require $routeDir . '/orders.php';
-require $routeDir . '/payments.php';
-require $routeDir . '/community.php';
-require $routeDir . '/admin.php';
-require $routeDir . '/public.php';
-require $routeDir . '/invoices.php';
+require $routeDir.'/auth.php';
+require $routeDir.'/shipment.php';
+require $routeDir.'/cart.php';
+require $routeDir.'/orders.php';
+require $routeDir.'/payments.php';
+require $routeDir.'/community.php';
+require $routeDir.'/admin.php';
+require $routeDir.'/public.php';
+require $routeDir.'/invoices.php';

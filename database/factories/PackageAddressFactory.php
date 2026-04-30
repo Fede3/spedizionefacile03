@@ -2,14 +2,15 @@
 
 namespace Database\Factories;
 
+use App\Models\PackageAddress;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\PackageAddress>
+ * @extends Factory<PackageAddress>
  */
 class PackageAddressFactory extends Factory
 {
-    protected $model = \App\Models\PackageAddress::class;
+    protected $model = PackageAddress::class;
 
     /**
      * Define the model's default state.

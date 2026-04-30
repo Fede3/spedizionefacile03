@@ -38,6 +38,7 @@ use Illuminate\Queue\Events\JobFailed;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\ServiceProvider;
+use Sentry\Laravel\Integration;
 use Stripe\StripeClient;
 
 class AppServiceProvider extends ServiceProvider
@@ -96,10 +97,10 @@ class AppServiceProvider extends ServiceProvider
         // senza questo hook, un errore in coda passerebbe SILENZIOSO e
         // scomparirebbe nei log. Con Sentry: alert immediato al team.
         // Guard class_exists: se Sentry non e' installato localmente, zero errori.
-        if (class_exists(\Sentry\Laravel\Integration::class)) {
+        if (class_exists(Integration::class)) {
             Queue::failing(function (JobFailed $event): void {
                 if (app()->bound('sentry')) {
-                    \Sentry\Laravel\Integration::captureUnhandledException($event->exception);
+                    Integration::captureUnhandledException($event->exception);
                 }
             });
         }

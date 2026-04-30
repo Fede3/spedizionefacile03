@@ -20,9 +20,9 @@ namespace App\Mail;
 use App\Models\Order;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
+use Illuminate\Mail\Mailables\Attachment;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
-use Illuminate\Mail\Mailables\Attachment;
 use Illuminate\Queue\SerializesModels;
 
 class ShipmentLabelMail extends Mailable
@@ -44,7 +44,7 @@ class ShipmentLabelMail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'SpediamoFacile - Etichetta spedizione ordine #' . $this->order->id,
+            subject: 'SpediamoFacile - Etichetta spedizione ordine #'.$this->order->id,
         );
     }
 
@@ -70,7 +70,7 @@ class ShipmentLabelMail extends Mailable
         if ($this->order->brt_label_base64) {
             $attachments[] = Attachment::fromData(
                 fn () => base64_decode($this->order->brt_label_base64, true) ?: '',
-                'etichetta-brt-' . $this->order->id . '.pdf'
+                'etichetta-brt-'.$this->order->id.'.pdf'
             )->withMime('application/pdf');
         }
 

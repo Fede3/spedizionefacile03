@@ -3,11 +3,10 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-
+use App\Http\Requests\UpdateAdminSettingsRequest;
 use App\Models\ContactMessage;
 use App\Models\Setting;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 
 class ContentController extends Controller
 {
@@ -50,7 +49,7 @@ class ContentController extends Controller
 
     // Aggiorna le impostazioni del sito
     // Accetta solo le chiavi autorizzate (per sicurezza)
-    public function updateSettings(\App\Http\Requests\UpdateAdminSettingsRequest $request): JsonResponse
+    public function updateSettings(UpdateAdminSettingsRequest $request): JsonResponse
     {
         $data = $request->validated();
 
@@ -72,7 +71,7 @@ class ContentController extends Controller
         }
 
         foreach ($data as $key => $value) {
-            if (!is_null($value)) {
+            if (! is_null($value)) {
                 Setting::set($key, $value);
             }
         }
@@ -90,5 +89,4 @@ class ContentController extends Controller
             'message' => 'Impostazioni aggiornate con successo.',
         ]);
     }
-
 }

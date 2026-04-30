@@ -4,6 +4,9 @@ namespace Tests\Feature\Auth;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
+use Laravel\Socialite\Facades\Socialite;
+use Laravel\Socialite\Two\GoogleProvider;
+use Laravel\Socialite\Two\User;
 use Tests\TestCase;
 
 /**
@@ -202,16 +205,17 @@ class OAuthStateSecurityTest extends TestCase
         // Mockery il driver Google per ispezionare i parametri passati a
         // ->with([...]) durante user() — il nostro controller deve aggiungere
         // 'code_verifier' prima di risolvere il token.
-        $mock = \Mockery::mock(\Laravel\Socialite\Two\GoogleProvider::class);
+        $mock = \Mockery::mock(GoogleProvider::class);
         $mock->shouldReceive('stateless')->andReturnSelf();
         $mock->shouldReceive('redirectUrl')->andReturnSelf();
         $captured = [];
         $mock->shouldReceive('with')->once()->andReturnUsing(function ($params) use (&$captured, $mock) {
             $captured = $params;
+
             return $mock;
         });
         $mock->shouldReceive('user')->andReturn(
-            tap(new \Laravel\Socialite\Two\User, function ($u) {
+            tap(new User, function ($u) {
                 $u->id = 'google-123';
                 $u->email = 'user-pkce@example.com';
                 $u->name = 'Test User';
@@ -220,7 +224,7 @@ class OAuthStateSecurityTest extends TestCase
             })
         );
 
-        \Laravel\Socialite\Facades\Socialite::shouldReceive('driver')->with('google')->andReturn($mock);
+        Socialite::shouldReceive('driver')->with('google')->andReturn($mock);
 
         $this
             ->withCookie('frontend_redirect', 'http://localhost:3000')

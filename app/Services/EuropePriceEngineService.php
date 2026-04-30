@@ -4,7 +4,6 @@ namespace App\Services;
 
 use App\Models\Setting;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Validation\ValidationException;
 
 class EuropePriceEngineService
 {
@@ -346,7 +345,7 @@ class EuropePriceEngineService
 
         return [
             'id' => trim((string) ($band['id'] ?? uniqid('eu-band-', true))),
-            'label' => trim((string) ($band['label'] ?? '')), 
+            'label' => trim((string) ($band['label'] ?? '')),
             'max_weight_kg' => round((float) ($band['max_weight_kg'] ?? 0), 3),
             'max_volume_m3' => round((float) ($band['max_volume_m3'] ?? 0), 6),
             'volumetric_factor' => max(1, (int) ($band['volumetric_factor'] ?? 250)),

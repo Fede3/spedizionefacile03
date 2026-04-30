@@ -48,11 +48,11 @@ class AbandonedCartReminderMail extends Mailable implements ShouldQueue
     public function headers(): Headers
     {
         $unsubscribeUrl = rtrim((string) config('app.frontend_url', config('app.url')), '/')
-            . '/account/notifiche?unsubscribe=1';
+            .'/account/notifiche?unsubscribe=1';
 
         return new Headers(
             text: [
-                'List-Unsubscribe' => '<' . $unsubscribeUrl . '>',
+                'List-Unsubscribe' => '<'.$unsubscribeUrl.'>',
                 'List-Unsubscribe-Post' => 'List-Unsubscribe=One-Click',
             ],
         );
@@ -61,12 +61,12 @@ class AbandonedCartReminderMail extends Mailable implements ShouldQueue
     public function content(): Content
     {
         $frontend = rtrim((string) config('app.frontend_url', config('app.url')), '/');
-        $resumeUrl = $frontend . '/preventivo?resume=' . urlencode($this->resumeToken);
+        $resumeUrl = $frontend.'/preventivo?resume='.urlencode($this->resumeToken);
 
         return new Content(
             view: 'emails.abandoned-cart',
             with: [
-                'user'      => $this->user,
+                'user' => $this->user,
                 'itemCount' => $this->itemCount,
                 'resumeUrl' => $resumeUrl,
             ],

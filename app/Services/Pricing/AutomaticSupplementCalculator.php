@@ -2,6 +2,8 @@
 
 namespace App\Services\Pricing;
 
+use App\Models\Package;
+
 /**
  * Calcola i supplementi automatici in base a regole configurabili.
  *
@@ -202,7 +204,7 @@ class AutomaticSupplementCalculator
     public function normalizePackages(array $packages): array
     {
         return array_values(array_filter(array_map(function ($package) {
-            if ($package instanceof \App\Models\Package) {
+            if ($package instanceof Package) {
                 $package = [
                     'package_type' => $package->package_type,
                     'quantity' => $package->quantity,

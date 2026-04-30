@@ -21,7 +21,7 @@ class StoreArticleRequest extends FormRequest
         return [
             'title' => ['required', 'string', 'max:255'],
             'slug' => ['nullable', 'string', 'max:255', 'unique:articles,slug'],
-            'type' => ['required', 'in:' . ArticleController::ALLOWED_TYPES],
+            'type' => ['required', 'in:'.ArticleController::ALLOWED_TYPES],
             'meta_description' => ['nullable', 'string'],
             'intro' => ['nullable', 'string'],
             'sections' => ['nullable', 'array'],

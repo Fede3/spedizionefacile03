@@ -31,10 +31,10 @@
  *   - Sanctum internamente (rotta "login" come fallback per utenti non autenticati)
  */
 
-use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Shipping\BrtWebhookController;
 use App\Http\Controllers\Auth\GoogleController;
 use App\Http\Controllers\Checkout\StripeWebhookController;
+use App\Http\Controllers\Shipping\BrtWebhookController;
+use Illuminate\Support\Facades\Route;
 use Laravel\Sanctum\Http\Controllers\CsrfCookieController;
 
 // Pagina principale del backend Laravel (non usata dal frontend Nuxt)
@@ -92,8 +92,8 @@ Route::get('/_test-sentry', function () {
     // Blocco hard in produzione: questa rotta NON deve restare attiva.
     // Per test post-deploy, abilitare temporaneamente SENTRY_TEST_ROUTE_ENABLED=true
     // e rimuovere dopo la verifica.
-    if (app()->environment('production') && !env('SENTRY_TEST_ROUTE_ENABLED', false)) {
+    if (app()->environment('production') && ! env('SENTRY_TEST_ROUTE_ENABLED', false)) {
         abort(404);
     }
-    throw new \RuntimeException('Sentry test error — se lo vedi in dashboard, l\'integrazione funziona.');
+    throw new RuntimeException('Sentry test error — se lo vedi in dashboard, l\'integrazione funziona.');
 })->middleware('throttle:1,1')->name('sentry.test');

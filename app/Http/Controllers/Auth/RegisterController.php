@@ -10,8 +10,9 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
-
 use App\Http\Requests\RegisterRequest;
+use App\Http\Requests\ResendVerificationEmailRequest;
+use App\Http\Requests\VerifyCodeRequest;
 use App\Jobs\SendVerificationEmailJob;
 use App\Models\User;
 use App\Services\GuestCartMergeService;
@@ -56,10 +57,10 @@ class RegisterController extends Controller
             );
         }
 
-        $data['telephone_number'] = $data['prefix'] . ' ' . $data['telephone_number'];
+        $data['telephone_number'] = $data['prefix'].' '.$data['telephone_number'];
         unset($data['prefix']);
 
-        if (!empty($data['referred_by'])) {
+        if (! empty($data['referred_by'])) {
             $referralCode = strtoupper($data['referred_by']);
             $proUser = User::where('referral_code', $referralCode)
                 ->where('role', 'Partner Pro')
@@ -76,7 +77,7 @@ class RegisterController extends Controller
 
             $user = new User($data);
             $user->role = 'User';
-            if (!empty($data['referred_by'])) {
+            if (! empty($data['referred_by'])) {
                 $user->referred_by = $data['referred_by'];
             }
             $user->verification_code = $code;
@@ -113,7 +114,7 @@ class RegisterController extends Controller
      * Verifica il codice a 6 cifre e attiva l'account.
      * Chiamata quando l'utente inserisce il codice ricevuto via email.
      */
-    public function verifyCode(\App\Http\Requests\VerifyCodeRequest $request)
+    public function verifyCode(VerifyCodeRequest $request)
     {
         $user = User::where('email', $request->email)->first();
         $guestCart = $request->hasSession() ? $request->session()->get('cart', []) : [];
@@ -127,7 +128,7 @@ class RegisterController extends Controller
         }
 
         // Controlla se il codice e' stato invalidato per troppi tentativi errati
-        $attemptKey = 'verify_attempts_' . $user->id;
+        $attemptKey = 'verify_attempts_'.$user->id;
         $attempts = (int) Cache::get($attemptKey, 0);
 
         if ($attempts >= 5) {
@@ -147,8 +148,9 @@ class RegisterController extends Controller
             Cache::put($attemptKey, $attempts + 1, now()->addMinutes(30));
 
             $remaining = 4 - $attempts;
+
             return CustomResponse::setFailResponse(
-                'Codice di verifica non valido. Tentativi rimasti: ' . max(0, $remaining) . '.',
+                'Codice di verifica non valido. Tentativi rimasti: '.max(0, $remaining).'.',
                 Response::HTTP_UNPROCESSABLE_ENTITY
             );
         }
@@ -209,7 +211,7 @@ class RegisterController extends Controller
      * Reinvia il codice di verifica via email.
      * Usato quando l'utente non ha ricevuto il codice o quando e' scaduto.
      */
-    public function resendVerificationEmail(\App\Http\Requests\ResendVerificationEmailRequest $request)
+    public function resendVerificationEmail(ResendVerificationEmailRequest $request)
     {
         $user = User::where('email', $request->email)->first();
 

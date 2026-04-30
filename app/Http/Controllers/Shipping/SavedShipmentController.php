@@ -3,15 +3,16 @@
 namespace App\Http\Controllers\Shipping;
 
 use App\Http\Controllers\Controller;
-
-use App\Models\PackageAddress;
-use App\Models\Package;
-use App\Models\Service;
-use Illuminate\Support\Facades\DB;
-use App\Http\Resources\PackageResource;
+use App\Http\Requests\AddSavedShipmentToCartRequest;
 use App\Http\Requests\PackageStoreRequest;
+use App\Http\Requests\UpdateSavedShipmentRequest;
+use App\Http\Resources\PackageResource;
+use App\Models\Package;
+use App\Models\PackageAddress;
+use App\Models\Service;
 use App\Services\CartService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class SavedShipmentController extends Controller
 {
@@ -67,7 +68,7 @@ class SavedShipmentController extends Controller
             $destination = PackageAddress::create($data['destination_address']);
 
             $servicesData = $data['services'];
-            $servicesData['service_type'] = !empty($servicesData['service_type']) ? $servicesData['service_type'] : 'Nessuno';
+            $servicesData['service_type'] = ! empty($servicesData['service_type']) ? $servicesData['service_type'] : 'Nessuno';
             $servicesData['date'] = $servicesData['date'] ?? '';
             $servicesData['time'] = $servicesData['time'] ?? '';
             $services = Service::create($servicesData);
@@ -90,6 +91,7 @@ class SavedShipmentController extends Controller
                     'service_id' => $services->id, 'user_id' => $userId,
                 ]);
             }
+
             return $packages;
         });
 
@@ -100,7 +102,7 @@ class SavedShipmentController extends Controller
         return PackageResource::collection($outPackages);
     }
 
-    public function update(\App\Http\Requests\UpdateSavedShipmentRequest $request, $id)
+    public function update(UpdateSavedShipmentRequest $request, $id)
     {
         $userId = auth()->id();
 
@@ -121,17 +123,21 @@ class SavedShipmentController extends Controller
         $data = $request->validated();
 
         DB::transaction(function () use ($package, $data) {
-            if (isset($data['origin_address']) && $package->originAddress) $package->originAddress->update($data['origin_address']);
-            if (isset($data['destination_address']) && $package->destinationAddress) $package->destinationAddress->update($data['destination_address']);
+            if (isset($data['origin_address']) && $package->originAddress) {
+                $package->originAddress->update($data['origin_address']);
+            }
+            if (isset($data['destination_address']) && $package->destinationAddress) {
+                $package->destinationAddress->update($data['destination_address']);
+            }
 
             if (isset($data['services']) && $package->service) {
                 $serviceData = $data['services'];
-                $serviceData['service_type'] = !empty($serviceData['service_type']) ? $serviceData['service_type'] : 'Nessuno';
+                $serviceData['service_type'] = ! empty($serviceData['service_type']) ? $serviceData['service_type'] : 'Nessuno';
                 $package->service->update($serviceData);
             }
 
             $packageFields = array_intersect_key($data, array_flip(['package_type', 'quantity', 'weight', 'first_size', 'second_size', 'third_size']));
-            $shouldReprice = !empty($packageFields) || isset($data['origin_address']) || isset($data['destination_address']);
+            $shouldReprice = ! empty($packageFields) || isset($data['origin_address']) || isset($data['destination_address']);
 
             if ($shouldReprice) {
                 $pricedPackage = $this->cartService->pricePackageData(
@@ -149,10 +155,13 @@ class SavedShipmentController extends Controller
                 ]);
             }
 
-            if (!empty($packageFields)) $package->update($packageFields);
+            if (! empty($packageFields)) {
+                $package->update($packageFields);
+            }
         });
 
         $package->load(['originAddress', 'destinationAddress', 'service']);
+
         return new PackageResource($package);
     }
 
@@ -175,10 +184,11 @@ class SavedShipmentController extends Controller
         DB::table('saved_shipments')->where('user_id', $userId)->where('package_id', $id)->delete();
         DB::table('cart_user')->where('user_id', $userId)->where('package_id', $id)->delete();
         Package::where('id', $id)->where('user_id', $userId)->delete();
+
         return response()->json(['message' => 'Spedizione rimossa']);
     }
 
-    public function addToCart(\App\Http\Requests\AddSavedShipmentToCartRequest $request)
+    public function addToCart(AddSavedShipmentToCartRequest $request)
     {
         $userId = auth()->id();
 
@@ -188,7 +198,9 @@ class SavedShipmentController extends Controller
         $copiedCount = 0;
         foreach ($validIds as $packageId) {
             $original = Package::with(['originAddress', 'destinationAddress', 'service'])->find($packageId);
-            if (!$original) continue;
+            if (! $original) {
+                continue;
+            }
 
             $newOrigin = $original->originAddress ? PackageAddress::create($original->originAddress->replicate()->toArray()) : null;
             $newDest = $original->destinationAddress ? PackageAddress::create($original->destinationAddress->replicate()->toArray()) : null;
@@ -223,7 +235,9 @@ class SavedShipmentController extends Controller
     private function cleanupOrphanedShipments(int $userId): void
     {
         $savedIds = DB::table('saved_shipments')->where('user_id', $userId)->pluck('package_id');
-        if ($savedIds->isEmpty()) return;
+        if ($savedIds->isEmpty()) {
+            return;
+        }
 
         $orphanedIds = $savedIds->diff(Package::whereIn('id', $savedIds)->pluck('id'));
         if ($orphanedIds->isNotEmpty()) {

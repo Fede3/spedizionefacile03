@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Models;
 
 use App\Models\Traits\HasPrice;
@@ -40,14 +41,14 @@ class Package extends Model
 
     // Converte automaticamente i campi nei tipi corretti
     protected $casts = [
-        'weight'       => 'float',
-        'first_size'   => 'float',
-        'second_size'  => 'float',
-        'third_size'   => 'float',
+        'weight' => 'float',
+        'first_size' => 'float',
+        'second_size' => 'float',
+        'third_size' => 'float',
         'weight_price' => 'float',
         'volume_price' => 'float',
         'single_price' => 'integer',  // centesimi: 1190 = 11,90 EUR
-        'quantity'     => 'integer',
+        'quantity' => 'integer',
     ];
 
     // Relazione: ogni pacco appartiene a UN utente

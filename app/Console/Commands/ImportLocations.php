@@ -56,16 +56,19 @@ class ImportLocations extends Command
         ];
         $resolveFile = function (string $code) use ($dataDirs): ?string {
             foreach ($dataDirs as $dir) {
-                $file = rtrim($dir, '/\\') . DIRECTORY_SEPARATOR . "{$code}.txt";
-                if (file_exists($file)) return $file;
+                $file = rtrim($dir, '/\\').DIRECTORY_SEPARATOR."{$code}.txt";
+                if (file_exists($file)) {
+                    return $file;
+                }
             }
+
             return null;
         };
 
         if (empty($normalizedCountries)) {
             $files = [];
             foreach ($dataDirs as $dir) {
-                foreach (glob(rtrim($dir, '/\\') . DIRECTORY_SEPARATOR . '*.txt') ?: [] as $f) {
+                foreach (glob(rtrim($dir, '/\\').DIRECTORY_SEPARATOR.'*.txt') ?: [] as $f) {
                     $basename = basename($f, '.txt');
                     if (preg_match('/^[A-Z]{2}$/', $basename)) {
                         $files[] = $f;
@@ -102,7 +105,7 @@ class ImportLocations extends Command
         }
 
         $this->newLine();
-        $this->info("Total: {$grandTotal} locations imported from " . count($files) . ' countries.');
+        $this->info("Total: {$grandTotal} locations imported from ".count($files).' countries.');
 
         // Show stats
         $totalRows = DB::table('locations')->count();

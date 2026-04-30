@@ -1,6 +1,8 @@
 <?php
+
 namespace App\Models;
 
+use Illuminate\Contracts\Encryption\DecryptException;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Crypt;
@@ -43,6 +45,7 @@ class Setting extends Model
             if (! $setting) {
                 return null;
             }
+
             return ['value' => $setting->value, 'encrypted' => in_array($key, static::$encryptedKeys, true)];
         });
 
@@ -53,7 +56,7 @@ class Setting extends Model
         if ($cached['encrypted'] && $cached['value']) {
             try {
                 return Crypt::decryptString($cached['value']);
-            } catch (\Illuminate\Contracts\Encryption\DecryptException $e) {
+            } catch (DecryptException $e) {
                 // Fallback: valore ancora in plaintext (pre-cifratura).
                 // Verra' cifrato al prossimo set().
                 return $cached['value'];

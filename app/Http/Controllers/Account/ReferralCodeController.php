@@ -10,11 +10,9 @@
 namespace App\Http\Controllers\Account;
 
 use App\Http\Controllers\Controller;
-
+use App\Http\Requests\ReferralCodeRequest;
 use App\Services\DiscountPreviewService;
-use App\Models\User;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
 class ReferralCodeController extends Controller
@@ -40,7 +38,7 @@ class ReferralCodeController extends Controller
         $totalUsages = $user->referralUsagesAsPro()->count();
 
         $baseUrl = config('app.frontend_url', config('app.url'));
-        $referralLink = $baseUrl . '?ref=' . $user->referral_code;
+        $referralLink = $baseUrl.'?ref='.$user->referral_code;
         $whatsappMessage = urlencode("Spedisci con SpediamoFacile e ottieni il 5% di sconto! Usa il mio codice: {$user->referral_code} oppure registrati da qui: {$referralLink}");
         $whatsappLink = "https://wa.me/?text={$whatsappMessage}";
 
@@ -57,7 +55,7 @@ class ReferralCodeController extends Controller
      * Verifica se un codice referral e' valido.
      * Usato dal frontend per mostrare un messaggio di conferma prima di procedere al pagamento.
      */
-    public function validate(\App\Http\Requests\ReferralCodeRequest $request, DiscountPreviewService $discountPreviewService): JsonResponse
+    public function validate(ReferralCodeRequest $request, DiscountPreviewService $discountPreviewService): JsonResponse
     {
         $data = $request->validated();
 
@@ -83,7 +81,7 @@ class ReferralCodeController extends Controller
      * Chiamato quando un utente si registra tramite un link referral (es. ?ref=ABC12345)
      * o quando inserisce manualmente un codice referral.
      */
-    public function storeReferral(\App\Http\Requests\ReferralCodeRequest $request, DiscountPreviewService $discountPreviewService): JsonResponse
+    public function storeReferral(ReferralCodeRequest $request, DiscountPreviewService $discountPreviewService): JsonResponse
     {
         $data = $request->validated();
 

@@ -1,10 +1,11 @@
 <?php
+
 namespace App\Services;
 
 use App\Models\Order;
 use App\Models\User;
 use App\Services\Stripe\IdempotencyAndMetadataHelpers;
-use Illuminate\Support\Facades\Log;
+use Stripe\PaymentIntent;
 use Stripe\StripeClient;
 
 class StripePaymentService
@@ -47,7 +48,7 @@ class StripePaymentService
             $stripe = $this->client();
             $customer = $stripe->customers->create([
                 'email' => $user->email,
-                'name' => $user->name . ' ' . $user->surname,
+                'name' => $user->name.' '.$user->surname,
             ]);
 
             $user->customer_id = $customer->id;
@@ -75,6 +76,7 @@ class StripePaymentService
      * Crea un PaymentIntent per il checkout con carta.
      *
      * @return array{client_secret: string, payment_intent_id: string}
+     *
      * @throws \Exception
      */
     public function createPaymentIntent(Order $order, User $user, ?string $idempotencyKey = null): array
@@ -166,7 +168,7 @@ class StripePaymentService
     /**
      * Verifica un pagamento completato e restituisce i dati necessari.
      *
-     * @return array{intent: \Stripe\PaymentIntent, payment_type: string}
+     * @return array{intent: PaymentIntent, payment_type: string}
      */
     public function retrieveAndVerifyPayment(string $paymentIntentId, Order $order): array
     {

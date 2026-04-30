@@ -28,10 +28,13 @@ class SendAbandonedCartEmailJob implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public int $tries = 2;
+
     public int $timeout = 30;
 
     public int $userId;
+
     public string $resumeToken;
+
     public int $itemCount;
 
     public function __construct(int $userId, string $resumeToken, int $itemCount)
@@ -53,6 +56,7 @@ class SendAbandonedCartEmailJob implements ShouldQueue
             Log::info('[AbandonedCart] skip: utente non trovato o senza email', [
                 'user_id' => $this->userId,
             ]);
+
             return;
         }
 

@@ -9,7 +9,7 @@ class BorderoPdfBuilderTest extends TestCase
 {
     public function test_genera_pdf_minimale_con_magic_number_valido(): void
     {
-        $builder = new BorderoPdfBuilder();
+        $builder = new BorderoPdfBuilder;
 
         $pdf = $builder->build([
             'bordero_date' => '15/04/2026',
@@ -28,7 +28,7 @@ class BorderoPdfBuilderTest extends TestCase
 
     public function test_genera_pdf_include_dati_mittente_e_destinatario(): void
     {
-        $builder = new BorderoPdfBuilder();
+        $builder = new BorderoPdfBuilder;
 
         $pdf = $builder->build([
             'bordero_number' => '42',
@@ -45,7 +45,7 @@ class BorderoPdfBuilderTest extends TestCase
 
     public function test_gestisce_payload_vuoto_senza_errore(): void
     {
-        $builder = new BorderoPdfBuilder();
+        $builder = new BorderoPdfBuilder;
 
         $pdf = $builder->build([]);
 
@@ -57,7 +57,7 @@ class BorderoPdfBuilderTest extends TestCase
 
     public function test_pdf_contiene_struttura_oggetti_base(): void
     {
-        $builder = new BorderoPdfBuilder();
+        $builder = new BorderoPdfBuilder;
 
         $pdf = $builder->build(['bordero_number' => '1']);
 
@@ -70,7 +70,7 @@ class BorderoPdfBuilderTest extends TestCase
 
     public function test_caratteri_non_ascii_vengono_translitterati(): void
     {
-        $builder = new BorderoPdfBuilder();
+        $builder = new BorderoPdfBuilder;
 
         // "Citta" con accento: deve essere translitterato in ASCII e non rompere il PDF
         $pdf = $builder->build([

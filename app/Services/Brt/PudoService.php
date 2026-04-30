@@ -14,7 +14,7 @@ class PudoService
         private readonly BrtConfig $config,
         ?PudoPointMapper $mapper = null,
     ) {
-        $this->mapper = $mapper ?? new PudoPointMapper();
+        $this->mapper = $mapper ?? new PudoPointMapper;
     }
 
     public function getPudoByAddress(string $address, string $zipCode, string $city, string $countryCode = 'ITA', int $maxResults = 50): array
@@ -29,25 +29,33 @@ class PudoService
         $geocodedSeed = null;
 
         $merge = function (array $points) use (&$combinedPoints, $maxResults): void {
-            if (!empty($points)) $combinedPoints = $this->mapper->mergePudoPoints($combinedPoints, $points, $maxResults);
+            if (! empty($points)) {
+                $combinedPoints = $this->mapper->mergePudoPoints($combinedPoints, $points, $maxResults);
+            }
         };
 
         // Pass 1: city + ZIP
         if ($city !== '' && $zipCode !== '') {
             $strategyUsed[] = 'city_zip';
             $r = $this->queryPudoByAddressNoFallback($address, $zipCode, $city, $countryCode, $maxResults);
-            if (!empty($r['pudo'])) $merge($r['pudo']);
+            if (! empty($r['pudo'])) {
+                $merge($r['pudo']);
+            }
         }
 
         // Pass 2: city with alternative ZIPs
         if (count($combinedPoints) < $maxResults && $city !== '') {
             $altZips = $this->mapper->resolveAlternativeZipsForCity($city, $zipCode);
-            if (!empty($altZips)) {
+            if (! empty($altZips)) {
                 $strategyUsed[] = 'city_alt_zip';
                 foreach ($altZips as $altZip) {
-                    if (count($combinedPoints) >= $maxResults) break;
+                    if (count($combinedPoints) >= $maxResults) {
+                        break;
+                    }
                     $r = $this->queryPudoByAddressNoFallback($address, $altZip, $city, $countryCode, $maxResults);
-                    if (!empty($r['pudo'])) $merge($r['pudo']);
+                    if (! empty($r['pudo'])) {
+                        $merge($r['pudo']);
+                    }
                 }
             }
         }
@@ -56,14 +64,18 @@ class PudoService
         if (count($combinedPoints) < $maxResults && $city !== '') {
             $strategyUsed[] = 'city_only';
             $r = $this->queryPudoByAddressNoFallback($address, '', $city, $countryCode, $maxResults);
-            if (!empty($r['pudo'])) $merge($r['pudo']);
+            if (! empty($r['pudo'])) {
+                $merge($r['pudo']);
+            }
         }
 
         // Pass 3: ZIP only
         if (count($combinedPoints) < $maxResults && $zipCode !== '') {
             $strategyUsed[] = 'zip_only';
             $r = $this->queryPudoByAddressNoFallback($address, $zipCode, '', $countryCode, $maxResults);
-            if (!empty($r['pudo'])) $merge($r['pudo']);
+            if (! empty($r['pudo'])) {
+                $merge($r['pudo']);
+            }
         }
 
         // Pass 4: nearby from geocoded coordinates
@@ -72,9 +84,11 @@ class PudoService
             if ($geocodedSeed) {
                 $strategyUsed[] = 'nearby_geo_input';
                 $nr = $this->getPudoByCoordinates((float) $geocodedSeed['latitude'], (float) $geocodedSeed['longitude'], $maxResults);
-                if (!empty($nr['pudo'])) {
+                if (! empty($nr['pudo'])) {
                     $merge($nr['pudo']);
-                    if (!empty($nr['fallback'])) $fallbackUsed = true;
+                    if (! empty($nr['fallback'])) {
+                        $fallbackUsed = true;
+                    }
                 }
             }
         }
@@ -83,11 +97,15 @@ class PudoService
         if (count($combinedPoints) < min($maxResults, 30) && is_array($geocodedSeed) && isset($geocodedSeed['latitude'], $geocodedSeed['longitude'])) {
             $strategyUsed[] = 'nearby_geo_grid';
             foreach ($this->mapper->buildGeoGridSearchPoints((float) $geocodedSeed['latitude'], (float) $geocodedSeed['longitude']) as $gridPoint) {
-                if (count($combinedPoints) >= $maxResults) break;
+                if (count($combinedPoints) >= $maxResults) {
+                    break;
+                }
                 $gr = $this->getPudoByCoordinates((float) $gridPoint['latitude'], (float) $gridPoint['longitude'], min($maxResults, 30));
-                if (!empty($gr['pudo'])) {
+                if (! empty($gr['pudo'])) {
                     $merge($gr['pudo']);
-                    if (!empty($gr['fallback'])) $fallbackUsed = true;
+                    if (! empty($gr['fallback'])) {
+                        $fallbackUsed = true;
+                    }
                 }
             }
         }
@@ -95,7 +113,7 @@ class PudoService
         // Fallback: local database
         if (empty($combinedPoints)) {
             $fbResult = $this->mapper->getPudoFromDatabase($city, $zipCode, $maxResults);
-            if (!empty($fbResult['pudo'])) {
+            if (! empty($fbResult['pudo'])) {
                 $merge($fbResult['pudo']);
                 $fallbackUsed = true;
                 $strategyUsed[] = 'fallback_db';
@@ -131,30 +149,33 @@ class PudoService
 
         try {
             $response = $this->config->pudoClient()
-                ->get($this->config->pudoApiUrl . '/pudo/v1/open/pickup/get-pudo-by-lat-lng', [
+                ->get($this->config->pudoApiUrl.'/pudo/v1/open/pickup/get-pudo-by-lat-lng', [
                     'latitude' => $latitude, 'longitude' => $longitude,
                     'max_pudo_number' => $maxResults, 'maxDistanceSearch' => 50000,
                 ]);
 
-            if (!$response->successful()) {
+            if (! $response->successful()) {
                 Log::warning('BRT PUDO coordinates API error', ['status' => $response->status(), 'lat' => $latitude, 'lng' => $longitude]);
+
                 return $this->mapper->getPudoFromDatabaseByCoordinates($latitude, $longitude, $maxResults);
             }
 
             $pudoList = $response->json()['pudo'] ?? [];
             if (empty($pudoList)) {
                 Log::info('BRT PUDO coordinates API returned no results', ['lat' => $latitude, 'lng' => $longitude]);
+
                 return $this->mapper->getPudoFromDatabaseByCoordinates($latitude, $longitude, $maxResults);
             }
 
             return [
                 'success' => true,
-                'pudo' => array_map(fn($p) => $this->mapper->mapBrtPudoPoint($p), $pudoList),
+                'pudo' => array_map(fn ($p) => $this->mapper->mapBrtPudoPoint($p), $pudoList),
                 'fallback' => false,
                 'meta' => ['strategy_used' => ['nearby_geo'], 'returned_count' => count($pudoList), 'requested_count' => $maxResults, 'fallback' => false, 'provider' => 'BRT'],
             ];
         } catch (\Exception $e) {
             Log::error('BRT PUDO coordinates exception', ['error' => $e->getMessage(), 'lat' => $latitude, 'lng' => $longitude]);
+
             return $this->mapper->getPudoFromDatabaseByCoordinates($latitude, $longitude, $maxResults);
         }
     }
@@ -163,8 +184,11 @@ class PudoService
     {
         try {
             $response = $this->config->pudoClient()
-                ->get($this->config->pudoApiUrl . '/pudo/v1/open/pickup/get-pudo-details', ['pudoId' => $pudoId]);
-            if (!$response->successful()) return ['success' => false, 'error' => 'Errore PUDO details API'];
+                ->get($this->config->pudoApiUrl.'/pudo/v1/open/pickup/get-pudo-details', ['pudoId' => $pudoId]);
+            if (! $response->successful()) {
+                return ['success' => false, 'error' => 'Errore PUDO details API'];
+            }
+
             return ['success' => true, 'pudo' => $response->json()];
         } catch (\Exception $e) {
             return ['success' => false, 'error' => $e->getMessage()];
@@ -175,23 +199,27 @@ class PudoService
     {
         try {
             $response = $this->config->pudoClient()
-                ->get($this->config->pudoApiUrl . '/pudo/v1/open/pickup/get-pudo-by-address', [
+                ->get($this->config->pudoApiUrl.'/pudo/v1/open/pickup/get-pudo-by-address', [
                     'address' => $address, 'zipCode' => $zipCode, 'city' => $city,
                     'countryCode' => $countryCode, 'max_pudo_number' => max(1, min($maxResults, 50)),
                     'maxDistanceSearch' => 80000,
                 ]);
 
-            if (!$response->successful()) {
+            if (! $response->successful()) {
                 Log::warning('BRT PUDO API error (no fallback pass)', ['status' => $response->status(), 'city' => $city, 'zip' => $zipCode]);
+
                 return ['success' => false, 'pudo' => []];
             }
 
             $pudoList = $response->json()['pudo'] ?? [];
-            if (empty($pudoList)) return ['success' => true, 'pudo' => []];
+            if (empty($pudoList)) {
+                return ['success' => true, 'pudo' => []];
+            }
 
-            return ['success' => true, 'pudo' => array_map(fn($item) => $this->mapper->mapBrtPudoPoint($item), $pudoList)];
+            return ['success' => true, 'pudo' => array_map(fn ($item) => $this->mapper->mapBrtPudoPoint($item), $pudoList)];
         } catch (\Exception $e) {
             Log::warning('BRT PUDO API exception (no fallback pass)', ['error' => $e->getMessage(), 'city' => $city, 'zip' => $zipCode]);
+
             return ['success' => false, 'pudo' => []];
         }
     }
@@ -199,11 +227,13 @@ class PudoService
     private function geocodeInputToCoordinates(string $address, string $city, string $zipCode): ?array
     {
         try {
-            $parts = array_values(array_filter([trim($address), preg_replace('/\D/', '', (string) $zipCode), trim($city), 'Italia'], fn($v) => (string) $v !== ''));
-            if (empty($parts)) return null;
+            $parts = array_values(array_filter([trim($address), preg_replace('/\D/', '', (string) $zipCode), trim($city), 'Italia'], fn ($v) => (string) $v !== ''));
+            if (empty($parts)) {
+                return null;
+            }
 
             $query = implode(', ', $parts);
-            $cacheKey = 'nominatim_' . md5($query);
+            $cacheKey = 'nominatim_'.md5($query);
 
             return Cache::remember($cacheKey, now()->addHours(24), function () use ($query) {
                 // Nominatim ToS: max 1 request per second
@@ -213,14 +243,19 @@ class PudoService
                     ->withHeaders(['User-Agent' => 'SpedizioneFacile/1.0 (info@spediamofacile.it)'])
                     ->get('https://nominatim.openstreetmap.org/search', ['format' => 'jsonv2', 'limit' => 1, 'q' => $query]);
 
-                if (!$response->successful()) return null;
+                if (! $response->successful()) {
+                    return null;
+                }
                 $first = is_array($response->json()) ? ($response->json()[0] ?? null) : null;
-                if (!$first || !isset($first['lat'], $first['lon']) || !is_numeric($first['lat']) || !is_numeric($first['lon'])) return null;
+                if (! $first || ! isset($first['lat'], $first['lon']) || ! is_numeric($first['lat']) || ! is_numeric($first['lon'])) {
+                    return null;
+                }
 
                 return ['latitude' => (float) $first['lat'], 'longitude' => (float) $first['lon']];
             });
         } catch (\Exception $e) {
             Log::debug('PUDO geocode input failed', ['error' => $e->getMessage()]);
+
             return null;
         }
     }

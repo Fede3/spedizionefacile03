@@ -3,9 +3,6 @@
 namespace Tests\Feature\Characterization;
 
 use App\Models\Order;
-use App\Models\Package;
-use App\Models\PackageAddress;
-use App\Models\Service;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
@@ -74,6 +71,7 @@ class OrdineTest extends TestCase
             'subtotal' => $subtotal,
             'status' => $status,
         ]);
+
         return $order;
     }
 
@@ -104,7 +102,7 @@ class OrdineTest extends TestCase
 
         // Il formato order_number e' "SF-" + 6 cifre con zeri davanti
         $this->assertStringStartsWith('SF-', $orderNumber);
-        $this->assertEquals('SF-' . str_pad($orderId, 6, '0', STR_PAD_LEFT), $orderNumber);
+        $this->assertEquals('SF-'.str_pad($orderId, 6, '0', STR_PAD_LEFT), $orderNumber);
     }
 
     /**
@@ -217,7 +215,7 @@ class OrdineTest extends TestCase
      */
     public function test_traduzione_stati_in_italiano(): void
     {
-        $order = new Order();
+        $order = new Order;
 
         $this->assertEquals('In attesa', $order->getStatus('pending'));
         $this->assertEquals('In lavorazione', $order->getStatus('processing'));
@@ -239,7 +237,7 @@ class OrdineTest extends TestCase
      */
     public function test_stato_non_previsto_restituito_invariato(): void
     {
-        $order = new Order();
+        $order = new Order;
         $this->assertEquals('stato_inventato', $order->getStatus('stato_inventato'));
     }
 

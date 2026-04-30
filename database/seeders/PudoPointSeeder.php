@@ -98,6 +98,6 @@ class PudoPointSeeder extends Seeder
             );
         }
 
-        $this->command->info('✓ Creati ' . count($pudoPoints) . ' punti PUDO di fallback');
+        $this->command->info('✓ Creati '.count($pudoPoints).' punti PUDO di fallback');
     }
 }

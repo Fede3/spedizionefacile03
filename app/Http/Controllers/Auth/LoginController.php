@@ -11,16 +11,17 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\Traits\BuildsSessionPayload;
+use App\Http\Requests\ConfirmPasswordRequest;
+use App\Http\Requests\LoginRequest;
 use App\Jobs\SendVerificationEmailJob;
 use App\Models\User;
 use App\Services\GuestCartMergeService;
 use App\Support\AuthUiCookie;
-use Illuminate\Http\Request;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
-use Carbon\Carbon;
 use Symfony\Component\HttpFoundation\Response;
 
 class LoginController extends Controller
@@ -89,7 +90,7 @@ class LoginController extends Controller
      * di risposta. L'errore e' generico ("credenziali non corrette") e non rivela
      * mai se l'email e' registrata.
      */
-    public function login(\App\Http\Requests\LoginRequest $request)
+    public function login(LoginRequest $request)
     {
         $user = $this->resolveUserFromEmail((string) $request->email);
         $guestCart = $request->hasSession() ? $request->session()->get('cart', []) : [];
@@ -158,7 +159,7 @@ class LoginController extends Controller
     /**
      * Conferma la password dell'admin (fuori flusso standard).
      */
-    public function confirmPassword(\App\Http\Requests\ConfirmPasswordRequest $request)
+    public function confirmPassword(ConfirmPasswordRequest $request)
     {
         $user = $request->user();
 

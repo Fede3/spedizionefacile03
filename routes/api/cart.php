@@ -9,11 +9,11 @@
  * CartItemController  — CRUD su singoli pacchi (store, show, update, destroy, quantity)
  */
 
-use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Cart\CartTotalController;
 use App\Http\Controllers\Cart\CartItemController;
+use App\Http\Controllers\Cart\CartTotalController;
 use App\Http\Controllers\Cart\GuestCartController;
 use App\Http\Controllers\Catalog\PackageController;
+use Illuminate\Support\Facades\Route;
 
 /* ===== CARRELLO OSPITE (senza login) ===== */
 

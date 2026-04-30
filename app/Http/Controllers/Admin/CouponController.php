@@ -3,10 +3,10 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-
+use App\Http\Requests\StoreCouponRequest;
+use App\Http\Requests\UpdateCouponRequest;
 use App\Models\Coupon;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 
 class CouponController extends Controller
 {
@@ -14,11 +14,12 @@ class CouponController extends Controller
     public function index(): JsonResponse
     {
         $coupons = Coupon::orderBy('created_at', 'desc')->get();
+
         return response()->json(['data' => $coupons]);
     }
 
     // Crea un nuovo coupon
-    public function store(\App\Http\Requests\StoreCouponRequest $request): JsonResponse
+    public function store(StoreCouponRequest $request): JsonResponse
     {
         $data = $request->validated();
 
@@ -35,7 +36,7 @@ class CouponController extends Controller
     }
 
     // Aggiorna un coupon
-    public function update(\App\Http\Requests\UpdateCouponRequest $request, Coupon $coupon): JsonResponse
+    public function update(UpdateCouponRequest $request, Coupon $coupon): JsonResponse
     {
         $data = $request->validated();
 
@@ -51,6 +52,7 @@ class CouponController extends Controller
     public function destroy(Coupon $coupon): JsonResponse
     {
         $coupon->delete();
+
         return response()->json(['success' => true, 'message' => 'Coupon eliminato.']);
     }
 }

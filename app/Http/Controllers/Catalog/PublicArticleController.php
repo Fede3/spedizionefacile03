@@ -1,8 +1,8 @@
 <?php
+
 namespace App\Http\Controllers\Catalog;
 
 use App\Http\Controllers\Controller;
-
 use App\Models\Article;
 use Illuminate\Http\JsonResponse;
 
@@ -30,7 +30,7 @@ class PublicArticleController extends Controller
             ->where('slug', $slug)
             ->first();
 
-        if (!$article) {
+        if (! $article) {
             return response()->json(['message' => $notFoundMessage], 404);
         }
 

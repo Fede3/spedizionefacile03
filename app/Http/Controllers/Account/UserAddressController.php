@@ -1,8 +1,8 @@
 <?php
+
 namespace App\Http\Controllers\Account;
 
 use App\Http\Controllers\Controller;
-
 use App\Http\Requests\UserAddressStoreRequest;
 use App\Http\Resources\UserAddressResource;
 use App\Models\UserAddress;

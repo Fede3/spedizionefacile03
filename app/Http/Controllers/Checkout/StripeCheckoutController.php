@@ -6,9 +6,13 @@
 
 namespace App\Http\Controllers\Checkout;
 
-use App\Http\Controllers\Controller;
-
 use App\Events\OrderPaid;
+use App\Http\Controllers\Controller;
+use App\Http\Requests\CreateOrderRequest;
+use App\Http\Requests\CreatePaymentIntentRequest;
+use App\Http\Requests\CreateStripePaymentRequest;
+use App\Http\Requests\OrderPaidRequest;
+use App\Http\Requests\PayWithExternalProviderRequest;
 use App\Mail\OrderAwaitingBankTransferMail;
 use App\Models\Order;
 use App\Models\Package;
@@ -19,7 +23,7 @@ use App\Services\CheckoutSubmissionContextService;
 use App\Services\OrderCreationService;
 use App\Services\StripePaymentService;
 use App\Services\WalletOrderLinkService;
-use Illuminate\Http\Request;
+use Illuminate\Contracts\Encryption\DecryptException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
@@ -54,7 +58,7 @@ class StripeCheckoutController extends Controller
      *  PUBLIC ENDPOINTS
      * =================================================================*/
 
-    public function markOrderCompleted(\App\Http\Requests\PayWithExternalProviderRequest $request)
+    public function markOrderCompleted(PayWithExternalProviderRequest $request)
     {
         // Questo endpoint e' il secondo step canonico per bonifico e wallet.
         // Per wallet richiede un movimento gia' verificato, non addebita denaro da solo.
@@ -63,7 +67,9 @@ class StripeCheckoutController extends Controller
         // transazione ma si e' fermato prima di dispatchare OrderPaid, un retry
         // deve far ripartire i side-effect post-pagamento una sola volta.
         $order = Order::findOrFail($request->order_id);
-        if ($unauthorized = $this->ensureOrderOwnership($order)) return $unauthorized;
+        if ($unauthorized = $this->ensureOrderOwnership($order)) {
+            return $unauthorized;
+        }
 
         $paymentType = $request->payment_type;
         $externalId = filled($request->ext_id)
@@ -187,9 +193,9 @@ class StripeCheckoutController extends Controller
                     Mail::raw(
                         "Nuovo ordine #{$freshOrder->id} in attesa di bonifico.\n"
                         ."Importo: {$amount} EUR\n"
-                        ."Cliente: ".($freshOrder->user?->email ?: '—')."\n"
+                        .'Cliente: '.($freshOrder->user?->email ?: '—')."\n"
                         ."Causale attesa: Ordine #{$freshOrder->id}\n"
-                        ."Gestisci: ".rtrim((string) config('app.frontend_url'), '/')."/account/amministrazione/ordini?filter=awaiting_bank_transfer",
+                        .'Gestisci: '.rtrim((string) config('app.frontend_url'), '/').'/account/amministrazione/ordini?filter=awaiting_bank_transfer',
                         function ($message) use ($adminEmail, $freshOrder) {
                             $message->to($adminEmail)
                                 ->subject('[Admin] Bonifico in attesa - Ordine #'.$freshOrder->id);
@@ -225,13 +231,14 @@ class StripeCheckoutController extends Controller
         return $order->rawStatus() === Order::COMPLETED;
     }
 
-    public function createOrder(\App\Http\Requests\CreateOrderRequest $request)
+    public function createOrder(CreateOrderRequest $request)
     {
         $userId = auth()->id();
+
         return DB::transaction(function () use ($request, $userId) {
             DB::table('users')->where('id', $userId)->lockForUpdate()->first();
 
-            $submissionContext = $this->submissionContextFromRequest($request);
+            $submissionContext = $this->submissionContextFromRequest($request, includeDiscountContext: true);
 
             $requestedPackageIds = $request->has('package_ids') && ! empty($request->package_ids)
                 ? (array) $request->package_ids
@@ -320,16 +327,26 @@ class StripeCheckoutController extends Controller
         });
     }
 
-    public function createPayment(\App\Http\Requests\CreateStripePaymentRequest $request)
+    public function createPayment(CreateStripePaymentRequest $request)
     {
         $order = Order::findOrFail($request->order_id);
         $user = $request->user();
-        if ($unauthorized = $this->ensureOrderOwnership($order, $user?->id)) return $unauthorized;
-        if ($contextError = $this->syncSubmissionContextOnOrder($order, $this->submissionContextFromRequest($request))) return $contextError;
-        if ($notPayable = $this->ensureOrderPayable($order)) return $notPayable;
-        if (!$this->stripe->isConfigured()) return response()->json(['error' => 'Stripe non configurato.'], 503);
-        if (!$user?->customer_id) return response()->json(['error' => 'No Stripe customer'], 400);
-        if (!$this->stripe->paymentMethodBelongsToUser($user, $request->payment_method_id)) {
+        if ($unauthorized = $this->ensureOrderOwnership($order, $user?->id)) {
+            return $unauthorized;
+        }
+        if ($contextError = $this->syncSubmissionContextOnOrder($order, $this->submissionContextFromRequest($request))) {
+            return $contextError;
+        }
+        if ($notPayable = $this->ensureOrderPayable($order)) {
+            return $notPayable;
+        }
+        if (! $this->stripe->isConfigured()) {
+            return response()->json(['error' => 'Stripe non configurato.'], 503);
+        }
+        if (! $user?->customer_id) {
+            return response()->json(['error' => 'No Stripe customer'], 400);
+        }
+        if (! $this->stripe->paymentMethodBelongsToUser($user, $request->payment_method_id)) {
             return response()->json(['error' => 'Non autorizzato.'], 403);
         }
 
@@ -342,17 +359,27 @@ class StripeCheckoutController extends Controller
         ));
     }
 
-    public function createPaymentIntent(\App\Http\Requests\CreatePaymentIntentRequest $request)
+    public function createPaymentIntent(CreatePaymentIntentRequest $request)
     {
         $order = Order::findOrFail($request->order_id);
         $user = $request->user();
-        if ($unauthorized = $this->ensureOrderOwnership($order, $user?->id)) return $unauthorized;
-        if ($contextError = $this->syncSubmissionContextOnOrder($order, $this->submissionContextFromRequest($request))) return $contextError;
-        if ($notPayable = $this->ensureOrderPayable($order)) return $notPayable;
-        if (!$this->stripe->isConfigured()) return response()->json(['error' => 'Stripe non configurato.'], 503);
+        if ($unauthorized = $this->ensureOrderOwnership($order, $user?->id)) {
+            return $unauthorized;
+        }
+        if ($contextError = $this->syncSubmissionContextOnOrder($order, $this->submissionContextFromRequest($request))) {
+            return $contextError;
+        }
+        if ($notPayable = $this->ensureOrderPayable($order)) {
+            return $notPayable;
+        }
+        if (! $this->stripe->isConfigured()) {
+            return response()->json(['error' => 'Stripe non configurato.'], 503);
+        }
 
         $amount = $order->payableTotalCents();
-        if ($amount < 50) return response()->json(['error' => 'Importo troppo basso per il pagamento.'], 422);
+        if ($amount < 50) {
+            return response()->json(['error' => 'Importo troppo basso per il pagamento.'], 422);
+        }
 
         try {
             return response()->json($this->stripe->createPaymentIntent(
@@ -360,7 +387,7 @@ class StripeCheckoutController extends Controller
                 $user,
                 $this->resolveStripeIdempotencyKey($order, $request),
             ));
-        } catch (\Illuminate\Contracts\Encryption\DecryptException $e) {
+        } catch (DecryptException $e) {
             // customer_id corrotto nel DB (APP_KEY ruotata): reset e riprova una volta.
             if ($user && $user->customer_id !== null) {
                 Log::warning('customer_id decrypt failed during PaymentIntent, resetting', ['user_id' => $user->id]);
@@ -375,22 +402,27 @@ class StripeCheckoutController extends Controller
                     Log::error('PaymentIntent retry after decrypt reset failed', ['error' => $retryError->getMessage()]);
                 }
             }
+
             return response()->json(['error' => 'Errore durante la creazione del pagamento. Riprova.'], 500);
         } catch (\Exception $e) {
             Log::error('PaymentIntent creation error', ['error' => $e->getMessage()]);
+
             return response()->json(['error' => 'Errore durante la creazione del pagamento. Riprova.'], 500);
         }
     }
 
-    public function orderPaid(\App\Http\Requests\OrderPaidRequest $request)
+    public function orderPaid(OrderPaidRequest $request)
     {
         $order = Order::findOrFail($request->order_id);
-        if ($unauthorized = $this->ensureOrderOwnership($order)) return $unauthorized;
+        if ($unauthorized = $this->ensureOrderOwnership($order)) {
+            return $unauthorized;
+        }
 
         try {
             $result = $this->stripe->retrieveAndVerifyPayment($request->ext_id, $order);
         } catch (\RuntimeException $e) {
             Log::warning('Stripe retrieveAndVerifyPayment failed', ['order_id' => $order->id, 'error' => $e->getMessage()]);
+
             return response()->json(['error' => 'Verifica del pagamento non riuscita. Riprova o contatta il supporto.'], 422);
         }
 

@@ -3,13 +3,17 @@
 namespace App\Http\Controllers\Shipping;
 
 use App\Http\Controllers\Controller;
-
+use App\Http\Requests\BrtCreateLabelRequest;
+use App\Http\Requests\BrtOrderActionRequest;
+use App\Http\Requests\BrtPublicTrackingRequest;
+use App\Http\Requests\BrtPudoNearbyRequest;
+use App\Http\Requests\BrtPudoSearchRequest;
+use App\Http\Requests\BrtTestCreateShipmentRequest;
 use App\Models\Order;
 use App\Services\Brt\PudoService;
 use App\Services\Brt\ShipmentService;
 use App\Services\OrderBrtFulfillmentService;
 use App\Services\OrderBrtTrackingReadService;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
 
@@ -22,7 +26,7 @@ class BrtController extends Controller
         private readonly OrderBrtTrackingReadService $trackingRead,
     ) {}
 
-    public function createShipment(\App\Http\Requests\BrtCreateLabelRequest $request)
+    public function createShipment(BrtCreateLabelRequest $request)
     {
         // Endpoint admin/manuale: gli override qui sono eccezioni controllate.
         // Il flusso automatico BRT deve leggere dall'ordine persistito canonico.
@@ -96,7 +100,7 @@ class BrtController extends Controller
         ]);
     }
 
-    public function confirmShipment(\App\Http\Requests\BrtOrderActionRequest $request)
+    public function confirmShipment(BrtOrderActionRequest $request)
     {
         $order = Order::findOrFail($request->order_id);
 
@@ -114,7 +118,7 @@ class BrtController extends Controller
         return response()->json(['success' => true]);
     }
 
-    public function deleteShipment(\App\Http\Requests\BrtOrderActionRequest $request)
+    public function deleteShipment(BrtOrderActionRequest $request)
     {
         $order = Order::findOrFail($request->order_id);
 
@@ -159,14 +163,14 @@ class BrtController extends Controller
         return response()->json($this->trackingRead->buildOrderTrackingPayload($order));
     }
 
-    public function publicTracking(\App\Http\Requests\BrtPublicTrackingRequest $request)
+    public function publicTracking(BrtPublicTrackingRequest $request)
     {
         return response()->json(
             $this->trackingRead->buildPublicTrackingPayload((string) $request->code)
         );
     }
 
-    public function pudoSearch(\App\Http\Requests\BrtPudoSearchRequest $request)
+    public function pudoSearch(BrtPudoSearchRequest $request)
     {
         $data = $request->validated();
 
@@ -188,7 +192,7 @@ class BrtController extends Controller
         return response()->json($result);
     }
 
-    public function pudoNearby(\App\Http\Requests\BrtPudoNearbyRequest $request)
+    public function pudoNearby(BrtPudoNearbyRequest $request)
     {
 
         $result = $this->pudo->getPudoByCoordinates(
@@ -205,7 +209,7 @@ class BrtController extends Controller
         return response()->json($this->pudo->getPudoDetails($pudoId));
     }
 
-    public function testCreate(\App\Http\Requests\BrtTestCreateShipmentRequest $request)
+    public function testCreate(BrtTestCreateShipmentRequest $request)
     {
         return response()->json($this->shipment->testCreateShipment($request->validated()));
     }

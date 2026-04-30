@@ -1,9 +1,11 @@
 <?php
+
 namespace App\Services\Invoice;
 
 use App\Models\InvoiceArchive;
 use App\Models\Order;
 use App\Services\InvoicePdfService;
+use Barryvdh\DomPDF\PDF;
 use Carbon\CarbonImmutable;
 use Illuminate\Contracts\Filesystem\Filesystem;
 use Illuminate\Support\Facades\DB;
@@ -23,7 +25,7 @@ class InvoicePdfGenerator
      * Genera (o recupera se gia' esistente) il PDF fattura per l'ordine.
      *
      * @param  Order  $order  Ordine da fatturare. Deve avere subtotal > 0.
-     * @return string         Path relativo al PDF su Storage (es. "invoices/2026/04/INV-2026-00042.pdf").
+     * @return string Path relativo al PDF su Storage (es. "invoices/2026/04/INV-2026-00042.pdf").
      *
      * @throws RuntimeException se subtotal mancante o errore di scrittura su disk.
      */
@@ -71,7 +73,7 @@ class InvoicePdfGenerator
                 'number' => $invoiceNumber,
                 'issue_date' => $issueDate,
                 'due_date' => $issueDate->addDays((int) config('billing.pagamento.termini_giorni', 0)),
-                'order_number' => 'SF-' . str_pad((string) $order->id, 6, '0', STR_PAD_LEFT),
+                'order_number' => 'SF-'.str_pad((string) $order->id, 6, '0', STR_PAD_LEFT),
             ],
             'cedente' => config('billing.cedente'),
             'pagamento' => config('billing.pagamento'),
@@ -85,7 +87,7 @@ class InvoicePdfGenerator
                 'totale_cents' => $totalCents,
             ],
             // Comodi alias usati dal template legacy resources/views/pdf/invoice.blade.php
-            'orderNumber' => 'SF-' . str_pad((string) $order->id, 6, '0', STR_PAD_LEFT),
+            'orderNumber' => 'SF-'.str_pad((string) $order->id, 6, '0', STR_PAD_LEFT),
             'subtotalCents' => $totalCents,
             'grossSubtotalCents' => $grossTotalCents,
             'discountCents' => $discountCents,
@@ -128,7 +130,7 @@ class InvoicePdfGenerator
         $base = (string) config('billing.storage.base_path', 'invoices');
         $year = $date->format('Y');
         $month = $date->format('m');
-        $filename = $invoiceNumber . '.pdf';
+        $filename = $invoiceNumber.'.pdf';
 
         return "{$base}/{$year}/{$month}/{$filename}";
     }
@@ -176,7 +178,7 @@ class InvoicePdfGenerator
                 ]);
 
             return sprintf(
-                '%s-%04d-%0' . $padding . 'd',
+                '%s-%04d-%0'.$padding.'d',
                 $prefix,
                 $year > 0 ? $year : date('Y'),
                 $next,
@@ -214,7 +216,7 @@ class InvoicePdfGenerator
         // Tenta dompdf via facade (registrata con auto-discovery se package installato).
         if (class_exists(\Barryvdh\DomPDF\Facade\Pdf::class)) {
             try {
-                /** @var \Barryvdh\DomPDF\PDF $pdf */
+                /** @var PDF $pdf */
                 $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('invoices.pdf', $viewData)
                     ->setPaper('a4', 'portrait')
                     ->setOptions([

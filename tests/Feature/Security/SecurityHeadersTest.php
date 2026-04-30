@@ -11,7 +11,7 @@ class SecurityHeadersTest extends TestCase
 {
     public function test_testing_environment_csp_omits_unsafe_eval(): void
     {
-        $middleware = new SecurityHeaders();
+        $middleware = new SecurityHeaders;
         $request = Request::create('/security-check', 'GET');
 
         $response = $middleware->handle($request, fn () => new Response('ok'));

@@ -12,7 +12,8 @@ namespace App\Http\Controllers\Order;
 
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\Traits\NormalizesServiceData;
-
+use App\Http\Requests\AddOrderPackageRequest;
+use App\Http\Requests\CancelOrderRequest;
 use App\Http\Requests\PackageStoreRequest;
 use App\Http\Resources\OrderResource;
 use App\Models\Order;
@@ -22,9 +23,10 @@ use App\Services\CheckoutSubmissionContextService;
 use App\Services\DirectOrderService;
 use App\Services\InvoicePdfService;
 use App\Services\RefundService;
-use Illuminate\Http\Request;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Log;
 
 class OrderDetailController extends Controller
 {
@@ -211,7 +213,7 @@ class OrderDetailController extends Controller
 
                 return response()->json([
                     'order_id' => $existingOrder->id,
-                    'order_number' => 'SF-' . str_pad((string) $existingOrder->id, 6, '0', STR_PAD_LEFT),
+                    'order_number' => 'SF-'.str_pad((string) $existingOrder->id, 6, '0', STR_PAD_LEFT),
                     'amount_cents' => $existingOrder->payableTotalCents(),
                     'client_submission_id' => (string) $existingOrder->client_submission_id,
                 ]);
@@ -236,7 +238,7 @@ class OrderDetailController extends Controller
      * Calls RefundService directly (not RefundController) to avoid bypassing
      * middleware. Authorization is handled via OrderPolicy::cancel().
      */
-    public function cancel(\App\Http\Requests\CancelOrderRequest $request, Order $order)
+    public function cancel(CancelOrderRequest $request, Order $order)
     {
         Gate::authorize('cancel', $order);
 
@@ -250,26 +252,26 @@ class OrderDetailController extends Controller
         try {
             $result = $refundService->processCancellation($order, $request->reason);
 
-            $refundEur     = number_format($result['refund_amount_cents'] / 100, 2, ',', '.');
+            $refundEur = number_format($result['refund_amount_cents'] / 100, 2, ',', '.');
             $commissionEur = number_format($result['commission_cents'] / 100, 2, ',', '.');
 
             return response()->json([
-                'success'        => true,
-                'message'        => $result['refund_amount_cents'] > 0
+                'success' => true,
+                'message' => $result['refund_amount_cents'] > 0
                     ? "Ordine annullato. Rimborso di {$refundEur} EUR processato (commissione: {$commissionEur} EUR)."
                     : 'Ordine annullato con successo.',
-                'refund_amount'  => $refundEur,
-                'commission'     => $commissionEur,
-                'refund_method'  => $result['refund_method'],
-                'brt_cancelled'  => $result['brt_cancelled'],
+                'refund_amount' => $refundEur,
+                'commission' => $commissionEur,
+                'refund_method' => $result['refund_method'],
+                'brt_cancelled' => $result['brt_cancelled'],
             ]);
         } catch (\RuntimeException $e) {
             return response()->json(['error' => $e->getMessage()], 422);
         } catch (\Exception $e) {
-            \Illuminate\Support\Facades\Log::error('Order cancellation failed', [
+            Log::error('Order cancellation failed', [
                 'order_id' => $order->id,
-                'error'    => $e->getMessage(),
-                'trace'    => $e->getTraceAsString(),
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
             ]);
 
             return response()->json([
@@ -278,7 +280,7 @@ class OrderDetailController extends Controller
         }
     }
 
-    private function syncDiscountContextOnOrder(Order $order, array $context): ?\Illuminate\Http\JsonResponse
+    private function syncDiscountContextOnOrder(Order $order, array $context): ?JsonResponse
     {
         $incomingDiscountContext = $this->normalizeDiscountContextValue($context['discount_context'] ?? null);
 
@@ -320,7 +322,7 @@ class OrderDetailController extends Controller
      *
      * Il prezzo viene ricalcolato lato server e il subtotale dell'ordine aggiornato.
      */
-    public function addPackage(\App\Http\Requests\AddOrderPackageRequest $request, Order $order)
+    public function addPackage(AddOrderPackageRequest $request, Order $order)
     {
         Gate::authorize('addPackage', $order);
 
@@ -403,11 +405,11 @@ class OrderDetailController extends Controller
 
         $pdfContent = $invoicePdf->generate($order);
 
-        $orderNumber = 'SF-' . str_pad((string) $order->id, 6, '0', STR_PAD_LEFT);
+        $orderNumber = 'SF-'.str_pad((string) $order->id, 6, '0', STR_PAD_LEFT);
 
         return response($pdfContent, 200, [
             'Content-Type' => 'application/pdf',
-            'Content-Disposition' => 'attachment; filename="ricevuta-' . $orderNumber . '.pdf"',
+            'Content-Disposition' => 'attachment; filename="ricevuta-'.$orderNumber.'.pdf"',
             'Content-Length' => strlen($pdfContent),
         ]);
     }

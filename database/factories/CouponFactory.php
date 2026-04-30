@@ -2,14 +2,15 @@
 
 namespace Database\Factories;
 
+use App\Models\Coupon;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Coupon>
+ * @extends Factory<Coupon>
  */
 class CouponFactory extends Factory
 {
-    protected $model = \App\Models\Coupon::class;
+    protected $model = Coupon::class;
 
     /**
      * Define the model's default state.

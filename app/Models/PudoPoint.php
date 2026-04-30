@@ -58,7 +58,7 @@ class PudoPoint extends Model
             ->limit($limit)
             ->get();
 
-        return $points->map(fn($p) => self::formatForApi($p))->toArray();
+        return $points->map(fn ($p) => self::formatForApi($p))->toArray();
     }
 
     /**
@@ -92,20 +92,20 @@ class PudoPoint extends Model
         $points = self::where('is_active', true)
             ->whereNotNull('latitude')
             ->whereNotNull('longitude')
-            ->selectRaw("
+            ->selectRaw('
                 *,
                 (6371 * acos(
                     cos(radians(?)) * cos(radians(latitude)) *
                     cos(radians(longitude) - radians(?)) +
                     sin(radians(?)) * sin(radians(latitude))
                 )) AS distance
-            ", [$lat, $lng, $lat])
+            ', [$lat, $lng, $lat])
             ->having('distance', '<', 50)
             ->orderBy('distance')
             ->limit($limit)
             ->get();
 
-        return $points->map(fn($p) => self::formatForApi($p))->toArray();
+        return $points->map(fn ($p) => self::formatForApi($p))->toArray();
     }
 
     /**

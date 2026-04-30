@@ -20,7 +20,7 @@ class UpdateCouponRequest extends FormRequest
         $couponId = $this->route('coupon')?->id ?? 'NULL';
 
         return [
-            'code' => ['sometimes', 'string', 'max:50', 'unique:coupons,code,' . $couponId],
+            'code' => ['sometimes', 'string', 'max:50', 'unique:coupons,code,'.$couponId],
             'percentage' => ['sometimes', 'numeric', 'min:1', 'max:100'],
             'active' => ['sometimes', 'boolean'],
             'expires_at' => ['nullable', 'date'],

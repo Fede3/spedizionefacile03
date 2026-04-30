@@ -1,20 +1,13 @@
 <?php
+
 namespace App\Models;
 
-use App\Models\Order;
-use App\Models\Package;
-use App\Models\UserAddress;
-use App\Models\UserNotificationPreference;
-use App\Models\WalletMovement;
-use App\Models\ReferralUsage;
-use App\Models\ProRequest;
-use App\Models\WithdrawalRequest;
-use Illuminate\Support\Str;
-use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Str;
 use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable
@@ -122,7 +115,8 @@ class User extends Authenticatable
 
     // Controlla se l'utente e' un amministratore del sito
     // Restituisce true (vero) se il ruolo dell'utente e' "Admin"
-    public function isAdmin(): bool {
+    public function isAdmin(): bool
+    {
         return $this->role === 'Admin';
     }
 
@@ -150,7 +144,8 @@ class User extends Authenticatable
 
     // Relazione: un utente ha MOLTI indirizzi salvati nella sua rubrica
     // Esempio: casa, ufficio, magazzino...
-    public function addresses(): HasMany {
+    public function addresses(): HasMany
+    {
         return $this->hasMany(UserAddress::class);
     }
 
@@ -166,41 +161,48 @@ class User extends Authenticatable
 
     // Relazione: un utente ha MOLTI pacchi configurati
     // Sono i pacchi che l'utente ha preparato per la spedizione
-    public function packages(): HasMany {
+    public function packages(): HasMany
+    {
         return $this->hasMany(Package::class);
     }
 
     // Relazione: un utente ha MOLTI ordini
     // Ogni volta che l'utente paga una spedizione, viene creato un ordine
-    public function orders(): HasMany {
+    public function orders(): HasMany
+    {
         return $this->hasMany(Order::class);
     }
 
     // Controlla se l'utente e' un Partner Pro
     // I Partner Pro hanno un codice referral e guadagnano commissioni
-    public function isPro(): bool {
+    public function isPro(): bool
+    {
         return $this->role === 'Partner Pro';
     }
 
     // Relazione: un utente ha MOLTI movimenti nel portafoglio
     // I movimenti possono essere ricariche (credit) o pagamenti (debit)
-    public function walletMovements(): HasMany {
+    public function walletMovements(): HasMany
+    {
         return $this->hasMany(WalletMovement::class);
     }
 
     // Relazione: un utente Pro ha MOLTI utilizzi del suo codice referral
     // Ogni volta che qualcuno usa il suo codice, viene registrato qui
-    public function referralUsagesAsPro(): HasMany {
+    public function referralUsagesAsPro(): HasMany
+    {
         return $this->hasMany(ReferralUsage::class, 'pro_user_id');
     }
 
     // Relazione: un utente ha MOLTE richieste di prelievo delle commissioni guadagnate
-    public function withdrawalRequests(): HasMany {
+    public function withdrawalRequests(): HasMany
+    {
         return $this->hasMany(WithdrawalRequest::class);
     }
 
     // Relazione: un utente ha MOLTE richieste per diventare Partner Pro
-    public function proRequests(): HasMany {
+    public function proRequests(): HasMany
+    {
         return $this->hasMany(ProRequest::class);
     }
 
@@ -217,7 +219,8 @@ class User extends Authenticatable
      * Prende tutti i movimenti confermati, somma le ricariche (credit)
      * e sottrae i pagamenti (debit). Il risultato e' il saldo disponibile.
      */
-    public function walletBalance(): float {
+    public function walletBalance(): float
+    {
         $credits = $this->walletMovements()
             ->where('status', 'confirmed')
             ->where('type', 'credit')
@@ -234,6 +237,7 @@ class User extends Authenticatable
                     ->orWhereNotIn('source', ['commission', 'withdrawal']);
             })
             ->sum('amount');
+
         return round($credits - $debits, 2);
     }
 
@@ -243,7 +247,8 @@ class User extends Authenticatable
      * Se esiste una richiesta pending, la considera come saldo gia' riservato.
      * Il risultato e' quanto puo' ancora prelevare.
      */
-    public function commissionBalance(): float {
+    public function commissionBalance(): float
+    {
         $earned = $this->referralUsagesAsPro()
             ->where('status', 'confirmed')
             ->sum('commission_amount');
@@ -253,6 +258,7 @@ class User extends Authenticatable
         $withdrawn = $this->withdrawalRequests()
             ->whereIn('status', ['approved', 'completed'])
             ->sum('amount');
+
         return round($earned - $reserved - $withdrawn, 2);
     }
 

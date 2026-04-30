@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Checkout;
 
 use App\Http\Controllers\Controller;
-
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
@@ -40,7 +39,7 @@ class StripeConnectController extends Controller
 
         // Restituiamo l'URL completo al frontend, che reindirizzerà l'utente
         return response()->json([
-            'url' => 'https://connect.stripe.com/oauth/authorize?' . $query,
+            'url' => 'https://connect.stripe.com/oauth/authorize?'.$query,
         ]);
     }
 
@@ -57,7 +56,7 @@ class StripeConnectController extends Controller
 
         // Se la richiesta a Stripe non e' andata a buon fine, reindirizziamo con un errore
         if ($response->failed()) {
-            return redirect(config('app.frontend_url') . '/account?stripe_error=1');
+            return redirect(config('app.frontend_url').'/account?stripe_error=1');
         }
 
         // Salviamo l'identificativo dell'account Stripe dell'utente nel nostro database
@@ -68,7 +67,7 @@ class StripeConnectController extends Controller
         $user->save();
 
         // Reindirizziamo l'utente alla sua pagina account con un messaggio di successo
-        return redirect(config('app.frontend_url') . '/account?stripe_connected=1');
+        return redirect(config('app.frontend_url').'/account?stripe_connected=1');
     }
 
     // Crea un nuovo account Stripe Express per l'utente
@@ -98,8 +97,8 @@ class StripeConnectController extends Controller
         // return_url = dove mandarlo quando ha finito
         $accountLink = $stripe->accountLinks->create([
             'account' => $account->id,
-            'refresh_url' => config('app.frontend_url') . '/account/account-pro?refresh=1',
-            'return_url' => config('app.frontend_url') . '/account/account-pro?connected=1',
+            'refresh_url' => config('app.frontend_url').'/account/account-pro?refresh=1',
+            'return_url' => config('app.frontend_url').'/account/account-pro?connected=1',
             'type' => 'account_onboarding',
         ]);
 

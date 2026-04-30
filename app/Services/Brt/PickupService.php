@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Services\Brt;
 
 use App\Models\Order;
@@ -14,8 +15,8 @@ class PickupService
     /**
      * Richiede il ritiro a domicilio a BRT per un ordine con etichetta generata.
      *
-     * @param Order $order L'ordine con brt_parcel_id e indirizzi caricati
-     * @param array $pickupRequest Dati ritiro: time_slot, notes, date
+     * @param  Order  $order  L'ordine con brt_parcel_id e indirizzi caricati
+     * @param  array  $pickupRequest  Dati ritiro: time_slot, notes, date
      * @return array {success, status, pickup_reference?, error?}
      */
     public function requestPickup(Order $order, array $pickupRequest): array
@@ -70,7 +71,7 @@ class PickupService
                 'numericSenderReference' => $order->brt_numeric_sender_reference ?? $order->id,
                 'pickupContactName' => $origin->name ?? '',
                 'pickupCompanyName' => $origin->name ?? '',
-                'pickupAddress' => trim(($origin->address ?? '') . ' ' . ($origin->address_number ?? '')),
+                'pickupAddress' => trim(($origin->address ?? '').' '.($origin->address_number ?? '')),
                 'pickupZIPCode' => $normalizedOrigin['postal_code'],
                 'pickupCity' => $normalizedOrigin['city'],
                 'pickupProvinceAbbreviation' => $normalizedOrigin['province'],
@@ -99,7 +100,8 @@ class PickupService
             if (! $response->successful()) {
                 $errorSource = $body['createResponse'] ?? $body;
                 $errorMsg = $errorSource['executionMessage']['message']
-                    ?? 'Errore API BRT ritiro (HTTP ' . $response->status() . ')';
+                    ?? 'Errore API BRT ritiro (HTTP '.$response->status().')';
+
                 return [
                     'success' => false,
                     'status' => 'failed',
@@ -111,13 +113,14 @@ class PickupService
             $execCode = $responseData['executionMessage']['code'] ?? -1;
             if ($execCode < 0) {
                 $errorMsg = $responseData['executionMessage']['message']
-                    ?? 'Errore richiesta ritiro BRT (code: ' . $execCode . ')';
+                    ?? 'Errore richiesta ritiro BRT (code: '.$execCode.')';
                 Log::warning('BRT requestPickup error response', [
                     'order_id' => $order->id,
                     'url' => $resolvedUrl,
                     'exec_code' => $execCode,
                     'message' => $errorMsg,
                 ]);
+
                 return [
                     'success' => false,
                     'status' => 'failed',
@@ -129,7 +132,7 @@ class PickupService
                 ?? $responseData['confirmationNumber']
                 ?? $body['pickupConfirmationNumber']
                 ?? $body['confirmationNumber']
-                ?? ('PU-' . $order->id . '-' . now()->format('Ymd'));
+                ?? ('PU-'.$order->id.'-'.now()->format('Ymd'));
 
             Log::info('BRT requestPickup success', [
                 'order_id' => $order->id,
@@ -147,10 +150,11 @@ class PickupService
                 'order_id' => $order->id,
                 'error' => $e->getMessage(),
             ]);
+
             return [
                 'success' => false,
                 'status' => 'failed',
-                'error' => 'Errore di connessione BRT ritiro: ' . $e->getMessage(),
+                'error' => 'Errore di connessione BRT ritiro: '.$e->getMessage(),
             ];
         }
     }

@@ -2,14 +2,16 @@
 
 namespace Database\Factories;
 
+use App\Models\Order;
+use App\Models\Transaction;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Transaction>
+ * @extends Factory<Transaction>
  */
 class TransactionFactory extends Factory
 {
-    protected $model = \App\Models\Transaction::class;
+    protected $model = Transaction::class;
 
     /**
      * Define the model's default state.
@@ -19,8 +21,8 @@ class TransactionFactory extends Factory
     public function definition(): array
     {
         return [
-            'order_id' => \App\Models\Order::factory(),
-            'ext_id' => 'pi_' . fake()->unique()->regexify('[a-zA-Z0-9]{24}'),
+            'order_id' => Order::factory(),
+            'ext_id' => 'pi_'.fake()->unique()->regexify('[a-zA-Z0-9]{24}'),
             'type' => 'stripe',
             'status' => 'succeeded',
             'total' => fake()->numberBetween(500, 50000),

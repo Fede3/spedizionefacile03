@@ -1,5 +1,15 @@
 <?php
 
+use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Auth\AuthenticationException;
+use Illuminate\Http\Exceptions\HttpResponseException;
+use Illuminate\Http\Exceptions\ThrottleRequestsException;
+use Illuminate\Routing\Exceptions\InvalidSignatureException;
+use Illuminate\Validation\ValidationException;
+use Sentry\Event;
+use Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+
 /**
  * FILE: config/sentry.php
  * SCOPO: Configurazione Sentry per il backend Laravel SpediamoFacile.
@@ -29,7 +39,7 @@
  * ogni richiesta ma solo una volta per processo PHP, quindi function_exists
  * evita redeclare se il file venisse re-richiesto in test.
  */
-if (!function_exists('sf_sentry_scrub_sensitive')) {
+if (! function_exists('sf_sentry_scrub_sensitive')) {
     function sf_sentry_scrub_sensitive(array $data): array
     {
         $sensitiveKeys = [
@@ -46,6 +56,7 @@ if (!function_exists('sf_sentry_scrub_sensitive')) {
             $keyLower = strtolower((string) $key);
             if (in_array($keyLower, $sensitiveKeys, true)) {
                 $data[$key] = '[FILTERED]';
+
                 continue;
             }
             if (is_array($value)) {
@@ -112,10 +123,10 @@ return [
 
     // before_send: hook chiamato PRIMA dell'invio di ogni evento.
     // Qui sanitizziamo i dati sensibili per essere conformi GDPR.
-    'before_send' => static function (\Sentry\Event $event): ?\Sentry\Event {
+    'before_send' => static function (Event $event): ?Event {
         // Rimuovi dai request payload i campi sensibili (password, token, Stripe).
         $request = $event->getRequest();
-        if (!empty($request)) {
+        if (! empty($request)) {
             $sanitized = $request;
 
             // Sanitize body data (POST, PUT).
@@ -167,14 +178,14 @@ return [
     //   - HttpResponseException 4xx: redirect/abort volontari.
     // Un 500 VERO (DB down, null pointer) viene sempre inviato.
     'ignore_exceptions' => [
-        \Illuminate\Validation\ValidationException::class,
-        \Illuminate\Auth\AuthenticationException::class,
-        \Illuminate\Auth\Access\AuthorizationException::class,
-        \Symfony\Component\HttpKernel\Exception\NotFoundHttpException::class,
-        \Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException::class,
-        \Illuminate\Http\Exceptions\HttpResponseException::class,
-        \Illuminate\Http\Exceptions\ThrottleRequestsException::class,
-        \Illuminate\Routing\Exceptions\InvalidSignatureException::class,
+        ValidationException::class,
+        AuthenticationException::class,
+        AuthorizationException::class,
+        NotFoundHttpException::class,
+        MethodNotAllowedHttpException::class,
+        HttpResponseException::class,
+        ThrottleRequestsException::class,
+        InvalidSignatureException::class,
     ],
 
     // Transazioni ignorate (health check, metrics endpoint).

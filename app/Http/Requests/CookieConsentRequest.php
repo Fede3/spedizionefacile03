@@ -19,9 +19,9 @@ class CookieConsentRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'type'       => ['nullable', 'string', 'in:all,necessary'],
-            'analytics'  => ['nullable', 'boolean'],
-            'marketing'  => ['nullable', 'boolean'],
+            'type' => ['nullable', 'string', 'in:all,necessary'],
+            'analytics' => ['nullable', 'boolean'],
+            'marketing' => ['nullable', 'boolean'],
             'functional' => ['nullable', 'boolean'],
         ];
     }

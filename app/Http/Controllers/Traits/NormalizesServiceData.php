@@ -12,7 +12,7 @@ trait NormalizesServiceData
      */
     private function normalizeServiceData(array $servicesData): array
     {
-        $servicesData['service_type'] = !empty($servicesData['service_type']) ? $servicesData['service_type'] : 'Nessuno';
+        $servicesData['service_type'] = ! empty($servicesData['service_type']) ? $servicesData['service_type'] : 'Nessuno';
         $servicesData['date'] = $servicesData['date'] ?? '';
         $servicesData['time'] = $servicesData['time'] ?? '';
 

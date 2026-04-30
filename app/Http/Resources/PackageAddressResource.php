@@ -10,10 +10,11 @@
 
 namespace App\Http\Resources;
 
+use App\Models\PackageAddress;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
-/** @mixin \App\Models\PackageAddress */
+/** @mixin PackageAddress */
 class PackageAddressResource extends JsonResource
 {
     /**
@@ -21,7 +22,7 @@ class PackageAddressResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
-         return [
+        return [
             'name' => $this->name,                              // Nome mittente/destinatario
             'additional_information' => $this->additional_information, // Info aggiuntive
             'address' => $this->address,                        // Via/piazza

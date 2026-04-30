@@ -75,7 +75,7 @@ class ImageSanitizer
             $maxSide
         );
 
-        $path = trim($directory, '/') . '/' . $filename;
+        $path = trim($directory, '/').'/'.$filename;
         Storage::disk($disk)->put($path, $sanitizedBinary);
 
         return $path;
@@ -95,7 +95,7 @@ class ImageSanitizer
         // Accettiamo sia "articles" sia "articles/2026" purche' la radice sia in whitelist.
         $root = explode('/', $directory, 2)[0];
         if (! in_array($root, self::ALLOWED_DIRECTORIES, true)) {
-            throw new RuntimeException('Directory upload non autorizzata: ' . $root);
+            throw new RuntimeException('Directory upload non autorizzata: '.$root);
         }
 
         return $directory;
@@ -118,7 +118,7 @@ class ImageSanitizer
 
         $allowed = ['image/jpeg', 'image/png', 'image/webp'];
         if (! in_array($mime, $allowed, true)) {
-            throw new RuntimeException('Tipo file non consentito: ' . $mime);
+            throw new RuntimeException('Tipo file non consentito: '.$mime);
         }
 
         return $mime;
@@ -145,7 +145,7 @@ class ImageSanitizer
             $base = bin2hex(random_bytes(16));
         }
 
-        return $base . '.' . $ext;
+        return $base.'.'.$ext;
     }
 
     /**

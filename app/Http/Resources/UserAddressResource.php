@@ -10,10 +10,11 @@
 
 namespace App\Http\Resources;
 
+use App\Models\UserAddress;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
-/** @mixin \App\Models\UserAddress */
+/** @mixin UserAddress */
 class UserAddressResource extends JsonResource
 {
     /**

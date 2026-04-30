@@ -14,7 +14,7 @@ class RefundTest extends TestCase
     use RefreshDatabase;
 
     /* ------------------------------------------------------------------ */
-    /*  Helpers                                                            */
+    /*  Helpers */
     /* ------------------------------------------------------------------ */
 
     /**
@@ -27,14 +27,14 @@ class RefundTest extends TestCase
         string $paymentMethod = 'wallet',
     ): Order {
         $order = Order::factory()->create([
-            'user_id'        => $user->id,
-            'status'         => $status,
-            'subtotal'       => $subtotalCents,
+            'user_id' => $user->id,
+            'status' => $status,
+            'subtotal' => $subtotalCents,
             'payment_method' => $paymentMethod,
         ]);
 
         $package = Package::factory()->create([
-            'user_id'      => $user->id,
+            'user_id' => $user->id,
             'single_price' => $subtotalCents,
         ]);
         Order::attachPackage($order->id, $package->id, 1);
@@ -43,11 +43,11 @@ class RefundTest extends TestCase
     }
 
     /* ================================================================== */
-    /*  T11.7.1: Check refund eligibility                                  */
+    /*  T11.7.1: Check refund eligibility */
     /* ================================================================== */
     public function test_refund_eligibility_completed_order(): void
     {
-        $user  = User::factory()->create();
+        $user = User::factory()->create();
         $order = $this->createOrderForUser($user, 'completed', 890);
 
         $response = $this->actingAs($user)
@@ -66,7 +66,7 @@ class RefundTest extends TestCase
 
     public function test_refund_eligibility_pending_order(): void
     {
-        $user  = User::factory()->create();
+        $user = User::factory()->create();
         $order = $this->createOrderForUser($user, 'pending', 890);
 
         $response = $this->actingAs($user)
@@ -81,7 +81,7 @@ class RefundTest extends TestCase
 
     public function test_refund_eligibility_in_transit_not_eligible(): void
     {
-        $user  = User::factory()->create();
+        $user = User::factory()->create();
         $order = $this->createOrderForUser($user, 'in_transit', 890);
 
         $response = $this->actingAs($user)
@@ -94,7 +94,7 @@ class RefundTest extends TestCase
 
     public function test_refund_eligibility_already_cancelled(): void
     {
-        $user  = User::factory()->create();
+        $user = User::factory()->create();
         $order = $this->createOrderForUser($user, 'cancelled', 890);
 
         $response = $this->actingAs($user)
@@ -107,9 +107,9 @@ class RefundTest extends TestCase
 
     public function test_refund_eligibility_other_user_returns_403(): void
     {
-        $owner    = User::factory()->create();
+        $owner = User::factory()->create();
         $intruder = User::factory()->create();
-        $order    = $this->createOrderForUser($owner, 'completed', 890);
+        $order = $this->createOrderForUser($owner, 'completed', 890);
 
         $this->actingAs($intruder)
             ->getJson("/api/orders/{$order->id}/refund-eligibility")
@@ -117,11 +117,11 @@ class RefundTest extends TestCase
     }
 
     /* ================================================================== */
-    /*  T11.7.4: Commission of 2 EUR deducted from refund                  */
+    /*  T11.7.4: Commission of 2 EUR deducted from refund */
     /* ================================================================== */
     public function test_cancellation_with_2eur_commission_deducted(): void
     {
-        $user  = User::factory()->create();
+        $user = User::factory()->create();
         // Order of 890 cents (8.90 EUR), paid with wallet
         $order = $this->createOrderForUser($user, 'completed', 890, 'wallet');
 
@@ -152,15 +152,15 @@ class RefundTest extends TestCase
         // WalletMovement credit created for refund
         $this->assertDatabaseHas('wallet_movements', [
             'user_id' => $user->id,
-            'type'    => 'credit',
-            'amount'  => '6.90',
-            'source'  => 'refund',
+            'type' => 'credit',
+            'amount' => '6.90',
+            'source' => 'refund',
         ]);
     }
 
     public function test_cancellation_pending_order_no_refund(): void
     {
-        $user  = User::factory()->create();
+        $user = User::factory()->create();
         $order = $this->createOrderForUser($user, 'pending', 890, 'wallet');
 
         $response = $this->actingAs($user)
@@ -180,13 +180,13 @@ class RefundTest extends TestCase
         // No wallet movement created
         $this->assertDatabaseMissing('wallet_movements', [
             'user_id' => $user->id,
-            'source'  => 'refund',
+            'source' => 'refund',
         ]);
     }
 
     public function test_cancellation_subtotal_less_than_commission(): void
     {
-        $user  = User::factory()->create();
+        $user = User::factory()->create();
         // Order of 150 cents (1.50 EUR) < commission of 200 cents (2.00 EUR)
         $order = $this->createOrderForUser($user, 'completed', 150, 'wallet');
 
@@ -201,7 +201,7 @@ class RefundTest extends TestCase
 
     public function test_cancellation_in_transit_fails(): void
     {
-        $user  = User::factory()->create();
+        $user = User::factory()->create();
         $order = $this->createOrderForUser($user, 'in_transit', 890);
 
         $this->actingAs($user)
@@ -211,9 +211,9 @@ class RefundTest extends TestCase
 
     public function test_cancellation_other_user_returns_403(): void
     {
-        $owner    = User::factory()->create();
+        $owner = User::factory()->create();
         $intruder = User::factory()->create();
-        $order    = $this->createOrderForUser($owner, 'completed', 890);
+        $order = $this->createOrderForUser($owner, 'completed', 890);
 
         $this->actingAs($intruder)
             ->postJson("/api/orders/{$order->id}/cancel")

@@ -64,7 +64,7 @@ class DiscountPreviewService
     }
 
     /**
-     * @param array{percentage: float, discount_amount: float, final_total: float} $breakdown
+     * @param  array{percentage: float, discount_amount: float, final_total: float}  $breakdown
      */
     private function buildPreviewPayloadFromBreakdown(string $type, string $code, array $breakdown): array
     {

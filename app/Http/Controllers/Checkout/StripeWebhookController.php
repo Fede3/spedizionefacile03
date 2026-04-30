@@ -1,9 +1,9 @@
 <?php
+
 namespace App\Http\Controllers\Checkout;
 
-use App\Http\Controllers\Controller;
-
 use App\Events\OrderPaid;
+use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Models\Setting;
 use App\Models\StripeWebhookEvent;
@@ -52,28 +52,41 @@ class StripeWebhookController extends Controller
         // Stripe puo' ritentare lo stesso webhook (timeout, errore di rete).
         // L'ID evento (evt_...) resta lo stesso nei retry. Registriamo
         // gli ID processati per evitare di rielaborare lo stesso evento.
-        if (in_array($event->type, self::IDEMPOTENT_EVENT_TYPES, true)) {
-            if (! StripeWebhookEvent::markAsProcessed($event->id, $event->type)) {
-                Log::info('Stripe webhook event already processed, skipping', [
-                    'event_id' => $event->id,
-                    'event_type' => $event->type,
-                ]);
+        $requiresIdempotency = in_array($event->type, self::IDEMPOTENT_EVENT_TYPES, true);
 
-                return response()->json(['received' => true, 'skipped' => 'already_processed']);
-            }
+        if ($requiresIdempotency && StripeWebhookEvent::wasAlreadyProcessed($event->id)) {
+            Log::info('Stripe webhook event already processed, skipping', [
+                'event_id' => $event->id,
+                'event_type' => $event->type,
+            ]);
+
+            return response()->json(['received' => true, 'skipped' => 'already_processed']);
         }
 
         // In base al tipo di evento, chiamiamo la funzione giusta
         // "match" e' come un selettore: sceglie cosa fare in base al tipo di notifica
-        match ($event->type) {
+        $handled = match ($event->type) {
             'payment_intent.succeeded' => $this->paymentSucceeded($event),     // Pagamento riuscito
             'payment_intent.payment_failed' => $this->paymentFailed($event),   // Pagamento fallito
 
-            'account.updated' => $this->accountUpdated($event),                // Account Stripe aggiornato
-            'account.application.deauthorized' => $this->accountDisconnected($event), // Account scollegato
+            'account.updated' => $this->accountUpdated($event) !== false,                // Account Stripe aggiornato
+            'account.application.deauthorized' => $this->accountDisconnected($event) !== false, // Account scollegato
 
-            default => null, // Per tutti gli altri eventi, non facciamo nulla
+            default => true, // Per tutti gli altri eventi, non facciamo nulla
         };
+
+        if ($requiresIdempotency) {
+            if (! $handled) {
+                Log::warning('Stripe webhook handler did not complete; asking Stripe to retry', [
+                    'event_id' => $event->id,
+                    'event_type' => $event->type,
+                ]);
+
+                return response()->json(['received' => false, 'retry' => 'handler_not_completed'], 500);
+            }
+
+            StripeWebhookEvent::markAsProcessed($event->id, $event->type);
+        }
 
         // Rispondiamo a Stripe per confermare che abbiamo ricevuto la notifica
         return response()->json(['received' => true]);
@@ -109,7 +122,7 @@ class StripeWebhookController extends Controller
 
     // Gestisce l'evento "pagamento riuscito"
     // Quando un cliente paga con successo, aggiorniamo l'ordine e salviamo i dettagli della transazione
-    protected function paymentSucceeded($event)
+    protected function paymentSucceeded($event): bool
     {
         $intent = $event->data->object;
 
@@ -117,7 +130,7 @@ class StripeWebhookController extends Controller
         $orderId = (int) ($intent->metadata->order_id ?? 0);
 
         if ($orderId <= 0) {
-            return;
+            return true;
         }
 
         // Cerchiamo l'ordine nel database
@@ -125,7 +138,7 @@ class StripeWebhookController extends Controller
 
         // Se l'ordine non esiste, non facciamo nulla
         if (! $order) {
-            return;
+            return false;
         }
 
         // ── Idempotenza a livello di payment_intent ─────────────────
@@ -142,14 +155,15 @@ class StripeWebhookController extends Controller
                 'payment_intent_id' => $intent->id,
             ]);
 
-            return;
+            return true;
         }
 
         $transaction = null;
         $dispatchOrderPaid = false;
         $shouldClearCart = false;
+        $handled = false;
 
-        DB::transaction(function () use ($order, $intent, &$transaction, &$dispatchOrderPaid, &$shouldClearCart) {
+        DB::transaction(function () use ($order, $intent, &$transaction, &$dispatchOrderPaid, &$shouldClearCart, &$handled) {
             $lockedOrder = Order::query()->lockForUpdate()->find($order->id);
 
             if (! $lockedOrder) {
@@ -183,6 +197,8 @@ class StripeWebhookController extends Controller
                     $lockedOrder->save();
                 }
 
+                $handled = true;
+
                 return;
             }
 
@@ -201,6 +217,7 @@ class StripeWebhookController extends Controller
                     ->latest('id')
                     ->first();
                 $shouldClearCart = true;
+                $handled = true;
 
                 return;
             }
@@ -213,6 +230,8 @@ class StripeWebhookController extends Controller
                     'current_payment_intent_id' => $lockedOrder->stripe_payment_intent_id,
                     'status' => $lockedOrder->rawStatus(),
                 ]);
+
+                $handled = true;
 
                 return;
             }
@@ -242,7 +261,12 @@ class StripeWebhookController extends Controller
 
             $dispatchOrderPaid = ! $wasAlreadySucceeded;
             $shouldClearCart = true;
+            $handled = true;
         });
+
+        if (! $handled) {
+            return false;
+        }
 
         if ($shouldClearCart) {
             $this->clearCartForOrder($order);
@@ -251,24 +275,26 @@ class StripeWebhookController extends Controller
         if ($dispatchOrderPaid && $transaction) {
             event(new OrderPaid($order->fresh(), $transaction));
         }
+
+        return true;
     }
 
     // Gestisce l'evento "pagamento fallito"
     // Quando un pagamento non va a buon fine, salviamo il motivo dell'errore
-    protected function paymentFailed($event)
+    protected function paymentFailed($event): bool
     {
         $intent = $event->data->object;
 
         $orderId = (int) ($intent->metadata->order_id ?? 0);
 
         if ($orderId <= 0) {
-            return;
+            return true;
         }
 
         $order = Order::where('id', $orderId)->first();
 
         if (! $order) {
-            return;
+            return false;
         }
 
         // ── Idempotenza: se esiste gia' una transazione failed per questo intent, skip ──
@@ -283,7 +309,7 @@ class StripeWebhookController extends Controller
                 'payment_intent_id' => $intent->id,
             ]);
 
-            return;
+            return true;
         }
 
         // Cerchiamo di capire perche' il pagamento e' fallito
@@ -296,7 +322,9 @@ class StripeWebhookController extends Controller
                   ?? $intent->charges->data[0]->failure_code
                   ?? null;
 
-        DB::transaction(function () use ($order, $intent, $failureCode, $failureMessage) {
+        $handled = false;
+
+        DB::transaction(function () use ($order, $intent, $failureCode, $failureMessage, &$handled) {
             $lockedOrder = Order::query()->lockForUpdate()->find($order->id);
 
             if (! $lockedOrder) {
@@ -329,7 +357,11 @@ class StripeWebhookController extends Controller
                 'failure_code' => $failureCode,
                 'failure_message' => $failureMessage,
             ]);
+
+            $handled = true;
         });
+
+        return $handled;
     }
 
     /**

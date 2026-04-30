@@ -10,10 +10,15 @@ use Illuminate\Validation\ValidationException;
 class PriceEngineService
 {
     private const SETTINGS_KEY_WEIGHT_BANDS = 'pricing_national_bands_weight';
+
     private const SETTINGS_KEY_VOLUME_BANDS = 'pricing_national_bands_volume';
+
     private const SETTINGS_KEY_EXTRA_RULES = 'pricing_national_extra_rules';
+
     private const SETTINGS_KEY_SUPPLEMENTS = 'pricing_national_supplements';
+
     private const SETTINGS_KEY_VERSION = 'pricing_national_version';
+
     private const EPSILON = 0.0000001;
 
     public const DEFAULT_WEIGHT_BANDS = [
@@ -52,11 +57,12 @@ class PriceEngineService
     ];
 
     private ?array $cachedConfig = null;
+
     private PriceBandValidator $validator;
 
     public function __construct(?PriceBandValidator $validator = null)
     {
-        $this->validator = $validator ?? new PriceBandValidator();
+        $this->validator = $validator ?? new PriceBandValidator;
     }
 
     public function getPricingConfig(): array
@@ -68,10 +74,18 @@ class PriceEngineService
         $weightBands = $this->decodeJsonSetting(self::SETTINGS_KEY_WEIGHT_BANDS);
         $volumeBands = $this->decodeJsonSetting(self::SETTINGS_KEY_VOLUME_BANDS);
 
-        if (empty($weightBands)) $weightBands = $this->loadBandsFromDatabase('weight');
-        if (empty($volumeBands)) $volumeBands = $this->loadBandsFromDatabase('volume');
-        if (empty($weightBands)) $weightBands = self::DEFAULT_WEIGHT_BANDS;
-        if (empty($volumeBands)) $volumeBands = self::DEFAULT_VOLUME_BANDS;
+        if (empty($weightBands)) {
+            $weightBands = $this->loadBandsFromDatabase('weight');
+        }
+        if (empty($volumeBands)) {
+            $volumeBands = $this->loadBandsFromDatabase('volume');
+        }
+        if (empty($weightBands)) {
+            $weightBands = self::DEFAULT_WEIGHT_BANDS;
+        }
+        if (empty($volumeBands)) {
+            $volumeBands = self::DEFAULT_VOLUME_BANDS;
+        }
 
         $extraRules = $this->validator->normalizeExtraRules(
             $this->decodeJsonSetting(self::SETTINGS_KEY_EXTRA_RULES, self::DEFAULT_EXTRA_RULES),
@@ -179,6 +193,7 @@ class PriceEngineService
         }
 
         $fallbackBands = $type === 'weight' ? self::DEFAULT_WEIGHT_BANDS : self::DEFAULT_VOLUME_BANDS;
+
         return self::effectivePriceCents(end($fallbackBands));
     }
 
@@ -191,11 +206,17 @@ class PriceEngineService
         $total = 0;
 
         foreach ($supplements as $rule) {
-            if (! ($rule['enabled'] ?? true)) continue;
+            if (! ($rule['enabled'] ?? true)) {
+                continue;
+            }
             $prefix = preg_replace('/\D+/', '', (string) ($rule['prefix'] ?? ''));
-            if ($prefix === '') continue;
+            if ($prefix === '') {
+                continue;
+            }
             $amount = (int) ($rule['amount_cents'] ?? 0);
-            if ($amount <= 0) continue;
+            if ($amount <= 0) {
+                continue;
+            }
             $applyTo = (string) ($rule['apply_to'] ?? 'both');
 
             if (($applyTo === 'origin' || $applyTo === 'both') && $origin !== '' && str_starts_with($origin, $prefix)) {
@@ -231,6 +252,7 @@ class PriceEngineService
         });
 
         $this->invalidateLocalCache();
+
         return $this->getPricingConfig();
     }
 
@@ -256,22 +278,29 @@ class PriceEngineService
                 return $band;
             }
         }
+
         return null;
     }
 
     private function calculateExtraPriceCents(string $type, float $rawValue, array $bands, array $extraRules): ?int
     {
-        if (! ($extraRules['enabled'] ?? true)) return null;
+        if (! ($extraRules['enabled'] ?? true)) {
+            return null;
+        }
 
         $start = (float) ($type === 'weight' ? ($extraRules['weight_start'] ?? 101) : ($extraRules['volume_start'] ?? 0.401));
         $step = (float) ($type === 'weight' ? ($extraRules['weight_step'] ?? 50) : ($extraRules['volume_step'] ?? 0.200));
         $resolution = (float) ($type === 'weight' ? ($extraRules['weight_resolution'] ?? 1) : ($extraRules['volume_resolution'] ?? 0.001));
         $increment = (int) ($extraRules['increment_cents'] ?? 500);
 
-        if ($step <= 0 || $increment < 0 || $resolution <= 0) return null;
+        if ($step <= 0 || $increment < 0 || $resolution <= 0) {
+            return null;
+        }
 
         $value = self::ceilByResolution($rawValue, $resolution);
-        if ($value + self::EPSILON < $start) return null;
+        if ($value + self::EPSILON < $start) {
+            return null;
+        }
 
         $baseMode = (string) ($extraRules['base_price_cents_mode'] ?? 'last_band_effective');
         if ($baseMode === 'manual') {
@@ -294,15 +323,20 @@ class PriceEngineService
     private function decodeJsonSetting(string $key, ?array $default = []): array
     {
         $raw = Setting::get($key);
-        if ($raw === null || $raw === '') return $default ?? [];
+        if ($raw === null || $raw === '') {
+            return $default ?? [];
+        }
         $decoded = json_decode($raw, true);
+
         return is_array($decoded) ? $decoded : ($default ?? []);
     }
 
     private function loadBandsFromDatabase(string $type): array
     {
         $rows = PriceBand::where('type', $type)->orderBy('sort_order')->orderBy('min_value')->get();
-        if ($rows->isEmpty()) return [];
+        if ($rows->isEmpty()) {
+            return [];
+        }
 
         return $rows->map(fn (PriceBand $band) => [
             'id' => (string) $band->id,
@@ -324,14 +358,18 @@ class PriceEngineService
         if (isset($band['discount_price']) && $band['discount_price'] !== null && (int) $band['discount_price'] > 0) {
             return (int) $band['discount_price'];
         }
+
         return (int) ($band['base_price'] ?? 0);
     }
 
     private static function ceilByResolution(float $value, float $resolution): float
     {
-        if ($resolution <= 0) return $value;
+        if ($resolution <= 0) {
+            return $value;
+        }
         $multiplier = 1 / $resolution;
         $rounded = ceil(($value * $multiplier) - self::EPSILON) / $multiplier;
+
         return PriceBandValidator::normalizeDecimal($rounded);
     }
 }

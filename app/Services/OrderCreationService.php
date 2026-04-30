@@ -3,7 +3,6 @@
 namespace App\Services;
 
 use App\Models\Order;
-use App\Models\Package;
 use Illuminate\Support\Facades\DB;
 
 class OrderCreationService
@@ -33,7 +32,7 @@ class OrderCreationService
                 $subtotal += $servicePricing->calculateSurchargeCents($serviceType, $serviceData, $smsEmailNotification, [
                     'packages' => $groupPackages->all(),
                     'origin_address' => $groupPackages->first()?->originAddress?->toArray() ?? [],
-                    'destination_address' => (($serviceData['delivery_mode'] ?? 'home') === 'pudo' && !empty($serviceData['pudo']))
+                    'destination_address' => (($serviceData['delivery_mode'] ?? 'home') === 'pudo' && ! empty($serviceData['pudo']))
                         ? $serviceData['pudo']
                         : ($groupPackages->first()?->destinationAddress?->toArray() ?? []),
                     'delivery_mode' => $serviceData['delivery_mode'] ?? 'home',
@@ -56,7 +55,7 @@ class OrderCreationService
                 $pudoId = null;
                 foreach ($groupPackages as $pkg) {
                     $sd = $pkg->service->service_data ?? [];
-                    if (!empty($sd['pudo']['pudo_id']) && ($sd['delivery_mode'] ?? '') === 'pudo') {
+                    if (! empty($sd['pudo']['pudo_id']) && ($sd['delivery_mode'] ?? '') === 'pudo') {
                         $pudoId = $sd['pudo']['pudo_id'];
                         break;
                     }
@@ -120,9 +119,9 @@ class OrderCreationService
             $originParts = $origin ? implode('|', [$normalize($origin->name), $normalize($origin->address), $normalize($origin->address_number), $normalize($origin->city), $normalize($origin->postal_code), $normalize($origin->province)]) : 'no-origin';
             $destParts = $destination ? implode('|', [$normalize($destination->name), $normalize($destination->address), $normalize($destination->address_number), $normalize($destination->city), $normalize($destination->postal_code), $normalize($destination->province)]) : 'no-dest';
 
-            $key = md5($originParts . '::' . $destParts . '::' . $normalize($serviceType) . '::' . $serviceSignature);
+            $key = md5($originParts.'::'.$destParts.'::'.$normalize($serviceType).'::'.$serviceSignature);
 
-            if (!isset($groups[$key])) {
+            if (! isset($groups[$key])) {
                 $groups[$key] = ['key' => $key, 'packages' => collect()];
             }
             $groups[$key]['packages']->push($package);

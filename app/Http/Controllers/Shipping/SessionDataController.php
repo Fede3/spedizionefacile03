@@ -3,10 +3,12 @@
 namespace App\Http\Controllers\Shipping;
 
 use App\Http\Controllers\Controller;
-
 use App\Http\Controllers\Traits\BuildsSessionPayload;
+use App\Http\Requests\StoreSessionFirstStepRequest;
+use App\Http\Requests\StoreSessionSecondStepRequest;
 use App\Services\EuropePriceEngineService;
 use App\Services\PriceEngineService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use Illuminate\Validation\ValidationException;
@@ -18,8 +20,7 @@ class SessionDataController extends Controller
     public function __construct(
         private readonly PriceEngineService $priceEngine,
         private readonly EuropePriceEngineService $europePriceEngine,
-    ) {
-    }
+    ) {}
 
     public static function findBandPrice(string $type, float $value): float
     {
@@ -36,7 +37,7 @@ class SessionDataController extends Controller
         return app(PriceEngineService::class)->calculateCapSupplementCents($originCap, $destinationCap);
     }
 
-    public function firstStep(\App\Http\Requests\StoreSessionFirstStepRequest $request)
+    public function firstStep(StoreSessionFirstStepRequest $request)
     {
         $validated = $request->validated();
 
@@ -145,7 +146,7 @@ class SessionDataController extends Controller
         ]);
     }
 
-    public function secondStep(\App\Http\Requests\StoreSessionSecondStepRequest $request)
+    public function secondStep(StoreSessionSecondStepRequest $request)
     {
         $validated = $request->validated();
 
@@ -302,7 +303,7 @@ class SessionDataController extends Controller
      * Mostra lo stato corrente della sessione preventivo (post-rewrite v2).
      * Mantiene la struttura "data.*" per compat con test esistenti.
      */
-    public function show(\Illuminate\Http\Request $request): \Illuminate\Http\JsonResponse
+    public function show(Request $request): JsonResponse
     {
         return response()->json([
             'data' => [

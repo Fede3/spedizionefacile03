@@ -36,40 +36,44 @@ class StrongPassword implements ValidationRule
         'juventus', 'inter1908', 'milan1899', 'roma1927', 'napoli1926',
     ];
 
-    public function __construct(private array $context = [])
-    {
-    }
+    public function __construct(private array $context = []) {}
 
     public function validate(string $attribute, mixed $value, Closure $fail): void
     {
         if (! is_string($value)) {
             $fail('La password deve essere una stringa.');
+
             return;
         }
 
         if (mb_strlen($value) < 10) {
             $fail('La password deve essere di almeno 10 caratteri.');
+
             return;
         }
 
         if (! preg_match('/[A-Z]/u', $value)) {
             $fail('La password deve contenere almeno una lettera maiuscola.');
+
             return;
         }
 
         if (! preg_match('/[0-9]/u', $value)) {
             $fail('La password deve contenere almeno un numero.');
+
             return;
         }
 
         if (! preg_match('/[^A-Za-z0-9]/u', $value)) {
             $fail('La password deve contenere almeno un simbolo (es. !@#$%).');
+
             return;
         }
 
         $needle = mb_strtolower($value);
         if (in_array($needle, self::BLOCKLIST, true)) {
             $fail('Questa password è troppo comune. Scegline una più sicura.');
+
             return;
         }
 
@@ -82,6 +86,7 @@ class StrongPassword implements ValidationRule
             $token = mb_strtolower(strtok($candidate, '@'));
             if ($token && str_contains($needle, $token)) {
                 $fail('La password non può contenere il tuo nome o la tua email.');
+
                 return;
             }
         }

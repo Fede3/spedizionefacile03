@@ -1,13 +1,14 @@
 <?php
+
 namespace App\Http\Controllers\Wallet;
 
 use App\Http\Controllers\Controller;
-
 use App\Models\User;
 use App\Models\WithdrawalRequest;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+
 class WithdrawalController extends Controller
 {
     // Mostra la lista di tutte le richieste di prelievo dell'utente che ha fatto la richiesta
@@ -29,7 +30,7 @@ class WithdrawalController extends Controller
 
         // Controlliamo che l'utente sia un Partner Pro
         // Solo i Partner Pro possono prelevare le commissioni
-        if (!$user->isPro()) {
+        if (! $user->isPro()) {
             return response()->json(['message' => 'Solo gli account Pro possono richiedere prelievi.'], 403);
         }
 
@@ -56,7 +57,7 @@ class WithdrawalController extends Controller
             $available = $lockedUser->commissionBalance();
             if ($available < 1) {
                 return [
-                    'error' => 'Saldo commissioni insufficiente. Disponibile: ' . number_format($available, 2) . ' EUR',
+                    'error' => 'Saldo commissioni insufficiente. Disponibile: '.number_format($available, 2).' EUR',
                 ];
             }
 

@@ -32,17 +32,22 @@ class OrderBrtTrackingReadService
     private function findPublicTrackingOrder(string $code): ?Order
     {
         $normalized = trim($code);
-        if ($normalized === '') return null;
+        if ($normalized === '') {
+            return null;
+        }
 
         $byRef = Order::where('brt_parcel_id', $normalized)->first()
             ?? Order::where('brt_tracking_number', $normalized)->first()
             ?? Order::where('brt_numeric_sender_reference', $normalized)->first();
-        if ($byRef) return $byRef;
+        if ($byRef) {
+            return $byRef;
+        }
 
         $cleanCode = preg_replace('/^(SF-|#|sf-)/i', '', $normalized);
         if (is_numeric($cleanCode)) {
             return Order::where('id', (int) $cleanCode)->whereNotNull('brt_parcel_id')->first();
         }
+
         return null;
     }
 

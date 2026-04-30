@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Coupon;
 use App\Services\Checkout\SnapshotCompactingHelpers;
+use Illuminate\Database\Eloquent\Collection;
 
 class CheckoutSubmissionContextService
 {
@@ -65,9 +66,9 @@ class CheckoutSubmissionContextService
     public function snapshotFromPackages($packages, ?array $billingData = null): array
     {
         // Preserva Eloquent\Collection per non perdere loadMissing() usato nel calcolo subtotal.
-        $collection = $packages instanceof \Illuminate\Database\Eloquent\Collection
+        $collection = $packages instanceof Collection
             ? $packages
-            : \Illuminate\Database\Eloquent\Collection::make($packages);
+            : Collection::make($packages);
         $firstPackage = $collection->first();
         $service = $firstPackage?->service;
         $serviceData = is_array($service?->service_data) ? $service->service_data : [];

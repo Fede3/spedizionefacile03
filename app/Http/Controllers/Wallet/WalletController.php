@@ -1,15 +1,18 @@
 <?php
+
 namespace App\Http\Controllers\Wallet;
 
 use App\Http\Controllers\Controller;
-
+use App\Http\Requests\WalletPayRequest;
+use App\Http\Requests\WalletTopUpRequest;
+use App\Models\Order;
+use App\Models\User;
 use App\Models\WalletMovement;
 use App\Services\StripePaymentService;
 use App\Services\WalletOrderLinkService;
 use App\Services\WalletOrderPaymentService;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Stripe\Exception\CardException;
@@ -66,7 +69,7 @@ class WalletController extends Controller
 
     // Ricarica il portafoglio usando una carta di credito salvata
     // Crea un pagamento su Stripe e, se va a buon fine, aggiunge i soldi al portafoglio
-    public function topUp(\App\Http\Requests\WalletTopUpRequest $request): JsonResponse
+    public function topUp(WalletTopUpRequest $request): JsonResponse
     {
         $data = $request->validated();
 
@@ -96,7 +99,7 @@ class WalletController extends Controller
 
             if (($paymentIntent['status'] ?? null) === 'succeeded') {
                 $result = DB::transaction(function () use ($user, $data, $paymentIntent, $idempotencyKey) {
-                    $lockedUser = \App\Models\User::query()->whereKey($user->id)->lockForUpdate()->firstOrFail();
+                    $lockedUser = User::query()->whereKey($user->id)->lockForUpdate()->firstOrFail();
 
                     $existingMovement = WalletMovement::query()
                         ->where('user_id', $lockedUser->id)
@@ -181,7 +184,7 @@ class WalletController extends Controller
     // Questo endpoint crea SOLO il movimento debit verificato.
     // La completion dell'ordine vive nel secondo step
     // StripeCheckoutController::markOrderCompleted().
-    public function payWithWallet(\App\Http\Requests\WalletPayRequest $request): JsonResponse
+    public function payWithWallet(WalletPayRequest $request): JsonResponse
     {
         $data = $request->validated();
 
@@ -196,7 +199,7 @@ class WalletController extends Controller
             return response()->json(['message' => 'Riferimento ordine non valido.'], 422);
         }
 
-        $order = \App\Models\Order::find($orderId);
+        $order = Order::find($orderId);
         if (! $order) {
             return response()->json(['message' => 'Ordine non trovato.'], 404);
         }

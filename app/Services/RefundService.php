@@ -33,8 +33,8 @@ class RefundService
      *
      * @return array{refund_amount_cents: int, commission_cents: int, refund_method: string, brt_cancelled: bool}
      *
-     * @throws \RuntimeException  Business-logic failure (order no longer cancellable).
-     * @throws \Exception         Unexpected infrastructure failure.
+     * @throws \RuntimeException Business-logic failure (order no longer cancellable).
+     * @throws \Exception Unexpected infrastructure failure.
      */
     public function processCancellation(Order $order, ?string $reason = null): array
     {
@@ -51,43 +51,43 @@ class RefundService
             $brtCancelled = $this->cancelBrtShipmentIfNeeded($order);
 
             $refundAmountCents = $eligibility['refund_amount_cents'];
-            $commissionCents   = $eligibility['commission_cents'];
-            $refundMethod      = 'wallet';
+            $commissionCents = $eligibility['commission_cents'];
+            $refundMethod = 'wallet';
 
             if ($refundAmountCents > 0) {
                 $refundMethod = $this->routeRefund($order, $refundAmountCents);
 
                 Transaction::create([
                     'order_id' => $order->id,
-                    'ext_id'   => 'refund_' . $order->id . '_' . now()->timestamp,
-                    'type'     => 'refund_' . $refundMethod,
-                    'status'   => 'succeeded',
-                    'total'    => -$refundAmountCents,
+                    'ext_id' => 'refund_'.$order->id.'_'.now()->timestamp,
+                    'type' => 'refund_'.$refundMethod,
+                    'status' => 'succeeded',
+                    'total' => -$refundAmountCents,
                 ]);
             }
 
-            $order->status            = $refundAmountCents > 0 ? Order::REFUNDED : Order::CANCELLED;
-            $order->refund_status     = $refundAmountCents > 0 ? 'completed' : 'none';
-            $order->refund_amount     = $refundAmountCents;
-            $order->refund_method     = $refundMethod;
-            $order->refund_reason     = $reason ?? 'Annullamento richiesto dall\'utente';
-            $order->refunded_at       = $refundAmountCents > 0 ? now() : null;
-            $order->cancellation_fee  = $commissionCents;
+            $order->status = $refundAmountCents > 0 ? Order::REFUNDED : Order::CANCELLED;
+            $order->refund_status = $refundAmountCents > 0 ? 'completed' : 'none';
+            $order->refund_amount = $refundAmountCents;
+            $order->refund_method = $refundMethod;
+            $order->refund_reason = $reason ?? 'Annullamento richiesto dall\'utente';
+            $order->refunded_at = $refundAmountCents > 0 ? now() : null;
+            $order->cancellation_fee = $commissionCents;
             $order->save();
 
             Log::info('Order cancelled and refunded', [
-                'order_id'           => $order->id,
+                'order_id' => $order->id,
                 'refund_amount_cents' => $refundAmountCents,
-                'commission_cents'   => $commissionCents,
-                'refund_method'      => $refundMethod,
-                'brt_cancelled'      => $brtCancelled,
+                'commission_cents' => $commissionCents,
+                'refund_method' => $refundMethod,
+                'brt_cancelled' => $brtCancelled,
             ]);
 
             return [
                 'refund_amount_cents' => $refundAmountCents,
-                'commission_cents'    => $commissionCents,
-                'refund_method'       => $refundMethod,
-                'brt_cancelled'       => $brtCancelled,
+                'commission_cents' => $commissionCents,
+                'refund_method' => $refundMethod,
+                'brt_cancelled' => $brtCancelled,
             ];
         });
     }
@@ -103,14 +103,14 @@ class RefundService
 
         try {
             $brtService = new BrtClient;
-            $brtResult  = $brtService->deleteShipment((int) $order->brt_numeric_sender_reference);
-            $success    = $brtResult['success'] ?? false;
+            $brtResult = $brtService->deleteShipment((int) $order->brt_numeric_sender_reference);
+            $success = $brtResult['success'] ?? false;
 
             if (! $success) {
                 Log::warning('BRT deleteShipment failed during cancellation', [
-                    'order_id'       => $order->id,
-                    'brt_reference'  => $order->brt_numeric_sender_reference,
-                    'brt_error'      => $brtResult['error'] ?? 'Errore sconosciuto',
+                    'order_id' => $order->id,
+                    'brt_reference' => $order->brt_numeric_sender_reference,
+                    'brt_error' => $brtResult['error'] ?? 'Errore sconosciuto',
                 ]);
             }
 
@@ -118,7 +118,7 @@ class RefundService
         } catch (\Exception $e) {
             Log::error('BRT deleteShipment exception during cancellation', [
                 'order_id' => $order->id,
-                'error'    => $e->getMessage(),
+                'error' => $e->getMessage(),
             ]);
 
             return false;
@@ -161,8 +161,9 @@ class RefundService
             $subtotalCents = (int) $order->subtotal->amount();
             $commission = self::CANCELLATION_FEE_CENTS;
             $refund = max(0, $subtotalCents - $commission);
+
             return $this->eligible(
-                'L\'ordine puo\' essere annullato. Verra\' applicata una commissione di annullamento di ' . number_format($commission / 100, 2, ',', '.') . ' EUR.',
+                'L\'ordine puo\' essere annullato. Verra\' applicata una commissione di annullamento di '.number_format($commission / 100, 2, ',', '.').' EUR.',
                 $order, 'refund_with_commission', $refund, $commission
             );
         }
@@ -177,7 +178,9 @@ class RefundService
     public function processStripeRefund(Order $order, int $amountCents): void
     {
         $secret = $this->stripeConfig->getSecret();
-        if (!$secret) throw new \Exception('Stripe non configurato. Impossibile processare il rimborso.');
+        if (! $secret) {
+            throw new \Exception('Stripe non configurato. Impossibile processare il rimborso.');
+        }
 
         $stripe = $this->stripe;
 
@@ -185,7 +188,7 @@ class RefundService
             // La idempotency key e' deterministica sull'ordine: anche se questa funzione venisse
             // chiamata due volte per lo stesso ordine (es. retry di rete), Stripe restituira' il
             // rimborso gia' creato invece di crearne uno secondo.
-            $idempotencyKey = 'refund_order_' . $order->id . '_' . $amountCents;
+            $idempotencyKey = 'refund_order_'.$order->id.'_'.$amountCents;
 
             $refund = $stripe->refunds->create([
                 'payment_intent' => $order->stripe_payment_intent_id,
@@ -194,10 +197,12 @@ class RefundService
             ], ['idempotency_key' => $idempotencyKey]);
 
             Log::info('Stripe refund processed', ['order_id' => $order->id, 'refund_id' => $refund->id, 'amount' => $amountCents, 'status' => $refund->status]);
-            if ($refund->status === 'failed') throw new \Exception('Rimborso Stripe fallito. Status: ' . $refund->status);
+            if ($refund->status === 'failed') {
+                throw new \Exception('Rimborso Stripe fallito. Status: '.$refund->status);
+            }
         } catch (ApiErrorException $e) {
             Log::error('Stripe refund API error', ['order_id' => $order->id, 'error' => $e->getMessage()]);
-            throw new \Exception('Errore Stripe durante il rimborso: ' . $e->getMessage());
+            throw new \Exception('Errore Stripe durante il rimborso: '.$e->getMessage());
         }
     }
 
@@ -206,9 +211,9 @@ class RefundService
         WalletMovement::create([
             'user_id' => $order->user_id, 'type' => 'credit',
             'amount' => round($amountCents / 100, 2), 'currency' => 'EUR', 'status' => 'confirmed',
-            'idempotency_key' => 'refund_' . $order->id . '_' . Str::uuid(),
+            'idempotency_key' => 'refund_'.$order->id.'_'.Str::uuid(),
             'reference' => (string) $order->id,
-            'description' => 'Rimborso ordine #SF-' . str_pad((string) $order->id, 6, '0', STR_PAD_LEFT),
+            'description' => 'Rimborso ordine #SF-'.str_pad((string) $order->id, 6, '0', STR_PAD_LEFT),
             'source' => 'refund',
         ]);
         Log::info('Wallet refund processed', ['order_id' => $order->id, 'user_id' => $order->user_id, 'amount_eur' => round($amountCents / 100, 2)]);

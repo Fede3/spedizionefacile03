@@ -19,16 +19,17 @@
  *   - Ogni singola richiesta HTTP passa attraverso questo file
  */
 
-use Illuminate\Foundation\Application;
-use Illuminate\Foundation\Configuration\Exceptions;
-use Illuminate\Auth\AuthenticationException;
-use Illuminate\Http\Exceptions\ThrottleRequestsException;
-use Illuminate\Routing\Exceptions\InvalidSignatureException;
-// -- ARCHIVIATO 2026-04-20 -- use App\Http\Middleware\AuthenticateProApiKey;
-use App\Http\Middleware\CheckAdmin;
 use App\Http\Middleware\HydrateSanctumFrontendHeaders;
+use App\Http\Middleware\SecurityHeaders;
 use App\Http\Middleware\SentryContext;
 use App\Support\AuthUiCookie;
+use Illuminate\Auth\AuthenticationException;
+// -- ARCHIVIATO 2026-04-20 -- use App\Http\Middleware\AuthenticateProApiKey;
+use Illuminate\Foundation\Application;
+use Illuminate\Foundation\Configuration\Exceptions;
+use Illuminate\Http\Exceptions\ThrottleRequestsException;
+use Illuminate\Routing\Exceptions\InvalidSignatureException;
+use Sentry\Laravel\Integration;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -82,7 +83,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
         // Aggiunge le intestazioni di sicurezza a TUTTE le risposte
         // (vedi app/Http/Middleware/SecurityHeaders.php per i dettagli)
-        $middleware->append(\App\Http\Middleware\SecurityHeaders::class);
+        $middleware->append(SecurityHeaders::class);
 
         // SENTRY-OBS-01: contesto Sentry (user id + ruolo, ip hash, route name).
         // Eseguito DOPO trustProxies cosi' $request->ip() e' quello vero.
@@ -109,14 +110,14 @@ return Application::configure(basePath: dirname(__DIR__))
         // reindirizza al frontend con un messaggio chiaro invece di mostrare
         // la pagina di errore generica di Laravel (errore 403 brutto)
         $exceptions->render(function (InvalidSignatureException $e, $request) {
-            return redirect(config('app.frontend_url') . '/verifica-email?status=invalid_signature');
+            return redirect(config('app.frontend_url').'/verifica-email?status=invalid_signature');
         });
 
         // Se l'utente fa troppe richieste (rate limiting), restituisce
         // un messaggio in italiano con il tempo di attesa
         $exceptions->render(function (ThrottleRequestsException $e, $request) {
             return response()->json([
-                'message' => 'Hai superato il numero massimo di tentativi. Riprova tra ' . ($e->getHeaders()['Retry-After'] ?? 60) . ' secondi.'
+                'message' => 'Hai superato il numero massimo di tentativi. Riprova tra '.($e->getHeaders()['Retry-After'] ?? 60).' secondi.',
             ], 429);
         });
 
@@ -126,9 +127,9 @@ return Application::configure(basePath: dirname(__DIR__))
         // (es. log stack) e la gestione di rendering resta invariata.
         // Il filtro ignore_exceptions e' applicato da sentry.php#before_send
         // implicitamente via Integration helper.
-        $exceptions->report(function (\Throwable $e) {
-            if (class_exists(\Sentry\Laravel\Integration::class) && app()->bound('sentry')) {
-                \Sentry\Laravel\Integration::captureUnhandledException($e);
+        $exceptions->report(function (Throwable $e) {
+            if (class_exists(Integration::class) && app()->bound('sentry')) {
+                Integration::captureUnhandledException($e);
             }
         });
     })->create();

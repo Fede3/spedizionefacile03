@@ -1,13 +1,15 @@
 <?php
+
 namespace App\Http\Controllers\Cart;
 
 use App\Http\Controllers\Controller;
-
+use App\Http\Resources\PackageResource;
 use App\Models\Package;
 use App\Services\CartService;
-use Illuminate\Support\Facades\DB;
-use App\Http\Resources\PackageResource;
+use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class CartTotalController extends Controller
 {
@@ -20,8 +22,7 @@ class CartTotalController extends Controller
     /**
      * Carica tutti i pacchi presenti nel carrello di un utente.
      *
-     * @param  int  $userId
-     * @return \Illuminate\Database\Eloquent\Collection<int, Package>
+     * @return Collection<int, Package>
      */
     private function loadCartPackages(int $userId)
     {
@@ -46,12 +47,13 @@ class CartTotalController extends Controller
     /**
      * Calcola i metadati del carrello (subtotale, totale, raggruppamento indirizzi).
      *
-     * @param  \Illuminate\Database\Eloquent\Collection<int, Package>  $packages
+     * @param  Collection<int, Package>  $packages
      * @return array{empty: bool, subtotal: string, total: string, address_groups: array}
      */
     protected function meta($packages): array
     {
         $subtotal = $this->cartService->subtotalFromModels($packages);
+
         return [
             'empty' => $packages->isEmpty(),
             'subtotal' => $subtotal->formatted(),
@@ -87,8 +89,7 @@ class CartTotalController extends Controller
         $this->cartService->normalizePackagePricing($packages);
 
         // Pulizia pacchi non validi: filtra dalla collezione già in memoria.
-        $invalidPackages = $packages->filter(fn ($pkg) =>
-            empty($pkg->package_type) || (empty($pkg->weight) && empty($pkg->first_size))
+        $invalidPackages = $packages->filter(fn ($pkg) => empty($pkg->package_type) || (empty($pkg->weight) && empty($pkg->first_size))
         );
 
         if ($invalidPackages->isNotEmpty()) {
@@ -113,7 +114,7 @@ class CartTotalController extends Controller
     /**
      * Unisce manualmente i pacchi identici nel carrello.
      *
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function mergeIdentical()
     {
@@ -137,7 +138,7 @@ class CartTotalController extends Controller
     /**
      * Svuota completamente il carrello dell'utente autenticato.
      *
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function emptyCart()
     {

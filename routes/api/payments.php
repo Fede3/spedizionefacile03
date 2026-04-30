@@ -7,14 +7,14 @@
  * portafoglio virtuale (ricarica, pagamento, saldo, movimenti).
  */
 
-use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Checkout\StripeCheckoutController;
-use App\Http\Controllers\Checkout\StripeCustomerController;
-use App\Http\Controllers\Checkout\StripeConnectController;
 use App\Http\Controllers\Catalog\SettingsController;
+use App\Http\Controllers\Checkout\StripeCheckoutController;
+use App\Http\Controllers\Checkout\StripeConnectController;
+use App\Http\Controllers\Checkout\StripeCustomerController;
 use App\Http\Controllers\Wallet\WalletController;
-use App\Http\Middleware\CheckCart;
 use App\Http\Middleware\CheckAdmin;
+use App\Http\Middleware\CheckCart;
+use Illuminate\Support\Facades\Route;
 
 Route::group(['middleware' => ['auth:sanctum']], function () {
 

@@ -7,11 +7,11 @@
  * tracking pubblico, BRT PUDO (punti di ritiro/consegna).
  */
 
-use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Catalog\LocationController;
 use App\Http\Controllers\Auth\LoginController;
-use App\Http\Controllers\Shipping\SessionDataController;
+use App\Http\Controllers\Catalog\LocationController;
 use App\Http\Controllers\Shipping\BrtController;
+use App\Http\Controllers\Shipping\SessionDataController;
+use Illuminate\Support\Facades\Route;
 
 /* ===== SESSIONE PREVENTIVO ===== */
 

@@ -3,10 +3,10 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-
 use App\Models\User;
 use App\Models\WalletMovement;
 use App\Models\WithdrawalRequest;
+use App\Services\AuditLogService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -21,7 +21,7 @@ class WalletManagementController extends Controller
             ->map(function ($user) {
                 return [
                     'id' => $user->id,
-                    'name' => $user->name . ' ' . $user->surname,
+                    'name' => $user->name.' '.$user->surname,
                     'email' => $user->email,
                     'role' => $user->role,
                     'referral_code' => $user->referral_code,
@@ -44,7 +44,7 @@ class WalletManagementController extends Controller
         return response()->json([
             'user' => [
                 'id' => $user->id,
-                'name' => $user->name . ' ' . $user->surname,
+                'name' => $user->name.' '.$user->surname,
                 'email' => $user->email,
                 'role' => $user->role,
                 'wallet_balance' => $user->walletBalance(),
@@ -85,13 +85,13 @@ class WalletManagementController extends Controller
             'amount' => $withdrawal->amount,
             'currency' => 'EUR',
             'status' => 'confirmed',
-            'idempotency_key' => 'withdrawal_' . $withdrawal->id,
+            'idempotency_key' => 'withdrawal_'.$withdrawal->id,
             'description' => 'Prelievo commissioni approvato',
             'source' => 'withdrawal',
-            'reference' => 'withdrawal_' . $withdrawal->id,
+            'reference' => 'withdrawal_'.$withdrawal->id,
         ]);
 
-        \App\Services\AuditLogService::log('admin.withdrawal.approve', $withdrawal, [
+        AuditLogService::log('admin.withdrawal.approve', $withdrawal, [
             'user_id' => $withdrawal->user_id,
             'amount' => (float) $withdrawal->amount,
         ]);
@@ -116,7 +116,7 @@ class WalletManagementController extends Controller
             'admin_notes' => $request->input('notes', 'Richiesta rifiutata'),
         ]);
 
-        \App\Services\AuditLogService::log('admin.withdrawal.reject', $withdrawal, [
+        AuditLogService::log('admin.withdrawal.reject', $withdrawal, [
             'user_id' => $withdrawal->user_id,
             'amount' => (float) $withdrawal->amount,
             'reason' => $request->input('notes'),

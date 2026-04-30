@@ -46,7 +46,7 @@ class PickupServiceTest extends TestCase
             ],
         ]);
 
-        $service = new PickupService(new BrtConfig(), new AddressNormalizer());
+        $service = new PickupService(new BrtConfig, new AddressNormalizer);
         $result = $service->requestPickup($order, [
             'enabled' => true,
             'date' => '2026-04-23',
@@ -85,7 +85,7 @@ class PickupServiceTest extends TestCase
 
         $order = $this->createOrderWithPackage();
 
-        $service = new PickupService(new BrtConfig(), new AddressNormalizer());
+        $service = new PickupService(new BrtConfig, new AddressNormalizer);
         $result = $service->requestPickup($order, [
             'enabled' => true,
             'date' => '2026-04-23',
@@ -102,7 +102,7 @@ class PickupServiceTest extends TestCase
 
     public function test_normalize_weight_value_supporta_peso_con_virgola_italiana(): void
     {
-        $service = new PickupService(new BrtConfig(), new AddressNormalizer());
+        $service = new PickupService(new BrtConfig, new AddressNormalizer);
         $method = new \ReflectionMethod($service, 'normalizeWeightValue');
         $method->setAccessible(true);
 
@@ -124,7 +124,7 @@ class PickupServiceTest extends TestCase
 
         $order = $this->createOrderWithPackage();
 
-        $service = new PickupService(new BrtConfig(), new AddressNormalizer());
+        $service = new PickupService(new BrtConfig, new AddressNormalizer);
         $result = $service->requestPickup($order, [
             'enabled' => true,
             'date' => '2026-04-23',
@@ -160,7 +160,7 @@ class PickupServiceTest extends TestCase
 
         $order = $this->createOrderWithPackage();
 
-        $service = new PickupService(new BrtConfig(), new AddressNormalizer());
+        $service = new PickupService(new BrtConfig, new AddressNormalizer);
         $result = $service->requestPickup($order, [
             'enabled' => true,
             'date' => '2026-04-23',

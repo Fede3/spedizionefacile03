@@ -49,7 +49,7 @@ class InvoicePdfService
         $y += 18;
 
         $orderDate = $order->created_at ? $order->created_at->format('d/m/Y H:i') : 'n/d';
-        $orderNumber = 'SF-' . str_pad((string) $order->id, 6, '0', STR_PAD_LEFT);
+        $orderNumber = 'SF-'.str_pad((string) $order->id, 6, '0', STR_PAD_LEFT);
 
         $ops .= $this->drawText($this->marginLeft, $y, 9, 'Numero ordine:', 'F2');
         $ops .= $this->drawText($this->marginLeft + 100, $y, 9, $orderNumber, 'F1');
@@ -78,7 +78,7 @@ class InvoicePdfService
 
         $userName = '';
         if ($order->user) {
-            $userName = trim(($order->user->name ?? '') . ' ' . ($order->user->surname ?? ''));
+            $userName = trim(($order->user->name ?? '').' '.($order->user->surname ?? ''));
         }
 
         // Usa billing_data se disponibile, altrimenti dati utente base.
@@ -131,7 +131,7 @@ class InvoicePdfService
                 $ops .= $this->drawLabelValue($this->marginLeft, $y, 'Indirizzo:', (string) $address);
                 $y += 14;
             }
-            $cityLine = trim(($billingData['postal_code'] ?? '') . ' ' . ($billingData['city'] ?? '') . ' ' . ($billingData['province'] ?? ''));
+            $cityLine = trim(($billingData['postal_code'] ?? '').' '.($billingData['city'] ?? '').' '.($billingData['province'] ?? ''));
             if ($cityLine !== '') {
                 $ops .= $this->drawLabelValue($this->marginLeft, $y, 'Localita:', $cityLine);
                 $y += 14;
@@ -161,9 +161,9 @@ class InvoicePdfService
                 $y += 14;
                 $ops .= $this->drawText($this->marginLeft, $y, 9, $this->normalizeText($origin->name ?? ''), 'F1');
                 $y += 12;
-                $ops .= $this->drawText($this->marginLeft, $y, 8, $this->normalizeText(($origin->address ?? '') . ' ' . ($origin->address_number ?? '')), 'F1');
+                $ops .= $this->drawText($this->marginLeft, $y, 8, $this->normalizeText(($origin->address ?? '').' '.($origin->address_number ?? '')), 'F1');
                 $y += 12;
-                $ops .= $this->drawText($this->marginLeft, $y, 8, $this->normalizeText(($origin->postal_code ?? '') . ' ' . ($origin->city ?? '') . ' (' . ($origin->province ?? '') . ')'), 'F1');
+                $ops .= $this->drawText($this->marginLeft, $y, 8, $this->normalizeText(($origin->postal_code ?? '').' '.($origin->city ?? '').' ('.($origin->province ?? '').')'), 'F1');
                 $y += 16;
             }
 
@@ -172,9 +172,9 @@ class InvoicePdfService
                 $y += 14;
                 $ops .= $this->drawText($this->marginLeft, $y, 9, $this->normalizeText($destination->name ?? ''), 'F1');
                 $y += 12;
-                $ops .= $this->drawText($this->marginLeft, $y, 8, $this->normalizeText(($destination->address ?? '') . ' ' . ($destination->address_number ?? '')), 'F1');
+                $ops .= $this->drawText($this->marginLeft, $y, 8, $this->normalizeText(($destination->address ?? '').' '.($destination->address_number ?? '')), 'F1');
                 $y += 12;
-                $ops .= $this->drawText($this->marginLeft, $y, 8, $this->normalizeText(($destination->postal_code ?? '') . ' ' . ($destination->city ?? '') . ' (' . ($destination->province ?? '') . ')'), 'F1');
+                $ops .= $this->drawText($this->marginLeft, $y, 8, $this->normalizeText(($destination->postal_code ?? '').' '.($destination->city ?? '').' ('.($destination->province ?? '').')'), 'F1');
                 $y += 16;
             }
 
@@ -201,13 +201,13 @@ class InvoicePdfService
         foreach ($order->packages as $index => $package) {
             $priceCents = $package->getRawOriginal('single_price') ?? 0;
             $totalCents += $priceCents;
-            $priceStr = number_format($priceCents / 100, 2, ',', '.') . ' EUR';
-            $dims = ($package->first_size ?? '?') . ' x ' . ($package->second_size ?? '?') . ' x ' . ($package->third_size ?? '?');
+            $priceStr = number_format($priceCents / 100, 2, ',', '.').' EUR';
+            $dims = ($package->first_size ?? '?').' x '.($package->second_size ?? '?').' x '.($package->third_size ?? '?');
 
             $ops .= $this->drawText($this->marginLeft + 4, $y, 8, (string) ($index + 1), 'F1');
             $ops .= $this->drawText($this->marginLeft + $cols[1], $y, 8, $this->normalizeText($package->package_type ?? 'Pacco'), 'F1');
             $ops .= $this->drawText($this->marginLeft + $cols[2], $y, 8, $dims, 'F1');
-            $ops .= $this->drawText($this->marginLeft + $cols[3], $y, 8, ($package->weight ?? '?') . ' kg', 'F1');
+            $ops .= $this->drawText($this->marginLeft + $cols[3], $y, 8, ($package->weight ?? '?').' kg', 'F1');
             $ops .= $this->drawText($this->marginLeft + $cols[4], $y, 8, $priceStr, 'F1');
             $y += 16;
         }
@@ -230,24 +230,24 @@ class InvoicePdfService
 
         if ($discountCents > 0) {
             $ops .= $this->drawText($rightX - 180, $y, 9, 'Totale lordo:', 'F1');
-            $ops .= $this->drawText($rightX, $y, 9, number_format($grossSubtotalCents / 100, 2, ',', '.') . ' EUR', 'F1', 'right');
+            $ops .= $this->drawText($rightX, $y, 9, number_format($grossSubtotalCents / 100, 2, ',', '.').' EUR', 'F1', 'right');
             $y += 14;
             $ops .= $this->drawText($rightX - 180, $y, 9, 'Sconto:', 'F1');
-            $ops .= $this->drawText($rightX, $y, 9, '-' . number_format($discountCents / 100, 2, ',', '.') . ' EUR', 'F1', 'right');
+            $ops .= $this->drawText($rightX, $y, 9, '-'.number_format($discountCents / 100, 2, ',', '.').' EUR', 'F1', 'right');
             $y += 14;
         }
 
         $ops .= $this->drawText($rightX - 180, $y, 9, 'Imponibile:', 'F1');
-        $ops .= $this->drawText($rightX, $y, 9, number_format($imponibileCents / 100, 2, ',', '.') . ' EUR', 'F1', 'right');
+        $ops .= $this->drawText($rightX, $y, 9, number_format($imponibileCents / 100, 2, ',', '.').' EUR', 'F1', 'right');
         $y += 14;
-        $ops .= $this->drawText($rightX - 180, $y, 9, 'IVA (' . $vatRate . '%):', 'F1');
-        $ops .= $this->drawText($rightX, $y, 9, number_format($ivaCents / 100, 2, ',', '.') . ' EUR', 'F1', 'right');
+        $ops .= $this->drawText($rightX - 180, $y, 9, 'IVA ('.$vatRate.'%):', 'F1');
+        $ops .= $this->drawText($rightX, $y, 9, number_format($ivaCents / 100, 2, ',', '.').' EUR', 'F1', 'right');
         $y += 16;
 
         $ops .= $this->drawLine($rightX - 200, $y, $rightX, $y, 1.0);
         $y += 14;
         $ops .= $this->drawText($rightX - 180, $y, 12, 'TOTALE:', 'F2');
-        $ops .= $this->drawText($rightX, $y, 12, number_format($subtotalCents / 100, 2, ',', '.') . ' EUR', 'F2', 'right');
+        $ops .= $this->drawText($rightX, $y, 12, number_format($subtotalCents / 100, 2, ',', '.').' EUR', 'F2', 'right');
         $y += 30;
 
         // ── METODO DI PAGAMENTO ─────────────────────────────────

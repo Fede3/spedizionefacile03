@@ -9,7 +9,7 @@ class BrtPayloadBuilderTest extends TestCase
 {
     public function test_sanitize_create_data_removes_unsupported_sender_override_fields(): void
     {
-        $builder = new BrtPayloadBuilder();
+        $builder = new BrtPayloadBuilder;
 
         $sanitized = $builder->sanitizeCreateData([
             'createData' => [

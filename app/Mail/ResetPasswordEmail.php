@@ -27,6 +27,7 @@ class ResetPasswordEmail extends Mailable
 
     // Token segreto per il recupero password (scade dopo un certo tempo)
     public $token;
+
     // Email dell'utente che vuole recuperare la password
     public $email;
 

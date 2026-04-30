@@ -1,8 +1,8 @@
 <?php
+
 namespace App\Http\Controllers\Communication;
 
 use App\Http\Controllers\Controller;
-
 use App\Http\Requests\StoreContactMessageRequest;
 use App\Http\Requests\StoreSupportTicketRequest;
 use App\Models\ContactMessage;

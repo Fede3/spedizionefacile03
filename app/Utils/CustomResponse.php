@@ -1,16 +1,17 @@
-<?php 
+<?php
 
 namespace App\Utils;
 
-class CustomResponse {
+class CustomResponse
+{
+    public static function setSuccessResponse($message, $code, $objName = null, $data = null)
+    {
 
-    public static function setSuccessResponse($message, $code, $objName = null, $data = null) {
-
-        $params = array(
+        $params = [
             'success' => true,
             'status_code' => $code,
             'message' => $message,
-        );
+        ];
 
         if ($objName) {
             $params[$objName] = $data;
@@ -23,16 +24,15 @@ class CustomResponse {
         return response()->json($params, $code);
     }
 
+    public static function setFailResponse($message, $code, $errors = null)
+    {
 
-
-    public static function setFailResponse($message, $code, $errors = null) {
-
-        $params = array(
+        $params = [
             'success' => false,
             'message' => $message,
             'code' => $code,
-            'errors' => $errors
-        );
+            'errors' => $errors,
+        ];
 
         return response()->json($params, $code);
     }

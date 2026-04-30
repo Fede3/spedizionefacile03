@@ -3,9 +3,9 @@
 namespace App\Services;
 
 use App\Cart\MyMoney;
-use App\Models\Service;
 use App\Models\Package;
-use App\Services\PriceEngineService;
+use App\Models\Service;
+use Illuminate\Support\Facades\DB;
 
 class CartService
 {
@@ -63,6 +63,7 @@ class CartService
     public function buildServiceSignatureFromGuest(array $services = []): string
     {
         $serviceData = $services['serviceData'] ?? $services['service_data'] ?? [];
+
         return app(ShipmentServicePricingService::class)->buildSelectionSignature(
             $services['service_type'] ?? 'Nessuno',
             is_array($serviceData) ? $serviceData : [],
@@ -96,6 +97,7 @@ class CartService
     {
         $unitPrice = $newUnitPriceCents ?? $this->unitPrice($existingPriceCents, $existingQty);
         $totalQty = $existingQty + $addedQty;
+
         return ['quantity' => $totalQty, 'single_price' => $unitPrice * $totalQty];
     }
 
@@ -197,8 +199,8 @@ class CartService
         return implode('|', [
             $this->normalize($pkg->package_type),
             (string) $pkg->weight, (string) $pkg->first_size, (string) $pkg->second_size, (string) $pkg->third_size,
-            $o ? $this->normalize($o->name) . '|' . $this->normalize($o->address) . '|' . $this->normalize($o->city) . '|' . $this->normalize($o->postal_code) : 'no-origin',
-            $d ? $this->normalize($d->name) . '|' . $this->normalize($d->address) . '|' . $this->normalize($d->city) . '|' . $this->normalize($d->postal_code) : 'no-dest',
+            $o ? $this->normalize($o->name).'|'.$this->normalize($o->address).'|'.$this->normalize($o->city).'|'.$this->normalize($o->postal_code) : 'no-origin',
+            $d ? $this->normalize($d->name).'|'.$this->normalize($d->address).'|'.$this->normalize($d->city).'|'.$this->normalize($d->postal_code) : 'no-dest',
             $s ? $this->normalize($s->service_type) : 'nessuno',
             $s ? $this->buildServiceSignatureFromService($s) : 'no-service-data',
         ]);
@@ -208,7 +210,9 @@ class CartService
 
     public function buildAddressGroups($packages): array
     {
-        if ($packages->isEmpty()) return [];
+        if ($packages->isEmpty()) {
+            return [];
+        }
         $groups = [];
 
         foreach ($packages as $package) {
@@ -226,13 +230,13 @@ class CartService
                 $this->normalize($destination->city), $this->normalize($destination->postal_code), $this->normalize($destination->province),
             ]) : 'no-dest';
 
-            $key = md5($originParts . '::' . $destParts . '::' . $this->normalize($serviceType));
+            $key = md5($originParts.'::'.$destParts.'::'.$this->normalize($serviceType));
 
-            if (!isset($groups[$key])) {
+            if (! isset($groups[$key])) {
                 $groups[$key] = [
                     'package_ids' => [], 'count' => 0,
-                    'origin_summary' => $origin ? trim(($origin->name ?? '') . ' - ' . ($origin->city ?? '')) : '',
-                    'destination_summary' => $destination ? trim(($destination->name ?? '') . ' - ' . ($destination->city ?? '')) : '',
+                    'origin_summary' => $origin ? trim(($origin->name ?? '').' - '.($origin->city ?? '')) : '',
+                    'destination_summary' => $destination ? trim(($destination->name ?? '').' - '.($destination->city ?? '')) : '',
                     'service_type' => $serviceType,
                 ];
             }
@@ -249,6 +253,7 @@ class CartService
     {
         $subtotal = $packages->sum(fn ($p) => (int) $p->single_price);
         $subtotal += CartSurchargeCalculator::fromModels($packages);
+
         return new MyMoney($subtotal);
     }
 
@@ -259,6 +264,7 @@ class CartService
             $subtotal += (int) ($package['single_price'] ?? 0);
         }
         $subtotal += CartSurchargeCalculator::fromArray($packages);
+
         return new MyMoney($subtotal);
     }
 
@@ -267,7 +273,7 @@ class CartService
 
     public function normalizeServiceData(array $servicesData): array
     {
-        $servicesData['service_type'] = !empty($servicesData['service_type']) ? $servicesData['service_type'] : 'Nessuno';
+        $servicesData['service_type'] = ! empty($servicesData['service_type']) ? $servicesData['service_type'] : 'Nessuno';
         $servicesData['date'] = $servicesData['date'] ?? '';
         $servicesData['time'] = $servicesData['time'] ?? '';
 
@@ -326,7 +332,7 @@ class CartService
 
     public function applyPudoData(array $servicesData, array $requestData): array
     {
-        if (!empty($requestData['pudo']) && ($requestData['delivery_mode'] ?? 'home') === 'pudo') {
+        if (! empty($requestData['pudo']) && ($requestData['delivery_mode'] ?? 'home') === 'pudo') {
             $serviceData = $servicesData['service_data'] ?? [];
             $serviceData['pudo'] = $requestData['pudo'];
             $serviceData['delivery_mode'] = 'pudo';
@@ -336,6 +342,7 @@ class CartService
             unset($serviceData['pudo'], $serviceData['delivery_mode']);
             $servicesData['service_data'] = $serviceData;
         }
+
         return $servicesData;
     }
 
@@ -343,7 +350,7 @@ class CartService
 
     public function mergeIdenticalPackages($packages, int $userId): int
     {
-        $cartPackageIds = \Illuminate\Support\Facades\DB::table('cart_user')
+        $cartPackageIds = DB::table('cart_user')
             ->where('user_id', $userId)
             ->whereIn('package_id', collect($packages)->pluck('id')->all())
             ->pluck('package_id')
@@ -355,13 +362,15 @@ class CartService
             ->filter(fn ($pkg) => $cartPackageIds->contains((int) $pkg->id))
             ->values();
 
-        if ($packages->count() < 2) return 0;
+        if ($packages->count() < 2) {
+            return 0;
+        }
 
-        $protectedPackageIds = \Illuminate\Support\Facades\DB::table('saved_shipments')
+        $protectedPackageIds = DB::table('saved_shipments')
             ->whereIn('package_id', $cartPackageIds->all())
             ->pluck('package_id')
             ->merge(
-                \Illuminate\Support\Facades\DB::table('package_order')
+                DB::table('package_order')
                     ->whereIn('package_id', $cartPackageIds->all())
                     ->pluck('package_id')
             )
@@ -377,7 +386,9 @@ class CartService
 
         $merged = 0;
         foreach ($groups as $groupPackages) {
-            if (count($groupPackages) < 2) continue;
+            if (count($groupPackages) < 2) {
+                continue;
+            }
 
             usort($groupPackages, function (Package $left, Package $right) use ($protectedLookup) {
                 $leftProtected = isset($protectedLookup[(int) $left->id]) ? 1 : 0;
@@ -402,7 +413,7 @@ class CartService
                 }
 
                 $masterQty += (int) $dup->quantity;
-                \Illuminate\Support\Facades\DB::table('cart_user')->where('user_id', $userId)->where('package_id', $dup->id)->delete();
+                DB::table('cart_user')->where('user_id', $userId)->where('package_id', $dup->id)->delete();
                 $dup->delete();
                 $merged++;
                 $groupMerged++;

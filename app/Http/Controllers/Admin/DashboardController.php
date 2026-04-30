@@ -3,11 +3,11 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-
+use App\Models\ContactMessage;
 use App\Models\Order;
+use App\Models\ProRequest;
 use App\Models\Transaction;
 use App\Models\User;
-use App\Models\ContactMessage;
 use App\Models\WithdrawalRequest;
 use Illuminate\Http\JsonResponse;
 
@@ -79,7 +79,7 @@ class DashboardController extends Controller
         // NOTIFICHE: conteggio di cose che richiedono attenzione dell'admin
         $unreadMessages = ContactMessage::whereNull('read_at')->count();
         $pendingWithdrawals = WithdrawalRequest::where('status', 'pending')->count();
-        $pendingProRequests = \App\Models\ProRequest::where('status', 'pending')->count();
+        $pendingProRequests = ProRequest::where('status', 'pending')->count();
 
         return response()->json([
             'orders' => [

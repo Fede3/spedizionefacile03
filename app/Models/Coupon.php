@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -57,11 +58,11 @@ class Coupon extends Model
             ->where('active', true)
             ->where(function ($q) {
                 $q->whereNull('expires_at')
-                  ->orWhere('expires_at', '>', now());
+                    ->orWhere('expires_at', '>', now());
             })
             ->where(function ($q) {
                 $q->whereNull('max_uses')
-                  ->orWhereColumn('uses_count', '<', 'max_uses');
+                    ->orWhereColumn('uses_count', '<', 'max_uses');
             });
     }
 

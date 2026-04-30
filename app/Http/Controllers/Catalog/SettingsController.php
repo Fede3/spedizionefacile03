@@ -1,11 +1,12 @@
 <?php
+
 namespace App\Http\Controllers\Catalog;
 
 use App\Http\Controllers\Controller;
-
+use App\Http\Requests\UpdateStripeKeysRequest;
 use App\Models\Setting;
 use App\Services\StripeConfigService;
-use Illuminate\Http\Request;
+
 class SettingsController extends Controller
 {
     public function __construct(
@@ -30,19 +31,19 @@ class SettingsController extends Controller
      * Solo l'amministratore puo' fare questa operazione.
      * Verifica che le chiavi abbiano il formato corretto (pk_ e sk_).
      */
-    public function saveStripeConfig(\App\Http\Requests\UpdateStripeKeysRequest $request)
+    public function saveStripeConfig(UpdateStripeKeysRequest $request)
     {
         // Ripulisce eventuali spazi/newline da copia-incolla
         $publishable = preg_replace('/\s+/', '', (string) $request->publishable_key);
         $secret = preg_replace('/\s+/', '', (string) $request->secret_key);
 
-        if (!preg_match('/^pk_(test|live)_[A-Za-z0-9]+$/', $publishable)) {
+        if (! preg_match('/^pk_(test|live)_[A-Za-z0-9]+$/', $publishable)) {
             return response()->json([
                 'message' => 'Publishable Key non valida. Incolla la chiave completa (pk_test_... o pk_live_...) senza caratteri extra.',
             ], 422);
         }
 
-        if (!preg_match('/^sk_(test|live)_[A-Za-z0-9]+$/', $secret)) {
+        if (! preg_match('/^sk_(test|live)_[A-Za-z0-9]+$/', $secret)) {
             return response()->json([
                 'message' => 'Secret Key non valida. Incolla la chiave completa (sk_test_... o sk_live_...) senza caratteri extra.',
             ], 422);

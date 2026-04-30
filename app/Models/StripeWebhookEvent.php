@@ -1,7 +1,9 @@
 <?php
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\QueryException;
 
 class StripeWebhookEvent extends Model
 {
@@ -32,7 +34,7 @@ class StripeWebhookEvent extends Model
             ]);
 
             return true;
-        } catch (\Illuminate\Database\QueryException $e) {
+        } catch (QueryException $e) {
             // Codice 23000 = violazione vincolo UNIQUE (l'evento era gia' stato processato)
             if (str_contains($e->getMessage(), 'Duplicate') || str_contains($e->getMessage(), 'UNIQUE')) {
                 return false;

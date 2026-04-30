@@ -3,7 +3,6 @@
 namespace App\Services;
 
 use App\Models\Package;
-use App\Models\Service;
 
 class CartSurchargeCalculator
 {
@@ -12,7 +11,9 @@ class CartSurchargeCalculator
      */
     public static function fromModels($packages): int
     {
-        if ($packages->isEmpty()) return 0;
+        if ($packages->isEmpty()) {
+            return 0;
+        }
 
         // PERF-03: garantisce eager loading anche se il chiamante non lo ha fatto,
         // evitando query N+1 quando la collezione arriva senza relazioni caricate.
@@ -26,7 +27,9 @@ class CartSurchargeCalculator
 
         foreach ($packages as $package) {
             $service = $package->service;
-            if (! $service) continue;
+            if (! $service) {
+                continue;
+            }
 
             $serviceSignature = app(CartService::class)->buildServiceSignatureFromService($service);
             $groupKey = self::buildAddressKeyForServices($package, $serviceSignature);
@@ -70,7 +73,9 @@ class CartSurchargeCalculator
      */
     public static function fromArray(array $packages): int
     {
-        if (empty($packages)) return 0;
+        if (empty($packages)) {
+            return 0;
+        }
 
         $pricing = app(ShipmentServicePricingService::class);
         $groups = [];
@@ -82,11 +87,11 @@ class CartSurchargeCalculator
             $smsEmailNotification = (bool) ($services['sms_email_notification'] ?? $serviceData['sms_email_notification'] ?? false);
 
             $groupKey = md5(
-                ($package['origin_address']['city'] ?? '') . '|'
-                . ($package['origin_address']['postal_code'] ?? '') . '|'
-                . ($package['destination_address']['city'] ?? '') . '|'
-                . ($package['destination_address']['postal_code'] ?? '') . '|'
-                . app(CartService::class)->buildServiceSignatureFromGuest($services)
+                ($package['origin_address']['city'] ?? '').'|'
+                .($package['origin_address']['postal_code'] ?? '').'|'
+                .($package['destination_address']['city'] ?? '').'|'
+                .($package['destination_address']['postal_code'] ?? '').'|'
+                .app(CartService::class)->buildServiceSignatureFromGuest($services)
             );
 
             if (! isset($groups[$groupKey])) {
@@ -133,6 +138,6 @@ class CartSurchargeCalculator
         $originParts = $origin ? implode('|', [$n($origin->name), $n($origin->address), $n($origin->address_number), $n($origin->city), $n($origin->postal_code), $n($origin->province)]) : 'no-origin';
         $destParts = $destination ? implode('|', [$n($destination->name), $n($destination->address), $n($destination->address_number), $n($destination->city), $n($destination->postal_code), $n($destination->province)]) : 'no-dest';
 
-        return md5($originParts . '::' . $destParts . '::' . $serviceSignature);
+        return md5($originParts.'::'.$destParts.'::'.$serviceSignature);
     }
 }

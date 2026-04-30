@@ -31,7 +31,7 @@ class HydrateSanctumFrontendHeaders
 
         if ($origin !== '') {
             $request->headers->set('origin', $origin);
-            $request->headers->set('referer', $origin . '/');
+            $request->headers->set('referer', $origin.'/');
         }
 
         return $next($request);

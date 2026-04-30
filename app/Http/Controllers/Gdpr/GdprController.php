@@ -1,8 +1,9 @@
 <?php
+
 namespace App\Http\Controllers\Gdpr;
 
 use App\Http\Controllers\Controller;
-
+use App\Http\Requests\CookieConsentRequest;
 use App\Models\Order;
 use App\Models\UserAddress;
 use App\Models\UserNotificationPreference;
@@ -52,7 +53,7 @@ class GdprController extends Controller
             Order::where('user_id', $userId)
                 ->whereNotIn('status', [Order::PENDING, Order::PAYMENT_FAILED, Order::CANCELLED])
                 ->update([
-                    'user_id'      => null,   // Scollega l'ordine dall'utente
+                    'user_id' => null,   // Scollega l'ordine dall'utente
                     'billing_data' => null,   // Rimuove i dati di fatturazione personali
                 ]);
 
@@ -71,33 +72,33 @@ class GdprController extends Controller
             // --- 7. Anonimizza il record utente ---
             // Sovrascriviamo i dati personali con valori anonimi.
             // L'account viene disabilitato definitivamente.
-            $anonEmail = 'deleted_' . $userId . '@removed.invalid';
+            $anonEmail = 'deleted_'.$userId.'@removed.invalid';
             $user->forceFill([
-                'name'                       => 'Utente eliminato',
-                'surname'                    => null,
-                'email'                      => $anonEmail,
-                'telephone_number'           => null,
-                'password'                   => bin2hex(random_bytes(16)), // Cast 'hashed' su User hashera' automaticamente
-                'google_id'                  => null,
-                'facebook_id'                => null,
-                'apple_id'                   => null,
-                'avatar'                     => null,
-                'referral_code'              => null,
-                'referred_by'                => null,
-                'stripe_account_id'          => null,
-                'customer_id'                => null,
-                'verification_code'          => null,
+                'name' => 'Utente eliminato',
+                'surname' => null,
+                'email' => $anonEmail,
+                'telephone_number' => null,
+                'password' => bin2hex(random_bytes(16)), // Cast 'hashed' su User hashera' automaticamente
+                'google_id' => null,
+                'facebook_id' => null,
+                'apple_id' => null,
+                'avatar' => null,
+                'referral_code' => null,
+                'referred_by' => null,
+                'stripe_account_id' => null,
+                'customer_id' => null,
+                'verification_code' => null,
                 'verification_code_expires_at' => null,
-                'remember_token'             => null,
-                'email_verified_at'          => null,
+                'remember_token' => null,
+                'email_verified_at' => null,
             ])->save();
 
             // --- 8. Registra l'evento nel log ---
             Log::info('GDPR: account eliminato', [
                 'deleted_user_id' => $userId,
-                'anon_email'      => $anonEmail,
-                'ip'              => request()->ip(),
-                'timestamp'       => now()->toIso8601String(),
+                'anon_email' => $anonEmail,
+                'ip' => request()->ip(),
+                'timestamp' => now()->toIso8601String(),
             ]);
         });
 
@@ -128,18 +129,18 @@ class GdprController extends Controller
 
         // Profilo utente (esclusi campi sensibili di sicurezza)
         $profile = [
-            'id'               => $user->id,
-            'name'             => $user->name,
-            'surname'          => $user->surname,
-            'email'            => $user->email,
+            'id' => $user->id,
+            'name' => $user->name,
+            'surname' => $user->surname,
+            'email' => $user->email,
             'telephone_number' => $user->telephone_number,
-            'user_type'        => $user->user_type,
-            'role'             => $user->role,
-            'referral_code'    => $user->referral_code,
-            'referred_by'      => $user->referred_by,
+            'user_type' => $user->user_type,
+            'role' => $user->role,
+            'referral_code' => $user->referral_code,
+            'referred_by' => $user->referred_by,
             'email_verified_at' => $user->email_verified_at,
             'privacy_accepted_at' => $user->privacy_accepted_at,
-            'created_at'       => $user->created_at,
+            'created_at' => $user->created_at,
         ];
 
         // Ordini con dati di fatturazione completi (senza dati tecnici BRT voluminosi)
@@ -200,21 +201,21 @@ class GdprController extends Controller
             ->orderByDesc('last_activity')
             ->get()
             ->map(fn ($session) => [
-                'ip_address'    => $session->ip_address,
-                'user_agent'    => $session->user_agent,
+                'ip_address' => $session->ip_address,
+                'user_agent' => $session->user_agent,
                 'last_activity' => date('c', $session->last_activity),
             ]);
 
         return response()->json([
-            'export_date'               => now()->toIso8601String(),
-            'profile'                   => $profile,
-            'orders'                    => $orders,
-            'addresses'                 => $addresses,
-            'wallet_movements'          => $walletMovements,
+            'export_date' => now()->toIso8601String(),
+            'profile' => $profile,
+            'orders' => $orders,
+            'addresses' => $addresses,
+            'wallet_movements' => $walletMovements,
             'saved_shipment_package_ids' => $savedPackageIds,
-            'notification_preferences'  => $notificationPreferences,
-            'cookie_consents'           => $cookieConsents,
-            'login_sessions'            => $loginSessions,
+            'notification_preferences' => $notificationPreferences,
+            'cookie_consents' => $cookieConsents,
+            'login_sessions' => $loginSessions,
         ]);
     }
 
@@ -229,40 +230,40 @@ class GdprController extends Controller
      *
      * Il consenso viene salvato nella tabella cookie_consents per audit trail.
      */
-    public function cookieConsent(\App\Http\Requests\CookieConsentRequest $request): JsonResponse
+    public function cookieConsent(CookieConsentRequest $request): JsonResponse
     {
         $data = $request->validated();
 
         // Supporto formato legacy: type=all abilita tutto, type=necessary disabilita tutto
         if (isset($data['type'])) {
             $allEnabled = $data['type'] === 'all';
-            $analytics  = $allEnabled;
-            $marketing  = $allEnabled;
+            $analytics = $allEnabled;
+            $marketing = $allEnabled;
             $functional = $allEnabled;
         } else {
-            $analytics  = (bool) ($data['analytics'] ?? false);
-            $marketing  = (bool) ($data['marketing'] ?? false);
+            $analytics = (bool) ($data['analytics'] ?? false);
+            $marketing = (bool) ($data['marketing'] ?? false);
             $functional = (bool) ($data['functional'] ?? false);
         }
 
         DB::table('cookie_consents')->insert([
-            'user_id'      => $request->user()?->id,
-            'analytics'    => $analytics,
-            'marketing'    => $marketing,
-            'functional'   => $functional,
-            'ip_address'   => $request->ip(),
-            'user_agent'   => mb_substr((string) $request->userAgent(), 0, 512),
+            'user_id' => $request->user()?->id,
+            'analytics' => $analytics,
+            'marketing' => $marketing,
+            'functional' => $functional,
+            'ip_address' => $request->ip(),
+            'user_agent' => mb_substr((string) $request->userAgent(), 0, 512),
             'consented_at' => now(),
-            'created_at'   => now(),
-            'updated_at'   => now(),
+            'created_at' => now(),
+            'updated_at' => now(),
         ]);
 
         Log::info('GDPR: consenso cookie registrato', [
-            'user_id'    => $request->user()?->id,
-            'analytics'  => $analytics,
-            'marketing'  => $marketing,
+            'user_id' => $request->user()?->id,
+            'analytics' => $analytics,
+            'marketing' => $marketing,
             'functional' => $functional,
-            'ip'         => $request->ip(),
+            'ip' => $request->ip(),
         ]);
 
         return response()->json(['ok' => true]);

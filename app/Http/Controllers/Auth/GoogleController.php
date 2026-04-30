@@ -1,8 +1,8 @@
 <?php
+
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
-
 use App\Models\User;
 use App\Support\AuthUiCookie;
 use Illuminate\Http\Request;
@@ -19,7 +19,9 @@ class GoogleController extends Controller
     private const STATE_TTL_MINUTES = 10;
 
     private const SESSION_STATE_KEY = 'oauth_state_google';
+
     private const SESSION_STATE_CREATED_KEY = 'oauth_state_google_created_at';
+
     private const SESSION_PKCE_VERIFIER_KEY = 'oauth_pkce_google_verifier';
 
     private function isGoogleConfigured(): bool

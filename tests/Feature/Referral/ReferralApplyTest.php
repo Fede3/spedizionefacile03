@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Referral;
 
+use App\Mail\ReferralUsedMail;
 use App\Models\Coupon;
 use App\Models\Order;
 use App\Models\Package;
@@ -12,7 +13,6 @@ use App\Models\UserNotificationPreference;
 use App\Models\WalletMovement;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Mail;
-use App\Mail\ReferralUsedMail;
 use Tests\TestCase;
 
 class ReferralApplyTest extends TestCase
@@ -20,7 +20,7 @@ class ReferralApplyTest extends TestCase
     use RefreshDatabase;
 
     /* ------------------------------------------------------------------ */
-    /*  Helpers                                                            */
+    /*  Helpers */
     /* ------------------------------------------------------------------ */
 
     /**
@@ -31,6 +31,7 @@ class ReferralApplyTest extends TestCase
         $user = User::factory()->partnerPro()->create([
             'referral_code' => $code,
         ]);
+
         return $user;
     }
 
@@ -40,14 +41,14 @@ class ReferralApplyTest extends TestCase
     private function createOrder(User $user, int $subtotalCents = 1190): Order
     {
         $order = Order::factory()->create([
-            'user_id'  => $user->id,
-            'status'   => 'pending',
+            'user_id' => $user->id,
+            'status' => 'pending',
             'subtotal' => $subtotalCents,
             'pricing_snapshot' => $this->referralPricingSnapshot($user, $subtotalCents),
         ]);
 
         $package = Package::factory()->create([
-            'user_id'      => $user->id,
+            'user_id' => $user->id,
             'single_price' => $subtotalCents,
         ]);
         Order::attachPackage($order->id, $package->id, 1);
@@ -90,12 +91,12 @@ class ReferralApplyTest extends TestCase
     }
 
     /* ================================================================== */
-    /*  T11.5.1: Validate referral code (POST /api/referral/validate)      */
+    /*  T11.5.1: Validate referral code (POST /api/referral/validate) */
     /* ================================================================== */
     public function test_validate_referral_code_success(): void
     {
         $proUser = $this->createProUser('ABCD1234');
-        $buyer   = User::factory()->create();
+        $buyer = User::factory()->create();
 
         $response = $this->actingAs($buyer)
             ->postJson('/api/referral/validate', [
@@ -119,18 +120,18 @@ class ReferralApplyTest extends TestCase
     }
 
     /* ================================================================== */
-    /*  T11.5.2: Apply referral creates ReferralUsage + WalletMovement     */
+    /*  T11.5.2: Apply referral creates ReferralUsage + WalletMovement */
     /* ================================================================== */
     public function test_apply_referral_uses_server_order_subtotal_and_ignores_client_amount(): void
     {
         $proUser = $this->createProUser('PROAPPLY');
-        $buyer   = User::factory()->create(['referred_by' => 'PROAPPLY']);
-        $order   = $this->createPaidOrder($buyer, 2000); // 20.00 EUR
+        $buyer = User::factory()->create(['referred_by' => 'PROAPPLY']);
+        $order = $this->createPaidOrder($buyer, 2000); // 20.00 EUR
 
         $response = $this->actingAs($buyer)
             ->postJson('/api/referral/apply', [
-                'code'         => 'PROAPPLY',
-                'order_id'     => $order->id,
+                'code' => 'PROAPPLY',
+                'order_id' => $order->id,
                 'order_amount' => 1.23,
             ]);
 
@@ -142,23 +143,23 @@ class ReferralApplyTest extends TestCase
 
         // ReferralUsage record created
         $this->assertDatabaseHas('referral_usages', [
-            'buyer_id'       => $buyer->id,
-            'pro_user_id'    => $proUser->id,
-            'referral_code'  => 'PROAPPLY',
-            'order_id'       => $order->id,
-            'order_amount'   => '20.00',
-            'discount_amount'=> '1.00',
+            'buyer_id' => $buyer->id,
+            'pro_user_id' => $proUser->id,
+            'referral_code' => 'PROAPPLY',
+            'order_id' => $order->id,
+            'order_amount' => '20.00',
+            'discount_amount' => '1.00',
             'commission_amount' => '1.00',
-            'status'         => 'confirmed',
+            'status' => 'confirmed',
         ]);
 
         // WalletMovement (commission credit) created for the Pro user
         $this->assertDatabaseHas('wallet_movements', [
-            'user_id'     => $proUser->id,
-            'type'        => 'credit',
-            'amount'      => '1.00',
-            'status'      => 'confirmed',
-            'source'      => 'commission',
+            'user_id' => $proUser->id,
+            'type' => 'credit',
+            'amount' => '1.00',
+            'status' => 'confirmed',
+            'source' => 'commission',
         ]);
     }
 
@@ -170,8 +171,8 @@ class ReferralApplyTest extends TestCase
 
         $this->actingAs($buyer)
             ->postJson('/api/referral/apply', [
-                'code'         => 'PROUNPAI',
-                'order_id'     => $order->id,
+                'code' => 'PROUNPAI',
+                'order_id' => $order->id,
                 'order_amount' => 20.00,
             ])
             ->assertStatus(422)
@@ -190,8 +191,8 @@ class ReferralApplyTest extends TestCase
 
         $this->actingAs($buyer)
             ->postJson('/api/referral/apply', [
-                'code'         => 'PROOWNED',
-                'order_id'     => $order->id,
+                'code' => 'PROOWNED',
+                'order_id' => $order->id,
                 'order_amount' => 20.00,
             ])
             ->assertStatus(404)
@@ -269,7 +270,7 @@ class ReferralApplyTest extends TestCase
     }
 
     /* ================================================================== */
-    /*  T11.5.3: Self-referral blocked                                     */
+    /*  T11.5.3: Self-referral blocked */
     /* ================================================================== */
     public function test_self_referral_is_blocked(): void
     {
@@ -284,26 +285,26 @@ class ReferralApplyTest extends TestCase
         $order = $this->createOrder($proUser);
         $this->actingAs($proUser)
             ->postJson('/api/referral/apply', [
-                'code'         => 'SELFCODE',
-                'order_id'     => $order->id,
+                'code' => 'SELFCODE',
+                'order_id' => $order->id,
                 'order_amount' => 11.90,
             ])
             ->assertStatus(422);
     }
 
     /* ================================================================== */
-    /*  T11.5.4: Atomicity - both records created or neither               */
+    /*  T11.5.4: Atomicity - both records created or neither */
     /* ================================================================== */
     public function test_apply_referral_atomicity(): void
     {
         $proUser = $this->createProUser('ATOMICCD');
-        $buyer   = User::factory()->create(['referred_by' => 'ATOMICCD']);
-        $order   = $this->createPaidOrder($buyer, 5000); // 50.00 EUR
+        $buyer = User::factory()->create(['referred_by' => 'ATOMICCD']);
+        $order = $this->createPaidOrder($buyer, 5000); // 50.00 EUR
 
         $this->actingAs($buyer)
             ->postJson('/api/referral/apply', [
-                'code'         => 'ATOMICCD',
-                'order_id'     => $order->id,
+                'code' => 'ATOMICCD',
+                'order_id' => $order->id,
                 'order_amount' => 50.00,
             ])
             ->assertSuccessful();
@@ -326,16 +327,16 @@ class ReferralApplyTest extends TestCase
 
         $this->actingAs($buyer)
             ->postJson('/api/referral/apply', [
-                'code'         => 'DUPLORD1',
-                'order_id'     => $order->id,
+                'code' => 'DUPLORD1',
+                'order_id' => $order->id,
                 'order_amount' => 50.00,
             ])
             ->assertSuccessful();
 
         $this->actingAs($buyer)
             ->postJson('/api/referral/apply', [
-                'code'         => 'DUPLORD1',
-                'order_id'     => $order->id,
+                'code' => 'DUPLORD1',
+                'order_id' => $order->id,
                 'order_amount' => 50.00,
             ])
             ->assertStatus(409)
@@ -346,22 +347,22 @@ class ReferralApplyTest extends TestCase
     }
 
     /* ================================================================== */
-    /*  T11.5.5: Calculate coupon (POST /api/calculate-coupon)              */
+    /*  T11.5.5: Calculate coupon (POST /api/calculate-coupon) */
     /* ================================================================== */
     public function test_calculate_coupon_with_valid_coupon(): void
     {
         $buyer = User::factory()->create();
 
         Coupon::factory()->create([
-            'code'       => 'SAVE10',
+            'code' => 'SAVE10',
             'percentage' => 10,
-            'active'     => true,
+            'active' => true,
         ]);
 
         $response = $this->actingAs($buyer)
             ->postJson('/api/calculate-coupon', [
                 'coupon' => 'SAVE10',
-                'total'  => 100.00,
+                'total' => 100.00,
             ]);
 
         $response->assertSuccessful();
@@ -375,12 +376,12 @@ class ReferralApplyTest extends TestCase
     public function test_calculate_coupon_with_referral_code(): void
     {
         $proUser = $this->createProUser('REFCOUPO');
-        $buyer   = User::factory()->create();
+        $buyer = User::factory()->create();
 
         $response = $this->actingAs($buyer)
             ->postJson('/api/calculate-coupon', [
                 'coupon' => 'REFCOUPO',
-                'total'  => 100.00,
+                'total' => 100.00,
             ]);
 
         $response->assertSuccessful();
@@ -397,13 +398,13 @@ class ReferralApplyTest extends TestCase
         $this->actingAs($buyer)
             ->postJson('/api/calculate-coupon', [
                 'coupon' => 'NOTEXIST',
-                'total'  => 50.00,
+                'total' => 50.00,
             ])
             ->assertStatus(404);
     }
 
     /* ================================================================== */
-    /*  T11.5.6: Expired coupon fails                                      */
+    /*  T11.5.6: Expired coupon fails */
     /* ================================================================== */
     public function test_expired_coupon_fails(): void
     {
@@ -411,7 +412,7 @@ class ReferralApplyTest extends TestCase
 
         // Create an inactive coupon (simulates expired/disabled)
         Coupon::factory()->inactive()->create([
-            'code'       => 'EXPIRED1',
+            'code' => 'EXPIRED1',
             'percentage' => 15,
         ]);
 
@@ -420,7 +421,7 @@ class ReferralApplyTest extends TestCase
         $this->actingAs($buyer)
             ->postJson('/api/calculate-coupon', [
                 'coupon' => 'EXPIRED1',
-                'total'  => 50.00,
+                'total' => 50.00,
             ])
             ->assertStatus(404);
     }
@@ -432,7 +433,7 @@ class ReferralApplyTest extends TestCase
         $this->actingAs($proUser)
             ->postJson('/api/calculate-coupon', [
                 'coupon' => 'SELFCOUP',
-                'total'  => 50.00,
+                'total' => 50.00,
             ])
             ->assertStatus(422);
     }

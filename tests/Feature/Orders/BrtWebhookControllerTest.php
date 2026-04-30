@@ -93,4 +93,39 @@ class BrtWebhookControllerTest extends TestCase
         $order->refresh();
         $this->assertSame(Order::IN_TRANSIT, $order->rawStatus());
     }
+
+    public function test_tracking_webhook_does_not_dedupe_failed_order_lookup(): void
+    {
+        $tracking = Mockery::mock(TrackingService::class);
+        $tracking->shouldReceive('mapCarrierStatus')
+            ->once()
+            ->with('IN_TRANSIT', '')
+            ->andReturn(Order::IN_TRANSIT);
+        app()->instance(TrackingService::class, $tracking);
+
+        $payload = [
+            'parcelId' => 'PARCEL-WEBHOOK-LATE',
+            'status' => 'IN_TRANSIT',
+            'timestamp' => '2026-04-23T10:25:00Z',
+        ];
+
+        $this->postJson('/webhooks/brt/tracking', $payload)
+            ->assertNotFound()
+            ->assertJsonPath('error', 'Ordine non trovato per il parcelId fornito.');
+
+        $this->assertSame(0, BrtWebhookEvent::count());
+
+        $order = Order::factory()->create([
+            'status' => Order::PROCESSING,
+            'brt_parcel_id' => 'PARCEL-WEBHOOK-LATE',
+        ]);
+
+        $this->postJson('/webhooks/brt/tracking', $payload)
+            ->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('order_id', $order->id);
+
+        $this->assertSame(1, BrtWebhookEvent::count());
+        $this->assertSame(Order::IN_TRANSIT, $order->fresh()->rawStatus());
+    }
 }

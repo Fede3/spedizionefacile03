@@ -7,19 +7,21 @@
  * recupero password, OAuth social, upload file admin, confirm password.
  */
 
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Account\UserController;
+use App\Http\Controllers\Auth\ChangePasswordController;
 use App\Http\Controllers\Auth\GoogleController;
 use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\Auth\PasswordResetRequestController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Auth\VerificationController;
-use App\Http\Controllers\Auth\ChangePasswordController;
-use App\Http\Controllers\Auth\CustomRegisterController;
-use App\Http\Controllers\Auth\PasswordResetRequestController;
 use App\Http\Middleware\CheckAdmin;
+use App\Services\AuditLogService;
 use App\Support\AuthUiCookie;
+use Illuminate\Http\Request;
+use Illuminate\Session\Middleware\StartSession;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Route;
+use Illuminate\View\Middleware\ShareErrorsFromSession;
 
 /* ===== UTENTE CORRENTE E LOGOUT ===== */
 
@@ -34,13 +36,14 @@ Route::post('/logout', function (Request $request) {
     $user->tokens()->delete();
 
     // F14 audit
-    \App\Services\AuditLogService::log('auth.logout', null, [], ['user' => $user]);
+    AuditLogService::log('auth.logout', null, [], ['user' => $user]);
 
     Auth::guard('web')->logout();
     if ($request->hasSession()) {
         $request->session()->invalidate();
         $request->session()->regenerateToken();
     }
+
     return response()->json(['message' => 'Logged out'])
         ->cookie(AuthUiCookie::forget());
 })->middleware('auth:sanctum');
@@ -71,8 +74,8 @@ Route::get('/auth/providers', function () {
 // redirect top-level. Aggiungiamo esplicitamente StartSession in modo che
 // l'OAuth handshake sia indipendente dai controlli stateful.
 Route::middleware([
-    \Illuminate\Session\Middleware\StartSession::class,
-    \Illuminate\View\Middleware\ShareErrorsFromSession::class,
+    StartSession::class,
+    ShareErrorsFromSession::class,
 ])->group(function () {
     Route::get('/auth/google/redirect', [GoogleController::class, 'redirectToGoogle']);
 });

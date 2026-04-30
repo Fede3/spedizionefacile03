@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
@@ -32,11 +33,15 @@ class InvoiceArchive extends Model
     ];
 
     public const TYPE_FATTURA_SDI = 'fattura_sdi';
+
     public const TYPE_RICEVUTA = 'ricevuta_cortesia';
+
     public const TYPE_NOTA_CREDITO = 'nota_credito';
 
     public const STATUS_PENDING = 'pending';
+
     public const STATUS_ARCHIVED = 'archived';
+
     public const STATUS_MIGRATED = 'migrated';
 
     public function order(): BelongsTo

@@ -130,6 +130,7 @@ trait PdfRenderingPrimitives
     public function _drawLine(float $x1, float $top1, float $x2, float $top2, float $lineWidth = 0.5): string
     {
         $h = $this->currentPageHeight;
+
         return $this->format($lineWidth).' w '
             .$this->format($x1).' '.$this->format($h - $top1).' m '
             .$this->format($x2).' '.$this->format($h - $top2)." l S\n";
@@ -210,6 +211,7 @@ trait PdfRenderingPrimitives
         while ($fitted !== '' && $this->estimateTextWidth($fitted.$suffix, $fontSize) > $maxWidth) {
             $fitted = substr($fitted, 0, -1);
         }
+
         return rtrim($fitted).$suffix;
     }
 

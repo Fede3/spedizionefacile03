@@ -2,12 +2,12 @@
 
 namespace App\Http\Controllers\Admin;
 
-use App\Http\Controllers\Controller;
-
 use App\Concerns\LogsAudit;
+use App\Http\Controllers\Controller;
+use App\Http\Requests\UpdateUserRoleRequest;
+use App\Http\Requests\UpdateUserTypeRequest;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
 class UserManagementController extends Controller
@@ -25,7 +25,7 @@ class UserManagementController extends Controller
 
     // Cambia il ruolo di un utente (es. da "User" a "Partner Pro" o "Admin")
     // Se l'utente viene promosso a Partner Pro, gli viene generato un codice referral
-    public function updateUserRole(\App\Http\Requests\UpdateUserRoleRequest $request, User $user): JsonResponse
+    public function updateUserRole(UpdateUserRoleRequest $request, User $user): JsonResponse
     {
         $data = $request->validated();
 
@@ -33,7 +33,7 @@ class UserManagementController extends Controller
         $user->role = $data['role'];
 
         // Se l'utente diventa Partner Pro, generiamo un codice referral se non ne ha gia' uno
-        if ($data['role'] === 'Partner Pro' && !$user->referral_code) {
+        if ($data['role'] === 'Partner Pro' && ! $user->referral_code) {
             $user->referral_code = strtoupper(Str::random(8));
         }
 
@@ -52,7 +52,7 @@ class UserManagementController extends Controller
     }
 
     // Cambia il tipo di account (privato/commerciante)
-    public function updateUserType(User $user, \App\Http\Requests\UpdateUserTypeRequest $request): JsonResponse
+    public function updateUserType(User $user, UpdateUserTypeRequest $request): JsonResponse
     {
         $validated = $request->validated();
 

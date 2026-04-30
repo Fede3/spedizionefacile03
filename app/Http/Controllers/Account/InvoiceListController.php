@@ -1,9 +1,9 @@
 <?php
+
 namespace App\Http\Controllers\Account;
 
-use App\Http\Controllers\Controller;
-
 use App\Cart\MyMoney;
+use App\Http\Controllers\Controller;
 use App\Models\Order;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -56,7 +56,7 @@ class InvoiceListController extends Controller
  * del controller (progetto ha convenzione Resource separata solo quando la
  * risorsa viene riusata in piu' controller — qui non e' il caso).
  *
- * @mixin \App\Models\Order
+ * @mixin Order
  */
 class InvoiceListItemResource extends JsonResource
 {
@@ -88,7 +88,7 @@ class InvoiceListItemResource extends JsonResource
             'amount_eur_formatted' => $amountFormatted,
             'sdi_status' => $this->deriveSdiStatus($order),
             'sdi_sent_at' => $order->sdi_sent_at?->toIso8601String(),
-            'download_url' => '/api/orders/' . (int) $order->id . '/invoice.pdf',
+            'download_url' => '/api/orders/'.(int) $order->id.'/invoice.pdf',
         ];
     }
 

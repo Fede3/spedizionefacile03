@@ -15,7 +15,7 @@ class PriceEngineServiceTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->engine = new PriceEngineService();
+        $this->engine = new PriceEngineService;
     }
 
     public function test_calcola_prezzo_band_corretto_per_peso_nella_prima_fascia(): void

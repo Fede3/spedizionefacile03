@@ -1,10 +1,10 @@
 <?php
+
 namespace App\Http\Controllers\Shipping;
 
 use App\Http\Controllers\Controller;
-
+use App\Http\Requests\ExportOrdersCsvRequest;
 use App\Models\Order;
-use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class OrderExportController extends Controller
@@ -19,7 +19,7 @@ class OrderExportController extends Controller
      * Esporta gli ordini in CSV.
      * Ritorna StreamedResponse col Content-Type text/csv.
      */
-    public function exportCsv(\App\Http\Requests\ExportOrdersCsvRequest $request): StreamedResponse
+    public function exportCsv(ExportOrdersCsvRequest $request): StreamedResponse
     {
         $data = $request->validated();
 
@@ -51,13 +51,13 @@ class OrderExportController extends Controller
 
         $query->limit(self::MAX_ROWS);
 
-        $fileName = 'ordini_' . now()->format('Ymd_His') . '.csv';
+        $fileName = 'ordini_'.now()->format('Ymd_His').'.csv';
 
         $headers = [
-            'Content-Type'        => 'text/csv; charset=UTF-8',
-            'Content-Disposition' => 'attachment; filename="' . $fileName . '"',
-            'Cache-Control'       => 'no-store, no-cache, must-revalidate',
-            'Pragma'              => 'no-cache',
+            'Content-Type' => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => 'attachment; filename="'.$fileName.'"',
+            'Cache-Control' => 'no-store, no-cache, must-revalidate',
+            'Pragma' => 'no-cache',
         ];
 
         return new StreamedResponse(function () use ($query) {
@@ -120,7 +120,7 @@ class OrderExportController extends Controller
 
         // Conversione centesimi -> euro formato italiano (es. 1590 -> "15,90").
         $totalCents = (int) ($order->getRawOriginal('subtotal') ?? 0);
-        $totalEur   = number_format($totalCents / 100, 2, ',', '.');
+        $totalEur = number_format($totalCents / 100, 2, ',', '.');
 
         return [
             (string) $order->id,

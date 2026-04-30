@@ -105,7 +105,7 @@ class OrderExportControllerTest extends TestCase
 
     public function test_user_does_not_see_orders_of_other_users(): void
     {
-        $user  = User::factory()->create();
+        $user = User::factory()->create();
         $other = User::factory()->create();
 
         $this->createOrderWithPackage($other, 'processing', 9999, 'BRTOTHER123');
@@ -143,7 +143,7 @@ class OrderExportControllerTest extends TestCase
         $recent = $this->createOrderWithPackage($user, 'pending', 2000, 'BRTRECENT');
 
         $from = now()->subDays(2)->toDateString();
-        $response = $this->actingAs($user)->get('/api/orders/export?from=' . $from);
+        $response = $this->actingAs($user)->get('/api/orders/export?from='.$from);
         $content = $response->streamedContent();
 
         $this->assertStringContainsString('BRTRECENT', $content);

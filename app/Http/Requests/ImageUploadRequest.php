@@ -121,7 +121,7 @@ class ImageUploadRequest extends FormRequest
                 'mimes:jpg,jpeg,png,webp',
                 // MIME dichiarato dal browser deve essere immagine reale
                 'mimetypes:image/jpeg,image/png,image/webp',
-                'max:' . $this->maxKilobytes(),
+                'max:'.$this->maxKilobytes(),
                 sprintf(
                     'dimensions:min_width=%d,min_height=%d,max_width=%d,max_height=%d',
                     $this->minWidth(),
@@ -138,12 +138,12 @@ class ImageUploadRequest extends FormRequest
         $field = $this->fieldName();
 
         return [
-            $field . '.required' => 'Immagine obbligatoria.',
-            $field . '.file' => 'Payload non valido: atteso un file.',
-            $field . '.mimes' => 'Formato non supportato. Usa JPG, PNG o WEBP.',
-            $field . '.mimetypes' => 'Tipo MIME non valido.',
-            $field . '.max' => 'File troppo grande (max ' . ($this->maxKilobytes() / 1024) . ' MB).',
-            $field . '.dimensions' => sprintf(
+            $field.'.required' => 'Immagine obbligatoria.',
+            $field.'.file' => 'Payload non valido: atteso un file.',
+            $field.'.mimes' => 'Formato non supportato. Usa JPG, PNG o WEBP.',
+            $field.'.mimetypes' => 'Tipo MIME non valido.',
+            $field.'.max' => 'File troppo grande (max '.($this->maxKilobytes() / 1024).' MB).',
+            $field.'.dimensions' => sprintf(
                 'Dimensioni non valide (min %dx%dpx, max %dx%dpx).',
                 $this->minWidth(),
                 $this->minHeight(),
@@ -168,12 +168,14 @@ class ImageUploadRequest extends FormRequest
             $file = $this->file($this->fieldName());
             if (! $file || ! $file->isValid()) {
                 $v->errors()->add($this->fieldName(), 'File corrotto o non caricato correttamente.');
+
                 return;
             }
 
             $finfo = finfo_open(FILEINFO_MIME_TYPE);
             if ($finfo === false) {
                 $v->errors()->add($this->fieldName(), 'Impossibile verificare il tipo di file.');
+
                 return;
             }
 

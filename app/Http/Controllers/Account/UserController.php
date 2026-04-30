@@ -3,16 +3,19 @@
 namespace App\Http\Controllers\Account;
 
 use App\Http\Controllers\Controller;
-
+use App\Http\Requests\AdminAvatarUploadRequest;
 use App\Http\Requests\UpdateUserRequest;
 use App\Models\Order;
+use App\Models\Setting;
 use App\Models\User;
+use App\Services\Security\ImageSanitizer;
+use App\Utils\CustomResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
-use App\Utils\CustomResponse;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
@@ -56,7 +59,7 @@ class UserController extends Controller
         }
 
         $userEmail = $user->email;
-        $userName  = $user->name;
+        $userName = $user->name;
 
         DB::transaction(function () use ($user) {
             // 1. Anonimizza gli ordini collegati all'utente.
@@ -72,24 +75,24 @@ class UserController extends Controller
             // 3. Cancella i dati personali dell'utente.
             //    Sovrascriviamo i campi con valori anonimi prima del soft delete,
             //    cosi' i dati non sono recuperabili nemmeno dalla tabella deleted.
-            $anonymizedId = 'deleted_' . $user->id;
+            $anonymizedId = 'deleted_'.$user->id;
             // forceFill bypassa $fillable: necessario per azzerare anche i campi protetti
             $user->forceFill([
-                'name'                       => 'Utente eliminato',
-                'surname'                    => '',
-                'email'                      => $anonymizedId . '@eliminato.local',
-                'telephone_number'           => null,
-                'password'                   => \Illuminate\Support\Str::random(64),
-                'verification_code'          => null,
+                'name' => 'Utente eliminato',
+                'surname' => '',
+                'email' => $anonymizedId.'@eliminato.local',
+                'telephone_number' => null,
+                'password' => Str::random(64),
+                'verification_code' => null,
                 'verification_code_expires_at' => null,
-                'google_id'                  => null,
-                'facebook_id'                => null,
-                'apple_id'                   => null,
-                'avatar'                     => null,
-                'customer_id'                => null,
-                'stripe_account_id'          => null,
-                'referral_code'              => null,
-                'referred_by'                => null,
+                'google_id' => null,
+                'facebook_id' => null,
+                'apple_id' => null,
+                'avatar' => null,
+                'customer_id' => null,
+                'stripe_account_id' => null,
+                'referral_code' => null,
+                'referred_by' => null,
             ])->save();
 
             // 4. Soft delete dell'utente (segna come eliminato nel DB)
@@ -99,22 +102,22 @@ class UserController extends Controller
         // 5. Invia email di conferma all'indirizzo originale (fuori dalla transazione)
         try {
             Mail::raw(
-                "Gentile {$userName},\n\n" .
-                "Il tuo account SpedizioneFacile e' stato eliminato con successo.\n" .
-                "I tuoi dati personali sono stati rimossi dai nostri sistemi.\n\n" .
-                "Se non hai richiesto tu questa eliminazione, contatta immediatamente " .
-                "il nostro supporto all'indirizzo info@spedizionefacile.it\n\n" .
-                "SpedizioneFacile",
+                "Gentile {$userName},\n\n".
+                "Il tuo account SpedizioneFacile e' stato eliminato con successo.\n".
+                "I tuoi dati personali sono stati rimossi dai nostri sistemi.\n\n".
+                'Se non hai richiesto tu questa eliminazione, contatta immediatamente '.
+                "il nostro supporto all'indirizzo info@spedizionefacile.it\n\n".
+                'SpedizioneFacile',
                 function ($message) use ($userEmail, $userName) {
                     $message->to($userEmail, $userName)
-                            ->subject('Account eliminato — SpedizioneFacile');
+                        ->subject('Account eliminato — SpedizioneFacile');
                 }
             );
         } catch (\Exception $e) {
             // L'email di conferma e' best-effort: non blocchiamo l'eliminazione se fallisce
             Log::warning('Account deletion confirmation email failed', [
                 'user_id' => $user->id,
-                'error'   => $e->getMessage(),
+                'error' => $e->getMessage(),
             ]);
         }
 
@@ -130,7 +133,7 @@ class UserController extends Controller
     // Sprint 6.7 security hardening: validazione tramite AdminAvatarUploadRequest
     // (extension + real MIME + dimensions + magic byte), sanitizzazione tramite
     // ImageSanitizer (hash filename, EXIF strip, dir whitelist).
-    public function uploadFile(\App\Http\Requests\AdminAvatarUploadRequest $request, \App\Services\Security\ImageSanitizer $sanitizer)
+    public function uploadFile(AdminAvatarUploadRequest $request, ImageSanitizer $sanitizer)
     {
         $path = $sanitizer->sanitizeAndStore(
             $request->file('admin_image'),
@@ -147,9 +150,10 @@ class UserController extends Controller
 
     // Questa funzione recupera l'ultima immagine caricata dall'admin
     // Cerca nella cartella "attach" e restituisce l'URL dell'ultimo file trovato
-    public function getAdminImage() {
+    public function getAdminImage()
+    {
         // Prima controlla se l'admin ha impostato un'immagine dalle impostazioni
-        $settingUrl = \App\Models\Setting::get('homepage_image_url', '');
+        $settingUrl = Setting::get('homepage_image_url', '');
         if ($settingUrl) {
             return response()->json(['image_url' => $settingUrl]);
         }
@@ -166,10 +170,8 @@ class UserController extends Controller
         $lastFile = collect($files)->last();
 
         // Costruiamo l'indirizzo web (URL) per accedere all'immagine
-        $url = asset('storage/' . $lastFile);
+        $url = asset('storage/'.$lastFile);
 
         return response()->json(['image_url' => $url]);
     }
-
-
 }

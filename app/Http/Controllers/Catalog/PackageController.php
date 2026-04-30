@@ -1,20 +1,22 @@
 <?php
+
 namespace App\Http\Controllers\Catalog;
 
-use App\Http\Controllers\Controller;
-
 use App\Cart\MyMoney;
-use App\Models\PackageAddress;
+use App\Http\Controllers\Controller;
+use App\Http\Requests\PackageStoreRequest;
+use App\Http\Resources\PackageResource;
 use App\Models\Package;
+use App\Models\PackageAddress;
 use App\Models\Service;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use App\Http\Resources\PackageResource;
-use App\Http\Requests\PackageStoreRequest;
+
 class PackageController extends Controller
 {
     // Mostra la lista di tutti i pacchi dell'utente attualmente loggato
-    public function index(Request $request) {
+    public function index(Request $request)
+    {
 
         $packages = Package::where('user_id', auth()->id())->get();
 

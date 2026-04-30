@@ -7,13 +7,13 @@
  * contattaci, assistenza utente.
  */
 
-use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Account\ProRequestController;
 use App\Http\Controllers\Account\ReferralCodeController;
 use App\Http\Controllers\Account\ReferralRewardController;
+use App\Http\Controllers\Communication\ContactController;
 use App\Http\Controllers\Communication\NotificationController;
 use App\Http\Controllers\Wallet\WithdrawalController;
-use App\Http\Controllers\Account\ProRequestController;
-use App\Http\Controllers\Communication\ContactController;
+use Illuminate\Support\Facades\Route;
 
 /* ===== CONTATTACI (pubblico) ===== */
 

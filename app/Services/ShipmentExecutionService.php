@@ -189,8 +189,7 @@ class ShipmentExecutionService
                 $pickup['enabled'] = true;
             }
 
-            $hasPickupService = $order->packages->contains(fn ($pkg) =>
-                $pkg->service && $this->isPickupServiceToken($pkg->service->service_type ?? '')
+            $hasPickupService = $order->packages->contains(fn ($pkg) => $pkg->service && $this->isPickupServiceToken($pkg->service->service_type ?? '')
             );
             if ($hasPickupService) {
                 $pickup['enabled'] = true;

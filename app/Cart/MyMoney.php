@@ -32,7 +32,7 @@ class MyMoney implements \JsonSerializable
             return $moneyFormatter->format($this->money);
         }
 
-        return number_format(((int) $this->money->getAmount()) / 100, 2, ',', '.') . ' EUR';
+        return number_format(((int) $this->money->getAmount()) / 100, 2, ',', '.').' EUR';
     }
 
     public function instance(): Money

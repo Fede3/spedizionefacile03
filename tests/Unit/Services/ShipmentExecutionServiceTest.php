@@ -48,8 +48,7 @@ class ShipmentExecutionServiceTest extends TestCase
         $brt = Mockery::mock(BrtClient::class);
         $brt->shouldReceive('requestHomePickup')
             ->once()
-            ->withArgs(fn (Order $candidateOrder, array $pickupRequest) =>
-                $candidateOrder->is($order)
+            ->withArgs(fn (Order $candidateOrder, array $pickupRequest) => $candidateOrder->is($order)
                 && ($pickupRequest['date'] ?? null) === $pickupDate
                 && ($pickupRequest['time_slot'] ?? null) === '09:00-12:00'
                 && ($pickupRequest['notes'] ?? null) === 'Citofono 12'
@@ -78,8 +77,7 @@ class ShipmentExecutionServiceTest extends TestCase
         $brt = Mockery::mock(BrtClient::class);
         $brt->shouldReceive('requestHomePickup')
             ->once()
-            ->withArgs(fn (Order $candidateOrder, array $pickupRequest) =>
-                $candidateOrder->is($order)
+            ->withArgs(fn (Order $candidateOrder, array $pickupRequest) => $candidateOrder->is($order)
                 && ($pickupRequest['date'] ?? null) === $pickupDate
                 && ($pickupRequest['time_slot'] ?? null) === '10:00-13:00'
             )

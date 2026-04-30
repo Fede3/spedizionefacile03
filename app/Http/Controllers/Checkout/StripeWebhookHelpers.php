@@ -135,6 +135,7 @@ trait StripeWebhookHelpers
                 foreach ($users as $u) {
                     if ($u->stripe_account_id === $stripeAccountId) {
                         $found = $u;
+
                         return false; // interrompe chunkById
                     }
                 }

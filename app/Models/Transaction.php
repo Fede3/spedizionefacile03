@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Models;
 
 use App\Cart\MyMoney;
@@ -21,14 +22,15 @@ class Transaction extends Model
         'status',           // Stato della transazione (es. "succeeded", "failed")
         'provider_status',  // Stato dettagliato dal provider di pagamento (Stripe)
         'failure_code',     // Codice errore se il pagamento e' fallito
-        'failure_message'   // Messaggio di errore leggibile se il pagamento e' fallito
+        'failure_message',   // Messaggio di errore leggibile se il pagamento e' fallito
     ];
 
     /**
      * Traduce il tipo di metodo di pagamento in italiano.
      * Usato per mostrare all'utente "Carta" invece di "card".
      */
-    public function getPaymentMethod(string $type): string {
+    public function getPaymentMethod(string $type): string
+    {
         $methods = [
             'card' => 'Carta',
             'bank_transfer' => 'Bonifico',
@@ -43,7 +45,8 @@ class Transaction extends Model
      * convertito in un oggetto MyMoney per gestire la formattazione
      * dei prezzi (es. da centesimi a "12,50 EUR").
      */
-    public function getTotalAttribute($total): MyMoney {
+    public function getTotalAttribute($total): MyMoney
+    {
         return new MyMoney($total);
     }
 

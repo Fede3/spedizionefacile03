@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
@@ -25,7 +26,7 @@ class BrtWebhookEvent extends Model
      */
     public static function fingerprintFor(string $parcelId, string $status, string $timestamp): string
     {
-        return hash('sha256', $parcelId . '|' . $status . '|' . $timestamp);
+        return hash('sha256', $parcelId.'|'.$status.'|'.$timestamp);
     }
 
     /**

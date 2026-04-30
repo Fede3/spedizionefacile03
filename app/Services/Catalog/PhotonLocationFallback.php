@@ -89,7 +89,7 @@ class PhotonLocationFallback
                     }
                     $seen[$dedupKey] = true;
 
-                    $obj = new \stdClass();
+                    $obj = new \stdClass;
                     $obj->postal_code = $postcode;
                     $obj->place_name = $placeName;
                     $obj->province = trim((string) ($props['state'] ?? $props['county'] ?? ''));

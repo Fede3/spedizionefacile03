@@ -1,9 +1,13 @@
 <?php
+
 namespace App\Http\Controllers\Catalog;
 
 use App\Http\Controllers\Controller;
-
+use App\Http\Requests\ArticleImageUploadRequest;
+use App\Http\Requests\StoreArticleRequest;
+use App\Http\Requests\UpdateArticleRequest;
 use App\Models\Article;
+use App\Services\Security\ImageSanitizer;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -26,7 +30,7 @@ class ArticleController extends Controller
     }
 
     // Crea un nuovo articolo
-    public function store(\App\Http\Requests\StoreArticleRequest $request): JsonResponse
+    public function store(StoreArticleRequest $request): JsonResponse
     {
         $data = $request->validated();
 
@@ -49,7 +53,7 @@ class ArticleController extends Controller
     }
 
     // Aggiorna un articolo esistente
-    public function update(\App\Http\Requests\UpdateArticleRequest $request, Article $article): JsonResponse
+    public function update(UpdateArticleRequest $request, Article $article): JsonResponse
     {
         $data = $request->validated();
 
@@ -74,7 +78,7 @@ class ArticleController extends Controller
 
     // Carica un'immagine per un articolo.
     // Sprint 6.7 security hardening: ArticleImageUploadRequest + ImageSanitizer.
-    public function uploadImage(\App\Http\Requests\ArticleImageUploadRequest $request, Article $article, \App\Services\Security\ImageSanitizer $sanitizer): JsonResponse
+    public function uploadImage(ArticleImageUploadRequest $request, Article $article, ImageSanitizer $sanitizer): JsonResponse
     {
         $path = $sanitizer->sanitizeAndStore(
             $request->file('image'),

@@ -2,11 +2,11 @@
 
 namespace Tests\Feature\Cart;
 
+use App\Models\Order;
 use App\Models\Package;
 use App\Models\PackageAddress;
 use App\Models\Service;
 use App\Models\User;
-use App\Models\Order;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
@@ -16,55 +16,55 @@ class CartControllerTest extends TestCase
     use RefreshDatabase;
 
     /* ------------------------------------------------------------------ */
-    /*  Helper: payload completo per POST /api/cart (PackageStoreRequest)  */
+    /*  Helper: payload completo per POST /api/cart (PackageStoreRequest) */
     /* ------------------------------------------------------------------ */
     private function validCartPayload(array $overrides = []): array
     {
         return array_merge([
             'origin_address' => [
-                'type'               => 'privato',
-                'name'               => 'Mario Rossi',
-                'address'            => 'Via Roma',
-                'number_type'        => 'civico',
-                'address_number'     => '10',
-                'country'            => 'Italia',
-                'city'               => 'Milano',
-                'postal_code'        => '20121',
-                'province'           => 'MI',
-                'telephone_number'   => '3331234567',
+                'type' => 'privato',
+                'name' => 'Mario Rossi',
+                'address' => 'Via Roma',
+                'number_type' => 'civico',
+                'address_number' => '10',
+                'country' => 'Italia',
+                'city' => 'Milano',
+                'postal_code' => '20121',
+                'province' => 'MI',
+                'telephone_number' => '3331234567',
             ],
             'destination_address' => [
-                'type'               => 'privato',
-                'name'               => 'Luigi Verdi',
-                'address'            => 'Via Napoli',
-                'number_type'        => 'civico',
-                'address_number'     => '5',
-                'country'            => 'Italia',
-                'city'               => 'Roma',
-                'postal_code'        => '00185',
-                'province'           => 'RM',
-                'telephone_number'   => '3339876543',
+                'type' => 'privato',
+                'name' => 'Luigi Verdi',
+                'address' => 'Via Napoli',
+                'number_type' => 'civico',
+                'address_number' => '5',
+                'country' => 'Italia',
+                'city' => 'Roma',
+                'postal_code' => '00185',
+                'province' => 'RM',
+                'telephone_number' => '3339876543',
             ],
             'services' => [
                 'service_type' => 'Nessuno',
-                'date'         => '',
-                'time'         => '',
+                'date' => '',
+                'time' => '',
             ],
             'packages' => [
                 [
                     'package_type' => 'Pacco',
-                    'quantity'     => 1,
-                    'weight'       => 5,
-                    'first_size'   => 30,
-                    'second_size'  => 20,
-                    'third_size'   => 15,
+                    'quantity' => 1,
+                    'weight' => 5,
+                    'first_size' => 30,
+                    'second_size' => 20,
+                    'third_size' => 15,
                 ],
             ],
         ], $overrides);
     }
 
     /* ------------------------------------------------------------------ */
-    /*  Helper: inserire manualmente un pacco nel carrello di un utente   */
+    /*  Helper: inserire manualmente un pacco nel carrello di un utente */
     /* ------------------------------------------------------------------ */
     private function makeAddressFixture(string $kind): PackageAddress
     {
@@ -86,28 +86,28 @@ class CartControllerTest extends TestCase
 
     private function makePackageForUser(User $user, int $singlePriceCents = 1190): Package
     {
-        $origin      = $this->makeAddressFixture('origin');
+        $origin = $this->makeAddressFixture('origin');
         $destination = $this->makeAddressFixture('destination');
-        $service     = Service::create([
+        $service = Service::create([
             'service_type' => 'Nessuno',
-            'date'         => '',
-            'time'         => '',
+            'date' => '',
+            'time' => '',
         ]);
 
         $package = Package::create([
-            'package_type'           => 'Pacco',
-            'quantity'               => 1,
-            'weight'                 => 5,
-            'first_size'             => 30,
-            'second_size'            => 20,
-            'third_size'             => 15,
-            'weight_price'           => 11.9,
-            'volume_price'           => 8.9,
-            'single_price'           => $singlePriceCents,
-            'origin_address_id'      => $origin->id,
+            'package_type' => 'Pacco',
+            'quantity' => 1,
+            'weight' => 5,
+            'first_size' => 30,
+            'second_size' => 20,
+            'third_size' => 15,
+            'weight_price' => 11.9,
+            'volume_price' => 8.9,
+            'single_price' => $singlePriceCents,
+            'origin_address_id' => $origin->id,
             'destination_address_id' => $destination->id,
-            'service_id'             => $service->id,
-            'user_id'                => $user->id,
+            'service_id' => $service->id,
+            'user_id' => $user->id,
         ]);
 
         return $package;
@@ -118,7 +118,7 @@ class CartControllerTest extends TestCase
         $package = $this->makePackageForUser($user, $singlePriceCents);
 
         DB::table('cart_user')->insert([
-            'user_id'    => $user->id,
+            'user_id' => $user->id,
             'package_id' => $package->id,
         ]);
 
@@ -126,7 +126,7 @@ class CartControllerTest extends TestCase
     }
 
     /* ================================================================== */
-    /*  T11.2.0: Cart requires authentication                             */
+    /*  T11.2.0: Cart requires authentication */
     /* ================================================================== */
     public function test_cart_requires_authentication(): void
     {
@@ -135,7 +135,7 @@ class CartControllerTest extends TestCase
     }
 
     /* ================================================================== */
-    /*  T11.2.1: Add package to cart                                       */
+    /*  T11.2.1: Add package to cart */
     /* ================================================================== */
     public function test_add_package_to_cart(): void
     {
@@ -148,9 +148,9 @@ class CartControllerTest extends TestCase
 
         // Package record created in DB
         $this->assertDatabaseHas('packages', [
-            'user_id'      => $user->id,
+            'user_id' => $user->id,
             'package_type' => 'Pacco',
-            'weight'       => 5,
+            'weight' => 5,
         ]);
 
         // cart_user pivot row exists
@@ -229,11 +229,11 @@ class CartControllerTest extends TestCase
     }
 
     /* ================================================================== */
-    /*  T11.2.2: Get cart contents                                         */
+    /*  T11.2.2: Get cart contents */
     /* ================================================================== */
     public function test_get_cart_contents(): void
     {
-        $user    = User::factory()->create();
+        $user = User::factory()->create();
         $package = $this->seedCartForUser($user);
 
         $response = $this->actingAs($user)->getJson('/api/cart');
@@ -261,11 +261,11 @@ class CartControllerTest extends TestCase
     }
 
     /* ================================================================== */
-    /*  T11.2.3: Remove from cart                                          */
+    /*  T11.2.3: Remove from cart */
     /* ================================================================== */
     public function test_remove_package_from_cart(): void
     {
-        $user    = User::factory()->create();
+        $user = User::factory()->create();
         $package = $this->seedCartForUser($user);
 
         $response = $this->actingAs($user)
@@ -287,11 +287,11 @@ class CartControllerTest extends TestCase
     }
 
     /* ================================================================== */
-    /*  T11.2.4: Update quantity                                           */
+    /*  T11.2.4: Update quantity */
     /* ================================================================== */
     public function test_update_quantity(): void
     {
-        $user    = User::factory()->create();
+        $user = User::factory()->create();
         $package = $this->seedCartForUser($user, 1190); // 1 x 1190 cents
 
         $response = $this->actingAs($user)
@@ -348,7 +348,7 @@ class CartControllerTest extends TestCase
 
     public function test_update_quantity_validation_rejects_zero(): void
     {
-        $user    = User::factory()->create();
+        $user = User::factory()->create();
         $package = $this->seedCartForUser($user);
 
         $this->actingAs($user)
@@ -497,7 +497,7 @@ class CartControllerTest extends TestCase
     }
 
     /* ================================================================== */
-    /*  Correct data structure verification                                */
+    /*  Correct data structure verification */
     /* ================================================================== */
     public function test_store_validates_required_fields(): void
     {

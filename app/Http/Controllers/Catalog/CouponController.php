@@ -1,11 +1,10 @@
 <?php
+
 namespace App\Http\Controllers\Catalog;
 
 use App\Http\Controllers\Controller;
-
 use App\Http\Requests\CalculateCouponRequest;
 use App\Models\Coupon;
-use Illuminate\Http\Request;
 use App\Services\DiscountPreviewService;
 
 class CouponController extends Controller
@@ -54,7 +53,7 @@ class CouponController extends Controller
             // L'utente non puo' usare il proprio codice referral su se stesso
             if ($proUser->id === $buyer->id) {
                 return response()->json([
-                    'error' => 'Non puoi usare il tuo stesso codice referral.'
+                    'error' => 'Non puoi usare il tuo stesso codice referral.',
                 ], 422);
             }
 
@@ -65,7 +64,7 @@ class CouponController extends Controller
 
         // Se il codice non corrisponde ne' a un coupon ne' a un codice referral, e' non valido
         return response()->json([
-            'error' => 'Codice non valido'
+            'error' => 'Codice non valido',
         ], 404);
     }
 }

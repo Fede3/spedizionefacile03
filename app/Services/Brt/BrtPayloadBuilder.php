@@ -9,22 +9,22 @@ class BrtPayloadBuilder
 {
     private const SERVICE_MAPPING = [
         // Audit F16: allineati ai service_type strutturati del FE (snake_case)
-        'consegna_al_piano'       => ['field' => 'particularitiesDeliveryManagement', 'value' => 'CP'],
-        'consegna al piano'       => ['field' => 'particularitiesDeliveryManagement', 'value' => 'CP'],
-        'delivery al piano'       => ['field' => 'particularitiesDeliveryManagement', 'value' => 'CP'],
-        'ritiro_al_piano'         => ['field' => 'particularitiesPickupManagement', 'value' => 'RP'],
-        'ritiro al piano'         => ['field' => 'particularitiesPickupManagement', 'value' => 'RP'],
-        'pickup al piano'         => ['field' => 'particularitiesPickupManagement', 'value' => 'RP'],
-        'sponda_idraulica'        => ['field' => 'particularitiesDeliveryManagement', 'value' => 'SU'],
-        'sponda idraulica'        => ['field' => 'particularitiesDeliveryManagement', 'value' => 'SU'],
+        'consegna_al_piano' => ['field' => 'particularitiesDeliveryManagement', 'value' => 'CP'],
+        'consegna al piano' => ['field' => 'particularitiesDeliveryManagement', 'value' => 'CP'],
+        'delivery al piano' => ['field' => 'particularitiesDeliveryManagement', 'value' => 'CP'],
+        'ritiro_al_piano' => ['field' => 'particularitiesPickupManagement', 'value' => 'RP'],
+        'ritiro al piano' => ['field' => 'particularitiesPickupManagement', 'value' => 'RP'],
+        'pickup al piano' => ['field' => 'particularitiesPickupManagement', 'value' => 'RP'],
+        'sponda_idraulica' => ['field' => 'particularitiesDeliveryManagement', 'value' => 'SU'],
+        'sponda idraulica' => ['field' => 'particularitiesDeliveryManagement', 'value' => 'SU'],
         'sponda idraulica ritiro' => ['field' => 'particularitiesPickupManagement', 'value' => 'SU'],
-        'consegna_appuntamento'   => ['field' => 'particularitiesDeliveryManagement', 'value' => 'AP'],
-        'consegna su appuntamento'=> ['field' => 'particularitiesDeliveryManagement', 'value' => 'AP'],
-        'giacenza'                => ['field' => 'particularitiesDeliveryManagement', 'value' => 'GI'],
-        'express'                 => ['field' => 'serviceType', 'value' => 'E'],
-        'priority'                => ['field' => 'serviceType', 'value' => 'P'],
-        '10:30'                   => ['field' => 'serviceType', 'value' => 'O'],
-        'economy'                 => ['field' => 'serviceType', 'value' => 'N'],
+        'consegna_appuntamento' => ['field' => 'particularitiesDeliveryManagement', 'value' => 'AP'],
+        'consegna su appuntamento' => ['field' => 'particularitiesDeliveryManagement', 'value' => 'AP'],
+        'giacenza' => ['field' => 'particularitiesDeliveryManagement', 'value' => 'GI'],
+        'express' => ['field' => 'serviceType', 'value' => 'E'],
+        'priority' => ['field' => 'serviceType', 'value' => 'P'],
+        '10:30' => ['field' => 'serviceType', 'value' => 'O'],
+        'economy' => ['field' => 'serviceType', 'value' => 'N'],
     ];
 
     public function addServicesToPayload(array &$payload, Order $order, array $options): void
@@ -73,6 +73,7 @@ class BrtPayloadBuilder
                         'order_id' => $order->id,
                         'service_type' => $serviceType,
                     ]);
+
                     continue;
                 }
 
@@ -98,29 +99,29 @@ class BrtPayloadBuilder
             }
         }
 
-        if (!empty($options['insurance_amount'])) {
+        if (! empty($options['insurance_amount'])) {
             $payload['createData']['insuranceAmount'] = round((float) ($options['insurance_amount'] / 100), 2);
             $payload['createData']['insuranceCurrency'] = 'EUR';
             $appliedServices[] = ['app_service' => 'assicurazione', 'brt_field' => 'insuranceAmount', 'brt_value' => $payload['createData']['insuranceAmount']];
         }
 
-        if (!empty($options['delivery_appointment'])) {
+        if (! empty($options['delivery_appointment'])) {
             $payload['createData']['isAlertRequired'] = 1;
-            if (!in_array('AP', $deliveryCodes, true)) {
+            if (! in_array('AP', $deliveryCodes, true)) {
                 $deliveryCodes[] = 'AP';
             }
             $appliedServices[] = ['app_service' => 'appuntamento_consegna', 'brt_field' => 'particularitiesDeliveryManagement', 'brt_value' => 'AP'];
         }
 
         // Assign accumulated management codes to payload (all codes joined with a space)
-        if (!empty($deliveryCodes)) {
+        if (! empty($deliveryCodes)) {
             $payload['createData']['particularitiesDeliveryManagement'] = implode(' ', $deliveryCodes);
         }
-        if (!empty($pickupCodes)) {
+        if (! empty($pickupCodes)) {
             $payload['createData']['particularitiesPickupManagement'] = implode(' ', $pickupCodes);
         }
 
-        if (!empty($options['no_label'])) {
+        if (! empty($options['no_label'])) {
             $payload['isLabelRequired'] = 0;
             $appliedServices[] = ['app_service' => 'senza_etichetta', 'brt_field' => 'isLabelRequired', 'brt_value' => 0];
         }
@@ -150,18 +151,22 @@ class BrtPayloadBuilder
         //     $appliedServices[] = ['app_service' => 'dimensioni_colli', 'brt_field' => 'pParcelID', 'brt_value' => count($parcelsWithDimensions) . ' colli'];
         // }
 
-        if (!empty($appliedServices)) {
+        if (! empty($appliedServices)) {
             Log::info('BRT services applied to shipment', ['order_id' => $order->id, 'services' => $appliedServices]);
         }
     }
 
     public function buildNotes(Order $order, array $options): string
     {
-        if (!empty($options['notes'])) return $options['notes'];
+        if (! empty($options['notes'])) {
+            return $options['notes'];
+        }
 
-        $notes = 'SpediamoFacile ordine #' . $order->id;
+        $notes = 'SpediamoFacile ordine #'.$order->id;
         $descriptions = $order->packages->pluck('content_description')->filter()->unique()->implode(', ');
-        if ($descriptions) $notes .= ' - Contenuto: ' . $descriptions;
+        if ($descriptions) {
+            $notes .= ' - Contenuto: '.$descriptions;
+        }
 
         return mb_substr($notes, 0, 120);
     }
@@ -205,13 +210,13 @@ class BrtPayloadBuilder
             'numberOfParcels' => (int) ($data['parcels'] ?? 1),
             'weightKG' => max(1, (int) ($data['weight_kg'] ?? 1)),
             'numericSenderReference' => $numericSenderReference,
-            'alphanumericSenderReference' => 'TEST-' . $numericSenderReference,
+            'alphanumericSenderReference' => 'TEST-'.$numericSenderReference,
             'notes' => $data['notes'] ?? 'Test SpediamoFacile',
             'isAlertRequired' => 1,
-            'isCODMandatory' => !empty($data['is_cod']) ? 1 : 0,
+            'isCODMandatory' => ! empty($data['is_cod']) ? 1 : 0,
         ];
 
-        if (!empty($data['is_cod']) && !empty($data['cod_amount'])) {
+        if (! empty($data['is_cod']) && ! empty($data['cod_amount'])) {
             $createData['cashOnDelivery'] = round((float) ($data['cod_amount'] / 100), 2);
             $createData['codPaymentType'] = $data['cod_payment_type'] ?? 'BM';
             $createData['codCurrency'] = 'EUR';
@@ -255,7 +260,7 @@ class BrtPayloadBuilder
 
         if (isset($data['createData']) && is_array($data['createData'])) {
             foreach (array_keys($data['createData']) as $key) {
-                if (str_starts_with((string) $key, 'sender') && !in_array($key, $allowedSenderFields, true)) {
+                if (str_starts_with((string) $key, 'sender') && ! in_array($key, $allowedSenderFields, true)) {
                     unset($data['createData'][$key]);
                 }
             }

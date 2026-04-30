@@ -21,7 +21,6 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-
 use App\Models\AuditLog;
 use App\Services\AuditLogService;
 use Illuminate\Http\JsonResponse;
@@ -54,6 +53,7 @@ class AuditLogController extends Controller
     public function show(AuditLog $auditLog): JsonResponse
     {
         $auditLog->load('user:id,name,surname,email');
+
         return response()->json($auditLog);
     }
 
@@ -86,12 +86,12 @@ class AuditLogController extends Controller
             ->orderByDesc('created_at')
             ->limit(self::EXPORT_MAX_ROWS);
 
-        $filename = 'audit-log-' . now()->format('Ymd-His') . '.csv';
+        $filename = 'audit-log-'.now()->format('Ymd-His').'.csv';
 
         return response()->streamDownload(function () use ($query) {
             $out = fopen('php://output', 'w');
             // BOM UTF-8 cosi' Excel apre i caratteri accentati correttamente
-            fwrite($out, chr(0xEF) . chr(0xBB) . chr(0xBF));
+            fwrite($out, chr(0xEF).chr(0xBB).chr(0xBF));
             fputcsv($out, ['id', 'created_at', 'action', 'actor_type', 'user_id', 'user_email', 'target_type', 'target_id', 'ip', 'user_agent', 'context']);
 
             $query->chunk(500, function ($rows) use ($out) {
@@ -125,7 +125,7 @@ class AuditLogController extends Controller
     {
         return AuditLog::query()
             ->when($request->filled('action'), fn ($q) => $q->where('action', $request->input('action')))
-            ->when($request->filled('action_like'), fn ($q) => $q->where('action', 'like', '%' . $request->input('action_like') . '%'))
+            ->when($request->filled('action_like'), fn ($q) => $q->where('action', 'like', '%'.$request->input('action_like').'%'))
             ->when($request->filled('user_id'), fn ($q) => $q->where('user_id', (int) $request->input('user_id')))
             ->when($request->filled('actor_type'), fn ($q) => $q->where('actor_type', $request->input('actor_type')))
             ->when($request->filled('target_type'), fn ($q) => $q->where('target_type', $request->input('target_type')))

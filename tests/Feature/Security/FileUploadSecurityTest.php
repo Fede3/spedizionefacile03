@@ -67,7 +67,7 @@ class FileUploadSecurityTest extends TestCase
         ]);
 
         // File con magic byte non-immagine (<?php) ma nome/MIME spoofati
-        $maliciousContent = "<?php echo 'pwned'; ?>\n" . str_repeat('A', 1024);
+        $maliciousContent = "<?php echo 'pwned'; ?>\n".str_repeat('A', 1024);
         $malicious = TestingFile::createWithContent('shell.jpg', $maliciousContent);
 
         $response = $this->post(
@@ -195,14 +195,14 @@ class FileUploadSecurityTest extends TestCase
         $sanitizer = app(ImageSanitizer::class);
 
         // Creiamo JPEG con "commento" embedded nei byte grezzi (simula EXIF payload)
-        $tmp = tempnam(sys_get_temp_dir(), 'exif') . '.jpg';
+        $tmp = tempnam(sys_get_temp_dir(), 'exif').'.jpg';
         $im = imagecreatetruecolor(400, 300);
         imagefilledrectangle($im, 0, 0, 400, 300, imagecolorallocate($im, 10, 20, 30));
         imagejpeg($im, $tmp, 90);
         imagedestroy($im);
 
         // Appendiamo un "payload" dopo la fine del JPEG (classico smuggling)
-        file_put_contents($tmp, "MALICIOUS_PAYLOAD_<?php phpinfo();?>", FILE_APPEND);
+        file_put_contents($tmp, 'MALICIOUS_PAYLOAD_<?php phpinfo();?>', FILE_APPEND);
 
         $sizeBefore = filesize($tmp);
         $upload = new UploadedFile($tmp, 'x.jpg', 'image/jpeg', null, true);

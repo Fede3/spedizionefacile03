@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Mail;
 
 use App\Models\Order;
@@ -7,6 +8,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
+use Illuminate\Mail\Mailables\Headers;
 use Illuminate\Queue\SerializesModels;
 
 class ShipmentStatusUpdateMail extends Mailable implements ShouldQueue
@@ -14,7 +16,9 @@ class ShipmentStatusUpdateMail extends Mailable implements ShouldQueue
     use Queueable, SerializesModels;
 
     public Order $order;
+
     public string $oldStatus;
+
     public string $newStatus;
 
     public function __construct(Order $order, string $oldStatus, string $newStatus)
@@ -31,20 +35,20 @@ class ShipmentStatusUpdateMail extends Mailable implements ShouldQueue
     public function envelope(): Envelope
     {
         $statusSubjects = [
-            'label_generated'  => 'Il tuo pacco e\' stato preparato',
-            'in_transit'       => 'Il tuo pacco e\' in viaggio',
+            'label_generated' => 'Il tuo pacco e\' stato preparato',
+            'in_transit' => 'Il tuo pacco e\' in viaggio',
             'out_for_delivery' => 'Il tuo pacco e\' in consegna',
-            'delivered'        => 'Il tuo pacco e\' stato consegnato',
-            'in_giacenza'      => 'Il tuo pacco e\' in giacenza',
-            'returned'         => 'Il tuo pacco e\' stato restituito',
-            'refused'          => 'Il tuo pacco e\' stato rifiutato',
-            'cancelled'        => 'Ordine annullato',
-            'refunded'         => 'Rimborso elaborato',
+            'delivered' => 'Il tuo pacco e\' stato consegnato',
+            'in_giacenza' => 'Il tuo pacco e\' in giacenza',
+            'returned' => 'Il tuo pacco e\' stato restituito',
+            'refused' => 'Il tuo pacco e\' stato rifiutato',
+            'cancelled' => 'Ordine annullato',
+            'refunded' => 'Rimborso elaborato',
         ];
 
         $subject = isset($statusSubjects[$this->newStatus])
-            ? $statusSubjects[$this->newStatus] . ' - SpediamoFacile'
-            : 'Aggiornamento spedizione #' . $this->order->id . ' - SpediamoFacile';
+            ? $statusSubjects[$this->newStatus].' - SpediamoFacile'
+            : 'Aggiornamento spedizione #'.$this->order->id.' - SpediamoFacile';
 
         return new Envelope(
             subject: $subject,
@@ -54,13 +58,13 @@ class ShipmentStatusUpdateMail extends Mailable implements ShouldQueue
     /**
      * Aggiunge header List-Unsubscribe per conformita' GDPR.
      */
-    public function headers(): \Illuminate\Mail\Mailables\Headers
+    public function headers(): Headers
     {
-        $unsubscribeUrl = config('app.frontend_url') . '/account/notifiche?unsubscribe=1';
+        $unsubscribeUrl = config('app.frontend_url').'/account/notifiche?unsubscribe=1';
 
-        return new \Illuminate\Mail\Mailables\Headers(
+        return new Headers(
             text: [
-                'List-Unsubscribe' => '<' . $unsubscribeUrl . '>',
+                'List-Unsubscribe' => '<'.$unsubscribeUrl.'>',
                 'List-Unsubscribe-Post' => 'List-Unsubscribe=One-Click',
             ],
         );

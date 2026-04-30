@@ -6,7 +6,6 @@ use App\Models\Order;
 use App\Models\Package;
 use App\Models\PackageAddress;
 use App\Models\Service;
-use Illuminate\Support\Facades\DB;
 
 /**
  * DirectOrderService - Business logic for creating orders directly (bypassing the cart).
@@ -203,7 +202,7 @@ class DirectOrderService
 
         return [
             'order_id' => $order->id,
-            'order_number' => 'SF-' . str_pad((string) $order->id, 6, '0', STR_PAD_LEFT),
+            'order_number' => 'SF-'.str_pad((string) $order->id, 6, '0', STR_PAD_LEFT),
             'amount_cents' => $order->payableTotalCents(),
             'client_submission_id' => (string) $submissionContext['client_submission_id'],
         ];

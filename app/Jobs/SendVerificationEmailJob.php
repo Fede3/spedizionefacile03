@@ -1,9 +1,10 @@
 <?php
+
 namespace App\Jobs;
 
 use App\Mail\VerificationEmail;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 
 class SendVerificationEmailJob
 {
@@ -24,10 +25,11 @@ class SendVerificationEmailJob
     {
         $code = $this->user->verification_code;
 
-        if (!$code) {
+        if (! $code) {
             Log::warning('Tentativo di invio email di verifica senza codice.', [
                 'user_id' => $this->user->id,
             ]);
+
             return;
         }
 

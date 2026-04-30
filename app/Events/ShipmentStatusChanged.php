@@ -1,12 +1,12 @@
 <?php
+
 namespace App\Events;
 
 use App\Models\Order;
-use Illuminate\Broadcasting\Channel;
-use Illuminate\Queue\SerializesModels;
+use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Foundation\Events\Dispatchable;
-use Illuminate\Broadcasting\InteractsWithSockets;
+use Illuminate\Queue\SerializesModels;
 
 class ShipmentStatusChanged
 {
@@ -14,8 +14,10 @@ class ShipmentStatusChanged
 
     // L'ordine il cui stato e' cambiato
     public $order;
+
     // Lo stato precedente (es. "processing")
     public $oldStatus;
+
     // Il nuovo stato (es. "in_transit")
     public $newStatus;
 

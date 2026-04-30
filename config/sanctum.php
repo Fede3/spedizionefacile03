@@ -1,4 +1,5 @@
 <?php
+
 /**
  * FILE: config/sanctum.php
  * SCOPO: Configura Laravel Sanctum per l'autenticazione SPA (Single Page Application).
@@ -28,6 +29,8 @@
  *   - bootstrap/app.php — $middleware->statefulApi() attiva il middleware Sanctum
  */
 
+use App\Http\Middleware\EncryptCookies;
+use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
 use Laravel\Sanctum\Sanctum;
 
 $defaultStateful = sprintf(
@@ -137,8 +140,8 @@ return [
         // HttpOnly + SameSite=lax + CSRF token. Riattivare solo dopo aver
         // allineato tutti i controller auth a salvare password_hash_web in sessione.
         // 'authenticate_session' => Laravel\Sanctum\Http\Middleware\AuthenticateSession::class,
-        'encrypt_cookies' => App\Http\Middleware\EncryptCookies::class,
-        'validate_csrf_token' => Illuminate\Foundation\Http\Middleware\ValidateCsrfToken::class,
+        'encrypt_cookies' => EncryptCookies::class,
+        'validate_csrf_token' => ValidateCsrfToken::class,
     ],
 
     /*

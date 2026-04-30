@@ -4,6 +4,7 @@ namespace App\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
+use Sentry\SentrySdk;
 use Sentry\State\Scope;
 
 /**
@@ -30,15 +31,13 @@ class SentryContext
     /**
      * Handle an incoming request.
      *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \Closure  $next
      * @return mixed
      */
     public function handle(Request $request, Closure $next)
     {
         // Se il pacchetto Sentry non e' installato (es. dev locale senza composer install),
         // salta tutto silenziosamente: nessun errore, nessun log rumoroso.
-        if (!class_exists(\Sentry\SentrySdk::class)) {
+        if (! class_exists(SentrySdk::class)) {
             return $next($request);
         }
 
@@ -103,6 +102,7 @@ class SentryContext
                 return $family;
             }
         }
+
         return 'other';
     }
 }

@@ -9,15 +9,14 @@
 
 namespace App\Http\Controllers\Account;
 
-use App\Http\Controllers\Controller;
-
 use App\Events\ReferralApplied;
+use App\Http\Controllers\Controller;
+use App\Http\Requests\ApplyReferralRewardRequest;
 use App\Models\Order;
 use App\Models\ReferralUsage;
 use App\Services\ReferralAccountingService;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class ReferralRewardController extends Controller
@@ -33,7 +32,7 @@ class ReferralRewardController extends Controller
      * Applica il codice referral a un ordine specifico.
      * Registra l'utilizzo del codice, calcola lo sconto e accredita la commissione al Partner Pro.
      */
-    public function apply(\App\Http\Requests\ApplyReferralRewardRequest $request, ReferralAccountingService $referralAccountingService): JsonResponse
+    public function apply(ApplyReferralRewardRequest $request, ReferralAccountingService $referralAccountingService): JsonResponse
     {
         $data = $request->validated();
 

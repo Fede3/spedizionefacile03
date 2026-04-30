@@ -1,10 +1,9 @@
 <?php
+
 namespace App\Listeners;
 
-use App\Models\Order;
 use App\Events\OrderPaid;
-use Illuminate\Queue\InteractsWithQueue;
-use Illuminate\Contracts\Queue\ShouldQueue;
+use App\Models\Order;
 
 class MarkOrderProcessing
 {
@@ -25,7 +24,7 @@ class MarkOrderProcessing
         }
 
         $event->order->update([
-            'status' => Order::PROCESSING
+            'status' => Order::PROCESSING,
         ]);
     }
 }

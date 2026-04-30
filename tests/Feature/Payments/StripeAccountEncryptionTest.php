@@ -124,7 +124,7 @@ class StripeAccountEncryptionTest extends TestCase
         $user->save();
 
         // Invochiamo il helper privato tramite reflection per testare la logica.
-        $controller = new StripeWebhookController();
+        $controller = new StripeWebhookController;
         $ref = new \ReflectionMethod($controller, 'findUserByStripeAccountId');
         $ref->setAccessible(true);
 

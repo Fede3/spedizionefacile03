@@ -2,11 +2,11 @@
 
 namespace Tests\Feature\SavedShipments;
 
+use App\Models\Order;
 use App\Models\Package;
 use App\Models\PackageAddress;
 use App\Models\Service;
 use App\Models\User;
-use App\Models\Order;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;

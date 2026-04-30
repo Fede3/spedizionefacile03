@@ -3,7 +3,6 @@
 namespace Tests\Unit\Services;
 
 use App\Models\Order;
-use App\Models\Transaction;
 use App\Models\User;
 use App\Models\WalletMovement;
 use App\Services\RefundService;
@@ -105,7 +104,7 @@ class RefundServiceTest extends TestCase
         $stripeClient = \Mockery::mock(StripeClient::class);
 
         return new RefundService(
-            new StripeConfigService(),
+            new StripeConfigService,
             $stripeClient,
         );
     }

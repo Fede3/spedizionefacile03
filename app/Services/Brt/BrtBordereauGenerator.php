@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Services\Brt;
 
 use App\Models\Order;
@@ -417,6 +418,7 @@ class BrtBordereauGenerator
     private function resolveServiceLabel(Order $order, Package $package): string
     {
         $srv = strtolower((string) ($package->service?->service_type ?? ''));
+
         return match ($srv) {
             'express' => 'EXPRESS',
             'economy' => 'ECONOMY',

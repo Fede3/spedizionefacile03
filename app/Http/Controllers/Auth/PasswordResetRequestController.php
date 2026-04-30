@@ -1,18 +1,19 @@
 <?php
+
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
-
-use Carbon\Carbon;
-use App\Models\User;
+use App\Http\Requests\ForgotPasswordRequest;
 use App\Mail\ResetPasswordEmail;
-use Illuminate\Support\Str;
-use Illuminate\Http\Request;
+use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Str;
 use Symfony\Component\HttpFoundation\Response;
+
 class PasswordResetRequestController extends Controller
 {
     /**
@@ -26,7 +27,8 @@ class PasswordResetRequestController extends Controller
      *
      * Ref: https://cheatsheetseries.owasp.org/cheatsheets/Authentication_Cheat_Sheet.html#authentication-responses
      */
-    public function sendEmail(\App\Http\Requests\ForgotPasswordRequest $request) {
+    public function sendEmail(ForgotPasswordRequest $request)
+    {
         $startedAt = microtime(true);
 
         // Anti-enumerazione: rispondiamo sempre allo stesso modo, ma inviamo
@@ -69,7 +71,8 @@ class PasswordResetRequestController extends Controller
     }
 
     // Genera il token e invia l'email di recupero password all'utente
-    public function send($email) {
+    public function send($email)
+    {
         // Creiamo un codice segreto (token) per questo reset
         $token = $this->createToken($email);
 
@@ -81,7 +84,8 @@ class PasswordResetRequestController extends Controller
 
     // Crea un nuovo token segreto per il reset della password
     // Se l'utente aveva gia' richiesto un reset prima, aggiorna il token esistente
-    public function createToken($email) {
+    public function createToken($email)
+    {
         // Controlliamo se esiste gia' un token per questa email
         $oldToken = DB::table('password_reset_tokens')->where('email', $email)->first();
 
@@ -93,8 +97,7 @@ class PasswordResetRequestController extends Controller
         if ($oldToken) {
             // Se c'era gia' un token, lo aggiorniamo con il nuovo
             $this->updateToken($hashedToken, $email);
-        }
-        else {
+        } else {
             // Se non c'era, ne creiamo uno nuovo
             $this->saveToken($hashedToken, $email);
         }
@@ -103,30 +106,31 @@ class PasswordResetRequestController extends Controller
         return $token;
     }
 
-
     // Salva un nuovo token nel database
-    public function saveToken($token, $email) {
+    public function saveToken($token, $email)
+    {
         DB::table('password_reset_tokens')->insert([
             'email' => $email,
             'token' => $token,
-            'created_at' => Carbon::now()
+            'created_at' => Carbon::now(),
         ]);
     }
 
     // Aggiorna un token esistente nel database con uno nuovo
-    public function updateToken($token, $email) {
+    public function updateToken($token, $email)
+    {
         DB::table('password_reset_tokens')
-                ->where('email', $email)
-                ->update([
-                    'token' => $token,
-                    'created_at' => Carbon::now()
-                ]);
+            ->where('email', $email)
+            ->update([
+                'token' => $token,
+                'created_at' => Carbon::now(),
+            ]);
     }
-
 
     // Controlla se un'email e' registrata nel database degli utenti
     // Restituisce vero (true) se l'email esiste, falso (false) se non esiste
-    public function validateEmail($email) {
+    public function validateEmail($email)
+    {
         return User::where('email', $email)->exists();
     }
 
@@ -134,7 +138,8 @@ class PasswordResetRequestController extends Controller
     // NOTA: la risposta e' volutamente generica per non rivelare se l'email esiste.
     // Il messaggio usa la forma condizionale "Se l'email e' registrata..." come da
     // raccomandazione OWASP Auth Cheatsheet e pattern Stripe/Auth0/Google.
-    public function successResponse() {
+    public function successResponse()
+    {
         return response()->json([
             'success' => true,
             'message' => 'Se l\'email è registrata riceverai un link di reset entro pochi minuti.',

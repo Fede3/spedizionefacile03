@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Checkout;
 
 use App\Models\Order;
 use App\Models\Package;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -22,15 +23,17 @@ use Illuminate\Support\Facades\DB;
  */
 trait StripeCheckoutHelpers
 {
-    private function submissionContextFromRequest(Request $request): array
+    private function submissionContextFromRequest(Request $request, bool $includeDiscountContext = false): array
     {
-        return $this->submissionContext->fromRequestArray($request->only([
-            'client_submission_id',
-            'discount_context',
-        ]));
+        $fields = ['client_submission_id'];
+        if ($includeDiscountContext) {
+            $fields[] = 'discount_context';
+        }
+
+        return $this->submissionContext->fromRequestArray($request->only($fields));
     }
 
-    private function syncSubmissionContextOnOrder(Order $order, array $context): ?\Illuminate\Http\JsonResponse
+    private function syncSubmissionContextOnOrder(Order $order, array $context): ?JsonResponse
     {
         if (
             blank($order->client_submission_id)
@@ -212,7 +215,10 @@ trait StripeCheckoutHelpers
     private function ensureOrderOwnership(Order $order, ?int $userId = null)
     {
         $ownerId = $userId ?? auth()->id();
-        if ((int) $order->user_id === (int) $ownerId) return null;
+        if ((int) $order->user_id === (int) $ownerId) {
+            return null;
+        }
+
         return response()->json(['error' => 'Non autorizzato.'], 403);
     }
 

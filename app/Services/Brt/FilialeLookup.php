@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Services\Brt;
 
 class FilialeLookup
@@ -9,7 +10,7 @@ class FilialeLookup
     /**
      * Risolve la filiale BRT piu' vicina al CAP del mittente.
      *
-     * @param string $cap CAP del mittente (5 cifre)
+     * @param  string  $cap  CAP del mittente (5 cifre)
      * @return int|null Codice filiale BRT, o null se nessun match
      */
     public static function resolveFilialeByCap(string $cap): ?int
@@ -93,6 +94,7 @@ class FilialeLookup
         if (self::$filiali === null) {
             self::$filiali = config('brt_filiali.filiali', []);
         }
+
         return self::$filiali;
     }
 

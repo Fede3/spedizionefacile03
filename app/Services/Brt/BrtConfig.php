@@ -1,20 +1,29 @@
 <?php
+
 namespace App\Services\Brt;
 
+use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Http\Client\PendingRequest;
 
 class BrtConfig
 {
     public readonly string $apiUrl;
+
     public readonly string $pudoApiUrl;
+
     public readonly string $clientId;
+
     public readonly string $password;
+
     public readonly string $pudoToken;
+
     public readonly int $departureDepot;
+
     public readonly bool $verifySsl;
+
     public readonly bool $pickupEnabled;
+
     public readonly ?string $pickupEndpoint;
 
     public function __construct()
@@ -55,7 +64,7 @@ class BrtConfig
     public function pudoClient(): PendingRequest
     {
         $headers = ['Accept' => 'application/json'];
-        if (!empty($this->pudoToken)) {
+        if (! empty($this->pudoToken)) {
             $headers['X-API-Auth'] = $this->pudoToken;
         }
 

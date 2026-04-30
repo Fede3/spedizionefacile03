@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Services;
 
 use App\Models\Setting;
@@ -41,6 +42,6 @@ class StripeConfigService
             return false;
         }
 
-        return !str_contains($key, 'placeholder') && !str_contains($secret, 'placeholder');
+        return ! str_contains($key, 'placeholder') && ! str_contains($secret, 'placeholder');
     }
 }

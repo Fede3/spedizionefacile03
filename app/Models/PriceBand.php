@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
@@ -34,10 +35,16 @@ class PriceBand extends Model
     protected $appends = ['effective_price', 'discount_percent'];
 
     // Scope: filtra solo le fasce di peso
-    public function scopeWeight($query) { return $query->where('type', 'weight'); }
+    public function scopeWeight($query)
+    {
+        return $query->where('type', 'weight');
+    }
 
     // Scope: filtra solo le fasce di volume
-    public function scopeVolume($query) { return $query->where('type', 'volume'); }
+    public function scopeVolume($query)
+    {
+        return $query->where('type', 'volume');
+    }
 
     /**
      * Prezzo effettivo: se c'e' uno sconto attivo, usa il prezzo scontato.
@@ -50,6 +57,7 @@ class PriceBand extends Model
         if ($this->discount_price !== null && $this->discount_price > 0) {
             return (int) $this->discount_price;
         }
+
         return (int) $this->base_price;
     }
 

@@ -49,7 +49,7 @@ class PriceEngineTest extends TestCase
     }
 
     /* ================================================================== */
-    /*  T11.6.1: Weight band matching (5 kg => correct band)               */
+    /*  T11.6.1: Weight band matching (5 kg => correct band) */
     /* ================================================================== */
     public function test_weight_band_5kg(): void
     {
@@ -82,7 +82,7 @@ class PriceEngineTest extends TestCase
     }
 
     /* ================================================================== */
-    /*  T11.6.2: Volume band matching                                      */
+    /*  T11.6.2: Volume band matching */
     /* ================================================================== */
     public function test_volume_band_small(): void
     {
@@ -99,8 +99,8 @@ class PriceEngineTest extends TestCase
     }
 
     /* ================================================================== */
-    /*  T11.6.3: MAX(weight, volume) formula                               */
-    /*  The controller uses max(weightPrice, volumePrice)                  */
+    /*  T11.6.3: MAX(weight, volume) formula */
+    /*  The controller uses max(weightPrice, volumePrice) */
     /* ================================================================== */
     public function test_max_weight_volume_formula(): void
     {
@@ -141,7 +141,7 @@ class PriceEngineTest extends TestCase
     }
 
     /* ================================================================== */
-    /*  T11.6.4: Extra rule for > 100 kg                                   */
+    /*  T11.6.4: Extra rule for > 100 kg */
     /* ================================================================== */
     public function test_extra_rule_above_100kg(): void
     {
@@ -173,7 +173,7 @@ class PriceEngineTest extends TestCase
     }
 
     /* ================================================================== */
-    /*  T11.6.5: CAP supplement calculation                                */
+    /*  T11.6.5: CAP supplement calculation */
     /* ================================================================== */
     public function test_cap_supplement_origin_90_prefix(): void
     {

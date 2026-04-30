@@ -53,7 +53,7 @@ class CleanupOrders extends Command
 
         // Di default controlliamo solo gli ordini in attesa o con pagamento fallito
         // Con --all controlliamo tutti gli ordini
-        if (!$allStatuses) {
+        if (! $allStatuses) {
             $query->whereIn('status', [Order::PENDING, Order::PAYMENT_FAILED]);
         }
 
@@ -77,11 +77,11 @@ class CleanupOrders extends Command
                 $validPackages = Package::whereIn('id', $packageIds)
                     ->where(function ($q) {
                         $q->whereNotNull('package_type')
-                          ->where('package_type', '!=', '')
-                          ->where(function ($q2) {
-                              $q2->where('weight', '>', 0)
-                                 ->orWhere('first_size', '>', 0);
-                          });
+                            ->where('package_type', '!=', '')
+                            ->where(function ($q2) {
+                                $q2->where('weight', '>', 0)
+                                    ->orWhere('first_size', '>', 0);
+                            });
                     })
                     ->count();
 

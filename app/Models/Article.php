@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
@@ -33,11 +34,20 @@ class Article extends Model
     ];
 
     // Scope: filtra solo le guide (type = "guide")
-    public function scopeGuides($query) { return $query->where('type', 'guide'); }
+    public function scopeGuides($query)
+    {
+        return $query->where('type', 'guide');
+    }
 
     // Scope: filtra solo i servizi (type = "service")
-    public function scopeServices($query) { return $query->where('type', 'service'); }
+    public function scopeServices($query)
+    {
+        return $query->where('type', 'service');
+    }
 
     // Scope: filtra solo gli articoli pubblicati
-    public function scopePublished($query) { return $query->where('is_published', true); }
+    public function scopePublished($query)
+    {
+        return $query->where('is_published', true);
+    }
 }

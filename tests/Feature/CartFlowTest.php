@@ -43,15 +43,15 @@ class CartFlowTest extends TestCase
 
         $packages = $sessionData['packages'];
 
-        echo "\n  Session packages: " . json_encode($packages);
-        echo "\n  Total price: " . $sessionData['total_price'];
+        echo "\n  Session packages: ".json_encode($packages);
+        echo "\n  Total price: ".$sessionData['total_price'];
 
         // Step 2: Empty cart
         $emptyResponse = $this->actingAs($user)
             ->deleteJson('/api/empty-cart');
 
         $emptyResponse->assertOk();
-        echo "\n  Empty cart: " . $emptyResponse->getStatusCode() . " - " . $emptyResponse->getContent();
+        echo "\n  Empty cart: ".$emptyResponse->getStatusCode().' - '.$emptyResponse->getContent();
 
         // Step 3: Store to cart (exact same payload structure as frontend)
         $cartPayload = [
@@ -93,13 +93,13 @@ class CartFlowTest extends TestCase
             'packages' => $packages,
         ];
 
-        echo "\n  Cart payload packages: " . json_encode($cartPayload['packages']);
+        echo "\n  Cart payload packages: ".json_encode($cartPayload['packages']);
 
         $storeResponse = $this->actingAs($user)
             ->postJson('/api/cart', $cartPayload);
 
-        echo "\n  Store cart status: " . $storeResponse->getStatusCode();
-        echo "\n  Store cart body: " . substr($storeResponse->getContent(), 0, 500);
+        echo "\n  Store cart status: ".$storeResponse->getStatusCode();
+        echo "\n  Store cart body: ".substr($storeResponse->getContent(), 0, 500);
 
         $storeResponse->assertOk();
 
@@ -108,7 +108,7 @@ class CartFlowTest extends TestCase
             ->getJson('/api/cart');
 
         $cartResponse->assertOk();
-        echo "\n  Cart content: " . substr($cartResponse->getContent(), 0, 300);
+        echo "\n  Cart content: ".substr($cartResponse->getContent(), 0, 300);
 
         $cartData = $cartResponse->json();
         $this->assertNotEmpty($cartData['data'], 'Cart should not be empty');
@@ -121,7 +121,7 @@ class CartFlowTest extends TestCase
             ->deleteJson('/api/empty-guest-cart');
 
         $emptyResponse->assertOk();
-        echo "\n  Empty guest cart: " . $emptyResponse->getStatusCode();
+        echo "\n  Empty guest cart: ".$emptyResponse->getStatusCode();
 
         // Step 2: Store to guest cart
         $cartPayload = [
@@ -178,15 +178,15 @@ class CartFlowTest extends TestCase
         $storeResponse = $this->withSession([])
             ->postJson('/api/guest-cart', $cartPayload);
 
-        echo "\n  Store guest cart status: " . $storeResponse->getStatusCode();
-        echo "\n  Store guest cart body: " . substr($storeResponse->getContent(), 0, 300);
+        echo "\n  Store guest cart status: ".$storeResponse->getStatusCode();
+        echo "\n  Store guest cart body: ".substr($storeResponse->getContent(), 0, 300);
 
         $storeResponse->assertOk();
 
         // Step 3: Read guest cart
         $cartResponse = $this->getJson('/api/guest-cart');
 
-        echo "\n  Guest cart status: " . $cartResponse->getStatusCode();
-        echo "\n  Guest cart body: " . substr($cartResponse->getContent(), 0, 300);
+        echo "\n  Guest cart status: ".$cartResponse->getStatusCode();
+        echo "\n  Guest cart body: ".substr($cartResponse->getContent(), 0, 300);
     }
 }

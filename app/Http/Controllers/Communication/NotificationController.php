@@ -1,12 +1,12 @@
 <?php
+
 namespace App\Http\Controllers\Communication;
 
 use App\Http\Controllers\Controller;
-
+use App\Http\Requests\UpdateNotificationPreferencesRequest;
 use App\Models\UserNotification;
 use App\Models\UserNotificationPreference;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
 class NotificationController extends Controller
@@ -23,15 +23,16 @@ class NotificationController extends Controller
             return null;
         }
         if (Str::startsWith($cleaned, '00')) {
-            $cleaned = '+' . substr($cleaned, 2);
+            $cleaned = '+'.substr($cleaned, 2);
         }
-        if (!Str::startsWith($cleaned, '+')) {
+        if (! Str::startsWith($cleaned, '+')) {
             $cleaned = ltrim($cleaned, '0');
-            $cleaned = $defaultCountry . $cleaned;
+            $cleaned = $defaultCountry.$cleaned;
         }
-        if (!preg_match('/^\+\d{8,15}$/', $cleaned)) {
+        if (! preg_match('/^\+\d{8,15}$/', $cleaned)) {
             return null;
         }
+
         return $cleaned;
     }
 
@@ -114,7 +115,7 @@ class NotificationController extends Controller
      *
      * GDPR: registra timestamp opt-in al passaggio false->true per ogni canale.
      */
-    public function updatePreferences(\App\Http\Requests\UpdateNotificationPreferencesRequest $request): JsonResponse
+    public function updatePreferences(UpdateNotificationPreferencesRequest $request): JsonResponse
     {
         $data = $request->validated();
 
@@ -126,15 +127,15 @@ class NotificationController extends Controller
 
         // Audit GDPR: traccia opt-in al primo true.
         $now = now();
-        if (($data['referral_email_enabled'] ?? false) && !$prefs->referral_email_enabled) {
+        if (($data['referral_email_enabled'] ?? false) && ! $prefs->referral_email_enabled) {
             $data['email_opt_in_at'] = $now;
         }
         if ((($data['referral_sms_enabled'] ?? false) || ($data['sms_order_updates'] ?? false) || ($data['sms_marketing'] ?? false))
-            && !$prefs->sms_opt_in_at) {
+            && ! $prefs->sms_opt_in_at) {
             $data['sms_opt_in_at'] = $now;
         }
         if ((($data['push_order_updates'] ?? false) || ($data['push_marketing'] ?? false))
-            && !$prefs->push_opt_in_at) {
+            && ! $prefs->push_opt_in_at) {
             $data['push_opt_in_at'] = $now;
         }
 

@@ -21,6 +21,7 @@ class InvoiceArchivePolicy
         if ($user->isAdmin()) {
             return true;
         }
+
         // Verifica via order: l'archivio fattura referenzia order_id che a sua volta ha user_id.
         return $invoice->order && $invoice->order->user_id === $user->id;
     }

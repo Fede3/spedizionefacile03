@@ -1,15 +1,17 @@
 <?php
+
 namespace App\Services\Brt;
 
 use App\Models\Location;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
 
 class AddressNormalizer
 {
     /**
      * Normalizza un indirizzo per il sistema di routing BRT.
      *
-     * @param object $address L'oggetto indirizzo con city, postal_code, province
+     * @param  object  $address  L'oggetto indirizzo con city, postal_code, province
      * @return array Array con chiavi: city, postal_code, province (normalizzati per BRT)
      */
     public function normalizeAddressForBrt(object $address): array
@@ -30,7 +32,7 @@ class AddressNormalizer
 
         // 4. Prova a trovare la citta' corretta dal database locations usando il CAP
         try {
-            if (\Illuminate\Support\Facades\Schema::hasTable('locations')) {
+            if (Schema::hasTable('locations')) {
                 $city = $this->resolveCityFromLocations($city, $postalCode, $province);
             }
         } catch (\Exception $e) {
@@ -235,6 +237,7 @@ class AddressNormalizer
                     'postal_code' => $postalCode,
                     'city' => $normalizedCity,
                 ]);
+
                 return $normalizedCity;
             }
 
@@ -248,6 +251,7 @@ class AddressNormalizer
                         'postal_code' => $postalCode,
                     ]);
                 }
+
                 return $resolved;
             }
 
@@ -260,12 +264,13 @@ class AddressNormalizer
                         'resolved_city' => $dbCity,
                         'postal_code' => $postalCode,
                     ]);
+
                     return $dbCity;
                 }
             }
 
             // 4. Match per provincia
-            if (!empty($province)) {
+            if (! empty($province)) {
                 $provinceMatch = $citiesByZip->first(function ($loc) use ($province) {
                     return mb_strtoupper($loc->province ?? '', 'UTF-8') === $province;
                 });
@@ -277,6 +282,7 @@ class AddressNormalizer
                         'postal_code' => $postalCode,
                         'province' => $province,
                     ]);
+
                     return $resolved;
                 }
             }
@@ -287,6 +293,7 @@ class AddressNormalizer
                 'city' => $normalizedCity,
                 'available_cities' => $citiesByZip->pluck('place_name')->toArray(),
             ]);
+
             return $normalizedCity;
 
         } catch (\Exception $e) {
@@ -295,6 +302,7 @@ class AddressNormalizer
                 'city' => $normalizedCity,
                 'postal_code' => $postalCode,
             ]);
+
             return $normalizedCity;
         }
     }

@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Services\Brt;
 
 use App\Models\Order;
@@ -38,14 +39,15 @@ class TrackingService
      * Genera l'URL per seguire il tracking di un pacco BRT.
      * Usa il sistema VAS di BRT che accetta il numero di collo come riferimento.
      *
-     * @param string $parcelNumber Il numero di collo BRT (parcelNumberFrom) o parcelId
+     * @param  string  $parcelNumber  Il numero di collo BRT (parcelNumberFrom) o parcelId
      */
     public function getTrackingUrl(string $parcelNumber): string
     {
         if (empty($parcelNumber)) {
             return '';
         }
-        return 'https://vas.brt.it/vas/sped_det_show.hsm?refnr=' . urlencode($parcelNumber);
+
+        return 'https://vas.brt.it/vas/sped_det_show.hsm?refnr='.urlencode($parcelNumber);
     }
 
     /**
@@ -55,7 +57,7 @@ class TrackingService
      * Endpoint BRT: POST /rest/v1/shipments/tracking
      * Accetta account + spedition_id (numericSenderReference) oppure parcelId.
      *
-     * @param Order $order L'ordine con brt_numeric_sender_reference o brt_parcel_id
+     * @param  Order  $order  L'ordine con brt_numeric_sender_reference o brt_parcel_id
      * @return array {status: ?string, brt_event: ?string, description: ?string, error: ?string}
      */
     public function getTrackingStatus(Order $order): array
@@ -83,14 +85,14 @@ class TrackingService
             }
 
             $response = $this->config->shipmentClient()
-                ->post($this->config->apiUrl . '/tracking', $payload);
+                ->post($this->config->apiUrl.'/tracking', $payload);
 
             if (! $response->successful()) {
                 return [
                     'status' => null,
                     'brt_event' => null,
                     'description' => null,
-                    'error' => 'HTTP ' . $response->status(),
+                    'error' => 'HTTP '.$response->status(),
                 ];
             }
 
@@ -136,6 +138,7 @@ class TrackingService
                 'order_id' => $order->id,
                 'error' => $e->getMessage(),
             ]);
+
             return ['status' => null, 'brt_event' => null, 'description' => null, 'error' => $e->getMessage()];
         }
     }
@@ -160,7 +163,7 @@ class TrackingService
             return self::DIRECT_STATUS_MAP[$normalizedCode];
         }
 
-        $combined = strtoupper(trim($eventCode . ' ' . $eventDesc));
+        $combined = strtoupper(trim($eventCode.' '.$eventDesc));
 
         // Consegnato (stato finale)
         $deliveredKeywords = ['DELIVERED', 'CONSEGNAT', 'CONSEGNA EFFETTUATA', 'RECAPITATO'];

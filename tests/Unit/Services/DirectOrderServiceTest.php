@@ -19,9 +19,9 @@ class DirectOrderServiceTest extends TestCase
     {
         parent::setUp();
         $this->service = new DirectOrderService(
-            new PriceEngineService(),
+            new PriceEngineService,
             app(ShipmentServicePricingService::class),
-            new CheckoutSubmissionContextService(),
+            new CheckoutSubmissionContextService,
         );
     }
 

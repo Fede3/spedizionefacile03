@@ -1,10 +1,11 @@
 <?php
+
 namespace App\Events;
 
 use App\Models\Order;
-use Illuminate\Queue\SerializesModels;
-use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Broadcasting\InteractsWithSockets;
+use Illuminate\Foundation\Events\Dispatchable;
+use Illuminate\Queue\SerializesModels;
 
 class OrderPaid
 {
@@ -12,9 +13,9 @@ class OrderPaid
 
     // L'ordine che e' stato pagato
     public $order;
+
     // I dati della transazione di pagamento (importo, metodo, stato...)
     public $transaction;
-
 
     /**
      * Crea una nuova istanza dell'evento.

@@ -1,10 +1,9 @@
 <?php
+
 namespace App\Listeners;
 
 use App\Cart\Cart;
 use App\Events\OrderCreated;
-use Illuminate\Queue\InteractsWithQueue;
-use Illuminate\Contracts\Queue\ShouldQueue;
 
 class CartEmpty
 {

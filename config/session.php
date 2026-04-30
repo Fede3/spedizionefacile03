@@ -1,4 +1,5 @@
 <?php
+
 /**
  * FILE: config/session.php
  * SCOPO: Configura la sessione PHP usata per l'autenticazione Sanctum SPA e il preventivo rapido.

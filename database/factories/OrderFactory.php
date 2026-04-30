@@ -2,14 +2,16 @@
 
 namespace Database\Factories;
 
+use App\Models\Order;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Order>
+ * @extends Factory<Order>
  */
 class OrderFactory extends Factory
 {
-    protected $model = \App\Models\Order::class;
+    protected $model = Order::class;
 
     /**
      * Define the model's default state.
@@ -19,7 +21,7 @@ class OrderFactory extends Factory
     public function definition(): array
     {
         return [
-            'user_id' => \App\Models\User::factory(),
+            'user_id' => User::factory(),
             'status' => 'pending',
             'subtotal' => fake()->numberBetween(500, 50000),
             'payment_method' => 'stripe',

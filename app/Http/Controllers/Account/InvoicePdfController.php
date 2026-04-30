@@ -1,8 +1,8 @@
 <?php
+
 namespace App\Http\Controllers\Account;
 
 use App\Http\Controllers\Controller;
-
 use App\Models\Order;
 use App\Services\Invoice\InvoicePdfGenerator;
 use Illuminate\Http\Request;
@@ -62,7 +62,7 @@ class InvoicePdfController extends Controller
 
         return response()->file($absolutePath, [
             'Content-Type' => 'application/pdf',
-            'Content-Disposition' => 'inline; filename="' . $filename . '"',
+            'Content-Disposition' => 'inline; filename="'.$filename.'"',
             'Cache-Control' => 'no-store, no-cache, must-revalidate, private',
             'Pragma' => 'no-cache',
             'X-Content-Type-Options' => 'nosniff',

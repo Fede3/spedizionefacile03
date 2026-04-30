@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Shipping;
 
 use App\Http\Controllers\Controller;
-
+use App\Http\Requests\ReschedulePickupRequest;
 use App\Models\Order;
 use App\Services\ShipmentExecutionService;
 use Illuminate\Http\JsonResponse;
@@ -104,7 +104,7 @@ class ShipmentExecutionController extends Controller
      * consigliata). Se BRT fallisce, salviamo comunque la nuova data e logghiamo
      * per follow-up admin.
      */
-    public function reschedulePickup(\App\Http\Requests\ReschedulePickupRequest $request, Order $order): JsonResponse
+    public function reschedulePickup(ReschedulePickupRequest $request, Order $order): JsonResponse
     {
         Gate::authorize('manageShipment', $order);
 

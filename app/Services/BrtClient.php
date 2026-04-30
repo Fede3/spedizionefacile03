@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Services;
 
 use App\Models\Order;
@@ -25,15 +26,18 @@ use App\Services\Brt\TrackingService;
 class BrtClient
 {
     private BrtConfig $config;
+
     private ShipmentService $shipmentService;
+
     private PudoService $pudoService;
+
     private TrackingService $trackingService;
 
     public function __construct()
     {
-        $this->config = new BrtConfig();
-        $addressNormalizer = new AddressNormalizer();
-        $errorTranslator = new ErrorTranslator();
+        $this->config = new BrtConfig;
+        $addressNormalizer = new AddressNormalizer;
+        $errorTranslator = new ErrorTranslator;
         $this->shipmentService = new ShipmentService($this->config, $addressNormalizer, $errorTranslator);
         $this->pudoService = new PudoService($this->config);
         $this->trackingService = new TrackingService($this->config);
@@ -127,7 +131,7 @@ class BrtClient
         $origin = $package->originAddress;
         $destination = $package->destinationAddress;
         $parcelCount = (int) $order->packages->sum(fn (Package $item) => max(1, (int) ($item->quantity ?? 1)));
-        $reference = 'BORD-' . str_pad((string) $order->id, 8, '0', STR_PAD_LEFT);
+        $reference = 'BORD-'.str_pad((string) $order->id, 8, '0', STR_PAD_LEFT);
 
         $pdf = app(BorderoPdfBuilder::class)->build([
             'bordero_date' => now()->format('d/m/Y'),
@@ -144,12 +148,12 @@ class BrtClient
             'importo_assicurare' => '0,00',
             'colli' => (string) $parcelCount,
             'sender_name' => (string) ($origin->name ?? ''),
-            'sender_address' => trim((string) (($origin->address ?? '') . ' ' . ($origin->address_number ?? ''))),
-            'sender_city_line' => trim((string) (($origin->postal_code ?? '') . ' ' . ($origin->city ?? '') . ' (' . ($origin->province ?? '') . ')')),
+            'sender_address' => trim((string) (($origin->address ?? '').' '.($origin->address_number ?? ''))),
+            'sender_city_line' => trim((string) (($origin->postal_code ?? '').' '.($origin->city ?? '').' ('.($origin->province ?? '').')')),
             'sender_phone' => (string) ($origin->telephone_number ?? ''),
             'recipient_name' => (string) ($destination->name ?? ''),
-            'recipient_address' => trim((string) (($destination->address ?? '') . ' ' . ($destination->address_number ?? ''))),
-            'recipient_city_line' => trim((string) (($destination->postal_code ?? '') . ' ' . ($destination->city ?? '') . ' (' . ($destination->province ?? '') . ')')),
+            'recipient_address' => trim((string) (($destination->address ?? '').' '.($destination->address_number ?? ''))),
+            'recipient_city_line' => trim((string) (($destination->postal_code ?? '').' '.($destination->city ?? '').' ('.($destination->province ?? '').')')),
             'recipient_phone' => (string) ($destination->telephone_number ?? ''),
             'created_at' => now()->format('d/m/Y H:i'),
         ]);
@@ -159,7 +163,7 @@ class BrtClient
             'bordero_reference' => $reference,
             'document_base64' => base64_encode($pdf),
             'document_mime' => 'application/pdf',
-            'document_filename' => 'bordero-' . $order->id . '.pdf',
+            'document_filename' => 'bordero-'.$order->id.'.pdf',
         ];
     }
 }

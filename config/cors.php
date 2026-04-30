@@ -1,4 +1,5 @@
 <?php
+
 /**
  * FILE: config/cors.php
  * SCOPO: Configura le regole CORS (Cross-Origin Resource Sharing) per permettere

@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-
 use App\Http\Requests\HomepageImageUploadRequest;
 use App\Models\Setting;
 use App\Services\Security\ImageSanitizer;
@@ -11,18 +10,16 @@ use Illuminate\Http\JsonResponse;
 
 class HomepageImageController extends Controller
 {
-    public function __construct(private readonly ImageSanitizer $sanitizer)
-    {
-    }
+    public function __construct(private readonly ImageSanitizer $sanitizer) {}
 
     // Upload immagine homepage
     public function uploadHomepageImage(HomepageImageUploadRequest $request): JsonResponse
     {
         if (
-            !$request->hasFile('image') &&
-            !$request->filled('config') &&
-            !$request->has('desktop') &&
-            !$request->has('mobile')
+            ! $request->hasFile('image') &&
+            ! $request->filled('config') &&
+            ! $request->has('desktop') &&
+            ! $request->has('mobile')
         ) {
             return response()->json([
                 'success' => false,
@@ -43,14 +40,14 @@ class HomepageImageController extends Controller
                 'homepage',
                 'public'
             );
-            $currentConfig['image_url'] = '/storage/' . $path;
+            $currentConfig['image_url'] = '/storage/'.$path;
         }
 
         if ($request->filled('config')) {
             $rawConfig = $request->input('config');
             $decodedConfig = is_string($rawConfig) ? json_decode($rawConfig, true) : $rawConfig;
 
-            if (!is_array($decodedConfig)) {
+            if (! is_array($decodedConfig)) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Configurazione hero non valida.',
@@ -168,12 +165,12 @@ class HomepageImageController extends Controller
     {
         $base = $this->defaultHomepageImageConfig($fallbackImageUrl);
 
-        if (!is_string($rawConfig) || trim($rawConfig) === '') {
+        if (! is_string($rawConfig) || trim($rawConfig) === '') {
             return $base;
         }
 
         $decoded = json_decode($rawConfig, true);
-        if (!is_array($decoded)) {
+        if (! is_array($decoded)) {
             return $base;
         }
 

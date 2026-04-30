@@ -35,9 +35,9 @@ class HealthController extends Controller
     {
         $checks = [
             'database' => $this->checkDatabase(),
-            'cache'    => $this->checkCache(),
-            'stripe'   => $this->checkStripe(),
-            'brt'      => $this->checkBrt(),
+            'cache' => $this->checkCache(),
+            'stripe' => $this->checkStripe(),
+            'brt' => $this->checkBrt(),
         ];
 
         // Un check "error" su dipendenze critiche (database, cache) → 503
@@ -48,13 +48,13 @@ class HealthController extends Controller
         $allOk = collect($checks)->every(fn ($c) => $c['status'] === 'ok');
 
         $httpStatus = $criticalDown ? 503 : 200;
-        $overall    = $allOk ? 'ok' : ($criticalDown ? 'error' : 'degraded');
+        $overall = $allOk ? 'ok' : ($criticalDown ? 'error' : 'degraded');
 
         return response()->json([
-            'status'    => $overall,
+            'status' => $overall,
             'timestamp' => now()->toIso8601String(),
-            'version'   => config('app.version', 'unknown'),
-            'checks'    => $checks,
+            'version' => config('app.version', 'unknown'),
+            'checks' => $checks,
         ], $httpStatus);
     }
 
@@ -65,7 +65,7 @@ class HealthController extends Controller
     public function live(): JsonResponse
     {
         return response()->json([
-            'status'    => 'ok',
+            'status' => 'ok',
             'timestamp' => now()->toIso8601String(),
         ], 200);
     }
@@ -87,8 +87,8 @@ class HealthController extends Controller
     private function checkCache(): array
     {
         try {
-            $key   = 'health_check_' . random_int(1000, 9999);
-            $value = 'ping_' . now()->timestamp;
+            $key = 'health_check_'.random_int(1000, 9999);
+            $value = 'ping_'.now()->timestamp;
 
             Cache::put($key, $value, 5);
             $read = Cache::get($key);
@@ -135,7 +135,7 @@ class HealthController extends Controller
 
         try {
             // HEAD sull'host BRT con timeout corto — verifica raggiungibilita' rete
-            $host = parse_url($baseUrl, PHP_URL_SCHEME) . '://' . parse_url($baseUrl, PHP_URL_HOST);
+            $host = parse_url($baseUrl, PHP_URL_SCHEME).'://'.parse_url($baseUrl, PHP_URL_HOST);
 
             $response = Http::timeout(3)->connectTimeout(2)->head($host);
 

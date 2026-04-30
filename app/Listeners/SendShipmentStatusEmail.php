@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Listeners;
 
 use App\Events\ShipmentStatusChanged;
@@ -40,7 +41,7 @@ class SendShipmentStatusEmail
             'processing_in_transit', // Coperta da ShipmentLabelMail
         ];
 
-        $transitionKey = $event->oldStatus . '_' . $event->newStatus;
+        $transitionKey = $event->oldStatus.'_'.$event->newStatus;
         if (in_array($transitionKey, $excludedTransitions)) {
             return;
         }

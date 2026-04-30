@@ -20,7 +20,7 @@ class InvoicePdfServiceTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->service = new InvoicePdfService();
+        $this->service = new InvoicePdfService;
     }
 
     public function test_genera_pdf_valido_per_ordine_semplice(): void
@@ -40,7 +40,7 @@ class InvoicePdfServiceTest extends TestCase
         $pdf = $this->service->generate($order);
 
         // Numero ordine: SF-000001 (padding a 6 cifre)
-        $this->assertStringContainsString('SF-' . str_pad((string) $order->id, 6, '0', STR_PAD_LEFT), $pdf);
+        $this->assertStringContainsString('SF-'.str_pad((string) $order->id, 6, '0', STR_PAD_LEFT), $pdf);
     }
 
     public function test_pdf_calcola_scorporo_iva_22_percento(): void

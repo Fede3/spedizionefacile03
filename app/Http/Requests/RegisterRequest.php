@@ -69,7 +69,8 @@ class RegisterRequest extends FormRequest
      * Messaggi di errore personalizzati in italiano.
      * Vengono mostrati all'utente quando un campo non e' valido.
      */
-    public function messages() {
+    public function messages()
+    {
         return [
             'name.required' => 'Il nome è obbligatorio.',
             'surname.required' => 'Il cognome è obbligatorio.',

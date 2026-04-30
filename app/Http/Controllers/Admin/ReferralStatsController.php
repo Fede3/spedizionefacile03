@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-
 use App\Models\ReferralUsage;
 use Illuminate\Http\JsonResponse;
 
@@ -22,9 +21,9 @@ class ReferralStatsController extends Controller
         ];
 
         $stats = ReferralUsage::with([
-                'proUser:id,name,surname,email,referral_code',
-                'buyer:id,name,surname,email',
-            ])
+            'proUser:id,name,surname,email,referral_code',
+            'buyer:id,name,surname,email',
+        ])
             ->orderByDesc('created_at')
             ->paginate(30);
 

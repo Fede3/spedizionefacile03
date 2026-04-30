@@ -1,16 +1,17 @@
 <?php
+
 namespace App\Http\Controllers\Cart;
 
 use App\Http\Controllers\Controller;
-
-use App\Models\PackageAddress;
+use App\Http\Requests\PackageStoreRequest;
+use App\Http\Requests\UpdateCartItemQuantityRequest;
+use App\Http\Requests\UpdateCartItemRequest;
+use App\Http\Resources\PackageResource;
 use App\Models\Package;
+use App\Models\PackageAddress;
 use App\Models\Service;
 use App\Services\CartService;
 use Illuminate\Support\Facades\DB;
-use App\Http\Resources\PackageResource;
-use App\Http\Requests\PackageStoreRequest;
-use Illuminate\Http\Request;
 
 class CartItemController extends Controller
 {
@@ -88,6 +89,7 @@ class CartItemController extends Controller
                     if (! $existing->originAddress || ! $existing->destinationAddress || ! $existing->service) {
                         return false;
                     }
+
                     return $this->cartService->isDuplicate(
                         $pricedPackage,
                         $data['origin_address'] ?? [],
@@ -164,7 +166,7 @@ class CartItemController extends Controller
 
     // ── Update ───────────────────────────────────────────────────
 
-    public function update(\App\Http\Requests\UpdateCartItemRequest $request, $id)
+    public function update(UpdateCartItemRequest $request, $id)
     {
         $userId = auth()->id();
 
@@ -229,13 +231,14 @@ class CartItemController extends Controller
             }
 
             $package->load(['originAddress', 'destinationAddress', 'service']);
+
             return new PackageResource($package);
         });
     }
 
     // ── Update quantity ──────────────────────────────────────────
 
-    public function updateQuantity(\App\Http\Requests\UpdateCartItemQuantityRequest $request, $id)
+    public function updateQuantity(UpdateCartItemQuantityRequest $request, $id)
     {
         $userId = auth()->id();
 

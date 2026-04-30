@@ -1,8 +1,8 @@
 <?php
+
 namespace App\Http\Controllers\Shipping;
 
 use App\Http\Controllers\Controller;
-
 use App\Models\BrtWebhookEvent;
 use App\Services\OrderBrtTrackingLifecycleService;
 use Illuminate\Http\JsonResponse;
@@ -48,13 +48,13 @@ class BrtWebhookController extends Controller
         ]);
 
         $eventTimestamp = (string) $validated['timestamp'];
-        $isNewEvent = BrtWebhookEvent::markAsProcessed(
+        $eventFingerprint = BrtWebhookEvent::fingerprintFor(
             $validated['parcelId'],
             $validated['status'],
             $eventTimestamp,
         );
 
-        if (! $isNewEvent) {
+        if (BrtWebhookEvent::query()->where('fingerprint', $eventFingerprint)->exists()) {
             Log::info('BRT webhook: evento duplicato (dedup via fingerprint)', [
                 'parcelId' => $validated['parcelId'],
                 'status' => $validated['status'],
@@ -92,6 +92,7 @@ class BrtWebhookController extends Controller
                 'order_id' => $orderId,
                 'brt_status' => $validated['status'],
             ]);
+            BrtWebhookEvent::markAsProcessed($validated['parcelId'], $validated['status'], $eventTimestamp);
 
             return response()->json([
                 'success' => true,
@@ -104,6 +105,7 @@ class BrtWebhookController extends Controller
                 'order_id' => $orderId,
                 'status' => $result['new_status'] ?? $result['old_status'] ?? null,
             ]);
+            BrtWebhookEvent::markAsProcessed($validated['parcelId'], $validated['status'], $eventTimestamp);
 
             return response()->json([
                 'success' => true,
@@ -117,6 +119,7 @@ class BrtWebhookController extends Controller
                 'old_status' => $result['old_status'] ?? null,
                 'new_status' => $result['new_status'] ?? null,
             ]);
+            BrtWebhookEvent::markAsProcessed($validated['parcelId'], $validated['status'], $eventTimestamp);
 
             return response()->json([
                 'success' => true,
@@ -131,6 +134,7 @@ class BrtWebhookController extends Controller
                 'new_status' => $result['new_status'] ?? null,
                 'brt_status' => $validated['status'],
             ]);
+            BrtWebhookEvent::markAsProcessed($validated['parcelId'], $validated['status'], $eventTimestamp);
 
             return response()->json([
                 'success' => true,
@@ -189,7 +193,7 @@ class BrtWebhookController extends Controller
             $clientIp = $request->ip();
 
             if (! in_array($clientIp, $ips, true)) {
-                return 'IP ' . $clientIp . ' non autorizzato.';
+                return 'IP '.$clientIp.' non autorizzato.';
             }
 
             return null;
@@ -199,11 +203,13 @@ class BrtWebhookController extends Controller
         // Evita che webhook non firmati vengano accettati.
         if (app()->isProduction()) {
             Log::error('BRT webhook RIFIUTATO: nessuna protezione configurata. Configurare BRT_WEBHOOK_SECRET o BRT_WEBHOOK_ALLOWED_IPS.');
+
             return 'Webhook non autenticato: nessun secret HMAC né IP whitelist configurato.';
         }
 
         // In dev/staging: log warning ma accetta (utile per testing locale).
-        Log::warning('BRT webhook: nessuna protezione configurata (env=' . app()->environment() . '). In produzione verrà rifiutato.');
+        Log::warning('BRT webhook: nessuna protezione configurata (env='.app()->environment().'). In produzione verrà rifiutato.');
+
         return null;
     }
 }

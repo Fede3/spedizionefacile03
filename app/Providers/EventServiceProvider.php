@@ -2,6 +2,20 @@
 
 namespace App\Providers;
 
+use App\Events\OrderCreated;
+use App\Events\OrderPaid;
+use App\Events\OrderPaymentFailed;
+use App\Events\ReferralApplied;
+use App\Events\ShipmentStatusChanged;
+use App\Listeners\CartEmpty;
+use App\Listeners\DispatchReferralNotifications;
+use App\Listeners\GenerateBrtLabel;
+use App\Listeners\LogAuthenticationEvents;
+use App\Listeners\MarkOrderPaymentFailed;
+use App\Listeners\MarkOrderProcessing;
+use App\Listeners\RegisterPaidOrderDiscountAccounting;
+use App\Listeners\SendOrderConfirmation;
+use App\Listeners\SendShipmentStatusEmail;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
 
 class EventServiceProvider extends ServiceProvider
@@ -23,27 +37,27 @@ class EventServiceProvider extends ServiceProvider
     } */
 
     protected $listen = [
-        \App\Events\OrderPaid::class => [
-            \App\Listeners\MarkOrderProcessing::class,
-            \App\Listeners\RegisterPaidOrderDiscountAccounting::class,
-            \App\Listeners\GenerateBrtLabel::class,
-            \App\Listeners\SendOrderConfirmation::class,
+        OrderPaid::class => [
+            MarkOrderProcessing::class,
+            RegisterPaidOrderDiscountAccounting::class,
+            GenerateBrtLabel::class,
+            SendOrderConfirmation::class,
         ],
 
-        \App\Events\OrderCreated::class => [
-            \App\Listeners\CartEmpty::class,
+        OrderCreated::class => [
+            CartEmpty::class,
         ],
 
-        \App\Events\ShipmentStatusChanged::class => [
-            \App\Listeners\SendShipmentStatusEmail::class,
+        ShipmentStatusChanged::class => [
+            SendShipmentStatusEmail::class,
         ],
 
-        \App\Events\OrderPaymentFailed::class => [
-            \App\Listeners\MarkOrderPaymentFailed::class,
+        OrderPaymentFailed::class => [
+            MarkOrderPaymentFailed::class,
         ],
 
-        \App\Events\ReferralApplied::class => [
-            \App\Listeners\DispatchReferralNotifications::class,
+        ReferralApplied::class => [
+            DispatchReferralNotifications::class,
         ],
     ];
 
@@ -52,7 +66,7 @@ class EventServiceProvider extends ServiceProvider
      * un solo posto. Vedi LogAuthenticationEvents::subscribe().
      */
     protected $subscribe = [
-        \App\Listeners\LogAuthenticationEvents::class,
+        LogAuthenticationEvents::class,
     ];
 
     public function shouldDiscoverEvents(): bool

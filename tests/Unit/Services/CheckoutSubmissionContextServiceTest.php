@@ -16,7 +16,7 @@ class CheckoutSubmissionContextServiceTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->service = new CheckoutSubmissionContextService();
+        $this->service = new CheckoutSubmissionContextService;
     }
 
     public function test_from_request_array_estrae_client_submission_id_quando_presente(): void

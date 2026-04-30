@@ -28,13 +28,14 @@ use Illuminate\Support\Facades\DB;
 class SendAbandonedCartEmails extends Command
 {
     protected $signature = 'carts:send-abandoned-reminders {--dry-run : Lista soltanto, non invia}';
+
     protected $description = 'Invia email di reminder agli utenti con carrello abbandonato (F15).';
 
     public function handle(): int
     {
-        $now    = Carbon::now();
-        $lower  = $now->copy()->subDays(7);     // limite inferiore: non piu' vecchio di 7g
-        $upper  = $now->copy()->subHours(24);   // limite superiore: almeno 24h fa
+        $now = Carbon::now();
+        $lower = $now->copy()->subDays(7);     // limite inferiore: non piu' vecchio di 7g
+        $upper = $now->copy()->subHours(24);   // limite superiore: almeno 24h fa
 
         $dryRun = (bool) $this->option('dry-run');
 
@@ -51,6 +52,7 @@ class SendAbandonedCartEmails extends Command
 
         if ($rows->isEmpty()) {
             $this->info('Nessun carrello abbandonato da notificare.');
+
             return self::SUCCESS;
         }
 
@@ -67,12 +69,13 @@ class SendAbandonedCartEmails extends Command
 
             if ($hasOrderAfter) {
                 $skipped++;
+
                 continue;
             }
 
             $resumeToken = hash_hmac(
                 'sha256',
-                (string) $row->user_id . '|' . (string) $row->cart_started_at,
+                (string) $row->user_id.'|'.(string) $row->cart_started_at,
                 (string) config('app.key')
             );
 
@@ -81,9 +84,10 @@ class SendAbandonedCartEmails extends Command
                     '[DRY-RUN] user_id=%d items=%d token=%s',
                     $row->user_id,
                     $row->item_count,
-                    substr($resumeToken, 0, 12) . '...'
+                    substr($resumeToken, 0, 12).'...'
                 ));
                 $sent++;
+
                 continue;
             }
 

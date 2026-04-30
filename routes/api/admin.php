@@ -8,21 +8,21 @@
  * richieste pro, articoli, fasce prezzo, promozioni, coupon, contenuti.
  */
 
-use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Catalog\ArticleController;
-use App\Http\Controllers\Catalog\PriceBandController;
 use App\Http\Controllers\Account\ProRequestController;
-use App\Http\Controllers\Admin\ContentController as AdminContentController;
-use App\Http\Controllers\Admin\HomepageImageController;
-use App\Http\Controllers\Admin\CouponController as AdminCouponController;
-use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\AdminBankTransferController;
 use App\Http\Controllers\Admin\AuditLogController as AdminAuditLogController;
+use App\Http\Controllers\Admin\ContentController as AdminContentController;
+use App\Http\Controllers\Admin\CouponController as AdminCouponController;
+use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
+use App\Http\Controllers\Admin\HomepageImageController;
 use App\Http\Controllers\Admin\OrderManagementController;
 use App\Http\Controllers\Admin\ReferralStatsController;
 use App\Http\Controllers\Admin\UserManagementController;
 use App\Http\Controllers\Admin\WalletManagementController;
+use App\Http\Controllers\Catalog\ArticleController;
+use App\Http\Controllers\Catalog\PriceBandController;
 use App\Http\Middleware\CheckAdmin;
+use Illuminate\Support\Facades\Route;
 
 Route::middleware(['auth:sanctum', CheckAdmin::class])->prefix('admin')->group(function () {
 

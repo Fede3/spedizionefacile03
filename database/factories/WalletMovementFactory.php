@@ -2,14 +2,16 @@
 
 namespace Database\Factories;
 
+use App\Models\User;
+use App\Models\WalletMovement;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\WalletMovement>
+ * @extends Factory<WalletMovement>
  */
 class WalletMovementFactory extends Factory
 {
-    protected $model = \App\Models\WalletMovement::class;
+    protected $model = WalletMovement::class;
 
     /**
      * Define the model's default state.
@@ -19,7 +21,7 @@ class WalletMovementFactory extends Factory
     public function definition(): array
     {
         return [
-            'user_id' => \App\Models\User::factory(),
+            'user_id' => User::factory(),
             'type' => 'credit',
             'amount' => fake()->randomFloat(2, 5, 500),
             'currency' => 'EUR',

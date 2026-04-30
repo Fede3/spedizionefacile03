@@ -1,14 +1,14 @@
 <?php
+
 namespace App\Http\Controllers\Catalog;
 
 use App\Http\Controllers\Controller;
-
 use App\Models\Location;
 use App\Services\Catalog\PhotonLocationFallback;
-use Illuminate\Http\Request;
 use App\Utils\CustomResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Session;
-use App\Http\Resources\LocationResource;
 use Symfony\Component\HttpFoundation\Response;
 
 class LocationController extends Controller
@@ -46,6 +46,7 @@ class LocationController extends Controller
     private function normalizeCountryFilter(Request $request): ?string
     {
         $countryCode = strtoupper(trim((string) $request->input('country', '')));
+
         return strlen($countryCode) === 2 ? $countryCode : null;
     }
 
@@ -66,7 +67,8 @@ class LocationController extends Controller
 
     // Salva la citta' selezionata dall'utente nella sessione
     // La "sessione" e' una memoria temporanea che dura finche' l'utente naviga sul sito
-    public function postLocation(Request $request) {
+    public function postLocation(Request $request)
+    {
 
         Session::put('city', $request->city);
 
@@ -75,7 +77,8 @@ class LocationController extends Controller
 
     // Recupera i dati della citta' salvata in sessione
     // Cerca nel database il CAP, il nome della citta' e la provincia corrispondenti
-    public function getLocations() {
+    public function getLocations()
+    {
 
         $city = Session::get('city');
 
@@ -206,7 +209,9 @@ class LocationController extends Controller
                 $bestDistance = PHP_INT_MAX;
                 foreach (self::CITY_ALIASES_IT as $italianName => $originalName) {
                     $lenDiff = abs(mb_strlen($italianName) - mb_strlen($queryNormalized));
-                    if ($lenDiff > 2) continue;
+                    if ($lenDiff > 2) {
+                        continue;
+                    }
                     $distance = levenshtein($queryNormalized, $italianName);
                     // Max 2 errori di digitazione, preferisce match con distanza minore
                     if ($distance <= 2 && $distance < $bestDistance) {
@@ -223,7 +228,7 @@ class LocationController extends Controller
         // Ricerca CAP: prefisso numerico (es. 001 -> 00100, 00118, ...)
         if (preg_match('/^\d+$/', $query)) {
             $results = $this->applyCountryFilter(
-                Location::where('postal_code', 'LIKE', $query . '%'),
+                Location::where('postal_code', 'LIKE', $query.'%'),
                 $countryCode
             )
                 ->select('postal_code', 'place_name', 'province', 'country_code')
@@ -242,18 +247,18 @@ class LocationController extends Controller
             ->select('postal_code', 'place_name', 'province', 'country_code')
             ->where(function ($q) use ($queryLower) {
                 $q->whereRaw('LOWER(place_name) = ?', [$queryLower])
-                    ->orWhereRaw('LOWER(place_name) LIKE ?', [$queryLower . ' %'])
-                    ->orWhereRaw('LOWER(place_name) LIKE ?', ['% ' . $queryLower . ' %'])
-                    ->orWhereRaw('LOWER(place_name) LIKE ?', [$queryLower . '%']);
+                    ->orWhereRaw('LOWER(place_name) LIKE ?', [$queryLower.' %'])
+                    ->orWhereRaw('LOWER(place_name) LIKE ?', ['% '.$queryLower.' %'])
+                    ->orWhereRaw('LOWER(place_name) LIKE ?', [$queryLower.'%']);
             })
             ->orderByRaw(
-                "CASE
+                'CASE
                     WHEN LOWER(place_name) = ? THEN 0
                     WHEN LOWER(place_name) LIKE ? THEN 1
                     WHEN LOWER(place_name) LIKE ? THEN 2
                     ELSE 3
-                END",
-                [$queryLower, $queryLower . ' %', $queryLower . '%']
+                END',
+                [$queryLower, $queryLower.' %', $queryLower.'%']
             )
             ->orderBy('place_name')
             ->orderBy('postal_code')
@@ -265,7 +270,7 @@ class LocationController extends Controller
         // Esempi d'uso: Grecia (non nel DB), Irlanda, Norvegia, citta' minori.
         if ($results->isEmpty()) {
             $fallback = app(PhotonLocationFallback::class)->search($query, $countryCode);
-            if (!empty($fallback)) {
+            if (! empty($fallback)) {
                 return response()->json($this->withCountryMetadata(collect($fallback)));
             }
         }
@@ -330,7 +335,7 @@ class LocationController extends Controller
 
         $prefix = $this->applyCountryFilter(Location::query(), $countryCode)
             ->select('postal_code', 'place_name', 'province', 'country_code')
-            ->whereRaw('LOWER(place_name) LIKE ?', [$cityLower . '%'])
+            ->whereRaw('LOWER(place_name) LIKE ?', [$cityLower.'%'])
             ->distinct()
             ->orderBy('place_name')
             ->orderBy('postal_code')
@@ -342,11 +347,11 @@ class LocationController extends Controller
 
     private function withCountryMetadata($results)
     {
-        if ($results instanceof \Illuminate\Support\Collection) {
+        if ($results instanceof Collection) {
             return $results->map(fn ($location) => $this->withCountryMetadata($location))->values();
         }
 
-        if (!$results) {
+        if (! $results) {
             return $results;
         }
 

@@ -59,7 +59,7 @@ class UpdateUserRequest extends FormRequest
     {
         return [
             'email.email' => "L'email non è valida.",
-            'email.unique' => "Questa email è già usata da un altro account.",
+            'email.unique' => 'Questa email è già usata da un altro account.',
             'password.min' => 'La password deve essere lunga almeno 8 caratteri.',
             'password.confirmed' => 'Le due password non corrispondono.',
             'password.regex' => 'La password deve contenere maiuscola, minuscola, numero e simbolo.',

@@ -1,17 +1,19 @@
 <?php
+
 namespace App\Http\Controllers\Catalog;
 
 use App\Http\Controllers\Controller;
-
-use App\Models\PriceBand;
+use App\Http\Requests\PromoImageUploadRequest;
+use App\Http\Requests\SavePromoSettingsRequest;
 use App\Models\Setting;
 use App\Services\EuropePriceEngineService;
 use App\Services\PriceEngineService;
+use App\Services\Security\ImageSanitizer;
 use App\Services\ShipmentServicePricingService;
+use Database\Seeders\PriceBandSeeder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 
 class PriceBandController extends Controller
@@ -20,9 +22,7 @@ class PriceBandController extends Controller
         private readonly PriceEngineService $priceEngine,
         private readonly EuropePriceEngineService $europePriceEngine,
         private readonly ShipmentServicePricingService $shipmentServicePricing,
-    )
-    {
-    }
+    ) {}
 
     // Lista tutte le bande raggruppate per tipo
     public function index(): JsonResponse
@@ -47,11 +47,14 @@ class PriceBandController extends Controller
     // Inizializza le fasce di prezzo con i valori di default (seeder via API)
     public function seed(): JsonResponse
     {
-        $seeder = new \Database\Seeders\PriceBandSeeder();
+        $seeder = new PriceBandSeeder;
         $seeder->run();
         $this->priceEngine->clearPricingSettings();
 
-        try { Cache::forget('public_price_bands'); } catch (\Exception $e) { /* best-effort: cache flush non deve far fallire la richiesta */ }
+        try {
+            Cache::forget('public_price_bands');
+        } catch (\Exception $e) { /* best-effort: cache flush non deve far fallire la richiesta */
+        }
 
         return response()->json([
             'success' => true,
@@ -66,7 +69,7 @@ class PriceBandController extends Controller
             $payload = [];
 
             // Compatibilità legacy: body con array "bands" basato su ID DB
-            if ($request->has('bands') && !$request->has('weight') && !$request->has('volume')) {
+            if ($request->has('bands') && ! $request->has('weight') && ! $request->has('volume')) {
                 $legacy = $request->validate([
                     'bands' => 'required|array|min:1',
                     'bands.*.id' => 'required',
@@ -90,6 +93,7 @@ class PriceBandController extends Controller
                             $band['show_discount'] = (bool) $map[$id]['show_discount'];
                         }
                     }
+
                     return $band;
                 })->values()->all();
 
@@ -102,6 +106,7 @@ class PriceBandController extends Controller
                             $band['show_discount'] = (bool) $map[$id]['show_discount'];
                         }
                     }
+
                     return $band;
                 })->values()->all();
 
@@ -182,7 +187,10 @@ class PriceBandController extends Controller
         }
 
         // Invalida la cache pubblica: i nuovi prezzi sono visibili subito
-        try { Cache::forget('public_price_bands'); } catch (\Exception $e) { /* best-effort: cache flush non deve far fallire la richiesta */ }
+        try {
+            Cache::forget('public_price_bands');
+        } catch (\Exception $e) { /* best-effort: cache flush non deve far fallire la richiesta */
+        }
 
         return response()->json([
             'success' => true,
@@ -218,7 +226,7 @@ class PriceBandController extends Controller
     }
 
     // Salva le impostazioni promozionali
-    public function savePromoSettings(\App\Http\Requests\SavePromoSettingsRequest $request): JsonResponse
+    public function savePromoSettings(SavePromoSettingsRequest $request): JsonResponse
     {
         $data = $request->validated();
 
@@ -230,7 +238,10 @@ class PriceBandController extends Controller
         Setting::set('promo_description', $data['promo_description'] ?? '');
 
         // Invalida cache pubblica per mostrare subito le modifiche promo
-        try { Cache::forget('public_price_bands'); } catch (\Exception $e) { /* best-effort: cache flush non deve far fallire la richiesta */ }
+        try {
+            Cache::forget('public_price_bands');
+        } catch (\Exception $e) { /* best-effort: cache flush non deve far fallire la richiesta */
+        }
 
         return response()->json([
             'success' => true,
@@ -240,21 +251,24 @@ class PriceBandController extends Controller
 
     // Upload immagine promozionale.
     // Sprint 6.7 security hardening: PromoImageUploadRequest + ImageSanitizer.
-    public function uploadPromoImage(\App\Http\Requests\PromoImageUploadRequest $request, \App\Services\Security\ImageSanitizer $sanitizer): JsonResponse
+    public function uploadPromoImage(PromoImageUploadRequest $request, ImageSanitizer $sanitizer): JsonResponse
     {
         $path = $sanitizer->sanitizeAndStore(
             $request->file('image'),
             'promo',
             'public'
         );
-        Setting::set('promo_label_image', '/storage/' . $path);
+        Setting::set('promo_label_image', '/storage/'.$path);
 
         // Invalida cache pubblica
-        try { Cache::forget('public_price_bands'); } catch (\Exception $e) { /* best-effort: cache flush non deve far fallire la richiesta */ }
+        try {
+            Cache::forget('public_price_bands');
+        } catch (\Exception $e) { /* best-effort: cache flush non deve far fallire la richiesta */
+        }
 
         return response()->json([
             'success' => true,
-            'image_url' => '/storage/' . $path,
+            'image_url' => '/storage/'.$path,
         ]);
     }
 }
