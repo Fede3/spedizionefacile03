@@ -115,3 +115,12 @@ export interface PriceBandsState {
 	operational_fees: PricingRuleGroup
 	version: string | number | null
 }
+
+// Alias retrocompat (caller storici).
+export type LadderRow = IncrementLadderRow
+export type EuropePricingBand = EuropeBand
+export type EuropePricingRate = EuropeRate
+export interface PricingRuleTier {
+	up_to_kg: number | null
+	price_cents: number
+}
