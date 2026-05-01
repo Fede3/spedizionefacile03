@@ -5,7 +5,6 @@
  * NOTA: zero dipendenze Vue/Pinia/Nuxt. Pure functions testabili in isolamento.
  */
 
-
 const SENTINEL_VALUES = new Set(['n/d', 'nd', '-', '—', 'null', 'undefined']);
 
 /**

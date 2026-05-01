@@ -1,5 +1,5 @@
 <script setup>
-// Funnel master route shell (Ondata 6 split): contiene SOLO route metadata
+
 // (definePageMeta + useSeoMeta) + render <ShipmentFlowPage />.
 // L'orchestratore (14 composable, 65 computed, 22 handler, template 4 step)
 // vive in components/shipment/ShipmentFlowPage.vue.

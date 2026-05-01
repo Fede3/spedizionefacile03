@@ -1,7 +1,6 @@
 /**
  * promosStore — settings promozione globale (badge, etichetta, immagine).
  *
- * Estratto dalla sezione "promo" di composables/useAdminPricing.js
  * (split atomico Pinia 2026-04-26). Endpoint dedicati:
  *   - GET  /api/admin/promo-settings
  *   - POST /api/admin/promo-settings

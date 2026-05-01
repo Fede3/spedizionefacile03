@@ -30,7 +30,6 @@ import type { EuropePricing, ExtraRules, PriceBand, PricingRuleGroup, Supplement
 
 // Normalizzatori puri estratti in `~/utils/adminPricingNormalize.js`.
 
-
 // Sezioni Form/Import/List estratte in file dedicati.
 import { createFormSection } from '~/composables/useAdminPricingForm';
 import { createImportSection } from '~/composables/useAdminPricingImport';

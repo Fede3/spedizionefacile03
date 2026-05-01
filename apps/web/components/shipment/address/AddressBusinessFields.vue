@@ -2,7 +2,6 @@
 /**
  * AddressBusinessFields — sotto-fieldset "Dati azienda" del form indirizzi.
  *
- * Estratto da AddressFormFields.vue (Ondata 6b split markup-only).
  * Mostrato solo quando showBusinessFields=true (utenti business B2B).
  * Markup identico al pixel: 4 input (ragione sociale, P.IVA, SDI, PEC).
  */

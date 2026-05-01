@@ -1,8 +1,7 @@
 <script setup>
 // ShipmentFlowPage — orchestratore template + computed del funnel.
-// Estratto da pages/la-tua-spedizione/[step].vue (Ondata 6 split chirurgico).
+
 // Lo shell di route mantiene SOLO definePageMeta + useSeoMeta + render.
-//
 // Composto da:
 //   - 14 composable (services, addresses, validation, flow, summary, ...)
 //   - 65+ computed di summary derivati da cart/session/store
@@ -23,7 +22,6 @@ import {
 	normalizeExistingOrderAddress,
 } from '~/utils/shipmentStepHelpers';
 // resolveApiError ora usato solo dentro useShipmentVentaglioActions.
-
 
 const debugCheckpoint = (label) => {
 	if (!import.meta.client) return;
@@ -734,7 +732,7 @@ debugCheckpoint('step submit ready');
 
 // --- PROVIDE: funzioni form/validazione iniettate nei componenti figli ---
 // Evita prop drilling di 19+ funzioni attraverso StepAddressSection -> AddressFormFields.
-// InjectionKey tipato (Ondata 6 — sostituisce string-key per dare type-safety
+
 // ai 4 consumer: AddressFormFields, AddressFieldFeedback, StepAddressSection).
 provide(shipmentFormHandlersKey, {
 	fieldClass,

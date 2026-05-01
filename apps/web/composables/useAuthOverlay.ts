@@ -36,7 +36,6 @@ const getApiStatus = (error: unknown) => {
 
 /**
  * @file useAuthOverlay — composable di orchestrazione per AuthOverlayModal.vue.
- * Estratto da composables/useAuth.js. Gestisce login, register, social, verifica email.
  */
 
 // Usato da AuthOverlayModal.vue per mantenere il componente snello.

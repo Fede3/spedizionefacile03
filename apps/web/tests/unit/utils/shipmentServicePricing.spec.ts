@@ -147,7 +147,7 @@ describe('normalizeSelectedServices', () => {
 
 // ─────────────────────────────────────────────────────────────────────
 // CALCULATE SHIPMENT SERVICE SURCHARGE — fixture-based parity tests
-// (snapshot del comportamento ATTUALE — Ondata 2 plan refactor)
+
 // Parity: tests/Feature/Pricing/PriceEngineTest.php (backend Laravel)
 // ─────────────────────────────────────────────────────────────────────
 

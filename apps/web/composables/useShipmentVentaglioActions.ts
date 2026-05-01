@@ -9,7 +9,6 @@
  * persistAndContinueToCart), poi invia il payload al cart endpoint giusto
  * (auth = /api/cart, guest = /api/guest-cart).
  *
- * Estratto da pages/la-tua-spedizione/[step].vue per ridurre LOC del page hub
  * e isolare la logica del flusso ventaglio.
  */
 import type { Ref } from 'vue';
@@ -33,7 +32,7 @@ type VentaglioDeps = {
 
 export const useShipmentVentaglioActions = (deps: VentaglioDeps) => {
 	const isAddingToCart = ref(false);
-	// ARCHIVIATA: feature spedizioni-configurate rimossa 2026-04-20.
+
 	// Lo stato resta esposto solo per retro-compat del template.
 	const isSavingConfigured = ref(false);
 

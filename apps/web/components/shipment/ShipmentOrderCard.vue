@@ -20,13 +20,12 @@ defineProps({
 	getRecipientName: { type: Function, required: true },
 	isPendingPayment: { type: Function, required: true },
 	getPendingReason: { type: Function, required: true },
-	// -- ARCHIVIATO 2026-04-20: prop legati a "Salva configurata" (_archive/frontend-simplification-2026-04-20/features/spedizioni-configurate) --
+
 	// isAlreadySaved: { type: Function, required: true },
 	// savingToConfigured: { type: Object, default: () => ({}) },
 	saveError: { type: Object, default: () => ({}) },
 });
 
-// -- ARCHIVIATO 2026-04-20: emit saveToConfigured (_archive/frontend-simplification-2026-04-20/features/spedizioni-configurate) --
 // const emit = defineEmits(['saveToConfigured']);
 </script>
 

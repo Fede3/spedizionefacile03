@@ -1,23 +1,18 @@
 // composables/usePayment.js
 // Boundary frontend del pagamento checkout.
-//
 // Possiede:
 // - scelta metodo pagamento
 // - bootstrap auth/Stripe
 // - creazione o recupero ordine pagabile
 // - submit finale carta / bonifico / wallet
-//
 // Non possiede:
 // - il calcolo canonico del totale ordine backend (useCart espone un totale preview UI)
 // - la logica di funnel e validazione cross-step (vive in useShipmentStepPageOrchestration)
-//
 // Nota importante:
 // il pagamento wallet oggi e' un flusso in 2 step backend:
 // 1. /api/wallet/pay
 // 2. /api/stripe/mark-order-completed
-//
 // L'obiettivo di semplificazione futuro e' rendere questo boundary piu' lineare senza perdere idempotenza.
-//
 // Boundary critico Stripe + 3DS + idempotency-key. Pure helpers gia' estratti
 // in utils/checkout + utils/pendingPayment. Lo split del composable in
 // sub-composable per flusso (carta/wallet/bonifico) richiede E2E carta test
@@ -374,7 +369,7 @@ export function usePayment(cart: CartLike) {
 
   // ---------- CARTA (+ 3DS automatico) ----------
   // Flusso Stripe carta estratto in composables/payment/usePaymentStripe.ts
-  // (Ondata 5 split). Gestisce carta nuova/salvata + 3DS challenge.
+
   // Lifecycle Stripe SDK (initStripe) resta nell'orchestratore per lazy mount.
   const { payWithCard } = usePaymentStripe({
     stripe,
@@ -421,7 +416,7 @@ export function usePayment(cart: CartLike) {
 
   // ---------- WALLET ----------
   // Flusso wallet estratto in composables/payment/usePaymentWallet.ts
-  // (Ondata 5 split). 65% isolato: 2 API chained, no Stripe SDK.
+
   const { payWithWallet } = usePaymentWallet({
     cart,
     paymentStep,
@@ -435,7 +430,7 @@ export function usePayment(cart: CartLike) {
 
   // ---------- BONIFICO ----------
   // Flusso bonifico estratto in composables/payment/usePaymentBonifico.ts
-  // (Ondata 3 split). 100% isolato: no Stripe SDK, no card state.
+
   const { payWithBonifico } = usePaymentBonifico({
     cart,
     paymentStep,
@@ -464,7 +459,6 @@ export function usePayment(cart: CartLike) {
     // Pagamento riuscito: rimuovi il draft di recovery dal localStorage.
     clearPendingPayment()
 
-    // GA4 archiviato — purchase event non più inviato a gtag.
     // Plausible riceve `payment_success` via useFunnelAnalytics.
 
     try {
@@ -487,7 +481,7 @@ export function usePayment(cart: CartLike) {
    * Per tracking begin_checkout usare Plausible via useFunnelAnalytics.
    */
   function trackBeginCheckout() {
-    // GA4 archiviato — begin_checkout non più inviato a gtag.
+
   }
 
   // ---------- APPLE/GOOGLE PAY (ARCHIVIATO 2026-04-20) ----------

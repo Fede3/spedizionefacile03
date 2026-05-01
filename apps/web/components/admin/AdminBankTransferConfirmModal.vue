@@ -2,7 +2,6 @@
 /**
  * AdminBankTransferConfirmModal — modal conferma ricezione bonifico admin.
  *
- * Estratto da pages/account/amministrazione/bonifici.vue (era Teleport inline).
  * P5/P9 design system: meno modali ad-hoc, più componenti riutilizzabili.
  */
 const props = defineProps({

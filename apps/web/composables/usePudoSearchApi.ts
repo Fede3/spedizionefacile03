@@ -90,7 +90,6 @@ export function usePudoSearchApi(props: PudoSearchProps = {}, emit: PudoEmit = (
 		return await $fetch<T>(url, { method: 'GET', credentials: 'include', timeout: 15000 })
 	}
 
-
 	// ── Search state ──
 	const searchAddress = ref('')
 	const searchCity = ref(props.initialCity || '')
@@ -115,7 +114,6 @@ export function usePudoSearchApi(props: PudoSearchProps = {}, emit: PudoEmit = (
 	// ── Watchers for props ──
 	watch(() => props.initialCity, (v) => { if (v && !searchCity.value) searchCity.value = v })
 	watch(() => props.initialZip, (v) => { if (v && !searchZip.value) searchZip.value = v })
-
 
 	// ── Computed ──
 	const hasSearchInput = computed(() => Boolean(searchCity.value?.trim() || searchZip.value?.trim()))

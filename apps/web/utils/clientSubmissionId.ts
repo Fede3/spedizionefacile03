@@ -5,7 +5,6 @@
  * doppi-submit (utente impaziente, retry rete, doppio click). Generato lato
  * client come stringa breve `sub-<base36-timestamp>-<random>`.
  *
- * Estratto da utils/shipment.ts (Ondata 5 split god file).
  */
 export type SubmissionSource = { client_submission_id?: unknown };
 export type NestedSubmissionSource = SubmissionSource & {

@@ -25,7 +25,6 @@ const getApiErrorMessage = (error: unknown): string => {
 /**
  * useShipmentStepSessionPersistence — persistenza intermedia step funnel (ex composable separato).
  *
- * Inviato come parte di useShipmentStepSubmit (Ondata 4 fusione composable).
  * Salva lo stato corrente del flow in /api/session/second-step e refreshes la session.
  */
 export const useShipmentStepSessionPersistence = ({

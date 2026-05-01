@@ -1,7 +1,6 @@
 /**
  * supplementsStore — supplementi CAP + supplementi automatici + fee operative.
  *
- * Estratto dalla sezione "supplementi" di composables/useAdminPricing.js
  * (split atomico Pinia 2026-04-26). Comprende:
  *   - state delle 3 categorie (cap-based, automatici, operativi) + snapshot originali
  *   - CRUD dei supplementi CAP base

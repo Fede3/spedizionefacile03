@@ -245,7 +245,6 @@ onMounted(() => {
 				</template>
 			</AccountPageHeader>
 
-			<!-- Wallet hero card compatto (P13: rimosso dot-pattern + 2 radial-gradient = rumore visivo). -->
 			<div
 class="rounded-[16px] px-[20px] py-[18px] mb-[20px] sf-animate-in sf-animate-in-1 tablet:px-[24px] tablet:py-[20px]"
 				style="background: linear-gradient(135deg, #F3FAFB 0%, #E6F2F4 100%); border: 1px solid rgba(9, 88, 102, 0.12);">
@@ -279,7 +278,7 @@ to="/account/carte"
 								<svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
 								Carte
 							</NuxtLink>
-							<!-- -- ARCHIVIATO 2026-04-20: CTA Prelievi (_archive/frontend-simplification-2026-04-20/features/prelievi-dedicati) -- -->
+
 						</div>
 					</div>
 				</div>

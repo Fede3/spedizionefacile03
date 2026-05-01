@@ -1,6 +1,5 @@
 /**
  * @file useCarrello — composable pagina /carrello.
- * Estratto da useCart.js. Logica filtri, raggruppamento, coupon UI.
  * Distinto da useCart (checkout) perche' la pagina ha contesto e API diverse.
  */
 import { computed, onMounted, ref, watch, type Ref } from 'vue';

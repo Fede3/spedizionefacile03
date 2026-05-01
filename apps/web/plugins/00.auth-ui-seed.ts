@@ -6,7 +6,6 @@ import {
 	parseStoredSnapshot,
 } from '~/utils/auth'
 
-
 export default defineNuxtPlugin(() => {
 	const authCookie = useCookie<AuthUiSnapshot | string>(AUTH_UI_COOKIE, {
 		sameSite: 'lax',

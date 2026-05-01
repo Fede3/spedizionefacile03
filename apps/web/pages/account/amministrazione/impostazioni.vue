@@ -139,7 +139,6 @@ onMounted(() => {
 						</p>
 					</div>
 
-					<!-- P14: explainer "Prima di salvare" rimosso (era matryoshka). -->
 					<p class="mb-[14px] text-[0.75rem] text-[var(--color-brand-text-muted)] leading-[1.5]">
 						Queste credenziali impattano creazione spedizioni, tracking ed etichette.
 					</p>

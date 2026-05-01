@@ -1,7 +1,6 @@
 /**
  * API pubblica del modulo pricing: calculateShipmentServiceSurcharge.
  *
- * Estratto da utils/shipmentServicePricing.ts (Ondata 3 split). Compone
  * normalize + matchers per produrre il SurchargeResult per una spedizione.
  */
 import {

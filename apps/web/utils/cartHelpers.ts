@@ -1,7 +1,6 @@
 /**
  * cartHelpers — funzioni pure di supporto al cart/checkout.
  *
- * Estratto da composables/useCart.js (split atomico Pinia 2026-04-26).
  * Tutte le funzioni qui dentro sono prive di stato e SSR-safe.
  *
  *

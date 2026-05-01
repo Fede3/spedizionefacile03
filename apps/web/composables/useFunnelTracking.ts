@@ -1,7 +1,6 @@
 /**
  * useFunnelTracking — analytics funnel SpediamoFacile (Plausible).
  *
- * Estratto da useFunnel.ts (Ondata 5 split god file). Ex `useFunnelAnalytics`.
  *
  * Privacy: MAI trackare PII (email, nome, indirizzi, phone, CF/VAT, stripe_account_id).
  * Importi in cents (integer), mai EUR decimali. order_id ok (riferimento tecnico).

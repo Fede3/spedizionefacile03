@@ -1,6 +1,5 @@
 /**
  * @file useQuoteResults — sezione risultati del preventivo rapido.
- * Estratto da useQuote.js. Computed presentazione, navigazione step successivo,
  * watchers per auto-quote, label location formattate.
  */
 

@@ -59,7 +59,7 @@ const faqs = [
 	},
 ];
 // Accordion multi-aperto: cliccando una FAQ non chiude le altre.
-// Prima era singolo (un solo indice), ma gli utenti si lamentavano
+
 // che le risposte precedenti "sparivano".
 const openFaqIndexes = ref([]);
 function isFaqOpen(i) {

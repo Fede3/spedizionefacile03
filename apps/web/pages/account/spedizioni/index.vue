@@ -139,7 +139,7 @@ const {
 							<path d="M5 12h14"/><path d="m13 5 7 7-7 7"/>
 						</svg>
 					</NuxtLink>
-					<!-- -- ARCHIVIATO 2026-04-20: CTA "Vedi modelli salvati" -> /account/spedizioni-configurate (_archive/frontend-simplification-2026-04-20/features/spedizioni-configurate) -- -->
+
 				</div>
 			</div>
 		</div>

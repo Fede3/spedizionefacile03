@@ -324,7 +324,7 @@ export const canAccessShipmentFlowRoute = (routeLike: RouteLike, flowState?: Par
         return Boolean(flowState?.quote_ready);
     if (stage === 'addresses')
         return Boolean(flowState?.services_ready);
-    // stage === 'summary' e' un alias storico di 'payment' (unificati in Sprint 2.1).
+
     if (stage === 'summary' || stage === 'payment')
         return Boolean(flowState?.addresses_ready);
     return true;
@@ -484,7 +484,6 @@ export const trimUserStoreToFlowState = (shipmentFlowStore: TrimmableUserStore |
     shipmentFlowStore.stepNumber = getShipmentFlowStepNumber(flowState);
 };
 
-// SEZIONE 2 (clientSubmissionId) estratta in utils/clientSubmissionId.ts (Ondata 5).
 // Niente re-export: Nuxt auto-importa direttamente dal file dedicato — evita
 // warning "duplicate auto-import" per createClientSubmissionId / readClientSubmissionId
 // / readNestedClientSubmissionId / ensureClientSubmissionId.

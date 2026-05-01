@@ -53,7 +53,7 @@ const linkColumns = [
 		links: [
 			{ label: 'FAQ', to: '/faq' },
 			{ label: 'Traccia spedizione', to: '/traccia' },
-			// -- ARCHIVIATO 2026-04-20: Reclami (_archive/frontend-simplification-2026-04-20/features/reclami-dedicato) --
+
 			// { label: 'Reclami', to: '/reclami' },
 			{ label: 'Guide', to: '/guide' },
 			{ label: 'Centro assistenza', to: '/account/assistenza' },

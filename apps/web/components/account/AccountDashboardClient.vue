@@ -7,7 +7,7 @@ defineProps({
 	highlightedCustomerOrders: { type: Array, default: () => [] },
 	recentCompletedCustomerOrders: { type: Array, default: () => [] },
 	personalHighlights: { type: Array, default: () => [] },
-	// -- ARCHIVIATO 2026-04-20: bonusPage (_archive/frontend-simplification-2026-04-20/features/bonus-fedelta) --
+
 	// bonusPage: { type: Object, default: null },
 	isLoggingOut: { type: Boolean, default: false },
 });
@@ -199,7 +199,6 @@ const resolveAccountPageUrl = (url = '') => {
 			</div>
 		</div>
 
-		<!-- -- ARCHIVIATO 2026-04-20: Bonus CTA (_archive/frontend-simplification-2026-04-20/features/bonus-fedelta) -- -->
 	</div>
 </template>
 

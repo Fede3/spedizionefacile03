@@ -1,7 +1,6 @@
 /**
  * cartStore — stato canonico cart + checkout (billing, wallet, ordine esistente).
  *
- * Estratto da composables/useCart.js (split atomico Pinia 2026-04-26).
  * Lo store contiene SOLO state + azioni neutre rispetto al ciclo di vita Vue.
  * I watcher legati a route/setup vivono nel composable wrapper `useCart()`.
  */

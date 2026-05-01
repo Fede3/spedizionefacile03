@@ -1,7 +1,6 @@
 <script setup>
 /**
  * AccountSidebar — sidebar desktop dell'area account (visibile da lg).
- * Estratto da AccountRouteShell.vue senza modifiche logiche.
  * Gli stili .account-route-shell__* sono definiti nel parent (global, non
  * scoped) così che sidebar e drawer mobile condividano lo stesso look.
  */

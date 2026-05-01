@@ -188,7 +188,7 @@ const onTableAction = async ({ type, order }) => {
 		return;
 	}
 	if (type === 'invoice') {
-		// -- ARCHIVIATO 2026-04-20 -- modulo SDI fatturazione elettronica rimosso.
+
 		// Ora scarichiamo la fattura/ricevuta PDF normale (endpoint InvoicePdfController).
 		try {
 			const blob = await sanctum(`/api/orders/${order.id}/invoice.pdf`, {

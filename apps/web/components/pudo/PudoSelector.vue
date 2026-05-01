@@ -2,7 +2,7 @@
 // Lazy: Leaflet (~130 KB gzip) è incluso SOLO in MapPudo.client.vue.
 // Caricandolo come defineAsyncComponent il bundle iniziale della pagina
 // ritiro/consegna non paga il costo della libreria finché la mappa non viene
-// effettivamente renderizzata (Sprint 5.2a).
+
 const MapPudo = defineAsyncComponent(() => import('~/components/pudo/MapPudo.client.vue'));
 
 const props = defineProps({

@@ -1,8 +1,6 @@
 <script setup>
 // Step 4 funnel: selezione metodo pagamento (Stripe/wallet/bonifico) + 3DS.
 // Logica complessa (useCheckout, stripe, coupon, confirm modal) resta nel parent.
-// Migrazione VM in corso (Ondata 5b): props *Vm opzionali aggiungono backward-compat
-// per ridurre i 70 props atomici a 6 ViewModel typed in `types/payment.ts`.
 import { computed } from 'vue';
 import CheckoutBilling from '~/components/checkout/Billing.vue';
 import CheckoutSuccess from '~/components/checkout/Success.vue';

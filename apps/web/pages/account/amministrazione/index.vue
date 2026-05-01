@@ -63,7 +63,7 @@ const urgentActions = computed(() => {
 	if (pendingWithdrawals.value > 0) {
 		items.push({ key: 'withdrawals', label: `${pendingWithdrawals.value} prelievi in attesa`, to: '/account/amministrazione/prelievi', tone: 'accent', cta: 'Apri prelievi' });
 	}
-	// -- ARCHIVIATO 2026-04-20: Messaggi (admin-messaggi-sistema) — sostituito da email/contatto esterno --
+
 	// if (unreadMessages.value > 0) {
 	// 	items.push({ key: 'messages', label: `${unreadMessages.value} messaggi da leggere`, to: '/account/amministrazione/messaggi', tone: 'primary', cta: 'Apri messaggi' });
 	// }

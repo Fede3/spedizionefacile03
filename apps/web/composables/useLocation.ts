@@ -177,7 +177,6 @@ export const useLocationSearch = (client?: LocationClient) => {
 // SEZIONE 2: AddressAutocomplete (ex useAddressAutocomplete)
 // Autocompletamento citta'/CAP/provincia con API locations,
 // validazione coerenza CAP-citta'-provincia, formatters, blur/focus handlers.
-//
 // DIPENDENZE INIETTATE:
 //   - originAddress, destinationAddress: ref indirizzi
 //   - deliveryMode: computed delivery mode
@@ -187,12 +186,10 @@ export const useLocationSearch = (client?: LocationClient) => {
 
 // useAddressAutocomplete estratto in composables/useAddressAutocomplete.js
 
-
 // ─────────────────────────────────────────────────────────────────────────────
 // SEZIONE 3: AddressPudo (ex useAddressPudo)
 // Gestione selezione/deselezione punto PUDO (BRT pickup point),
 // aggiornamento indirizzo destinazione da PUDO, watcher delivery mode.
-//
 // DIPENDENZE INIETTATE:
 //   - destinationAddress: ref indirizzo destinazione
 //   - deliveryMode: computed delivery mode

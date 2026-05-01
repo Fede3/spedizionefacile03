@@ -46,7 +46,6 @@ const hasComponentElement = (value: StageHost): value is { $el: HTMLElement } =>
 	&& (value as { $el?: unknown }).$el instanceof HTMLElement
 );
 
-// useFunnelAnalytics estratto in composables/useFunnelTracking.ts (Ondata 5).
 // Niente re-export: Nuxt auto-importa direttamente dal file dedicato — evita
 // warning "duplicate auto-import" per useFunnelAnalytics.
 

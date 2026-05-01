@@ -20,7 +20,6 @@ const props = defineProps({
 	showBusinessFields: { type: Boolean, default: false },
 });
 
-// InjectionKey tipato (Ondata 6 — sostituisce string-key 'shipmentSuggestions').
 const suggestions = inject(shipmentSuggestionsKey);
 if (!suggestions) throw new Error('StepAddressSection: shipmentSuggestionsKey non iniettata');
 

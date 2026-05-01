@@ -2,7 +2,6 @@
  * @file useShipmentForm — Composable useShipmentForm.
  */
 // useShipmentForm.js — Validazione + error summary + field assist per form spedizione.
-//
 // Consolidato il 2026-04-20 da:
 //  - useShipmentFormValidation.js  (208 LOC) → SEZIONE 3
 //  - useShipmentFormErrorSummary.js (170 LOC) → SEZIONE 1

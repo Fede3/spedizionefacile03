@@ -1,7 +1,6 @@
 /**
  * shipmentStore — store unificato del modulo Spedizione/Preventivo.
  *
- * Fonde i 3 store storici (Ondata 3 consolidamento Pinia):
  *  - shipmentFlowStore: 16 ref dati spedizione (step, packages, indirizzi, …)
  *  - preventivoStore: 5 ref orchestrazione preventivo + actions navigation
  *  - shipmentFlowAdminGateStore: 1 ref challenge accesso fuori flusso

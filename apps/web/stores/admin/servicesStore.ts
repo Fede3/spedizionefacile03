@@ -1,7 +1,6 @@
 /**
  * servicesStore — servizi utente (sezione "Servizi e supplementi" pannello admin).
  *
- * Estratto dalla sezione "services" di composables/useAdminPricing.js
  * (split atomico Pinia 2026-04-26). Comprende:
  *   - state servicePricing (etichetta, notifiche, sponda, contrassegno, assicurazione)
  *   - UI state della vista admin (tab attivo + filtri/search)

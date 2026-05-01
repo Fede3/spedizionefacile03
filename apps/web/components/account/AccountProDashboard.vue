@@ -91,7 +91,6 @@ const historyItems = computed(() => props.earnings?.data || []);
 				</p>
 			</div>
 
-			<!-- -- ARCHIVIATO 2026-04-20: card Prelievi (_archive/frontend-simplification-2026-04-20/features/prelievi-dedicati) -- -->
 		</div>
 
 		<div class="sf-account-panel rounded-[16px] p-[18px] desktop:p-[22px]">

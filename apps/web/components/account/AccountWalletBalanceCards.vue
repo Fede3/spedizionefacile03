@@ -38,7 +38,6 @@ const quickLinks = computed(() => {
 		},
 	];
 
-	// -- ARCHIVIATO 2026-04-20: link quick "Prelievi" (_archive/frontend-simplification-2026-04-20/features/prelievi-dedicati) --
 	// if (props.isPro) {
 	// 	links.push({
 	// 		label: 'Prelievi',

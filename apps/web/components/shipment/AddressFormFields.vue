@@ -1,7 +1,7 @@
 <script setup>
 // Form indirizzi multi-zona (mittente/destinatario) con validazione inline.
 // Gli handler arrivano via inject(shipmentFormHandlersKey) da ShipmentFlowPage.
-// Sub-componenti markup-only sono in components/shipment/address/* (Ondata 6).
+
 const props = defineProps({
 	type: { type: String, required: true, validator: (value) => ['origin', 'dest'].includes(value) },
 	address: { type: Object, required: true },
@@ -12,7 +12,6 @@ const props = defineProps({
 	readonly: { type: Boolean, default: false },
 });
 
-// InjectionKey tipato (Ondata 6). Vue InjectionKey<T> garantisce che inject()
 // ritorni il tipo corretto a TypeScript senza cast manuali.
 const handlers = inject(shipmentFormHandlersKey);
 if (!handlers) throw new Error('AddressFormFields: shipmentFormHandlersKey non iniettata');

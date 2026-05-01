@@ -4,7 +4,6 @@
  * - mostra errore di validazione (con role="alert" + aria-describedby tramite errorId)
  * - mostra "chip assist" (suggerimento auto-fill: CAP, città, provincia)
  *
- * Estratto da AddressFormFields.vue per evitare 8 ripetizioni identiche del markup.
  * Markup output identico al precedente — zero cambiamenti CSS/visuali.
  */
 const props = defineProps({
@@ -12,7 +11,6 @@ const props = defineProps({
 	typeKey: { type: String, required: true, validator: (v) => ['origin', 'dest'].includes(v) },
 });
 
-// InjectionKey tipato (Ondata 6 — sostituisce string-key 'shipmentFormHandlers').
 const handlers = inject(shipmentFormHandlersKey);
 if (!handlers) throw new Error('AddressFieldFeedback: shipmentFormHandlersKey non iniettata');
 const { getFieldError, fieldErrorText, getFieldAssist, applyFieldAssist } = handlers;

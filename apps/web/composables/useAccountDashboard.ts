@@ -77,7 +77,6 @@ export function useAccountDashboard() {
 	const isAdmin = computed(() => roleKey.value === 'admin');
 	const isPro = computed(() => roleKey.value === 'pro');
 
-	// -- ARCHIVIATO 2026-04-20: bonusPage (_archive/frontend-simplification-2026-04-20/features/bonus-fedelta) --
 	// const bonusPage = computed(() => allVisiblePages.value.find((page) => page.url === '/bonus') || null);
 
 	/* ---------------------- CLIENT COMPUTED ---------------------- */
@@ -275,7 +274,7 @@ export function useAccountDashboard() {
 				value: `EUR ${formatCents(revenue)}`,
 				label: 'Ricavi',
 				meta: `EUR ${formatCents(revenueMonth)} nel mese`,
-				// -- ARCHIVIATO 2026-04-20: era /account/amministrazione/portafogli (admin-portafogli-duplicato) --
+
 				url: '/account/amministrazione/ordini',
 				iconKey: 'wallet',
 				iconBg: '#FFF4EE',

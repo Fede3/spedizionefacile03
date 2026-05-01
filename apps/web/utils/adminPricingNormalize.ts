@@ -1,7 +1,6 @@
 /**
  * @file adminPricingNormalize — normalizzatori puri per il pannello admin pricing.
  *
- * Estratto da composables/useAdminPricing.js. Pure functions:
  * normalizeStringList, normalizeTiers, normalizePricingGroup, normalizeEuropePricing,
  * buildPricingRulesPayload.
  */

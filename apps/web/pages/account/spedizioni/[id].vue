@@ -253,7 +253,7 @@ aria-hidden="true"
 								</svg>
 								Cambia data ritiro
 							</button>
-							<!-- -- ARCHIVIATO 2026-04-20: CTA Reclamo dedicato (_archive/frontend-simplification-2026-04-20/features/reclami-dedicato) -- -->
+
 							<NuxtLink
 								to="/account/assistenza"
 								class="btn btn-secondary btn-sm inline-flex items-center gap-[6px]"
@@ -278,7 +278,7 @@ aria-hidden="true"
 						<p class="text-[0.75rem] text-[var(--color-brand-text-secondary)]">
 							Hai riscontrato un problema con questa spedizione? Contatta l'assistenza e il nostro team ti risponderà entro 48h.
 						</p>
-						<!-- -- ARCHIVIATO 2026-04-20: CTA Reclamo dedicato (_archive/frontend-simplification-2026-04-20/features/reclami-dedicato) -- -->
+
 						<NuxtLink
 							to="/account/assistenza"
 							class="btn btn-secondary btn-sm inline-flex items-center gap-[6px]"

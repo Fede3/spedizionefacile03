@@ -27,7 +27,6 @@ defineProps({
 
 const emit = defineEmits(['reschedule', 'change-address']);
 
-// -- ARCHIVIATO 2026-04-20: link reclamo dedicato rimosso; per reclami usare /account/assistenza
 // const reclamoLink = computed(() => {
 // 	if (!props.orderId) return '/reclami';
 // 	return `/reclami?order=${encodeURIComponent(props.orderId)}`;

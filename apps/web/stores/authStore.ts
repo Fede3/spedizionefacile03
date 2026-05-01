@@ -1,7 +1,6 @@
 /**
  * authStore — store unificato del modulo autenticazione.
  *
- * Fonde i 2 store storici (Ondata 3 consolidamento Pinia):
  *  - authModalStore: stato modal login/register/forgot
  *  - authProvidersStore: disponibilita' provider OAuth (Google/Facebook/Apple)
  *

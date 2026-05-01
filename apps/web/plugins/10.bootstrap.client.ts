@@ -53,13 +53,11 @@ export default defineNuxtPlugin({
 		//   1. Un'origine DIVERSA dalla pagina → i cookie di sessione NON vengono inviati
 		//      dal browser (SameSite=Lax blocca i cookie cross-origin)
 		//   2. Irraggiungibile da browser remoti (127.0.0.1 e' il LORO localhost, non il server)
-		//
 		// SOLUZIONE:
 		//   Riscrivere baseUrl all'origine corrente del browser (window.location.origin).
 		//   Cosi' tutte le chiamate API passano dallo stesso dominio della pagina:
 		//   - Locale: http://127.0.0.1:8787 → nessun cambiamento
 		//   - Cloudflare: https://abc123.trycloudflare.com → le API passano dal tunnel
-		//
 		// PERCHE' SOLO CLIENT?
 		//   Durante il rendering lato server (SSR), Nuxt gira sullo stesso server di Laravel,
 		//   quindi http://127.0.0.1:8787 funziona perfettamente. Il problema esiste SOLO
@@ -92,7 +90,6 @@ export default defineNuxtPlugin({
 		// Bootstrap auth immediato lato client:
 		// in nuova tab (middle click) non passa da page:loading:start, quindi
 		// forziamo subito init() per riallineare lo stato utente con la sessione.
-		//
 		// IMPORTANTE: Questo blocco DEVE completare prima che le pagine protette
 		// facciano richieste API, altrimenti otteniamo 401 (CSRF token non pronto).
 		const { authCookie } = useAuthUiSnapshotPersistence()

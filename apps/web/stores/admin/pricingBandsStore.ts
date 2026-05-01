@@ -1,7 +1,6 @@
 /**
  * pricingBandsStore — fasce nazionali (peso + volume) + extra rules + Europa.
  *
- * Estratto dalla sezione "bands" di composables/useAdminPricing.js
  * (split atomico Pinia 2026-04-26). Comprende:
  *   - state delle bande peso/volume + snapshot originali
  *   - extra rules ladder con CRUD (add/remove/continuita\u0300)

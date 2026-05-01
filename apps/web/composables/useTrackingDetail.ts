@@ -1,7 +1,6 @@
 /**
  * @file useTrackingDetail — composable per pagina dettaglio tracking spedizione.
  *
- * Estratto da pages/traccia/[tracking].vue per ridurre il file pagina sotto
  * soglia 500 LOC. Contiene fetch + polling + normalize + computed UI helpers.
  *
  * USO:

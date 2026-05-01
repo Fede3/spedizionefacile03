@@ -1,7 +1,6 @@
 /**
  * @file useAdminPricingForm — sezione form del pannello admin pricing.
  *
- * Estratto da useAdminPricing.js. Gestisce: editing inline, CRUD fasce/supplementi,
  * helpers servizi/Europa/ladder, conversioni cents<->euro.
  *
  * Riceve come deps gli ref reattivi dello store admin. Esporta `createFormSection`

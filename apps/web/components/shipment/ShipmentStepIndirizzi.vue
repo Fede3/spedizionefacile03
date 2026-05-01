@@ -46,7 +46,7 @@ defineEmits([
 	'back',
 	'confirm',
 	'add-to-cart',
-	// 'save-configured' -- ARCHIVIATO 2026-04-20 (_archive/frontend-simplification-2026-04-20/features/spedizioni-configurate)
+
 	'dismiss-error',
 	'update:deliveryMode',
 	'update:originSelectorRef',

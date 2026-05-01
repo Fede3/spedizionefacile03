@@ -1,7 +1,6 @@
 /**
  * @file useAdminPricingImport — sezione import/persistence del pannello admin pricing.
  *
- * Estratto da useAdminPricing.js. CRUD price-bands + promo-settings, seed iniziale,
  * payload builders. API:
  *  - GET/PUT /api/admin/price-bands
  *  - POST /api/admin/price-bands/seed

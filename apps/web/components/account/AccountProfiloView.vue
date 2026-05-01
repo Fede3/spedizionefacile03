@@ -169,7 +169,7 @@ v-else
 			<h2 id="sf-profilo-view-notifiche" class="text-[var(--color-brand-text)] text-[14px] tracking-[-0.2px] font-[700]">Notifiche</h2>
 		</div>
 		<div class="px-[16px] pb-[16px] space-y-[8px]">
-			<!-- -- ARCHIVIATO 2026-04-20: link /account/notifiche (_archive/frontend-simplification-2026-04-20/features/notifiche-in-app) -- -->
+
 			<div
 				aria-label="Gestione email tramite assistenza"
 				class="flex items-center gap-[10px] p-[12px] rounded-[12px] cursor-default group no-underline opacity-70">

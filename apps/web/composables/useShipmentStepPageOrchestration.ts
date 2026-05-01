@@ -2,10 +2,8 @@
  * @file useShipmentStepPageOrchestration — Composable useShipmentStepPageOrchestration.
  */
 // Canonical shipment-flow entrypoint.
-//
 // Questo file espone:
 // - useShipmentStepPageOrchestration: orchestrazione UI del ventaglio
-//
 // I subcomposable del funnel restano importabili dai propri file dedicati:
 // questo evita auto-import duplicati Nuxt e rende chiaro dove intervenire.
 

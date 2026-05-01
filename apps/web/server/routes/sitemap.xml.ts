@@ -34,7 +34,7 @@ const PUBLIC_PAGES: readonly SitemapEntry[] = [
   { loc: '/chi-siamo', changefreq: 'monthly', priority: 0.7 },
   { loc: '/contatti', changefreq: 'monthly', priority: 0.7 },
   { loc: '/faq', changefreq: 'monthly', priority: 0.6 },
-  // -- ARCHIVIATO 2026-04-20: '/reclami' (_archive/frontend-simplification-2026-04-20/features/reclami-dedicato) --
+
   { loc: '/privacy-policy', changefreq: 'yearly', priority: 0.3 },
   { loc: '/termini-condizioni', changefreq: 'yearly', priority: 0.3 },
   { loc: '/cookie-policy', changefreq: 'yearly', priority: 0.3 },
