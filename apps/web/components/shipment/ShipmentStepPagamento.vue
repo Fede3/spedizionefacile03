@@ -89,17 +89,6 @@ const props = defineProps({
 	selectPaymentMethod: { type: Function, required: true },
 	confirmPayment: { type: Function, required: true },
 	proceedWithPayment: { type: Function, required: true },
-
-	// Ondata 5b — ViewModel opzionali (overlay backward-compat).
-	// Se passati dal parent, possono sostituire i 70 props atomici a regime
-	// (Ondata 5c richiede E2E carta Stripe live per migrazione completa).
-	// Tipi in types/payment.ts: PaymentSummaryViewModel, ecc.
-	summaryVm: { type: Object, default: null },
-	methodsVm: { type: Object, default: null },
-	billingVm: { type: Object, default: null },
-	actionsVm: { type: Object, default: null },
-	stripeVm: { type: Object, default: null },
-	walletVm: { type: Object, default: null },
 });
 
 defineEmits([
