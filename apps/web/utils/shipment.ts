@@ -112,11 +112,6 @@ export type TrimmableUserStore = {
     isQuoteStarted?: boolean
     stepNumber?: number
 }
-type SubmissionSource = { client_submission_id?: unknown }
-type NestedSubmissionSource = SubmissionSource & {
-    data?: NestedSubmissionSource | null
-    pendingShipment?: NestedSubmissionSource | null
-}
 const EMPTY_FLOW_STATE = (): ShipmentFlowState => ({
     quote_ready: false,
     services_ready: false,
@@ -488,63 +483,14 @@ export const trimUserStoreToFlowState = (shipmentFlowStore: TrimmableUserStore |
     }
     shipmentFlowStore.stepNumber = getShipmentFlowStepNumber(flowState);
 };
+
 // ─────────────────────────────────────────────────────────────────
-// SEZIONE 2 — ex utils/clientSubmissionId.ts
+// SEZIONE 2 — re-export da utils/clientSubmissionId.ts per backward compat
+// (split Ondata 5 — la logica vive ora nel proprio file dedicato)
 // ─────────────────────────────────────────────────────────────────
-// Idempotency key client-side: protegge preventivo e checkout da doppio submit e retry di rete (usato da backend Stripe/ordini per deduplica).
-const normalizeSubmissionId = (value: unknown): string => String(value ?? '').trim();
-/**
- * Genera un nuovo ID submission client (idempotency key).
- */
-export const createClientSubmissionId = () => (`sub-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`);
-/**
- * Cerca il primo client_submission_id valido fra le sorgenti passate (flat).
- */
-export const readClientSubmissionId = (...sources: Array<SubmissionSource | null | undefined>): string | null => {
-    for (const source of sources) {
-        if (!source || typeof source !== 'object')
-            continue;
-        const submissionId = normalizeSubmissionId(source.client_submission_id);
-        if (submissionId)
-            return submissionId;
-    }
-    return null;
-};
-/**
- * Cerca ricorsivamente client_submission_id nelle chiavi pendingShipment/data.
- */
-export const readNestedClientSubmissionId = (...sources: Array<NestedSubmissionSource | null | undefined>): string | null => {
-    const queue = [...sources];
-    const visited = new Set<NestedSubmissionSource>();
-    while (queue.length > 0) {
-        const source = queue.shift();
-        if (!source || typeof source !== 'object')
-            continue;
-        if (visited.has(source))
-            continue;
-        visited.add(source);
-        const submissionId = normalizeSubmissionId(source.client_submission_id);
-        if (submissionId)
-            return submissionId;
-        const nestedCandidates = [source.pendingShipment, source.data];
-        for (const candidate of nestedCandidates) {
-            if (candidate && typeof candidate === 'object') {
-                queue.push(candidate);
-            }
-        }
-    }
-    return null;
-};
-/**
- * Se target non ha un client_submission_id, ne genera uno e lo salva in place.
- */
-export const ensureClientSubmissionId = (target: SubmissionSource | null | undefined): string => {
-    const existing = readClientSubmissionId(target);
-    if (existing)
-        return existing;
-    const created = createClientSubmissionId();
-    if (target && typeof target === 'object') {
-        target.client_submission_id = created;
-    }
-    return created;
-};
+export {
+    createClientSubmissionId,
+    readClientSubmissionId,
+    readNestedClientSubmissionId,
+    ensureClientSubmissionId,
+} from '~/utils/clientSubmissionId';
