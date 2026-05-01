@@ -1,7 +1,6 @@
 <!-- Verifica Email — landing post-click link email. ?status ∈ verified|invalid_signature|already_verified.
      Nessun status → redirect homepage. -->
 <script setup>
-import '~/assets/css/autenticazione.css';
 import { buildAuthOverlayLocation } from '~/utils/auth';
 
 useSeoMeta({
@@ -62,44 +61,59 @@ if (!statusState.value) {
 </script>
 
 <template>
-	<section class="auth-shell">
-		<div class="my-container">
-			<div class="auth-shell-frame">
-				<header class="auth-shell-head">
-					<div class="auth-shell-avatar" aria-hidden="true">
+	<section class="relative overflow-clip flex flex-col min-h-[calc(100vh-80px)] py-[clamp(20px,3vw,28px)] pb-[clamp(32px,5vh,48px)] bg-gradient-to-b from-[var(--surface-page)] to-[var(--surface-page-end)]">
+		<div class="relative z-[1] mx-auto w-full max-w-[1280px] px-3.5 sm:px-10">
+			<div class="grid gap-5 w-full max-w-[40rem] mx-auto">
+				<header class="grid justify-items-center gap-2 text-center">
+					<div
+						class="inline-flex items-center justify-center w-[3.25rem] h-[3.25rem] rounded-full text-white shadow-[0_10px_24px_rgba(9,88,102,0.18)]"
+						style="background: linear-gradient(135deg, var(--color-brand-primary) 0%, var(--color-teal-400) 100%);"
+						aria-hidden="true"
+					>
 						<svg
 							v-if="statusState?.icon === 'check'"
 							xmlns="http://www.w3.org/2000/svg"
 							viewBox="0 0 24 24"
-							class="auth-shell-avatar__icon"
+							class="w-[1.35rem] h-[1.35rem]"
 							fill="none"
 							stroke="currentColor"
 							stroke-width="2"
 							stroke-linecap="round"
-							stroke-linejoin="round">
+							stroke-linejoin="round"
+						>
 							<path d="M20 6 9 17l-5-5" />
 						</svg>
 						<svg
 							v-else
 							xmlns="http://www.w3.org/2000/svg"
 							viewBox="0 0 24 24"
-							class="auth-shell-avatar__icon"
+							class="w-[1.35rem] h-[1.35rem]"
 							fill="none"
 							stroke="currentColor"
 							stroke-width="2"
 							stroke-linecap="round"
-							stroke-linejoin="round">
+							stroke-linejoin="round"
+						>
 							<path d="M12 9v4" />
 							<path d="M12 17h.01" />
 							<circle cx="12" cy="12" r="9" />
 						</svg>
 					</div>
-					<h1 class="auth-shell-title">{{ statusState?.title }}</h1>
-					<p class="auth-shell-copy">{{ statusState?.copy }}</p>
+					<h1 class="max-w-[15ch] font-montserrat text-[18px] leading-[1.2] font-extrabold text-brand-text">
+						{{ statusState?.title }}
+					</h1>
+					<p class="max-w-[32rem] text-base leading-[1.55] text-brand-text-secondary">
+						{{ statusState?.copy }}
+					</p>
 				</header>
 
-				<div class="auth-page-body auth-page-stack">
-					<div class="auth-feedback" :class="statusState?.tone === 'error' ? 'auth-feedback--error' : 'auth-feedback--success'">
+				<div class="relative overflow-hidden grid gap-4 px-6 py-7 bg-white rounded-2xl border border-brand-border shadow-[0_2px_8px_rgba(9,88,102,0.05),0_0_0_1px_rgba(9,88,102,0.04)] before:content-[''] before:absolute before:top-0 before:left-0 before:right-0 before:h-[3px] before:bg-gradient-to-r before:from-brand-primary before:to-[var(--color-teal-400)]">
+					<div
+						class="px-3 py-2.5 rounded-2xl text-sm leading-[1.5]"
+						:class="statusState?.tone === 'error'
+							? 'text-[var(--color-error-text)] bg-[var(--surface-accent-wash)] border border-[var(--color-error-border)]'
+							: 'text-[var(--color-success-text-strong)] bg-[var(--color-success-bg)] border border-[var(--color-success-border)]'"
+					>
 						{{ statusState?.copy }}
 					</div>
 					<SfButton :to="loginOverlayLocation" variant="primary" block>Vai al login</SfButton>

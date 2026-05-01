@@ -122,10 +122,15 @@ export function useTrackingDetail(trackingCode: ComputedRef<string>) {
 
 	const statusChipClass = computed(() => {
 		const raw = data.value?.raw_status || '';
-		if (raw === 'delivered') return 'chip-success';
-		if (ALT_END.includes(raw)) return raw === 'refused' || raw === 'payment_failed' ? 'chip-danger' : 'chip-warn';
-		if (raw === 'in_giacenza') return 'chip-warn';
-		return 'chip-progress';
+		// Mapping Tailwind utility (era chip-success/chip-warn/chip-danger/chip-progress in tracking.css)
+		if (raw === 'delivered') return 'bg-[#f0fdf4] text-[#0a8a7a] ring-[1.5px] ring-[#c8e6cd]';
+		if (ALT_END.includes(raw)) {
+			return raw === 'refused' || raw === 'payment_failed'
+				? 'bg-[#fdecec] text-[#b3261e] ring-[1.5px] ring-[#f1b4b4]'
+				: 'bg-[#fff5ef] text-[#E44203] ring-[1.5px] ring-[#f5c8b1]';
+		}
+		if (raw === 'in_giacenza') return 'bg-[#fff5ef] text-[#E44203] ring-[1.5px] ring-[#f5c8b1]';
+		return 'bg-[#eef7f8] text-[#095866] ring-[1.5px] ring-[#bdd5da]';
 	});
 
 	const etaFormatted = computed(() => formatEtaIso(data.value?.estimated_delivery_at || null));

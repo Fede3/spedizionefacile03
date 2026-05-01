@@ -66,10 +66,24 @@ cd apps/web && npm install && cd ..
 
 ## Documentazione
 
-- [`CLAUDE.md`](CLAUDE.md) — istruzioni AI + convenzioni
+- [`CLAUDE.md`](CLAUDE.md) — istruzioni AI + convenzioni codice + design system
 - [`docs/ONBOARDING.md`](docs/ONBOARDING.md) — setup completo nuovo dev
 - [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — overview backend + frontend
-- [`docs/audits/2026-04-v5-1-r4/`](docs/audits/2026-04-v5-1-r4/) — storico audit V5.1R4
+- [`docs/adr/`](docs/adr/) — Architectural Decision Records (5 ADR)
+- `pages/__design-system.vue` — showcase live componenti `Sf*` (dev-only)
+
+## Design system
+
+Frontend: **Tailwind utility puro + 23 componenti `Sf*` + Nuxt UI 4** primitive avanzate. Single source of truth: CSS variables in `apps/web/assets/css/main.css :root`, mappate a token Tailwind in `tailwind.config.js`. Showcase live in `/api/__design-system` (dev-only).
+
+Componenti `Sf*` disponibili in `apps/web/components/sf/`:
+
+| Categoria | Componenti |
+|---|---|
+| Form | `SfButton`, `SfInput`, `SfTextarea`, `SfSelect`, `SfCheckbox`, `SfRadio`, `SfSegmented`, `SfFormGroup` |
+| Surface | `SfCard`, `SfModal`, `SfConfirmDialog`, `SfTooltip`, `SfDropdown`, `SfSkeleton` |
+| Feedback | `SfBadge`, `SfStatusPill`, `SfStatCard`, `SfAvatar`, `SfAlert`, `SfEmptyState`, `SfAddressChip` |
+| Navigation | `SfTabs`, `SfBreadcrumbs`, `SfPagination`, `SfTable` |
 
 ## File critici (idempotency / soldi reali)
 

@@ -103,17 +103,19 @@ const iconForCode = (code) => {
 		</div>
 
 		<!-- Lista eventi -->
-		<ol v-else class="event-list grid gap-0 m-0 p-0 list-none" aria-label="Eventi spedizione, dal più recente">
+		<ol v-else class="grid gap-0 m-0 p-0 list-none" aria-label="Eventi spedizione, dal più recente">
 			<li
 				v-for="(ev, idx) in sortedEvents"
 				:key="`${ev.at}-${idx}`"
-				class="event-item flex gap-[14px]"
+				class="flex gap-[14px]"
 			>
 				<!-- Icona + linea -->
 				<div class="flex flex-col items-center">
 					<div
-						class="event-icon"
-						:class="idx === 0 ? 'event-icon-latest' : 'event-icon-past'"
+						class="inline-flex items-center justify-center w-[36px] h-[36px] rounded-full shrink-0 transition-all duration-200"
+						:class="idx === 0
+							? 'bg-[#095866] text-white shadow-[0_2px_6px_rgba(9,88,102,0.25)]'
+							: 'bg-white text-[#095866] shadow-[inset_0_0_0_1.5px_rgba(9,88,102,0.35)]'"
 						aria-hidden="true"
 					>
 						<!-- check -->
@@ -162,13 +164,14 @@ const iconForCode = (code) => {
 					</div>
 					<div
 						v-if="idx < sortedEvents.length - 1"
-						class="event-line"
+						class="w-[2px] flex-1 min-h-[20px] rounded-[1px] mt-[4px]"
+						:class="idx === 0 ? 'bg-[rgba(9,88,102,0.45)]' : 'bg-[#DFE2E7]'"
 						aria-hidden="true"
 					/>
 				</div>
 
 				<!-- Contenuto -->
-				<div class="event-content pb-[16px] flex-1 min-w-0" :class="{ 'pb-0': idx === sortedEvents.length - 1 }">
+				<div class="pb-[16px] flex-1 min-w-0" :class="{ 'pb-0': idx === sortedEvents.length - 1 }">
 					<p class="text-[14px] text-[#1d2738] m-0 leading-[1.4]" style="font-weight:600">
 						{{ ev.label }}
 					</p>
@@ -199,4 +202,3 @@ const iconForCode = (code) => {
 	</div>
 </template>
 
-<!-- Stili estratti in assets/css/tracking.css (importato da main.css). -->

@@ -1,6 +1,4 @@
 <script setup>
-import '~/assets/css/content.css';
-
 const faqs = [
 	{
 		q: 'Qual e il costo di una spedizione?',
@@ -36,38 +34,48 @@ const toggle = (i) => {
 </script>
 
 <template>
-	<div class="contact-faq-items">
+	<div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
 		<div
 			v-for="(faq, i) in faqs"
 			:key="i"
-			class="contact-faq-item"
-			:class="{ 'is-open': openIdx === i }">
+			class="rounded-card border bg-brand-card overflow-hidden self-start transition-all"
+			:class="openIdx === i
+				? 'border-brand-accent shadow-[0_6px_20px_rgba(228,66,3,0.08)]'
+				: 'border-brand-primary/12 hover:border-brand-primary/25 hover:shadow-[0_4px_14px_rgba(9,88,102,0.06)]'"
+		>
 			<button
 				type="button"
-				class="contact-faq-toggle"
+				class="grid w-full grid-cols-[auto_1fr_auto] items-center gap-3 p-4 cursor-pointer text-left text-brand-text transition-colors hover:text-brand-primary"
 				:aria-expanded="openIdx === i"
-				@click="toggle(i)">
-				<span class="contact-faq-pill" aria-hidden="true">
+				@click="toggle(i)"
+			>
+				<span
+					aria-hidden="true"
+					class="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-brand-primary/20 to-brand-primary/5 text-brand-primary"
+				>
 					<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
 						<path :d="faq.icon" />
 					</svg>
 				</span>
-				<span class="contact-faq-question">{{ faq.q }}</span>
+				<span class="text-[0.9375rem] font-semibold leading-tight">{{ faq.q }}</span>
 				<svg
-					width="16"
-					height="16"
-					viewBox="0 0 24 24"
-					fill="none"
-					stroke="currentColor"
-					stroke-width="2"
-					stroke-linecap="round"
-					stroke-linejoin="round"
-					class="contact-faq-chevron">
-					<polyline points="6 9 12 15 18 9"/>
+					width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+					stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+					class="shrink-0 transition-transform duration-200"
+					:class="openIdx === i ? 'rotate-180 text-brand-accent' : 'text-brand-primary'"
+				>
+					<polyline points="6 9 12 15 18 9" />
 				</svg>
 			</button>
-			<div class="contact-faq-content">
-				<p>{{ faq.a }}</p>
+			<div
+				class="grid transition-[grid-template-rows] duration-200 ease-out"
+				:style="{ gridTemplateRows: openIdx === i ? '1fr' : '0fr' }"
+			>
+				<div class="overflow-hidden">
+					<p class="px-4 pb-4 text-sm leading-relaxed text-brand-text-secondary">
+						{{ faq.a }}
+					</p>
+				</div>
 			</div>
 		</div>
 	</div>

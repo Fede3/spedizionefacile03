@@ -7,7 +7,6 @@
  * Mantiene gli stili .service-* scoped qui e in deep per i figli senza
  * necessità di stili duplicati (stylesheet ereditato tramite classi comuni).
  */
-import '~/assets/css/servizi.css';
 import ServiceCardFeatured from './ServiceCardFeatured.vue';
 import ServiceCardRegular from './ServiceCardRegular.vue';
 

@@ -1,7 +1,6 @@
 <!-- Aggiorna Password — landing post-link-recupero. Richiede ?token=XXX, precompila email se presente.
      Redirect a /autenticazione dopo successo. -->
 <script setup>
-import '~/assets/css/autenticazione.css';
 import { buildAuthOverlayLocation } from '~/utils/auth';
 
 useSeoMeta({
@@ -122,38 +121,58 @@ const updatePassword = async () => {
 </script>
 
 <template>
-	<section class="auth-shell">
-		<div class="my-container">
-			<div class="auth-shell-frame auth-shell-frame--wide">
-				<header class="auth-shell-head">
-					<div class="auth-shell-avatar" aria-hidden="true">
-						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="auth-shell-avatar__icon" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+	<section class="relative overflow-clip flex flex-col min-h-[calc(100vh-80px)] py-[clamp(20px,3vw,28px)] pb-[clamp(32px,5vh,48px)] bg-gradient-to-b from-[var(--surface-page)] to-[var(--surface-page-end)]">
+		<div class="relative z-[1] mx-auto w-full max-w-[1280px] px-3.5 sm:px-10">
+			<div class="grid gap-5 w-full max-w-[36rem] mx-auto">
+				<header class="grid justify-items-center gap-2 text-center">
+					<div
+						class="inline-flex items-center justify-center w-[3.25rem] h-[3.25rem] rounded-full text-white shadow-[0_10px_24px_rgba(9,88,102,0.18)]"
+						style="background: linear-gradient(135deg, var(--color-brand-primary) 0%, var(--color-teal-400) 100%);"
+						aria-hidden="true"
+					>
+						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[1.35rem] h-[1.35rem]" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
 							<rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
 							<path d="M7 11V7a5 5 0 0 1 10 0v4" />
 						</svg>
 					</div>
-					<h1 class="auth-shell-title">Imposta nuova password</h1>
-					<p class="auth-shell-copy">
+					<h1 class="max-w-[15ch] font-montserrat text-[18px] leading-[1.2] font-extrabold text-brand-text">
+						Imposta nuova password
+					</h1>
+					<p class="max-w-[32rem] text-base leading-[1.55] text-brand-text-secondary">
 						Scegli una nuova password sicura per completare il recupero del tuo account.
 					</p>
 				</header>
 
-				<div v-if="messageSuccess" class="auth-shell-message auth-feedback--success">
-					<div class="auth-shell-message__icon" aria-hidden="true">
+				<div
+					v-if="messageSuccess"
+					class="relative overflow-hidden flex flex-wrap items-center justify-between gap-4 w-full p-6 bg-white rounded-2xl border border-brand-border shadow-[0_2px_8px_rgba(9,88,102,0.05),0_0_0_1px_rgba(9,88,102,0.04)] before:content-[''] before:absolute before:top-0 before:left-0 before:right-0 before:h-[3px] before:bg-gradient-to-r before:from-brand-primary before:to-[var(--color-brand-primary-light)] max-sm:items-start"
+				>
+					<div aria-hidden="true">
 						<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
 							<path d="M20 6L9 17l-5-5" />
 						</svg>
 					</div>
-					<div class="auth-shell-message__body">
-						<p class="auth-shell-message__title">Password aggiornata</p>
-						<p class="auth-shell-message__copy">{{ messageSuccess }}</p>
+					<div class="min-w-0 grid gap-0.5 flex-1 basis-60">
+						<p class="font-montserrat text-base font-extrabold text-brand-text">Password aggiornata</p>
+						<p class="text-sm leading-[1.45] text-brand-text-secondary">{{ messageSuccess }}</p>
 					</div>
-					<SfButton :to="loginOverlayLocation" variant="primary" block class="auth-shell-message__action">Torna al login</SfButton>
+					<SfButton
+						:to="loginOverlayLocation"
+						variant="primary"
+						block
+						class="flex-none min-h-10 px-4 whitespace-nowrap max-sm:w-full"
+					>
+						Torna al login
+					</SfButton>
 				</div>
 
-				<form v-else class="auth-page-body auth-page-stack" @submit.prevent="updatePassword">
-					<div class="auth-field-group">
-						<label for="email" class="auth-field-label">Email</label>
+				<form
+					v-else
+					class="relative overflow-hidden grid gap-4 px-6 py-7 bg-white rounded-2xl border border-brand-border shadow-[0_2px_8px_rgba(9,88,102,0.05),0_0_0_1px_rgba(9,88,102,0.04)] before:content-[''] before:absolute before:top-0 before:left-0 before:right-0 before:h-[3px] before:bg-gradient-to-r before:from-brand-primary before:to-[var(--color-teal-400)] max-sm:p-4"
+					@submit.prevent="updatePassword"
+				>
+					<div class="flex flex-col gap-1.5">
+						<label for="email" class="text-[11px] font-bold uppercase tracking-[0.4px] text-brand-text-muted leading-none">Email</label>
 						<input
 							id="email"
 							v-model="data.email"
@@ -163,24 +182,24 @@ const updatePassword = async () => {
 							autocomplete="email"
 						>
 					</div>
-					<p v-if="fieldErrors.email" class="auth-feedback auth-feedback--error">
+					<p v-if="fieldErrors.email" class="mt-0 px-3 py-2.5 rounded-2xl text-sm leading-[1.5] text-[var(--color-error-text)] bg-[var(--surface-accent-wash)] border border-[var(--color-error-border)]">
 						<span v-for="(error, index) in fieldErrors.email" :key="index" class="block">{{ error }}</span>
 					</p>
 
-					<div class="auth-field-group">
-						<label for="password" class="auth-field-label">Nuova password</label>
-						<div class="auth-password-wrap">
+					<div class="flex flex-col gap-1.5">
+						<label for="password" class="text-[11px] font-bold uppercase tracking-[0.4px] text-brand-text-muted leading-none">Nuova password</label>
+						<div class="relative">
 							<input
 								id="password"
 								v-model="data.password"
 								:type="showPassword ? 'text' : 'password'"
-								class="form-input auth-field-input--password"
+								class="form-input pr-[2.55rem]"
 								required
 								autocomplete="new-password"
 							>
 							<button
 								type="button"
-								class="auth-password-toggle"
+								class="absolute top-1/2 right-3 -translate-y-1/2 inline-flex items-center justify-center w-[1.6rem] h-[1.6rem] text-brand-text-muted cursor-pointer bg-transparent border-0 p-0"
 								:aria-label="showPassword ? 'Nascondi password' : 'Mostra password'"
 								@click="showPassword = !showPassword"
 							>
@@ -194,50 +213,56 @@ const updatePassword = async () => {
 								</svg>
 							</button>
 						</div>
-						<div v-if="data.password" class="auth-password-meter">
+						<div v-if="data.password" class="flex gap-1 mt-0.5">
 							<div
 								v-for="i in 5"
 								:key="i"
-								class="auth-password-meter__bar"
-								:class="passwordStrength >= i ? (passwordStrength <= 2 ? 'auth-password-meter__bar--weak' : passwordStrength <= 3 ? 'auth-password-meter__bar--medium' : 'auth-password-meter__bar--strong') : ''"
+								class="h-[3px] flex-1 rounded-full transition-colors duration-200"
+								:class="passwordStrength >= i
+									? (passwordStrength <= 2
+										? 'bg-brand-error'
+										: passwordStrength <= 3
+											? 'bg-[var(--color-warning-text)]'
+											: 'bg-[var(--color-brand-success)]')
+									: 'bg-brand-border'"
 							/>
 						</div>
-						<ul v-if="data.password" class="auth-password-checklist">
-							<li :class="passwordChecks.minLength ? 'auth-password-checklist__item auth-password-checklist__item--good' : 'auth-password-checklist__item'">
+						<ul v-if="data.password" class="grid grid-cols-2 max-sm:grid-cols-1 gap-y-[5px] gap-x-2.5 mt-1">
+							<li class="flex items-center gap-1 text-xs leading-[1.35] text-brand-text-muted">
 								<span>{{ passwordChecks.minLength ? '✓' : '•' }}</span> Minimo 8 caratteri
 							</li>
-							<li :class="passwordChecks.hasLower ? 'auth-password-checklist__item auth-password-checklist__item--good' : 'auth-password-checklist__item'">
+							<li class="flex items-center gap-1 text-xs leading-[1.35] text-brand-text-muted">
 								<span>{{ passwordChecks.hasLower ? '✓' : '•' }}</span> Una lettera minuscola
 							</li>
-							<li :class="passwordChecks.hasUpper ? 'auth-password-checklist__item auth-password-checklist__item--good' : 'auth-password-checklist__item'">
+							<li class="flex items-center gap-1 text-xs leading-[1.35] text-brand-text-muted">
 								<span>{{ passwordChecks.hasUpper ? '✓' : '•' }}</span> Una lettera maiuscola
 							</li>
-							<li :class="passwordChecks.hasNumber ? 'auth-password-checklist__item auth-password-checklist__item--good' : 'auth-password-checklist__item'">
+							<li class="flex items-center gap-1 text-xs leading-[1.35] text-brand-text-muted">
 								<span>{{ passwordChecks.hasNumber ? '✓' : '•' }}</span> Un numero
 							</li>
-							<li :class="passwordChecks.hasSymbol ? 'auth-password-checklist__item auth-password-checklist__item--good' : 'auth-password-checklist__item'">
+							<li class="flex items-center gap-1 text-xs leading-[1.35] text-brand-text-muted">
 								<span>{{ passwordChecks.hasSymbol ? '✓' : '•' }}</span> Un simbolo speciale
 							</li>
 						</ul>
 					</div>
-					<p v-if="fieldErrors.password" class="auth-feedback auth-feedback--error">
+					<p v-if="fieldErrors.password" class="mt-0 px-3 py-2.5 rounded-2xl text-sm leading-[1.5] text-[var(--color-error-text)] bg-[var(--surface-accent-wash)] border border-[var(--color-error-border)]">
 						<span v-for="(error, index) in fieldErrors.password" :key="index" class="block">{{ error }}</span>
 					</p>
 
-					<div class="auth-field-group">
-						<label for="password_confirmation" class="auth-field-label">Conferma nuova password</label>
-						<div class="auth-password-wrap">
+					<div class="flex flex-col gap-1.5">
+						<label for="password_confirmation" class="text-[11px] font-bold uppercase tracking-[0.4px] text-brand-text-muted leading-none">Conferma nuova password</label>
+						<div class="relative">
 							<input
 								id="password_confirmation"
 								v-model="data.password_confirmation"
 								:type="showPasswordConfirmation ? 'text' : 'password'"
-								class="form-input auth-field-input--password"
+								class="form-input pr-[2.55rem]"
 								required
 								autocomplete="new-password"
 							>
 							<button
 								type="button"
-								class="auth-password-toggle"
+								class="absolute top-1/2 right-3 -translate-y-1/2 inline-flex items-center justify-center w-[1.6rem] h-[1.6rem] text-brand-text-muted cursor-pointer bg-transparent border-0 p-0"
 								:aria-label="showPasswordConfirmation ? 'Nascondi conferma password' : 'Mostra conferma password'"
 								@click="showPasswordConfirmation = !showPasswordConfirmation"
 							>
@@ -252,12 +277,12 @@ const updatePassword = async () => {
 							</button>
 						</div>
 					</div>
-					<p v-if="fieldErrors.password_confirmation" class="auth-feedback auth-feedback--error">
+					<p v-if="fieldErrors.password_confirmation" class="mt-0 px-3 py-2.5 rounded-2xl text-sm leading-[1.5] text-[var(--color-error-text)] bg-[var(--surface-accent-wash)] border border-[var(--color-error-border)]">
 						<span v-for="(error, index) in fieldErrors.password_confirmation" :key="index" class="block">{{ error }}</span>
 					</p>
 
-					<p v-if="messageError" class="auth-feedback auth-feedback--error">{{ messageError }}</p>
-					<p v-if="messageSuccess" class="auth-feedback auth-feedback--success">{{ messageSuccess }}</p>
+					<p v-if="messageError" class="mt-0 px-3 py-2.5 rounded-2xl text-sm leading-[1.5] text-[var(--color-error-text)] bg-[var(--surface-accent-wash)] border border-[var(--color-error-border)]">{{ messageError }}</p>
+					<p v-if="messageSuccess" class="mt-0 px-3 py-2.5 rounded-2xl text-sm leading-[1.5] text-[var(--color-success-text-strong)] bg-[var(--color-success-bg)] border border-[var(--color-success-border)]">{{ messageSuccess }}</p>
 
 					<SfButton type="submit" variant="primary" block :loading="isLoading" loading-text="Salvataggio...">Aggiorna password</SfButton>
 				</form>

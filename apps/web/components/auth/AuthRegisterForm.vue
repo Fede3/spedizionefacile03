@@ -33,16 +33,34 @@ const CTA_CLS = 'btn-cta-filled w-full h-[50px] rounded-full text-[14px] flex it
     @submit.capture.prevent.stop="emit('submit')"
   >
     <!-- Tipo profilo: radio inline compatti -->
-    <fieldset class="auth-overlay-profile-radios" aria-label="Tipo profilo">
-      <label class="auth-overlay-profile-radio">
-        <input :checked="formValue('user_type') === 'privato'" type="radio" value="privato" class="auth-overlay-profile-radio__input" @change="updateFormField('user_type', 'privato')" >
-        <span class="auth-overlay-profile-radio__dot" aria-hidden="true" />
-        <span class="auth-overlay-profile-radio__label">Privato</span>
+    <fieldset class="flex gap-[18px] p-0 m-0 mt-1 mb-0.5 border-0" aria-label="Tipo profilo">
+      <label class="group inline-flex items-center gap-[7px] text-sm font-semibold text-brand-text-secondary select-none cursor-pointer has-[:checked]:text-brand-text">
+        <input
+          :checked="formValue('user_type') === 'privato'"
+          type="radio"
+          value="privato"
+          class="peer absolute w-px h-px overflow-hidden opacity-0 [clip:rect(0_0_0_0)] focus-visible:outline-2 focus-visible:outline-brand-primary focus-visible:outline-offset-2"
+          @change="updateFormField('user_type', 'privato')"
+        >
+        <span
+          class="relative inline-block w-4 h-4 shrink-0 rounded-full border-2 border-brand-border bg-white transition-[border-color,box-shadow] peer-checked:border-brand-primary peer-checked:after:content-[''] peer-checked:after:absolute peer-checked:after:top-1/2 peer-checked:after:left-1/2 peer-checked:after:w-2 peer-checked:after:h-2 peer-checked:after:rounded-full peer-checked:after:bg-brand-primary peer-checked:after:-translate-x-1/2 peer-checked:after:-translate-y-1/2 peer-focus-visible:shadow-[0_0_0_3px_rgba(9,88,102,0.22)]"
+          aria-hidden="true"
+        />
+        <span>Privato</span>
       </label>
-      <label class="auth-overlay-profile-radio">
-        <input :checked="formValue('user_type') === 'commerciante'" type="radio" value="commerciante" class="auth-overlay-profile-radio__input" @change="updateFormField('user_type', 'commerciante')" >
-        <span class="auth-overlay-profile-radio__dot" aria-hidden="true" />
-        <span class="auth-overlay-profile-radio__label">Azienda</span>
+      <label class="group inline-flex items-center gap-[7px] text-sm font-semibold text-brand-text-secondary select-none cursor-pointer has-[:checked]:text-brand-text">
+        <input
+          :checked="formValue('user_type') === 'commerciante'"
+          type="radio"
+          value="commerciante"
+          class="peer absolute w-px h-px overflow-hidden opacity-0 [clip:rect(0_0_0_0)] focus-visible:outline-2 focus-visible:outline-brand-primary focus-visible:outline-offset-2"
+          @change="updateFormField('user_type', 'commerciante')"
+        >
+        <span
+          class="relative inline-block w-4 h-4 shrink-0 rounded-full border-2 border-brand-border bg-white transition-[border-color,box-shadow] peer-checked:border-brand-primary peer-checked:after:content-[''] peer-checked:after:absolute peer-checked:after:top-1/2 peer-checked:after:left-1/2 peer-checked:after:w-2 peer-checked:after:h-2 peer-checked:after:rounded-full peer-checked:after:bg-brand-primary peer-checked:after:-translate-x-1/2 peer-checked:after:-translate-y-1/2 peer-focus-visible:shadow-[0_0_0_3px_rgba(9,88,102,0.22)]"
+          aria-hidden="true"
+        />
+        <span>Azienda</span>
       </label>
     </fieldset>
 

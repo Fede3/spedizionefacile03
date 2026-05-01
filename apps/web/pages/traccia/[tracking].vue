@@ -1,5 +1,4 @@
 <script setup>
-import '~/assets/css/tracking.css';
 import TrackingStepper from '~/components/tracking/TrackingStepper.vue';
 import TrackingEventsTimeline from '~/components/tracking/TrackingEventsTimeline.vue';
 import TrackingActionsBar from '~/components/tracking/TrackingActionsBar.vue';
@@ -188,7 +187,7 @@ useSeoMeta({
 										</h1>
 										<button
 											type="button"
-											class="copy-btn"
+											class="inline-flex items-center gap-[6px] px-[10px] py-[6px] rounded-[8px] bg-white text-[#095866] ring-[1.5px] ring-[#DFE2E7] cursor-pointer transition-all duration-200 hover:ring-[#095866] hover:bg-[#eef7f8] active:scale-[0.97] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#095866]"
 											:aria-label="copyOk ? 'Codice copiato' : 'Copia codice tracking'"
 											@click="copyCode"
 										>
@@ -209,8 +208,8 @@ useSeoMeta({
 
 								<!-- Stato + ETA -->
 								<div class="flex flex-col items-start lg:items-end gap-[8px]">
-									<span class="status-chip" :class="statusChipClass">
-										<span class="status-dot" aria-hidden="true"/>
+									<span class="inline-flex items-center gap-[8px] px-[14px] py-[6px] rounded-full text-[13px] tracking-[0.01em]" :class="statusChipClass" style="font-weight:700">
+										<span class="w-[8px] h-[8px] rounded-full bg-current shadow-[0_0_0_3px_rgba(255,255,255,0.7)] shrink-0" aria-hidden="true"/>
 										{{ data.status_label }}
 									</span>
 									<div v-if="etaFormatted && !isDelivered" class="text-right">
@@ -288,7 +287,7 @@ useSeoMeta({
 									</h3>
 									<div v-if="data.origin || data.destination" class="grid gap-[10px]">
 										<div class="flex items-start gap-[10px]">
-											<div class="route-icon route-icon-origin">
+											<div class="w-[28px] h-[28px] rounded-[8px] inline-flex items-center justify-center shrink-0 bg-[#eef7f8] text-[#095866]">
 												<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
 													<circle cx="12" cy="12" r="3" />
 												</svg>
@@ -302,9 +301,9 @@ useSeoMeta({
 												</p>
 											</div>
 										</div>
-										<div class="route-divider" aria-hidden="true"/>
+										<div class="w-[2px] h-[16px] bg-[#DFE2E7] ml-[13px] rounded-[1px]" aria-hidden="true"/>
 										<div class="flex items-start gap-[10px]">
-											<div class="route-icon route-icon-dest">
+											<div class="w-[28px] h-[28px] rounded-[8px] inline-flex items-center justify-center shrink-0 bg-[#fff5ef] text-[#E44203]">
 												<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
 													<path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
 													<circle cx="12" cy="10" r="3" />

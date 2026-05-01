@@ -1,7 +1,5 @@
 <!-- COMPONENTE: TrackingActionsBar (tracking/TrackingActionsBar.vue) -->
 <script setup>
-import '~/assets/css/tracking.css';
-
 defineProps({
 	orderId: {
 		type: [String, Number],

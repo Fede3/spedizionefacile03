@@ -1,7 +1,5 @@
 <!-- COMPONENTE: TrackingStepper (tracking/TrackingStepper.vue) -->
 <script setup>
-import '~/assets/css/tracking.css';
-
 const props = defineProps({
 	steps: {
 		type: Array,
@@ -43,7 +41,7 @@ const isFuture = (idx) => idx > props.currentIndex;
 
 		<!-- Stepper -->
 		<div
-			class="stepper-scroll overflow-x-auto md:overflow-visible -mx-[12px] px-[12px] md:mx-0 md:px-0"
+			class="overflow-x-auto md:overflow-visible -mx-[12px] px-[12px] md:mx-0 md:px-0 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
 			role="list"
 			aria-label="Avanzamento spedizione"
 		>
@@ -59,11 +57,11 @@ const isFuture = (idx) => idx > props.currentIndex;
 					<!-- Cerchio + label -->
 					<div class="flex flex-col items-center text-center w-[88px] md:w-auto md:flex-1 shrink-0">
 						<div
-							class="step-circle"
+							class="relative inline-flex items-center justify-center w-[36px] h-[36px] rounded-full transition-all duration-200"
 							:class="{
-								'step-done': isDone(idx),
-								'step-current': isCurrent(idx),
-								'step-future': isFuture(idx),
+								'bg-[#095866] text-white shadow-[0_2px_6px_rgba(9,88,102,0.25)]': isDone(idx),
+								'bg-white text-[#095866] shadow-[inset_0_0_0_2.5px_#095866]': isCurrent(idx),
+								'bg-white text-[#9aa3b1] shadow-[inset_0_0_0_1.5px_#DFE2E7]': isFuture(idx),
 							}"
 							:aria-label="`${step.label}: ${isDone(idx) ? 'completato' : isCurrent(idx) ? 'in corso' : 'in attesa'}`"
 						>
@@ -84,13 +82,16 @@ const isFuture = (idx) => idx > props.currentIndex;
 								<polyline points="20 6 9 17 4 12" />
 							</svg>
 							<!-- Current/Future: numero -->
-							<span v-else class="step-num">{{ idx + 1 }}</span>
+							<span v-else class="text-[13px] leading-none [font-variant-numeric:tabular-nums]" style="font-weight:800">{{ idx + 1 }}</span>
 
 							<!-- Pulse current -->
-							<span v-if="isCurrent(idx)" class="step-pulse" aria-hidden="true"/>
+							<span
+								v-if="isCurrent(idx)"
+								class="absolute -inset-[4px] rounded-full ring-2 ring-[rgba(9,88,102,0.45)] pointer-events-none animate-[stepPulse_2s_ease-out_infinite] motion-reduce:animate-none motion-reduce:opacity-55"
+								aria-hidden="true"/>
 						</div>
 						<span
-							class="step-label mt-[8px] text-[11px] md:text-[12px] leading-[1.3]"
+							class="mt-[8px] text-[11px] md:text-[12px] leading-[1.3]"
 							:class="{
 								'text-[#1d2738]': isDone(idx) || isCurrent(idx),
 								'text-[#7a8493]': isFuture(idx),
@@ -104,8 +105,8 @@ const isFuture = (idx) => idx > props.currentIndex;
 					<!-- Linea connettrice -->
 					<div
 						v-if="idx < steps.length - 1"
-						class="step-line mt-[16px] flex-1 mx-[4px] md:mx-[6px] min-w-[24px]"
-						:class="idx < currentIndex ? 'step-line-done' : 'step-line-future'"
+						class="h-[2px] rounded-[1px] mt-[16px] flex-1 mx-[4px] md:mx-[6px] min-w-[24px] transition-colors duration-300"
+						:class="idx < currentIndex ? 'bg-[#095866]' : 'bg-[#DFE2E7]'"
 						aria-hidden="true"
 					/>
 				</li>

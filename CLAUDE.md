@@ -51,6 +51,26 @@ Cookie sessione Laravel (Sanctum SPA) emessi su `127.0.0.1:8787` → condivisi t
 - **Palette**: teal `#095866` + arancione `#E44203` + neutri. **Mai blu** (no `blue-*`, `indigo-*`, `sky-*`, `slate-*`).
 - **Italiano** per stringhe utente (commenti, label, errori). **English** per identifier (variabili, funzioni, tabelle).
 
+## Design system (regola d'oro UI)
+
+- **UNA sola strada per lo styling**: Tailwind utility puro + componenti `Sf*` proprietari + Nuxt UI 4 per primitive. Vedi [`docs/adr/004-tailwind-utility-design-system.md`](docs/adr/004-tailwind-utility-design-system.md).
+- **CSS custom solo in casi documentati**: `:root` token in `assets/css/main.css`, keyframes in `funnel-animations.css`, `funnel-*.css` Stripe-critical (intoccabili senza E2E carta). Tutti gli altri stili = Tailwind utility inline o `Sf*` component.
+- **Naming token brand** (CSS variables in `:root` mappate a Tailwind config):
+  - `bg-brand-primary`, `text-brand-primary`, `border-brand-primary` (teal)
+  - `bg-brand-accent`, `text-brand-accent`, `bg-brand-accent-surface` (arancione)
+  - `text-brand-text`, `text-brand-text-secondary`, `text-brand-text-muted`
+  - `bg-brand-card`, `border-brand-border`, `bg-brand-bg-alt`
+  - `bg-brand-success-bg`, `text-brand-success-fg`, `bg-brand-error`
+  - `rounded-button`, `rounded-control`, `rounded-card`, `rounded-pill`
+  - `shadow-sf`, `shadow-sf-sm`, `shadow-sf-lg`, `shadow-sf-focus`
+- **Componenti `Sf*` disponibili** (auto-imported, vedi `pages/__design-system.vue`):
+  - Form: `SfButton`, `SfInput`, `SfTextarea`, `SfSelect`, `SfCheckbox`, `SfRadio`, `SfSegmented`, `SfFormGroup`
+  - Surface: `SfCard`, `SfModal`, `SfConfirmDialog`, `SfTooltip`, `SfDropdown`, `SfSkeleton`
+  - Feedback: `SfBadge`, `SfStatusPill`, `SfStatCard`, `SfAvatar`, `SfAlert`, `SfEmptyState`, `SfAddressChip`
+  - Navigation: `SfTabs`, `SfBreadcrumbs`, `SfPagination`, `SfTable`
+- **Nuxt UI 4** (`<UModal>`, `<UTable>`, `<UInput>`, `<UFormGroup>`, `<UTabs>`, `<UAvatar>`, `<UIcon>`): primitive avanzate quando `Sf*` non basta.
+- **MAI**: `<style scoped>` con classi page-specific custom (`.account-*`, `.admin-*`, `.lp-*`). MAI mischiare CSS custom + Tailwind nello stesso componente.
+
 ## File critici (idempotency / soldi reali)
 
 Modificare solo con E2E gating Stripe (`4242 4242 4242 4242 09/30 123`):

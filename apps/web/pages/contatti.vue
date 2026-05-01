@@ -1,7 +1,5 @@
 <script setup>
-// Pagina Contatti — redesign editoriale (hero + strip canali + form centrato + FAQ grid + quick next)
-import '~/assets/css/content.css'
-import '~/assets/css/contatti.css'
+// Pagina Contatti — redesign editoriale (hero + strip canali + form centrato + FAQ grid + quick next).
 
 useSeoMeta({
 	title: 'Contatti - Assistenza e Supporto',
@@ -148,36 +146,40 @@ const quickActions = [
 </script>
 
 <template>
-	<div class="contatti-page">
+	<div class="min-h-screen bg-page-gradient pb-16 [&>section+section]:mt-8">
 		<!-- ── HERO editoriale: accent bar + titolo + claim + pill canali rapidi ── -->
 		<PublicPageHeader
 			eyebrow="Assistenza e supporto"
 			title="Parla con noi"
 			description="Rispondiamo in giornata a email, telefono o messaggio. Nessun bot, solo persone che conoscono il mondo BRT."
 			:crumbs="[{ label: 'Home', to: '/' }, { label: 'Contatti' }]">
-			<div class="contatti-hero__pills">
-				<a href="mailto:info@spediamofacile.it" class="contatti-hero__pill">
-					<span class="contatti-hero__pill-label">Email</span>
-					<span class="contatti-hero__pill-arrow" aria-hidden="true">→</span>
-					<span class="contatti-hero__pill-value">info@spediamofacile.it</span>
+			<div class="mt-2 flex flex-wrap gap-x-6 gap-y-3">
+				<a
+					href="mailto:info@spediamofacile.it"
+					class="inline-flex items-center gap-2.5 rounded-pill border border-brand-primary/20 bg-brand-card px-[18px] py-2.5 text-[0.9rem] text-brand-primary no-underline transition hover:-translate-y-px hover:border-brand-accent hover:shadow-[0_6px_16px_rgba(9,88,102,0.08)]">
+					<span class="text-[0.72rem] font-bold uppercase tracking-[0.08em] text-brand-text-secondary">Email</span>
+					<span class="font-bold text-brand-accent" aria-hidden="true">→</span>
+					<span class="font-semibold text-brand-primary">info@spediamofacile.it</span>
 				</a>
-				<a href="tel:+390282954130" class="contatti-hero__pill">
-					<span class="contatti-hero__pill-label">Telefono</span>
-					<span class="contatti-hero__pill-arrow" aria-hidden="true">→</span>
-					<span class="contatti-hero__pill-value">+39 02 8295 4130</span>
+				<a
+					href="tel:+390282954130"
+					class="inline-flex items-center gap-2.5 rounded-pill border border-brand-primary/20 bg-brand-card px-[18px] py-2.5 text-[0.9rem] text-brand-primary no-underline transition hover:-translate-y-px hover:border-brand-accent hover:shadow-[0_6px_16px_rgba(9,88,102,0.08)]">
+					<span class="text-[0.72rem] font-bold uppercase tracking-[0.08em] text-brand-text-secondary">Telefono</span>
+					<span class="font-bold text-brand-accent" aria-hidden="true">→</span>
+					<span class="font-semibold text-brand-primary">+39 02 8295 4130</span>
 				</a>
-				<span class="contatti-hero__pill contatti-hero__pill--static">
-					<span class="contatti-hero__pill-label">Sede</span>
-					<span class="contatti-hero__pill-arrow" aria-hidden="true">→</span>
-					<span class="contatti-hero__pill-value">Milano (MI)</span>
+				<span class="inline-flex cursor-default items-center gap-2.5 rounded-pill border border-brand-primary/20 bg-brand-card px-[18px] py-2.5 text-[0.9rem] text-brand-primary">
+					<span class="text-[0.72rem] font-bold uppercase tracking-[0.08em] text-brand-text-secondary">Sede</span>
+					<span class="font-bold text-brand-accent" aria-hidden="true">→</span>
+					<span class="font-semibold text-brand-primary">Milano (MI)</span>
 				</span>
 			</div>
 		</PublicPageHeader>
 
 		<!-- ── STRIP canali: 4 card icona con valore ── -->
-		<section class="contact-strip" aria-label="Canali di contatto">
+		<section aria-label="Canali di contatto">
 			<div class="my-container">
-				<div class="contact-strip__grid">
+				<div class="grid gap-4 [grid-template-columns:repeat(auto-fit,minmax(200px,1fr))]">
 					<component
 						:is="channel.href ? 'a' : 'div'"
 						v-for="channel in channels"
@@ -185,77 +187,111 @@ const quickActions = [
 						:href="channel.href || undefined"
 						:target="channel.href && channel.href.startsWith('http') ? '_blank' : undefined"
 						:rel="channel.href && channel.href.startsWith('http') ? 'noopener noreferrer' : undefined"
-						class="contact-strip__card">
-						<span class="contact-strip__icon" aria-hidden="true">
+						class="grid gap-2 rounded-card border border-brand-primary/12 bg-brand-card p-5 text-inherit no-underline shadow-[0_2px_8px_rgba(9,88,102,0.04)] transition hover:[&:where(a)]:-translate-y-0.5 hover:[&:where(a)]:border-brand-primary/30 hover:[&:where(a)]:shadow-[0_8px_24px_rgba(9,88,102,0.08)]">
+						<span class="inline-flex h-11 w-11 items-center justify-center rounded-[14px] bg-gradient-to-br from-brand-primary/15 to-brand-primary/5 text-brand-primary" aria-hidden="true">
 							<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
 								<path :d="channel.icon" />
 							</svg>
 						</span>
-						<span class="contact-strip__label">{{ channel.label }}</span>
-						<span class="contact-strip__value">{{ channel.value }}</span>
+						<span class="text-[0.6875rem] font-bold uppercase tracking-[0.1em] text-brand-text-secondary">{{ channel.label }}</span>
+						<span class="break-words text-[0.9375rem] font-semibold text-brand-primary">{{ channel.value }}</span>
 					</component>
 				</div>
 			</div>
 		</section>
 
 		<!-- ── FORM centrato (max 640px) ── -->
-		<section class="contact-form-centered" aria-labelledby="contact-form-title">
+		<section aria-labelledby="contact-form-title">
 			<div class="my-container">
-				<div v-if="submitSuccess" class="contact-form-centered__success">
-					<div class="contact-form-centered__success-icon" aria-hidden="true">
+				<div v-if="submitSuccess" class="grid w-full justify-items-center gap-3 rounded-[20px] border border-brand-primary/12 bg-brand-card p-8 text-center shadow-[0_4px_16px_rgba(9,88,102,0.05),0_12px_32px_rgba(9,88,102,0.04)] md:px-10 md:py-9">
+					<div class="inline-flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-brand-primary/20 to-brand-primary/5 text-brand-primary" aria-hidden="true">
 						<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
 							<path d="M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2M11,16.5L18,9.5L16.59,8.09L11,13.67L7.91,10.59L6.5,12L11,16.5Z" />
 						</svg>
 					</div>
-					<h2 class="contact-form-centered__title">Messaggio inviato</h2>
-					<p class="contact-form-centered__success-text">Ti risponderemo in giornata. Nel frattempo puoi tracciare una spedizione o calcolare un preventivo.</p>
+					<h2 class="m-0 font-display text-[1.625rem] font-extrabold leading-[1.1] tracking-[-0.025em] text-brand-primary">Messaggio inviato</h2>
+					<p class="m-0 max-w-[44ch] text-[0.95rem] leading-[1.55] text-brand-text-secondary">Ti risponderemo in giornata. Nel frattempo puoi tracciare una spedizione o calcolare un preventivo.</p>
 					<SfButton @click="submitSuccess = false">
 						Invia un altro messaggio
 					</SfButton>
 				</div>
 
-				<div v-else class="contact-form-centered__wrap">
-					<header class="contact-form-centered__header">
-						<span class="contact-form-centered__accent" aria-hidden="true"/>
-						<h2 id="contact-form-title" class="contact-form-centered__title">Scrivici</h2>
-						<p class="contact-form-centered__lead">Descrivi la richiesta con peso, tratta e urgenza: piu contesto, risposta piu precisa.</p>
+				<div v-else class="w-full rounded-[20px] border border-brand-primary/12 bg-brand-card p-8 shadow-[0_4px_16px_rgba(9,88,102,0.05),0_12px_32px_rgba(9,88,102,0.04)] md:px-10 md:py-9">
+					<header class="mb-6 grid justify-items-center gap-2 text-center">
+						<span class="block h-[3px] w-12 rounded-pill bg-brand-accent" aria-hidden="true"/>
+						<h2 id="contact-form-title" class="m-0 font-display text-[1.625rem] font-extrabold leading-[1.1] tracking-[-0.025em] text-brand-primary">Scrivici</h2>
+						<p class="m-0 max-w-[48ch] text-[0.95rem] leading-[1.55] text-brand-text-secondary">Descrivi la richiesta con peso, tratta e urgenza: piu contesto, risposta piu precisa.</p>
 					</header>
 
-					<form class="contact-form" novalidate @submit.prevent="handleSubmit">
-						<div class="contact-form__grid contact-form__grid--two">
-							<div class="contact-field">
-								<label for="cf-name" class="contact-field__label">Nome</label>
-								<input id="cf-name" v-model="contactForm.name" type="text" required autocomplete="given-name" class="contact-field__input" placeholder="Es. Mario" >
-							</div>
-							<div class="contact-field">
-								<label for="cf-surname" class="contact-field__label">Cognome</label>
-								<input id="cf-surname" v-model="contactForm.surname" type="text" required autocomplete="family-name" class="contact-field__input" placeholder="Es. Rossi" >
-							</div>
+					<form class="space-y-6" novalidate @submit.prevent="handleSubmit">
+						<div class="grid gap-4 md:grid-cols-2">
+							<SfFormGroup label="Nome">
+								<SfInput
+									id="cf-name"
+									v-model="contactForm.name"
+									type="text"
+									required
+									autocomplete="given-name"
+									placeholder="Es. Mario" />
+							</SfFormGroup>
+							<SfFormGroup label="Cognome">
+								<SfInput
+									id="cf-surname"
+									v-model="contactForm.surname"
+									type="text"
+									required
+									autocomplete="family-name"
+									placeholder="Es. Rossi" />
+							</SfFormGroup>
 						</div>
 
-						<div class="contact-form__grid contact-form__grid--two">
-							<div class="contact-field">
-								<label for="cf-email" class="contact-field__label">Email</label>
-								<input id="cf-email" v-model="contactForm.email" type="email" required autocomplete="email" class="contact-field__input" placeholder="nome@email.it" >
-							</div>
-							<div class="contact-field">
-								<label for="cf-phone" class="contact-field__label">Telefono <span class="contact-field__hint">(opzionale)</span></label>
-								<input id="cf-phone" v-model="contactForm.telephone_number" type="tel" autocomplete="tel" class="contact-field__input" placeholder="+39 ..." >
-							</div>
+						<div class="grid gap-4 md:grid-cols-2">
+							<SfFormGroup label="Email">
+								<SfInput
+									id="cf-email"
+									v-model="contactForm.email"
+									type="email"
+									required
+									autocomplete="email"
+									placeholder="nome@email.it" />
+							</SfFormGroup>
+							<SfFormGroup label="Telefono" hint="(opzionale)">
+								<SfInput
+									id="cf-phone"
+									v-model="contactForm.telephone_number"
+									type="tel"
+									autocomplete="tel"
+									placeholder="+39 ..." />
+							</SfFormGroup>
 						</div>
 
-						<div class="contact-field">
-							<label for="cf-message" class="contact-field__label">Messaggio <span class="contact-field__hint">(per reclami: indica "Reclamo" e numero spedizione BRT)</span></label>
-							<textarea id="cf-message" v-model="contactForm.message" required rows="6" maxlength="1500" class="contact-field__textarea" placeholder="Racconta la richiesta con dettagli utili (tratta, peso, urgenza). Per un reclamo: inizia con &quot;Reclamo&quot; e allega numero spedizione."/>
-						</div>
+						<SfFormGroup label="Messaggio" hint='(per reclami: indica "Reclamo" e numero spedizione BRT)'>
+							<SfTextarea
+								id="cf-message"
+								v-model="contactForm.message"
+								required
+								:rows="6"
+								:maxlength="1500"
+								placeholder='Racconta la richiesta con dettagli utili (tratta, peso, urgenza). Per un reclamo: inizia con "Reclamo" e allega numero spedizione.' />
+						</SfFormGroup>
 
-						<div class="contact-form__turnstile" aria-label="Verifica anti-bot">
+						<div class="mt-1 flex justify-center" aria-label="Verifica anti-bot">
 							<NuxtTurnstile v-model="turnstile.token.value" @expired="turnstile.onExpire" @error="turnstile.onError" />
 						</div>
 
-						<p v-if="submitError" class="contact-form__error" role="alert">{{ submitError }}</p>
+						<p
+							v-if="submitError"
+							class="m-0 rounded-control border border-brand-error/30 bg-brand-error/10 p-3 text-sm font-semibold text-brand-error"
+							role="alert">
+							{{ submitError }}
+						</p>
 
-						<SfButton type="submit" size="lg" class="contact-form__cta" :loading="isSubmitting" :disabled="!turnstile.isReady.value">
+						<SfButton
+							type="submit"
+							size="lg"
+							class="mt-1 w-full justify-center md:ml-auto md:w-auto md:min-w-[220px]"
+							:loading="isSubmitting"
+							:disabled="!turnstile.isReady.value">
 							<span v-if="!isSubmitting">Invia richiesta</span>
 							<span v-else>Invio in corso...</span>
 						</SfButton>
@@ -265,36 +301,36 @@ const quickActions = [
 		</section>
 
 		<!-- ── FAQ grid editoriale ── -->
-		<section class="contact-faq-grid" aria-labelledby="contact-faq-title">
+		<section aria-labelledby="contact-faq-title">
 			<div class="my-container">
-				<header class="contact-faq-grid__header">
-					<span class="contact-faq-grid__accent" aria-hidden="true"/>
-					<h2 id="contact-faq-title" class="contact-faq-grid__title">Domande frequenti</h2>
-					<p class="contact-faq-grid__lead">Prima di scriverci, dai un'occhiata: molte risposte sono qui.</p>
+				<header class="mb-6 grid justify-items-center gap-2.5 text-center">
+					<span class="block h-[3px] w-12 rounded-pill bg-brand-accent" aria-hidden="true"/>
+					<h2 id="contact-faq-title" class="m-0 font-display text-[1.75rem] font-extrabold leading-[1.1] tracking-[-0.025em] text-brand-primary">Domande frequenti</h2>
+					<p class="m-0 max-w-[56ch] text-[0.95rem] text-brand-text-secondary">Prima di scriverci, dai un'occhiata: molte risposte sono qui.</p>
 				</header>
 				<ContactFAQ />
 			</div>
 		</section>
 
 		<!-- ── Quick next: 3 strip orizzontali per azione rapida ── -->
-		<section class="contact-quick-next" aria-label="Prossime azioni utili">
+		<section aria-label="Prossime azioni utili">
 			<div class="my-container">
-				<div class="contact-quick-next__grid">
+				<div class="grid gap-3">
 					<NuxtLink
 						v-for="action in quickActions"
 						:key="action.href"
 						:to="action.href"
-						class="contact-quick-next__strip">
-						<span class="contact-quick-next__icon" aria-hidden="true">
+						class="group grid grid-cols-[auto_1fr_auto] items-center gap-4 rounded-card border border-brand-primary/12 bg-brand-card px-5 py-4 text-inherit no-underline transition hover:-translate-y-px hover:border-brand-accent hover:shadow-[0_8px_20px_rgba(9,88,102,0.08)]">
+						<span class="inline-flex h-10 w-10 items-center justify-center rounded-control bg-gradient-to-br from-brand-primary/15 to-brand-primary/5 text-brand-primary" aria-hidden="true">
 							<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
 								<path :d="action.icon" />
 							</svg>
 						</span>
-						<span class="contact-quick-next__body">
-							<span class="contact-quick-next__title">{{ action.title }}</span>
-							<span class="contact-quick-next__text">{{ action.text }}</span>
+						<span class="grid gap-0.5 text-center">
+							<span class="text-[0.9375rem] font-bold text-brand-primary">{{ action.title }}</span>
+							<span class="text-[0.82rem] text-brand-text-secondary">{{ action.text }}</span>
 						</span>
-						<span class="contact-quick-next__arrow" aria-hidden="true">
+						<span class="inline-flex items-center justify-center text-brand-accent transition group-hover:translate-x-[3px]" aria-hidden="true">
 							<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
 								<path d="M5 12h14" />
 								<path d="m12 5 7 7-7 7" />

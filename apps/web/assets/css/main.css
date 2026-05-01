@@ -12,8 +12,15 @@
 @import "./funnel-payment-methods.css";
 @import "./funnel-cart-totals.css";
 @import "./components/empty-state.css";
-@import "./tracking.css";
 @import "./account.css";
+
+/* Keyframe stepPulse: alone esterno cerchio "current" nello stepper tracking.
+   Era in tracking.css; consolidato qui dopo migrazione del modulo a Tailwind utility. */
+@keyframes stepPulse {
+	0% { transform: scale(0.9); opacity: 0.9; }
+	70% { transform: scale(1.25); opacity: 0; }
+	100% { transform: scale(1.25); opacity: 0; }
+}
 /* Nasconde le frecce spinner di default del browser sugli input number.
    Le useriamo solo quando serve un pulsante +/- custom (es. quantity-stepper). */
 input[type="number"]::-webkit-inner-spin-button,

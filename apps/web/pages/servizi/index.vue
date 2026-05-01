@@ -5,9 +5,6 @@
   API: GET /api/public/services — con fallback hardcoded.
 -->
 <script setup>
-// CSS split route-specific: servizi.css usato solo in /servizi/* + /chi-siamo.
-import '~/assets/css/servizi.css';
-
 useSeoMeta({
 	title: 'Servizi di Spedizione',
 	ogTitle: 'Servizi di Spedizione',

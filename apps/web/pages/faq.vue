@@ -1,5 +1,4 @@
 <script setup>
-import '~/assets/css/content.css';
 import { computed, ref } from 'vue';
 import { faqs, categories, highlightMatch } from '~/utils/faqs';
 

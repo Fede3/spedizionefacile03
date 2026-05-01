@@ -1,5 +1,4 @@
-<script setup>// Carica autenticazione.css solo quando l'overlay è montato (code-splitting route-specific).
-import '~/assets/css/autenticazione.css';
+<script setup>
 // Shell del modal autenticazione. Orchestra 4 flussi distinti (Login / Registrati /
 // Forgot password / Verifica email) delegando la presentazione a sub-componenti:
 //   • AuthLoginForm        — tab Login (email + password + link forgot)
@@ -226,14 +225,20 @@ const modalUi = {
             v-if="!forgotMode && !verificationMode"
             role="tablist"
             aria-label="Accesso o registrazione"
-            class="sf-shared-segment-strip sf-shared-segment-strip--two sf-shared-segment-strip--compact auth-overlay-segment-strip mt-[0]"
+            class="sf-shared-segment-strip sf-shared-segment-strip--two sf-shared-segment-strip--compact w-full max-w-none mt-0"
             style="box-shadow: inset 0 1px 2px rgba(0,0,0,0.04)"
           >
             <button
               type="button"
               role="tab"
               :aria-selected="selectedTab === 'login'"
-              :class="['sf-shared-segment', 'sf-shared-segment--compact', 'auth-overlay-segment', selectedTab === 'login' ? 'sf-shared-segment--active' : '']"
+              :class="[
+                'sf-shared-segment', 'sf-shared-segment--compact',
+                'min-h-[44px] px-4',
+                selectedTab === 'login'
+                  ? 'sf-shared-segment--active !bg-brand-primary !border-brand-primary !text-white !font-bold !shadow-[0_6px_16px_rgba(9,88,102,0.22),inset_0_0_0_1px_rgba(255,255,255,0.08)] hover:!text-white'
+                  : '',
+              ]"
               @click="selectedTab = 'login'; resetVerificationMode(); clearFeedback()"
             >
               Accedi
@@ -242,7 +247,13 @@ const modalUi = {
               type="button"
               role="tab"
               :aria-selected="selectedTab === 'register'"
-              :class="['sf-shared-segment', 'sf-shared-segment--compact', 'auth-overlay-segment', selectedTab === 'register' ? 'sf-shared-segment--active' : '']"
+              :class="[
+                'sf-shared-segment', 'sf-shared-segment--compact',
+                'min-h-[44px] px-4',
+                selectedTab === 'register'
+                  ? 'sf-shared-segment--active !bg-brand-primary !border-brand-primary !text-white !font-bold !shadow-[0_6px_16px_rgba(9,88,102,0.22),inset_0_0_0_1px_rgba(255,255,255,0.08)] hover:!text-white'
+                  : '',
+              ]"
               @click="selectedTab = 'register'; resetVerificationMode(); clearFeedback()"
             >
               Registrati

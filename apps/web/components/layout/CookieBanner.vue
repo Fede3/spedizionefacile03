@@ -1,6 +1,4 @@
 <script setup>
-import '~/assets/css/cookie-banner.css';
-
 const client = useSanctumClient();
 const visible = ref(false);
 const showPreferences = ref(false);
@@ -123,15 +121,17 @@ const acceptCustom = () => {
 		<div
 			v-if="visible"
 			ref="bannerRef"
-			:class="[
-				'cookie-banner',
-				isCompactBanner ? 'cookie-banner--compact' : '',
-			]"
+			class="fixed left-[10px] right-[10px] bottom-[10px] sm:left-[18px] sm:right-auto sm:bottom-[18px] z-[900] sm:w-[min(308px,calc(100vw-36px))] rounded-[16px] bg-white/95 backdrop-blur-md ring-1 ring-[rgba(9,88,102,0.08)] shadow-[0_10px_28px_rgba(15,23,42,0.09),0_2px_6px_rgba(15,23,42,0.04)]"
 			:role="bannerRole"
 			aria-label="Gestione cookie">
-			<div class="cookie-banner__inner">
-				<div class="cookie-banner__content">
-					<div class="cookie-banner__icon" aria-hidden="true">
+			<div
+				class="flex flex-col"
+				:class="isCompactBanner ? 'gap-[9px] p-[12px] pb-[max(11px,env(safe-area-inset-bottom))]' : 'gap-[12px] p-[15px] pb-[max(13px,env(safe-area-inset-bottom))]'">
+				<div class="flex items-start gap-[12px] min-w-0">
+					<div
+						v-if="!isCompactBanner"
+						class="shrink-0 inline-flex items-center justify-center w-[36px] h-[36px] rounded-[10px] bg-[var(--color-brand-secondary-soft-bg)] ring-1 ring-[var(--color-brand-secondary-soft-border)] text-[var(--color-brand-secondary-soft-text)]"
+						aria-hidden="true">
 						<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
 							<path d="M12 2a10 10 0 1 0 10 10 4 4 0 0 1-5-5 4 4 0 0 1-5-5" />
 							<path d="M2 12h.01" />
@@ -143,71 +143,83 @@ const acceptCustom = () => {
 							<circle cx="14.5" cy="15.5" r=".5" fill="currentColor" />
 						</svg>
 					</div>
-					<div class="cookie-banner__text">
-						<p class="cookie-banner__eyebrow">Cookie e privacy</p>
-						<h3 class="cookie-banner__title">{{ bannerTitle }}</h3>
-						<p class="cookie-banner__message">
+					<div class="min-w-0">
+						<p
+							v-if="!isCompactBanner"
+							class="m-0 mb-[4px] text-[0.7rem] uppercase tracking-[0.08em] text-[var(--color-brand-secondary-soft-text)]"
+							style="font-weight:800">
+							Cookie e privacy
+						</p>
+						<h3
+							class="m-0 mb-[4px] sm:mb-[6px] font-montserrat leading-[1.25] text-[var(--color-brand-text,#1d2738)]"
+							:class="isCompactBanner ? 'text-[0.88rem]' : 'text-[0.95rem]'"
+							style="font-weight:800">
+							{{ bannerTitle }}
+						</h3>
+						<p
+							class="m-0 text-[var(--color-brand-text-secondary)]"
+							:class="isCompactBanner ? 'text-[0.74rem] leading-[1.34]' : 'text-[0.825rem] leading-[1.5]'">
 							{{ bannerMessage }}
-							<NuxtLink to="/cookie-policy" class="cookie-banner__link">Scopri di più</NuxtLink>
+							<NuxtLink to="/cookie-policy" class="inline-block px-[2px] py-[4px] text-[var(--color-brand-primary)] underline underline-offset-[3px] whitespace-nowrap hover:opacity-80" style="font-weight:600">
+								Scopri di più
+							</NuxtLink>
 						</p>
 					</div>
 				</div>
 
-				<div v-if="showPreferences" class="cookie-banner__preferences">
-					<p class="cookie-banner__panel-title">Preferenze cookie</p>
-					<label class="cookie-pref">
-						<input type="checkbox" checked disabled class="cookie-pref__check" >
-						<span class="cookie-pref__label">Necessari <span class="cookie-pref__hint">(sempre attivi)</span></span>
+				<div v-if="showPreferences" class="flex flex-col items-start gap-[10px]">
+					<p class="m-0 mb-[2px] text-[0.72rem] uppercase tracking-[0.08em] text-[var(--color-brand-secondary-soft-text)]" style="font-weight:800">
+						Preferenze cookie
+					</p>
+					<label class="inline-flex items-center gap-[6px] text-[0.8125rem] text-[var(--color-brand-text-secondary)] whitespace-nowrap cursor-not-allowed opacity-65">
+						<input type="checkbox" checked disabled class="w-[16px] h-[16px] accent-[var(--color-brand-primary)]" >
+						<span>Necessari <span class="text-[0.6875rem] text-[var(--color-brand-text-secondary)]">(sempre attivi)</span></span>
 					</label>
-					<label class="cookie-pref">
-						<input v-model="preferences.functional" type="checkbox" class="cookie-pref__check" >
-						<span class="cookie-pref__label">Funzionali</span>
+					<label class="inline-flex items-center gap-[6px] text-[0.8125rem] text-[var(--color-brand-text-secondary)] whitespace-nowrap cursor-pointer">
+						<input v-model="preferences.functional" type="checkbox" class="w-[16px] h-[16px] accent-[var(--color-brand-primary)]" >
+						<span>Funzionali</span>
 					</label>
-					<label class="cookie-pref">
-						<input v-model="preferences.analytics" type="checkbox" class="cookie-pref__check" >
-						<span class="cookie-pref__label">Analitici</span>
+					<label class="inline-flex items-center gap-[6px] text-[0.8125rem] text-[var(--color-brand-text-secondary)] whitespace-nowrap cursor-pointer">
+						<input v-model="preferences.analytics" type="checkbox" class="w-[16px] h-[16px] accent-[var(--color-brand-primary)]" >
+						<span>Analitici</span>
 					</label>
-					<label class="cookie-pref">
-						<input v-model="preferences.marketing" type="checkbox" class="cookie-pref__check" >
-						<span class="cookie-pref__label">Marketing</span>
+					<label class="inline-flex items-center gap-[6px] text-[0.8125rem] text-[var(--color-brand-text-secondary)] whitespace-nowrap cursor-pointer">
+						<input v-model="preferences.marketing" type="checkbox" class="w-[16px] h-[16px] accent-[var(--color-brand-primary)]" >
+						<span>Marketing</span>
 					</label>
-					<div class="cookie-banner__pref-actions">
-						<button
-							type="button"
-							class="cookie-banner__btn-primary cookie-banner__btn-primary--full btn-cta"
+					<div class="w-full mt-[6px] flex flex-col gap-[8px]">
+						<SfButton
+							variant="primary"
+							block
 							@click="acceptCustom">
 							Salva preferenze
-						</button>
-						<div class="cookie-banner__btns-row">
-							<button
-								type="button"
-								class="cookie-banner__btn-secondary btn-secondary"
+						</SfButton>
+						<div class="grid grid-cols-2 gap-[8px]">
+							<SfButton
+								variant="secondary"
 								@click="showPreferences = false">
 								Indietro
-							</button>
-							<button
-								type="button"
-								class="cookie-banner__btn-secondary btn-secondary"
+							</SfButton>
+							<SfButton
+								variant="secondary"
 								@click="accept('essential')">
 								Rifiuta tutti
-							</button>
+							</SfButton>
 						</div>
 					</div>
 				</div>
 
-				<div v-else class="cookie-banner__actions">
-					<button
-						type="button"
-						class="cookie-banner__btn-secondary btn-secondary"
+				<div v-else class="grid grid-cols-2 gap-[8px]">
+					<SfButton
+						variant="secondary"
 						@click="openPreferencesPanel">
 						Personalizza
-					</button>
-					<button
-						type="button"
-						class="cookie-banner__btn-primary btn-cta"
+					</SfButton>
+					<SfButton
+						variant="primary"
 						@click="accept('all')">
 						Accetta tutti
-					</button>
+					</SfButton>
 				</div>
 			</div>
 		</div>

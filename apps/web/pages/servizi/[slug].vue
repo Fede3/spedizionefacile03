@@ -3,9 +3,6 @@
   Template dinamico servizi con fetch SSR, SEO reale lato server e shell pubblica coerente.
 -->
 <script setup>
-// CSS split route-specific: servizi.css usato solo in /servizi/* + /chi-siamo.
-import '~/assets/css/servizi.css';
-
 const route = useRoute();
 const slug = computed(() => String(route.params.slug || ''));
 
@@ -299,17 +296,17 @@ useHead(() => {
 		<!-- CTA finale -->
 		<section class="py-[24px] desktop:py-[30px]">
 			<div class="my-container">
-				<div class="services-bottom-cta">
-					<div class="services-bottom-cta__copy">
-						<p class="services-intro-panel__eyebrow" style="color: rgba(255,255,255,0.7)">Prossimo passo</p>
-						<h2 class="services-bottom-cta__title">
+				<div class="grid gap-4 rounded-card border border-brand-primary/20 bg-gradient-to-br from-brand-primary-light to-brand-primary p-5 text-white shadow-[0_18px_40px_rgba(9,88,102,0.14)] md:grid-cols-[minmax(0,1.2fr)_auto] md:items-center md:p-7">
+					<div class="grid gap-2">
+						<p class="text-xs font-extrabold uppercase tracking-[0.12em] text-white/70">Prossimo passo</p>
+						<h2 class="m-0 text-center font-display text-[15px] font-bold leading-[1.15] tracking-[-0.035em] text-white md:text-[1.45rem]">
 							Vuoi attivare {{ service.title.toLowerCase() }}?
 						</h2>
-						<p class="services-bottom-cta__text">
+						<p class="m-0 max-w-[58ch] text-[0.9375rem] leading-[1.6] text-white/80">
 							Parti dal preventivo per vedere subito costi, combinazioni compatibili e impatto sul riepilogo finale.
 						</p>
 					</div>
-					<div class="services-bottom-cta__actions">
+					<div class="flex flex-wrap gap-2">
 						<SfButton to="/preventivo" variant="primary" size="sm">Calcola il preventivo</SfButton>
 						<SfButton to="/servizi" variant="secondary" size="sm">Esplora altri servizi</SfButton>
 					</div>

@@ -482,7 +482,7 @@
 	}
 }
 
-/* Allineato a pattern .contact-field (contatti.css) per coerenza sitewide:
+/* Allineato a pattern campo form sitewide (vedi pages/contatti.vue):
    label 0.82rem 700 brand-text (no uppercase), input border 1.5px radius 12
    min-height 48 padding 0/16. */
 

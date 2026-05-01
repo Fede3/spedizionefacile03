@@ -4,7 +4,7 @@ Componenti Vue raggruppati per area. Configurato `pathPrefix: false` — accessi
 
 ## Aree
 
-- `auth/` — modal e form login/register/recovery (vedi `autenticazione.css`)
+- `auth/` — modal e form login/register/recovery (Tailwind utility puro inline)
 - `shipment/` — funnel preventivo (4 step, progress, modali admin gate)
 - `admin/` — console admin (drawer, tabelle, charts)
 - `account/` — area cliente (profilo, ordini, fatture, wallet)

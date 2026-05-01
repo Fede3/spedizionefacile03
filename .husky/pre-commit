@@ -9,6 +9,17 @@ fi
 
 ROOT="$(git rev-parse --show-toplevel)"
 
+# --- Gitleaks: scan secrets nei file staged (impedisce push bloccati da GitHub secret scanning) ---
+if command -v gitleaks >/dev/null 2>&1; then
+	echo "[husky] pre-commit: gitleaks scan staged"
+	gitleaks protect --staged --redact --no-banner --config "$ROOT/.gitleaks.toml" || {
+		echo "[husky] gitleaks ha rilevato secrets nei file staged. Rimuovili prima del commit."
+		exit 1
+	}
+else
+	echo "[husky] gitleaks non installato (skip secret scan). Installa: https://github.com/gitleaks/gitleaks/releases"
+fi
+
 # --- Nuxt: lint-staged (ESLint + Prettier solo sui file staged) ---
 NUXT_STAGED=$(git diff --cached --name-only --diff-filter=ACMR | grep -E '^apps/web/' || true)
 if [ -n "$NUXT_STAGED" ]; then
