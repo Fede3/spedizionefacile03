@@ -1,14 +1,12 @@
 <script setup>
-import '~/assets/css/account.css';
-
 /*
   AccountPageHeader — hero unificato per tutte le pagine /account/*.
   Pattern caratteristico:
-    - accent-bar arancione verticale 3px a sinistra (via CSS ::before)
+    - accent-bar arancione verticale 3px a sinistra (border-l-[3px])
     - kicker uppercase arancione 11px (es. "ACCOUNT", "WALLET", "STORICO")
-    - heading 22-28px 800 teal
+    - heading 22-28px font-display teal
     - description secondary 14-15px
-    - meta pills / actions slot
+    - slot identity / meta / actions
 */
 const props = defineProps({
 	title: { type: String, required: true },
@@ -44,46 +42,79 @@ const resolvedCrumbs = computed(() => {
 </script>
 
 <template>
-	<div class="sf-account-page-header sf-animate-in">
-		<div class="sf-account-page-header__surface">
-			<div v-if="resolvedCrumbs.length || backTo" class="sf-account-page-header__topline">
-				<NuxtLink v-if="backTo" :to="backTo" class="sf-account-page-header__backlink">
-					<svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[16px] h-[16px]" fill="currentColor">
+	<div class="mb-5 md:mb-6">
+		<div class="relative overflow-hidden rounded-card border border-brand-border bg-gradient-to-b from-brand-card to-brand-bg-alt shadow-sf p-5 md:p-6 border-l-[3px] border-l-brand-accent">
+			<div
+				v-if="resolvedCrumbs.length || backTo"
+				class="relative z-10 flex flex-wrap items-center justify-between gap-2 mb-2.5 pb-2.5 border-b border-brand-primary/10"
+			>
+				<NuxtLink
+					v-if="backTo"
+					:to="backTo"
+					class="inline-flex items-center gap-1.5 text-xs font-bold text-brand-primary transition hover:gap-2 hover:underline"
+				>
+					<svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="h-4 w-4" fill="currentColor">
 						<path d="M20,11V13H8L13.5,18.5L12.08,19.92L4.16,12L12.08,4.08L13.5,5.5L8,11H20Z" />
 					</svg>
 					{{ backLabel }}
 				</NuxtLink>
 
-				<nav v-else-if="resolvedCrumbs.length" class="sf-account-page-header__crumbs" aria-label="Percorso di navigazione">
+				<nav
+					v-else-if="resolvedCrumbs.length"
+					class="flex flex-wrap items-center gap-1.5 text-xs text-brand-text-muted"
+					aria-label="Percorso di navigazione"
+				>
 					<template v-for="(crumb, index) in resolvedCrumbs" :key="`${crumb.label}-${index}`">
-						<NuxtLink v-if="crumb.to" :to="crumb.to" class="sf-account-page-header__crumb-link">
+						<NuxtLink
+							v-if="crumb.to"
+							:to="crumb.to"
+							class="inline-flex items-center font-bold text-brand-primary transition hover:underline"
+						>
 							{{ crumb.label }}
 						</NuxtLink>
 						<span
 							v-else
-							class="sf-account-page-header__crumb-current"
-							:aria-current="index === resolvedCrumbs.length - 1 ? 'page' : undefined">{{ crumb.label }}</span>
-						<span v-if="index < resolvedCrumbs.length - 1" class="sf-account-page-header__crumb-divider" aria-hidden="true">/</span>
+							class="font-semibold text-brand-text"
+							:aria-current="index === resolvedCrumbs.length - 1 ? 'page' : undefined"
+						>{{ crumb.label }}</span>
+						<span
+							v-if="index < resolvedCrumbs.length - 1"
+							class="text-brand-text-muted/60"
+							aria-hidden="true"
+						>/</span>
 					</template>
 				</nav>
 			</div>
 
-			<div :class="['sf-account-page-header__body', centered ? 'items-center text-center' : '']">
+			<div :class="['relative z-10 grid gap-2', centered ? 'place-items-center text-center' : '']">
 				<div
 					:class="[
-						'sf-account-page-header__main',
-						$slots.identity ? 'sf-account-page-header__main--identity' : '',
+						'flex flex-col gap-3',
+						$slots.identity ? 'lg:flex-row lg:items-center lg:gap-5' : '',
 						centered ? 'items-center text-center' : '',
-					]">
-					<div v-if="$slots.identity" class="sf-account-page-header__identity">
+					]"
+				>
+					<div v-if="$slots.identity" class="flex items-center gap-3 shrink-0">
 						<slot name="identity" />
 					</div>
 
-					<div :class="['sf-account-page-header__intro', centered ? 'items-center text-center max-w-[720px]' : '']">
-						<p v-if="eyebrow" class="sf-account-kicker mb-[10px]">{{ eyebrow }}</p>
-						<h1 class="sf-page-title">{{ title }}</h1>
-						<p v-if="description" class="sf-section-description mt-[6px]">{{ description }}</p>
-						<div v-if="$slots.meta" class="sf-account-page-header__meta mt-[10px]">
+					<div :class="['flex flex-col gap-1', centered ? 'items-center text-center max-w-[720px]' : '']">
+						<p
+							v-if="eyebrow"
+							class="inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-widest text-brand-accent mb-2.5"
+						>
+							{{ eyebrow }}
+						</p>
+						<h1 class="font-display text-2xl md:text-[1.75rem] font-extrabold text-brand-primary leading-tight tracking-tight">
+							{{ title }}
+						</h1>
+						<p
+							v-if="description"
+							class="text-sm md:text-base text-brand-text-secondary leading-relaxed mt-1.5"
+						>
+							{{ description }}
+						</p>
+						<div v-if="$slots.meta" class="flex flex-wrap gap-2 mt-2.5">
 							<slot name="meta" />
 						</div>
 					</div>
@@ -91,12 +122,16 @@ const resolvedCrumbs = computed(() => {
 
 				<div
 					v-if="$slots.actions"
-					:class="['sf-account-page-header__actions', centered ? 'w-full justify-center' : 'w-full desktop:w-auto desktop:shrink-0']">
+					:class="[
+						'flex flex-wrap gap-2',
+						centered ? 'w-full justify-center' : 'w-full lg:w-auto lg:shrink-0',
+					]"
+				>
 					<slot name="actions" />
 				</div>
 			</div>
 
-			<div v-if="$slots.default" class="sf-account-page-header__content">
+			<div v-if="$slots.default" class="mt-4">
 				<slot />
 			</div>
 		</div>
