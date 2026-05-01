@@ -24,6 +24,7 @@ const emit = defineEmits(['toggle', 'close', 'logout']);
 </script>
 
 <template>
+<!-- eslint-disable vue/no-v-html -- icone SVG da dictionary accountCardIcons (no input utente) -->
 	<div>
 		<div
 			class="account-route-shell__mobile-topbar lg:hidden fixed top-0 left-0 right-0 z-50 border-b border-[#DFE2E7]/60 bg-white/95 backdrop-blur-md"

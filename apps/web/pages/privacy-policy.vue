@@ -199,6 +199,7 @@ function scrollToTop() {
 						:aria-labelledby="`${s.id}-h`"
 					>
 						<h2 :id="`${s.id}-h`" class="lp-section__title">{{ s.title }}</h2>
+						<!-- eslint-disable vue/no-v-html — testi privacy controllati dall'amministratore (no input utente) -->
 						<p
 							v-for="(p, i) in s.paragraphs"
 							:key="i"
@@ -208,6 +209,7 @@ function scrollToTop() {
 						<ul v-if="s.list" class="lp-section__list">
 							<li v-for="(item, i) in s.list" :key="i" v-html="item" />
 						</ul>
+						<!-- eslint-enable vue/no-v-html -->
 					</article>
 
 					<!-- Pulsante torna in alto -->

@@ -181,6 +181,7 @@ function scrollToTop() {
 						:aria-labelledby="`${s.id}-h`"
 					>
 						<h2 :id="`${s.id}-h`" class="lp-section__title">{{ s.title }}</h2>
+						<!-- eslint-disable vue/no-v-html — testi termini controllati dall'amministratore (no input utente) -->
 						<p
 							v-for="(p, i) in s.paragraphs"
 							:key="`p-${i}`"
@@ -196,6 +197,7 @@ function scrollToTop() {
 							class="lp-section__text"
 							v-html="p"
 						/>
+						<!-- eslint-enable vue/no-v-html -->
 					</article>
 
 					<div class="lp-backtop">

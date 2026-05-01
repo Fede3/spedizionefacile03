@@ -102,6 +102,7 @@ const infoFields = computed(() => {
 </script>
 
 <template>
+<!-- eslint-disable vue/no-v-html -- icone SVG da dictionary accountCardIcons (no input utente) -->
 	<!-- Personal data section -->
 	<section class="rounded-[16px] bg-white mb-[24px] overflow-hidden" style="box-shadow: 0 2px 8px rgba(9,88,102,0.06), 0 0 0 1px rgba(9,88,102,0.04);" aria-labelledby="sf-profilo-view-dati">
 		<!-- Section header -->

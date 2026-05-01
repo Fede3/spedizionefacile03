@@ -26,6 +26,7 @@ const emit = defineEmits(['logout']);
 </script>
 
 <template>
+<!-- eslint-disable vue/no-v-html -- icone SVG da dictionary accountCardIcons (no input utente) -->
 	<aside class="account-route-shell__sidebar hidden lg:block shrink-0 self-start">
 		<div class="account-route-shell__sidebar-sticky flex flex-col">
 			<div class="mb-[12px] flex items-center gap-[10px] px-[4px]">

@@ -2,8 +2,8 @@
 import { escapeHtml } from '~/utils/html';
 const props = defineProps({
   points: { type: Array, required: true },
-  selectedKey: { default: null },
-  referencePoint: { default: null },
+  selectedKey: { type: [String, Number, null], default: null },
+  referencePoint: { type: [Object, null], default: null },
 });
 const emit = defineEmits(['select']);
 const mapEl = ref(null);

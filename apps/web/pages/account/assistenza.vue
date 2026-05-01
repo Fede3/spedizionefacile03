@@ -122,6 +122,7 @@ const handleSubmit = async () => {
 </script>
 
 <template>
+<!-- eslint-disable vue/no-v-html -- icone SVG da dictionary accountCardIcons (no input utente) -->
 	<section class="sf-account-shell min-h-[600px] py-[20px] tablet:py-[24px] desktop:py-[28px]">
 		<div class="my-container">
 			<AccountPageHeader

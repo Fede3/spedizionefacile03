@@ -227,6 +227,7 @@ function scrollToTop() {
 						:aria-labelledby="`${s.id}-h`"
 					>
 						<h2 :id="`${s.id}-h`" class="lp-section__title">{{ s.title }}</h2>
+						<!-- eslint-disable vue/no-v-html — testi cookie policy controllati dall'amministratore (no input utente) -->
 						<p
 							v-for="(p, i) in s.paragraphs"
 							:key="`p-${i}`"
@@ -259,6 +260,7 @@ function scrollToTop() {
 						<ul v-if="s.list" class="lp-section__list">
 							<li v-for="(item, i) in s.list" :key="`l-${i}`" v-html="item" />
 						</ul>
+						<!-- eslint-enable vue/no-v-html -->
 
 						<!-- Link esterni guide browser -->
 						<ul v-if="s.links" class="lp-section__list lp-section__list--links">

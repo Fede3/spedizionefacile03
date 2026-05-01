@@ -25,6 +25,7 @@ const resolveAccountPageUrl = (url = '') => {
 </script>
 
 <template>
+<!-- eslint-disable vue/no-v-html -- icone SVG da dictionary accountCardIcons (no input utente) -->
 	<div class="sf-account-admin-stack">
 		<AccountPageHeader
 			class="sf-account-shell-hero--compact sf-account-root__header"
