@@ -53,22 +53,6 @@ type CartLike = {
 }
 type StripeSettingsResponse = { publishable_key?: string }
 type DefaultPaymentResponse = { card?: { id?: string } }
-type StripePaymentResponse = {
-  payment_intent_id?: string | null
-  status?: string
-  client_secret?: string
-  error?: string
-}
-type PaymentIntentResponse = {
-  client_secret?: string
-  error?: string
-}
-type WalletPayResponse = {
-  success?: boolean
-  message?: string
-  error?: string
-  data?: { id?: string | number }
-}
 type PaymentDraft = {
   orderId: string | number
   paymentMethod: PaymentMethodKey
@@ -77,7 +61,6 @@ type PaymentDraft = {
   amount: number
 }
 type AuthRetryOptions = { attempts?: number; label?: string }
-type UserProfile = { name?: string }
 
 const asRecord = (value: unknown): Record<string, unknown> =>
   value && typeof value === 'object' ? value as Record<string, unknown> : {}
