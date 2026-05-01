@@ -3,7 +3,7 @@ import {
 	ensureClientSubmissionId,
 	readClientSubmissionId,
 	readNestedClientSubmissionId,
-} from '~/utils/shipment'
+} from '~/utils/clientSubmissionId'
 
 type SubmissionSource = {
 	id?: string | number | null

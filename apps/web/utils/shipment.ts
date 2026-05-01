@@ -484,13 +484,7 @@ export const trimUserStoreToFlowState = (shipmentFlowStore: TrimmableUserStore |
     shipmentFlowStore.stepNumber = getShipmentFlowStepNumber(flowState);
 };
 
-// ─────────────────────────────────────────────────────────────────
-// SEZIONE 2 — re-export da utils/clientSubmissionId.ts per backward compat
-// (split Ondata 5 — la logica vive ora nel proprio file dedicato)
-// ─────────────────────────────────────────────────────────────────
-export {
-    createClientSubmissionId,
-    readClientSubmissionId,
-    readNestedClientSubmissionId,
-    ensureClientSubmissionId,
-} from '~/utils/clientSubmissionId';
+// SEZIONE 2 (clientSubmissionId) estratta in utils/clientSubmissionId.ts (Ondata 5).
+// Niente re-export: Nuxt auto-importa direttamente dal file dedicato — evita
+// warning "duplicate auto-import" per createClientSubmissionId / readClientSubmissionId
+// / readNestedClientSubmissionId / ensureClientSubmissionId.

@@ -62,15 +62,17 @@ export interface Package {
 
 /**
  * Dettagli geografici della spedizione (step 1 — preventivo).
- * Corrisponde a shipmentFlowStore.shipmentDetails.
+ * Corrisponde a shipmentStore.shipmentDetails.
  */
 export interface ShipmentDetails {
 	origin_city: string
 	origin_postal_code: string
+	origin_province: string
 	origin_country_code: string
 	origin_country: string
 	destination_city: string
 	destination_postal_code: string
+	destination_province: string
 	destination_country_code: string
 	destination_country: string
 	date: string

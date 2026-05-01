@@ -47,8 +47,8 @@ const hasComponentElement = (value: StageHost): value is { $el: HTMLElement } =>
 );
 
 // useFunnelAnalytics estratto in composables/useFunnelTracking.ts (Ondata 5).
-// Re-export per backward compat — caller esistenti continuano a funzionare.
-export { useFunnelAnalytics } from '~/composables/useFunnelTracking';
+// Niente re-export: Nuxt auto-importa direttamente dal file dedicato — evita
+// warning "duplicate auto-import" per useFunnelAnalytics.
 
 // ============================================================================
 // SEZIONE 2 — Navigation (ex useFunnelNavigation)

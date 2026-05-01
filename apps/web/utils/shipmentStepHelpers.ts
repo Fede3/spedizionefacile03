@@ -131,7 +131,12 @@ export function getExistingOrderPackageDimensions(pack: ExistingOrderPackage): s
 /**
  * Estrae il messaggio di errore da un errore $fetch / Sanctum, con fallback.
  * Pattern: response._data.message → data.message → message → fallback.
+ *
+ * Accetta `unknown` per essere chiamabile direttamente da `catch (err)` senza
+ * cast — il body fa narrowing runtime sulla shape effettiva del payload.
  */
-export function resolveApiError(err: ApiErrorLike, fallback: string): string {
-	return err?.response?._data?.message || err?.data?.message || err?.message || fallback;
+export function resolveApiError(err: unknown, fallback: string): string {
+	if (!err || typeof err !== 'object') return fallback;
+	const source = err as ApiErrorLike;
+	return source.response?._data?.message || source.data?.message || source.message || fallback;
 }
