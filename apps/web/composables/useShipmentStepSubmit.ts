@@ -2,6 +2,68 @@ import type { Ref } from 'vue'
 import { nextTick, ref } from 'vue'
 import { buildSecondStepPayload, toStepAddressPayload } from '~/utils/shipmentDraftPayload'
 
+// ── Tipi per la sezione persistShipmentFlowState (ex useShipmentStepSessionPersistence) ──
+type ValueRef<T> = { value: T }
+type BuildSecondStepArgs = NonNullable<Parameters<typeof buildSecondStepPayload>[0]>
+type PersistOptions = {
+	includeAddresses?: boolean
+	payload?: unknown
+}
+type ShipmentStepPersistenceOptions = BuildSecondStepArgs & {
+	sanctumClient: (url: string, options?: Record<string, unknown>) => Promise<unknown>
+	refresh: () => Promise<unknown>
+	session: ValueRef<unknown>
+	submitError: ValueRef<string | null>
+}
+
+const getApiErrorMessage = (error: unknown): string => {
+	if (!error || typeof error !== 'object') return ''
+	const source = error as { data?: { message?: string }; message?: string }
+	return source.data?.message || source.message || ''
+}
+
+/**
+ * useShipmentStepSessionPersistence — persistenza intermedia step funnel (ex composable separato).
+ *
+ * Inviato come parte di useShipmentStepSubmit (Ondata 4 fusione composable).
+ * Salva lo stato corrente del flow in /api/session/second-step e refreshes la session.
+ */
+export const useShipmentStepSessionPersistence = ({
+	sanctumClient,
+	refresh,
+	session,
+	submitError,
+	shipmentFlowStore,
+	services,
+	smsEmailNotification,
+	originAddress,
+	destinationAddress,
+}: ShipmentStepPersistenceOptions) => {
+	const persistShipmentFlowState = async ({ includeAddresses = false, payload = null }: PersistOptions = {}) => {
+		try {
+			await sanctumClient('/api/session/second-step', {
+				method: 'POST',
+				body: buildSecondStepPayload({
+					shipmentFlowStore,
+					services,
+					smsEmailNotification,
+					originAddress,
+					destinationAddress,
+					includeAddresses,
+					payload,
+				}),
+			})
+			await refresh().catch(() => session.value)
+			return true
+		} catch (error) {
+			submitError.value = getApiErrorMessage(error) || 'Errore nel salvataggio del flusso spedizione. Riprova.'
+			return false
+		}
+	}
+
+	return { persistShipmentFlowState }
+}
+
 type StepAddress = {
 	full_name?: string
 	address?: string
@@ -37,7 +99,6 @@ type RouteConsistencyState = {
 type UiFeedback = {
 	success: (title: string, message?: string, options?: { timeout?: number }) => void
 }
-type BuildSecondStepArgs = NonNullable<Parameters<typeof buildSecondStepPayload>[0]>
 type ShipmentStepSubmitOptions = {
 	destinationAddress: Ref<StepAddress>
 	editablePackages: Ref<ShipmentPackage[]>

@@ -10,7 +10,7 @@
 // questo evita auto-import duplicati Nuxt e rende chiaro dove intervenire.
 
 import { computed, onMounted, watch, type Ref } from 'vue';
-import type { AuthModalTab } from '~/stores/authModalStore';
+import type { AuthModalTab } from '~/stores/authStore';
 import {
 	buildSecondStepPayload,
 	type ServicesState,

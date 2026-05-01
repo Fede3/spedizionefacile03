@@ -5,7 +5,7 @@
  */
 import { computed, onMounted, ref, watch, type Ref } from 'vue';
 import type { AddressGroup, CartItem, CartResponse } from '~/types';
-import type { AuthModalTab } from '~/stores/authModalStore';
+import type { AuthModalTab } from '~/stores/authStore';
 import { formatPrice as formatPriceCents } from '~/utils/price';
 import { formatDateIt } from '~/utils/date';
 import { useCartPromoPreview } from '~/composables/useCartPromoPreview';
