@@ -1,0 +1,1 @@
+{"event":"pre_flight","status":"green","timestamp":"2026-05-01T11:54:00Z","baseline_hash":"4cbaaea7","gates":{"typecheck":"pass","lint":"0err_90warn","vitest":"269pass","phpunit":"336pass_18skip"},"god_files_loc":{"step_vue":1191,"pagamento_vue":729,"usePayment_ts":733,"addressFormFields_vue":628,"servicePricing_ts":763,"shipmentFlow_css":5831}}
