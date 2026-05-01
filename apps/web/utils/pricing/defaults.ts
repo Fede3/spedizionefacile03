@@ -1,0 +1,161 @@
+/**
+ * Defaults frozen del pricing engine SpediamoFacile.
+ *
+ * VINCOLO CROSS-STACK: questi default DEVONO restare allineati al backend
+ * Laravel (config/services/pricing.php). Eventuali override admin arrivano
+ * da `pricingConfig` runtime e fanno merge in normalizePricingConfig.
+ */
+import type { ServicePricingRule } from './types'
+
+/** Servizi opzionali manuali (selezionabili dall'utente nel funnel). */
+export const DEFAULT_SERVICE_PRICING: Readonly<Record<string, ServicePricingRule>> = Object.freeze({
+	senza_etichetta: {
+		label: 'Senza etichetta',
+		description: "Il corriere stampa e applica l'etichetta al ritiro.",
+		pricing_type: 'fixed',
+		price_cents: 99,
+		enabled: true,
+		application: 'per_spedizione',
+		note: '',
+	},
+	notifications: {
+		label: 'Notifiche spedizione',
+		description: 'SMS ed email al ritiro, in transito e alla consegna.',
+		pricing_type: 'fixed',
+		price_cents: 50,
+		enabled: true,
+		application: 'per_spedizione',
+		note: '',
+	},
+	sponda_idraulica: {
+		label: 'Sponda idraulica',
+		description: 'Supplemento per mezzo con pedana.',
+		pricing_type: 'fixed',
+		price_cents: 1500,
+		enabled: true,
+		application: 'per_spedizione',
+		note: '',
+	},
+	contrassegno: {
+		label: 'Contrassegno',
+		description: 'Incasso alla consegna comprensivo di bonifico.',
+		pricing_type: 'threshold_percentage',
+		threshold_amount_eur: 300,
+		min_fee_cents: 700,
+		percentage_rate: 2,
+		enabled: true,
+		application: 'per_spedizione',
+		note: '',
+	},
+	assicurazione: {
+		label: 'Assicurazione',
+		description: 'Protezione economica sulla merce dichiarata.',
+		pricing_type: 'threshold_percentage',
+		threshold_amount_eur: 300,
+		min_fee_cents: 700,
+		percentage_rate: 2,
+		enabled: true,
+		application: 'per_spedizione',
+		note: '',
+	},
+})
+
+/** Supplementi automatici applicati per zona/dimensione/peso senza richiesta utente. */
+export const DEFAULT_AUTOMATIC_SUPPLEMENTS: Readonly<Record<string, ServicePricingRule>> = Object.freeze({
+	calabria_sardegna_sicilia: {
+		label: 'Calabria / Sardegna / Sicilia',
+		description: 'Supplemento automatico destinazione per collo.',
+		enabled: true,
+		pricing_type: 'tiered_weight',
+		application: 'automatic_destination_per_package',
+		province_codes: ['AG', 'CL', 'CT', 'EN', 'ME', 'PA', 'RG', 'SR', 'TP', 'CA', 'CI', 'NU', 'OG', 'OR', 'OT', 'SS', 'SU', 'VS', 'CS', 'CZ', 'KR', 'RC', 'VV'],
+		tiers: [
+			{ up_to_kg: 10, price_cents: 600 },
+			{ up_to_kg: 25, price_cents: 700 },
+			{ up_to_kg: 50, price_cents: 800 },
+			{ up_to_kg: 100, price_cents: 1500 },
+			{ up_to_kg: null, price_cents: 2000 },
+		],
+		note: '',
+	},
+	brt_point_csi: {
+		label: 'BRT Point Calabria / Sardegna / Sicilia',
+		description: 'Supplemento ridotto per consegna presso punto BRT fino a 20 kg/collo.',
+		enabled: true,
+		pricing_type: 'fixed_with_threshold',
+		application: 'automatic_destination_per_package',
+		province_codes: ['AG', 'CL', 'CT', 'EN', 'ME', 'PA', 'RG', 'SR', 'TP', 'CA', 'CI', 'NU', 'OG', 'OR', 'OT', 'SS', 'SU', 'VS', 'CS', 'CZ', 'KR', 'RC', 'VV'],
+		delivery_modes: ['pudo'],
+		max_weight_kg: 20,
+		price_cents: 200,
+		note: '',
+	},
+	isole_minori_italia: {
+		label: 'Isole minori Italia',
+		description: 'Supplemento automatico per localita italiane insulari minori.',
+		enabled: true,
+		pricing_type: 'fixed',
+		application: 'automatic_destination',
+		country_codes: ['IT'],
+		keyword_list: ['la maddalena', 'carloforte', 'calasetta', 'pantelleria', 'lampedusa', 'linosa', 'favignana', 'levanzo', 'marettimo', 'lipari', 'vulcano', 'salina', 'panarea', 'stromboli', 'filicudi', 'alicudi', 'ustica', 'ponza', 'ventotene', 'procida', 'ischia', 'capri', 'elba', 'giglio', 'giannutri', 'tremiti', 'capraia'],
+		price_cents: 2000,
+		note: '',
+	},
+	isole_minori_europa: {
+		label: 'Isole minori Europa',
+		description: 'Supplemento automatico per localita europee insulari minori.',
+		enabled: true,
+		pricing_type: 'fixed',
+		application: 'automatic_destination',
+		country_codes: ['ES', 'PT', 'FR', 'GR', 'HR', 'MT', 'CY'],
+		keyword_list: ['ibiza', 'formentera', 'menorca', 'minorca', 'mallorca', 'majorca', 'canarie', 'canary', 'tenerife', 'gran canaria', 'fuerteventura', 'lanzarote', 'madeira', 'azores', 'porto santo', 'corsica', 'corfu', 'santorini', 'mykonos', 'rodos', 'rhodes', 'crete'],
+		price_cents: 2500,
+		note: '',
+	},
+	fuori_sagoma: {
+		label: 'Fuori sagoma',
+		description: 'Supplemento automatico per colli fuori sagoma.',
+		enabled: true,
+		pricing_type: 'tiered_weight',
+		application: 'automatic_package_shape',
+		flag_keys: ['fuori_sagoma', 'out_of_gauge', 'oversized'],
+		longest_side_threshold_cm: 100,
+		girth_threshold_cm: 260,
+		tiers: [
+			{ up_to_kg: 10, price_cents: 300 },
+			{ up_to_kg: null, price_cents: 500 },
+		],
+		note: '',
+	},
+	lato_superiore_130cm: {
+		label: 'Lato superiore a 130 cm',
+		description: 'Supplemento automatico per colli con lato massimo oltre 130 cm.',
+		enabled: true,
+		pricing_type: 'fixed',
+		application: 'automatic_per_package',
+		threshold_cm: 130,
+		price_cents: 500,
+		note: '',
+	},
+	aste_tubi: {
+		label: 'Aste / Tubi',
+		description: 'Supplemento per colli molto lunghi e stretti.',
+		enabled: true,
+		pricing_type: 'fixed',
+		application: 'automatic_per_package',
+		flag_keys: ['aste_tubi', 'tubi', 'tubo', 'rod_tube'],
+		min_longest_side_cm: 100,
+		max_secondary_side_cm: 20,
+		price_cents: 500,
+		note: '',
+	},
+	eu_manual_extra: {
+		label: 'Extra Europa su preventivo manuale',
+		description: 'Fee extra per pratiche Europa con preventivo manuale.',
+		enabled: true,
+		pricing_type: 'fixed',
+		application: 'manual_quote_only',
+		price_cents: 1500,
+		note: '',
+	},
+})
