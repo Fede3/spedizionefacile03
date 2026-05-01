@@ -2,6 +2,9 @@
 @import "@nuxt/ui";
 @import "./motion.css";
 @import "./shipment-flow.css";
+/* Shared segment toggle (sf-shared-segment-*) — estratto da shipment-flow.css (Ondata 6).
+   Import DOPO shipment-flow.css per mantenere cascade originale. */
+@import "./funnel-shared.css";
 @import "./components/empty-state.css";
 @import "./tracking.css";
 @import "./account.css";
