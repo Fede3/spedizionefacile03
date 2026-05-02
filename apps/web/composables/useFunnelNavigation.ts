@@ -17,10 +17,15 @@
 
 import { nextTick, type Ref } from 'vue';
 
+// Le ref di stage/sezione possono puntare sia a un HTMLElement (DOM nudo) sia
+// a un'istanza componente Vue che espone `.$el`. Wrapper minimo per tipizzare
+// senza cast.
+type StageRef = Ref<HTMLElement | { $el?: HTMLElement } | null | undefined>;
+
 export interface FunnelNavigationReturn {
-	resolveStageElement: (stageRef: Ref<any> | null | undefined) => HTMLElement | null;
-	scrollAccordionStageIntoView: (stageRef: Ref<any>, focusSelector?: string) => void;
-	focusPickupDateSection: (pickupDateSectionRef: Ref<any>) => void;
+	resolveStageElement: (stageRef: StageRef | null | undefined) => HTMLElement | null;
+	scrollAccordionStageIntoView: (stageRef: StageRef, focusSelector?: string) => void;
+	focusPickupDateSection: (pickupDateSectionRef: StageRef) => void;
 	dismissActiveFieldFocusImmediately: () => void;
 	dismissActiveFieldFocus: () => Promise<void>;
 	onAccordionPanelBeforeEnter: (el: Element) => void;
@@ -31,14 +36,16 @@ export interface FunnelNavigationReturn {
 	onAccordionPanelAfterLeave: (el: Element) => void;
 }
 
+// eslint-disable-next-line max-lines-per-function -- factory di 11 helper coesi (DOM scroll/focus + 6 accordion hook), splittarla = perdere coesione semantica
 export function useFunnelNavigation(): FunnelNavigationReturn {
-	const resolveStageElement = (stageRef: Ref<any> | null | undefined): HTMLElement | null => {
+	const resolveStageElement = (stageRef: StageRef | null | undefined): HTMLElement | null => {
 		const rawRef = stageRef?.value;
 		if (!rawRef) return null;
-		return rawRef?.$el instanceof HTMLElement ? rawRef.$el : rawRef;
+		if (rawRef instanceof HTMLElement) return rawRef;
+		return rawRef.$el instanceof HTMLElement ? rawRef.$el : null;
 	};
 
-	const scrollAccordionStageIntoView = (stageRef: Ref<any>, focusSelector?: string) => {
+	const scrollAccordionStageIntoView = (stageRef: StageRef, focusSelector?: string) => {
 		nextTick(() => {
 			const stageElement = resolveStageElement(stageRef);
 			if (!stageElement) return;
@@ -67,12 +74,9 @@ export function useFunnelNavigation(): FunnelNavigationReturn {
 		});
 	};
 
-	const focusPickupDateSection = (pickupDateSectionRef: Ref<any>) => {
+	const focusPickupDateSection = (pickupDateSectionRef: StageRef) => {
 		nextTick(() => {
-			const sectionRoot =
-				pickupDateSectionRef.value?.$el instanceof HTMLElement
-					? pickupDateSectionRef.value.$el
-					: pickupDateSectionRef.value;
+			const sectionRoot = resolveStageElement(pickupDateSectionRef);
 			const firstDateButton =
 				sectionRoot?.querySelector?.('[data-pickup-day]') ||
 				document.querySelector('[data-pickup-day], [id^="date-"]');

@@ -23,14 +23,17 @@ export interface FunnelErrorSlots {
 	packagesError: Ref<string>;
 }
 
+// Stage ref puntano a HTMLElement nudo o a un'istanza componente Vue (con `.$el`).
+type StageElementRef = Ref<HTMLElement | { $el?: HTMLElement } | null>;
+
 export interface FunnelTemplateRefs {
 	formRef: Ref<HTMLFormElement | null>;
 	stepsRef: Ref<HTMLElement | null>;
-	pickupDateSectionRef: Ref<any>;
-	packagesStageRef: Ref<any>;
-	servicesStageRef: Ref<any>;
-	addressStageRef: Ref<any>;
-	paymentStageRef: Ref<any>;
+	pickupDateSectionRef: StageElementRef;
+	packagesStageRef: StageElementRef;
+	servicesStageRef: StageElementRef;
+	addressStageRef: StageElementRef;
+	paymentStageRef: StageElementRef;
 }
 
 export interface FunnelUiState {
@@ -57,7 +60,7 @@ export interface FunnelErrorHelpers {
 	stripFunnelThrottleMessage: (message: unknown) => string;
 }
 
-const THROTTLE_ERROR_PATTERN = /numero massimo di tentativi|hai superato|riprova tra|attendi(?: ancora)?|\d+\s*(second|minut)|too many (attempts|requests)|tentativi troppo frequenti|rate limit|429/i;
+const THROTTLE_ERROR_PATTERN = /numero massimo di tentativi|hai superato|riprova tra|attendi(?: ancora)?|\d+\s*(?:second|minut)|too many (?:attempts|requests)|tentativi troppo frequenti|rate limit|429/i;
 const THROTTLE_STATUS_PATTERN = /\b429\b|too[\s_-]*many[\s_-]*requests|throttled|rate[\s_-]*limited/i;
 
 const createFunnelErrorHelpers = (): FunnelErrorHelpers => {
@@ -71,21 +74,25 @@ const createFunnelErrorHelpers = (): FunnelErrorHelpers => {
 				.join(' ');
 		}
 		if (typeof message === 'object') {
-			const anyMsg = message as any;
+			const m = message as Record<string, unknown>;
+			const data = (m.data ?? {}) as Record<string, unknown>;
+			const response = (m.response ?? {}) as Record<string, unknown>;
+			const responseData = (response.data ?? {}) as Record<string, unknown>;
+			const responseUnderscoreData = (response._data ?? {}) as Record<string, unknown>;
 			return [
-				anyMsg.message,
-				anyMsg.error,
-				anyMsg.errors,
-				anyMsg.statusMessage,
-				anyMsg.data?.message,
-				anyMsg.data?.error,
-				anyMsg.data?.errors,
-				anyMsg.response?._data?.message,
-				anyMsg.response?._data?.error,
-				anyMsg.response?._data?.errors,
-				anyMsg.response?.data?.message,
-				anyMsg.response?.data?.error,
-				anyMsg.response?.data?.errors,
+				m.message,
+				m.error,
+				m.errors,
+				m.statusMessage,
+				data.message,
+				data.error,
+				data.errors,
+				responseUnderscoreData.message,
+				responseUnderscoreData.error,
+				responseUnderscoreData.errors,
+				responseData.message,
+				responseData.error,
+				responseData.errors,
 			]
 				.map((entry) => normalizeFunnelErrorMessage(entry))
 				.filter(Boolean)
@@ -101,28 +108,32 @@ const createFunnelErrorHelpers = (): FunnelErrorHelpers => {
 
 	const normalizeFunnelErrorStatus = (message: unknown): string => {
 		if (!message || typeof message !== 'object') return '';
-		const anyMsg = message as any;
+		const m = message as Record<string, unknown>;
+		const data = (m.data ?? {}) as Record<string, unknown>;
+		const response = (m.response ?? {}) as Record<string, unknown>;
+		const responseData = (response.data ?? {}) as Record<string, unknown>;
+		const responseUnderscoreData = (response._data ?? {}) as Record<string, unknown>;
 
 		return [
-			anyMsg.status,
-			anyMsg.statusCode,
-			anyMsg.code,
-			anyMsg.statusText,
-			anyMsg.data?.status,
-			anyMsg.data?.statusCode,
-			anyMsg.data?.code,
-			anyMsg.data?.statusText,
-			anyMsg.response?.status,
-			anyMsg.response?.statusCode,
-			anyMsg.response?.statusText,
-			anyMsg.response?._data?.status,
-			anyMsg.response?._data?.statusCode,
-			anyMsg.response?._data?.code,
-			anyMsg.response?._data?.statusText,
-			anyMsg.response?.data?.status,
-			anyMsg.response?.data?.statusCode,
-			anyMsg.response?.data?.code,
-			anyMsg.response?.data?.statusText,
+			m.status,
+			m.statusCode,
+			m.code,
+			m.statusText,
+			data.status,
+			data.statusCode,
+			data.code,
+			data.statusText,
+			response.status,
+			response.statusCode,
+			response.statusText,
+			responseUnderscoreData.status,
+			responseUnderscoreData.statusCode,
+			responseUnderscoreData.code,
+			responseUnderscoreData.statusText,
+			responseData.status,
+			responseData.statusCode,
+			responseData.code,
+			responseData.statusText,
 		]
 			.map((entry: unknown) => String(entry ?? '').trim())
 			.find(Boolean) || '';
@@ -173,11 +184,11 @@ export function useFunnelState(): UseFunnelStateReturn {
 	const templateRefs: FunnelTemplateRefs = {
 		formRef: ref<HTMLFormElement | null>(null),
 		stepsRef: ref<HTMLElement | null>(null),
-		pickupDateSectionRef: ref<any>(null),
-		packagesStageRef: ref<any>(null),
-		servicesStageRef: ref<any>(null),
-		addressStageRef: ref<any>(null),
-		paymentStageRef: ref<any>(null),
+		pickupDateSectionRef: ref<HTMLElement | { $el?: HTMLElement } | null>(null),
+		packagesStageRef: ref<HTMLElement | { $el?: HTMLElement } | null>(null),
+		servicesStageRef: ref<HTMLElement | { $el?: HTMLElement } | null>(null),
+		addressStageRef: ref<HTMLElement | { $el?: HTMLElement } | null>(null),
+		paymentStageRef: ref<HTMLElement | { $el?: HTMLElement } | null>(null),
 	};
 
 	const ui: FunnelUiState = {

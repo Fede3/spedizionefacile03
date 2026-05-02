@@ -5,7 +5,7 @@ import {
 	buildCheckoutSubmissionSignature,
 	readPendingShipmentDraft,
 	syncPendingShipmentSubmissionId,
-} from '~/utils/checkoutSubmissionContext'
+} from '~/utils/checkout'
 
 type OrderLike = {
 	id?: string | number | null

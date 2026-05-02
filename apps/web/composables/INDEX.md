@@ -12,6 +12,8 @@
 
 - `useFunnelValidation` — validazione cross-field step 1 (colli, dimensioni, paesi).
 - `useFunnelAnalytics` — tracking eventi Plausible (auth, payment, funnel step). No-op se tracker offline.
+- `useFunnelNavigation` — scroll/focus + 6 hook accordion enter/leave (transition cubic-bezier easeOutExpo 440ms).
+- `useFunnelState` — errors + templateRefs + ui state + iconFilters + helpers throttle stripping per `<ShipmentFlowPage>`.
 - `useQuote` — orchestratore preventivo: pacchi + locazioni + pricing + persist sessione.
 - `useQuoteForm` — gestione form pacchi (add/remove/edit).
 - `useQuotePricing` — calcolo prezzo runtime (peso/volume/CAP supplement).
@@ -106,6 +108,10 @@
 ## Linee guida composables
 
 - **Nuovo composable solo se usato in 2+ posti** (singolo chiamante: inline).
+- **Eccezione single-use**: composable >100 LOC che orchestrano una sezione di un god file
+  (es. `<ShipmentFlowPage>` 1021 LOC, `useAdminPricing` facade 4-section, `useQuote` 4-section)
+  restano standalone anche con un solo caller — inlinarli sforerebbe il limite 400 LOC del
+  file orchestratore. Vedi ADR 006 (modular monolith) per il razionale.
 - **Naming**: `useXxx` per composable Vue, `xxx` per utils puri (in `utils/`).
 - **Auto-import**: tutti i composable in `composables/` sono auto-importati da Nuxt.
 - **TypeScript**: usare tipi espliciti per gli args, ritorni inferiti dal compiler.
