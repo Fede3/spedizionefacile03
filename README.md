@@ -74,9 +74,9 @@ cd apps/web && npm install && cd ..
 
 | Email | Password | Ruolo |
 |---|---|---|
-| `admin@spediamofacile.it` | `password` | Admin |
-| `cliente@spediamofacile.it` | `password` | Cliente |
-| `pro@spediamofacile.it` | `password` | Partner Pro |
+| `admin@spediamofacile.it` | `Password1!` | Admin |
+| `cliente@spediamofacile.it` | `Password1!` | Cliente |
+| `pro@spediamofacile.it` | `Password1!` | Partner Pro |
 
 ## Documentazione
 
