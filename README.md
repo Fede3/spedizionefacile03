@@ -11,12 +11,26 @@ Intermediario BRT: preventivo, funnel spedizione, carrello, pagamento, account c
 - **Pagamenti**: Stripe + Bonifico + Wallet interno
 - **Test**: PHPUnit backend + Playwright E2E + Vitest unit
 
-## Quickstart
+## Quickstart (Docker — consigliato)
 
 ```bash
 git clone <repo>
 cd spedizionefacile
 
+# 5 servizi (postgres + redis + laravel + nuxt + caddy) in un comando
+make dev      # equivalente a: docker compose up -d
+
+# Apri http://127.0.0.1:8787 quando "caddy: healthy"
+make logs     # tail dei log
+make down     # stop (mantiene volumi)
+make clean    # reset completo (drop DB)
+```
+
+Vedi `make help` per l'elenco completo dei target (`dev`, `test`, `build`, `typecheck`, `lint`, `seed`, …).
+
+## Quickstart (host nativo — alternativa)
+
+```bash
 # Backend
 composer install
 cp .env.example .env && php artisan key:generate

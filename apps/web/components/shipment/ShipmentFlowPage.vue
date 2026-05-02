@@ -1,27 +1,17 @@
 <script setup>
 // ShipmentFlowPage — orchestratore template + computed del funnel.
-
+//
 // Lo shell di route mantiene SOLO definePageMeta + useSeoMeta + render.
 // Composto da:
 //   - 14 composable (services, addresses, validation, flow, summary, ...)
-//   - 65+ computed di summary derivati da cart/session/store
+//   - 3 composabili "view" estratti (existing-order summary, payment-summary view, payment events)
 //   - 2 provide() Symbol-typed (shipmentFormHandlersKey, shipmentSuggestionsKey)
-//   - 22 handler inline (continueToCart, ventaglio actions, payment update:* events)
+//   - continueToCart wrapper analytics + apertura Step 4
 import ShipmentStepColli from '~/components/shipment/ShipmentStepColli.vue';
 import ShipmentStepServizi from '~/components/shipment/ShipmentStepServizi.vue';
 import ShipmentStepIndirizzi from '~/components/shipment/ShipmentStepIndirizzi.vue';
 import ShipmentStepPagamento from '~/components/shipment/ShipmentStepPagamento.vue';
 import PublicPageHeader from '~/components/layout/PublicPageHeader.vue';
-import {
-	buildEmptyPaymentAddress,
-	cleanPaymentSummaryText,
-	formatExistingOrderDate,
-	getExistingOrderPackageDimensions,
-	getExistingOrderPackageQuantity,
-	getExistingOrderPackageType,
-	normalizeExistingOrderAddress,
-} from '~/utils/shipmentStepHelpers';
-// resolveApiError ora usato solo dentro useShipmentVentaglioActions.
 
 const debugCheckpoint = (label) => {
 	if (!import.meta.client) return;
@@ -60,7 +50,6 @@ const {
 	onAccordionPanelAfterLeave,
 } = useFunnelNavigation();
 
-// Oggetto handler transitions passato come prop ai sub-componenti step.
 const accordionTransitions = {
 	onBeforeEnter: onAccordionPanelBeforeEnter,
 	onEnter: onAccordionPanelEnter,
@@ -95,15 +84,11 @@ const visibleSubmitError = funnelState.visibleSubmitError;
 const visiblePaymentBootstrapError = funnelState.visiblePaymentBootstrapError;
 debugCheckpoint('funnel state ready');
 
-// Dismiss manuale della pill di errore submit (bottone × nelle 3 pill step).
-// Resetta il ref condiviso in useFunnelState così la pill sparisce da tutti gli step.
 const clearVisibleSubmitError = () => {
 	if (submitError.value) submitError.value = null;
 };
 
 const focusPickupDateSection = () => focusPickupDateSectionHelper(pickupDateSectionRef);
-// Callback ref: il sub-componente ShipmentStepServizi inietta qui
-// il template-ref del ShipmentStepPickupDate nel pickupDateSectionRef centrale.
 const setPickupDateSectionRef = (el) => {
 	pickupDateSectionRef.value = el ?? null;
 };
@@ -263,10 +248,7 @@ const { persistShipmentFlowState } = useShipmentStepSessionPersistence({
 });
 debugCheckpoint('session persistence ready');
 
-// Auto-dismiss pill submitError quando l'utente modifica i campi
-// rilevanti (colli, indirizzo mittente/destinatario). Debounce 300ms per evitare
-// reset a ogni keystroke. {deep: true, flush: 'post'} per intercettare anche le
-// mutazioni nested (es. pack.weight, address.city). Attivo SOLO se errore presente.
+// Auto-dismiss pill submitError quando l'utente modifica i campi rilevanti.
 let _autoDismissErrorTimer = null;
 watch(
 	[() => editablePackages.value, () => originAddress, () => destinationAddress],
@@ -395,25 +377,6 @@ const {
 	shipmentFlowStore,
 });
 debugCheckpoint('summary ready');
-const ssrSafePackageAccordionSummary = computed(() => (summaryHydrationReady.value ? packageAccordionSummary.value : '0 colli · —'));
-const ssrSafeAddressAccordionSummary = computed(() => (summaryHydrationReady.value ? addressAccordionSummary.value : '— -> —'));
-const ssrSafeTrattaLabel = computed(() => (summaryHydrationReady.value ? trattaLabel.value : 'Tratta da definire'));
-const ssrSafeSummaryPackageLabel = computed(() => (summaryHydrationReady.value ? summaryPackageLabel.value : '0 colli'));
-const ssrSafeSummaryDimensionsLabel = computed(() => (summaryHydrationReady.value ? summaryDimensionsLabel.value : '—'));
-const ssrSafeConfirmationOriginContact = computed(() =>
-	summaryHydrationReady.value ? confirmationOriginContact.value : 'Mittente da completare',
-);
-const ssrSafeConfirmationDestinationContact = computed(() =>
-	summaryHydrationReady.value
-		? confirmationDestinationContact.value
-		: deliveryMode.value === 'pudo'
-			? 'Punto BRT da selezionare'
-			: 'Destinatario da completare',
-);
-const ssrSafePaymentOriginAddress = computed(() => (summaryHydrationReady.value ? originAddress.value : buildEmptyPaymentAddress()));
-const ssrSafePaymentDestinationAddress = computed(() =>
-	summaryHydrationReady.value ? destinationAddress.value : buildEmptyPaymentAddress(),
-);
 
 // --- Packages/services validation (step 1 & 2) --------------------------
 const funnelValidation = useFunnelValidation({
@@ -455,8 +418,6 @@ const cart = useCart();
 const pay = usePayment(cart);
 debugCheckpoint('cart + payment ready');
 
-// Destructure da cart (nomi identici, tranne pageReady -> checkoutPageReady
-// per mantenere il nome usato nel template e nell'orchestration composable).
 const {
 	pageReady: checkoutPageReady,
 	existingOrderId,
@@ -485,125 +446,25 @@ const {
 	contentDescription: checkoutContentDescription,
 } = cart;
 
-const existingOrderPackages = computed(() => (
-	existingOrder.value && Array.isArray(displayPackages.value) ? displayPackages.value : []
-));
-const existingOrderPrimaryPackage = computed(() => existingOrderPackages.value[0] || null);
-const hasExistingOrderSummary = computed(() => Boolean(existingOrderId.value && existingOrderPackages.value.length));
-
-const existingOrderPackageCount = computed(() =>
-	existingOrderPackages.value.reduce((sum, pack) => sum + getExistingOrderPackageQuantity(pack), 0),
-);
-const existingOrderPackageLabel = computed(() => {
-	const count = existingOrderPackageCount.value;
-	return `${count} ${count === 1 ? 'collo' : 'colli'}`;
-});
-const existingOrderDimensionsLabel = computed(() => {
-	const grouped = new Map();
-	for (const pack of existingOrderPackages.value) {
-		const dimensions = getExistingOrderPackageDimensions(pack);
-		if (!dimensions) continue;
-		const type = getExistingOrderPackageType(pack);
-		const key = `${type}|${dimensions}`;
-		grouped.set(key, (grouped.get(key) || 0) + getExistingOrderPackageQuantity(pack));
-	}
-
-	const rows = Array.from(grouped.entries()).map(([key, qty]) => {
-		const [type, dimensions] = key.split('|');
-		return qty > 1 ? `${qty}x ${type}: ${dimensions}` : `${type}: ${dimensions}`;
-	});
-
-	if (!rows.length) return '';
-	return rows.length === 1 ? rows[0] : `${rows[0]} +${rows.length - 1}`;
-});
-const existingOrderOriginAddress = computed(() =>
-	normalizeExistingOrderAddress(existingOrderPrimaryPackage.value?.origin_address),
-);
-const existingOrderDestinationAddress = computed(() =>
-	normalizeExistingOrderAddress(existingOrderPrimaryPackage.value?.destination_address),
-);
-const existingOrderService = computed(() => existingOrderPrimaryPackage.value?.services || {});
-const existingOrderDeliveryMode = computed(() => (
-	existingOrder.value?.brt_pudo_id ? 'pudo' : 'home'
-));
-const existingOrderPickupDate = computed(() =>
-	formatExistingOrderDate(
-		existingOrder.value?.pickup_date
-		|| existingOrderService.value?.date
-		|| existingOrderService.value?.serviceData?.pickup_request?.date,
-	),
-);
-const existingOrderServicesLabel = computed(() => {
-	const raw = cleanPaymentSummaryText(existingOrderService.value?.service_type);
-	return !raw || raw.toLowerCase() === 'nessuno' ? 'Nessun extra selezionato' : raw;
-});
-const existingOrderContentDescription = computed(() => (
-	cleanPaymentSummaryText(existingOrderPackages.value.find((pack) => cleanPaymentSummaryText(pack?.content_description))?.content_description)
-	|| cleanPaymentSummaryText(checkoutContentDescription.value)
-));
-const existingOrderRouteLabel = computed(() => {
-	const originCity = cleanPaymentSummaryText(existingOrderOriginAddress.value.city);
-	const destinationCity = cleanPaymentSummaryText(existingOrderDestinationAddress.value.city || existingOrderDestinationAddress.value.name);
-	if (originCity && destinationCity) return `${originCity} -> ${destinationCity}`;
-	return '';
+// Tutti i computed del riepilogo "ordine esistente" estratti in composable.
+const {
+	hasExistingOrderSummary,
+	existingOrderPackageLabel,
+	existingOrderDimensionsLabel,
+	existingOrderOriginAddress,
+	existingOrderDestinationAddress,
+	existingOrderDeliveryMode,
+	existingOrderPickupDate,
+	existingOrderServicesLabel,
+	existingOrderContentDescription,
+	existingOrderRouteLabel,
+} = useShipmentExistingOrderSummary({
+	existingOrder,
+	existingOrderId,
+	displayPackages,
+	checkoutContentDescription,
 });
 
-// Boundary payment summary: il checkout da order_id vive sul backend, non nel
-// draft del funnel. Qui scegliamo i dati ordine persistito solo per la UI.
-const paymentTrattaLabel = computed(() => (
-	hasExistingOrderSummary.value ? existingOrderRouteLabel.value : ssrSafeTrattaLabel.value
-));
-const paymentColloLabel = computed(() => (
-	hasExistingOrderSummary.value ? existingOrderPackageLabel.value : colloLabel.value
-));
-const paymentSummaryPackageLabel = computed(() => (
-	hasExistingOrderSummary.value ? existingOrderPackageLabel.value : ssrSafeSummaryPackageLabel.value
-));
-const paymentSummaryDimensionsLabel = computed(() => (
-	hasExistingOrderSummary.value ? existingOrderDimensionsLabel.value : ssrSafeSummaryDimensionsLabel.value
-));
-const paymentConfirmationOriginContact = computed(() => (
-	hasExistingOrderSummary.value ? existingOrderOriginAddress.value.full_name : ssrSafeConfirmationOriginContact.value
-));
-const paymentConfirmationDestinationContact = computed(() => (
-	hasExistingOrderSummary.value ? existingOrderDestinationAddress.value.full_name : ssrSafeConfirmationDestinationContact.value
-));
-const paymentOriginAddress = computed(() => (
-	hasExistingOrderSummary.value ? existingOrderOriginAddress.value : ssrSafePaymentOriginAddress.value
-));
-const paymentDestinationAddress = computed(() => (
-	hasExistingOrderSummary.value ? existingOrderDestinationAddress.value : ssrSafePaymentDestinationAddress.value
-));
-const paymentDeliveryMode = computed(() => (
-	hasExistingOrderSummary.value ? existingOrderDeliveryMode.value : deliveryMode.value
-));
-const paymentPickupDate = computed(() => (
-	hasExistingOrderSummary.value ? existingOrderPickupDate.value : confirmationPickupDate.value
-));
-const paymentServicesLabel = computed(() => (
-	hasExistingOrderSummary.value ? existingOrderServicesLabel.value : paymentSummaryServicesLabel.value
-));
-const paymentContentDescription = computed(() => (
-	hasExistingOrderSummary.value ? existingOrderContentDescription.value : resolvedContentDescription.value
-));
-const paymentDeliveryDisplayLabel = computed(() => (
-	hasExistingOrderSummary.value
-		? (existingOrderDeliveryMode.value === 'pudo' ? 'Punto BRT' : 'Consegna a domicilio')
-		: paymentDeliveryLabel.value
-));
-const packagesStageSummary = computed(() => {
-	if (!hasExistingOrderSummary.value) return ssrSafePackageAccordionSummary.value;
-	const dimensions = cleanPaymentSummaryText(existingOrderDimensionsLabel.value);
-	return `${existingOrderPackageLabel.value} · ${dimensions || 'Misure disponibili'}`;
-});
-const addressStageSummary = computed(() => (
-	hasExistingOrderSummary.value
-		? (existingOrderRouteLabel.value || ssrSafeAddressAccordionSummary.value)
-		: ssrSafeAddressAccordionSummary.value
-));
-
-// Destructure da pay (nomi identici, tranne termsAccepted -> checkoutTermsAccepted
-// e isProcessing -> checkoutIsProcessing per preservare l'API del template).
 const {
 	initStripe,
 	stripeLoading,
@@ -631,8 +492,6 @@ const {
 	paymentActionLabel,
 	canPay,
 	payButtonTooltip,
-	// Wallet express (Apple Pay / Google Pay) — Stripe PaymentRequestButton.
-	// Dopo F-Pay-2 sono fallback inerti (archiviati). Lasciati per retro-compatibilità template.
 	canMakePayment,
 	paymentRequestContainer,
 	paymentRequestError,
@@ -645,48 +504,32 @@ const setCheckoutCardRef = (el) => {
 	cardElementContainer.value = el;
 };
 
-// Handler per update:xxx emessi da ShipmentStepPagamento.
-// Necessari perche' nel template Vue i ref sono auto-unwrappati e non si puo'
-// scrivere `ref.value = v` direttamente: serve una funzione nello script setup.
-const onPaymentSummaryExpanded = (v) => {
-	paymentSummaryExpanded.value = v;
-};
-const onCouponPanelOpen = (v) => {
-	couponPanelOpen.value = v;
-};
-const onCouponCode = (v) => {
-	couponCode.value = v;
-};
-const onUseNewCard = (v) => {
-	useNewCard.value = v;
-};
-const onSaveCardForFuture = (v) => {
-	saveCardForFuture.value = v;
-};
-const onFatturazioneType = (v) => {
-	fatturazioneType.value = v;
-};
-const onInvoiceSubjectType = (v) => {
-	invoiceSubjectType.value = v;
-};
-const onFatturaData = (v) => {
-	fatturaData.value = {
-		...fatturaData.value,
-		...v,
-	};
-};
-const onCheckoutTermsAccepted = (v) => {
-	checkoutTermsAccepted.value = v;
-};
-const onShowConfirmModal = (v) => {
-	showConfirmModal.value = v;
-};
+// Handler per update:xxx emessi da ShipmentStepPagamento (estratti in composable).
+const {
+	onPaymentSummaryExpanded,
+	onCouponPanelOpen,
+	onCouponCode,
+	onUseNewCard,
+	onSaveCardForFuture,
+	onFatturazioneType,
+	onInvoiceSubjectType,
+	onFatturaData,
+	onCheckoutTermsAccepted,
+	onShowConfirmModal,
+} = useShipmentPaymentEvents({
+	paymentSummaryExpanded,
+	couponPanelOpen,
+	couponCode,
+	useNewCard,
+	saveCardForFuture,
+	fatturazioneType,
+	invoiceSubjectType,
+	fatturaData,
+	checkoutTermsAccepted,
+	showConfirmModal,
+});
 
 // Wallet express: callback ref per container del Stripe PaymentRequestButton.
-// onPaymentRequestReady viene chiamato dal PaymentMethods quando il container
-// e' in DOM e canMakePayment = true; monta il bottone Apple/Google Pay.
-// Guard: se l'utente non ha ancora accettato i termini, non montiamo il bottone
-// — il watch su termsAccepted in usePaymentFlow lo monterà appena spunta.
 const setPaymentRequestRef = (el) => {
 	paymentRequestContainer.value = el;
 };
@@ -696,9 +539,7 @@ const handlePaymentRequestReady = async () => {
 };
 
 const uiFeedback = useUiFeedback();
-// Funnel analytics: 5 step principali del preventivo.
 const funnelAnalytics = useFunnelAnalytics();
-// GA4 e-commerce: add_to_cart / begin_checkout / add_payment_info
 debugCheckpoint('analytics ready');
 
 const updateAddressField = (type, field, value) => {
@@ -731,9 +572,6 @@ const { continueToCart: persistAndContinueToCart, isSubmitting } = useShipmentSt
 debugCheckpoint('step submit ready');
 
 // --- PROVIDE: funzioni form/validazione iniettate nei componenti figli ---
-// Evita prop drilling di 19+ funzioni attraverso StepAddressSection -> AddressFormFields.
-
-// ai 4 consumer: AddressFormFields, AddressFieldFeedback, StepAddressSection).
 provide(shipmentFormHandlersKey, {
 	fieldClass,
 	getFieldError,
@@ -768,7 +606,6 @@ provide(shipmentSuggestionsKey, {
 
 // continueToCart (handler wrapper analytics + apertura Step 4) resta qui
 // perché dipende dall'orchestrazione: deve chiamare openPaymentAccordion DOPO trackServicesSelected.
-// È una forward declaration: openPaymentAccordion arriva da useShipmentStepPageOrchestration qui sotto.
 const continueToCart = async () => {
 	if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
 	await nextTick();
@@ -781,10 +618,8 @@ const continueToCart = async () => {
 	const persisted = await persistAndContinueToCart();
 	if (persisted === false) return false;
 
-	// Analytics: indirizzi compilati e validati. Evento senza PII.
 	funnelAnalytics.trackAddressesFilled();
 
-	// Analytics: snapshot dei servizi selezionati al submit (non ad ogni toggle).
 	const selectedServiceNames = [];
 	if (featuredService.value?.isSelected) selectedServiceNames.push(String(featuredService.value.name || 'featured'));
 	for (const s of regularServices.value || []) {
@@ -797,9 +632,6 @@ const continueToCart = async () => {
 	return true;
 };
 
-/* USCITE ALTERNATIVE DAL VENTAGLIO (step Indirizzi):
-   "Aggiungi al carrello" + handler archiviato "Salva configurata".
-   Logica spostata in useShipmentVentaglioActions per isolare il flusso. */
 const {
 	isAddingToCart: isAddingToCartFromVentaglio,
 	isSavingConfigured: isSavingConfiguredFromVentaglio,
@@ -815,9 +647,7 @@ const {
 	persistAndContinueToCart,
 });
 
-// Orchestrazione UI (summary, accordion open/close, sticky bar,
-// payment bootstrap). Raggruppa le 35+ computed/funzioni che prima vivevano
-// inline in questa pagina senza modificarne la logica.
+// Orchestrazione UI (summary, accordion open/close, sticky bar, payment bootstrap).
 const {
 	packageAccordionSummary,
 	servicesAccordionSummary,
@@ -903,6 +733,56 @@ const {
 	initStripe,
 	loadPriceBands,
 	autoApplyReferral,
+});
+
+// Tutti i computed "view" che bilanciano dati existing-order vs live funnel
+// (con SSR-safe fallback). Estratti in composable per tenere lo script setup
+// snello e testabile.
+const {
+	ssrSafePaymentOriginAddress,
+	ssrSafePaymentDestinationAddress,
+	paymentTrattaLabel,
+	paymentColloLabel,
+	paymentSummaryPackageLabel,
+	paymentSummaryDimensionsLabel,
+	paymentConfirmationOriginContact,
+	paymentConfirmationDestinationContact,
+	paymentOriginAddress,
+	paymentDestinationAddress,
+	paymentDeliveryMode,
+	paymentPickupDate,
+	paymentServicesLabel,
+	paymentContentDescription,
+	paymentDeliveryDisplayLabel,
+	packagesStageSummary,
+	addressStageSummary,
+} = useShipmentPaymentSummaryView({
+	summaryHydrationReady,
+	hasExistingOrderSummary,
+	deliveryMode,
+	packageAccordionSummary,
+	addressAccordionSummary,
+	trattaLabel,
+	colloLabel,
+	summaryPackageLabel,
+	summaryDimensionsLabel,
+	confirmationOriginContact,
+	confirmationDestinationContact,
+	confirmationPickupDate,
+	paymentSummaryServicesLabel,
+	resolvedContentDescription,
+	paymentDeliveryLabel,
+	originAddress,
+	destinationAddress,
+	existingOrderRouteLabel,
+	existingOrderPackageLabel,
+	existingOrderDimensionsLabel,
+	existingOrderOriginAddress,
+	existingOrderDestinationAddress,
+	existingOrderDeliveryMode,
+	existingOrderPickupDate,
+	existingOrderServicesLabel,
+	existingOrderContentDescription,
 });
 </script>
 

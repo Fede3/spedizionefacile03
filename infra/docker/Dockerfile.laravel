@@ -1,0 +1,76 @@
+# =============================================================================
+# Dockerfile.laravel — Laravel 11 dev container (PHP 8.3 + artisan serve)
+# =============================================================================
+# Profilo dev: bind-mount del codice + artisan serve su :8000.
+# Per produzione usa il Dockerfile root (multi-stage nginx + php-fpm).
+#
+# Uso da docker-compose.yml:
+#   build:
+#     context: .
+#     dockerfile: infra/docker/Dockerfile.laravel
+# =============================================================================
+
+FROM php:8.3-cli-alpine
+
+# Estensioni PHP richieste da Laravel + moneyphp + Stripe SDK + BRT REST
+RUN apk add --no-cache \
+        bash \
+        curl \
+        git \
+        icu-libs \
+        libpng \
+        libjpeg-turbo \
+        libwebp \
+        freetype \
+        libzip \
+        postgresql-libs \
+        oniguruma \
+        sqlite \
+    && apk add --no-cache --virtual .build-deps \
+        icu-dev \
+        libpng-dev \
+        libjpeg-turbo-dev \
+        libwebp-dev \
+        freetype-dev \
+        libzip-dev \
+        postgresql-dev \
+        oniguruma-dev \
+        sqlite-dev \
+        $PHPIZE_DEPS \
+    && docker-php-ext-configure gd --with-jpeg --with-webp --with-freetype \
+    && docker-php-ext-install -j"$(nproc)" \
+        pdo \
+        pdo_sqlite \
+        pdo_pgsql \
+        pdo_mysql \
+        gd \
+        intl \
+        bcmath \
+        zip \
+        opcache \
+    && pecl install redis \
+    && docker-php-ext-enable redis \
+    && apk del .build-deps \
+    && rm -rf /tmp/* /var/cache/apk/*
+
+# Composer
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+
+WORKDIR /var/www/html
+
+# Copia composer.* per layer cache, poi tutto il resto a runtime via bind mount.
+COPY composer.json composer.lock ./
+RUN composer install --no-scripts --no-autoloader --prefer-dist \
+    && rm -rf /root/.composer
+
+ENV APP_ENV=local \
+    APP_DEBUG=true \
+    PHP_CLI_SERVER_WORKERS=4
+
+EXPOSE 8000
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
+    CMD curl -fsS "http://localhost:8000/api/health/live" || exit 1
+
+# artisan serve binding 0.0.0.0 per essere raggiungibile dal container caddy.
+CMD ["sh", "-c", "composer dump-autoload && php artisan serve --host=0.0.0.0 --port=8000"]
