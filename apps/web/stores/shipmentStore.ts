@@ -12,18 +12,11 @@ import { defineStore } from 'pinia';
 import type { Ref } from 'vue';
 import { ref, watch } from 'vue';
 import type {
-	Address,
-	Package,
-	PendingShipment,
-	PudoPoint,
-	ShipmentDetails,
-	ShipmentFlowStoreState,
+	Address, Package, PendingShipment, PudoPoint, ShipmentDetails, ShipmentFlowStoreState,
 } from '~/types';
 import {
-	buildQuoteComparableSignature,
-	buildQuotePayloadSnapshotFor,
-	extractSessionComparablePayload,
-	formatResolvedLocation,
+	buildQuoteComparableSignature, buildQuotePayloadSnapshotFor,
+	extractSessionComparablePayload, formatResolvedLocation,
 } from '~/utils/quickQuoteHelpers';
 import { buildShipmentFlowLocation } from '~/utils/shipment';
 
@@ -37,9 +30,7 @@ type QuoteSessionData = {
 	step?: number | string;
 	[key: string]: unknown;
 };
-type QuoteSyncOptions = {
-	sourceSignature?: string;
-};
+type QuoteSyncOptions = { sourceSignature?: string };
 type ShipmentFlowStoreLike = {
 	shipmentDetails: QuoteShipmentDetails;
 	packages: QuotePackage[];
@@ -58,14 +49,8 @@ type ContinueToNextStepDeps = {
 };
 
 // ── Tipi per admin gate (ex shipmentFlowAdminGateStore) ────────────────────
-type AdminGatePayload = {
-	targetPath?: string;
-	lastValidRoute?: string;
-	reason?: string;
-};
-type AdminGateChallenge = Required<AdminGatePayload> & {
-	createdAt: number;
-};
+type AdminGatePayload = { targetPath?: string; lastValidRoute?: string; reason?: string };
+type AdminGateChallenge = Required<AdminGatePayload> & { createdAt: number };
 
 // ── Persistenza sessionStorage (ex shipmentFlowStore) ──────────────────────
 const STORAGE_KEY = 'spedizionefacile_user_store';
@@ -73,16 +58,10 @@ const DEBOUNCE_MS = 300;
 let debounceTimer: ReturnType<typeof setTimeout> | null = null;
 
 const DEFAULT_SHIPMENT_DETAILS: ShipmentDetails = {
-	origin_city: '',
-	origin_postal_code: '',
-	origin_province: '',
-	origin_country_code: 'IT',
-	origin_country: 'Italia',
-	destination_city: '',
-	destination_postal_code: '',
-	destination_province: '',
-	destination_country_code: 'IT',
-	destination_country: 'Italia',
+	origin_city: '', origin_postal_code: '', origin_province: '',
+	origin_country_code: 'IT', origin_country: 'Italia',
+	destination_city: '', destination_postal_code: '', destination_province: '',
+	destination_country_code: 'IT', destination_country: 'Italia',
 	date: '',
 };
 
@@ -101,27 +80,16 @@ function loadFromSession(): Partial<ShipmentFlowStoreState> | null {
 
 function saveToSession(state: ShipmentFlowStoreState) {
 	if (!import.meta.client) return;
-	try {
-		sessionStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-	} catch {
-		// sessionStorage pieno o non disponibile: ignoriamo
-	}
+	try { sessionStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+	catch { /* sessionStorage pieno o non disponibile: ignoriamo */ }
 }
 
 export const useShipmentStore = defineStore('shipment', () => {
-	// ═══════════════════════════════════════════════════════════════════════
-	// SEZIONE 1 — DATI SPEDIZIONE (ex shipmentFlowStore, 16 ref)
-	// ═══════════════════════════════════════════════════════════════════════
+	// ── SEZIONE 1 — DATI SPEDIZIONE (ex shipmentFlowStore, 16 ref) ─────────
 
 	const stepNumber = ref(1);
 	const hasPersistedHydration = ref(false);
-
 	const shipmentDetails = ref<ShipmentDetails>({ ...DEFAULT_SHIPMENT_DETAILS });
-	if (!shipmentDetails.value.origin_country_code) shipmentDetails.value.origin_country_code = 'IT';
-	if (!shipmentDetails.value.origin_country) shipmentDetails.value.origin_country = 'Italia';
-	if (!shipmentDetails.value.destination_country_code) shipmentDetails.value.destination_country_code = 'IT';
-	if (!shipmentDetails.value.destination_country) shipmentDetails.value.destination_country = 'Italia';
-
 	const isQuoteStarted = ref(false);
 	const totalPrice = ref(0);
 	const packages = ref<Package[]>([]);
@@ -137,24 +105,32 @@ export const useShipmentStore = defineStore('shipment', () => {
 	const smsEmailNotification = ref(false);
 	const serviceData = ref<Record<string, unknown>>({});
 
-	function applyPersistedState(saved: Partial<ShipmentFlowStoreState> | null) {
-		if (!saved || typeof saved !== 'object') return;
-		stepNumber.value = typeof saved.stepNumber === 'number' ? saved.stepNumber : 1;
-		shipmentDetails.value = { ...DEFAULT_SHIPMENT_DETAILS, ...(saved.shipmentDetails || {}) };
-		isQuoteStarted.value = saved.isQuoteStarted ?? false;
-		totalPrice.value = typeof saved.totalPrice === 'number' ? saved.totalPrice : 0;
-		packages.value = Array.isArray(saved.packages) ? saved.packages : [];
-		servicesArray.value = Array.isArray(saved.servicesArray) ? saved.servicesArray : [];
-		contentDescription.value = saved.contentDescription ?? '';
-		pendingShipment.value = saved.pendingShipment ?? null;
-		originAddressData.value = saved.originAddressData ?? null;
-		destinationAddressData.value = saved.destinationAddressData ?? null;
-		pickupDate.value = saved.pickupDate ?? '';
-		editingCartItemId.value = saved.editingCartItemId ?? null;
-		deliveryMode.value = saved.deliveryMode ?? 'home';
-		selectedPudo.value = saved.selectedPudo ?? null;
-		smsEmailNotification.value = saved.smsEmailNotification ?? false;
-		serviceData.value = saved.serviceData ?? {};
+	// Registry persistenza: mappa `chiave -> ref` per evitare ripetere 16 assegnazioni in apply/snapshot/watch.
+	const persistedFields = {
+		stepNumber, shipmentDetails, isQuoteStarted, totalPrice, packages,
+		servicesArray, contentDescription, pendingShipment, originAddressData,
+		destinationAddressData, pickupDate, editingCartItemId, deliveryMode, selectedPudo,
+		smsEmailNotification, serviceData,
+	} as const;
+
+	function applyPersistedState(s: Partial<ShipmentFlowStoreState> | null) {
+		if (!s || typeof s !== 'object') return;
+		stepNumber.value = typeof s.stepNumber === 'number' ? s.stepNumber : 1;
+		shipmentDetails.value = { ...DEFAULT_SHIPMENT_DETAILS, ...(s.shipmentDetails || {}) };
+		totalPrice.value = typeof s.totalPrice === 'number' ? s.totalPrice : 0;
+		packages.value = Array.isArray(s.packages) ? s.packages : [];
+		servicesArray.value = Array.isArray(s.servicesArray) ? s.servicesArray : [];
+		isQuoteStarted.value = s.isQuoteStarted ?? false;
+		contentDescription.value = s.contentDescription ?? '';
+		pendingShipment.value = s.pendingShipment ?? null;
+		originAddressData.value = s.originAddressData ?? null;
+		destinationAddressData.value = s.destinationAddressData ?? null;
+		pickupDate.value = s.pickupDate ?? '';
+		editingCartItemId.value = s.editingCartItemId ?? null;
+		deliveryMode.value = s.deliveryMode ?? 'home';
+		selectedPudo.value = s.selectedPudo ?? null;
+		smsEmailNotification.value = s.smsEmailNotification ?? false;
+		serviceData.value = s.serviceData ?? {};
 	}
 
 	function hydrateFromSession() {
@@ -167,41 +143,15 @@ export const useShipmentStore = defineStore('shipment', () => {
 		if (!hasPersistedHydration.value) return;
 		if (debounceTimer) clearTimeout(debounceTimer);
 		debounceTimer = setTimeout(() => {
-			saveToSession({
-				stepNumber: stepNumber.value,
-				shipmentDetails: shipmentDetails.value,
-				isQuoteStarted: isQuoteStarted.value,
-				totalPrice: totalPrice.value,
-				packages: packages.value,
-				servicesArray: servicesArray.value,
-				contentDescription: contentDescription.value,
-				pendingShipment: pendingShipment.value,
-				originAddressData: originAddressData.value,
-				destinationAddressData: destinationAddressData.value,
-				pickupDate: pickupDate.value,
-				editingCartItemId: editingCartItemId.value,
-				deliveryMode: deliveryMode.value,
-				selectedPudo: selectedPudo.value,
-				smsEmailNotification: smsEmailNotification.value,
-				serviceData: serviceData.value,
-			});
+			const snap: Record<string, unknown> = {};
+			for (const [key, r] of Object.entries(persistedFields)) snap[key] = r.value;
+			saveToSession(snap as unknown as ShipmentFlowStoreState);
 		}, DEBOUNCE_MS);
 	}
 
-	watch(
-		[
-			stepNumber, shipmentDetails, isQuoteStarted, totalPrice, packages,
-			servicesArray, contentDescription, pendingShipment, originAddressData,
-			destinationAddressData, pickupDate, editingCartItemId, deliveryMode, selectedPudo,
-			smsEmailNotification, serviceData,
-		],
-		persist,
-		{ deep: true },
-	);
+	watch(Object.values(persistedFields), persist, { deep: true });
 
-	// ═══════════════════════════════════════════════════════════════════════
-	// SEZIONE 2 — ORCHESTRAZIONE PREVENTIVO (ex preventivoStore)
-	// ═══════════════════════════════════════════════════════════════════════
+	// ── SEZIONE 2 — ORCHESTRAZIONE PREVENTIVO (ex preventivoStore) ─────────
 
 	const messageError = ref<string | null>(null);
 	const isCalculating = ref(false);
@@ -218,40 +168,31 @@ export const useShipmentStore = defineStore('shipment', () => {
 	let latestQuoteRequestId = 0;
 
 	const getAutoQuoteTimer = () => autoQuoteTimer;
-	const setAutoQuoteTimer = (timer: ReturnType<typeof setTimeout> | null) => {
-		autoQuoteTimer = timer;
-	};
+	const setAutoQuoteTimer = (timer: ReturnType<typeof setTimeout> | null) => { autoQuoteTimer = timer; };
 	const clearAutoQuoteTimer = () => {
-		if (autoQuoteTimer) {
-			clearTimeout(autoQuoteTimer);
-			autoQuoteTimer = null;
-		}
+		if (autoQuoteTimer) { clearTimeout(autoQuoteTimer); autoQuoteTimer = null; }
 	};
 
+	// Helper privato per assegnare/azzerare lo stato pendente in atomico.
+	const writePending = (p: Promise<boolean> | null, sig: string, silent: boolean, id: number) => {
+		pendingQuotePromise = p; pendingQuoteSignature = sig;
+		pendingQuoteSilent = silent; pendingQuoteRequestId = id;
+	};
 	const getPendingQuotePromise = () => pendingQuotePromise;
 	const getPendingQuoteSignature = () => pendingQuoteSignature;
-	const setPending = (
-		promise: Promise<boolean> | null,
-		signature: string,
-		silent: boolean,
-		requestId: number,
-	) => {
-		pendingQuotePromise = promise;
-		pendingQuoteSignature = signature;
-		pendingQuoteSilent = silent;
-		pendingQuoteRequestId = requestId;
-	};
-	const releasePendingIfMatches = (requestId: number) => {
-		if (pendingQuoteRequestId === requestId) {
-			pendingQuotePromise = null;
-			pendingQuoteSignature = '';
-			pendingQuoteSilent = false;
-			pendingQuoteRequestId = 0;
-		}
-	};
+	const setPending = writePending;
+	const releasePendingIfMatches = (id: number) => { if (pendingQuoteRequestId === id) writePending(null, '', false, 0); };
 	const isPendingSilent = () => pendingQuoteSilent;
 	const nextRequestId = () => ++latestQuoteRequestId;
-	const isLatestRequest = (requestId: number) => requestId === latestQuoteRequestId;
+	const isLatestRequest = (id: number) => id === latestQuoteRequestId;
+
+	// Aggiorna totale/step/flag isQuoteStarted dallo snapshot di sessione.
+	const applySessionMeta = (s: ShipmentFlowStoreLike, d: QuoteSessionData, ensurePrimaryPackage: () => void) => {
+		s.totalPrice = Number(d?.total_price || s?.totalPrice || 0);
+		s.stepNumber = Number(d?.step || 2);
+		s.isQuoteStarted = true;
+		ensurePrimaryPackage();
+	};
 
 	const syncQuoteStateFromSession = (
 		shipmentFlowStore: ShipmentFlowStoreLike,
@@ -264,30 +205,18 @@ export const useShipmentStore = defineStore('shipment', () => {
 		const sessionSignature = buildQuoteComparableSignature(extractSessionComparablePayload(sessionData));
 		if (sourceSignature) {
 			if (sourceSignature !== sessionSignature) return;
-			shipmentFlowStore.totalPrice = Number(sessionData?.total_price || shipmentFlowStore?.totalPrice || 0);
-			shipmentFlowStore.stepNumber = Number(sessionData?.step || 2);
-			shipmentFlowStore.isQuoteStarted = true;
 			ensurePackagesIdentity();
-			ensurePrimaryPackage();
+			applySessionMeta(shipmentFlowStore, sessionData, ensurePrimaryPackage);
 			return;
 		}
-		const sessionDetails = sessionData?.shipment_details || {};
-		for (const [key, value] of Object.entries(sessionDetails)) {
-			if (key in shipmentFlowStore.shipmentDetails) {
-				shipmentFlowStore.shipmentDetails[key] = value ?? '';
-			}
+		for (const [key, value] of Object.entries(sessionData?.shipment_details || {})) {
+			if (key in shipmentFlowStore.shipmentDetails) shipmentFlowStore.shipmentDetails[key] = value ?? '';
 		}
-		const newPackages = Array.isArray(sessionData?.packages)
-			? sessionData.packages.map((pack) => ({ ...pack }))
-			: null;
-		if (newPackages) {
-			shipmentFlowStore?.packages.splice(0, shipmentFlowStore?.packages.length, ...newPackages);
+		if (Array.isArray(sessionData?.packages)) {
+			shipmentFlowStore?.packages.splice(0, shipmentFlowStore?.packages.length, ...sessionData.packages.map((p) => ({ ...p })));
 			ensurePackagesIdentity();
 		}
-		shipmentFlowStore.totalPrice = Number(sessionData?.total_price || shipmentFlowStore?.totalPrice || 0);
-		shipmentFlowStore.stepNumber = Number(sessionData?.step || 2);
-		shipmentFlowStore.isQuoteStarted = true;
-		ensurePrimaryPackage();
+		applySessionMeta(shipmentFlowStore, sessionData, ensurePrimaryPackage);
 	};
 
 	const resetQuoteState = () => {
@@ -298,57 +227,29 @@ export const useShipmentStore = defineStore('shipment', () => {
 
 	const continueToNextStep = async (deps: ContinueToNextStepDeps) => {
 		const {
-			shipmentFlowStore,
-			flushLocationDraftsForSubmit,
-			calculateRate,
-			ensurePackagesIdentity,
-			ensurePrimaryPackage,
-			session,
-			refresh,
+			shipmentFlowStore, flushLocationDraftsForSubmit, calculateRate,
+			ensurePackagesIdentity, ensurePrimaryPackage, session, refresh,
 		} = deps;
 		if (isCalculating.value || isAdvancingToServices.value) return;
 		messageError.value = null;
 		isAdvancingToServices.value = true;
 		quoteTransitionLock.value = true;
 		clearAutoQuoteTimer();
-		const unlockTimer = setTimeout(() => {
-			quoteTransitionLock.value = false;
-		}, 8000);
+		const unlockTimer = setTimeout(() => { quoteTransitionLock.value = false; }, 8000);
 		try {
 			await flushLocationDraftsForSubmit(formatResolvedLocation);
 			const payloadSnapshot = buildQuotePayloadSnapshotFor(shipmentFlowStore) as QuoteSessionData;
 			const payloadSignature = buildQuoteComparableSignature(payloadSnapshot);
-			const pendingPromise = getPendingQuotePromise();
-			const pendingSig = getPendingQuoteSignature();
-			let isValid = false;
-			if (pendingPromise && pendingSig === payloadSignature) {
-				isValid = await pendingPromise;
-				if (!isValid) {
-					isValid = await calculateRate({ silent: false, payload: payloadSnapshot });
-				}
-			} else {
-				isValid = await calculateRate({ silent: false, payload: payloadSnapshot });
-			}
+			const pending = pendingQuotePromise && pendingQuoteSignature === payloadSignature ? pendingQuotePromise : null;
+			let isValid = pending ? await pending : false;
+			if (!isValid) isValid = await calculateRate({ silent: false, payload: payloadSnapshot });
 			if (!isValid) return;
-			const refreshedSession = await refresh().catch(() => session.value);
-			const refreshedData = (refreshedSession && 'data' in refreshedSession ? refreshedSession.data : refreshedSession) as QuoteSessionData | null;
-			if (refreshedData) {
-				syncQuoteStateFromSession(
-					shipmentFlowStore,
-					ensurePackagesIdentity,
-					ensurePrimaryPackage,
-					refreshedData,
-					{ sourceSignature: payloadSignature },
-				);
-			} else {
-				syncQuoteStateFromSession(
-					shipmentFlowStore,
-					ensurePackagesIdentity,
-					ensurePrimaryPackage,
-					payloadSnapshot,
-					{ sourceSignature: payloadSignature },
-				);
-			}
+			const refreshed = await refresh().catch(() => session.value);
+			const refreshedData = (refreshed && 'data' in refreshed ? refreshed.data : refreshed) as QuoteSessionData | null;
+			syncQuoteStateFromSession(
+				shipmentFlowStore, ensurePackagesIdentity, ensurePrimaryPackage,
+				refreshedData || payloadSnapshot, { sourceSignature: payloadSignature },
+			);
 			lastQuotedSignature.value = payloadSignature;
 			await nextTick();
 			await navigateTo(buildShipmentFlowLocation({}, 'servizi'), { replace: true });
@@ -362,9 +263,7 @@ export const useShipmentStore = defineStore('shipment', () => {
 		}
 	};
 
-	// ═══════════════════════════════════════════════════════════════════════
-	// SEZIONE 3 — ADMIN GATE (ex shipmentFlowAdminGateStore)
-	// ═══════════════════════════════════════════════════════════════════════
+	// ── SEZIONE 3 — ADMIN GATE (ex shipmentFlowAdminGateStore) ─────────────
 
 	const adminGateChallenge = ref<AdminGateChallenge | null>(null);
 
@@ -377,55 +276,24 @@ export const useShipmentStore = defineStore('shipment', () => {
 		};
 	}
 
-	function closeAdminGate() {
-		adminGateChallenge.value = null;
-	}
+	function closeAdminGate() { adminGateChallenge.value = null; }
 
 	return {
 		// Sezione 1: dati spedizione
-		stepNumber,
-		isQuoteStarted,
-		shipmentDetails,
-		packages,
-		totalPrice,
-		servicesArray,
-		contentDescription,
-		pendingShipment,
-		originAddressData,
-		destinationAddressData,
-		pickupDate,
-		editingCartItemId,
-		deliveryMode,
-		selectedPudo,
-		smsEmailNotification,
-		serviceData,
-		hasPersistedHydration,
-		hydrateFromSession,
+		stepNumber, isQuoteStarted, shipmentDetails, packages, totalPrice,
+		servicesArray, contentDescription, pendingShipment, originAddressData,
+		destinationAddressData, pickupDate, editingCartItemId, deliveryMode, selectedPudo,
+		smsEmailNotification, serviceData, hasPersistedHydration, hydrateFromSession,
 
 		// Sezione 2: orchestrazione preventivo
-		messageError,
-		isCalculating,
-		isSyncingQuote,
-		isAdvancingToServices,
-		lastQuotedSignature,
-		quoteTransitionLock,
-		getAutoQuoteTimer,
-		setAutoQuoteTimer,
-		clearAutoQuoteTimer,
-		getPendingQuotePromise,
-		getPendingQuoteSignature,
-		setPending,
-		releasePendingIfMatches,
-		isPendingSilent,
-		nextRequestId,
-		isLatestRequest,
-		syncQuoteStateFromSession,
-		resetQuoteState,
-		continueToNextStep,
+		messageError, isCalculating, isSyncingQuote, isAdvancingToServices,
+		lastQuotedSignature, quoteTransitionLock,
+		getAutoQuoteTimer, setAutoQuoteTimer, clearAutoQuoteTimer,
+		getPendingQuotePromise, getPendingQuoteSignature, setPending, releasePendingIfMatches,
+		isPendingSilent, nextRequestId, isLatestRequest,
+		syncQuoteStateFromSession, resetQuoteState, continueToNextStep,
 
 		// Sezione 3: admin gate
-		adminGateChallenge,
-		openAdminGate,
-		closeAdminGate,
+		adminGateChallenge, openAdminGate, closeAdminGate,
 	};
 });

@@ -1,31 +1,18 @@
 <script setup>
-/** AdminConsoleAnalytics.vue (orchestrator) */
-import { computed, ref, onMounted } from 'vue';
-import {
-	chartToNumber,
-	formatCurrencyShort as formatEurShort,
-	formatPercentage as formatPercent,
-	formatInteger,
-	computeSegments,
-} from '~/utils/chart';
+import { ref, computed, onMounted } from 'vue';
 import AdminChartOrders from '~/components/admin/AdminChartOrders.vue';
 import AdminChartRevenue from '~/components/admin/AdminChartRevenue.vue';
 import AdminChartStatus from '~/components/admin/AdminChartStatus.vue';
 
 const props = defineProps({
 	days: { type: Array, default: () => [] },
-	today: { type: Number, default: 0 },
-	week: { type: Number, default: 0 },
-	month: { type: Number, default: 0 },
 	dailyRevenue: { type: Array, default: () => [] },
-	revenueToday: { type: Number, default: 0 },
-	revenueWeek: { type: Number, default: 0 },
-	revenueMonth: { type: Number, default: 0 },
 	statusDistribution: { type: Array, default: () => [] },
 });
 
 const mounted = ref(false);
 const activeChart = ref('ordini');
+onMounted(() => requestAnimationFrame(() => { mounted.value = true; }));
 
 const chartTabs = [
 	{ id: 'ordini', label: 'Ordini' },
@@ -33,103 +20,17 @@ const chartTabs = [
 	{ id: 'stati', label: 'Stati' },
 ];
 
-onMounted(() => {
-	requestAnimationFrame(() => {
-		mounted.value = true;
-	});
-});
-
-const peakValue = computed(() => {
-	const arr = Array.isArray(props.days) ? props.days : [];
-	return arr.reduce((peak, item) => Math.max(peak, chartToNumber(item?.count ?? item?.value ?? item?.orders)), 0);
-});
-
-const statusDotColors = {
-	consegnato: 'var(--color-brand-primary)',
-	consegnati: 'var(--color-brand-primary)',
-	delivered: 'var(--color-brand-primary)',
-	paid: 'var(--color-brand-primary)',
-	pagato: 'var(--color-brand-primary)',
-	completed: 'var(--color-brand-primary)',
-	completato: 'var(--color-brand-primary)',
-	in_transito: '#095866',
-	in_transit: '#095866',
-	in_lavorazione: '#095866',
-	processing: '#095866',
-	pending: '#095866',
-	in_attesa: '#095866',
-	confermato: '#095866',
-	in_giacenza: 'var(--color-brand-accent)',
-	reso: 'var(--color-brand-accent)',
-	returned: 'var(--color-brand-accent)',
-	rimborsato: 'var(--color-brand-accent)',
-	refunded: 'var(--color-brand-accent)',
-	cancellato: 'var(--color-brand-error)',
-	cancelled: 'var(--color-brand-error)',
-	annullato: 'var(--color-brand-error)',
-	rifiutato: 'var(--color-brand-error)',
-	refused: 'var(--color-brand-error)',
-	fallito: 'var(--color-brand-error)',
-	payment_failed: 'var(--color-brand-error)',
+const chartMeta = {
+	ordini: { title: 'Andamento ultimi 30 giorni', desc: 'Ordini giornalieri con andamento, picchi e continuità delle ultime quattro settimane.' },
+	ricavi: { title: 'Ricavi ultimi 30 giorni', desc: 'Ricavi giornalieri espressi in euro per capire subito i giorni più forti.' },
+	stati: { title: 'Distribuzione stati', desc: 'Quota delle code attive per leggere dove si concentra l’operatività.' },
 };
-
-const statusFallbackColors = ['#095866', 'var(--color-brand-primary)', '#0b6e80', 'var(--color-brand-error)'];
-
-const topStatusShares = computed(() => {
-	const segs = computeSegments(props.statusDistribution);
-	return segs.slice(0, 3).map((item, index) => ({
-		...item,
-		color: statusDotColors[item.key] || statusFallbackColors[index % statusFallbackColors.length],
-	}));
-});
-
-const _summaryCards = computed(() => {
-	if (activeChart.value === 'ricavi') {
-		return [
-			{ key: 'rev-today', label: 'Oggi', value: formatEurShort(props.revenueToday) },
-			{ key: 'rev-week', label: '7 giorni', value: formatEurShort(props.revenueWeek) },
-			{ key: 'rev-month', label: '30 giorni', value: formatEurShort(props.revenueMonth) },
-		];
-	}
-	if (activeChart.value === 'stati') {
-		return topStatusShares.value.map((item) => ({
-			key: `st-${item.key}`,
-			label: item.label,
-			value: formatInteger(item.count),
-			dotColor: item.color,
-			hint: formatPercent(item.share),
-		}));
-	}
-	return [
-		{ key: 'today', label: 'Oggi', value: formatInteger(props.today), hint: 'ordini' },
-		{ key: 'week', label: '7 giorni', value: formatInteger(props.week), hint: 'ordini' },
-		{ key: 'month', label: '30 giorni', value: formatInteger(props.month), hint: 'ordini' },
-		{ key: 'peak', label: 'Picco', value: formatInteger(peakValue.value), hint: 'giorno più pieno' },
-	];
-});
-
-const chartTitle = computed(() => {
-	if (activeChart.value === 'ricavi') return 'Ricavi ultimi 30 giorni';
-	if (activeChart.value === 'stati') return 'Distribuzione stati';
-	return 'Andamento ultimi 30 giorni';
-});
-
-const chartDescription = computed(() => {
-	if (activeChart.value === 'ricavi') {
-		return 'Ricavi giornalieri espressi in euro per capire subito i giorni più forti.';
-	}
-	if (activeChart.value === 'stati') {
-		return 'Quota delle code attive per leggere dove si concentra l’operatività.';
-	}
-	return 'Ordini giornalieri con andamento, picchi e continuità delle ultime quattro settimane.';
-});
+const chartTitle = computed(() => chartMeta[activeChart.value].title);
+const chartDescription = computed(() => chartMeta[activeChart.value].desc);
 </script>
 
 <template>
-	<section
-		class="admin-console-analytics"
-		:class="{ 'admin-console-analytics--mounted': mounted }">
-
+	<section class="admin-console-analytics" :class="{ 'admin-console-analytics--mounted': mounted }">
 		<div class="admin-console-analytics__header">
 			<div class="min-w-0">
 				<p class="admin-console-analytics__eyebrow">Analisi</p>
@@ -146,38 +47,17 @@ const chartDescription = computed(() => {
 			</div>
 		</div>
 
-		<p class="admin-console-analytics__description">
-			{{ chartDescription }}
-		</p>
+		<p class="admin-console-analytics__description">{{ chartDescription }}</p>
 
 		<Transition name="chart-fade" mode="out-in">
-			<AdminChartOrders
-				v-if="activeChart === 'ordini'"
-				key="ordini"
-				:orders-data="props.days"
-				period="30d" />
-
-			<AdminChartRevenue
-				v-else-if="activeChart === 'ricavi'"
-				key="ricavi"
-				:revenue-data="props.dailyRevenue"
-				period="30d" />
-
-			<AdminChartStatus
-				v-else-if="activeChart === 'stati'"
-				key="stati"
-				:status-data="props.statusDistribution"
-				legend-position="right" />
+			<AdminChartOrders v-if="activeChart === 'ordini'" key="ordini" :orders-data="props.days" period="30d" />
+			<AdminChartRevenue v-else-if="activeChart === 'ricavi'" key="ricavi" :revenue-data="props.dailyRevenue" period="30d" />
+			<AdminChartStatus v-else-if="activeChart === 'stati'" key="stati" :status-data="props.statusDistribution" legend-position="right" />
 		</Transition>
 	</section>
 </template>
 
-<!--
-  Stili admin analytics: NON scoped intenzionalmente.
-  Le classi `.admin-console-analytics__*` sono namespaced per nome e
-  condivise dai 3 children chart (Orders, Revenue, Status).
-  Non-scoped evita `:deep()` in ogni selettore figlio.
--->
+<!-- Stili non-scoped: classi namespaced condivise dai 3 children chart. -->
 <style>
 .admin-console-analytics {
 	display: grid;
@@ -271,15 +151,8 @@ const chartDescription = computed(() => {
 	max-height: 160px;
 }
 
-.admin-console-analytics__grid-line {
-	stroke: var(--color-border-soft, #E6E9EE);
-	stroke-width: 0.6;
-}
-
-.admin-console-analytics__area {
-	opacity: 0;
-	animation: admin-analytics-area-fade 400ms ease 600ms forwards;
-}
+.admin-console-analytics__grid-line { stroke: var(--color-border-soft, #E6E9EE); stroke-width: 0.6; }
+.admin-console-analytics__area { opacity: 0; animation: admin-analytics-area-fade 400ms ease 600ms forwards; }
 
 .admin-console-analytics__line {
 	fill: none;
@@ -292,34 +165,11 @@ const chartDescription = computed(() => {
 	animation: admin-analytics-line-draw 800ms cubic-bezier(0.22, 1, 0.36, 1) 120ms forwards;
 }
 
-.admin-console-analytics__guide-line {
-	stroke: rgba(9, 88, 102, 0.14);
-	stroke-width: 0.5;
-	stroke-dasharray: 2 3;
-}
-
-.admin-console-analytics__hit-area {
-	fill: transparent;
-	cursor: pointer;
-}
-
-.admin-console-analytics__active-dot {
-	fill: var(--color-brand-primary);
-	stroke: var(--color-brand-card);
-	stroke-width: 2;
-}
-
-.admin-console-analytics__active-ring {
-	fill: none;
-	stroke: rgba(9, 88, 102, 0.16);
-	stroke-width: 1;
-}
-
-.admin-console-analytics__axis-label {
-	font-size: 5.25px;
-	font-weight: 600;
-	fill: #999;
-}
+.admin-console-analytics__guide-line { stroke: rgba(9, 88, 102, 0.14); stroke-width: 0.5; stroke-dasharray: 2 3; }
+.admin-console-analytics__hit-area { fill: transparent; cursor: pointer; }
+.admin-console-analytics__active-dot { fill: var(--color-brand-primary); stroke: var(--color-brand-card); stroke-width: 2; }
+.admin-console-analytics__active-ring { fill: none; stroke: rgba(9, 88, 102, 0.16); stroke-width: 1; }
+.admin-console-analytics__axis-label { font-size: 5.25px; font-weight: 600; fill: #999; }
 
 .admin-console-analytics__tooltip {
 	position: absolute;
@@ -340,18 +190,9 @@ const chartDescription = computed(() => {
 	box-shadow: 0 4px 12px rgba(9, 88, 102, 0.25);
 }
 
-.admin-console-analytics__tooltip-label {
-	font-weight: 500;
-	opacity: 0.85;
-}
-
-.admin-console-analytics__tooltip-sep {
-	opacity: 0.5;
-}
-
-.admin-console-analytics__tooltip-value {
-	font-weight: 700;
-}
+.admin-console-analytics__tooltip-label { font-weight: 500; opacity: 0.85; }
+.admin-console-analytics__tooltip-sep { opacity: 0.5; }
+.admin-console-analytics__tooltip-value { font-weight: 700; }
 
 .admin-console-analytics__bar {
 	fill: var(--color-brand-primary);
@@ -361,10 +202,7 @@ const chartDescription = computed(() => {
 }
 
 .admin-console-analytics__bar:hover,
-.admin-console-analytics__bar--active {
-	opacity: 1;
-	fill: var(--color-brand-primary);
-}
+.admin-console-analytics__bar--active { opacity: 1; fill: var(--color-brand-primary); }
 
 .admin-console-analytics__donut-area {
 	display: flex;
@@ -378,41 +216,12 @@ const chartDescription = computed(() => {
 	box-shadow: 0 8px 18px rgba(20, 37, 48, 0.03);
 }
 
-.admin-console-analytics__donut-area--legend-bottom {
-	flex-direction: column;
-	align-items: flex-start;
-}
-
-.admin-console-analytics__donut-svg {
-	width: 148px;
-	height: 148px;
-	flex-shrink: 0;
-}
-
-.admin-console-analytics__donut-segment {
-	transition: opacity 180ms ease;
-}
-
-.admin-console-analytics__donut-total-value {
-	font-size: 14px;
-	font-weight: 800;
-	fill: var(--color-brand-primary);
-	letter-spacing: -0.04em;
-}
-
-.admin-console-analytics__donut-total-label {
-	font-size: 5.5px;
-	font-weight: 600;
-	fill: #999;
-	text-transform: uppercase;
-	letter-spacing: 0.5px;
-}
-
-.admin-console-analytics__donut-legend {
-	display: grid;
-	gap: 8px;
-	flex: 1;
-}
+.admin-console-analytics__donut-area--legend-bottom { flex-direction: column; align-items: flex-start; }
+.admin-console-analytics__donut-svg { width: 148px; height: 148px; flex-shrink: 0; }
+.admin-console-analytics__donut-segment { transition: opacity 180ms ease; }
+.admin-console-analytics__donut-total-value { font-size: 14px; font-weight: 800; fill: var(--color-brand-primary); letter-spacing: -0.04em; }
+.admin-console-analytics__donut-total-label { font-size: 5.5px; font-weight: 600; fill: #999; text-transform: uppercase; letter-spacing: 0.5px; }
+.admin-console-analytics__donut-legend { display: grid; gap: 8px; flex: 1; }
 
 .admin-console-analytics__legend-item {
 	display: grid;
@@ -425,33 +234,10 @@ const chartDescription = computed(() => {
 	background: rgba(255, 255, 255, 0.88);
 }
 
-.admin-console-analytics__legend-swatch {
-	width: 10px;
-	height: 10px;
-	border-radius: 999px;
-	flex-shrink: 0;
-}
-
-.admin-console-analytics__legend-label {
-	font-size: 0.86rem;
-	font-weight: 700;
-	color: var(--color-brand-text);
-	flex: 1;
-}
-
-.admin-console-analytics__legend-count {
-	font-size: 0.9rem;
-	font-weight: 700;
-	color: var(--color-brand-text);
-	font-variant-numeric: tabular-nums;
-}
-
-.admin-console-analytics__legend-share {
-	font-size: 0.78rem;
-	font-weight: 700;
-	color: var(--color-brand-text-secondary);
-	font-variant-numeric: tabular-nums;
-}
+.admin-console-analytics__legend-swatch { width: 10px; height: 10px; border-radius: 999px; flex-shrink: 0; }
+.admin-console-analytics__legend-label { font-size: 0.86rem; font-weight: 700; color: var(--color-brand-text); flex: 1; }
+.admin-console-analytics__legend-count { font-size: 0.9rem; font-weight: 700; color: var(--color-brand-text); font-variant-numeric: tabular-nums; }
+.admin-console-analytics__legend-share { font-size: 0.78rem; font-weight: 700; color: var(--color-brand-text-secondary); font-variant-numeric: tabular-nums; }
 
 .admin-console-analytics__empty {
 	display: flex;
@@ -464,37 +250,14 @@ const chartDescription = computed(() => {
 	color: var(--color-brand-text-secondary);
 }
 
-.admin-console-analytics__empty-dot {
-	width: 10px;
-	height: 10px;
-	border-radius: 999px;
-	background: rgba(9, 88, 102, 0.2);
-}
+.admin-console-analytics__empty-dot { width: 10px; height: 10px; border-radius: 999px; background: rgba(9, 88, 102, 0.2); }
+.admin-console-analytics__empty p { margin: 0; font-size: 0.9rem; line-height: 1.45; }
 
-.admin-console-analytics__empty p {
-	margin: 0;
-	font-size: 0.9rem;
-	line-height: 1.45;
-}
-
-@keyframes admin-analytics-line-draw {
-	to { stroke-dashoffset: 0; }
-}
-
-@keyframes admin-analytics-area-fade {
-	from { opacity: 0; }
-	to { opacity: 1; }
-}
-
+@keyframes admin-analytics-line-draw { to { stroke-dashoffset: 0; } }
+@keyframes admin-analytics-area-fade { from { opacity: 0; } to { opacity: 1; } }
 @keyframes admin-analytics-tooltip-rise {
-	from {
-		opacity: 0;
-		transform: translate(-50%, calc(-100% + 4px));
-	}
-	to {
-		opacity: 1;
-		transform: translate(-50%, -100%);
-	}
+	from { opacity: 0; transform: translate(-50%, calc(-100% + 4px)); }
+	to { opacity: 1; transform: translate(-50%, -100%); }
 }
 
 @media (min-width: 768px) {
@@ -507,49 +270,15 @@ const chartDescription = computed(() => {
 @media (max-width: 767px) {
 	.admin-console-analytics { padding: 16px; }
 	.admin-console-analytics__header { align-items: flex-start; }
-
-	.admin-analytics-tabs {
-		width: 100%;
-		justify-content: space-between;
-	}
-
-	.admin-analytics-tab {
-		flex: 1 1 0;
-		text-align: center;
-		padding-inline: 10px;
-	}
-
-	.admin-console-analytics__chart-area {
-		min-height: 180px;
-		padding: 12px;
-	}
-
+	.admin-analytics-tabs { width: 100%; justify-content: space-between; }
+	.admin-analytics-tab { flex: 1 1 0; text-align: center; padding-inline: 10px; }
+	.admin-console-analytics__chart-area { min-height: 180px; padding: 12px; }
 	.admin-console-analytics__svg { min-height: 166px; }
-
-	.admin-console-analytics__donut-area {
-		flex-direction: column;
-		align-items: flex-start;
-		gap: 16px;
-		padding: 12px;
-	}
-
-	.admin-console-analytics__donut-svg {
-		width: 124px;
-		height: 124px;
-		align-self: center;
-	}
-
-	.admin-console-analytics__legend-item {
-		grid-template-columns: auto minmax(0, 1fr) auto;
-	}
-
-	.admin-console-analytics__legend-share {
-		justify-self: end;
-	}
-
-	.admin-console-analytics__donut-legend {
-		width: 100%;
-	}
+	.admin-console-analytics__donut-area { flex-direction: column; align-items: flex-start; gap: 16px; padding: 12px; }
+	.admin-console-analytics__donut-svg { width: 124px; height: 124px; align-self: center; }
+	.admin-console-analytics__legend-item { grid-template-columns: auto minmax(0, 1fr) auto; }
+	.admin-console-analytics__legend-share { justify-self: end; }
+	.admin-console-analytics__donut-legend { width: 100%; }
 }
 
 .chart-fade-enter-active, .chart-fade-leave-active { transition: opacity 200ms ease; }
