@@ -2,56 +2,51 @@
 
 namespace App\Http\Controllers\Checkout;
 
-use App\Events\OrderPaid;
 use App\Http\Controllers\Controller;
-use App\Models\Order;
 use App\Models\Setting;
 use App\Models\StripeWebhookEvent;
-use App\Models\Transaction;
-use App\Models\User;
+use App\Services\Stripe\Webhook\AccountDisconnectedHandler;
+use App\Services\Stripe\Webhook\AccountUpdatedHandler;
+use App\Services\Stripe\Webhook\PaymentFailedHandler;
+use App\Services\Stripe\Webhook\PaymentSucceededHandler;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Stripe\Exception\SignatureVerificationException;
 use Stripe\Webhook;
 use Symfony\Component\HttpFoundation\Response;
 use UnexpectedValueException;
 
+/**
+ * Dispatcher dei webhook Stripe. La logica per ogni event-type vive in
+ * app/Services/Stripe/Webhook/*Handler. Questo controller fa solo:
+ *  1. verifica firma
+ *  2. controllo idempotency a livello di event-id
+ *  3. routing al giusto handler
+ */
 class StripeWebhookController extends Controller
 {
-    use StripeWebhookHelpers;
-
-    protected function getWebhookSecret(): ?string
-    {
-        $secret = trim((string) (
-            Setting::get('stripe_webhook_secret')
-            ?: config('services.stripe.webhook_secret')
-        ));
-
-        return $secret !== '' ? $secret : null;
-    }
-
     /**
      * Eventi che modificano dati e richiedono controllo di idempotenza.
-     * Gli eventi in questa lista vengono registrati nella tabella stripe_webhook_events
-     * per evitare che Stripe retries creino duplicati.
+     * Stripe puo' ritentare lo stesso webhook (timeout, errore di rete);
+     * registriamo gli ID processati per evitare duplicazioni.
      */
     private const IDEMPOTENT_EVENT_TYPES = [
         'payment_intent.succeeded',
         'payment_intent.payment_failed',
     ];
 
-    // Funzione principale che riceve e gestisce tutte le notifiche da Stripe
+    public function __construct(
+        private readonly PaymentSucceededHandler $paymentSucceeded,
+        private readonly PaymentFailedHandler $paymentFailed,
+        private readonly AccountUpdatedHandler $accountUpdated,
+        private readonly AccountDisconnectedHandler $accountDisconnected,
+    ) {
+    }
+
     public function handle(Request $request)
     {
-        // Prima di tutto, verifichiamo che la notifica venga davvero da Stripe
-        // (per sicurezza, per evitare che qualcuno finga di essere Stripe)
         $event = $this->verifySignature($request);
 
-        // ── Idempotenza a livello di evento Stripe ──────────────────
-        // Stripe puo' ritentare lo stesso webhook (timeout, errore di rete).
-        // L'ID evento (evt_...) resta lo stesso nei retry. Registriamo
-        // gli ID processati per evitare di rielaborare lo stesso evento.
         $requiresIdempotency = in_array($event->type, self::IDEMPOTENT_EVENT_TYPES, true);
 
         if ($requiresIdempotency && StripeWebhookEvent::wasAlreadyProcessed($event->id)) {
@@ -63,16 +58,12 @@ class StripeWebhookController extends Controller
             return response()->json(['received' => true, 'skipped' => 'already_processed']);
         }
 
-        // In base al tipo di evento, chiamiamo la funzione giusta
-        // "match" e' come un selettore: sceglie cosa fare in base al tipo di notifica
         $handled = match ($event->type) {
-            'payment_intent.succeeded' => $this->paymentSucceeded($event),     // Pagamento riuscito
-            'payment_intent.payment_failed' => $this->paymentFailed($event),   // Pagamento fallito
-
-            'account.updated' => $this->accountUpdated($event) !== false,                // Account Stripe aggiornato
-            'account.application.deauthorized' => $this->accountDisconnected($event) !== false, // Account scollegato
-
-            default => true, // Per tutti gli altri eventi, non facciamo nulla
+            'payment_intent.succeeded' => $this->paymentSucceeded->handle($event),
+            'payment_intent.payment_failed' => $this->paymentFailed->handle($event),
+            'account.updated' => $this->accountUpdated->handle($event),
+            'account.application.deauthorized' => $this->accountDisconnected->handle($event),
+            default => true,
         };
 
         if ($requiresIdempotency) {
@@ -88,349 +79,35 @@ class StripeWebhookController extends Controller
             StripeWebhookEvent::markAsProcessed($event->id, $event->type);
         }
 
-        // Rispondiamo a Stripe per confermare che abbiamo ricevuto la notifica
         return response()->json(['received' => true]);
     }
 
-    // Verifica che la notifica venga davvero da Stripe controllando la "firma" digitale
-    // Se la firma non e' valida, blocchiamo tutto con un errore
     protected function verifySignature(Request $request)
     {
-        $payload = $request->getContent();           // Il contenuto della notifica
-        $sigHeader = $request->header('Stripe-Signature'); // La firma inviata da Stripe
-        $secret = $this->getWebhookSecret(); // La nostra chiave segreta per verificare
+        $payload = $request->getContent();
+        $sigHeader = $request->header('Stripe-Signature');
+        $secret = $this->getWebhookSecret();
 
         if (! $secret) {
             abort(Response::HTTP_SERVICE_UNAVAILABLE, 'Stripe webhook non configurato');
         }
 
         try {
-            // Stripe verifica che il contenuto corrisponda alla firma
-            return Webhook::constructEvent(
-                $payload,
-                $sigHeader,
-                $secret
-            );
+            return Webhook::constructEvent($payload, $sigHeader, $secret);
         } catch (UnexpectedValueException $e) {
-            // Il contenuto della notifica non e' valido
             abort(Response::HTTP_BAD_REQUEST, 'Invalid payload');
         } catch (SignatureVerificationException $e) {
-            // La firma non corrisponde: qualcuno potrebbe star cercando di ingannarci
             abort(Response::HTTP_BAD_REQUEST, 'Invalid signature');
         }
     }
 
-    // Gestisce l'evento "pagamento riuscito"
-    // Quando un cliente paga con successo, aggiorniamo l'ordine e salviamo i dettagli della transazione
-    protected function paymentSucceeded($event): bool
+    protected function getWebhookSecret(): ?string
     {
-        $intent = $event->data->object;
+        $secret = trim((string) (
+            Setting::get('stripe_webhook_secret')
+            ?: config('services.stripe.webhook_secret')
+        ));
 
-        // Recuperiamo l'identificativo dell'ordine dai dati aggiuntivi (metadata) del pagamento
-        $orderId = (int) ($intent->metadata->order_id ?? 0);
-
-        if ($orderId <= 0) {
-            return true;
-        }
-
-        // Cerchiamo l'ordine nel database
-        $order = Order::where('id', $orderId)->first();
-
-        // Se l'ordine non esiste, non facciamo nulla
-        if (! $order) {
-            return false;
-        }
-
-        // ── Idempotenza a livello di payment_intent ─────────────────
-        // Se l'ordine ha gia' registrato questo payment_intent con una transazione
-        // succeeded, non c'e' nulla da fare. Questo e' un secondo livello di
-        // protezione oltre all'event-level idempotency in handle().
-        if (
-            $order->stripe_payment_intent_id === $intent->id
-            && $order->hasSuccessfulTransactionForExternalId($intent->id)
-            && $order->isPostPaymentState()
-        ) {
-            Log::info('Stripe paymentSucceeded: order already fully processed', [
-                'order_id' => $order->id,
-                'payment_intent_id' => $intent->id,
-            ]);
-
-            return true;
-        }
-
-        $transaction = null;
-        $dispatchOrderPaid = false;
-        $shouldClearCart = false;
-        $handled = false;
-
-        DB::transaction(function () use ($order, $intent, &$transaction, &$dispatchOrderPaid, &$shouldClearCart, &$handled) {
-            $lockedOrder = Order::query()->lockForUpdate()->find($order->id);
-
-            if (! $lockedOrder) {
-                return;
-            }
-
-            if (! $this->syncSubmissionContextFromIntent($lockedOrder, $intent)) {
-                return;
-            }
-
-            if ((int) $intent->amount !== $lockedOrder->payableTotalCents()) {
-                $intentAmount = (int) $intent->amount;
-                $orderAmount = $lockedOrder->payableTotalCents();
-                $mismatchPercent = $orderAmount > 0
-                    ? abs($intentAmount - $orderAmount) / $orderAmount * 100
-                    : 100;
-
-                Log::critical('Stripe webhook amount mismatch detected', [
-                    'order_id' => $lockedOrder->id,
-                    'payment_intent_id' => $intent->id,
-                    'intent_amount' => $intentAmount,
-                    'order_amount' => $orderAmount,
-                    'gross_subtotal_cents' => $lockedOrder->grossSubtotalCents(),
-                    'discount_amount_cents' => $lockedOrder->discountAmountCents(),
-                    'mismatch_percent' => round($mismatchPercent, 2),
-                ]);
-
-                // Se la differenza supera l'1%, segna l'ordine come anomalia di pagamento
-                if ($mismatchPercent > 1) {
-                    $lockedOrder->status = 'payment_anomaly';
-                    $lockedOrder->save();
-                }
-
-                $handled = true;
-
-                return;
-            }
-
-            if ($lockedOrder->hasSuccessfulTransactionForExternalId($intent->id)) {
-                if ($lockedOrder->isAwaitingPayment()) {
-                    $lockedOrder->status = Order::COMPLETED;
-                }
-
-                $lockedOrder->payment_method = 'stripe';
-                $lockedOrder->stripe_payment_intent_id = $intent->id;
-                $lockedOrder->save();
-
-                $transaction = $lockedOrder->transactions()
-                    ->where('ext_id', $intent->id)
-                    ->where('status', 'succeeded')
-                    ->latest('id')
-                    ->first();
-                $shouldClearCart = true;
-                $handled = true;
-
-                return;
-            }
-
-            if (! $lockedOrder->isAwaitingPayment()
-                && $lockedOrder->stripe_payment_intent_id !== $intent->id) {
-                Log::warning('Ignoring unexpected Stripe success for non-payable order', [
-                    'order_id' => $lockedOrder->id,
-                    'payment_intent_id' => $intent->id,
-                    'current_payment_intent_id' => $lockedOrder->stripe_payment_intent_id,
-                    'status' => $lockedOrder->rawStatus(),
-                ]);
-
-                $handled = true;
-
-                return;
-            }
-
-            if ($lockedOrder->isAwaitingPayment()) {
-                $lockedOrder->status = Order::COMPLETED;
-            }
-
-            $lockedOrder->payment_method = 'stripe';
-            $lockedOrder->stripe_payment_intent_id = $intent->id;
-            $lockedOrder->save();
-
-            $existingTransaction = $lockedOrder->transactions()
-                ->where('ext_id', $intent->id)
-                ->first();
-            $wasAlreadySucceeded = $existingTransaction?->status === 'succeeded';
-
-            $transaction = Transaction::updateOrCreate([
-                'ext_id' => $intent->id,
-            ], [
-                'order_id' => $lockedOrder->id,
-                'status' => 'succeeded',
-                'total' => $intent->amount,
-                'type' => $intent->payment_method_types[0] ?? 'unknown',
-                'provider_status' => $intent->status,
-            ]);
-
-            $dispatchOrderPaid = ! $wasAlreadySucceeded;
-            $shouldClearCart = true;
-            $handled = true;
-        });
-
-        if (! $handled) {
-            return false;
-        }
-
-        if ($shouldClearCart) {
-            $this->clearCartForOrder($order);
-        }
-
-        if ($dispatchOrderPaid && $transaction) {
-            event(new OrderPaid($order->fresh(), $transaction));
-        }
-
-        return true;
-    }
-
-    // Gestisce l'evento "pagamento fallito"
-    // Quando un pagamento non va a buon fine, salviamo il motivo dell'errore
-    protected function paymentFailed($event): bool
-    {
-        $intent = $event->data->object;
-
-        $orderId = (int) ($intent->metadata->order_id ?? 0);
-
-        if ($orderId <= 0) {
-            return true;
-        }
-
-        $order = Order::where('id', $orderId)->first();
-
-        if (! $order) {
-            return false;
-        }
-
-        // ── Idempotenza: se esiste gia' una transazione failed per questo intent, skip ──
-        $existingFailedTransaction = $order->transactions()
-            ->where('ext_id', $intent->id)
-            ->where('status', 'failed')
-            ->exists();
-
-        if ($existingFailedTransaction && $order->rawStatus() === Order::PAYMENT_FAILED) {
-            Log::info('Stripe paymentFailed: already recorded for this intent', [
-                'order_id' => $order->id,
-                'payment_intent_id' => $intent->id,
-            ]);
-
-            return true;
-        }
-
-        // Cerchiamo di capire perche' il pagamento e' fallito
-        // Proviamo a recuperare il messaggio di errore da diverse fonti
-        $failureMessage = $intent->last_payment_error->message
-                  ?? $intent->charges->data[0]->failure_message
-                  ?? 'Payment failed';
-
-        $failureCode = $intent->last_payment_error->code
-                  ?? $intent->charges->data[0]->failure_code
-                  ?? null;
-
-        $handled = false;
-
-        DB::transaction(function () use ($order, $intent, $failureCode, $failureMessage, &$handled) {
-            $lockedOrder = Order::query()->lockForUpdate()->find($order->id);
-
-            if (! $lockedOrder) {
-                return;
-            }
-
-            if ($lockedOrder->isAwaitingPayment() || $lockedOrder->stripe_payment_intent_id === $intent->id) {
-                $lockedOrder->status = Order::PAYMENT_FAILED;
-                $lockedOrder->payment_method = 'stripe';
-                $lockedOrder->stripe_payment_intent_id = $intent->id;
-                $lockedOrder->save();
-            } else {
-                Log::warning('Ignoring Stripe failed intent for non-payable order', [
-                    'order_id' => $lockedOrder->id,
-                    'payment_intent_id' => $intent->id,
-                    'current_payment_intent_id' => $lockedOrder->stripe_payment_intent_id,
-                    'status' => $lockedOrder->rawStatus(),
-                ]);
-            }
-
-            // Salviamo i dettagli della transazione fallita, incluso il motivo dell'errore
-            Transaction::updateOrCreate([
-                'ext_id' => $intent->id,
-            ], [
-                'order_id' => $lockedOrder->id,
-                'status' => 'failed',
-                'total' => $intent->amount,
-                'type' => $intent->payment_method_types[0] ?? 'unknown',
-                'provider_status' => $intent->status,
-                'failure_code' => $failureCode,
-                'failure_message' => $failureMessage,
-            ]);
-
-            $handled = true;
-        });
-
-        return $handled;
-    }
-
-    /**
-     * Trova un utente a partire dallo stripe_account_id.
-     *
-     * Dato che il campo e' cifrato at-rest (cast 'encrypted' con IV random),
-     * non possiamo usare User::where('stripe_account_id', $id). Effettuiamo
-     * quindi una scansione in memoria ristretta ai soli Partner Pro che hanno
-     * un account Stripe configurato. Il numero e' limitato (ordine delle centinaia
-     * al massimo) e i webhook Stripe account.updated/deauthorized sono rari,
-     * quindi l'overhead e' accettabile. Si usa chunkById per evitare carichi
-     * memory eccessivi in caso di crescita.
-     */
-    // Gestisce l'evento "account Stripe aggiornato"
-    // Quando un Partner Pro completa o modifica il suo profilo Stripe,
-    // aggiorniamo le informazioni nel nostro database
-    protected function accountUpdated($event)
-    {
-        $intent = $event->data->object;
-
-        $stripeAccountId = $intent->id;
-
-        // Cerchiamo l'utente che ha questo account Stripe
-        // Lookup decriptato lato app (vedi findUserByStripeAccountId).
-        $user = $this->findUserByStripeAccountId($stripeAccountId);
-
-        if (! $user) {
-            return;
-        }
-
-        // Aggiorniamo le informazioni sulle capacita' dell'account Stripe
-        // (es. se puo' ricevere pagamenti, se puo' fare prelievi, ecc.)
-        $user->stripe_charges_enabled = $intent->charges_enabled;
-        $user->stripe_payouts_enabled = $intent->payouts_enabled;
-        $user->stripe_capabilities = json_encode($intent->capabilities);
-        $user->stripe_requirements = json_encode($intent->requirements);
-        $user->stripe_details_submitted = $intent->details_submitted;
-
-        $user->save();
-    }
-
-    // Gestisce l'evento "account Stripe disconnesso"
-    // Quando un utente scollega il suo account Stripe, rimuoviamo tutti i dati di collegamento
-    protected function accountDisconnected($event)
-    {
-        $account = $event->data->object;
-        $stripeAccountId = $account->id ?? null;
-
-        if (! $stripeAccountId) {
-            return;
-        }
-
-        // Lookup decriptato lato app (vedi findUserByStripeAccountId).
-        $user = $this->findUserByStripeAccountId($stripeAccountId);
-
-        if (! $user) {
-            return;
-        }
-
-        // Resettiamo tutti i campi legati a Stripe, come se l'utente non avesse mai collegato il suo account
-        $user->stripe_account_id = null;
-        $user->stripe_charges_enabled = false;
-        $user->stripe_payouts_enabled = false;
-        $user->stripe_details_submitted = false;
-        $user->stripe_capabilities = null;
-        $user->stripe_requirements = null;
-        $user->save();
-
-        // Registriamo nei log che l'account e' stato disconnesso (utile per debug)
-        Log::info('Stripe account disconnected', ['user_id' => $user->id, 'account_id' => $stripeAccountId]);
+        return $secret !== '' ? $secret : null;
     }
 }

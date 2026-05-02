@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Checkout;
+namespace App\Services\Stripe\Webhook;
 
 use App\Models\Order;
 use App\Models\User;
@@ -8,17 +8,13 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 /**
- * Helper privati per StripeWebhookController.
- *
- * Estratti dalla classe principale per ridurla sotto soglia 400 LOC.
- * Tutti i metodi sono "puri" rispetto a Stripe SDK (nessuna chiamata HTTP):
- * gestiscono solo trasformazioni metadata e cleanup carrello/utente.
- *
- * @internal Trait usato solo da StripeWebhookController.
+ * Helper condivisi tra gli handler Stripe webhook.
+ * Estratti da StripeWebhookHelpers (controller-side) per essere disponibili
+ * ai handler service-side senza duplicazione logica.
  */
-trait StripeWebhookHelpers
+trait StripeWebhookHelpersTrait
 {
-    private function decodeSnapshotMetadata(mixed $value): ?array
+    protected function decodeSnapshotMetadata(mixed $value): ?array
     {
         if (is_array($value)) {
             return $value;
@@ -33,7 +29,7 @@ trait StripeWebhookHelpers
         return is_array($decoded) ? $decoded : null;
     }
 
-    private function clearCartForOrder(Order $order): void
+    protected function clearCartForOrder(Order $order): void
     {
         $packageIds = $order->packages()->pluck('packages.id')->filter()->values();
 
@@ -47,7 +43,7 @@ trait StripeWebhookHelpers
             ->delete();
     }
 
-    private function syncSubmissionContextFromIntent(Order $order, object $intent): bool
+    protected function syncSubmissionContextFromIntent(Order $order, object $intent): bool
     {
         $metadata = is_object($intent->metadata ?? null)
             ? (array) $intent->metadata
@@ -136,7 +132,7 @@ trait StripeWebhookHelpers
                     if ($u->stripe_account_id === $stripeAccountId) {
                         $found = $u;
 
-                        return false; // interrompe chunkById
+                        return false;
                     }
                 }
             });

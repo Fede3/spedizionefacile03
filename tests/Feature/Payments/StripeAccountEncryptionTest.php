@@ -15,7 +15,6 @@
 
 namespace Tests\Feature\Payments;
 
-use App\Http\Controllers\Checkout\StripeWebhookController;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Crypt;
@@ -123,18 +122,17 @@ class StripeAccountEncryptionTest extends TestCase
         $user->stripe_account_id = $plaintext;
         $user->save();
 
-        // Invochiamo il helper privato tramite reflection per testare la logica.
-        $controller = new StripeWebhookController;
-        $ref = new \ReflectionMethod($controller, 'findUserByStripeAccountId');
+        // Invochiamo il helper protected tramite reflection sul handler che lo usa.
+        $handler = app(\App\Services\Stripe\Webhook\AccountUpdatedHandler::class);
+        $ref = new \ReflectionMethod($handler, 'findUserByStripeAccountId');
         $ref->setAccessible(true);
 
-        $found = $ref->invoke($controller, $plaintext);
+        $found = $ref->invoke($handler, $plaintext);
 
         $this->assertNotNull($found, 'Il lookup deve trovare l\'utente anche se il campo e\' cifrato');
         $this->assertSame($user->id, $found->id);
 
-        // Lookup con id inesistente.
-        $notFound = $ref->invoke($controller, 'acct_NonExistent');
+        $notFound = $ref->invoke($handler, 'acct_NonExistent');
         $this->assertNull($notFound);
     }
 

@@ -9,8 +9,10 @@
 
 use App\Http\Controllers\Catalog\SettingsController;
 use App\Http\Controllers\Checkout\StripeCheckoutController;
+use App\Http\Controllers\Checkout\StripeConfirmController;
 use App\Http\Controllers\Checkout\StripeConnectController;
 use App\Http\Controllers\Checkout\StripeCustomerController;
+use App\Http\Controllers\Checkout\StripeIntentController;
 use App\Http\Controllers\Wallet\WalletController;
 use App\Http\Middleware\CheckAdmin;
 use App\Http\Middleware\CheckCart;
@@ -32,18 +34,18 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
     Route::middleware(['throttle:60,1,stripe-mark-order-completed:'])->post('stripe/mark-order-completed', [StripeCheckoutController::class, 'markOrderCompleted']);
 
     Route::middleware(['throttle:60,1'])->group(function () {
-        Route::post('stripe/existing-order-payment', [StripeCheckoutController::class, 'createPayment']);
-        Route::post('stripe/existing-order-payment-intent', [StripeCheckoutController::class, 'createPaymentIntent']);
-        Route::post('stripe/existing-order-paid', [StripeCheckoutController::class, 'orderPaid']);
+        Route::post('stripe/existing-order-payment', [StripeIntentController::class, 'createPayment']);
+        Route::post('stripe/existing-order-payment-intent', [StripeIntentController::class, 'createPaymentIntent']);
+        Route::post('stripe/existing-order-paid', [StripeConfirmController::class, 'orderPaid']);
     });
 
     /* ===== PAGAMENTO DA CARRELLO ===== */
 
     Route::group(['middleware' => [CheckCart::class, 'throttle:10,1']], function () {
-        Route::post('stripe/create-payment', [StripeCheckoutController::class, 'createPayment']);
+        Route::post('stripe/create-payment', [StripeIntentController::class, 'createPayment']);
         Route::post('stripe/create-order', [StripeCheckoutController::class, 'createOrder']);
-        Route::post('stripe/create-payment-intent', [StripeCheckoutController::class, 'createPaymentIntent']);
-        Route::post('stripe/order-paid', [StripeCheckoutController::class, 'orderPaid']);
+        Route::post('stripe/create-payment-intent', [StripeIntentController::class, 'createPaymentIntent']);
+        Route::post('stripe/order-paid', [StripeConfirmController::class, 'orderPaid']);
     });
 
     /* ===== IMPOSTAZIONI STRIPE ===== */

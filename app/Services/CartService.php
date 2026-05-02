@@ -5,11 +5,30 @@ namespace App\Services;
 use App\Cart\MyMoney;
 use App\Models\Package;
 use App\Models\Service;
-use Illuminate\Support\Facades\DB;
+use App\Services\Cart\CartItemPricingService;
+use App\Services\Cart\CartMergeService;
+use App\Services\Cart\CartSignatureService;
+use App\Services\Cart\CartTotalsService;
 
+/**
+ * Orchestrator del carrello: facade su sub-service specializzati.
+ * - duplicate detection / address grouping / service normalization (qui)
+ * - pricing item: CartItemPricingService
+ * - totali + supplementi: CartTotalsService
+ * - merge identici: CartMergeService
+ * - signature servizi: CartSignatureService
+ */
 class CartService
 {
-    // --- Duplicate detection (ex trait CartDuplicateDetection, inlined per consumer unico) ---
+    public function __construct(
+        private readonly CartItemPricingService $pricing,
+        private readonly CartTotalsService $totals,
+        private readonly CartMergeService $merge,
+        private readonly CartSignatureService $signature,
+    ) {
+    }
+
+    // --- Duplicate detection ---
 
     public function normalize(?string $value): string
     {
@@ -43,62 +62,48 @@ class CartService
             && $serviceSignature === $existingServiceSig;
     }
 
-    // --- Service signatures (ex trait CartServiceSignatures, inlined per consumer unico) ---
+    // --- Service signatures (delega a CartSignatureService) ---
 
     public function buildServiceSignatureFromService(Service $service): string
     {
-        return app(ShipmentServicePricingService::class)->buildSelectionSignature(
-            $service->service_type ?? 'Nessuno', $service->service_data ?? [],
-            (bool) (($service->service_data ?? [])['sms_email_notification'] ?? false),
-        );
+        return $this->signature->buildFromService($service);
     }
 
     public function buildServiceSignatureFromArray(string $serviceType, array $serviceData = []): string
     {
-        return app(ShipmentServicePricingService::class)->buildSelectionSignature(
-            $serviceType, $serviceData, (bool) ($serviceData['sms_email_notification'] ?? false),
-        );
+        return $this->signature->buildFromArray($serviceType, $serviceData);
     }
 
     public function buildServiceSignatureFromGuest(array $services = []): string
     {
-        $serviceData = $services['serviceData'] ?? $services['service_data'] ?? [];
-
-        return app(ShipmentServicePricingService::class)->buildSelectionSignature(
-            $services['service_type'] ?? 'Nessuno',
-            is_array($serviceData) ? $serviceData : [],
-            (bool) ($services['sms_email_notification'] ?? (is_array($serviceData) ? ($serviceData['sms_email_notification'] ?? false) : false)),
-        );
+        return $this->signature->buildFromGuest($services);
     }
 
     public function calculateGroupedSurchargeFromModels($packages): int
     {
-        return CartSurchargeCalculator::fromModels($packages);
+        return $this->totals->calculateGroupedSurchargeFromModels($packages);
     }
 
     public function calculateGroupedSurchargeFromArray(array $packages): int
     {
-        return CartSurchargeCalculator::fromArray($packages);
+        return $this->totals->calculateGroupedSurchargeFromArray($packages);
     }
 
-    // --- Price helpers ---
+    // --- Price helpers (delega a CartItemPricingService) ---
 
     public function euroToCents(float|int|null $euro): int
     {
-        return (int) round(($euro ?? 0) * 100);
+        return $this->pricing->euroToCents($euro);
     }
 
     public function unitPrice(int $totalPriceCents, int $quantity): int
     {
-        return $quantity > 0 ? (int) round($totalPriceCents / $quantity) : $totalPriceCents;
+        return $this->pricing->unitPrice($totalPriceCents, $quantity);
     }
 
     public function mergeQuantity(int $existingPriceCents, int $existingQty, int $addedQty, ?int $newUnitPriceCents = null): array
     {
-        $unitPrice = $newUnitPriceCents ?? $this->unitPrice($existingPriceCents, $existingQty);
-        $totalQty = $existingQty + $addedQty;
-
-        return ['quantity' => $totalQty, 'single_price' => $unitPrice * $totalQty];
+        return $this->pricing->mergeQuantity($existingPriceCents, $existingQty, $addedQty, $newUnitPriceCents);
     }
 
     public function pricePackageData(
@@ -107,103 +112,29 @@ class CartService
         array $destinationAddress = [],
         array $fallback = [],
     ): array {
-        $payload = $fallback;
-        foreach ($packageData as $key => $value) {
-            if ($value !== null) {
-                $payload[$key] = $value;
-            }
-        }
-        $quantity = min(999, max(1, (int) ($payload['quantity'] ?? 1)));
-
-        $weight = max(0, (float) preg_replace('/[^0-9.]/', '', (string) ($payload['weight'] ?? '0')));
-        $firstSize = max(0, (float) preg_replace('/[^0-9.]/', '', (string) ($payload['first_size'] ?? '0')));
-        $secondSize = max(0, (float) preg_replace('/[^0-9.]/', '', (string) ($payload['second_size'] ?? '0')));
-        $thirdSize = max(0, (float) preg_replace('/[^0-9.]/', '', (string) ($payload['third_size'] ?? '0')));
-
-        $priceEngine = app(PriceEngineService::class);
-        $volumeM3 = ($firstSize / 100) * ($secondSize / 100) * ($thirdSize / 100);
-
-        // Calcola direttamente in centesimi per evitare errori di arrotondamento float.
-        // Solo alla fine convertiamo in euro per i campi di visualizzazione.
-        // Se peso o volume sono zero (dati incompleti) il prezzo e' 0 — il frontend
-        // impedisce di aggiungere al carrello pacchi con dimensioni mancanti.
-        $weightPriceCents = $weight > 0 ? $priceEngine->calculateBandPriceCents('weight', $weight) : 0;
-        $volumePriceCents = $volumeM3 > 0 ? $priceEngine->calculateBandPriceCents('volume', $volumeM3) : 0;
-
-        $capSupplementCents = $priceEngine->calculateCapSupplementCents(
-            $originAddress['postal_code'] ?? null,
-            $destinationAddress['postal_code'] ?? null,
-        );
-
-        $unitPriceCents = max($weightPriceCents, $volumePriceCents) + $capSupplementCents;
-
-        return array_merge($payload, [
-            'quantity' => $quantity,
-            'weight_price' => round($weightPriceCents / 100, 2),
-            'volume_price' => round($volumePriceCents / 100, 2),
-            'single_price' => $unitPriceCents * $quantity,
-            'unit_price_cents' => $unitPriceCents,
-        ]);
+        return $this->pricing->pricePackageData($packageData, $originAddress, $destinationAddress, $fallback);
     }
 
     public function pricePackageModel(Package $package, ?int $quantity = null): array
     {
-        $origin = $package->originAddress?->toArray() ?? [];
-        $destination = $package->destinationAddress?->toArray() ?? [];
-
-        return $this->pricePackageData([
-            'package_type' => $package->package_type,
-            'quantity' => $quantity ?? (int) $package->quantity,
-            'weight' => $package->weight,
-            'first_size' => $package->first_size,
-            'second_size' => $package->second_size,
-            'third_size' => $package->third_size,
-        ], $origin, $destination);
+        return $this->pricing->pricePackageModel($package, $quantity);
     }
 
     public function normalizePackagePricing($packages): int
     {
-        $updated = 0;
-
-        foreach ($packages as $package) {
-            $priced = $this->pricePackageModel($package);
-
-            if (
-                (int) $package->quantity !== (int) $priced['quantity']
-                || (float) $package->weight_price !== (float) $priced['weight_price']
-                || (float) $package->volume_price !== (float) $priced['volume_price']
-                || (int) $package->single_price !== (int) $priced['single_price']
-            ) {
-                $package->update([
-                    'quantity' => $priced['quantity'],
-                    'weight_price' => $priced['weight_price'],
-                    'volume_price' => $priced['volume_price'],
-                    'single_price' => $priced['single_price'],
-                ]);
-                $updated++;
-            }
-        }
-
-        return $updated;
+        return $this->pricing->normalizePackagePricing($packages);
     }
 
-    // --- Duplicate detection: vedi Concerns/CartDuplicateDetection.php ---
-    // --- Merge key ---
+    // --- Merge key + identical packages (delega a CartMergeService) ---
 
     public function buildMergeKey(Package $pkg): string
     {
-        $o = $pkg->originAddress;
-        $d = $pkg->destinationAddress;
-        $s = $pkg->service;
+        return $this->merge->buildMergeKey($pkg);
+    }
 
-        return implode('|', [
-            $this->normalize($pkg->package_type),
-            (string) $pkg->weight, (string) $pkg->first_size, (string) $pkg->second_size, (string) $pkg->third_size,
-            $o ? $this->normalize($o->name).'|'.$this->normalize($o->address).'|'.$this->normalize($o->city).'|'.$this->normalize($o->postal_code) : 'no-origin',
-            $d ? $this->normalize($d->name).'|'.$this->normalize($d->address).'|'.$this->normalize($d->city).'|'.$this->normalize($d->postal_code) : 'no-dest',
-            $s ? $this->normalize($s->service_type) : 'nessuno',
-            $s ? $this->buildServiceSignatureFromService($s) : 'no-service-data',
-        ]);
+    public function mergeIdenticalPackages($packages, int $userId): int
+    {
+        return $this->merge->mergeIdenticalPackages($packages, $userId);
     }
 
     // --- Address grouping ---
@@ -247,28 +178,18 @@ class CartService
         return array_values($groups);
     }
 
-    // --- Subtotal calculation (delegates surcharge to CartSurchargeCalculator) ---
+    // --- Subtotali (delega a CartTotalsService) ---
 
     public function subtotalFromModels($packages): MyMoney
     {
-        $subtotal = $packages->sum(fn ($p) => (int) $p->single_price);
-        $subtotal += CartSurchargeCalculator::fromModels($packages);
-
-        return new MyMoney($subtotal);
+        return $this->totals->subtotalFromModels($packages);
     }
 
     public function subtotalFromArray(array $packages): MyMoney
     {
-        $subtotal = 0;
-        foreach ($packages as $package) {
-            $subtotal += (int) ($package['single_price'] ?? 0);
-        }
-        $subtotal += CartSurchargeCalculator::fromArray($packages);
-
-        return new MyMoney($subtotal);
+        return $this->totals->subtotalFromArray($packages);
     }
 
-    // --- Service signatures + surcharge delegates: vedi Concerns/CartServiceSignatures.php ---
     // --- Service normalization ---
 
     public function normalizeServiceData(array $servicesData): array
@@ -310,26 +231,6 @@ class CartService
         return $servicesData;
     }
 
-    private function normalizePickupRequestDate(string $pickupDate): string
-    {
-        $pickupDate = trim($pickupDate);
-        if ($pickupDate === '') {
-            return '';
-        }
-
-        if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $pickupDate)) {
-            return $pickupDate;
-        }
-
-        if (preg_match('/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/', $pickupDate, $matches)) {
-            return sprintf('%s-%02d-%02d', $matches[3], (int) $matches[2], (int) $matches[1]);
-        }
-
-        return $pickupDate;
-    }
-
-    // --- PUDO helpers ---
-
     public function applyPudoData(array $servicesData, array $requestData): array
     {
         if (! empty($requestData['pudo']) && ($requestData['delivery_mode'] ?? 'home') === 'pudo') {
@@ -346,93 +247,21 @@ class CartService
         return $servicesData;
     }
 
-    // --- Merge operations ---
-
-    public function mergeIdenticalPackages($packages, int $userId): int
+    private function normalizePickupRequestDate(string $pickupDate): string
     {
-        $cartPackageIds = DB::table('cart_user')
-            ->where('user_id', $userId)
-            ->whereIn('package_id', collect($packages)->pluck('id')->all())
-            ->pluck('package_id')
-            ->map(fn ($id) => (int) $id)
-            ->unique()
-            ->values();
-
-        $packages = collect($packages)
-            ->filter(fn ($pkg) => $cartPackageIds->contains((int) $pkg->id))
-            ->values();
-
-        if ($packages->count() < 2) {
-            return 0;
+        $pickupDate = trim($pickupDate);
+        if ($pickupDate === '') {
+            return '';
         }
 
-        $protectedPackageIds = DB::table('saved_shipments')
-            ->whereIn('package_id', $cartPackageIds->all())
-            ->pluck('package_id')
-            ->merge(
-                DB::table('package_order')
-                    ->whereIn('package_id', $cartPackageIds->all())
-                    ->pluck('package_id')
-            )
-            ->map(fn ($id) => (int) $id)
-            ->unique()
-            ->all();
-        $protectedLookup = array_fill_keys($protectedPackageIds, true);
-
-        $groups = [];
-        foreach ($packages as $pkg) {
-            $groups[$this->buildMergeKey($pkg)][] = $pkg;
+        if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $pickupDate)) {
+            return $pickupDate;
         }
 
-        $merged = 0;
-        foreach ($groups as $groupPackages) {
-            if (count($groupPackages) < 2) {
-                continue;
-            }
-
-            usort($groupPackages, function (Package $left, Package $right) use ($protectedLookup) {
-                $leftProtected = isset($protectedLookup[(int) $left->id]) ? 1 : 0;
-                $rightProtected = isset($protectedLookup[(int) $right->id]) ? 1 : 0;
-
-                if ($leftProtected !== $rightProtected) {
-                    return $rightProtected <=> $leftProtected;
-                }
-
-                return $left->id <=> $right->id;
-            });
-
-            $master = $groupPackages[0];
-            $masterQty = (int) $master->quantity;
-            $groupMerged = 0;
-
-            for ($i = 1; $i < count($groupPackages); $i++) {
-                $dup = $groupPackages[$i];
-
-                if (isset($protectedLookup[(int) $dup->id])) {
-                    continue;
-                }
-
-                $masterQty += (int) $dup->quantity;
-                DB::table('cart_user')->where('user_id', $userId)->where('package_id', $dup->id)->delete();
-                $dup->delete();
-                $merged++;
-                $groupMerged++;
-            }
-
-            if ($groupMerged === 0) {
-                continue;
-            }
-
-            $pricedMaster = $this->pricePackageModel($master, $masterQty);
-
-            $master->update([
-                'quantity' => $pricedMaster['quantity'],
-                'weight_price' => $pricedMaster['weight_price'],
-                'volume_price' => $pricedMaster['volume_price'],
-                'single_price' => $pricedMaster['single_price'],
-            ]);
+        if (preg_match('/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/', $pickupDate, $matches)) {
+            return sprintf('%s-%02d-%02d', $matches[3], (int) $matches[2], (int) $matches[1]);
         }
 
-        return $merged;
+        return $pickupDate;
     }
 }

@@ -8,7 +8,8 @@
  */
 
 use App\Http\Controllers\Auth\LoginController;
-use App\Http\Controllers\Catalog\LocationController;
+use App\Http\Controllers\Catalog\LocationDetailController;
+use App\Http\Controllers\Catalog\LocationSearchController;
 use App\Http\Controllers\Shipping\BrtController;
 use App\Http\Controllers\Shipping\SessionDataController;
 use Illuminate\Support\Facades\Route;
@@ -22,9 +23,9 @@ Route::middleware(['throttle:10,1'])->post('/session/reset', [SessionDataControl
 
 /* ===== COMUNI, CAP, PROVINCE (autocompletamento indirizzi) ===== */
 
-Route::middleware(['throttle:180,1'])->get('/locations/search', [LocationController::class, 'search']);
-Route::middleware(['throttle:180,1'])->get('/locations/by-cap', [LocationController::class, 'byCap']);
-Route::middleware(['throttle:180,1'])->get('/locations/by-city', [LocationController::class, 'byCity']);
+Route::middleware(['throttle:180,1'])->get('/locations/search', [LocationSearchController::class, 'search']);
+Route::middleware(['throttle:180,1'])->get('/locations/by-cap', [LocationDetailController::class, 'byCap']);
+Route::middleware(['throttle:180,1'])->get('/locations/by-city', [LocationDetailController::class, 'byCity']);
 
 /* ===== TRACKING PUBBLICO ===== */
 

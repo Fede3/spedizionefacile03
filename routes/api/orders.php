@@ -11,6 +11,7 @@ use App\Http\Controllers\Account\AddressController;
 use App\Http\Controllers\Account\UserAddressController;
 use App\Http\Controllers\Catalog\CouponController;
 use App\Http\Controllers\Checkout\RefundController;
+use App\Http\Controllers\Order\OrderActionsController;
 use App\Http\Controllers\Order\OrderDetailController;
 use App\Http\Controllers\Order\OrderListController;
 use App\Http\Controllers\Shipping\BrtController;
@@ -33,11 +34,11 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
     // Export CSV ordini utente (o tutti per admin). Rate limit stretto: 5/min.
     Route::middleware(['throttle:5,1'])->get('orders/export', [OrderExportController::class, 'exportCsv']);
     Route::get('orders/{order}', [OrderDetailController::class, 'show'])->whereNumber('order');
-    Route::middleware(['throttle:3,1'])->post('orders/{order}/cancel', [OrderDetailController::class, 'cancel']);
     Route::get('orders/{order}/invoice', [OrderDetailController::class, 'invoice']);
+    Route::middleware(['throttle:3,1'])->post('orders/{order}/cancel', [OrderActionsController::class, 'cancel']);
     Route::middleware(['throttle:5,1'])->get('orders/{order}/refund-eligibility', [RefundController::class, 'checkRefundEligibility']);
-    Route::middleware(['throttle:10,1'])->post('orders/{order}/add-package', [OrderDetailController::class, 'addPackage']);
-    Route::middleware(['throttle:30,1'])->post('create-direct-order', [OrderDetailController::class, 'createDirectOrder']);
+    Route::middleware(['throttle:10,1'])->post('orders/{order}/add-package', [OrderActionsController::class, 'addPackage']);
+    Route::middleware(['throttle:30,1'])->post('create-direct-order', [OrderActionsController::class, 'createDirectOrder']);
 
     /* ===== COUPON ===== */
 

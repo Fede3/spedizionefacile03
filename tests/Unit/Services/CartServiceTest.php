@@ -16,7 +16,7 @@ class CartServiceTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->service = new CartService;
+        $this->service = app(CartService::class);
     }
 
     public function test_euro_to_cents_converte_correttamente(): void
