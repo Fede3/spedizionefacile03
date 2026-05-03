@@ -4,7 +4,7 @@ const props = defineProps({
   open: { type: Boolean, default: false },
 });
 const emit = defineEmits(['close', 'pudo-selected']);
-// ── Helpers orari ──
+// Helpers orari
 const dayNames = [
     { key: 'mon', label: 'Lunedi', tokens: ['lun', 'lunedi', 'mon'] },
     { key: 'tue', label: 'Martedi', tokens: ['mar', 'martedi', 'tue'] },
@@ -195,7 +195,7 @@ width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor"
 					<div class="px-[20px] py-[14px] border-t border-[var(--color-brand-border,#E9EBEC)] bg-white">
 						<button
 							type="button"
-							class="w-full inline-flex items-center justify-center gap-[8px] h-[46px] rounded-[14px] bg-[var(--color-brand-primary,#095866)] text-white text-[0.9375rem] font-semibold hover:bg-[var(--color-brand-primary-hover,#074a56)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#E44203] cursor-pointer transition-colors"
+							class="w-full inline-flex items-center justify-center gap-[8px] h-[46px] rounded-[14px] bg-[var(--color-brand-primary,#095866)] text-white text-[0.9375rem] font-semibold hover:bg-[var(--color-brand-primary-hover,#074a56)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand-accent)] cursor-pointer transition-colors"
 							@click="handleChoose">
 							<svg
 width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -210,4 +210,3 @@ width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
 		</transition>
 	</Teleport>
 </template>
-

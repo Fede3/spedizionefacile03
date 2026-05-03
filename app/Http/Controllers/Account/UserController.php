@@ -103,14 +103,14 @@ class UserController extends Controller
         try {
             Mail::raw(
                 "Gentile {$userName},\n\n".
-                "Il tuo account SpedizioneFacile e' stato eliminato con successo.\n".
+                "Il tuo account SpediamoFacile e' stato eliminato con successo.\n".
                 "I tuoi dati personali sono stati rimossi dai nostri sistemi.\n\n".
                 'Se non hai richiesto tu questa eliminazione, contatta immediatamente '.
-                "il nostro supporto all'indirizzo info@spedizionefacile.it\n\n".
-                'SpedizioneFacile',
+                "il nostro supporto all'indirizzo info@SpediamoFacile.it\n\n".
+                'SpediamoFacile',
                 function ($message) use ($userEmail, $userName) {
                     $message->to($userEmail, $userName)
-                        ->subject('Account eliminato — SpedizioneFacile');
+                        ->subject('Account eliminato — SpediamoFacile');
                 }
             );
         } catch (\Exception $e) {

@@ -29,8 +29,8 @@ const statusTimeline = [
 ];
 
 const ALT_END_LABELS = { returned: 'Reso al mittente', refused: 'Rifiutato dal destinatario', cancelled: 'Annullato' };
-const TEAL = 'bg-[#eef7f8] text-[#095866] border border-[#bdd5da]';
-const GREEN = 'bg-[#f0fdf4] text-[#0a8a7a] border border-[#d1fae5]';
+const TEAL = 'bg-[#eef7f8] text-[var(--color-brand-primary)] border border-[#bdd5da]';
+const GREEN = 'bg-[#f0fdf4] text-[var(--color-brand-success)] border border-[#d1fae5]';
 const ORANGE = 'bg-orange-50 text-orange-700 border border-orange-200';
 const RED = 'bg-red-50 text-red-700 border border-red-200';
 const GREY = 'bg-gray-50 text-[var(--color-brand-text-secondary)] border border-gray-200';
@@ -113,7 +113,7 @@ onMounted(() => { if (trackingCode.value) trackShipment(); });
 									v-model="trackingCode"
 									type="text"
 									placeholder="es. BRT-2026032801234, SF-000042..."
-									class="w-full h-[48px] sm:h-[50px] rounded-[12px] pl-[42px] pr-[14px] text-[15px] text-[#1d2738] bg-white ring-[1.5px] ring-[#DFE2E7] focus:ring-[3px] focus:ring-[#095866]/60 placeholder:text-[var(--color-brand-text-muted)] outline-none transition-all duration-200"
+									class="w-full h-[48px] sm:h-[50px] rounded-[12px] pl-[42px] pr-[14px] text-[15px] text-[var(--color-brand-text)] bg-white ring-[1.5px] ring-[#DFE2E7] focus:ring-[3px] focus:ring-[var(--color-brand-primary)]/60 placeholder:text-[var(--color-brand-text-muted)] outline-none transition-all duration-200"
 									style="font-weight:600"
 									@keyup.enter="trackShipment">
 							</div>
@@ -125,7 +125,7 @@ onMounted(() => { if (trackingCode.value) trackShipment(); });
 							</SfButton>
 						</div>
 					</div>
-					<p v-if="trackingError" class="text-[#E44203] text-[0.8125rem] mt-[10px]">{{ trackingError }}</p>
+					<p v-if="trackingError" class="text-[var(--color-brand-accent)] text-[0.8125rem] mt-[10px]">{{ trackingError }}</p>
 				</div>
 			</div>
 
@@ -135,7 +135,7 @@ onMounted(() => { if (trackingCode.value) trackShipment(); });
 					<div class="flex items-center justify-between mb-[18px] pb-[14px] border-b border-[#DFE2E7] flex-wrap gap-[10px]">
 						<div>
 							<span class="text-[var(--color-brand-text-muted)] text-[11px] uppercase tracking-[0.4px] block" style="font-weight:600">Spedizione trovata</span>
-							<span class="text-[#1d2738] text-[16px]" style="font-weight:700">#{{ trackingResult.order_id }}</span>
+							<span class="text-[var(--color-brand-text)] text-[16px]" style="font-weight:700">#{{ trackingResult.order_id }}</span>
 						</div>
 						<span :class="statusColorClass" class="px-[12px] py-[4px] rounded-full text-[0.8125rem]" style="font-weight:700">{{ trackingResult.status }}</span>
 					</div>
@@ -150,26 +150,26 @@ v-for="info in [
 								{ label: 'Stato', value: trackingResult.status_description, show: true },
 							].filter(i => i.show)" :key="info.label">
 								<p class="text-[11px] uppercase tracking-[0.06em] text-[#777] mb-[2px]" style="font-weight:700">{{ info.label }}</p>
-								<p class="text-[0.9375rem] text-[#1d2738]" :class="info.mono ? 'font-mono' : ''" style="font-weight:600">{{ info.value }}</p>
+								<p class="text-[0.9375rem] text-[var(--color-brand-text)]" :class="info.mono ? 'font-mono' : ''" style="font-weight:600">{{ info.value }}</p>
 							</div>
 						</div>
 					</div>
 
 					<div v-if="currentStepIndex >= 0" class="mb-[16px]">
-						<h3 class="font-montserrat text-[0.8125rem] text-[#1d2738] uppercase tracking-[0.06em] mb-[14px]" style="font-weight:800">Avanzamento spedizione</h3>
+						<h3 class="font-montserrat text-[0.8125rem] text-[var(--color-brand-text)] uppercase tracking-[0.06em] mb-[14px]" style="font-weight:800">Avanzamento spedizione</h3>
 						<div class="rounded-[16px] p-[16px] sm:p-[20px]" data-surface="grey-inset">
 							<div class="flex flex-col gap-0">
 								<div v-for="(step, idx) in statusTimeline" :key="step.key" class="flex gap-[14px]">
 									<div class="flex flex-col items-center">
-										<div class="w-[32px] h-[32px] rounded-full flex items-center justify-center shrink-0" :class="idx <= currentStepIndex ? 'bg-[#095866]' : 'bg-white ring-[1.5px] ring-[#DFE2E7]'">
+										<div class="w-[32px] h-[32px] rounded-full flex items-center justify-center shrink-0" :class="idx <= currentStepIndex ? 'bg-[var(--color-brand-primary)]' : 'bg-white ring-[1.5px] ring-[#DFE2E7]'">
 											<svg v-if="idx <= currentStepIndex" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
 											<svg v-else xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#999" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4" /></svg>
 										</div>
-										<div v-if="idx < statusTimeline.length - 1" class="w-[2px] flex-1 min-h-[28px] rounded-[1px]" :class="idx < currentStepIndex ? 'bg-[#095866]/30' : 'bg-[#D5D9E0]'" />
+										<div v-if="idx < statusTimeline.length - 1" class="w-[2px] flex-1 min-h-[28px] rounded-[1px]" :class="idx < currentStepIndex ? 'bg-[var(--color-brand-primary)]/30' : 'bg-[#D5D9E0]'" />
 									</div>
 									<div class="pb-[16px]" :class="{ 'pb-0': idx === statusTimeline.length - 1 && !isAlternateEndState }">
-										<span class="text-[14px] block" :class="idx <= currentStepIndex ? 'text-[#1d2738]' : 'text-[var(--color-brand-text-muted)]'" style="font-weight:600">{{ step.label }}</span>
-										<span v-if="idx === currentStepIndex && !isAlternateEndState" class="text-[#095866] text-[12px]" style="font-weight:600">Stato attuale</span>
+										<span class="text-[14px] block" :class="idx <= currentStepIndex ? 'text-[var(--color-brand-text)]' : 'text-[var(--color-brand-text-muted)]'" style="font-weight:600">{{ step.label }}</span>
+										<span v-if="idx === currentStepIndex && !isAlternateEndState" class="text-[var(--color-brand-primary)] text-[12px]" style="font-weight:600">Stato attuale</span>
 										<span v-else-if="idx < currentStepIndex" class="text-[var(--color-brand-text-muted)] text-[12px]">Completato</span>
 									</div>
 								</div>
@@ -177,13 +177,13 @@ v-for="info in [
 								<div v-if="isAlternateEndState" class="flex gap-[14px]">
 									<div class="flex flex-col items-center">
 										<div class="w-[2px] min-h-[12px] rounded-[1px] bg-[#D5D9E0]" />
-										<div class="w-[32px] h-[32px] rounded-full flex items-center justify-center shrink-0" :class="trackingResult.raw_status === 'refused' ? 'bg-red-600' : 'bg-[#E44203]'">
+										<div class="w-[32px] h-[32px] rounded-full flex items-center justify-center shrink-0" :class="trackingResult.raw_status === 'refused' ? 'bg-red-600' : 'bg-[var(--color-brand-accent)]'">
 											<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
 										</div>
 									</div>
 									<div class="pt-[12px]">
-										<span class="text-[14px] block" :class="trackingResult.raw_status === 'refused' ? 'text-red-700' : 'text-[#E44203]'" style="font-weight:700">{{ alternateEndLabel }}</span>
-										<span class="text-[12px]" :class="trackingResult.raw_status === 'refused' ? 'text-red-600' : 'text-[#E44203]'" style="font-weight:600">Stato finale</span>
+										<span class="text-[14px] block" :class="trackingResult.raw_status === 'refused' ? 'text-red-700' : 'text-[var(--color-brand-accent)]'" style="font-weight:700">{{ alternateEndLabel }}</span>
+										<span class="text-[12px]" :class="trackingResult.raw_status === 'refused' ? 'text-red-600' : 'text-[var(--color-brand-accent)]'" style="font-weight:600">Stato finale</span>
 									</div>
 								</div>
 							</div>
@@ -210,19 +210,19 @@ v-for="info in [
 							<path d="M9.5,3A6.5,6.5 0 0,1 16,9.5C16,11.11 15.41,12.59 14.44,13.73L14.71,14H15.5L20.5,19L19,20.5L14,15.5V14.71L13.73,14.44C12.59,15.41 11.11,16 9.5,16A6.5,6.5 0 0,1 3,9.5A6.5,6.5 0 0,1 9.5,3M9.5,5C7,5 5,7 5,9.5C5,12 7,14 9.5,14C12,14 14,12 14,9.5C14,7 12,5 9.5,5Z" />
 						</svg>
 					</div>
-					<p class="text-[1rem] text-[#1d2738] mb-[6px]" style="font-weight:700">Spedizione non trovata</p>
+					<p class="text-[1rem] text-[var(--color-brand-text)] mb-[6px]" style="font-weight:700">Spedizione non trovata</p>
 					<p class="text-[0.875rem] text-[#777] mb-[16px] max-w-[44ch] mx-auto">Il codice inserito non corrisponde a nessuna spedizione nel nostro archivio.</p>
 
 					<div class="rounded-[12px] p-[14px] text-left mb-[16px] max-w-[400px] mx-auto" data-surface="grey-inset">
-						<p class="text-[12px] text-[#1d2738] mb-[8px]" style="font-weight:700">Suggerimenti:</p>
-						<ul class="text-[12px] text-[#5A6474] leading-[1.8] list-none m-0 p-0">
+						<p class="text-[12px] text-[var(--color-brand-text)] mb-[8px]" style="font-weight:700">Suggerimenti:</p>
+						<ul class="text-[12px] text-[var(--color-brand-text-secondary)] leading-[1.8] list-none m-0 p-0">
 							<li
 v-for="hint in [
 								'Verifica di aver inserito il codice correttamente',
 								'Il tracking potrebbe non essere ancora attivo (attendi 1-2 ore)',
 								'Se hai un codice BRT, prova direttamente sul sito del corriere',
 							]" :key="hint" class="flex items-start gap-[6px]">
-								<span class="text-[#095866] mt-[2px] shrink-0" style="font-weight:800">-</span>
+								<span class="text-[var(--color-brand-primary)] mt-[2px] shrink-0" style="font-weight:800">-</span>
 								{{ hint }}
 							</li>
 						</ul>
@@ -251,20 +251,20 @@ v-for="hint in [
 					<div class="p-[18px] sm:p-[22px]" style="background: var(--gradient-page-surface)">
 						<div class="grid gap-[14px]">
 							<div class="grid gap-[6px]">
-								<h3 class="text-[#1d2738] text-[15px]" style="font-weight:700; font-family: var(--font-montserrat, Montserrat, sans-serif)">Prima della ricerca</h3>
-								<p class="text-[#5A6474] text-[13px] leading-[1.6]">Questa pagina serve solo a trovare in fretta lo stato corretto: niente box dimostrativi inutili, solo i controlli minimi davvero utili.</p>
+								<h3 class="text-[var(--color-brand-text)] text-[15px]" style="font-weight:700; font-family: var(--font-montserrat, Montserrat, sans-serif)">Prima della ricerca</h3>
+								<p class="text-[var(--color-brand-text-secondary)] text-[13px] leading-[1.6]">Questa pagina serve solo a trovare in fretta lo stato corretto: niente box dimostrativi inutili, solo i controlli minimi davvero utili.</p>
 							</div>
 							<div class="rounded-[12px] p-[14px] sm:p-[16px]" data-surface="grey-inset">
 								<ul class="grid gap-[10px] m-0 p-0 list-none">
-									<li v-for="tip in trackingTips" :key="tip" class="flex items-start gap-[8px] text-[13px] leading-[1.55] text-[#5A6474]">
-										<span class="mt-[6px] h-[6px] w-[6px] rounded-full bg-[#095866] shrink-0" aria-hidden="true"/>
+									<li v-for="tip in trackingTips" :key="tip" class="flex items-start gap-[8px] text-[13px] leading-[1.55] text-[var(--color-brand-text-secondary)]">
+										<span class="mt-[6px] h-[6px] w-[6px] rounded-full bg-[var(--color-brand-primary)] shrink-0" aria-hidden="true"/>
 										<span>{{ tip }}</span>
 									</li>
 								</ul>
 							</div>
 						</div>
 						<p class="text-center mt-[14px]">
-							<NuxtLink to="/guide" class="text-[#095866] text-[13px] hover:opacity-80 inline-flex items-center gap-[4px]" style="font-weight:600">
+							<NuxtLink to="/guide" class="text-[var(--color-brand-primary)] text-[13px] hover:opacity-80 inline-flex items-center gap-[4px]" style="font-weight:600">
 								Leggi la guida dettagliata
 								<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
 							</NuxtLink>
@@ -275,8 +275,8 @@ v-for="hint in [
 					<div class="p-[16px] sm:p-[18px]" style="background: rgba(255,255,255,0.72)">
 						<div class="flex flex-col gap-[12px] sm:flex-row sm:items-center sm:justify-between">
 							<div class="grid gap-[4px]">
-								<p class="text-[#1d2738] text-[14px]" style="font-weight:700">Hai bisogno di un altro percorso?</p>
-								<p class="text-[#5A6474] text-[13px] leading-[1.55]">Se il codice non è ancora pronto, puoi passare dalla tua area spedizioni o aprire un contatto rapido.</p>
+								<p class="text-[var(--color-brand-text)] text-[14px]" style="font-weight:700">Hai bisogno di un altro percorso?</p>
+								<p class="text-[var(--color-brand-text-secondary)] text-[13px] leading-[1.55]">Se il codice non è ancora pronto, puoi passare dalla tua area spedizioni o aprire un contatto rapido.</p>
 							</div>
 							<div class="flex flex-col gap-[8px] sm:flex-row sm:items-center sm:justify-end">
 								<SfButton to="/account/spedizioni" variant="secondary">Le tue spedizioni</SfButton>
@@ -289,7 +289,7 @@ v-for="hint in [
 
 			<p class="text-[#777] text-[0.8125rem] text-center mt-[24px]">
 				Puoi anche tracciare le tue spedizioni dall'area
-				<NuxtLink to="/account/spedizioni" class="text-[#095866] font-semibold hover:opacity-80">Le tue spedizioni</NuxtLink>.
+				<NuxtLink to="/account/spedizioni" class="text-[var(--color-brand-primary)] font-semibold hover:opacity-80">Le tue spedizioni</NuxtLink>.
 			</p>
 
 			</div>

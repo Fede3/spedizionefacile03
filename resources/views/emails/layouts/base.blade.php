@@ -1,5 +1,5 @@
 {{--
-    LAYOUT EMAIL BASE — SpedizioneFacile (M8 design system)
+    LAYOUT EMAIL BASE — SpediamoFacile (M8 design system)
 
     Layout responsive table-based, compatibile con tutti i client email.
     Tutte le email transazionali estendono questo layout via @extends('emails.layouts.base').
@@ -25,13 +25,13 @@
     <meta name="x-apple-disable-message-reformatting">
     <meta name="color-scheme" content="light only">
     <meta name="supported-color-schemes" content="light only">
-    <title>@yield('title', 'SpedizioneFacile')</title>
+    <title>@yield('title', 'SpediamoFacile')</title>
 </head>
 <body style="margin: 0; padding: 0; background-color: #f5f3ec; font-family: Arial, Helvetica, sans-serif; color: #1d2738; -webkit-font-smoothing: antialiased; -webkit-text-size-adjust: 100%;">
 
     {{-- PREHEADER (testo nascosto visualizzato come anteprima dai client email) --}}
     <div style="display: none; max-height: 0; overflow: hidden; mso-hide: all; font-size: 1px; line-height: 1px; color: #f5f3ec; opacity: 0;">
-        @yield('preheader', 'SpedizioneFacile — spedizioni semplici, veloci, convenienti.')
+        @yield('preheader', 'SpediamoFacile — spedizioni semplici, veloci, convenienti.')
     </div>
 
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #f5f3ec;">
@@ -49,7 +49,7 @@
                                         {{-- Logo testuale (massima compatibilita') --}}
                                         <a href="{{ config('app.frontend_url', config('app.url')) }}" target="_blank" style="text-decoration: none; color: #ffffff;">
                                             <span style="display: inline-block; vertical-align: middle; font-family: Arial, Helvetica, sans-serif; font-size: 22px; font-weight: 700; letter-spacing: 0.4px; color: #ffffff;">
-                                                Spedizione<span style="color: #E44203;">Facile</span>
+                                                Spediamo<span style="color: #E44203;">Facile</span>
                                             </span>
                                         </a>
                                     </td>
@@ -84,7 +84,7 @@
                                 <tr>
                                     <td align="center" style="font-family: Arial, Helvetica, sans-serif; font-size: 12px; line-height: 1.6; color: #6b7280;">
                                         <p style="margin: 0 0 6px;">
-                                            <strong style="color: #095866;">SpedizioneFacile S.r.l.</strong> &middot; P.IVA IT00000000000
+                                            <strong style="color: #095866;">SpediamoFacile S.r.l.</strong> &middot; P.IVA IT00000000000
                                         </p>
                                         <p style="margin: 0 0 12px;">
                                             Spedizioni semplici, veloci, convenienti.
@@ -102,7 +102,7 @@
                                             Seguici: Facebook &middot; Instagram &middot; LinkedIn
                                         </p>
                                         <p style="margin: 0; font-size: 11px; color: #9ca3af;">
-                                            &copy; {{ date('Y') }} SpedizioneFacile. Tutti i diritti riservati.
+                                            &copy; {{ date('Y') }} SpediamoFacile. Tutti i diritti riservati.
                                         </p>
                                     </td>
                                 </tr>

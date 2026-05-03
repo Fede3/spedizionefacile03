@@ -2,7 +2,7 @@
  * @file useCartPage — composable pagina /carrello.
  * Distinto da useCart (checkout) perche' la pagina ha contesto e API diverse.
  */
-import { computed, onMounted, ref, watch, type Ref } from 'vue';
+import type { Ref } from 'vue';
 import type { AddressGroup, CartItem, CartResponse } from '~/types';
 import type { AuthModalTab } from '~/stores/authStore';
 import { formatPrice } from '~/utils/price';
@@ -21,8 +21,6 @@ type DisplayGroupEntry = {
 type DisplaySingleEntry = { type: 'single'; groupIndex: number; item: CartItem };
 type DisplayEntry = DisplayGroupEntry | DisplaySingleEntry;
 
-// SEZIONE 3 — useCartPage(): logica pagina /carrello
-// ============================================================================
 // State e API distinti da useCart perche' la pagina /carrello ha:
 //  - couponApplied SEMANTICA DIVERSA (boolean vs object di useCart)
 //  - filtri indirizzi, raggruppamento, quantita' inline, auth gate guest

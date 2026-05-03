@@ -5,7 +5,6 @@
  * gli endpoint `/api/locations/search`, `/locations/by-cap`, `/locations/by-city`.
  */
 
-import { ref } from 'vue'
 import { dedupeLocations, getProvinceLabel, locationKey, normalizeLocationText, type LocationRecord } from '~/utils/location'
 
 type FetchLike = (url: string, opts?: { query?: Record<string, unknown> }) => Promise<unknown>

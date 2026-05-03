@@ -199,7 +199,7 @@ onBeforeUnmount(() => stopNowTimer());
 							Doppio clic sulla mappa per impostare il punto di riferimento e aggiornare automaticamente via, citta e CAP.
 						</p>
 						<p v-if="mapClickLoading" class="text-[0.75rem] font-semibold text-[var(--color-brand-primary)] mt-[4px]">Aggiornamento in corso...</p>
-						<p v-else-if="referenceUpdateMessage" class="text-[0.75rem] text-[#0a8a7a] mt-[4px]">{{ referenceUpdateMessage }}</p>
+						<p v-else-if="referenceUpdateMessage" class="text-[0.75rem] text-[var(--color-brand-success)] mt-[4px]">{{ referenceUpdateMessage }}</p>
 					</div>
 
 					<div class="mt-[8px] flex-1 min-h-0">

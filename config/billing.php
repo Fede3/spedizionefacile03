@@ -11,7 +11,7 @@
  * VARIABILI .env DA POPOLARE:
  *
  *   # Dati cedente (azienda emittente)
- *   BILLING_COMPANY_NAME="SpedizioneFacile S.r.l."
+ *   BILLING_COMPANY_NAME="SpediamoFacile S.r.l."
  *   BILLING_COMPANY_VAT="01234567890"
  *   BILLING_COMPANY_FISCAL_CODE="01234567890"
  *   BILLING_COMPANY_REA="MI-1234567"
@@ -21,10 +21,10 @@
  *   BILLING_COMPANY_CITY="Milano"
  *   BILLING_COMPANY_PROVINCE="MI"
  *   BILLING_COMPANY_COUNTRY="IT"
- *   BILLING_COMPANY_EMAIL="amministrazione@spedizionefacile.it"
- *   BILLING_COMPANY_PEC="spedizionefacile@pec.it"
+ *   BILLING_COMPANY_EMAIL="amministrazione@SpediamoFacile.it"
+ *   BILLING_COMPANY_PEC="SpediamoFacile@pec.it"
  *   BILLING_COMPANY_PHONE="+39 02 0000000"
- *   BILLING_COMPANY_WEBSITE="https://spedizionefacile.it"
+ *   BILLING_COMPANY_WEBSITE="https://SpediamoFacile.it"
  *
  *   # Regime fiscale e numerazione
  *   BILLING_REGIME_FISCALE="RF01"
@@ -53,7 +53,7 @@ return [
     | del PDF e usati come <CedentePrestatore> nell'XML SDI.
     */
     'cedente' => [
-        'ragione_sociale' => env('BILLING_COMPANY_NAME', 'SpedizioneFacile S.r.l.'),
+        'ragione_sociale' => env('BILLING_COMPANY_NAME', 'SpediamoFacile S.r.l.'),
         'partita_iva' => env('BILLING_COMPANY_VAT', '00000000000'),
         'codice_fiscale' => env('BILLING_COMPANY_FISCAL_CODE', '00000000000'),
         'numero_rea' => env('BILLING_COMPANY_REA', null),
@@ -67,10 +67,10 @@ return [
         'paese' => env('BILLING_COMPANY_COUNTRY', 'IT'),
 
         // Contatti
-        'email' => env('BILLING_COMPANY_EMAIL', 'amministrazione@spedizionefacile.it'),
+        'email' => env('BILLING_COMPANY_EMAIL', 'amministrazione@SpediamoFacile.it'),
         'pec' => env('BILLING_COMPANY_PEC', null),
         'telefono' => env('BILLING_COMPANY_PHONE', null),
-        'sito_web' => env('BILLING_COMPANY_WEBSITE', 'https://spedizionefacile.it'),
+        'sito_web' => env('BILLING_COMPANY_WEBSITE', 'https://SpediamoFacile.it'),
     ],
 
     /*

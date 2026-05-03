@@ -228,11 +228,11 @@
         <table>
             <tr>
                 <td style="width: 50%;">
-                    <div class="brand">Spedizione<span class="accent">Facile</span></div>
+                    <div class="brand">Spediamo<span class="accent">Facile</span></div>
                     <div class="brand-tagline">Spedizioni semplici, veloci e convenienti</div>
                 </td>
                 <td style="width: 50%;" class="cedente">
-                    <strong>{{ $cedente['ragione_sociale'] ?? 'SpedizioneFacile S.r.l.' }}</strong><br>
+                    <strong>{{ $cedente['ragione_sociale'] ?? 'SpediamoFacile S.r.l.' }}</strong><br>
                     P.IVA {{ $cedente['partita_iva'] ?? '—' }}
                     @if(!empty($cedente['codice_fiscale']) && $cedente['codice_fiscale'] !== ($cedente['partita_iva'] ?? null))
                         — C.F. {{ $cedente['codice_fiscale'] }}
@@ -473,7 +473,7 @@
 
     {{-- ────────────────────── FOOTER ────────────────────── --}}
     <div class="footer">
-        <span>{{ $cedente['ragione_sociale'] ?? 'SpedizioneFacile' }}</span>
+        <span>{{ $cedente['ragione_sociale'] ?? 'SpediamoFacile' }}</span>
         — P.IVA {{ $cedente['partita_iva'] ?? '—' }}
         — {{ $cedente['indirizzo'] ?? '' }}, {{ $cedente['cap'] ?? '' }} {{ $cedente['citta'] ?? '' }} ({{ $cedente['provincia'] ?? '' }})
         @if(!empty($cedente['email']))

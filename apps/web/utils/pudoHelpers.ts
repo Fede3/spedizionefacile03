@@ -231,9 +231,7 @@ export async function geocodeNominatim(parts: unknown[]): Promise<GeocodeResult 
 	return { latitude: lat, longitude: lng, label: String(first.display_name || '') }
 }
 
-// ────────────────────────────────────────────────────────────────────────────
 // Map helpers (orari, distanza, stato apertura) — usati dal composable wrapper
-// ────────────────────────────────────────────────────────────────────────────
 
 export const PUDO_DAY_TOKENS: Record<number, string[]> = {
 	0: ['dom', 'domenica', 'sun', 'sunday'], 1: ['lun', 'lunedi', 'mon', 'monday'],

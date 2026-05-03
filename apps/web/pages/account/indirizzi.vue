@@ -225,7 +225,8 @@ const tabs = computed(() => [
 						]"
 						@click="activeTab = tab.key">
 						<span>{{ tab.label }}</span>
-						<span :class="[
+						<span
+:class="[
 							'inline-flex h-5 min-w-[20px] items-center justify-center rounded-full px-1.5 text-[0.6875rem] font-bold',
 							activeTab === tab.key ? 'bg-white/20 text-white' : 'bg-brand-bg-alt text-brand-text-muted',
 						]">{{ tab.count }}</span>

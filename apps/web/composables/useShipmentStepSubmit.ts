@@ -1,8 +1,7 @@
 import type { Ref } from 'vue'
-import { nextTick, ref } from 'vue'
 import { buildSecondStepPayload, toStepAddressPayload } from '~/utils/shipmentDraftPayload'
 
-// ── Tipi per la sezione persistShipmentFlowState (ex useShipmentStepSessionPersistence) ──
+// Tipi per la sezione persistShipmentFlowState (ex useShipmentStepSessionPersistence)
 type ValueRef<T> = { value: T }
 type BuildSecondStepArgs = NonNullable<Parameters<typeof buildSecondStepPayload>[0]>
 type PersistOptions = {

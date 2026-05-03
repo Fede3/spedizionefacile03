@@ -133,7 +133,7 @@ defineExpose({
 	<div class="payment-summary-card">
 		<div class="flex flex-col gap-[10px] lg:flex-row lg:items-start lg:justify-between">
 			<div class="min-w-0 flex items-start gap-[12px]">
-				<span class="inline-flex h-[40px] w-[40px] shrink-0 items-center justify-center rounded-[14px] bg-[#F3FAFB] text-[#095866] border border-[#D7E4E7]">
+				<span class="inline-flex h-[40px] w-[40px] shrink-0 items-center justify-center rounded-[14px] bg-[#F3FAFB] text-[var(--color-brand-primary)] border border-[#D7E4E7]">
 					<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
 						<path d="M3 7l9-4 9 4v10l-9 4-9-4z" />
 						<path d="M3 7l9 4 9-4" />
@@ -147,7 +147,7 @@ defineExpose({
 							{{ colloLabel }}
 						</span>
 					</div>
-					<div class="mt-[6px] flex flex-wrap items-center gap-x-[10px] gap-y-[6px] text-[13px] text-[#1d2738]" style="font-weight:800">
+					<div class="mt-[6px] flex flex-wrap items-center gap-x-[10px] gap-y-[6px] text-[13px] text-[var(--color-brand-text)]" style="font-weight:800">
 						<span>{{ resolvedTrattaLabel }}</span>
 						<span class="text-[#C0C5CC]">•</span>
 						<span class="text-[#5C6473]" style="font-weight:700">Ritiro {{ confirmationPickupDate }}</span>
@@ -159,7 +159,7 @@ defineExpose({
 
 			<div class="flex items-center gap-[10px] lg:justify-end">
 				<p
-					class="leading-none text-[#1d2738]"
+					class="leading-none text-[var(--color-brand-text)]"
 					style="font-weight:800; font-size: clamp(28px, 4vw, 36px); letter-spacing: -0.02em;">
 					{{ displayTotalText }}
 				</p>

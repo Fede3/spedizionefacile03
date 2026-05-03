@@ -21,7 +21,7 @@ export type LocationRecord = {
 	[key: string]: unknown
 }
 
-// ─── 1. Normalizzazione ───────────────────────────────────────────
+// 1. Normalizzazione
 
 /**
  * Normalizza testo località per confronti case/accent-insensitive.
@@ -44,7 +44,7 @@ export const getProvinceLabel = (location: LocationRecord | null | undefined): s
 		.toUpperCase()
 		.trim();
 
-// ─── 2. Deduplicazione ────────────────────────────────────────────
+// 2. Deduplicazione
 
 /**
  * Genera una chiave univoca per una località (CAP|città|provincia).
@@ -71,7 +71,7 @@ export const dedupeLocations = (locations: unknown[] = []): LocationRecord[] => 
 	return Array.from(map.values());
 };
 
-// ─── 3. Suggestion BRT (sanitize + format) ────────────────────────
+// 3. Suggestion BRT (sanitize + format)
 
 /**
  * Pulizia carattere-by-carattere del campo "Nome e Cognome" digitato a mano.
@@ -101,7 +101,7 @@ export const formatCapSuggestionLabel = (location: LocationRecord): string => {
 	return `${location.postal_code} - ${location.place_name}`;
 };
 
-// ─── 4. Validazione coerenza ──────────────────────────────────────
+// 4. Validazione coerenza
 
 /**
  * Verifica che `location` abbia city/province coerenti con quelle digitate.
@@ -131,7 +131,7 @@ export const extractUniqueProvinces = (locations: unknown[], max = 20): string[]
 	return provinces.slice(0, max);
 };
 
-// ─── 5. Lista province italiane (formato "SIGLA - Nome") ──────────
+// 5. Lista province italiane (formato "SIGLA - Nome")
 
 export const provinceList = [
 	"AG - Agrigento", "AL - Alessandria", "AN - Ancona", "AO - Aosta",

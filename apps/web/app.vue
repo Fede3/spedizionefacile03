@@ -12,7 +12,7 @@ import {
 const shipmentFlowStore = useShipmentStore();
 const route = useRoute();
 
-// === SEO TECNICA GLOBALE ===
+// SEO TECNICA GLOBALE
 // useHead + useSeoMeta forniscono i meta che devono valere su OGNI pagina.
 // I meta specifici (title/description per route) vengono sovrascritti dalle
 // singole pagine senza toccare questi default globali.

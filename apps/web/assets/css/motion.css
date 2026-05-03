@@ -44,17 +44,6 @@ html:not(.is-hydrated) *::after {
 	}
 }
 
-/* ────────────────────────────────────────────────────────
- * PRIMITIVA 1 — sf-interactive
- * Copre ~90% dei casi: button, link, card, nav item.
- * Hover colore, press scale leggero, focus ring teal.
- * ──────────────────────────────────────────────────────── */
-/* ────────────────────────────────────────────────────────
- * PRIMITIVA 2 — sf-reveal
- * Entrata di modal, toast, popover, tooltip.
- * Fade + traslazione morbida 6px.
- * ──────────────────────────────────────────────────────── */
-/* ────────────────────────────────────────────────────────
- * PRIMITIVA 3 — sf-spin
- * UNICA animazione infinita del sito. Solo per loader/spinner.
- * ──────────────────────────────────────────────────────── */
+/* PRIMITIVA 1 — sf-interactive — Copre ~90% dei casi: button, link, card, nav item. — Hover colore, press scale leggero, focus ring teal. */
+/* PRIMITIVA 2 — sf-reveal — Entrata di modal, toast, popover, tooltip. — Fade + traslazione morbida 6px. */
+/* PRIMITIVA 3 — sf-spin — UNICA animazione infinita del sito. Solo per loader/spinner. */

@@ -8,7 +8,7 @@ import { describe, it, expect } from 'vitest'
 
 describe('shipmentStore Logic', () => {
 
-  // ========== PACKAGE DATA ==========
+  // PACKAGE DATA
   describe('Package Data Structure', () => {
     // Struttura default di un pacco come usata nello store
     const createDefaultPackage = () => ({
@@ -60,7 +60,7 @@ describe('shipmentStore Logic', () => {
     })
   })
 
-  // ========== TOTAL PRICE CALCULATION ==========
+  // TOTAL PRICE CALCULATION
   describe('Total Price Calculation', () => {
     // Riproduce la logica di calcolo totalPrice usata nel componente Preventivo
     function calculateTotal(packages: Array<{ single_price: number; quantity: number }>): number {
@@ -99,7 +99,7 @@ describe('shipmentStore Logic', () => {
     })
   })
 
-  // ========== SHIPMENT DETAILS ==========
+  // SHIPMENT DETAILS
   describe('Shipment Details', () => {
     const defaultShipmentDetails = {
       origin_city: '',
@@ -127,7 +127,7 @@ describe('shipmentStore Logic', () => {
     })
   })
 
-  // ========== STEP NAVIGATION ==========
+  // STEP NAVIGATION
   describe('Step Navigation', () => {
     it('step default e\' 1', () => {
       const defaultStep = 1
@@ -151,7 +151,7 @@ describe('shipmentStore Logic', () => {
     })
   })
 
-  // ========== DELIVERY MODE ==========
+  // DELIVERY MODE
   describe('Delivery Mode', () => {
     it('delivery modes validi', () => {
       const validModes = ['home', 'pudo']
@@ -170,7 +170,7 @@ describe('shipmentStore Logic', () => {
     })
   })
 
-  // ========== SESSION STORAGE PERSISTENCE ==========
+  // SESSION STORAGE PERSISTENCE
   describe('SessionStorage Persistence', () => {
     it('dati serializzabili in JSON', () => {
       const state = {
@@ -271,7 +271,7 @@ describe('shipmentStore Logic', () => {
     })
   })
 
-  // ========== DEFAULT STATE VALUES ==========
+  // DEFAULT STATE VALUES
   describe('Default State Values', () => {
     it('isQuoteStarted default false', () => {
       const defaultValue = false
@@ -309,7 +309,7 @@ describe('shipmentStore Logic', () => {
     })
   })
 
-  // ========== STORAGE KEY ==========
+  // STORAGE KEY
   describe('Storage Key', () => {
     it('chiave sessionStorage corretta', () => {
       const STORAGE_KEY = 'spedizionefacile_user_store'

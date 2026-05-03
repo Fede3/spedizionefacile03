@@ -26,7 +26,7 @@ const isFuture = (idx) => idx > props.currentIndex;
 		<div
 			v-if="alternateEnd"
 			class="mb-[14px] inline-flex items-center gap-[8px] rounded-full px-[14px] py-[6px] text-[12px]"
-			:class="alternateEnd.type === 'refused' ? 'bg-[#fdecec] text-[#b3261e] ring-[1.5px] ring-[#f1b4b4]' : 'bg-[#fff1ea] text-[#E44203] ring-[1.5px] ring-[#f5c8b1]'"
+			:class="alternateEnd.type === 'refused' ? 'bg-[#fdecec] text-[#b3261e] ring-[1.5px] ring-[#f1b4b4]' : 'bg-[#fff1ea] text-[var(--color-brand-accent)] ring-[1.5px] ring-[#f5c8b1]'"
 			style="font-weight:700"
 			role="status"
 			aria-live="polite"
@@ -59,8 +59,8 @@ const isFuture = (idx) => idx > props.currentIndex;
 						<div
 							class="relative inline-flex items-center justify-center w-[36px] h-[36px] rounded-full transition-all duration-200"
 							:class="{
-								'bg-[#095866] text-white shadow-[0_2px_6px_rgba(9,88,102,0.25)]': isDone(idx),
-								'bg-white text-[#095866] shadow-[inset_0_0_0_2.5px_#095866]': isCurrent(idx),
+								'bg-[var(--color-brand-primary)] text-white shadow-[0_2px_6px_rgba(9,88,102,0.25)]': isDone(idx),
+								'bg-white text-[var(--color-brand-primary)] shadow-[inset_0_0_0_2.5px_#095866]': isCurrent(idx),
 								'bg-white text-[#9aa3b1] shadow-[inset_0_0_0_1.5px_#DFE2E7]': isFuture(idx),
 							}"
 							:aria-label="`${step.label}: ${isDone(idx) ? 'completato' : isCurrent(idx) ? 'in corso' : 'in attesa'}`"
@@ -93,7 +93,7 @@ const isFuture = (idx) => idx > props.currentIndex;
 						<span
 							class="mt-[8px] text-[11px] md:text-[12px] leading-[1.3]"
 							:class="{
-								'text-[#1d2738]': isDone(idx) || isCurrent(idx),
+								'text-[var(--color-brand-text)]': isDone(idx) || isCurrent(idx),
 								'text-[#7a8493]': isFuture(idx),
 							}"
 							style="font-weight:600"
@@ -106,7 +106,7 @@ const isFuture = (idx) => idx > props.currentIndex;
 					<div
 						v-if="idx < steps.length - 1"
 						class="h-[2px] rounded-[1px] mt-[16px] flex-1 mx-[4px] md:mx-[6px] min-w-[24px] transition-colors duration-300"
-						:class="idx < currentIndex ? 'bg-[#095866]' : 'bg-[#DFE2E7]'"
+						:class="idx < currentIndex ? 'bg-[var(--color-brand-primary)]' : 'bg-[#DFE2E7]'"
 						aria-hidden="true"
 					/>
 				</li>

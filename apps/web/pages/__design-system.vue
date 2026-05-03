@@ -64,7 +64,8 @@ const tableColumns = [
 					<SfInput v-model="inputValue" placeholder="Mario Rossi" />
 				</SfFormGroup>
 				<SfFormGroup label="Categoria" :error="'Campo obbligatorio'">
-					<SfSelect v-model="selectValue" placeholder="Seleziona…" :options="[
+					<SfSelect
+v-model="selectValue" placeholder="Seleziona…" :options="[
 						{ value: 'a', label: 'Opzione A' },
 						{ value: 'b', label: 'Opzione B' },
 					]" />
@@ -78,7 +79,8 @@ const tableColumns = [
 				<SfRadio v-model="radio" value="card" label="Carta" />
 				<SfRadio v-model="radio" value="bonifico" label="Bonifico" />
 			</div>
-			<SfSegmented v-model="segmented" :options="[
+			<SfSegmented
+v-model="segmented" :options="[
 				{ value: 'home', label: 'Casa', icon: 'mdi:home' },
 				{ value: 'pudo', label: 'Punto BRT', icon: 'mdi:map-marker' },
 			]" />
@@ -158,12 +160,14 @@ const tableColumns = [
 		<!-- Tabs -->
 		<section class="space-y-4">
 			<h2 class="font-display text-xl font-bold border-b border-brand-border pb-2">SfTabs</h2>
-			<SfTabs v-model="tab" :items="[
+			<SfTabs
+v-model="tab" :items="[
 				{ id: 'profile', label: 'Profilo', icon: 'mdi:account' },
 				{ id: 'security', label: 'Sicurezza', icon: 'mdi:lock', count: 2 },
 				{ id: 'billing', label: 'Fatturazione', icon: 'mdi:receipt' },
 			]" />
-			<SfTabs v-model="tab" variant="pills" :items="[
+			<SfTabs
+v-model="tab" variant="pills" :items="[
 				{ id: 'profile', label: 'Profilo' },
 				{ id: 'security', label: 'Sicurezza' },
 				{ id: 'billing', label: 'Fatturazione' },
@@ -208,7 +212,8 @@ const tableColumns = [
 		<!-- Breadcrumbs + Pagination -->
 		<section class="space-y-4">
 			<h2 class="font-display text-xl font-bold border-b border-brand-border pb-2">SfBreadcrumbs + SfPagination</h2>
-			<SfBreadcrumbs :items="[
+			<SfBreadcrumbs
+:items="[
 				{ label: 'Account', to: '/account', icon: 'mdi:account' },
 				{ label: 'Ordini', to: '/account/spedizioni' },
 				{ label: 'Ordine #123' },
@@ -226,7 +231,8 @@ const tableColumns = [
 				<SfTooltip text="Tooltip a destra" position="right">
 					<SfButton variant="secondary">Hover right</SfButton>
 				</SfTooltip>
-				<SfDropdown :items="[
+				<SfDropdown
+:items="[
 					{ label: 'Modifica', icon: 'mdi:pencil', onClick: () => {} },
 					{ label: 'Duplica', icon: 'mdi:content-copy', onClick: () => {} },
 					{ label: 'Elimina', icon: 'mdi:delete', tone: 'danger', onClick: () => {} },

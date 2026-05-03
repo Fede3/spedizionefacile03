@@ -37,7 +37,7 @@ class StripePaymentService
         return $this->stripe;
     }
 
-    // ── Customer management ──────────────────────────────────────
+    // Customer management
 
     /**
      * Crea un profilo cliente su Stripe per l'utente, o restituisce quello esistente.
@@ -70,7 +70,7 @@ class StripePaymentService
         return (string) ($paymentMethod->customer ?? '') === (string) $user->customer_id;
     }
 
-    // ── Payment intents ──────────────────────────────────────────
+    // Payment intents
 
     /**
      * Crea un PaymentIntent per il checkout con carta.
@@ -225,7 +225,7 @@ class StripePaymentService
         ];
     }
 
-    // ── SetupIntent (card saving) ────────────────────────────────
+    // SetupIntent (card saving)
 
     /**
      * Crea un SetupIntent per salvare una nuova carta.
@@ -243,7 +243,7 @@ class StripePaymentService
         return ['client_secret' => $intent->client_secret];
     }
 
-    // ── Payment methods (cards) ──────────────────────────────────
+    // Payment methods (cards)
 
     /**
      * Lista delle carte salvate dall'utente.

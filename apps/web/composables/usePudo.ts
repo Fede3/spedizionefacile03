@@ -7,7 +7,6 @@
  *
  *
  */
-import { computed, ref, watch } from 'vue'
 import type { PudoNormalized } from '~/utils/pudoHelpers'
 
 type PudoSearchProps = {
@@ -22,16 +21,15 @@ type PudoFilters = {
 	sabato: boolean
 }
 
-/* ============================================================================
+/**
  * SEZIONE 1 — API FETCH, GEOCODING, NORMALIZZAZIONE, DISTANZE
  * (ex `usePudoSearchApi.js`)
- *
  * Responsabilita':
- *   - fetch `/api/brt/pudo/search`, `/api/brt/pudo/nearby`, `/api/brt/pudo/:id`
- *   - geocoding Nominatim (search + reverse)
- *   - parsing coordinate, deduplica, sort per distanza
- *   - gestione reference point (fields | geo | manual | results)
- * ============================================================================ */
+ * - fetch `/api/brt/pudo/search`, `/api/brt/pudo/nearby`, `/api/brt/pudo/:id`
+ * - geocoding Nominatim (search + reverse)
+ * - parsing coordinate, deduplica, sort per distanza
+ * - gestione reference point (fields | geo | manual | results)
+ */
 
 /** @returns {object} composable PUDO search API — state + azioni API grezze. */
 

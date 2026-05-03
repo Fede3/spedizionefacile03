@@ -7,7 +7,6 @@
  * Era stato rimosso durante il cleanup "orphan" del 27 apr; in realta' la pagina
  * spedizioni admin lo importa e crashava in 500 SSR ("useAdminSpedizioni is not defined").
  */
-import { computed, ref } from 'vue';
 
 const STATUS_FILTERS = [
 	{ id: 'all', label: 'Tutti' },

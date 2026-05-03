@@ -19,7 +19,7 @@ const emit = defineEmits(['update:couponPanelOpen', 'update:couponCode']);
 			@click="emit('update:couponPanelOpen', !couponPanelOpen)">
 			<div>
 				<p class="text-[11px] uppercase tracking-[0.14em] text-[#7C8594]" style="font-weight:800">Codice promozionale</p>
-				<p class="mt-[6px] text-[14px] text-[#1d2738]" style="font-weight:700">
+				<p class="mt-[6px] text-[14px] text-[var(--color-brand-text)]" style="font-weight:700">
 					{{ couponApplied ? 'Coupon applicato' : 'Hai un codice o un invito?' }}
 				</p>
 			</div>
@@ -40,7 +40,7 @@ const emit = defineEmits(['update:couponPanelOpen', 'update:couponCode']);
 						:value="couponCode"
 						type="text"
 						placeholder="Inserisci il codice"
-						class="flex-1 h-[46px] rounded-[16px] border border-[#D9E1EA] bg-[#F8F9FB] px-[16px] text-[15px] text-[#1d2738] outline-none focus:border-[#0b7d92] focus:ring-[3px] focus:ring-[rgba(11,125,146,0.12)]"
+						class="flex-1 h-[46px] rounded-[16px] border border-[#D9E1EA] bg-[#F8F9FB] px-[16px] text-[15px] text-[var(--color-brand-text)] outline-none focus:border-[#0b7d92] focus:ring-[3px] focus:ring-[rgba(11,125,146,0.12)]"
 						@input="emit('update:couponCode', $event.target.value)">
 					<SfButton
 						v-if="!couponApplied"
@@ -58,7 +58,7 @@ const emit = defineEmits(['update:couponPanelOpen', 'update:couponCode']);
 					</SfButton>
 				</div>
 				<p v-if="couponError" class="text-[13px] leading-[1.55] text-[#A64016]" style="font-weight:700">{{ couponError }}</p>
-				<p v-if="couponApplied" class="text-[13px] leading-[1.55] text-[#0f7a56]" style="font-weight:700">
+				<p v-if="couponApplied" class="text-[13px] leading-[1.55] text-[var(--color-brand-success-fg)]" style="font-weight:700">
 					{{ couponApplied.code || couponCode }} attivo.
 				</p>
 			</div>

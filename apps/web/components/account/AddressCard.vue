@@ -40,7 +40,8 @@ const recipientName = computed(() => {
 	>
 		<header class="flex items-center justify-between gap-2">
 			<div class="flex flex-wrap gap-1.5">
-				<span :class="[
+				<span
+:class="[
 					'inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[0.6875rem] font-bold uppercase leading-none tracking-wide',
 					isOrigin ? 'bg-brand-primary/10 text-brand-primary' : 'bg-brand-accent/10 text-brand-accent-dark',
 				]">

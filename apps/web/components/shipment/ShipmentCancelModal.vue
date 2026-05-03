@@ -92,7 +92,7 @@ onUnmounted(() => { document.removeEventListener('keydown', trapFocus) })
 								</div>
 								<div class="border-t border-[var(--color-brand-border)] pt-[8px] flex items-center justify-between text-[0.9375rem]">
 									<span class="font-semibold text-[var(--color-brand-text)]">Rimborso:</span>
-									<span class="font-bold text-[#0a8a7a]">{{ refundEligibility.refund_amount_eur }} EUR</span>
+									<span class="font-bold text-[var(--color-brand-success)]">{{ refundEligibility.refund_amount_eur }} EUR</span>
 								</div>
 								<div class="flex items-center justify-between text-[0.8125rem]">
 									<span class="text-[var(--color-brand-text-secondary)]">Metodo rimborso:</span>

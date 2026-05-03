@@ -18,7 +18,7 @@ const emit = defineEmits(['focus-search']);
 			</div>
 			<h3 class="faq-side__title">Parla con un operatore</h3>
 			<p class="faq-side__text">
-				Quando la FAQ non basta, un consulente SpedizioneFacile risponde via
+				Quando la FAQ non basta, un consulente SpediamoFacile risponde via
 				telefono, email o ticket.
 			</p>
 

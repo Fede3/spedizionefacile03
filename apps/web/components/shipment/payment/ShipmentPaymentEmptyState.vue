@@ -1,6 +1,6 @@
 <template>
 	<div class="flex flex-col items-center gap-[16px] py-[32px] px-[20px] text-center">
-		<span class="inline-flex h-[48px] w-[48px] items-center justify-center rounded-full bg-[#FFF5EF] text-[#E44203]">
+		<span class="inline-flex h-[48px] w-[48px] items-center justify-center rounded-full bg-[#FFF5EF] text-[var(--color-brand-accent)]">
 			<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
 				<circle cx="12" cy="12" r="10" />
 				<line x1="12" y1="8" x2="12" y2="12" />
@@ -8,7 +8,7 @@
 			</svg>
 		</span>
 		<div class="max-w-[420px]">
-			<h3 class="text-[16px] font-bold text-[#1d2738] mb-[6px]">Nessun preventivo attivo</h3>
+			<h3 class="text-[16px] font-bold text-[var(--color-brand-text)] mb-[6px]">Nessun preventivo attivo</h3>
 			<p class="text-[14px] leading-[1.5] text-[#5C6473]">
 				Il carrello è vuoto o il preventivo è scaduto. Torna al passo 1 per calcolare un nuovo prezzo e completare l'ordine.
 			</p>

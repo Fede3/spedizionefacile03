@@ -84,7 +84,7 @@ export function usePaymentStripe(deps: PaymentStripeDeps) {
 		paymentStep.value = 'Conferma pagamento...'
 
 		if (useSaved) {
-			// ── CARTA SALVATA ──
+			// CARTA SALVATA
 			const endpoint = isExisting
 				? '/api/stripe/existing-order-payment'
 				: '/api/stripe/create-payment'
@@ -113,7 +113,7 @@ export function usePaymentStripe(deps: PaymentStripeDeps) {
 
 			await markOrderPaid(orderId, finalIntentId, isExisting, submissionId)
 		} else {
-			// ── CARTA NUOVA ──
+			// CARTA NUOVA
 			const card = cardElement.value
 			if (!card) throw new Error('Campo carta non pronto.')
 			const intentEndpoint = isExisting

@@ -1,12 +1,8 @@
-// === utils/account.js — Helper navigation account ===
+// utils/account.js — Helper navigation account
 // Consolidamento di:
 //   - utils/accountNavigation.ts        (icons + createAccountSections)
 //   - utils/accountNavigationGroups.ts  (adminNavGroups / clientNavGroups / proNavGroups)
 // Tutti gli export originali sono preservati identici.
-
-// ─────────────────────────────────────────────────────────────────
-// SEZIONE 1 — ex utils/accountNavigation.ts
-// ─────────────────────────────────────────────────────────────────
 
 /**
  *   | 'package'
@@ -259,10 +255,6 @@ export const createAccountSections = (
 		},
 	]
 }
-
-// ─────────────────────────────────────────────────────────────────
-// SEZIONE 2 — ex utils/accountNavigationGroups.ts
-// ─────────────────────────────────────────────────────────────────
 
 /** @type {AccountNavGroup[]} */
 export const adminNavGroups = [

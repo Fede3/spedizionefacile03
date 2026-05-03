@@ -50,7 +50,7 @@ type SsrAuthValidation = { checked: boolean; authenticated: boolean; user: AuthU
 
 const isRecord = (value: unknown): value is Record<string, unknown> => typeof value === 'object' && value !== null;
 
-// ── Auth UI snapshot / cookie ──
+// Auth UI snapshot / cookie
 export const AUTH_UI_COOKIE = 'sf_auth_ui';
 export const AUTH_UI_STORAGE = 'sf_auth_ui_cache';
 
@@ -103,7 +103,7 @@ export const readAuthUiSnapshotFromCookieHeader = (cookieHeader: string): AuthUi
 export const isAuthenticatedSnapshotValue = (value: unknown): value is AuthUiSnapshot =>
     Boolean(isRecord(value) && value.authenticated);
 
-// ── Redirect sanitization + social auth errors ──
+// Redirect sanitization + social auth errors
 // Pagine standalone /autenticazione legacy redirezionano al modale via buildLegacyAuthOverlayRedirect().
 const BLOCKED_REDIRECT_PREFIXES = ['/autenticazione', '/login', '/registrazione', '/recupera-password', '/aggiorna-password', '/verifica-email'];
 
@@ -132,7 +132,7 @@ export const humanizeSocialAuthError = (rawError: string): string => {
     return "Errore durante l’accesso social. Riprova.";
 };
 
-// ── Auth routing (overlay locations) ──
+// Auth routing (overlay locations)
 const isSameOrNestedPath = (path: string, prefix: string): boolean => path === prefix || path.startsWith(`${prefix}/`);
 
 export const getRouteQueryValue = <T>(value: T | T[] | undefined | null): T | undefined =>
@@ -181,7 +181,7 @@ export const buildLegacyAuthOverlayRedirect = (
     });
 };
 
-// ── Auth bootstrap (middleware + plugin) ──
+// Auth bootstrap (middleware + plugin)
 // Stato globale condiviso da admin.js, app-auth.js, guest-auth.js, sanctum-bootstrap plugin.
 export const useAuthBootstrapState = (): AuthBootstrapResult => ({
     bootstrapReady: useState<boolean>('auth-bootstrap-ready', () => false),
@@ -252,7 +252,7 @@ export const validateSsrAuthSession = async (): Promise<SsrAuthValidation> => {
     return validationState.value;
 };
 
-// ── Post-auth sync (cookie settling backoff) ──
+// Post-auth sync (cookie settling backoff)
 const POST_AUTH_RETRY_DELAYS = [0, 180, 420, 900];
 
 export const waitForPostAuthSync = async (refreshIdentity: () => Promise<unknown>): Promise<boolean> => {

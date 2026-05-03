@@ -83,7 +83,7 @@ jobs:
       - name: Create test .env
         run: |
           cat > .env <<'EOF'
-          APP_NAME=SpedizioneFacile
+          APP_NAME=SpediamoFacile
           APP_ENV=testing
           APP_DEBUG=true
           APP_URL=http://localhost

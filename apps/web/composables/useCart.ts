@@ -5,7 +5,7 @@
  * defaults, wallet balance and checkout promo preview. The `/carrello` page has
  * its own composable (`useCartPage`) because it has different UI concerns.
  */
-import { computed, ref, watch, type Ref } from 'vue';
+import type { Ref } from 'vue';
 import type { Address, AddressGroup, CartItem, CartResponse, Order } from '~/types';
 import { centsToEuro, parseEuroAmount, buildDiscountOrderContext } from '~/utils/cartHelpers';
 import { useCheckoutPromoPreview } from '~/composables/useCheckoutPromoPreview';

@@ -7,7 +7,7 @@
 @endphp
 
 @section('title', 'Reimposta la tua password')
-@section('preheader', 'Hai richiesto di reimpostare la password del tuo account SpedizioneFacile.')
+@section('preheader', 'Hai richiesto di reimpostare la password del tuo account SpediamoFacile.')
 
 @section('content')
     <h1 style="margin: 0 0 12px; font-family: Arial, Helvetica, sans-serif; font-size: 24px; line-height: 1.3; color: #095866; font-weight: 700;">

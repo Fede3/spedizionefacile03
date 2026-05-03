@@ -1,4 +1,3 @@
-import { computed, onMounted, ref, watch } from 'vue';
 import { useAuthUiSnapshotPersistence } from '~/composables/useAuth';
 import useOrdersList from '~/composables/useOrdersList';
 
@@ -34,6 +33,7 @@ type AuthRoleUser = { role?: unknown } | null | undefined;
  * - Computed per highlights cliente e KPI/alerts/recent admin
  * - handleLogout condiviso
  */
+// eslint-disable-next-line max-lines-per-function -- orchestratore dashboard cliente + admin: 6 fetch + 9 computed + 4 helper; split per area duplicherebbe state.
 export function useAccountDashboard() {
 	const sanctum = useSanctumClient();
 	const { user, logout } = useSanctumAuth();

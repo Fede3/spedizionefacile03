@@ -24,7 +24,7 @@ const updatePackageField = (field, value) => {
 
 <template>
 	<div class="mt-[16px]">
-		<div v-if="addPackageSuccess" class="bg-[#f0fdf4] border border-[#d1fae5] rounded-[50px] px-[14px] py-[10px] text-[#0a8a7a] text-[0.8125rem] mb-[12px]">
+		<div v-if="addPackageSuccess" class="bg-[#f0fdf4] border border-[#d1fae5] rounded-[50px] px-[14px] py-[10px] text-[var(--color-brand-success)] text-[0.8125rem] mb-[12px]">
 			Collo aggiunto con successo!
 		</div>
 

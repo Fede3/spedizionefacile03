@@ -88,6 +88,6 @@ type="button" class="inline-flex items-center gap-[6px] px-[16px] py-[10px] bg-[
 
 		<!-- Messaggi rigenerazione -->
 		<div v-if="regenerateError" class="mt-[10px] bg-red-50 border border-red-200 rounded-[50px] px-[14px] py-[10px] text-red-600 text-[0.8125rem]">{{ regenerateError }}</div>
-		<div v-if="regenerateSuccess" class="mt-[10px] bg-[#f0fdf4] border border-[#d1fae5] rounded-[50px] px-[14px] py-[10px] text-[#0a8a7a] text-[0.8125rem]">Etichetta generata con successo!</div>
+		<div v-if="regenerateSuccess" class="mt-[10px] bg-[#f0fdf4] border border-[#d1fae5] rounded-[50px] px-[14px] py-[10px] text-[var(--color-brand-success)] text-[0.8125rem]">Etichetta generata con successo!</div>
 	</div>
 </template>

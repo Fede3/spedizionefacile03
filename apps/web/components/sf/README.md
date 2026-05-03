@@ -1,6 +1,6 @@
 # sf/* Atomic Library — Sprint 4.8
 
-Libreria 10 componenti atomic del design system SpedizioneFacile.
+Libreria 10 componenti atomic del design system SpediamoFacile.
 Brad Frost methodology: **atoms** (Button, Card, Input, Badge, Icon, Skeleton)
 + **molecules** (EmptyState, Toast, Tooltip) + **organism** (Modal).
 

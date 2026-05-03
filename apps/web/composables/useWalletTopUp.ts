@@ -33,6 +33,7 @@ const errorMessage = (error: unknown): string => {
 	return String(responseData.message || data.message || e.message || '');
 };
 
+// eslint-disable-next-line max-lines-per-function -- orchestratore Stripe Elements + 3DS confirm + intent reset; soglia superata di soli 4 LOC.
 export function useWalletTopUp(props: WalletTopUpProps, emit: WalletTopUpEmit) {
 	const { user, refreshIdentity } = useSanctumAuth();
 	const sanctum = useSanctumClient();

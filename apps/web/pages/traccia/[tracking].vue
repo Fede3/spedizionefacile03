@@ -120,7 +120,7 @@ useSeoMeta({
 							v-model="newSearchInput"
 							type="text"
 							placeholder="Inserisci un altro codice..."
-							class="flex-1 h-[46px] rounded-[12px] px-[14px] text-[14px] text-[#1d2738] bg-white ring-[1.5px] ring-[#DFE2E7] focus:ring-[3px] focus:ring-[#095866]/60 outline-none transition-all"
+							class="flex-1 h-[46px] rounded-[12px] px-[14px] text-[14px] text-[var(--color-brand-text)] bg-white ring-[1.5px] ring-[#DFE2E7] focus:ring-[3px] focus:ring-[var(--color-brand-primary)]/60 outline-none transition-all"
 							style="font-weight:600"
 						>
 						<button
@@ -155,7 +155,7 @@ useSeoMeta({
 
 				<!-- Stato errore di rete -->
 				<div v-else-if="errorState === 'network'" class="rounded-[16px] p-[24px] text-center" style="background:#fff">
-					<p class="text-[14px] text-[#E44203] mb-[12px]" style="font-weight:600">
+					<p class="text-[14px] text-[var(--color-brand-accent)] mb-[12px]" style="font-weight:600">
 						Impossibile contattare il server. Verifica la connessione.
 					</p>
 					<button
@@ -182,12 +182,12 @@ useSeoMeta({
 										Codice tracking
 									</p>
 									<div class="flex items-center gap-[10px] flex-wrap">
-										<h1 class="font-mono text-[1.5rem] sm:text-[1.75rem] lg:text-[2rem] text-[#1d2738] m-0 leading-[1.1] break-all" style="font-weight:800; letter-spacing:-0.01em">
+										<h1 class="font-mono text-[1.5rem] sm:text-[1.75rem] lg:text-[2rem] text-[var(--color-brand-text)] m-0 leading-[1.1] break-all" style="font-weight:800; letter-spacing:-0.01em">
 											{{ data.code }}
 										</h1>
 										<button
 											type="button"
-											class="inline-flex items-center gap-[6px] px-[10px] py-[6px] rounded-[8px] bg-white text-[#095866] ring-[1.5px] ring-[#DFE2E7] cursor-pointer transition-all duration-200 hover:ring-[#095866] hover:bg-[#eef7f8] active:scale-[0.97] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#095866]"
+											class="inline-flex items-center gap-[6px] px-[10px] py-[6px] rounded-[8px] bg-white text-[var(--color-brand-primary)] ring-[1.5px] ring-[#DFE2E7] cursor-pointer transition-all duration-200 hover:ring-[var(--color-brand-primary)] hover:bg-[#eef7f8] active:scale-[0.97] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-brand-primary)]"
 											:aria-label="copyOk ? 'Codice copiato' : 'Copia codice tracking'"
 											@click="copyCode"
 										>
@@ -216,7 +216,7 @@ useSeoMeta({
 										<p class="text-[11px] uppercase tracking-[0.4px] text-[#777] m-0" style="font-weight:700">
 											Consegna stimata
 										</p>
-										<p class="text-[14px] text-[#1d2738] m-0 capitalize" style="font-weight:700">
+										<p class="text-[14px] text-[var(--color-brand-text)] m-0 capitalize" style="font-weight:700">
 											{{ etaFormatted }}
 										</p>
 									</div>
@@ -229,7 +229,7 @@ useSeoMeta({
 								</div>
 							</div>
 
-							<p v-if="data.status_description" class="text-[13px] text-[#5A6474] mt-[14px] mb-0 leading-[1.55]">
+							<p v-if="data.status_description" class="text-[13px] text-[var(--color-brand-text-secondary)] mt-[14px] mb-0 leading-[1.55]">
 								{{ data.status_description }}
 							</p>
 						</div>
@@ -254,13 +254,13 @@ useSeoMeta({
 							<div class="h-[3px]" data-accent="bar"/>
 							<div class="p-[20px] sm:p-[24px]" style="background:#ffffff">
 								<div class="flex items-center justify-between mb-[14px]">
-									<h2 class="text-[1rem] text-[#1d2738] m-0" style="font-weight:700">
+									<h2 class="text-[1rem] text-[var(--color-brand-text)] m-0" style="font-weight:700">
 										Cronologia eventi
 									</h2>
 									<button
 										v-if="!isLoading"
 										type="button"
-										class="text-[12px] text-[#095866] inline-flex items-center gap-[4px] hover:opacity-80"
+										class="text-[12px] text-[var(--color-brand-primary)] inline-flex items-center gap-[4px] hover:opacity-80"
 										style="font-weight:600"
 										@click="fetchTracking({ silent: true })"
 									>
@@ -287,7 +287,7 @@ useSeoMeta({
 									</h3>
 									<div v-if="data.origin || data.destination" class="grid gap-[10px]">
 										<div class="flex items-start gap-[10px]">
-											<div class="w-[28px] h-[28px] rounded-[8px] inline-flex items-center justify-center shrink-0 bg-[#eef7f8] text-[#095866]">
+											<div class="w-[28px] h-[28px] rounded-[8px] inline-flex items-center justify-center shrink-0 bg-[#eef7f8] text-[var(--color-brand-primary)]">
 												<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
 													<circle cx="12" cy="12" r="3" />
 												</svg>
@@ -296,14 +296,14 @@ useSeoMeta({
 												<p class="text-[10px] uppercase tracking-[0.06em] text-[#7a8493] m-0" style="font-weight:700">
 													Origine
 												</p>
-												<p class="text-[13px] text-[#1d2738] m-0 leading-[1.4]" style="font-weight:600">
+												<p class="text-[13px] text-[var(--color-brand-text)] m-0 leading-[1.4]" style="font-weight:600">
 													{{ data.origin || 'Non disponibile' }}
 												</p>
 											</div>
 										</div>
 										<div class="w-[2px] h-[16px] bg-[#DFE2E7] ml-[13px] rounded-[1px]" aria-hidden="true"/>
 										<div class="flex items-start gap-[10px]">
-											<div class="w-[28px] h-[28px] rounded-[8px] inline-flex items-center justify-center shrink-0 bg-[#fff5ef] text-[#E44203]">
+											<div class="w-[28px] h-[28px] rounded-[8px] inline-flex items-center justify-center shrink-0 bg-[#fff5ef] text-[var(--color-brand-accent)]">
 												<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
 													<path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
 													<circle cx="12" cy="10" r="3" />
@@ -313,10 +313,10 @@ useSeoMeta({
 												<p class="text-[10px] uppercase tracking-[0.06em] text-[#7a8493] m-0" style="font-weight:700">
 													Destinazione
 												</p>
-												<p class="text-[13px] text-[#1d2738] m-0 leading-[1.4]" style="font-weight:600">
+												<p class="text-[13px] text-[var(--color-brand-text)] m-0 leading-[1.4]" style="font-weight:600">
 													{{ data.destination || 'Non disponibile' }}
 												</p>
-												<p v-if="data.recipient_name" class="text-[12px] text-[#5A6474] m-0 mt-[2px]">
+												<p v-if="data.recipient_name" class="text-[12px] text-[var(--color-brand-text-secondary)] m-0 mt-[2px]">
 													{{ data.recipient_name }}
 												</p>
 											</div>
@@ -335,15 +335,15 @@ useSeoMeta({
 									<dl class="grid grid-cols-2 gap-[8px] m-0">
 										<template v-if="data.package.weight">
 											<dt class="text-[11px] text-[#7a8493]">Peso</dt>
-											<dd class="text-[12px] text-[#1d2738] m-0" style="font-weight:600">{{ data.package.weight }} kg</dd>
+											<dd class="text-[12px] text-[var(--color-brand-text)] m-0" style="font-weight:600">{{ data.package.weight }} kg</dd>
 										</template>
 										<template v-if="data.package.parcels">
 											<dt class="text-[11px] text-[#7a8493]">Colli</dt>
-											<dd class="text-[12px] text-[#1d2738] m-0" style="font-weight:600">{{ data.package.parcels }}</dd>
+											<dd class="text-[12px] text-[var(--color-brand-text)] m-0" style="font-weight:600">{{ data.package.parcels }}</dd>
 										</template>
 										<template v-if="data.package.dimensions">
 											<dt class="text-[11px] text-[#7a8493]">Dimensioni</dt>
-											<dd class="text-[12px] text-[#1d2738] m-0" style="font-weight:600">{{ data.package.dimensions }}</dd>
+											<dd class="text-[12px] text-[var(--color-brand-text)] m-0" style="font-weight:600">{{ data.package.dimensions }}</dd>
 										</template>
 									</dl>
 								</div>
@@ -354,7 +354,7 @@ useSeoMeta({
 										Servizi attivi
 									</h3>
 									<ul class="grid gap-[6px] m-0 p-0 list-none">
-										<li v-for="srv in data.package.services" :key="srv" class="text-[12px] text-[#1d2738] inline-flex items-center gap-[6px]">
+										<li v-for="srv in data.package.services" :key="srv" class="text-[12px] text-[var(--color-brand-text)] inline-flex items-center gap-[6px]">
 											<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#095866" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
 												<polyline points="20 6 9 17 4 12" />
 											</svg>

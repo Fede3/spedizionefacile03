@@ -10,7 +10,6 @@
  */
 import { defineStore } from 'pinia';
 import type { Ref } from 'vue';
-import { ref, watch } from 'vue';
 import type {
 	Address, Package, PendingShipment, PudoPoint, ShipmentDetails, ShipmentFlowStoreState,
 } from '~/types';
@@ -20,7 +19,7 @@ import {
 } from '~/utils/quickQuoteHelpers';
 import { buildShipmentFlowLocation } from '~/utils/shipment';
 
-// ── Tipi per orchestrazione preventivo (ex preventivoStore) ────────────────
+// Tipi per orchestrazione preventivo (ex preventivoStore)
 type QuotePackage = Record<string, unknown>;
 type QuoteShipmentDetails = Record<string, string | number | null | undefined>;
 type QuoteSessionData = {
@@ -48,11 +47,11 @@ type ContinueToNextStepDeps = {
 	refresh: () => Promise<QuoteSessionData | { data?: QuoteSessionData } | null | undefined>;
 };
 
-// ── Tipi per admin gate (ex shipmentFlowAdminGateStore) ────────────────────
+// Tipi per admin gate (ex shipmentFlowAdminGateStore)
 type AdminGatePayload = { targetPath?: string; lastValidRoute?: string; reason?: string };
 type AdminGateChallenge = Required<AdminGatePayload> & { createdAt: number };
 
-// ── Persistenza sessionStorage (ex shipmentFlowStore) ──────────────────────
+// Persistenza sessionStorage (ex shipmentFlowStore)
 const STORAGE_KEY = 'spedizionefacile_user_store';
 const DEBOUNCE_MS = 300;
 let debounceTimer: ReturnType<typeof setTimeout> | null = null;
@@ -85,7 +84,6 @@ function saveToSession(state: ShipmentFlowStoreState) {
 }
 
 export const useShipmentStore = defineStore('shipment', () => {
-	// ── SEZIONE 1 — DATI SPEDIZIONE (ex shipmentFlowStore, 16 ref) ─────────
 
 	const stepNumber = ref(1);
 	const hasPersistedHydration = ref(false);
@@ -150,8 +148,6 @@ export const useShipmentStore = defineStore('shipment', () => {
 	}
 
 	watch(Object.values(persistedFields), persist, { deep: true });
-
-	// ── SEZIONE 2 — ORCHESTRAZIONE PREVENTIVO (ex preventivoStore) ─────────
 
 	const messageError = ref<string | null>(null);
 	const isCalculating = ref(false);
@@ -262,8 +258,6 @@ export const useShipmentStore = defineStore('shipment', () => {
 			isAdvancingToServices.value = false;
 		}
 	};
-
-	// ── SEZIONE 3 — ADMIN GATE (ex shipmentFlowAdminGateStore) ─────────────
 
 	const adminGateChallenge = ref<AdminGateChallenge | null>(null);
 

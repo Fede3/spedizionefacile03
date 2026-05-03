@@ -23,7 +23,7 @@
 					Intermediari BRT autorizzati
 				</h2>
 				<p class="about-partnership__text">
-					SpedizioneFacile opera in qualità di intermediario BRT autorizzato. Le tariffe che
+					SpediamoFacile opera in qualità di intermediario BRT autorizzato. Le tariffe che
 					vedi nel preventivo arrivano dal listino contrattualizzato direttamente con il
 					corriere: nessun rivenditore di terze parti, nessun ricarico nascosto, supporto
 					gestito dal nostro team in coordinamento con la rete BRT.

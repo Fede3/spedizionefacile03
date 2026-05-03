@@ -75,6 +75,7 @@ const getErrorStatus = (error: unknown): number => {
  *   existingOrder (Ref<object|null>), existingOrderId (Ref<string|number|null>),
  *   walletSufficient? (Ref<boolean>), loadWalletBalance? (Function).
  */
+// eslint-disable-next-line max-lines-per-function -- composable orchestrator: 4 metodi pagamento + 12 computed + watchers; split in sub-composables ridurrebbe la traceability del flusso pagamento (file critico Stripe).
 export function usePayment(cart: CartLike) {
   const route = useRoute()
   const router = useRouter()

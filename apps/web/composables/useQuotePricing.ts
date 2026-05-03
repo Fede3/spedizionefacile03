@@ -4,7 +4,7 @@
  * Owns CSRF/session requests, request de-duplication and sync from the backend
  * first-step response back into the shipment flow store.
  */
-import { ref, type Ref } from 'vue';
+import type { Ref } from 'vue';
 import type { Package } from '~/types';
 
 type QuoteErrors = Record<string, string[]> | null;

@@ -109,4 +109,28 @@ export default createConfigForNuxt({
 		'max-lines': ['warn', { max: 400, skipBlankLines: true, skipComments: true }],
 		'max-lines-per-function': ['warn', { max: 100, skipBlankLines: true, skipComments: true, IIFEs: true }],
 	},
+}).append({
+	// Composables/stores Vue 3 Composition API: la setup function è naturalmente lunga
+	// (ref + computed + watch + methods + return). Alziamo il limite a 300 LOC per riflettere
+	// il pattern reale; oltre 300 = candidato a split in sub-composable.
+	files: ['**/composables/**/*.{ts,js}', '**/stores/**/*.{ts,js}', '**/middleware/**/*.{ts,js}', '**/utils/**/*.{ts,js}'],
+	rules: {
+		'max-lines-per-function': ['warn', { max: 300, skipBlankLines: true, skipComments: true, IIFEs: true }],
+	},
+}).append({
+	// Test files (Vitest + Playwright): describe/it blocks legittimamente lunghi.
+	// console.log accettabile per debug test. File spec possono superare 400 LOC.
+	files: ['**/tests/**/*.{ts,js,mjs}', '**/*.spec.{ts,js}', '**/*.test.{ts,js}'],
+	rules: {
+		'max-lines-per-function': 'off',
+		'max-lines': ['warn', { max: 600, skipBlankLines: true, skipComments: true }],
+		'no-console': 'off',
+	},
+}).append({
+	// Scripts probe/diagnostica: workflow CLI con log estesi e file spesso >400 LOC.
+	files: ['**/scripts/**/*.{mjs,js,ts}'],
+	rules: {
+		'no-console': 'off',
+		'max-lines': ['warn', { max: 600, skipBlankLines: true, skipComments: true }],
+	},
 });

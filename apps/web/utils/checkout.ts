@@ -6,15 +6,11 @@ import {
 	readNestedClientSubmissionId,
 } from '~/utils/clientSubmissionId'
 
-// === utils/checkout.js — Helper checkout / post-pagamento ===
+// utils/checkout.js — Helper checkout / post-pagamento
 // Consolidamento di:
 //   - utils/checkoutSuccess.ts  (build/read/clear checkout success query, status)
 //   - utils/stripeErrors.ts     (mappa errori Stripe IT, translateStripeError)
 // Tutti gli export originali sono preservati identici.
-
-// ─────────────────────────────────────────────────────────────────
-// SEZIONE 1 — ex utils/checkoutSuccess.ts
-// ─────────────────────────────────────────────────────────────────
 
 /**
  * checkoutSuccess — helpers for persisting / reading / clearing checkout success
@@ -107,10 +103,6 @@ export function clearCheckoutSuccessQuery(query: LocationQuery): LocationQuery {
   return cleaned
 }
 
-// ─────────────────────────────────────────────────────────────────
-// SEZIONE 2 — ex utils/stripeErrors.ts
-// ─────────────────────────────────────────────────────────────────
-
 /**
  * stripeErrors — messaggi errore Stripe unificati in italiano.
  *
@@ -173,7 +165,7 @@ export function translateStripeError(err: unknown, fallback = 'Errore durante il
 	);
 }
 
-// ─── Submission context (idempotency key) ─────────────────────────
+// Submission context (idempotency key)
 // Estratto da checkoutSubmissionContext.ts — Sessione 7.6 merge.
 
 type SubmissionSource = {

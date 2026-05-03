@@ -43,11 +43,11 @@ function focusSearch() {
 
 useSeoMeta({
 	title: 'FAQ — Domande frequenti',
-	ogTitle: 'FAQ — Domande frequenti SpedizioneFacile',
+	ogTitle: 'FAQ — Domande frequenti SpediamoFacile',
 	description:
 		'Tutte le risposte su spedizioni, preventivi, pagamenti, tracking, reclami, account e profilo Pro. Cerca subito la tua domanda o contatta un operatore.',
 	ogDescription:
-		'Domande frequenti SpedizioneFacile: spedizione, preventivi, pagamenti, tracking, reclami, account e Pro. Cerca o parla con un operatore.',
+		'Domande frequenti SpediamoFacile: spedizione, preventivi, pagamenti, tracking, reclami, account e Pro. Cerca o parla con un operatore.',
 });
 
 useBreadcrumbSchema([

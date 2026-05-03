@@ -111,7 +111,7 @@ class Order extends Model
         'bank_transfer_confirmed_at' => 'datetime',
     ];
 
-    /* ===== COSTANTI STATI SDI ===== */
+    // COSTANTI STATI SDI
 
     const SDI_PENDING = 'pending';     // XML generato, non ancora inviato
 

@@ -3,9 +3,7 @@
  * watchers per auto-quote, label location formattate.
  */
 
-// SEZIONE 4: RESULTS — computed display + navigazione step + watchers
 // (ex usePreventivoResults.js)
-// =============================================================================
 
 /**
  * Sub-logica results: computed presentazione (label/subtitle/placeholders),

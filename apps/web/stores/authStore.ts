@@ -8,7 +8,6 @@
  * da qui (modal + OAuth providers). Ispezionabile in Vue DevTools.
  */
 import { defineStore } from 'pinia';
-import { ref } from 'vue';
 
 export type AuthModalTab = 'login' | 'register' | 'forgot';
 
@@ -34,7 +33,7 @@ const defaultProviders = (): AuthProviders => ({
 });
 
 export const useAuthStore = defineStore('auth', () => {
-	// ── Modal state (ex authModalStore) ──────────────────────────────────
+	// Modal state (ex authModalStore)
 	const isOpen = ref(false);
 	const selectedTab = ref<AuthModalTab>('login');
 	const redirectPath = ref('/');
@@ -56,7 +55,7 @@ export const useAuthStore = defineStore('auth', () => {
 		entryMode.value = null;
 	}
 
-	// ── OAuth providers state (ex authProvidersStore) ────────────────────
+	// OAuth providers state (ex authProvidersStore)
 	const providers = ref<AuthProviders>(defaultProviders());
 	const providersLoaded = ref(false);
 	const providersLoading = ref(false);

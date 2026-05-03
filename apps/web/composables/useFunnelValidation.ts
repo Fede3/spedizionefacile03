@@ -4,7 +4,7 @@
  * The composable keeps package/service validation close to the UI while the
  * field rules remain inside the smart-validation service passed by the page.
  */
-import { nextTick, ref, type Ref } from 'vue';
+import type { Ref } from 'vue';
 import type { Package } from '~/types';
 
 type PackageFieldKey = 'weight' | 'first_size' | 'second_size' | 'third_size';

@@ -1,4 +1,3 @@
-import { ref } from 'vue'
 import { readClientSubmissionId } from '~/utils/clientSubmissionId'
 import {
 	buildCheckoutSubmissionContext,

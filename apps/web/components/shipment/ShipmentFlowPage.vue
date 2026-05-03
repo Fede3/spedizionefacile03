@@ -1,3 +1,4 @@
+<!-- eslint-disable max-lines -- shell funnel checkout: orchestratore di 14 composable + 3 view + provide()/inject(); split rompe il flusso step-by-step. CRITICAL: file gating Stripe E2E. -->
 <script setup>
 // ShipmentFlowPage — orchestratore template + computed del funnel.
 //
@@ -12,13 +13,15 @@ import ShipmentStepServizi from '~/components/shipment/ShipmentStepServizi.vue';
 import ShipmentStepIndirizzi from '~/components/shipment/ShipmentStepIndirizzi.vue';
 import ShipmentStepPagamento from '~/components/shipment/ShipmentStepPagamento.vue';
 import PublicPageHeader from '~/components/layout/PublicPageHeader.vue';
+import { createShipmentDebugCheckpoint } from '~/utils/shipment-flow/debug';
+import {
+	buildAccordionTransitions,
+	isBusinessUserType,
+	buildQuickQuoteDebugStub,
+	buildPackagesHandlers,
+} from '~/utils/shipment-flow/view-state';
 
-const debugCheckpoint = (label) => {
-	if (!import.meta.client) return;
-	if (localStorage.getItem('sf_debug_shipment') !== '1') return;
-	// eslint-disable-next-line no-console -- debug runtime opt-in via localStorage
-	console.info(`[shipment-step-debug] ${label}`);
-};
+const debugCheckpoint = createShipmentDebugCheckpoint();
 const summaryHydrationReady = ref(false);
 onMounted(() => {
 	nextTick(() => {
@@ -50,14 +53,14 @@ const {
 	onAccordionPanelAfterLeave,
 } = useFunnelNavigation();
 
-const accordionTransitions = {
-	onBeforeEnter: onAccordionPanelBeforeEnter,
-	onEnter: onAccordionPanelEnter,
-	onAfterEnter: onAccordionPanelAfterEnter,
-	onBeforeLeave: onAccordionPanelBeforeLeave,
-	onLeave: onAccordionPanelLeave,
-	onAfterLeave: onAccordionPanelAfterLeave,
-};
+const accordionTransitions = buildAccordionTransitions({
+	onAccordionPanelBeforeEnter,
+	onAccordionPanelEnter,
+	onAccordionPanelAfterEnter,
+	onAccordionPanelBeforeLeave,
+	onAccordionPanelLeave,
+	onAccordionPanelAfterLeave,
+});
 debugCheckpoint('navigation ready');
 
 const deliveryMode = computed({
@@ -66,12 +69,7 @@ const deliveryMode = computed({
 		shipmentFlowStore.deliveryMode = v;
 	},
 });
-const isBusinessProfile = computed(() => {
-	const rawType = String(authUi.uiSnapshot.value?.userType || '')
-		.trim()
-		.toLowerCase();
-	return ['commerciante', 'azienda', 'business'].includes(rawType);
-});
+const isBusinessProfile = computed(() => isBusinessUserType(authUi.uiSnapshot.value?.userType));
 
 // --- Funnel state (errors + template refs + ui flags + icon filters) ----
 const funnelState = useFunnelState();
@@ -172,24 +170,7 @@ const {
 debugCheckpoint('price bands ready');
 
 const quickQuotePackagesApi = DEBUG_DISABLE_QUICK_QUOTE_PACKAGES
-	? {
-			addPackageInline: () => {},
-			calcPriceWithVolume: () => {},
-			calcPriceWithWeight: () => {},
-			calcQuantity: () => {},
-			decrementQuantity: () => {},
-			deletePack: () => {},
-			ensurePackagesIdentity: () => {},
-			europeRestrictionMessage: computed(() => ''),
-			incrementQuantity: () => {},
-			isEuropeMonocollo: computed(() => false),
-			packageTypeList: [
-				{ text: 'Pacco', img: 'pack.png', width: 43, height: 47 },
-				{ text: 'Pallet', img: 'pallet.png', width: 43, height: 42 },
-				{ text: 'Valigia', img: 'suitcase.png', width: 30, height: 52 },
-			],
-			updatePackageType: () => {},
-		}
+	? buildQuickQuoteDebugStub()
 	: useQuickQuotePackages({
 			shipmentFlowStore,
 			getWeightPrice,
@@ -401,18 +382,12 @@ const {
 } = funnelValidation;
 debugCheckpoint('funnel validation ready');
 
-const handleAddPackage = () => {
-	packagesError.value = '';
-	addPackageInline();
-};
-const handleDeletePackage = (targetPackId) => {
-	packagesError.value = '';
-	deletePack(targetPackId);
-};
-const handleUpdatePackageType = (pack, packageType) => {
-	packagesError.value = '';
-	updatePackageType(pack, packageType);
-};
+const { handleAddPackage, handleDeletePackage, handleUpdatePackageType } = buildPackagesHandlers({
+	packagesError,
+	addPackageInline,
+	deletePack,
+	updatePackageType,
+});
 
 const cart = useCart();
 const pay = usePayment(cart);

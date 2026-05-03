@@ -131,7 +131,7 @@ onBeforeUnmount(() => stopNowTimer())
 			<div class="max-w-[1280px] mx-auto px-[16px] tablet:px-[24px] py-[28px] tablet:py-[44px]">
 				<div class="max-w-[760px]">
 					<span class="inline-flex items-center gap-[6px] text-[0.75rem] font-semibold uppercase tracking-wide text-[var(--color-brand-primary,#095866)] bg-[#E6F0F2] rounded-full px-[10px] py-[4px] mb-[12px]">
-						<span class="w-[6px] h-[6px] rounded-full bg-[#E44203]"/>
+						<span class="w-[6px] h-[6px] rounded-full bg-[var(--color-brand-accent)]"/>
 						Rete BRT
 					</span>
 					<h1 class="text-[1.75rem] tablet:text-[2.25rem] font-bold text-[var(--color-brand-text,#0f172a)] leading-tight">
@@ -211,32 +211,32 @@ v-if="!loading" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="c
 						</span>
 						<label class="inline-flex items-center gap-[6px] cursor-pointer">
 							<input v-model="filters.openNow" type="checkbox" class="sr-only peer" >
-							<span class="inline-flex items-center gap-[5px] text-[0.8125rem] font-medium px-[10px] py-[5px] rounded-full border border-[var(--color-brand-border,#E9EBEC)] bg-white text-[var(--color-brand-text,#0f172a)] peer-checked:bg-[var(--color-brand-primary,#095866)] peer-checked:text-white peer-checked:border-[var(--color-brand-primary,#095866)] peer-focus-visible:ring-2 peer-focus-visible:ring-[#E44203] transition-colors">
+							<span class="inline-flex items-center gap-[5px] text-[0.8125rem] font-medium px-[10px] py-[5px] rounded-full border border-[var(--color-brand-border,#E9EBEC)] bg-white text-[var(--color-brand-text,#0f172a)] peer-checked:bg-[var(--color-brand-primary,#095866)] peer-checked:text-white peer-checked:border-[var(--color-brand-primary,#095866)] peer-focus-visible:ring-2 peer-focus-visible:ring-[var(--color-brand-accent)] transition-colors">
 								Aperto ora
 							</span>
 						</label>
 						<label class="inline-flex items-center gap-[6px] cursor-pointer">
 							<input v-model="filters.ritiro" type="checkbox" class="sr-only peer" >
-							<span class="inline-flex items-center gap-[5px] text-[0.8125rem] font-medium px-[10px] py-[5px] rounded-full border border-[var(--color-brand-border,#E9EBEC)] bg-white text-[var(--color-brand-text,#0f172a)] peer-checked:bg-[var(--color-brand-primary,#095866)] peer-checked:text-white peer-checked:border-[var(--color-brand-primary,#095866)] peer-focus-visible:ring-2 peer-focus-visible:ring-[#E44203] transition-colors">
+							<span class="inline-flex items-center gap-[5px] text-[0.8125rem] font-medium px-[10px] py-[5px] rounded-full border border-[var(--color-brand-border,#E9EBEC)] bg-white text-[var(--color-brand-text,#0f172a)] peer-checked:bg-[var(--color-brand-primary,#095866)] peer-checked:text-white peer-checked:border-[var(--color-brand-primary,#095866)] peer-focus-visible:ring-2 peer-focus-visible:ring-[var(--color-brand-accent)] transition-colors">
 								Ritiro
 							</span>
 						</label>
 						<label class="inline-flex items-center gap-[6px] cursor-pointer">
 							<input v-model="filters.consegna" type="checkbox" class="sr-only peer" >
-							<span class="inline-flex items-center gap-[5px] text-[0.8125rem] font-medium px-[10px] py-[5px] rounded-full border border-[var(--color-brand-border,#E9EBEC)] bg-white text-[var(--color-brand-text,#0f172a)] peer-checked:bg-[var(--color-brand-primary,#095866)] peer-checked:text-white peer-checked:border-[var(--color-brand-primary,#095866)] peer-focus-visible:ring-2 peer-focus-visible:ring-[#E44203] transition-colors">
+							<span class="inline-flex items-center gap-[5px] text-[0.8125rem] font-medium px-[10px] py-[5px] rounded-full border border-[var(--color-brand-border,#E9EBEC)] bg-white text-[var(--color-brand-text,#0f172a)] peer-checked:bg-[var(--color-brand-primary,#095866)] peer-checked:text-white peer-checked:border-[var(--color-brand-primary,#095866)] peer-focus-visible:ring-2 peer-focus-visible:ring-[var(--color-brand-accent)] transition-colors">
 								Consegna
 							</span>
 						</label>
 						<label class="inline-flex items-center gap-[6px] cursor-pointer">
 							<input v-model="filters.sabato" type="checkbox" class="sr-only peer" >
-							<span class="inline-flex items-center gap-[5px] text-[0.8125rem] font-medium px-[10px] py-[5px] rounded-full border border-[var(--color-brand-border,#E9EBEC)] bg-white text-[var(--color-brand-text,#0f172a)] peer-checked:bg-[var(--color-brand-primary,#095866)] peer-checked:text-white peer-checked:border-[var(--color-brand-primary,#095866)] peer-focus-visible:ring-2 peer-focus-visible:ring-[#E44203] transition-colors">
+							<span class="inline-flex items-center gap-[5px] text-[0.8125rem] font-medium px-[10px] py-[5px] rounded-full border border-[var(--color-brand-border,#E9EBEC)] bg-white text-[var(--color-brand-text,#0f172a)] peer-checked:bg-[var(--color-brand-primary,#095866)] peer-checked:text-white peer-checked:border-[var(--color-brand-primary,#095866)] peer-focus-visible:ring-2 peer-focus-visible:ring-[var(--color-brand-accent)] transition-colors">
 								Aperto sabato
 							</span>
 						</label>
 						<button
 							v-if="filtersActiveCount > 0"
 							type="button"
-							class="ml-auto text-[0.75rem] font-semibold text-[#E44203] hover:underline cursor-pointer"
+							class="ml-auto text-[0.75rem] font-semibold text-[var(--color-brand-accent)] hover:underline cursor-pointer"
 							@click="resetFilters">
 							Azzera filtri ({{ filtersActiveCount }})
 						</button>

@@ -39,7 +39,7 @@ type PackageLike = {
 	third_size?: unknown
 }
 
-// ─── 1. Cloni canonici ────────────────────────────────────────────
+// 1. Cloni canonici
 
 export const cloneShipmentDetailsForQuote = (details: QuoteDetailsInput = {}) => ({
 	origin_city: String(details.origin_city || ''),
@@ -67,7 +67,7 @@ export const clonePackagesForQuote = (packages: unknown[] = []) =>
 		? packages.map((pack) => clonePackageForQuote(pack && typeof pack === 'object' ? pack as QuotePackageInput : {}))
 		: []
 
-// ─── 2. Signature & extraction ────────────────────────────────────
+// 2. Signature & extraction
 
 export const buildQuoteComparableSignature = (payload: QuoteComparablePayload = {}) => JSON.stringify({
 	shipment_details: cloneShipmentDetailsForQuote(payload.shipment_details),
@@ -94,7 +94,7 @@ export function buildQuotePayloadSnapshotFor(shipmentFlowStore: QuoteStoreLike) 
 	}
 }
 
-// ─── 3. Format helpers UI ─────────────────────────────────────────
+// 3. Format helpers UI
 
 export const formatResolvedLocation = (city = '', cap = '') => {
 	const trimmedCity = String(city || '').trim()
@@ -113,7 +113,7 @@ export function formatLivePrice(amount: unknown): string {
 	}).format(Number(amount) || 0).replace(/\s/g, '')
 }
 
-// ─── 4. Validazione package ───────────────────────────────────────
+// 4. Validazione package
 
 export function packageMissingMeasurements(pack: PackageLike): boolean {
 	return !pack?.weight || !pack?.first_size || !pack?.second_size || !pack?.third_size

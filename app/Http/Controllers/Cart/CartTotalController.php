@@ -17,7 +17,7 @@ class CartTotalController extends Controller
         private readonly CartService $cartService,
     ) {}
 
-    // ── Helpers ──────────────────────────────────────────────────
+    // Helpers
 
     /**
      * Carica tutti i pacchi presenti nel carrello di un utente.
@@ -62,7 +62,7 @@ class CartTotalController extends Controller
         ];
     }
 
-    // ── Index ────────────────────────────────────────────────────
+    // Index
 
     /**
      * Mostra il contenuto del carrello con auto-merge e pulizia pacchi invalidi.
@@ -109,7 +109,7 @@ class CartTotalController extends Controller
             ->additional(['meta' => $this->meta($packages)]);
     }
 
-    // ── Merge identical (POST /api/cart/merge) ───────────────────
+    // Merge identical (POST /api/cart/merge)
 
     /**
      * Unisce manualmente i pacchi identici nel carrello.
@@ -133,7 +133,7 @@ class CartTotalController extends Controller
         ]);
     }
 
-    // ── Empty cart ───────────────────────────────────────────────
+    // Empty cart
 
     /**
      * Svuota completamente il carrello dell'utente autenticato.

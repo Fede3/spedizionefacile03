@@ -33,7 +33,7 @@ class PaymentSucceededHandler
             return false;
         }
 
-        // ── Idempotenza a livello di payment_intent ─────────────────
+        // Idempotenza a livello di payment_intent
         if (
             $order->stripe_payment_intent_id === $intent->id
             && $order->hasSuccessfulTransactionForExternalId($intent->id)

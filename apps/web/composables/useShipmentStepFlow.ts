@@ -1,5 +1,4 @@
 import type { Ref } from 'vue'
-import { computed, nextTick, ref, watch } from 'vue'
 
 type AccordionStep = 'packages' | 'services' | 'addresses' | 'payment'
 type DestinationAddress = {

@@ -57,7 +57,8 @@ const getBrandIcon = (brand) => {
 					payment.default ? 'border-brand-primary' : 'border-transparent hover:bg-brand-primary/[0.03]',
 				]">
 				<div class="flex flex-col gap-3 tablet:flex-row tablet:items-center tablet:gap-3.5">
-					<div :class="[
+					<div
+:class="[
 						'flex h-[34px] w-[50px] shrink-0 items-center justify-center rounded-lg text-[0.7rem] font-bold uppercase tracking-wide',
 						payment.default ? 'bg-gradient-to-br from-brand-primary to-brand-primary-hover text-white' : 'bg-brand-bg-alt text-brand-text',
 					]">

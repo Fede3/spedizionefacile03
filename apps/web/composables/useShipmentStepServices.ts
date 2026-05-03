@@ -2,7 +2,7 @@
  * @file useShipmentStepServices — orchestratore step "Servizi" del funnel.
  * Helpers in utils/shipmentServiceData.js. Cards in useShipmentStepServiceCards.
  */
-import { ref, computed, watch, type Ref } from 'vue';
+import type { Ref } from 'vue';
 import type { PricingRuleGroup } from '~/types/pricing';
 import {
 	DEFAULT_SHIPMENT_SERVICES,

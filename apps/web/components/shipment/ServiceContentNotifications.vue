@@ -15,13 +15,13 @@ defineEmits(['update:content-description', 'update:content-error', 'update:sms-e
 
 		<!-- Section header -->
 		<div class="flex items-center gap-[10px] mb-[12px]">
-			<div class="w-[32px] h-[32px] rounded-[10px] bg-[#095866]/[0.08] flex items-center justify-center shrink-0">
+			<div class="w-[32px] h-[32px] rounded-[10px] bg-[var(--color-brand-primary)]/[0.08] flex items-center justify-center shrink-0">
 				<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#095866" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
 					<path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
 					<path d="M13.73 21a2 2 0 0 1-3.46 0"/>
 				</svg>
 			</div>
-			<span class="text-[16px] sm:text-[17px] text-[#1d2738] font-[700]">Dettagli</span>
+			<span class="text-[16px] sm:text-[17px] text-[var(--color-brand-text)] font-[700]">Dettagli</span>
 		</div>
 
 		<!-- Divider -->
@@ -45,10 +45,10 @@ defineEmits(['update:content-description', 'update:content-error', 'update:sms-e
 						placeholder="Abbigliamento, documenti..."
 						maxlength="255"
 						:class="[
-							'h-[48px] sm:h-[50px] w-full rounded-[16px] px-[14px] bg-white outline-none text-[#1d2738] text-[14px] transition-all duration-[250ms] placeholder:text-[#b0b5be]',
+							'h-[48px] sm:h-[50px] w-full rounded-[16px] px-[14px] bg-white outline-none text-[var(--color-brand-text)] text-[14px] transition-all duration-[250ms] placeholder:text-[#b0b5be]',
 							contentError
 								? 'ring-[2px] ring-[#ef4444]'
-								: 'ring-[1.5px] ring-[#DFE2E7] focus:ring-[3px] focus:ring-[#095866]/60'
+								: 'ring-[1.5px] ring-[#DFE2E7] focus:ring-[3px] focus:ring-[var(--color-brand-primary)]/60'
 						]"
 						@input="
 							$emit('update:content-description', $event.target.value);
@@ -71,8 +71,8 @@ defineEmits(['update:content-description', 'update:content-error', 'update:sms-e
 					type="button"
 					class="w-full h-[48px] sm:h-[50px] rounded-[16px] px-[14px] flex items-center gap-[10px] text-left transition-all duration-[350ms] cursor-pointer bg-white"
 					:class="smsEmailNotification
-						? 'ring-[2.5px] ring-[#095866] shadow-[0_2px_10px_rgba(9,88,102,0.1)]'
-						: 'ring-[1.5px] ring-[#DFE2E7] hover:ring-[2px] hover:ring-[#095866]/50 hover:bg-[rgba(9,88,102,0.03)]'"
+						? 'ring-[2.5px] ring-[var(--color-brand-primary)] shadow-[0_2px_10px_rgba(9,88,102,0.1)]'
+						: 'ring-[1.5px] ring-[#DFE2E7] hover:ring-[2px] hover:ring-[var(--color-brand-primary)]/50 hover:bg-[rgba(9,88,102,0.03)]'"
 					:aria-label="smsEmailNotification ? 'Rimuovi notifiche spedizione' : 'Attiva notifiche spedizione'"
 					:aria-pressed="smsEmailNotification ? 'true' : 'false'"
 					@click="$emit('update:sms-email-notification', !smsEmailNotification)">
@@ -87,20 +87,20 @@ defineEmits(['update:content-description', 'update:content-error', 'update:sms-e
 						stroke-width="2"
 						stroke-linecap="round"
 						stroke-linejoin="round"
-						:class="smsEmailNotification ? 'text-[#095866]' : 'text-[var(--color-brand-text-muted)]'"
+						:class="smsEmailNotification ? 'text-[var(--color-brand-primary)]' : 'text-[var(--color-brand-text-muted)]'"
 						aria-hidden="true">
 						<path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
 						<path d="M13.73 21a2 2 0 0 1-3.46 0"/>
 					</svg>
 
 					<!-- Label -->
-					<span class="flex-1 text-[14px] text-[#1d2738] font-[600]">{{ notificationPriceLabel }}</span>
+					<span class="flex-1 text-[14px] text-[var(--color-brand-text)] font-[600]">{{ notificationPriceLabel }}</span>
 
 					<!-- Checkmark box -->
 					<span
 						class="w-[22px] h-[22px] rounded-[6px] flex items-center justify-center transition-all duration-[350ms] shrink-0"
 						:class="smsEmailNotification
-							? 'bg-[#095866]'
+							? 'bg-[var(--color-brand-primary)]'
 							: 'bg-[#E6E9EE] ring-[1.5px] ring-[#C0C5CC]'">
 						<svg
 							v-if="smsEmailNotification"

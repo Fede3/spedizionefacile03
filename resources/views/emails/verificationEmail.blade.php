@@ -1,7 +1,7 @@
 <x-mail::message>
 # Conferma il tuo indirizzo email
 
-Grazie per esserti registrato su **SpedizioneFacile**.
+Grazie per esserti registrato su **SpediamoFacile**.
 
 Per completare l'attivazione del tuo account, inserisci il seguente codice di verifica nella pagina di login:
 

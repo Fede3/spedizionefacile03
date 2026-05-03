@@ -3,9 +3,9 @@
 /* eslint-disable no-useless-escape */
 useSeoMeta({
 	title: 'Privacy Policy',
-	ogTitle: 'Privacy Policy | SpedizioneFacile',
+	ogTitle: 'Privacy Policy | SpediamoFacile',
 	description:
-		'Informativa privacy SpedizioneFacile ai sensi del GDPR (Reg. UE 2016/679) e CCPA. Trattamento dati per servizi di intermediazione spedizioni con corriere BRT.',
+		'Informativa privacy SpediamoFacile ai sensi del GDPR (Reg. UE 2016/679) e CCPA. Trattamento dati per servizi di intermediazione spedizioni con corriere BRT.',
 });
 
 const lastUpdate = '18/04/2026';
@@ -168,7 +168,7 @@ function scrollToTop() {
 			<PublicPageHeader
 				eyebrow="Privacy"
 				title="Informativa sulla privacy"
-				description="Come SpedizioneFacile raccoglie, utilizza e protegge i tuoi dati personali nell'ambito del servizio di intermediazione spedizioni con corriere BRT (GDPR 2016/679 e CCPA)."
+				description="Come SpediamoFacile raccoglie, utilizza e protegge i tuoi dati personali nell'ambito del servizio di intermediazione spedizioni con corriere BRT (GDPR 2016/679 e CCPA)."
 				:crumbs="[{ label: 'Home', to: '/' }, { label: 'Privacy Policy' }]">
 				<p class="mt-2 text-sm text-brand-text-secondary"><span class="font-semibold">Ultimo aggiornamento:</span> <time datetime="2026-04-18">{{ lastUpdate }}</time></p>
 			</PublicPageHeader>

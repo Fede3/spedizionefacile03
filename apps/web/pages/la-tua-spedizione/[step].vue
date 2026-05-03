@@ -10,7 +10,7 @@ definePageMeta({ middleware: ['shipment-validation'] });
 useSeoMeta({
 	title: 'Preventivo',
 	description: 'Configura colli, servizi, indirizzi e pagamento in un flusso unico, chiaro e modificabile.',
-	ogTitle: 'Preventivo - SpedizioneFacile',
+	ogTitle: 'Preventivo - SpediamoFacile',
 	ogDescription: 'Configura colli, servizi, indirizzi e pagamento in un flusso unico, chiaro e modificabile.',
 });
 </script>

@@ -10,7 +10,7 @@ const stats = [
 <template>
 	<section class="about-stats" aria-labelledby="about-stats-title">
 		<div class="my-container">
-			<h2 id="about-stats-title" class="about-stats__title">I numeri di SpedizioneFacile</h2>
+			<h2 id="about-stats-title" class="about-stats__title">I numeri di SpediamoFacile</h2>
 			<dl class="about-stats__grid">
 				<div v-for="stat in stats" :key="stat.label" class="about-stats__card">
 					<dt class="about-stats__value">

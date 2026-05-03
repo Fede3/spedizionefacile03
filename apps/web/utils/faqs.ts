@@ -16,7 +16,7 @@ const FAQS = [
 		category: 'Spedizione',
 		question: 'Quanto costa spedire un pacco in Italia con BRT?',
 		answer:
-			'Il prezzo dipende da peso reale e volumetrico, città di partenza e destinazione, servizio scelto (standard, express, isole) ed eventuali servizi accessori come contrassegno o assicurazione. Su SpedizioneFacile vedi il prezzo finale tutto incluso prima di confermare: nessun sovrapprezzo nascosto, nessuna sorpresa in fattura.',
+			'Il prezzo dipende da peso reale e volumetrico, città di partenza e destinazione, servizio scelto (standard, express, isole) ed eventuali servizi accessori come contrassegno o assicurazione. Su SpediamoFacile vedi il prezzo finale tutto incluso prima di confermare: nessun sovrapprezzo nascosto, nessuna sorpresa in fattura.',
 	},
 	{
 		id: 'sped-ritiro-domicilio',
@@ -44,7 +44,7 @@ const FAQS = [
 		category: 'Spedizione',
 		question: 'Posso spedire batterie al litio?',
 		answer:
-			'Le batterie al litio rientrano nelle merci pericolose (ADR classe 9) e sono soggette a regole molto strette. SpedizioneFacile accetta esclusivamente batterie installate dentro un dispositivo (es. notebook, smartphone) e nei limiti previsti dalla normativa IATA/ADR. Le batterie sciolte, danneggiate o di ricambio non sono ammesse: contattaci prima di prenotare se hai dubbi.',
+			'Le batterie al litio rientrano nelle merci pericolose (ADR classe 9) e sono soggette a regole molto strette. SpediamoFacile accetta esclusivamente batterie installate dentro un dispositivo (es. notebook, smartphone) e nei limiti previsti dalla normativa IATA/ADR. Le batterie sciolte, danneggiate o di ricambio non sono ammesse: contattaci prima di prenotare se hai dubbi.',
 	},
 	{
 		id: 'sped-imballaggio',
@@ -94,7 +94,7 @@ const FAQS = [
 		category: 'Preventivi',
 		question: 'Posso confrontare più corrieri nello stesso preventivo?',
 		answer:
-			'Al momento SpedizioneFacile lavora in esclusiva con BRT (Bartolini), il che ci permette di garantire tariffe più basse del listino pubblico, supporto in italiano e una rete capillare in tutta Italia. Stiamo valutando l\'integrazione di altri corrieri per le tratte internazionali: chi è registrato riceverà un\'email appena saranno disponibili.',
+			'Al momento SpediamoFacile lavora in esclusiva con BRT (Bartolini), il che ci permette di garantire tariffe più basse del listino pubblico, supporto in italiano e una rete capillare in tutta Italia. Stiamo valutando l\'integrazione di altri corrieri per le tratte internazionali: chi è registrato riceverà un\'email appena saranno disponibili.',
 	},
 
 	{
@@ -102,7 +102,7 @@ const FAQS = [
 		category: 'Pagamenti',
 		question: 'Quali metodi di pagamento accettate?',
 		answer:
-			'Accettiamo carte di credito e debito (Visa, Mastercard, American Express) tramite Stripe, e il portafoglio prepagato interno SpedizioneFacile. Tutti i pagamenti sono protetti con crittografia SSL e 3D Secure. Non gestiamo PayPal e bonifico immediato per ora, ma puoi ricaricare il portafoglio una volta e usarlo per più spedizioni.',
+			'Accettiamo carte di credito e debito (Visa, Mastercard, American Express) tramite Stripe, e il portafoglio prepagato interno SpediamoFacile. Tutti i pagamenti sono protetti con crittografia SSL e 3D Secure. Non gestiamo PayPal e bonifico immediato per ora, ma puoi ricaricare il portafoglio una volta e usarlo per più spedizioni.',
 	},
 	{
 		id: 'pag-cod-contrassegno',
@@ -189,7 +189,7 @@ const FAQS = [
 		category: 'Account',
 		question: 'La registrazione è gratuita?',
 		answer:
-			'Sì. La registrazione su SpedizioneFacile è completamente gratuita, senza canoni mensili né vincoli. Crei il tuo account in 2 minuti, salvi indirizzi ricorrenti, vedi lo storico spedizioni e gestisci pagamenti e fatture. Paghi solo le spedizioni che effettui, niente più niente meno.',
+			'Sì. La registrazione su SpediamoFacile è completamente gratuita, senza canoni mensili né vincoli. Crei il tuo account in 2 minuti, salvi indirizzi ricorrenti, vedi lo storico spedizioni e gestisci pagamenti e fatture. Paghi solo le spedizioni che effettui, niente più niente meno.',
 	},
 	{
 		id: 'acc-recupero-password',
@@ -237,7 +237,7 @@ const FAQS = [
 	{
 		id: 'pro-api-ecommerce',
 		category: 'Pro',
-		question: 'Posso integrare SpedizioneFacile con il mio e-commerce?',
+		question: 'Posso integrare SpediamoFacile con il mio e-commerce?',
 		answer:
 			'Sì. Il profilo Pro include l\'accesso alle nostre API REST documentate per creare spedizioni, calcolare preventivi, scaricare etichette e ricevere webhook di tracking direttamente nel tuo sistema. Forniamo plugin pronti per WooCommerce, PrestaShop e Shopify; per Magento e gestionali custom il nostro team tecnico ti supporta nell\'integrazione.',
 	},

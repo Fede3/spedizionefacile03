@@ -25,9 +25,9 @@ const statusLabels = {
 };
 
 const statusTone = {
-	completed: 'bg-[#f0fdf4] text-[#0a8a7a] border-[#d1fae5]',
-	requested: 'bg-[#eef7f8] text-[#095866] border-[#bdd5da]',
-	sent: 'bg-[#f0fdf4] text-[#0a8a7a] border-[#d1fae5]',
+	completed: 'bg-[#f0fdf4] text-[var(--color-brand-success)] border-[#d1fae5]',
+	requested: 'bg-[#eef7f8] text-[var(--color-brand-primary)] border-[#bdd5da]',
+	sent: 'bg-[#f0fdf4] text-[var(--color-brand-success)] border-[#d1fae5]',
 	pending: 'bg-[#EEF0F3] text-[var(--color-brand-text-secondary)] border-[#DFE2E7]',
 	not_requested: 'bg-[#EEF0F3] text-[var(--color-brand-text-secondary)] border-[#DFE2E7]',
 	manual_required: 'bg-amber-50 text-amber-700 border-amber-200',
@@ -212,7 +212,7 @@ const runCardAction = (kind) => {
 			</div>
 			<span
 				class="inline-flex items-center gap-[6px] rounded-full border px-[12px] py-[7px] text-[0.75rem] font-semibold"
-				:class="hasShipmentLabel ? 'border-[#d1fae5] bg-[#f0fdf4] text-[#0a8a7a]' : 'border-amber-200 bg-amber-50 text-amber-700'">
+				:class="hasShipmentLabel ? 'border-[#d1fae5] bg-[#f0fdf4] text-[var(--color-brand-success)]' : 'border-amber-200 bg-amber-50 text-amber-700'">
 				{{ hasShipmentLabel ? 'Etichetta pronta' : 'Serve etichetta BRT' }}
 			</span>
 		</div>

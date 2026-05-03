@@ -13,7 +13,7 @@
  * ----------------------------------------------------------------------------
  */
 
-import { computed, ref, type ComputedRef, type Ref } from 'vue';
+import type { ComputedRef, Ref } from 'vue';
 
 export interface FunnelErrorSlots {
 	dateError: Ref<string | null>;

@@ -15,7 +15,7 @@ useHead({
 			innerHTML: JSON.stringify({
 				'@context': 'https://schema.org',
 				'@type': 'AboutPage',
-				name: 'Chi siamo — SpedizioneFacile',
+				name: 'Chi siamo — SpediamoFacile',
 				url: 'https://spediamofacile.it/chi-siamo',
 				mainEntity: {
 					'@type': 'Organization',

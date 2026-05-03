@@ -8,7 +8,6 @@
  * rimosso durante il cleanup "orphan" del 27 apr: in realta' la pagina utenti
  * lo importa e crashava in 500 SSR ("useAdminUtenti is not defined").
  */
-import { computed, ref } from 'vue';
 
 export const proRequestStatusConfig = {
 	pending: { label: 'In attesa', tone: 'warning' },

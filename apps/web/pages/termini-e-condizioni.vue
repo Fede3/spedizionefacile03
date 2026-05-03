@@ -3,9 +3,9 @@
 <script setup>
 useSeoMeta({
 	title: 'Termini e Condizioni',
-	ogTitle: 'Termini e Condizioni | SpedizioneFacile',
+	ogTitle: 'Termini e Condizioni | SpediamoFacile',
 	description:
-		'Condizioni generali di servizio di SpedizioneFacile: intermediazione spedizioni con corriere BRT, prezzi, recesso, assicurazione, foro competente.',
+		'Condizioni generali di servizio di SpediamoFacile: intermediazione spedizioni con corriere BRT, prezzi, recesso, assicurazione, foro competente.',
 });
 
 const lastUpdate = '18/04/2026';
@@ -28,7 +28,7 @@ const sections = [
 		id: 'oggetto',
 		title: '2. Oggetto del contratto',
 		paragraphs: [
-			'SpedizioneFacile (di seguito anche "il Fornitore") è una piattaforma online di <strong>intermediazione</strong> che consente all\'utente di confrontare, prenotare, pagare e tracciare spedizioni nazionali ed internazionali tramite il vettore <strong>BRT S.p.A.</strong> (Bartolini) e altri corrieri convenzionati.',
+			'SpediamoFacile (di seguito anche "il Fornitore") è una piattaforma online di <strong>intermediazione</strong> che consente all\'utente di confrontare, prenotare, pagare e tracciare spedizioni nazionali ed internazionali tramite il vettore <strong>BRT S.p.A.</strong> (Bartolini) e altri corrieri convenzionati.',
 			'Il Fornitore <strong>non è un vettore</strong> ai sensi degli artt. 1678 e seguenti del Codice Civile e non esegue direttamente l\'attività di trasporto. Agisce esclusivamente come intermediario tra l\'utente e il vettore prescelto, in nome proprio e per conto dell\'utente, secondo lo schema del contratto di spedizione (artt. 1737-1741 c.c.).',
 			'Il Fornitore mette a disposizione strumenti di preventivazione automatica, prenotazione del ritiro, generazione della lettera di vettura, gestione del pagamento, monitoraggio in tempo reale della spedizione e assistenza post-vendita.',
 		],
@@ -62,7 +62,7 @@ const sections = [
 			'<strong>Carta di credito/debito</strong> (circuiti Visa, Mastercard, American Express) tramite Stripe Payments Europe Ltd., con autenticazione 3D Secure ove applicabile.',
 			'<strong>Wallet digitali</strong> (Apple Pay, Google Pay) tramite Stripe.',
 			'<strong>Bonifico bancario</strong> per ordini di importo elevato e clienti business, previa accettazione del Fornitore. La spedizione viene attivata solo dopo la verifica dell\'accredito.',
-			'<strong>Saldo del Wallet SpedizioneFacile</strong>, alimentato da ricariche o crediti promozionali.',
+			'<strong>Saldo del Wallet SpediamoFacile</strong>, alimentato da ricariche o crediti promozionali.',
 		],
 		extra: [
 			'La fattura elettronica viene emessa entro 12 giorni dalla conferma dell\'ordine (D.Lgs. 127/2015) e trasmessa tramite Sistema di Interscambio (SDI) all\'utente registrato come professionista o impresa.',
@@ -153,7 +153,7 @@ function scrollToTop() {
 			<PublicPageHeader
 				eyebrow="Termini"
 				title="Termini e Condizioni di Servizio"
-				description="Condizioni generali del servizio di intermediazione spedizioni offerto da SpedizioneFacile tramite BRT S.p.A. e corrieri convenzionati. L'accettazione è condizione necessaria per l'utilizzo della piattaforma."
+				description="Condizioni generali del servizio di intermediazione spedizioni offerto da SpediamoFacile tramite BRT S.p.A. e corrieri convenzionati. L'accettazione è condizione necessaria per l'utilizzo della piattaforma."
 				:crumbs="[{ label: 'Home', to: '/' }, { label: 'Termini e Condizioni' }]">
 				<p class="mt-2 text-sm text-brand-text-secondary"><span class="font-semibold">Ultimo aggiornamento:</span> <time datetime="2026-04-18">{{ lastUpdate }}</time></p>
 			</PublicPageHeader>

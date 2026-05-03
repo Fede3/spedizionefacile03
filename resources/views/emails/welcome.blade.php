@@ -1,6 +1,6 @@
 @extends('emails.layouts.base')
 
-@section('title', 'Benvenuto in SpedizioneFacile')
+@section('title', 'Benvenuto in SpediamoFacile')
 @section('preheader', 'Il tuo account è attivo. Inizia a spedire in pochi clic.')
 
 @section('content')
@@ -9,7 +9,7 @@
     </h1>
 
     <p style="margin: 0 0 16px; font-family: Arial, Helvetica, sans-serif; font-size: 15px; line-height: 1.6; color: #1d2738;">
-        Grazie per esserti registrato a <strong style="color: #095866;">SpedizioneFacile</strong>. Il tuo account è attivo e pronto all'uso.
+        Grazie per esserti registrato a <strong style="color: #095866;">SpediamoFacile</strong>. Il tuo account è attivo e pronto all'uso.
     </p>
 
     <p style="margin: 0 0 24px; font-family: Arial, Helvetica, sans-serif; font-size: 15px; line-height: 1.6; color: #1d2738;">

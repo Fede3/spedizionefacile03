@@ -40,7 +40,7 @@ const numberOrNull = (value: unknown, fallback: number | null = null): number | 
 };
 const arrayFrom = (value: unknown): unknown[] => Array.isArray(value) ? value : [];
 
-// ─── 1. Normalizzatori payload ────────────────────────────────────
+// 1. Normalizzatori payload
 
 export const normalizeStringListForAdmin = (values: unknown[] = [], { uppercase = false }: { uppercase?: boolean } = {}): string[] => {
 	if (!Array.isArray(values)) return [];
@@ -154,7 +154,7 @@ export const normalizeEuropePricingForAdmin = (config: Partial<EuropePricing> | 
 export const buildPricingRulesPayload = <T extends Record<string, unknown>>(group: T = {} as T): T =>
 	JSON.parse(JSON.stringify(group)) as T;
 
-// ─── 2. Conversioni cents <-> euro (admin) ────────────────────────
+// 2. Conversioni cents <-> euro (admin)
 
 /** Converte centesimi (number/string) in euro stringa con 2 decimali. */
 export const adminCentsToEuro = (cents: unknown): string => {
@@ -177,7 +177,7 @@ export const adminIncrementCentsToEuro = (cents: unknown): string => {
 	return (n / 100).toFixed(2)
 }
 
-// ─── 3. Calcoli prezzo (delega a priceBandsCalc) ──────────────────
+// 3. Calcoli prezzo (delega a priceBandsCalc)
 
 /** Prezzo effettivo (discount se presente, altrimenti base). */
 export const effectivePrice = (band: Partial<PriceBand> | null | undefined) => effectivePriceCents(band)
@@ -206,7 +206,7 @@ export const discountInfo = (band: Partial<PriceBand>): { percentage: number | n
 	}
 }
 
-// ─── 4. Snapshot / clone per dirty-tracking ───────────────────────
+// 4. Snapshot / clone per dirty-tracking
 
 /** Deep clone JSON-safe per snapshot stato originale. */
 export const cloneForSnapshot = <T>(value: T): T => {
@@ -241,7 +241,7 @@ export const normalizeArrayFieldInput = (
 		.map((s) => uppercase ? s.toUpperCase() : s.toLowerCase())
 }
 
-// ─── 5. Costanti default + label UI ───────────────────────────────
+// 5. Costanti default + label UI
 
 export const ADMIN_DEFAULT_WEIGHT_BANDS = FALLBACK_WEIGHT_BANDS
 export const ADMIN_DEFAULT_VOLUME_BANDS = FALLBACK_VOLUME_BANDS

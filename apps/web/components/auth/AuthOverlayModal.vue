@@ -198,7 +198,7 @@ const modalUi = {
           <!-- Close button: 44x44 tap target (WCAG 2.5.5) con pallino visivo 30x30 -->
           <button
             type="button"
-            class="absolute top-[3px] right-[3px] z-20 flex h-[44px] w-[44px] items-center justify-center rounded-full bg-transparent text-[#52606D] focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-[#095866]/25 cursor-pointer transition-all duration-[350ms] group"
+            class="absolute top-[3px] right-[3px] z-20 flex h-[44px] w-[44px] items-center justify-center rounded-full bg-transparent text-[#52606D] focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-[var(--color-brand-primary)]/25 cursor-pointer transition-all duration-[350ms] group"
             aria-label="Chiudi finestra"
             @click="closeModal"
           >
@@ -212,7 +212,7 @@ const modalUi = {
           <!-- Heading (solo per forgot / verification) -->
           <template v-if="forgotMode || verificationMode">
             <h2
-              class="m-0 pr-[44px] text-[22px] font-extrabold leading-[1.08] text-[#1D2738] sm:text-[24px]"
+              class="m-0 pr-[44px] text-[22px] font-extrabold leading-[1.08] text-[var(--color-brand-text)] sm:text-[24px]"
               style="font-family: var(--font-montserrat, 'Montserrat', sans-serif)"
             >
               <template v-if="forgotMode">Recupera password</template>
@@ -267,16 +267,16 @@ const modalUi = {
               'flex items-center gap-[8px] rounded-[12px] px-[14px] py-[11px] overflow-hidden',
               socialErrorTone === 'muted'
                 ? 'bg-[#f7fafb] ring-[1px] ring-[#dfe8ec]'
-                : 'bg-[#FFF5F2] ring-[1px] ring-[#E44203]/10',
+                : 'bg-[#FFF5F2] ring-[1px] ring-[var(--color-brand-accent)]/10',
             ]"
           >
             <svg v-if="socialErrorTone !== 'muted'" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#E44203" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="shrink-0"><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" /></svg>
-            <span :class="socialErrorTone === 'muted' ? 'text-[#666] text-[13px] font-medium' : 'text-[#E44203] text-[13px] font-semibold'">{{ socialError }}</span>
+            <span :class="socialErrorTone === 'muted' ? 'text-[#666] text-[13px] font-medium' : 'text-[var(--color-brand-accent)] text-[13px] font-semibold'">{{ socialError }}</span>
           </div>
 
-          <div v-if="authError" class="flex items-center gap-[8px] bg-[#FFF5F2] ring-[1px] ring-[#E44203]/10 rounded-[12px] px-[14px] py-[11px] overflow-hidden">
+          <div v-if="authError" class="flex items-center gap-[8px] bg-[#FFF5F2] ring-[1px] ring-[var(--color-brand-accent)]/10 rounded-[12px] px-[14px] py-[11px] overflow-hidden">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#E44203" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="shrink-0"><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" /></svg>
-            <span class="text-[#E44203] text-[13px] font-semibold">{{ authError }}</span>
+            <span class="text-[var(--color-brand-accent)] text-[13px] font-semibold">{{ authError }}</span>
           </div>
 
           <div v-if="authSuccess" class="flex items-center gap-[8px] bg-[#f0fdf4] ring-[1px] ring-[#166534]/10 rounded-[12px] px-[14px] py-[11px] overflow-hidden">

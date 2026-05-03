@@ -4,7 +4,7 @@
  * Pure view state and computed entries for the pricing admin page. Business
  * calculations still come from the pricing helpers passed in by the caller.
  */
-import { computed, ref, type Ref } from 'vue';
+import type { Ref } from 'vue';
 import type {
 	EuropePricing,
 	EuropeRate,

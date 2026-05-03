@@ -15,7 +15,7 @@
  * ----------------------------------------------------------------------------
  */
 
-import { nextTick, type Ref } from 'vue';
+import type { Ref } from 'vue';
 
 // Le ref di stage/sezione possono puntare sia a un HTMLElement (DOM nudo) sia
 // a un'istanza componente Vue che espone `.$el`. Wrapper minimo per tipizzare
@@ -36,7 +36,6 @@ export interface FunnelNavigationReturn {
 	onAccordionPanelAfterLeave: (el: Element) => void;
 }
 
-// eslint-disable-next-line max-lines-per-function -- factory di 11 helper coesi (DOM scroll/focus + 6 accordion hook), splittarla = perdere coesione semantica
 export function useFunnelNavigation(): FunnelNavigationReturn {
 	const resolveStageElement = (stageRef: StageRef | null | undefined): HTMLElement | null => {
 		const rawRef = stageRef?.value;

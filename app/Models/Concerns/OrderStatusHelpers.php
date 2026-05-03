@@ -65,7 +65,7 @@ trait OrderStatusHelpers
         ], true);
     }
 
-    /* ===== SCOPES — Query predefinite per stati comuni ===== */
+    // SCOPES — Query predefinite per stati comuni
 
     public function scopePending($query)
     {

@@ -9,13 +9,13 @@ defineProps({
     success: { type: String, default: '' },
 });
 const emit = defineEmits(['input', 'keydown', 'submit', 'resend', 'back']);
-const CTA_CLS = 'btn-cta-filled w-full h-[50px] rounded-full text-[14px] flex items-center justify-center gap-[10px] mt-[4px] cursor-pointer active:scale-[0.985] focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-[#E44203]/25 disabled:cursor-wait';
+const CTA_CLS = 'btn-cta-filled w-full h-[50px] rounded-full text-[14px] flex items-center justify-center gap-[10px] mt-[4px] cursor-pointer active:scale-[0.985] focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-[var(--color-brand-accent)]/25 disabled:cursor-wait';
 </script>
 
 <template>
   <div class="flex flex-col gap-[16px]">
     <p class="text-[14px] leading-[1.5] text-[#666] m-0">
-      Inserisci il codice a 6 cifre inviato a <strong class="text-[#1d2738]">{{ email }}</strong>.
+      Inserisci il codice a 6 cifre inviato a <strong class="text-[var(--color-brand-text)]">{{ email }}</strong>.
     </p>
 
     <div class="flex items-center justify-center gap-[6px] sm:gap-[8px]">
@@ -28,15 +28,15 @@ const CTA_CLS = 'btn-cta-filled w-full h-[50px] rounded-full text-[14px] flex it
         type="text"
         inputmode="numeric"
         maxlength="1"
-        class="w-[40px] h-[46px] sm:w-[44px] sm:h-[48px] rounded-[12px] bg-[#F8F9FB] text-center text-[16px] font-bold ring-[1.5px] ring-[#DFE2E7] focus:ring-[3px] focus:ring-[#095866]/60 focus:bg-white outline-none transition-all duration-200"
+        class="w-[40px] h-[46px] sm:w-[44px] sm:h-[48px] rounded-[12px] bg-[#F8F9FB] text-center text-[16px] font-bold ring-[1.5px] ring-[#DFE2E7] focus:ring-[3px] focus:ring-[var(--color-brand-primary)]/60 focus:bg-white outline-none transition-all duration-200"
         @input="emit('input', index, $event)"
         @keydown="emit('keydown', index, $event)"
       >
     </div>
 
-    <div v-if="error" class="flex items-center gap-[8px] bg-[#FFF5F2] ring-[1px] ring-[#E44203]/10 rounded-[12px] px-[14px] py-[11px]">
+    <div v-if="error" class="flex items-center gap-[8px] bg-[#FFF5F2] ring-[1px] ring-[var(--color-brand-accent)]/10 rounded-[12px] px-[14px] py-[11px]">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#E44203" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="shrink-0"><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" /></svg>
-      <span class="text-[#E44203] text-[13px] font-semibold">{{ error }}</span>
+      <span class="text-[var(--color-brand-accent)] text-[13px] font-semibold">{{ error }}</span>
     </div>
     <div v-if="success" class="flex items-center gap-[8px] bg-[#f0fdf4] ring-[1px] ring-[#166534]/10 rounded-[12px] px-[14px] py-[11px]">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#166534" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="shrink-0"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" /></svg>
@@ -58,7 +58,7 @@ const CTA_CLS = 'btn-cta-filled w-full h-[50px] rounded-full text-[14px] flex it
     <div class="flex items-center justify-between gap-[12px] text-[13px]">
       <button
         type="button"
-        class="text-[#095866] font-medium hover:opacity-80 cursor-pointer bg-transparent border-0 p-0 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        class="text-[var(--color-brand-primary)] font-medium hover:opacity-80 cursor-pointer bg-transparent border-0 p-0 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         :disabled="resendLoading"
         @click="emit('resend')"
       >

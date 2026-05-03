@@ -101,7 +101,7 @@ export const createImportSection = ({
 	const promoImageUploading = ref(false);
 	const promo = ref<PromoSettings>({ active: false, label_text: '', label_color: '#E44203', label_image: null, show_badges: true, description: '' });
 
-	// ── Common: applica extra rules + ladder ─────────────
+	// Common: applica extra rules + ladder
 	const applyExtraRules = (source: Partial<ExtraRules>) => {
 		extraRules.value = { ...DEFAULT_EXTRA_RULES, ...source } as ExtraRules;
 		extraRules.value.increment_mode = 'flat';
@@ -122,7 +122,7 @@ export const createImportSection = ({
 		originalOperationalFees.value = clone(operationalFees.value);
 	};
 
-	// ── Payload builders ─────────────────────────────────
+	// Payload builders
 	const buildEuropePricingPayload = () => {
 		const n = normalizeEuropePricingForAdmin(europePricing.value);
 		return {
@@ -178,7 +178,7 @@ export const createImportSection = ({
 		};
 	};
 
-	// ── Defaults ─────────────────────────────────────────
+	// Defaults
 	const applyDefaults = () => {
 		weightBands.value = DEFAULT_WEIGHT_BANDS.map((band, idx) => asPriceBand({ ...band, id: `new-w-${idx}` }, 'weight', idx));
 		volumeBands.value = DEFAULT_VOLUME_BANDS.map((band, idx) => asPriceBand({ ...band, id: `new-v-${idx}` }, 'volume', idx));
@@ -191,7 +191,7 @@ export const createImportSection = ({
 		bandsFromDb.value = false;
 	};
 
-	// ── Fetch ────────────────────────────────────────────
+	// Fetch
 	const apiGet = async <T>(url: string): Promise<T> => {
 		const res = await sanctum<MaybeDataResponse<T> | T>(url);
 		return (extractResponseData<T>(res) || {}) as T;
@@ -237,7 +237,7 @@ export const createImportSection = ({
 		}
 	};
 
-	// ── Save ─────────────────────────────────────────────
+	// Save
 	const runWithFlag = async (flag: Ref<boolean>, errorMsg: string, fn: () => Promise<void>) => {
 		flag.value = true;
 		try { await fn(); } catch (e) { showError(e, errorMsg); } finally { flag.value = false; }

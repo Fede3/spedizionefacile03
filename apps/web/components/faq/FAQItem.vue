@@ -9,13 +9,13 @@ defineProps({
 </script>
 
 <template>
+	<!-- eslint-disable vue/no-v-html -- highlightMatch escapa input prima di wrappare <mark>, output safe -->
 	<details
 		:id="`faq-${item.id}`"
 		class="faq-details"
 		:open="open">
 		<summary class="faq-details__summary">
 			<span class="faq-details__cat">{{ item.category }}</span>
-			<!-- eslint-disable-next-line vue/no-v-html -- highlightMatch escapa il testo prima del wrap <mark> -->
 			<span
 				class="faq-details__q"
 				v-html="highlightMatch(item.question, searchQuery)" />
@@ -35,7 +35,6 @@ defineProps({
 			</span>
 		</summary>
 		<div class="faq-details__panel">
-			<!-- eslint-disable-next-line vue/no-v-html -- highlightMatch escapa il testo prima del wrap <mark> -->
 			<p
 				class="faq-details__a"
 				v-html="highlightMatch(item.answer, searchQuery)" />

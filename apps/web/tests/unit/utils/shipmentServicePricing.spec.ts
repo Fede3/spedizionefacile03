@@ -6,9 +6,7 @@ import {
 	calculateShipmentServiceSurcharge,
 } from '~/utils/shipmentServicePricing'
 
-// ─────────────────────────────────────────────────────────────────────
 // PARSING currency / service keys
-// ─────────────────────────────────────────────────────────────────────
 
 describe('parseCurrencyAmount', () => {
 	it('parse numero diretto', () => {
@@ -145,11 +143,9 @@ describe('normalizeSelectedServices', () => {
 	})
 })
 
-// ─────────────────────────────────────────────────────────────────────
 // CALCULATE SHIPMENT SERVICE SURCHARGE — fixture-based parity tests
 
 // Parity: tests/Feature/Pricing/PriceEngineTest.php (backend Laravel)
-// ─────────────────────────────────────────────────────────────────────
 
 describe('calculateShipmentServiceSurcharge', () => {
 	describe('Empty state', () => {

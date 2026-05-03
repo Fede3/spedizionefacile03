@@ -1,4 +1,3 @@
-import { computed, ref } from 'vue'
 
 import { buildCartDiscountPreviewState, parseEuroAmount } from '~/utils/cartHelpers'
 

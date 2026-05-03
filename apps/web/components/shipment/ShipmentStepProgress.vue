@@ -81,7 +81,7 @@ const stateOf = (n) => {
 	.shipment-step-progress { padding: 0 40px; }
 }
 
-/* === Desktop view === */
+/* Desktop view */
 .shipment-step-progress__desktop {
 	display: none;
 	list-style: none;
@@ -156,7 +156,7 @@ const stateOf = (n) => {
 	font-weight: 700;
 }
 
-/* === Mobile view === */
+/* Mobile view */
 .shipment-step-progress__mobile {
 	display: block;
 	padding: 12px 0;

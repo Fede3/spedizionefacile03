@@ -20,9 +20,9 @@ const turnstileToken = computed({
 	get: () => props.turnstile?.token?.value || '',
 	set: (value) => emit('update:turnstileToken', value),
 });
-const INPUT_CLS = 'w-full h-[46px] rounded-[12px] px-[14px] text-[14px] font-medium text-[#1d2738] bg-white ring-[1.5px] ring-[#DFE2E7] focus:ring-[2.5px] focus:ring-[#095866]/50 placeholder:text-[#aaa] outline-none transition-all duration-200';
+const INPUT_CLS = 'w-full h-[46px] rounded-[12px] px-[14px] text-[14px] font-medium text-[var(--color-brand-text)] bg-white ring-[1.5px] ring-[#DFE2E7] focus:ring-[2.5px] focus:ring-[var(--color-brand-primary)]/50 placeholder:text-[#aaa] outline-none transition-all duration-200';
 const LABEL_CLS = 'text-[#777] text-[11px] uppercase tracking-[0.4px] font-bold block';
-const CTA_CLS = 'btn-cta-filled w-full h-[50px] rounded-full text-[14px] flex items-center justify-center gap-[10px] mt-[4px] cursor-pointer active:scale-[0.985] focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-[#E44203]/25 disabled:cursor-wait';
+const CTA_CLS = 'btn-cta-filled w-full h-[50px] rounded-full text-[14px] flex items-center justify-center gap-[10px] mt-[4px] cursor-pointer active:scale-[0.985] focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-[var(--color-brand-accent)]/25 disabled:cursor-wait';
 </script>
 
 <template>
@@ -162,16 +162,16 @@ const CTA_CLS = 'btn-cta-filled w-full h-[50px] rounded-full text-[14px] flex it
       <input
         :checked="Boolean(form.privacy_accepted)"
         type="checkbox"
-        class="mt-[1px] h-[16px] w-[16px] shrink-0 accent-[#095866]"
+        class="mt-[1px] h-[16px] w-[16px] shrink-0 accent-[var(--color-brand-primary)]"
         @change="updateBooleanField('privacy_accepted', $event.target.checked)"
       >
       <span class="text-[11px] leading-[1.55] text-[#667085]">
         Accetto la
-        <NuxtLink to="/privacy-policy" class="font-semibold text-[#095866] underline underline-offset-2 hover:text-[#0a7489]">
+        <NuxtLink to="/privacy-policy" class="font-semibold text-[var(--color-brand-primary)] underline underline-offset-2 hover:text-[#0a7489]">
           Privacy Policy
         </NuxtLink>
         e i
-        <NuxtLink to="/termini-e-condizioni" class="font-semibold text-[#095866] underline underline-offset-2 hover:text-[#0a7489]">
+        <NuxtLink to="/termini-e-condizioni" class="font-semibold text-[var(--color-brand-primary)] underline underline-offset-2 hover:text-[#0a7489]">
           Termini e Condizioni
         </NuxtLink>.
       </span>

@@ -36,7 +36,7 @@ class Coupon extends Model
         'uses_count' => 'integer',
     ];
 
-    // ── Relazioni ─────────────────────────────────────────────
+    // Relazioni
 
     /**
      * Utenti che hanno usato questo coupon (pivot coupon_user).
@@ -47,7 +47,7 @@ class Coupon extends Model
             ->withPivot('order_id', 'used_at');
     }
 
-    // ── Query scopes ──────────────────────────────────────────
+    // Query scopes
 
     /**
      * Scope: solo coupon utilizzabili (attivo, non scaduto, sotto i limiti).
@@ -66,7 +66,7 @@ class Coupon extends Model
             });
     }
 
-    // ── Metodi di istanza ─────────────────────────────────────
+    // Metodi di istanza
 
     /**
      * Verifica se il coupon e' ancora valido per un determinato utente.

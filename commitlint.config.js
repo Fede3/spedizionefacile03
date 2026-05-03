@@ -1,5 +1,5 @@
 /**
- * commitlint configuration for SpedizioneFacile monorepo.
+ * commitlint configuration for SpediamoFacile monorepo.
  *
  * Enforces Conventional Commits (https://www.conventionalcommits.org).
  * Scope-enum è la lista canonica dei domini del prodotto: aggiornarla quando

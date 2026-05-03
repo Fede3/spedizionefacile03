@@ -7,7 +7,7 @@
 // I subcomposable del funnel restano importabili dai propri file dedicati:
 // questo evita auto-import duplicati Nuxt e rende chiaro dove intervenire.
 
-import { computed, onMounted, watch, type Ref } from 'vue';
+import type { Ref } from 'vue';
 import type { AuthModalTab } from '~/stores/authStore';
 import {
 	buildSecondStepPayload,

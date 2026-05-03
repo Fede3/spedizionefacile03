@@ -1,5 +1,4 @@
 import type { Ref } from 'vue'
-import { computed, watch } from 'vue'
 
 type ShipmentSubStep = 'colli' | 'servizi' | 'indirizzi' | 'pagamento'
 type ShipmentServicesState = {

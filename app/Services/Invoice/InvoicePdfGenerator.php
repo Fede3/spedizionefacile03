@@ -43,7 +43,7 @@ class InvoicePdfGenerator
             throw new RuntimeException("Order #{$order->id}: subtotal mancante o zero, impossibile generare fattura.");
         }
 
-        // ── Idempotenza: se l'ordine ha gia' un numero fattura E il file esiste, ritornalo. ──
+        // Idempotenza: se l'ordine ha gia' un numero fattura E il file esiste, ritornalo.
         $disk = $this->disk();
         if (! empty($order->sdi_invoice_number)) {
             $existingPath = $this->buildPathFromNumber($order->sdi_invoice_number, $order->created_at ?? now());
@@ -52,11 +52,11 @@ class InvoicePdfGenerator
             }
         }
 
-        // ── Assegna numero progressivo annuale (transazione + lockForUpdate). ──
+        // Assegna numero progressivo annuale (transazione + lockForUpdate).
         $issueDate = CarbonImmutable::now();
         $invoiceNumber = $order->sdi_invoice_number ?: $this->reserveInvoiceNumber($issueDate->year);
 
-        // ── Calcoli fiscali: scorporo IVA (prezzi includono IVA), bollo virtuale. ──
+        // Calcoli fiscali: scorporo IVA (prezzi includono IVA), bollo virtuale.
         $vatRate = (float) config('billing.iva.aliquota', 22);
         $grossTotalCents = $order->grossSubtotalCents();
         $discountCents = $order->discountAmountCents();
@@ -66,7 +66,7 @@ class InvoicePdfGenerator
 
         $stampDuty = $this->computeStampDuty($totalCents / 100);
 
-        // ── Preparo i dati per il template. ──
+        // Preparo i dati per il template.
         $viewData = [
             'order' => $order,
             'invoice' => [
@@ -95,19 +95,19 @@ class InvoicePdfGenerator
             'ivaCents' => $ivaCents,
         ];
 
-        // ── Genera il binario PDF (dompdf se disponibile, altrimenti raw). ──
+        // Genera il binario PDF (dompdf se disponibile, altrimenti raw).
         $pdfBinary = $this->renderPdfBinary($viewData, $order);
 
-        // ── Persisti su disk: invoices/{year}/{month}/{invoiceNumber}.pdf. ──
+        // Persisti su disk: invoices/{year}/{month}/{invoiceNumber}.pdf.
         $relativePath = $this->buildPathFromNumber($invoiceNumber, $issueDate);
         $disk->put($relativePath, $pdfBinary);
 
-        // ── Salva il numero sull'ordine (campo sdi_invoice_number gia' presente). ──
+        // Salva il numero sull'ordine (campo sdi_invoice_number gia' presente).
         if ($order->sdi_invoice_number !== $invoiceNumber) {
             $order->forceFill(['sdi_invoice_number' => $invoiceNumber])->saveQuietly();
         }
 
-        // ── Inserisci record in invoice_archive (conservazione decennale). ──
+        // Inserisci record in invoice_archive (conservazione decennale).
         $this->archive($order, $invoiceNumber, $issueDate, $relativePath, $pdfBinary);
 
         return $relativePath;

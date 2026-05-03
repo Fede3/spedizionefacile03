@@ -20,7 +20,7 @@ const ITALIAN_PROVINCES = [
 
 describe('useSmartValidation', () => {
 
-  // ========== CAP VALIDATION ==========
+  // CAP VALIDATION
   describe('CAP Validation', () => {
     // Riproduce la logica di validateCAP: 5 cifre, range 00010-98168
     function isValidCAP(value: string): boolean {
@@ -76,7 +76,7 @@ describe('useSmartValidation', () => {
     })
   })
 
-  // ========== PHONE VALIDATION ==========
+  // PHONE VALIDATION
   describe('Phone Validation', () => {
     // Riproduce la logica di validateTelefono:
     // cleaned = remove spaces/dashes/parens; must match /^\+?\d+$/;
@@ -134,7 +134,7 @@ describe('useSmartValidation', () => {
     })
   })
 
-  // ========== EMAIL VALIDATION ==========
+  // EMAIL VALIDATION
   describe('Email Validation', () => {
     // Riproduce la logica di validateEmail: opzionale; se presente, regex /^[^\s@]+@[^\s@]+\.[^\s@]+$/
     const emailRegex = /^[^\s@]{1,64}@[^\s@.]{1,253}(?:\.[^\s@.]{1,63})+$/
@@ -173,7 +173,7 @@ describe('useSmartValidation', () => {
     })
   })
 
-  // ========== PROVINCE VALIDATION ==========
+  // PROVINCE VALIDATION
   describe('Province Validation', () => {
     // Riproduce la logica di validateProvincia: 2 lettere maiuscole, nell'elenco ITALIAN_PROVINCES
     function isValidProvincia(value: string): boolean {
@@ -223,7 +223,7 @@ describe('useSmartValidation', () => {
     })
   })
 
-  // ========== NAME VALIDATION ==========
+  // NAME VALIDATION
   describe('Name Validation', () => {
     // Riproduce la logica di validateNomeCognome: obbligatorio, no numeri
     function isValidName(value: string): boolean {
@@ -252,7 +252,7 @@ describe('useSmartValidation', () => {
     })
   })
 
-  // ========== WEIGHT VALIDATION ==========
+  // WEIGHT VALIDATION
   describe('Weight Validation', () => {
     // Riproduce la logica di validatePeso: num = Number(cleaned), num > 0, num <= 1000
     function isValidWeight(value: unknown): boolean {
@@ -298,7 +298,7 @@ describe('useSmartValidation', () => {
     })
   })
 
-  // ========== DIMENSION VALIDATION ==========
+  // DIMENSION VALIDATION
   describe('Dimension Validation', () => {
     // Riproduce la logica di validateDimensione: num > 0, num <= 300
     function isValidDimension(value: unknown): boolean {
@@ -330,7 +330,7 @@ describe('useSmartValidation', () => {
     })
   })
 
-  // ========== UTILITY FUNCTIONS ==========
+  // UTILITY FUNCTIONS
   describe('Utility Functions', () => {
 
     describe('filterCAP', () => {

@@ -99,7 +99,7 @@ const iconForCode = (code) => {
 					<polyline points="12 6 12 12 16 14" />
 				</svg>
 			</div>
-			<p class="text-[13px] text-[#5A6474] leading-[1.55] max-w-[44ch] mx-auto m-0">{{ emptyMessage }}</p>
+			<p class="text-[13px] text-[var(--color-brand-text-secondary)] leading-[1.55] max-w-[44ch] mx-auto m-0">{{ emptyMessage }}</p>
 		</div>
 
 		<!-- Lista eventi -->
@@ -114,8 +114,8 @@ const iconForCode = (code) => {
 					<div
 						class="inline-flex items-center justify-center w-[36px] h-[36px] rounded-full shrink-0 transition-all duration-200"
 						:class="idx === 0
-							? 'bg-[#095866] text-white shadow-[0_2px_6px_rgba(9,88,102,0.25)]'
-							: 'bg-white text-[#095866] shadow-[inset_0_0_0_1.5px_rgba(9,88,102,0.35)]'"
+							? 'bg-[var(--color-brand-primary)] text-white shadow-[0_2px_6px_rgba(9,88,102,0.25)]'
+							: 'bg-white text-[var(--color-brand-primary)] shadow-[inset_0_0_0_1.5px_rgba(9,88,102,0.35)]'"
 						aria-hidden="true"
 					>
 						<!-- check -->
@@ -172,12 +172,12 @@ const iconForCode = (code) => {
 
 				<!-- Contenuto -->
 				<div class="pb-[16px] flex-1 min-w-0" :class="{ 'pb-0': idx === sortedEvents.length - 1 }">
-					<p class="text-[14px] text-[#1d2738] m-0 leading-[1.4]" style="font-weight:600">
+					<p class="text-[14px] text-[var(--color-brand-text)] m-0 leading-[1.4]" style="font-weight:600">
 						{{ ev.label }}
 					</p>
 					<div class="flex flex-wrap items-center gap-x-[10px] gap-y-[2px] mt-[4px]">
 						<span
-							class="text-[12px] text-[#5A6474]"
+							class="text-[12px] text-[var(--color-brand-text-secondary)]"
 							:title="formatAbs(ev.at)"
 						>
 							{{ formatRel(ev.at) }}
@@ -188,7 +188,7 @@ const iconForCode = (code) => {
 					</div>
 					<p
 						v-if="ev.location"
-						class="text-[12px] text-[#5A6474] mt-[4px] m-0 inline-flex items-center gap-[4px]"
+						class="text-[12px] text-[var(--color-brand-text-secondary)] mt-[4px] m-0 inline-flex items-center gap-[4px]"
 					>
 						<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
 							<path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />

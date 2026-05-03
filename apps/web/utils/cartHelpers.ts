@@ -48,7 +48,7 @@ type DisplaySingleEntry = {
 }
 type DisplayEntry = DisplayGroupEntry | DisplaySingleEntry
 
-// ─── 1. Cart formatters ───────────────────────────────────────────
+// 1. Cart formatters
 
 /** Converte centesimi in euro, sempre >= 0. Per leggere campi `_cents`. */
 export function centsToEuro(value: unknown): number {
@@ -98,7 +98,7 @@ export const QUANTITY_BUTTON_COMPACT_CLASS =
 export const QUANTITY_BUTTON_MOBILE_CLASS =
 	'w-[36px] h-[36px] flex items-center justify-center rounded-full bg-[#EEF2F3] text-[#252B42] text-[0.875rem] font-bold hover:bg-[#DDE5E7] disabled:opacity-30 cursor-pointer disabled:cursor-not-allowed transition-[background-color,transform] duration-200 active:scale-[0.97]'
 
-// ─── 2. Cart filters & display entries ────────────────────────────
+// 2. Cart filters & display entries
 
 /**
  * Builder delle voci di display per il carrello: aggrega items per gruppo
@@ -182,7 +182,7 @@ export function applyCartFilters(items: CartItem[], { provenienza, riferimento }
 	return result
 }
 
-// ─── 3. Discount preview (coupon / referral) ──────────────────────
+// 3. Discount preview (coupon / referral)
 
 type DiscountPreviewSource = {
 	type?: unknown
@@ -304,7 +304,7 @@ export function buildDiscountOrderContext({ preview = null, subtotal, finalTotal
 	}
 }
 
-// ─── 4. Pending payment (localStorage draft) ──────────────────────
+// 4. Pending payment (localStorage draft)
 
 export const PENDING_PAYMENT_KEY = 'sf_pending_payment'
 export const PENDING_PAYMENT_TTL_MS = 24 * 60 * 60 * 1000

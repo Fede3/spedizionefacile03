@@ -46,7 +46,7 @@ const activeHero = computed(() => secondaryHeros.find((h) => h.match(route.path)
 				<p class="hero-subtitle">Ritiro a domicilio, consegna veloce, prezzo fisso.</p>
 
 				<div v-if="showMinPriceDiscount" class="mt-[12px] flex items-center gap-[8px] flex-wrap">
-					<span class="inline-flex items-center gap-[4px] px-[10px] py-[4px] rounded-full bg-[#095866] text-white text-[0.8125rem] font-bold">-{{ minPriceInfo.discountPercent }}%</span>
+					<span class="inline-flex items-center gap-[4px] px-[10px] py-[4px] rounded-full bg-[var(--color-brand-primary)] text-white text-[0.8125rem] font-bold">-{{ minPriceInfo.discountPercent }}%</span>
 					<span v-if="minBasePriceFormatted" class="text-[0.875rem] font-medium text-[var(--color-brand-text-muted)] line-through">{{ minBasePriceFormatted }}&euro;</span>
 				</div>
 				<div v-if="promoSettings?.active && promoSettings?.label_text" class="mt-[8px]">

@@ -240,7 +240,7 @@ class PudoService
                 sleep(1);
 
                 $response = Http::timeout(8)->acceptJson()
-                    ->withHeaders(['User-Agent' => 'SpedizioneFacile/1.0 (info@spediamofacile.it)'])
+                    ->withHeaders(['User-Agent' => 'SpediamoFacile/1.0 (info@spediamofacile.it)'])
                     ->get('https://nominatim.openstreetmap.org/search', ['format' => 'jsonv2', 'limit' => 1, 'q' => $query]);
 
                 if (! $response->successful()) {

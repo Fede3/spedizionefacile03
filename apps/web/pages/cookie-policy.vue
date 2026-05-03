@@ -2,9 +2,9 @@
 /* eslint-disable no-useless-escape */
 useSeoMeta({
 	title: 'Cookie Policy',
-	ogTitle: 'Cookie Policy | SpedizioneFacile',
+	ogTitle: 'Cookie Policy | SpediamoFacile',
 	description:
-		'Cookie Policy di SpedizioneFacile: tipologie, finalità, durata e modalità di gestione delle preferenze. Conforme al Provvedimento Garante 10/06/2021.',
+		'Cookie Policy di SpediamoFacile: tipologie, finalità, durata e modalità di gestione delle preferenze. Conforme al Provvedimento Garante 10/06/2021.',
 });
 
 const lastUpdate = '18/04/2026';
@@ -162,7 +162,7 @@ const sections = [
 			'L\'utente può gestire le proprie preferenze cookie in due modi:',
 		],
 		list: [
-			'<strong>Tramite il banner SpedizioneFacile:</strong> al primo accesso o cliccando il pulsante "Gestisci preferenze cookie" qui sotto, è possibile accettare, rifiutare o personalizzare le categorie di cookie non strettamente necessari.',
+			'<strong>Tramite il banner SpediamoFacile:</strong> al primo accesso o cliccando il pulsante "Gestisci preferenze cookie" qui sotto, è possibile accettare, rifiutare o personalizzare le categorie di cookie non strettamente necessari.',
 			'<strong>Tramite le impostazioni del browser:</strong> ogni browser consente di bloccare tutti i cookie, eliminarli al termine della sessione o eliminarli manualmente. Si segnala che la disattivazione dei cookie tecnici può compromettere il funzionamento del sito (es. impossibilità di mantenere la sessione di login).',
 		],
 		links: [
@@ -199,7 +199,7 @@ function scrollToTop() {
 			<PublicPageHeader
 				eyebrow="Cookie"
 				title="Cookie Policy"
-				description="Informazioni complete sui cookie e le tecnologie di tracciamento di SpedizioneFacile. Conforme al Provvedimento Garante Privacy 10/06/2021 e all'art. 13 GDPR."
+				description="Informazioni complete sui cookie e le tecnologie di tracciamento di SpediamoFacile. Conforme al Provvedimento Garante Privacy 10/06/2021 e all'art. 13 GDPR."
 				:crumbs="[{ label: 'Home', to: '/' }, { label: 'Cookie Policy' }]">
 				<p class="mt-2 text-sm text-brand-text-secondary"><span class="font-semibold">Ultimo aggiornamento:</span> <time datetime="2026-04-18">{{ lastUpdate }}</time></p>
 			</PublicPageHeader>

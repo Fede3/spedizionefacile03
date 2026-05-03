@@ -1,4 +1,4 @@
-# Security policy — SpedizioneFacile backend
+# Security policy — SpediamoFacile backend
 
 Documento di riferimento per le policy di sicurezza applicate al backend
 Laravel. Aggiornare a ogni sprint di security hardening.

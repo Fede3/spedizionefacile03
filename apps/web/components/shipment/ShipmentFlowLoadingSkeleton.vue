@@ -6,9 +6,9 @@
 		data-test="shipment-step-initial-loading">
 		<div class="flex items-start gap-[12px]">
 			<div
-				class="mt-[2px] h-[18px] w-[18px] rounded-full border-[2px] border-[#095866]/20 border-t-[#095866] animate-spin shrink-0" />
+				class="mt-[2px] h-[18px] w-[18px] rounded-full border-[2px] border-[var(--color-brand-primary)]/20 border-t-[var(--color-brand-primary)] animate-spin shrink-0" />
 			<div class="min-w-0">
-				<p class="text-[#1d2738] text-[15px] sm:text-[16px] tracking-[-0.1px]" style="font-weight: 700">
+				<p class="text-[var(--color-brand-text)] text-[15px] sm:text-[16px] tracking-[-0.1px]" style="font-weight: 700">
 					Ripristiniamo la tua spedizione
 				</p>
 				<p class="mt-[4px] text-[#667085] text-[13px] leading-[1.55]" style="font-weight: 500">

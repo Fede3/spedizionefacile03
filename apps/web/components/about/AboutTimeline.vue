@@ -4,7 +4,7 @@ const milestones = [
 		year: '2020',
 		title: 'Fondazione',
 		text:
-			'Nasce SpedizioneFacile con un’idea semplice: trasformare il preventivo BRT in un’esperienza chiara, immediata, senza intermediari opachi.',
+			'Nasce SpediamoFacile con un’idea semplice: trasformare il preventivo BRT in un’esperienza chiara, immediata, senza intermediari opachi.',
 	},
 	{
 		year: '2021',

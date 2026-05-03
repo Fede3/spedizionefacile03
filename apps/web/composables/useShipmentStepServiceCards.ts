@@ -4,7 +4,7 @@
  * Keeps card-level validation, inline configuration and toggle interactions
  * separate from the broader step orchestration.
  */
-import { computed, nextTick, reactive, type ComputedRef, type Ref } from 'vue';
+import type { ComputedRef, Ref } from 'vue';
 import type { Package } from '~/types';
 
 type ShipmentService = {

@@ -120,7 +120,7 @@ class User extends Authenticatable
         return $this->role === 'Admin';
     }
 
-    /* ===== SCOPES — Query predefinite per ruoli e stati comuni ===== */
+    // SCOPES — Query predefinite per ruoli e stati comuni
 
     public function scopeAdmins($query)
     {

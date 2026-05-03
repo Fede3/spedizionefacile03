@@ -43,7 +43,7 @@ class BrtClient
         $this->trackingService = new TrackingService($this->config);
     }
 
-    // ── Shipment operations (delegated to Brt\ShipmentService) ───
+    // Shipment operations (delegated to Brt\ShipmentService)
 
     public function createShipment(Order $order, array $options = []): array
     {
@@ -65,7 +65,7 @@ class BrtClient
         return $this->shipmentService->deleteShipment($numericSenderReference);
     }
 
-    // ── PUDO operations (delegated to Brt\PudoService) ───────────
+    // PUDO operations (delegated to Brt\PudoService)
 
     public function getPudoByAddress(string $address, string $zipCode, string $city, string $countryCode = 'ITA', int $maxResults = 50): array
     {
@@ -82,7 +82,7 @@ class BrtClient
         return $this->pudoService->getPudoDetails($pudoId);
     }
 
-    // ── Tracking operations (delegated to Brt\TrackingService) ───
+    // Tracking operations (delegated to Brt\TrackingService)
 
     public function getTrackingUrl(string $parcelNumber): string
     {
@@ -94,7 +94,7 @@ class BrtClient
         return $this->trackingService->getTrackingStatus($order);
     }
 
-    // ── Home pickup (delegated to Brt\PickupService) ──────────
+    // Home pickup (delegated to Brt\PickupService)
 
     public function requestHomePickup(Order $order, array $pickupRequest): array
     {
@@ -113,7 +113,7 @@ class BrtClient
         return app(PickupService::class)->requestPickup($order, $pickupRequest);
     }
 
-    // ── Bordero generation ───────────────────────────────────────
+    // Bordero generation
 
     public function createBordero(Order $order): array
     {
