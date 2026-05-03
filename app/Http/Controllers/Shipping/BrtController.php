@@ -10,19 +10,18 @@ use App\Http\Requests\BrtPudoNearbyRequest;
 use App\Http\Requests\BrtPudoSearchRequest;
 use App\Http\Requests\BrtTestCreateShipmentRequest;
 use App\Models\Order;
+use App\Services\Brt\BrtUiService;
 use App\Services\Brt\PudoService;
 use App\Services\Brt\ShipmentService;
-use App\Services\OrderBrtFulfillmentService;
 use App\Services\OrderBrtTrackingReadService;
 use Illuminate\Support\Facades\Gate;
-use Illuminate\Support\Facades\Log;
 
 class BrtController extends Controller
 {
     public function __construct(
         private readonly ShipmentService $shipment,
         private readonly PudoService $pudo,
-        private readonly OrderBrtFulfillmentService $fulfillment,
+        private readonly BrtUiService $ui,
         private readonly OrderBrtTrackingReadService $trackingRead,
     ) {}
 
@@ -36,7 +35,6 @@ class BrtController extends Controller
         }
 
         $order = Order::findOrFail($request->order_id);
-
         Gate::authorize('manageShipment', $order);
 
         $rawStatus = $order->getRawOriginal('status') ?? $order->getAttributes()['status'] ?? 'pending';
@@ -52,58 +50,23 @@ class BrtController extends Controller
             ], 409);
         }
 
-        $options = [
+        $result = $this->ui->createManualShipment($order, [
             'is_cod' => $request->boolean('is_cod'),
             'cod_amount' => $request->input('cod_amount'),
             'pudo_id' => $request->input('pudo_id'),
             'notes' => $request->input('notes'),
-        ];
-
-        $result = null;
-        for ($attempt = 1; $attempt <= 3; $attempt++) {
-            try {
-                $result = $this->shipment->createShipment($order, $options);
-                if ($result['success']) {
-                    break;
-                }
-            } catch (\Throwable $e) {
-                Log::warning("BRT manual createShipment attempt {$attempt}/3 failed", [
-                    'order_id' => $order->id,
-                    'error' => $e->getMessage(),
-                ]);
-                $result = ['success' => false, 'error' => $e->getMessage()];
-            }
-        }
+        ]);
 
         if (! ($result['success'] ?? false)) {
-            return response()->json(['error' => $result['error'] ?? 'Errore BRT sconosciuto.'], 502);
+            return response()->json(['error' => $result['error']], 502);
         }
 
-        $order = $this->fulfillment->finalizeSuccessfulShipment(
-            $order,
-            $result,
-            [
-                'brt_pudo_id' => $request->input('pudo_id'),
-                'is_cod' => $request->boolean('is_cod'),
-                'cod_amount' => $request->input('cod_amount'),
-            ],
-            'Post-elaborazione documenti fallita dopo creazione spedizione manuale',
-            'Failed to complete shipment documents flow after manual shipment creation'
-        );
-
-        return response()->json([
-            'success' => true,
-            'parcel_id' => $result['parcel_id'] ?? null,
-            'tracking_number' => $result['tracking_number'] ?? null,
-            'tracking_url' => $result['tracking_url'] ?? null,
-            'order_status' => Order::LABEL_GENERATED,
-        ]);
+        return response()->json($result);
     }
 
     public function confirmShipment(BrtOrderActionRequest $request)
     {
         $order = Order::findOrFail($request->order_id);
-
         Gate::authorize('manageShipment', $order);
 
         if (! $order->brt_numeric_sender_reference) {
@@ -134,7 +97,7 @@ class BrtController extends Controller
             return response()->json(['error' => $result['error']], 502);
         }
 
-        $this->resetBrtData($order);
+        $this->ui->resetBrtData($order);
 
         return response()->json(['success' => true]);
     }
@@ -173,7 +136,6 @@ class BrtController extends Controller
     public function pudoSearch(BrtPudoSearchRequest $request)
     {
         $data = $request->validated();
-
         $zipCode = preg_replace('/\D/', '', (string) ($data['zip_code'] ?? ''));
         $city = trim((string) ($data['city'] ?? ''));
 
@@ -181,27 +143,22 @@ class BrtController extends Controller
             return response()->json(['success' => false, 'error' => 'Inserisci almeno citta o CAP per cercare i punti PUDO.'], 422);
         }
 
-        $result = $this->pudo->getPudoByAddress(
+        return response()->json($this->pudo->getPudoByAddress(
             trim((string) ($data['address'] ?? '')),
             $zipCode,
             $city,
             $data['country'] ?? 'ITA',
             (int) ($data['max_results'] ?? 50)
-        );
-
-        return response()->json($result);
+        ));
     }
 
     public function pudoNearby(BrtPudoNearbyRequest $request)
     {
-
-        $result = $this->pudo->getPudoByCoordinates(
+        return response()->json($this->pudo->getPudoByCoordinates(
             (float) $request->latitude,
             (float) $request->longitude,
             (int) ($request->max_results ?? 50)
-        );
-
-        return response()->json($result);
+        ));
     }
 
     public function pudoDetails(string $pudoId)
@@ -212,32 +169,5 @@ class BrtController extends Controller
     public function testCreate(BrtTestCreateShipmentRequest $request)
     {
         return response()->json($this->shipment->testCreateShipment($request->validated()));
-    }
-
-    private function resetBrtData(Order $order): void
-    {
-        $brtFields = [
-            'brt_parcel_id',
-            'brt_numeric_sender_reference',
-            'brt_tracking_url',
-            'brt_label_base64',
-            'brt_tracking_number',
-            'brt_parcel_number_to',
-            'brt_departure_depot',
-            'brt_arrival_terminal',
-            'brt_arrival_depot',
-            'brt_delivery_zone',
-            'brt_series_number',
-            'brt_service_type',
-            'brt_all_labels',
-            'brt_raw_response',
-            'brt_error',
-        ];
-
-        foreach ($brtFields as $field) {
-            $order->{$field} = null;
-        }
-        $order->status = Order::COMPLETED;
-        $order->save();
     }
 }

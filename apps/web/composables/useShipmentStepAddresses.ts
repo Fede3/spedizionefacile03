@@ -5,21 +5,6 @@ import { computed, ref, watch, type ComputedRef, type Ref } from 'vue';
 
 type AddressTarget = 'origin' | 'dest';
 
-type StepAddress = {
-	type?: string;
-	full_name: string;
-	additional_information: string;
-	address: string;
-	address_number: string;
-	intercom_code: string;
-	country: string;
-	city: string;
-	postal_code: string;
-	province: string;
-	telephone_number: string;
-	email: string;
-};
-
 type AddressBookAddress = {
 	name?: string;
 	additional_information?: string;
@@ -34,16 +19,10 @@ type AddressBookAddress = {
 	email?: string;
 };
 
-type ShipmentSessionDetails = {
-	origin_city?: string;
-	origin_postal_code?: string;
-	origin_country?: string;
-	origin_province?: string;
-	destination_city?: string;
-	destination_postal_code?: string;
-	destination_country?: string;
-	destination_province?: string;
-};
+type StepAddress = Required<Omit<AddressBookAddress, 'name'>> & { full_name: string; type?: string };
+
+type Side = 'origin' | 'destination';
+type ShipmentSessionDetails = Partial<Record<`${Side}_${'city' | 'postal_code' | 'country' | 'province'}`, string>>;
 
 type SessionData = {
 	shipment_details?: ShipmentSessionDetails;
@@ -102,17 +81,15 @@ const initStepAddress = (
 	sessAddr: AddressBookAddress | null | undefined,
 	details: ShipmentSessionDetails | undefined,
 	type: string,
-	cityKey: keyof ShipmentSessionDetails,
-	pcKey: keyof ShipmentSessionDetails,
-	countryKey: keyof ShipmentSessionDetails,
+	side: Side,
 ): StepAddress => {
 	if (stored) return { ...stored };
 	if (sessAddr) return fromSessionAddress(sessAddr, type);
 	return {
 		...baseAddress(), type,
-		city: String(details?.[cityKey] || ''),
-		postal_code: String(details?.[pcKey] || ''),
-		country: String(details?.[countryKey] || 'Italia'),
+		city: String(details?.[`${side}_city`] || ''),
+		postal_code: String(details?.[`${side}_postal_code`] || ''),
+		country: String(details?.[`${side}_country`] || 'Italia'),
 	};
 };
 
@@ -130,8 +107,6 @@ const normCountry = (v: unknown) => {
 	const n = normText(v);
 	return n === 'italia' || n === 'it' ? 'it' : n;
 };
-const normEmail = (v: unknown) => String(v || '').trim().toLowerCase();
-const normPhone = (v: unknown) => String(v || '').replace(/\s+/g, '');
 
 const toBookPayload = (a: StepAddress): Required<AddressBookAddress> & { number_type: string } => ({
 	name: a.full_name.trim(),
@@ -160,15 +135,13 @@ const bookSignature = (a: StepAddress | AddressBookAddress) => {
 		city: normText(p.city),
 		postal_code: normPostal(p),
 		province: normText(p.province),
-		telephone_number: normPhone(p.telephone_number),
-		email: normEmail(p.email),
+		telephone_number: String(p.telephone_number || '').replace(/\s+/g, ''),
+		email: String(p.email || '').trim().toLowerCase(),
 	});
 };
 
 const apiErrorMessage = (error: unknown, fallback: string) => {
-	if (!isRecord(error)) return fallback;
-	const data = isRecord(error.data) ? error.data : null;
-	const msg = data?.message;
+	const msg = isRecord(error) && isRecord(error.data) ? error.data.message : null;
 	return typeof msg === 'string' && msg ? msg : fallback;
 };
 
@@ -181,8 +154,8 @@ export const useShipmentStepAddresses = ({
 	const sessionOrigin = session.value?.data?.origin_address;
 	const sessionDest = session.value?.data?.destination_address;
 
-	const originAddress = ref<StepAddress>(initStepAddress(storedOrigin, sessionOrigin, sessionDetails, 'Partenza', 'origin_city', 'origin_postal_code', 'origin_country'));
-	const destinationAddress = ref<StepAddress>(initStepAddress(storedDest, sessionDest, sessionDetails, 'Destinazione', 'destination_city', 'destination_postal_code', 'destination_country'));
+	const originAddress = ref<StepAddress>(initStepAddress(storedOrigin, sessionOrigin, sessionDetails, 'Partenza', 'origin'));
+	const destinationAddress = ref<StepAddress>(initStepAddress(storedDest, sessionDest, sessionDetails, 'Destinazione', 'destination'));
 
 	const shouldAutoShowAddressFields = route.query.step === 'ritiro' || Boolean(storedOrigin || sessionOrigin);
 	const savedAddresses = ref<AddressBookAddress[]>([]);
@@ -209,9 +182,8 @@ export const useShipmentStepAddresses = ({
 
 	const requestedPath = () => {
 		const r = Array.isArray(route.query.redirect) ? route.query.redirect[0] : route.query.redirect;
-		if (route.path === '/autenticazione' || route.path === '/login' || route.path === '/registrazione') {
-			return typeof r === 'string' && r.startsWith('/') ? r : '/';
-		}
+		const isAuthRoute = route.path === '/autenticazione' || route.path === '/login' || route.path === '/registrazione';
+		if (isAuthRoute) return typeof r === 'string' && r.startsWith('/') ? r : '/';
 		return route.fullPath;
 	};
 
@@ -252,8 +224,10 @@ export const useShipmentStepAddresses = ({
 		void loadSavedAddresses();
 	}, { immediate: true });
 
+	const pick = <T>(target: AddressTarget, o: T, d: T) => target === 'origin' ? o : d;
+
 	const applySavedAddress = (address: AddressBookAddress, target: AddressTarget) => {
-		const ref_ = target === 'origin' ? originAddress : destinationAddress;
+		const ref_ = pick(target, originAddress, destinationAddress);
 		const contactOnly = target === 'dest' && deliveryMode.value === 'pudo';
 		ref_.value.full_name = address.name || '';
 		ref_.value.telephone_number = address.telephone_number || '';
@@ -267,11 +241,10 @@ export const useShipmentStepAddresses = ({
 			ref_.value.province = address.province || '';
 			ref_.value.intercom_code = address.intercom_code || '';
 		}
-		const isOrigin = target === 'origin';
-		(isOrigin ? showOriginAddressSelector : showDestAddressSelector).value = false;
-		(isOrigin ? originFromSaved : destFromSaved).value = true;
-		(isOrigin ? originSaveSuccess : destSaveSuccess).value = false;
-		(isOrigin ? originSavedSnapshot : destSavedSnapshot).value = bookSignature(ref_.value);
+		pick(target, showOriginAddressSelector, showDestAddressSelector).value = false;
+		pick(target, originFromSaved, destFromSaved).value = true;
+		pick(target, originSaveSuccess, destSaveSuccess).value = false;
+		pick(target, originSavedSnapshot, destSavedSnapshot).value = bookSignature(ref_.value);
 	};
 
 	const watchSavedDrift = (snapshot: Ref<string | null>, fromSaved: Ref<boolean>, success: Ref<boolean>) =>
@@ -301,12 +274,11 @@ export const useShipmentStepAddresses = ({
 	const canSaveDestAddress = computed(canSave(destinationAddress, destFromSaved, destSaveSuccess, isDestDuplicateAddress));
 
 	const saveAddressToBook = async (target: AddressTarget) => {
-		const isOrigin = target === 'origin';
-		const address = (isOrigin ? originAddress : destinationAddress).value;
-		const savingRef = isOrigin ? savingOriginAddress : savingDestAddress;
-		const successRef = isOrigin ? originSaveSuccess : destSaveSuccess;
-		const dupRef = isOrigin ? isOriginDuplicateAddress : isDestDuplicateAddress;
-		const snapshotRef = isOrigin ? originSavedSnapshot : destSavedSnapshot;
+		const address = pick(target, originAddress, destinationAddress).value;
+		const savingRef = pick(target, savingOriginAddress, savingDestAddress);
+		const successRef = pick(target, originSaveSuccess, destSaveSuccess);
+		const dupRef = pick(target, isOriginDuplicateAddress, isDestDuplicateAddress);
+		const snapshotRef = pick(target, originSavedSnapshot, destSavedSnapshot);
 
 		if (dupRef.value) {
 			submitError.value = 'Questo indirizzo e gia presente tra gli indirizzi salvati.';
@@ -342,30 +314,29 @@ export const useShipmentStepAddresses = ({
 		showDestAddressSelector.value = !isOrigin ? !showDestAddressSelector.value : false;
 	};
 
+	const fillSide = (a: StepAddress, d: ShipmentSessionDetails, side: Side) => {
+		if (!a.city) a.city = d[`${side}_city`] || '';
+		if (!a.postal_code) a.postal_code = d[`${side}_postal_code`] || '';
+		const province = d[`${side}_province`];
+		if (!a.province && province) a.province = province;
+	};
+
 	const fillFromDetails = (d: ShipmentSessionDetails | null | undefined) => {
 		if (!d) return;
-		const o = originAddress.value;
-		const t = destinationAddress.value;
-		if (!o.city) o.city = d.origin_city || '';
-		if (!o.postal_code) o.postal_code = d.origin_postal_code || '';
-		if (!o.province && d.origin_province) o.province = d.origin_province;
-		if (!t.city) t.city = d.destination_city || '';
-		if (!t.postal_code) t.postal_code = d.destination_postal_code || '';
-		if (!t.province && d.destination_province) t.province = d.destination_province;
+		fillSide(originAddress.value, d, 'origin');
+		fillSide(destinationAddress.value, d, 'destination');
+	};
+
+	const watchSessionAddress = (key: 'origin_address' | 'destination_address', target: Ref<StepAddress>, type: string) => {
+		watch(() => session.value?.data?.[key], (a) => {
+			if (!a || target.value.full_name) return;
+			target.value = fromSessionAddress(a, type);
+		}, { immediate: true });
 	};
 
 	watch(() => session.value?.data?.shipment_details, fillFromDetails, { immediate: true });
-
-	watch(() => session.value?.data?.origin_address, (a) => {
-		if (!a || originAddress.value.full_name) return;
-		originAddress.value = fromSessionAddress(a, 'Partenza');
-	}, { immediate: true });
-
-	watch(() => session.value?.data?.destination_address, (a) => {
-		if (!a || destinationAddress.value.full_name) return;
-		destinationAddress.value = fromSessionAddress(a, 'Destinazione');
-	}, { immediate: true });
-
+	watchSessionAddress('origin_address', originAddress, 'Partenza');
+	watchSessionAddress('destination_address', destinationAddress, 'Destinazione');
 	watch(() => shipmentFlowStore?.shipmentDetails, fillFromDetails, { immediate: true, deep: true });
 
 	return {
