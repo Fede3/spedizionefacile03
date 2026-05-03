@@ -1,5 +1,4 @@
 <script setup>
-
 const faqs = [
 	{
 		q: 'Quanto costa spedire con SpediamoFacile?',
@@ -8,6 +7,22 @@ const faqs = [
 	{
 		q: 'Quanto tempo impiega la consegna?',
 		a: 'Per le spedizioni nazionali la consegna avviene in 24/48 ore lavorative. In Europa i tempi vanno da 2 a 5 giorni lavorativi a seconda del paese.',
+	},
+	{
+		q: 'Posso fare il ritiro a domicilio?',
+		a: 'Sì. Scegli giorno e fascia oraria al momento del preventivo: il corriere BRT ritira il pacco direttamente dove preferisci, senza costi extra.',
+	},
+	{
+		q: 'Come traccio la mia spedizione?',
+		a: 'Ricevi un link tracking via email subito dopo il pagamento. Lo stato si aggiorna in tempo reale con tutte le tappe del corriere fino alla consegna.',
+	},
+	{
+		q: 'Cosa succede se il pacco si danneggia?',
+		a: 'Tutte le spedizioni sono coperte fino a 520 €. Per pacchi di valore superiore puoi attivare l\'assicurazione integrativa al momento del preventivo.',
+	},
+	{
+		q: 'Accettate il contrassegno?',
+		a: 'Sì, il destinatario può pagare alla consegna in contanti o con carta. Selezionalo durante la compilazione del preventivo, c\'è un piccolo costo aggiuntivo.',
 	},
 ];
 
@@ -26,157 +41,70 @@ function toggleFaq(i) {
 </script>
 
 <template>
-	<section class="faq" aria-labelledby="faq-title">
-		<div class="container faq__inner">
-			<aside class="faq__aside">
-				<HomeSectionHead
-					eyebrow="Domande frequenti"
-					title="Tutto quello che vuoi sapere"
-					title-id="faq-title"
-					subtitle="Le risposte alle domande più comuni dei nostri clienti."
-					align="left" />
-				<div class="faq__aside-meta" data-reveal>
-					<p class="faq__aside-hint">Non trovi la risposta? Scrivici o guarda le guide complete.</p>
-					<div class="faq__aside-actions">
+	<section class="bg-brand-bg-alt py-16 md:py-20" aria-labelledby="home-faq-title">
+		<div class="max-w-6xl mx-auto px-4 md:px-8">
+			<div class="grid gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.5fr)] lg:gap-16 lg:items-start">
+				<!-- LEFT: Heading + CTA box -->
+				<aside class="lg:sticky lg:top-24 space-y-6">
+					<HomeSectionHead
+						eyebrow="Domande frequenti"
+						title="Tutto quello che vuoi sapere"
+						title-id="home-faq-title"
+						subtitle="Le risposte alle domande più comuni dei nostri clienti."
+						align="left"
+					/>
+					<div class="space-y-3 text-sm leading-relaxed text-brand-text-secondary">
+						<p>Non trovi la risposta che cerchi? Esplora il centro assistenza completo o parla con il nostro team.</p>
+					</div>
+					<div class="flex flex-wrap gap-3">
 						<SfButton to="/faq">Vai a tutte le FAQ</SfButton>
 						<SfButton variant="secondary" to="/contatti">Contatta l'assistenza</SfButton>
 					</div>
-				</div>
-			</aside>
+				</aside>
 
-			<ul class="faq__list" role="list">
-				<li
-					v-for="(item, i) in faqs"
-					:key="i"
-					class="faq__item"
-					:data-open="isFaqOpen(i) ? 'true' : 'false'"
-					data-reveal>
-					<button
-						:id="`faq-trigger-${i}`"
-						type="button"
-						class="faq__q"
-						:aria-expanded="isFaqOpen(i)"
-						:aria-controls="`faq-panel-${i}`"
-						@click="toggleFaq(i)">
-						<span>{{ item.q }}</span>
-						<span class="faq__icon" aria-hidden="true">
-							<svg viewBox="0 0 16 16" focusable="false">
-								<path d="M3 6l5 5 5-5" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" />
-							</svg>
-						</span>
-					</button>
-					<div
-						v-show="isFaqOpen(i)"
-						:id="`faq-panel-${i}`"
-						role="region"
-						:aria-labelledby="`faq-trigger-${i}`"
-						class="faq__a">
-						<p>{{ item.a }}</p>
-					</div>
-				</li>
-			</ul>
+				<!-- RIGHT: FAQ accordion list -->
+				<ul class="space-y-3" role="list">
+					<li
+						v-for="(item, i) in faqs"
+						:key="i"
+						class="overflow-hidden rounded-card border border-brand-border bg-brand-card transition-all"
+						:class="isFaqOpen(i)
+							? 'border-brand-primary/30 shadow-[0_8px_24px_-12px_rgba(9,88,102,0.18)]'
+							: 'hover:border-brand-primary/20 hover:shadow-sf-sm'"
+					>
+						<button
+							:id="`faq-trigger-${i}`"
+							type="button"
+							class="flex w-full items-center justify-between gap-4 px-5 py-4 text-left text-base font-semibold text-brand-text transition-colors hover:text-brand-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-primary/50"
+							:aria-expanded="isFaqOpen(i)"
+							:aria-controls="`faq-panel-${i}`"
+							@click="toggleFaq(i)"
+						>
+							<span>{{ item.q }}</span>
+							<span
+								aria-hidden="true"
+								class="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full transition-all"
+								:class="isFaqOpen(i)
+									? 'bg-brand-accent/10 text-brand-accent rotate-180'
+									: 'bg-brand-primary/8 text-brand-primary'"
+							>
+								<svg viewBox="0 0 16 16" focusable="false" class="h-3.5 w-3.5">
+									<path d="M3 6l5 5 5-5" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" />
+								</svg>
+							</span>
+						</button>
+						<div
+							v-show="isFaqOpen(i)"
+							:id="`faq-panel-${i}`"
+							role="region"
+							:aria-labelledby="`faq-trigger-${i}`"
+							class="px-5 pb-5 text-sm leading-relaxed text-brand-text-secondary"
+						>
+							<p>{{ item.a }}</p>
+						</div>
+					</li>
+				</ul>
+			</div>
 		</div>
 	</section>
 </template>
-
-<style scoped>
-.container {
-	max-width: 1280px;
-	margin-inline: auto;
-	padding-inline: 14px;
-}
-@media (min-width: 1024px) {
-	.container { padding-inline: 40px; }
-}
-.faq { padding-block: 72px; background: #f7faf9; }
-.faq__inner {
-	display: grid;
-	gap: 32px;
-}
-.faq__aside {
-	display: flex;
-	flex-direction: column;
-	justify-content: space-between;
-	gap: 28px;
-}
-.faq__aside-meta {
-	padding: 20px;
-	border-radius: 16px;
-	background: #ffffff;
-	border: 1px solid #e3ece9;
-	box-shadow: 0 6px 18px rgba(9, 88, 102, 0.05);
-	display: flex;
-	flex-direction: column;
-	gap: 14px;
-}
-.faq__aside-hint {
-	margin: 0;
-	font-size: 14px;
-	line-height: 1.55;
-	color: #475559;
-}
-.faq__aside-actions {
-	display: flex;
-	flex-wrap: wrap;
-	gap: 10px;
-}
-@media (min-width: 1024px) {
-	.faq__inner { grid-template-columns: 1fr 1.4fr; align-items: stretch; gap: 56px; }
-	.faq__aside { position: sticky; top: 88px; }
-}
-.faq__list {
-	margin: 0;
-	padding: 0;
-	list-style: none;
-	display: grid;
-	gap: 12px;
-}
-.faq__item {
-	background: #ffffff;
-	border: 1px solid #eef2f0;
-	border-radius: 14px;
-	overflow: hidden;
-	transition: border-color var(--sf-t1) var(--sf-ease), box-shadow var(--sf-t1) var(--sf-ease);
-}
-.faq__item[data-open="true"] {
-	border-color: #c7d6d2;
-	box-shadow: 0 8px 22px -16px rgba(9, 88, 102, 0.25);
-}
-.faq__q {
-	width: 100%;
-	background: transparent;
-	border: 0;
-	padding: 18px 20px;
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
-	gap: 16px;
-	text-align: left;
-	font: inherit;
-	font-size: 16px;
-	font-weight: 600;
-	color: #0d3a44;
-	cursor: pointer;
-}
-.faq__q:focus-visible {
-	outline: none;
-	box-shadow: inset 0 0 0 3px rgba(9, 88, 102, 0.18);
-}
-.faq__icon {
-	color: #095866;
-	transition: transform var(--sf-t1) var(--sf-ease);
-	display: inline-grid;
-	place-items: center;
-	width: 22px;
-	height: 22px;
-}
-.faq__icon svg { width: 16px; height: 16px; }
-.faq__item[data-open="true"] .faq__icon { transform: rotate(180deg); color: #E44203; }
-.faq__a {
-	padding: 0 20px 18px;
-	font-size: 15px;
-	line-height: 1.6;
-	color: #475559;
-}
-.faq__a p { margin: 0; }
-</style>
