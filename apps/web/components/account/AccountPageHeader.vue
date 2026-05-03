@@ -2,7 +2,6 @@
 /*
   AccountPageHeader — hero unificato per tutte le pagine /account/*.
   Pattern caratteristico:
-    - accent-bar arancione verticale 3px a sinistra (border-l-[3px])
     - kicker uppercase arancione 11px (es. "ACCOUNT", "WALLET", "STORICO")
     - heading 22-28px font-display teal
     - description secondary 14-15px
@@ -43,7 +42,7 @@ const resolvedCrumbs = computed(() => {
 
 <template>
 	<div class="mb-5 md:mb-6">
-		<div class="relative overflow-hidden rounded-card border border-brand-border bg-gradient-to-b from-brand-card to-brand-bg-alt shadow-sf p-5 md:p-6 border-l-[3px] border-l-brand-accent">
+		<div class="relative overflow-hidden rounded-card border border-brand-border bg-gradient-to-b from-brand-card to-brand-bg-alt shadow-sf p-5 md:p-6">
 			<div
 				v-if="resolvedCrumbs.length || backTo"
 				class="relative z-10 flex flex-wrap items-center justify-between gap-2 mb-2.5 pb-2.5 border-b border-brand-primary/10"
