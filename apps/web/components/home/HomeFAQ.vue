@@ -12,18 +12,6 @@ const faqs = [
 		q: 'Posso fare il ritiro a domicilio?',
 		a: 'Sì. Scegli giorno e fascia oraria al momento del preventivo: il corriere BRT ritira il pacco direttamente dove preferisci, senza costi extra.',
 	},
-	{
-		q: 'Come traccio la mia spedizione?',
-		a: 'Ricevi un link tracking via email subito dopo il pagamento. Lo stato si aggiorna in tempo reale con tutte le tappe del corriere fino alla consegna.',
-	},
-	{
-		q: 'Cosa succede se il pacco si danneggia?',
-		a: 'Tutte le spedizioni sono coperte fino a 520 €. Per pacchi di valore superiore puoi attivare l\'assicurazione integrativa al momento del preventivo.',
-	},
-	{
-		q: 'Accettate il contrassegno?',
-		a: 'Sì, il destinatario può pagare alla consegna in contanti o con carta. Selezionalo durante la compilazione del preventivo, c\'è un piccolo costo aggiuntivo.',
-	},
 ];
 
 const openFaqIndexes = ref([]);
@@ -43,9 +31,9 @@ function toggleFaq(i) {
 <template>
 	<section class="bg-brand-bg-alt py-16 md:py-20" aria-labelledby="home-faq-title">
 		<div class="max-w-6xl mx-auto px-4 md:px-8">
-			<div class="grid gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.5fr)] lg:gap-16 lg:items-start">
-				<!-- LEFT: Heading + CTA box -->
-				<aside class="lg:sticky lg:top-24 space-y-6">
+			<div class="grid gap-10 lg:grid-cols-2 lg:gap-12 lg:items-center">
+				<!-- LEFT: Heading + CTA box bilanciato -->
+				<div class="space-y-6">
 					<HomeSectionHead
 						eyebrow="Domande frequenti"
 						title="Tutto quello che vuoi sapere"
@@ -53,16 +41,16 @@ function toggleFaq(i) {
 						subtitle="Le risposte alle domande più comuni dei nostri clienti."
 						align="left"
 					/>
-					<div class="space-y-3 text-sm leading-relaxed text-brand-text-secondary">
-						<p>Non trovi la risposta che cerchi? Esplora il centro assistenza completo o parla con il nostro team.</p>
-					</div>
+					<p class="text-sm leading-relaxed text-brand-text-secondary md:text-base">
+						Tre risposte rapide qui sotto, oppure consulta il centro assistenza completo con tutte le guide e domande.
+					</p>
 					<div class="flex flex-wrap gap-3">
 						<SfButton to="/faq">Vai a tutte le FAQ</SfButton>
 						<SfButton variant="secondary" to="/contatti">Contatta l'assistenza</SfButton>
 					</div>
-				</aside>
+				</div>
 
-				<!-- RIGHT: FAQ accordion list -->
+				<!-- RIGHT: 3 FAQ accordion (bilanciato con sinistra) -->
 				<ul class="space-y-3" role="list">
 					<li
 						v-for="(item, i) in faqs"
