@@ -40,10 +40,15 @@ useHead({
 let observer = null;
 onMounted(() => {
 	if (!('IntersectionObserver' in window)) return;
+	const elements = document.querySelectorAll('[data-reveal]');
+	// Progressive enhancement: aggiungiamo is-pending SOLO se l'observer parte.
+	// Cosi' se JS fallisce per qualsiasi motivo, gli elementi restano visibili.
+	elements.forEach((el) => el.classList.add('is-pending'));
 	observer = new IntersectionObserver(
 		(entries) => {
 			for (const entry of entries) {
 				if (entry.isIntersecting) {
+					entry.target.classList.remove('is-pending');
 					entry.target.classList.add('is-visible');
 					observer.unobserve(entry.target);
 				}
@@ -51,7 +56,7 @@ onMounted(() => {
 		},
 		{ threshold: 0.12, rootMargin: '0px 0px -40px 0px' },
 	);
-	document.querySelectorAll('[data-reveal]').forEach((el) => observer.observe(el));
+	elements.forEach((el) => observer.observe(el));
 });
 onBeforeUnmount(() => observer?.disconnect());
 </script>
@@ -76,17 +81,22 @@ onBeforeUnmount(() => observer?.disconnect());
 </template>
 
 <style>
+/* Progressive enhancement: gli elementi sono visibili di default.
+   La classe is-pending viene aggiunta solo dal JS in onMounted, quindi se JS
+   fallisce o l'IntersectionObserver non e disponibile, l'elemento e visibile. */
 [data-reveal] {
+	transition: opacity var(--sf-t2) var(--sf-ease), transform var(--sf-t2) var(--sf-ease);
+}
+[data-reveal].is-pending {
 	opacity: 0;
 	transform: translateY(16px);
-	transition: opacity var(--sf-t2) var(--sf-ease), transform var(--sf-t2) var(--sf-ease);
 }
 [data-reveal].is-visible {
 	opacity: 1;
 	transform: none;
 }
 @media (prefers-reduced-motion: reduce) {
-	[data-reveal] { opacity: 1; transform: none; transition: none; }
+	[data-reveal].is-pending { opacity: 1; transform: none; transition: none; }
 }
 </style>
 

@@ -9,7 +9,7 @@ defineProps({
 </script>
 
 <template>
-	<header class="section-head" :class="{ 'section-head--left': align === 'left' }" data-reveal>
+	<header class="section-head" :class="{ 'section-head--left': align === 'left' }">
 		<p v-if="eyebrow" class="section-head__eyebrow">{{ eyebrow }}</p>
 		<h2 v-if="title" :id="titleId" class="section-head__title">{{ title }}</h2>
 		<p v-if="subtitle" class="section-head__sub">{{ subtitle }}</p>
