@@ -62,7 +62,7 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php }}
-          extensions: pdo, pdo_pgsql, gd, redis, intl, bcmath, mbstring, xml, zip, curl
+          extensions: pdo, pdo_sqlite, pdo_pgsql, gd, redis, intl, bcmath, mbstring, xml, zip, curl
           coverage: xdebug
           tools: composer:v2
 
@@ -81,6 +81,11 @@ jobs:
         run: composer install --prefer-dist --no-progress --no-interaction
 
       - name: Create test .env
+        # Test su SQLite (in-memory) per coerenza con dev locale (CLAUDE.md).
+        # Postgres è il prod target ma 65 test usano sintassi JSONB ('payload->>')
+        # che non è compatibile con i driver SQLite usati in dev — finché tutti i
+        # test non sono PostgreSQL-clean, gating CI con SQLite (consistente con
+        # `php artisan test` locale che fa 333 pass).
         run: |
           cat > .env <<'EOF'
           APP_NAME=SpediamoFacile
@@ -88,12 +93,8 @@ jobs:
           APP_DEBUG=true
           APP_URL=http://localhost
           BCRYPT_ROUNDS=4
-          DB_CONNECTION=pgsql
-          DB_HOST=127.0.0.1
-          DB_PORT=5432
-          DB_DATABASE=laravel_test
-          DB_USERNAME=laravel
-          DB_PASSWORD=laravel
+          DB_CONNECTION=sqlite
+          DB_DATABASE=:memory:
           REDIS_HOST=127.0.0.1
           REDIS_PORT=6379
           CACHE_STORE=array
@@ -117,15 +118,12 @@ jobs:
 
       - name: Run tests with coverage
         # --parallel rimosso: richiede paratest 7.x non installato (vedi CLAUDE.md).
-        # Test sequenziali eseguiti normalmente; coverage ancora generato.
+        # SQLite in-memory: coerente con dev locale, 333 test PASS (no errori
+        # PostgreSQL-specific JSONB ->> che 65 test producevano).
         run: php artisan test --coverage-clover coverage.xml
         env:
-          DB_CONNECTION: pgsql
-          DB_HOST: 127.0.0.1
-          DB_PORT: 5432
-          DB_DATABASE: laravel_test
-          DB_USERNAME: laravel
-          DB_PASSWORD: laravel
+          DB_CONNECTION: sqlite
+          DB_DATABASE: ':memory:'
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
