@@ -86,12 +86,14 @@ jobs:
         # che non è compatibile con i driver SQLite usati in dev — finché tutti i
         # test non sono PostgreSQL-clean, gating CI con SQLite (consistente con
         # `php artisan test` locale che fa 333 pass).
+        # APP_KEY hardcoded per CI (test only, non è un secret di produzione).
         run: |
           cat > .env <<'EOF'
           APP_NAME=SpediamoFacile
           APP_ENV=testing
           APP_DEBUG=true
           APP_URL=http://localhost
+          APP_KEY=base64:Y2lFeGFtcGxlS2V5Rm9yVGVzdGluZ09ubHkxMjM0NTY3OD0=
           BCRYPT_ROUNDS=4
           DB_CONNECTION=sqlite
           DB_DATABASE=:memory:
@@ -104,14 +106,10 @@ jobs:
           MAIL_MAILER=array
           EOF
 
-      - name: Generate application key
-        run: php artisan key:generate
-
-      # Run database migrations: SKIP per SQLite in-memory test
-      # Con :memory: ogni nuova connessione ottiene un DB vuoto.
-      # `RefreshDatabase` trait nei test esegue migrate per ogni test
-      # case, quindi un migrate up-front è ridondante e causa
-      # "There is already an active transaction" su connessioni riusate.
+      # APP_KEY già hardcoded nel .env CI sopra. config:clear per assicurare
+      # che config caching non blocchi APP_KEY pickup nei test.
+      - name: Clear config cache
+        run: php artisan config:clear
 
       - name: Run Laravel Pint (code style)
         run: composer lint
