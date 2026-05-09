@@ -301,7 +301,7 @@ export const adminNavGroups = [
 		items: [
 			{ label: 'Servizi', to: '/account/amministrazione/servizi', iconKey: 'services-cog' },
 			// Guide nel menu sidebar admin: stesso modello di Servizi (CMS articoli pubblici).
-			{ label: 'Guide', to: '/guide', iconKey: 'clipboard-list' },
+			{ label: 'Guide', to: '/account/amministrazione/guide', iconKey: 'clipboard-list' },
 		],
 	},
 	{
