@@ -57,6 +57,14 @@ export const accountCardIcons = {
 	email: '<path d="M20,8L12,13L4,8V6L12,11L20,6M20,4H4C2.89,4 2,4.89 2,6V18A2,2 0 0,0 4,20H20A2,2 0 0,0 22,18V6C22,4.89 21.1,4 20,4Z"/>',
 	'cog-outline':
 		'<path d="M12,8A4,4 0 0,1 16,12A4,4 0 0,1 12,16A4,4 0 0,1 8,12A4,4 0 0,1 12,8M12,10A2,2 0 0,0 10,12A2,2 0 0,0 12,14A2,2 0 0,0 14,12A2,2 0 0,0 12,10M10,22C9.75,22 9.54,21.82 9.5,21.58L9.13,18.93C8.5,18.68 7.96,18.34 7.44,17.94L4.95,18.95C4.73,19.03 4.46,18.95 4.34,18.73L2.34,15.27C2.21,15.05 2.27,14.78 2.46,14.63L4.57,12.97C4.53,12.65 4.5,12.33 4.5,12C4.5,11.67 4.53,11.34 4.57,11L2.46,9.37C2.27,9.22 2.21,8.95 2.34,8.73L4.34,5.27C4.46,5.05 4.73,4.96 4.95,5.05L7.44,6.05C7.96,5.66 8.5,5.32 9.13,5.07L9.5,2.42C9.54,2.18 9.75,2 10,2H14C14.25,2 14.46,2.18 14.5,2.42L14.87,5.07C15.5,5.32 16.04,5.66 16.56,6.05L19.05,5.05C19.27,4.96 19.54,5.05 19.66,5.27L21.66,8.73C21.79,8.95 21.73,9.22 21.54,9.37L19.43,11C19.47,11.34 19.5,11.67 19.5,12C19.5,12.33 19.47,12.65 19.43,12.97L21.54,14.63C21.73,14.78 21.79,15.05 21.66,15.27L19.66,18.73C19.54,18.95 19.27,19.04 19.05,18.95L16.56,17.94C16.04,18.34 15.5,18.68 14.87,18.93L14.5,21.58C14.46,21.82 14.25,22 14,22H10Z"/>',
+	'shield-key':
+		'<path d="M12,1L3,5V11C3,16.5 6.84,21.74 12,23C17.16,21.74 21,16.5 21,11V5L12,1M12,7A2,2 0 0,1 14,9C14,9.74 13.6,10.39 13,10.73V13H11V10.73C10.4,10.39 10,9.74 10,9A2,2 0 0,1 12,7Z"/>',
+	'shield-account':
+		'<path d="M12,1L3,5V11C3,16.55 6.84,21.74 12,23C17.16,21.74 21,16.55 21,11V5L12,1M12,11.86C13.31,11.86 14.37,12.92 14.37,14.23C14.37,15.54 13.31,16.6 12,16.6C10.69,16.6 9.63,15.54 9.63,14.23C9.63,12.92 10.69,11.86 12,11.86M17.13,18.5C17.13,16.94 14.69,15.65 12,15.65C9.31,15.65 6.87,16.94 6.87,18.5V19.32C6.07,18.41 5.41,17.39 4.93,16.29C4.74,15.85 4.74,15.34 4.93,14.9C5.59,13.36 7.65,12.07 12,12.07C16.35,12.07 18.41,13.36 19.07,14.9C19.26,15.34 19.26,15.85 19.07,16.29C18.59,17.39 17.93,18.41 17.13,19.32V18.5Z"/>',
+	history:
+		'<path d="M13.5,8H12V13L16.28,15.54L17,14.33L13.5,12.25V8M13,3A9,9 0 0,0 4,12H1L4.96,16.03L9,12H6A7,7 0 0,1 13,5A7,7 0 0,1 20,12A7,7 0 0,1 13,19C11.07,19 9.32,18.21 8.06,16.94L6.64,18.36C8.27,20 10.5,21 13,21A9,9 0 0,0 22,12A9,9 0 0,0 13,3"/>',
+	'eye-off':
+		'<path d="M11.83,9L15,12.16C15,12.11 15,12.05 15,12A3,3 0 0,0 12,9C11.94,9 11.89,9 11.83,9M7.53,9.8L9.08,11.35C9.03,11.56 9,11.77 9,12A3,3 0 0,0 12,15C12.22,15 12.44,14.97 12.65,14.92L14.2,16.47C13.53,16.8 12.79,17 12,17A5,5 0 0,1 7,12C7,11.21 7.2,10.47 7.53,9.8M2,4.27L4.28,6.55L4.73,7C3.08,8.3 1.78,10 1,12C2.73,16.39 7,19.5 12,19.5C13.55,19.5 15.03,19.2 16.38,18.66L16.81,19.08L19.73,22L21,20.73L3.27,3M12,7A5,5 0 0,1 17,12C17,12.64 16.87,13.26 16.64,13.82L19.57,16.75C21.07,15.5 22.27,13.86 23,12C21.27,7.61 17,4.5 12,4.5C10.6,4.5 9.26,4.75 8,5.2L10.17,7.35C10.74,7.13 11.35,7 12,7Z"/>',
 }
 
 /** @type {AccountTone} */
@@ -302,6 +310,7 @@ export const adminNavGroups = [
 		tone: 'admin',
 		items: [
 			{ label: 'Impostazioni', to: '/account/amministrazione/impostazioni', iconKey: 'cog-outline' },
+			{ label: 'Storico azioni', to: '/account/amministrazione/audit-log', iconKey: 'history' },
 		],
 	},
 	{
@@ -314,6 +323,8 @@ export const adminNavGroups = [
 			{ label: 'Le mie spedizioni', to: '/account/spedizioni', iconKey: 'truck-fast' },
 			{ label: 'Le mie fatture', to: '/account/fatture', iconKey: 'clipboard-list' },
 			{ label: 'Profilo', to: '/account/profilo', iconKey: 'account' },
+			{ label: 'Sicurezza', to: '/account/sicurezza/2fa', iconKey: 'shield-key' },
+			{ label: 'Privacy', to: '/account/privacy', iconKey: 'shield-account' },
 			{ label: 'Indirizzi', to: '/account/indirizzi', iconKey: 'map-marker' },
 			{ label: 'Portafoglio', to: '/account/portafoglio', iconKey: 'wallet' },
 			{ label: 'Carte', to: '/account/carte', iconKey: 'credit-card' },
@@ -333,6 +344,8 @@ export const clientNavGroups = [
 			{ label: 'Portafoglio', to: '/account/portafoglio', iconKey: 'wallet' },
 			{ label: 'Carte', to: '/account/carte', iconKey: 'credit-card' },
 			{ label: 'Profilo', to: '/account/profilo', iconKey: 'account' },
+			{ label: 'Sicurezza', to: '/account/sicurezza/2fa', iconKey: 'shield-key' },
+			{ label: 'Privacy', to: '/account/privacy', iconKey: 'shield-account' },
 			{ label: 'Indirizzi', to: '/account/indirizzi', iconKey: 'map-marker' },
 			{ label: 'Assistenza', to: '/account/assistenza', iconKey: 'headset' },
 		],
@@ -350,6 +363,8 @@ export const proNavGroups = [
 			{ label: 'Portafoglio', to: '/account/portafoglio', iconKey: 'wallet' },
 			{ label: 'Carte', to: '/account/carte', iconKey: 'credit-card' },
 			{ label: 'Profilo', to: '/account/profilo', iconKey: 'account' },
+			{ label: 'Sicurezza', to: '/account/sicurezza/2fa', iconKey: 'shield-key' },
+			{ label: 'Privacy', to: '/account/privacy', iconKey: 'shield-account' },
 			{ label: 'Indirizzi', to: '/account/indirizzi', iconKey: 'map-marker' },
 			{ label: 'Assistenza', to: '/account/assistenza', iconKey: 'headset' },
 		],

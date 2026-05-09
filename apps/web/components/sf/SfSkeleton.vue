@@ -1,7 +1,8 @@
 <!-- COMPONENTE: SfSkeleton (atom) -->
 <script setup>
 const props = defineProps({
-  variant: { type: Object, default: () => ({}) },
+  // String preset key. Vedi PRESETS sotto. Stringa vuota = usa width/height props.
+  variant: { type: String, default: '' },
   width: { type: String, default: '100%' },
   height: { type: String, default: '14px' },
   rounded: { type: String, default: '' },
@@ -20,13 +21,14 @@ const PRESETS = {
 };
 const isTextBlock = computed(() => props.variant === 'text-block');
 const resolved = computed(() => {
-    if (props.variant && props.variant !== 'custom' && props.variant !== 'text-block') {
+    // Se variant matcha un preset noto (escluso 'custom' e 'text-block'), usa il preset.
+    if (props.variant && props.variant !== 'custom' && props.variant !== 'text-block' && PRESETS[props.variant]) {
         return PRESETS[props.variant];
     }
     return {
         width: props.width,
         height: props.height,
-        rounded: props.rounded ?? (props.variant === 'custom' ? '6px' : 'var(--radius-sm, 6px)'),
+        rounded: props.rounded || (props.variant === 'custom' ? '6px' : 'var(--radius-sm, 6px)'),
     };
 });
 const itemStyle = computed(() => ({

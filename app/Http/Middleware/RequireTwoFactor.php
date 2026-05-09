@@ -27,10 +27,26 @@ class RequireTwoFactor
         $user = $request->user();
 
         if ($user && $user->role === 'Admin' && ! $user->hasTwoFactorEnabled()) {
-            return response()->json([
-                'message' => '2FA setup required for admin',
-                'code' => '2FA_REQUIRED',
-            ], 403);
+            // Catch-22: senza 2FA non può accedere ad admin per attivarlo. Whitelist endpoint setup.
+            $path = $request->path();
+            $allowedWithoutTwoFactor = [
+                'api/2fa/enable',
+                'api/2fa/confirm',
+                'api/2fa/recovery',
+            ];
+            $isAllowed = false;
+            foreach ($allowedWithoutTwoFactor as $allowed) {
+                if (str_starts_with($path, $allowed)) {
+                    $isAllowed = true;
+                    break;
+                }
+            }
+            if (! $isAllowed) {
+                return response()->json([
+                    'message' => 'Configurazione 2FA richiesta per accedere agli endpoint amministratore. Attiva il 2FA dalle impostazioni di sicurezza.',
+                    'code' => '2FA_REQUIRED',
+                ], 403);
+            }
         }
 
         return $next($request);
