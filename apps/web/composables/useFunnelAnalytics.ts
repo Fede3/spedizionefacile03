@@ -27,5 +27,11 @@ export function useFunnelAnalytics() {
 		trackBeginCheckout: (totalCents?: number) => safeTrack('begin_checkout', totalCents !== undefined ? { total_cents: totalCents } : undefined),
 		trackFunnelStep: (step: string) => safeTrack('funnel_step', { step }),
 		trackPreventivoStart: (origin?: string) => safeTrack('preventivo_start', origin ? { origin } : undefined),
+		// Step 1 → 2: dimensioni colli completate
+		trackPackagesFilled: (count?: number) => safeTrack('packages_filled', count !== undefined ? { count: Number(count) } : undefined),
+		// Step 2 → 3: servizi extra selezionati
+		trackServicesSelected: (services: string[]) => safeTrack('services_selected', { services: Array.isArray(services) ? services.join(',') : '' }),
+		// Step 3 → 4: indirizzi mittente+destinatario completati
+		trackAddressesFilled: () => safeTrack('addresses_filled'),
 	}
 }
