@@ -21,12 +21,12 @@ const showDivider = computed(() => showNavbarDivider.value || !isNavbarLogo.valu
 	<template v-if="isNavbarLogo">
 		<span
 			:class="[
-				showNavbarDivider ? 'desktop:ml-[31px] ml-[10px] tablet:ml-[26px]' : 'desktop:ml-[14px] ml-[8px] tablet:ml-[12px]',
-				'text-[var(--color-brand-text)] font-semibold tracking-[-0.03em]',
+				showNavbarDivider ? 'tablet:ml-[26px] desktop:ml-[31px]' : 'tablet:ml-[12px] desktop:ml-[14px]',
+				'hidden tablet:inline text-[var(--color-brand-text)] font-semibold tracking-[-0.03em]',
 			]"
 		>
-			<!-- Brand intero su tutti i breakpoint — mobile usa font-size più piccolo invece di troncare. -->
-			<span class="text-[0.75rem] tablet:text-[1rem] desktop:text-[1.125rem] desktop-xl:text-[1.2rem]">SpediamoFacile</span>
+			<!-- Brand text visibile da tablet in su (≥768px). Su mobile resta solo il logo SF a tonalità arancione (riconoscibile da brand). -->
+			<span class="text-[1rem] desktop:text-[1.125rem] desktop-xl:text-[1.2rem]">SpediamoFacile</span>
 		</span>
 	</template>
 	<span
@@ -70,12 +70,18 @@ const showDivider = computed(() => showNavbarDivider.value || !isNavbarLogo.valu
 	top: 0;
 	width: 2px;
 	height: 100%;
+	display: none; /* mobile: nessun divider perché il testo brand è nascosto */
 }
 .logo-mark--with-divider::after {
 	background: #333333;
 }
 .logo-mark--with-divider-light::after {
 	background: #ffffff;
+}
+
+@media (min-width: 768px) {
+	.logo-mark--with-divider::after,
+	.logo-mark--with-divider-light::after { display: block; }
 }
 
 @media (min-width: 640px) {

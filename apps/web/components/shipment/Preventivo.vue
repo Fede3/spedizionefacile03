@@ -195,7 +195,7 @@ const shellShadow = 'shadow-[0_4px_20px_rgba(0,0,0,0.04),0_12px_40px_rgba(0,0,0,
 									<ul class="package-entry-list">
 										<li v-for="(pack, packIndex) in shipmentFlowStore.packages" :key="pack._qid || packIndex" class="package-entry">
 											<div class="package-entry__header">
-												<div class="package-type-switcher package-type-switcher--shared sf-shared-segment-strip sf-shared-segment-strip--compact" :aria-label="`Tipo collo ${packIndex + 1}`">
+												<div class="package-type-switcher package-type-switcher--shared sf-shared-segment-strip sf-shared-segment-strip--three sf-shared-segment-strip--compact" :aria-label="`Tipo collo ${packIndex + 1}`">
 													<button v-for="packageType in packageTypeList" :key="packageType.text" type="button" :aria-pressed="pack.package_type === packageType.text" :class="['package-type-switcher__button', 'sf-shared-segment', 'sf-shared-segment--compact', pack.package_type === packageType.text ? 'package-type-switcher__button--active sf-shared-segment--active' : '']" @click="updatePackageType(pack, packageType.text)">
 														<span class="package-type-switcher__icon-wrap sf-shared-segment__icon" aria-hidden="true"><img :src="`/img/quote/first-step/${packageType.img}`" :alt="packageType.text" :width="packageType.width" :height="packageType.height" class="package-type-switcher__icon-image" :loading="pack.package_type === packageType.text ? 'eager' : 'lazy'" decoding="async" draggable="false" ></span>
 														<span class="sf-shared-segment__title">{{ packageType.text }}</span>
