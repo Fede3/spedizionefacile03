@@ -10,6 +10,7 @@ export default defineNuxtPlugin(async (nuxtApp) => {
 
 	// Dynamic import: se @sentry/vue non installato, no-op gracefully.
 	// @vite-ignore evita che Vite faccia import-analysis statica e fallisca il build se il pkg manca.
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	let Sentry: any = null
 	try {
 		Sentry = await import(/* @vite-ignore */ '@sentry/vue')
@@ -31,7 +32,8 @@ export default defineNuxtPlugin(async (nuxtApp) => {
 			Sentry.replayIntegration(),
 		],
 		// Scrub PII (email, cookie, IP) prima dell'invio.
-		beforeSend(event) {
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		beforeSend(event: any) {
 			if (event.request?.cookies) delete event.request.cookies
 			if (event.user?.email) event.user.email = '[scrubbed]'
 			if (event.user?.ip_address) event.user.ip_address = '[scrubbed]'

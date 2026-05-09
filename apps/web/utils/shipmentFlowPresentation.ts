@@ -44,9 +44,11 @@ export const formatColloLabel = (packageItems?: PackageLike[] | null): string =>
  */
 const toCityCase = (name?: string | null): string => {
 	if (!name) return "";
+	// \p{L} = qualsiasi lettera Unicode (include accenti italiani à è é ì ò ù).
+	// Sostituisce a-zà-ÿ che eslint-plugin-regexp segnalava come "obscure range".
 	return String(name)
 		.toLowerCase()
-		.replace(/(^|[\s'\-/])([a-zà-ÿ])/g, (_, sep: string, ch: string) => sep + ch.toUpperCase());
+		.replace(/(^|[\s'\-/])(\p{L})/gu, (_, sep: string, ch: string) => sep + ch.toUpperCase());
 };
 
 export const formatTrattaLabel = (originCity?: string | null, destinationCity?: string | null): string =>

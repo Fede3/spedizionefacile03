@@ -12,7 +12,6 @@ import ShipmentStepColli from '~/components/shipment/ShipmentStepColli.vue';
 import ShipmentStepServizi from '~/components/shipment/ShipmentStepServizi.vue';
 import ShipmentStepIndirizzi from '~/components/shipment/ShipmentStepIndirizzi.vue';
 import ShipmentStepPagamento from '~/components/shipment/ShipmentStepPagamento.vue';
-import PublicPageHeader from '~/components/layout/PublicPageHeader.vue';
 import { createShipmentDebugCheckpoint } from '~/utils/shipment-flow/debug';
 import {
 	buildAccordionTransitions,
@@ -648,8 +647,6 @@ const {
 	isAddressAccordionOpen,
 	isPaymentAccordionOpen,
 	canAdvanceFromAddresses,
-	quoteHeroTitle,
-	quoteHeroDescription,
 	visiblePaymentError,
 	openPackagesAccordion,
 	openServicesAccordion,
