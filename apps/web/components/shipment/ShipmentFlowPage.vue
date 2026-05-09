@@ -338,6 +338,13 @@ const { currentStep, initOnMounted, showInitialStepLoading } = useShipmentStepPa
 });
 debugCheckpoint('page state ready');
 
+// Label step corrente per il header funnel compatto (allineato a ShipmentStepProgress)
+const STEP_LABELS = ['Colli', 'Servizi', 'Indirizzi', 'Pagamento'];
+const currentStepLabel = computed(() => {
+	const idx = Math.max(1, Math.min(4, Number(currentStep.value) || 1)) - 1;
+	return STEP_LABELS[idx] || 'Preventivo';
+});
+
 const {
 	routeConsistencyState,
 	summaryDimensionsLabel,
@@ -763,13 +770,11 @@ const {
 
 <template>
 	<section class="pb-[64px] md:pb-[88px]" style="background: var(--gradient-page-surface)">
-		<PublicPageHeader
-			:title="quoteHeroTitle"
-			:description="quoteHeroDescription"
-			eyebrow="Preventivo"
-			variant="compact"
-			:crumbs="[{ label: 'Home', to: '/' }, { label: 'Preventivo' }]" />
-		<!-- P8 Progress bar 4 step (Baymard pattern checkout) -->
+		<!-- Header funnel compatto: back + step name. Sostituisce PublicPageHeader marketing
+		     che duplicava "Preventivo" 3 volte (eyebrow + title + breadcrumb) e occupava
+		     ~250px su mobile prima del contenuto utile. Pattern Baymard checkout. -->
+		<ShipmentFunnelHeader :current-step="currentStep" :step-label="currentStepLabel" />
+		<!-- Progress bar 4 step (Baymard pattern checkout) -->
 		<ShipmentStepProgress :current-step="currentStep" />
 		<div class="w-full max-w-[1280px] mx-auto px-[14px] sm:px-[40px]">
 			<form ref="formRef" class="preventivo-form" novalidate @submit.prevent="continueToCart">

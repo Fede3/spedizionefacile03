@@ -54,12 +54,10 @@ const stateOf = (n) => {
 			</li>
 		</ol>
 
-		<!-- Mobile: numero + label corrente + barra % -->
+		<!-- Mobile: barra % minimal (il label step è già nel header funnel sopra) -->
 		<div class="shipment-step-progress__mobile">
 			<div class="shipment-step-progress__mobile-row">
-				<span class="shipment-step-progress__mobile-current">
-					Step {{ currentStep }} di 4 · {{ steps[currentStep - 1]?.label || '' }}
-				</span>
+				<span class="shipment-step-progress__mobile-current">Avanzamento</span>
 				<span class="shipment-step-progress__mobile-pct">{{ progressPct }}%</span>
 			</div>
 			<div class="shipment-step-progress__mobile-bar" aria-hidden="true">
@@ -159,23 +157,25 @@ const stateOf = (n) => {
 /* Mobile view */
 .shipment-step-progress__mobile {
 	display: block;
-	padding: 12px 0;
+	padding: 8px 0 10px;
 }
 .shipment-step-progress__mobile-row {
 	display: flex;
 	justify-content: space-between;
 	align-items: baseline;
-	margin-bottom: 8px;
+	margin-bottom: 5px;
 }
 .shipment-step-progress__mobile-current {
-	font-size: 13px;
+	font-size: 10px;
 	font-weight: 700;
-	color: var(--color-brand-text, #1D2738);
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+	color: var(--color-brand-text-muted, #6b7280);
 }
 .shipment-step-progress__mobile-pct {
-	font-size: 12px;
-	font-weight: 600;
-	color: var(--color-brand-text-muted, #6b7280);
+	font-size: 11px;
+	font-weight: 700;
+	color: var(--color-brand-primary, #095866);
 }
 .shipment-step-progress__mobile-bar {
 	height: 4px;
