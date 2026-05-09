@@ -6,6 +6,7 @@ use App\Cart\MyMoney;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Carbon;
 
 /**
  * @property int $id
@@ -17,8 +18,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property string|null $provider_status
  * @property string|null $failure_code
  * @property string|null $failure_message
- * @property \Illuminate\Support\Carbon|null $created_at
- * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
  * @property-read Order|null $order
  */
 class Transaction extends Model

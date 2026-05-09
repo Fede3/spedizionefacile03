@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
 use Laravel\Sanctum\HasApiTokens;
 
@@ -17,15 +18,15 @@ use Laravel\Sanctum\HasApiTokens;
  * @property string|null $email
  * @property string|null $telephone_number
  * @property string|null $phone_number
- * @property \Illuminate\Support\Carbon|null $phone_number_verified_at
+ * @property Carbon|null $phone_number_verified_at
  * @property string|null $password
  * @property string|null $identifier
- * @property \Illuminate\Support\Carbon|null $email_verified_at
+ * @property Carbon|null $email_verified_at
  * @property string|null $verification_code
- * @property \Illuminate\Support\Carbon|null $verification_code_expires_at
+ * @property Carbon|null $verification_code_expires_at
  * @property string $user_type
  * @property string|null $avatar
- * @property \Illuminate\Support\Carbon|null $privacy_accepted_at
+ * @property Carbon|null $privacy_accepted_at
  * @property string|null $role
  * @property string|null $stripe_account_id
  * @property string|null $customer_id
@@ -36,9 +37,9 @@ use Laravel\Sanctum\HasApiTokens;
  * @property string|null $referred_by
  * @property string|null $two_factor_secret
  * @property array|null $two_factor_recovery_codes
- * @property \Illuminate\Support\Carbon|null $two_factor_confirmed_at
- * @property \Illuminate\Support\Carbon|null $created_at
- * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property Carbon|null $two_factor_confirmed_at
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
  */
 class User extends Authenticatable
 {

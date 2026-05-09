@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Carbon;
 
 /**
  * @property int $id
@@ -14,11 +15,11 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property string $sha256_hash
  * @property int $size_bytes
  * @property string|null $invoice_number
- * @property \Illuminate\Support\Carbon|null $invoice_date
+ * @property Carbon|null $invoice_date
  * @property string $archive_status
  * @property string|null $provider
  * @property string|null $provider_reference
- * @property \Illuminate\Support\Carbon|null $retain_until
+ * @property Carbon|null $retain_until
  * @property array|null $metadata
  * @property-read Order|null $order
  */

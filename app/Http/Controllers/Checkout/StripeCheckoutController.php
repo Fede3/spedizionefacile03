@@ -6,6 +6,7 @@
 
 namespace App\Http\Controllers\Checkout;
 
+use App\Cart\MyMoney;
 use App\Events\OrderPaid;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\CreateOrderRequest;
@@ -91,7 +92,7 @@ class StripeCheckoutController extends Controller
                 $lockedOrder->payment_method = $paymentType;
                 $lockedOrder->save();
                 if ($paymentType === 'bonifico') {
-                    $existingTransaction->total = new \App\Cart\MyMoney($lockedOrder->payableTotalCents());
+                    $existingTransaction->total = new MyMoney($lockedOrder->payableTotalCents());
                     $existingTransaction->save();
                 }
                 $transaction = $existingTransaction;

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Connection;
 use Illuminate\Database\Eloquent\Model;
 
 /**
@@ -85,7 +86,7 @@ class PudoPoint extends Model
     {
         $limit = max(1, min((int) $limit, 50));
 
-        /** @var \Illuminate\Database\Connection $connection */
+        /** @var Connection $connection */
         $connection = self::query()->getConnection();
         $driver = $connection->getDriverName();
         if ($driver === 'sqlite') {

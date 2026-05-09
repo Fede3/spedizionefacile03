@@ -5,8 +5,6 @@ declare(strict_types=1);
 namespace App\Services\Auth;
 
 use App\Models\User;
-use Illuminate\Support\Str;
-use InvalidArgumentException;
 
 /**
  * P1.1 — Servizio TOTP (Time-based One-Time Password) RFC 6238.

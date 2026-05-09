@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Cart\MyMoney;
 use App\Events\OrderPaid;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\ConfirmBankTransferRequest;
@@ -63,7 +64,7 @@ class AdminBankTransferController extends Controller
             if ($existing) {
                 $existing->status = 'succeeded';
                 $existing->provider_status = 'succeeded';
-                $existing->total = new \App\Cart\MyMoney($lockedOrder->payableTotalCents());
+                $existing->total = new MyMoney($lockedOrder->payableTotalCents());
                 $existing->save();
                 $transaction = $existing;
             } else {

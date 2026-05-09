@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
@@ -37,14 +38,14 @@ use Illuminate\Support\Str;
  * @property int|null $refund_amount
  * @property string|null $refund_method
  * @property string|null $refund_reason
- * @property \Illuminate\Support\Carbon|null $refunded_at
+ * @property Carbon|null $refunded_at
  * @property int|null $cancellation_fee
  * @property array|null $billing_data
- * @property \Illuminate\Support\Carbon|string|null $pickup_date
+ * @property Carbon|string|null $pickup_date
  * @property string|null $public_tracking_token
- * @property \Illuminate\Support\Carbon|null $created_at
- * @property \Illuminate\Support\Carbon|null $updated_at
- * @property \Illuminate\Support\Carbon|null $deleted_at
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
+ * @property Carbon|null $deleted_at
  * @property-read User|null $user
  * @property-read Collection<int, Package> $packages
  * @property-read Collection<int, Transaction> $transactions

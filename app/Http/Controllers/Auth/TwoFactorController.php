@@ -160,6 +160,7 @@ class TwoFactorController extends Controller
         foreach ($codes as $code) {
             if (! $found && hash_equals(strtoupper($code), $submitted)) {
                 $found = true; // rimosso dal pool
+
                 continue;
             }
             $remaining[] = $code;
