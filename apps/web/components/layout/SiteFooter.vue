@@ -79,7 +79,8 @@ const socials = [
 						</ul>
 					</div>
 
-					<details v-for="column in linkColumns" :key="column.title" class="site-footer__column" :open="true">
+					<!-- Mobile: collassati di default per ridurre scroll. Desktop: aperti via CSS (vedi @media min-width: 48rem) -->
+					<details v-for="column in linkColumns" :key="column.title" class="site-footer__column">
 						<summary class="site-footer__column-title">
 							{{ column.title }}
 							<svg class="site-footer__column-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">

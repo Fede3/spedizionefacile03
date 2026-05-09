@@ -77,36 +77,61 @@
 	border-block: 1px solid #eef2f0;
 }
 .trust__inner {
-	padding-block: 28px;
+	padding-block: 16px;
 	text-align: center;
 }
+@media (min-width: 768px) { .trust__inner { padding-block: 28px; } }
+
 .trust__label {
-	margin: 0 0 18px;
-	font-size: 13px;
+	margin: 0 0 10px;
+	font-size: 11px;
 	letter-spacing: 0.06em;
 	text-transform: uppercase;
 	color: #5b6b6f;
 	font-weight: 500;
 }
+@media (min-width: 768px) { .trust__label { margin: 0 0 18px; font-size: 13px; } }
+
+/* Mobile: scroll orizzontale invece di stack verticale (5 cards stacked = 5 righe) */
 .trust__badges {
 	margin: 0;
-	padding: 0;
+	padding: 0 14px;
+	margin-inline: -14px;
 	list-style: none;
 	display: flex;
-	flex-wrap: wrap;
-	gap: 10px 14px;
+	gap: 8px;
 	align-items: stretch;
-	justify-content: center;
+	justify-content: flex-start;
+	overflow-x: auto;
+	scroll-snap-type: x proximity;
+	scrollbar-width: none;
 }
+.trust__badges::-webkit-scrollbar { display: none; }
+@media (min-width: 768px) {
+	.trust__badges {
+		flex-wrap: wrap;
+		justify-content: center;
+		overflow-x: visible;
+		gap: 10px 14px;
+		padding: 0;
+		margin-inline: 0;
+	}
+}
+
 .trust-badge {
 	display: inline-flex;
 	align-items: center;
-	gap: 10px;
-	padding: 8px 16px;
+	gap: 8px;
+	padding: 6px 12px;
 	background: #ffffff;
 	border: 1px solid #e2e8df;
 	border-radius: 999px;
 	box-shadow: 0 1px 2px rgba(9, 88, 102, 0.04);
+	flex: 0 0 auto;
+	scroll-snap-align: start;
+}
+@media (min-width: 768px) {
+	.trust-badge { gap: 10px; padding: 8px 16px; }
 }
 .trust-badge__icon {
 	width: 22px;

@@ -39,25 +39,35 @@ const activeHero = computed(() => secondaryHeros.find((h) => h.match(route.path)
 	<section v-if="isHomepageHeroRoute" class="hero-homepage relative z-[2]">
 		<div class="flex flex-col lg:flex-row items-center gap-[16px] lg:gap-[24px]">
 			<div class="relative z-[5] flex flex-col flex-1 min-w-0 lg:max-w-[480px]">
-				<div class="h-[6px] w-[72px] rounded-full mb-[20px]" style="background: linear-gradient(90deg, var(--color-brand-accent), var(--color-brand-primary))" />
+				<!-- Accent bar — solo desktop (mobile compatto) -->
+				<div class="hidden tablet:block h-[6px] w-[72px] rounded-full mb-[20px]" style="background: linear-gradient(90deg, var(--color-brand-accent), var(--color-brand-primary))" />
 				<h1 class="hero-title">
 					<span>Spedisci in </span><span class="hero-title-highlight">tutta Italia</span>
 				</h1>
 				<p class="hero-subtitle">Ritiro a domicilio, consegna veloce, prezzo fisso.</p>
 
-				<div v-if="showMinPriceDiscount" class="mt-[12px] flex items-center gap-[8px] flex-wrap">
+				<!-- Mobile (< 640px): chip prezzo inline compatto. Niente CTA, niente immagine: il form è direttamente sotto. -->
+				<div class="hero-price-chip tablet:hidden">
+					<span class="hero-price-chip__from">Da</span>
+					<span class="hero-price-chip__amount">{{ minPriceFormatted }}<span class="hero-price-chip__currency">&euro;</span></span>
+					<span class="hero-price-chip__sep" aria-hidden="true">·</span>
+					<span class="hero-price-chip__detail">IVA e ritiro incluso</span>
+				</div>
+
+				<div v-if="showMinPriceDiscount" class="hidden tablet:flex mt-[12px] items-center gap-[8px] flex-wrap">
 					<span class="inline-flex items-center gap-[4px] px-[10px] py-[4px] rounded-full bg-[var(--color-brand-primary)] text-white text-[0.8125rem] font-bold">-{{ minPriceInfo.discountPercent }}%</span>
 					<span v-if="minBasePriceFormatted" class="text-[0.875rem] font-medium text-[var(--color-brand-text-muted)] line-through">{{ minBasePriceFormatted }}&euro;</span>
 				</div>
-				<div v-if="promoSettings?.active && promoSettings?.label_text" class="mt-[8px]">
+				<div v-if="promoSettings?.active && promoSettings?.label_text" class="hidden tablet:block mt-[8px]">
 					<span :style="{ backgroundColor: promoSettings.label_color || 'var(--color-brand-accent)' }" class="inline-flex items-center gap-[6px] px-[10px] py-[4px] rounded-full text-white text-[0.75rem] font-bold tracking-wide shadow-sm">
 						<img v-if="promoSettings.label_image" :src="promoSettings.label_image" alt="" decoding="async" width="40" height="16" class="h-[16px] w-auto shrink-0">
 						{{ promoSettings.label_text }}
 					</span>
 				</div>
-				<p v-if="promoSettings?.active && promoSettings?.description" class="text-[0.8125rem] text-[var(--color-brand-text-secondary)] font-medium mt-[6px]">{{ promoSettings.description }}</p>
+				<p v-if="promoSettings?.active && promoSettings?.description" class="hidden tablet:block text-[0.8125rem] text-[var(--color-brand-text-secondary)] font-medium mt-[6px]">{{ promoSettings.description }}</p>
 
-				<div class="hero-price-cta-box">
+				<!-- Box prezzo + CTA: solo da tablet in su. Su mobile il form è direttamente sotto, no CTA ridondante. -->
+				<div class="hero-price-cta-box hidden tablet:flex">
 					<div class="flex flex-col gap-[2px] min-w-0">
 						<div class="flex items-baseline gap-[8px]">
 							<span class="text-white/70 text-sm font-semibold">Da</span>
@@ -71,7 +81,8 @@ const activeHero = computed(() => secondaryHeros.find((h) => h.match(route.path)
 					</SfButton>
 				</div>
 
-				<div class="hero-trust-row">
+				<!-- Trust row: solo da tablet (mobile li ha già il Preventivo subito sotto + bar trust nel form) -->
+				<div class="hero-trust-row hidden tablet:flex">
 					<span class="hero-trust-item">
 						<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/><path d="m9 12 2 2 4-4"/></svg>
 						Pagamento sicuro
@@ -87,7 +98,8 @@ const activeHero = computed(() => secondaryHeros.find((h) => h.match(route.path)
 				</div>
 			</div>
 
-			<div class="hero-image-wrapper">
+			<!-- Hero image: nascosta su mobile per dare spazio al Preventivo above the fold. -->
+			<div class="hero-image-wrapper hidden tablet:block">
 				<div class="hero-image-gradient-border">
 					<div class="hero-image-frame">
 						<img :src="heroImageUrl" alt="Spedizioni veloci in tutta Italia" class="hero-image" :style="heroImageStyle" width="1600" height="900" loading="eager" fetchpriority="high" decoding="async">
@@ -136,10 +148,33 @@ const activeHero = computed(() => secondaryHeros.find((h) => h.match(route.path)
 	background: linear-gradient(90deg, var(--color-brand-accent), var(--color-brand-primary));
 }
 .hero-subtitle { margin-top: 12px; color: #777; font-weight: 450; font-size: 15px; line-height: 1.55; max-width: 380px; }
+
+/* Mobile-first: chip prezzo compatto sostituisce price-cta-box. Save ~80px. */
+.hero-price-chip {
+	display: inline-flex;
+	align-items: baseline;
+	gap: 6px;
+	margin-top: 10px;
+	padding: 4px 10px;
+	border-radius: 999px;
+	background: var(--color-brand-primary);
+	color: #fff;
+	font-size: 12px;
+	font-weight: 700;
+	width: fit-content;
+}
+.hero-price-chip__from { font-weight: 600; opacity: 0.85; font-size: 11px; }
+.hero-price-chip__amount { font-size: 14px; letter-spacing: -0.3px; }
+.hero-price-chip__currency { font-size: 12px; opacity: 0.85; }
+.hero-price-chip__sep { opacity: 0.5; }
+.hero-price-chip__detail { font-weight: 500; opacity: 0.85; font-size: 11px; }
 .hero-price-cta-box {
 	margin-top: 22px; border-radius: 16px; padding: 14px 20px;
-	display: flex; flex-direction: column; align-items: flex-start; gap: 12px;
+	display: none; flex-direction: column; align-items: flex-start; gap: 12px;
 	background: var(--color-brand-primary);
+}
+@media (min-width: 40rem) {
+	.hero-price-cta-box { display: flex; }
 }
 .hero-image-wrapper { position: relative; z-index: 2; flex: 1 1 0%; width: 100%; }
 .hero-image-gradient-border {
@@ -148,7 +183,10 @@ const activeHero = computed(() => secondaryHeros.find((h) => h.match(route.path)
 }
 .hero-image-frame { position: relative; width: 100%; aspect-ratio: 16 / 9; height: 240px; overflow: hidden; border-radius: 19px; background: #fff; }
 .hero-image { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; pointer-events: none; user-select: none; }
-.hero-trust-row { display: flex; flex-wrap: wrap; align-items: center; gap: 14px; margin-top: 16px; }
+.hero-trust-row { display: none; flex-wrap: wrap; align-items: center; gap: 14px; margin-top: 16px; }
+@media (min-width: 40rem) {
+	.hero-trust-row { display: flex; }
+}
 .hero-trust-item { display: inline-flex; align-items: center; gap: 5px; color: var(--color-brand-text-secondary, #777); font-size: 12px; font-weight: 600; letter-spacing: 0.01em; }
 .hero-trust-item svg { color: var(--color-brand-primary, #095866); flex-shrink: 0; }
 
@@ -165,19 +203,14 @@ const activeHero = computed(() => secondaryHeros.find((h) => h.match(route.path)
 	.hero-image, .hero-image-frame { height: 320px; }
 }
 @media (max-width: 23.4375rem) {
-	.hero-homepage { padding: 12px 0 4px; }
-	.hero-title { font-size: clamp(1.75rem, 7vw, 2.4rem); letter-spacing: -1px; }
-	.hero-subtitle { font-size: 13px; margin-top: 8px; max-width: 100%; }
-	.hero-price-cta-box { margin-top: 16px; padding: 12px 14px; border-radius: 14px; gap: 10px; }
-	.hero-trust-row { gap: 8px 12px; margin-top: 12px; }
-	.hero-trust-item { font-size: 11px; gap: 4px; }
-	.hero-trust-item svg { width: 12px; height: 12px; }
-	.hero-image-frame { height: 180px; border-radius: 13px; }
-	.hero-image { height: 180px; }
-	.hero-image-gradient-border { border-radius: 16px; }
+	.hero-homepage { padding: 8px 0 0; }
+	.hero-title { font-size: clamp(1.5rem, 6.5vw, 2rem); letter-spacing: -0.8px; }
+	.hero-subtitle { font-size: 13px; margin-top: 6px; max-width: 100%; line-height: 1.4; }
+	.hero-price-chip { margin-top: 8px; padding: 3px 9px; }
 }
 @media (max-width: 39.99rem) {
-	.hero-image-frame, .hero-image { height: 200px; }
-	.hero-price-cta-box { flex-direction: column; align-items: stretch; }
+	.hero-homepage { padding: 10px 0 0; }
+	.hero-title { font-size: clamp(1.6rem, 6vw, 2.2rem); line-height: 1.1; letter-spacing: -0.8px; }
+	.hero-subtitle { font-size: 14px; margin-top: 8px; line-height: 1.45; }
 }
 </style>

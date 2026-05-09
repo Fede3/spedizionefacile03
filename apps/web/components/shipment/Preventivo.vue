@@ -104,7 +104,7 @@ const shellShadow = 'shadow-[0_4px_20px_rgba(0,0,0,0.04),0_12px_40px_rgba(0,0,0,
 </script>
 
 <template>
-	<section id="preventivo" :class="isHomepageLikeRoute ? 'mt-[48px] tablet:mt-[64px] desktop:mt-[80px] relative z-10' : 'pt-[24px]'">
+	<section id="preventivo" :class="isHomepageLikeRoute ? 'mt-[12px] tablet:mt-[64px] desktop:mt-[80px] relative z-10' : 'pt-[24px]'">
 		<div class="my-container">
 			<!-- Coerenza Preventivo homepage vs ventaglio funnel: radius 22px, gradient surface, min-height 230px mobile, shadow identici al ventaglio. -->
 			<div

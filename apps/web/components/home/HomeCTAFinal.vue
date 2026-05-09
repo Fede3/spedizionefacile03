@@ -29,7 +29,7 @@
 .cta-final {
 	background: linear-gradient(135deg, #095866 0%, #0d6f80 100%);
 	color: #ffffff;
-	padding-block: 60px;
+	padding-block: 32px;
 	position: relative;
 	overflow: hidden;
 	border-bottom: 4px solid #E44203;

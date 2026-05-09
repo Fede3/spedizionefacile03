@@ -64,49 +64,77 @@
 @media (min-width: 1024px) {
 	.container { padding-inline: 40px; }
 }
-.how { padding-block: 72px; }
+.how { padding-block: 32px; }
+@media (min-width: 768px) { .how { padding-block: 72px; } }
+
 .steps {
 	margin: 0;
 	padding: 0;
 	list-style: none;
 	display: grid;
-	gap: 20px;
+	gap: 10px;
 }
 @media (min-width: 768px) { .steps { grid-template-columns: repeat(3, 1fr); gap: 24px; } }
+
 .step {
 	background: #ffffff;
 	border: 1px solid #eef2f0;
-	border-radius: 18px;
-	padding: 28px 24px;
+	border-radius: 14px;
+	padding: 14px 16px 14px 76px;
 	transition: transform var(--sf-t1) var(--sf-ease), box-shadow var(--sf-t1) var(--sf-ease), border-color var(--sf-t1) var(--sf-ease);
 	position: relative;
+	min-height: 80px;
+}
+@media (min-width: 768px) {
+	.step {
+		padding: 28px 24px;
+		min-height: 0;
+	}
 }
 .step:hover {
 	transform: translateY(-4px);
 	box-shadow: 0 14px 28px -16px rgba(9, 88, 102, 0.22);
 	border-color: #d2dcd9;
 }
-.step__icon { width: 56px; height: 56px; }
+.step__icon {
+	position: absolute;
+	top: 14px;
+	left: 16px;
+	width: 44px;
+	height: 44px;
+}
+@media (min-width: 768px) {
+	.step__icon { position: static; width: 56px; height: 56px; }
+}
 .step__icon svg { width: 100%; height: 100%; display: block; }
 .step__num {
 	position: absolute;
-	top: 24px;
-	right: 24px;
-	font-size: 13px;
+	top: 14px;
+	right: 14px;
+	font-size: 11px;
 	font-weight: 700;
 	color: #b8c4c2;
 	letter-spacing: 0.1em;
 }
+@media (min-width: 768px) {
+	.step__num { top: 24px; right: 24px; font-size: 13px; }
+}
 .step__title {
-	margin: 18px 0 6px;
-	font-size: 19px;
+	margin: 0 0 3px;
+	font-size: 16px;
 	font-weight: 700;
 	color: #0d3a44;
 }
+@media (min-width: 768px) {
+	.step__title { margin: 18px 0 6px; font-size: 19px; }
+}
 .step__text {
 	margin: 0;
-	font-size: 15px;
-	line-height: 1.55;
+	font-size: 13px;
+	line-height: 1.45;
 	color: #475559;
+}
+@media (min-width: 768px) {
+	.step__text { font-size: 15px; line-height: 1.55; }
 }
 </style>

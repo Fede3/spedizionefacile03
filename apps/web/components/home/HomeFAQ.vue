@@ -29,9 +29,9 @@ function toggleFaq(i) {
 </script>
 
 <template>
-	<section class="bg-brand-bg-alt py-16 md:py-20" aria-labelledby="home-faq-title">
+	<section class="bg-brand-bg-alt py-8 md:py-20" aria-labelledby="home-faq-title">
 		<div class="max-w-6xl mx-auto px-4 md:px-8">
-			<div class="grid gap-10 lg:grid-cols-2 lg:gap-12 lg:items-center">
+			<div class="grid gap-5 lg:grid-cols-2 lg:gap-12 lg:items-center">
 				<!-- LEFT: Heading + CTA box bilanciato -->
 				<div class="space-y-6">
 					<HomeSectionHead
