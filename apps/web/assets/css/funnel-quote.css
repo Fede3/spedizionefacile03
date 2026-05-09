@@ -1267,8 +1267,10 @@
 		gap: 12px;
 	}
 
-	/* Inputs: always full-width on mobile */
-	.preventivo-form input,
+	/* Inputs: always full-width on mobile (escluso checkbox/radio che hanno
+	   dimensione fissa e non devono diventare 100% width — bug "Salva carta"
+	   dove il checkbox occupava 185px invece di 20px). */
+	.preventivo-form input:not([type="checkbox"]):not([type="radio"]),
 	.preventivo-form select,
 	.preventivo-form textarea {
 		width: 100%;

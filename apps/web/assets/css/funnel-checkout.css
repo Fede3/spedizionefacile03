@@ -596,11 +596,11 @@
   margin-bottom: 12px;
 }
 .checkout-payment-card-form__save {
-  display: inline-flex;
-  align-items: center;
+  display: flex;
+  align-items: flex-start;
   gap: 10px;
   font-size: 0.875rem;
-  line-height: 1.35;
+  line-height: 1.45;
   color: var(--color-brand-text-secondary);
   cursor: pointer;
   margin-top: 12px;
@@ -609,6 +609,18 @@
   margin-left: -6px;
   border-radius: 8px;
   user-select: none;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.checkout-payment-card-form__save > input {
+  margin-top: 2px;
+  flex: 0 0 auto;
+}
+
+.checkout-payment-card-form__save > span {
+  flex: 1 1 auto;
+  min-width: 0;
 }
 .checkout-payment-card-form__save:hover { background: rgba(9, 88, 102, 0.04); }
 .checkout-payment-card-form__checkbox {
