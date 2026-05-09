@@ -50,8 +50,10 @@ watchEffect(() => {
 					:address="address"
 					:readonly="readonly" />
 			</div>
-			<p class="field-required-hint">
-				I campi con <span aria-hidden="true">*</span> sono obbligatori.
+			<!-- Hint "obbligatori" mostrato solo nel primo card (origin), evita
+			     duplicazione visiva quando entrambi mittente+destinatario sono renderizzati. -->
+			<p v-if="type === 'origin'" class="field-required-hint">
+				I campi con <span aria-hidden="true" class="field-required-star">*</span> sono obbligatori.
 			</p>
 		</section>
 	</div>
@@ -60,9 +62,9 @@ watchEffect(() => {
 <style>
 .address-form-layout-grid {
 	display: grid;
-	gap: 14px 16px;
+	gap: 16px 16px;
 	grid-template-columns: repeat(2, minmax(0, 1fr));
-	row-gap: 16px;
+	row-gap: 18px;
 	align-items: start;
 }
 
@@ -91,11 +93,36 @@ watchEffect(() => {
 .address-form-field label,
 .address-form-field .form-label {
 	display: block;
-	margin-bottom: 6px;
-	font-size: 0.875rem;
-	font-weight: 600;
-	color: #1d2738;
+	margin-bottom: 8px;
+	font-size: 0.75rem;
+	font-weight: 700;
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+	color: var(--color-brand-text-muted, #6b7280);
 	line-height: 1.2;
+}
+
+/* Asterisco campi obbligatori in arancione brand (sostituisce il rosso default) */
+.address-form-field .field-required-star {
+	color: var(--color-brand-accent);
+	font-weight: 800;
+	margin-left: 2px;
+}
+
+/* Campi readonly (post Salva): bordo più tenue, testo secondario,
+   chiaramente NON editabile ma visivamente coerente con gli editabili.
+   Era plain text invisibile (border:none), ora ha bordo morbido. */
+.address-input--readonly {
+	background: var(--color-bg-alt, #f7f8fa) !important;
+	box-shadow: 0 0 0 1px rgba(9, 88, 102, 0.10) !important;
+	color: var(--color-brand-text-secondary) !important;
+	cursor: not-allowed;
+	font-weight: 600;
+}
+
+.address-input--readonly:hover,
+.address-input--readonly:focus {
+	box-shadow: 0 0 0 1px rgba(9, 88, 102, 0.10) !important;
 }
 
 .address-form-layout-grid__street,

@@ -29,9 +29,12 @@ export function useAddressFormField(
 		'data-form-type': 'other',
 	}
 
+	// Readonly visual: mantiene il bordo (box-shadow) dell'input ma con tono
+	// più tenue, sfondo bianco, testo secondario. Visivamente RICONOSCIBILE
+	// come campo (non plain text confuso) ma chiaramente non editabile.
 	const readonlyClass = computed(() =>
 		readonly.value
-			? '!bg-white !border-[#CBD5DF] !text-[var(--color-brand-text-secondary)] cursor-not-allowed'
+			? 'address-input--readonly'
 			: '',
 	)
 

@@ -657,13 +657,16 @@
 	border-radius: 999px;
 }
 
-/* Origin = teal dot, Dest = teal dot */
+/* Origin = teal dot (parte da qui), Dest = orange dot (arriva qui)
+   Coerente con il Preventivo (route-card badge teal/orange). */
 .address-entry-card:first-child .address-entry-card__title::before {
-	background: rgba(9, 88, 102, 0.1);
+	background: rgba(9, 88, 102, 0.14);
+	box-shadow: inset 0 0 0 1.5px rgba(9, 88, 102, 0.20);
 }
 
 .address-entry-card:last-child .address-entry-card__title::before {
-	background: rgba(9, 88, 102, 0.1);
+	background: rgba(228, 66, 3, 0.12);
+	box-shadow: inset 0 0 0 1.5px rgba(228, 66, 3, 0.22);
 }
 
 .address-entry-card__actions {

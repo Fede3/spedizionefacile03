@@ -20,9 +20,13 @@ interface UseShipmentFormValidationArgs {
 export function useShipmentFormValidation(args: UseShipmentFormValidationArgs) {
 	const { sv, contentError, dateError } = args
 
+	// Base class garantita: tutti gli input del funnel devono avere lo stile
+	// .input-preventivo-step-2 (border-radius, height, box-shadow). Prima
+	// fieldClass restituiva solo la classe d'errore — quando il campo era
+	// valido si vedeva come testo plain senza bordi (bug visivo step 3).
 	const fieldClass = (key: string) => {
 		const error = sv?.getError?.(key)
-		return error ? 'border-brand-error' : ''
+		return error ? 'input-preventivo-step-2 border-brand-error' : 'input-preventivo-step-2'
 	}
 
 	const fieldErrorText = (key: string) => sv?.getError?.(key) ?? null
