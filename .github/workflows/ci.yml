@@ -104,6 +104,15 @@ jobs:
           QUEUE_CONNECTION=sync
           SESSION_DRIVER=array
           MAIL_MAILER=array
+          # BRT credentials placeholder per evitare null type errors in BrtConfig
+          BRT_CLIENT_ID=test_client
+          BRT_PASSWORD=test_password
+          BRT_PUDO_TOKEN=test_token
+          BRT_DEPARTURE_DEPOT=89
+          # Stripe credentials placeholder
+          STRIPE_KEY=pk_test_placeholder
+          STRIPE_SECRET=sk_test_placeholder
+          STRIPE_WEBHOOK_SECRET=whsec_test_placeholder
           EOF
 
       # APP_KEY già hardcoded nel .env CI sopra. config:clear per assicurare

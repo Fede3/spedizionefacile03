@@ -28,15 +28,17 @@ class BrtConfig
 
     public function __construct()
     {
-        $this->apiUrl = config('services.brt.api_url', 'https://api.brt.it/rest/v1/shipments');
-        $this->pudoApiUrl = config('services.brt.pudo_api_url', 'https://api.brt.it');
-        $this->clientId = config('services.brt.client_id', '');
-        $this->password = config('services.brt.password', '');
-        $this->pudoToken = config('services.brt.pudo_token', '');
+        // Cast esplicito a string: env() può ritornare null se var non set,
+        // e le proprietà tipate string non accettano null (TypeError in CI/test).
+        $this->apiUrl = (string) (config('services.brt.api_url') ?? 'https://api.brt.it/rest/v1/shipments');
+        $this->pudoApiUrl = (string) (config('services.brt.pudo_api_url') ?? 'https://api.brt.it');
+        $this->clientId = (string) (config('services.brt.client_id') ?? '');
+        $this->password = (string) (config('services.brt.password') ?? '');
+        $this->pudoToken = (string) (config('services.brt.pudo_token') ?? '');
         $this->departureDepot = (int) config('services.brt.departure_depot', 0);
         $this->verifySsl = (bool) config('services.brt.verify_ssl', true);
         $this->pickupEnabled = (bool) config('services.brt.pickup_enabled', false);
-        $pickupEndpoint = trim((string) config('services.brt.pickup_endpoint', ''));
+        $pickupEndpoint = trim((string) (config('services.brt.pickup_endpoint') ?? ''));
         $this->pickupEndpoint = $pickupEndpoint !== '' ? $pickupEndpoint : null;
 
         if ($this->departureDepot === 0) {
