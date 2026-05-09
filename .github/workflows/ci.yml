@@ -194,8 +194,11 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: nuxt-output
-          path: apps/web/.output
+          # Path absolute da repo root (working-directory non si applica a actions/upload-artifact).
+          # Nuxi build crea .output nel cwd dello step (apps/web), quindi full path è apps/web/.output.
+          path: ${{ github.workspace }}/apps/web/.output
           retention-days: 3
+          if-no-files-found: error
 
   # ─────────────────────────────────────────────────────────────
   # Job 3: Playwright E2E (depends on nuxt-build)
@@ -242,7 +245,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: nuxt-output
-          path: apps/web/.output
+          path: ${{ github.workspace }}/apps/web/.output
 
       - name: Start Nuxt preview
         run: |
@@ -314,7 +317,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: nuxt-output
-          path: apps/web/.output
+          path: ${{ github.workspace }}/apps/web/.output
 
       - name: Run Lighthouse CI
         run: npx --no -- lhci autorun
