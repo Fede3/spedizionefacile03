@@ -72,17 +72,6 @@ const scrollTrack = (direction) => {
 		<!-- Card container -->
 		<div class="rounded-card border border-brand-border bg-brand-bg-alt p-4 md:p-5 relative shadow-sf-sm">
 
-			<!-- Badge "Primo" centrato orizzontalmente sulla PRIMA card giorno.
-			     Posizione = container-pad + track-pad + metà day-button.
-			     Mobile:  16px + 10px + 39px = 65px (day-button 78px)
-			     Sm+:     20px + 10px + 42px = 72px (day-button 84px)
-			     translateX(-50%) centra il pill sul punto calcolato. -->
-			<div
-				class="absolute top-[-10px] z-10 pointer-events-none left-[65px] sm:left-[72px]"
-				style="transform: translateX(-50%);">
-				<span class="inline-block px-2.5 py-[3px] rounded-pill text-[10px] bg-brand-primary text-white font-bold leading-none">Primo</span>
-			</div>
-
 			<!-- Scrollable row -->
 			<div
 				ref="trackRef"
@@ -91,18 +80,26 @@ const scrollTrack = (direction) => {
 				aria-label="Giorni disponibili per il ritiro">
 
 				<button
-					v-for="day in props.daysInMonth"
+					v-for="(day, dayIdx) in props.daysInMonth"
 					:id="`date-${day.formattedDate}`"
 					:key="day.date.toISOString()"
 					type="button"
 					:data-pickup-day="day.formattedDate"
-					class="snap-start shrink-0 w-[78px] sm:w-[84px] h-[92px] sm:h-[98px] rounded-card flex flex-col items-center justify-center cursor-pointer transition focus-visible:ring-2 focus-visible:ring-brand-primary/30"
+					class="snap-start shrink-0 w-[78px] sm:w-[84px] h-[92px] sm:h-[98px] rounded-card flex flex-col items-center justify-center cursor-pointer transition focus-visible:ring-2 focus-visible:ring-brand-primary/30 relative"
 					:class="isSelectedDay(day)
 						? 'ring-2 ring-brand-primary bg-brand-primary/[0.06] shadow-sf'
 						: 'border border-brand-border bg-brand-card hover:border-brand-primary/40 hover:shadow-sf'"
 					:aria-pressed="isSelectedDay(day) ? 'true' : 'false'"
 					:aria-label="`Seleziona ${day.weekday} ${day.dayNumber} ${day.monthAbbr}`"
 					@click="emit('choose-date', day)">
+
+					<!-- Badge "Primo" sulla PRIMA card disponibile, ancorato al top del bottone (etichetta data),
+					     non più floating sopra il container. Cavalca il top-border del tile, centrato. -->
+					<span
+						v-if="dayIdx === 0"
+						class="absolute -top-[8px] left-1/2 -translate-x-1/2 inline-block px-2 py-[2px] rounded-pill text-[9px] uppercase tracking-[0.04em] bg-brand-primary text-white font-bold leading-none shadow-sf-sm pointer-events-none">
+						Primo
+					</span>
 
 					<span
 						class="text-[11px] uppercase tracking-[0.5px] font-bold"
