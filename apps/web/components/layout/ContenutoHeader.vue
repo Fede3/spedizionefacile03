@@ -46,7 +46,18 @@ const activeHero = computed(() => secondaryHeros.find((h) => h.match(route.path)
 				</h1>
 				<p class="hero-subtitle">Ritiro a domicilio, consegna veloce, prezzo fisso.</p>
 
-				<!-- Mobile (< 640px): chip prezzo inline compatto. Niente CTA, niente immagine: il form è direttamente sotto. -->
+				<!-- Mobile (< 640px): banner immagine curato (compatto, ~110px) + chip prezzo inline -->
+				<div class="hero-mobile-banner tablet:hidden" aria-hidden="true">
+					<img :src="heroImageUrl" alt="" class="hero-mobile-banner__image" :style="heroImageStyle" width="1600" height="900" loading="eager" fetchpriority="high" decoding="async">
+					<div class="hero-mobile-banner__overlay">
+						<span class="hero-mobile-banner__chip">
+							<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+							Corriere BRT · Tracking in tempo reale
+						</span>
+					</div>
+				</div>
+
+				<!-- Mobile (< 640px): chip prezzo inline compatto sotto il banner. -->
 				<div class="hero-price-chip tablet:hidden">
 					<span class="hero-price-chip__from">Da</span>
 					<span class="hero-price-chip__amount">{{ minPriceFormatted }}<span class="hero-price-chip__currency">&euro;</span></span>
@@ -149,6 +160,50 @@ const activeHero = computed(() => secondaryHeros.find((h) => h.match(route.path)
 }
 .hero-subtitle { margin-top: 12px; color: #777; font-weight: 450; font-size: 15px; line-height: 1.55; max-width: 380px; }
 
+/* Mobile-first: banner immagine curato compatto (110px max). Visibile solo su mobile. */
+.hero-mobile-banner {
+	position: relative;
+	margin-top: 12px;
+	height: 110px;
+	border-radius: 14px;
+	overflow: hidden;
+	background: linear-gradient(135deg, var(--color-brand-accent) 0%, rgba(228, 66, 3, 0.3) 35%, rgba(9, 88, 102, 0.3) 65%, var(--color-brand-primary) 100%);
+	padding: 2px;
+}
+.hero-mobile-banner__image {
+	display: block;
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	border-radius: 12px;
+	pointer-events: none;
+	user-select: none;
+}
+.hero-mobile-banner__overlay {
+	position: absolute;
+	inset: 0;
+	display: flex;
+	align-items: flex-end;
+	padding: 8px 10px;
+	border-radius: 12px;
+	background: linear-gradient(180deg, transparent 35%, rgba(9, 30, 36, 0.55) 100%);
+	pointer-events: none;
+}
+.hero-mobile-banner__chip {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	padding: 4px 10px;
+	border-radius: 999px;
+	background: rgba(255, 255, 255, 0.96);
+	color: var(--color-brand-primary);
+	font-size: 11px;
+	font-weight: 700;
+	letter-spacing: 0.01em;
+	box-shadow: 0 4px 10px rgba(9, 30, 36, 0.18);
+}
+.hero-mobile-banner__chip svg { color: var(--color-brand-accent); flex-shrink: 0; }
+
 /* Mobile-first: chip prezzo compatto sostituisce price-cta-box. Save ~80px. */
 .hero-price-chip {
 	display: inline-flex;
@@ -206,6 +261,8 @@ const activeHero = computed(() => secondaryHeros.find((h) => h.match(route.path)
 	.hero-homepage { padding: 8px 0 0; }
 	.hero-title { font-size: clamp(1.5rem, 6.5vw, 2rem); letter-spacing: -0.8px; }
 	.hero-subtitle { font-size: 13px; margin-top: 6px; max-width: 100%; line-height: 1.4; }
+	.hero-mobile-banner { height: 96px; margin-top: 10px; }
+	.hero-mobile-banner__chip { font-size: 10px; padding: 3px 8px; }
 	.hero-price-chip { margin-top: 8px; padding: 3px 9px; }
 }
 @media (max-width: 39.99rem) {
