@@ -50,11 +50,11 @@ Cookie sessione Laravel (Sanctum SPA) emessi su `127.0.0.1:8787` → condivisi t
 - **Components Nuxt**: in `apps/web/components/`, auto-import abilitato (`<ServizioGrid>` direttamente).
 - **Palette**: teal `#095866` + arancione `#E44203` + neutri. **Mai blu** (no `blue-*`, `indigo-*`, `sky-*`, `slate-*`).
 - **Italiano** per stringhe utente (commenti, label, errori). **English** per identifier (variabili, funzioni, tabelle).
-- **TypeScript strategy**: TS in `composables/*.ts` + `utils/*.ts` + `stores/*.ts` (logica riusata, tipi cross-domain). JS in `components/**/*.vue` + `pages/**/*.vue` (props validate runtime). Vedi [`docs/adr/007-typescript-strategy.md`](docs/adr/007-typescript-strategy.md).
+- **TypeScript strategy**: TS in `composables/*.ts` + `utils/*.ts` + `stores/*.ts` (logica riusata, tipi cross-domain). JS in `components/**/*.vue` + `pages/**/*.vue` (props validate runtime).
 
 ## Design system (regola d'oro UI)
 
-- **UNA sola strada per lo styling**: Tailwind utility puro + componenti `Sf*` proprietari + Nuxt UI 4 per primitive. Vedi [`docs/adr/004-tailwind-utility-design-system.md`](docs/adr/004-tailwind-utility-design-system.md).
+- **UNA sola strada per lo styling**: Tailwind utility puro + componenti `Sf*` proprietari + Nuxt UI 4 per primitive.
 - **CSS custom solo in casi documentati**: `:root` token in `assets/css/main.css`, keyframes in `funnel-animations.css`, `funnel-*.css` Stripe-critical (intoccabili senza E2E carta). Tutti gli altri stili = Tailwind utility inline o `Sf*` component.
 - **Naming token brand** (CSS variables in `:root` mappate a Tailwind config):
   - `bg-brand-primary`, `text-brand-primary`, `border-brand-primary` (teal)
@@ -97,7 +97,7 @@ Eccezioni documentate inline con `// CRITICAL:` + motivazione.
 
 ## DB::table() autorizzati
 
-Vedi [`docs/adr/006-service-layer-architecture.md`](docs/adr/006-service-layer-architecture.md) per il razionale completo. In sintesi:
+Casi autorizzati di accesso DB::table() invece di Eloquent:
 
 - **Pivot pure**: `cart_user`, `package_order`, `saved_shipments`
 - **Laravel internals**: `password_reset_tokens`, `sessions`, `cache`, `jobs`, `cookie_consents`
