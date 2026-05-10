@@ -1,0 +1,101 @@
+version: 2
+
+updates:
+  # ────────────────────────────────────────────────
+  # Composer (Laravel backend)
+  # ────────────────────────────────────────────────
+  - package-ecosystem: "composer"
+    directory: "/"
+    schedule:
+      interval: "daily"
+      time: "06:00"
+      timezone: "Europe/Rome"
+    open-pull-requests-limit: 10
+    labels:
+      - "dependencies"
+      - "backend"
+    commit-message:
+      prefix: "chore(deps)"
+      include: "scope"
+    groups:
+      laravel:
+        patterns:
+          - "laravel/*"
+          - "illuminate/*"
+      dev-dependencies:
+        dependency-type: "development"
+      security:
+        applies-to: security-updates
+        patterns:
+          - "*"
+    ignore:
+      - dependency-name: "laravel/framework"
+        update-types: ["version-update:semver-major"]
+
+  # ────────────────────────────────────────────────
+  # npm (Nuxt frontend)
+  # ────────────────────────────────────────────────
+  - package-ecosystem: "npm"
+    directory: "/apps/web"
+    schedule:
+      interval: "daily"
+      time: "06:30"
+      timezone: "Europe/Rome"
+    open-pull-requests-limit: 10
+    labels:
+      - "dependencies"
+      - "frontend"
+    commit-message:
+      prefix: "chore(deps)"
+      include: "scope"
+    groups:
+      nuxt:
+        patterns:
+          - "nuxt"
+          - "@nuxt/*"
+          - "@nuxtjs/*"
+      vue:
+        patterns:
+          - "vue"
+          - "vue-*"
+          - "@vue/*"
+          - "pinia"
+          - "@pinia/*"
+      tiptap:
+        patterns:
+          - "@tiptap/*"
+      sentry:
+        patterns:
+          - "@sentry/*"
+      dev-dependencies:
+        dependency-type: "development"
+      security:
+        applies-to: security-updates
+        patterns:
+          - "*"
+    ignore:
+      - dependency-name: "nuxt"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "vue"
+        update-types: ["version-update:semver-major"]
+
+  # ────────────────────────────────────────────────
+  # GitHub Actions
+  # ────────────────────────────────────────────────
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "Europe/Rome"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "ci"
+    commit-message:
+      prefix: "chore(ci)"
+    groups:
+      actions:
+        patterns:
+          - "*"

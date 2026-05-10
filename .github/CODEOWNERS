@@ -1,0 +1,63 @@
+# CODEOWNERS — SpediamoFacile
+# Docs: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+#
+# L'ultimo match vince. Path-prefix = default owner.
+
+# ────────────────────────────────────────────────
+# Default fallback: tutto il repo
+# ────────────────────────────────────────────────
+*                                 @devops @tech-lead
+
+# ────────────────────────────────────────────────
+# Frontend (Nuxt 3 + Vue + Pinia + Tailwind)
+# ────────────────────────────────────────────────
+/nuxt-SpediamoFacile-master/    @frontend-team
+/nuxt-SpediamoFacile-master/components/   @frontend-team @design-team
+/nuxt-SpediamoFacile-master/pages/        @frontend-team
+/nuxt-SpediamoFacile-master/stores/       @frontend-team
+/nuxt-SpediamoFacile-master/assets/       @frontend-team @design-team
+
+# ────────────────────────────────────────────────
+# Backend (Laravel 11 + Sanctum + Stripe)
+# ────────────────────────────────────────────────
+/laravel-SpediamoFacile-main/             @backend-team
+/laravel-SpediamoFacile-main/app/Http/    @backend-team
+/laravel-SpediamoFacile-main/database/    @backend-team @dba
+/laravel-SpediamoFacile-main/routes/      @backend-team
+
+# ────────────────────────────────────────────────
+# Pagamenti / Business critical
+# ────────────────────────────────────────────────
+/laravel-SpediamoFacile-main/app/Services/Stripe/     @backend-team @tech-lead
+/laravel-SpediamoFacile-main/app/Http/Controllers/Payment*  @backend-team @tech-lead
+/nuxt-SpediamoFacile-master/components/Checkout*      @frontend-team @tech-lead
+
+# ────────────────────────────────────────────────
+# BRT integration
+# ────────────────────────────────────────────────
+/laravel-SpediamoFacile-main/app/Services/Brt/        @backend-team @brt-specialist
+/BrtRestApi-PUDO-EN/                                    @backend-team @brt-specialist
+
+# ────────────────────────────────────────────────
+# Infra / DevOps / CI
+# ────────────────────────────────────────────────
+/.github/                         @devops
+/.github/workflows/               @devops @tech-lead
+/Caddyfile*                       @devops
+/render.yaml                      @devops
+/scripts/                         @devops
+
+# ────────────────────────────────────────────────
+# Docs
+# ────────────────────────────────────────────────
+/docs/                            @tech-writer
+*.md                              @tech-writer
+/AGENTS.md                        @tech-lead
+/README.md                        @tech-writer @tech-lead
+
+# ────────────────────────────────────────────────
+# Security-sensitive (require sign-off)
+# ────────────────────────────────────────────────
+/.env*                            @devops @security
+/laravel-SpediamoFacile-main/config/auth.php   @backend-team @security
+/laravel-SpediamoFacile-main/app/Http/Middleware/              @backend-team @security

@@ -1,72 +1,44 @@
 # SpediamoFacile
 
-Intermediario BRT: preventivo, funnel spedizione, carrello, pagamento, account cliente, admin, wallet, coupon/referral, PUDO, tracking, documenti/etichette/fatture.
+Intermediario BRT: preventivo, funnel spedizione, carrello, pagamento (Stripe / bonifico / wallet), account cliente, admin, coupon/referral, PUDO, tracking, fatturazione.
 
-## Stack reale
+## Stack
 
-- **Backend**: Laravel 11 alla **root** del repo (Sanctum 4 + Stripe SDK 18 + BRT REST 3.x)
-- **Frontend**: Nuxt 4 SPA in **`apps/web/`** (Vue 3.5 + Pinia + Nuxt UI 4 + Tailwind 4)
-- **Reverse proxy**: Caddy `:8787` → Laravel `:8000` API + Nuxt `:3001` SPA
-- **DB**: SQLite (dev) / Postgres (prod)
-- **Pagamenti**: Stripe + Bonifico + Wallet interno
-- **Test**: PHPUnit backend + Playwright E2E + Vitest unit
+- **Backend** — Laravel 11 + Sanctum 4 SPA + Stripe SDK 18 + BRT REST 3.x
+- **Frontend** — Nuxt 4 + Vue 3.5 + Pinia + Nuxt UI 4 + Tailwind 4 (in `apps/web/`)
+- **Proxy** — Caddy `:8787` → Laravel `:8000` (API) + Nuxt `:3001` (SPA)
+- **DB** — SQLite (dev) / Postgres (prod)
+- **Test** — PHPUnit (BE) + Vitest (FE unit) + Playwright (E2E)
 
 ## Quickstart
 
 ```bash
-git clone <repo>
-cd spedizionefacile
+git clone <repo> && cd spedizionefacile
 
 # Backend
 composer install
 cp .env.example .env && php artisan key:generate
-php -r "file_exists('database/database.sqlite') || touch('database/database.sqlite');"
+touch database/database.sqlite
 php artisan migrate:fresh --seed
 
 # Frontend
-cd apps/web && npm install && cd ..
+npm install --prefix apps/web
 
-# 3 processi paralleli (vedi .claude/launch.json):
-#   php artisan serve --port=8000              # Laravel API
-#   npm run dev --prefix apps/web              # Nuxt :3001
-#   caddy run --config infra/caddy/Caddyfile   # Caddy :8787
+# Avvia 3 servizi (1 comando)
+./scripts/avvia-locale.sh    # Linux/macOS
+.\scripts\avvia-locale.ps1   # Windows PowerShell
 
 # Apri http://127.0.0.1:8787
 ```
 
-> Per setup Docker (Postgres+Redis+Laravel+Nuxt+Caddy con `make dev`),
-> `Dockerfile`/`docker-compose.yml`/`Makefile` sono nell'archivio
-> `~/Desktop/spedizionefacile-archive/docker-setup/`.
-
-## Routing
-
-- **API JSON** modulari: `routes/api/*.php` (auth, cart, orders, payments, shipment, admin, ...)
-- **Webhook esterni**: `routes/web.php` (Stripe `/stripe/webhook`, BRT `/webhooks/brt/tracking`)
-- **Sanctum CSRF**: `/sanctum/csrf-cookie`
-
-## Convenzioni codice
-
-- **Prezzi backend in cents** (`MyMoney` / moneyphp). Frontend mostra `(cents/100).toFixed(2) + ' €'`.
-- **Auth Nuxt**: `useSanctumClient()` per chiamate API stateful.
-- **Italiano** per stringhe utente (commenti, label, errori). **English** per identifier.
-- **Palette**: teal `#095866` (primary) + arancione `#E44203` (cta) + neutri. **Mai blu**.
-
-## Test
-
-I test (PHPUnit, Playwright, Vitest) sono in archivio. Per ripristinarli:
+In manuale:
 ```bash
-cp -r ~/Desktop/spedizionefacile-archive/testing/{tests,phpunit.xml,phpstan.neon} \
-      ~/Desktop/spedizionefacile/
+php artisan serve --port=8000              # API
+npm run dev --prefix apps/web              # SPA :3001
+caddy run --config infra/caddy/Caddyfile   # Proxy :8787
 ```
-Poi:
-- Backend: `php artisan test`
-- Frontend type-check: `cd apps/web && npm run typecheck`
-- Frontend lint: `cd apps/web && npm run lint`
-- Frontend unit: `cd apps/web && npm run test:unit`
-- Frontend build: `cd apps/web && npm run build`
-- E2E: `cd apps/web && npx playwright test`
 
-## Account demo (seeder)
+## Account demo (seeded)
 
 | Email | Password | Ruolo |
 |---|---|---|
@@ -74,37 +46,52 @@ Poi:
 | `cliente@spediamofacile.it` | `Password1!` | Cliente |
 | `pro@spediamofacile.it` | `Password1!` | Partner Pro |
 
-## Documentazione
+## Test & Quality
 
-- `pages/__design-system.vue` — showcase live componenti `Sf*` (dev-only)
-- Documentazione completa, ADR, deploy config, tooling, test config
-  in `~/Desktop/spedizionefacile-archive/`
+```bash
+php artisan test                            # PHPUnit (333+ test)
+vendor/bin/pint --test                      # Code style PHP
+vendor/bin/phpstan analyse                  # Static analysis
 
-## Design system
+cd apps/web
+npm run lint                                # ESLint
+npm run typecheck                           # vue-tsc
+npm run test:unit                           # Vitest
+npm run build                               # Nitro build
+npx playwright test                         # E2E (carta Stripe: 4242 4242 4242 4242 09/30 123)
+```
 
-Frontend: **Tailwind utility puro + 23 componenti `Sf*` + Nuxt UI 4** primitive avanzate. Single source of truth: CSS variables in `apps/web/assets/css/main.css :root`, mappate a token Tailwind in `tailwind.config.js`. Showcase live in `/api/__design-system` (dev-only).
+## Convenzioni codice
 
-Componenti `Sf*` disponibili in `apps/web/components/sf/`:
+Vedi **[CLAUDE.md](CLAUDE.md)** per istruzioni complete (palette, design system, naming, file critici Stripe-gated).
 
-| Categoria | Componenti |
-|---|---|
-| Form | `SfButton`, `SfInput`, `SfTextarea`, `SfSelect`, `SfCheckbox`, `SfRadio`, `SfSegmented`, `SfFormGroup` |
-| Surface | `SfCard`, `SfModal`, `SfConfirmDialog`, `SfTooltip`, `SfDropdown`, `SfSkeleton` |
-| Feedback | `SfBadge`, `SfStatusPill`, `SfStatCard`, `SfAvatar`, `SfAlert`, `SfEmptyState`, `SfAddressChip` |
-| Navigation | `SfTabs`, `SfBreadcrumbs`, `SfPagination`, `SfTable` |
+In sintesi:
+- **Prezzi** in cents lato BE (`MyMoney`); frontend formatta `(cents/100).toFixed(2) + ' €'`
+- **Auth Nuxt** via `useSanctumClient()` (mai `$fetch` raw)
+- **Stringhe utente** italiano, **identifier** inglese
+- **Palette** teal `#095866` + arancione `#E44203` + neutri (mai blu)
+- **Design system** — Tailwind utility + componenti `Sf*` + Nuxt UI 4
 
-## File critici (idempotency / soldi reali)
+## Routing
 
-Modificare solo con E2E gating Stripe (carta `4242 4242 4242 4242 09/30 123`):
+- **API**: `routes/api/*.php` (auth, cart, orders, payments, shipment, admin)
+- **Webhook**: `routes/web.php` (Stripe `/stripe/webhook`, BRT `/webhooks/brt/tracking`)
+- **Sanctum CSRF**: `/sanctum/csrf-cookie`
 
-- `app/Http/Controllers/Checkout/StripeCheckoutController.php`
-- `app/Http/Controllers/Checkout/StripeWebhookController.php`
-- `app/Services/StripePaymentService.php`
-- `app/Services/OrderCreationService.php`
-- `app/Services/WalletOrderPaymentService.php`
-- `app/Models/Order.php`
-- `app/Http/Controllers/Shipping/BrtWebhookController.php`
-- `bootstrap/app.php`
+## File critici (Stripe / soldi reali)
+
+Modificare solo con E2E gating carta `4242 4242 4242 4242 09/30 123`:
+
+```
+app/Http/Controllers/Checkout/StripeCheckoutController.php
+app/Http/Controllers/Checkout/StripeWebhookController.php
+app/Http/Controllers/Shipping/BrtWebhookController.php
+app/Services/StripePaymentService.php
+app/Services/OrderCreationService.php
+app/Services/WalletOrderPaymentService.php
+app/Models/Order.php
+bootstrap/app.php
+```
 
 ## License
 
