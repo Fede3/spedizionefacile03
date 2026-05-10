@@ -53,6 +53,12 @@ cd apps/web && npm install && cd ..
 
 ## Test
 
+I test (PHPUnit, Playwright, Vitest) sono in archivio. Per ripristinarli:
+```bash
+cp -r ~/Desktop/spedizionefacile-archive/testing/{tests,phpunit.xml,phpstan.neon} \
+      ~/Desktop/spedizionefacile/
+```
+Poi:
 - Backend: `php artisan test`
 - Frontend type-check: `cd apps/web && npm run typecheck`
 - Frontend lint: `cd apps/web && npm run lint`
@@ -70,8 +76,9 @@ cd apps/web && npm install && cd ..
 
 ## Documentazione
 
-- [`CLAUDE.md`](CLAUDE.md) — istruzioni AI + convenzioni codice + design system
 - `pages/__design-system.vue` — showcase live componenti `Sf*` (dev-only)
+- Documentazione completa, ADR, deploy config, tooling, test config
+  in `~/Desktop/spedizionefacile-archive/`
 
 ## Design system
 
